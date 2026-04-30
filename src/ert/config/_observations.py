@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 import pathlib
+import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
@@ -10,7 +12,9 @@ from typing import Annotated, Any, Literal, Self, assert_never
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
+from resfo_utilities import make_summary_key
 
 from ert.validation import rangestring_to_list
 
@@ -49,6 +53,14 @@ class _SummaryValues(BaseObservation):
     shape_id: int | None = None
 
 
+def _cast_optional_csv_value(value: str | None, annotation: str) -> int | str | None:
+    if value is None:
+        return None
+    if "int" in annotation:
+        return int(value)
+    return value
+
+
 def _parse_date(date_str: str) -> datetime:
     try:
         return datetime.fromisoformat(date_str)
@@ -79,7 +91,12 @@ class SummaryObservation(_SummaryValues):
         directory: str,
         observation_dict: ObservationDict,
         shape_registry: ShapeRegistry,
-    ) -> list[Self]:
+    ) -> list[Self | BreakthroughObservation]:
+        if observation_dict["type"] is ObservationType.SUMMARY_COMMON_CONFIG:
+            return cls.from_common_config_dict(
+                directory, observation_dict, shape_registry
+            )
+
         error_mode = ErrorModes.ABS
         summary_key = None
 
@@ -154,17 +171,7 @@ class SummaryObservation(_SummaryValues):
             case default:
                 assert_never(default)
 
-        # Register geometry if localization is present
-        shape_id = None
-        if east is not None and north is not None:
-            radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
-            shape_id = shape_registry.register(
-                CircleShapeConfig(
-                    east=east,
-                    north=north,
-                    radius=radius,
-                )
-            )
+        shape_id = cls.get_shape_id(east, north, radius, shape_registry)
 
         name = (
             observation_dict["name"]
@@ -186,6 +193,169 @@ class SummaryObservation(_SummaryValues):
         obs_instance.name = name
 
         return [obs_instance]
+
+    @classmethod
+    def from_common_config_dict(
+        cls,
+        directory: str,
+        observation_dict: ObservationDict,
+        shape_registry: ShapeRegistry,
+    ) -> list[Self | BreakthroughObservation]:
+        obs_instances: list[Self | BreakthroughObservation] = []
+        context: FileContextToken = observation_dict.context
+
+        required_csv_columns = ["keyword", "value", "error", "date"]
+
+        # Optional arguments for resfo_utilities.make_summary_key
+        optional_csv_columns = {}
+        for name, param in inspect.signature(make_summary_key).parameters.items():
+            if param.default is not inspect.Parameter.empty:
+                optional_csv_columns[name] = param.annotation
+
+        csv_file = observation_dict.get("VALUES")
+        if csv_file is None:
+            raise _missing_value_error(context, "VALUES")
+        csv_path = _resolve_path(directory, csv_file)
+        csv_df = pl.read_csv(
+            csv_path,
+            encoding="utf-8",
+        )
+        # Strip all whitespaces from dataframe columns and values
+        csv_df = csv_df.rename({col: col.strip() for col in csv_df.columns}).select(
+            pl.all().str.strip_chars()
+        )
+        # Rename 'well' column to 'name' to match make_summary_key parameter
+        if "well" not in csv_df.columns:
+            raise _missing_csv_column(context, "well", csv_file)
+        csv_df = csv_df.rename({"well": "name"})
+
+        for col in csv_df.columns:
+            if col not in {
+                *required_csv_columns,
+                *optional_csv_columns,
+            }:
+                raise _unknown_csv_column(context, col, csv_path)
+
+        for required_col in required_csv_columns:
+            if required_col not in csv_df.columns:
+                raise _missing_csv_column(context, required_col, csv_file)
+
+        well_localization = {}
+
+        for key, value in observation_dict.items():
+            match key:
+                case "name" | "VALUES" | "type":
+                    pass
+                case _:
+                    if match := re.match(r"WELL (.+)", key):
+                        well_name = match.group(1)
+                        for key_, value_ in value.items():
+                            match key_:
+                                case "LOCALIZATION":
+                                    validate_localization(value_, context)
+                                    east, north, radius = extract_localization_values(
+                                        value_
+                                    )
+                                    well_localization[well_name] = {
+                                        "east": east,
+                                        "north": north,
+                                        "radius": radius,
+                                    }
+                                case "BREAKTHROUGH":
+                                    breakthrough_context = context.update(
+                                        value="BREAKTHROUGH"
+                                    )
+                                    validate_populated_string(
+                                        value_.get("KEY"), "KEY", breakthrough_context
+                                    )
+                                    breakthrough_key = value_["KEY"]
+                                    breakthrough_key = (
+                                        breakthrough_key
+                                        if breakthrough_key.endswith(f":{well_name}")
+                                        else f"{breakthrough_key}:{well_name}"
+                                    )
+                                    breakthrough_obs_dict = ObservationDict(
+                                        {
+                                            **value_,
+                                        }
+                                        | {"KEY": breakthrough_key}
+                                        | (
+                                            {"LOCALIZATION": value["LOCALIZATION"]}
+                                            if "LOCALIZATION" in value
+                                            else {}
+                                        ),
+                                        context=breakthrough_context,
+                                    )
+                                    obs_instances.extend(
+                                        BreakthroughObservation.from_obs_dict(
+                                            directory,
+                                            breakthrough_obs_dict,
+                                            shape_registry,
+                                        )
+                                    )
+                    else:
+                        raise _unknown_key_error(str(key), observation_dict.context)
+
+        for row in csv_df.iter_rows(named=True):
+            well = row.get("name")
+            key = validate_populated_string(row["keyword"], "key", context)
+
+            summary_key = make_summary_key(
+                keyword=key,
+                **{  # type: ignore[arg-type]
+                    col: _cast_optional_csv_value(row.get(col), annotation)
+                    for col, annotation in optional_csv_columns.items()
+                },
+            )
+            key = f"{key}{f':{well}' if well else ''}"
+
+            standardized_date = _parse_date(row["date"]).isoformat()
+            validated_value = validate_float(row["value"], f"({key}) VALUE")
+            validated_error = validate_positive_float(
+                row["error"], f"({key}) ERROR", strictly_positive=True
+            )
+
+            loc_values = well_localization.get(well, {})
+            shape_id = cls.get_shape_id(
+                loc_values.get("east"),
+                loc_values.get("north"),
+                loc_values.get("radius"),
+                shape_registry,
+            )
+
+            obs_instances.append(
+                cls(
+                    name=summary_key,
+                    error=validated_error,
+                    key=key,
+                    value=validated_value,
+                    shape_id=shape_id,
+                    date=standardized_date,
+                )
+            )
+
+        return obs_instances
+
+    @classmethod
+    def get_shape_id(
+        cls,
+        east: float | None,
+        north: float | None,
+        radius: float | None,
+        shape_registry: ShapeRegistry,
+    ) -> int | None:
+        # Register geometry if localization is present
+        shape_id = None
+        if east is not None and north is not None:
+            radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
+            shape_id = shape_registry.register(
+                CircleShapeConfig(
+                    east=east,
+                    north=north,
+                    radius=radius,
+                )
+            )
+        return shape_id
 
     def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
         if self.shape_id is not None:
@@ -733,8 +903,8 @@ class BreakthroughObservation(BaseObservation):
             )
 
         name = (
-            obs_dict["name"]
-            if obs_dict["name"] is not None
+            obs_dict.get("name")
+            if obs_dict.get("name") is not None
             else f"BREAKTHROUGH:{summary_key}:{threshold}"
         )
         return [
@@ -769,6 +939,7 @@ _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.GENERAL: GeneralObservation,
     ObservationType.RFT: RFTObservation,
     ObservationType.BREAKTHROUGH: BreakthroughObservation,
+    ObservationType.SUMMARY_COMMON_CONFIG: SummaryObservation,
 }
 
 LOCALIZATION_KEYS = Literal["east", "north", "radius"]
@@ -828,6 +999,18 @@ def validate_error_mode(inp: str) -> ErrorModes:
     raise ObservationConfigError.with_context(
         f'Unexpected ERROR_MODE {inp}. Failed to validate "{inp}"', inp
     )
+
+
+def validate_populated_string(val: str, key: str, context: FileContextToken) -> str:
+    if not val:
+        raise ObservationConfigError.with_context(
+            f'Required string value for key "{key}" is empty for {context!s}.',
+            context,
+        )
+    try:
+        return str(val)
+    except ValueError as err:
+        raise _conversion_error(key, val, "str") from err
 
 
 def validate_float(val: str, key: str) -> float:
@@ -918,6 +1101,25 @@ def _missing_value_error(
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f'Missing item "{value_key}" in {context!s}', context
+    )
+
+
+def _unknown_csv_column(
+    context: FileContextToken, column_name: str, filename: str | None
+) -> ObservationConfigError:
+    if column_name == "name":
+        column_name = "well"
+    return ObservationConfigError.with_context(
+        f"Unrecognized column '{column_name}' in CSV file '{filename}' for {context!s}",
+        context,
+    )
+
+
+def _missing_csv_column(
+    context: FileContextToken, value_key: str, filename: str
+) -> ObservationConfigError:
+    return ObservationConfigError.with_context(
+        f'Missing column "{value_key}" in csv file "{filename}"', context
     )
 
 
