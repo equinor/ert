@@ -606,7 +606,7 @@ class RunDialog(QFrame):
             ):
                 self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
             case WorkflowBatchFinishedEvent(hook=hook, iteration=iteration):
-                pass
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
 
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count

@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 
 from _ert.events import (
+    WorkflowBatchFinishedEvent,
     WorkflowCancelledEvent,
     WorkflowFinishedEvent,
     WorkflowStartedEvent,
@@ -28,10 +29,9 @@ _STATUS_TO_BACKGROUND = {
     WorkflowStatus.FAILED: QColor(*state.COLOR_FAILED),
     WorkflowStatus.CANCELLED: QColor(*state.COLOR_CANCELLED),
 }
-_ROW_FOREGROUND = QColor(Qt.GlobalColor.black)
 HEADER_TO_COLUMN = {
-    "Workflow job": 0,
-    "Status": 1,
+    "WORKFLOW": 0,
+    "STATUS": 1,
     "STDOUT": 2,
     "STDERR": 3,
 }
@@ -61,7 +61,7 @@ class WorkflowWidget(QWidget):
 
         horizontal_header = self._table.horizontalHeader()
         assert horizontal_header is not None
-        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
 
         vertical_header = self._table.verticalHeader()
         assert vertical_header is not None
@@ -75,10 +75,14 @@ class WorkflowWidget(QWidget):
 
         for row, workflow_name in enumerate(workflow_names):
             self._add_row(row, workflow_name, WorkflowStatus.PENDING)
+        self._resize_columns()
 
     def handle_event(
         self,
-        event: WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent,
+        event: WorkflowStartedEvent
+        | WorkflowFinishedEvent
+        | WorkflowCancelledEvent
+        | WorkflowBatchFinishedEvent,
     ) -> None:
         match event:
             case WorkflowStartedEvent(workflow_name=workflow_name):
@@ -112,14 +116,23 @@ class WorkflowWidget(QWidget):
                 self._status_label.setText(
                     f"{self.hook.workflow_tab_title()} cancelled"
                 )
+            case WorkflowBatchFinishedEvent(status=status):
+                assert status in {
+                    WorkflowStatus.FINISHED,
+                    WorkflowStatus.FAILED,
+                    WorkflowStatus.CANCELLED,
+                }
+                self._status_label.setText(
+                    f"{self.hook.workflow_tab_title()} {status.value.lower()}"
+                )
 
     def workflow_status(self, workflow_name: str) -> list[WorkflowStatus]:
         workflow_status = []
         for row in range(self._table.rowCount()):
-            name_item = self._table.item(row, HEADER_TO_COLUMN["Workflow job"])
+            name_item = self._table.item(row, HEADER_TO_COLUMN["WORKFLOW"])
             assert name_item is not None
             if name_item.text() == workflow_name:
-                status_item = self._table.item(row, HEADER_TO_COLUMN["Status"])
+                status_item = self._table.item(row, HEADER_TO_COLUMN["STATUS"])
                 assert status_item is not None
                 workflow_status.append(WorkflowStatus(status_item.text()))
         return workflow_status
@@ -132,7 +145,7 @@ class WorkflowWidget(QWidget):
     ) -> list[tuple[str | None, str | None]]:
         workflow_outputs: list[tuple[str | None, str | None]] = []
         for row in range(self._table.rowCount()):
-            name_item = self._table.item(row, HEADER_TO_COLUMN["Workflow job"])
+            name_item = self._table.item(row, HEADER_TO_COLUMN["WORKFLOW"])
             assert name_item is not None
             if name_item.text() == workflow_name:
                 stdout = self._table.item(row, HEADER_TO_COLUMN["STDOUT"])
@@ -150,7 +163,7 @@ class WorkflowWidget(QWidget):
         row: int,
         status: WorkflowStatus,
     ) -> None:
-        status_item = self._table.item(row, HEADER_TO_COLUMN["Status"])
+        status_item = self._table.item(row, HEADER_TO_COLUMN["STATUS"])
         assert status_item is not None
         status_item.setText(status.value)
         self._apply_row_style(row, status)
@@ -162,8 +175,8 @@ class WorkflowWidget(QWidget):
     ) -> int | None:
 
         for row in range(self._table.rowCount()):
-            status_item = self._table.item(row, HEADER_TO_COLUMN["Status"])
-            name_item = self._table.item(row, HEADER_TO_COLUMN["Workflow job"])
+            status_item = self._table.item(row, HEADER_TO_COLUMN["STATUS"])
+            name_item = self._table.item(row, HEADER_TO_COLUMN["WORKFLOW"])
             assert name_item is not None
             assert status_item is not None
             if status_item.text() == status.value and name_item.text() == workflow_name:
@@ -176,10 +189,10 @@ class WorkflowWidget(QWidget):
     def _add_row(self, row: int, workflow_name: str, status: WorkflowStatus) -> None:
         self._table.insertRow(row)
         self._table.setItem(
-            row, HEADER_TO_COLUMN["Workflow job"], QTableWidgetItem(workflow_name)
+            row, HEADER_TO_COLUMN["WORKFLOW"], QTableWidgetItem(workflow_name)
         )
         self._table.setItem(
-            row, HEADER_TO_COLUMN["Status"], QTableWidgetItem(status.value)
+            row, HEADER_TO_COLUMN["STATUS"], QTableWidgetItem(status.value)
         )
         self._table.setItem(row, HEADER_TO_COLUMN["STDOUT"], QTableWidgetItem())
         self._table.setItem(row, HEADER_TO_COLUMN["STDERR"], QTableWidgetItem())
@@ -212,3 +225,19 @@ class WorkflowWidget(QWidget):
         item.setText("-" if text == "" else text)  # noqa: PLC1901
         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         item.setToolTip(text)
+
+    def _resize_columns(self) -> None:
+        horizontal_header = self._table.horizontalHeader()
+        assert horizontal_header is not None
+
+        horizontal_header.resizeSections(QHeaderView.ResizeMode.ResizeToContents)
+        for section in range(horizontal_header.count()):
+            if horizontal_header.sectionSize(section) < 135:
+                horizontal_header.resizeSection(section, 135)
+
+            horizontal_header.setSectionResizeMode(
+                section,
+                QHeaderView.ResizeMode.Stretch
+                if section == horizontal_header.count() - 1
+                else QHeaderView.ResizeMode.Interactive,
+            )
