@@ -449,7 +449,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         target_index = None
         for r in range(model.rowCount(experiment_index)):
             idx = model.index(r, 0, experiment_index)
-            if model.data(idx, Qt.ItemDataRole.DisplayRole) == "iter-0":
+            if model.data(idx, Qt.ItemDataRole.DisplayRole) == "iter-1":
                 target_index = idx
                 break
         assert target_index is not None
