@@ -318,16 +318,15 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
 
 
-@pytest.mark.snapshot_test
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
-@pytest.mark.slow
-def test_update_snapshot(
+@pytest.mark.slow  # This test is slow when snake_oil is not in cache
+def test_that_posterior_gen_kw_values_match_expected_on_snake_oil(
     snake_oil_case_storage,
     snake_oil_storage,
 ):
     """
-    Note that this is now a snapshot test, so there is no guarantee that the
-    snapshots are correct, they are just documenting the current behavior.
+    There is no guarantee that the expected GEN_KW values are correct,
+    they are just documenting the current behavior.
     """
     expected_gen_kw = [
         0.3583003662668918,
@@ -385,7 +384,6 @@ def test_update_snapshot(
     assert target_gen_kw == pytest.approx(expected_gen_kw, abs=1e-5)
 
 
-@pytest.mark.snapshot_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     ("alpha", "expected", "expectation"),
@@ -425,16 +423,9 @@ def test_update_snapshot(
         ),
     ],
 )
-def test_smoother_snapshot_alpha(
+def test_that_alpha_can_be_used_for_outlier_detection(
     alpha, expected, storage, uniform_parameter, obs, expectation
 ):
-    """
-    Note that this is now a snapshot test, so there is no guarantee that the
-    snapshots are correct, they are just documenting the current behavior.
-    """
-
-    # alpha is a parameter used for outlier detection
-
     response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
     experiment = storage.create_experiment(
         name="ensemble_smoother",
@@ -493,7 +484,7 @@ def test_smoother_snapshot_alpha(
             enkf_truncation=es_settings.enkf_truncation,
             rng=rng,
         )
-        result_snapshot = smoother_update(
+        posterior_update = smoother_update(
             prior_storage,
             posterior_storage,
             observations=["OBSERVATION"],
@@ -502,9 +493,9 @@ def test_smoother_snapshot_alpha(
             ),
             strategy_map=strategy_map,
         )
-        assert result_snapshot.alpha == alpha
+        assert posterior_update.alpha == alpha
         assert (
-            result_snapshot.observations_and_responses["status"].to_list() == expected
+            posterior_update.observations_and_responses["status"].to_list() == expected
         )
 
 
