@@ -62,7 +62,6 @@ from everest.config import (
     EverestConfig,
 )
 from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
-from everest.config.validation_utils import unique_items
 from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
@@ -503,11 +502,8 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         return cls(
             experiment_name=experiment_name,
             target_ensemble=target_ensemble,
-            controls=everest_config.controls,
             simulation_dir=everest_config.simulation_dir,
             keep_run_path=not delete_run_path,
-            objective_names=everest_config.objective_names,
-            objective_functions=everest_config.objective_functions,
             input_constraints=everest_config.input_constraints,
             optimization=everest_config.optimization,
             model=everest_config.model,
@@ -530,7 +526,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             storage_path=str(everest_config.storage_dir),
             queue_config=queue_config,
             status_queue=status_queue,
-            optimization_callback=optimization_callback,
             shape_registry=ShapeRegistry(),  # this one is not expected to be used,
             # but is needed for the observation localization
         )

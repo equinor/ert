@@ -172,5 +172,8 @@
   "start_iteration": 0,
   "minimum_required_realizations": 1,
   "experiment_type": "Evaluate Ensemble",
-  "ensemble_id": "00000000-0000-0000-0000-000000000000"
+  "ensemble_id": "00000000-0000-0000-0000-000000000000",
+  "shape_registry": {
+    "shapes": {}
+  }
 }

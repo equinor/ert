@@ -327,27 +327,22 @@ def _setup_manual_update_enif(
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
-) -> ManualUpdate:
+) -> ManualUpdateEnIF:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
-
-    return ManualUpdateEnIF(
+    validate_minimum_realizations(config, active_realizations.tolist())
+    # Using ManualUpdateConfig as the runmodel_config for ManualUpdateEnIF since they
+    # share the same configuration parameters. The only difference is the update method.
+    runmodel_config = ManualUpdateConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         target_ensemble=args.target_ensemble,
-        config=config,
         storage_path=config.ens_path,
         queue_config=config.queue_config,
         analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
-        status_queue=status_queue,
         runpath_file=config.runpath_file,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
-        response_configuration=config.ensemble_config.response_configuration,
-        derived_response_configuration=config.ensemble_config.derived_response_configuration,
-        ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
         env_vars=config.env_vars,
         env_pr_fm_step=config.env_pr_fm_step,
@@ -356,9 +351,10 @@ def _setup_manual_update_enif(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observation_declarations,
+        ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
     )
+    return ManualUpdateEnIF(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _setup_ensemble_smoother(
