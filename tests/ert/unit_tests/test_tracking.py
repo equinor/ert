@@ -5,6 +5,7 @@ import re
 from argparse import ArgumentParser
 from collections.abc import Generator
 from pathlib import Path
+from queue import SimpleQueue
 
 import pytest
 from jsonpath_ng import parse
@@ -34,8 +35,9 @@ from ert.mode_definitions import (
 from ert.run_models.model_factory import create_model
 
 
-class Events:
+class Events(SimpleQueue):
     def __init__(self) -> None:
+        super().__init__()
         self.events: list[BaseModel] = []
         self.environment = []
 

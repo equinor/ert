@@ -75,12 +75,12 @@ def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
 
 def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
     brm = create_run_model()
-    brm._status_queue = SimpleQueue()
+    brm.status_queue = SimpleQueue()
     brm.start_simulations_thread(
         EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
     )
-    assert isinstance(brm._status_queue.get(), StartEvent)
-    assert brm._status_queue.get() == EndEvent(
+    assert isinstance(brm.status_queue.get(), StartEvent)
+    assert brm.status_queue.get() == EndEvent(
         event_type="EndEvent",
         failed=True,
         msg="Run model None does not support restart/rerun of failed simulations.\n",

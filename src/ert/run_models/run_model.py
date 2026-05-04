@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 from pydantic import (
+    Field,
     PrivateAttr,
     field_validator,
 )
@@ -162,6 +163,8 @@ class RunModelAPI:
 
 
 class RunModel(RunModelConfig, ABC):
+    status_queue: queue.SimpleQueue[StatusEvents] = Field(exclude=True, repr=False)
+
     # Private attributes initialized in model_post_init
     _initial_realizations_mask: list[bool] = PrivateAttr()
     _completed_realizations_mask: list[bool] = PrivateAttr(default_factory=list)
@@ -181,12 +184,10 @@ class RunModel(RunModelConfig, ABC):
     def __init__(
         self,
         *,
-        status_queue: queue.SimpleQueue[StatusEvents],
         _total_iterations: int | None = None,
         **data: Any,
     ) -> None:
         super().__init__(**data)
-        self._status_queue = status_queue
 
         if _total_iterations is not None:
             self._total_iterations = _total_iterations
@@ -227,7 +228,7 @@ class RunModel(RunModelConfig, ABC):
         keys_to_drop = [
             "_end_event",
             "_queue_config",
-            "_status_queue",
+            "status_queue",
             "_storage",
             "rng",
             "run_paths",
@@ -309,7 +310,7 @@ class RunModel(RunModelConfig, ABC):
         return None
 
     def send_event(self, event: StatusEvents) -> None:
-        self._status_queue.put(event)
+        self.status_queue.put(event)
 
     @property
     def ensemble_size(self) -> int:
