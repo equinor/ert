@@ -1,12 +1,14 @@
-import os.path
+import os
 import shutil
 from enum import StrEnum
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
 import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
+from pytestqt.qtbot import QtBot
 from skimage import io, transform
 from skimage.metrics import structural_similarity as ssim
 
@@ -17,7 +19,7 @@ from ert.gui.experiments.view import RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
-from ert.run_models import EnsembleExperiment, EnsembleSmoother
+from ert.run_models import EnsembleExperiment, EnsembleSmoother, RunModel
 from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
@@ -134,12 +136,13 @@ class ExampleFolders(StrEnum):
     WITH_MORE_OBSERVATIONS = "with_more_observations"
 
     @classmethod
-    def path(cls, example_folder):
-        base = "docs/ert/getting_started/configuration/poly_new"
-        return os.path.join(base, example_folder)
+    def path(cls, example_folder: str) -> Path:
+        return Path("docs/ert/getting_started/configuration/poly_new") / example_folder
 
 
-def run_experiment(qtbot, experiment_mode, gui, click_done=True):
+def run_experiment(
+    qtbot: QtBot, experiment_mode: RunModel, gui: QWidget, click_done: bool = True
+) -> None:
     # Select correct experiment in the simulation panel
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
@@ -149,7 +152,7 @@ def run_experiment(qtbot, experiment_mode, gui, click_done=True):
     # Click start simulation and agree to the message
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
-    def handle_dialog():
+    def handle_dialog() -> None:
         QTimer.singleShot(
             500,
             lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
@@ -188,23 +191,25 @@ CI_CMP_PREFIX = "ci_cmp_"
 
 
 class GuiEvaluator:
-    def __init__(self, source_root, example_folder, gui, qtbot) -> None:
+    def __init__(
+        self, source_root: Path, example_folder: str, gui: QWidget, qtbot
+    ) -> None:
         self.gui_changed: list[str] = []
-        self.source_root = source_root
-        self.example_folder = example_folder
+        self.source_root: Path = source_root
+        self.example_folder: Path = Path(example_folder)
         self.gui = gui
         self.qtbot = qtbot
 
-    def compare_img_with_gui(self, img_name, threshold=0.99):
-        temp_image_path = self.qtbot.screenshot(self.gui)
-        new_img = io.imread(temp_image_path, as_gray=True)
+    def compare_img_with_gui(self, img_name: str, threshold: float = 0.99) -> None:
+        temp_image_path: Path = self.qtbot.screenshot(self.gui)
+        new_img: np.ndarray = io.imread(temp_image_path, as_gray=True)
 
         name = (
             f"{CI_CMP_PREFIX}{img_name}" if IS_RUNNING_IN_GITHUB_ACTIONS else img_name
         )
 
-        image_path = os.path.join(self.example_folder, name)
-        full_image_path = os.path.join(self.source_root, image_path)
+        image_path = self.example_folder / name
+        full_image_path = self.source_root / image_path
 
         # The ssim_score is a decimal value between -1 and 1, where:
         #   1 indicates perfect similarity,
@@ -212,37 +217,37 @@ class GuiEvaluator:
         #   and -1 indicates perfect anti-correlation.
         ssim_score = (
             self._get_ssim_score(new_img, io.imread(full_image_path, as_gray=True))
-            if os.path.isfile(full_image_path)
+            if full_image_path.is_file()
             else 0
         )
 
         if ssim_score < threshold:
             if IS_RUNNING_IN_GITHUB_ACTIONS:
-                # Copy the new image in temp storage for artifact upload
-                tmp_img_storage = os.path.join(
-                    "/tmp/test_docs_screenshots", self.example_folder
+                # Copy the new image in temp storage for screenshot artifact-upload
+                tmp_img_storage = (
+                    Path("/tmp/test_docs_screenshots") / self.example_folder
                 )
-                os.makedirs(tmp_img_storage, exist_ok=True)
-                full_image_path = os.path.join(tmp_img_storage, f"{name}")
+                tmp_img_storage.mkdir(exist_ok=True)
+                full_image_path = tmp_img_storage / name
 
             shutil.copy(temp_image_path, full_image_path)
             self.gui_changed.append(
                 f"{image_path} SSIM:{ssim_score} < Threshold:{threshold}"
             )
 
-        os.remove(temp_image_path)
+        temp_image_path.unlink()
 
-    def gui_change_detected(self):
+    def gui_change_detected(self) -> bool:
         return len(self.gui_changed) > 0
 
     @staticmethod
-    def _get_ssim_score(img1, img2):
+    def _get_ssim_score(img1: np.ndarray, img2: np.ndarray) -> float:
         # Images of different shape cannot be compared with ssim
         if img1.shape != img2.shape:
             img2 = transform.resize(img2, img1.shape, anti_aliasing=True)
         return ssim(img1, img2, data_range=img1.max() - img1.min())
 
-    def change_report(self):
+    def change_report(self) -> str:
         if not self.gui_change_detected():
             return "No gui changes detected"
 
@@ -268,7 +273,7 @@ class GuiEvaluator:
         )
 
 
-def set_data_type_selection_index(data_type_widget, index):
+def set_data_type_selection_index(data_type_widget: QWidget, index: int) -> None:
     data_type_widget.data_type_keys_widget.setCurrentIndex(
         data_type_widget.filter_model.index(index, 0)
     )
@@ -285,18 +290,18 @@ def clean_up_diplayed_runpath(gui: QWidget):
 
 
 @pytest.fixture
-def open_gui_with_docs_example(monkeypatch, tmp_path, source_root, request):
+def open_gui_with_docs_example(monkeypatch, tmp_path, source_root: Path, request):
     example_folder = request.param.get("example_folder")
     config_file = request.param.get("config_file")
     random_seed = request.param.get("random_seed")
 
     monkeypatch.chdir(tmp_path)
 
-    def ignore_pngs(src, files):
+    def ignore_pngs(src, files: list[str]) -> list[str]:
         return [f for f in files if f.endswith(".png")]
 
     shutil.copytree(
-        os.path.join(source_root, example_folder),
+        source_root / example_folder,
         tmp_path,
         ignore=ignore_pngs,
         dirs_exist_ok=True,
@@ -328,7 +333,7 @@ def open_gui_with_docs_example(monkeypatch, tmp_path, source_root, request):
     indirect=True,
 )
 def test_that_poly_new_minimal_screenshots_are_up_to_date(
-    monkeypatch, qtbot, source_root, mocker, open_gui_with_docs_example
+    monkeypatch, qtbot, source_root: Path, mocker, open_gui_with_docs_example
 ):
     # Set static values for disk space to not trigger false gui change detection
     monkeypatch.setattr(DiskSpaceWidget, "_get_status", lambda self: (50, "100 GB"))
@@ -369,7 +374,7 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     indirect=True,
 )
 def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
-    qtbot, source_root, open_gui_with_docs_example
+    qtbot, source_root: Path, open_gui_with_docs_example
 ):
     example_folder = ExampleFolders.path(ExampleFolders.WITH_SIMPLE_SCRIPT)
     gui = open_gui_with_docs_example
@@ -395,7 +400,7 @@ def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
     indirect=True,
 )
 def test_that_poly_new_with_results_screenshots_are_up_to_date(
-    qtbot, source_root, open_gui_with_docs_example
+    qtbot, source_root: Path, open_gui_with_docs_example
 ):
     example_folder = ExampleFolders.path(ExampleFolders.WITH_RESULTS)
 
@@ -434,7 +439,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     indirect=True,
 )
 def test_that_poly_new_with_observations_screenshots_are_up_to_date(
-    qtbot, source_root, open_gui_with_docs_example
+    qtbot, source_root: Path, open_gui_with_docs_example
 ):
     example_folder = ExampleFolders.path(ExampleFolders.WITH_OBSERVATIONS)
 
@@ -490,7 +495,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     indirect=True,
 )
 def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
-    qtbot, source_root, open_gui_with_docs_example
+    qtbot, source_root: Path, open_gui_with_docs_example
 ):
     example_folder = ExampleFolders.path(ExampleFolders.WITH_MORE_OBSERVATIONS)
 
@@ -524,9 +529,9 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
 
 
 def test_that_all_png_files_under_the_docs_folder_has_been_considered_for_testing(
-    source_root,
+    source_root: Path,
 ):
-    docs_folder = Path(os.path.join(source_root, "docs"))
+    docs_folder = source_root / "docs"
     pngs_files_in_docs = {
         str(file.relative_to(source_root)) for file in docs_folder.rglob("*.png")
     }
@@ -540,7 +545,7 @@ def test_that_all_png_files_under_the_docs_folder_has_been_considered_for_testin
     uncategorized_png_files = {
         file_path
         for file_path in uncategorized_png_files
-        if not os.path.basename(file_path).startswith(CI_CMP_PREFIX)
+        if not Path(file_path).name.startswith(CI_CMP_PREFIX)
     }
 
     newline = "\n  - "
