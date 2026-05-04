@@ -61,7 +61,10 @@ class PlotTools:
     def showGrid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.isGridEnabled():
-            axes.grid(visible=True, color="black", alpha=0.4)
+            if plot_context.plot_type == "BAR":
+                axes.grid(axis="y", color="black", alpha=0.1)
+            else:
+                axes.grid(visible=True, color="black", alpha=0.4)
 
     @staticmethod
     def showLegend(axes: Axes, plot_context: PlotContext) -> None:

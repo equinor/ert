@@ -25,6 +25,9 @@ class PlotContext:
         INDEX_AXIS,
         VALUE_AXIS,
     ]
+    PLOT_TYPES: ClassVar[list[str]] = [
+        "BAR",
+    ]
 
     def __init__(
         self,
@@ -47,6 +50,8 @@ class PlotContext:
         self._y_axis: str | None = None
         self._log_scale = False
         self._extended_plot_information = False
+
+        self._plot_type: str | None = None
 
     @property
     def flip_response_axis(self) -> bool:
@@ -109,6 +114,18 @@ class PlotContext:
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
             )
         self._y_axis = value
+
+    @property
+    def plot_type(self) -> str | None:
+        return self._plot_type
+
+    @plot_type.setter
+    def plot_type(self, value: str) -> None:
+        if value not in PlotContext.PLOT_TYPES:
+            raise UserWarning(
+                f"Plot type: '{value}' is not one of: {PlotContext.PLOT_TYPES}"
+            )
+        self._plot_type = value
 
     def setXLabel(self, value: str) -> None:
         self._plot_config.setXLabel(value)

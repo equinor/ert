@@ -50,6 +50,7 @@ class EverestGradientsPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
+        plot_context.plot_type = "BAR"
         plot_context.deactivateDateSupport()
 
         response_key = key_def.key if key_def else "Response"
@@ -76,6 +77,11 @@ class EverestGradientsPlot:
         batch_ids = sorted(combined["batch_id"].unique())
 
         pos = np.arange(len(batch_ids))
+        for idx, x in enumerate(pos):
+            if idx % 2 == 0:
+                axes.axvspan(x - 0.5, x + 0.5, color="grey", alpha=0.07)
+        for edge in np.arange(pos[0] - 0.5, pos[-1] + 1.0, 1.0):
+            axes.axvline(edge, color="grey", linewidth=0.8, linestyle="--", alpha=0.4)
         n_controls = len(self.selected_controls)
         bar_width = 0.8 / n_controls
 
@@ -101,7 +107,7 @@ class EverestGradientsPlot:
             config.addLegendItem(control, bars[0])
         axes.axhline(0, color="black", linewidth=1.0, alpha=0.3)
         axes.set_xticks(pos)
-        axes.set_xticklabels([str(b) for b in batch_ids], rotation=0)
+        axes.set_xticklabels([f"Batch {b}" for b in batch_ids], rotation=0)
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
         axes.spines["right"].set_visible(False)
         axes.spines["left"].set_visible(False)
@@ -111,6 +117,6 @@ class EverestGradientsPlot:
             plot_context,
             figure,
             axes,
-            default_x_label="Batch iteration",
+            default_x_label="",
             default_y_label="Gradient",
         )
