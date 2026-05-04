@@ -186,5 +186,5 @@ def plot_figure(qtbot: QtBot, request, rft_config: ErtConfig):
 # report so it has to be on a top level test.
 @pytest.mark.mpl_image_compare(tolerance=10.0)
 @pytest.mark.skip_mac_ci  # test is slow
-def test_that_all_rft_visualizations_matches_snapshot(plot_figure):
+def test_that_all_rft_visualizations_are_unchanged(plot_figure):
     return plot_figure
