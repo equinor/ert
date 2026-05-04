@@ -10,7 +10,6 @@ plot_figure = create_breakthrough_figure(MISFITS)
 
 @pytest.mark.mpl_image_compare(tolerance=10.0)
 @pytest.mark.skip_mac_ci
-@pytest.mark.snapshot_test
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_that_breakthrough_misfit_visualization_matches_snapshot(plot_figure):
+def test_that_breakthrough_misfit_visualization_images_are_unchanged(plot_figure):
     return plot_figure

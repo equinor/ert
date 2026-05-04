@@ -133,9 +133,8 @@ def plot_figure(
 # were off, we needed a tolerance of 5 to get tests to fail.
 @pytest.mark.mpl_image_compare(tolerance=5.0)
 @pytest.mark.skip_mac_ci  # test is slow
-@pytest.mark.snapshot_test
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
-def test_that_selected_plot_visualizations_match_snapshot(plot_figure):
+def test_that_plot_images_are_unchanged(plot_figure):
     return plot_figure
 
 
