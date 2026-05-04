@@ -169,7 +169,7 @@ class SummaryObservation(_SummaryValues):
         name = (
             observation_dict["name"]
             if observation_dict["name"] is not None
-            else f"{summary_key}:{date}"
+            else cls.default_name(summary_key, date)
         )
 
         obs_instance = cls(
@@ -191,6 +191,10 @@ class SummaryObservation(_SummaryValues):
         if self.shape_id is not None:
             return shape_registry.get(self.shape_id)
         return None
+
+    @classmethod
+    def default_name(cls, summary_key: str, date: str) -> str:
+        return f"{summary_key}:{date}"
 
 
 class _GeneralObservation(BaseObservation):
