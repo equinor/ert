@@ -3,6 +3,7 @@
 
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import gaussianfft as grf
@@ -20,6 +21,12 @@ from definition import (
     summary_names,
     u_init,
 )
+
+
+@dataclass(frozen=True)
+class HeatEquationOutputs:
+    summary_values: dict[str, list[float]]
+    response_layers: dict[int, npt.NDArray[np.float64]]
 
 
 def write_unsmry(
@@ -100,14 +107,15 @@ def heat_equation(
     return u_
 
 
-def heat_equation_observation_data(
+def simulate_heat_equation_outputs(
     initial_temperature: npt.NDArray[np.float64],
     cond: npt.NDArray[np.float64],
     dx: int,
     dt: float,
     k_start: int,
     k_end: int,
-) -> tuple[dict[str, list[float]], dict[int, npt.NDArray[np.float64]]]:
+) -> HeatEquationOutputs:
+    """Run the solver while keeping only the data written by this forward model."""
     current = initial_temperature.copy()
     next_layer = current.copy()
     nx = current.shape[0]
@@ -143,7 +151,10 @@ def heat_equation_observation_data(
         if time_step in obs_time_steps:
             response_layers[time_step] = current.copy()
 
-    return summary_values, response_layers
+    return HeatEquationOutputs(
+        summary_values=summary_values,
+        response_layers=response_layers,
+    )
 
 
 def sample_prior_conductivity(ensemble_size, nx, rng, corr_length):
@@ -196,7 +207,7 @@ if __name__ == "__main__":
 
     t = float(parameters["t"]["value"])
     initial_temperature = room_temperature + (u_init[0] - room_temperature) * t
-    summary_values, response_layers = heat_equation_observation_data(
+    outputs = simulate_heat_equation_outputs(
         initial_temperature,
         cond,
         dx,
@@ -208,6 +219,8 @@ if __name__ == "__main__":
     index = sorted((obs.x, obs.y) for obs in obs_coordinates)
     for time_step in obs_times:
         with Path(f"gen_data_{time_step}.out").open("w", encoding="utf-8") as f:
-            f.writelines(f"{response_layers[int(time_step)][i]}\n" for i in index)
+            f.writelines(
+                f"{outputs.response_layers[int(time_step)][i]}\n" for i in index
+            )
 
-    write_unsmry(summary_values, time_step_in_days=1)
+    write_unsmry(outputs.summary_values, time_step_in_days=1)
