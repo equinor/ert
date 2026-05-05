@@ -14,6 +14,7 @@ from surfio import IrapHeader, IrapSurface
 from ert.config.parsing.config_errors import ConfigWarning
 from ert.substitutions import substitute_runpath_name
 
+from ._get_update_from_options import get_update_from_options
 from ._str_to_bool import str_to_bool
 from .graph_utils import create_flattened_cube_graph
 from .parameter_config import InvalidParameterFile, ParameterConfig
@@ -93,7 +94,7 @@ class SurfaceConfig(ParameterConfig):
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        update = get_update_from_options(options, "ADAPTIVE")
         errors = []
         if not out_file:
             errors.append(
@@ -153,7 +154,7 @@ class SurfaceConfig(ParameterConfig):
             forward_init_file=init_file,
             output_file=Path(out_file),
             base_surface_path=base_surface,
-            update=update_parameter,
+            update=update,
             file_format=file_format,
         )
 

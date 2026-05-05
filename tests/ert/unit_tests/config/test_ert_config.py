@@ -3071,3 +3071,69 @@ def test_that_using_too_long_sheetname_in_design_matrix_raises_validation_error(
                 """
             )
         )
+
+
+def test_that_analysis_set_var_parameters_sets_strategy_when_update_is_none(tmp_path):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:NONE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update == "DISTANCE"
+
+
+def test_that_analysis_set_var_parameters_does_not_override_explicit_update_strategy(
+    tmp_path,
+):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:ADAPTIVE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update == "ADAPTIVE"
+
+
+# is this what we want for CONST?
+def test_that_analysis_set_var_parameters_overrides_const_gen_kw(tmp_path):
+    (tmp_path / "prior.txt").write_text("MY_PARAM CONST 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update == "DISTANCE"
+
+
+def test_that_gen_kw_defaults_to_adaptive_without_analysis_set_var(tmp_path):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update == "ADAPTIVE"

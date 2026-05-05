@@ -17,7 +17,7 @@ def test_that_prune_nan_nodes_preserves_adjacency_and_relabels():
     config = SurfaceConfig(
         name="s",
         forward_init=False,
-        update=True,
+        update="ADAPTIVE",
         ncol=4,
         nrow=3,
         xori=0,
@@ -80,7 +80,7 @@ def test_that_prune_nan_wall_creates_disconnected_components():
     config = SurfaceConfig(
         name="s",
         forward_init=False,
-        update=True,
+        update="ADAPTIVE",
         ncol=3,
         nrow=3,
         xori=0,

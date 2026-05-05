@@ -91,7 +91,7 @@ def test_key_def_structure(api: PlotApi):
             {
                 "name": "BPR_138_PERSISTENCE",
                 "forward_init": False,
-                "update": True,
+                "update": "ADAPTIVE",
                 "dimensionality": 1,
                 "distribution": {"name": "uniform", "min": 0.2, "max": 0.7},
                 "group": "SNAKE_OIL_PARAM",
@@ -285,7 +285,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
                 GenKwConfig(
                     name=name,
                     group=key,
-                    update=False,
+                    update=None,
                     distribution={"name": "normal", "mean": 0, "std": 0.1},
                 ).model_dump(mode="json"),
             ],
@@ -341,7 +341,7 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
                 GenKwConfig(
                     name="subgroup:1:2:2",
                     group="group",
-                    update=False,
+                    update=None,
                     distribution={"name": "raw"},
                 ).model_dump(mode="json"),
             ],

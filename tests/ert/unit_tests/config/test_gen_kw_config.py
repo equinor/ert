@@ -397,7 +397,7 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
             GenKwConfig(
                 name=name,
                 forward_init=False,
-                update=False,
+                update=None,
                 distribution=dist,
             )
 
@@ -460,7 +460,7 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
         cfg = GenKwConfig(
             name=name,
             forward_init=False,
-            update=False,
+            update=None,
             distribution=GenKwConfig._parse_distribution(name, dist_name, values),
         )
         out = float(
@@ -475,7 +475,7 @@ def test_that_dunif_transform_does_not_exceed_max_for_extreme_input_values(tmpdi
         cfg = GenKwConfig(
             name="MYNAME",
             forward_init=False,
-            update=False,
+            update=None,
             distribution=GenKwConfig._parse_distribution(
                 "MYNAME", "DUNIF", ["5", "1", "5"]
             ),
@@ -892,7 +892,7 @@ def test_that_const_keyword_sets_update_to_false(tmpdir):
         ert_config = ErtConfig.from_file("config.ert")
 
         gen_kw_config = ert_config.ensemble_config.parameter_configs["CONST_TEST"]
-        assert gen_kw_config.update is False
+        assert gen_kw_config.update is None
 
 
 def test_that_parameter_named_const_with_non_const_distribution_is_updatable(tmp_path):
@@ -911,7 +911,7 @@ def test_that_parameter_named_const_with_non_const_distribution_is_updatable(tmp
     )
     assert len(configs) == 1
     assert configs[0].name == "CONST"
-    assert configs[0].update is True
+    assert configs[0].update == "ADAPTIVE"
 
 
 def test_that_unexpected_positional_arg_count_raises_validation_error(tmp_path):

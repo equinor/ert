@@ -289,7 +289,8 @@ Clicking this will open the "Parameter viewer" window, displaying the defined pa
 
 This window shows parameters organized by their "type" (see :ref:`Data_types_available_in_ERT`) for an overview.
 The "Source" property refers to if the parameter is sampled by ERT, or provided using a design matrix (see :ref:`design_matrix`).
-"Update" tells you if ERT will update this parameter, and "Forward Init" indicates if the parameter is produced using a
+"Update" tells you the update strategy ERT will use for this parameter (e.g. ``ADAPTIVE`` or ``DISTANCE``),
+or whether the parameter is excluded from updating. "Forward Init" indicates if the parameter is produced using a
 forward model step.
 
 Reading parameters in the simulation script

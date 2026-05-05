@@ -155,7 +155,7 @@
       "type": "gen_kw",
       "name": "OP1_PERSISTENCE",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -169,7 +169,7 @@
       "type": "gen_kw",
       "name": "OP1_OCTAVES",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -183,7 +183,7 @@
       "type": "gen_kw",
       "name": "OP1_DIVERGENCE_SCALE",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -197,7 +197,7 @@
       "type": "gen_kw",
       "name": "OP1_OFFSET",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -211,7 +211,7 @@
       "type": "gen_kw",
       "name": "OP2_PERSISTENCE",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -225,7 +225,7 @@
       "type": "gen_kw",
       "name": "OP2_OCTAVES",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -239,7 +239,7 @@
       "type": "gen_kw",
       "name": "OP2_DIVERGENCE_SCALE",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -253,7 +253,7 @@
       "type": "gen_kw",
       "name": "OP2_OFFSET",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -267,7 +267,7 @@
       "type": "gen_kw",
       "name": "BPR_555_PERSISTENCE",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -281,7 +281,7 @@
       "type": "gen_kw",
       "name": "BPR_138_PERSISTENCE",
       "forward_init": false,
-      "update": true,
+      "update": "ADAPTIVE",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
