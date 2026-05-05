@@ -40,7 +40,7 @@ Example usage:
     )
 
     # Prepare strategies (called by perform_ensemble_update)
-    for strategy in set(strategy_map.values()):
+    for strategy in dict.fromkeys(strategy_map.values()):
         strategy.prepare(obs_context)
 
     # Update each parameter group
