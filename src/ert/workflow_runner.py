@@ -199,12 +199,11 @@ class WorkflowRunner:
         return self.__cancelled
 
     def cancel(self) -> None:
-        if self.isRunning():
-            if self.__current_job is not None:
-                self.__current_job.cancel()
-
-            self.__cancelled = True
-        self.wait()
+        self.__cancelled = True
+        if self.__current_job is not None:
+            self.__current_job.cancel()
+        if self.isRunning() or self._workflow_job is not None:
+            self.wait()
 
     def exception(self) -> BaseException | None:
         if self._workflow_job is not None:

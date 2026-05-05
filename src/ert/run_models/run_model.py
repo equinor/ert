@@ -226,6 +226,7 @@ class RunModel(RunModelConfig, ABC):
     _total_iterations: int = PrivateAttr(default=1)
     _start_iteration: int = PrivateAttr(default=0)
     _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
+    _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
 
     def __init__(
         self,
@@ -375,6 +376,8 @@ class RunModel(RunModelConfig, ABC):
 
     def cancel(self) -> None:
         self._end_event.set()
+        if self._workflow_runner is not None:
+            self._workflow_runner.cancel()
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
@@ -853,10 +856,22 @@ class RunModel(RunModelConfig, ABC):
         fixtures: HookedWorkflowFixtures,
     ) -> None:
         for workflow in self.hooked_workflows[fixtures.hook]:
-            WorkflowRunner(
+            workflow_runner = WorkflowRunner(
                 workflow=workflow,
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
-            ).run_blocking()
+            )
+            self._workflow_runner = workflow_runner
+            try:
+                if self._end_event.is_set():
+                    workflow_runner.cancel()
+                    raise UserCancelled("Experiment cancelled by user during workflows")
+
+                workflow_runner.run_blocking()
+            finally:
+                self._workflow_runner = None
+
+            if self._end_event.is_set():
+                raise UserCancelled("Experiment cancelled by user during workflows")
 
     def _evaluate_and_postprocess(
         self,
@@ -895,6 +910,7 @@ class RunModel(RunModelConfig, ABC):
                 run_paths=self._run_paths,
             ),
         )
+
         try:
             successful_realizations = self.run_ensemble_evaluator(
                 run_args,
