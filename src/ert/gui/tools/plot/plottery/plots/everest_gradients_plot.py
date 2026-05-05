@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from ert.gui.tools.plot.plottery.plot_context import PlotType
+
 from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
@@ -50,7 +52,7 @@ class EverestGradientsPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
-        plot_context.plot_type = "BAR"
+        plot_context.plot_type = PlotType.BAR
         plot_context.deactivateDateSupport()
 
         response_key = key_def.key if key_def else "Response"
@@ -85,6 +87,8 @@ class EverestGradientsPlot:
         n_controls = len(self.selected_controls)
         bar_width = 0.8 / n_controls
 
+        bar_containers = []
+
         for i, control in enumerate(self.selected_controls):
             color = colors[i % len(colors)][0]
             values = []
@@ -105,6 +109,8 @@ class EverestGradientsPlot:
                 alpha=0.7,
             )
             config.addLegendItem(control, bars[0])
+            bar_containers.append(bars)
+
         axes.axhline(0, color="black", linewidth=1.0, alpha=0.3)
         axes.set_xticks(pos)
         axes.set_xticklabels([f"Batch {b}" for b in batch_ids], rotation=0)
@@ -112,6 +118,15 @@ class EverestGradientsPlot:
         axes.spines["right"].set_visible(False)
         axes.spines["left"].set_visible(False)
         axes.spines["top"].set_visible(False)
+
+        bar_labels = [
+            f"batch {batch}\n{control}"
+            for batch in batch_ids
+            for control in self.selected_controls
+        ]
+        PlotTools.labels_on_hover(
+            axes, plot_context, figure, data=bar_containers, labels=bar_labels
+        )
 
         PlotTools.finalizePlot(
             plot_context,
