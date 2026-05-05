@@ -34,7 +34,7 @@ fuzz:
     OMP_NUM_THREADS=1 pytest {{pytest_args}} -m "fuzzing" --hypothesis-profile=fuzz tests/ert
 
 ert-gui-tests:
-    pytest {{pytest_args}} --mpl tests/ert/ui_tests/gui
+    pytest {{pytest_args}} --mpl tests/ert/ui_tests/gui tests/ert/unit_tests/gui/plottery
 
 ert-cli-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/cli
