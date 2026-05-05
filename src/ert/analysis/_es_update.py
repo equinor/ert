@@ -200,8 +200,9 @@ def perform_ensemble_update(
         observation_locations=observation_locations,
     )
 
-    # Prepare each unique strategy once (multiple params may share the same instance)
-    for strategy in set(strategy_map.values()):
+    # Prepare each unique strategy instance once, in parameter insertion order,
+    # ensuring shared seeded RNGs are consumed deterministically.
+    for strategy in dict.fromkeys(strategy_map.values()):
         strategy.prepare(obs_context)
 
     # Update each parameter group
