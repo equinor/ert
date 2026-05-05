@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ert.config import ErtConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
@@ -41,7 +40,9 @@ def assert_stronger_variance_reduction_at_observation_location(
 @pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_heat_equation")
 @pytest.mark.slow
-def test_that_distance_localization_reduces_posterior_variance():
+def test_that_distance_localization_reduces_posterior_variance(
+    load_config_with_site_plugins,
+):
     with Path("config.ert").open(encoding="utf-8") as fh:
         lines = fh.readlines()
 
@@ -65,7 +66,7 @@ def test_that_distance_localization_reduces_posterior_variance():
         "heat_dl",
     )
 
-    config = ErtConfig.from_file("heat_dl.ert")
+    config = load_config_with_site_plugins("heat_dl.ert")
     assert config.analysis_config.es_settings.distance_localization is True
     with open_storage(config.ens_path) as storage:
         experiment = storage.get_experiment_by_name("heat_dl")

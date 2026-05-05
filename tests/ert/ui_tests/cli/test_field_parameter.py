@@ -23,7 +23,7 @@ from .run_cli import run_cli
 def test_field_param_update_using_heat_equation_enif(
     symlinked_heat_equation_storage_enif,
 ):
-    config = ErtConfig.from_file("config.ert")
+    config = symlinked_heat_equation_storage_enif
     with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("enif")
         prior = experiment.get_ensemble_by_name("iter-0")
@@ -307,7 +307,7 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
     - Numerical warnings from division by zero
     - Cross-correlation matrix instabilities
     """
-    config = ErtConfig.from_file("config.ert")
+    config = symlinked_heat_equation_storage_es
     with open_storage(config.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("es")
         prior = experiment.get_ensemble_by_name("iter-0")
@@ -416,8 +416,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
 
 
 @pytest.mark.usefixtures("copy_heat_equation")
-def test_foward_init_false():
-    config = ErtConfig.from_file("config_forward_init_false.ert")
+def test_foward_init_false(load_config_with_site_plugins):
+    config = load_config_with_site_plugins("config_forward_init_false.ert")
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitoring",
