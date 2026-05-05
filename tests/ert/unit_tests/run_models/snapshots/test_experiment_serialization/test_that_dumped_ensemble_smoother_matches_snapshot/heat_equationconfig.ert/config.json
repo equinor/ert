@@ -64,6 +64,14 @@
   },
   "forward_model_steps": [
     {
+      "type": "site_installed",
+      "name": "COPY_FILE",
+      "private_args": {
+        "<FROM>": "test-data/ert/heat_equation.config.ert/HEAT.SMSPEC",
+        "<TO>": "HEAT.SMSPEC"
+      }
+    },
+    {
       "name": "heat_equation",
       "executable": "test-data/ert/heat_equation.config.ert/heat_equation.py",
       "stdin_file": null,
