@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 
-class ShapeConfig(BaseModel):
+class ShapeConfig(BaseModel, extra="forbid"):
     """Base class for all shape configurations models for observations."""
 
     shape_id: int | None = None
@@ -40,7 +40,7 @@ class CircleShapeConfig(ShapeConfig):
 Shape = Annotated[CircleShapeConfig, Field(discriminator="type")]
 
 
-class ShapeRegistry(BaseModel):
+class ShapeRegistry(BaseModel, extra="forbid"):
     """Registry for reusable shape configurations.
 
     Resolves identical geometries and assigns unique shape IDs.
