@@ -335,7 +335,9 @@ class PlotWindow(QMainWindow):
         self._everest_dock.setVisible(is_gradient_plot or is_controls_plot)
 
         self._ensemble_selection_widget.apply_ensemble_filtering(
-            require_func_eval=is_objective_plot or is_everest_ensemble,
+            require_func_eval=is_objective_plot
+            or is_everest_ensemble
+            or is_controls_plot,
             require_gradient=is_gradient_plot,
         )
 
