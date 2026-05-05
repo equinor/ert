@@ -14,7 +14,9 @@ from ert.analysis import (
     build_strategy_map,
     smoother_update,
 )
-from ert.analysis._es_update import _create_combined_ensemble_mask
+from ert.analysis._es_update import (
+    _create_combined_ensemble_mask,
+)
 from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _OutlierColumns,
