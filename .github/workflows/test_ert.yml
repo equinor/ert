@@ -71,15 +71,15 @@ jobs:
         rm storage
 
 
-    - name: Upload artifact images
+    - name: Upload updated screenshot images from failed image comparison test
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: ${{ failure() }}
       continue-on-error: true
       with:
         name: test-images-${{ github.run_number }}-${{ github.run_id }}-${{ inputs.python-version }}
         path: |
-          /tmp/tmp*/**/*.png
-          /tmp/test_docs_screenshots/**/*.png
+          /tmp/tmp*/**/*.png  # Images must be moved manually to the correct location
+          /tmp/test_docs_screenshots/**/*.png  # Contains the correct directory structure
 
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
