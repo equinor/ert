@@ -1179,3 +1179,126 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
     assert isinstance(dialog._tab_widget.widget(0), RealizationWidget)
     qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.timeout(20)
+@pytest.mark.slow
+def test_that_terminating_experiment_during_hooked_workflows_stops_run_dialog(
+    qtbot: QtBot, monkeypatch
+) -> None:
+    config_file = "hooked_workflow_config.ert"
+    monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
+    monkeypatch.setattr(
+        "ert.ensemble_evaluator.EnsembleEvaluator.BATCHING_INTERVAL", 0.01
+    )
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
+
+    forward_model_script = Path("forward_model.sh")
+    forward_model_script.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    forward_model_script.chmod(0o755)
+
+    forward_model_job = Path("FORWARD_MODEL_JOB")
+    forward_model_job.write_text("EXECUTABLE forward_model.sh\n", encoding="utf-8")
+
+    workflow_script = Path("slow_workflow.py")
+    workflow_script.write_text(
+        "#!/usr/bin/env python3\n"
+        "from pathlib import Path\n"
+        "import sys\n"
+        "import time\n"
+        "Path(sys.argv[1]).touch()\n"
+        "time.sleep(5)\n"
+        "Path(sys.argv[2]).touch()\n",
+        encoding="utf-8",
+    )
+    workflow_script.chmod(0o755)
+
+    workflow_job = Path("SLOW_WORKFLOW_JOB")
+    workflow_job.write_text(
+        "EXECUTABLE slow_workflow.py\nMIN_ARG 2\nMAX_ARG 2\nARG_TYPE 0 STRING\n",
+        encoding="utf-8",
+    )
+
+    next_workflow_script = Path("touch_workflow.py")
+    next_workflow_script.write_text(
+        "#!/usr/bin/env python3\n"
+        "from pathlib import Path\n"
+        "import sys\n"
+        "Path(sys.argv[1]).touch()\n",
+        encoding="utf-8",
+    )
+    next_workflow_script.chmod(0o755)
+
+    next_workflow_job = Path("TOUCH_WORKFLOW_JOB")
+    next_workflow_job.write_text(
+        "EXECUTABLE touch_workflow.py\nMIN_ARG 1\nMAX_ARG 1\nARG_TYPE 0 STRING\n",
+        encoding="utf-8",
+    )
+
+    file_a = Path("file_a.txt")
+    file_b = Path("file_b.txt")
+    file_c = Path("file_c.txt")
+    Path(config_file).write_text(
+        f"""NUM_REALIZATIONS 1
+QUEUE_SYSTEM LOCAL
+INSTALL_JOB forward_model FORWARD_MODEL_JOB
+FORWARD_MODEL forward_model
+LOAD_WORKFLOW_JOB SLOW_WORKFLOW_JOB SLOW_WORKFLOW
+LOAD_WORKFLOW_JOB TOUCH_WORKFLOW_JOB TOUCH_WORKFLOW
+HOOK_WORKFLOW_JOB slow_workflow_01 SLOW_WORKFLOW {file_a} {file_b} PRE_SIMULATION
+HOOK_WORKFLOW_JOB slow_workflow_02 TOUCH_WORKFLOW {file_c} PRE_SIMULATION
+""",
+        encoding="utf-8",
+    )
+
+    args_mock = Mock()
+    args_mock.config = config_file
+    ert_config = ErtConfig.from_file(config_file)
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
+    qtbot.addWidget(gui)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_settings = gui.findChild(EnsembleExperimentPanel)
+    simulation_settings._experiment_name_field.setText("new_experiment_name")
+    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
+    assert run_experiment
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+    run_dialog = gui.findChild(RunDialog)
+    assert run_dialog
+    kill_button = run_dialog.kill_button
+
+    qtbot.waitUntil(file_a.exists, timeout=10000)
+
+    def handle_dialog() -> None:
+        terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
+        dialog_buttons = terminate_dialog.findChild(QDialogButtonBox).buttons()
+        yes_button = next(button for button in dialog_buttons if "Yes" in button.text())
+        qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
+
+    with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
+        QTimer.singleShot(100, handle_dialog)
+        assert kill_button.isEnabled()
+        assert kill_button.text() == "Terminate experiment"
+        qtbot.mouseClick(kill_button, Qt.MouseButton.LeftButton)
+        assert not kill_button.isEnabled()
+        assert kill_button.text() == "Terminating"
+
+    qtbot.waitUntil(lambda: run_dialog.fail_msg_box is not None, timeout=5000)
+
+    assert file_a.exists()
+    assert not file_b.exists()
+    assert not file_c.exists()
+    assert run_dialog.fail_msg_box is not None
+    assert kill_button.text() == "Terminate experiment"
+    assert not kill_button.isEnabled()
+    assert (
+        "Experiment cancelled by user during workflows"
+        in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
+        .findChild(QLabel)
+        .text()
+    )
