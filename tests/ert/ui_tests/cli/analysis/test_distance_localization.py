@@ -1,12 +1,16 @@
 from pathlib import Path
 
 import numpy as np
+import polars as pl
 import pytest
 
 from ert.config import ErtConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
+
+OBSERVATION_COORDINATES = ((10, 25), (25, 10), (40, 25), (25, 40))
+SNAPSHOT_REALIZATIONS = (0, 1, 2)
 
 
 def assert_stronger_variance_reduction_at_observation_location(
@@ -135,3 +139,109 @@ def test_that_distance_localization_reduces_posterior_variance():
             "Expected posterior responses to have a lower normalized misfit "
             "against observations than the prior"
         )
+
+
+@pytest.mark.timeout(600)
+@pytest.mark.slow
+@pytest.mark.snapshot_test
+@pytest.mark.usefixtures("copy_heat_equation")
+def test_that_distance_localization_heat_equation_matches_snapshot(snapshot):
+    with Path("config.ert").open(encoding="utf-8") as fh:
+        lines = fh.readlines()
+
+    config_content = [
+        line for line in lines if not line.lstrip().startswith("ANALYSIS_SET_VAR")
+    ]
+    config_content.extend(
+        [
+            "ANALYSIS_SET_VAR STD_ENKF DISTANCE_LOCALIZATION True\n",
+            "ENSPATH heat_storage_dl\n",
+        ]
+    )
+
+    with Path("heat_dl.ert").open("w", encoding="utf-8") as fh:
+        fh.writelines(config_content)
+
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitoring",
+        "heat_dl.ert",
+        "--experiment-name",
+        "heat_dl",
+    )
+
+    config = ErtConfig.from_file("heat_dl.ert")
+    assert config.analysis_config.es_settings.distance_localization is True
+
+    with open_storage(config.ens_path, mode="r") as storage:
+        experiment = storage.get_experiment_by_name("heat_dl")
+        prior = experiment.get_ensemble_by_name("iter-0")
+        posterior = experiment.get_ensemble_by_name("iter-1")
+
+        data = []
+        observation_point_data = []
+        gen_kw_data = []
+        observation_points = pl.DataFrame(
+            {
+                "x": [x for x, _ in OBSERVATION_COORDINATES],
+                "y": [y for _, y in OBSERVATION_COORDINATES],
+            }
+        )
+        for iteration, ensemble in enumerate((prior, posterior)):
+            field_data = ensemble.load_parameters("COND")
+            field_df = pl.from_pandas(
+                field_data.to_dataframe().reset_index()
+            ).with_columns(pl.lit(iteration).alias("iteration"))
+            field_df = field_df.with_columns(pl.col(pl.Float64).cast(pl.Float32))
+            data.append(
+                field_df.select("iteration", "realizations", "x", "y", "z", "values")
+            )
+            observation_point_data.append(
+                field_df.join(observation_points, on=["x", "y"], how="inner")
+                .filter(pl.col("realizations").is_in(SNAPSHOT_REALIZATIONS))
+                .with_columns(pl.col("values").round(4))
+                .select("iteration", "realizations", "x", "y", "z", "values")
+            )
+
+            gen_kw_df = ensemble.load_scalars().with_columns(
+                pl.lit(iteration).alias("iteration")
+            )
+            gen_kw_columns = sorted(
+                column
+                for column in gen_kw_df.columns
+                if column not in {"iteration", "realization"}
+            )
+            gen_kw_data.append(
+                gen_kw_df.select("iteration", "realization", *gen_kw_columns)
+            )
+
+    stats = (
+        pl.concat(data)
+        .group_by("iteration")
+        .agg(
+            pl.col("values").mean().alias("mean"),
+            pl.col("values").std().alias("std"),
+            pl.col("values").min().alias("min"),
+            pl.col("values").median().alias("median"),
+            pl.col("values").max().alias("max"),
+        )
+        .sort("iteration")
+    )
+    snapshot.assert_match(
+        stats.write_csv(),
+        "heat_distance_localization_statistics.csv",
+    )
+
+    observation_point_values = pl.concat(observation_point_data).sort(
+        "iteration", "realizations", "x", "y", "z"
+    )
+    snapshot.assert_match(
+        observation_point_values.write_csv(float_precision=4),
+        "heat_distance_localization_observation_point_values.csv",
+    )
+
+    gen_kw_values = pl.concat(gen_kw_data).sort("iteration", "realization")
+    snapshot.assert_match(
+        gen_kw_values.write_csv(float_precision=6),
+        "heat_distance_localization_gen_kw_values.csv",
+    )
