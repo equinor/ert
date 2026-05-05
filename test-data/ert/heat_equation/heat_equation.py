@@ -2,7 +2,6 @@
 """Partial Differential Equations to use as forward models."""
 
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -21,14 +20,6 @@ from definition import (
     summary_names,
     u_init,
 )
-
-SMSPEC_TEMPLATE = Path(__file__).with_name("HEAT.SMSPEC")
-
-
-def copy_smspec_template(output_file: str | Path = "HEAT.SMSPEC") -> None:
-    output_path = Path(output_file)
-    if SMSPEC_TEMPLATE.resolve() != output_path.resolve():
-        shutil.copyfile(SMSPEC_TEMPLATE, output_path)
 
 
 def write_unsmry(
@@ -219,5 +210,4 @@ if __name__ == "__main__":
         with Path(f"gen_data_{time_step}.out").open("w", encoding="utf-8") as f:
             f.writelines(f"{response_layers[int(time_step)][i]}\n" for i in index)
 
-    copy_smspec_template()
     write_unsmry(summary_values, time_step_in_days=1)
