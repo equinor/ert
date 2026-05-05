@@ -1,5 +1,3 @@
-# configuration for for `just`
-
 poly:
     ert gui test-data/ert/poly_example/poly.ert
 
@@ -11,7 +9,6 @@ heat_equation:
 
 pytest_args := env("ERT_PYTEST_ARGS", "--quiet")
 
-# execute rapid unittests
 rapid-tests:
     OMP_NUM_THREADS=1 pytest -n auto --dist loadgroup tests/ert/unit_tests tests/everest \
     --hypothesis-profile=fast \
