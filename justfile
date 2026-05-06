@@ -33,8 +33,33 @@ continuous_tests:
 fuzz:
     OMP_NUM_THREADS=1 pytest {{pytest_args}} -m "fuzzing" --hypothesis-profile=fuzz tests/ert
 
+screenshot-comparison-test:
+    rm -rf /tmp/test_docs_screenshots
+    pytest --mpl --mpl-results-path=pytest-mpl_results -v -m "mpl_image_compare or screenshot_test" tests
+
+pack_updated_screenshots:
+    #!/bin/bash
+    staging="updated-screenshots"
+    mkdir -p "$staging"
+    for test_dir in pytest-mpl_results/*/; do
+      # Filenames from pytest-mpl need a lot of massaging in order to
+      # reconstruct the directory structure:
+      full_dotted_name=$(basename "$test_dir")
+      updated_img="${test_dir}/result.png"
+      filename="${full_dotted_name##*.}.png"
+      path_with_test_func_name="${full_dotted_name%.*}"
+      path_dots="${path_with_test_func_name%.*}"
+      rel_path="${path_dots//.//}"
+      target_dir="$staging/$rel_path/baseline"
+      mkdir -p $staging/$rel_path/baseline
+      cp "$updated_img" "$target_dir/$filename"
+      echo "Mapped $full_dotted_name -> $target_dir/$filename"
+    done
+    [ -d "/tmp/test_docs_screenshots" ] && cp -r /tmp/test_docs_screenshots/* "$staging"
+    find "$staging" -type f -exec ls -l {} +
+
 ert-gui-tests:
-    pytest {{pytest_args}} --mpl tests/ert/ui_tests/gui tests/ert/unit_tests/gui/plottery
+    pytest {{pytest_args}} tests/ert/ui_tests/gui -m "not (mpl_image_compare or screenshot_test)"
 
 ert-cli-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/cli
