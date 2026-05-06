@@ -78,8 +78,8 @@ jobs:
       with:
         name: test-images-${{ github.run_number }}-${{ github.run_id }}-${{ inputs.python-version }}
         path: |
-          /tmp/tmp*/**/*.png  # Images must be moved manually to the correct location
-          /tmp/test_docs_screenshots/**/*.png  # Contains the correct directory structure
+          /tmp/tmp*/**/*.png
+          /tmp/test_docs_screenshots/**/*.png
 
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
