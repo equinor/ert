@@ -5,6 +5,7 @@ import contextlib
 import logging
 import os
 import time
+import uuid
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -37,6 +38,7 @@ from ert.config.rft_config import RFTConfig
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
+from .blob_data import BlobStorageData, BlobType
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
@@ -56,7 +58,7 @@ class EverestRealizationInfo(TypedDict):
 
 
 SCALAR_FILENAME = "SCALAR"
-TRANSITION_DATA_DIR = "transition"
+BLOB_DATA_DIR = "blobs"
 
 
 class BatchDataframes(TypedDict, total=False):
@@ -1328,10 +1330,24 @@ class LocalEnsemble(BaseMode):
         )
 
     @require_write
-    def save_transition_data(self, file_name: str, data: str) -> None:
-        path = self._path / TRANSITION_DATA_DIR / file_name
-        Path.mkdir(path.parent, exist_ok=True)
-        self._storage._write_transaction(path, data.encode("utf-8"))
+    def save_blob(
+        self, data: bytes, blob_type: BlobType = BlobType.OBSERVATION_REPORT
+    ) -> None:
+        blob_dir = self._path / BLOB_DATA_DIR
+        blob_dir.mkdir(parents=True, exist_ok=True)
+        blob_id = uuid.uuid4().hex[:8]
+        parquet_path = blob_dir / f"{blob_id}.parquet"
+        self._storage._write_transaction(parquet_path, data)
+        blob_data = BlobStorageData(
+            blob_type=blob_type,
+            uri=f"{blob_id}.parquet",
+            file_size=len(data),
+            ensemble_id=str(self.id),
+        )
+        self._storage._write_transaction(
+            blob_dir / f"{blob_id}.json",
+            blob_data.model_dump_json(indent=2).encode("utf-8"),
+        )
 
     @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:

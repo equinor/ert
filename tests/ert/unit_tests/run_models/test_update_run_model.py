@@ -1,6 +1,8 @@
-import json
+import io
 import uuid
 from unittest.mock import MagicMock
+
+import polars as pl
 
 from ert.analysis.event import AnalysisCompleteEvent, DataSection
 from ert.run_models.update_run_model import UpdateRunModel
@@ -10,27 +12,27 @@ def test_that_send_smoother_event_persists_observation_report_on_analysis_comple
     model = MagicMock(spec=UpdateRunModel)
     model._storage = MagicMock()
     mock_ensemble = MagicMock()
+    ensemble_id = str(uuid.uuid4())
+    mock_ensemble.id = uuid.UUID(ensemble_id)
     model._storage.get_ensemble.return_value = mock_ensemble
 
-    posterior_id = str(uuid.uuid4())
     data_section = DataSection(
         header=["observation_key", "status"],
         data=[("OBS_1", "Active"), ("OBS_2", "Deactivated, outlier")],
     )
-    event = AnalysisCompleteEvent(data=data_section, posterior_id=posterior_id)
+    event = AnalysisCompleteEvent(data=data_section, ensemble_id=ensemble_id)
 
     UpdateRunModel.send_smoother_event(
         model, iteration=0, run_id=uuid.uuid4(), event=event
     )
 
-    model._storage.get_ensemble.assert_called_once_with(posterior_id)
-    mock_ensemble.save_transition_data.assert_called_once()
+    model._storage.get_ensemble.assert_called_once_with(ensemble_id)
+    mock_ensemble.save_blob.assert_called_once()
 
-    _, saved_json = mock_ensemble.save_transition_data.call_args[0]
-    parsed = json.loads(saved_json)
-    assert parsed["posterior_id"] == posterior_id
-    assert parsed["data"]["header"] == ["observation_key", "status"]
-    assert parsed["data"]["data"] == [
-        ["OBS_1", "Active"],
-        ["OBS_2", "Deactivated, outlier"],
-    ]
+    saved_bytes = mock_ensemble.save_blob.call_args[0][0]
+    assert isinstance(saved_bytes, bytes)
+    saved_df = pl.read_parquet(io.BytesIO(saved_bytes))
+    assert saved_df.columns == ["observation_key", "status"]
+    assert len(saved_df) == 2
+    assert saved_df["observation_key"].to_list() == ["OBS_1", "OBS_2"]
+    assert saved_df["status"].to_list() == ["Active", "Deactivated, outlier"]

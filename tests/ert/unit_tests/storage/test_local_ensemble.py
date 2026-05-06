@@ -1,4 +1,6 @@
 import asyncio
+import io
+import json
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -687,41 +689,54 @@ def test_that_location_metadata_file_is_not_created_when_no_observations():
     asyncio.run(run_test())
 
 
-def test_that_save_transition_data_writes_file_to_disk(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment()
-        ensemble = storage.create_ensemble(
-            experiment, ensemble_size=1, iteration=0, name="prior"
-        )
-
-        ensemble.save_transition_data("report.json", '{"key": "value"}')
-
-        written = (ensemble._path / "transition" / "report.json").read_text(
-            encoding="utf-8"
-        )
-        assert written == '{"key": "value"}'
-
-
-def test_that_save_transition_data_creates_transition_directory(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment()
-        ensemble = storage.create_ensemble(
-            experiment, ensemble_size=1, iteration=0, name="prior"
-        )
-
-        transition_dir = ensemble._path / "transition"
-        assert not transition_dir.exists()
-
-        ensemble.save_transition_data("report.json", "data")
-        assert transition_dir.is_dir()
-
-
-def test_that_save_transition_data_raises_in_read_mode(tmp_path):
+def test_that_save_blob_raises_in_read_mode(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         storage.create_ensemble(experiment, ensemble_size=1, iteration=0, name="prior")
 
     with open_storage(tmp_path, mode="r") as storage:
         ensemble = next(iter(storage.ensembles))
+        buf = io.BytesIO()
+        pl.DataFrame({"x": [1]}).write_parquet(buf)
         with pytest.raises(ModeError):
-            ensemble.save_transition_data("report.json", "data")
+            ensemble.save_blob(buf.getvalue())
+
+
+def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        df = pl.DataFrame(
+            {
+                "observation_key": ["OBS_1", "OBS_2"],
+                "status": ["Active", "Deactivated, outlier"],
+                "value": [1.5, 2.0],
+            }
+        )
+        buf = io.BytesIO()
+        df.write_parquet(buf)
+
+        ensemble.save_blob(buf.getvalue())
+
+        blob_dir = ensemble._path / "blobs"
+
+        assert blob_dir.is_dir(), "Expected blob directory to be created"
+
+        parquet_files = list(blob_dir.glob("*.parquet"))
+        json_files = list(blob_dir.glob("*.json"))
+        assert len(parquet_files) == 1
+        assert len(json_files) == 1
+
+        loaded_df = pl.read_parquet(parquet_files[0])
+        assert loaded_df.columns == ["observation_key", "status", "value"]
+        assert len(loaded_df) == 2
+        assert loaded_df["observation_key"][0] == "OBS_1"
+
+        metadata = json.loads(json_files[0].read_text(encoding="utf-8"))
+        assert metadata["blob_type"] == "observation_report"
+        assert metadata["uri"].endswith(".parquet")
+        assert metadata["file_size"] > 0
+        assert metadata["ensemble_id"] == str(ensemble.id)

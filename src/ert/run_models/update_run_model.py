@@ -1,6 +1,9 @@
 import dataclasses
 import functools
+import io
 import uuid
+
+import polars as pl
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
@@ -185,10 +188,14 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisCompleteEvent():
-                self._storage.get_ensemble(event.posterior_id).save_transition_data(
-                    f"{AnalysisCompleteEvent.__name__}_{uuid.uuid4().hex[:8]}.json",
-                    event.model_dump_json(),
-                )
+                ensemble = self._storage.get_ensemble(event.ensemble_id)
+                buf = io.BytesIO()
+                pl.DataFrame(
+                    event.data.data,
+                    schema=event.data.header,
+                    orient="row",
+                ).write_parquet(buf)
+                ensemble.save_blob(buf.getvalue())
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration, run_id=run_id, data=event.data
