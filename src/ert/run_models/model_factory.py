@@ -310,7 +310,6 @@ def _setup_manual_update(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         ert_templates=config.ert_templates,
-        observations=config.observation_declarations,
         shape_registry=config.shape_registry,
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
@@ -330,17 +329,12 @@ def _setup_manual_update_enif(
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         target_ensemble=args.target_ensemble,
-        config=config,
         storage_path=config.ens_path,
         queue_config=config.queue_config,
         analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
         runpath_file=config.runpath_file,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
-        response_configuration=config.ensemble_config.response_configuration,
-        derived_response_configuration=config.ensemble_config.derived_response_configuration,
         ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
         env_vars=config.env_vars,
@@ -350,7 +344,6 @@ def _setup_manual_update_enif(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observation_declarations,
         shape_registry=config.shape_registry,
     )
 
