@@ -1,7 +1,7 @@
 """Unit tests for the new experiment_server endpoints:
 - POST /check_runpath
 - POST /delete_runpaths
-- POST /rerun_failed/{run_id}
+- POST /start_experiment?rerun_from_run_id={run_id}
 - GET  /has_failed_realizations/{run_id}
 """
 
@@ -211,13 +211,14 @@ def test_that_rerun_failed_creates_new_run_with_same_model(
     ) as mock_run:
         mock_run.return_value = None
         response = experiment_server_client.post(
-            f"/experiment_server/{EverEndpoints.rerun_failed}/{run_id}",
+            f"/experiment_server/{EverEndpoints.start_experiment}",
+            params={"rerun_from_run_id": run_id},
             auth=_AUTH,
         )
 
     assert response.status_code == 200
     data = response.json()
-    new_run_id = data["new_run_id"]
+    new_run_id = data["run_id"]
     assert new_run_id != run_id
     assert new_run_id in _runs
     assert _runs[new_run_id].run_model is mock_run_model
@@ -232,7 +233,8 @@ def test_that_rerun_failed_returns_400_when_run_model_is_missing(
     _runs[run_id] = state
 
     response = experiment_server_client.post(
-        f"/experiment_server/{EverEndpoints.rerun_failed}/{run_id}",
+        f"/experiment_server/{EverEndpoints.start_experiment}",
+        params={"rerun_from_run_id": run_id},
         auth=_AUTH,
     )
     assert response.status_code == 400
@@ -251,7 +253,8 @@ def test_that_rerun_failed_returns_400_when_rerun_is_not_supported(
     _runs[run_id] = state
 
     response = experiment_server_client.post(
-        f"/experiment_server/{EverEndpoints.rerun_failed}/{run_id}",
+        f"/experiment_server/{EverEndpoints.start_experiment}",
+        params={"rerun_from_run_id": run_id},
         auth=_AUTH,
     )
     assert response.status_code == 400
@@ -261,7 +264,8 @@ def test_that_rerun_failed_returns_404_for_unknown_run_id(
     experiment_server_client,
 ):
     response = experiment_server_client.post(
-        f"/experiment_server/{EverEndpoints.rerun_failed}/nonexistent-id",
+        f"/experiment_server/{EverEndpoints.start_experiment}",
+        params={"rerun_from_run_id": "nonexistent-id"},
         auth=_AUTH,
     )
     assert response.status_code == 404

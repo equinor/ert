@@ -95,10 +95,12 @@ class ExperimentClient:
 
     def rerun_failed(self) -> tuple[str, bool]:
         assert self._run_id is not None, "No active run to rerun"
-        response = self._http_post(f"{EverEndpoints.rerun_failed}/{self._run_id}")
+        response = self._http_post(
+            f"{EverEndpoints.start_experiment}?rerun_from_run_id={self._run_id}"
+        )
         response.raise_for_status()
         data = response.json()
-        self._run_id = data["new_run_id"]
+        self._run_id = data["run_id"]
         return self._run_id, data.get("supports_rerunning_failed_realizations", False)
 
     def has_failed_realizations(self) -> bool:

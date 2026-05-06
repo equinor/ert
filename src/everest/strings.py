@@ -36,5 +36,4 @@ class EverEndpoints(StrEnum):
     events = "events"
     check_runpath = "check_runpath"
     delete_runpaths = "delete_runpaths"
-    rerun_failed = "rerun_failed"
     has_failed_realizations = "has_failed_realizations"

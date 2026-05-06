@@ -220,10 +220,47 @@ async def start_experiment(
     request: Request,
     background_tasks: BackgroundTasks,
     credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+    rerun_from_run_id: str | None = None,
 ) -> JSONResponse:
     _log(request)
     _check_user(credentials)
     run_id = str(uuid.uuid4())
+    if rerun_from_run_id is not None:
+        if rerun_from_run_id not in _runs:
+            raise HTTPException(
+                status_code=404, detail=f"Run '{rerun_from_run_id}' not found"
+            )
+        source_run = _runs[rerun_from_run_id]
+        if source_run.run_model is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Run '{rerun_from_run_id}' has no run model to rerun.",
+            )
+        if not source_run.supports_rerunning_failed_realizations:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Run '{rerun_from_run_id}' "
+                f"does not support rerunning failed realizations.",
+            )
+        run_state = ExperimentRunnerState(
+            config_path=source_run.config_path,
+            run_path=source_run.run_path,
+            storage_path=source_run.storage_path,
+            run_model=source_run.run_model,
+            supports_rerunning_failed_realizations=source_run.supports_rerunning_failed_realizations,
+        )
+        _runs[run_id] = run_state
+        runner = ExperimentRunner(None, run_id)
+        background_tasks.add_task(runner.run, rerun=True)
+        run_state.start_time_unix = int(time.time())
+        return JSONResponse(
+            {
+                "run_id": run_id,
+                "supports_rerunning_failed_realizations": (
+                    run_state.supports_rerunning_failed_realizations
+                ),
+            }
+        )
     run_state = ExperimentRunnerState()
     _runs[run_id] = run_state
     request_data = await request.json()
@@ -355,47 +392,6 @@ async def delete_runpaths(
         raise HTTPException(
             status_code=422, detail=f"Could not delete runpaths: {e!s}"
         ) from e
-
-
-@router.post(f"/{EverEndpoints.rerun_failed}/{{run_id}}")
-async def rerun_failed(
-    request: Request,
-    run: Annotated[ExperimentRunnerState, Depends(_get_run)],
-    run_id: str,
-    background_tasks: BackgroundTasks,
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
-) -> JSONResponse:
-    _log(request)
-    _check_user(credentials)
-    if run.run_model is None:
-        raise HTTPException(
-            status_code=400, detail=f"Run '{run_id}' has no run model to rerun."
-        )
-    if not run.supports_rerunning_failed_realizations:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Run '{run_id}' does not support rerunning failed realizations.",
-        )
-    new_run_id = str(uuid.uuid4())
-    new_run_state = ExperimentRunnerState(
-        config_path=run.config_path,
-        run_path=run.run_path,
-        storage_path=run.storage_path,
-        run_model=run.run_model,
-        supports_rerunning_failed_realizations=run.supports_rerunning_failed_realizations,
-    )
-    _runs[new_run_id] = new_run_state
-    runner = ExperimentRunner(None, new_run_id)
-    background_tasks.add_task(runner.run, rerun=True)
-    new_run_state.start_time_unix = int(time.time())
-    return JSONResponse(
-        {
-            "new_run_id": new_run_id,
-            "supports_rerunning_failed_realizations": (
-                new_run_state.supports_rerunning_failed_realizations
-            ),
-        }
-    )
 
 
 @router.get(f"/{EverEndpoints.has_failed_realizations}/{{run_id}}")
