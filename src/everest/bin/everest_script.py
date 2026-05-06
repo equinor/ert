@@ -246,10 +246,15 @@ async def run_everest(options: argparse.Namespace) -> None:
         "Starting experiment"
     )
 
-    start_experiment(
-        server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
-        config=options.config,
-    )
+    try:
+        start_experiment(
+            server_context=ServerConfig.get_server_context_from_conn_info(
+                client.conn_info
+            ),
+            config=options.config,
+        )
+    except Exception as e:
+        raise SystemExit(f"Failed to start the experiment: {e}") from e
 
     # blocks until the run is finished
     if options.gui:

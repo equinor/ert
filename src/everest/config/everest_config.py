@@ -26,7 +26,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic.json_schema import SkipJsonSchema
-from pydantic_core import ErrorDetails
+from pydantic_core import ErrorDetails, InitErrorDetails, PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.nodes import ScalarNode
@@ -94,6 +94,30 @@ class EverestValidationError(ValueError):
 
     def __str__(self) -> str:
         return f"{self._errors!s}"
+
+    @classmethod
+    def from_missing_forward_model_jobs(
+        cls,
+        missing_jobs: list[str],
+        config_path: Path,
+    ) -> "EverestValidationError":
+        errors: list[InitErrorDetails] = [
+            InitErrorDetails(
+                type=PydanticCustomError(
+                    "missing_forward_model_job",
+                    "Job '{job}' is not installed on the server",
+                    {"job": job},
+                ),
+                loc=("forward_model",),
+                input=job,
+            )
+            for job in missing_jobs
+        ]
+        validation_error = ValidationError.from_exception_data(
+            title=EverestConfig.__name__,
+            line_errors=errors,
+        )
+        return _convert_to_everest_validation_error(validation_error, str(config_path))
 
 
 def _error_loc(error: ErrorDetails) -> str:
@@ -568,25 +592,18 @@ class EverestConfig(BaseModelWithContextSupport):
 
         return [format_fm(fm) for fm in forward_model_steps]
 
-    @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:
-        install_jobs = self.install_jobs
+    def validate_forward_model_job_name_installed(self) -> list[str]:
         forward_model_jobs = self.forward_model
         if not forward_model_jobs:
-            return self
-        installed_jobs_name = [job.name for job in install_jobs]
-        if info.context:  # Add plugin jobs
-            installed_jobs_name += info.context.installed_forward_model_steps.keys()
-
-        errors = []
-        for fm_job in forward_model_jobs:
-            job_name = fm_job.job.split()[0]
-            if job_name not in installed_jobs_name:
-                errors.append(f"unknown job {job_name}")
-
-        if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
-            raise ValueError(errors)
-        return self
+            return []
+        site_plugins = get_site_plugins()
+        installed_jobs_name = [job.name for job in self.install_jobs]
+        installed_jobs_name += site_plugins.installed_forward_model_steps.keys()
+        return [
+            job_name
+            for fm_job in forward_model_jobs
+            if (job_name := fm_job.job.split()[0]) not in installed_jobs_name
+        ]
 
     @model_validator(mode="after")
     def validate_at_most_one_summary_forward_model(self, _: ValidationInfo) -> Self:

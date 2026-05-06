@@ -34,12 +34,59 @@ from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
     PROXY,
     server_is_running,
+    start_experiment,
     start_server,
     stop_server,
     wait_for_server,
     wait_for_server_to_stop,
 )
 from tests.everest.utils import everest_config_with_defaults
+
+
+@pytest.mark.slow
+@pytest.mark.skip_mac_ci
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_that_start_experiment_validates_forward_models(change_to_tmpdir):
+    """
+    Tests that the existance of the forward model is not validated on the client,
+    but in the start_experiment on the server, and that given the validation
+    we are able to look up the line in the user file to provide a good error message
+    """
+    Path("./config.yml").touch()
+    config_dict = everest_config_with_defaults(config_path="./config.yml").to_dict()
+    config_dict["forward_model"] = ["this_does_not_exist"]
+    everest_config = EverestConfig.model_validate(config_dict)
+    # start_server() loads config based on config_path, so we need to actually
+    # overwrite it
+    everest_config.write_to_file("config.yml")
+    file_content = Path("config.yml").read_text(encoding="utf-8").splitlines()
+    line_number = next(
+        i + 1 for i, line in enumerate(file_content) if "this_does_not_exist" in line
+    )
+    makedirs_if_needed(Path(everest_config.output_dir), roll_if_exists=True)
+    await start_server(everest_config, logging_level=logging.INFO)
+
+    session = create_ertserver_client(
+        Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
+    )
+    wait_for_server(session, 240)
+    server_context = ServerConfig.get_server_context_from_conn_info(session.conn_info)
+    url, cert, auth = ServerConfig.get_server_context_from_conn_info(session.conn_info)
+    assert requests.get(url, verify=cert, auth=auth, proxies=PROXY).status_code == 200  # noqa: ASYNC210
+    with pytest.raises(
+        RuntimeError,
+        match=f"line: {line_number}, column: 11. forward_model"
+        f"\n.*'this_does_not_exist' is not installed",
+    ):
+        start_experiment(
+            ServerConfig.get_server_context_from_conn_info(session.conn_info),
+            everest_config,
+        )
+
+    if stop_server(server_context):
+        wait_for_server_to_stop(server_context, 240)
+        assert not server_is_running(*server_context)
 
 
 @pytest.mark.slow

@@ -20,7 +20,8 @@ from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
 from ert.trace import get_traceparent
-from everest.config import EverestConfig, ServerConfig
+from everest.config import EverestConfig, EverestValidationError, ServerConfig
+from everest.config.everest_config import _format_errors
 from everest.strings import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
@@ -113,7 +114,21 @@ def start_experiment(
                 proxies=PROXY,  # type: ignore
                 json=config.to_dict(),
             )
+            if response.status_code == 422:
+                detail = response.json().get("detail", {})
+                missing_jobs = (
+                    detail.get("missing_jobs", []) if isinstance(detail, dict) else []
+                )
+                if missing_jobs:
+                    raise EverestValidationError.from_missing_forward_model_jobs(
+                        missing_jobs, config.config_path
+                    )
+                raise RuntimeError(f"Server rejected config: {detail}")
             response.raise_for_status()
+        except EverestValidationError as e:
+            raise RuntimeError(
+                f"Config file <{config.config_file}> had errors:\n{_format_errors(e)}"
+            ) from e
         except Exception:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
