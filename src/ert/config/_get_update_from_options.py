@@ -14,7 +14,7 @@ def get_update_from_options(options: dict[str, str]) -> str | None:
     normalized_update = update.upper()
     if normalized_update == "FALSE":
         return None
-    elif normalized_update == "TRUE":
+    if normalized_update == "TRUE":
         return "GLOBAL"
 
     raise ConfigValidationError(f"Invalid UPDATE option: {update}")

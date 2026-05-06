@@ -10,7 +10,6 @@ import numpy as np
 import polars as pl
 
 from ert.config import (
-    ESSettings,
     Field,
     GenKwConfig,
     ObservationSettings,
@@ -282,8 +281,8 @@ def build_strategy_map(
     parameters: Iterable[str],
     param_configs: Mapping[str, ParameterConfig],
     enkf_truncation: float,
+    correlation_threshold: Callable[[int], float],
     *,
-    correlation_threshold: Callable[[int], float] | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
 ) -> dict[str, UpdateStrategy]:
     """Build a mapping from parameter group names to update strategies.
@@ -329,14 +328,8 @@ def build_strategy_map(
         progress_callback,
     )
 
-    # fix
-    # if correlation_threshold is None:
-    #   raise ValueError(
-    #      "correlation_threshold is required when localization is enabled"
-    # )
-
     adaptive_localization_strategy = AdaptiveLocalizationUpdate(
-        correlation_threshold if correlation_threshold is not None else lambda x: 1.0,
+        correlation_threshold,
         enkf_truncation,
         progress_callback,
     )
@@ -348,22 +341,20 @@ def build_strategy_map(
                 strategy_map[param_name] = field_distance_strategy
             elif param_cfg.update_strategy == "ADAPTIVE":
                 strategy_map[param_name] = adaptive_localization_strategy
-            else:  # what about none?
+            elif param_cfg.update_strategy == "GLOBAL":
                 strategy_map[param_name] = global_strategy
         elif isinstance(param_cfg, SurfaceConfig):
             if param_cfg.update_strategy == "DISTANCE":
                 strategy_map[param_name] = surface_distance_strategy
             elif param_cfg.update_strategy == "ADAPTIVE":
                 strategy_map[param_name] = adaptive_localization_strategy
-            else:
+            elif param_cfg.update_strategy == "GLOBAL":
                 strategy_map[param_name] = global_strategy
         elif isinstance(param_cfg, GenKwConfig):
             if param_cfg.update_strategy == "ADAPTIVE":
                 strategy_map[param_name] = adaptive_localization_strategy
-            else:
+            elif param_cfg.update_strategy == "GLOBAL":
                 strategy_map[param_name] = global_strategy
-        else:
-            strategy_map[param_name] = global_strategy
 
     return strategy_map
 
@@ -374,23 +365,13 @@ def smoother_update(
     observations: Iterable[str],
     update_settings: ObservationSettings,
     rng: np.random.Generator,
-    strategy_map: dict[str, UpdateStrategy] | None = None,
+    strategy_map: dict[str, UpdateStrategy],
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
     active_realizations: list[bool] | None = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
-
-    if strategy_map is None:
-        settings = ESSettings()
-        experiment = prior_storage.experiment
-        strategy_map = build_strategy_map(
-            parameters=experiment.update_parameters,
-            param_configs=experiment.parameter_configuration,
-            enkf_truncation=settings.enkf_truncation,
-            progress_callback=progress_callback,
-        )
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
     ens_mask = _create_combined_ensemble_mask(ens_mask, active_realizations)

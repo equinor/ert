@@ -227,7 +227,7 @@
       "update_strategy": "global",
       "dimensionality": 1,
       "distribution": {
-        "name": "uniform",f
+        "name": "uniform",
         "min": 0.0,
         "max": 5.0
       },

@@ -98,6 +98,7 @@ def test_update_report(
         param_configs=prior_ens.experiment.parameter_configuration,
         enkf_truncation=es_settings.enkf_truncation,
         progress_callback=events.append,
+        correlation_threshold=ert_config.analysis_config.es_settings.correlation_threshold,
     )
     smoother_update(
         prior_ens,
@@ -174,6 +175,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         param_configs=prior_ens.experiment.parameter_configuration,
         enkf_truncation=es_settings.enkf_truncation,
         progress_callback=events.append,
+        correlation_threshold=ert_config.analysis_config.es_settings.correlation_threshold,
     )
     ss = smoother_update(
         prior_ens,
@@ -313,6 +315,7 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             experiment.observation_keys,
             ObservationSettings(auto_scale_observations=[["OBS*"]]),
             rng=np.random.default_rng(42),
+            strategy_map={},
             progress_callback=events.append,
         )
 
@@ -365,6 +368,7 @@ def test_that_posterior_gen_kw_values_match_expected_on_snake_oil(
         parameters=list(ert_config.ensemble_config.parameters),
         param_configs=prior_ens.experiment.parameter_configuration,
         enkf_truncation=es_settings.enkf_truncation,
+        correlation_threshold=ert_config.analysis_config.es_settings.correlation_threshold,
     )
     smoother_update(
         prior_ens,
@@ -488,6 +492,7 @@ def test_that_alpha_can_be_used_for_outlier_detection(
             parameters=["KEY_1"],
             param_configs=prior_storage.experiment.parameter_configuration,
             enkf_truncation=es_settings.enkf_truncation,
+            correlation_threshold=lambda x: 1.0,
         )
         posterior_update = smoother_update(
             prior_storage,
@@ -532,6 +537,7 @@ def test_update_only_using_subset_observations(
         ["WPR_DIFF_1"],
         ObservationSettings(),
         rng=np.random.default_rng(42),
+        strategy_map={},
         progress_callback=events.append,
     )
 
@@ -1035,6 +1041,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             ["OBSERVATION"],
             ObservationSettings(),
             rng=np.random.default_rng(42),
+            strategy_map={},
         )
 
 
@@ -1096,6 +1103,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         ObservationSettings(),
         rng=np.random.default_rng(42),
         progress_callback=events.append,
+        strategy_map={},
     )
 
     assert update_snapshot.observations_and_responses["status"].to_list() == [
@@ -1178,12 +1186,22 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="posterior",
         prior_ensemble=prior,
     )
+
+    strategy_map = build_strategy_map(
+        parameters=["KEY_1", "KEY_2"],
+        param_configs=prior.experiment.parameter_configuration,
+        enkf_truncation=1.0,
+        rng=rng,
+        correlation_threshold=lambda x: 1.0,
+    )
+
     smoother_update(
         prior,
         posterior_ens,
         ["OBSERVATION"],
         ObservationSettings(),
         rng=np.random.default_rng(42),
+        strategy_map=strategy_map,
         active_realizations=active_realizations,
     )
 
@@ -1330,6 +1348,7 @@ def test_that_field_parameter_with_update_false_is_copied_to_posterior(
         ["OBSERVATION"],
         ObservationSettings(),
         rng=np.random.default_rng(42),
+        strategy_map={},
     )
 
     for iens in range(ensemble_size):

@@ -114,6 +114,17 @@ class AnalysisConfig:
         for module_name, var_name, value in analysis_set_var:
             if module_name == "PARAMETERS":
                 parameter_type = var_name
+                strategy_name = value
+
+                if parameter_type == "GEN_KW" and strategy_name == "DISTANCE":
+                    all_errors.append(
+                        ConfigValidationError(
+                            "DISTANCE strategy is not supported for GEN_KW parameters. "
+                            "Valid strategies for GEN_KW are: GLOBAL, ADAPTIVE"
+                        )
+                    )
+                    continue
+
                 if parameter_type not in {"FIELD", "SURFACE", "GEN_KW"}:
                     all_errors.append(
                         ConfigValidationError(
@@ -124,7 +135,6 @@ class AnalysisConfig:
                     )
                     continue
 
-                strategy_name = value
                 if strategy_name not in get_args(StrategyName):
                     all_errors.append(
                         ConfigValidationError(

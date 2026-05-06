@@ -3081,7 +3081,7 @@ def test_that_analysis_set_var_parameters_do_not_update_strategy_when_update_is_
         dedent("""\
             NUM_REALIZATIONS 1
             GEN_KW MY_KW prior.txt UPDATE:FALSE
-            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         """),
         encoding="utf-8",
     )
@@ -3099,14 +3099,14 @@ def test_that_analysis_set_var_parameters_updates_update_strategy_when_update_is
         dedent("""\
             NUM_REALIZATIONS 1
             GEN_KW MY_KW prior.txt UPDATE:TRUE
-            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         """),
         encoding="utf-8",
     )
     os.chdir(tmp_path)
     ert_config = ErtConfig.from_file("config.ert")
     param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
-    assert param.update_strategy == "DISTANCE"
+    assert param.update_strategy == "ADAPTIVE"
 
 
 # is this what we want for CONST?
@@ -3116,7 +3116,7 @@ def test_that_analysis_set_var_parameters_overrides_const_gen_kw(tmp_path):
         dedent("""\
             NUM_REALIZATIONS 1
             GEN_KW MY_KW prior.txt
-            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         """),
         encoding="utf-8",
     )
