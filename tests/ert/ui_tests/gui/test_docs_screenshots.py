@@ -320,8 +320,8 @@ def open_gui_with_docs_example(monkeypatch, tmp_path, source_root: Path, request
         yield gui
 
 
+@pytest.mark.screenshot_test
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-@pytest.mark.skip_mac_ci
 @pytest.mark.parametrize(
     "open_gui_with_docs_example",
     [
@@ -362,7 +362,7 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
-@pytest.mark.skip_mac_ci
+@pytest.mark.screenshot_test
 @pytest.mark.parametrize(
     "open_gui_with_docs_example",
     [
@@ -387,7 +387,7 @@ def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
-@pytest.mark.skip_mac_ci
+@pytest.mark.screenshot_test
 @pytest.mark.parametrize(
     "open_gui_with_docs_example",
     [
@@ -426,7 +426,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
-@pytest.mark.skip_mac_ci
+@pytest.mark.screenshot_test
 @pytest.mark.parametrize(
     "open_gui_with_docs_example",
     [
@@ -480,7 +480,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
-@pytest.mark.skip_mac_ci
+@pytest.mark.screenshot_test
 @pytest.mark.parametrize(
     "open_gui_with_docs_example",
     [
