@@ -33,7 +33,7 @@ class ConditionalAxisFormatter(mticker.Formatter):
         self,
         low: float = 1e-3,
         high: float = 1e4,
-        precision: float = 0,
+        precision: int = 0,
     ) -> None:
         self.low = low
         self.high = high
