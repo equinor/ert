@@ -10,7 +10,7 @@ import uuid
 import warnings
 from base64 import b64decode
 from queue import SimpleQueue
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import (
     APIRouter,
@@ -51,6 +51,9 @@ from everest.strings import (
     EverEndpoints,
 )
 
+if TYPE_CHECKING:
+    from ert.run_models.run_model import RunModel
+
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
 
 
@@ -67,6 +70,9 @@ class ExperimentRunnerState:
     run_path: str | os.PathLike[str] | None = None
     storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
+    run_model: "RunModel | None" = dataclasses.field(default=None)
+    supports_rerunning_failed_realizations: bool = False
+    has_failed_realizations: bool = False
 
 
 _runs: dict[str, ExperimentRunnerState] = {}
@@ -243,7 +249,14 @@ async def start_experiment(
         # Assume client and server is always in the same timezone
         # so disregard timestamps
         run_state.start_time_unix = int(time.time())
-        return JSONResponse({"run_id": run_id})
+        return JSONResponse(
+            {
+                "run_id": run_id,
+                "supports_rerunning_failed_realizations": (
+                    run_state.supports_rerunning_failed_realizations
+                ),
+            }
+        )
     except Exception as e:
         run_state.status = ExperimentStatus(
             status=ExperimentState.failed,
@@ -288,6 +301,112 @@ async def start_time(
         return Response("No experiment started", status_code=404)
 
     return Response(str(run.start_time_unix), status_code=200)
+
+
+@router.post("/" + EverEndpoints.check_runpath)
+async def check_runpath(
+    request: Request,
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+) -> JSONResponse:
+    _log(request)
+    _check_user(credentials)
+    status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+    request_data = await request.json()
+    adapter: TypeAdapter[RunModelConfigs] = TypeAdapter(RunModelConfigs)
+    try:
+        config = adapter.validate_python(request_data)
+        run_model = _instantiate_run_model(config, status_queue)
+        try:
+            runpath_exists = run_model.check_if_runpath_exists()
+            return JSONResponse(
+                {
+                    "runpath_exists": runpath_exists,
+                    "num_existing": run_model.get_number_of_existing_runpaths(),
+                    "num_active": run_model.get_number_of_active_realizations(),
+                }
+            )
+        finally:
+            run_model._storage.close()
+    except Exception as e:
+        raise HTTPException(
+            status_code=422, detail=f"Could not check runpath: {e!s}"
+        ) from e
+
+
+@router.post("/" + EverEndpoints.delete_runpaths)
+async def delete_runpaths(
+    request: Request,
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+) -> Response:
+    _log(request)
+    _check_user(credentials)
+    status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+    request_data = await request.json()
+    adapter: TypeAdapter[RunModelConfigs] = TypeAdapter(RunModelConfigs)
+    try:
+        config = adapter.validate_python(request_data)
+        run_model = _instantiate_run_model(config, status_queue)
+        try:
+            run_model.rm_run_path()
+        finally:
+            run_model._storage.close()
+        return Response("Runpaths deleted.", 200)
+    except Exception as e:
+        raise HTTPException(
+            status_code=422, detail=f"Could not delete runpaths: {e!s}"
+        ) from e
+
+
+@router.post(f"/{EverEndpoints.rerun_failed}/{{run_id}}")
+async def rerun_failed(
+    request: Request,
+    run: Annotated[ExperimentRunnerState, Depends(_get_run)],
+    run_id: str,
+    background_tasks: BackgroundTasks,
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+) -> JSONResponse:
+    _log(request)
+    _check_user(credentials)
+    if run.run_model is None:
+        raise HTTPException(
+            status_code=400, detail=f"Run '{run_id}' has no run model to rerun."
+        )
+    if not run.supports_rerunning_failed_realizations:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Run '{run_id}' does not support rerunning failed realizations.",
+        )
+    new_run_id = str(uuid.uuid4())
+    new_run_state = ExperimentRunnerState(
+        config_path=run.config_path,
+        run_path=run.run_path,
+        storage_path=run.storage_path,
+        run_model=run.run_model,
+        supports_rerunning_failed_realizations=run.supports_rerunning_failed_realizations,
+    )
+    _runs[new_run_id] = new_run_state
+    runner = ExperimentRunner(None, new_run_id)
+    background_tasks.add_task(runner.run, rerun=True)
+    new_run_state.start_time_unix = int(time.time())
+    return JSONResponse(
+        {
+            "new_run_id": new_run_id,
+            "supports_rerunning_failed_realizations": (
+                new_run_state.supports_rerunning_failed_realizations
+            ),
+        }
+    )
+
+
+@router.get(f"/{EverEndpoints.has_failed_realizations}/{{run_id}}")
+def has_failed_realizations_endpoint(
+    request: Request,
+    run: Annotated[ExperimentRunnerState, Depends(_get_run)],
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+) -> JSONResponse:
+    _log(request)
+    _check_user(credentials)
+    return JSONResponse({"has_failed": run.has_failed_realizations})
 
 
 @router.websocket(f"/{EverEndpoints.events}/{{run_id}}")
@@ -337,7 +456,7 @@ async def _get_event(subscriber_id: str, run_id: str) -> StatusEvents:
 class ExperimentRunner:
     def __init__(
         self,
-        config: RunModelConfigs,
+        config: RunModelConfigs | None,
         run_id: str,
     ) -> None:
         super().__init__()
@@ -345,11 +464,24 @@ class ExperimentRunner:
         self._config = config
         self._run_id = run_id
 
-    async def run(self) -> None:
+    async def run(self, rerun: bool = False) -> None:
         run = _runs[self._run_id]
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+        run_model: RunModel | None = None
         try:
-            run_model = _instantiate_run_model(self._config, status_queue)
+            if rerun and run.run_model is not None:
+                run_model = run.run_model
+                # Rewire status_queue so events go to this run's event loop
+                run_model._status_queue = status_queue
+            else:
+                assert self._config is not None, (
+                    "ExperimentRunner.run() called without config for a fresh run"
+                )
+                run_model = _instantiate_run_model(self._config, status_queue)
+                run.run_model = run_model
+                run.supports_rerunning_failed_realizations = (
+                    run_model.supports_rerunning_failed_realizations
+                )
             run.status = ExperimentStatus(
                 message="Experiment started", status=ExperimentState.running
             )
@@ -405,11 +537,13 @@ class ExperimentRunner:
                 status=ExperimentState.failed,
             )
         finally:
-            if (
-                isinstance(run_model, EverestRunModel)
-                and run_model._experiment is not None
-            ):
-                run_model._experiment.status = run.status
+            if run_model is not None:
+                run.has_failed_realizations = run_model.has_failed_realizations()
+                if (
+                    isinstance(run_model, EverestRunModel)
+                    and run_model._experiment is not None
+                ):
+                    run_model._experiment.status = run.status
 
             logging.getLogger(EXPERIMENT_SERVER).info(
                 f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"

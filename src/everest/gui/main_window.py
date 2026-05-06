@@ -70,7 +70,10 @@ class EverestMainWindow(QMainWindow):
         title = Path(config["config_path"]).name
         self.setWindowTitle(f"EVEREST - {title}")
 
-        run_model_api = client.create_run_model_api()
+        run_model_api = client.create_run_model_api(
+            experiment_name=title,
+            supports_rerunning_failed_realizations=False,
+        )
         event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(
             refresh_interval=0.02, open_timeout=40, websocket_recv_timeout=1.0
         )
