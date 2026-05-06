@@ -24,7 +24,7 @@ def test_read_file(tmp_path, monkeypatch):
         encoding="utf-8",
     )
     everest_config = EverestConfig.load_file("config.yml")
-    keys = ["config_path", "controls", "model", "objective_functions"]
+    keys = ["config_path", "controls", "model", "objective_functions", "type"]
     assert sorted(everest_config.to_dict().keys()) == sorted(keys)
 
     exp_dir, exp_fn = os.path.split(os.path.realpath("config.yml"))

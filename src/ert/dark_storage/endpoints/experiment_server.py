@@ -1,6 +1,5 @@
 import asyncio
 import dataclasses
-import datetime
 import logging
 import os
 import queue
@@ -23,19 +22,23 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pydantic import TypeAdapter
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket
 
-from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
-from ert.plugins import get_site_plugins
-from ert.run_models import StatusEvents
-from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
+from ert.run_models import RunModel, StatusEvents
+from ert.run_models.everest_run_model import EverestExitCode
+from ert.run_models.model_factory import (
+    EverestRunModel,
+    RunModelConfigs,
+    _instantiate_run_model,
+)
 from everest.config import EverestConfig
 from everest.detached.everserver import (
     ExperimentState,
@@ -218,19 +221,25 @@ async def start_experiment(
     run_state = ExperimentRunnerState()
     _runs[run_id] = run_state
     request_data = await request.json()
-    # The output of warnings is the task of the user interface, not
-    # of everserver. Therefore we suppress them here:
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=ConfigWarning)
-        config = EverestConfig.with_plugins(request_data)
+    adapter: TypeAdapter[RunModelConfigs] = TypeAdapter(RunModelConfigs)
+    config: RunModelConfigs | EverestConfig
+    if request_data.get("type") == "everest_config":
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ConfigWarning)
+            config = EverestConfig.with_plugins(request_data)
+    else:
+        config = adapter.validate_python(request_data)
     runner = ExperimentRunner(config, run_id)
     try:
         background_tasks.add_task(runner.run)
-        run_state.config_path = config.config_path
-
-        run_state.run_path = config.simulation_dir
-        run_state.storage_path = config.output_dir
-
+        if isinstance(config, EverestConfig):
+            run_state.config_path = config.config_file
+            run_state.run_path = config.output_dir
+            run_state.storage_path = str(config.storage_dir)
+        else:
+            run_state.config_path = config.user_config_file
+            run_state.run_path = config.runpath_config.runpath_format_string
+            run_state.storage_path = config.storage_path
         # Assume client and server is always in the same timezone
         # so disregard timestamps
         run_state.start_time_unix = int(time.time())
@@ -328,28 +337,20 @@ async def _get_event(subscriber_id: str, run_id: str) -> StatusEvents:
 class ExperimentRunner:
     def __init__(
         self,
-        everest_config: EverestConfig,
+        config: RunModelConfigs,
         run_id: str,
     ) -> None:
         super().__init__()
 
-        self._everest_config = everest_config
+        self._config = config
         self._run_id = run_id
 
     async def run(self) -> None:
         run = _runs[self._run_id]
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-        run_model: EverestRunModel | None = None
-        try:  # noqa: PLW0717
-            site_plugins = get_site_plugins()
-            with use_runtime_plugins(site_plugins):
-                run_model = EverestRunModel.create(
-                    everest_config=self._everest_config,
-                    experiment_name=f"EnOpt@{datetime.datetime.now().astimezone().isoformat(timespec='seconds')}",
-                    target_ensemble="batch",
-                    status_queue=status_queue,
-                    runtime_plugins=site_plugins,
-                )
+        run_model: RunModel | None = None
+        try:
+            run_model = _instantiate_run_model(self._config, status_queue)
             run.status = ExperimentStatus(
                 message="Experiment started", status=ExperimentState.running
             )
@@ -382,15 +383,20 @@ class ExperimentRunner:
                         await sub.is_done()
                     break
             await simulation_future
-            assert run_model.exit_code is not None
-            exp_status, msg = _get_optimization_status(
-                run_model.exit_code,
-                run.events,
-            )
-            run.status = ExperimentStatus(
-                message=msg,
-                status=exp_status,
-            )
+            if isinstance(run_model, EverestRunModel):
+                assert run_model.exit_code is not None
+                exp_state, msg = _get_optimization_status(
+                    run_model.exit_code, run.events
+                )
+                run_status = ExperimentStatus(
+                    message=msg,
+                    status=exp_state,
+                )
+            else:
+                run_status = ExperimentStatus(
+                    message="Experiment completed.", status=ExperimentState.completed
+                )
+            run.status = run_status
         except UserCancelled as e:
             logging.getLogger(EXPERIMENT_SERVER).info(f"User cancelled: {e}")
         except Exception as e:
@@ -400,7 +406,10 @@ class ExperimentRunner:
                 status=ExperimentState.failed,
             )
         finally:
-            if run_model and run_model._experiment:
+            if (
+                isinstance(run_model, EverestRunModel)
+                and run_model._experiment is not None
+            ):
                 run_model._experiment.status = run.status
 
             logging.getLogger(EXPERIMENT_SERVER).info(

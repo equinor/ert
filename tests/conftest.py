@@ -1,9 +1,37 @@
 import os
+import shutil
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
+from ert.config import ErtConfig
 from ert.plugins import ErtRuntimePlugins
+
+
+def source_dir() -> Path:
+    src = Path("@CMAKE_CURRENT_SOURCE_DIR@/../..")
+    if src.is_dir():
+        return src.relative_to(Path.cwd())
+
+    # If the file was not correctly configured by cmake, look for the source
+    # folder, assuming the build folder is inside the source folder.
+    current_path = Path(__file__)
+    while current_path != Path("/"):
+        if (current_path / ".git").is_dir():
+            return current_path
+        # This is to find root dir for git worktrees
+        elif (current_path / ".git").is_file():
+            with (current_path / ".git").open(encoding="utf-8") as f:
+                for line in f:
+                    if "gitdir:" in line:
+                        return current_path
+
+        current_path = current_path.parent
+    raise RuntimeError("Cannot find the source folder")
+
+
+SOURCE_DIR: Path = source_dir()
 
 
 def pytest_addoption(parser):
@@ -143,3 +171,26 @@ def use_site_configurations_with_no_queue_options():
         ErtRuntimePluginsWithNoQueueOptions,
     ):
         yield
+
+
+@pytest.fixture(scope="session", name="source_root")
+def fixture_source_root():
+    return SOURCE_DIR
+
+
+@pytest.fixture(name="setup_case")
+def fixture_setup_case(tmp_path_factory, source_root, monkeypatch):
+    def copy_case(path, config_file):
+        tmp_path = tmp_path_factory.mktemp(path.replace("/", "-"))
+        shutil.copytree(
+            os.path.join(source_root, "test-data/ert", path), tmp_path / "test_data"
+        )
+        monkeypatch.chdir(tmp_path / "test_data")
+        return ErtConfig.from_file(config_file)
+
+    return copy_case
+
+
+@pytest.fixture
+def poly_case(setup_case):
+    return setup_case("poly_example", "poly.ert")

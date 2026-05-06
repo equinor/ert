@@ -11,8 +11,8 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, InstallTemplateConfig
+from tests.conftest import SOURCE_DIR
 from tests.ert.unit_tests.resources._import_from_location import import_from_location
-from tests.ert.utils import SOURCE_DIR
 from tests.everest.utils import everest_config_with_defaults
 
 CONFIG = {

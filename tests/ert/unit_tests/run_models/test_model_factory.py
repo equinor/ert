@@ -28,6 +28,7 @@ from ert.run_models import (
     model_factory,
 )
 from ert.run_models.model_factory import (
+    _instantiate_run_model,
     _setup_ensemble_information_filter,
     _setup_ensemble_smoother,
     _setup_multiple_data_assimilation,
@@ -123,7 +124,7 @@ def test_custom_realizations():
 
 
 def test_setup_single_test_run(tmp_path):
-    model = model_factory._setup_single_test_run(
+    config = model_factory._setup_single_test_run(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             current_ensemble="current-ensemble",
@@ -131,14 +132,14 @@ def test_setup_single_test_run(tmp_path):
             random_seed=None,
             experiment_name=None,
         ),
-        queue.SimpleQueue(),
     )
+    model = _instantiate_run_model(config, queue.SimpleQueue())
     assert isinstance(model, SingleTestRun)
     assert model._storage.path == tmp_path
 
 
 def test_setup_single_test_run_with_ensemble(tmp_path):
-    model = model_factory._setup_single_test_run(
+    config = model_factory._setup_single_test_run(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             current_ensemble="current-ensemble",
@@ -146,14 +147,14 @@ def test_setup_single_test_run_with_ensemble(tmp_path):
             random_seed=None,
             experiment_name=None,
         ),
-        queue.SimpleQueue(),
     )
+    model = _instantiate_run_model(config, queue.SimpleQueue())
     assert isinstance(model, SingleTestRun)
     assert model._storage.path == tmp_path
 
 
 def test_setup_ensemble_experiment(tmp_path):
-    model = model_factory._setup_ensemble_experiment(
+    config = model_factory._setup_ensemble_experiment(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             realizations=None,
@@ -162,8 +163,8 @@ def test_setup_ensemble_experiment(tmp_path):
             target_ensemble=None,
             experiment_name="ensemble_experiment",
         ),
-        queue.SimpleQueue(),
     )
+    model = _instantiate_run_model(config, queue.SimpleQueue())
     assert isinstance(model, EnsembleExperiment)
 
     assert model.active_realizations == [True] * 100
@@ -171,7 +172,7 @@ def test_setup_ensemble_experiment(tmp_path):
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 def test_setup_ensemble_smoother(tmp_path):
-    model = model_factory._setup_ensemble_smoother(
+    config = model_factory._setup_ensemble_smoother(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             realizations="0-4,7,8",
@@ -180,8 +181,8 @@ def test_setup_ensemble_smoother(tmp_path):
             experiment_name="just_smoothing",
         ),
         ObservationSettings(),
-        queue.SimpleQueue(),
     )
+    model = _instantiate_run_model(config, queue.SimpleQueue())
     assert isinstance(model, EnsembleSmoother)
     assert (
         model.active_realizations
@@ -191,7 +192,7 @@ def test_setup_ensemble_smoother(tmp_path):
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 def test_setup_multiple_data_assimilation(tmp_path):
-    model = model_factory._setup_multiple_data_assimilation(
+    config = model_factory._setup_multiple_data_assimilation(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             realizations="0-4,8",
@@ -203,8 +204,8 @@ def test_setup_multiple_data_assimilation(tmp_path):
             starting_iteration=0,
         ),
         ObservationSettings(),
-        queue.SimpleQueue(),
     )
+    model = _instantiate_run_model(config, queue.SimpleQueue())
     assert isinstance(model, MultipleDataAssimilation)
     assert model.weights == "6,4,2"
     assert model._parsed_weights == MultipleDataAssimilation.parse_weights("6,4,2")
@@ -269,9 +270,10 @@ def test_multiple_data_assimilation_restart_paths(
     with patch(
         "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock
     ):
-        model = model_factory._setup_multiple_data_assimilation(
-            config, args, ObservationSettings(), queue.SimpleQueue()
+        config = model_factory._setup_multiple_data_assimilation(
+            config, args, ObservationSettings()
         )
+        model = _instantiate_run_model(config, queue.SimpleQueue())
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
     assert set(model.paths) == set(expected_path)
@@ -299,7 +301,7 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
         ConfigValidationError,
         match="Number of active realizations must be at least 2 for an update step",
     ):
-        analysis_mode(config, args, ObservationSettings(), queue.SimpleQueue())
+        analysis_mode(config, args, ObservationSettings())
 
 
 @pytest.mark.parametrize(
@@ -372,4 +374,4 @@ def test_that_setting_up_experiment_with_update_step_raises_config_validation_er
         ConfigValidationError,
         match="Number of active realizations must be at least 2 for an update step",
     ):
-        experiment_setup_method(config, args, MagicMock(), MagicMock())
+        experiment_setup_method(config, args, MagicMock())

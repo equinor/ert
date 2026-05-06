@@ -183,7 +183,9 @@ class UpdateRunModelConfig(RunModelConfig):
 
 
 class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig):
-    experiment_type: ExperimentType = ExperimentType.ENSEMBLE_SMOOTHER
+    experiment_type: Literal[ExperimentType.ENSEMBLE_SMOOTHER] = (
+        ExperimentType.ENSEMBLE_SMOOTHER
+    )
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
@@ -196,7 +198,9 @@ class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig
 class EnsembleInformationFilterConfig(
     InitialEnsembleRunModelConfig, UpdateRunModelConfig
 ):
-    experiment_type: ExperimentType = ExperimentType.ENSEMBLE_INFORMATION_FILTER
+    experiment_type: Literal[ExperimentType.ENSEMBLE_INFORMATION_FILTER] = (
+        ExperimentType.ENSEMBLE_INFORMATION_FILTER
+    )
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
@@ -207,7 +211,9 @@ class EnsembleInformationFilterConfig(
 
 
 class EnsembleExperimentConfig(InitialEnsembleRunModelConfig):
-    experiment_type: ExperimentType = ExperimentType.ENSEMBLE_EXPERIMENT
+    experiment_type: Literal[ExperimentType.ENSEMBLE_EXPERIMENT] = (
+        ExperimentType.ENSEMBLE_EXPERIMENT
+    )
     target_ensemble: str
     supports_rerunning_failed_realizations: ClassVar[bool] = True
 
@@ -220,7 +226,9 @@ class EnsembleExperimentConfig(InitialEnsembleRunModelConfig):
 
 
 class EvaluateEnsembleConfig(RunModelConfig):
-    experiment_type: ExperimentType = ExperimentType.EVALUATE_ENSEMBLE
+    experiment_type: Literal[ExperimentType.EVALUATE_ENSEMBLE] = (
+        ExperimentType.EVALUATE_ENSEMBLE
+    )
     ensemble_id: str
     supports_rerunning_failed_realizations: ClassVar[bool] = True
 
@@ -237,7 +245,7 @@ EverestResponseTypesAdapter = TypeAdapter(  # type: ignore
 
 
 class EverestRunModelConfig(RunModelConfig):
-    experiment_type: ExperimentType = ExperimentType.EVEREST
+    experiment_type: Literal[ExperimentType.EVEREST] = ExperimentType.EVEREST
     optimization_output_dir: str
     simulation_dir: str
 
@@ -274,7 +282,9 @@ class EverestRunModelConfig(RunModelConfig):
 
 
 class ManualUpdateConfig(UpdateRunModelConfig):
-    experiment_type: ExperimentType = ExperimentType.MANUAL_UPDATE
+    experiment_type: Literal[ExperimentType.MANUAL_UPDATE] = (
+        ExperimentType.MANUAL_UPDATE
+    )
     ensemble_id: str
     ert_templates: list[tuple[str, str]]
 
@@ -300,7 +310,7 @@ class ManualUpdateConfig(UpdateRunModelConfig):
 class MultipleDataAssimilationConfig(
     InitialEnsembleRunModelConfig, UpdateRunModelConfig
 ):
-    experiment_type: ExperimentType = ExperimentType.ES_MDA
+    experiment_type: Literal[ExperimentType.ES_MDA] = ExperimentType.ES_MDA
     default_weights: ClassVar[str] = "4, 2, 1"
     restart_run: bool
     prior_ensemble_id: str | None
@@ -318,7 +328,9 @@ class MultipleDataAssimilationConfig(
 
 
 class SingleTestRunConfig(InitialEnsembleRunModelConfig):
-    experiment_type: ExperimentType = ExperimentType.SINGLE_TEST_RUN
+    experiment_type: Literal[ExperimentType.SINGLE_TEST_RUN] = (
+        ExperimentType.SINGLE_TEST_RUN
+    )
     target_ensemble: str
     supports_rerunning_failed_realizations: ClassVar[bool] = True
     active_realizations: list[bool] = Field(default_factory=lambda: [True])
