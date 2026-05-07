@@ -690,7 +690,7 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
                 "type": "summary_observation",
                 "name": obs_keys[i],
                 "key": response_keys[i],
-                "date": times[i].date().isoformat(),
+                "date": times[i].isoformat(),
                 "value": 1.0,
                 "error": 0.1,
             }
@@ -757,6 +757,9 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
         obs_and_responses_perturbed = ensemble.get_observations_and_responses(
             obs_keys, iens_active_index
         )
+
+        assert obs_and_responses_exact["0"].null_count() == 0
+        assert obs_and_responses_perturbed["0"].null_count() == 0
 
         assert (
             obs_and_responses_exact.sort("response_key")
