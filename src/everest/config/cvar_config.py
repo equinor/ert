@@ -1,10 +1,10 @@
 from textwrap import dedent
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
-class CVaRConfig(BaseModel):
+class CVaRConfig(BaseModel, extra="forbid"):
     number_of_realizations: int | None = Field(
         default=None,
         description=dedent(
@@ -33,10 +33,6 @@ class CVaRConfig(BaseModel):
             option.
             """
         ),
-    )
-
-    model_config = ConfigDict(
-        extra="forbid",
     )
 
     @model_validator(mode="before")

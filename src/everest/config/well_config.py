@@ -2,14 +2,13 @@ from textwrap import dedent
 
 from pydantic import (
     BaseModel,
-    ConfigDict,
     Field,
     PositiveInt,
     field_validator,
 )
 
 
-class WellConfig(BaseModel):
+class WellConfig(BaseModel, extra="forbid"):
     name: str = Field(
         description=dedent(
             """
@@ -24,9 +23,6 @@ class WellConfig(BaseModel):
             Specifies the time it takes to drill the well.
             """,
         ),
-    )
-    model_config = ConfigDict(
-        extra="forbid",
     )
 
     @field_validator("name")
