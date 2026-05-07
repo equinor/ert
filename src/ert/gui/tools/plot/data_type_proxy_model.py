@@ -45,7 +45,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
                         show = False
 
             # Filter out non-finalized responses
-            if key.response and not key.response.has_finalized_keys:
+            if key.response and not key.response.are_keys_finalized():
                 show = False
 
         return show

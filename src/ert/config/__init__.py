@@ -9,7 +9,6 @@ from .analysis_config import (
 from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
 from .breakthrough_config import BreakthroughConfig
 from .capture_validation import capture_validation
-from .derived_response_config import DerivedResponseConfig
 from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig, forward_model_step_from_config_contents
@@ -52,7 +51,7 @@ from .queue_config import (
     LocalQueueOptions,
     QueueConfig,
 )
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import DerivedResponseConfig, InvalidResponseFile, ResponseConfig
 from .rft_config import RFTConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
