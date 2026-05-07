@@ -68,8 +68,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             progress_callback=progress_callback,
         )
 
-        assert strategy_map, "No parameters to update"
-
         smoother_update(
             prior,
             posterior,

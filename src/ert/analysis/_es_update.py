@@ -299,9 +299,9 @@ def build_strategy_map(
         Parameter configuration mapping from the experiment.
     enkf_truncation : float
         Singular value truncation threshold (0, 1].
-    correlation_threshold : Callable[[int], float] | None
+    correlation_threshold : Callable[[int], float]
         Function that takes ensemble size and returns the correlation
-        threshold. Required when ``localization`` is True.
+        threshold.
     progress_callback : Callable[[AnalysisEvent], None] | None
         Callback for reporting progress.
 
@@ -355,6 +355,11 @@ def build_strategy_map(
                 strategy_map[param_name] = adaptive_localization_strategy
             elif param_cfg.update_strategy == "GLOBAL":
                 strategy_map[param_name] = global_strategy
+        else:
+            logger.warning(
+                f"Parameter '{param_name}' has unrecognized config type "
+                f"'{type(param_cfg).__name__}'. Parameter will not be updated"
+            )
 
     return strategy_map
 

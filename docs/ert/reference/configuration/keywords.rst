@@ -1750,16 +1750,18 @@ all ``GEN_KW`` parameters will use adaptive localization, and all ``SURFACE``
 parameters will use distance-based localization during the update step.
 
 
-::NOTE::
+.. note::
 
         The update strategy set with ``ANALYSIS_SET_VAR PARAMETERS`` acts as a default for all parameters of that type.
-        However, individual parameters can override this and disable updates by setting ``UPDATE:FALSE``. For example:
+        However, individual parameters can override this and disable updates by setting ``UPDATE:FALSE``.
 
-        ```
-        FIELD  PERMX  PARAMETER  permx.grdecl  UPDATE:FALSE
-        ```
+        *Example:*
 
-        IF ``UPDATE:TRUE`` is set for a parameter, it will use the default strategy defined for its type.
+        ::
+                FIELD  PERMX  PARAMETER  permx.grdecl  UPDATE:FALSE
+
+
+        If ``UPDATE:TRUE`` is set for a parameter, it will use the default strategy defined for its type.
         If no strategy is defined for that type, it will default to ``GLOBAL``.
 
 

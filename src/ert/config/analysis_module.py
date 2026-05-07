@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_ENKF_TRUNCATION_EXACT = 1.0
 DEFAULT_ENKF_TRUNCATION_SUBSPACE = 0.98
-# DEFAULT_LOCALIZATION = False
+DEFAULT_LOCALIZATION = False
 
 
 def _upper(v: str) -> str:
