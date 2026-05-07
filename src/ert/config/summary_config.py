@@ -83,7 +83,6 @@ class SummaryConfig(ResponseConfig):
                     "steps known to generate summary files"
                 )
             return cls(
-                name="summary",
                 input_files=[eclbase.replace("%d", "<IENS>")],
                 keys=[key for keys in summary_keys for key in keys],
             )

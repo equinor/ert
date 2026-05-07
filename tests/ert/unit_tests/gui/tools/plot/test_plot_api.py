@@ -225,7 +225,6 @@ def test_plot_api_handles_urlescape(api_and_storage):
             "parameter_configuration": [],
             "response_configuration": [
                 SummaryConfig(
-                    name="summary",
                     input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
                     keys=[key],
                 ).model_dump(mode="json")
@@ -371,7 +370,6 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
             "parameter_configuration": [],
             "response_configuration": [
                 SummaryConfig(
-                    name="summary",
                     input_files=[""],
                     keys=["WOPR:OP1"],
                     has_finalized_keys=True,
@@ -419,9 +417,9 @@ def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage
         experiment_config={
             "parameter_configuration": [],
             "response_configuration": [
-                SummaryConfig(
-                    name="summary", input_files=[""], keys=["NAIMFRAC"]
-                ).model_dump(mode="json")
+                SummaryConfig(input_files=[""], keys=["NAIMFRAC"]).model_dump(
+                    mode="json"
+                )
             ],
             "ert_templates": {},
             "observations": {},
@@ -443,7 +441,6 @@ def test_that_data_for_response_is_empty_for_ensembles_without_responses(
             "parameter_configuration": [],
             "response_configuration": [
                 SummaryConfig(
-                    name="summary",
                     input_files=[],
                     keys=["FOPT"],
                     has_finalized_keys=True,
@@ -474,7 +471,6 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
             "parameter_configuration": [],
             "response_configuration": [
                 SummaryConfig(
-                    name="summary",
                     input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
                     keys=["FOPR"],
                 ).model_dump(mode="json")
@@ -499,7 +495,6 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
             "parameter_configuration": [],
             "response_configuration": [
                 SummaryConfig(
-                    name="summary",
                     input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
                     keys=["FOPR"],
                 ).model_dump(mode="json")
@@ -563,7 +558,6 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
             "parameter_configuration": [],
             "response_configuration": [
                 SummaryConfig(
-                    name="summary",
                     input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
                     keys=[key, history_key(key), "FOPR"],
                 ).model_dump(mode="json")
@@ -621,7 +615,6 @@ def _create_gradient_only_ensemble(storage):
             "parameter_configuration": [],
             "response_configuration": [
                 EverestObjectivesConfig(
-                    name="everest_objectives",
                     input_files=[f"{objective_key}.json"],
                     keys=[objective_key],
                     scales=[1.0],

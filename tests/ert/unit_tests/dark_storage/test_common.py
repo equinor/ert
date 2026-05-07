@@ -27,7 +27,7 @@ def test_data_for_response_gives_mean_for_duplicate_values(tmp_path):
     value1 = 1.1
     value2 = 1.0e19
     with open_storage(tmp_path / "storage", mode="w") as storage:
-        summary_config = SummaryConfig(name="summary", input_files=["CASE"], keys=["*"])
+        summary_config = SummaryConfig(input_files=["CASE"], keys=["*"])
         experiment = storage.create_experiment(
             experiment_config={"response_configuration": [summary_config]},
         )
@@ -79,9 +79,7 @@ def test_data_for_response_gives_mean_for_duplicate_values(tmp_path):
 
 def test_data_for_response_doesnt_mistake_history_for_response(tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
-        summary_config = SummaryConfig(
-            name="summary", input_files=["CASE"], keys=["FGPR"]
-        )
+        summary_config = SummaryConfig(input_files=["CASE"], keys=["FGPR"])
         experiment = storage.create_experiment(
             experiment_config={"response_configuration": [summary_config]}
         )

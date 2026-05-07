@@ -74,14 +74,13 @@ def create_experiment_args(
     random.seed(seed)
 
     gen_data_config = GenDataConfig(
-        name="gen_data",
         report_steps_list=[list(range(num_gen_data_report_steps))] * num_gen_data_keys,
         keys=[f"gen_data_{i}" for i in range(num_gen_data_keys)],
     ).model_dump(mode="json")
 
     # Remember to do one explicit .save_parameters to an ensemble
     # to get the finalized summary keys stored in the experiment
-    summary_config = SummaryConfig(name="summary", keys=["*"]).model_dump(mode="json")
+    summary_config = SummaryConfig(keys=["*"]).model_dump(mode="json")
 
     genkw_data = (
         pl.DataFrame(

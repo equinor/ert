@@ -129,7 +129,6 @@ class GenDataConfig(ResponseConfig):
             input_files.append(res_file)
 
         return cls(
-            name="gen_data",
             keys=keys,
             input_files=input_files,
             report_steps_list=report_steps,
