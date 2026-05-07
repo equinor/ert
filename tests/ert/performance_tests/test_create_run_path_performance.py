@@ -75,7 +75,7 @@ def test_create_run_path_load_scalar_keys_performance(
     with open_storage(storage_path, mode="w") as storage:
         exp = storage.create_experiment(
             experiment_config={
-                "parameter_configs": [
+                "parameter_configuration": [
                     pc.model_dump(mode="json") for pc in parameter_configs
                 ]
             },

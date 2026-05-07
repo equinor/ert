@@ -340,7 +340,11 @@ def test_that_load_scalars_handles_many_genkw_keys(benchmark, tmp_path):
 
     with open_storage(storage_path, mode="w") as storage:
         exp = storage.create_experiment(
-            experiment_config={"parameter_configs": parameter_configs},
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json") for pc in parameter_configs
+                ]
+            },
             name="perf-exp",
         )
         ensemble = exp.create_ensemble(ensemble_size=reals, name="default")
