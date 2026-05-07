@@ -74,7 +74,7 @@ class BatchDataframes(TypedDict, total=False):
     batch_constraint_gradient: pl.DataFrame | None
 
 
-class _Index(BaseModel):
+class _Index(BaseModel, extra="forbid"):
     id: UUID
     experiment_id: UUID
     ensemble_size: int
@@ -86,7 +86,7 @@ class _Index(BaseModel):
     is_improvement: bool | None = None
 
 
-class _Failure(BaseModel):
+class _Failure(BaseModel, extra="forbid"):
     type: RealizationStorageState
     message: str
     time: datetime
