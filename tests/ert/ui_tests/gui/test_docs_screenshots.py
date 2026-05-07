@@ -407,7 +407,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleExperiment, gui)
-    open_storage(gui.ert_config.ens_path, mode="w")
+    open_storage(gui.ert_config.ens_path, mode="r")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
     with ErtServerController.init_service(
@@ -446,7 +446,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleSmoother, gui)
-    open_storage(gui.ert_config.ens_path, mode="w")
+    open_storage(gui.ert_config.ens_path, mode="r")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
     with ErtServerController.init_service(
@@ -502,7 +502,7 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
     gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleSmoother, gui)
-    open_storage(gui.ert_config.ens_path, mode="w")
+    open_storage(gui.ert_config.ens_path, mode="r")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
     with ErtServerController.init_service(

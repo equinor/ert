@@ -318,6 +318,7 @@ class ErtServerController:
                     f"{url}/healthcheck",
                     auth=self.fetch_auth(),
                     verify=con_info["cert"],
+                    timeout=10,
                 )
                 if resp.status_code == 200:
                     logger.info(f"Successfully connected to {url}")
@@ -367,9 +368,18 @@ class ErtServerController:
             timeout=timeout or 120,
             logging_config=logging_config,
         )
-        if obj._thread_that_starts_server_process is not None:
-            obj._thread_that_starts_server_process.start()
-        return ErtServerContext(obj)
+        try:
+            if obj._thread_that_starts_server_process is not None:
+                obj._thread_that_starts_server_process.start()
+            ctx = ErtServerContext(obj)
+            if not obj.wait_until_ready():
+                raise RuntimeError(
+                    f"Storage server failed to become ready for project: {project}"
+                )
+            return ctx
+        except Exception:
+            cls._instance = None
+            raise
 
     def on_connection_info_received_from_server_process(
         self, info: ErtServerConnectionInfo | Exception

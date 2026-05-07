@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import ipaddress
 import json
 import logging
 import logging.config
@@ -78,7 +79,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def _get_host_list() -> list[str]:
-    return list({socket.gethostname(), socket.getfqdn(), get_machine_name()})
+    names = {socket.gethostname(), socket.getfqdn(), get_machine_name()} - {"127.0.0.1"}
+    return ["127.0.0.1"] + list(names)
 
 
 def _create_connection_info(
@@ -129,9 +131,13 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
         ]
     )
     dns_name = get_machine_name()
-    subject_alternative_names = (
-        _get_host_list()
-    )  # Important that this matches potential server url hosts
+    host_list = _get_host_list()
+    sans: list[x509.GeneralName] = []
+    for name in host_list:
+        try:
+            sans.append(x509.IPAddress(ipaddress.ip_address(name)))
+        except ValueError:
+            sans.append(x509.DNSName(name))
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -143,9 +149,7 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
             datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
         )  # 1 year
         .add_extension(
-            x509.SubjectAlternativeName(
-                [x509.DNSName(f"{san_name}") for san_name in subject_alternative_names]
-            ),
+            x509.SubjectAlternativeName(sans),
             critical=False,
         )
         .sign(key, hashes.SHA256(), default_backend())

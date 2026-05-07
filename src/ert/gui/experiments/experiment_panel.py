@@ -7,6 +7,7 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING, Any
 
+import requests
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QAction, QStandardItemModel
@@ -90,6 +91,7 @@ class ExperimentPanel(QWidget):
         )
 
         self._experiment_done: bool = True
+        self._client: ExperimentClient | None = None
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
         self.run_button.setIcon(load_icon("play_circle.svg"))
@@ -286,16 +288,32 @@ class ExperimentPanel(QWidget):
         conn_info: dict[str, Any] = json.loads(
             conn_info_path.read_text(encoding="utf-8")
         )
-        url = conn_info["urls"][0]
         cert_file = conn_info["cert"]
         ssl_context = ssl.create_default_context()
         ssl_context.load_verify_locations(cafile=cert_file)
-        return ExperimentClient(
-            url=f"{url}/experiment_server",
-            cert_file=cert_file,
-            username="__token__",
-            password=conn_info["authtoken"],
-            ssl_context=ssl_context,
+
+        errors: list[str] = []
+        for url in conn_info["urls"]:
+            try:
+                requests.get(
+                    f"{url}/healthcheck",
+                    auth=("__token__", conn_info["authtoken"]),
+                    verify=cert_file,
+                    timeout=5,
+                ).raise_for_status()
+                return ExperimentClient(
+                    url=f"{url}/experiment_server",
+                    cert_file=cert_file,
+                    username="__token__",
+                    password=conn_info["authtoken"],
+                    ssl_context=ssl_context,
+                )
+            except Exception as e:
+                errors.append(f"{url}: {e}")
+
+        raise RuntimeError(
+            f"Cannot connect to storage server at {self.config.ens_path}: "
+            + "; ".join(errors)
         )
 
     def run_experiment(self) -> None:
@@ -305,6 +323,7 @@ class ExperimentPanel(QWidget):
             run_model_config = build_run_model_config(self.config, args)
             config_json = run_model_config.model_dump(mode="json")
             client = self._create_experiment_client()
+            self._client = client
         except Exception as e:
             QApplication.restoreOverrideCursor()
             QMessageBox.warning(

@@ -3,6 +3,7 @@
 - POST /delete_runpaths
 - POST /start_experiment?rerun_from_run_id={run_id}
 - GET  /has_failed_realizations/{run_id}
+- GET  /failed_realizations_mask/{run_id}
 """
 
 from __future__ import annotations
@@ -266,6 +267,54 @@ def test_that_rerun_failed_returns_404_for_unknown_run_id(
     response = experiment_server_client.post(
         f"/experiment_server/{EverEndpoints.start_experiment}",
         params={"rerun_from_run_id": "nonexistent-id"},
+        auth=_AUTH,
+    )
+    assert response.status_code == 404
+
+
+def test_that_failed_realizations_mask_returns_empty_list_when_no_run_model(
+    experiment_server_client,
+):
+    run_id = "run-no-model"
+    state = ExperimentRunnerState(run_model=None)
+    _runs[run_id] = state
+
+    response = experiment_server_client.get(
+        f"/experiment_server/{EverEndpoints.failed_realizations_mask}/{run_id}",
+        auth=_AUTH,
+    )
+    assert response.status_code == 200
+    assert response.json() == {"mask": []}
+
+
+def test_that_failed_realizations_mask_returns_mask_from_run_model(
+    experiment_server_client,
+):
+    mock_run_model = MagicMock()
+    mock_run_model._create_mask_from_failed_realizations.return_value = [
+        True,
+        False,
+        True,
+        False,
+    ]
+
+    run_id = "run-with-model"
+    state = ExperimentRunnerState(run_model=mock_run_model)
+    _runs[run_id] = state
+
+    response = experiment_server_client.get(
+        f"/experiment_server/{EverEndpoints.failed_realizations_mask}/{run_id}",
+        auth=_AUTH,
+    )
+    assert response.status_code == 200
+    assert response.json() == {"mask": [True, False, True, False]}
+
+
+def test_that_failed_realizations_mask_returns_404_for_unknown_run_id(
+    experiment_server_client,
+):
+    response = experiment_server_client.get(
+        f"/experiment_server/{EverEndpoints.failed_realizations_mask}/nonexistent-id",
         auth=_AUTH,
     )
     assert response.status_code == 404

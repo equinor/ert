@@ -37,6 +37,7 @@ from ert.run_models.everest_run_model import EverestExitCode
 from ert.run_models.model_factory import (
     EverestRunModel,
     RunModelConfigs,
+    _get_supports_rerunning,
     _instantiate_run_model,
 )
 from everest.config import EverestConfig
@@ -275,23 +276,25 @@ async def start_experiment(
     runner = ExperimentRunner(config, run_id)
     try:
         background_tasks.add_task(runner.run)
+        supports_rerunning: bool
         if isinstance(config, EverestConfig):
             run_state.config_path = config.config_file
             run_state.run_path = config.output_dir
             run_state.storage_path = str(config.storage_dir)
+            supports_rerunning = False
         else:
             run_state.config_path = config.user_config_file
             run_state.run_path = config.runpath_config.runpath_format_string
             run_state.storage_path = config.storage_path
+            supports_rerunning = _get_supports_rerunning(config)
+        run_state.supports_rerunning_failed_realizations = supports_rerunning
         # Assume client and server is always in the same timezone
         # so disregard timestamps
         run_state.start_time_unix = int(time.time())
         return JSONResponse(
             {
                 "run_id": run_id,
-                "supports_rerunning_failed_realizations": (
-                    run_state.supports_rerunning_failed_realizations
-                ),
+                "supports_rerunning_failed_realizations": supports_rerunning,
             }
         )
     except Exception as e:
@@ -405,6 +408,19 @@ def has_failed_realizations_endpoint(
     return JSONResponse({"has_failed": run.has_failed_realizations})
 
 
+@router.get(f"/{EverEndpoints.failed_realizations_mask}/{{run_id}}")
+def failed_realizations_mask_endpoint(
+    request: Request,
+    run: Annotated[ExperimentRunnerState, Depends(_get_run)],
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+) -> JSONResponse:
+    _log(request)
+    _check_user(credentials)
+    if run.run_model is None:
+        return JSONResponse({"mask": []})
+    return JSONResponse({"mask": run.run_model._create_mask_from_failed_realizations()})
+
+
 @router.websocket(f"/{EverEndpoints.events}/{{run_id}}")
 async def websocket_endpoint(websocket: WebSocket, run_id: str) -> None:
     await websocket.accept()
@@ -467,7 +483,6 @@ class ExperimentRunner:
         try:
             if rerun and run.run_model is not None:
                 run_model = run.run_model
-                # Rewire status_queue so events go to this run's event loop
                 run_model._status_queue = status_queue
             else:
                 assert self._config is not None, (
@@ -487,13 +502,15 @@ class ExperimentRunner:
                 lambda: run_model.start_simulations_thread(
                     EvaluatorServerConfig()
                     if run_model.queue_config.queue_system == QueueSystem.LOCAL
-                    else EvaluatorServerConfig(use_ipc_protocol=False)
+                    else EvaluatorServerConfig(use_ipc_protocol=False),
+                    rerun_failed_realizations=rerun,
                 ),
             )
+            cancelled = False
             while True:
-                if run.status.status == ExperimentState.stopped:
+                if run.status.status == ExperimentState.stopped and not cancelled:
                     run_model.cancel()
-                    raise UserCancelled("Optimization aborted")
+                    cancelled = True
                 try:
                     item: StatusEvents = status_queue.get(block=False)
                 except queue.Empty:
@@ -501,6 +518,10 @@ class ExperimentRunner:
                     continue
 
                 run.events.append(item)
+                if isinstance(item, EndEvent):
+                    # Update has_failed_realizations before subscribers receive EndEvent
+                    # so clients can check it when the event arrives
+                    run.has_failed_realizations = run_model.has_failed_realizations()
                 for sub in run.subscribers.values():
                     sub.notify()
 
@@ -509,21 +530,27 @@ class ExperimentRunner:
                     for sub in list(run.subscribers.values()):
                         await sub.is_done()
                     break
-            await simulation_future
-            if isinstance(run_model, EverestRunModel):
-                assert run_model.exit_code is not None
-                exp_state, msg = _get_optimization_status(
-                    run_model.exit_code, run.events
-                )
-                run_status = ExperimentStatus(
-                    message=msg,
-                    status=exp_state,
-                )
-            else:
-                run_status = ExperimentStatus(
-                    message="Experiment completed.", status=ExperimentState.completed
-                )
-            run.status = run_status
+            try:
+                await simulation_future
+            except Exception:
+                if not cancelled:
+                    raise
+            if not cancelled:
+                if isinstance(run_model, EverestRunModel):
+                    assert run_model.exit_code is not None
+                    exp_state, msg = _get_optimization_status(
+                        run_model.exit_code, run.events
+                    )
+                    run_status = ExperimentStatus(
+                        message=msg,
+                        status=exp_state,
+                    )
+                else:
+                    run_status = ExperimentStatus(
+                        message="Experiment completed.",
+                        status=ExperimentState.completed,
+                    )
+                run.status = run_status
         except UserCancelled as e:
             logging.getLogger(EXPERIMENT_SERVER).info(f"User cancelled: {e}")
         except Exception as e:

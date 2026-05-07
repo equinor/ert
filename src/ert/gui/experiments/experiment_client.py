@@ -50,6 +50,7 @@ class ExperimentClient:
             verify=self._cert,
             auth=(self._username, self._password),
             proxies={"http": None, "https": None},  # type: ignore
+            timeout=(5, 30),
         )
 
     def _http_post(self, endpoint: str) -> requests.Response:
@@ -58,6 +59,7 @@ class ExperimentClient:
             verify=self._cert,
             auth=(self._username, self._password),
             proxies={"http": None, "https": None},  # type: ignore
+            timeout=(5, 30),
         )
 
     def _http_post_json(self, endpoint: str, body: dict[str, Any]) -> requests.Response:
@@ -67,6 +69,7 @@ class ExperimentClient:
             verify=self._cert,
             auth=(self._username, self._password),
             proxies={"http": None, "https": None},  # type: ignore
+            timeout=(5, 30),
         )
 
     @property
@@ -110,6 +113,14 @@ class ExperimentClient:
         )
         response.raise_for_status()
         return bool(response.json().get("has_failed", False))
+
+    def failed_realizations_mask(self) -> list[bool]:
+        assert self._run_id is not None, "No active run"
+        response = self._http_get(
+            f"{EverEndpoints.failed_realizations_mask}/{self._run_id}"
+        )
+        response.raise_for_status()
+        return [bool(v) for v in response.json().get("mask", [])]
 
     def setup_event_queue_from_ws_endpoint(
         self,

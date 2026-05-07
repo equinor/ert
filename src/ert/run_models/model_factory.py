@@ -64,6 +64,7 @@ RunModelConfigs = Annotated[
     | SingleTestRunConfig
     | EnsembleExperimentConfig
     | ManualUpdateConfig
+    | ManualUpdateEnIFConfig
     | EvaluateEnsembleConfig
     | EverestConfig,
     Field(discriminator="type"),
@@ -110,6 +111,26 @@ def build_run_model_config(config: ErtConfig, args: Namespace) -> RunModelConfig
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
+_MODEL_MAP: dict[str, type[RunModel]] = {
+    "single_test_run": SingleTestRun,
+    "ensemble_experiment": EnsembleExperiment,
+    "evaluate_ensemble": EvaluateEnsemble,
+    "ensemble_smoother": EnsembleSmoother,
+    "ensemble_information_filter": EnsembleInformationFilter,
+    "multiple_data_assimilation": MultipleDataAssimilation,
+    "manual_update": ManualUpdate,
+    "manual_update_enif": ManualUpdateEnIF,
+}
+
+
+def _get_supports_rerunning(runmodel_config: RunModelConfigs) -> bool:
+    """Return True if the run model for the given config supports rerunning failed realizations."""
+    model_cls = _MODEL_MAP.get(runmodel_config.type)
+    if model_cls is None:
+        return False
+    return model_cls.supports_rerunning_failed_realizations
+
+
 def _instantiate_run_model(
     runmodel_config: RunModelConfigs,
     status_queue: SimpleQueue[StatusEvents],
@@ -126,17 +147,7 @@ def _instantiate_run_model(
                 runtime_plugins=site_plugins,
             )
 
-    model_map: dict[str, type[RunModel]] = {
-        "single_test_run": SingleTestRun,
-        "ensemble_experiment": EnsembleExperiment,
-        "evaluate_ensemble": EvaluateEnsemble,
-        "ensemble_smoother": EnsembleSmoother,
-        "ensemble_information_filter": EnsembleInformationFilter,
-        "multiple_data_assimilation": MultipleDataAssimilation,
-        "manual_update": ManualUpdate,
-        "manual_update_enif": ManualUpdateEnIF,
-    }
-    model_cls = model_map[runmodel_config.type]
+    model_cls = _MODEL_MAP[runmodel_config.type]
     return model_cls(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
