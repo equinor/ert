@@ -151,7 +151,7 @@
   "target_ensemble": "posterior<ITER>",
   "analysis_settings": {
     "enkf_truncation": 0.98,
-    "inversion": "SUBSPACE",
+    "inversion": "EXACT",
     "localization": false,
     "localization_correlation_threshold": null,
     "distance_localization": false
