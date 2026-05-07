@@ -264,7 +264,6 @@ def runmodel_args(draw, tmp_path_factory):
         num_realizations=draw(st.integers(min_value=1, max_value=n_realizations)),
         runpath_format_string="simulations/realization-<IENS>/iter-<ITER>",
         jobname_format_string="<CONFIG_FILE>-<IENS>",
-        eclbase_format_string="ECLBASE<IENS>",
         gen_kw_export_name="parameters",
     )
 
@@ -447,9 +446,6 @@ surface_configs = st.builds(
 
 field_configs = st.builds(
     Field,
-    nx=st.integers(min_value=1, max_value=100),
-    ny=st.integers(min_value=1, max_value=100),
-    nz=st.integers(min_value=1, max_value=100),
     output_transformation=optional_nonempty_str,
     input_transformation=optional_nonempty_str,
     truncation_min=st.one_of(st.none(), st.floats(min_value=-1e6, max_value=1e6)),
@@ -457,7 +453,6 @@ field_configs = st.builds(
     forward_init_file=realistic_text().map(lambda s: f"{s}.init"),
     output_file=realistic_text().map(lambda s: Path(f"{s}.dat")),
     grid_file=realistic_text().map(lambda s: f"{s}.grid"),
-    mask_file=st.one_of(st.none(), realistic_text().map(lambda s: Path(f"{s}.mask"))),
 )
 
 

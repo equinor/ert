@@ -353,7 +353,6 @@ def test_evaluate_ensemble_paths(
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = ensemble_iteration
     config = ErtConfig(
-        random_seed=1234,
         runpath_config=ModelConfig(num_realizations=1),
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
     )
