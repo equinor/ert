@@ -1,9 +1,13 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
-class PriorConst(BaseModel):
+class PriorBaseModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class PriorConst(PriorBaseModel):
     """
     Constant parameter prior
     """
@@ -12,7 +16,7 @@ class PriorConst(BaseModel):
     value: float
 
 
-class PriorTrig(BaseModel):
+class PriorTrig(PriorBaseModel):
     """
     Triangular distribution parameter prior
     """
@@ -23,7 +27,7 @@ class PriorTrig(BaseModel):
     mode: float
 
 
-class PriorNormal(BaseModel):
+class PriorNormal(PriorBaseModel):
     """
     Normal distribution parameter prior
     """
@@ -33,7 +37,7 @@ class PriorNormal(BaseModel):
     std: float
 
 
-class PriorLogNormal(BaseModel):
+class PriorLogNormal(PriorBaseModel):
     """
     Log-normal distribution parameter prior
     """
@@ -43,7 +47,7 @@ class PriorLogNormal(BaseModel):
     std: float
 
 
-class PriorErtTruncNormal(BaseModel):
+class PriorErtTruncNormal(PriorBaseModel):
     """
     ERT Truncated normal distribution parameter prior
 
@@ -59,7 +63,7 @@ class PriorErtTruncNormal(BaseModel):
     max: float
 
 
-class PriorStdNormal(BaseModel):
+class PriorStdNormal(PriorBaseModel):
     """
     Standard normal distribution parameter prior
 
@@ -69,7 +73,7 @@ class PriorStdNormal(BaseModel):
     function: Literal["stdnormal"] = "stdnormal"
 
 
-class PriorUniform(BaseModel):
+class PriorUniform(PriorBaseModel):
     """
     Uniform distribution parameter prior
     """
@@ -79,7 +83,7 @@ class PriorUniform(BaseModel):
     max: float
 
 
-class PriorErtDUniform(BaseModel):
+class PriorErtDUniform(PriorBaseModel):
     """
     ERT Discrete uniform distribution parameter prior
 
@@ -96,7 +100,7 @@ class PriorErtDUniform(BaseModel):
     max: float
 
 
-class PriorLogUniform(BaseModel):
+class PriorLogUniform(PriorBaseModel):
     """
     Logarithmic uniform distribution parameter prior
     """
@@ -106,7 +110,7 @@ class PriorLogUniform(BaseModel):
     max: float
 
 
-class PriorErtErf(BaseModel):
+class PriorErtErf(PriorBaseModel):
     """
     ERT Error function distribution parameter prior
     """
@@ -118,7 +122,7 @@ class PriorErtErf(BaseModel):
     width: float
 
 
-class PriorErtDErf(BaseModel):
+class PriorErtDErf(PriorBaseModel):
     """
     ERT Discrete error function distribution parameter prior
     """

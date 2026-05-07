@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
 
-class ErtClientConnectionInfo(BaseModel):
+class ErtClientConnectionInfo(BaseModel, extra="forbid"):
     base_url: str
     auth_token: str | None = None
     cert: str | bool = False

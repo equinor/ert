@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from ert.storage.realization_storage_state import RealizationStorageState
 
 
-class _Ensemble(BaseModel):
+class _Ensemble(BaseModel, extra="forbid"):
     size: int
     active_realizations: list[int] = []
 
