@@ -108,8 +108,6 @@ class AdaptiveLocalizationUpdate:
         Function that takes ensemble size and returns the correlation threshold.
     enkf_truncation : float
         Singular value truncation threshold for the smoother.
-    rng : np.random.Generator
-        Random number generator for reproducibility.
     progress_callback : Callable[[AnalysisEvent], None]
         Callback to report progress events.
 
@@ -125,12 +123,10 @@ class AdaptiveLocalizationUpdate:
         self,
         correlation_threshold: Callable[[int], float],
         enkf_truncation: float,
-        rng: np.random.Generator,
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
         self._correlation_threshold_fn = correlation_threshold
         self._enkf_truncation = enkf_truncation
-        self._rng = rng
         self._progress_callback = progress_callback
         self._smoother: AdaptiveESMDA | None = None
         self._num_obs: int = 0
@@ -148,13 +144,14 @@ class AdaptiveLocalizationUpdate:
             covariance=obs_context.observation_errors**2,
             observations=obs_context.observation_values,
             alpha=1,
-            seed=self._rng,
+            seed=None,
         )
 
         self._smoother.prepare_assimilation(
             Y=obs_context.responses,
             truncation=self._enkf_truncation,
             overwrite=False,
+            observation_perturbations=obs_context.observation_perturbations,
         )
 
         self._num_obs = obs_context.num_observations

@@ -422,6 +422,7 @@ def test_that_manual_update_from_migrated_storage_works(
                 posterior_ens,
                 list(experiment.observation_keys),
                 ObservationSettings(),
+                rng=np.random.default_rng(),
             )
 
 

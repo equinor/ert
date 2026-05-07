@@ -538,6 +538,7 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
             posterior,
             prior.experiment.observation_keys,
             ObservationSettings(),
+            rng=np.random.default_rng(),
         )
 
     stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
@@ -557,6 +558,7 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
             posterior,
             prior.experiment.observation_keys,
             ObservationSettings(),
+            rng=np.random.default_rng(),
         )
 
     benchmark(run)

@@ -36,12 +36,10 @@ class DistanceLocalizationUpdate:
     def __init__(
         self,
         enkf_truncation: float,
-        rng: np.random.Generator,
         param_type: type[Field | SurfaceConfig],
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
         self._enkf_truncation = enkf_truncation
-        self._rng = rng
         self._param_type = param_type
         self._progress_callback = progress_callback
         self._obs_loc: ObservationLocations | None = None
@@ -60,17 +58,19 @@ class DistanceLocalizationUpdate:
         responses = obs_context.responses[mask, :]
         obs_values = obs_context.observation_values[mask]
         obs_errors = obs_context.observation_errors[mask]
+        observation_perturbations = obs_context.observation_perturbations[mask, :]
 
         self._smoother = LocalizedESMDA(
             covariance=obs_errors**2,
             observations=obs_values,
             alpha=1,
-            seed=self._rng,
+            seed=None,
         )
         self._smoother.prepare_assimilation(
             Y=responses,
             truncation=self._enkf_truncation,
             overwrite=False,
+            observation_perturbations=observation_perturbations,
         )
 
     def update(

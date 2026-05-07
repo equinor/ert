@@ -103,7 +103,8 @@ def test_update_report(
         posterior_ens,
         experiment.observation_keys,
         ObservationSettings(auto_scale_observations=misfit_preprocess),
-        strategy_map,
+        rng=np.random.default_rng(),
+        strategy_map=strategy_map,
         progress_callback=events.append,
     )
 
@@ -178,7 +179,8 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         posterior_ens,
         experiment.observation_keys,
         update_settings,
-        strategy_map,
+        rng=np.random.default_rng(),
+        strategy_map=strategy_map,
         progress_callback=events.append,
     )
 
@@ -309,6 +311,7 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             posterior,
             experiment.observation_keys,
             ObservationSettings(auto_scale_observations=[["OBS*"]]),
+            rng=np.random.default_rng(),
             progress_callback=events.append,
         )
 
@@ -361,14 +364,14 @@ def test_that_posterior_gen_kw_values_match_expected_on_snake_oil(
         parameters=list(ert_config.ensemble_config.parameters),
         param_configs=prior_ens.experiment.parameter_configuration,
         enkf_truncation=es_settings.enkf_truncation,
-        rng=rng,
     )
     smoother_update(
         prior_ens,
         posterior_ens,
         experiment.observation_keys,
         ObservationSettings(),
-        strategy_map,
+        rng=rng,
+        strategy_map=strategy_map,
     )
 
     sim_gen_kw = list(
@@ -484,7 +487,6 @@ def test_that_alpha_can_be_used_for_outlier_detection(
             parameters=["KEY_1"],
             param_configs=prior_storage.experiment.parameter_configuration,
             enkf_truncation=es_settings.enkf_truncation,
-            rng=rng,
         )
         posterior_update = smoother_update(
             prior_storage,
@@ -493,6 +495,7 @@ def test_that_alpha_can_be_used_for_outlier_detection(
             update_settings=ObservationSettings(
                 outlier_settings=OutlierSettings(alpha=alpha)
             ),
+            rng=rng,
             strategy_map=strategy_map,
         )
         assert posterior_update.alpha == alpha
@@ -527,6 +530,7 @@ def test_update_only_using_subset_observations(
         posterior_ens,
         ["WPR_DIFF_1"],
         ObservationSettings(),
+        rng=np.random.default_rng(),
         progress_callback=events.append,
     )
 
@@ -974,6 +978,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             posterior_ens,
             ["OBSERVATION"],
             ObservationSettings(),
+            rng=np.random.default_rng(),
         )
 
 
@@ -1033,6 +1038,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         posterior_ens,
         ["OBSERVATION"],
         ObservationSettings(),
+        rng=np.random.default_rng(),
         progress_callback=events.append,
     )
 
@@ -1121,6 +1127,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         posterior_ens,
         ["OBSERVATION"],
         ObservationSettings(),
+        rng=np.random.default_rng(),
         active_realizations=active_realizations,
     )
 
@@ -1261,7 +1268,13 @@ def test_that_field_parameter_with_update_false_is_copied_to_posterior(
         name="posterior",
         prior_ensemble=prior,
     )
-    smoother_update(prior, posterior, ["OBSERVATION"], ObservationSettings())
+    smoother_update(
+        prior,
+        posterior,
+        ["OBSERVATION"],
+        ObservationSettings(),
+        rng=np.random.default_rng(),
+    )
 
     for iens in range(ensemble_size):
         xr.testing.assert_equal(

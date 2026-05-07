@@ -377,7 +377,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
                     new_posterior,
                     experiment.observation_keys,
                     ObservationSettings(),
-                    strategy_map,
+                    rng=np.random.default_rng(),
+                    strategy_map=strategy_map,
                 )
 
                 # Note that this used to fail since run time and user warnings were
