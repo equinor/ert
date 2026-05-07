@@ -1,4 +1,3 @@
-import logging
 import os
 import random
 import stat
@@ -74,28 +73,30 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-    run_model = opened_main_window_poly._experiment_panel._model
+    client = experiment_panel._client
+    assert client is not None
     # Check that all realizations failed
-    assert all(run_model._create_mask_from_failed_realizations())
+    assert all(client.failed_realizations_mask())
 
     write_poly_eval(failing_reals=False)
+    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-    assert not any(run_model._create_mask_from_failed_realizations()), (
+    assert not any(client.failed_realizations_mask()), (
         "Not all realizations were successful"
     )
 
 
-def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
+def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
     """This runs an ensemble experiment with some failing realizations, and then
     restarts two times, checking that only the failed realizations are started.
-    Verifies that the number of successful and failed realizations is logged correctly
+    Verifies that the number of successful and failed realizations is correct.
     """
     gui = opened_main_window_poly
-    caplog.set_level(logging.INFO)
 
     def write_poly_eval(failing_reals: set[int]):
         Path("poly_eval.py").write_text(
@@ -151,12 +152,18 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-    def verify_logged_realization_status(realization_count: int, failed_count: int):
-        expected_success = realization_count - failed_count
-        assert f"number of realizations succeeding: {expected_success}" in caplog.text
-        assert f"number of realizations failing: {failed_count}" in caplog.text
+    def verify_realization_status(expected_failed_count: int, mask: list[bool]) -> None:
+        actual_failed = sum(mask)
+        assert actual_failed == expected_failed_count, (
+            f"Expected {expected_failed_count} failed realizations, got {actual_failed}"
+        )
 
-    verify_logged_realization_status(num_reals, len(failing_reals_first_try))
+    client = experiment_panel._client
+    assert client is not None
+
+    verify_realization_status(
+        len(failing_reals_first_try), client.failed_realizations_mask()
+    )
 
     # Assert that the number of boxes in the detailed view is
     # equal to the number of realizations
@@ -168,12 +175,11 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
         list_model.rowCount() == experiment_panel.config.runpath_config.num_realizations
     )
 
-    run_model = opened_main_window_poly._experiment_panel._model
     # Check we have failed realizations
-    assert any(run_model._create_mask_from_failed_realizations())
+    assert any(client.failed_realizations_mask())
     failed_realizations = [
         i
-        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
+        for i, mask in enumerate(client.failed_realizations_mask())
         if mask
     ]
 
@@ -181,13 +187,15 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
 
     failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 3)}
     write_poly_eval(failing_reals=failing_reals_second_try)
+    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-    verify_logged_realization_status(
-        len(failing_reals_first_try), len(failing_reals_second_try)
+    verify_realization_status(
+        len(failing_reals_second_try), client.failed_realizations_mask()
     )
 
     # We expect to have the same amount of realizations in list_model
@@ -201,10 +209,10 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     )
 
     # Second restart
-    assert any(run_model._create_mask_from_failed_realizations())
+    assert any(client.failed_realizations_mask())
     failed_realizations = [
         i
-        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
+        for i, mask in enumerate(client.failed_realizations_mask())
         if mask
     ]
     assert set(failed_realizations) == (
@@ -213,13 +221,15 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
 
     failing_reals_third_try = {*random.sample(list(failing_reals_second_try), 2)}
     write_poly_eval(failing_reals=failing_reals_third_try)
+    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-    verify_logged_realization_status(
-        len(failing_reals_second_try), len(failing_reals_third_try)
+    verify_realization_status(
+        len(failing_reals_third_try), client.failed_realizations_mask()
     )
 
     # We expect to have the same amount of realizations in list_model
@@ -324,12 +334,13 @@ def test_rerun_failed_realizations_evaluate_ensemble(
         list_model.rowCount() == experiment_panel.config.runpath_config.num_realizations
     )
 
-    run_model = gui._experiment_panel._model
+    client = experiment_panel._client
+    assert client is not None
     # Check we have failed realizations
-    assert any(run_model._create_mask_from_failed_realizations())
+    assert any(client.failed_realizations_mask())
     failed_realizations = [
         i
-        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
+        for i, mask in enumerate(client.failed_realizations_mask())
         if mask
     ]
 
@@ -337,7 +348,9 @@ def test_rerun_failed_realizations_evaluate_ensemble(
 
     failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 5)}
     write_poly_eval(failing_reals=failing_reals_second_try)
+    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
@@ -353,10 +366,10 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     )
 
     # Second restart
-    assert any(run_model._create_mask_from_failed_realizations())
+    assert any(client.failed_realizations_mask())
     failed_realizations = [
         i
-        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
+        for i, mask in enumerate(client.failed_realizations_mask())
         if mask
     ]
     assert set(failed_realizations) == failing_reals_second_try
