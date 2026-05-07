@@ -287,7 +287,6 @@ def test_plot_api_big_summary_memory_usage(
         experiment_config={
             "response_configuration": [
                 SummaryConfig(
-                    name="summary",
                     input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
                     keys=keys_df,
                 ).model_dump(mode="json")
