@@ -14,7 +14,7 @@ class InvalidResponseFile(Exception):
     """
 
 
-class BaseResponseConfig(BaseModel):
+class BaseResponseConfig(BaseModel, extra="forbid"):
     type: str
 
     @property
