@@ -2,7 +2,7 @@ import os
 from textwrap import dedent
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -16,7 +16,7 @@ from everest.strings import SESSION_DIR
 from .simulator_config import check_removed_config
 
 
-class ServerConfig(BaseModel):
+class ServerConfig(BaseModel, extra="forbid"):
     queue_system: (
         LocalQueueOptions
         | LsfQueueOptions
@@ -40,9 +40,6 @@ class ServerConfig(BaseModel):
             """
         ),
         discriminator="name",
-    )
-    model_config = ConfigDict(
-        extra="forbid",
     )
 
     @model_validator(mode="before")

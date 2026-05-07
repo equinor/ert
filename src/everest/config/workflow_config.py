@@ -1,9 +1,9 @@
 from textwrap import dedent
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
-class WorkflowConfig(BaseModel):
+class WorkflowConfig(BaseModel, extra="forbid"):
     pre_simulation: list[str] = Field(
         default_factory=list,
         description=dedent(
@@ -25,8 +25,4 @@ class WorkflowConfig(BaseModel):
             job options.
             """
         ),
-    )
-
-    model_config = ConfigDict(
-        extra="forbid",
     )

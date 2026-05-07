@@ -7,7 +7,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ert.config.forward_model_step import (
     SiteOrUserForwardModelStep,
@@ -40,7 +40,7 @@ def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
     return is_dir[0]
 
 
-class InstallDataConfig(BaseModel):
+class InstallDataConfig(BaseModel, extra="forbid"):
     source: str | None = Field(
         default=None,
         description=dedent(
@@ -80,10 +80,6 @@ class InstallDataConfig(BaseModel):
             If `data` is provided, `link` will be ignored.
             """
         ),
-    )
-
-    model_config = ConfigDict(
-        extra="forbid",
     )
 
     @field_validator("link", mode="before")

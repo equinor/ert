@@ -9,7 +9,7 @@ from typing import (
     TypeAlias,
 )
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BaseModel, Field, model_validator
 from ropt.enums import VariableType
 
 from ert.config import ConfigWarning, EverestControl, SamplerConfig
@@ -44,7 +44,7 @@ def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
     return variables
 
 
-class ControlConfig(BaseModel):
+class ControlConfig(BaseModel, extra="forbid"):
     name: Annotated[
         str,
         AfterValidator(no_dots_in_string),
@@ -329,10 +329,6 @@ class ControlConfig(BaseModel):
                 formatted_names.append(f"{self.name}.{variable.name}")
 
         return formatted_names
-
-    model_config = ConfigDict(
-        extra="forbid",
-    )
 
     def to_ert_parameter_config(self) -> list[EverestControl]:
         """Convert this control group to a list of EverestControl objects.
