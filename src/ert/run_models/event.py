@@ -33,7 +33,7 @@ class RunModelStatusEvent(RunModelEvent):
     detail: bool = False
 
 
-class EverestStatusEvent(BaseModel):
+class EverestStatusEvent(BaseModel, extra="forbid"):
     batch: int | None
     event_type: Literal["EverestStatusEvent"] = "EverestStatusEvent"
     everest_event: Literal[
@@ -42,7 +42,7 @@ class EverestStatusEvent(BaseModel):
     ]
 
 
-class EverestBatchResultEvent(BaseModel):
+class EverestBatchResultEvent(BaseModel, extra="forbid"):
     batch: int
     event_type: Literal["EverestBatchResultEvent"] = "EverestBatchResultEvent"
     everest_event: Literal["OPTIMIZATION_RESULT",]
@@ -89,7 +89,7 @@ class RunModelErrorEvent(RunModelEvent):
             self.data.to_csv("Report", output_path / str(self.run_id))
 
 
-class RunPathCreationEvent(BaseModel):
+class RunPathCreationEvent(BaseModel, extra="forbid"):
     pass
 
 
