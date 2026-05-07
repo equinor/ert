@@ -2,6 +2,7 @@ import fileinput
 import shutil
 from pathlib import Path
 
+import numpy as np
 import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
@@ -73,6 +74,27 @@ def remove_responses_in_realization0(gui, indices_to_drop):
 
     assert len(df) == 10, "test setup is expected to have 10 responses"
     df = df.filter(~pl.Series(range(len(df))).is_in(indices_to_drop))
+    df.write_parquet(realization0_response_file_path)
+
+    gui.notifier.emitErtChange()
+
+
+def change_responses_in_realization0(gui, indices_to_change):
+    """Changes report_step to new value for rows in indices_to_change."""
+    ensemble_path = gui.notifier.storage._ensemble_path(
+        next(iter(gui.notifier.storage._ensembles.keys()))
+    )
+
+    realization0_response_file_path = ensemble_path / "realization-0/gen_data.parquet"
+    df = pl.read_parquet(realization0_response_file_path)
+    assert len(df) == 10, "test setup is expected to have 10 responses"
+
+    df = df.with_columns(
+        pl.when(pl.Series(range(len(df))).is_in(indices_to_change))
+        .then(666)
+        .otherwise(pl.col("report_step"))
+        .alias("report_step")
+    )
     df.write_parquet(realization0_response_file_path)
 
     gui.notifier.emitErtChange()
@@ -220,16 +242,69 @@ def test_that_report_table_is_displayed_on_missing_responses(
 
     update_log_table = update_widget._tab_widget.widget(1).findChild(UpdateLogTable)
 
+    response_mean_index = update_log_table.data.header.index("response_mean")
     status_index = update_log_table.data.header.index("status")
     missing_realizations_index = update_log_table.data.header.index(
         "missing_realizations"
     )
 
     expected_disabled_observations = [2, 4]
-    for index, row in enumerate(update_log_table.data.data):
-        if index in expected_disabled_observations:
-            assert row[status_index] == "nan", f"at row {index}"
-            assert row[missing_realizations_index] == "0"
+    for obs_index, row in enumerate(update_log_table.data.data):
+        if obs_index in expected_disabled_observations:
+            assert row[status_index] == "nan", f"at row {obs_index}"
+            assert row[response_mean_index] is not None, f"at row {obs_index}"
+            response_index = obs_index * 2
+            msg = (
+                "0: no response matched observation data: "
+                f"response_key=POLY_RES, report_step=0, index={response_index}"
+            )
+            assert row[missing_realizations_index] == msg
         else:
-            assert row[status_index] == "Active", f"at row {index}"
+            assert row[status_index] == "Active", f"at row {obs_index}"
+            assert row[response_mean_index] is not None, f"at row {obs_index}"
             assert not row[missing_realizations_index]
+
+
+@pytest.fixture(
+    params=[range(10), range(8)],
+    ids=[
+        "all responses mismatched observation in realization 0",
+        "one response has a match in observation in realization 0",
+    ],
+)
+def poly_case_with_changed_response_on_match_key(
+    source_root, tmp_path, run_experiment, request
+):
+    """
+    Sets up a poly case with all responses changed on match key in realization 0.
+    """
+    _new_poly_example(source_root, tmp_path, 2)
+    config_path = tmp_path / "poly.ert"
+    # ensures observations are not disabled due to unlucky responses
+    with Path(config_path).open("a", encoding="utf-8") as f:
+        f.write("\nRANDOM_SEED 1234\n")
+
+    with open_gui_with_config(config_path) as gui:
+        run_experiment(EnsembleExperiment, gui)
+        change_responses_in_realization0(gui, indices_to_change=request.param)
+        yield gui
+
+
+def test_that_response_mean_is_calculated_on_mismatched_responses(
+    qtbot, poly_case_with_changed_response_on_match_key, run_experiment, request
+):
+    gui = poly_case_with_changed_response_on_match_key
+    run_experiment(ManualUpdate, gui, check_realizations=False)
+
+    run_dialog = gui.findChildren(RunDialog)[-1]
+    update_widget = run_dialog.findChild(UpdateWidget)
+    update_log_table = update_widget._tab_widget.widget(1).findChild(UpdateLogTable)
+    response_mean_index = update_log_table.data.header.index("response_mean")
+
+    case = request.node.callspec.id
+    if case == "all responses mismatched observation in realization 0":
+        for obs_index, row in enumerate(update_log_table.data.data):
+            assert np.isnan(row[response_mean_index]), f"at row {obs_index}"
+    else:
+        for obs_index, row in enumerate(update_log_table.data.data):
+            assert not np.isnan(row[response_mean_index]), f"at row {obs_index}"
