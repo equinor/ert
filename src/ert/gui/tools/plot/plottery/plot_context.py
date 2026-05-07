@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import StrEnum, auto
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
@@ -8,6 +9,12 @@ if TYPE_CHECKING:
     from ert.gui.tools.plot.plot_api import EnsembleObject
 
     from .plot_config import PlotConfig
+
+
+class PlotType(StrEnum):
+    LINE = auto()
+    BAR = auto()
+    SCATTER = auto()
 
 
 class PlotContext:
@@ -24,9 +31,6 @@ class PlotContext:
         DENSITY_AXIS,
         INDEX_AXIS,
         VALUE_AXIS,
-    ]
-    PLOT_TYPES: ClassVar[list[str]] = [
-        "BAR",
     ]
 
     def __init__(
@@ -51,7 +55,7 @@ class PlotContext:
         self._log_scale = False
         self._extended_plot_information = False
 
-        self._plot_type: str | None = None
+        self._plot_type: PlotType | None = None
 
     @property
     def flip_response_axis(self) -> bool:
@@ -116,15 +120,11 @@ class PlotContext:
         self._y_axis = value
 
     @property
-    def plot_type(self) -> str | None:
+    def plot_type(self) -> PlotType | None:
         return self._plot_type
 
     @plot_type.setter
-    def plot_type(self, value: str) -> None:
-        if value not in PlotContext.PLOT_TYPES:
-            raise UserWarning(
-                f"Plot type: '{value}' is not one of: {PlotContext.PLOT_TYPES}"
-            )
+    def plot_type(self, value: PlotType) -> None:
         self._plot_type = value
 
     def setXLabel(self, value: str) -> None:
