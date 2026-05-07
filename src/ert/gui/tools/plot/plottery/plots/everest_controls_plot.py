@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.utils import LEGEND_THRESHOLD
 
 from .plot_tools import PlotTools
@@ -54,6 +55,7 @@ class EverestControlsPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
+        plot_context.plot_type = PlotType.LINE
         plot_context.deactivate_date_support()
 
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
@@ -63,6 +65,8 @@ class EverestControlsPlot:
 
         combined = pd.concat(all_dfs, ignore_index=True)
 
+        tooltip_data = []
+        tooltip_labels = []
         n_colors = config.get_number_of_colors()
         for i, control in (
             enumerate(self.selected_controls) if self.selected_controls else []
@@ -87,6 +91,8 @@ class EverestControlsPlot:
                 color=color,
                 markersize=4,
             )
+            tooltip_data.append(lines)
+            tooltip_labels.append(control)
             if len(self.selected_controls) <= LEGEND_THRESHOLD:
                 config.add_legend_item(control, lines[0])
             if len(control) <= 20:
@@ -102,6 +108,16 @@ class EverestControlsPlot:
 
         # Conversion to integer ticks for batch_id (number of batches)
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        PlotTools.labels_on_hover(
+            axes,
+            plot_context,
+            figure,
+            data=tooltip_data,
+            labels=tooltip_labels,
+            disable_values=True,
+            hover_color=config.next_color()[0],
+        )
 
         PlotTools.finalizePlot(
             plot_context,
