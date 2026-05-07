@@ -31,7 +31,7 @@ MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD = 200 * 1000**3  # 200 GB
 # and used space in percentage is greater than FULL_DISK_PERCENTAGE_THRESHOLD
 
 
-class ModelConfig(BaseModel):
+class ModelConfig(BaseModel, extra="forbid"):
     num_realizations: int = 1
     runpath_format_string: str = DEFAULT_RUNPATH
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT

@@ -5,7 +5,7 @@ import polars as pl
 from pydantic import BaseModel, Field
 
 
-class DerivedResponseConfig(BaseModel):
+class DerivedResponseConfig(BaseModel, extra="forbid"):
     type: str
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False

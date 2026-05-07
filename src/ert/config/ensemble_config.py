@@ -21,7 +21,7 @@ from .surface_config import SurfaceConfig
 logger = logging.getLogger(__name__)
 
 
-class EnsembleConfig(BaseModel):
+class EnsembleConfig(BaseModel, extra="forbid"):
     response_configs: dict[str, KnownErtResponseTypes] = Field(default_factory=dict)
     derived_response_configs: dict[str, KnownDerivedResponseTypes] = Field(
         default_factory=dict

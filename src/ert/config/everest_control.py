@@ -11,7 +11,7 @@ import networkx as nx
 import numpy as np
 import polars as pl
 import xarray as xr
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 from ropt.workflow import find_sampler_plugin
 
 from .parameter_config import ParameterCardinality, ParameterConfig
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     MutableDataType = MutableMapping[str, Number | MutableMapping[str, Number]]
 
 
-class SamplerConfig(BaseModel):
+class SamplerConfig(BaseModel, extra="forbid"):
     backend: str | None = Field(
         default=None,
         description=dedent(
@@ -86,7 +86,6 @@ class SamplerConfig(BaseModel):
             """
         ),
     )
-    model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
     def validate_backend_and_method(self) -> Self:

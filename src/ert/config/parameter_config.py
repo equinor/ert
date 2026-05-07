@@ -39,7 +39,7 @@ class ParameterCardinality(StrEnum):
     one_config_per_realization_dataset = auto()
 
 
-class ParameterConfig(BaseModel):
+class ParameterConfig(BaseModel, extra="forbid"):
     type: str
     name: str
     forward_init: bool
