@@ -102,7 +102,6 @@ def create_dummy_field(nx, ny, nz, mask):
         forward_init_file="no_nees",
         output_file="no_nees",
         grid_file="no_nees",
-        mask_file=Path("grid_mask.npy"),
     )
 
 
