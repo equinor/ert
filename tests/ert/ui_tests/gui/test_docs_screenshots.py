@@ -227,7 +227,7 @@ class GuiEvaluator:
                 tmp_img_storage = (
                     Path("/tmp/test_docs_screenshots") / self.example_folder
                 )
-                tmp_img_storage.mkdir(exist_ok=True)
+                tmp_img_storage.mkdir(exist_ok=True, parents=True)
                 full_image_path = tmp_img_storage / name
 
             shutil.copy(temp_image_path, full_image_path)
