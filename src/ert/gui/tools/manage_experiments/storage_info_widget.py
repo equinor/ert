@@ -29,8 +29,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert import LibresFacade
-from ert.config.derived_response_config import DerivedResponseConfig
-from ert.config.response_config import ResponseConfig
+from ert.config.response_config import BaseResponseConfig
 from ert.config.rft_config import RFTConfig
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 from ert.warnings import capture_specific_warning
@@ -142,7 +141,7 @@ class _ObservationTreeWidgetItem(QTreeWidgetItem):
         parent: QTreeWidgetItem,
         observation_key: str,
         observation_data: pl.DataFrame,
-        response_config: ResponseConfig | DerivedResponseConfig,
+        response_config: BaseResponseConfig,
     ) -> None:
         assert len(observation_data) == 1
         self.observation_key = observation_key

@@ -18,7 +18,6 @@ from surfio import IrapSurface
 from typing_extensions import TypedDict
 
 from ert.config import (
-    DerivedResponseConfig,
     EverestConstraintsConfig,
     EverestControl,
     EverestObjectivesConfig,
@@ -33,6 +32,7 @@ from ert.config import (
 from ert.config import Field as FieldConfig
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import Observation
+from ert.config.response_config import DerivedResponseConfig
 
 from .mode import BaseMode, Mode, require_write
 

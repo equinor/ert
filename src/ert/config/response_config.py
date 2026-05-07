@@ -14,27 +14,8 @@ class InvalidResponseFile(Exception):
     """
 
 
-class ResponseConfig(BaseModel):
+class BaseResponseConfig(BaseModel):
     type: str
-    input_files: list[str] = Field(default_factory=list)
-    keys: list[str] = Field(default_factory=list)
-    has_finalized_keys: bool = False
-
-    @abstractmethod
-    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
-        """Reads the data for the response from run_path.
-
-        Raises:
-            FileNotFoundError: when one of the input_files for the
-                response is missing.
-            InvalidResponseFile: when one of the input_files is
-                invalid
-        """
-
-    @property
-    @abstractmethod
-    def expected_input_files(self) -> list[str]:
-        """Returns a list of filenames expected to be produced by the forward model"""
 
     @property
     @abstractmethod
@@ -61,13 +42,6 @@ class ResponseConfig(BaseModel):
         )
 
     @classmethod
-    @abstractmethod
-    def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
-        """Creates a config, given an ert config dict.
-        A response config may depend on several config kws, such as REFCASE
-        for summary."""
-
-    @classmethod
     def display_column(cls, value: Any, column_name: str) -> str:
         """Formats a value to a user-friendly displayable format."""
         return str(value)
@@ -76,3 +50,54 @@ class ResponseConfig(BaseModel):
     def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
         """Optional filters for this response."""
         return None
+
+    @abstractmethod
+    def are_keys_finalized(self) -> bool:
+        """
+        True if keys are finalized, False otherwise (for example, keys were declared
+        with wildcard and have not been resolved yet).
+        """
+
+
+class ResponseConfig(BaseResponseConfig):
+    input_files: list[str] = Field(default_factory=list)
+    keys: list[str] = Field(default_factory=list)
+    has_finalized_keys: bool = False
+
+    @abstractmethod
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
+        """Reads the data for the response from run_path.
+
+        Raises:
+            FileNotFoundError: when one of the input_files for the
+                response is missing.
+            InvalidResponseFile: when one of the input_files is
+                invalid
+        """
+
+    @property
+    @abstractmethod
+    def expected_input_files(self) -> list[str]:
+        """Returns a list of filenames expected to be produced by the forward model"""
+
+    @classmethod
+    @abstractmethod
+    def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
+        """Creates a config, given an ert config dict.
+        A response config may depend on several config kws, such as REFCASE
+        for summary."""
+
+    def are_keys_finalized(self) -> bool:
+        return self.has_finalized_keys
+
+
+class DerivedResponseConfig(BaseResponseConfig):
+    keys: list[str] = Field(default_factory=list)
+    has_finalized_keys: bool = False
+
+    @abstractmethod
+    def derive_from_storage(self, iter_: int, real: int, ensemble: Any) -> pl.DataFrame:
+        """Derives response DataFrame from existing files in storage"""
+
+    def are_keys_finalized(self) -> bool:
+        return self.has_finalized_keys

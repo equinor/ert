@@ -7,7 +7,7 @@ import polars as pl
 from polars import Float32
 from pydantic import Field
 
-from .derived_response_config import DerivedResponseConfig
+from .response_config import DerivedResponseConfig
 
 
 class BreakthroughConfig(DerivedResponseConfig):
@@ -70,7 +70,8 @@ class BreakthroughConfig(DerivedResponseConfig):
     def match_key(self) -> list[str]:
         return ["threshold"]
 
-    def display_column(self, value: Any, column_name: str) -> str:
+    @classmethod
+    def display_column(cls, value: Any, column_name: str) -> str:
         if column_name == "time":
             return value.strftime("%Y-%m-%d")
 
