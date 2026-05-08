@@ -60,6 +60,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             prior.iteration,
             prior.id,
         )
+
         strategy_map = build_strategy_map(
             parameters=prior.experiment.update_parameters,
             param_configs=prior.experiment.parameter_configuration,

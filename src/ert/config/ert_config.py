@@ -1191,7 +1191,7 @@ class ErtConfig(BaseModel):
                     ]
                     param_config.update_strategy = strategy
                 else:
-                    strategy = param_config.update_strategy = "GLOBAL"
+                    param_config.update_strategy = "GLOBAL"
 
         zonemap = config_dict.get(ConfigKeys.ZONEMAP)
         if zonemap:

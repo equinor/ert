@@ -112,6 +112,15 @@ class AnalysisConfig:
         parameter_strategies: dict[str, StrategyName] = {}
 
         for module_name, var_name, value in analysis_set_var:
+            if var_name == "DISTANCE_LOCALIZATION" and value.upper() == "TRUE":
+                parameter_strategies["FIELD"] = "DISTANCE"
+                parameter_strategies["SURFACE"] = "DISTANCE"
+
+            if var_name == "LOCALIZATION" and value.upper() == "TRUE":
+                parameter_strategies["FIELD"] = "ADAPTIVE"
+                parameter_strategies["SURFACE"] = "ADAPTIVE"
+                parameter_strategies["GEN_KW"] = "ADAPTIVE"
+
             if module_name == "PARAMETERS":
                 parameter_type = var_name
                 strategy_name = value
