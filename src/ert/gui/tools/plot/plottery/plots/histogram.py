@@ -188,9 +188,6 @@ def _plotHistogram(
     if minimum is not None and maximum is not None:
         # Ensure we have at least 2 bin edges to create 1 bin
         effective_bin_count = max(bin_count + 1, 2)
-        if minimum == maximum:
-            minimum -= 0.5
-            maximum += 0.5
         if use_log_scale:
             bins = _histogramLogBins(effective_bin_count, minimum, maximum)  # type: ignore
             axes.set_xscale("log")
