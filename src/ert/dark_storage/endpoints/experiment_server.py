@@ -509,7 +509,11 @@ class ExperimentRunner:
                     for sub in list(run.subscribers.values()):
                         await sub.is_done()
                     break
-            await simulation_future
+            try:
+                await simulation_future
+            except Exception:
+                if not cancelled:
+                    raise
             if not cancelled:
                 if isinstance(run_model, EverestRunModel):
                     assert run_model.exit_code is not None
