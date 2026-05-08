@@ -1,4 +1,3 @@
-import os
 import shutil
 from enum import StrEnum
 from pathlib import Path
@@ -182,14 +181,6 @@ def run_experiment(
         )
 
 
-# Checks if the current Python script is running within a GitHub Actions environment.
-IS_RUNNING_IN_GITHUB_ACTIONS = (
-    os.getenv("CI") == "true" and os.getenv("GITHUB_ACTIONS") == "true"
-)
-
-CI_CMP_PREFIX = "ci_cmp_"
-
-
 class GuiEvaluator:
     def __init__(
         self, source_root: Path, example_folder: str, gui: QWidget, qtbot
@@ -204,33 +195,23 @@ class GuiEvaluator:
         temp_image_path: Path = self.qtbot.screenshot(self.gui)
         new_img: np.ndarray = io.imread(temp_image_path, as_gray=True)
 
-        name = (
-            f"{CI_CMP_PREFIX}{img_name}" if IS_RUNNING_IN_GITHUB_ACTIONS else img_name
-        )
-
-        image_path = self.example_folder / name
-        full_image_path = self.source_root / image_path
+        image_path = self.example_folder / img_name
+        baseline_path = self.source_root / image_path
 
         # The ssim_score is a decimal value between -1 and 1, where:
         #   1 indicates perfect similarity,
         #   0 indicates no similarity,
         #   and -1 indicates perfect anti-correlation.
         ssim_score = (
-            self._get_ssim_score(new_img, io.imread(full_image_path, as_gray=True))
-            if full_image_path.is_file()
+            self._get_ssim_score(new_img, io.imread(baseline_path, as_gray=True))
+            if baseline_path.is_file()
             else 0
         )
 
         if ssim_score < threshold:
-            if IS_RUNNING_IN_GITHUB_ACTIONS:
-                # Copy the new image in temp storage for screenshot artifact-upload
-                tmp_img_storage = (
-                    Path("/tmp/test_docs_screenshots") / self.example_folder
-                )
-                tmp_img_storage.mkdir(exist_ok=True, parents=True)
-                full_image_path = tmp_img_storage / name
-
-            shutil.copy(temp_image_path, full_image_path)
+            tmp_img_storage = Path("/tmp/test_docs_screenshots") / self.example_folder
+            tmp_img_storage.mkdir(exist_ok=True, parents=True)
+            shutil.copy(temp_image_path, tmp_img_storage / img_name)
             self.gui_changed.append(
                 f"{image_path} SSIM:{ssim_score} < Threshold:{threshold}"
             )
@@ -254,17 +235,15 @@ class GuiEvaluator:
         newline = "\n            - "
         return dedent(
             f"""
-            One or more auto generated images differed from the image used in the docs
+            One or more auto-generated images differed from the baseline:
 
-            The image(s):
             - {newline.join(self.gui_changed)}
-            {
-                "has been added to the test-images artifact."
-                if IS_RUNNING_IN_GITHUB_ACTIONS
-                else "has been overwritten with the new version."
-            }
-            If the new and old image looks the same and both are correct, the test might
-            simply need to lower the similarity threshold.
+
+            If the new and old image(s) look the same and both are correct, the test
+            might simply need to lower the similarity threshold.
+
+            NB: Only update the repository with images that are generated in CI for
+            platform consistency. Use the artifact from Github actions.
 
             If the updated image reflects an intended gui change it should be kept.
             If the updated image seems incorrect the underlying code generating
@@ -542,11 +521,6 @@ def test_that_all_png_files_under_the_docs_folder_has_been_considered_for_testin
         - set(PNGS_TESTED_FOR_CHANGE)
         - set(TODOS)
     )
-    uncategorized_png_files = {
-        file_path
-        for file_path in uncategorized_png_files
-        if not Path(file_path).name.startswith(CI_CMP_PREFIX)
-    }
 
     newline = "\n  - "
     assert not uncategorized_png_files, (
