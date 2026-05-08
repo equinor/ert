@@ -1753,7 +1753,7 @@ parameters will use distance-based localization during the update step.
 .. note::
 
         The update strategy set with ``ANALYSIS_SET_VAR PARAMETERS`` acts as a default for all parameters of that type.
-        However, individual parameters can override this and disable updates by setting ``UPDATE:FALSE``.
+        You can still turn off update for individual parameters by setting ``UPDATE:FALSE``.
 
         *Example:*
 
