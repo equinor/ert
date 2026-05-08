@@ -403,15 +403,20 @@ class PlotWindow(QMainWindow):
                     elif result is not None:
                         ensemble_to_data_map[ensemble] = result
 
-            negative_values_in_data = False
+            log_scale_valid_values = True
             if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
                 for data in ensemble_to_data_map.values():
                     numeric = data.select_dtypes(include=["number"])
-                    if not numeric.empty and numeric.le(0).any().any():
-                        negative_values_in_data = True
+                    # Need non-unique check to disable log scale for
+                    # single realization runs, even though the
+                    # distribution is not set as CONSTANT
+                    if not numeric.empty and (
+                        numeric.le(0).any().any() or numeric.nunique().le(1).all()
+                    ):
+                        log_scale_valid_values = False
                         break
 
-            plot_widget._negative_values_in_data = negative_values_in_data
+            plot_widget._log_scale_valid_values = log_scale_valid_values
             observations = pd.DataFrame()
             if key_def.observations and selected_ensembles:
                 try:

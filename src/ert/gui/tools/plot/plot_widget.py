@@ -182,9 +182,7 @@ class PlotWidget(QWidget):
         vbox.addSpacing(8)
         self.setLayout(vbox)
 
-        self._negative_values_in_data = False
-        self._dirty = True
-        self._active = False
+        self._log_scale_valid_values = True
         self.resetPlot()
 
     @property
@@ -202,7 +200,7 @@ class PlotWidget(QWidget):
                 "DistributionPlot",
                 "GaussianKDEPlot",
             }
-            and self._negative_values_in_data is False
+            and self._log_scale_valid_values
         ):
             if key_def is not None:
                 a = key_def.parameter
@@ -238,7 +236,7 @@ class PlotWidget(QWidget):
             plot_context.log_scale = (
                 self._log_checkbox.isVisible()
                 and self._log_checkbox.isChecked()
-                and self._negative_values_in_data is False
+                and self._log_scale_valid_values
             )
 
             self._plotter.plot(
