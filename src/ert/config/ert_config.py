@@ -130,6 +130,7 @@ def create_forward_model_json(
     context: dict[str, str],
     forward_model_steps: list[SiteOrUserForwardModelStep],
     run_id: str | None,
+    *,
     iens: int = 0,
     itr: int = 0,
     user_config_file: str | None = "",

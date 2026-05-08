@@ -37,6 +37,7 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
+        *,
         rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()

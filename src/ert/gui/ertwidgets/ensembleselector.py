@@ -40,6 +40,7 @@ class EnsembleSelector(QComboBox):
     def __init__(
         self,
         notifier: ErtNotifier,
+        *,
         update_ert: bool = True,
         filters: Iterable[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = (),
     ) -> None:

@@ -62,6 +62,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         self,
         canvas: FigureCanvas,
         parent: QWidget | None,
+        *,
         coordinates: bool = True,
     ) -> None:
         super().__init__(canvas, parent, coordinates)  # type: ignore

@@ -821,7 +821,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     gui = opened_main_window_poly
 
     def find_and_click_button(
-        button_name: str, should_click: bool, expected_enabled_state: bool
+        button_name: str, *, should_click: bool, expected_enabled_state: bool
     ):
         button = gui.findChild(SidebarToolButton, button_name)
         assert button
@@ -829,7 +829,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         if should_click:
             qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
-    def find_and_check_selected(button_name: str, expected_selected_state: bool):
+    def find_and_check_selected(button_name: str, *, expected_selected_state: bool):
         button = gui.findChild(SidebarToolButton, button_name)
         assert button
         assert button.isChecked() == expected_selected_state
@@ -847,18 +847,26 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         qtbot.wait_until(lambda: dialog.is_experiment_done() is True, timeout=15000)
 
     # not clickable since no simulations started yet
-    find_and_click_button("button_Experiment_status", False, False)
-    find_and_click_button("button_Start_experiment", True, True)
+    find_and_click_button(
+        "button_Experiment_status", should_click=False, expected_enabled_state=False
+    )
+    find_and_click_button(
+        "button_Start_experiment", should_click=True, expected_enabled_state=True
+    )
 
     run_experiment()
     wait_for_simulation_completed()
 
     # just toggle to see if next button yields intended change
-    find_and_click_button("button_Start_experiment", True, True)
+    find_and_click_button(
+        "button_Start_experiment", should_click=True, expected_enabled_state=True
+    )
     experiments_panel = wait_for_child(gui, qtbot, ExperimentPanel)
     qtbot.wait_until(lambda: not experiments_panel.isHidden(), timeout=5000)
 
-    find_and_click_button("button_Experiment_status", True, True)
+    find_and_click_button(
+        "button_Experiment_status", should_click=True, expected_enabled_state=True
+    )
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.wait_until(lambda: not run_dialog.isHidden(), timeout=5000)
 
@@ -868,24 +876,34 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     )
     assert button_simulation_status.menu() is None
 
-    find_and_click_button("button_Start_experiment", True, True)
-    QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
+    find_and_click_button(
+        "button_Start_experiment", should_click=True, expected_enabled_state=True
+    )
+    QTimer.singleShot(
+        500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+    )
     run_experiment()
     wait_for_simulation_completed()
 
     # verify menu available
     assert len(button_simulation_status.menu().actions()) == 2
 
-    find_and_click_button("button_Start_experiment", True, True)
-    QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
+    find_and_click_button(
+        "button_Start_experiment", should_click=True, expected_enabled_state=True
+    )
+    QTimer.singleShot(
+        500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+    )
     run_experiment()
     wait_for_simulation_completed()
 
     # click on something else just to shift focus
-    find_and_click_button("button_Start_experiment", True, True)
+    find_and_click_button(
+        "button_Start_experiment", should_click=True, expected_enabled_state=True
+    )
     # verify correct button in focus
-    find_and_check_selected("button_Start_experiment", True)
-    find_and_check_selected("button_Experiment_status", False)
+    find_and_check_selected("button_Start_experiment", expected_selected_state=True)
+    find_and_check_selected("button_Experiment_status", expected_selected_state=False)
 
     assert len(button_simulation_status.menu().actions()) == 3
     for choice in button_simulation_status.menu().actions():
@@ -893,8 +911,12 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
 
         # verify correct button in focus when selecting from drop-down
         choice.trigger()
-        find_and_check_selected("button_Start_experiment", False)
-        find_and_check_selected("button_Experiment_status", True)
+        find_and_check_selected(
+            "button_Start_experiment", expected_selected_state=False
+        )
+        find_and_check_selected(
+            "button_Experiment_status", expected_selected_state=True
+        )
 
 
 def test_that_visible_experiment_label_matches_bold_simulation_menu_action(

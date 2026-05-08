@@ -56,7 +56,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
     return arg_parser
 
 
-def _handle_keyboard_interrupt(signal: int, _: Any, after: bool = False) -> None:
+def _handle_keyboard_interrupt(signal: int, _: Any, *, after: bool = False) -> None:
     if after:
         print(
             f"KeyboardInterrupt (ID: {signal}) has been caught, "

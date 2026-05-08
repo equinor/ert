@@ -129,9 +129,9 @@ def plotHistogram(
                         config.histogramStyle(),
                         data[ensemble.id],
                         bin_count,
-                        plot_context.log_scale,
-                        minimum,
-                        maximum,
+                        use_log_scale=plot_context.log_scale,
+                        minimum=minimum,
+                        maximum=maximum,
                     ),
                 )
 
@@ -180,6 +180,7 @@ def _plotHistogram(
     style: PlotStyle,
     data: pd.DataFrame,
     bin_count: int,
+    *,
     use_log_scale: bool = False,
     minimum: float | None = None,
     maximum: float | None = None,

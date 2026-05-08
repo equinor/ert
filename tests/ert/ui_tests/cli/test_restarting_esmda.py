@@ -58,7 +58,7 @@ def poly_eval() -> str:
 
 @pytest.fixture
 def observations() -> Callable[[bool], str]:
-    def observations(restart: bool = False):
+    def observations(*, restart: bool = False):
         if restart:
             return dedent(
                 """

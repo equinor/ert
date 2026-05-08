@@ -44,11 +44,11 @@ def test_makedirs_roll_existing(change_to_tmpdir):
     assert len(list(cwd.iterdir())) == 1
 
     # run makedirs_if_needed again, verify old dir rolled
-    makedirs_if_needed(output_dir, True)
+    makedirs_if_needed(output_dir, roll_if_exists=True)
     assert output_dir.is_dir()
     assert len(list(cwd.iterdir())) == 2
 
     # run makedirs_if_needed again, verify old dir rolled
-    makedirs_if_needed(output_dir, True)
+    makedirs_if_needed(output_dir, roll_if_exists=True)
     assert output_dir.is_dir()
     assert len(list(cwd.iterdir())) == 3

@@ -142,6 +142,7 @@ _parser = Lark(grammar, propagate_positions=True, parser="lalr")
 def _substitute_token(
     defines: Defines,
     token: FileContextToken,
+    *,
     expand_env: bool = True,
 ) -> FileContextToken:
     current: FileContextToken = token
@@ -252,13 +253,15 @@ def _substitute_args(
 ) -> list[Arg]:
     def substitute_arglist_tuple(tup: ArgPair) -> ArgPair:
         key, value = tup
-        substituted_value = _substitute_token(defines, value, constraints.expand_envvar)
+        substituted_value = _substitute_token(
+            defines, value, expand_env=constraints.expand_envvar
+        )
 
         return [key, substituted_value]
 
     def substitute_arg(arg: Arg) -> Arg:
         if isinstance(arg, FileContextToken):
-            return _substitute_token(defines, arg, constraints.expand_envvar)
+            return _substitute_token(defines, arg, expand_env=constraints.expand_envvar)
 
         if isinstance(arg, list):
             # It is a list of keyword tuples

@@ -5,6 +5,7 @@ class PathModel(ValueModel):
     def __init__(
         self,
         default_path: str,
+        *,
         is_required: bool = True,
         must_be_a_directory: bool = False,
         must_be_a_file: bool = True,

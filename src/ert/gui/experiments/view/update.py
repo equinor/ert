@@ -185,7 +185,7 @@ class UpdateWidget(QWidget):
     def iteration(self) -> int:
         return self._iteration
 
-    def _insert_status_message(self, message: str, detail: bool = False) -> None:
+    def _insert_status_message(self, message: str, *, detail: bool = False) -> None:
         if detail:
             self._msg_list.append(f'<span style="color: gray;">{message}</span>')
         else:

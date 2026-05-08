@@ -301,7 +301,7 @@ class ErtConfigValues:
     observations: list[Observation]
     egrid: EGrid
 
-    def to_config_dict(self, config_file, cwd, all_defines=True):
+    def to_config_dict(self, config_file, cwd, *, all_defines=True):
         result = {
             ConfigKeys.FORWARD_MODEL: self.forward_model,
             ConfigKeys.NUM_REALIZATIONS: self.num_realizations,

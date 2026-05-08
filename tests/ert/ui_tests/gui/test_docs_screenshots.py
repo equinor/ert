@@ -141,7 +141,7 @@ class ExampleFolders(StrEnum):
 
 
 def run_experiment(
-    qtbot: QtBot, experiment_mode: RunModel, gui: QWidget, click_done: bool = True
+    qtbot: QtBot, experiment_mode: RunModel, gui: QWidget, *, click_done: bool = True
 ) -> None:
     # Select correct experiment in the simulation panel
     experiment_panel = get_child(gui, ExperimentPanel)

@@ -116,6 +116,7 @@ class ExperimentClient:
     def create_run_model_api(self) -> RunModelAPI:
         def start_fn(
             evaluator_server_config: EvaluatorServerConfig,
+            *,
             rerun_failed_realizations: bool = False,
         ) -> None:
             pass

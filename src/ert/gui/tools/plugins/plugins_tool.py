@@ -29,7 +29,7 @@ class PluginsTool(Tool):
         super().__init__(
             "Plugins",
             load_icon("widgets.svg"),
-            enabled,
+            enabled=enabled,
             popup_menu=True,
         )
 

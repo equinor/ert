@@ -276,6 +276,7 @@ def build_strategy_map(
     parameters: Iterable[str],
     param_configs: Mapping[str, ParameterConfig],
     enkf_truncation: float,
+    *,
     distance_localization: bool = False,
     localization: bool = False,
     correlation_threshold: Callable[[int], float] | None = None,

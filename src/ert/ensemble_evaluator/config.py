@@ -24,6 +24,7 @@ def get_machine_name() -> str:
 class EvaluatorServerConfig:
     def __init__(
         self,
+        *,
         port_range: tuple[int, int] | None = PORT_RANGE,
         use_token: bool = True,
         host: str | None = None,

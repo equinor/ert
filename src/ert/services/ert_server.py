@@ -209,6 +209,7 @@ class ErtServerController:
     def __init__(
         self,
         storage_path: str,
+        *,
         timeout: int = 120,
         parent_pid: int | None = None,
         connection_info: ErtServerConnectionInfo | None = None,
@@ -353,6 +354,7 @@ class ErtServerController:
     def start_server(
         cls,
         project: Path,
+        *,
         parent_pid: int | None = None,
         verbose: bool = False,
         timeout: int | None = None,

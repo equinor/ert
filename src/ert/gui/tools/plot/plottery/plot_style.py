@@ -2,6 +2,7 @@ class PlotStyle:
     def __init__(
         self,
         name: str,
+        *,
         color: str | None = "#000000",
         alpha: float = 1.0,
         line_style: str = "-",
@@ -23,7 +24,7 @@ class PlotStyle:
         self._is_copy = False
 
     def copyStyleFrom(
-        self, other: "PlotStyle", copy_enabled_state: bool = False
+        self, other: "PlotStyle", *, copy_enabled_state: bool = False
     ) -> None:
         self.color = other.color
         self.alpha = other.alpha

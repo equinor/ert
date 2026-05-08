@@ -22,7 +22,7 @@ class WorkflowsTool(Tool):
         super().__init__(
             "Run workflow",
             load_icon("playlist_play.svg"),
-            enabled,
+            enabled=enabled,
         )
 
     @override

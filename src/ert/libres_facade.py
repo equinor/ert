@@ -75,7 +75,7 @@ class LibresFacade:
 
     @classmethod
     def from_config_file(
-        cls, config_file: str, read_only: bool = False
+        cls, config_file: str, *, read_only: bool = False
     ) -> LibresFacade:
         return cls(
             ErtConfig.with_plugins(get_site_plugins()).from_file(config_file),

@@ -213,6 +213,7 @@ select = [
     "F",     # pyflakes
     "FA",
     "FAST",
+    "FBT002",
     "FIX",
     "FLY",
     "FURB",  # refurb

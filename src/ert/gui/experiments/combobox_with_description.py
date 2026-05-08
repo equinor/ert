@@ -26,6 +26,7 @@ class _ComboBoxItemWidget(QWidget):
         self,
         label: str,
         description: str,
+        *,
         enabled: bool = True,
         parent: QWidget | None = None,
         group: str | None = None,
@@ -97,7 +98,9 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
                 color = COLOR_HIGHLIGHT_DARK
             painter.fillRect(option.rect, color)
 
-        widget = _ComboBoxItemWidget(label, description, is_enabled, group=group)
+        widget = _ComboBoxItemWidget(
+            label, description, enabled=is_enabled, group=group
+        )
         widget.setStyle(option.widget.style())
         widget.resize(option.rect.size())
 

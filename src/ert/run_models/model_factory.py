@@ -94,6 +94,7 @@ def create_model(
 def _merge_parameters(
     design_matrix: DesignMatrix | None,
     parameter_configs: list[ParameterConfig],
+    *,
     require_updateable_param: bool = False,
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
     if design_matrix is None:

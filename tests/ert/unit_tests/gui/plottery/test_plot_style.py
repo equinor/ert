@@ -92,7 +92,9 @@ def test_plot_style_builtin_checks():
 
 
 def test_plot_style_copy_style():
-    style = PlotStyle("Test", "red", 0.5, ".", "o", 2.5)
+    style = PlotStyle(
+        "Test", color="red", alpha=0.5, line_style=".", marker="o", width=2.5
+    )
     style.setEnabled(False)
 
     copy_style = PlotStyle("Copy")

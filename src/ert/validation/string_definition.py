@@ -7,6 +7,7 @@ class StringDefinition:
 
     def __init__(
         self,
+        *,
         optional: bool = False,
         required: list[str] | None = None,
         invalid: list[str] | None = None,

@@ -36,7 +36,7 @@ def log_duration(
     return decorator
 
 
-def makedirs_if_needed(path: Path, roll_if_exists: bool = False) -> None:
+def makedirs_if_needed(path: Path, *, roll_if_exists: bool = False) -> None:
     if path.is_dir():
         if not roll_if_exists:
             return

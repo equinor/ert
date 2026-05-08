@@ -7,6 +7,7 @@ class Tool:
         self,
         name: str,
         icon: QIcon,
+        *,
         enabled: bool = True,
         checkable: bool = False,
         popup_menu: bool = False,

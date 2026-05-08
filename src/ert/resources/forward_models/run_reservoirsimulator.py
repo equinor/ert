@@ -144,6 +144,7 @@ class RunReservoirSimulator:
         simulator: Simulators,
         version: str | None,
         ecl_case: Path | str,
+        *,
         num_cpu: int = 1,
         check_status: bool = True,
         summary_conversion: bool = False,

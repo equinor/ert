@@ -16,6 +16,7 @@ class Substitutions(UserDict[str, str]):
         to_substitute: str,
         context: str = "",
         max_iterations: int = 1000,
+        *,
         warn_max_iter: bool = True,
     ) -> str:
         """Perform a search-replace on the first argument
@@ -24,7 +25,13 @@ class Substitutions(UserDict[str, str]):
         emitted during substitution.
 
         """
-        return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
+        return _substitute(
+            self,
+            to_substitute,
+            context=context,
+            max_iterations=max_iterations,
+            warn_max_iter=warn_max_iter,
+        )
 
     def real_iter_substituter(self, realization: int, iteration: int) -> Self:
         extra_data = {
@@ -63,6 +70,7 @@ class Substitutions(UserDict[str, str]):
 def _substitute(
     substitutions: Mapping[str, str],
     to_substitute: str,
+    *,
     context: str = "",
     max_iterations: int = 1000,
     warn_max_iter: bool = True,

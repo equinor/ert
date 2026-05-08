@@ -752,6 +752,7 @@ def setup_dataframe_for_compute_observation_statuses(
     overspread_responses: set[int],
     collapsed_responses: set[int],
     expected_statuses,
+    *,
     use_outlier_settings=True,
 ):
     alpha = 0.1

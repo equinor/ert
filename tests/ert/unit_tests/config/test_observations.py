@@ -90,7 +90,7 @@ def run_simulator(summary_values=SUMMARY_VALUES):
 
 
 def make_refcase_observations(
-    obs_config_contents, parse=True, extra_config=None, summary_values=SUMMARY_VALUES
+    obs_config_contents, *, parse=True, extra_config=None, summary_values=SUMMARY_VALUES
 ):
     extra_config = extra_config or ""
     run_simulator(summary_values=summary_values)
