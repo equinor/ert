@@ -65,6 +65,7 @@ class LocalStorage(BaseMode):
         self,
         path: str | os.PathLike[str],
         mode: Mode,
+        *,
         stage_for_migration: bool = False,
     ) -> None:
         """
@@ -137,7 +138,7 @@ class LocalStorage(BaseMode):
     @staticmethod
     def perform_migration(path: Path) -> None:
         if LocalStorage.check_migration_needed(path):
-            with LocalStorage(path, Mode("w"), True) as storage:
+            with LocalStorage(path, Mode("w"), stage_for_migration=True) as storage:
                 storage._migrate(storage.version)
                 storage.reload()
 

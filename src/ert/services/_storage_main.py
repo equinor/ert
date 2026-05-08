@@ -175,6 +175,7 @@ def _generate_authentication() -> str:
 
 def run_server(
     args: argparse.Namespace | None = None,
+    *,
     debug: bool = False,
     uvicorn_config: uvicorn.Config | None = None,
 ) -> None:

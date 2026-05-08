@@ -109,7 +109,7 @@ def _wait_for_retry() -> None:
     time.sleep(FILE_RETRY_TIME)
 
 
-def _read_fm_description_file(retry: bool = True) -> "ForwardModelDescriptionJSON":
+def _read_fm_description_file(*, retry: bool = True) -> "ForwardModelDescriptionJSON":
     try:
         return json.loads(
             Path(FORWARD_MODEL_DESCRIPTION_FILE).read_text(encoding="utf-8")

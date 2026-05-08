@@ -57,7 +57,7 @@ class Monitor:
 
     dot = "■ "
 
-    def __init__(self, out: TextIO = sys.stdout, color_always: bool = False) -> None:
+    def __init__(self, out: TextIO = sys.stdout, *, color_always: bool = False) -> None:
         self._out = out
         self._snapshots: dict[int, EnsembleSnapshot] = {}
         self._start_time: datetime.datetime | None = None

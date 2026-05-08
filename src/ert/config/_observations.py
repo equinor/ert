@@ -845,7 +845,7 @@ def validate_int(val: str, key: str) -> int:
 
 
 def validate_positive_float(
-    val: str, key: str, strictly_positive: bool = False
+    val: str, key: str, *, strictly_positive: bool = False
 ) -> float:
     v = validate_float(val, key)
     if v < 0 or (v <= 0 and strictly_positive):

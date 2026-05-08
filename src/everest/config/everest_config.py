@@ -1092,7 +1092,7 @@ to read summary data from forward model, do:
             parser.error(f"Loading config file <{config_path}> failed with: {e}")
 
     def write_to_file(
-        self, output_file: str | Path | TextIO, drop_config_path: bool = False
+        self, output_file: str | Path | TextIO, *, drop_config_path: bool = False
     ) -> None:
         dictconf = self.to_dict()
         if drop_config_path:
@@ -1103,7 +1103,10 @@ to read summary data from forward model, do:
 
     @staticmethod
     def write_dict_to_file(
-        config: dict[str, Any], output_file: Path | TextIO, safe_and_pure: bool = True
+        config: dict[str, Any],
+        output_file: Path | TextIO,
+        *,
+        safe_and_pure: bool = True,
     ) -> None:
         yaml = YAML(typ="safe", pure=True) if safe_and_pure else YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)

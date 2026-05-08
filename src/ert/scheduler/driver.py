@@ -107,6 +107,7 @@ class Driver(ABC):
     @staticmethod
     async def _execute_with_retry(
         cmd_with_args: list[str],
+        *,
         retry_on_empty_stdout: bool | None = False,
         retry_codes: Iterable[int] = (),
         accept_codes: Iterable[int] = (),

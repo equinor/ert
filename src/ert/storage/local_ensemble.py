@@ -513,6 +513,7 @@ class LocalEnsemble(BaseMode):
         self,
         keys: list[str] | None = None,
         realizations: int | npt.NDArray[np.int_] | None = None,
+        *,
         transformed: bool = False,
     ) -> pl.DataFrame:
         if keys is None:
@@ -571,6 +572,7 @@ class LocalEnsemble(BaseMode):
         self,
         group: str,
         realizations: int | npt.NDArray[np.int_] | None = None,
+        *,
         transformed: bool = False,
     ) -> xr.Dataset | pl.DataFrame:
         """
@@ -591,7 +593,7 @@ class LocalEnsemble(BaseMode):
         cardinality = next(cfg.cardinality for cfg in cfgs)
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
             return self.load_scalar_keys(
-                [cfg.name for cfg in cfgs], realizations, transformed
+                [cfg.name for cfg in cfgs], realizations, transformed=transformed
             )
         return self._load_dataset(
             group,

@@ -110,7 +110,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
         ANY,
         ANY,
         ANY,
-        ANY,
-        min_value,
-        max_value,
+        use_log_scale=ANY,
+        minimum=min_value,
+        maximum=max_value,
     )

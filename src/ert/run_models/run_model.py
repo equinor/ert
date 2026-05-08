@@ -155,6 +155,7 @@ class StartSimulationsThreadFn(Protocol):
     def __call__(
         self,
         evaluator_server_config: EvaluatorServerConfig,
+        *,
         rerun_failed_realizations: bool = False,
     ) -> None: ...
 
@@ -424,6 +425,7 @@ class RunModel(RunModelConfig, ABC):
     def start_simulations_thread(
         self,
         evaluator_server_config: EvaluatorServerConfig,
+        *,
         rerun_failed_realizations: bool = False,
     ) -> None:
         failed = False
@@ -514,6 +516,7 @@ class RunModel(RunModelConfig, ABC):
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
+        *,
         rerun_failed_realizations: bool = False,
     ) -> None: ...
 

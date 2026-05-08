@@ -455,7 +455,9 @@ class RunDialog(QFrame):
                 text += f", assigned to host: {exec_hosts}"
             self._fm_step_label.setText(text)
 
-    def setup_event_monitoring(self, rerun_failed_realizations: bool = False) -> None:
+    def setup_event_monitoring(
+        self, *, rerun_failed_realizations: bool = False
+    ) -> None:
         self.flag_experiment_done = False
         if rerun_failed_realizations is False:
             self._snapshot_model.reset()

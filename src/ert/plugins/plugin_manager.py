@@ -215,6 +215,7 @@ class ErtPluginManager(pluggy.PluginManager):
     @staticmethod
     def _merge_dicts(
         list_of_dicts: list[PluginResponse[dict[str, V]]],
+        *,
         include_plugin_data: Literal[True],
     ) -> dict[str, tuple[V, PluginMetadata]]:
         pass
@@ -223,6 +224,7 @@ class ErtPluginManager(pluggy.PluginManager):
     @staticmethod
     def _merge_dicts(
         list_of_dicts: list[PluginResponse[dict[str, V]]],
+        *,
         include_plugin_data: Literal[False] = False,
     ) -> dict[str, V]:
         pass
@@ -230,6 +232,7 @@ class ErtPluginManager(pluggy.PluginManager):
     @staticmethod
     def _merge_dicts(
         list_of_dicts: list[PluginResponse[dict[str, V]]],
+        *,
         include_plugin_data: bool = False,
     ) -> dict[str, V] | dict[str, tuple[V, PluginMetadata]]:
         list_of_dicts.reverse()

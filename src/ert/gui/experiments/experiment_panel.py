@@ -59,7 +59,10 @@ def create_md_table(kv: dict[str, str], output: str) -> str:
 
 
 def get_simulation_thread(
-    model: Any, rerun_failed_realizations: bool = False, use_ipc_protocol: bool = False
+    model: Any,
+    *,
+    rerun_failed_realizations: bool = False,
+    use_ipc_protocol: bool = False,
 ) -> ErtThread:
     evaluator_server_config = EvaluatorServerConfig(use_ipc_protocol=use_ipc_protocol)
 
@@ -422,14 +425,16 @@ class ExperimentPanel(QWidget):
         self._experiment_done = False
         self.run_button.setEnabled(self._experiment_done)
 
-        def start_simulation_thread(rerun_failed_realizations: bool = False) -> None:
+        def start_simulation_thread(*, rerun_failed_realizations: bool = False) -> None:
             simulation_thread = get_simulation_thread(
                 self._model,
-                rerun_failed_realizations,
+                rerun_failed_realizations=rerun_failed_realizations,
                 use_ipc_protocol=self.config.queue_config.queue_system
                 == QueueSystem.LOCAL,
             )
-            self._dialog.setup_event_monitoring(rerun_failed_realizations)
+            self._dialog.setup_event_monitoring(
+                rerun_failed_realizations=rerun_failed_realizations
+            )
             simulation_thread.start()
             self._notifier.set_is_experiment_running(True)
 

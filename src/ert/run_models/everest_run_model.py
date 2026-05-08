@@ -609,6 +609,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     def start_simulations_thread(
         self,
         evaluator_server_config: EvaluatorServerConfig,
+        *,
         rerun_failed_realizations: bool = False,
     ) -> None:
         failed = False
@@ -839,6 +840,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
+        *,
         rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()

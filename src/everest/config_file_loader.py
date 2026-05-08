@@ -29,7 +29,7 @@ ERT_CONFIG_TEMPLATES = {
 }
 
 
-def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any]:
+def load_yaml(file_name: str, *, safe: bool = False) -> dict[str, Any]:
     input_data = Path(file_name).read_text(encoding="utf-8").splitlines()
     try:
         yaml = YAML(typ="safe", pure=True) if safe else YAML()

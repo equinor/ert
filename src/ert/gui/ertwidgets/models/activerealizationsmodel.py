@@ -8,7 +8,7 @@ from .valuemodel import ValueModel
 
 
 class ActiveRealizationsModel(ValueModel):
-    def __init__(self, ensemble_size: int, show_default: bool = True) -> None:
+    def __init__(self, ensemble_size: int, *, show_default: bool = True) -> None:
         self.default_value = f"0-{ensemble_size - 1:d}" if show_default else None
         self.ensemble_size = ensemble_size
         ValueModel.__init__(self, self.default_value)

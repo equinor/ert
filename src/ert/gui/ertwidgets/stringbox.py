@@ -24,6 +24,7 @@ class StringBox(QLineEdit):
         self,
         model: TextModel,
         default_string: str = "",
+        *,
         continuous_update: bool = False,
         placeholder_text: str = "",
         minimum_width: int = 250,

@@ -265,7 +265,9 @@ def _ensemble_experiment_has_run(
 
 @pytest.fixture(name="run_experiment", scope="module")
 def run_experiment_fixture(request):
-    def func(experiment_mode, gui, wait_done=True, check_realizations=True, **kwargs):
+    def func(
+        experiment_mode, gui, *, wait_done=True, check_realizations=True, **kwargs
+    ):
         """
         Runs experiment.
 

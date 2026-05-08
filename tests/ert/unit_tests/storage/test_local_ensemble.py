@@ -308,7 +308,9 @@ def _create_rft_location_metadata_df(
 
 
 @contextmanager
-def _create_rft_ensemble(ensemble_size, observations, with_summary=False, zonemap=None):
+def _create_rft_ensemble(
+    ensemble_size, observations, *, with_summary=False, zonemap=None
+):
     if zonemap is not None:
         zonemap_file = Path("zonemap.txt")
         zonemap_file.write_text(zonemap, encoding="utf-8")

@@ -111,17 +111,21 @@ class PlotCustomizer(QObject):
 
         self._emitChangedSignal()
 
-    def _revertCustomization(self, plot_config: PlotConfig, emit: bool = True) -> None:
+    def _revertCustomization(
+        self, plot_config: PlotConfig, *, emit: bool = True
+    ) -> None:
         if self._customization_dialog is not None:
             for customization_view in self._customization_dialog:
                 customization_view.revertCustomization(plot_config)
 
-        self._emitChangedSignal(emit)
+        self._emitChangedSignal(emit=emit)
 
-    def _emitChangedSignal(self, emit: bool = True) -> None:
+    def _emitChangedSignal(self, *, emit: bool = True) -> None:
         history = self._getPlotConfigHistory()
         self._customization_dialog.setUndoRedoCopyState(
-            history.isUndoPossible(), history.isRedoPossible(), self.isCopyPossible()
+            undo=history.isUndoPossible(),
+            redo=history.isRedoPossible(),
+            copy=self.isCopyPossible(),
         )
 
         if emit:
@@ -337,7 +341,9 @@ class CustomizePlotDialog(QDialog):
         for attribute_name in self._tab_order:
             yield self._tab_map[attribute_name]
 
-    def setUndoRedoCopyState(self, undo: bool, redo: bool, copy: bool = False) -> None:
+    def setUndoRedoCopyState(
+        self, *, undo: bool, redo: bool, copy: bool = False
+    ) -> None:
         self._undo_button.setEnabled(undo)
         self._redo_button.setEnabled(redo)
         self._copy_from_button.setEnabled(copy)

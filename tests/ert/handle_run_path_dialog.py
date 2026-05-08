@@ -18,6 +18,7 @@ def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
 def handle_run_path_dialog(
     gui: ErtMainWindow,
     qtbot: QtBot,
+    *,
     delete_run_path: bool = True,
     expect_error: bool = False,
 ):

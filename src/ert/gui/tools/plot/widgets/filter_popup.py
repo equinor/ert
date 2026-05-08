@@ -56,7 +56,7 @@ class FilterPopup(QDialog):
         self.setLayout(layout)
         self.adjustSize()
 
-    def addFilterItem(self, name: str, id_: str, value: bool = True) -> None:
+    def addFilterItem(self, name: str, id_: str, *, value: bool = True) -> None:
         self.filter_items[id_] = value
 
         check_box = QCheckBox(name)

@@ -300,7 +300,7 @@ class PlotWindow(QMainWindow):
         self.updatePlot()
         self.logPlotTabUsage(self._central_tab.tabText(index))
 
-    def logPlotTabUsage(self, tab_name: str, default: bool = False) -> None:
+    def logPlotTabUsage(self, tab_name: str, *, default: bool = False) -> None:
         msg = f"Plotwindow tab used: {tab_name}" + (" (default tab)" if default else "")
         logger.info(msg)
 
@@ -552,6 +552,7 @@ class PlotWindow(QMainWindow):
         | EverestControlsPlot
         | EverestGradientsPlot
         | EverestObjectiveFunctionPlot,
+        *,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)

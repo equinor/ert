@@ -169,7 +169,7 @@ def _plotPercentiles(
         data["std+"].values,
         data["std-"].values,
         0.5,
-        plot_config.flip_response_axis,
+        inverted=plot_config.flip_response_axis,
     )
 
     style = plot_config.getStatisticsStyle("min-max")
@@ -180,7 +180,7 @@ def _plotPercentiles(
         data["Maximum"].values,
         data["Minimum"].values,
         0.5,
-        plot_config.flip_response_axis,
+        inverted=plot_config.flip_response_axis,
     )
 
     style = plot_config.getStatisticsStyle("p10-p90")
@@ -191,7 +191,7 @@ def _plotPercentiles(
         data["p90"].values,
         data["p10"].values,
         0.5,
-        plot_config.flip_response_axis,
+        inverted=plot_config.flip_response_axis,
     )
 
     style = plot_config.getStatisticsStyle("p33-p67")
@@ -202,7 +202,7 @@ def _plotPercentiles(
         data["p67"].values,
         data["p33"].values,
         0.5,
-        plot_config.flip_response_axis,
+        inverted=plot_config.flip_response_axis,
     )
 
 
@@ -213,6 +213,7 @@ def _plotPercentile(
     top_line_data: npt.ArrayLike,
     bottom_line_data: npt.ArrayLike,
     alpha_multiplier: float,
+    *,
     inverted: bool = False,
 ) -> None:
     alpha = style.alpha
