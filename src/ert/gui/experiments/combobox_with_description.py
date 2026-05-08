@@ -112,7 +112,7 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         group = index.data(GROUP_TITLE_ROLE)
         adjustment = QSize(0, 20) if group else QSize(0, 0)
 
-        widget = _ComboBoxItemWidget(label, description, group)
+        widget = _ComboBoxItemWidget(label, description, group=group)
         return widget.sizeHint() + adjustment
 
 
