@@ -1,7 +1,10 @@
+import json
 import tempfile
+from base64 import b64encode
 from pathlib import Path
 from queue import SimpleQueue
 from threading import Thread
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
@@ -18,10 +21,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from pytestqt.qtbot import QtBot
+from starlette.testclient import TestClient
 
 import ert.run_models
 from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErtConfig
+from ert.dark_storage.app import app
+from ert.dark_storage.endpoints.experiment_server import (
+    _runs,
+)
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -36,6 +44,7 @@ from ert.gui.experiments.ensemble_experiment_panel import (
     EnsembleExperimentPanel,
 )
 from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
+from ert.gui.experiments.experiment_client import ExperimentClient
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
@@ -57,6 +66,67 @@ from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
+
+
+@pytest.fixture
+def start_experiment_client(monkeypatch):
+    original = dict(_runs)
+    # with ErtServerController.init_service(
+    #         timeout=240, project=tmp_path_factory.mktemp("server_path")
+    # ) as server:
+    # with ErtServerController.init_service(project=Path().absolute()) as server:
+    #     server.fetch_connection_info()
+    #     yield
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    client = TestClient(app)
+    credentials = b64encode(b"username:password").decode()
+
+    class ExperimentClientMock(ExperimentClient):
+        def _http_post_json(self, endpoint: str, body: dict[str, Any]):
+            return client.post(
+                f"{self._url}/{endpoint}",
+                json=body,
+                headers={"Authorization": f"Basic {credentials}"},
+            )
+
+        def check_runpath(self, config_json: dict[str, Any]) -> dict[str, Any]:
+            return {
+                "runpath_exists": False,
+                "num_existing": 0,
+                "num_active": 1,
+            }
+
+    client_mock = ExperimentClientMock(
+        url="/experiment_server",
+        cert_file="password",
+        username="username",
+        password="password",
+        ssl_context=None,
+    )  # type: ignore
+    # client_mock.check_runpath = MagicMock(return_value={
+    #     "runpath_exists": False,
+    #     "num_existing": 0,
+    #     "num_active": 1,
+    # })
+
+    monkeypatch.setattr(
+        ExperimentPanel, "_create_experiment_client", lambda self: client_mock
+    )
+
+    credentials = b64encode(b"username:password").decode()
+    storage_path = Path() / "storage"
+    storage_path.mkdir(exist_ok=True)
+    mock_server_json = {
+        "urls": "http://testserver",
+        "cert": "password",
+        "authtoken": "__token__",
+    }
+    (storage_path / "storage_server.json").write_text(
+        json.dumps(mock_server_json), encoding="utf-8"
+    )
+    yield client, {"Authorization": f"Basic {credentials}"}
+    _runs.clear()
+    _runs.update(original)
 
 
 @pytest.fixture
@@ -175,7 +245,7 @@ def run_dialog(events, qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
 @pytest.mark.timeout(10)
 @pytest.mark.slow
 def test_that_terminating_experiment_shows_a_confirmation_dialog(
-    qtbot: QtBot, monkeypatch
+    qtbot: QtBot, monkeypatch, start_experiment_client
 ):
     config_file = "minimal_config.ert"
     monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)

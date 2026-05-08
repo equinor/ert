@@ -467,7 +467,6 @@ class ExperimentRunner:
         try:
             if rerun and run.run_model is not None:
                 run_model = run.run_model
-                # Rewire status_queue so events go to this run's event loop
                 run_model._status_queue = status_queue
             else:
                 assert self._config is not None, (
