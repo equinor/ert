@@ -489,10 +489,11 @@ class ExperimentRunner:
                     else EvaluatorServerConfig(use_ipc_protocol=False)
                 ),
             )
+            cancelled = False
             while True:
-                if run.status.status == ExperimentState.stopped:
+                if run.status.status == ExperimentState.stopped and not cancelled:
                     run_model.cancel()
-                    raise UserCancelled("Optimization aborted")
+                    cancelled = True
                 try:
                     item: StatusEvents = status_queue.get(block=False)
                 except queue.Empty:
@@ -509,20 +510,22 @@ class ExperimentRunner:
                         await sub.is_done()
                     break
             await simulation_future
-            if isinstance(run_model, EverestRunModel):
-                assert run_model.exit_code is not None
-                exp_state, msg = _get_optimization_status(
-                    run_model.exit_code, run.events
-                )
-                run_status = ExperimentStatus(
-                    message=msg,
-                    status=exp_state,
-                )
-            else:
-                run_status = ExperimentStatus(
-                    message="Experiment completed.", status=ExperimentState.completed
-                )
-            run.status = run_status
+            if not cancelled:
+                if isinstance(run_model, EverestRunModel):
+                    assert run_model.exit_code is not None
+                    exp_state, msg = _get_optimization_status(
+                        run_model.exit_code, run.events
+                    )
+                    run_status = ExperimentStatus(
+                        message=msg,
+                        status=exp_state,
+                    )
+                else:
+                    run_status = ExperimentStatus(
+                        message="Experiment completed.",
+                        status=ExperimentState.completed,
+                    )
+                run.status = run_status
         except UserCancelled as e:
             logging.getLogger(EXPERIMENT_SERVER).info(f"User cancelled: {e}")
         except Exception as e:

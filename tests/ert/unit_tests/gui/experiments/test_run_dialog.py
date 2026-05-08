@@ -1,10 +1,7 @@
-import json
 import tempfile
-from base64 import b64encode
 from pathlib import Path
 from queue import SimpleQueue
 from threading import Thread
-from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
@@ -21,15 +18,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from pytestqt.qtbot import QtBot
-from starlette.testclient import TestClient
 
 import ert.run_models
 from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErtConfig
-from ert.dark_storage.app import app
-from ert.dark_storage.endpoints.experiment_server import (
-    _runs,
-)
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -44,7 +36,6 @@ from ert.gui.experiments.ensemble_experiment_panel import (
     EnsembleExperimentPanel,
 )
 from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
-from ert.gui.experiments.experiment_client import ExperimentClient
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
@@ -63,70 +54,10 @@ from ert.run_models.event import (
     StartingTotalRunPathCreationEvent,
 )
 from ert.scheduler.job import Job
+from ert.services import ErtServerController
 from tests.ert import SnapshotBuilder
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
-
-
-@pytest.fixture
-def start_experiment_client(monkeypatch):
-    original = dict(_runs)
-    # with ErtServerController.init_service(
-    #         timeout=240, project=tmp_path_factory.mktemp("server_path")
-    # ) as server:
-    # with ErtServerController.init_service(project=Path().absolute()) as server:
-    #     server.fetch_connection_info()
-    #     yield
-    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
-    client = TestClient(app)
-    credentials = b64encode(b"username:password").decode()
-
-    class ExperimentClientMock(ExperimentClient):
-        def _http_post_json(self, endpoint: str, body: dict[str, Any]):
-            return client.post(
-                f"{self._url}/{endpoint}",
-                json=body,
-                headers={"Authorization": f"Basic {credentials}"},
-            )
-
-        def check_runpath(self, config_json: dict[str, Any]) -> dict[str, Any]:
-            return {
-                "runpath_exists": False,
-                "num_existing": 0,
-                "num_active": 1,
-            }
-
-    client_mock = ExperimentClientMock(
-        url="/experiment_server",
-        cert_file="password",
-        username="username",
-        password="password",
-        ssl_context=None,
-    )  # type: ignore
-    # client_mock.check_runpath = MagicMock(return_value={
-    #     "runpath_exists": False,
-    #     "num_existing": 0,
-    #     "num_active": 1,
-    # })
-
-    monkeypatch.setattr(
-        ExperimentPanel, "_create_experiment_client", lambda self: client_mock
-    )
-
-    credentials = b64encode(b"username:password").decode()
-    storage_path = Path() / "storage"
-    storage_path.mkdir(exist_ok=True)
-    mock_server_json = {
-        "urls": "http://testserver",
-        "cert": "password",
-        "authtoken": "__token__",
-    }
-    (storage_path / "storage_server.json").write_text(
-        json.dumps(mock_server_json), encoding="utf-8"
-    )
-    yield client, {"Authorization": f"Basic {credentials}"}
-    _runs.clear()
-    _runs.update(original)
 
 
 @pytest.fixture
@@ -242,10 +173,10 @@ def run_dialog(events, qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(60)
 @pytest.mark.slow
 def test_that_terminating_experiment_shows_a_confirmation_dialog(
-    qtbot: QtBot, monkeypatch, start_experiment_client
+    qtbot: QtBot, monkeypatch
 ):
     config_file = "minimal_config.ert"
     monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
@@ -278,48 +209,51 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
     )
     args_mock = Mock()
     args_mock.config = config_file
-    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
-    qtbot.addWidget(gui)
-    experiment_panel = gui.findChild(ExperimentPanel)
-    assert experiment_panel
-    simulation_mode_combo = experiment_panel.findChild(QComboBox)
-    assert simulation_mode_combo
-    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-    simulation_settings = gui.findChild(EnsembleExperimentPanel)
-    simulation_settings._experiment_name_field.setText("new_experiment_name")
-    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-    assert run_experiment
-    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-    run_dialog = gui.findChild(RunDialog)
-    assert run_dialog
-    kill_button = run_dialog.kill_button
-    with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
-        # Wait for ensemble to start evaluating before cancelling
-        _ = wait_for_child(run_dialog, qtbot, RealizationWidget)
+    storage_path = Path("storage")
+    storage_path.mkdir()
+    with ErtServerController.init_service(project=storage_path.absolute()):
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
+        qtbot.addWidget(gui)
+        experiment_panel = gui.findChild(ExperimentPanel)
+        assert experiment_panel
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
+        assert simulation_mode_combo
+        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings._experiment_name_field.setText("new_experiment_name")
+        run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
+        assert run_experiment
+        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=30000)
+        run_dialog = gui.findChild(RunDialog)
+        assert run_dialog
+        kill_button = run_dialog.kill_button
+        with qtbot.waitSignal(run_dialog.experiment_done, timeout=30000):
+            # Wait for ensemble to start evaluating before cancelling
+            _ = wait_for_child(run_dialog, qtbot, RealizationWidget)
 
-        def handle_dialog():
-            terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
-            dialog_buttons = terminate_dialog.findChild(QDialogButtonBox).buttons()
-            yes_button = next(b for b in dialog_buttons if "Yes" in b.text())
-            qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
+            def handle_dialog():
+                terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
+                dialog_buttons = terminate_dialog.findChild(QDialogButtonBox).buttons()
+                yes_button = next(b for b in dialog_buttons if "Yes" in b.text())
+                qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
 
-        QTimer.singleShot(100, handle_dialog)
-        assert kill_button.isEnabled()
+            QTimer.singleShot(100, handle_dialog)
+            assert kill_button.isEnabled()
+            assert kill_button.text() == "Terminate experiment"
+            qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
+            assert not kill_button.isEnabled()
+            assert kill_button.text() == "Terminating"
+        wait_for_child(run_dialog, qtbot, Suggestor)
+        assert run_dialog.fail_msg_box is not None
         assert kill_button.text() == "Terminate experiment"
-        qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
         assert not kill_button.isEnabled()
-        assert kill_button.text() == "Terminating"
-    wait_for_child(run_dialog, qtbot, Suggestor)
-    assert run_dialog.fail_msg_box is not None
-    assert kill_button.text() == "Terminate experiment"
-    assert not kill_button.isEnabled()
-    assert (
-        "Experiment cancelled by user during evaluation"
-        in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
-        .findChild(QLabel)
-        .text()
-    )
+        assert (
+            "Experiment cancelled by user during evaluation"
+            in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
+            .findChild(QLabel)
+            .text()
+        )
 
 
 @pytest.mark.slow
@@ -1268,7 +1202,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.timeout(20)
+@pytest.mark.timeout(60)
 @pytest.mark.slow
 def test_that_terminating_experiment_during_hooked_workflows_stops_run_dialog(
     qtbot: QtBot, monkeypatch
@@ -1341,50 +1275,55 @@ HOOK_WORKFLOW_JOB slow_workflow_02 TOUCH_WORKFLOW {file_c} PRE_SIMULATION
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
-    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
-    qtbot.addWidget(gui)
-    experiment_panel = gui.findChild(ExperimentPanel)
-    assert experiment_panel
-    simulation_mode_combo = experiment_panel.findChild(QComboBox)
-    assert simulation_mode_combo
-    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-    simulation_settings = gui.findChild(EnsembleExperimentPanel)
-    simulation_settings._experiment_name_field.setText("new_experiment_name")
-    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-    assert run_experiment
-    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-    run_dialog = gui.findChild(RunDialog)
-    assert run_dialog
-    kill_button = run_dialog.kill_button
+    storage_path = Path("storage")
+    storage_path.mkdir()
+    with ErtServerController.init_service(project=storage_path.absolute()):
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
+        qtbot.addWidget(gui)
+        experiment_panel = gui.findChild(ExperimentPanel)
+        assert experiment_panel
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
+        assert simulation_mode_combo
+        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings._experiment_name_field.setText("new_experiment_name")
+        run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
+        assert run_experiment
+        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=30000)
+        run_dialog = gui.findChild(RunDialog)
+        assert run_dialog
+        kill_button = run_dialog.kill_button
 
-    qtbot.waitUntil(file_a.exists, timeout=10000)
+        qtbot.waitUntil(file_a.exists, timeout=30000)
 
-    def handle_dialog() -> None:
-        terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
-        dialog_buttons = terminate_dialog.findChild(QDialogButtonBox).buttons()
-        yes_button = next(button for button in dialog_buttons if "Yes" in button.text())
-        qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
+        def handle_dialog() -> None:
+            terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
+            dialog_buttons = terminate_dialog.findChild(QDialogButtonBox).buttons()
+            yes_button = next(
+                button for button in dialog_buttons if "Yes" in button.text()
+            )
+            qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
 
-    with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
-        QTimer.singleShot(100, handle_dialog)
-        assert kill_button.isEnabled()
+        with qtbot.waitSignal(run_dialog.experiment_done, timeout=30000):
+            QTimer.singleShot(100, handle_dialog)
+            assert kill_button.isEnabled()
+            assert kill_button.text() == "Terminate experiment"
+            qtbot.mouseClick(kill_button, Qt.MouseButton.LeftButton)
+            assert not kill_button.isEnabled()
+            assert kill_button.text() == "Terminating"
+
+        qtbot.waitUntil(lambda: run_dialog.fail_msg_box is not None, timeout=5000)
+
+        assert file_a.exists()
+        assert not file_b.exists()
+        assert not file_c.exists()
+        assert run_dialog.fail_msg_box is not None
         assert kill_button.text() == "Terminate experiment"
-        qtbot.mouseClick(kill_button, Qt.MouseButton.LeftButton)
         assert not kill_button.isEnabled()
-        assert kill_button.text() == "Terminating"
-
-    qtbot.waitUntil(lambda: run_dialog.fail_msg_box is not None, timeout=5000)
-
-    assert file_a.exists()
-    assert not file_b.exists()
-    assert not file_c.exists()
-    assert run_dialog.fail_msg_box is not None
-    assert kill_button.text() == "Terminate experiment"
-    assert not kill_button.isEnabled()
-    assert (
-        "Experiment cancelled by user during workflows"
-        in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
-        .findChild(QLabel)
-        .text()
-    )
+        assert (
+            "Experiment cancelled by user during workflows"
+            in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
+            .findChild(QLabel)
+            .text()
+        )
