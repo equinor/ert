@@ -74,6 +74,7 @@ def test_memory_smoothing(poly_template):
                 posterior_ens,
                 list(experiment.observation_keys),
                 ObservationSettings(),
+                rng=np.random.default_rng(42),
             )
 
     stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))

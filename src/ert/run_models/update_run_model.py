@@ -71,13 +71,13 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             distance_localization=self.analysis_settings.distance_localization,
             localization=self.analysis_settings.localization,
             correlation_threshold=self.analysis_settings.correlation_threshold,
-            rng=self._rng,
             progress_callback=progress_callback,
         )
         smoother_update(
             prior,
             posterior,
             update_settings=self.update_settings,
+            rng=self._rng,
             strategy_map=strategy_map,
             observations=prior.experiment.observation_keys,
             global_scaling=weight,
