@@ -111,7 +111,7 @@ class ObservationContext:
 
     This is a minimal, immutable data container holding only the observation
     and response data computed during preprocessing. Runtime dependencies
-    (rng, settings, progress_callback) are passed to strategies at construction.
+    (settings, progress_callback) are passed to strategies at construction.
     """
 
     responses: npt.NDArray[np.floating]
@@ -122,6 +122,14 @@ class ObservationContext:
 
     observation_errors: npt.NDArray[np.floating]
     """Scaled observation errors (standard deviations)."""
+
+    observation_perturbations: npt.NDArray[np.floating]
+    """Additive observation perturbations (num_obs x ensemble_size).
+
+    Generated once and shared across all strategies to ensure consistent
+    observation perturbations in the ES-MDA update. Each entry is drawn
+    from N(0, sigma_i^2) where sigma_i is the observation error.
+    """
 
     observation_locations: ObservationLocations | None = None
     """Observation locations for distance-based localization (optional)."""
@@ -142,11 +150,11 @@ class UpdateStrategy(Protocol):
 
     Each strategy implements a specific algorithm for updating ensemble
     parameters based on observations. Strategies receive runtime dependencies
-    (rng, settings, progress_callback) at construction, and observation data
-    via prepare().
+    (settings, progress_callback) at construction, and observation data via
+    prepare().
 
     Lifecycle:
-        1. Create strategy with dependencies (rng, settings, progress_callback)
+        1. Create strategy with dependencies (settings, progress_callback)
         2. Call prepare(obs_context) to initialize with observation data
         3. Call update() for each parameter group
     """

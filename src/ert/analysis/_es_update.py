@@ -78,6 +78,7 @@ def perform_ensemble_update(
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
     strategy_map: dict[str, UpdateStrategy],
+    rng: np.random.Generator,
 ) -> SmootherSnapshot:
     """
     Orchestrate ensemble-based parameter updates using configurable strategies.
@@ -107,6 +108,8 @@ def perform_ensemble_update(
         Callback for reporting progress.
     strategy_map : dict[str, UpdateStrategy]
         Mapping from parameter group names to update strategies.
+    rng : np.random.Generator
+        Random number generator used to produce observation perturbations.
 
     Returns
     -------
@@ -146,6 +149,20 @@ def perform_ensemble_update(
     )
 
     num_obs = len(observation_values)
+
+    # Generate additive observation perturbations once for all strategies.
+    # In ES-MDA there is one realization of measurement noise per update step,
+    # shared across all parameter groups.
+    # NOTE: This sampling assumes a diagonal observation error covariance, i.e.
+    # observations are uncorrelated. Each observation i is perturbed independently
+    # by N(0, sigma_i^2). If a full covariance matrix C_D were introduced,
+    # this would need to be replaced with Cholesky-based sampling:
+    #   L = np.linalg.cholesky(C_D)
+    #   observation_perturbations = L @ rng.standard_normal(size=(num_obs, N))
+    observation_perturbations = (
+        rng.standard_normal(size=(num_obs, len(iens_active_index)))
+        * observation_errors[:, np.newaxis]
+    )
 
     smoother_snapshot = SmootherSnapshot(
         source_ensemble_name=source_ensemble.name,
@@ -197,6 +214,7 @@ def perform_ensemble_update(
         responses=responses,
         observation_values=observation_values,
         observation_errors=observation_errors,
+        observation_perturbations=observation_perturbations,
         observation_locations=observation_locations,
     )
 
@@ -261,7 +279,6 @@ def build_strategy_map(
     distance_localization: bool = False,
     localization: bool = False,
     correlation_threshold: Callable[[int], float] | None = None,
-    rng: np.random.Generator | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
 ) -> dict[str, UpdateStrategy]:
     """Build a mapping from parameter group names to update strategies.
@@ -285,8 +302,6 @@ def build_strategy_map(
     correlation_threshold : Callable[[int], float] | None
         Function that takes ensemble size and returns the correlation
         threshold. Required when ``localization`` is True.
-    rng : np.random.Generator | None
-        Random number generator for reproducibility.
     progress_callback : Callable[[AnalysisEvent], None] | None
         Callback for reporting progress.
 
@@ -295,8 +310,6 @@ def build_strategy_map(
     dict[str, UpdateStrategy]
         Mapping from parameter group names to update strategies.
     """
-    if rng is None:
-        rng = np.random.default_rng()
     if not progress_callback:
         progress_callback = noop_progress_callback
 
@@ -304,14 +317,13 @@ def build_strategy_map(
 
     if distance_localization:
         field_strategy = DistanceLocalizationUpdate(
-            enkf_truncation, rng, Field, progress_callback
+            enkf_truncation, Field, progress_callback
         )
         surface_strategy = DistanceLocalizationUpdate(
-            enkf_truncation, rng, SurfaceConfig, progress_callback
+            enkf_truncation, SurfaceConfig, progress_callback
         )
         global_strategy = GlobalESUpdate(
             enkf_truncation,
-            rng,
             progress_callback,
         )
 
@@ -330,7 +342,7 @@ def build_strategy_map(
                 "correlation_threshold is required when localization is enabled"
             )
         adaptive_strategy = AdaptiveLocalizationUpdate(
-            correlation_threshold, enkf_truncation, rng, progress_callback
+            correlation_threshold, enkf_truncation, progress_callback
         )
         for param_name in parameters:
             strategy_map[param_name] = adaptive_strategy
@@ -338,7 +350,6 @@ def build_strategy_map(
     else:
         global_strategy = GlobalESUpdate(
             enkf_truncation,
-            rng,
             progress_callback,
         )
         for param_name in parameters:
@@ -352,6 +363,7 @@ def smoother_update(
     posterior_storage: Ensemble,
     observations: Iterable[str],
     update_settings: ObservationSettings,
+    rng: np.random.Generator,
     strategy_map: dict[str, UpdateStrategy] | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
@@ -415,6 +427,7 @@ def smoother_update(
                 posterior_storage,
                 progress_callback,
                 strategy_map,
+                rng,
             )
     except Exception as e:
         data = None

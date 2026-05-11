@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 import humanize
 import iterative_ensemble_smoother as ies
-import numpy as np
 
 from ert.analysis._update_commons import ErtAnalysisError
 from ert.analysis.event import (
@@ -18,6 +17,7 @@ from ert.analysis.event import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
     import numpy.typing as npt
 
     from ert.config import ParameterConfig
@@ -35,8 +35,6 @@ class GlobalESUpdate:
     ----------
     enkf_truncation : float
         Singular value truncation threshold.
-    rng : np.random.Generator
-        Random number generator for reproducibility.
     progress_callback : Callable[[AnalysisEvent], None]
         Callback to report progress events.
 
@@ -49,11 +47,9 @@ class GlobalESUpdate:
     def __init__(
         self,
         enkf_truncation: float,
-        rng: np.random.Generator,
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
         self._enkf_truncation = enkf_truncation
-        self._rng = rng
         self._progress_callback = progress_callback
         self._smoother: ies.ESMDA | None = None
         self._ensemble_size: int = 0
@@ -74,7 +70,9 @@ class GlobalESUpdate:
             covariance=obs_context.observation_errors**2,
             observations=obs_context.observation_values,
             alpha=1,
-            seed=self._rng,
+            # Observation perturbations are supplied explicitly below, so no
+            # smoother RNG is used.
+            seed=None,
         )
 
         try:
@@ -82,6 +80,7 @@ class GlobalESUpdate:
                 Y=obs_context.responses,
                 truncation=self._enkf_truncation,
                 overwrite=False,
+                observation_perturbations=obs_context.observation_perturbations,
             )
         except Exception as err:
             raise ErtAnalysisError(

@@ -38,6 +38,10 @@ def _make_context(
         responses=responses,
         observation_values=obs_values,
         observation_errors=obs_errors,
+        observation_perturbations=rng.standard_normal(size=(n_obs, n_real)).astype(
+            np.float64
+        )
+        * obs_errors[:, np.newaxis],
         observation_locations=obs_loc,
     )
 
@@ -48,7 +52,6 @@ def test_that_global_es_prepare_does_not_mutate_obs_context_responses() -> None:
 
     strat = GlobalESUpdate(
         enkf_truncation=1.0,
-        rng=np.random.default_rng(0),
         progress_callback=_noop,
     )
     strat.prepare(ctx)
@@ -65,7 +68,6 @@ def test_that_adaptive_localization_prepare_does_not_mutate_obs_context_response
     strat = AdaptiveLocalizationUpdate(
         correlation_threshold=lambda _n: 0.0,
         enkf_truncation=1.0,
-        rng=np.random.default_rng(0),
         progress_callback=_noop,
     )
     strat.prepare(ctx)
@@ -81,7 +83,6 @@ def test_that_distance_localization_prepare_does_not_mutate_obs_context_response
 
     strat = DistanceLocalizationUpdate(
         enkf_truncation=1.0,
-        rng=np.random.default_rng(0),
         param_type=Field,
         progress_callback=_noop,
     )
@@ -102,13 +103,11 @@ def test_that_distance_localization_innovation_is_independent_of_prepare_order()
         ctx = _make_context()
         dist = DistanceLocalizationUpdate(
             enkf_truncation=1.0,
-            rng=np.random.default_rng(7),
             param_type=Field,
             progress_callback=_noop,
         )
         std = GlobalESUpdate(
             enkf_truncation=1.0,
-            rng=np.random.default_rng(7),
             progress_callback=_noop,
         )
         if global_first:
@@ -150,12 +149,10 @@ def test_that_obs_context_responses_survive_two_strategy_prepares(
         if cls is GlobalESUpdate:
             return GlobalESUpdate(
                 enkf_truncation=1.0,
-                rng=np.random.default_rng(0),
                 progress_callback=_noop,
             )
         return DistanceLocalizationUpdate(
             enkf_truncation=1.0,
-            rng=np.random.default_rng(0),
             param_type=Field,
             progress_callback=_noop,
         )
