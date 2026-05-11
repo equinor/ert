@@ -314,6 +314,7 @@ exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
 iterative_ensemble_smoother = false # Developed by Equinor
+jupyter-server = false # Needed until 14.05 for security update
 graphite-maps = false # Developed by Equinor
 oil_reservoir_synthesizer = false # Developed by Equinor
 resdata = false # Developed by Equinor
