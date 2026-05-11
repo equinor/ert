@@ -5,7 +5,7 @@ allowing different update methods (global ES, adaptive localization,
 distance-based localization) to be applied to different parameters.
 
 Strategy Lifecycle:
-    1. Create strategy instances with dependencies (rng, settings, callback)
+    1. Create strategy instances with dependencies (settings, callback)
     2. Call strategy.prepare(obs_context) to initialize with observation data
     3. Call strategy.update() for each parameter group
 
@@ -18,12 +18,11 @@ Example usage:
 
     # Create strategies with dependencies
     global_strategy = GlobalESUpdate(
-        settings.enkf_truncation,
-        rng, progress_callback,
+        settings.enkf_truncation, progress_callback,
     )
     adaptive_strategy = AdaptiveLocalizationUpdate(
         settings.correlation_threshold, settings.enkf_truncation,
-        rng, progress_callback,
+        progress_callback,
     )
 
     # Build strategy map (parameter_name -> strategy)
@@ -37,6 +36,7 @@ Example usage:
         responses=responses,
         observation_values=obs_values,
         observation_errors=obs_errors,
+        observation_perturbations=observation_perturbations,
     )
 
     # Prepare strategies (called by perform_ensemble_update)

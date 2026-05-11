@@ -88,16 +88,20 @@ def test_that_distance_localization_updates_all_z_layers_at_observation_xy(
         location_mask=np.ones(responses.shape[0], dtype=bool),
     )
 
+    rng = np.random.default_rng(42)
     obs_context = ObservationContext(
         responses=responses,
         observation_values=obs_values,
         observation_errors=obs_errors,
+        observation_perturbations=rng.standard_normal(
+            size=(responses.shape[0], responses.shape[1])
+        ).astype(np.float64)
+        * obs_errors[:, np.newaxis],
         observation_locations=obs_loc,
     )
 
     updater = DistanceLocalizationUpdate(
         enkf_truncation=0.99,
-        rng=np.random.default_rng(42),
         param_type=Field,
         progress_callback=_noop_callback,
     )
