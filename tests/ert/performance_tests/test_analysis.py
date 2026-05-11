@@ -167,7 +167,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
         posterior_ensemble,
         ["OBSERVATION"],
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
         strategy_map=strategy_map,
     )
     benchmark(smoother_update_run)

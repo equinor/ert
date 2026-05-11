@@ -103,7 +103,7 @@ def test_update_report(
         posterior_ens,
         experiment.observation_keys,
         ObservationSettings(auto_scale_observations=misfit_preprocess),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
         strategy_map=strategy_map,
         progress_callback=events.append,
     )
@@ -179,7 +179,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         posterior_ens,
         experiment.observation_keys,
         update_settings,
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
         strategy_map=strategy_map,
         progress_callback=events.append,
     )
@@ -311,7 +311,7 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             posterior,
             experiment.observation_keys,
             ObservationSettings(auto_scale_observations=[["OBS*"]]),
-            rng=np.random.default_rng(),
+            rng=np.random.default_rng(42),
             progress_callback=events.append,
         )
 
@@ -530,7 +530,7 @@ def test_update_only_using_subset_observations(
         posterior_ens,
         ["WPR_DIFF_1"],
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
         progress_callback=events.append,
     )
 
@@ -978,7 +978,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             posterior_ens,
             ["OBSERVATION"],
             ObservationSettings(),
-            rng=np.random.default_rng(),
+            rng=np.random.default_rng(42),
         )
 
 
@@ -1038,7 +1038,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         posterior_ens,
         ["OBSERVATION"],
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
         progress_callback=events.append,
     )
 
@@ -1127,7 +1127,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         posterior_ens,
         ["OBSERVATION"],
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
         active_realizations=active_realizations,
     )
 
@@ -1273,7 +1273,7 @@ def test_that_field_parameter_with_update_false_is_copied_to_posterior(
         posterior,
         ["OBSERVATION"],
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
     )
 
     for iens in range(ensemble_size):

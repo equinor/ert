@@ -131,7 +131,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
     )
 
 
@@ -165,7 +165,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
             target_ensemble,
             prior_ensemble.experiment.observation_keys,
             ObservationSettings(),
-            rng=np.random.default_rng(),
+            rng=np.random.default_rng(42),
         )
 
 
@@ -203,7 +203,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
     )
 
 
@@ -256,7 +256,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ObservationSettings(),
-        rng=np.random.default_rng(),
+        rng=np.random.default_rng(42),
     )
 
 
