@@ -213,7 +213,6 @@ def analysis_EnIF(
     H = linear_boost_ic_regression(
         U=X_clean_scaled,
         Y=S.T,
-        verbose_level=5,
     )
 
     # Learn the precision matrix block-sparse over parameter groups
@@ -240,7 +239,6 @@ def analysis_EnIF(
             X_scaled,
             graph_u_sub,
             neighbourhood_expansion=2,
-            verbose_level=2,
             use_tqdm=True,
         )
 
@@ -263,7 +261,7 @@ def analysis_EnIF(
     )
 
     update_indices = gtmap.get_update_indices(
-        neighbor_propagation_order=15, verbose_level=1
+        neighbor_propagation_order=15,
     )
 
     # Using iterative=False because the non-iterative solvers
@@ -277,7 +275,6 @@ def analysis_EnIF(
         observation_values,
         update_indices=update_indices,
         iterative=False,
-        verbose_level=5,
         seed=random_seed,
     )
     X_updated = X_clean_scaler.inverse_transform(X_updated).T

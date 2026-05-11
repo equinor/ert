@@ -1163,7 +1163,7 @@ requires-dist = [
     { name = "fastapi" },
     { name = "fastexcel", specifier = ">=0.14.0" },
     { name = "filelock" },
-    { name = "graphite-maps", specifier = "<0.0.10" },
+    { name = "graphite-maps", specifier = ">=0.0.10" },
     { name = "httpx" },
     { name = "httpx-retries" },
     { name = "humanize" },
@@ -1551,7 +1551,7 @@ wheels = [
 
 [[package]]
 name = "graphite-maps"
-version = "0.0.9"
+version = "0.0.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "joblib" },
@@ -1562,14 +1562,14 @@ dependencies = [
     { name = "tqdm" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/91/a45ea239aabb9e9d6a4c8a672bfa974bfef9b407d5b962c9369af0145de6/graphite_maps-0.0.9-cp311-cp311-macosx_10_9_x86_64.macosx_15_0_arm64.whl", hash = "sha256:035d8a51c74a3ac334d657fdf139720abcffbb0860a219e7b1cac87ef152065c", size = 1892897, upload-time = "2026-04-27T13:55:49.423Z" },
-    { url = "https://files.pythonhosted.org/packages/6c/04/8916c134cea83f09caf1e400c894330e2be62b4902637c1abcf82e2c9119/graphite_maps-0.0.9-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:eb0a364124fd4c06f37856fb390d6ac4563c34553a0ffdf6c8192809b23c872f", size = 6821985, upload-time = "2026-04-27T13:56:34.757Z" },
-    { url = "https://files.pythonhosted.org/packages/b5/dd/cf2cf73942dff53d66357b3884c12e5885718679aaa3ef06abc134db6872/graphite_maps-0.0.9-cp312-cp312-macosx_10_13_x86_64.macosx_15_0_arm64.whl", hash = "sha256:07f213d6d0cc271b2133c0a8fee2e383fda7c31d69172c04bdf5b978e6947d94", size = 1887452, upload-time = "2026-04-27T13:55:51.502Z" },
-    { url = "https://files.pythonhosted.org/packages/16/f8/330a2da466cffc515683e38a89fae69eaeeadf689b31a24b6644d539fb34/graphite_maps-0.0.9-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a743be99b156c2a561a47f2a3d65267ad4d6e262fc45a286d66538bd84c2775d", size = 6816133, upload-time = "2026-04-27T13:56:37.032Z" },
-    { url = "https://files.pythonhosted.org/packages/43/e9/b0d93d5096bb2d20c3e7968ad921739669227ca9428bd01e6fc2e8cd7e2d/graphite_maps-0.0.9-cp313-cp313-macosx_10_13_x86_64.macosx_15_0_arm64.whl", hash = "sha256:ea9ab905fcfee57b99d93c1bc9f5d42679069b6c707e5e070f626ba9a834fbd7", size = 1886247, upload-time = "2026-04-27T13:55:53.149Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/f2/a1b9bd0f45ad5dc941b15e22c3893a7adaa3af6695889724dfa955876c68/graphite_maps-0.0.9-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6003c02a02c76fa137097a0c64a2fad1acbeb0c97abba5bb3b6cc95c6d25261e", size = 6801458, upload-time = "2026-04-27T13:56:38.79Z" },
-    { url = "https://files.pythonhosted.org/packages/fc/48/30384d9a6adb1afad5a44e89056d296b0e83b490cf9d2c44fff0fb2439e2/graphite_maps-0.0.9-cp314-cp314-macosx_10_15_x86_64.macosx_15_0_arm64.whl", hash = "sha256:bc5ef1a9b5fb7f53d3651ac19f54258e42965efebd6b2be2269e3daa044a0d97", size = 1887259, upload-time = "2026-04-27T13:55:55.035Z" },
-    { url = "https://files.pythonhosted.org/packages/f9/23/c6f7d65cc76b3ae0059b922331297f336b0772c30250ffb6cb42fb3aa08c/graphite_maps-0.0.9-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cbacc032d3ec5399d56ac3181d1e470b6d1588273b34f9391db528647469886d", size = 6795346, upload-time = "2026-04-27T13:56:40.718Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/ae/b614f8eb77aa7f2c1da59724298521564ad719d0e030b2aed9e1620c599b/graphite_maps-0.0.10-cp311-cp311-macosx_10_9_x86_64.macosx_15_0_arm64.whl", hash = "sha256:e6ff932fe0399a114f98f8f7d607fe450d06d50ee6c5f50324ad8418ae5a17c4", size = 1893303, upload-time = "2026-05-08T08:22:57.063Z" },
+    { url = "https://files.pythonhosted.org/packages/72/cd/4b46ef98f8dc4cdce8a0a455d436545909195bb45f2b9281dfe283ab6914/graphite_maps-0.0.10-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:10b007904a1618ca53ff2a0256024c36208d441a6b216b9edbdbb5b2ab753332", size = 6822412, upload-time = "2026-05-08T08:27:54.428Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/c7/80289950cec124e3a7f8c01d7021a79273c1d108beee47e3a5cad5bdfc77/graphite_maps-0.0.10-cp312-cp312-macosx_10_13_x86_64.macosx_15_0_arm64.whl", hash = "sha256:be82323d013bea4f40a2b6398f3ad47c43b8ca23c8c146ddc43c030414a45a11", size = 1887855, upload-time = "2026-05-08T08:22:58.737Z" },
+    { url = "https://files.pythonhosted.org/packages/db/59/20fe466acf93e566c56b3842b19a16b75a579e4d99f0935d6ccd42c00cdc/graphite_maps-0.0.10-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8f2c8134265953dc827a4a79380d3c23939271e7323d231668b1260790565da0", size = 6816560, upload-time = "2026-05-08T08:27:56.431Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/4c/2877f28b9f88015d65a1ba7e3a78571dfdfc847421e469197b6d56a471dc/graphite_maps-0.0.10-cp313-cp313-macosx_10_13_x86_64.macosx_15_0_arm64.whl", hash = "sha256:e8af7e40aadfae68e1c67aeca363ed91c49df696b5dba75831d8f6ea1583d019", size = 1886651, upload-time = "2026-05-08T08:23:00.321Z" },
+    { url = "https://files.pythonhosted.org/packages/39/67/0414c8aeee5a2a35efb0d374ffd0a0951369acf0677fb04e6cdb68b7c747/graphite_maps-0.0.10-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c39a7b3381d35670509f66ff8f4457346da9789710925354a4e8a6b749ac4720", size = 6801875, upload-time = "2026-05-08T08:27:58.448Z" },
+    { url = "https://files.pythonhosted.org/packages/44/89/8cf250ebb807d0d29d671d6e12cb95e66dcb740aceee3a4eab98fbeea92d/graphite_maps-0.0.10-cp314-cp314-macosx_10_15_x86_64.macosx_15_0_arm64.whl", hash = "sha256:4ce3a4bb744123145c6c74bc2ee058436d0db6ad0c369df5159948b3ab8a9a5b", size = 1887666, upload-time = "2026-05-08T08:23:01.682Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/9f/da7cecbc27a2845e813b765a798a2ea642358f69bc06b1f651aed4dfb85f/graphite_maps-0.0.10-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bec6eb9f201bf76107b5600c37512ba679f7d635c0bcda78df74106f9663a15e", size = 6795772, upload-time = "2026-05-08T08:28:00.449Z" },
 ]
 
 [[package]]
