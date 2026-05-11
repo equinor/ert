@@ -1163,7 +1163,7 @@ requires-dist = [
     { name = "fastapi" },
     { name = "fastexcel", specifier = ">=0.14.0" },
     { name = "filelock" },
-    { name = "graphite-maps" },
+    { name = "graphite-maps", specifier = "<0.0.10" },
     { name = "httpx" },
     { name = "httpx-retries" },
     { name = "humanize" },
