@@ -11,7 +11,7 @@ import pytest
 from ert.config import ErtConfig
 from ert.config.workflow_job import ExecutableWorkflow
 from ert.plugins import get_site_plugins
-from tests.ert.utils import SOURCE_DIR
+from tests.conftest import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 

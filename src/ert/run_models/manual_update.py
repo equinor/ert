@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import PrivateAttr
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class ManualUpdateConfig(UpdateRunModelConfig):
+    type: Literal["manual_update"] = "manual_update"
     ensemble_id: str
     ert_templates: list[tuple[str, str]]
 

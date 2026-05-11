@@ -7,7 +7,7 @@ from pathlib import Path
 import jinja2
 import pytest
 
-from tests.ert.utils import SOURCE_DIR
+from tests.conftest import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 

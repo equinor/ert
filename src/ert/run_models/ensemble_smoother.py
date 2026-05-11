@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Literal
 
 import numpy as np
 from pydantic import PrivateAttr
@@ -23,7 +24,8 @@ from .run_model import ErtRunError, ExperimentType
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig): ...
+class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig):
+    type: Literal["ensemble_smoother"] = "ensemble_smoother"
 
 
 class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
@@ -37,7 +39,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
     ) -> None:
         self.log_at_startup()
         if rerun_failed_realizations:
-            raise ErtRunError("Ensemble Information Filter does not support restart")
+            raise ErtRunError("Ensemble Smoother does not support restart")
 
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
