@@ -251,6 +251,11 @@ def filter_job_ids_on_submission_time(
     }
 
 
+class BhistProcessingFinishedSentinel:
+    """This sentinel is put when we are finishing polling, so
+    that the bhist processing task can also finish gracefully."""
+
+
 class LsfDriver(Driver):
     def __init__(
         self,
@@ -303,6 +308,10 @@ class LsfDriver(Driver):
         self._bhist_cache: dict[str, dict[str, int]] | None = None
         self._bhist_required_cache_age: float = 4
         self._bhist_cache_timestamp: float = time.time()
+        self._bhist_job_history_processing_queue: asyncio.Queue[
+            str | BhistProcessingFinishedSentinel
+        ] = asyncio.Queue()
+        self._bhist_job_history_processing_task: asyncio.Task[None] | None = None
 
         self._submit_locks: MutableMapping[int, asyncio.Lock] = {}
 
@@ -573,7 +582,7 @@ class LsfDriver(Driver):
             if isinstance(event, FinishedEvent):
                 del self._jobs[job_id]
                 del self._iens2jobid[iens]
-                await self._log_bhist_job_summary(job_id)
+                await self._schedule_log_bhist_history(job_id)
             await self.event_queue.put(event)
 
     async def _get_exit_code(self, job_id: str) -> int:
@@ -609,7 +618,7 @@ class LsfDriver(Driver):
 
         return LSF_FAILED_JOB
 
-    async def _log_bhist_job_summary(self, job_id: str) -> None:
+    async def _log_bhist_job_history(self, job_id: str) -> None:
         bhist_with_args: list[str] = [
             str(self._bhist_cmd),
             "-l",  # long format
@@ -623,6 +632,26 @@ class LsfDriver(Driver):
             log_to_debug=False,
         )
         logger.info(f"Output from bhist -l: {process_message}")
+
+    async def _schedule_log_bhist_history(self, job_id: str) -> None:
+        await self._bhist_job_history_processing_queue.put(job_id)
+        if (
+            self._bhist_job_history_processing_task is None
+            or self._bhist_job_history_processing_task.done()
+        ):
+            self._bhist_job_history_processing_task = asyncio.create_task(
+                self._process_bhist_job_history(), name="lsf-bhist-history-worker"
+            )
+
+    async def _process_bhist_job_history(self) -> None:
+        while True:
+            job_id = await self._bhist_job_history_processing_queue.get()
+            try:
+                if isinstance(job_id, BhistProcessingFinishedSentinel):
+                    return
+                await self._log_bhist_job_history(job_id)
+            finally:
+                self._bhist_job_history_processing_queue.task_done()
 
     async def _poll_once_by_bhist(
         self, missing_job_ids: Iterable[str]
@@ -702,7 +731,21 @@ class LsfDriver(Driver):
         )
 
     async def finish(self) -> None:
-        pass
+        if self._bhist_job_history_processing_task is None:
+            return
+        try:
+            await asyncio.wait_for(
+                self._bhist_job_history_processing_queue.join(), timeout=60
+            )
+            self._bhist_job_history_processing_queue.put_nowait(
+                BhistProcessingFinishedSentinel()
+            )
+            await self._bhist_job_history_processing_task
+            self._bhist_job_history_processing_task = None
+        except TimeoutError:
+            logger.error(
+                "Timeout while waiting for bhist history processing queue to finish"
+            )
 
     def read_stdout_and_stderr_files(
         self, runpath: str, job_name: str, num_characters_to_read_from_end: int = 300
