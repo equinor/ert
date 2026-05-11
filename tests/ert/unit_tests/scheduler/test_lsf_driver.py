@@ -158,13 +158,15 @@ async def test_events_produced_from_jobstate_updates(
         self._iens2jobid[iens] = "1"
 
     driver.submit = mocked_submit.__get__(driver)
-    driver._dump_bhist_job_summary_to_runpath = AsyncMock()
+    driver._log_bhist_job_history = AsyncMock()
     await driver.submit(0, "_")
 
     # Replicate the behaviour of multiple calls to poll()
     for statestr in jobstate_sequence:
         jobstate = _parse_jobs_dict({"1": statestr})["1"]
         await driver._process_job_update("1", jobstate)
+
+    await driver.finish()
 
     events = []
     while not driver.event_queue.empty():
@@ -195,6 +197,38 @@ async def test_events_produced_from_jobstate_updates(
         assert len(events) <= 2  # The StartedEvent is not required
         assert events[-1] == FinishedEvent(iens=0, returncode=exit_code)
         assert "1" not in driver._jobs
+
+
+@pytest.mark.timeout(10)
+async def test_that_hanging_bhist_history_does_not_block_finished_event():
+    """This is a regression test to make sure that if bhist hangs for some reason,
+    job_updates are still processed and we get the finished event."""
+    driver = LsfDriver()
+    driver._jobs["1"] = JobData(
+        iens=0,
+        job_state=RunningJob(job_state="RUN"),
+        submitted_timestamp=time.time(),
+    )
+    driver._iens2jobid[0] = "1"
+    bhist_event = asyncio.Event()
+
+    async def never_ending_bhist_history(_job_id: str) -> None:
+        await bhist_event.wait()
+
+    driver._log_bhist_job_history = AsyncMock(side_effect=never_ending_bhist_history)
+
+    await asyncio.wait_for(
+        driver._process_job_update("1", FinishedJobSuccess(job_state="DONE")), timeout=5
+    )
+
+    assert await asyncio.wait_for(driver.event_queue.get(), timeout=5) == FinishedEvent(
+        iens=0, returncode=0
+    )
+    assert driver._bhist_job_history_processing_task is not None
+    assert not driver._bhist_job_history_processing_task.done()
+    bhist_event.set()
+    await driver.finish()
+    driver._log_bhist_job_history.assert_awaited_once_with("1")
 
 
 @pytest.mark.usefixtures("capturing_bsub")
@@ -580,7 +614,7 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
         bjobs_script=bjobs_script,
     )
     driver = LsfDriver()
-    driver._log_bhist_job_summary = AsyncMock()
+    driver._log_bhist_job_history = AsyncMock()
     with expectation:
         await driver.submit(0, "sleep")
         await asyncio.wait_for(poll(driver, {0}), timeout=1)
