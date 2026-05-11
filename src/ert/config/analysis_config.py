@@ -51,7 +51,9 @@ class AnalysisConfig:
     )
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
-    parameter_strategies: dict[str, StrategyName] = field(default_factory=dict)
+    parameter_type_update_strategies: dict[str, StrategyName] = field(
+        default_factory=dict
+    )
 
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> AnalysisConfig:
@@ -109,17 +111,24 @@ class AnalysisConfig:
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         errors = []
         all_errors = []
-        parameter_strategies: dict[str, StrategyName] = {}
+        parameter_type_update_strategies: dict[str, StrategyName] = {}
 
         for module_name, var_name, value in analysis_set_var:
             if var_name == "DISTANCE_LOCALIZATION" and value.upper() == "TRUE":
-                parameter_strategies["FIELD"] = "DISTANCE"
-                parameter_strategies["SURFACE"] = "DISTANCE"
+                parameter_type_update_strategies["FIELD"] = "DISTANCE"
+                parameter_type_update_strategies["SURFACE"] = "DISTANCE"
+                parameter_type_update_strategies["GEN_KW"] = "ADAPTIVE"
+
+                ConfigWarning.deprecation_warn(
+                    "DISTANCE_LOCALIZATION is deprecated and will be removed in a "
+                    "future version. Use ANALYSIS_SET_VAR PARAMETERS ... to set the "
+                    "strategy for each parameter type instead."
+                )
 
             if var_name == "LOCALIZATION" and value.upper() == "TRUE":
-                parameter_strategies["FIELD"] = "ADAPTIVE"
-                parameter_strategies["SURFACE"] = "ADAPTIVE"
-                parameter_strategies["GEN_KW"] = "ADAPTIVE"
+                parameter_type_update_strategies["FIELD"] = "ADAPTIVE"
+                parameter_type_update_strategies["SURFACE"] = "ADAPTIVE"
+                parameter_type_update_strategies["GEN_KW"] = "ADAPTIVE"
 
             if module_name == "PARAMETERS":
                 parameter_type = var_name
@@ -154,7 +163,7 @@ class AnalysisConfig:
                     )
                     continue
 
-                parameter_strategies[parameter_type] = strategy_name
+                parameter_type_update_strategies[parameter_type] = strategy_name
                 continue
 
             if module_name == "IES_ENKF":
@@ -271,7 +280,7 @@ class AnalysisConfig:
             observation_settings=obs_settings,
             es_settings=es_settings,
             design_matrix=design_matrix,
-            parameter_strategies=parameter_strategies,
+            parameter_type_update_strategies=parameter_type_update_strategies,
         )
 
     @property

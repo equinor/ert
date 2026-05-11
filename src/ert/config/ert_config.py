@@ -1184,9 +1184,9 @@ class ErtConfig(BaseModel):
             if param_config.update_strategy is not None:
                 if (
                     str(param_config.type).upper()
-                    in analysis_config.parameter_strategies
+                    in analysis_config.parameter_type_update_strategies
                 ):
-                    strategy: str = analysis_config.parameter_strategies[
+                    strategy: str = analysis_config.parameter_type_update_strategies[
                         str(param_config.type).upper()
                     ]
                     param_config.update_strategy = strategy

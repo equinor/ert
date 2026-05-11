@@ -434,20 +434,20 @@ def test_config_wrong_module(config, expectation):
         )
 
 
-def test_that_parameter_strategy_is_set_correctly():
+def test_that_parameter_type_update_strategies_is_set_correctly():
 
-    parameter_settings = AnalysisConfig.from_dict(
+    strategies = AnalysisConfig.from_dict(
         {
             ConfigKeys.ANALYSIS_SET_VAR: [
                 ["PARAMETERS", "FIELD", "DISTANCE"],
                 ["PARAMETERS", "GEN_KW", "ADAPTIVE"],
             ],
         }
-    ).parameter_strategies
+    ).parameter_type_update_strategies
 
-    assert len(parameter_settings) == 2
-    assert parameter_settings["FIELD"] == "DISTANCE"
-    assert parameter_settings["GEN_KW"] == "ADAPTIVE"
+    assert len(strategies) == 2
+    assert strategies["FIELD"] == "DISTANCE"
+    assert strategies["GEN_KW"] == "ADAPTIVE"
 
 
 def test_that_parameter_strategy_with_unknown_strategy_raises_validation_error():

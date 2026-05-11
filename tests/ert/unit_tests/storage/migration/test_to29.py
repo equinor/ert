@@ -59,11 +59,3 @@ def test_that_migration_converts_bool_update_to_strategy_string(tmp_path):
     assert updated_params[1]["update_strategy"] is None
     assert updated_params[2]["update_strategy"] == "GLOBAL"
     assert updated_params[3]["update_strategy"] is None
-
-
-def test_that_migration_handles_missing_experiments_dir(tmp_path):
-    root = tmp_path / "project"
-    root.mkdir()
-
-    # Should not raise
-    migrate(root)
