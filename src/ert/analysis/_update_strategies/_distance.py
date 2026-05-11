@@ -64,6 +64,8 @@ class DistanceLocalizationUpdate:
             covariance=obs_errors**2,
             observations=obs_values,
             alpha=1,
+            # Observation perturbations are supplied explicitly below, so no
+            # smoother RNG is used.
             seed=None,
         )
         self._smoother.prepare_assimilation(

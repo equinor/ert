@@ -70,6 +70,8 @@ class GlobalESUpdate:
             covariance=obs_context.observation_errors**2,
             observations=obs_context.observation_values,
             alpha=1,
+            # Observation perturbations are supplied explicitly below, so no
+            # smoother RNG is used.
             seed=None,
         )
 
