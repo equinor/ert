@@ -1,4 +1,6 @@
+import datetime
 import logging
+import re
 from pathlib import Path
 from textwrap import dedent
 
@@ -38,6 +40,73 @@ def test_that_str_type_failures_are_propagated(tmp_path, monkeypatch):
     assert any(
         e for e in err.value.errors if "Input should be a valid string" in e["msg"]
     )
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        (12),
+        (True),
+        (datetime.date(2024, 1, 1)),
+    ],
+)
+def test_that_non_string_keys_are_caught_in_config(tmp_path, monkeypatch, key):
+    monkeypatch.chdir(str(tmp_path))
+    Path("everest_config.yml").write_text(
+        dedent(f"""
+        objective_functions:
+            - name:
+                job: distance
+                {key}:
+        """),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=re.escape(f"Invalid key: `{key!r}`")):
+        EverestConfig.load_file("everest_config.yml")
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        ("definitions"),
+        ("forward_model"),
+    ],
+)
+def test_that_top_level_key_with_null_values_are_caught_in_config(
+    tmp_path, monkeypatch, key
+):
+    monkeypatch.chdir(str(tmp_path))
+    Path("everest_config.yml").write_text(
+        dedent(f"""
+        objective_functions:
+            - name:
+                job: distance
+        {key}:
+        """),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=re.escape(f"Null value for key: '{key}'")):
+        EverestConfig.load_file("everest_config.yml")
+
+
+def test_that_nested_keys_with_null_values_are_caught_in_config(tmp_path, monkeypatch):
+    monkeypatch.chdir(str(tmp_path))
+    Path("everest_config.yml").write_text(
+        dedent("""
+        objective_functions:
+            - name:
+                job: distance
+                parameters:
+        """),
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Null value for key: 'parameters' in 'objective_functions[0].name'"
+        ),
+    ):
+        EverestConfig.load_file("everest_config.yml")
 
 
 def test_that_control_config_is_initialized_with_control_variables():

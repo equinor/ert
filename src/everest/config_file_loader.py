@@ -122,6 +122,8 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
     if configuration is None:
         return {}
 
+    _check_for_valid_keys(configuration, Path(config_path))
+
     yaml = YAML()
     buffer = StringIO()
     yaml.dump(configuration, buffer)
@@ -178,3 +180,29 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
         # Inject config path
         yaml["config_path"] = config_path
         return yaml
+
+
+def _check_for_valid_keys(node: Any, config_path: Path, location: str = "") -> None:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            location = location or ""
+            if not isinstance(key, str):
+                raise ValueError(
+                    f"\n\nInvalid key: `{key!r}` ({type(key).__name__})"
+                    f"{f' in {location!r}' if location else ''}"
+                    f"\n    Keys can only be strings!"
+                    f'\n    Add quotes around the key (e.g. "{key}") '
+                    "to make it a string."
+                )
+            _check_for_valid_keys(
+                value, config_path, f"{location}.{key}" if location else key
+            )
+            if value is None:
+                raise ValueError(
+                    f"\n\nNull value for key: {key!r}"
+                    f"{f' in {location!r}' if location else ''}"
+                    f"\n    Either provide a value or remove the key entirely."
+                )
+    elif isinstance(node, list):
+        for index, item in enumerate(node):
+            _check_for_valid_keys(item, config_path, f"{location}[{index}]")
