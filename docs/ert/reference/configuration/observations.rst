@@ -209,6 +209,94 @@ different from space. Thus, the following statement is equivalent to
 the previous:
 
 
+Bulk configuration of summary observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Summary observations can also be created in bulk by the "SUMMARY"
+keyword. This will generate multiple summary observations from the
+same declaration, but requires a csv-file containing the attribute
+values for each summary observation.
+
+A minimal configuration for the "SUMMARY" keyword looks like:
+
+.. code-block:: none
+
+ SUMMARY {
+    VALUES = some_file.csv;
+ };
+
+Where the provided csv file will contain one row for each observation.
+Required columns to create summary observations are: keyword, value,
+error, date.
+
+Without these columns, the configuration is invalid, and Ert will raise
+an error.
+
+A csv file containing a single summary observation might look like:
+
+.. code-block:: none
+
+ keyword, value, error, date
+ FOPR, 1e6, 1e3, 2012-12-02
+
+
+It is also possible to provide optional columns: well, number, nx, ny,
+lgr_name, li, lj, lk - which may be required by certain keywords.
+
+The SUMMARY configuration can also configure WELLs. The WELL keyword
+inside a SUMMARY configuration is used to configure metadata about
+a well.
+
+The WELL keyword can contain two types of configuration: LOCALIZATION and
+BREAKTHROUGH.
+
+LOCALIZATION contains two required fields: NORTH and EAST, and optionally
+RADIUS. These localization attributes will be applied to all observations
+sharing the same well name as the WELL configuration.
+
+BREAKTHROUGH allows the user to define a BREAKTHROUGH observation for
+the given well. BREAKTHROUGH is configured like a regular
+BREAKTHROUGH_OBSERVATION - which requires the fields KEY, THRESHOLD, DATE
+and ERROR. BREAKTHROUGH will also inherit the LOCALIZATION values should
+they be defined for the well. Only one occurrence of BREAKTHROUGH can
+be configured per WELL.
+
+A SUMMARY configuration containing all of these elements may look like:
+
+.. code-block:: none
+
+ SUMMARY {
+    VALUES = some_file.csv;
+    WELL OP1 {
+        LOCALIZATION {
+            EAST   = 32.132;
+            NORTH  = 45.139;
+            RADIUS = 2500;
+        };
+        BREAKTHROUGH {
+            KEY       = WWCT;
+            THRESHOLD = 0.2;
+            DATE      = 2012-05-01;
+            ERROR     = 3;
+        };
+    };
+    WELL OP2 {
+        LOCALIZATION {
+            EAST   = 35.734;
+            NORTH  = 42.981;
+            RADIUS = 3000;
+        };
+    };
+ };
+
+.. code-block:: none
+
+ well,keyword, value, error, date, nx, ny, number
+ OP1, WOPR, 1e5, 1e3, 2012-01-03, , ,
+ OP1, BPR, 100, 7.5, 2012-01-07, 1, 2, 5
+ OP2, WOPR, 7e5, 1.2e3, 2012-02-05, , ,
+ ,FOPR, 1e6, 1e3, 2012-12-02, , ,
+
 .. _breakthrough_observation:
 
 BREAKTHROUGH_OBSERVATION keyword

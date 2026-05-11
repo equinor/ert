@@ -72,7 +72,19 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_director
         ).read_from_file(str(tmp_path / "DOES_NOT_EXIST"), 1, 0)
 
 
-def create_summary_observation(loc_config_lines):
+def create_observations(config, obs_config):
+    Path("config.ert").write_text(config, encoding="utf-8")
+    Path("observations").write_text(obs_config, encoding="utf-8")
+    Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+    Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
+
+    ert_config = ErtConfig.from_file("config.ert")
+    return create_observation_dataframes(
+        ert_config.observation_declarations, None, ert_config.shape_registry
+    )
+
+
+def create_localization_summary_observation(loc_config_lines):
     config = dedent(
         """
     NUM_REALIZATIONS 3
@@ -96,15 +108,7 @@ def create_summary_observation(loc_config_lines):
         };
         """
     )
-    Path("config.ert").write_text(config, encoding="utf-8")
-    Path("observations").write_text(obs_config, encoding="utf-8")
-    Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
-    Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
-    return create_observation_dataframes(
-        ert_config.observation_declarations, None, ert_config.shape_registry
-    )["summary"]
+    return create_observations(config, obs_config)["summary"]
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -112,7 +116,7 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
     tmpdir,
 ):
     with tmpdir.as_cwd():
-        summary_observations = create_summary_observation(
+        summary_observations = create_localization_summary_observation(
             """
             LOCALIZATION {
                 EAST   = 10;
@@ -134,7 +138,7 @@ def test_that_summary_observations_without_radius_gets_defaulted(
     tmpdir,
 ):
     with tmpdir.as_cwd():
-        summary_observations = create_summary_observation(
+        summary_observations = create_localization_summary_observation(
             """
             LOCALIZATION {
                 EAST   = 10;
@@ -166,7 +170,9 @@ def test_that_summary_observations_raises_error_when_east_or_north_are_undefined
     )
 
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
-        create_summary_observation("LOCALIZATION {" + loc_config_lines + "};")
+        create_localization_summary_observation(
+            "LOCALIZATION {" + loc_config_lines + "};"
+        )
     for kw in missing_keywords:
         assert f'Missing item "{kw}" in LOCALIZATION for SUMMARY_OBSERVATION' in str(
             e.value
@@ -184,7 +190,7 @@ def test_that_summary_observations_raises_error_given_unknown_localization_key(
         ),
         tmpdir.as_cwd(),
     ):
-        create_summary_observation("LOCALIZATION {FOO = BAZ;};")
+        create_localization_summary_observation("LOCALIZATION {FOO = BAZ;};")
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case")
@@ -223,7 +229,9 @@ def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internal
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_defaulted_summary_obs_values_have_type_float32(tmpdir):
     with tmpdir.as_cwd():
-        summary_observations = create_summary_observation(loc_config_lines="")
+        summary_observations = create_localization_summary_observation(
+            loc_config_lines=""
+        )
     assert summary_observations["east"].dtype == pl.Float32
     assert summary_observations["north"].dtype == pl.Float32
     assert summary_observations["radius"].dtype == pl.Float32
