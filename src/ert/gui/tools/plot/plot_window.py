@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
     QDockWidget,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -262,7 +263,11 @@ class PlotWindow(QMainWindow):
 
             self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
-            self.addDock("Data types", self._data_type_keys_widget)
+            left_dock = QDockWidget("View data type")
+            left_dock.setObjectName("NavigationDock")
+            left_dock.setWidget(self._data_type_keys_widget)
+            left_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
@@ -272,7 +277,6 @@ class PlotWindow(QMainWindow):
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
                 self.keySelected
             )
-            self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
             self._everest_parameters = [
                 kd.parameter.name
@@ -285,10 +289,52 @@ class PlotWindow(QMainWindow):
             self._everest_control_selection_widget.controlSelectionChanged.connect(
                 self.updatePlot
             )
-            self._everest_dock = self.addDock(
-                "Everest controls", self._everest_control_selection_widget
+
+            controls_group = QGroupBox("Select control(s)")
+            controls_layout = QVBoxLayout()
+            controls_layout.setContentsMargins(0, 0, 0, 0)
+            controls_layout.addWidget(self._everest_control_selection_widget)
+            controls_group.setLayout(controls_layout)
+            self._everest_controls_group = controls_group
+
+            ensemble_group = QGroupBox("Select ensemble(s)")
+            ensemble_layout = QVBoxLayout()
+            ensemble_layout.setContentsMargins(0, 0, 0, 0)
+            ensemble_layout.addWidget(self._ensemble_selection_widget)
+            ensemble_group.setLayout(ensemble_layout)
+
+            group_style = "QGroupBox { font-style: italic; }"
+
+            def create_group_box(title: str, widget: QWidget) -> QGroupBox:
+                group_box = QGroupBox(title)
+                group_box.setStyleSheet(group_style)
+                layout = QVBoxLayout()
+                layout.setContentsMargins(0, 0, 0, 0)
+                layout.addWidget(widget)
+                group_box.setLayout(layout)
+                return group_box
+
+            self._everest_controls_group = create_group_box(
+                "Select control(s)", self._everest_control_selection_widget
             )
-            self._everest_dock.setVisible(False)
+            ensemble_group = create_group_box(
+                "Select ensemble(s)", self._ensemble_selection_widget
+            )
+
+            right_container = QWidget()
+            right_layout = QVBoxLayout()
+            right_layout.setContentsMargins(0, 0, 0, 0)
+            right_layout.addWidget(self._everest_controls_group)
+            right_layout.addWidget(ensemble_group)
+            right_container.setLayout(right_layout)
+
+            right_dock = QDockWidget("Plot controls")
+            right_dock.setObjectName("PlotControlsDock")
+            right_dock.setWidget(right_container)
+            right_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right_dock)
+
+            self._everest_controls_group.setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
     def get_plot_api_version(self) -> str:
@@ -332,7 +378,7 @@ class PlotWindow(QMainWindow):
             EVEREST_OBJECTIVE_FUNCTION_PLOT,
         }
         is_everest_ensemble = plot_widget.name == ENSEMBLE and self.is_everest
-        self._everest_dock.setVisible(is_gradient_plot or is_controls_plot)
+        self._everest_controls_group.setVisible(is_gradient_plot or is_controls_plot)
 
         self._ensemble_selection_widget.apply_ensemble_filtering(
             require_func_eval=is_objective_plot
