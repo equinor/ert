@@ -269,6 +269,8 @@ def _create_rft_response_df(
     i: int = 1,
     j: int = 2,
     k: int = 3,
+    cell_center: tuple[float, float, float] = (100.0, 200.0, 25.0),
+    cell_zones: tuple[str, ...] = (),
 ) -> pl.DataFrame:
     time = datetime.strptime(date, "%Y-%m-%d").date()  # noqa: DTZ007
     df = pl.DataFrame(
@@ -281,6 +283,8 @@ def _create_rft_response_df(
             "depth": pl.Series([depth], dtype=pl.Float32),
             "values": pl.Series([value], dtype=pl.Float32),
             "well_connection_cell": pl.Series([(i, j, k)], dtype=pl.Array(pl.Int64, 3)),
+            "cell_center": pl.Series([cell_center], dtype=pl.Array(pl.Float32, 3)),
+            "cell_zones": pl.Series([cell_zones], dtype=pl.List(pl.String)),
         }
     )
     return RFTConfig._assert_schema(df, RFTConfig.response_schema())
@@ -304,6 +308,9 @@ def _create_rft_location_metadata_df(
             "tvd": pl.Series([tvd], dtype=pl.Float32),
             "actual_zones": pl.Series([zones], dtype=pl.List(pl.String)),
             "well_connection_cell": pl.Series([(i, j, k)], dtype=pl.Array(pl.Int64, 3)),
+            "well_connection_cell_center": pl.Series(
+                [(east, north, tvd)], dtype=pl.Array(pl.Float32, 3)
+            ),
         }
     )
     return RFTConfig._assert_schema(df, RFTConfig.location_metadata_schema())

@@ -1255,6 +1255,10 @@ def rft_response(
             "well_connection_cell": pl.Series(
                 [well_connection_cell], dtype=pl.Array(pl.Int64, 3)
             ),
+            "cell_center": pl.Series(
+                [[100.0, 105.0, 1000.0]], dtype=pl.Array(pl.Float32, 3)
+            ),
+            "cell_zones": pl.Series([[]], dtype=pl.List(pl.String)),
         },
         schema=RFTConfig.response_schema(),
     )
