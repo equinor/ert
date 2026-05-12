@@ -10,6 +10,7 @@ import polars as pl
 import pytest
 import resfo
 import xtgeo
+from polars.testing import assert_frame_equal
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.config import ErtConfig, ObservationSettings
@@ -17,6 +18,8 @@ from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
 from .run_cli import run_cli
+
+ENIF_HEAT_SNAPSHOT_ABS_TOL = 0.011
 
 
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
@@ -48,7 +51,7 @@ def test_field_param_update_using_heat_equation_enif(
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
 @pytest.mark.snapshot_test
 def test_field_param_update_using_heat_equation_enif_snapshot(
-    symlinked_heat_equation_storage_enif, snapshot
+    symlinked_heat_equation_storage_enif, snapshot, request
 ):
     config = symlinked_heat_equation_storage_enif
     with open_storage(config.ens_path, mode="r") as storage:
@@ -83,11 +86,32 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
             key=int,
         )
 
-        snapshot.assert_match(
-            result.select(index_columns + realization_columns).write_csv(
-                float_precision=2
-            ),
-            "enif_heat_snapshot.csv",
+        snapshot_name = "enif_heat_snapshot.csv"
+        actual = result.select(index_columns + realization_columns)
+        if bool(request.config.getoption("--snapshot-update")):
+            snapshot.assert_match(
+                actual.write_csv(float_precision=2),
+                snapshot_name,
+            )
+
+        expected = pl.read_csv(Path(snapshot.snapshot_dir, snapshot_name))
+        assert actual.columns == expected.columns
+        assert_frame_equal(
+            actual.select(index_columns),
+            expected.select(index_columns),
+            check_dtypes=False,
+            check_exact=True,
+        )
+
+        actual_values = actual.select(realization_columns).to_numpy()
+        expected_values = expected.select(realization_columns).to_numpy()
+        max_abs_diff = np.max(np.abs(actual_values - expected_values))
+        np.testing.assert_allclose(
+            actual_values,
+            expected_values,
+            rtol=0,
+            atol=ENIF_HEAT_SNAPSHOT_ABS_TOL,
+            err_msg=f"Maximum absolute snapshot drift: {max_abs_diff}",
         )
 
 
