@@ -321,7 +321,6 @@ def runmodel_args(draw, tmp_path_factory):
         installed_forward_model_steps={},
         installed_workflow_jobs=installed_ertscripts,
         queue_options=None,
-        activate_script="",
         environment_variables=env_vars_in_plugins | overridden_env_vars_in_plugins,
         env_pr_fm_step={},
         help_links={},

@@ -342,7 +342,7 @@ class ErtPluginManager(pluggy.PluginManager):
             add_span_processor(span_processor)
 
 
-class ErtRuntimePlugins(BaseModel):
+class ErtRuntimePlugins(BaseModel, extra="forbid"):
     installed_forward_model_steps: Mapping[str, SiteInstalledForwardModelStep] = Field(
         default_factory=dict
     )
