@@ -78,7 +78,7 @@ class EnsembleSelectListWidgetItemDataRole(IntEnum):
 
 class EnsembleSelectListWidget(QListWidget):
     ensembleSelectionListChanged = Signal()
-    MAXIMUM_SELECTED = 5
+    MAXIMUM_SELECTED = 10
     MINIMUM_SELECTED = 1
 
     def __init__(
