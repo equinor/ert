@@ -30,26 +30,26 @@ original_stat = os.stat
 def mocked_files(mocker):
     mocked_files = {}
 
+    def _fresh_buffer(data):
+        if isinstance(data, bytes):
+            return BytesIO(data)
+        return StringIO(data)
+
     def mock_open(*args, **kwargs):
-        nonlocal mocked_files
         path = args[0] if args else kwargs.get("file")
-        buffer = mocked_files.get(str(path))
-        if buffer is not None:
-            buffer.seek(0)
-            return buffer
+        data = mocked_files.get(str(path))
+        if data is not None:
+            return _fresh_buffer(data)
         return original_open(*args, **kwargs)
 
     def mock_io_open(*args, **kwargs):
-        nonlocal mocked_files
         path = args[0] if args else kwargs.get("file")
-        buffer = mocked_files.get(str(path))
-        if buffer is not None:
-            buffer.seek(0)
-            return buffer
+        data = mocked_files.get(str(path))
+        if data is not None:
+            return _fresh_buffer(data)
         return original_io_open(*args, **kwargs)
 
     def mock_stat(*args, **kwargs):
-        nonlocal mocked_files
         path = args[0] if args else kwargs.get("path")
         if str(path) in mocked_files:
             return os.stat_result([0x777, *([1] * 10)])
@@ -67,8 +67,7 @@ def mock_resfo_file(mocked_files):
     def inner(filename, contents):
         buffer = BytesIO()
         resfo.write(buffer, contents)
-        buffer.seek(0)
-        mocked_files[filename] = buffer
+        mocked_files[filename] = buffer.getvalue()
 
     return inner
 
@@ -618,9 +617,7 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
 def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepended(
     mock_resfo_file, egrid, mocked_files
 ):
-    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
-        "this_is_an_invalid_zonemap zone1"
-    )
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = "this_is_an_invalid_zonemap zone1"
     mock_resfo_file(
         "/tmp/does_not_exist/ECLBASE1.EGRID",
         egrid,
@@ -689,7 +686,7 @@ def test_that_substitutions_are_applied_to_zonemap_filename(
 ):
     iens = 5
     iter_ = 2
-    mocked_files[f"/tmp/does_not_exist/zonemap{iens}-{iter_}.txt"] = StringIO(
+    mocked_files[f"/tmp/does_not_exist/zonemap{iens}-{iter_}.txt"] = (
         "zonemap_file_is_picked_correctly zone1"
     )
 
@@ -810,9 +807,8 @@ def test_that_missing_egrid_without_locations_is_ignored(mock_resfo_file):
 def test_that_zone_with_multiple_layers_produces_single_matching_row(
     mock_resfo_file, egrid, mocked_files
 ):
-    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
-        "1 zone1\n2 zone1\n3 zone3\n"
-    )
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = "1 zone1\n2 zone1\n3 zone3\n"
+
     config = ErtConfig.from_dict(
         {
             "ZONEMAP": "zonemap.txt",
