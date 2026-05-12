@@ -42,7 +42,7 @@ class EverestGradientsPlot:
             axes.text(
                 0.5,
                 0.5,
-                "Select control(s) from the side panel to view gradients",
+                "Select control(s) from the right side panel to view gradients",
                 ha="center",
                 va="center",
             )
