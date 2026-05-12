@@ -2,6 +2,7 @@ import io
 import os
 from datetime import datetime
 from io import BytesIO, StringIO
+from pathlib import Path
 from typing import cast
 
 import numpy as np
@@ -19,11 +20,23 @@ from ert.config import (
 from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
+from ert.config.rft_config import _get_zonemap, _read_egrid
 from tests.ert.rft_generator import cell_start, float_arr
 
 original_open = open
 original_io_open = io.open
 original_stat = os.stat
+
+
+@pytest.fixture(autouse=True)
+def _clear_rft_caches():
+    """Reset the module-level EGRID and zonemap caches so cached entries from
+    previous tests do not leak into tests that expect a missing or different file."""
+    _read_egrid.cache_clear()
+    _get_zonemap.cache_clear()
+    yield
+    _read_egrid.cache_clear()
+    _get_zonemap.cache_clear()
 
 
 @pytest.fixture
@@ -97,6 +110,8 @@ def test_that_match_key_dict_expr_fits_match_key():
                 "well_connection_cell": pl.Series(
                     [well_connection_cell], dtype=pl.Array(pl.Int64, 3)
                 ),
+                "cell_center": [[0.0, 0.0, 0.0]],
+                "cell_zones": [[]],
             },
             schema=RFTConfig.response_schema(),
         )
@@ -134,6 +149,8 @@ def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo
         "depth",
         "values",
         "well_connection_cell",
+        "cell_center",
+        "cell_zones",
     }
 
 
@@ -152,10 +169,12 @@ def test_that_rft_with_empty_data_to_read_returns_empty_df(mock_resfo_file):
         "depth",
         "values",
         "well_connection_cell",
+        "cell_center",
+        "cell_zones",
     }
 
 
-def test_that_rft_reads_matching_well_and_date(mock_resfo_file):
+def test_that_rft_reads_matching_well_and_date(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -170,6 +189,10 @@ def test_that_rft_reads_matching_well_and_date(mock_resfo_file):
             ("SGAS    ", float_arr([0.01, 0.01])),
             ("DEPTH   ", float_arr([21.0, 31.0])),
         ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
     )
 
     rft_config = RFTConfig(
@@ -185,7 +208,9 @@ def test_that_rft_reads_matching_well_and_date(mock_resfo_file):
     ]
 
 
-def test_that_rft_config_wildcards_matches_any_well_date_and_property(mock_resfo_file):
+def test_that_rft_config_wildcards_matches_any_well_date_and_property(
+    mock_resfo_file, egrid
+):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -200,6 +225,10 @@ def test_that_rft_config_wildcards_matches_any_well_date_and_property(mock_resfo
             ("SGAS    ", float_arr([0.01, 0.01])),
             ("DEPTH   ", float_arr([21.0, 31.0])),
         ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
     )
 
     rft_config = RFTConfig(
@@ -232,7 +261,25 @@ def test_that_reading_from_non_existing_file_raises_invalid_response(tmp_path):
         rft_config.read_from_file(tmp_path / "BASE.RFT", 1, 1)
 
 
-def test_that_only_float_arrays_are_read(mock_resfo_file):
+def test_that_missing_egrid_file_raises_invalid_response(mock_resfo_file):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([100.0, 200.0])),
+            ("DEPTH   ", float_arr([20.0, 30.0])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["*"]}},
+    )
+    with pytest.raises(InvalidResponseFile):
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_only_float_arrays_are_read(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -241,6 +288,10 @@ def test_that_only_float_arrays_are_read(mock_resfo_file):
             ("HOSTGRID", ["        ", "        "]),
             ("DEPTH   ", float_arr([20.0, 30.0])),
         ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
     )
 
     rft_config = RFTConfig(
@@ -251,7 +302,7 @@ def test_that_only_float_arrays_are_read(mock_resfo_file):
     assert data["response_key"].to_list() == ["WELL:2000-01-01:PRESSURE"] * 2
 
 
-def test_that_a_well_can_match_no_properties(mock_resfo_file):
+def test_that_a_well_can_match_no_properties(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -263,6 +314,10 @@ def test_that_a_well_can_match_no_properties(mock_resfo_file):
             ("DEPTH   ", float_arr([20.0, 30.0])),
         ],
     )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
+    )
 
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
@@ -272,7 +327,7 @@ def test_that_a_well_can_match_no_properties(mock_resfo_file):
     assert data["response_key"].to_list() == ["WELL2:2000-01-01:SWAT"] * 2
 
 
-def test_that_missing_depth_raises_invalid_response_file(mock_resfo_file):
+def test_that_missing_depth_raises_invalid_response_file(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -280,6 +335,11 @@ def test_that_missing_depth_raises_invalid_response_file(mock_resfo_file):
             ("PRESSURE", float_arr([100.0, 200.0])),
         ],
     )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
+    )
+
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
@@ -310,7 +370,7 @@ def test_that_too_few_property_values_raises_invalid_response_file(mock_resfo_fi
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
 
-def test_that_number_of_connections_can_be_different_per_well(mock_resfo_file):
+def test_that_number_of_connections_can_be_different_per_well(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -322,6 +382,11 @@ def test_that_number_of_connections_can_be_different_per_well(mock_resfo_file):
             ("DEPTH   ", float_arr([0.1])),
         ],
     )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
+    )
+
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
@@ -338,6 +403,46 @@ def pad_to(lst: list[int], target_len: int):
     )
 
 
+def _egrid(nx, ny, nz, x_width, y_width, layer_height):
+    """EGrid file contents with nz layers, nx cells in the i direction and ny cells in
+    the j direction.
+
+    Each cell has width x_width in the i direction and y_width in the j direction and
+    height layer_height in the z direction.
+    """
+
+    height = nz * layer_height
+    cells_per_layer = nx * ny
+
+    coord = np.array(
+        [
+            [i * x_width, j * y_width, 0, i * x_width, j * y_width, height]
+            for j in range(ny + 1)
+            for i in range(nx + 1)
+        ],
+        dtype=">f4",
+    )
+
+    zcoord = np.array(
+        [
+            [z * layer_height] * (cells_per_layer * 4)
+            + [(z + 1) * layer_height] * (cells_per_layer * 4)
+            for z in range(nz)
+        ],
+        dtype=">f4",
+    )
+    return [
+        ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
+        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
+        ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
+        ("GRIDHEAD", pad_to([1, nx, ny, nz], 100)),
+        ("COORD   ", coord.ravel()),
+        ("ZCORN   ", zcoord.ravel()),
+        ("ACTNUM  ", np.ones(nx * ny * nz, dtype=">i4")),
+        ("ENDGRID ", np.array([], dtype=">i4")),
+    ]
+
+
 @pytest.fixture
 def egrid():
     """EGrid file contents with three layers.
@@ -350,33 +455,7 @@ def egrid():
     Third layer depth is from 2.0 to 3.0
 
     """
-    coord = np.array(
-        [
-            [0, 0, 0, 0, 0, 100],
-            [50, 0, 0, 50, 0, 100],
-            [100, 0, 0, 100, 0, 100],
-            [0, 50, 0, 0, 50, 100],
-            [50, 50, 0, 50, 50, 100],
-            [100, 50, 0, 100, 50, 100],
-            [0, 100, 0, 0, 100, 100],
-            [50, 100, 0, 50, 100, 100],
-            [100, 100, 0, 100, 100, 100],
-        ],
-        dtype=">f4",
-    )
-    return [
-        ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
-        ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-        ("GRIDHEAD", pad_to([1, 2, 2, 3], 100)),
-        ("COORD   ", coord.ravel()),
-        (
-            "ZCORN   ",
-            np.array([0.0] * 16 + [1.0] * 32 + [2.0] * 32 + [3.0] * 16, dtype=">f4"),
-        ),
-        ("ACTNUM  ", np.ones((8,), dtype=">i4")),
-        ("ENDGRID ", np.array([], dtype=">i4")),
-    ]
+    return _egrid(2, 2, 3, 50.0, 50.0, 1.0)
 
 
 def test_that_locations_are_found_in_corresponding_grid(mock_resfo_file, egrid):
@@ -487,7 +566,7 @@ def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
     assert sorted(data["tvd"].to_list()) == [1.25, 1.5]
 
 
-def test_that_connection_cells_are_processed_independently(mock_resfo_file, egrid):
+def test_that_connection_cells_are_processed_independently(mock_resfo_file):
     config = ErtConfig.from_dict(
         {
             "ECLBASE": "ECLBASE<IENS>",
@@ -513,7 +592,7 @@ def test_that_connection_cells_are_processed_independently(mock_resfo_file, egri
 
     mock_resfo_file(
         "/tmp/does_not_exist/ECLBASE1.EGRID",
-        egrid,
+        _egrid(5, 2, 3, 50.0, 50.0, 1.0),
     )
     mock_resfo_file(
         "/tmp/does_not_exist/ECLBASE1.RFT",
@@ -786,7 +865,9 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
         rft_config.obtain_location_metadata("/tmp/does_not_exist", 1, 1, observations)
 
 
-def test_that_missing_egrid_without_locations_is_ignored(mock_resfo_file):
+def test_that_missing_egrid_without_locations_raises_invalid_response_file(
+    mock_resfo_file,
+):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -795,13 +876,14 @@ def test_that_missing_egrid_without_locations_is_ignored(mock_resfo_file):
             ("DEPTH   ", float_arr([20.0])),
         ],
     )
+
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["PRESSURE"]}},
     )
 
-    responses = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
-    assert responses["response_key"].to_list() == ["WELL:2000-01-01:PRESSURE"]
+    with pytest.raises(InvalidResponseFile):
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
 
 def test_that_zone_with_multiple_layers_produces_single_matching_row(
@@ -861,7 +943,7 @@ def test_that_zone_with_multiple_layers_produces_single_matching_row(
     assert observation_metadata["actual_zones"].to_list() == [["zone1"]]
 
 
-def test_that_non_matching_wells_are_ignored_silently(mock_resfo_file):
+def test_that_non_matching_wells_are_ignored_silently(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -872,6 +954,10 @@ def test_that_non_matching_wells_are_ignored_silently(mock_resfo_file):
             ("PRESSURE", float_arr([300.0, 400.0])),
             ("DEPTH   ", float_arr([40.0, 50.0])),
         ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
     )
 
     rft_config = RFTConfig(
@@ -886,7 +972,9 @@ def test_that_non_matching_wells_are_ignored_silently(mock_resfo_file):
     ]
 
 
-def test_that_wildcard_well_with_specific_date_matches_all_wells(mock_resfo_file):
+def test_that_wildcard_well_with_specific_date_matches_all_wells(
+    mock_resfo_file, egrid
+):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -900,6 +988,10 @@ def test_that_wildcard_well_with_specific_date_matches_all_wells(mock_resfo_file
             ("PRESSURE", float_arr([200.0])),
             ("DEPTH   ", float_arr([30.0])),
         ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
     )
 
     rft_config = RFTConfig(
@@ -915,7 +1007,7 @@ def test_that_wildcard_well_with_specific_date_matches_all_wells(mock_resfo_file
 
 
 def test_that_specific_well_with_wildcard_property_reads_all_float_arrays(
-    mock_resfo_file,
+    mock_resfo_file, egrid
 ):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
@@ -927,6 +1019,10 @@ def test_that_specific_well_with_wildcard_property_reads_all_float_arrays(
             ("HOSTGRID", ["        "]),
             ("DEPTH   ", float_arr([20.0])),
         ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
     )
 
     rft_config = RFTConfig(
@@ -941,4 +1037,48 @@ def test_that_specific_well_with_wildcard_property_reads_all_float_arrays(
             "WELL:2000-01-01:SWAT",
             "WELL:2000-01-01:SGAS",
         ]
+    )
+
+
+@pytest.mark.parametrize(
+    ("with_zonemap", "expected_zones"),
+    [
+        pytest.param(False, [None, None]),
+        pytest.param(True, [["zone_a"], ["zone_b"]]),
+    ],
+)
+def test_that_cell_center_and_cell_zones_are_populated_from_egrid_and_zonemap(
+    mock_resfo_file,
+    egrid,
+    mocked_files,
+    with_zonemap,
+    expected_zones,
+):
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = "1 zone_a\n2 zone_b\n"
+    mock_resfo_file("/tmp/does_not_exist/BASE.EGRID", egrid)
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name=b"WELL",
+                ijks=[(1, 1, 1), (1, 1, 2)],
+            ),
+            ("PRESSURE", float_arr([10.0, 20.0])),
+            ("DEPTH   ", float_arr([0.5, 1.5])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL": {"2000-01-01": ["PRESSURE"]}},
+        zonemap=Path("zonemap.txt") if with_zonemap else None,
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    assert data["well_connection_cell"].to_list() == [[1, 1, 1], [1, 1, 2]]
+    assert data["cell_zones"].to_list() == expected_zones
+    np.testing.assert_allclose(
+        data["cell_center"].to_numpy(), [[25.0, 25.0, 0.5], [25.0, 25.0, 1.5]]
     )

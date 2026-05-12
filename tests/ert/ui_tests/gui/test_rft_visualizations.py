@@ -37,25 +37,32 @@ def pad_to(lst: list[int], target_len: int):
 
 
 def write_egrid(path: Path):
+    nz = 50
     resfo.write(
         path,
         [
             ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
             ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
             ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-            ("GRIDHEAD", pad_to([1, 1, 1, 1], 100)),
+            ("GRIDHEAD", pad_to([1, 1, 1, nz], 100)),
             (
                 "COORD   ",
                 np.array(
                     [
-                        [[[0, 0, 0], [0, 0, 10]], [[0, 1, 0], [0, 1, 10]]],
-                        [[[1, 0, 0], [1, 0, 10]], [[1, 1, 0], [1, 1, 10]]],
+                        [[[0, 0, 0], [0, 0, nz]], [[0, 1, 0], [0, 1, nz]]],
+                        [[[1, 0, 0], [1, 0, nz]], [[1, 1, 0], [1, 1, nz]]],
                     ],
                     dtype=">f4",
                 ).ravel(),
             ),
-            ("ZCORN   ", np.array([0, 0, 0, 0, 10, 10, 10, 10], dtype=">f4")),
-            ("ACTNUM  ", np.ones((8,), dtype=">i4")),
+            (
+                "ZCORN   ",
+                np.array(
+                    [v for k in range(nz) for v in [k] * 4 + [k + 1] * 4],
+                    dtype=">f4",
+                ),
+            ),
+            ("ACTNUM  ", np.ones((nz,), dtype=">i4")),
             ("ENDGRID ", np.array([], dtype=">i4")),
         ],
     )
@@ -77,7 +84,7 @@ def rft_config(tmp_path: Path):
                 *cell_start(
                     date=(1, 1, 2000),
                     well_name="WELL",
-                    ijks=[(i, i, i) for i in range(50)],
+                    ijks=[(1, 1, k) for k in range(1, 51)],
                 ),
                 ("PRESSURE", np.sin(depth)),
                 ("DEPTH   ", depth + offset),

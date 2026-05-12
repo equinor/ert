@@ -7,6 +7,7 @@ import os
 import re
 from collections import defaultdict
 from dataclasses import InitVar, dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import IO, Any, Literal, TypeAlias
 
@@ -45,6 +46,35 @@ ZoneName: TypeAlias = str
 WellName: TypeAlias = str
 DateString: TypeAlias = str
 RFTProperty: TypeAlias = str
+
+
+@dataclass(frozen=True)
+class WellConnectionCell:
+    grid_index: GridIndex
+    cell_center: Point
+
+
+# The egrid and zonemap are needed in both ``read_from_file`` and
+# ``obtain_location_metadata``.
+# These functions are called just after each other for the same realization/file path in
+# ``_write_responses_to_storage`` (see ``local_ensemble.py``). Caching them avoids
+# reading and parsing the same files twice. ``maxsize=1`` since we don't want to keep
+# multiple large objects in memory (especially grid objects can be large), and it is
+# sufficient as ``_write_responses_to_storage`` is only called for one realization at a
+# time.
+
+
+@lru_cache(maxsize=1)
+def _read_egrid(egrid_file: str) -> CornerpointGrid:
+    try:
+        return CornerpointGrid.read_egrid(egrid_file)
+    except (OSError, InvalidEgridFileError) as err:
+        raise InvalidResponseFile(f"Could not read grid file: {err}") from err
+
+
+@lru_cache(maxsize=1)
+def _get_zonemap(zonemap_path: Path) -> dict[int, list[str]]:
+    return parse_zonemap(str(zonemap_path), zonemap_path.read_text(encoding="utf-8"))
 
 
 class RFTConfig(ResponseConfig):
@@ -112,18 +142,16 @@ class RFTConfig(ResponseConfig):
     @staticmethod
     def _map_locations_to_cells(
         egrid_file: str | os.PathLike[str] | IO[Any], locations: list[Point]
-    ) -> dict[Point, GridIndex]:
+    ) -> dict[Point, WellConnectionCell]:
         """
-        For each location, find the corresponding connected grid cell, if it exists.
+        For each location, find the corresponding connected grid cell and its center,
+        if it exists.
         """
 
-        location_cell_map: dict[Point, GridIndex] = {}
+        location_cell_map: dict[Point, WellConnectionCell] = {}
         if not locations:
             return location_cell_map
-        try:
-            grid = CornerpointGrid.read_egrid(egrid_file)
-        except (OSError, InvalidEgridFileError) as err:
-            raise InvalidResponseFile(f"Could not read grid file: {err}") from err
+        grid = _read_egrid(str(egrid_file))
 
         for location, cell in zip(
             locations,
@@ -136,7 +164,10 @@ class RFTConfig(ResponseConfig):
                 )
             # cells returned by grid are 0-based, while zonemap
             # and RFTEntry.connections are 1-based, so unifying
-            location_cell_map[location] = (cell[0] + 1, cell[1] + 1, cell[2] + 1)
+            location_cell_map[location] = WellConnectionCell(
+                (cell[0] + 1, cell[1] + 1, cell[2] + 1),
+                grid.cell_corners(*cell).mean(axis=0),
+            )
         return location_cell_map
 
     @staticmethod
@@ -251,6 +282,8 @@ class RFTConfig(ResponseConfig):
             "depth": pl.Float32,
             "values": pl.Float32,
             "well_connection_cell": pl.Array(pl.Int64, 3),
+            "cell_center": pl.Array(pl.Float32, 3),
+            "cell_zones": pl.List(pl.String),
         }
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
@@ -265,6 +298,44 @@ class RFTConfig(ResponseConfig):
         if not rft_data:
             return pl.DataFrame(schema=self.response_schema())
 
+        egrid_filepath = self._ergrid_filepath(rft_filepath)
+        grid = _read_egrid(egrid_filepath)
+
+        def _cell_center(i: int, j: int, k: int) -> npt.NDArray[np.float32]:
+            try:
+                return grid.cell_corners(i - 1, j - 1, k - 1).mean(axis=0)
+            except IndexError as err:
+                raise InvalidResponseFile(
+                    f"Grid coordinates ({i}, {j}, {k}) are out of bounds "
+                    f"for grid file {egrid_filepath}"
+                ) from err
+
+        def _get_cell_center() -> pl.Expr:
+            return pl.struct(["well_connection_cell"]).map_elements(
+                lambda x: _cell_center(
+                    x["well_connection_cell"][0],
+                    x["well_connection_cell"][1],
+                    x["well_connection_cell"][2],
+                ),
+                return_dtype=pl.Array(pl.Float32, 3),
+            )
+
+        def _get_cell_zone() -> pl.Expr:
+            if self.zonemap:
+                zonemap_path = self._zonemap_filepath(
+                    self.zonemap, run_path, iens, iter_
+                )
+                zonemap = _get_zonemap(zonemap_path)
+            else:
+                zonemap = {}
+            return (
+                pl.col("well_connection_cell")
+                .arr.get(2)
+                .replace_strict(zonemap, default=None, return_dtype=pl.List(pl.String))
+            )
+
+        get_cell_column = _get_cell_center()
+        get_cell_zone = _get_cell_zone()
         try:
             df = pl.concat(
                 [
@@ -282,7 +353,12 @@ class RFTConfig(ResponseConfig):
                                 dtype=pl.List(pl.Array(pl.Int64, 3)),
                             ),
                         }
-                    ).explode("depth", "values", "well_connection_cell")
+                    )
+                    .explode("depth", "values", "well_connection_cell")
+                    .with_columns(
+                        get_cell_column.alias("cell_center"),
+                        get_cell_zone.alias("cell_zones"),
+                    )
                     for (well, time), inner_dict in rft_data.items()
                     for prop, vals in inner_dict.property_values.items()
                     if prop != "DEPTH" and len(vals) > 0
@@ -302,6 +378,7 @@ class RFTConfig(ResponseConfig):
             "tvd": pl.Float32,
             "actual_zones": pl.List(pl.String),
             "well_connection_cell": pl.Array(pl.Int64, 3),
+            "well_connection_cell_center": pl.Array(pl.Float32, 3),
         }
 
     def obtain_location_metadata(
@@ -329,7 +406,7 @@ class RFTConfig(ResponseConfig):
 
         if self.zonemap:
             zonemap_path = self._zonemap_filepath(self.zonemap, run_path, iens, iter_)
-            zonemap = parse_zonemap(str(zonemap_path), zonemap_path.read_text())
+            zonemap = _get_zonemap(zonemap_path)
         else:
             zonemap = {}
 
@@ -341,9 +418,15 @@ class RFTConfig(ResponseConfig):
                 "north": [loc[1] for loc in locations],
                 "tvd": [loc[2] for loc in locations],
                 "actual_zones": [
-                    zonemap.get(location_cell_map[loc][-1], []) for loc in locations
+                    zonemap.get(location_cell_map[loc].grid_index[-1], [])
+                    for loc in locations
                 ],
-                "well_connection_cell": [location_cell_map[loc] for loc in locations],
+                "well_connection_cell": [
+                    location_cell_map[loc].grid_index for loc in locations
+                ],
+                "well_connection_cell_center": [
+                    location_cell_map[loc].cell_center for loc in locations
+                ],
             },
             schema=self.location_metadata_schema(),
         )

@@ -185,6 +185,10 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
                 "well_connection_cell": pl.Series(
                     [[7, 7, 8]], dtype=pl.Array(pl.Int64, 3)
                 ),
+                "cell_center": pl.Series(
+                    [[np.nan, np.nan, np.nan]], dtype=pl.Array(pl.Float32, 3)
+                ),
+                "cell_zones": [["zone100"]],
             },
             schema=RFTConfig.response_schema(),
         )
@@ -200,6 +204,9 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
                 "actual_zones": [["zone100"]],
                 "well_connection_cell": pl.Series(
                     [[7, 7, 8]], dtype=pl.Array(pl.Int64, 3)
+                ),
+                "well_connection_cell_center": pl.Series(
+                    [[10.0, 11.0, 12.0]], dtype=pl.Array(pl.Float32, 3)
                 ),
             },
             schema=RFTConfig.location_metadata_schema(),
@@ -272,7 +279,10 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
         }
     )
 
-    def rft_response() -> pl.DataFrame:
+    def rft_response(
+        *,
+        cell_zones: list[str],
+    ) -> pl.DataFrame:
         df = pl.DataFrame(
             {
                 "response_key": ["WELL:2000-01-01:PRESSURE"],
@@ -283,6 +293,10 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
                 "depth": [0.0],
                 "values": [0.0],
                 "well_connection_cell": pl.Series([cell1], dtype=pl.Array(pl.Int64, 3)),
+                "cell_center": pl.Series(
+                    [[np.nan, np.nan, np.nan]], dtype=pl.Array(pl.Float32, 3)
+                ),
+                "cell_zones": [cell_zones],
             },
             schema=RFTConfig.response_schema(),
         )
@@ -320,25 +334,25 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     ensemble = experiment.create_ensemble(name="default", ensemble_size=4)
 
     # realization 0: disabled due to zone mismatch
-    ensemble.save_response("rft", rft_response(), 0)
+    ensemble.save_response("rft", rft_response(cell_zones=zones1), 0)
     ensemble.save_observation_location_metadata(
         location_metadata(actual_zones=zones1, well_connection_cell=cell1), 0
     )
 
     # realization 1: matching response
-    ensemble.save_response("rft", rft_response(), 1)
+    ensemble.save_response("rft", rft_response(cell_zones=zones2), 1)
     ensemble.save_observation_location_metadata(
         location_metadata(actual_zones=zones2, well_connection_cell=cell1), 1
     )
 
     # realization 2: disabled due to both zones and well connection cell mismatch
-    ensemble.save_response("rft", rft_response(), 2)
+    ensemble.save_response("rft", rft_response(cell_zones=zones1), 2)
     ensemble.save_observation_location_metadata(
         location_metadata(actual_zones=zones1, well_connection_cell=cell2), 2
     )
 
     # realization 3: disabled due to well connection cell mismatch
-    ensemble.save_response("rft", rft_response(), 3)
+    ensemble.save_response("rft", rft_response(cell_zones=zones2), 3)
     ensemble.save_observation_location_metadata(
         location_metadata(actual_zones=zones2, well_connection_cell=cell2), 3
     )
