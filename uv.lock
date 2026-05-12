@@ -17,7 +17,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-03-31T10:10:37.352018Z"
+exclude-newer = "2026-05-05T08:23:37.667817523Z"
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
@@ -1165,7 +1165,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "httpx-retries" },
     { name = "humanize" },
-    { name = "iterative-ensemble-smoother", specifier = ">=1.1.0" },
+    { name = "iterative-ensemble-smoother", specifier = ">=1.1.0,<1.2.0" },
     { name = "jinja2", specifier = ">=2.10" },
     { name = "lark" },
     { name = "lxml" },
