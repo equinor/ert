@@ -263,8 +263,12 @@ class PlotWindow(QMainWindow):
 
             self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
-            left_dock = QDockWidget("View data type")
+            left_dock = QDockWidget()
             left_dock.setObjectName("NavigationDock")
+            left_title = QLabel("View data type")
+            left_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            left_title.setStyleSheet("padding-bottom: 7px;")
+            left_dock.setTitleBarWidget(left_title)
             left_dock.setWidget(self._data_type_keys_widget)
             left_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
             self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
@@ -290,7 +294,10 @@ class PlotWindow(QMainWindow):
                 self.updatePlot
             )
 
+            group_style = "QGroupBox { font-style: italic; }"
+
             controls_group = QGroupBox("Select control(s)")
+            controls_group.setStyleSheet(group_style)
             controls_layout = QVBoxLayout()
             controls_layout.setContentsMargins(0, 0, 0, 0)
             controls_layout.addWidget(self._everest_control_selection_widget)
@@ -298,6 +305,7 @@ class PlotWindow(QMainWindow):
             self._everest_controls_group = controls_group
 
             ensemble_group = QGroupBox("Select ensemble(s)")
+            ensemble_group.setStyleSheet(group_style)
             ensemble_layout = QVBoxLayout()
             ensemble_layout.setContentsMargins(0, 0, 0, 0)
             ensemble_layout.addWidget(self._ensemble_selection_widget)
@@ -328,8 +336,12 @@ class PlotWindow(QMainWindow):
             right_layout.addWidget(ensemble_group)
             right_container.setLayout(right_layout)
 
-            right_dock = QDockWidget("Plot controls")
+            right_dock = QDockWidget()
             right_dock.setObjectName("PlotControlsDock")
+            right_title = QLabel("Plot controls")
+            right_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            right_title.setStyleSheet("padding-bottom: 7px;")
+            right_dock.setTitleBarWidget(right_title)
             right_dock.setWidget(right_container)
             right_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
             self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right_dock)
