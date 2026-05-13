@@ -119,6 +119,7 @@ def analysis_set_var_keyword() -> SchemaItem:
         kw=ConfigKeys.ANALYSIS_SET_VAR,
         argc_min=3,
         argc_max=None,
+        join_after=2,
         multi_occurrence=True,
     )
 
