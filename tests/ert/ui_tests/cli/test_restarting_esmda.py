@@ -154,7 +154,7 @@ def test_that_running_esmda_from_restart_uses_previous_observations_and_paramete
     run_cli(
         ES_MDA_MODE,
         "--disable-monitoring",
-        "--weights=0,1",
+        "--weights=2,1",
         "--restart-ensemble-id",
         str(ensemble.id),
         "config.ert",

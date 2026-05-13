@@ -115,7 +115,7 @@ def test_that_small_time_mismatches_in_summaries_are_ignored(
             run_cli(
                 ES_MDA_MODE,
                 str(tmp_path / "config.ert"),
-                "--weights=0,1",
+                "--weights=2,1",
             )
         assert "Experiment completed" in stderr.getvalue()
     else:
@@ -124,5 +124,5 @@ def test_that_small_time_mismatches_in_summaries_are_ignored(
                 ES_MDA_MODE,
                 "--disable-monitoring",
                 str(tmp_path / "config.ert"),
-                "--weights=0,1",
+                "--weights=2,1",
             )

@@ -1725,6 +1725,39 @@ proportional to the identity matrix.
 
 
 
+.. _es_mda_weights:
+
+WEIGHTS
+^^^^^^^
+
+Sets the relative weights used by the ES-MDA (Ensemble Smoother with Multiple
+Data Assimilation) algorithm. ES-MDA performs one update step per weight, and
+the number of weights therefore determines the number of assimilation
+iterations. This is valid for the ``STD_ENKF`` module only.
+
+The weights are relative: they are internally scaled so that the sum of their
+reciprocals equals 1.0, i.e: sum(1.0 / x for x in weights) == 1.0.
+The default weights are ``4, 2, 1``.
+
+The value is a comma-separated list of positive numbers. Zero or negative
+weights are not allowed.
+
+::
+
+    ANALYSIS_SET_VAR STD_ENKF WEIGHTS 8, 4, 2, 1
+
+This configures ES-MDA to run with four assimilation iterations using the
+given relative weights.
+
+.. note::
+
+    Weights set here are used as the default in the ES-MDA experiment panel in
+    the GUI. The value can still be overridden interactively before starting a
+    run; if the GUI value differs from the configured weights, a warning is
+    shown and the GUI value is used for that run.
+
+
+
 .. _parameters_section:
 
 PARAMETERS
