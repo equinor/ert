@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 from typing_extensions import override
 
@@ -45,7 +44,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from ert.config import AnalysisConfig
-    from ert.gui.ertwidgets import ValueModel
     from ert.storage import Ensemble
 logger = logging.getLogger(__name__)
 
@@ -316,36 +314,14 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
         self._relative_iteration_weights_box.setObjectName("weights_input_esmda")
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
-        layout.addRow("Relative weights:", self._relative_iteration_weights_box)
+        layout.addRow("Weights:", self._relative_iteration_weights_box)
 
         relative_iteration_weights_model.valueChanged.connect(self.setWeights)
-
-        normalized_weights_model = ValueModel()
-        normalized_weights_widget = _ActiveLabel(normalized_weights_model)
-        layout.addRow("Normalized weights:", normalized_weights_widget)
-
-        def updateVisualizationOfNormalizedWeights() -> None:
-            self.weights_valid = False
-
-            if self._relative_iteration_weights_box.isValid():
-                try:
-                    normalized_weights = MultipleDataAssimilation.parse_weights(
-                        relative_iteration_weights_model.getValue()  # type: ignore
-                    )
-                    normalized_weights_model.setValue(
-                        ", ".join(f"{x:.2f}" for x in normalized_weights)
-                    )
-                    self.weights_valid = True
-                except ValueError:
-                    normalized_weights_model.setValue("The weights are invalid!")
-            else:
-                normalized_weights_model.setValue("The weights are invalid!")
-
         self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
-            updateVisualizationOfNormalizedWeights
+            self._validate_weights
         )
 
-        updateVisualizationOfNormalizedWeights()  # To normalize the default weights
+        self._validate_weights()  # To validate the default weights
 
     @override
     def isConfigurationValid(self) -> bool:
@@ -377,6 +353,17 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def setWeights(self, weights: Any) -> None:
         self.weights = str(weights)
 
+    def _validate_weights(self) -> None:
+        self.weights_valid = False
+        if self._relative_iteration_weights_box.isValid():
+            try:
+                MultipleDataAssimilation.parse_weights(
+                    self._relative_iteration_weights_box.text()
+                )
+                self.weights_valid = True
+            except ValueError:
+                pass
+
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         try:
@@ -390,26 +377,3 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 widget_info='<p style="font-size: 28px;">Error reading storage</p>',
                 parent=self,
             ).show()
-
-
-class _ActiveLabel(QLabel):
-    def __init__(self, model: ValueModel) -> None:
-        super().__init__()
-
-        self._model = model
-
-        font = self.font()
-        font.setWeight(QFont.Weight.Bold)
-        self.setFont(font)
-
-        self._model.valueChanged.connect(self.updateLabel)
-
-        self.updateLabel()
-
-    def updateLabel(self) -> None:
-        """Retrieves data from the model and inserts it into the edit line"""
-        model_value = self._model.getValue()
-        if model_value is None:
-            model_value = ""
-
-        self.setText(str(model_value))
