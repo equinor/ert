@@ -72,16 +72,17 @@ class MisfitsPlot:
         axes.set_axis_off()
 
     @staticmethod
-    def _make_ensemble_colors(
+    def _map_ensembles_to_colours(
         sorted_ensemble_keys: list[tuple[str, str]],
+        colour_list: list[tuple[str, float]],  # tuples of hex and alpha values
     ) -> dict[tuple[str, str], str]:
         """
         Build a consistent color map and figure-level legend
-        used by all misfit plots
+        used by all misfit plots. Alpha values are dropped.
         """
-        colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         return {
-            key: colors[i % len(colors)] for i, key in enumerate(sorted_ensemble_keys)
+            key: colour_list[i % len(colour_list)][0]
+            for i, key in enumerate(sorted_ensemble_keys)
         }
 
     @staticmethod
@@ -209,7 +210,9 @@ class MisfitsPlot:
         distinct_gendata_index = all_misfits["key_index"].unique().sort().to_list()
         num_gendata_index = len(distinct_gendata_index)
 
-        color_map = self._make_ensemble_colors(sorted_ensemble_keys)
+        color_map = self._map_ensembles_to_colours(
+            sorted_ensemble_keys, plot_context.plotConfig().lineColorCycle()
+        )
         self._draw_legend(
             figure=figure,
             ensemble_colors=color_map,
@@ -335,7 +338,9 @@ class MisfitsPlot:
 
         # Prepare ensemble colors and draw the legend
         sorted_ensemble_keys = sorted(data_with_misfits.keys())
-        color_map = self._make_ensemble_colors(sorted_ensemble_keys)
+        color_map = self._map_ensembles_to_colours(
+            sorted_ensemble_keys, plot_context.plotConfig().lineColorCycle()
+        )
         self._draw_legend(
             figure=figure,
             ensemble_colors=color_map,
