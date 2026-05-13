@@ -15,6 +15,8 @@ from iterative_ensemble_smoother import AdaptiveESMDA
 
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
 
+from ._batching import calculate_localization_batch_size, split_by_batch_size
+
 if TYPE_CHECKING:
     import numpy.typing as npt
 
@@ -30,69 +32,6 @@ RESERVED_CPU_CORES = 2
 NUM_JOBS_ADAPTIVE_LOC = max(
     1, ((psutil.cpu_count(logical=False) or 1) - RESERVED_CPU_CORES)
 )
-
-
-def _split_by_batchsize(
-    arr: npt.NDArray[np.int_], batch_size: int
-) -> list[npt.NDArray[np.int_]]:
-    """Split an array into sub-arrays of a specified batch size.
-
-    Parameters
-    ----------
-    arr : npt.NDArray[np.int_]
-        Array of indices to split.
-    batch_size : int
-        Target size for each batch.
-
-    Returns
-    -------
-    list[npt.NDArray[np.int_]]
-        List of sub-arrays.
-
-    Examples
-    --------
-    >>> num_params = 10
-    >>> batch_size = 3
-    >>> s = np.arange(0, num_params)
-    >>> _split_by_batchsize(s, batch_size)
-    [array([0, 1, 2, 3]), array([4, 5, 6]), array([7, 8, 9])]
-    """
-    sections = 1 if batch_size > len(arr) else len(arr) // batch_size
-    return np.array_split(arr, sections)
-
-
-def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
-    """Calculate adaptive batch size to optimize memory usage.
-
-    Adaptive Localization calculates the cross-covariance between parameters
-    and responses. Cross-covariance is a matrix with shape (num_params x num_obs)
-    which may be larger than memory. This function calculates a batch size
-    that can fit into the available memory with a safety margin.
-
-    Parameters
-    ----------
-    num_params : int
-        Number of parameters to update.
-    num_obs : int
-        Number of observations.
-
-    Returns
-    -------
-    int
-        Batch size that fits in available memory.
-    """
-    available_memory_in_bytes = psutil.virtual_memory().available
-    memory_safety_factor = 0.8
-    bytes_in_float32 = 4
-    return min(
-        int(
-            np.floor(
-                (available_memory_in_bytes * memory_safety_factor)
-                / (num_obs * bytes_in_float32)
-            )
-        ),
-        num_params,
-    )
 
 
 class AdaptiveLocalizationUpdate:
@@ -190,8 +129,8 @@ class AdaptiveLocalizationUpdate:
             raise RuntimeError("prepare() must be called before update()")
 
         num_params = param_ensemble.shape[0]
-        batch_size = _calculate_adaptive_batch_size(num_params, self._num_obs)
-        batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
+        batch_size = calculate_localization_batch_size(num_params, self._num_obs)
+        batches = split_by_batch_size(np.arange(0, num_params), batch_size)
         num_batches = len(batches)
 
         batch_info = f" and {num_batches} batches" if num_batches > 1 else ""
