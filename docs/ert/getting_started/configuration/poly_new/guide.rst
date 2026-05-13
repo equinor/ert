@@ -462,7 +462,7 @@ Plot prior and posterior ensembles and notice that the updated parameters yield 
 
 In the "Create plot" section, the ``POLY_RES`` plot will now display a yellow background, denoting that observations are available.
 Black dots and lines represent observed values and uncertainties, respectively.
-Ensembles can be selected / deselected in the "Plot ensemble" section.
+Ensembles can be selected / deselected in the "Select ensemble(s)" section.
 
 .. image:: with_observations/plot_obs.png
 
