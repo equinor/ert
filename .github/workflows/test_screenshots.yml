@@ -66,3 +66,6 @@ jobs:
         echo " * Do 'gh auth login' if you are not authenticated yet"
         echo "$ rm -rf .tmp; gh run download ${{ github.run_id }} -D .tmp -n updated-screenshots-${{ github.run_number }}-${{ github.run_id }}-${{ inputs.python-version }}; cp -a .tmp/* ."
         echo " * Then review your local changes and commit+squash them."
+        echo ""
+        echo "(This steps exits with a failure code in order to have its output highlighted in Github actions web interface)"
+        exit 1
