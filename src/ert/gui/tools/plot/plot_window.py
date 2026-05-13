@@ -296,23 +296,6 @@ class PlotWindow(QMainWindow):
 
             group_style = "QGroupBox { font-style: italic; }"
 
-            controls_group = QGroupBox("Select control(s)")
-            controls_group.setStyleSheet(group_style)
-            controls_layout = QVBoxLayout()
-            controls_layout.setContentsMargins(0, 0, 0, 0)
-            controls_layout.addWidget(self._everest_control_selection_widget)
-            controls_group.setLayout(controls_layout)
-            self._everest_controls_group = controls_group
-
-            ensemble_group = QGroupBox("Select ensemble(s)")
-            ensemble_group.setStyleSheet(group_style)
-            ensemble_layout = QVBoxLayout()
-            ensemble_layout.setContentsMargins(0, 0, 0, 0)
-            ensemble_layout.addWidget(self._ensemble_selection_widget)
-            ensemble_group.setLayout(ensemble_layout)
-
-            group_style = "QGroupBox { font-style: italic; }"
-
             def create_group_box(title: str, widget: QWidget) -> QGroupBox:
                 group_box = QGroupBox(title)
                 group_box.setStyleSheet(group_style)
