@@ -20,6 +20,7 @@ from ert.field_utils import (
     transform_positions_to_local_field_coordinates,
 )
 
+from ._batching import calculate_localization_batch_size, split_by_batch_size
 from ._protocol import ObservationLocations
 
 if TYPE_CHECKING:
@@ -84,6 +85,11 @@ class DistanceLocalizationUpdate:
 
         num_params = param_ensemble.shape[0]
         num_located_obs = int(np.count_nonzero(self._location_mask))
+        batch_size = calculate_localization_batch_size(num_params, self._num_obs)
+        batches = split_by_batch_size(np.arange(0, num_params), batch_size)
+        num_batches = len(batches)
+
+        batch_info = f" and {num_batches} batches" if num_batches > 1 else ""
         self._progress_callback(
             AnalysisStatusEvent(
                 msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
@@ -92,16 +98,21 @@ class DistanceLocalizationUpdate:
                 f"{self._num_obs} observations "
                 f"({num_located_obs} with locations), "
                 f"{self._ensemble_size} realizations"
+                f"{batch_info}"
             )
         )
 
         start_time = time.perf_counter()
         if self._param_type is Field:
             assert isinstance(param_config, Field)
-            result = self._update_field(param_ensemble, param_config)
+            result = self._update_field(
+                param_ensemble, param_config, batches, non_zero_variance_mask
+            )
         else:
             assert isinstance(param_config, SurfaceConfig)
-            result = self._update_surface(param_ensemble, param_config)
+            result = self._update_surface(
+                param_ensemble, param_config, batches, non_zero_variance_mask
+            )
         elapsed = time.perf_counter() - start_time
 
         self._progress_callback(
@@ -130,17 +141,20 @@ class DistanceLocalizationUpdate:
         self,
         param_ensemble: npt.NDArray[np.floating],
         param_config: Field,
+        batches: list[npt.NDArray[np.int_]],
+        non_zero_variance_mask: npt.NDArray[np.bool_],
     ) -> npt.NDArray[np.floating]:
         assert self._smoother is not None
         assert self._location_mask is not None
 
-        num_params = param_ensemble.shape[0]
         # No located observations; use global assimilation
         if not self._location_mask.any():
-            return self._smoother.assimilate_batch(
-                X=param_ensemble,
+            X = param_ensemble[non_zero_variance_mask]
+            param_ensemble[non_zero_variance_mask] = self._smoother.assimilate_batch(
+                X=X,
                 overwrite=True,
             )
+            return param_ensemble
 
         assert self._obs_loc is not None
 
@@ -181,38 +195,50 @@ class DistanceLocalizationUpdate:
             axis_orientation=ertbox.axis_orientation,
         )
 
-        # Expand 2D rho (nx*ny, nobs) to 3D by repeating each xy cell across nz layers
         rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
-        rho_located = np.repeat(rho_2d, ertbox.nz, axis=0) if ertbox.nz > 1 else rho_2d
-        rho_full = self._full_localization_matrix(num_params, rho_located)
 
-        def localization_callback(
-            K: npt.NDArray[np.floating],
-        ) -> npt.NDArray[np.floating]:
-            K *= rho_full
-            return K
+        for param_batch_idx in batches:
+            update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
+            if update_idx.size == 0:
+                continue
+            xy_idx = update_idx // ertbox.nz
+            rho_batch = self._full_localization_matrix(
+                len(update_idx), rho_2d[xy_idx, :]
+            )
 
-        return self._smoother.assimilate_batch(
-            X=param_ensemble,
-            localization_callback=localization_callback,
-            overwrite=True,
-        )
+            def localization_callback(
+                K: npt.NDArray[np.floating],
+                rho: npt.NDArray[np.floating] = rho_batch,
+            ) -> npt.NDArray[np.floating]:
+                K *= rho
+                return K
+
+            param_ensemble[update_idx, :] = self._smoother.assimilate_batch(
+                X=param_ensemble[update_idx, :],
+                localization_callback=localization_callback,
+                overwrite=True,
+            )
+
+        return param_ensemble
 
     def _update_surface(
         self,
         param_ensemble: npt.NDArray[np.floating],
         param_config: SurfaceConfig,
+        batches: list[npt.NDArray[np.int_]],
+        non_zero_variance_mask: npt.NDArray[np.bool_],
     ) -> npt.NDArray[np.floating]:
         assert self._smoother is not None
         assert self._location_mask is not None
 
-        num_params = param_ensemble.shape[0]
         # No located observations; use global assimilation
         if not self._location_mask.any():
-            return self._smoother.assimilate_batch(
-                X=param_ensemble,
+            X = param_ensemble[non_zero_variance_mask]
+            param_ensemble[non_zero_variance_mask] = self._smoother.assimilate_batch(
+                X=X,
                 overwrite=True,
             )
+            return param_ensemble
 
         assert self._obs_loc is not None
 
@@ -247,16 +273,25 @@ class DistanceLocalizationUpdate:
         )
 
         rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
-        rho_full = self._full_localization_matrix(num_params, rho_flat)
+        for param_batch_idx in batches:
+            update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
+            if update_idx.size == 0:
+                continue
+            rho_batch = self._full_localization_matrix(
+                len(update_idx), rho_flat[update_idx, :]
+            )
 
-        def localization_callback(
-            K: npt.NDArray[np.floating],
-        ) -> npt.NDArray[np.floating]:
-            K *= rho_full
-            return K
+            def localization_callback(
+                K: npt.NDArray[np.floating],
+                rho: npt.NDArray[np.floating] = rho_batch,
+            ) -> npt.NDArray[np.floating]:
+                K *= rho
+                return K
 
-        return self._smoother.assimilate_batch(
-            X=param_ensemble,
-            localization_callback=localization_callback,
-            overwrite=True,
-        )
+            param_ensemble[update_idx, :] = self._smoother.assimilate_batch(
+                X=param_ensemble[update_idx, :],
+                localization_callback=localization_callback,
+                overwrite=True,
+            )
+
+        return param_ensemble

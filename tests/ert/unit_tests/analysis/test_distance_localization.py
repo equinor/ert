@@ -71,27 +71,7 @@ def test_that_distance_localization_updates_all_z_layers_at_observation_xy(
     n_real = 50
     xinc, yinc = 1.0, 1.0
 
-    ertbox = ErtboxParameters(
-        nx=nx,
-        ny=ny,
-        nz=nz,
-        xinc=xinc,
-        yinc=yinc,
-        origin=(0.0, 0.0),
-        rotation_angle=0.0,
-        axis_orientation=AxisOrientation.LEFT_HANDED,
-    )
-
-    field_config = Field(
-        name="TEST_FIELD",
-        ertbox_params=ertbox,
-        file_format=FieldFileFormat.ROFF,
-        forward_init_file="init_%d.roff",
-        forward_init=False,
-        update=True,
-        output_file="output.roff",
-        grid_file="dummy.grdecl",
-    )
+    field_config = _field_config(nx, ny, nz)
 
     rng = np.random.default_rng(42)
     raw_params = rng.standard_normal((n_params, n_real))
@@ -245,7 +225,88 @@ def test_that_unlocated_observations_are_assimilated_globally_for_distance_updat
     np.testing.assert_allclose(posterior, expected)
 
 
-def test_that_mixed_unlocated_observations_update_distant_field_parameters():
+@pytest.mark.parametrize(
+    ("param_type", "param_config", "n_params"),
+    [
+        (Field, _field_config(3, 3, 1), 9),
+        (SurfaceConfig, _surface_config(3, 3), 9),
+    ],
+)
+def test_that_unlocated_distance_update_respects_non_zero_variance_mask(
+    param_type,
+    param_config,
+    n_params,
+) -> None:
+    n_real = 30
+    rng = np.random.default_rng(124)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+    prior = param_ensemble.copy()
+
+    responses = np.vstack([param_ensemble[0], param_ensemble[-1]])
+    obs_errors = np.array([0.2, 0.3])
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=np.array([3.0, -2.0]),
+        observation_errors=obs_errors,
+        observation_perturbations=rng.standard_normal(size=responses.shape)
+        * obs_errors[:, np.newaxis],
+        observation_locations=None,
+    )
+
+    non_zero_variance_mask = np.ones(n_params, dtype=bool)
+    non_zero_variance_mask[0] = False
+
+    updater = DistanceLocalizationUpdate(
+        enkf_truncation=0.99,
+        param_type=param_type,
+        progress_callback=_noop_callback,
+    )
+    updater.prepare(obs_context)
+
+    posterior = updater.update(
+        param_ensemble=param_ensemble,
+        param_config=param_config,
+        non_zero_variance_mask=non_zero_variance_mask,
+    )
+
+    np.testing.assert_allclose(posterior[0, :], prior[0, :])
+    assert not np.allclose(posterior[1:, :], prior[1:, :])
+
+
+def test_that_distance_localization_matrix_uses_float32() -> None:
+    rng = np.random.default_rng(125)
+    updater = DistanceLocalizationUpdate(
+        enkf_truncation=0.99,
+        param_type=Field,
+        progress_callback=_noop_callback,
+    )
+    obs_context = ObservationContext(
+        responses=rng.standard_normal((2, 10)),
+        observation_values=np.ones(2),
+        observation_errors=np.ones(2),
+        observation_perturbations=np.zeros((2, 10)),
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.0]),
+            ypos=np.array([0.0]),
+            main_range=np.array([1.0]),
+            location_mask=np.array([True, False]),
+        ),
+    )
+    updater.prepare(obs_context)
+
+    rho = updater._full_localization_matrix(
+        3,
+        np.array([[0.5], [0.25], [0.0]], dtype=np.float64),
+    )
+
+    assert rho.dtype == np.float32
+    np.testing.assert_allclose(rho[:, 0], np.array([0.5, 0.25, 0.0]))
+    np.testing.assert_allclose(rho[:, 1], np.ones(3))
+
+
+def test_that_mixed_unlocated_observations_update_distant_field_parameters(
+    monkeypatch,
+):
     """
     Verifies that unlocated observations (location_mask=False) update all
     correlated parameters globally, even when mixed with located observations
@@ -286,6 +347,12 @@ def test_that_mixed_unlocated_observations_update_distant_field_parameters():
         ),
     )
 
+    forced_batch_size = 5
+    monkeypatch.setattr(
+        "ert.analysis._update_strategies._distance.calculate_localization_batch_size",
+        lambda _num_params, _num_obs: forced_batch_size,
+    )
+
     updater = DistanceLocalizationUpdate(
         enkf_truncation=0.99,
         param_type=Field,
@@ -305,7 +372,9 @@ def test_that_mixed_unlocated_observations_update_distant_field_parameters():
     )
 
 
-def test_that_mixed_unlocated_observations_update_distant_surface_parameters():
+def test_that_mixed_unlocated_observations_update_distant_surface_parameters(
+    monkeypatch,
+):
     ncol, nrow = 4, 4
     n_params = ncol * nrow
     n_real = 40
@@ -339,6 +408,12 @@ def test_that_mixed_unlocated_observations_update_distant_surface_parameters():
         ),
     )
 
+    forced_batch_size = 5
+    monkeypatch.setattr(
+        "ert.analysis._update_strategies._distance.calculate_localization_batch_size",
+        lambda _num_params, _num_obs: forced_batch_size,
+    )
+
     updater = DistanceLocalizationUpdate(
         enkf_truncation=0.99,
         param_type=SurfaceConfig,
@@ -356,3 +431,103 @@ def test_that_mixed_unlocated_observations_update_distant_surface_parameters():
     assert not np.allclose(
         posterior_2d[distant_x, distant_y, :], prior_2d[distant_x, distant_y, :]
     )
+
+
+def test_that_distance_localization_batch_size_does_not_change_result(
+    monkeypatch,
+) -> None:
+    nx, ny, nz = 4, 4, 1
+    n_params = nx * ny * nz
+    n_real = 30
+    rng = np.random.default_rng(17)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+    field_config = _field_config(nx, ny, nz)
+    responses = np.vstack(
+        [
+            param_ensemble.reshape(nx, ny, nz, n_real)[0, 0, 0, :],
+            param_ensemble.reshape(nx, ny, nz, n_real)[2, 2, 0, :],
+        ]
+    )
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=np.array([2.0, -1.0]),
+        observation_errors=np.array([0.1, 0.2]),
+        observation_perturbations=rng.standard_normal((2, n_real))
+        * np.array([[0.1], [0.2]]),
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.5, 2.5]),
+            ypos=np.array([0.5, 2.5]),
+            main_range=np.array([2.0, 2.0]),
+            location_mask=np.ones(2, dtype=bool),
+        ),
+    )
+
+    def update_with_batch_size(batch_size: int) -> np.ndarray:
+        monkeypatch.setattr(
+            "ert.analysis._update_strategies._distance.calculate_localization_batch_size",
+            lambda _num_params, _num_obs: batch_size,
+        )
+        updater = DistanceLocalizationUpdate(
+            enkf_truncation=0.99,
+            param_type=Field,
+            progress_callback=_noop_callback,
+        )
+        updater.prepare(obs_context)
+        return updater.update(
+            param_ensemble=param_ensemble.copy(),
+            param_config=field_config,
+            non_zero_variance_mask=np.ones(n_params, dtype=bool),
+        )
+
+    np.testing.assert_allclose(
+        update_with_batch_size(1),
+        update_with_batch_size(4),
+    )
+
+
+def test_that_distance_localization_respects_non_zero_variance_mask(
+    monkeypatch,
+) -> None:
+    nx, ny, nz = 3, 3, 2
+    n_params = nx * ny * nz
+    n_real = 30
+    rng = np.random.default_rng(11)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+    prior = param_ensemble.copy()
+    field_config = _field_config(nx, ny, nz)
+    responses = param_ensemble[:1, :].copy()
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=np.array([3.0]),
+        observation_errors=np.array([0.1]),
+        observation_perturbations=rng.standard_normal((1, n_real)) * 0.1,
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.5]),
+            ypos=np.array([0.5]),
+            main_range=np.array([5.0]),
+            location_mask=np.ones(1, dtype=bool),
+        ),
+    )
+    non_zero_variance_mask = np.ones(n_params, dtype=bool)
+    non_zero_variance_mask[0] = False
+
+    forced_batch_size = 4
+    monkeypatch.setattr(
+        "ert.analysis._update_strategies._distance.calculate_localization_batch_size",
+        lambda _num_params, _num_obs: forced_batch_size,
+    )
+    updater = DistanceLocalizationUpdate(
+        enkf_truncation=0.99,
+        param_type=Field,
+        progress_callback=_noop_callback,
+    )
+    updater.prepare(obs_context)
+
+    posterior = updater.update(
+        param_ensemble=param_ensemble,
+        param_config=field_config,
+        non_zero_variance_mask=non_zero_variance_mask,
+    )
+
+    np.testing.assert_allclose(posterior[0, :], prior[0, :])
+    assert not np.allclose(posterior[1:, :], prior[1:, :])
