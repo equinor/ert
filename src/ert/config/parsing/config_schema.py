@@ -116,6 +116,16 @@ def analysis_set_var_keyword() -> SchemaItem:
     )
 
 
+def update_algorithm_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.UPDATE_ALGORITHM,
+        argc_min=3,
+        argc_max=3,
+        join_after=2,
+        multi_occurrence=True,
+    )
+
+
 def hook_workflow_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.HOOK_WORKFLOW,
@@ -327,6 +337,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         int_keyword(ConfigKeys.MAX_RUNTIME),
         stop_long_running_keyword(),
         analysis_set_var_keyword(),
+        update_algorithm_keyword(),
         # the two fault types are just added to the config object only to
         # be able to print suitable messages before exiting.
         gen_kw_keyword(),

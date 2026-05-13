@@ -40,7 +40,6 @@ from ert.mode_definitions import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
-from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
 from ert.services import ErtServerController
 from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
 from ert.shared.status.utils import get_ert_memory_usage
@@ -525,7 +524,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     es_mda_parser.add_argument(
         "--weights",
         type=valid_weights,
-        default=MultipleDataAssimilationConfig.default_weights,
+        default=None,
         help="Example custom relative weights: '8,4,2,1'. This means multiple data "
         "assimilation ensemble smoother will half the weight applied to the "
         "observation errors from one iteration to the next across 4 iterations.",

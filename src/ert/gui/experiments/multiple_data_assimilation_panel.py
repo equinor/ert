@@ -8,7 +8,15 @@ from typing import TYPE_CHECKING, Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QStyle,
+    QWidget,
+)
 from typing_extensions import override
 
 from ert.config import ErrorInfo, ParameterConfig
@@ -73,6 +81,25 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     ) -> None:
         super().__init__(MultipleDataAssimilation)
         self.notifier = notifier
+        configured_weights = getattr(
+            analysis_config,
+            "es_mda_weights",
+            MultipleDataAssimilationConfig.default_weights,
+        )
+        self._configured_weights = (
+            configured_weights
+            if isinstance(configured_weights, str)
+            else MultipleDataAssimilationConfig.default_weights
+        )
+        weights_source_is_config = getattr(
+            analysis_config, "es_mda_weights_from_config", False
+        )
+        self._weights_source_is_config = (
+            weights_source_is_config
+            if isinstance(weights_source_is_config, bool)
+            else False
+        )
+        self._weights_source = self._configured_weights
 
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -116,7 +143,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
 
-        self.weights = MultipleDataAssimilationConfig.default_weights
+        self.weights = self._configured_weights
         self.weights_valid = True
         self._createInputForWeights(layout)
 
@@ -255,8 +282,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
             self._relative_iteration_weights_box.setText(
                 self._ensemble_selector.selected_ensemble.relative_weights
-                or MultipleDataAssimilationConfig.default_weights
+                or self._configured_weights
             )
+            self._weights_source = self._relative_iteration_weights_box.text()
+            self._update_weights_mismatch_warning()
             self._evaluate_weights_box_enabled()
 
     @Slot(bool)
@@ -290,10 +319,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._ensemble_selector.selected_ensemble is not None
                 and self._ensemble_selector.selected_ensemble.relative_weights
             )
-            or MultipleDataAssimilationConfig.default_weights
+            or self._configured_weights
             if self._restart_box.isChecked()
-            else MultipleDataAssimilationConfig.default_weights
+            else self._configured_weights
         )
+        self._weights_source = self._relative_iteration_weights_box.text()
+        self._update_weights_mismatch_warning()
         if self._restart_box.isChecked():
             self._active_realizations_field.setValidator(
                 self._previous_ensemble_realizations_validator
@@ -310,13 +341,30 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
+        weights_container = QWidget()
+        weights_layout = QHBoxLayout(weights_container)
+        weights_layout.setContentsMargins(0, 0, 0, 0)
         self._relative_iteration_weights_box = StringBox(
             relative_iteration_weights_model,  # type: ignore
             continuous_update=True,
         )
+        weights_layout.addWidget(self._relative_iteration_weights_box)
+        self._weights_mismatch_icon = QLabel()
+        self._weights_mismatch_icon.setObjectName("warning_icon_weights_esmda")
+        style = QApplication.style()
+        if style is not None:
+            self._weights_mismatch_icon.setPixmap(
+                style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning).pixmap(
+                    16, 16
+                )
+            )
+        self._weights_mismatch_icon.hide()
+        weights_layout.addWidget(self._weights_mismatch_icon)
+        weights_layout.setSpacing(2)
+        weights_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._relative_iteration_weights_box.setObjectName("weights_input_esmda")
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
-        layout.addRow("Relative weights:", self._relative_iteration_weights_box)
+        layout.addRow("Relative weights:", weights_container)
 
         relative_iteration_weights_model.valueChanged.connect(self.setWeights)
 
@@ -340,12 +388,41 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                     normalized_weights_model.setValue("The weights are invalid!")
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
+            self._update_weights_mismatch_warning()
 
         self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
             updateVisualizationOfNormalizedWeights
         )
 
         updateVisualizationOfNormalizedWeights()  # To normalize the default weights
+
+    def _update_weights_mismatch_warning(self) -> None:
+        if not hasattr(self, "_weights_mismatch_icon"):
+            return
+        differs_from_source = self._weights_differ_from_source()
+        self._weights_mismatch_icon.setVisible(differs_from_source)
+        if not differs_from_source:
+            self._weights_mismatch_icon.setToolTip("")
+            return
+        if self._weights_source_is_config:
+            self._weights_mismatch_icon.setToolTip(
+                "This value differs from the ES-MDA weights specified in the "
+                "config file. The GUI value will be used for this run."
+            )
+        else:
+            self._weights_mismatch_icon.setToolTip(
+                "This value differs from the default ES-MDA weights. The GUI value "
+                "will be used for this run."
+            )
+
+    def _weights_differ_from_source(self) -> bool:
+        try:
+            current = MultipleDataAssimilation.parse_weights(self.weights)
+            source = MultipleDataAssimilation.parse_weights(self._weights_source)
+        except ValueError:
+            return self.weights.strip() != self._weights_source.strip()
+        else:
+            return current != source
 
     @override
     def isConfigurationValid(self) -> bool:
@@ -376,6 +453,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def setWeights(self, weights: Any) -> None:
         self.weights = str(weights)
+        self._update_weights_mismatch_warning()
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
