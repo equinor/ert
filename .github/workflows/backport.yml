@@ -30,7 +30,7 @@ jobs:
           app-id: ${{ vars.SCOUT_TEAM_APP_ID }}
           private-key: ${{ secrets.SCOUT_TEAM_APP_PRIVATE_KEY }}
       - name: Create backport pull requests
-        uses: korthout/backport-action@bf97bcfb53d5250af8b9a15fab0f56158a63b224 # v4.5.1
+        uses: korthout/backport-action@66065406958f46e82238fd59546f5a99e69e22aa # v4.5.2
         with:
           add_author_as_assignee: true
           copy_labels_pattern: release-notes:.*
