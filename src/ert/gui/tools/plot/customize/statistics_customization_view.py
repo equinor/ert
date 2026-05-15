@@ -68,7 +68,7 @@ class StatisticsCustomizationView(CustomizationView):
         )
         self.add_spacing()
 
-        self.add_spin_box(
+        self.add_integer_selection_box(
             "std_dev_factor",
             "Std dev multiplier",
             "Choose which standard deviation to plot",

@@ -74,7 +74,7 @@ class CustomizationView(QWidget):
 
         self.update_property(attribute_name, getter, setter)
 
-    def add_spin_box(
+    def add_integer_selection_box(
         self,
         attribute_name: str,
         title: str,
