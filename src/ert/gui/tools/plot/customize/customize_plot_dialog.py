@@ -39,6 +39,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_PLOTCONFIG_KEYNAME = "__default_key__"
+
 
 class PlotCustomizer(QObject):
     settingsChanged = Signal()
@@ -50,10 +52,9 @@ class PlotCustomizer(QObject):
 
         self._plot_config_key = None
         self._previous_key = None
-        self.default_plot_settings = None
         self._plot_configs: dict[str | None, PlotConfigHistory] = {
             None: PlotConfigHistory(
-                "No_Key_Selected", PlotConfig(plot_settings=None, title=None)
+                DEFAULT_PLOTCONFIG_KEYNAME, PlotConfig(plot_settings=None, title=None)
             )
         }
 
@@ -141,8 +142,8 @@ class PlotCustomizer(QObject):
         for key in keys:
             if key not in self._plot_configs:
                 self._plot_configs[key] = PlotConfigHistory(
-                    "No_Key_Selected",
-                    PlotConfig(self.default_plot_settings, title=None),
+                    DEFAULT_PLOTCONFIG_KEYNAME,
+                    PlotConfig(None, title=None),
                 )
             source_config = history.get_plot_config()
             source_config.set_title(key)
