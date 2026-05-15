@@ -122,7 +122,7 @@ class CustomizationView(QWidget):
             self[attribute_name].setToolTip(tool_tip)
 
         def getter(self: Any) -> QWidget:
-            return self[attribute_name].getStyle()
+            return self[attribute_name].get_style()
 
         def setter(self: Any, style: QWidget) -> None:
             self[attribute_name].setStyle(style)

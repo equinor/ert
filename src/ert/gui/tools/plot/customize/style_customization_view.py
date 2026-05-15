@@ -38,7 +38,7 @@ class StyleCustomizationView(CustomizationView):
         )
 
         style = cast(StyleChooser, self["default_style"])
-        style.createLabelLayout(layout)
+        style.create_label_layout(layout)
 
         self.add_spacing(10)
 
@@ -46,47 +46,47 @@ class StyleCustomizationView(CustomizationView):
 
         self._color_boxes = []
         for name in ["#1", "#2", "#3", "#4", "#5"]:
-            color_box = self.createColorBox(name)
+            color_box = self.create_color_box(name)
             self._color_boxes.append(color_box)
             color_layout.addWidget(color_box)
 
         self.add_row("Color cycle", color_layout)  # type: ignore
         self.update_property(
             "color_cycle",
-            StyleCustomizationView.getColorCycle,
-            StyleCustomizationView.setColorCycle,
+            StyleCustomizationView.get_color_cycle,
+            StyleCustomizationView.set_color_cycle,
         )
 
-        self._observs_color_box = self.createColorBox("observations_color")
+        self._observs_color_box = self.create_color_box("observations_color")
         self.add_row("Observations color", self._observs_color_box)
         self.update_property(
             "observs_color",
-            StyleCustomizationView.getObservationsColor,
-            StyleCustomizationView.setObservationsColor,
+            StyleCustomizationView.get_observations_color,
+            StyleCustomizationView.set_observations_color,
         )
 
-    def getObservationsColor(self) -> tuple[str, float]:
+    def get_observations_color(self) -> tuple[str, float]:
         return (
             self._observs_color_box.color.name(),
             self._observs_color_box.color.alphaF(),
         )
 
-    def setObservationsColor(self, color_tuple: tuple[str, float]) -> None:
+    def set_observations_color(self, color_tuple: tuple[str, float]) -> None:
         self._observs_color_box.color = color_tuple
 
     @staticmethod
-    def createColorBox(name: str) -> ColorBox:
+    def create_color_box(name: str) -> ColorBox:
         color_box = ColorBox(size=20)
         color_box.setToolTip(name)
         return color_box
 
-    def getColorCycle(self) -> list[tuple[str, float]]:
+    def get_color_cycle(self) -> list[tuple[str, float]]:
         return [
             (color_box.color.name(), color_box.color.alphaF())
             for color_box in self._color_boxes
         ]
 
-    def setColorCycle(self, color_cycle: list[tuple[str, float]]) -> None:
+    def set_color_cycle(self, color_cycle: list[tuple[str, float]]) -> None:
         for index, color_tuple in enumerate(color_cycle):
             if 0 <= index < len(self._color_boxes):
                 color_box = self._color_boxes[index]

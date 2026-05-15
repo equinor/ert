@@ -32,7 +32,7 @@ class StatisticsCustomizationView(CustomizationView):
             "All statistics",
         ]
 
-        self.add_row("Presets", self.createPresets())
+        self.add_row("Presets", self.create_presets())
         self.add_spacing(10)
         layout = QHBoxLayout()
         self.add_row("", layout)  # type: ignore
@@ -82,47 +82,47 @@ class StatisticsCustomizationView(CustomizationView):
         )
 
         style = cast(StyleChooser, self["mean_style"])
-        style.createLabelLayout(layout)
+        style.create_label_layout(layout)
 
-    def createPresets(self) -> QComboBox:
+    def create_presets(self) -> QComboBox:
         preset_combo = QComboBox()
         for preset in self._presets:
             preset_combo.addItem(preset)
 
-        preset_combo.currentIndexChanged.connect(self.presetSelected)
+        preset_combo.currentIndexChanged.connect(self.preset_selected)
         return preset_combo
 
-    def presetSelected(self, index: int) -> None:
+    def preset_selected(self, index: int) -> None:
         if index == 0:  # Default
-            self.updateStyle("mean_style", "-", None)
-            self.updateStyle("p50_style", None, None)
-            self.updateStyle("std_style", None, None)
-            self.updateStyle("min_max_style", None, None)
-            self.updateStyle("p10_p90_style", "--", None)
-            self.updateStyle("p33_p67_style", None, None)
+            self.update_style("mean_style", "-", None)
+            self.update_style("p50_style", None, None)
+            self.update_style("std_style", None, None)
+            self.update_style("min_max_style", None, None)
+            self.update_style("p10_p90_style", "--", None)
+            self.update_style("p33_p67_style", None, None)
         elif index == 1:  # CCS Default
-            self.updateStyle("mean_style", "-", "o")
-            self.updateStyle("p50_style", None, None)
-            self.updateStyle("std_style", "--", "D")
-            self.updateStyle("min_max_style", None, None)
-            self.updateStyle("p10_p90_style", None, None)
-            self.updateStyle("p33_p67_style", None, None)
+            self.update_style("mean_style", "-", "o")
+            self.update_style("p50_style", None, None)
+            self.update_style("std_style", "--", "D")
+            self.update_style("min_max_style", None, None)
+            self.update_style("p10_p90_style", None, None)
+            self.update_style("p33_p67_style", None, None)
         elif index == 2:  # Overview
-            self.updateStyle("mean_style", None, None)
-            self.updateStyle("p50_style", None, None)
-            self.updateStyle("std_style", None, None)
-            self.updateStyle("min_max_style", "#", None)
-            self.updateStyle("p10_p90_style", None, None)
-            self.updateStyle("p33_p67_style", None, None)
+            self.update_style("mean_style", None, None)
+            self.update_style("p50_style", None, None)
+            self.update_style("std_style", None, None)
+            self.update_style("min_max_style", "#", None)
+            self.update_style("p10_p90_style", None, None)
+            self.update_style("p33_p67_style", None, None)
         elif index == 3:  # All statistics
-            self.updateStyle("mean_style", "-", None)
-            self.updateStyle("p50_style", "--", "x")
-            self.updateStyle("std_style", ":", None)
-            self.updateStyle("min_max_style", "--", None)
-            self.updateStyle("p10_p90_style", "#", None)
-            self.updateStyle("p33_p67_style", "#", None)
+            self.update_style("mean_style", "-", None)
+            self.update_style("p50_style", "--", "x")
+            self.update_style("std_style", ":", None)
+            self.update_style("min_max_style", "--", None)
+            self.update_style("p10_p90_style", "#", None)
+            self.update_style("p33_p67_style", "#", None)
 
-    def updateStyle(
+    def update_style(
         self,
         attribute_name: str,
         line_style: str | None,

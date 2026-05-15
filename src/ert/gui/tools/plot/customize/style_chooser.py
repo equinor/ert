@@ -125,12 +125,12 @@ class StyleChooser(QWidget):
 
         self.setLayout(layout)
 
-        self.line_chooser.currentIndexChanged.connect(self._updateStyle)
-        self.marker_chooser.currentIndexChanged.connect(self._updateStyle)
-        self.thickness_spinner.valueChanged.connect(self._updateStyle)
-        self.size_spinner.valueChanged.connect(self._updateStyle)
+        self.line_chooser.currentIndexChanged.connect(self._update_style)
+        self.marker_chooser.currentIndexChanged.connect(self._update_style)
+        self.thickness_spinner.valueChanged.connect(self._update_style)
+        self.size_spinner.valueChanged.connect(self._update_style)
 
-        self._updateLineStyleAndMarker(
+        self._update_line_style_and_marker(
             self._style.line_style,
             self._style.marker,
             self._style.width,
@@ -138,7 +138,7 @@ class StyleChooser(QWidget):
         )
         self._layout = layout
 
-    def getItemSizes(self) -> tuple[int, ...]:
+    def get_item_sizes(self) -> tuple[int, ...]:
         def _iter() -> Iterator[int]:
             for i in range(4):
                 item = self._layout.itemAt(i)
@@ -147,28 +147,28 @@ class StyleChooser(QWidget):
 
         return tuple(_iter())
 
-    def _findLineStyleIndex(self, line_style: str) -> int:
+    def _find_line_style_index(self, line_style: str) -> int:
         for index, style in enumerate(self._styles):
             if (style[1] == line_style) or (style[1] is None and not line_style):
                 return index
         return -1
 
     @staticmethod
-    def _findMarkerStyleIndex(marker: str) -> int:
+    def _find_marker_style_index(marker: str) -> int:
         for index, style in enumerate(MARKERS):
             if (style[1] == marker) or (style[1] is None and not marker):
                 return index
         return -1
 
-    def _updateLineStyleAndMarker(
+    def _update_line_style_and_marker(
         self, line_style: str, marker: str, thickness: float, size: float
     ) -> None:
-        self.line_chooser.setCurrentIndex(self._findLineStyleIndex(line_style))
-        self.marker_chooser.setCurrentIndex(self._findMarkerStyleIndex(marker))
+        self.line_chooser.setCurrentIndex(self._find_line_style_index(line_style))
+        self.marker_chooser.setCurrentIndex(self._find_marker_style_index(marker))
         self.thickness_spinner.setValue(thickness)
         self.size_spinner.setValue(size)
 
-    def _updateStyle(self) -> None:
+    def _update_style(self) -> None:
         self.marker_chooser.setEnabled(self.line_chooser.currentText() != "Area")
 
         line_style: str = self.line_chooser.itemData(self.line_chooser.currentIndex())
@@ -186,21 +186,21 @@ class StyleChooser(QWidget):
     @override
     def setStyle(self, style: PlotStyle) -> None:  # type: ignore
         self._style.copy_style_from(style)
-        self._updateLineStyleAndMarker(
+        self._update_line_style_and_marker(
             style.line_style, style.marker, style.width, style.size
         )
 
-    def getStyle(self) -> PlotStyle:
+    def get_style(self) -> PlotStyle:
         style = PlotStyle("Generated style from StyleChooser")
         style.copy_style_from(self._style)
         return style
 
-    def createLabelLayout(self, layout: QLayout | None = None) -> QLayout:
+    def create_label_layout(self, layout: QLayout | None = None) -> QLayout:
         if layout is None:
             layout = QHBoxLayout()
 
         titles = ["Line style", "Width", "Marker style", "Size"]
-        sizes = self.getItemSizes()
+        sizes = self.get_item_sizes()
         for title, size in zip(titles, sizes, strict=False):
             label = QLabel(title)
             label.setFixedWidth(size)

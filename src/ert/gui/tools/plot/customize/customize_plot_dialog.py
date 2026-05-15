@@ -189,7 +189,7 @@ class PlotCustomizer(QObject):
         return self._get_plot_config_history().get_plot_config()
 
     def set_axis_types(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
-        self._customize_limits.setAxisTypes(x_axis_type, y_axis_type)
+        self._customize_limits.set_axis_types(x_axis_type, y_axis_type)
 
 
 class CustomizePlotDialog(QDialog):
