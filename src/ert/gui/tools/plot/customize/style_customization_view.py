@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 class StyleCustomizationView(CustomizationView):
     default_style = WidgetProperty()
     history_style = WidgetProperty()
-    observs_style = WidgetProperty()
+    observations_style = WidgetProperty()
     color_cycle = WidgetProperty()
-    observs_color = WidgetProperty()
+    observations_color = WidgetProperty()
 
     def __init__(self) -> None:
         CustomizationView.__init__(self)
@@ -31,7 +31,7 @@ class StyleCustomizationView(CustomizationView):
             "history_style", "History", "Line and marker style for the history line."
         )
         self.add_style_chooser(
-            "observs_style",
+            "observations_style",
             "Observation",
             "Line and marker style for the observation line.",
             line_style_set=STYLESET_TOGGLE,
@@ -57,22 +57,22 @@ class StyleCustomizationView(CustomizationView):
             StyleCustomizationView.set_color_cycle,
         )
 
-        self._observs_color_box = self.create_color_box("observations_color")
-        self.add_row("Observations color", self._observs_color_box)
+        self._observations_color_box = self.create_color_box("observations_color")
+        self.add_row("Observations color", self._observations_color_box)
         self.update_property(
-            "observs_color",
+            "observations_color",
             StyleCustomizationView.get_observations_color,
             StyleCustomizationView.set_observations_color,
         )
 
     def get_observations_color(self) -> tuple[str, float]:
         return (
-            self._observs_color_box.color.name(),
-            self._observs_color_box.color.alphaF(),
+            self._observations_color_box.color.name(),
+            self._observations_color_box.color.alphaF(),
         )
 
     def set_observations_color(self, color_tuple: tuple[str, float]) -> None:
-        self._observs_color_box.color = color_tuple
+        self._observations_color_box.color = color_tuple
 
     @staticmethod
     def create_color_box(name: str) -> ColorBox:
@@ -96,14 +96,14 @@ class StyleCustomizationView(CustomizationView):
     def apply_customization(self, plot_config: "PlotConfig") -> None:
         plot_config.set_default_style(self.default_style)
         plot_config.set_history_style(self.history_style)
-        plot_config.set_observations_style(self.observs_style)
-        plot_config.set_observations_color(self.observs_color)
+        plot_config.set_observations_style(self.observations_style)
+        plot_config.set_observations_color(self.observations_color)
         plot_config.set_line_color_cycle(self.color_cycle)
 
     @override
     def revert_customization(self, plot_config: "PlotConfig") -> None:
         self.default_style = plot_config.default_style()
         self.history_style = plot_config.history_style()
-        self.observs_style = plot_config.observations_style()
-        self.observs_color = plot_config.observations_color()
+        self.observations_style = plot_config.observations_style()
+        self.observations_color = plot_config.observations_color()
         self.color_cycle = plot_config.line_color_cycle()
