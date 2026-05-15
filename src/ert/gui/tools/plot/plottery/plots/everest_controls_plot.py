@@ -54,7 +54,7 @@ class EverestControlsPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
-        plot_context.deactivateDateSupport()
+        plot_context.deactivate_date_support()
 
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
 
@@ -63,7 +63,7 @@ class EverestControlsPlot:
 
         combined = pd.concat(all_dfs, ignore_index=True)
 
-        n_colors = config.getNumberOfColors()
+        n_colors = config.get_number_of_colors()
         for i, control in (
             enumerate(self.selected_controls) if self.selected_controls else []
         ):
@@ -71,7 +71,7 @@ class EverestControlsPlot:
             if data.empty:
                 continue
 
-            color = config.nextColor()
+            color = config.next_color()
             if i < n_colors:
                 style = "-o"
             elif i < n_colors * 2:
@@ -88,7 +88,7 @@ class EverestControlsPlot:
                 markersize=4,
             )
             if len(self.selected_controls) <= LEGEND_THRESHOLD:
-                config.addLegendItem(control, lines[0])
+                config.add_legend_item(control, lines[0])
             if len(control) <= 20:
                 axes.annotate(
                     control,

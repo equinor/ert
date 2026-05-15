@@ -23,14 +23,14 @@ class StyleCustomizationView(CustomizationView):
 
         layout = QHBoxLayout()
 
-        self.addRow("", layout)  # type: ignore
-        self.addStyleChooser(
+        self.add_row("", layout)  # type: ignore
+        self.add_style_chooser(
             "default_style", "Default", "Line and marker style for default lines."
         )
-        self.addStyleChooser(
+        self.add_style_chooser(
             "history_style", "History", "Line and marker style for the history line."
         )
-        self.addStyleChooser(
+        self.add_style_chooser(
             "observs_style",
             "Observation",
             "Line and marker style for the observation line.",
@@ -40,7 +40,7 @@ class StyleCustomizationView(CustomizationView):
         style = cast(StyleChooser, self["default_style"])
         style.createLabelLayout(layout)
 
-        self.addSpacing(10)
+        self.add_spacing(10)
 
         color_layout = QHBoxLayout()
 
@@ -50,16 +50,16 @@ class StyleCustomizationView(CustomizationView):
             self._color_boxes.append(color_box)
             color_layout.addWidget(color_box)
 
-        self.addRow("Color cycle", color_layout)  # type: ignore
-        self.updateProperty(
+        self.add_row("Color cycle", color_layout)  # type: ignore
+        self.update_property(
             "color_cycle",
             StyleCustomizationView.getColorCycle,
             StyleCustomizationView.setColorCycle,
         )
 
         self._observs_color_box = self.createColorBox("observations_color")
-        self.addRow("Observations color", self._observs_color_box)
-        self.updateProperty(
+        self.add_row("Observations color", self._observs_color_box)
+        self.update_property(
             "observs_color",
             StyleCustomizationView.getObservationsColor,
             StyleCustomizationView.setObservationsColor,
@@ -93,17 +93,17 @@ class StyleCustomizationView(CustomizationView):
                 color_box.color = color_tuple
 
     @override
-    def applyCustomization(self, plot_config: "PlotConfig") -> None:
-        plot_config.setDefaultStyle(self.default_style)
-        plot_config.setHistoryStyle(self.history_style)
-        plot_config.setObservationsStyle(self.observs_style)
-        plot_config.setObservationsColor(self.observs_color)
-        plot_config.setLineColorCycle(self.color_cycle)
+    def apply_customization(self, plot_config: "PlotConfig") -> None:
+        plot_config.set_default_style(self.default_style)
+        plot_config.set_history_style(self.history_style)
+        plot_config.set_observations_style(self.observs_style)
+        plot_config.set_observations_color(self.observs_color)
+        plot_config.set_line_color_cycle(self.color_cycle)
 
     @override
-    def revertCustomization(self, plot_config: "PlotConfig") -> None:
-        self.default_style = plot_config.defaultStyle()
-        self.history_style = plot_config.historyStyle()
-        self.observs_style = plot_config.observationsStyle()
-        self.observs_color = plot_config.observationsColor()
-        self.color_cycle = plot_config.lineColorCycle()
+    def revert_customization(self, plot_config: "PlotConfig") -> None:
+        self.default_style = plot_config.default_style()
+        self.history_style = plot_config.history_style()
+        self.observs_style = plot_config.observations_style()
+        self.observs_color = plot_config.observations_color()
+        self.color_cycle = plot_config.line_color_cycle()

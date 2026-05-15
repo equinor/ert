@@ -185,14 +185,14 @@ class StyleChooser(QWidget):
 
     @override
     def setStyle(self, style: PlotStyle) -> None:  # type: ignore
-        self._style.copyStyleFrom(style)
+        self._style.copy_style_from(style)
         self._updateLineStyleAndMarker(
             style.line_style, style.marker, style.width, style.size
         )
 
     def getStyle(self) -> PlotStyle:
         style = PlotStyle("Generated style from StyleChooser")
-        style.copyStyleFrom(self._style)
+        style.copy_style_from(self._style)
         return style
 
     def createLabelLayout(self, layout: QLayout | None = None) -> QLayout:

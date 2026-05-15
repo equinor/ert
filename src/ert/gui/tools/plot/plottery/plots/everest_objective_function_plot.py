@@ -50,7 +50,7 @@ class EverestObjectiveFunctionPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
-        plot_context.deactivateDateSupport()
+        plot_context.deactivate_date_support()
 
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
 
@@ -67,7 +67,7 @@ class EverestObjectiveFunctionPlot:
 
         realizations = sorted(combined["realization"].unique())
 
-        color = config.nextColor()
+        color = config.next_color()
         for realization in realizations:
             data = combined[combined["realization"] == realization].sort_values(
                 "batch_id"
@@ -83,8 +83,8 @@ class EverestObjectiveFunctionPlot:
                 markersize=4,
             )
             if len(realizations) <= LEGEND_THRESHOLD:
-                color = config.nextColor()
-                config.addLegendItem(f"Realization {int(realization)}", lines[0])
+                color = config.next_color()
+                config.add_legend_item(f"Realization {int(realization)}", lines[0])
 
         axes.spines["right"].set_visible(False)
         axes.spines["left"].set_visible(False)

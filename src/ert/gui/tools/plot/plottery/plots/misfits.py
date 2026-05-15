@@ -211,7 +211,7 @@ class MisfitsPlot:
         num_gendata_index = len(distinct_gendata_index)
 
         color_map = self._map_ensembles_to_colours(
-            sorted_ensemble_keys, plot_context.plotConfig().lineColorCycle()
+            sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
         )
         self._draw_legend(
             figure=figure,
@@ -339,7 +339,7 @@ class MisfitsPlot:
         # Prepare ensemble colors and draw the legend
         sorted_ensemble_keys = sorted(data_with_misfits.keys())
         color_map = self._map_ensembles_to_colours(
-            sorted_ensemble_keys, plot_context.plotConfig().lineColorCycle()
+            sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
         )
         self._draw_legend(
             figure=figure,

@@ -66,7 +66,7 @@ class PlotTools:
     @staticmethod
     def showGrid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
-        if config.isGridEnabled():
+        if config.is_grid_enabled():
             if plot_context.plot_type == PlotType.BAR:
                 axes.grid(axis="y", color="black", alpha=0.1)
             else:
@@ -75,8 +75,8 @@ class PlotTools:
     @staticmethod
     def showLegend(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
-        if config.isLegendEnabled() and len(config.legendItems()) > 0:
-            axes.legend(config.legendItems(), config.legendLabels(), numpoints=1)
+        if config.is_legend_enabled() and len(config.legend_items()) > 0:
+            axes.legend(config.legend_items(), config.legend_labels(), numpoints=1)
 
     @staticmethod
     def _getXAxisLimits(
@@ -142,8 +142,8 @@ class PlotTools:
         PlotTools.__setupLabels(plot_context, default_x_label, default_y_label)
 
         plot_config = plot_context.plotConfig()
-        axes.set_xlabel(plot_config.xLabel())  # type: ignore
-        axes.set_ylabel(plot_config.yLabel())  # type: ignore
+        axes.set_xlabel(plot_config.x_label())  # type: ignore
+        axes.set_ylabel(plot_config.y_label())  # type: ignore
 
         x_axis_limits = PlotTools._getXAxisLimits(plot_context)
         if x_axis_limits is not None:
@@ -155,7 +155,7 @@ class PlotTools:
 
         axes.set_title(plot_config.title())
 
-        if plot_context.isDateSupportActive():
+        if plot_context.is_date_support_active():
             figure.autofmt_xdate()
 
     @staticmethod
@@ -164,11 +164,11 @@ class PlotTools:
     ) -> None:
         config = plot_context.plotConfig()
 
-        if config.xLabel() is None:
-            config.setXLabel(default_x_label)
+        if config.x_label() is None:
+            config.set_x_label(default_x_label)
 
-        if config.yLabel() is None:
-            config.setYLabel(default_y_label)
+        if config.y_label() is None:
+            config.set_y_label(default_y_label)
 
     @staticmethod
     def labels_on_hover(

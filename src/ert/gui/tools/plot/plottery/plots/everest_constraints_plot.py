@@ -51,7 +51,7 @@ class EverestConstraintsPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
-        plot_context.deactivateDateSupport()
+        plot_context.deactivate_date_support()
 
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
 
@@ -75,7 +75,7 @@ class EverestConstraintsPlot:
             if data.empty:
                 continue
 
-            color = config.nextColor()
+            color = config.next_color()
             lines = axes.plot(
                 data["batch_id"],
                 data[value_col],
@@ -84,11 +84,11 @@ class EverestConstraintsPlot:
                 markersize=4,
             )
             if len(realizations) <= LEGEND_THRESHOLD:
-                config.addLegendItem(f"Realization {int(realization)}", lines[0])
+                config.add_legend_item(f"Realization {int(realization)}", lines[0])
 
         if "lower_bound" in combined.columns or "upper_bound" in combined.columns:
             ylim = axes.get_ylim()
-            config.addLegendItem(
+            config.add_legend_item(
                 "Outside of bounds",
                 Patch(facecolor="red", alpha=0.15, edgecolor="none"),
             )

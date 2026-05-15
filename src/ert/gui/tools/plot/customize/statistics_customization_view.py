@@ -32,50 +32,50 @@ class StatisticsCustomizationView(CustomizationView):
             "All statistics",
         ]
 
-        self.addRow("Presets", self.createPresets())
-        self.addSpacing(10)
+        self.add_row("Presets", self.createPresets())
+        self.add_spacing(10)
         layout = QHBoxLayout()
-        self.addRow("", layout)  # type: ignore
-        self.addStyleChooser(
+        self.add_row("", layout)  # type: ignore
+        self.add_style_chooser(
             "mean_style", "Mean", "Line and marker style for the mean line."
         )
-        self.addStyleChooser(
+        self.add_style_chooser(
             "p50_style", "P50", "Line and marker style for the P50 line."
         )
-        self.addStyleChooser(
+        self.add_style_chooser(
             "std_style",
             "Std dev",
             "Line and marker style for the unbiased standard deviation lines.",
             line_style_set=STYLESET_AREA,
         )
-        self.addStyleChooser(
+        self.add_style_chooser(
             "min_max_style",
             "Min/max",
             "Line and marker style for the min/max lines.",
             line_style_set=STYLESET_AREA,
         )
-        self.addStyleChooser(
+        self.add_style_chooser(
             "p10_p90_style",
             "P10-P90",
             "Line and marker style for the P10-P90 lines.",
             line_style_set=STYLESET_AREA,
         )
-        self.addStyleChooser(
+        self.add_style_chooser(
             "p33_p67_style",
             "P33-P67",
             "Line and marker style for the P33-P67 lines.",
             line_style_set=STYLESET_AREA,
         )
-        self.addSpacing()
+        self.add_spacing()
 
-        self.addSpinBox(
+        self.add_spin_box(
             "std_dev_factor",
             "Std dev multiplier",
             "Choose which standard deviation to plot",
             max_value=3,
         )
 
-        self.addCheckBox(
+        self.add_check_box(
             "distribution_lines",
             "Connection lines",
             "Toggle distribution connection lines visibility.",
@@ -134,25 +134,25 @@ class StatisticsCustomizationView(CustomizationView):
         setattr(self, attribute_name, style)
 
     @override
-    def applyCustomization(self, plot_config: PlotConfig) -> None:
-        plot_config.setStatisticsStyle("mean", self.mean_style)
-        plot_config.setStatisticsStyle("p50", self.p50_style)
-        plot_config.setStatisticsStyle("std", self.std_style)
-        plot_config.setStatisticsStyle("min-max", self.min_max_style)
-        plot_config.setStatisticsStyle("p10-p90", self.p10_p90_style)
-        plot_config.setStatisticsStyle("p33-p67", self.p33_p67_style)
+    def apply_customization(self, plot_config: PlotConfig) -> None:
+        plot_config.set_statistics_style("mean", self.mean_style)
+        plot_config.set_statistics_style("p50", self.p50_style)
+        plot_config.set_statistics_style("std", self.std_style)
+        plot_config.set_statistics_style("min-max", self.min_max_style)
+        plot_config.set_statistics_style("p10-p90", self.p10_p90_style)
+        plot_config.set_statistics_style("p33-p67", self.p33_p67_style)
 
-        plot_config.setStandardDeviationFactor(self.std_dev_factor)
-        plot_config.setDistributionLineEnabled(self.distribution_lines)
+        plot_config.set_standard_deviation_factor(self.std_dev_factor)
+        plot_config.set_distribution_line_enabled(self.distribution_lines)
 
     @override
-    def revertCustomization(self, plot_config: PlotConfig) -> None:
-        self.mean_style = plot_config.getStatisticsStyle("mean")
-        self.p50_style = plot_config.getStatisticsStyle("p50")
-        self.std_style = plot_config.getStatisticsStyle("std")
-        self.min_max_style = plot_config.getStatisticsStyle("min-max")
-        self.p10_p90_style = plot_config.getStatisticsStyle("p10-p90")
-        self.p33_p67_style = plot_config.getStatisticsStyle("p33-p67")
+    def revert_customization(self, plot_config: PlotConfig) -> None:
+        self.mean_style = plot_config.get_statistics_style("mean")
+        self.p50_style = plot_config.get_statistics_style("p50")
+        self.std_style = plot_config.get_statistics_style("std")
+        self.min_max_style = plot_config.get_statistics_style("min-max")
+        self.p10_p90_style = plot_config.get_statistics_style("p10-p90")
+        self.p33_p67_style = plot_config.get_statistics_style("p33-p67")
 
-        self.std_dev_factor = plot_config.getStandardDeviationFactor()
-        self.distribution_lines = plot_config.isDistributionLineEnabled()
+        self.std_dev_factor = plot_config.get_standard_deviation_factor()
+        self.distribution_lines = plot_config.is_distribution_line_enabled()

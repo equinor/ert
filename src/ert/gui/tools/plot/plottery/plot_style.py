@@ -23,7 +23,7 @@ class PlotStyle:
         self._enabled = enabled
         self._is_copy = False
 
-    def copyStyleFrom(
+    def copy_style_from(
         self, other: "PlotStyle", *, copy_enabled_state: bool = False
     ) -> None:
         self.color = other.color
@@ -35,15 +35,15 @@ class PlotStyle:
         self._is_copy = True
 
         if copy_enabled_state:
-            self.setEnabled(other.isEnabled())
+            self.set_enabled(other.is_enabled())
 
-    def isEnabled(self) -> bool:
+    def is_enabled(self) -> bool:
         return self._enabled
 
-    def setEnabled(self, enabled: bool) -> None:
+    def set_enabled(self, enabled: bool) -> None:
         self._enabled = enabled
 
-    def isVisible(self) -> bool:
+    def is_visible(self) -> bool:
         return bool(self.line_style or self.marker)
 
     @property
@@ -90,7 +90,7 @@ class PlotStyle:
         return (
             f"{self.name} c:{self.color} a:{self.alpha} "
             f"ls:{self.line_style} m:{self.marker} w:{self.width} "
-            f"s:{self.size} enabled:{self.isEnabled()} copy:{self._is_copy}"
+            f"s:{self.size} enabled:{self.is_enabled()} copy:{self._is_copy}"
         )
 
     def __eq__(self, other: object) -> bool:
@@ -103,6 +103,6 @@ class PlotStyle:
         equalness = equalness and self.width == other.width
         equalness = equalness and self.color == other.color
         equalness = equalness and self.size == other.size
-        equalness = equalness and self.isEnabled() == other.isEnabled()
+        equalness = equalness and self.is_enabled() == other.is_enabled()
 
         return equalness

@@ -20,7 +20,7 @@ def plotObservations(
     ensemble_list = plot_context.ensembles()
 
     if (
-        config.isObservationsEnabled()
+        config.is_observations_enabled()
         and len(ensemble_list) > 0
         and not observation_data.empty
     ):
@@ -41,7 +41,7 @@ def _plotObservations(
     using the elinewidth parameter.
     """
 
-    style = plot_config.observationsStyle()
+    style = plot_config.observations_style()
 
     # adjusting the top and bottom bar, according to the line width/thickness
     def cap_size(line_with: float) -> float:

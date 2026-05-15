@@ -238,22 +238,22 @@ class LimitsCustomizationView(CustomizationView):
         limits_widget = LimitsWidget()
         self._limits_widget = limits_widget
 
-        self.addHeading("X-axis")
-        self.addRow("Minimum", limits_widget.x_minimum_stack)
-        self.addRow("Maximum", limits_widget.x_maximum_stack)
+        self.add_heading("X-axis")
+        self.add_row("Minimum", limits_widget.x_minimum_stack)
+        self.add_row("Maximum", limits_widget.x_maximum_stack)
 
-        self.addHeading("Y-axis")
-        self.addRow("Minimum", limits_widget.y_minimum_stack)
-        self.addRow("Maximum", limits_widget.y_maximum_stack)
+        self.add_heading("Y-axis")
+        self.add_row("Minimum", limits_widget.y_minimum_stack)
+        self.add_row("Maximum", limits_widget.y_maximum_stack)
 
     def setAxisTypes(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
         self._limits_widget.switchInputOnX(x_axis_type)
         self._limits_widget.switchInputOnY(y_axis_type)
 
     @override
-    def revertCustomization(self, plot_config: PlotConfig) -> None:
+    def revert_customization(self, plot_config: PlotConfig) -> None:
         self._limits_widget.limits = plot_config.limits
 
     @override
-    def applyCustomization(self, plot_config: PlotConfig) -> None:
+    def apply_customization(self, plot_config: PlotConfig) -> None:
         plot_config.limits = self._limits_widget.limits

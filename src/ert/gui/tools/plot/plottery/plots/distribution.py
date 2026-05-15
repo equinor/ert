@@ -44,7 +44,7 @@ def plotDistribution(
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
-    plot_context.deactivateDateSupport()
+    plot_context.deactivate_date_support()
 
     plot_context.y_axis = plot_context.VALUE_AXIS
 
@@ -56,7 +56,7 @@ def plotDistribution(
         plot_context.ensembles_color_indexes(),
         strict=False,
     ):
-        config.setCurrentColor(color_index)
+        config.set_current_color(color_index)
         ensemble_indexes.append(ensemble_index)
 
         if not data.empty:
@@ -81,7 +81,7 @@ def plotDistribution(
         + [""],
         rotation=rotation,
     )
-    config.setLegendEnabled(False)
+    config.set_legend_enabled(False)
 
     if plot_context.log_scale:
         axes.set_yscale("log")
@@ -102,10 +102,10 @@ def _plotDistribution(
     data = pd.Series(dtype="float64") if data.empty else data[0]
 
     axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
-    axes.set_xlabel(plot_config.xLabel())  # type: ignore
-    axes.set_ylabel(plot_config.yLabel())  # type: ignore
+    axes.set_xlabel(plot_config.x_label())  # type: ignore
+    axes.set_ylabel(plot_config.y_label())  # type: ignore
 
-    style = plot_config.distributionStyle()
+    style = plot_config.distribution_style()
 
     if not pd.api.types.is_numeric_dtype(data):
         data = pd.to_numeric(data, errors="coerce")
@@ -123,7 +123,7 @@ def _plotDistribution(
             markersize=style.size,
         )
 
-        if plot_config.isDistributionLineEnabled() and previous_data is not None:
+        if plot_config.is_distribution_line_enabled() and previous_data is not None:
             line_style = plot_config.distributionLineStyle()
             x = [index - 1, index]
             y = [previous_data[0], data]
@@ -137,4 +137,4 @@ def _plotDistribution(
             )
 
     if len(dots) > 0:
-        plot_config.addLegendItem(label, dots[0])
+        plot_config.add_legend_item(label, dots[0])

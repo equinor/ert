@@ -53,15 +53,15 @@ def plotHistogram(
     plot_context.x_axis = plot_context.VALUE_AXIS
     plot_context.y_axis = plot_context.COUNT_AXIS
 
-    x_label = config.xLabel()
+    x_label = config.x_label()
     if x_label is None:
         x_label = "Value"
-    config.setXLabel(x_label)
+    config.set_x_label(x_label)
 
-    y_label = config.yLabel()
+    y_label = config.y_label()
     if y_label is None:
         y_label = "Count"
-    config.setYLabel(y_label)
+    config.set_y_label(y_label)
 
     data = {}
     minimum = None
@@ -98,7 +98,7 @@ def plotHistogram(
     for (index, ensemble), color_index in zip(
         enumerate(ensemble_list), plot_context.ensembles_color_indexes(), strict=False
     ):
-        config.setCurrentColor(color_index)
+        config.set_current_color(color_index)
         axes[ensemble.name] = figure.add_subplot(ensemble_count, 1, index + 1)
 
         axes[ensemble.name].set_title(
@@ -109,11 +109,11 @@ def plotHistogram(
 
         if ensemble.id in data and not data[ensemble.id].empty:
             if categorical:
-                config.addLegendItem(
+                config.add_legend_item(
                     ensemble.name,
                     _plotCategoricalHistogram(
                         axes[ensemble.name],
-                        config.histogramStyle(),
+                        config.histogram_style(),
                         data[ensemble.id],
                         sorted(categories),
                     ),
@@ -122,11 +122,11 @@ def plotHistogram(
                 if minimum is not None and maximum is not None and minimum == maximum:
                     minimum -= 0.1
                     maximum += 0.1
-                config.addLegendItem(
+                config.add_legend_item(
                     ensemble.name,
                     _plotHistogram(
                         axes[ensemble.name],
-                        config.histogramStyle(),
+                        config.histogram_style(),
                         data[ensemble.id],
                         bin_count,
                         use_log_scale=plot_context.log_scale,

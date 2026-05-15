@@ -10,13 +10,13 @@ def plotHistory(plot_context: "PlotContext", axes: "Axes") -> None:
     plot_config = plot_context.plotConfig()
 
     if (
-        not plot_config.isHistoryEnabled()
+        not plot_config.is_history_enabled()
         or plot_context.history_data is None
         or plot_context.history_data.empty
     ):
         return
 
-    style = plot_config.historyStyle()
+    style = plot_config.history_style()
 
     lines = axes.plot(
         plot_context.history_data.index.values,
@@ -29,5 +29,5 @@ def plotHistory(plot_context: "PlotContext", axes: "Axes") -> None:
         linestyle=style.line_style,
     )
 
-    if len(lines) > 0 and style.isVisible():
-        plot_config.addLegendItem("History", lines[0])
+    if len(lines) > 0 and style.is_visible():
+        plot_config.add_legend_item("History", lines[0])

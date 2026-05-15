@@ -7,37 +7,37 @@ class PlotConfigHistory:
 
     def __init__(self, name: str, initial: PlotConfig) -> None:
         super().__init__()
-        self._name = name
-        self._initial = PlotConfig.createCopy(initial)
+        self._name: str = name
+        self._initial: PlotConfig = PlotConfig.create_copy(initial)
         self._undo_history: list[PlotConfig] = []
         self._redo_history: list[PlotConfig] = []
-        self._current = PlotConfig.createCopy(self._initial)
+        self._current = PlotConfig.create_copy(self._initial)
 
-    def isUndoPossible(self) -> bool:
+    def is_undo_possible(self) -> bool:
         return len(self._undo_history) > 0
 
-    def isRedoPossible(self) -> bool:
+    def is_redo_possible(self) -> bool:
         return len(self._redo_history) > 0
 
-    def applyChanges(self, plot_config: PlotConfig) -> None:
+    def apply_changes(self, plot_config: PlotConfig) -> None:
         self._undo_history.append(self._current)
-        copy = PlotConfig.createCopy(self._current)
-        copy.copyConfigFrom(plot_config)
+        copy = PlotConfig.create_copy(self._current)
+        copy.copy_config_from(plot_config)
         self._current = copy
         del self._redo_history[:]
 
-    def resetChanges(self) -> None:
-        self.applyChanges(self._initial)
+    def reset_changes(self) -> None:
+        self.apply_changes(self._initial)
 
-    def undoChanges(self) -> None:
-        if self.isUndoPossible():
+    def undo_changes(self) -> None:
+        if self.is_undo_possible():
             self._redo_history.append(self._current)
             self._current = self._undo_history.pop()
 
-    def redoChanges(self) -> None:
-        if self.isRedoPossible():
+    def redo_changes(self) -> None:
+        if self.is_redo_possible():
             self._undo_history.append(self._current)
             self._current = self._redo_history.pop()
 
-    def getPlotConfig(self) -> PlotConfig:
-        return PlotConfig.createCopy(self._current)
+    def get_plot_config(self) -> PlotConfig:
+        return PlotConfig.create_copy(self._current)
