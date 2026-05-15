@@ -13,8 +13,8 @@ def test_that_first_tab_is_not_logged_when_opening_customize_plot_dialog(qtbot, 
     )
 
     plot = CustomizePlotDialog(title="Test Plot", parent=None, key_defs=[])
-    plot.addTab("general", "General", DefaultCustomizationView())
-    plot.addTab("style", "Style", DefaultCustomizationView())
+    plot.add_tab("general", "General", DefaultCustomizationView())
+    plot.add_tab("style", "Style", DefaultCustomizationView())
     qtbot.addWidget(plot)
 
     plot.show()

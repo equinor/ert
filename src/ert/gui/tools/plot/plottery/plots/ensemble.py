@@ -52,9 +52,9 @@ class EnsemblePlot:
 
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
-                    plot_context.deactivateDateSupport()
+                    plot_context.deactivate_date_support()
                     plot_context.x_axis = plot_context.INDEX_AXIS
-                config.setCurrentColor(color_index)
+                config.set_current_color(color_index)
                 self._plotLines(
                     axes,
                     config,
@@ -74,7 +74,7 @@ class EnsemblePlot:
         axes.spines["left"].set_visible(False)
         axes.spines["top"].set_visible(False)
 
-        default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
+        default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
         PlotTools.finalizePlot(
             plot_context,
             figure,
@@ -92,7 +92,7 @@ class EnsemblePlot:
         draw_style: str | None = None,
         zorder: float = 1,
     ) -> None:
-        style = plot_config.defaultStyle()
+        style = plot_config.default_style()
 
         if len(data) == 1 and not style.marker:
             style.marker = "."
@@ -118,4 +118,4 @@ class EnsemblePlot:
         )
 
         if len(lines) > 0:
-            plot_config.addLegendItem(ensemble_label, lines[0])
+            plot_config.add_legend_item(ensemble_label, lines[0])

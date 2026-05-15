@@ -63,7 +63,7 @@ def plotCrossEnsembleStatistics(
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
-    plot_context.deactivateDateSupport()
+    plot_context.deactivate_date_support()
 
     plot_context.y_axis = plot_context.VALUE_AXIS
 
@@ -86,9 +86,9 @@ def plotCrossEnsembleStatistics(
         plot_context.ensembles_color_indexes(),
         strict=False,
     ):
-        config.setCurrentColor(color_index)
+        config.set_current_color(color_index)
         ensemble_indexes.append(ensemble_index)
-        std_dev_factor = config.getStandardDeviationFactor()
+        std_dev_factor = config.get_standard_deviation_factor()
 
         if not data.empty:
             numeric_data = _assertNumeric(data)
@@ -106,7 +106,7 @@ def plotCrossEnsembleStatistics(
 
                 _plotCrossEnsembleStatistics(axes, config, ccs, ensemble_index)
 
-    if config.isDistributionLineEnabled() and len(ccs["index"]) > 1:
+    if config.is_distribution_line_enabled() and len(ccs["index"]) > 1:
         _plotConnectionLines(axes, config, ccs)
 
     _addStatisticsLegends(config)
@@ -144,13 +144,13 @@ def _addStatisticsLegends(plot_config: PlotConfig) -> None:
 def _addStatisticsLegend(
     plot_config: PlotConfig, style_name: str, alpha_multiplier: float = 1.0
 ) -> None:
-    style = plot_config.getStatisticsStyle(style_name)
-    if style.isVisible():
+    style = plot_config.get_statistics_style(style_name)
+    if style.is_visible():
         if style.line_style == "#":
             rectangle = Rectangle(
                 (0, 0), 1, 1, color="black", alpha=style.alpha * alpha_multiplier
             )  # creates rectangle patch for legend use.
-            plot_config.addLegendItem(style.name, rectangle)
+            plot_config.add_legend_item(style.name, rectangle)
         else:
             line = Line2D(
                 [],
@@ -161,7 +161,7 @@ def _addStatisticsLegend(
                 linewidth=style.width,
                 alpha=style.alpha,
             )
-            plot_config.addLegendItem(style.name, line)
+            plot_config.add_legend_item(style.name, line)
 
 
 def _assertNumeric(data: pd.DataFrame) -> pd.Series | None:
@@ -177,11 +177,11 @@ def _assertNumeric(data: pd.DataFrame) -> pd.Series | None:
 def _plotCrossEnsembleStatistics(
     axes: Axes, plot_config: PlotConfig, data: CcsData, index: int
 ) -> None:
-    axes.set_xlabel(plot_config.xLabel())  # type: ignore
-    axes.set_ylabel(plot_config.yLabel())  # type: ignore
+    axes.set_xlabel(plot_config.x_label())  # type: ignore
+    axes.set_ylabel(plot_config.y_label())  # type: ignore
 
-    style = plot_config.getStatisticsStyle("mean")
-    if style.isVisible():
+    style = plot_config.get_statistics_style("mean")
+    if style.is_visible():
         axes.plot(
             [index],
             data["mean"][index],
@@ -192,8 +192,8 @@ def _plotCrossEnsembleStatistics(
             markersize=style.size,
         )
 
-    style = plot_config.getStatisticsStyle("p50")
-    if style.isVisible():
+    style = plot_config.get_statistics_style("p50")
+    if style.is_visible():
         axes.plot(
             [index],
             data["p50"][index],
@@ -204,8 +204,8 @@ def _plotCrossEnsembleStatistics(
             markersize=style.size,
         )
 
-    style = plot_config.getStatisticsStyle("std")
-    if style.isVisible():
+    style = plot_config.get_statistics_style("std")
+    if style.is_visible():
         axes.plot(
             [index],
             data["mean"][index] + data["std"][index],
@@ -225,8 +225,8 @@ def _plotCrossEnsembleStatistics(
             markersize=style.size,
         )
 
-    style = plot_config.getStatisticsStyle("min-max")
-    if style.isVisible():
+    style = plot_config.get_statistics_style("min-max")
+    if style.is_visible():
         axes.plot(
             [index],
             data["min"][index],
@@ -246,8 +246,8 @@ def _plotCrossEnsembleStatistics(
             markersize=style.size,
         )
 
-    style = plot_config.getStatisticsStyle("p10-p90")
-    if style.isVisible():
+    style = plot_config.get_statistics_style("p10-p90")
+    if style.is_visible():
         axes.plot(
             [index],
             data["p10"][index],
@@ -267,8 +267,8 @@ def _plotCrossEnsembleStatistics(
             markersize=style.size,
         )
 
-    style = plot_config.getStatisticsStyle("p33-p67")
-    if style.isVisible():
+    style = plot_config.get_statistics_style("p33-p67")
+    if style.is_visible():
         axes.plot(
             [index],
             data["p33"][index],
@@ -302,8 +302,8 @@ def _plotConnectionLines(
 
         x = [from_index, to_index]
 
-        style = plot_config.getStatisticsStyle("mean")
-        if style.isVisible():
+        style = plot_config.get_statistics_style("mean")
+        if style.is_visible():
             y = [ccs["mean"][from_index], ccs["mean"][to_index]]
             axes.plot(
                 x,
@@ -314,8 +314,8 @@ def _plotConnectionLines(
                 linewidth=style.width,
             )
 
-        style = plot_config.getStatisticsStyle("p50")
-        if style.isVisible():
+        style = plot_config.get_statistics_style("p50")
+        if style.is_visible():
             y = [ccs["p50"][from_index], ccs["p50"][to_index]]
             axes.plot(
                 x,
@@ -326,8 +326,8 @@ def _plotConnectionLines(
                 linewidth=style.width,
             )
 
-        style = plot_config.getStatisticsStyle("std")
-        if style.isVisible():
+        style = plot_config.get_statistics_style("std")
+        if style.is_visible():
             mean = [ccs["mean"][from_index], ccs["mean"][to_index]]
             std = [ccs["std"][from_index], ccs["std"][to_index]]
 
@@ -355,8 +355,8 @@ def _plotConnectionLines(
                 linewidth=style.width,
             )
 
-        style = plot_config.getStatisticsStyle("min-max")
-        if style.isVisible():
+        style = plot_config.get_statistics_style("min-max")
+        if style.is_visible():
             y_1 = [ccs["min"][from_index], ccs["min"][to_index]]
             y_2 = [ccs["max"][from_index], ccs["max"][to_index]]
 
@@ -381,8 +381,8 @@ def _plotConnectionLines(
                 linewidth=style.width,
             )
 
-        style = plot_config.getStatisticsStyle("p10-p90")
-        if style.isVisible():
+        style = plot_config.get_statistics_style("p10-p90")
+        if style.is_visible():
             y_1 = [ccs["p10"][from_index], ccs["p10"][to_index]]
             y_2 = [ccs["p90"][from_index], ccs["p90"][to_index]]
 
@@ -407,8 +407,8 @@ def _plotConnectionLines(
                 linewidth=style.width,
             )
 
-        style = plot_config.getStatisticsStyle("p33-p67")
-        if style.isVisible():
+        style = plot_config.get_statistics_style("p33-p67")
+        if style.is_visible():
             y_1 = [ccs["p33"][from_index], ccs["p33"][to_index]]
             y_2 = [ccs["p67"][from_index], ccs["p67"][to_index]]
 

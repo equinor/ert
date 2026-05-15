@@ -275,7 +275,7 @@ class PlotWindow(QMainWindow):
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
-                self._plot_customizer.getPlotConfig().getNumberOfColors(),
+                self._plot_customizer.get_plot_config().get_number_of_colors(),
             )
 
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
@@ -503,7 +503,9 @@ class PlotWindow(QMainWindow):
             else:
                 plot_widget.showLayerWidget.emit(False)
 
-            plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
+            plot_config = PlotConfig.create_copy(
+                self._plot_customizer.get_plot_config()
+            )
             plot_context = PlotContext(
                 plot_config,
                 selected_ensembles,
@@ -577,7 +579,7 @@ class PlotWindow(QMainWindow):
             x_axis_type = PlotContext.VALUE_AXIS
             y_axis_type = PlotContext.DENSITY_AXIS
 
-        self._plot_customizer.setAxisTypes(x_axis_type, y_axis_type)
+        self._plot_customizer.set_axis_types(x_axis_type, y_axis_type)
 
     def getSelectedKey(self) -> PlotApiKeyDefinition | None:
         return self._data_type_keys_widget.getSelectedItem()
@@ -631,7 +633,7 @@ class PlotWindow(QMainWindow):
         key_def = self.getSelectedKey()
         if key_def is None:
             return
-        self._plot_customizer.switchPlotConfigHistory(key_def)
+        self._plot_customizer.switch_plot_config_history(key_def)
 
         is_everest_specific_widget = key_def.metadata.get("data_origin") in {
             "everest_objectives",
@@ -712,4 +714,4 @@ class PlotWindow(QMainWindow):
         self.updatePlot()
 
     def toggleCustomizeDialog(self) -> None:
-        self._plot_customizer.toggleCustomizationDialog()
+        self._plot_customizer.toggle_customization_dialog()

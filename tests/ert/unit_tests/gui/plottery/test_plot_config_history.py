@@ -5,33 +5,33 @@ def test_plot_config_history():
     test_pc = PlotConfig(title="test_1")
     history = PlotConfigHistory("test", test_pc)
 
-    assert history.getPlotConfig().title() == test_pc.title()
-    assert history.getPlotConfig() != test_pc
+    assert history.get_plot_config().title() == test_pc.title()
+    assert history.get_plot_config() != test_pc
 
-    assert not history.isUndoPossible()
-    assert not history.isRedoPossible()
+    assert not history.is_undo_possible()
+    assert not history.is_redo_possible()
 
-    history.applyChanges(PlotConfig(title="test_2"))
-    assert history.isUndoPossible()
-    assert not history.isRedoPossible()
-    assert history.getPlotConfig().title() == "test_2"
+    history.apply_changes(PlotConfig(title="test_2"))
+    assert history.is_undo_possible()
+    assert not history.is_redo_possible()
+    assert history.get_plot_config().title() == "test_2"
 
-    history.undoChanges()
-    assert not history.isUndoPossible()
-    assert history.isRedoPossible()
-    assert history.getPlotConfig().title() == "test_1"
+    history.undo_changes()
+    assert not history.is_undo_possible()
+    assert history.is_redo_possible()
+    assert history.get_plot_config().title() == "test_1"
 
-    history.redoChanges()
-    assert history.isUndoPossible()
-    assert not history.isRedoPossible()
-    assert history.getPlotConfig().title() == "test_2"
+    history.redo_changes()
+    assert history.is_undo_possible()
+    assert not history.is_redo_possible()
+    assert history.get_plot_config().title() == "test_2"
 
-    history.resetChanges()
-    assert history.isUndoPossible()
-    assert not history.isRedoPossible()
-    assert history.getPlotConfig().title() == "test_1"
+    history.reset_changes()
+    assert history.is_undo_possible()
+    assert not history.is_redo_possible()
+    assert history.get_plot_config().title() == "test_1"
 
-    history.undoChanges()
-    assert history.isUndoPossible()
-    assert history.isRedoPossible()
-    assert history.getPlotConfig().title() == "test_2"
+    history.undo_changes()
+    assert history.is_undo_possible()
+    assert history.is_redo_possible()
+    assert history.get_plot_config().title() == "test_2"

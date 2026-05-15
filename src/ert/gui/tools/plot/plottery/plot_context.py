@@ -85,10 +85,10 @@ class PlotContext:
     def key(self) -> str:
         return self._key
 
-    def deactivateDateSupport(self) -> None:
+    def deactivate_date_support(self) -> None:
         self._date_support_active = False
 
-    def isDateSupportActive(self) -> bool:
+    def is_date_support_active(self) -> bool:
         return self._date_support_active
 
     @property
@@ -128,10 +128,10 @@ class PlotContext:
         self._plot_type = value
 
     def setXLabel(self, value: str) -> None:
-        self._plot_config.setXLabel(value)
+        self._plot_config.set_x_label(value)
 
     def setYLabel(self, value: str) -> None:
-        self._plot_config.setYLabel(value)
+        self._plot_config.set_y_label(value)
 
     @property
     def extended_plot_information(self) -> bool:

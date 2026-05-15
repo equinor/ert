@@ -51,7 +51,7 @@ def test_plot_style_test_defaults():
     assert style.marker == ""  # noqa: PLC1901
     assert math.isclose(style.width, 1.0)
     assert math.isclose(style.size, 7.5)
-    assert style.isEnabled()
+    assert style.is_enabled()
 
     style.line_style = None
     style.marker = None
@@ -87,19 +87,19 @@ def test_plot_style_builtin_checks():
     style.alpha = -0.1
     assert math.isclose(style.alpha, 0.0)
 
-    style.setEnabled(False)
-    assert not style.isEnabled()
+    style.set_enabled(False)
+    assert not style.is_enabled()
 
 
 def test_plot_style_copy_style():
     style = PlotStyle(
         "Test", color="red", alpha=0.5, line_style=".", marker="o", width=2.5
     )
-    style.setEnabled(False)
+    style.set_enabled(False)
 
     copy_style = PlotStyle("Copy")
 
-    copy_style.copyStyleFrom(style)
+    copy_style.copy_style_from(style)
 
     assert style.name != copy_style.name
     assert style.color == copy_style.color
@@ -108,11 +108,11 @@ def test_plot_style_copy_style():
     assert style.marker == copy_style.marker
     assert style.width == copy_style.width
     assert style.size == copy_style.size
-    assert style.isEnabled() != copy_style.isEnabled()
+    assert style.is_enabled() != copy_style.is_enabled()
 
     another_copy_style = PlotStyle("Another Copy")
-    another_copy_style.copyStyleFrom(style, copy_enabled_state=True)
-    assert style.isEnabled() == another_copy_style.isEnabled()
+    another_copy_style.copy_style_from(style, copy_enabled_state=True)
+    assert style.is_enabled() == another_copy_style.is_enabled()
 
 
 def test_plot_config():
@@ -128,91 +128,91 @@ def test_plot_config():
     plot_config.limits = limits
     assert plot_config.limits == limits
 
-    plot_config.setDistributionLineEnabled(True)
-    plot_config.setLegendEnabled(False)
-    plot_config.setGridEnabled(False)
-    plot_config.setObservationsEnabled(False)
+    plot_config.set_distribution_line_enabled(True)
+    plot_config.set_legend_enabled(False)
+    plot_config.set_grid_enabled(False)
+    plot_config.set_observations_enabled(False)
 
     style = PlotStyle("test_style", line_style=".", marker="g", width=2.5, size=7.5)
 
-    plot_config.setDefaultStyle(style)
-    plot_config.setStatisticsStyle("mean", style)
-    plot_config.setStatisticsStyle("min-max", style)
-    plot_config.setStatisticsStyle("p50", style)
-    plot_config.setStatisticsStyle("p10-p90", style)
-    plot_config.setStatisticsStyle("p33-p67", style)
-    plot_config.setStatisticsStyle("std", style)
+    plot_config.set_default_style(style)
+    plot_config.set_statistics_style("mean", style)
+    plot_config.set_statistics_style("min-max", style)
+    plot_config.set_statistics_style("p50", style)
+    plot_config.set_statistics_style("p10-p90", style)
+    plot_config.set_statistics_style("p33-p67", style)
+    plot_config.set_statistics_style("std", style)
 
     copy_of_plot_config = PlotConfig(title="Copy of Golden Sample")
-    copy_of_plot_config.copyConfigFrom(plot_config)
+    copy_of_plot_config.copy_config_from(plot_config)
 
-    assert plot_config.isLegendEnabled() == copy_of_plot_config.isLegendEnabled()
-    assert plot_config.isGridEnabled() == copy_of_plot_config.isGridEnabled()
+    assert plot_config.is_legend_enabled() == copy_of_plot_config.is_legend_enabled()
+    assert plot_config.is_grid_enabled() == copy_of_plot_config.is_grid_enabled()
     assert (
-        plot_config.isObservationsEnabled()
-        == copy_of_plot_config.isObservationsEnabled()
+        plot_config.is_observations_enabled()
+        == copy_of_plot_config.is_observations_enabled()
     )
     assert (
-        plot_config.isDistributionLineEnabled()
-        == copy_of_plot_config.isDistributionLineEnabled()
+        plot_config.is_distribution_line_enabled()
+        == copy_of_plot_config.is_distribution_line_enabled()
     )
 
-    assert plot_config.observationsStyle() == copy_of_plot_config.observationsStyle()
+    assert plot_config.observations_style() == copy_of_plot_config.observations_style()
 
-    assert plot_config.histogramStyle() == copy_of_plot_config.histogramStyle()
-    assert plot_config.defaultStyle() == copy_of_plot_config.defaultStyle()
-    assert plot_config.currentColor() == copy_of_plot_config.currentColor()
+    assert plot_config.histogram_style() == copy_of_plot_config.histogram_style()
+    assert plot_config.default_style() == copy_of_plot_config.default_style()
+    assert plot_config.current_color() == copy_of_plot_config.current_color()
 
-    assert plot_config.getStatisticsStyle(
+    assert plot_config.get_statistics_style(
         "mean"
-    ) == copy_of_plot_config.getStatisticsStyle("mean")
-    assert plot_config.getStatisticsStyle(
+    ) == copy_of_plot_config.get_statistics_style("mean")
+    assert plot_config.get_statistics_style(
         "min-max"
-    ) == copy_of_plot_config.getStatisticsStyle("min-max")
-    assert plot_config.getStatisticsStyle(
+    ) == copy_of_plot_config.get_statistics_style("min-max")
+    assert plot_config.get_statistics_style(
         "p50"
-    ) == copy_of_plot_config.getStatisticsStyle("p50")
-    assert plot_config.getStatisticsStyle(
+    ) == copy_of_plot_config.get_statistics_style("p50")
+    assert plot_config.get_statistics_style(
         "p10-p90"
-    ) == copy_of_plot_config.getStatisticsStyle("p10-p90")
-    assert plot_config.getStatisticsStyle(
+    ) == copy_of_plot_config.get_statistics_style("p10-p90")
+    assert plot_config.get_statistics_style(
         "p33-p67"
-    ) == copy_of_plot_config.getStatisticsStyle("p33-p67")
-    assert plot_config.getStatisticsStyle(
+    ) == copy_of_plot_config.get_statistics_style("p33-p67")
+    assert plot_config.get_statistics_style(
         "std"
-    ) == copy_of_plot_config.getStatisticsStyle("std")
+    ) == copy_of_plot_config.get_statistics_style("std")
 
     assert plot_config.title() == copy_of_plot_config.title()
 
     assert plot_config.limits == copy_of_plot_config.limits
 
-    plot_config.currentColor()  # cycle state will not be copied
-    plot_config.nextColor()
+    plot_config.current_color()  # cycle state will not be copied
+    plot_config.next_color()
 
     copy_of_plot_config = PlotConfig(title="Another Copy of Golden Sample")
-    copy_of_plot_config.copyConfigFrom(plot_config)
+    copy_of_plot_config.copy_config_from(plot_config)
 
-    assert plot_config.observationsStyle() == copy_of_plot_config.observationsStyle()
+    assert plot_config.observations_style() == copy_of_plot_config.observations_style()
 
-    assert plot_config.histogramStyle() != copy_of_plot_config.histogramStyle()
-    assert plot_config.defaultStyle() != copy_of_plot_config.defaultStyle()
-    assert plot_config.currentColor() != copy_of_plot_config.currentColor()
+    assert plot_config.histogram_style() != copy_of_plot_config.histogram_style()
+    assert plot_config.default_style() != copy_of_plot_config.default_style()
+    assert plot_config.current_color() != copy_of_plot_config.current_color()
 
-    assert plot_config.getStatisticsStyle(
+    assert plot_config.get_statistics_style(
         "mean"
-    ) != copy_of_plot_config.getStatisticsStyle("mean")
-    assert plot_config.getStatisticsStyle(
+    ) != copy_of_plot_config.get_statistics_style("mean")
+    assert plot_config.get_statistics_style(
         "min-max"
-    ) != copy_of_plot_config.getStatisticsStyle("min-max")
-    assert plot_config.getStatisticsStyle(
+    ) != copy_of_plot_config.get_statistics_style("min-max")
+    assert plot_config.get_statistics_style(
         "p50"
-    ) != copy_of_plot_config.getStatisticsStyle("p50")
-    assert plot_config.getStatisticsStyle(
+    ) != copy_of_plot_config.get_statistics_style("p50")
+    assert plot_config.get_statistics_style(
         "p10-p90"
-    ) != copy_of_plot_config.getStatisticsStyle("p10-p90")
-    assert plot_config.getStatisticsStyle(
+    ) != copy_of_plot_config.get_statistics_style("p10-p90")
+    assert plot_config.get_statistics_style(
         "p33-p67"
-    ) != copy_of_plot_config.getStatisticsStyle("p33-p67")
-    assert plot_config.getStatisticsStyle(
+    ) != copy_of_plot_config.get_statistics_style("p33-p67")
+    assert plot_config.get_statistics_style(
         "std"
-    ) != copy_of_plot_config.getStatisticsStyle("std")
+    ) != copy_of_plot_config.get_statistics_style("std")

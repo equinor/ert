@@ -53,11 +53,11 @@ class EverestGradientsPlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
         plot_context.plot_type = PlotType.BAR
-        plot_context.deactivateDateSupport()
+        plot_context.deactivate_date_support()
 
         response_key = key_def.key if key_def else "Response"
 
-        colors = config.lineColorCycle()
+        colors = config.line_color_cycle()
 
         # Collect all data into one frame
         all_frames = [
@@ -108,7 +108,7 @@ class EverestGradientsPlot:
                 color=color,
                 alpha=0.7,
             )
-            config.addLegendItem(control, bars[0])
+            config.add_legend_item(control, bars[0])
             bar_containers.append(bars)
 
         axes.axhline(0, color="black", linewidth=1.0, alpha=0.3)

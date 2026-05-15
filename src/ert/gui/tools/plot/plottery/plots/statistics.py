@@ -47,22 +47,22 @@ class StatisticsPlot:
             plot_context.ensembles_color_indexes(),
             strict=False,
         ):
-            config.setCurrentColor(color_index)
+            config.set_current_color(color_index)
             data = untransposed_data.T
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
-                    plot_context.deactivateDateSupport()
+                    plot_context.deactivate_date_support()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 
                 label = f"{ensemble.experiment_name} : {ensemble.name}"
-                style = config.getStatisticsStyle("mean")
+                style = config.get_statistics_style("mean")
                 rectangle = Rectangle(
                     (0, 0), 1, 1, color=style.color, alpha=0.8
                 )  # creates rectangle patch for legend use.
-                config.addLegendItem(label, rectangle)
+                config.add_legend_item(label, rectangle)
 
                 statistics_data = DataFrame()
-                std_dev_factor = config.getStandardDeviationFactor()
+                std_dev_factor = config.get_standard_deviation_factor()
 
                 statistics_data["Minimum"] = data.min(axis=1)
                 statistics_data["Maximum"] = data.max(axis=1)
@@ -82,7 +82,7 @@ class StatisticsPlot:
         plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 
-        default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
+        default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
         PlotTools.finalizePlot(
             plot_context,
             figure,
@@ -104,13 +104,13 @@ def _addStatisticsLegends(plot_config: PlotConfig) -> None:
 def _addStatisticsLegend(
     plot_config: PlotConfig, style_name: str, alpha_multiplier: float = 1.0
 ) -> None:
-    style = plot_config.getStatisticsStyle(style_name)
-    if style.isVisible():
+    style = plot_config.get_statistics_style(style_name)
+    if style.is_visible():
         if style.line_style == "#":
             rectangle = Rectangle(
                 (0, 0), 1, 1, color="black", alpha=style.alpha * alpha_multiplier
             )  # creates rectangle patch for legend use.
-            plot_config.addLegendItem(style.name, rectangle)
+            plot_config.add_legend_item(style.name, rectangle)
         else:
             line = Line2D(
                 [],
@@ -122,13 +122,13 @@ def _addStatisticsLegend(
                 alpha=style.alpha,
                 markersize=style.size,
             )
-            plot_config.addLegendItem(style.name, line)
+            plot_config.add_legend_item(style.name, line)
 
 
 def _plotPercentiles(
     axes: Axes, plot_config: PlotConfig, data: DataFrame, ensemble_label: str
 ) -> None:
-    style = plot_config.getStatisticsStyle("mean")
+    style = plot_config.get_statistics_style("mean")
     if plot_config.flip_response_axis:
         axes.yaxis.set_inverted(True)
 
@@ -138,7 +138,7 @@ def _plotPercentiles(
         else:
             return (x, y)
 
-    if style.isVisible():
+    if style.is_visible():
         axes.plot(
             *xy_order(data.index.values, data["Mean"].values),
             alpha=style.alpha,
@@ -149,8 +149,8 @@ def _plotPercentiles(
             markersize=style.size,
         )
 
-    style = plot_config.getStatisticsStyle("p50")
-    if style.isVisible():
+    style = plot_config.get_statistics_style("p50")
+    if style.is_visible():
         axes.plot(
             *xy_order(data.index.values, data["p50"].values),
             alpha=style.alpha,
@@ -161,7 +161,7 @@ def _plotPercentiles(
             markersize=style.size,
         )
 
-    style = plot_config.getStatisticsStyle("std")
+    style = plot_config.get_statistics_style("std")
     _plotPercentile(
         axes,
         style,
@@ -172,7 +172,7 @@ def _plotPercentiles(
         inverted=plot_config.flip_response_axis,
     )
 
-    style = plot_config.getStatisticsStyle("min-max")
+    style = plot_config.get_statistics_style("min-max")
     _plotPercentile(
         axes,
         style,
@@ -183,7 +183,7 @@ def _plotPercentiles(
         inverted=plot_config.flip_response_axis,
     )
 
-    style = plot_config.getStatisticsStyle("p10-p90")
+    style = plot_config.get_statistics_style("p10-p90")
     _plotPercentile(
         axes,
         style,
@@ -194,7 +194,7 @@ def _plotPercentiles(
         inverted=plot_config.flip_response_axis,
     )
 
-    style = plot_config.getStatisticsStyle("p33-p67")
+    style = plot_config.get_statistics_style("p33-p67")
     _plotPercentile(
         axes,
         style,
@@ -244,7 +244,7 @@ def _plotPercentile(
                 alpha=alpha * alpha_multiplier,
                 color=color,
             )
-    elif style.isVisible():
+    elif style.is_visible():
         axes.plot(
             *xy_order(index_values, bottom_line_data),
             alpha=alpha,

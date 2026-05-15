@@ -50,7 +50,7 @@ class EverestBatchObjectiveFunctionPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
-        plot_context.deactivateDateSupport()
+        plot_context.deactivate_date_support()
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
 
         if not all_dfs:
@@ -71,7 +71,7 @@ class EverestBatchObjectiveFunctionPlot:
         )
         data = combined.sort_values("batch_id")
 
-        color = config.nextColor()
+        color = config.next_color()
 
         improvement_data = data[data["is_improvement"]]
 
@@ -132,8 +132,8 @@ class EverestBatchObjectiveFunctionPlot:
             if plot_context.extended_plot_information:
                 axes.margins(y=0.2, x=0.1)
 
-        config.addLegendItem("Accepted", lines[0])
-        config.addLegendItem(
+        config.add_legend_item("Accepted", lines[0])
+        config.add_legend_item(
             "Rejected",
             Line2D(
                 [0], [0], marker="o", color="w", markerfacecolor="red", markersize=8

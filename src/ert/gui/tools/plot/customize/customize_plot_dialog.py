@@ -61,82 +61,82 @@ class PlotCustomizer(QObject):
             "Customize", parent, key_defs, key=self._plot_config_key
         )
 
-        self._customization_dialog.addTab(
+        self._customization_dialog.add_tab(
             "general", "General", DefaultCustomizationView()
         )
-        self._customization_dialog.addTab("style", "Style", StyleCustomizationView())
-        self._customization_dialog.addTab(
+        self._customization_dialog.add_tab("style", "Style", StyleCustomizationView())
+        self._customization_dialog.add_tab(
             "statistics", "Statistics", StatisticsCustomizationView()
         )
 
         self._customize_limits = LimitsCustomizationView()
-        self._customization_dialog.addTab("limits", "Limits", self._customize_limits)
+        self._customization_dialog.add_tab("limits", "Limits", self._customize_limits)
 
-        self._customization_dialog.applySettings.connect(self.applyCustomization)
-        self._customization_dialog.undoSettings.connect(self.undoCustomization)
-        self._customization_dialog.redoSettings.connect(self.redoCustomization)
-        self._customization_dialog.resetSettings.connect(self.resetCustomization)
-        self._customization_dialog.copySettings.connect(self.copyCustomization)
+        self._customization_dialog.applySettings.connect(self.apply_customization)
+        self._customization_dialog.undoSettings.connect(self.undo_customization)
+        self._customization_dialog.redoSettings.connect(self.redo_customization)
+        self._customization_dialog.resetSettings.connect(self.reset_customization)
+        self._customization_dialog.copySettings.connect(self.copy_customization)
         self._customization_dialog.copySettingsToOthers.connect(
-            self.copyCustomizationTo
+            self.copy_customization_to
         )
-        self._revertCustomization(self.getPlotConfig())
+        self._revert_customization(self.get_plot_config())
 
-    def _getPlotConfigHistory(self) -> PlotConfigHistory:
+    def _get_plot_config_history(self) -> PlotConfigHistory:
         return self._plot_configs[self._plot_config_key]
 
-    def undoCustomization(self) -> None:
-        history = self._getPlotConfigHistory()
-        history.undoChanges()
-        self._revertCustomization(history.getPlotConfig())
+    def undo_customization(self) -> None:
+        history = self._get_plot_config_history()
+        history.undo_changes()
+        self._revert_customization(history.get_plot_config())
 
-    def redoCustomization(self) -> None:
-        history = self._getPlotConfigHistory()
-        history.redoChanges()
-        self._revertCustomization(history.getPlotConfig())
+    def redo_customization(self) -> None:
+        history = self._get_plot_config_history()
+        history.redo_changes()
+        self._revert_customization(history.get_plot_config())
 
-    def resetCustomization(self) -> None:
-        history = self._getPlotConfigHistory()
-        history.resetChanges()
-        self._revertCustomization(history.getPlotConfig())
+    def reset_customization(self) -> None:
+        history = self._get_plot_config_history()
+        history.reset_changes()
+        self._revert_customization(history.get_plot_config())
 
-    def applyCustomization(self) -> None:
-        history = self._getPlotConfigHistory()
-        plot_config = history.getPlotConfig()
+    def apply_customization(self) -> None:
+        history = self._get_plot_config_history()
+        plot_config = history.get_plot_config()
         if self._customization_dialog is not None:
             for customization_view in self._customization_dialog:
-                customization_view.applyCustomization(plot_config)
+                customization_view.apply_customization(plot_config)
 
-        history.applyChanges(plot_config)
+        history.apply_changes(plot_config)
 
-        self._emitChangedSignal()
+        self._emit_changed_signal()
 
-    def _revertCustomization(
+    def _revert_customization(
         self, plot_config: PlotConfig, *, emit: bool = True
     ) -> None:
         if self._customization_dialog is not None:
             for customization_view in self._customization_dialog:
-                customization_view.revertCustomization(plot_config)
+                customization_view.revert_customization(plot_config)
 
-        self._emitChangedSignal(emit=emit)
+        self._emit_changed_signal(emit=emit)
 
-    def _emitChangedSignal(self, *, emit: bool = True) -> None:
-        history = self._getPlotConfigHistory()
-        self._customization_dialog.setUndoRedoCopyState(
-            undo=history.isUndoPossible(),
-            redo=history.isRedoPossible(),
-            copy=self.isCopyPossible(),
+    def _emit_changed_signal(self, *, emit: bool = True) -> None:
+        history = self._get_plot_config_history()
+        self._customization_dialog.set_undo_redo_copy_state(
+            undo=history.is_undo_possible(),
+            redo=history.is_redo_possible(),
+            copy=self.is_copy_possible(),
         )
 
         if emit:
             self.settingsChanged.emit()
 
-    def isCopyPossible(self) -> bool:
+    def is_copy_possible(self) -> bool:
         return len(self._plot_configs) > 2
 
-    def copyCustomizationTo(self, keys: Iterable[str]) -> None:
+    def copy_customization_to(self, keys: Iterable[str]) -> None:
         """copies the plotconfig of the current key, to a set of other keys"""
-        history = self._getPlotConfigHistory()
+        history = self._get_plot_config_history()
 
         for key in keys:
             if key not in self._plot_configs:
@@ -144,51 +144,51 @@ class PlotCustomizer(QObject):
                     "No_Key_Selected",
                     PlotConfig(self.default_plot_settings, title=None),
                 )
-            source_config = history.getPlotConfig()
-            source_config.setTitle(key)
+            source_config = history.get_plot_config()
+            source_config.set_title(key)
 
-            self._plot_configs[key].applyChanges(source_config)
+            self._plot_configs[key].apply_changes(source_config)
 
-            self._customization_dialog.addCopyableKey(key)
+            self._customization_dialog.add_copyable_key(key)
 
-        self._emitChangedSignal(emit=True)
+        self._emit_changed_signal(emit=True)
 
-    def copyCustomization(self, key: str | None) -> None:
+    def copy_customization(self, key: str | None) -> None:
         key = str(key)
-        if self.isCopyPossible():
-            source_config = self._plot_configs[key].getPlotConfig()
-            source_config.setTitle(None)
+        if self.is_copy_possible():
+            source_config = self._plot_configs[key].get_plot_config()
+            source_config.set_title(None)
 
-            history = self._getPlotConfigHistory()
-            history.applyChanges(source_config)
+            history = self._get_plot_config_history()
+            history.apply_changes(source_config)
 
-            self._revertCustomization(history.getPlotConfig())
+            self._revert_customization(history.get_plot_config())
 
-    def toggleCustomizationDialog(self) -> None:
+    def toggle_customization_dialog(self) -> None:
         if self._customization_dialog.isVisible():
             self._customization_dialog.hide()
         else:
             self._customization_dialog.show()
 
-    def switchPlotConfigHistory(self, key_def: PlotApiKeyDefinition) -> None:
+    def switch_plot_config_history(self, key_def: PlotApiKeyDefinition) -> None:
         if key_def is None:
             return
         key = key_def.key
         if key != self._plot_config_key:
             if key not in self._plot_configs:
                 self._plot_configs[key] = PlotConfigHistory(
-                    key, PlotConfigFactory.createPlotConfigForKey(key_def)
+                    key, PlotConfigFactory.create_plot_config_for_key(key_def)
                 )
-                self._customization_dialog.addCopyableKey(key)
-            self._customization_dialog.currentPlotKeyChanged(key)
+                self._customization_dialog.add_copyable_key(key)
+            self._customization_dialog.current_plot_key_changed(key)
             self._previous_key = self._plot_config_key
             self._plot_config_key = key
-            self._revertCustomization(self.getPlotConfig(), emit=False)
+            self._revert_customization(self.get_plot_config(), emit=False)
 
-    def getPlotConfig(self) -> PlotConfig:
-        return self._getPlotConfigHistory().getPlotConfig()
+    def get_plot_config(self) -> PlotConfig:
+        return self._get_plot_config_history().get_plot_config()
 
-    def setAxisTypes(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
+    def set_axis_types(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
         self._customize_limits.setAxisTypes(x_axis_type, y_axis_type)
 
 
@@ -261,14 +261,14 @@ class CustomizePlotDialog(QDialog):
         self._copy_to_button.setIcon(load_icon("upload.svg"))
         self._copy_to_button.setToolTip("Copy current plot settings to other keys")
         self._copy_to_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self._copy_to_button.clicked.connect(self.initiateCopyStyleToDialog)
+        self._copy_to_button.clicked.connect(self.initiate_copy_style_to_dialog)
         self._copy_to_button.clicked.connect(lambda: self.log_fn("Copy to"))
         self._copy_to_button.setEnabled(True)
 
         tool_menu = QMenu(self._copy_from_button)
         self._popup_list = QListWidget(tool_menu)
         self._popup_list.setSortingEnabled(True)
-        self._popup_list.itemClicked.connect(self.keySelected)
+        self._popup_list.itemClicked.connect(self.key_selected)
         action = QWidgetAction(tool_menu)
         action.setDefaultWidget(self._popup_list)
         tool_menu.addAction(action)
@@ -300,18 +300,18 @@ class CustomizePlotDialog(QDialog):
 
         self.setLayout(layout)
 
-    def initiateCopyStyleToDialog(self) -> None:
+    def initiate_copy_style_to_dialog(self) -> None:
         dialog = CopyStyleToDialog(self, self.current_key, self._key_defs)
         if dialog.exec():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())
 
-    def addCopyableKey(self, key: str | QListWidgetItem) -> None:
+    def add_copyable_key(self, key: str | QListWidgetItem) -> None:
         self._popup_list.addItem(key)
 
-    def keySelected(self, list_widget_item: QListWidgetItem) -> None:
+    def key_selected(self, list_widget_item: QListWidgetItem) -> None:
         self.copySettings.emit(str(list_widget_item.text()))
 
-    def currentPlotKeyChanged(self, new_key: str | None) -> None:
+    def current_plot_key_changed(self, new_key: str | None) -> None:
         self.current_key = new_key
 
     def log_fn(self, action: str) -> None:
@@ -326,7 +326,7 @@ class CustomizePlotDialog(QDialog):
         else:
             QDialog.keyPressEvent(self, a0)
 
-    def addTab(
+    def add_tab(
         self, attribute_name: str, title: str, widget: CustomizationView
     ) -> None:
         with QSignalBlocker(self._tabs):
@@ -341,7 +341,7 @@ class CustomizePlotDialog(QDialog):
         for attribute_name in self._tab_order:
             yield self._tab_map[attribute_name]
 
-    def setUndoRedoCopyState(
+    def set_undo_redo_copy_state(
         self, *, undo: bool, redo: bool, copy: bool = False
     ) -> None:
         self._undo_button.setEnabled(undo)

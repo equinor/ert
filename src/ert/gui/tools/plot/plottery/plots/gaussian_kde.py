@@ -50,7 +50,7 @@ def plotGaussianKDE(
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
-    plot_context.deactivateDateSupport()
+    plot_context.deactivate_date_support()
     plot_context.x_axis = plot_context.VALUE_AXIS
     plot_context.y_axis = plot_context.DENSITY_AXIS
 
@@ -59,7 +59,7 @@ def plotGaussianKDE(
         plot_context.ensembles_color_indexes(),
         strict=False,
     ):
-        config.setCurrentColor(color_index)
+        config.set_current_color(color_index)
         if data.empty or not pd.api.types.is_numeric_dtype(data[0]):
             continue
         if not _array_is_constant(data[0]):
@@ -78,7 +78,7 @@ def plotGaussianKDE(
 def _plotGaussianKDE(
     axes: Axes, plot_config: PlotConfig, data: pd.DataFrame, label: str
 ) -> None:
-    style = plot_config.histogramStyle()
+    style = plot_config.histogram_style()
 
     sample_range = data.max() - data.min()
     indexes = np.linspace(
@@ -98,4 +98,4 @@ def _plotGaussianKDE(
     )
 
     if len(lines) > 0:
-        plot_config.addLegendItem(label, lines[0])
+        plot_config.add_legend_item(label, lines[0])
