@@ -12,9 +12,6 @@ from .plot_style import PlotStyle
 
 
 class PlotConfig:
-    # The plot_settings input argument is an internalisation of the (quite few) plot
-    # policy settings which can be set in the configuration file.
-
     def __init__(
         self,
         plot_settings: dict[str, Any] | None = None,
