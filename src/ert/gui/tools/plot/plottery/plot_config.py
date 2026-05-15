@@ -58,7 +58,7 @@ class PlotConfig:
             enabled=self._plot_settings["SHOW_HISTORY"],
         )
 
-        self._observs_style = PlotStyle(
+        self._observations_style = PlotStyle(
             name="Observations",
             line_style="-",
             alpha=0.8,
@@ -140,12 +140,12 @@ class PlotConfig:
         return style
 
     def observationsColor(self) -> tuple[str, float]:
-        assert self._observs_style.color
-        return (self._observs_style.color, self._observs_style.alpha)
+        assert self._observations_style.color
+        return (self._observations_style.color, self._observations_style.alpha)
 
     def observationsStyle(self) -> PlotStyle:
         style = PlotStyle("Observations style")
-        style.copyStyleFrom(self._observs_style)
+        style.copyStyleFrom(self._observations_style)
         return style
 
     def historyStyle(self) -> PlotStyle:
@@ -189,10 +189,10 @@ class PlotConfig:
         self._y_label = label
 
     def setObservationsEnabled(self, enabled: bool) -> None:
-        self._observs_style.setEnabled(enabled)
+        self._observations_style.setEnabled(enabled)
 
     def isObservationsEnabled(self) -> bool:
-        return self._observs_style.isEnabled()
+        return self._observations_style.isEnabled()
 
     def setHistoryEnabled(self, enabled: bool) -> None:
         self._history_style.setEnabled(enabled)
@@ -245,13 +245,13 @@ class PlotConfig:
         self._history_style.size = style.size
 
     def setObservationsColor(self, color_tuple: tuple[str, float]) -> None:
-        self._observs_style.color, self._observs_style.alpha = color_tuple
+        self._observations_style.color, self._observations_style.alpha = color_tuple
 
     def setObservationsStyle(self, style: PlotStyle) -> None:
-        self._observs_style.line_style = style.line_style
-        self._observs_style.marker = style.marker
-        self._observs_style.width = style.width
-        self._observs_style.size = style.size
+        self._observations_style.line_style = style.line_style
+        self._observations_style.marker = style.marker
+        self._observations_style.width = style.width
+        self._observations_style.size = style.size
 
     def setDefaultStyle(self, style: PlotStyle) -> None:
         self._default_style.line_style = style.line_style
@@ -273,7 +273,9 @@ class PlotConfig:
         self._histogram_style.copyStyleFrom(
             other._histogram_style, copy_enabled_state=True
         )
-        self._observs_style.copyStyleFrom(other._observs_style, copy_enabled_state=True)
+        self._observations_style.copyStyleFrom(
+            other._observations_style, copy_enabled_state=True
+        )
         self._distribution_style.copyStyleFrom(
             other._distribution_style, copy_enabled_state=True
         )
