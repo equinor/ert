@@ -52,6 +52,7 @@ def plotHistogram(
 
     plot_context.x_axis = plot_context.VALUE_AXIS
     plot_context.y_axis = plot_context.COUNT_AXIS
+    plot_context.deactivate_date_support()
 
     x_label = config.x_label()
     if x_label is None:
@@ -106,6 +107,7 @@ def plotHistogram(
         )
         axes[ensemble.name].set_xlabel(x_label)
         axes[ensemble.name].set_ylabel(y_label)
+        is_last = index == ensemble_count - 1
 
         if ensemble.id in data and not data[ensemble.id].empty:
             if categorical:
@@ -122,20 +124,33 @@ def plotHistogram(
                 if minimum is not None and maximum is not None and minimum == maximum:
                     minimum -= 0.1
                     maximum += 0.1
-                config.add_legend_item(
-                    ensemble.name,
-                    _plotHistogram(
-                        axes[ensemble.name],
-                        config.histogram_style(),
-                        data[ensemble.id],
-                        bin_count,
-                        use_log_scale=plot_context.log_scale,
-                        minimum=minimum,
-                        maximum=maximum,
-                    ),
-                )
 
-            PlotTools.showGrid(axes[ensemble.name], plot_context)
+                legend_patch = _plotHistogram(
+                    axes[ensemble.name],
+                    config.histogram_style(),
+                    data[ensemble.id],
+                    bin_count,
+                    use_log_scale=plot_context.log_scale,
+                    minimum=minimum,
+                    maximum=maximum,
+                )
+                axes[ensemble.name].legend(
+                    [legend_patch],
+                    [f"{ensemble.experiment_name} : {ensemble.name}"],
+                    numpoints=1,
+                )
+                if index != 0:
+                    plot_context.plotConfig().set_title("")
+                PlotTools.finalizePlot(
+                    plot_context,
+                    figure,
+                    axes[ensemble.name],
+                    default_x_label=axes[ensemble.name].get_xlabel(),
+                    default_y_label=axes[ensemble.name].get_ylabel(),
+                )
+                # Removes x-axis labels for all but the last subplot to avoid clutter
+                if not is_last:
+                    axes[ensemble.name].set_xlabel("")
 
     min_count = 0
     max_count = (

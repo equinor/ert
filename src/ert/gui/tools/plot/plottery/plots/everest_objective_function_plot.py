@@ -86,10 +86,6 @@ class EverestObjectiveFunctionPlot:
                 color = config.next_color()
                 config.add_legend_item(f"Realization {int(realization)}", lines[0])
 
-        axes.spines["right"].set_visible(False)
-        axes.spines["left"].set_visible(False)
-        axes.spines["top"].set_visible(False)
-
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
         PlotTools.finalizePlot(
             plot_context,
@@ -98,4 +94,3 @@ class EverestObjectiveFunctionPlot:
             default_x_label="Batch iteration",
             default_y_label="Objective value",
         )
-        figure.tight_layout()

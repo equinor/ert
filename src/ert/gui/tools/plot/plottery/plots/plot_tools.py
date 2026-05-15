@@ -158,6 +158,9 @@ class PlotTools:
         if plot_context.is_date_support_active():
             figure.autofmt_xdate()
 
+        for spine in ("right", "left", "top"):
+            axes.spines[spine].set_visible(False)
+
     @staticmethod
     def __setupLabels(
         plot_context: PlotContext, default_x_label: str, default_y_label: str

@@ -57,8 +57,6 @@ class EverestGradientsPlot:
 
         response_key = key_def.key if key_def else "Response"
 
-        colors = config.line_color_cycle()
-
         # Collect all data into one frame
         all_frames = [
             filtered
@@ -88,9 +86,8 @@ class EverestGradientsPlot:
         bar_width = 0.8 / n_controls
 
         bar_containers = []
-
+        n_colors = config.get_number_of_colors()
         for i, control in enumerate(self.selected_controls):
-            color = colors[i % len(colors)][0]
             values = []
             for batch_id in batch_ids:
                 batch_data = combined[combined["batch_id"] == batch_id]
@@ -100,13 +97,22 @@ class EverestGradientsPlot:
                 )
 
             offsets = pos + (i - n_controls / 2) * bar_width + bar_width / 2
-
+            color = config.next_color()
+            if i < n_colors:
+                bar_style = ""
+            elif i < n_colors * 2:
+                bar_style = "//"
+            elif i < n_colors * 3:
+                bar_style = ".."
+            else:
+                bar_style = "-"
             bars = axes.bar(
                 offsets,
                 values,
                 width=bar_width,
                 color=color,
                 alpha=0.7,
+                hatch=bar_style,
             )
             config.add_legend_item(control, bars[0])
             bar_containers.append(bars)
@@ -115,9 +121,6 @@ class EverestGradientsPlot:
         axes.set_xticks(pos)
         axes.set_xticklabels([f"Batch {b}" for b in batch_ids], rotation=0)
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
-        axes.spines["right"].set_visible(False)
-        axes.spines["left"].set_visible(False)
-        axes.spines["top"].set_visible(False)
 
         bar_labels = [
             f"batch {batch}\n{control}"
