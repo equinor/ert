@@ -70,10 +70,6 @@ class EnsemblePlot:
         plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 
-        axes.spines["right"].set_visible(False)
-        axes.spines["left"].set_visible(False)
-        axes.spines["top"].set_visible(False)
-
         default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
         PlotTools.finalizePlot(
             plot_context,

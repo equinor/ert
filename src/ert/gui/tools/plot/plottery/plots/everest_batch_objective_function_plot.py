@@ -108,7 +108,7 @@ class EverestBatchObjectiveFunctionPlot:
                     horizontalalignment="left",
                 )
                 if plot_context.extended_plot_information:
-                    axes.margins(y=0.2, x=0.1)
+                    axes.margins(y=0.2)
 
         annotation_color = {True: color, False: "red"}
         for _, row in improvement_data.iterrows():
@@ -130,7 +130,7 @@ class EverestBatchObjectiveFunctionPlot:
                 horizontalalignment="left",
             )
             if plot_context.extended_plot_information:
-                axes.margins(y=0.2, x=0.1)
+                axes.margins(y=0.2)
 
         config.add_legend_item("Accepted", lines[0])
         config.add_legend_item(
@@ -139,11 +139,6 @@ class EverestBatchObjectiveFunctionPlot:
                 [0], [0], marker="o", color="w", markerfacecolor="red", markersize=8
             ),
         )
-
-        axes.margins(y=0.2, x=0.1)
-
-        for spine in ("right", "left", "top"):
-            axes.spines[spine].set_visible(False)
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
@@ -154,5 +149,4 @@ class EverestBatchObjectiveFunctionPlot:
             default_x_label="Batch iteration",
             default_y_label="Aggregated objective value",
         )
-        figure.tight_layout()
         return

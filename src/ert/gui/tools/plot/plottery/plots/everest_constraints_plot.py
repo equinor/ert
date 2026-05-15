@@ -117,8 +117,7 @@ class EverestConstraintsPlot:
             axes.set_ylim(ylim)
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
-        axes.spines["right"].set_visible(False)
-        axes.spines["top"].set_visible(False)
+
         PlotTools.finalizePlot(
             plot_context,
             figure,
@@ -126,4 +125,3 @@ class EverestConstraintsPlot:
             default_x_label="Batch iteration",
             default_y_label="Constraint value",
         )
-        figure.tight_layout()

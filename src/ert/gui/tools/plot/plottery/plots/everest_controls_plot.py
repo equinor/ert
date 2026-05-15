@@ -100,10 +100,6 @@ class EverestControlsPlot:
                     horizontalalignment="left",
                 )
 
-        axes.spines["right"].set_visible(False)
-        axes.spines["left"].set_visible(False)
-        axes.spines["top"].set_visible(False)
-
         # Conversion to integer ticks for batch_id (number of batches)
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
@@ -114,4 +110,3 @@ class EverestControlsPlot:
             default_x_label="Batch iteration",
             default_y_label="Control value",
         )
-        figure.tight_layout()
