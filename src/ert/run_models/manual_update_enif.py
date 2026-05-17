@@ -26,7 +26,6 @@ class ManualUpdateEnIF(ManualUpdate):
         enif_update(
             prior,
             posterior,
-            parameters=prior.experiment.update_parameters,
             observations=prior.experiment.observation_keys,
             random_seed=self.random_seed,
             progress_callback=functools.partial(
