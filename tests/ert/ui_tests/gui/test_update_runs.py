@@ -18,7 +18,7 @@ from _ert.events import (
 from ert.config import HookRuntime
 from ert.gui.experiments import ExperimentPanel
 from ert.gui.experiments.run_dialog import RunDialog
-from ert.gui.experiments.view import IterationWidget, RealizationWidget
+from ert.gui.experiments.view import RealizationWidget, TabGroupWidget
 from ert.gui.experiments.view.update import UpdateLogTable, UpdateWidget
 from ert.gui.experiments.view.workflow import (
     HEADER_TO_COLUMN,
@@ -455,7 +455,7 @@ def test_that_esmda_with_all_workflows_produces_expected_tabs(
             iteration_widget = _widget_for_tab_text(
                 run_dialog._tab_widget, f"iteration-{iteration}"
             )
-            assert isinstance(iteration_widget, IterationWidget)
+            assert isinstance(iteration_widget, TabGroupWidget)
             assert set(_tab_texts(iteration_widget._tab_widget)) == {
                 "Run",
                 "Pre-simulation workflows",
@@ -483,7 +483,7 @@ def test_that_esmda_with_all_workflows_produces_expected_tabs(
             update_iteration_widget = _widget_for_tab_text(
                 run_dialog._tab_widget, f"update-{iteration}"
             )
-            assert isinstance(update_iteration_widget, IterationWidget)
+            assert isinstance(update_iteration_widget, TabGroupWidget)
 
             expected_tabs = {
                 "Update",

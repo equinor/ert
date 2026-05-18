@@ -47,9 +47,9 @@ from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
-from ert.gui.experiments.view.iteration import IterationWidget
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
+from ert.gui.experiments.view.tab_group_widget import TabGroupWidget
 from ert.gui.experiments.view.update import UpdateWidget
 from ert.gui.experiments.view.workflow import WorkflowWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
@@ -317,11 +317,11 @@ def test_that_terminating_experiment_during_hooked_workflows_marks_batch_cancell
     )
 
     qtbot.waitUntil(
-        lambda: isinstance(run_dialog._tab_widget.currentWidget(), IterationWidget),
+        lambda: isinstance(run_dialog._tab_widget.currentWidget(), TabGroupWidget),
         timeout=5000,
     )
     iteration_widget = run_dialog._tab_widget.currentWidget()
-    assert isinstance(iteration_widget, IterationWidget)
+    assert isinstance(iteration_widget, TabGroupWidget)
     workflow_widget = iteration_widget._tab_widget.currentWidget()
     assert isinstance(workflow_widget, WorkflowWidget)
     assert workflow_widget._status_label.text() == "Pre-simulation workflows running"
@@ -634,7 +634,7 @@ def test_run_dialog_memory_usage_showing(
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
     iteration_widget = run_dialog._tab_widget.widget(0)
-    assert type(iteration_widget) is IterationWidget
+    assert type(iteration_widget) is TabGroupWidget
     # This is the container of realization boxes
     realization_box = iteration_widget._tab_widget.widget(0)
     assert type(realization_box) is RealizationWidget
@@ -736,7 +736,7 @@ def test_run_dialog_fm_label_show_correct_info(
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
     iteration_widget = run_dialog._tab_widget.widget(0)
-    assert type(iteration_widget) is IterationWidget
+    assert type(iteration_widget) is TabGroupWidget
     # This is the container of realization boxes
     realization_box = iteration_widget._tab_widget.widget(0)
     assert type(realization_box) is RealizationWidget
@@ -1009,7 +1009,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
     events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):
     def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
-        iteration_widget: IterationWidget = run_dialog._tab_widget.widget(iteration)
+        iteration_widget: TabGroupWidget = run_dialog._tab_widget.widget(iteration)
         view = iteration_widget._tab_widget.widget(0)._real_view
         model_index = view.model().index(realization_index, 0)
         view.scrollTo(model_index)
@@ -1293,7 +1293,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     queue.put(EndEvent(failed=False, msg=""))
 
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
-    iteration_widget: IterationWidget = dialog._tab_widget.widget(0)
+    iteration_widget: TabGroupWidget = dialog._tab_widget.widget(0)
 
     assert isinstance(iteration_widget._tab_widget.widget(0), RealizationWidget)
     qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)
@@ -1541,9 +1541,9 @@ def test_that_run_dialog_places_all_workflow_hooks_in_expected_tabs(
 
     assert isinstance(pre_experiment_widget, WorkflowWidget)
     assert isinstance(post_experiment_widget, WorkflowWidget)
-    assert isinstance(first_iteration_widget, IterationWidget)
-    assert isinstance(update_widget, IterationWidget)
-    assert isinstance(second_iteration_widget, IterationWidget)
+    assert isinstance(first_iteration_widget, TabGroupWidget)
+    assert isinstance(update_widget, TabGroupWidget)
+    assert isinstance(second_iteration_widget, TabGroupWidget)
 
     assert pre_experiment_widget.hook == HookRuntime.PRE_EXPERIMENT
     assert post_experiment_widget.hook == HookRuntime.POST_EXPERIMENT
