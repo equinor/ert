@@ -5,13 +5,13 @@ import stat
 from pathlib import Path
 from textwrap import dedent
 
-from ert.gui.experiments.view.iteration import TabGroupWidget
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.gui.ertwidgets import StringBox
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.view import RealizationWidget
+from ert.gui.experiments.view.tab_group_widget import TabGroupWidget
 
 from .conftest import wait_for_child
 

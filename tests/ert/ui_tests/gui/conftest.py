@@ -13,7 +13,6 @@ from typing import TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from ert.gui.experiments.view.iteration import TabGroupWidget
 from PyQt6.QtCore import QDir, Qt, QTimer
 from PyQt6.QtWidgets import (
     QApplication,
@@ -30,6 +29,7 @@ from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog, CreateExperimentDialog, EnsembleSelector
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.view import RealizationWidget
+from ert.gui.experiments.view.tab_group_widget import TabGroupWidget
 from ert.gui.main import ErtMainWindow, _setup_main_window, add_gui_log_handler
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
