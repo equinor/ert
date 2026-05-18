@@ -560,6 +560,7 @@ class PlotApi:
                     if (df[cc[0]] == df[cc[1]]).all()
                 ]
                 return df.drop(columns=duplicate_cols)
+        return pd.DataFrame()
 
     def std_dev_for_parameter(
         self, key: str, ensemble_id: str, z: int
