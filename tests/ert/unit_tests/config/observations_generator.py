@@ -14,13 +14,14 @@ from ert.config._observations import (
 from ert.config.observation_config_migrations import Segment
 
 
-def class_name(o: Observation):
+def class_name(o: Observation) -> str:
     if isinstance(o, Segment):
         return "SEGMENT"
     if isinstance(o, GeneralObservation):
         return "GENERAL_OBSERVATION"
     if isinstance(o, SummaryObservation):
         return "SUMMARY_OBSERVATION"
+    raise RuntimeError(f"Unsupported observation {o}")
 
 
 def as_obs_config_content(observation: Observation) -> str:
