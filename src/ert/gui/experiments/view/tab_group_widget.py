@@ -20,13 +20,12 @@ TabWidgetType = TypeVar(
 )
 
 
-class IterationWidget(QWidget):
+class TabGroupWidget(QWidget):
     currentTabChanged = Signal()
 
     def __init__(self, iteration: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.iteration = iteration
-        self.is_update_page = False
         self._tab_widget = QTabWidget(self)
         self._tab_widget.currentChanged.connect(
             lambda _index: self.currentTabChanged.emit()
