@@ -169,10 +169,9 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
     @override
     def get_experiment_arguments(self) -> Arguments:
-        arguments = Arguments(
+        return Arguments(
             mode=ENSEMBLE_SMOOTHER_MODE,
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             experiment_name=self._experiment_name_field.get_text,
         )
-        return arguments

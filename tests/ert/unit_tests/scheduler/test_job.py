@@ -50,7 +50,7 @@ def realization():
         runpath="test_runpath",
         job_name="test_job",
     )
-    realization = Realization(
+    return Realization(
         iens=run_arg.iens,
         fm_steps=[],
         active=True,
@@ -60,7 +60,6 @@ def realization():
         job_script=str(shutil.which("fm_dispatch.py")),
         realization_memory=0,
     )
-    return realization
 
 
 async def assert_scheduler_events(

@@ -126,5 +126,4 @@ class ModelConfig(BaseModel):
 
 def _replace_runpath_format(format_string: str) -> str:
     format_string = format_string.replace("%d", "<IENS>", 1)
-    format_string = format_string.replace("%d", "<ITER>", 1)
-    return format_string
+    return format_string.replace("%d", "<ITER>", 1)

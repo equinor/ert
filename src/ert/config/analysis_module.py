@@ -85,8 +85,7 @@ class ESSettings(BaseModel):
         """
         if self.localization_correlation_threshold is None:
             return 3 / math.sqrt(ensemble_size)
-        else:
-            return self.localization_correlation_threshold
+        return self.localization_correlation_threshold
 
 
 AnalysisModule = ESSettings

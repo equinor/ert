@@ -538,8 +538,8 @@ class LocalStorage(BaseMode):
 
                 logger.info("Blockfs storage backed up")
                 print(self._legacy_storage_migration_message(bkup_path, "10.3.*"))
-                return None
-            elif version < 5:
+                return
+            if version < 5:
                 bkup_path = self.path / "_storage_backup_lt_5"
                 dirs = set(os.listdir(self.path)) - {"storage.lock"}
                 os.mkdir(bkup_path)
@@ -550,8 +550,8 @@ class LocalStorage(BaseMode):
 
                 logger.info("Storage backed up for version less than 5")
                 print(self._legacy_storage_migration_message(bkup_path, "14.6.*"))
-                return None
-            elif version < _LOCAL_STORAGE_VERSION:
+                return
+            if version < _LOCAL_STORAGE_VERSION:
                 migrations = {
                     5: to6,
                     6: to7,
@@ -612,8 +612,7 @@ class LocalStorage(BaseMode):
 
         if numeric_suffixes:
             return experiment_name + "_" + str(max(numeric_suffixes) + 1)
-        else:
-            return experiment_name + "_0"
+        return experiment_name + "_0"
 
     def _write_transaction(self, filename: str | os.PathLike[str], data: bytes) -> None:
         """
@@ -666,8 +665,7 @@ def _storage_version(path: Path) -> int:
     if not (path / "index.json").exists():
         if _is_block_storage(path):
             return 0
-        else:
-            raise FileNotFoundError(path / "index.json")
+        raise FileNotFoundError(path / "index.json")
     try:
         return int(
             json.loads((path / "index.json").read_text(encoding="utf-8"))["version"]

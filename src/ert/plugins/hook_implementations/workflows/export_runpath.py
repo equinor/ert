@@ -65,8 +65,7 @@ class ExportRunpathJob(ErtScript):
     def _list_from_rangestring(rangestring: str, size: int) -> list[int]:
         if rangestring == "*":
             return list(range(size))
-        else:
-            return rangestring_to_list(rangestring)
+        return rangestring_to_list(rangestring)
 
     def _get_rangestrings(
         self, args: list[str], number_of_realizations: int

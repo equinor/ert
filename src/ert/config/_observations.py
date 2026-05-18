@@ -80,14 +80,13 @@ def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
         for col, dtype in zip(df.columns, df.dtypes, strict=True)
         if dtype == pl.String
     ]
-    stripped_df = df.with_columns(
+    return df.with_columns(
         pl.when(pl.col(col).str.strip_chars() == "")  # noqa: PLC1901 the truth value of an Expr is ambiguous
         .then(None)
         .otherwise(pl.col(col).str.strip_chars())
         .alias(col)
         for col in string_cols
     )
-    return stripped_df
 
 
 class SummaryObservation(_SummaryValues):

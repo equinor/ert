@@ -67,15 +67,12 @@ class InstallForwardModelStepConfig(InstallJobConfig):
             return UserInstalledForwardModelStep(
                 name=self.name, executable=str(executable)
             )
-        else:
-            assert (
-                self.source is not None
-            )  # validated by validate_source_and_executable
-            return forward_model_step_from_config_contents(
-                config_contents=Path(self.source).read_text(encoding="utf-8"),
-                config_file=self.source,
-                name=self.name,
-            )
+        assert self.source is not None  # validated by validate_source_and_executable
+        return forward_model_step_from_config_contents(
+            config_contents=Path(self.source).read_text(encoding="utf-8"),
+            config_file=self.source,
+            name=self.name,
+        )
 
 
 class InstallWorkflowJobConfig(InstallJobConfig):
@@ -91,13 +88,12 @@ class InstallWorkflowJobConfig(InstallJobConfig):
                 arg_types=[],
                 executable=str(executable),
             )
-        else:
-            assert self.source is not None
-            workflow = workflow_job_from_file(
-                config_file=str(Path(config_directory) / self.source),
-                name=self.name,
-                origin="user",
-            )
-            if not isinstance(workflow, ExecutableWorkflow):
-                raise ValueError(f"Workflow must be an executable: {self.source}")
-            return workflow
+        assert self.source is not None
+        workflow = workflow_job_from_file(
+            config_file=str(Path(config_directory) / self.source),
+            name=self.name,
+            origin="user",
+        )
+        if not isinstance(workflow, ExecutableWorkflow):
+            raise ValueError(f"Workflow must be an executable: {self.source}")
+        return workflow

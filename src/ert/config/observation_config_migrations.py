@@ -820,5 +820,4 @@ def _read_time_map(file_contents: str) -> list[datetime]:
             )
             return datetime.strptime(date_str, "%d/%m/%Y")  # noqa: DTZ007
 
-    dates = [str_to_datetime(line.strip()) for line in file_contents.splitlines()]
-    return dates
+    return [str_to_datetime(line.strip()) for line in file_contents.splitlines()]

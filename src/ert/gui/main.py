@@ -267,11 +267,10 @@ def _start_initial_gui_window(
             suggestor,
             ert_config.ens_path,
         )
-    else:
-        return (
-            main_window,
-            ert_config.ens_path,
-        )
+    return (
+        main_window,
+        ert_config.ens_path,
+    )
 
 
 def _setup_main_window(

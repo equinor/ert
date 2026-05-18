@@ -129,8 +129,7 @@ class ListEditBox(QWidget):
 
     def getListText(self) -> str:
         text = str(self._list_edit_line.text())
-        text = "".join(text.split())
-        return text
+        return "".join(text.split())
 
     def getItems(self) -> dict[UUID, str]:
         text = self.getListText()

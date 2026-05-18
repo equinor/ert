@@ -92,13 +92,13 @@ class PlotTools:
 
         if axis_name == plot_context.VALUE_AXIS:
             return limits.value_limits
-        elif axis_name == plot_context.COUNT_AXIS:
+        if axis_name == plot_context.COUNT_AXIS:
             return None  # Histogram takes care of itself
-        elif axis_name == plot_context.DATE_AXIS:
+        if axis_name == plot_context.DATE_AXIS:
             return limits.date_limits
-        elif axis_name == plot_context.DENSITY_AXIS:
+        if axis_name == plot_context.DENSITY_AXIS:
             return limits.density_limits
-        elif axis_name == plot_context.INDEX_AXIS:
+        if axis_name == plot_context.INDEX_AXIS:
             return limits.index_limits
 
         return None  # No limits set
@@ -117,13 +117,13 @@ class PlotTools:
 
         if axis_name == plot_context.VALUE_AXIS:
             return limits.value_limits
-        elif axis_name == plot_context.COUNT_AXIS:
+        if axis_name == plot_context.COUNT_AXIS:
             return None  # Histogram takes care of itself
-        elif axis_name == plot_context.DATE_AXIS:
+        if axis_name == plot_context.DATE_AXIS:
             return limits.date_limits
-        elif axis_name == plot_context.DENSITY_AXIS:
+        if axis_name == plot_context.DENSITY_AXIS:
             return limits.density_limits
-        elif axis_name == plot_context.INDEX_AXIS:
+        if axis_name == plot_context.INDEX_AXIS:
             return limits.index_limits
 
         return None  # No limits set

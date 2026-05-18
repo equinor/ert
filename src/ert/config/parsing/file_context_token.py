@@ -40,8 +40,7 @@ class FileContextToken(Token):
             return self.value == other
         if isinstance(other, Token):
             return self.value == other.value
-        else:
-            return False
+        return False
 
     def __hash__(self) -> int:
         return hash(self.value)

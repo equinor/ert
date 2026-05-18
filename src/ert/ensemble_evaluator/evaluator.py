@@ -415,8 +415,7 @@ class EnsembleEvaluator:
                         "Evaluator receiver closed, no new messages are received"
                     )
                     return  # The socket is closed, and we won't re-establish it.
-                else:
-                    logger.error(f"Unexpected error when listening to messages: {e}")
+                logger.error(f"Unexpected error when listening to messages: {e}")
             except asyncio.CancelledError:
                 return
 
@@ -538,9 +537,9 @@ class EnsembleEvaluator:
                 if task_exception := task.exception():
                     self.log_exception(task_exception, task.get_name())
                     raise task_exception
-                elif task.get_name() == "server_task":
+                if task.get_name() == "server_task":
                     return
-                elif task.get_name() in {
+                if task.get_name() in {
                     "ensemble_task",
                     "listener_task",
                     "dispatcher_termination_task",

@@ -20,7 +20,7 @@ class ErrorInfo:
     def _take(cls, context: Any, attr: str) -> FileContextToken | None:
         if isinstance(context, FileContextToken):
             return context
-        elif hasattr(context, attr):
+        if hasattr(context, attr):
             return getattr(context, attr)
 
         return None

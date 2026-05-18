@@ -39,12 +39,10 @@ def xtgeo_box_grids(draw, dimensions=None):
     flip = draw(st.sampled_from([1, -1]))
 
     # Create the grid using XTGeo
-    grid = xtgeo.create_box_grid(
+    return xtgeo.create_box_grid(
         dimension=(nx, ny, nz),
         origin=origin,
         increment=increment,
         rotation=rotation,
         flip=flip,
     )
-
-    return grid

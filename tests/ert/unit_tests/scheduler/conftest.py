@@ -33,15 +33,14 @@ class MockDriver(LocalDriver):
 
             if result is None:
                 return 0
-            elif isinstance(result, bool):
+            if isinstance(result, bool):
                 return 0 if result else 1
-            elif isinstance(result, int):
+            if isinstance(result, int):
                 return result
-            else:
-                raise TypeError(
-                    "MockDriver's wait() function must return "
-                    f"a bool, int or None, not {type(result)}"
-                )
+            raise TypeError(
+                "MockDriver's wait() function must return "
+                f"a bool, int or None, not {type(result)}"
+            )
         return 0
 
     async def _kill(self, iens):

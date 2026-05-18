@@ -403,7 +403,7 @@ class SnapshotModel(QAbstractItemModel):
                 index.data(FileRole)
             ):
                 return QColor(Qt.GlobalColor.blue)
-            elif is_dark_mode():
+            if is_dark_mode():
                 return QColor(Qt.GlobalColor.black)
 
         if role == Qt.ItemDataRole.BackgroundRole:

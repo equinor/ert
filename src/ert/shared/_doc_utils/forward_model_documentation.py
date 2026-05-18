@@ -52,10 +52,7 @@ class _ForwardModelDocumentation:
             nodes.term("", "", nodes.strong(text="Source package")),
             nodes.definition("", nodes.strong(text=self.job_source)),
         )
-        job_details_node = nodes.definition_list(
-            "", job_category_node, job_package_node
-        )
-        return job_details_node
+        return nodes.definition_list("", job_category_node, job_package_node)
 
     def _create_example_section(self, state: Any) -> nodes.section:
         assert self.examples is not None

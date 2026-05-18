@@ -44,8 +44,7 @@ def load_yaml(file_name: str, *, safe: bool = False) -> dict[str, Any]:
                     input_data[mark.line], " " * mark.column
                 )
             ) from exc
-        else:
-            raise YAMLError(str(exc)) from exc
+        raise YAMLError(str(exc)) from exc
 
 
 def _get_definitions(
@@ -176,10 +175,9 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
 
     if not isinstance(yaml, dict):
         return {"config_path": config_path}
-    else:
-        # Inject config path
-        yaml["config_path"] = config_path
-        return yaml
+    # Inject config path
+    yaml["config_path"] = config_path
+    return yaml
 
 
 def _check_for_valid_keys(node: Any, config_path: Path, location: str = "") -> None:

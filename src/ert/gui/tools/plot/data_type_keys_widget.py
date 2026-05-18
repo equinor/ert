@@ -172,8 +172,7 @@ class DataTypeKeysWidget(QWidget):
     def getSelectedItem(self) -> PlotApiKeyDefinition | None:
         index = self.data_type_keys_widget.currentIndex()
         source_index = self.filter_model.mapToSource(index)
-        item = self.model.itemAt(source_index)
-        return item
+        return self.model.itemAt(source_index)
 
     def selectDefault(self) -> None:
         for i in range(self.filter_model.rowCount()):

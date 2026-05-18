@@ -36,5 +36,4 @@ class WorkflowSchemaDict(SchemaItemDict):
 
 
 def init_workflow_schema() -> SchemaItemDict:
-    schema = WorkflowSchemaDict()
-    return schema
+    return WorkflowSchemaDict()

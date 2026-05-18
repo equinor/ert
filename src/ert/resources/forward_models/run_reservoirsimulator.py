@@ -119,8 +119,7 @@ def await_completed_unsmry_file(
         if prev_len == current_len:
             # smry file is regarded complete
             break
-        else:
-            prev_len = max(prev_len, current_len)
+        prev_len = max(prev_len, current_len)
 
         time.sleep(poll_interval)
 
@@ -177,12 +176,11 @@ class RunReservoirSimulator:
                 runner_abspath = shutil.which("flow")
                 if runner_abspath is None:
                     raise RuntimeError("flowrun or flow not installed")
-                else:
-                    if self.num_cpu > 1:
-                        raise RuntimeError(
-                            "MPI runs not supported without a flowrun wrapper"
-                        )
-                    self.bypass_flowrun = True
+                if self.num_cpu > 1:
+                    raise RuntimeError(
+                        "MPI runs not supported without a flowrun wrapper"
+                    )
+                self.bypass_flowrun = True
         self.runner_abspath: str = str(runner_abspath)
 
         data_file = ecl_case_to_data_file(Path(ecl_case))
@@ -271,8 +269,7 @@ class RunReservoirSimulator:
                         ),
                     )
                     return
-                else:
-                    raise err from None
+                raise err from None
             if self.num_cpu > 1:
                 smry_file = find_unsmry(self.run_path / self.base_name)
                 if smry_file is not None:
@@ -440,10 +437,9 @@ def run_reservoirsimulator(args: list[str]) -> None:
 def ecl_case_to_data_file(ecl_case: Path) -> Path:
     if ecl_case.suffix in {".data", ".DATA"}:
         return ecl_case
-    elif str(ecl_case).islower():
+    if str(ecl_case).islower():
         return Path(str(ecl_case) + ".data")
-    else:
-        return Path(str(ecl_case) + ".DATA")
+    return Path(str(ecl_case) + ".DATA")
 
 
 if __name__ == "__main__":

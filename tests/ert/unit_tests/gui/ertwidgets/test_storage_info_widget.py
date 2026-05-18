@@ -21,7 +21,7 @@ def create_experiment_from_config(config: ErtConfig, storage):
     def dump_all(configurations):
         return [c.model_dump(mode="json") for c in configurations]
 
-    experiment = storage.create_experiment(
+    return storage.create_experiment(
         experiment_config={
             "parameter_configuration": dump_all(ens_config.parameter_configuration),
             "response_configuration": dump_all(ens_config.response_configuration),
@@ -32,7 +32,6 @@ def create_experiment_from_config(config: ErtConfig, storage):
             "ert_templates": config.ert_templates,
         },
     )
-    return experiment
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")

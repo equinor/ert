@@ -105,24 +105,22 @@ def workflow_job_from_file(
                 source=script,
                 stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
             )
-        else:
-            return ErtScriptWorkflow(
-                ert_script=ert_script,
-                name=name,
-                min_args=min_args,
-                max_args=max_args,
-                arg_types=arg_types_list,
-                stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
-            )
-    else:
-        return ExecutableWorkflow(
+        return ErtScriptWorkflow(
+            ert_script=ert_script,
             name=name,
             min_args=min_args,
             max_args=max_args,
             arg_types=arg_types_list,
-            executable=content_dict.get("EXECUTABLE"),
             stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
         )
+    return ExecutableWorkflow(
+        name=name,
+        min_args=min_args,
+        max_args=max_args,
+        arg_types=arg_types_list,
+        executable=content_dict.get("EXECUTABLE"),
+        stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
+    )
 
 
 class _WorkflowJob(BaseModelWithContextSupport, ABC):
@@ -192,7 +190,7 @@ class BaseErtScriptWorkflow(_WorkflowJob, ABC):
                 f"Failed to load {self.name}, ert_script is instance, expected "
                 f"type, got {ertscript_class}"
             )
-        elif not issubclass(ertscript_class, ErtScript):
+        if not issubclass(ertscript_class, ErtScript):
             raise ErtScriptLoadFailure(
                 f"Failed to load {self.name}, script had wrong "
                 f"type, expected ErtScript, got {ertscript_class}"

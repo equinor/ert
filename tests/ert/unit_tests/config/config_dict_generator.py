@@ -182,19 +182,17 @@ for system, options in queue_systems_and_options.items():
 def valid_queue_values(option_name, queue_system):
     if option_name in queue_options_by_type["string"][queue_system]:
         return words
-    elif option_name in queue_options_by_type["posfloat"][queue_system]:
+    if option_name in queue_options_by_type["posfloat"][queue_system]:
         return small_floats.map(str)
-    elif option_name in queue_options_by_type["posint"][queue_system]:
+    if option_name in queue_options_by_type["posint"][queue_system]:
         return positives.map(str)
-    elif option_name in queue_options_by_type["bool"][queue_system]:
+    if option_name in queue_options_by_type["bool"][queue_system]:
         return booleans.map(str)
-    elif option_name in queue_options_by_type["memory"][queue_system]:
+    if option_name in queue_options_by_type["memory"][queue_system]:
         return memory_with_unit[queue_system]()
-    else:
-        raise ValueError(
-            "config_dict_generator does not know how to "
-            f"generate values for {option_name}"
-        )
+    raise ValueError(
+        f"config_dict_generator does not know how to generate values for {option_name}"
+    )
 
 
 @st.composite
@@ -208,9 +206,8 @@ def queue_options(draw, systems):
             queue_option,
             draw(valid_queue_values(queue_option, queue_system.name)),
         ]
-    else:
-        # Missing VALUE means unset
-        return [queue_system, queue_option]
+    # Missing VALUE means unset
+    return [queue_system, queue_option]
 
 
 def default_forward_model_names():
@@ -529,12 +526,11 @@ def job(installed_jobs):
 def sim_job(installed_jobs):
     possible_job_names = [job_name for job_name, _ in installed_jobs]
     args = small_list(words)
-    x = st.builds(
+    return st.builds(
         lambda job_name, args: [job_name, *args],
         st.sampled_from(possible_job_names),
         args,
     )
-    return x
 
 
 def get_date(observation, start):

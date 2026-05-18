@@ -175,8 +175,7 @@ class StorageModel(QAbstractItemModel):
         if parent is not None and parent.isValid():
             data = cast(ChildModel | Self, parent.internalPointer())
             return 0 if isinstance(data, RealizationModel) else len(data._children)
-        else:
-            return len(self._children)
+        return len(self._children)
 
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...

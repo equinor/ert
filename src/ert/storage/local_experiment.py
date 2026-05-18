@@ -312,12 +312,11 @@ class LocalExperiment(BaseMode):
     @property
     def shape_registry(self) -> ShapeRegistry:
         shape_registry_data = self.experiment_config.get("shape_registry")
-        shape_registry = (
+        return (
             ShapeRegistry.model_validate(shape_registry_data)
             if shape_registry_data
             else ShapeRegistry()
         )
-        return shape_registry
 
     @property
     def parameter_info(self) -> dict[str, Any]:
@@ -790,8 +789,7 @@ class LocalExperiment(BaseMode):
 
         def _sort_df(df: pl.DataFrame, index: list[str]) -> pl.DataFrame:
             sorted_cols = index + sorted(set(df.columns) - set(index))
-            df_ = df.select(sorted_cols).sort(by=index)
-            return df_
+            return df.select(sorted_cols).sort(by=index)
 
         return (
             _sort_df(

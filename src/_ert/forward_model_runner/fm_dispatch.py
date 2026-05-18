@@ -125,8 +125,7 @@ def _read_fm_description_file(*, retry: bool = True) -> "ForwardModelDescription
             )
             _wait_for_retry()
             return _read_fm_description_file(retry=False)
-        else:
-            raise e
+        raise e
 
 
 def _report_all_messages(

@@ -103,8 +103,7 @@ class ConfigValidationError(ValueError):
         """
         if isinstance(context, list):
             return cls.from_info(ErrorInfo(msg).set_context_list(context))
-        else:
-            return cls.from_info(ErrorInfo(msg).set_context(context))
+        return cls.from_info(ErrorInfo(msg).set_context(context))
 
     @classmethod
     def from_info(cls, info: ErrorInfo) -> Self:

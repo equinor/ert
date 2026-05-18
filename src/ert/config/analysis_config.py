@@ -216,14 +216,13 @@ class AnalysisConfig:
                         "only reading once."
                     )
             logger.info("Running ERT with DESIGN_MATRIX")
-        config = cls(
+        return cls(
             minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             observation_settings=obs_settings,
             es_settings=es_settings,
             design_matrix=design_matrix,
         )
-        return config
 
     @property
     def log_path(self) -> Path:

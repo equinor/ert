@@ -595,13 +595,12 @@ class LsfDriver(Driver):
 
         if not success:
             return await self._get_exit_code_from_bhist(job_id)
-        else:
-            try:
-                return int(output)
-            except ValueError:
-                # bjobs will sometimes return only "-" as exit code.
-                # running bhist will not help in this case.
-                return LSF_FAILED_JOB
+        try:
+            return int(output)
+        except ValueError:
+            # bjobs will sometimes return only "-" as exit code.
+            # running bhist will not help in this case.
+            return LSF_FAILED_JOB
 
     async def _get_exit_code_from_bhist(self, job_id: str) -> int:
         success, output = await self._execute_with_retry(

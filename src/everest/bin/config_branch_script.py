@@ -112,8 +112,7 @@ def _updated_initial_guess(
                     f" control {variable['name']} index {var_index}"
                 )
                 return None
-            else:
-                variable["initial_guess"] = opt_control_val
+            variable["initial_guess"] = opt_control_val
 
     return conf_controls
 

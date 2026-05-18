@@ -198,14 +198,12 @@ class GenDataConfig(ResponseConfig):
                     "Could not find one or more files/directories while reading "
                     f"GEN_DATA: {','.join([str(err) for err in errors])}"
                 )
-            else:
-                raise InvalidResponseFile(
-                    "Error reading GEN_DATA "
-                    f"{self.type}, errors: {','.join([str(err) for err in errors])}"
-                )
+            raise InvalidResponseFile(
+                "Error reading GEN_DATA "
+                f"{self.type}, errors: {','.join([str(err) for err in errors])}"
+            )
 
-        combined = pl.concat(datasets_per_name)
-        return combined
+        return pl.concat(datasets_per_name)
 
     def get_args_for_key(self, key: str) -> tuple[str | None, list[int] | None]:
         for i, key_ in enumerate(self.keys):

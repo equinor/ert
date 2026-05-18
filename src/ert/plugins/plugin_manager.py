@@ -186,8 +186,7 @@ class ErtPluginManager(pluggy.PluginManager):
             return None
 
     def get_installable_workflow_jobs(self) -> dict[str, str]:
-        config_workflow_jobs = self._get_config_workflow_jobs()
-        return config_workflow_jobs
+        return self._get_config_workflow_jobs()
 
     @staticmethod
     def _merge_internal_jobs(
@@ -388,7 +387,7 @@ def get_site_plugins(
         fm_step = fm_step_subclass()  # type: ignore
         all_forward_model_steps[fm_step.name] = fm_step
 
-    runtime_plugins = ErtRuntimePlugins(
+    return ErtRuntimePlugins(
         installed_forward_model_steps=all_forward_model_steps,
         installed_workflow_jobs=all_workflow_jobs,
         queue_options=site_configurations.queue_options
@@ -402,8 +401,6 @@ def get_site_plugins(
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
     )
-
-    return runtime_plugins
 
 
 def setup_site_logging(root_logger: logging.Logger | None = None) -> None:
