@@ -161,13 +161,12 @@ class InstallDataConfig(BaseModel):
 
             fm_step_instance.arglist = [source, target]
             return fm_step_instance
-        else:
-            data_storage = (Path(output_directory) / ".internal_data").resolve()
-            data_file = data_storage / Path(self.target).with_suffix(".json")
-            fm_step_instance = copy.deepcopy(installed_fm_steps.get("copy_file"))
-            if fm_step_instance is None:
-                error_message = _missing_fm_msg("copy_file")
-                raise KeyError(error_message)
+        data_storage = (Path(output_directory) / ".internal_data").resolve()
+        data_file = data_storage / Path(self.target).with_suffix(".json")
+        fm_step_instance = copy.deepcopy(installed_fm_steps.get("copy_file"))
+        if fm_step_instance is None:
+            error_message = _missing_fm_msg("copy_file")
+            raise KeyError(error_message)
 
-            fm_step_instance.arglist = [str(data_file), Path(data_file).name]
-            return fm_step_instance
+        fm_step_instance.arglist = [str(data_file), Path(data_file).name]
+        return fm_step_instance

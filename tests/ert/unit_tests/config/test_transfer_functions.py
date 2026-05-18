@@ -159,7 +159,7 @@ def test_that_derrf_is_non_strictly_monotone(x_tuple, arg):
 def valid_triangular_params():
     # Observed strange behavior for very large floats,
     # so setting min and max values that should cover all possible use-cases.
-    mode_min_max_strategy = nice_floats(min_value=-1e12, max_value=1e12).flatmap(
+    return nice_floats(min_value=-1e12, max_value=1e12).flatmap(
         lambda m: st.tuples(
             st.just(m),  # mode
             st.floats(m - 2, m - 1),  # min
@@ -168,8 +168,6 @@ def valid_triangular_params():
             ),  # max, ensuring it's strictly greater than mode
         )
     )
-
-    return mode_min_max_strategy
 
 
 @given(nice_floats(), valid_triangular_params())

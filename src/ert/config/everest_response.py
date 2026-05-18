@@ -66,14 +66,12 @@ class EverestResponse(ResponseConfig):
                     "Could not find one or more files/directories while reading "
                     f"{self.type}: {','.join([str(err) for err in errors])}"
                 )
-            else:
-                raise InvalidResponseFile(
-                    "Error reading "
-                    f"{self.type}, errors: {','.join([str(err) for err in errors])}"
-                )
+            raise InvalidResponseFile(
+                "Error reading "
+                f"{self.type}, errors: {','.join([str(err) for err in errors])}"
+            )
 
-        combined = pl.concat(datasets_per_name)
-        return combined
+        return pl.concat(datasets_per_name)
 
 
 class EverestConstraintsConfig(EverestResponse):

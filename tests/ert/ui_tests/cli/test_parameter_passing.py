@@ -81,7 +81,7 @@ def xtgeo_fformat(
     """
     if format_ == FieldFileFormat.ROFF_BINARY:
         return "roff"
-    elif format_ == FieldFileFormat.ROFF_ASCII:
+    if format_ == FieldFileFormat.ROFF_ASCII:
         return "roffasc"
     return format_.value
 
@@ -375,12 +375,10 @@ class SurfaceParameter(Parameter):
                 # init file. The following COPY_FILE is that forward model step.
                 f'FORWARD_MODEL COPY_FILE(<FROM>="../../../{self.filename}",<TO>=.)'
             )
-
-        else:
-            return (
-                f"SURFACE {self.name} OUTPUT_FILE:{self.filename}"
-                f" INIT_FILES:%d{self.filename} BASE_SURFACE:BASE{self.filename}"
-            )
+        return (
+            f"SURFACE {self.name} OUTPUT_FILE:{self.filename}"
+            f" INIT_FILES:%d{self.filename} BASE_SURFACE:BASE{self.filename}"
+        )
 
     def create_file(self, io_source: IoProvider, num_realizations: int):
         io_source.write_surface_file("BASE" + self.filename)

@@ -22,29 +22,28 @@ class NumberListStringArgument(ArgumentDefinition):
 
         if not validation_status:
             return validation_status
+        match = NumberListStringArgument.PATTERN.match(token)
+
+        if match is None:
+            validation_status.setFailed()
+            validation_status.addToMessage(
+                NumberListStringArgument.NOT_A_VALID_NUMBER_LIST_STRING
+            )
         else:
-            match = NumberListStringArgument.PATTERN.match(token)
+            groups = token.split(",")
 
-            if match is None:
-                validation_status.setFailed()
-                validation_status.addToMessage(
-                    NumberListStringArgument.NOT_A_VALID_NUMBER_LIST_STRING
-                )
-            else:
-                groups = token.split(",")
+            for unstripped_group in groups:
+                group = unstripped_group.strip()
 
-                for unstripped_group in groups:
-                    group = unstripped_group.strip()
+                if len(group) > 0:
+                    try:
+                        float(group.strip())
+                    except ValueError:
+                        validation_status.setFailed()
+                        validation_status.addToMessage(
+                            NumberListStringArgument.VALUE_NOT_A_NUMBER % group
+                        )
 
-                    if len(group) > 0:
-                        try:
-                            float(group.strip())
-                        except ValueError:
-                            validation_status.setFailed()
-                            validation_status.addToMessage(
-                                NumberListStringArgument.VALUE_NOT_A_NUMBER % group
-                            )
+            validation_status.setValue(token)
 
-                validation_status.setValue(token)
-
-            return validation_status
+        return validation_status

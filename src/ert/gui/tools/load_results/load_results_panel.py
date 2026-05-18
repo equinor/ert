@@ -88,8 +88,7 @@ class LoadResultsPanel(QWidget):
         current_ensemble = self._notifier.current_ensemble_name
         run_path = self._resolved_run_path
         run_path = run_path.replace("<ERTCASE>", current_ensemble)
-        run_path = run_path.replace("<ERT-CASE>", current_ensemble)
-        return run_path
+        return run_path.replace("<ERT-CASE>", current_ensemble)
 
     def isConfigurationValid(self) -> bool:
         return (

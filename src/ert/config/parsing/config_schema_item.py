@@ -107,14 +107,12 @@ class SchemaItem:
             case SchemaItemType.BOOL:
                 if token.lower() == "true":
                     return ContextBool(True, token)
-                elif token.lower() == "false":
+                if token.lower() == "false":
                     return ContextBool(False, token)
-                else:
-                    raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have a boolean "
-                        f"value as argument {index + 1!r}",
-                        token,
-                    )
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a boolean value as argument {index + 1!r}",
+                    token,
+                )
             case SchemaItemType.POSITIVE_INT:
                 try:
                     val = int(token)
@@ -126,12 +124,11 @@ class SchemaItem:
                     ) from e
                 if val > 0:
                     return ContextInt(val, token)
-                else:
-                    raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have a positive integer "
-                        f"value as argument {index + 1!r}",
-                        token,
-                    )
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a positive integer "
+                    f"value as argument {index + 1!r}",
+                    token,
+                )
             case SchemaItemType.INT:
                 try:
                     return ContextInt(int(token), token)
@@ -159,12 +156,11 @@ class SchemaItem:
                     ) from e
                 if fval > 0:
                     return ContextFloat(fval, token)
-                else:
-                    raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have a positive float "
-                        f"value as argument {index + 1!r}",
-                        token,
-                    )
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a positive float "
+                    f"value as argument {index + 1!r}",
+                    token,
+                )
             case (
                 SchemaItemType.PATH
                 | SchemaItemType.EXISTING_FILE
@@ -189,7 +185,7 @@ class SchemaItem:
                         if path != token:
                             err += f"The configured value was {path!r} "
                         raise ConfigValidationError.with_context(err, token)
-                    elif not os.access(str(path), os.R_OK):
+                    if not os.access(str(path), os.R_OK):
                         raise ConfigValidationError.with_context(
                             f'File "{path}" is not readable; please check read access.',
                             token,
@@ -205,8 +201,7 @@ class SchemaItem:
                             self.parser(path, read_file(path, token)),
                         ],
                     )
-                else:
-                    return token.update(path)
+                return token.update(path)
             case SchemaItemType.EXECUTABLE:
                 absolute_path: str | None
                 is_command = False

@@ -64,7 +64,7 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
         job_name="",
     )
 
-    realization = Realization(
+    return Realization(
         iens=iens,
         fm_steps=[],
         active=True,
@@ -74,7 +74,6 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
         job_script=str(shutil.which("fm_dispatch.py")),
         realization_memory=0,
     )
-    return realization
 
 
 async def test_empty(mock_driver):

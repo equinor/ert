@@ -103,6 +103,4 @@ class PlotStyle:
         equalness = equalness and self.width == other.width
         equalness = equalness and self.color == other.color
         equalness = equalness and self.size == other.size
-        equalness = equalness and self.is_enabled() == other.is_enabled()
-
-        return equalness
+        return equalness and self.is_enabled() == other.is_enabled()

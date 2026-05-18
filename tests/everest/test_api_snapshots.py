@@ -28,7 +28,7 @@ def _round_floats(obj, dec):
 
 
 def make_api_snapshot(api) -> dict[str, Any]:
-    api_json = {
+    return {
         "batches": api.batches,
         "control_names": api.control_names,
         "accepted_batches": api.accepted_batches,
@@ -41,8 +41,6 @@ def make_api_snapshot(api) -> dict[str, Any]:
         "gradient_values": api.gradient_values,
         "objective_values": api.objective_values,
     }
-
-    return api_json
 
 
 @pytest.mark.slow

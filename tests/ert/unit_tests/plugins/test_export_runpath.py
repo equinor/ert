@@ -11,8 +11,7 @@ from ert.runpaths import Runpaths
 @pytest.fixture
 def snake_oil_export_runpath_job(setup_case):
     setup_case("snake_oil", "snake_oil.ert")
-    plugin = ExportRunpathJob()
-    return plugin
+    return ExportRunpathJob()
 
 
 @dataclass

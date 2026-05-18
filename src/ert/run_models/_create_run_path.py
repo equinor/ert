@@ -164,7 +164,7 @@ def _generate_parameter_files(
         if isinstance(param, EverestControl):
             everest_controls_by_file[param.output_file].append(param)
             continue
-        elif param.name in scalar_data:
+        if param.name in scalar_data:
             scalar_value = scalar_data[param.name]
             group_name = param.group_name or param.name
             export_values = {group_name: {param.name: scalar_value}}

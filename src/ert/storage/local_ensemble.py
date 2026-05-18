@@ -506,8 +506,7 @@ class LocalEnsemble(BaseMode):
         group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
         if not group_path.exists():
             raise KeyError(f"No {group} dataset in storage for ensemble {self.name}")
-        df = pl.scan_parquet(group_path)
-        return df
+        return pl.scan_parquet(group_path)
 
     def load_scalar_keys(
         self,
@@ -677,10 +676,9 @@ class LocalEnsemble(BaseMode):
         df = self.load_scalar_keys(
             [config.name for config in gen_kws], realizations, transformed=True
         )
-        df = df.rename(
+        return df.rename(
             {config.name: f"{config.group_name}:{config.name}" for config in gen_kws}
         )
-        return df
 
     @require_write
     def save_observation_scaling_factors(self, dataset: pl.DataFrame) -> None:

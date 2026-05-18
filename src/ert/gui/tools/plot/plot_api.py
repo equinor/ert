@@ -579,5 +579,4 @@ class PlotApi:
             if http_response.status_code == 200:
                 # Deserialize the numpy array
                 return np.load(io.BytesIO(http_response.content))
-            else:
-                return np.array([])
+            return np.array([])

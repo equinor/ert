@@ -37,8 +37,7 @@ def mocked_files(mocker):
         if buffer is not None:
             buffer.seek(0)
             return buffer
-        else:
-            return original_open(*args, **kwargs)
+        return original_open(*args, **kwargs)
 
     def mock_io_open(*args, **kwargs):
         nonlocal mocked_files
@@ -47,16 +46,14 @@ def mocked_files(mocker):
         if buffer is not None:
             buffer.seek(0)
             return buffer
-        else:
-            return original_io_open(*args, **kwargs)
+        return original_io_open(*args, **kwargs)
 
     def mock_stat(*args, **kwargs):
         nonlocal mocked_files
         path = args[0] if args else kwargs.get("path")
         if str(path) in mocked_files:
             return os.stat_result([0x777, *([1] * 10)])
-        else:
-            return original_stat(*args, **kwargs)
+        return original_stat(*args, **kwargs)
 
     mocker.patch("builtins.open", mock_open)
     mocker.patch("io.open", mock_io_open)

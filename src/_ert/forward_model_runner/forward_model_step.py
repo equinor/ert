@@ -241,10 +241,9 @@ class ForwardModelStep:
         fm_step_pids: set[int],
     ) -> Exited:
         if exit_code != 0:
-            exited_message = self._create_exited_msg_for_non_zero_exit_code(
+            return self._create_exited_msg_for_non_zero_exit_code(
                 max_memory_usage, exit_code, fm_step_pids
             )
-            return exited_message
 
         exited_message = Exited(self, exit_code)
         if (error_file := self.step_data.get("error_file")) and Path(

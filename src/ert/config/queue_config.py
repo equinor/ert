@@ -147,11 +147,11 @@ class QueueOptions(
         try:
             if queue_system == QueueSystem.LSF:
                 return LsfQueueOptions(**lower_case_options)
-            elif queue_system == QueueSystem.SLURM:
+            if queue_system == QueueSystem.SLURM:
                 return SlurmQueueOptions(**lower_case_options)
-            elif queue_system == QueueSystem.TORQUE:
+            if queue_system == QueueSystem.TORQUE:
                 return TorqueQueueOptions(**lower_case_options)
-            elif queue_system == QueueSystem.LOCAL:
+            if queue_system == QueueSystem.LOCAL:
                 return LocalQueueOptions(**lower_case_options)
         except pydantic.ValidationError as exception:
             for error in exception.errors():
@@ -556,8 +556,7 @@ def _throw_error_or_warning(
             error_msg,
             option_value,
         ) from None
-    else:
-        ConfigWarning.warn(
-            error_msg,
-            option_value,
-        )
+    ConfigWarning.warn(
+        error_msg,
+        option_value,
+    )

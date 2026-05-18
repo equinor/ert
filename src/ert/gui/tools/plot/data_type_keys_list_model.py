@@ -83,9 +83,9 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
             if role == Qt.ItemDataRole.DisplayRole:
                 return item.key
-            elif role == Qt.ItemDataRole.BackgroundRole and item.observations:
+            if role == Qt.ItemDataRole.BackgroundRole and item.observations:
                 return self.HAS_OBSERVATIONS
-            elif (
+            if (
                 role == Qt.ItemDataRole.ForegroundRole
                 and item.observations
                 and is_dark_mode()

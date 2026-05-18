@@ -146,17 +146,16 @@ class EnsembleConfig(BaseModel):
     def __getitem__(self, key: str) -> ParameterConfig | ResponseConfig:
         if key in self.parameter_configs:
             return self.parameter_configs[key]
-        elif key in self.response_configs:
+        if key in self.response_configs:
             return self.response_configs[key]
-        elif config := next(
+        if config := next(
             (c for c in self.response_configs.values() if key in c.keys), None
         ):
             # Only hit by blockfs migration
             # returns the same config for one call per
             # response type. Is later deduped before saving to json
             return config
-        else:
-            raise KeyError(f"The key:{key} is not in the ensemble configuration")
+        raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
     def get_keylist_gen_kw(self) -> list[str]:
         return [

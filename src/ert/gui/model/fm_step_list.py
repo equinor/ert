@@ -63,8 +63,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
             return QModelIndex()
         if start.internalPointer() is None:
             return QModelIndex()
-        source_parent = self.mapToSource(start).parent()
-        return source_parent
+        return self.mapToSource(start).parent()
 
     @override
     def setSourceModel(self, sourceModel: QAbstractItemModel | None) -> None:
@@ -88,7 +87,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
                 header = FM_STEP_COLUMNS[section]
                 if header in {ids.STDOUT, ids.STDERR}:
                     return header.upper()
-                elif header == ids.MAX_MEMORY_USAGE:
+                if header == ids.MAX_MEMORY_USAGE:
                     header = header.replace("_", " ")
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:

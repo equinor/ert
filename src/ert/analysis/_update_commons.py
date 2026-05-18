@@ -177,15 +177,14 @@ def _auto_scale_observations(
 
     if scaling_factors_dfs:
         return scaling_factors_updated, pl.concat(scaling_factors_dfs)
-    else:
-        msg = (
-            "WARNING: Could not auto-scale the "
-            f"observations {auto_scale_observations}. "
-            f"No match with existing active observations {obs_keys}"
-        )
-        logger.warning(msg)
-        print(msg)
-        return None, None
+    msg = (
+        "WARNING: Could not auto-scale the "
+        f"observations {auto_scale_observations}. "
+        f"No match with existing active observations {obs_keys}"
+    )
+    logger.warning(msg)
+    print(msg)
+    return None, None
 
 
 def _preprocess_observations_and_responses(
@@ -329,7 +328,7 @@ def _compute_observation_statuses(
         )
     )
 
-    df_with_status = df_with_status.with_columns(
+    return df_with_status.with_columns(
         pl.when(pl.col("missing_realizations") != "")  # noqa PLC1901
         .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
         .when(pl.col(_OutlierColumns.response_std) <= outlier_settings.std_cutoff)
@@ -346,8 +345,6 @@ def _compute_observation_statuses(
         .otherwise(pl.lit(ObservationStatus.ACTIVE))
         .alias("status")
     )
-
-    return df_with_status
 
 
 class _OutlierColumns(StrEnum):

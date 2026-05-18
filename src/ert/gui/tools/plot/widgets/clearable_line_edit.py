@@ -109,5 +109,4 @@ class ClearableLineEdit(QLineEdit):
     def text(self) -> str:
         if self._placeholder_active:
             return ""
-        else:
-            return QLineEdit.text(self)
+        return QLineEdit.text(self)

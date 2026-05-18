@@ -191,8 +191,7 @@ class RFTConfig(ResponseConfig):
             pattern = f"({'|'.join(_translate(p) for p in props)})"
             if re.fullmatch(pattern, "DEPTH") is None:
                 return f"({'|'.join(_translate(p) for p in [*props, 'DEPTH'])})"
-            else:
-                return pattern
+            return pattern
 
         matcher = re.compile(
             "|".join(
@@ -366,7 +365,7 @@ class RFTConfig(ResponseConfig):
         observations: pl.DataFrame,
         location_metadata: pl.DataFrame,
     ) -> pl.DataFrame:
-        observations_with_metadata = observations.join(
+        return observations.join(
             location_metadata,
             on=["east", "north", "tvd"],
             how="left",
@@ -375,7 +374,6 @@ class RFTConfig(ResponseConfig):
                 pl.col("zone").alias("expected_zone"),
             ]
         )
-        return observations_with_metadata
 
     @staticmethod
     def is_zone_valid() -> pl.Expr:
@@ -409,10 +407,9 @@ class RFTConfig(ResponseConfig):
                 stacklevel=2,
             )
 
-        result = observations_with_metadata.with_columns(
+        return observations_with_metadata.with_columns(
             RFTConfig.is_zone_valid().alias("is_valid"),
         )
-        return result
 
     @property
     def response_type(self) -> str:

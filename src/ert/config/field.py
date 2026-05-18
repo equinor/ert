@@ -177,7 +177,7 @@ class Field(ParameterConfig):
         self, run_path: Path, real_nr: int, iteration: int
     ) -> xr.Dataset:
         file_name = substitute_runpath_name(self.forward_init_file, real_nr, iteration)
-        ds = xr.Dataset(
+        return xr.Dataset(
             {
                 "values": (
                     ["x", "y", "z"],
@@ -196,7 +196,6 @@ class Field(ParameterConfig):
                 )
             }
         )
-        return ds
 
     @log_duration(_logger, custom_name="save_field")
     def write_to_runpath(
@@ -327,8 +326,8 @@ def field_transform(
 def _field_truncate(data: npt.ArrayLike, min_: float | None, max_: float | None) -> Any:
     if min_ is not None and max_ is not None:
         return np.clip(data, min_, max_)
-    elif min_ is not None:
+    if min_ is not None:
         return np.maximum(data, min_)
-    elif max_ is not None:
+    if max_ is not None:
         return np.minimum(data, max_)
     return data

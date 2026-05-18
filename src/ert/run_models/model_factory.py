@@ -266,7 +266,7 @@ def _get_and_validate_active_realizations_list(
         ) & np.array(config.active_realizations)
         if np.any(intersected_realizations):
             return intersected_realizations.tolist()
-        elif (
+        if (
             config.analysis_config.design_matrix is not None
             and config.analysis_config.design_matrix.active_realizations is not None
         ):
@@ -275,10 +275,9 @@ def _get_and_validate_active_realizations_list(
                 "with the active realizations in the design matrix "
                 "and NUM_REALIZATIONS."
             )
-        else:
-            raise ConfigValidationError(
-                "The specified realizations do not intersect with NUM_REALIZATIONS."
-            )
+        raise ConfigValidationError(
+            "The specified realizations do not intersect with NUM_REALIZATIONS."
+        )
     return config.active_realizations
 
 

@@ -131,9 +131,7 @@ class EverestStorage:
             results.to_dataframe(field, select=values).reset_index(),
         ).select(select + values)
         df = cls._rename_ropt_df_columns(df)
-        df = cls._enforce_dtypes(df)
-
-        return df
+        return cls._enforce_dtypes(df)
 
     @staticmethod
     def check_for_deprecated_seba_storage(output_dir: str) -> None:

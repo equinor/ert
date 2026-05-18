@@ -135,8 +135,7 @@ def _plotPercentiles(
     def xy_order(x: Any, y: Any) -> tuple[Any, Any]:
         if plot_config.flip_response_axis:
             return (y, x)
-        else:
-            return (x, y)
+        return (x, y)
 
     if style.is_visible():
         axes.plot(
@@ -224,8 +223,7 @@ def _plotPercentile(
     def xy_order(x: Any, y: Any) -> tuple[Any, Any]:
         if inverted:
             return (y, x)
-        else:
-            return (x, y)
+        return (x, y)
 
     if line_style == "#":
         if inverted:

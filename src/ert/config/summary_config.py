@@ -56,8 +56,7 @@ class SummaryConfig(ResponseConfig):
             }
         )
         df = df.explode("values", "time")
-        df = df.sort(by=["time"])
-        return df
+        return df.sort(by=["time"])
 
     @property
     def match_key(self) -> list[str]:

@@ -9,8 +9,7 @@ from ert.plugins.plugin_manager import ErtRuntimePlugins, get_site_plugins
 def run_cli(*args):
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(parser, args)
-    res = cli_runner(parsed)
-    return res
+    return cli_runner(parsed)
 
 
 def run_cli_with_pm(args: list[Any], runtime_plugins: ErtRuntimePlugins | None = None):

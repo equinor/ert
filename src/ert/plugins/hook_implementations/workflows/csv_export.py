@@ -17,8 +17,7 @@ if TYPE_CHECKING:
 def loadDesignMatrix(filename: str) -> pd.DataFrame:
     dm = pd.read_csv(filename, sep=r"\s+")
     dm = dm.rename(columns={dm.columns[0]: "Realization"})
-    dm = dm.set_index(["Realization"])
-    return dm
+    return dm.set_index(["Realization"])
 
 
 class CSVExportJob(ErtScript):
@@ -146,8 +145,7 @@ class CSVExportJob(ErtScript):
 
         data.to_csv(output_file, float_format="%.6f")
 
-        export_info = (
+        return (
             f"Exported {len(data.index)} rows and {len(data.columns)} "
             f"columns to {output_file}."
         )
-        return export_info

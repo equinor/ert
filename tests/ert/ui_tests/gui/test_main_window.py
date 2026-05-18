@@ -699,12 +699,11 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
         def top_level_plotter_windows() -> list[PlotWindow]:
             plot_windows = gui.get_external_plot_windows()
 
-            top_level_plot_windows = [
+            return [
                 win
                 for win in plot_windows
                 if "Plotting" in win.windowTitle() and win.isVisible()
             ]
-            return top_level_plot_windows
 
         def right_click_plotter_button() -> None:
             top_level_windows = len(top_level_plotter_windows())

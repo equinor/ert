@@ -238,12 +238,11 @@ class EnsembleSnapshot:
         ]
 
     def aggregate_real_states(self) -> Counter[str]:
-        counter = Counter(
-            real["status"]
+        return Counter(
+            real["status"]  # type: ignore
             for real in self._realization_snapshots.values()
             if real.get("status") is not None
         )
-        return counter  # type: ignore
 
     def data(self) -> Mapping[str, Any]:
         # The gui uses this

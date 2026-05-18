@@ -318,7 +318,7 @@ class _EnsembleWidget(QWidget):
 
         def _try_render_scaled_obs() -> None:
             if scaling_df is None:
-                return None
+                return
 
             index_col = selected.response_config.index_column_expr()
             joined = obs.with_columns(index_col.alias("_tmp_index")).join(

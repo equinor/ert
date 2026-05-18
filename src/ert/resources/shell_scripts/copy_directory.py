@@ -28,10 +28,7 @@ def copy_directory(src_path: str, target_path: str) -> None:
                 # https://github.com/python/cpython/issues/102931
                 # This can only occur when the shutil.Error is a single error
                 raise OSError("".join(err.args[0])) from err
-            else:
-                raise OSError(
-                    ", ".join([err_arg[2] for err_arg in err.args[0]])
-                ) from err
+            raise OSError(", ".join([err_arg[2] for err_arg in err.args[0]])) from err
     else:
         raise OSError(
             f"Input argument: '{src_path}' does not correspond to an existing directory"

@@ -36,8 +36,7 @@ class SearchBox(QLineEdit):
     def filter(self) -> str:
         if self.disable_search:
             return ""
-        else:
-            return str(self.text())
+        return str(self.text())
 
     def presentSearch(self) -> None:
         """Is called to present the greyed out search"""

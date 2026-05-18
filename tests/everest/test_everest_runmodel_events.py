@@ -11,9 +11,9 @@ from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
 def round_floats(obj, decimals=6):
     if isinstance(obj, float):
         return round(obj, decimals)
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return [round_floats(item, decimals) for item in obj]
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         return {key: round_floats(value, decimals) for key, value in obj.items()}
     return obj
 

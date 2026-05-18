@@ -237,6 +237,7 @@ select = [
     "PTH123",
     "PYI",
     "Q",
+    "RET",
     "RSE",
     "RSE",   # flake8-raise
     "RUF",   # ruff specific rules

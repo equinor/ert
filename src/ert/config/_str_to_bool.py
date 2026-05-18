@@ -29,7 +29,6 @@ def str_to_bool(txt: str) -> bool:
     """
     if txt.lower() == "true":
         return True
-    elif txt.lower() == "false":
+    if txt.lower() == "false":
         return False
-    else:
-        raise ConfigValidationError.with_context(f"Invalid boolean value {txt!r}", txt)
+    raise ConfigValidationError.with_context(f"Invalid boolean value {txt!r}", txt)

@@ -37,8 +37,7 @@ def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
     def wrapper(*arg: Any) -> Any:
         QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
         try:
-            res = func(*arg)
-            return res
+            return func(*arg)
         finally:
             QApplication.restoreOverrideCursor()
 

@@ -121,8 +121,7 @@ def _get_num_cpu(
                         return None
                 if word is not None:
                     return int(word)
-                else:
-                    return None
+                return None
             if keyword == "SLAVES" and slaves_num_cpu is None:
                 slaves_num_cpu = 1
                 while (line_iter := parser.next_line(None)) is not None:

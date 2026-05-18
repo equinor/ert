@@ -118,14 +118,13 @@ def get_trace_context():
         default=None,
     )
     options = arg_parser.parse_args()
-    ctx = (
+    return (
         TraceContextTextMapPropagator().extract(
             carrier={"traceparent": options.traceparent}
         )
         if options.traceparent
         else None
     )
-    return ctx
 
 
 def main() -> None:
