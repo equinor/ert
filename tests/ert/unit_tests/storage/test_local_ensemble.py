@@ -613,17 +613,19 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_rft_artifacts_are_saved_atomically():
-    def read_from_file_mock(run_path, iens, iter_):
+    def read_from_file_mock(run_path, iens, iter_) -> pl.DataFrame:
         if iens in {0, 2}:
             return _create_rft_response_df()
         elif iens == 1:
             raise InvalidResponseFile("Mock error for realization 1")
+        return pl.DataFrame()
 
-    def location_metadata_mock(run_path, iens, iter_, observations):
+    def location_metadata_mock(run_path, iens, iter_, observations) -> pl.DataFrame:
         if iens in {0, 1}:
             return _create_rft_location_metadata_df()
         elif iens == 2:
             raise InvalidResponseFile("Mock error for realization 2")
+        return pl.DataFrame()
 
     async def run_test():
         with (

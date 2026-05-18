@@ -122,10 +122,11 @@ class MockedProcess:
     def cpu_times(self):
         return CpuTimes(user=self.pid / 10.0)
 
-    def children(self, recursive: bool):
+    def children(self, recursive: bool) -> list["MockedProcess"]:
         assert recursive
         if self.pid == 123:
             return [MockedProcess(124)]
+        return []
 
     def oneshot(self):
         return contextlib.nullcontext()
@@ -138,11 +139,12 @@ def test_cpu_seconds_for_process_with_children():
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
 def test_oom_score_is_max_over_processtree():
-    def read_text_side_effect(self: Path, *args, **kwargs):
+    def read_text_side_effect(self: Path, *args, **kwargs) -> str:
         if self.absolute() == Path("/proc/123/oom_score"):
             return "234"
         if self.absolute() == Path("/proc/124/oom_score"):
             return "456"
+        return ""
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
         mocked_read_text.side_effect = read_text_side_effect
