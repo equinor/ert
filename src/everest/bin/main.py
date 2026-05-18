@@ -82,7 +82,7 @@ class EverestMain:
         config_branch_entry(args)
 
     def results(self, args: list[str]) -> None:
-        """Start the everest visualization plugin
+        """Start the everest plotter
 
         The visualization module is imported lazily to avoid requiring
         optional GUI dependencies for CLI commands that do not use it.
