@@ -1,14 +1,8 @@
 from collections.abc import Sequence
-from typing import Any
 
 from pydantic import BaseModel
 
 from everest.plugins import hookimpl
-
-
-@hookimpl
-def visualize_data(api: Any) -> None:
-    print("No visualization plugin installed!")
 
 
 @hookimpl

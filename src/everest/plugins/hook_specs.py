@@ -7,13 +7,6 @@ from everest.plugins import hookspec
 
 
 @hookspec(firstresult=True)
-def visualize_data(api: Any) -> None:
-    """
-    :param :EverestAPI instance
-    """
-
-
-@hookspec(firstresult=True)
 def install_job_directories() -> list[str]:  # type: ignore[empty-body]
     """
     :return: List default site config of lines to
