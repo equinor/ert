@@ -5,13 +5,13 @@ import stat
 from pathlib import Path
 from textwrap import dedent
 
+from ert.gui.experiments.view.iteration import TabGroupWidget
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.gui.ertwidgets import StringBox
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.view import RealizationWidget
-from ert.gui.experiments.view.iteration import IterationWidget
 
 from .conftest import wait_for_child
 
@@ -160,7 +160,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     verify_logged_realization_status(num_reals, len(failing_reals_first_try))
 
     iteration_widget = run_dialog._tab_widget.currentWidget()
-    assert isinstance(iteration_widget, IterationWidget)
+    assert isinstance(iteration_widget, TabGroupWidget)
 
     # Assert that the number of boxes in the detailed view is
     # equal to the number of realizations
@@ -197,7 +197,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
     iteration_widget = run_dialog._tab_widget.currentWidget()
-    assert isinstance(iteration_widget, IterationWidget)
+    assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
     realization_widget = iteration_widget._tab_widget.currentWidget()
@@ -231,7 +231,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     )
 
     iteration_widget = run_dialog._tab_widget.currentWidget()
-    assert isinstance(iteration_widget, IterationWidget)
+    assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
     realization_widget = iteration_widget._tab_widget.currentWidget()
@@ -325,7 +325,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     iteration_widget = run_dialog._tab_widget.currentWidget()
-    assert isinstance(iteration_widget, IterationWidget)
+    assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
     realization_widget = iteration_widget._tab_widget.currentWidget()
@@ -355,7 +355,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     iteration_widget = run_dialog._tab_widget.currentWidget()
-    assert isinstance(iteration_widget, IterationWidget)
+    assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
     realization_widget = iteration_widget._tab_widget.currentWidget()

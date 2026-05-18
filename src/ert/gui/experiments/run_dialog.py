@@ -89,10 +89,10 @@ from ert.shared.status.utils import (
 from .queue_emitter import QueueEmitter
 from .view import (
     DiskSpaceWidget,
-    IterationWidget,
     ProgressWidget,
     RealizationWidget,
     RunpathProgressWidget,
+    TabGroupWidget,
     UpdateWidget,
     WorkflowWidget,
 )
@@ -400,7 +400,7 @@ class RunDialog(QFrame):
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
-        if isinstance(widget, IterationWidget):
+        if isinstance(widget, TabGroupWidget):
             current_widget = widget.current_widget()
             if isinstance(current_widget, RealizationWidget):
                 current_widget.refresh_current_selection()
@@ -683,31 +683,28 @@ class RunDialog(QFrame):
 
     def _get_or_create_iteration_tab(
         self, iteration: int, is_update: bool
-    ) -> IterationWidget:
+    ) -> TabGroupWidget:
+        tab_title = f"update-{iteration}" if is_update else f"iteration-{iteration}"
         for index in range(self._tab_widget.count()):
             widget = self._tab_widget.widget(index)
             if (
-                isinstance(widget, IterationWidget)
+                isinstance(widget, TabGroupWidget)
                 and widget.iteration == iteration
-                and widget.is_update_page == is_update
+                and self._tab_widget.tabText(index) == tab_title
             ):
                 return widget
 
-        widget = IterationWidget(iteration, self)
-        widget.is_update_page = is_update
+        widget = TabGroupWidget(iteration, self)
         widget.currentTabChanged.connect(
             lambda iteration_widget=widget: self._on_iteration_tab_changed(
                 iteration_widget
             )
         )
 
-        self._tab_widget.addTab(
-            widget,
-            f"update-{iteration}" if is_update else f"iteration-{iteration}",
-        )
+        self._tab_widget.addTab(widget, tab_title)
         return widget
 
-    def _on_iteration_tab_changed(self, iteration_widget: IterationWidget) -> None:
+    def _on_iteration_tab_changed(self, iteration_widget: TabGroupWidget) -> None:
         if self._tab_widget.currentWidget() is iteration_widget:
             self._current_tab_changed(self._tab_widget.currentIndex())
 

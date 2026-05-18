@@ -1,17 +1,17 @@
 from .disk_space_widget import DiskSpaceWidget
-from .iteration import IterationWidget
 from .progress_widget import ProgressWidget
 from .realization import RealizationWidget
 from .runpath_progress_widget import RunpathProgressWidget
+from .tab_group_widget import TabGroupWidget
 from .update import UpdateWidget
 from .workflow import WorkflowWidget
 
 __all__ = [
     "DiskSpaceWidget",
-    "IterationWidget",
     "ProgressWidget",
     "RealizationWidget",
     "RunpathProgressWidget",
+    "TabGroupWidget",
     "UpdateWidget",
     "WorkflowWidget",
 ]
