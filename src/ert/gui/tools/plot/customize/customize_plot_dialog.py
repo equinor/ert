@@ -306,7 +306,7 @@ class CustomizePlotDialog(QDialog):
         if dialog.exec():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())
 
-    def add_copyable_key(self, key: str | QListWidgetItem) -> None:
+    def add_copyable_key(self, key: str) -> None:
         self._popup_list.addItem(key)
 
     def key_selected(self, list_widget_item: QListWidgetItem) -> None:
