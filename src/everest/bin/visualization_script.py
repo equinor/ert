@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+import warnings
 from functools import partial
 from importlib.resources import files
 from pathlib import Path
@@ -14,18 +15,16 @@ from PyQt6.QtWidgets import QApplication
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.services import ErtServerController
 from ert.storage import LocalStorage
-from everest.api import EverestDataAPI
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
-from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 from .utils import ArgParseFormatter
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
-        description=dedent("""Start a visualization tool for Everest data."""),
+        description=dedent("""Start the plotter for for Everest data."""),
         formatter_class=ArgParseFormatter,
         usage="""everest results <config_file>""",
     )
@@ -37,7 +36,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser.add_argument(
         "--ert_plotter",
         action="store_true",
-        help="Use the Ert plotter instead of everviz (EXPERIMENTAL)",
+        help="No-op option, ert_plotter is already default.",
     )
     return arg_parser
 
@@ -56,7 +55,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
         )
 
         if LocalStorage.check_migration_needed(Path(ever_config.storage_dir)):
-            logger.info("Migrating ERT storage from everviz entrypoint")
+            logger.info("Migrating ERT storage from everest results entrypoint")
             LocalStorage.perform_migration(Path(ever_config.storage_dir))
 
         experiment = EverestStorage.get_everest_experiment(
@@ -70,28 +69,18 @@ def visualization_entry(args: list[str] | None = None) -> None:
             )
             return
 
-        if not options.ert_plotter:
-            print()
-            print(
-                "==============================================================================="
+        if options.ert_plotter:
+            warnings.warn(
+                "You can stop using the option --ert_plotter as it "
+                "is the only alternative",
+                UserWarning,
+                stacklevel=2,
             )
-            print()
-            print("Everviz is deprecated and will be replaced in the next release.")
-            print("Use the command `everest result --ert_plotter <config_file>` to use")
-            print("the upcoming visualization tool.")
-            print()
-            print(
-                "==============================================================================="
-            )
-            print()
-            pm = EverestPluginManager()
-            pm.hook.visualize_data(api=EverestDataAPI(options.config))
-        else:
-            with ErtServerController.init_service(
-                timeout=240,
-                project=Path(ever_config.storage_dir),
-            ):
-                run_plotter_gui(options.config.config_path, ever_config.storage_dir)
+        with ErtServerController.init_service(
+            timeout=240,
+            project=Path(ever_config.storage_dir),
+        ):
+            run_plotter_gui(options.config.config_path, ever_config.storage_dir)
 
 
 def run_plotter_gui(config_filename: str, storage_dir: Path) -> None:

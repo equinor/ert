@@ -79,17 +79,8 @@ jobs:
         uv pip install git+https://github.com/equinor/everest-models.git
         uv run just build-everest-docs
 
-
-    - name: Run tests requiring everviz
-      if: inputs.test-type == 'everviz-test'
-      run: |
-        uv pip install dash
-        uv pip install everviz
-        uv run pytest --benchmark-disable -s -v --log-cli-level=DEBUG tests/everest/entry_points/test_visualization_entry.py
-
-
     - name: Upload coverage to Codecov
-      if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
+      if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
       id: codecov1
       uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
       continue-on-error: true
@@ -99,12 +90,12 @@ jobs:
         files: cov1.xml,cov2.xml
         flags: ${{ inputs.test-type }}
     - name: codecov retry sleep
-      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
+      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
       run: |
         sleep 30
     - name: Codecov retry
       uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
-      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
+      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: cov1.xml,cov2.xml
@@ -112,13 +103,13 @@ jobs:
         fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
     - name: Upload test results to Codecov
-      if: ${{ !cancelled() && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test' }}
+      if: ${{ !cancelled() && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' }}
       uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Test for a clean repository
-      if: ${{ inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test' }}
+      if: ${{ inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' }}
       run: |
         # Remove things we have generated on purpose:
         ls -la

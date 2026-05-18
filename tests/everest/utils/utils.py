@@ -1,11 +1,9 @@
 import contextlib
-import importlib.util
 import os
 import sys
 from io import StringIO
 from textwrap import dedent
 
-import pytest
 import yaml
 
 from everest.config.everest_config import EverestConfig
@@ -34,13 +32,6 @@ def everest_config_with_defaults(**kwargs) -> EverestConfig:
     without having to provide empty defaults.
     """
     return EverestConfig.with_plugins(yaml.safe_load(MIN_CONFIG) | {**kwargs})  # type: ignore
-
-
-def skipif_no_everviz(function):
-    """Decorator to skip a test if everviz is not available"""
-    spec = importlib.util.find_spec("everviz")
-    not_found = spec is None
-    return pytest.mark.skipif(not_found, reason="everviz not found")(function)
 
 
 def relpath(*path):
