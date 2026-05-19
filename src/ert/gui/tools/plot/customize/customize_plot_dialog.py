@@ -28,6 +28,7 @@ from ert.gui.icon_utils import load_icon
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from ert.gui.tools.plot.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
 from ert.gui.tools.plot.widgets import CopyStyleToDialog
+from ert.gui.utils import is_everest_application
 
 from .default_customization_view import DefaultCustomizationView
 from .limits_customization_view import LimitsCustomizationView
@@ -49,7 +50,7 @@ class PlotCustomizer(QObject):
         self, parent: QWidget | None, key_defs: list[PlotApiKeyDefinition]
     ) -> None:
         super().__init__()
-
+        self._is_everest = is_everest_application()
         self._plot_config_key = None
         self._previous_key = None
         self._plot_configs: dict[str | None, PlotConfigHistory] = {
@@ -66,12 +67,14 @@ class PlotCustomizer(QObject):
             "general", "General", DefaultCustomizationView()
         )
         self._customization_dialog.add_tab("style", "Style", StyleCustomizationView())
-        self._customization_dialog.add_tab(
-            "statistics", "Statistics", StatisticsCustomizationView()
-        )
-
-        self._customize_limits = LimitsCustomizationView()
-        self._customization_dialog.add_tab("limits", "Limits", self._customize_limits)
+        if not self._is_everest:
+            self._customization_dialog.add_tab(
+                "statistics", "Statistics", StatisticsCustomizationView()
+            )
+            self._customize_limits = LimitsCustomizationView()
+            self._customization_dialog.add_tab(
+                "limits", "Limits", self._customize_limits
+            )
 
         self._customization_dialog.applySettings.connect(self.apply_customization)
         self._customization_dialog.undoSettings.connect(self.undo_customization)
@@ -190,7 +193,8 @@ class PlotCustomizer(QObject):
         return self._get_plot_config_history().get_plot_config()
 
     def set_axis_types(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
-        self._customize_limits.set_axis_types(x_axis_type, y_axis_type)
+        if not self._is_everest:
+            self._customize_limits.set_axis_types(x_axis_type, y_axis_type)
 
 
 class CustomizePlotDialog(QDialog):
