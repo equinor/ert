@@ -308,15 +308,15 @@ class PlotWindow(QMainWindow):
             self._everest_controls_group = create_group_box(
                 "Select control(s)", self._everest_control_selection_widget
             )
-            ensemble_group = create_group_box(
+            self._ensemble_group = create_group_box(
                 "Select ensemble(s)", self._ensemble_selection_widget
             )
 
             right_container = QWidget()
             right_layout = QVBoxLayout()
             right_layout.setContentsMargins(0, 0, 0, 0)
+            right_layout.addWidget(self._ensemble_group)
             right_layout.addWidget(self._everest_controls_group)
-            right_layout.addWidget(ensemble_group)
             right_container.setLayout(right_layout)
 
             right_dock = QDockWidget()
