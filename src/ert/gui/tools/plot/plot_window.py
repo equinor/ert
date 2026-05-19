@@ -74,6 +74,7 @@ RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
 STD_DEV_DEFAULT = 7
 
+EVEREST_UPPER_BATCH_LIMIT = 20
 
 logger = logging.getLogger(__name__)
 
@@ -243,6 +244,8 @@ class PlotWindow(QMainWindow):
             self._prev_tab_widget_index = -1
             self._current_tab_index = -1
             self._prev_key_dimensionality = -1
+            self._prev_key: str | None = None
+            self._prev_key_origin: str | None = None
             self._prev_tab_widget_index_map: dict[int, int] = {}
             if self.is_everest:
                 self._prev_tab_widget_index_map = {
@@ -631,10 +634,40 @@ class PlotWindow(QMainWindow):
         self._plot_customizer.switch_plot_config_history(key_def)
 
         is_everest_specific_widget = key_def.metadata.get("data_origin") in {
+            "everest_parameters",
             "everest_objectives",
             "everest_constraints",
             "everest_batch_objectives",
         }
+        if (
+            self.is_everest
+            and key_def.response is not None
+            and key_def.response.type in {"summary", "gen_data"}
+        ):
+            if self._prev_key_origin and self._prev_key_origin not in {
+                "summary",
+                "gen_data",
+            }:
+                self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+                self._ensemble_selection_widget.set_minimum_ensemble_limit(0)
+                self._ensemble_selection_widget.clear_ensemble_selection()
+        elif is_everest_specific_widget:
+            if key_def.key != self._prev_key:
+                self._ensemble_selection_widget.set_maximum_ensemble_limit(
+                    EVEREST_UPPER_BATCH_LIMIT
+                )
+                self._ensemble_selection_widget.reset_minimum_ensemble_limit_to_default()
+                self._ensemble_selection_widget.select_all_ensembles()
+        else:
+            self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
+
+        max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
+        str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
+        self._ensemble_group.setTitle(
+            f"Select{str_num_of_ens} batches"
+            if self.is_everest
+            else f"Select up to {max_selected} ensembles"
+        )
 
         available_widgets = [
             widget
@@ -706,6 +739,8 @@ class PlotWindow(QMainWindow):
         self._central_tab.currentChanged.connect(self.currentTabChanged)
         self._prev_tab_widget_index = self._central_tab.currentIndex()
         self._prev_key_dimensionality = key_def.dimensionality
+        self._prev_key = key_def.key
+        self._prev_key_origin = key_def.metadata.get("data_origin")
         self.updatePlot()
 
     def toggleCustomizeDialog(self) -> None:
