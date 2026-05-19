@@ -121,7 +121,7 @@ def _migrate_observations_to_grouped_parquet(path: Path) -> None:
         if not (experiment / "observations").exists():
             os.makedirs(experiment / "observations")
 
-        obs_keys = os.listdir(os.path.join(experiment, "observations"))
+        obs_keys = os.listdir(Path(experiment) / "observations")
 
         if len(set(obs_keys) - {"summary", "gen_data"}) == 0:
             # Observations are already migrated, likely from .to4 migrations

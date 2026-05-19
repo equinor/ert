@@ -209,12 +209,12 @@ class SchemaItem:
                 else:
                     absolute_path = Path(token)
                 if not absolute_path.exists():
-                    absolute_path = (
-                        Path(shutil.which(str(token)))
-                        if shutil.which(str(token)) and token
-                        else None
-                    )
-                    is_command = True
+                    potential_executable = shutil.which(token)
+                    if potential_executable is not None:
+                        absolute_path = Path(potential_executable)
+                        is_command = True
+                    else:
+                        absolute_path = None
 
                 if absolute_path is None:
                     raise ConfigValidationError.with_context(

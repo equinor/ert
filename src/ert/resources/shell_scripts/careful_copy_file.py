@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 import os
-import pathlib
 import shutil
 import sys
+from pathlib import Path
 
 
 def careful_copy_file(src: str, target: str | None = None) -> None:
     if target is None:
         target = os.path.basename(src)
-    if pathlib.Path(target).exists():
+    if Path(target).exists():
         print(f"File: {target} already present - not updated")
         return
     if os.path.isfile(src):
         if os.path.isdir(target):
-            target_file = os.path.join(target, os.path.basename(src))
+            target_file = str(Path(target) / Path(src).name)
             shutil.copyfile(src, target_file)
             print(f"Copying file '{src}' -> '{target_file}'")
         else:
@@ -22,7 +22,7 @@ def careful_copy_file(src: str, target: str | None = None) -> None:
                 os.makedirs(target_path)
                 print(f"Creating directory '{target_path}' ")
             if os.path.isdir(target):
-                target_file = os.path.join(target, os.path.basename(src))
+                target_file = str(Path(target) / Path(src).name)
             else:
                 target_file = target
 

@@ -250,9 +250,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         if status_queue is None:
             status_queue = queue.SimpleQueue()
 
-        runpath_file: Path = Path(
-            os.path.join(everest_config.output_dir, ".res_runpath_list")
-        )
+        runpath_file: Path = Path(everest_config.output_dir) / ".res_runpath_list"
 
         assert everest_config.config_file is not None
         config_file: Path = Path(everest_config.config_path)

@@ -2,6 +2,7 @@
 import os
 import shutil
 import sys
+from pathlib import Path
 
 
 def copy_file(src: str, target: str | None = None) -> None:
@@ -10,7 +11,7 @@ def copy_file(src: str, target: str | None = None) -> None:
             target = os.path.basename(src)
 
         if os.path.isdir(target):
-            target_file = os.path.join(target, os.path.basename(src))
+            target_file = str(Path(target) / Path(src).name)
             shutil.copyfile(src, target_file)
             print(f"Copying file '{src}' -> '{target_file}'")
         else:
@@ -19,7 +20,7 @@ def copy_file(src: str, target: str | None = None) -> None:
                 os.makedirs(target_path)
                 print(f"Creating directory '{target_path}' ")
             if os.path.isdir(target):
-                target_file = os.path.join(target, os.path.basename(src))
+                target_file = str(Path(target) / Path(src).name)
             else:
                 target_file = target
 

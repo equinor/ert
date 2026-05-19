@@ -2,6 +2,7 @@
 import os
 import shutil
 import sys
+from pathlib import Path
 
 from make_directory import mkdir  # type: ignore
 
@@ -17,7 +18,7 @@ def copy_directory(src_path: str, target_path: str) -> None:
 
         print(f"Copying directory structure {src_path} -> {target_path}")
         if os.path.isdir(target_path):
-            target_path = os.path.join(target_path, src_basename)
+            target_path = str(Path(target_path) / src_basename)
         try:
             shutil.copytree(src_path, target_path, dirs_exist_ok=True)
         except shutil.Error as err:

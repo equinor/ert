@@ -14,14 +14,14 @@ def symlink(target: str, link_name: str) -> None:
     """
     link_path, _ = os.path.split(link_name)
     if len(link_path) == 0:
-        target_check = target
+        target_check = Path(target)
     else:
         if not os.path.isdir(link_path):
             print(f"Creating directory for link: {link_path}")
             os.makedirs(link_path)
-        target_check = os.path.join(link_path, target)
+        target_check = Path(link_path) / target
 
-    if not Path(target_check).exists():
+    if not target_check.exists():
         raise OSError(
             f"{target} (target) and {link_name} (link_name) requested, "
             f"which implies that {target_check} must exist, but it does not."
