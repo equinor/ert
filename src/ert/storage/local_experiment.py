@@ -64,12 +64,12 @@ class ExperimentType(StrEnum):
     EVEREST = "Everest"
 
 
-class ExperimentStatus(BaseModel):
+class ExperimentStatus(BaseModel, extra="forbid"):
     message: str = Field(default="")
     status: ExperimentState = Field(default=ExperimentState.pending)
 
 
-class _Index(BaseModel):
+class _Index(BaseModel, extra="forbid"):
     id: UUID
     name: str
     # An experiment may point to ensembles that are originated

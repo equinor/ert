@@ -34,14 +34,14 @@ logger = logging.getLogger(__name__)
 _LOCAL_STORAGE_VERSION = 28
 
 
-class _Migrations(BaseModel):
+class _Migrations(BaseModel, extra="forbid"):
     ert_version: str = __version__
     timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
     name: str
     version_range: tuple[int, int]
 
 
-class _Index(BaseModel):
+class _Index(BaseModel, extra="forbid"):
     version: int = _LOCAL_STORAGE_VERSION
     migrations: MutableSequence[_Migrations] = Field(default_factory=list)
 
