@@ -38,8 +38,19 @@ class EnsemblePlot:
         obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
+        is_everest = is_everest_application()
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
+        if len(ensemble_to_data_map) == 0:
+            axes.text(
+                0.5,
+                0.5,
+                f"Select {'batches' if is_everest else 'ensembles'}"
+                f" from the right side panel",
+                ha="center",
+                va="center",
+            )
+            return
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
@@ -62,7 +73,7 @@ class EnsemblePlot:
                 config.set_current_color(color_index)
                 label = (
                     f"{ensemble.name}"
-                    if is_everest_application()
+                    if is_everest
                     else f"{ensemble.experiment_name} : {ensemble.name}"
                 )
                 lines = self._plotLines(
