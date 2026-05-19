@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 def check_executable(fname: str | None) -> str:
@@ -13,18 +14,18 @@ def check_executable(fname: str | None) -> str:
     """
     if not fname:
         return "No executable provided!"
-    fname = os.path.expanduser(fname)
+    filepath = Path(fname).expanduser()
 
-    potential_executables = [os.path.abspath(fname)]
-    if not os.path.isabs(fname):
+    potential_executables = [filepath.resolve()]
+    if not filepath.is_absolute():
         potential_executables += [
-            os.path.join(location, fname)
+            Path(location) / filepath
             for location in os.environ["PATH"].split(os.pathsep)
         ]
 
-    if not any(map(os.path.isfile, potential_executables)):
-        return f"{fname} is not a file!"
+    if not any(path.is_file() for path in potential_executables):
+        return f"{filepath} is not a file!"
 
-    if not any(os.access(fn, os.X_OK) for fn in potential_executables):
-        return f"{fname} is not an executable!"
+    if not any(os.access(path, os.X_OK) for path in potential_executables):
+        return f"{filepath} is not an executable!"
     return ""

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import logging
-import os
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
@@ -605,7 +604,7 @@ class RFTObservation(BaseObservation):
         cls,
         directory: str,
         observation_dict: ObservationDict,
-        filename: str,
+        filename: str | Path,
         shape_registry: ShapeRegistry,
         observed_property: str = "PRESSURE",
         radius: float | None = None,
@@ -632,9 +631,10 @@ class RFTObservation(BaseObservation):
                 lacks required columns, or contains invalid observation values
                 (value=-1 and error=0).
         """
-        if not os.path.isabs(filename):
-            filename = os.path.join(directory, filename)
-        if not Path(filename).exists():
+        filename = Path(filename)
+        if not filename.is_absolute():
+            filename = Path(directory) / filename
+        if not filename.exists():
             raise ObservationConfigError.with_context(
                 f"The CSV file ({filename}) does not exist or is not accessible.",
                 filename,
@@ -1161,14 +1161,15 @@ def _missing_csv_value(
 
 
 def _resolve_path(directory: str, filename: str) -> str:
-    if not os.path.isabs(filename):
-        filename = os.path.join(directory, filename)
-    if not Path(filename).exists():
+    filepath: Path = Path(filename)
+    if not filepath.is_absolute():
+        filepath = Path(directory) / filepath
+    if not filepath.exists():
         raise ObservationConfigError.with_context(
             f"The following keywords did not resolve to a valid path:\n {filename}",
             filename,
         )
-    return filename
+    return str(filepath)
 
 
 def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConfigError:

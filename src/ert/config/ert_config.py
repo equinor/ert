@@ -383,10 +383,10 @@ def workflow_jobs_from_dict(
             errors.append(ErrorInfo(message=str(err)).set_context(user_workflow_job[0]))
 
     for user_job_path in user_installed_workflow_job_dir_info:
-        for user_job_file in _get_files_in_directory(user_job_path, errors):
+        for user_job_file in _get_files_in_directory(Path(user_job_path), errors):
             try:
                 user_job = workflow_job_from_file(
-                    config_file=user_job_file, origin="user"
+                    config_file=str(user_job_file), origin="user"
                 )
                 name = user_job.name
                 if name in workflow_jobs:
@@ -615,13 +615,13 @@ def installed_forward_model_steps_from_dict(
         fm_steps[name] = new_fm_step
 
     for fm_step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
-        for file_name in _get_files_in_directory(fm_step_path, errors):
+        for file_name in _get_files_in_directory(Path(fm_step_path), errors):
             if not path.isfile(file_name):
                 continue
             try:
-                config_contents = read_file(file_name)
+                config_contents = read_file(str(file_name))
                 new_fm_step = forward_model_step_from_config_contents(
-                    config_contents, config_file=file_name
+                    config_contents, config_file=str(file_name)
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -998,7 +998,7 @@ class ErtConfig(BaseModel):
         substitutions["<RUNPATH_FILE>"] = runpath_file
         config_dir = substitutions.get("<CONFIG_PATH>", "")
         config_file = substitutions.get("<CONFIG_FILE>", "no_config")
-        config_file_path = path.join(config_dir, config_file)
+        config_file_path = Path(config_dir) / config_file
 
         errors = cls._validate_dict(config_dict, config_file)
 
@@ -1217,7 +1217,7 @@ class ErtConfig(BaseModel):
                     config_dict,
                 ),
                 runpath_config=model_config,
-                user_config_file=config_file_path,
+                user_config_file=str(config_file_path),
                 observation_declarations=list(obs_configs),
                 zonemap=zonemap,
                 shape_registry=shape_registry,
@@ -1432,16 +1432,17 @@ class ErtConfig(BaseModel):
         content_dict: ConfigDict, config_dir: str
     ) -> None:
         if ConfigKeys.ENSPATH not in content_dict:
-            content_dict[ConfigKeys.ENSPATH] = path.join(
-                config_dir, ErtConfig.DEFAULT_ENSPATH
+            content_dict[ConfigKeys.ENSPATH] = str(
+                Path(config_dir) / ErtConfig.DEFAULT_ENSPATH
             )
+
         if ConfigKeys.RUNPATH_FILE not in content_dict:
-            content_dict[ConfigKeys.RUNPATH_FILE] = path.join(
-                config_dir, ErtConfig.DEFAULT_RUNPATH_FILE
+            content_dict[ConfigKeys.RUNPATH_FILE] = str(
+                Path(config_dir) / ErtConfig.DEFAULT_RUNPATH_FILE
             )
         elif not path.isabs(content_dict[ConfigKeys.RUNPATH_FILE]):
-            content_dict[ConfigKeys.RUNPATH_FILE] = path.normpath(
-                path.join(config_dir, content_dict[ConfigKeys.RUNPATH_FILE])
+            content_dict[ConfigKeys.RUNPATH_FILE] = str(
+                (Path(config_dir) / content_dict[ConfigKeys.RUNPATH_FILE]).resolve()
             )
 
     @classmethod
@@ -1497,24 +1498,19 @@ def _split_string_into_sections(string: str, section_length: int) -> list[str]:
 
 
 def _get_files_in_directory(
-    job_path: str, errors: list[ErrorInfo | ConfigValidationError]
-) -> list[str]:
-    if not path.isdir(job_path):
+    job_path: Path, errors: list[ErrorInfo | ConfigValidationError]
+) -> list[Path]:
+    if not job_path.is_dir():
         errors.append(
             ConfigValidationError(
-                f"Unable to locate job directory {job_path!r}", job_path
+                f"Unable to locate job directory {job_path}", str(job_path)
             )
         )
         return []
-    files = list(
-        filter(
-            path.isfile,
-            (path.abspath(path.join(job_path, f)) for f in os.listdir(job_path)),
-        )
-    )
+    files = [path.resolve() for path in job_path.iterdir() if path.is_file()]
 
     if files == []:
-        ConfigWarning.warn(f"No files found in job directory {job_path}", job_path)
+        ConfigWarning.warn(f"No files found in job directory {job_path}", str(job_path))
     return files
 
 
