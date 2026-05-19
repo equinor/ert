@@ -255,18 +255,7 @@ class RFTConfig(ResponseConfig):
         }
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
-        """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT
-
-        Also labels those values by which optionally zone constrained point
-        it belongs to.
-
-        The columns east, north, tvd is none when the value does not belong to
-        any point, otherwise it is the x,y,z values of that point. If the point
-        is constrained to be in a certain zone then the zone column is also populated.
-
-        Points which were constrained to be in a given zone, but were not contained
-        in that zone, is not labeled, and instead a warning is emitted.
-        """
+        """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT"""
         if not self.data_to_read:
             return pl.DataFrame(schema=self.response_schema())
 
