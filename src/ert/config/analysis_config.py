@@ -23,6 +23,7 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 ObservationGroups = list[str]
+DEFAULT_ES_MDA_WEIGHTS = "4, 2, 1"
 
 
 @dataclass
@@ -49,6 +50,8 @@ class AnalysisConfig:
     )
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
+    es_mda_weights: str = DEFAULT_ES_MDA_WEIGHTS
+    es_mda_weights_from_config: bool = False
 
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> AnalysisConfig:
@@ -106,6 +109,8 @@ class AnalysisConfig:
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         errors = []
         all_errors = []
+        es_mda_weights = DEFAULT_ES_MDA_WEIGHTS
+        es_mda_weights_from_config = False
 
         for module_name, var_name, value in analysis_set_var:
             if module_name == "IES_ENKF":
@@ -178,6 +183,26 @@ class AnalysisConfig:
                 )
             )
 
+        for algorithm_name, var_name, value in config_dict.get(
+            ConfigKeys.UPDATE_ALGORITHM, []
+        ):
+            if algorithm_name != "ES_MDA" or var_name != "WEIGHTS":
+                all_errors.append(
+                    ConfigValidationError(
+                        "Invalid configuration: UPDATE_ALGORITHM "
+                        f"{algorithm_name} {var_name}. Valid option is: "
+                        "UPDATE_ALGORITHM ES_MDA WEIGHTS"
+                    )
+                )
+                continue
+            try:
+                _parse_es_mda_weights(value)
+            except ValueError as err:
+                all_errors.append(ConfigValidationError(str(err)))
+                continue
+            es_mda_weights = value
+            es_mda_weights_from_config = True
+
         try:
             es_settings = ESSettings(**options["STD_ENKF"])
             outlier_settings: dict[str, Any] = {
@@ -222,8 +247,32 @@ class AnalysisConfig:
             observation_settings=obs_settings,
             es_settings=es_settings,
             design_matrix=design_matrix,
+            es_mda_weights=es_mda_weights,
+            es_mda_weights_from_config=es_mda_weights_from_config,
         )
 
     @property
     def log_path(self) -> Path:
         return Path(realpath(self.update_log_path))
+
+
+def _parse_es_mda_weights(weights: str) -> list[float]:
+    if not weights:
+        raise ValueError(f"Must provide weights, got {weights}")
+
+    result = []
+    for element in [element.strip() for element in weights.split(",")]:
+        if not element:
+            continue
+        try:
+            weight = float(element)
+        except ValueError as err:
+            raise ValueError(f"Warning: cannot parse weight {element}") from err
+        if weight != 0:
+            result.append(weight)
+
+    if not result:
+        raise ValueError(f"Invalid weights: {weights}")
+
+    length = sum(1.0 / x for x in result)
+    return [x * length for x in result]

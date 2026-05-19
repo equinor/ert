@@ -217,6 +217,33 @@ def test_setup_multiple_data_assimilation(tmp_path):
     assert model.restart_run is False
 
 
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
+def test_setup_multiple_data_assimilation_uses_config_weights_when_cli_omits_them(
+    tmp_path,
+):
+    model = model_factory._setup_multiple_data_assimilation(
+        ErtConfig.from_file_contents(
+            f"""
+            NUM_REALIZATIONS 100
+            ENSPATH {tmp_path}
+            UPDATE_ALGORITHM ES_MDA WEIGHTS 8, 4, 2, 1
+            """
+        ),
+        Namespace(
+            realizations="0-4,8",
+            weights=None,
+            target_ensemble="test_case_%d",
+            restart_run=False,
+            prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
+            experiment_name="My-experiment",
+            starting_iteration=0,
+        ),
+        ObservationSettings(),
+        queue.SimpleQueue(),
+    )
+    assert model.weights == "8, 4, 2, 1"
+
+
 @pytest.mark.parametrize(
     ("restart_from_iteration", "expected_path"),
     [

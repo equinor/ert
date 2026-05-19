@@ -1,4 +1,11 @@
-from ert.config.parsing import init_user_config_schema, parse_contents
+import pytest
+
+from ert.config import ErtConfig
+from ert.config.parsing import (
+    ConfigValidationError,
+    init_user_config_schema,
+    parse_contents,
+)
 
 
 def test_that_rft_entry_is_parsable():
@@ -41,3 +48,44 @@ def test_that_rft_entry_is_a_multi_occurrence_keyword():
             {"WELL": "NAME2", "DATE": "2021-11-14"},
         ],
     }
+
+
+def test_that_update_algorithm_es_mda_weights_is_parsable():
+    parsed = parse_contents(
+        """
+        NUM_REALIZATIONS 1
+
+        UPDATE_ALGORITHM ES_MDA WEIGHTS 8, 4, 2, 1
+        """,
+        init_user_config_schema(),
+        "unused",
+    )
+
+    del parsed["DEFINE"]
+
+    assert parsed == {
+        "NUM_REALIZATIONS": 1,
+        "UPDATE_ALGORITHM": [["ES_MDA", "WEIGHTS", "8, 4, 2, 1"]],
+    }
+
+
+def test_that_update_algorithm_es_mda_weights_is_stored_in_analysis_config():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        UPDATE_ALGORITHM ES_MDA WEIGHTS 8, 4, 2, 1
+        """
+    )
+
+    assert config.analysis_config.es_mda_weights == "8, 4, 2, 1"
+    assert config.analysis_config.es_mda_weights_from_config
+
+
+def test_that_invalid_update_algorithm_es_mda_weights_fails_validation():
+    with pytest.raises(ConfigValidationError, match="Invalid weights: 0"):
+        ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            UPDATE_ALGORITHM ES_MDA WEIGHTS 0
+            """
+        )

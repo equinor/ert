@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDoubleSpinBox,
+    QLabel,
     QPushButton,
 )
 from pytestqt.qtbot import QtBot
@@ -141,6 +142,84 @@ def test_multiple_data_assimilation_panel_sets_active_realizations_to_initial_ac
     assert mda_panel._active_realizations_field.text() == active_realizations_string
     mda_panel.restart_run_toggled()
     assert mda_panel._active_realizations_field.text() == active_realizations_string
+
+
+def test_multiple_data_assimilation_panel_uses_config_weights(qtbot: QtBot) -> None:
+    active_realizations = [True] * 5
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(
+            minimum_required_realizations=1,
+            es_mda_weights="8, 4, 2, 1",
+            es_mda_weights_from_config=True,
+        ),
+        parameter_configuration=EnsembleConfig().parameter_configuration,
+        run_path="",
+        notifier=notifier,
+        active_realizations=active_realizations,
+        config_num_realization=len(active_realizations),
+    )
+    qtbot.addWidget(panel)
+
+    weights_box = panel.findChild(StringBox, "weights_input_esmda")
+    assert weights_box.text() == "8, 4, 2, 1"
+
+
+def test_multiple_data_assimilation_panel_shows_weight_mismatch_warning(
+    qtbot: QtBot,
+) -> None:
+    active_realizations = [True] * 5
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=EnsembleConfig().parameter_configuration,
+        run_path="",
+        notifier=notifier,
+        active_realizations=active_realizations,
+        config_num_realization=len(active_realizations),
+    )
+    qtbot.addWidget(panel)
+
+    weights_box = panel.findChild(StringBox, "weights_input_esmda")
+    warning_icon = panel.findChild(QLabel, "warning_icon_weights_esmda")
+
+    assert warning_icon.isHidden()
+
+    weights_box.setText("8, 4, 2, 1")
+
+    assert not warning_icon.isHidden()
+    assert "differs from the default ES-MDA weights" in warning_icon.toolTip()
+
+
+def test_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_formatting(
+    qtbot: QtBot,
+) -> None:
+    active_realizations = [True] * 5
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=EnsembleConfig().parameter_configuration,
+        run_path="",
+        notifier=notifier,
+        active_realizations=active_realizations,
+        config_num_realization=len(active_realizations),
+    )
+    qtbot.addWidget(panel)
+
+    weights_box = panel.findChild(StringBox, "weights_input_esmda")
+    warning_icon = panel.findChild(QLabel, "warning_icon_weights_esmda")
+
+    assert warning_icon.isHidden()
+
+    weights_box.setText("4,2,1")
+
+    assert warning_icon.isHidden()
 
 
 def _open_and_capture_threshold(panel, qtbot):
