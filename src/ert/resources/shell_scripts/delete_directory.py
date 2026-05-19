@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import os
-import pathlib
 import sys
+from pathlib import Path
 
 
-def delete_file(filename: str) -> None:
+def delete_file(filename: str | Path) -> None:
     stat_info = os.lstat(filename)
     uid = stat_info.st_uid
     if uid == os.getuid():
@@ -42,15 +42,15 @@ def delete_directory(path: str) -> None:
     """
     Will ignore if you are not owner.
     """
-    if pathlib.Path(path).exists():
+    if Path(path).exists():
         if os.path.isdir(path):
             for root, dirs, files in os.walk(path, topdown=False, followlinks=False):
                 if not os.path.islink(root):
                     for file in files:
-                        delete_file(os.path.join(root, file))
+                        delete_file(Path(root) / file)
 
                     for dir_ in dirs:
-                        delete_empty_directory(os.path.join(root, dir_))
+                        delete_empty_directory(str(Path(root) / dir_))
 
         else:
             raise OSError(f"Entry:'{path}' is not a directory")
