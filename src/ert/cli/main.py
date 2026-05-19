@@ -80,8 +80,8 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
                 f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are "
                 f"needed.\nPlease add to file {args.config}"
             )
-        if not any(
-            p.update_strategy
+        if all(
+            p.update_strategy is None
             for p in ert_config.ensemble_config.parameter_configs.values()
         ):
             raise ErtCliError(

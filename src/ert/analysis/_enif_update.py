@@ -166,6 +166,7 @@ def analysis_EnIF(
         p
         for p in parameters
         if source_ensemble.experiment.parameter_configuration[p].update_strategy
+        is not None
     ]
 
     # Load each parameter group once and reuse throughout

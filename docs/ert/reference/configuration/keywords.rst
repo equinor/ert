@@ -1729,8 +1729,8 @@ Where:
 ``DISTANCE``
     Distance-based localization. Correlations between parameters and
     observations are restricted based on their spatial distance. Only
-    observations within a defined radius of influence will affect a given
-    parameter during the update.
+    observations with location data and a defined radius of influence
+    will affect a given parameter during the update.
 
 ``ADAPTIVE``
     Adaptive localization. Uses an adaptive correlation threshold to
