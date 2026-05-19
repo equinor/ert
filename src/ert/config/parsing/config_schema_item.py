@@ -1,8 +1,8 @@
 import os
-import pathlib
 import shutil
 from collections.abc import Callable, Mapping, Sequence
 from enum import EnumType
+from pathlib import Path
 from typing import Any, TypeVar
 
 from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
@@ -168,10 +168,8 @@ class SchemaItem:
                 | SchemaItemType.EXISTING_PATH_INLINE
             ):
                 path: str | None = str(token)
-                if not os.path.isabs(token):
-                    path = os.path.normpath(
-                        os.path.join(os.path.dirname(token.filename), token)
-                    )
+                if not Path(token).is_absolute():
+                    path = str((Path(token.filename).parent / token).resolve())
                 if val_type != SchemaItemType.PATH:
                     if val_type == SchemaItemType.EXISTING_FILE and not os.path.isfile(
                         str(path)
@@ -180,7 +178,7 @@ class SchemaItem:
                             f"{self.kw} {token} is not a file.",
                             token,
                         )
-                    if not pathlib.Path(str(path)).exists():
+                    if not Path(str(path)).exists():
                         err = f'Cannot find file or directory "{token.value}". '
                         if path != token:
                             err += f"The configured value was {path!r} "
@@ -203,15 +201,19 @@ class SchemaItem:
                     )
                 return token.update(path)
             case SchemaItemType.EXECUTABLE:
-                absolute_path: str | None
+                absolute_path: Path | None
                 is_command = False
-                if not os.path.isabs(token):
+                if not Path(token).is_absolute():
                     # Try relative
-                    absolute_path = os.path.abspath(os.path.join(cwd, token))
+                    absolute_path = (Path(cwd) / token).resolve()
                 else:
-                    absolute_path = token
-                if not pathlib.Path(absolute_path).exists():
-                    absolute_path = shutil.which(token)
+                    absolute_path = Path(token)
+                if not absolute_path.exists():
+                    absolute_path = (
+                        Path(shutil.which(str(token)))
+                        if shutil.which(str(token)) and token
+                        else None
+                    )
                     is_command = True
 
                 if absolute_path is None:
@@ -229,13 +231,13 @@ class SchemaItem:
                 if not os.access(absolute_path, os.X_OK):
                     context = (
                         f"{token.value!r} which was resolved to {absolute_path!r}"
-                        if token.value != absolute_path
+                        if token.value != str(absolute_path)
                         else f"{token.value!r}"
                     )
                     raise ConfigValidationError.with_context(
                         f"File not executable: {context}", token
                     )
-                return token if is_command else token.update(value=absolute_path)
+                return token if is_command else token.update(value=str(absolute_path))
             case SchemaItemType():
                 return token
             case EnumType():

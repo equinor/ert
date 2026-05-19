@@ -326,7 +326,7 @@ def _handle_includes(
     if current_included_file is None:
         current_included_file = IncludedFile(included_from=None, filename=config_file)
 
-    config_dir = os.path.dirname(config_file)
+    config_dir: Path = Path(config_file).parent
     to_include = []
 
     errors = []
@@ -350,14 +350,12 @@ def _handle_includes(
                 )
 
                 args = args[0:1]
-            file_to_include = _substitute_token(defines, args[0])
+            file_to_include: FileContextToken = _substitute_token(defines, args[0])
 
-            if not os.path.isabs(file_to_include):
+            if not Path(file_to_include).is_absolute():
                 file_to_include = FileContextToken(
                     file_to_include.update(
-                        value=os.path.normpath(
-                            os.path.join(config_dir, file_to_include)
-                        ),
+                        value=str((config_dir / file_to_include).resolve())
                     ),
                     filename=file_to_include.filename,
                 )

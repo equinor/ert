@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -420,16 +419,16 @@ class LegacyGeneralObservation(_LegacyGeneralObservation):
                     setattr(output, str(key).lower(), value)
                 case "OBS_FILE" | "INDEX_FILE":
                     assert not isinstance(key, tuple)
-                    filename = value
-                    if not os.path.isabs(filename):
-                        filename = os.path.join(directory, filename)
-                    if not Path(filename).exists():
+                    filename = Path(value)
+                    if not filename.is_absolute():
+                        filename = Path(directory) / filename
+                    if not filename.exists():
                         raise ObservationConfigError.with_context(
                             "The following keywords did not"
                             f" resolve to a valid path:\n {key}",
                             value,
                         )
-                    setattr(output, str(key).lower(), filename)
+                    setattr(output, str(key).lower(), str(filename))
                 case "DATA":
                     output.data = value
                 case _:
