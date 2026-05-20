@@ -784,7 +784,7 @@ RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
 USER_CONFIG_SCHEMA = init_user_config_schema()
 
 
-class ErtConfig(BaseModel):
+class ErtConfig(BaseModel, extra="forbid"):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[

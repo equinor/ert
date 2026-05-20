@@ -303,8 +303,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                     keys=_extract_summary_keys(everest_config), input_files=[eclbase]
                 )
             )
-        else:
-            eclbase = None
 
         runpath_config = ErtModelConfig(
             num_realizations=len(everest_config.model.realizations)
@@ -316,9 +314,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 / "realization_<REALIZATION_ID>"
                 / "<SIM_DIR>"
             ),
-            eclbase_format_string=eclbase
-            if eclbase is not None
-            else DEFAULT_ECLBASE_FORMAT,
         )
 
         simulator_config = everest_config.simulator
