@@ -14,7 +14,7 @@ class InvalidResponseFile(Exception):
     """
 
 
-class ResponseConfig(BaseModel):
+class ResponseConfig(BaseModel, extra="forbid"):
     type: str
     input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
