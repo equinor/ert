@@ -139,7 +139,7 @@ class InstallDataConfig(BaseModel, extra="forbid"):
         if self.source is not None:
             source = self.source.replace("<CONFIG_PATH>", config_directory)
             if not os.path.isabs(source):
-                source = os.path.join(config_directory, source)
+                source = str(Path(config_directory) / source)
 
             is_dir = _is_dir_all_model(source, model_realizations)
 
