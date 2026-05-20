@@ -11,7 +11,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 if TYPE_CHECKING:
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
-    from ert.gui.tools.plot.plottery import PlotContext
+    from ert.gui.tools.plot.utils import PlotContext
 
 
 class StdDevPlot:

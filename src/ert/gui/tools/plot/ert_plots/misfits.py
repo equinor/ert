@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
-    from ert.gui.tools.plot.plottery import PlotContext
+    from ert.gui.tools.plot.utils import PlotContext
 
 
 class MisfitsPlot:

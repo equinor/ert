@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 from matplotlib.figure import Figure
 
+from ert.gui.tools.plot.ert_plots import StdDevPlot
 from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
-from ert.gui.tools.plot.plottery.plots import StdDevPlot
+from ert.gui.tools.plot.utils import PlotConfig, PlotContext
 
 
 @pytest.fixture

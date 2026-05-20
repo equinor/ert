@@ -17,7 +17,7 @@ from ert.gui.tools.plot.widgets import ClearableLineEdit
 from .style_chooser import STYLESET_DEFAULT, StyleChooser
 
 if TYPE_CHECKING:
-    from ert.gui.tools.plot.plottery import PlotConfig
+    from ert.gui.tools.plot.utils import PlotConfig
 
 
 class CustomizationView(QWidget):

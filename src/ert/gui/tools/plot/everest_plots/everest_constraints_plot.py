@@ -6,9 +6,8 @@ import pandas as pd
 from matplotlib.patches import Patch
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.tools.plot.utils.plot_tools import PlotTools
 from ert.gui.utils import LEGEND_THRESHOLD
-
-from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     import numpy as np
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
-    from ert.gui.tools.plot.plottery import PlotContext
+    from ert.gui.tools.plot.utils import PlotContext
 
 
 class EverestConstraintsPlot:

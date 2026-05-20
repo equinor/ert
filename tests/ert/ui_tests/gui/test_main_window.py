@@ -42,13 +42,15 @@ from ert.gui.main_window import SidebarToolButton
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectListWidget
 from ert.gui.tools.plot.plot_window import (
     GEN_KW_DEFAULT,
     RESPONSE_DEFAULT,
     PlotApi,
     PlotWindow,
+)
+from ert.gui.tools.plot.widgets.data_type_keys_widget import DataTypeKeysWidget
+from ert.gui.tools.plot.widgets.plot_ensemble_selection_widget import (
+    EnsembleSelectListWidget,
 )
 from ert.plugins import get_site_plugins
 from ert.run_models import (

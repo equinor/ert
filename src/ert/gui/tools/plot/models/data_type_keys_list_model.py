@@ -7,8 +7,7 @@ from typing_extensions import override
 
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.icon_utils import load_icon
-
-from .plot_api import PlotApiKeyDefinition
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 @dataclass(frozen=True)

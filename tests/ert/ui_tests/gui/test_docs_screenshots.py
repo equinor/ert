@@ -16,8 +16,10 @@ from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
 from ert.gui.experiments.view import RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
+from ert.gui.tools.plot.widgets.data_type_keys_widget import DataTypeKeysWidget
+from ert.gui.tools.plot.widgets.plot_ensemble_selection_widget import (
+    EnsembleSelectionWidget,
+)
 from ert.run_models import EnsembleExperiment, EnsembleSmoother, RunModel
 from ert.services import ErtServerController
 from ert.storage import open_storage

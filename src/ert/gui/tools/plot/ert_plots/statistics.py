@@ -7,11 +7,11 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from pandas import DataFrame
 
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext, PlotStyle
+from ert.gui.tools.plot.utils import PlotConfig, PlotContext, PlotStyle
+from ert.gui.tools.plot.utils.plot_tools import PlotTools
 
 from .history import plotHistory
 from .observations import plotObservations
-from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt

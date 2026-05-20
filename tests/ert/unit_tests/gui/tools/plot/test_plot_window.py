@@ -10,14 +10,14 @@ from pytestqt.qtbot import QtBot
 
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
-from ert.gui.tools.plot.data_type_keys_list_model import DataTypeSeparator
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
+from ert.gui.tools.plot.ert_plots.gaussian_kde import plotGaussianKDE
+from ert.gui.tools.plot.ert_plots.histogram import HistogramPlot
+from ert.gui.tools.plot.models.data_type_keys_list_model import DataTypeSeparator
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
-from ert.gui.tools.plot.plot_widget import PlotWidget
 from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
-from ert.gui.tools.plot.plottery.plots.gaussian_kde import plotGaussianKDE
-from ert.gui.tools.plot.plottery.plots.histogram import HistogramPlot
+from ert.gui.tools.plot.utils import PlotConfig, PlotContext
+from ert.gui.tools.plot.widgets.data_type_keys_widget import DataTypeKeysWidget
+from ert.gui.tools.plot.widgets.plot_widget import PlotWidget
 from ert.services import ErtServerController
 
 EVEREST_KEY_DEFS = [
@@ -348,7 +348,7 @@ def test_that_separators_are_included_in_everest(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        "ert.gui.tools.plot.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
     )
 
@@ -363,7 +363,7 @@ def test_that_datatype_separators_are_not_selectable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        "ert.gui.tools.plot.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
     )
     widget = DataTypeKeysWidget(EVEREST_KEY_DEFS)
@@ -381,7 +381,7 @@ def test_that_datatype_separators_are_never_set_as_default(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        "ert.gui.tools.plot.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
     )
     widget = DataTypeKeysWidget(EVEREST_KEY_DEFS)
