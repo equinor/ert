@@ -121,9 +121,9 @@ class DistanceLocalizationUpdate:
     ) -> npt.NDArray[np.floating]:
         assert self._location_mask is not None
 
-        rho = np.ones((num_params, self._num_obs), dtype=np.float64)
+        rho = np.ones((num_params, self._num_obs), dtype=np.float32)
         if located_rho is not None:
-            rho[:, self._location_mask] = located_rho
+            rho[:, self._location_mask] = located_rho.astype(np.float32, copy=False)
         return rho
 
     def _update_field(
@@ -189,7 +189,8 @@ class DistanceLocalizationUpdate:
         def localization_callback(
             K: npt.NDArray[np.floating],
         ) -> npt.NDArray[np.floating]:
-            return K * rho_full
+            K *= rho_full
+            return K
 
         return self._smoother.assimilate_batch(
             X=param_ensemble,
@@ -251,7 +252,8 @@ class DistanceLocalizationUpdate:
         def localization_callback(
             K: npt.NDArray[np.floating],
         ) -> npt.NDArray[np.floating]:
-            return K * rho_full
+            K *= rho_full
+            return K
 
         return self._smoother.assimilate_batch(
             X=param_ensemble,
