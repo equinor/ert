@@ -1,6 +1,5 @@
 import logging
 import os
-import os.path
 import shutil
 import stat
 from argparse import ArgumentParser
@@ -51,7 +50,7 @@ def test_load_forward_model():
     assert fm_step.stdout_file is None
     assert fm_step.stderr_file is None
 
-    assert fm_step.executable == os.path.join(Path.cwd(), "script.sh")
+    assert fm_step.executable == str(Path.cwd() / "script.sh")
     assert os.access(fm_step.executable, os.X_OK)
 
     assert fm_step.min_arg is None

@@ -53,10 +53,10 @@ def test_save_running_config(
     config.write_to_file("config.yml")
 
     everest_entry(["config.yml", "--skip-prompt"])
-    saved_config_path = os.path.join(config.output_dir, "config.yml")
+    saved_config_path = Path(config.output_dir) / "config.yml"
 
-    assert Path(saved_config_path).exists()
-    shutil.move(saved_config_path, os.path.join(Path.cwd(), "saved_config.yml"))
+    assert saved_config_path.exists()
+    shutil.move(saved_config_path, Path.cwd() / "saved_config.yml")
 
     new_config = EverestConfig.load_file("saved_config.yml")
 

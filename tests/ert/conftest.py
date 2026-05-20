@@ -98,7 +98,7 @@ settings.register_profile(
 
 
 @pytest.fixture(scope="session", name="source_root")
-def fixture_source_root():
+def fixture_source_root() -> Path:
     return SOURCE_DIR
 
 
@@ -122,11 +122,11 @@ def maximize_ulimits():
 
 
 @pytest.fixture(name="setup_case")
-def fixture_setup_case(tmp_path_factory, source_root, monkeypatch):
+def fixture_setup_case(tmp_path_factory, source_root: Path, monkeypatch):
     def copy_case(path, config_file):
         tmp_path = tmp_path_factory.mktemp(path.replace("/", "-"))
         shutil.copytree(
-            os.path.join(source_root, "test-data/ert", path), tmp_path / "test_data"
+            source_root / "test-data" / "ert" / path, tmp_path / "test_data"
         )
         monkeypatch.chdir(tmp_path / "test_data")
         return ErtConfig.from_file(config_file)
@@ -182,11 +182,11 @@ def minimum_case(use_tmpdir):
 
 
 @pytest.fixture(name="copy_case")
-def fixture_copy_case(tmp_path_factory, source_root, monkeypatch):
+def fixture_copy_case(tmp_path_factory, source_root: Path, monkeypatch):
     def _copy_case(path):
         tmp_path = tmp_path_factory.mktemp(path.replace("/", "-"))
         shutil.copytree(
-            os.path.join(source_root, "test-data/ert", path),
+            source_root / "test-data" / "ert" / path,
             tmp_path / "test_data",
             ignore=shutil.ignore_patterns("storage", "poly_out"),
         )
@@ -376,10 +376,8 @@ def _qt_excepthook(monkeypatch):
     monkeypatch.setattr(sys, "excepthook", excepthook)
 
 
-def _run_snake_oil(source_root):
-    shutil.copytree(
-        os.path.join(source_root, "test-data/ert", "snake_oil"), "test_data"
-    )
+def _run_snake_oil(source_root: Path):
+    shutil.copytree(source_root / "test-data" / "ert" / "snake_oil", "test_data")
     os.chdir("test_data")
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:
@@ -403,10 +401,8 @@ def _run_snake_oil(source_root):
     run_cli(parsed)
 
 
-def _run_heat_equation(source_root, run_mode):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "ert", "heat_equation"), "test_data"
-    )
+def _run_heat_equation(source_root: Path, run_mode):
+    shutil.copytree(source_root / "test-data" / "ert" / "heat_equation", "test_data")
     os.chdir("test_data")
     with Path("config.ert").open("a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
@@ -424,7 +420,7 @@ def _run_heat_equation(source_root, run_mode):
 
 
 @pytest.fixture
-def _shared_snake_oil_case(request, monkeypatch, source_root):
+def _shared_snake_oil_case(request, monkeypatch, source_root: Path):
     """This fixture will run the snake_oil case to populate storage,
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
@@ -442,7 +438,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
 
 
 @pytest.fixture
-def _shared_heat_equation_es(request, monkeypatch, source_root):
+def _shared_heat_equation_es(request, monkeypatch, source_root: Path):
     """This fixture will run the heat_equation case to populate storage,
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
@@ -460,7 +456,7 @@ def _shared_heat_equation_es(request, monkeypatch, source_root):
 
 
 @pytest.fixture
-def _shared_heat_equation_esmda(request, monkeypatch, source_root):
+def _shared_heat_equation_esmda(request, monkeypatch, source_root: Path):
     """This fixture will run the heat_equation case to populate storage,
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
@@ -478,7 +474,7 @@ def _shared_heat_equation_esmda(request, monkeypatch, source_root):
 
 
 @pytest.fixture
-def _shared_heat_equation_enif(request, monkeypatch, source_root):
+def _shared_heat_equation_enif(request, monkeypatch, source_root: Path):
     """This fixture will run the heat_equation case to populate storage,
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
@@ -523,8 +519,8 @@ def snake_oil_default_storage(snake_oil_case_storage):
 
 
 @pytest.fixture(scope="session")
-def block_storage_path(source_root):
-    path = source_root / "test-data/ert/block_storage/snake_oil"
+def block_storage_path(source_root: Path):
+    path = source_root / "test-data" / "ert" / "block_storage" / "snake_oil"
     if not path.is_dir():
         pytest.skip(
             "'test-data/ert/block_storage' has not been checked out.\n"

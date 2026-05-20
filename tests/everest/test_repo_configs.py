@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 from ropt.workflow import find_backend_plugin
@@ -6,18 +6,13 @@ from ropt.workflow import find_backend_plugin
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 
 
-def _get_all_files(folder):
-    return [
-        os.path.join(root, filename)
-        for root, _, files in os.walk(folder)
-        for filename in files
-    ]
+def _get_all_files(folder: Path) -> list[Path]:
+    return [path for path in folder.rglob("*") if path.is_file()]
 
 
 @pytest.mark.slow
 def test_all_repo_configs():
-    repo_dir = os.path.join(os.path.dirname(__file__), "..")
-    repo_dir = os.path.realpath(repo_dir)
+    repo_dir = Path(__file__).parent.parent.resolve()
 
     data_folders = (
         "examples/eightcells/everest/input",
@@ -25,28 +20,29 @@ def test_all_repo_configs():
     )
 
     config_folders = (
-        "examples",
-        "everest",
-        "tests",
+        repo_dir / "examples",
+        repo_dir / "everest",
+        repo_dir / "tests",
     )
-    config_folders = map(lambda fn: os.path.join(repo_dir, fn), config_folders)  # noqa E731
 
-    def is_yaml(fn):
+    def is_yaml(fn: str):
         return fn.endswith(".yml")
 
-    def is_data(fn):
+    def is_data(fn: str):
         return any(df in fn for df in data_folders)
 
-    def is_config(fn):
+    def is_config(fn: str):
         return is_yaml(fn) and not is_data(fn) and "invalid" not in fn
 
-    config_files = [fn for cdir in config_folders for fn in _get_all_files(cdir)]
+    config_files: list[str] = [
+        str(fn) for cdir in config_folders for fn in _get_all_files(cdir)
+    ]
     config_files = filter(is_config, config_files)
 
     if find_backend_plugin("scipy/default") is None:
-        config_files = [f for f in config_files if "scipy" not in f]
+        config_files = [f for f in config_files if "scipy" not in str(f)]
 
     config_files = list(config_files)
     for config_file in config_files:
-        config = yaml_file_to_substituted_config_dict(config_file)
+        config = yaml_file_to_substituted_config_dict(str(config_file))
         assert config is not None

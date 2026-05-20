@@ -177,7 +177,7 @@ def test_run_fails_using_exit_bash_builtin():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_defined_executable_but_missing():
-    executable = os.path.join(Path.cwd(), "this/is/not/a/file")
+    executable = str(Path.cwd() / "this" / "is" / "not" / "a" / "file")
     fmstep = ForwardModelStep(
         {
             "name": "TEST_EXECUTABLE_NOT_FOUND",
@@ -195,16 +195,16 @@ def test_run_with_defined_executable_but_missing():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_empty_executable():
-    empty_executable = os.path.join(Path.cwd(), "foo")
-    with Path(empty_executable).open("a", encoding="utf-8"):
+    empty_executable = Path.cwd() / "foo"
+    with empty_executable.open("a", encoding="utf-8"):
         pass
     st = os.stat(empty_executable)
-    Path(empty_executable).chmod(st.st_mode | stat.S_IEXEC)
+    empty_executable.chmod(st.st_mode | stat.S_IEXEC)
 
     fmstep = ForwardModelStep(
         {
             "name": "TEST_EXECUTABLE_NOT_EXECUTABLE",
-            "executable": empty_executable,
+            "executable": str(empty_executable),
             "stdout": "mkdir_out",
             "stderr": "mkdir_err",
         },
@@ -221,14 +221,14 @@ def test_run_with_empty_executable():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_defined_executable_no_exec_bit():
-    non_executable = os.path.join(Path.cwd(), "foo")
-    with Path(non_executable).open("a", encoding="utf-8"):
+    non_executable = Path.cwd() / "foo"
+    with non_executable.open("a", encoding="utf-8"):
         pass
 
     fmstep = ForwardModelStep(
         {
             "name": "TEST_EXECUTABLE_NOT_EXECUTABLE",
-            "executable": non_executable,
+            "executable": str(non_executable),
             "stdout": "mkdir_out",
             "stderr": "mkdir_err",
         },

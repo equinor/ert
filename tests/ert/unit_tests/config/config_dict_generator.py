@@ -651,8 +651,7 @@ def config_generators(draw, use_eclbase=booleans):
         note(f"Using tmp dir: {tmp!s}")
         with tmp.as_cwd():
             config_values.run_template = [
-                [os.path.join(tmp, src), target]
-                for src, target in config_values.run_template
+                [str(tmp / src), target] for src, target in config_values.run_template
             ]
             for key in [
                 "runpath",
@@ -661,9 +660,7 @@ def config_generators(draw, use_eclbase=booleans):
                 "obs_config",
                 "data_file",
             ]:
-                setattr(
-                    config_values, key, os.path.join(tmp, getattr(config_values, key))
-                )
+                setattr(config_values, key, str(tmp / getattr(config_values, key)))
             for dirname in should_exist_directories:
                 if not os.path.isdir(dirname):
                     os.mkdir(dirname)

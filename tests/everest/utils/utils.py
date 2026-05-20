@@ -1,7 +1,7 @@
 import contextlib
-import os
 import sys
 from io import StringIO
+from pathlib import Path
 from textwrap import dedent
 
 import yaml
@@ -34,8 +34,8 @@ def everest_config_with_defaults(**kwargs) -> EverestConfig:
     return EverestConfig.with_plugins(yaml.safe_load(MIN_CONFIG) | {**kwargs})  # type: ignore
 
 
-def relpath(*path):
-    return os.path.join(os.path.dirname(os.path.dirname(__file__)), *path)
+def relpath(*path) -> Path:
+    return Path(__file__).resolve().parent.parent.joinpath(*path)
 
 
 @contextlib.contextmanager

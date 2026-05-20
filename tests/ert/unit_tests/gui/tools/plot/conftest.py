@@ -39,7 +39,7 @@ def api(tmpdir, source_root, monkeypatch):
 
     with tmpdir.as_cwd():
         test_data_root = source_root / "test-data" / "ert"
-        test_data_dir = os.path.join(test_data_root, "snake_oil")
+        test_data_dir = test_data_root / "snake_oil"
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")
         yield PlotApi(test_data_dir)

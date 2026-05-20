@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 import jinja2
@@ -58,10 +57,7 @@ DUAL_INPUT_TMPL = "{{ well_drill_north.PROD1 }} vs {{ well_drill_south.PROD1 }}"
 
 template_render = import_from_location(
     "template_render",
-    os.path.join(
-        SOURCE_DIR,
-        "src/ert/resources/forward_models/template_render.py",
-    ),
+    SOURCE_DIR / "src" / "ert" / "resources" / "forward_models" / "template_render.py",
 )
 
 

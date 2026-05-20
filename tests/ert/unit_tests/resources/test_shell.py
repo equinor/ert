@@ -26,46 +26,48 @@ def pushd(path):
         os.chdir(cwd0)
 
 
+SHELL_SCRIPTS = SOURCE_DIR / "src" / "ert" / "resources" / "shell_scripts"
+
 symlink = import_from_location(
     "symlink",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/symlink.py"),
+    SHELL_SCRIPTS / "symlink.py",
 ).symlink
 
 careful_copy_file = import_from_location(
     "careful_copy",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/careful_copy_file.py"),
+    SHELL_SCRIPTS / "careful_copy_file.py",
 ).careful_copy_file
 mkdir = import_from_location(
     "make_directory",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/make_directory.py"),
+    SHELL_SCRIPTS / "make_directory.py",
 ).mkdir
 careful_copy_file = import_from_location(
     "careful_copy",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/careful_copy_file.py"),
+    SHELL_SCRIPTS / "careful_copy_file.py",
 ).careful_copy_file
 copy_directory = import_from_location(
     "careful_copy",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/copy_directory.py"),
+    SHELL_SCRIPTS / "copy_directory.py",
 ).copy_directory
 copy_file = import_from_location(
     "copy_file",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/copy_file.py"),
+    SHELL_SCRIPTS / "copy_file.py",
 ).copy_file
 delete_directory = import_from_location(
     "delete_directory",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/delete_directory.py"),
+    SHELL_SCRIPTS / "delete_directory.py",
 ).delete_directory
 delete_file = import_from_location(
     "delete_file",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/delete_file.py"),
+    SHELL_SCRIPTS / "delete_file.py",
 ).delete_file
 move_directory = import_from_location(
     "move_directory",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/move_directory.py"),
+    SHELL_SCRIPTS / "move_directory.py",
 ).move_directory
 move_file = import_from_location(
     "move_file",
-    os.path.join(SOURCE_DIR, "src/ert/resources/shell_scripts/move_file.py"),
+    SHELL_SCRIPTS / "move_file.py",
 ).move_file
 
 

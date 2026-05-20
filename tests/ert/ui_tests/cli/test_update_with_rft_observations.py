@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 from pathlib import Path
 
@@ -16,7 +15,7 @@ from .run_cli import run_cli
 @pytest.mark.slow
 @pytest.mark.skipif(not shutil.which("flow"), reason="flow not available")
 def test_that_rft_example_with_rft_observation_keyword_yelds_same_result_as_gendata_rft(
-    use_tmpdir, source_root, snapshot, request
+    use_tmpdir, source_root: Path, snapshot, request
 ):
     """
     Created snapshot of rft pressures by using the GENDATA_RFT in combination
@@ -26,9 +25,7 @@ def test_that_rft_example_with_rft_observation_keyword_yelds_same_result_as_gend
     Note that the snapshot might depend on version of Flow. Snapshot values
     were changed upon the release of Flow 2026.04
     """
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "ert", "rft_example"), "test-data"
-    )
+    shutil.copytree(source_root / "test-data" / "ert" / "rft_example", "test-data")
     run_cli(ENSEMBLE_SMOOTHER_MODE, "--disable-monitoring", "test-data/rft.ert")
     pressure = {}
     for file in sorted(Path("spe1_out").rglob("*.RFT")):

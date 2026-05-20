@@ -1,7 +1,6 @@
 import contextlib
 import fileinput
 import os
-import os.path
 import shutil
 import stat
 from collections.abc import Iterator
@@ -72,10 +71,10 @@ def opened_main_window_poly(
 
 
 def _new_poly_example(
-    source_root, destination, num_realizations: int = DEFAULT_NUM_REALIZATIONS
+    source_root: Path, destination, num_realizations: int = DEFAULT_NUM_REALIZATIONS
 ):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "ert", "poly_example"),
+        source_root / "test-data" / "ert" / "poly_example",
         destination,
         dirs_exist_ok=True,
     )
