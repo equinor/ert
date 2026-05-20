@@ -1040,16 +1040,12 @@ class LocalEnsemble(BaseMode):
 
                     if pivoted.is_empty():
                         # There are no responses for this realization,
-                        # so we explicitly create a column of nans
+                        # so we explicitly create a column of Nones
                         # to represent this. We are basically saying that
                         # for this realization, each observation points
-                        # to a NaN response.
+                        # to a None response.
                         joined = observations.with_columns(
-                            pl.Series(
-                                str(real),
-                                [np.nan] * len(observations),
-                                dtype=pl.Float32,
-                            )
+                            pl.lit(None, dtype=pl.Float32).alias(str(real)),
                         )
                     elif "time" in pivoted:
                         by_cols = [

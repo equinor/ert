@@ -301,10 +301,5 @@ def test_that_response_mean_is_calculated_on_mismatched_responses(
     update_log_table = update_widget._tab_widget.widget(1).findChild(UpdateLogTable)
     response_mean_index = update_log_table.data.header.index("response_mean")
 
-    case = request.node.callspec.id
-    if case == "all responses mismatched observation in realization 0":
-        for obs_index, row in enumerate(update_log_table.data.data):
-            assert np.isnan(row[response_mean_index]), f"at row {obs_index}"
-    else:
-        for obs_index, row in enumerate(update_log_table.data.data):
-            assert not np.isnan(row[response_mean_index]), f"at row {obs_index}"
+    for obs_index, row in enumerate(update_log_table.data.data):
+        assert not np.isnan(row[response_mean_index]), f"at row {obs_index}"
