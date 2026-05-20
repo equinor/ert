@@ -5,7 +5,6 @@ import fnmatch
 import logging
 import os
 import re
-import warnings
 from collections import defaultdict
 from dataclasses import InitVar, dataclass
 from pathlib import Path
@@ -21,9 +20,9 @@ from resfo_utilities import (
     InvalidRFTError,
     RFTReader,
 )
+from typing_extensions import override
 
 from ert.substitutions import substitute_runpath_name
-from ert.warnings import PostExperimentWarning
 
 from .parsing import (
     ConfigDict,
@@ -381,36 +380,6 @@ class RFTConfig(ResponseConfig):
             pl.col("actual_zones")
         )
 
-    @staticmethod
-    def enrich_observations_with_metadata_and_warn_on_zone_mismatch(
-        observations: pl.DataFrame,
-        location_metadata: pl.DataFrame,
-        iens: int,
-        iter_: int,
-    ) -> pl.DataFrame:
-        observations_with_metadata = RFTConfig.enrich_observations_with_metadata(
-            observations, location_metadata
-        )
-
-        disabled_due_to_zone_mismatch = observations_with_metadata.filter(
-            ~RFTConfig.is_zone_valid()
-        )
-        for row in disabled_due_to_zone_mismatch.iter_rows(named=True):
-            location = (row["east"], row["north"], row["tvd"])
-            warnings.warn(
-                PostExperimentWarning(
-                    f"An RFT observation with location {location}, "
-                    f"in iteration {iter_}, realization {iens} did "
-                    f"not match expected zone {row['expected_zone']}. The observation "
-                    "was deactivated",
-                ),
-                stacklevel=2,
-            )
-
-        return observations_with_metadata.with_columns(
-            RFTConfig.is_zone_valid().alias("is_valid"),
-        )
-
     @property
     def response_type(self) -> str:
         return "rft"
@@ -422,6 +391,30 @@ class RFTConfig(ResponseConfig):
     @property
     def index_key(self) -> list[str]:
         return ["east", "north", "tvd", "zone"]
+
+    @override
+    def match_key_dict_expr(self) -> pl.Expr:
+        assert len(self.match_key) == 1
+        col = self.match_key[0]
+
+        well_connection_cell_to_str_expr = pl.concat_str(
+            [
+                pl.lit("["),
+                pl.col(col)
+                .cast(pl.Array(pl.String, 3))
+                .arr.join(", ")
+                .fill_null("None"),
+                pl.lit("]"),
+            ],
+            separator="",
+        )
+
+        return pl.concat_str(
+            pl.lit(f"{col}="),
+            pl.when(pl.col(col).is_null())
+            .then(pl.lit("None"))
+            .otherwise(well_connection_cell_to_str_expr),
+        )
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> RFTConfig | None:

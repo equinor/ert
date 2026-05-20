@@ -40,6 +40,7 @@ from ert.config._observations import (
     BreakthroughObservation,
     GeneralObservation,
     RFTObservation,
+    SummaryObservation,
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import DISTRIBUTION_CLASSES
@@ -1239,7 +1240,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
 
 
 def rft_response(
-    *, values=100.0, well="WELL", well_connection_cell=(10, 10, 10)
+    *, well="WELL", values=100.0, well_connection_cell=(10, 10, 10)
 ) -> pl.DataFrame:
     date = datetime(2000, 1, 1).date()  # noqa: DTZ001
     df = pl.DataFrame(
@@ -1261,11 +1262,11 @@ def rft_response(
     return df
 
 
-def rft_observation1(*, zone=None):
+def rft_observation1(*, zone=None, well="WELL"):
     date = datetime(2000, 1, 1).date()  # noqa: DTZ001
     return RFTObservation(
         name="RFT_OBS1",
-        well="WELL",
+        well=well,
         date=date.isoformat(),
         property="SWAT",
         value=100.0,
@@ -1277,11 +1278,11 @@ def rft_observation1(*, zone=None):
     )
 
 
-def rft_observation2(*, zone=None):
+def rft_observation2(*, zone=None, well="WELL"):
     date = datetime(2000, 1, 1).date()  # noqa: DTZ001
     return RFTObservation(
         name="RFT_OBS2",
-        well="WELL",
+        well=well,
         date=date.isoformat(),
         property="SWAT",
         value=100.0,
@@ -1293,7 +1294,21 @@ def rft_observation2(*, zone=None):
     )
 
 
-def location_metadata(*, zones1=("zone1",), zones2=("zone2",)) -> pl.DataFrame:
+def location_metadata(
+    *,
+    zones1=("zone1",),
+    zones2=("zone2",),
+    well_connection_cell1=(
+        10,
+        10,
+        10,
+    ),
+    well_connection_cell2=(
+        10,
+        10,
+        10,
+    ),
+) -> pl.DataFrame:
     df = pl.DataFrame(
         [
             {
@@ -1301,14 +1316,14 @@ def location_metadata(*, zones1=("zone1",), zones2=("zone2",)) -> pl.DataFrame:
                 "north": 105.0,
                 "tvd": 1000.0,
                 "actual_zones": zones1,
-                "well_connection_cell": [10, 10, 10],
+                "well_connection_cell": well_connection_cell1,
             },
             {
                 "east": 300.0,
                 "north": 405.0,
                 "tvd": 2000.0,
                 "actual_zones": zones2,
-                "well_connection_cell": [10, 10, 10],
+                "well_connection_cell": well_connection_cell2,
             },
         ],
         schema=RFTConfig.location_metadata_schema(),
@@ -1361,7 +1376,6 @@ def test_that_get_observations_and_responses_applies_rft_metadata(tmp_path):
         assert obs_and_responses["1"].to_list() == [300.0]
 
 
-@pytest.mark.filterwarnings("ignore:.*did not match expected zone")
 def test_that_get_observations_and_responses_disables_observation(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         rft_config = RFTConfig(
@@ -1404,8 +1418,231 @@ def test_that_get_observations_and_responses_disables_observation(tmp_path):
         )
 
         assert obs_and_responses["observation_key"].to_list() == active_observations
+        msg = "expected zone 'zone2' did not match any of the simulated zones: zone1"
         assert obs_and_responses["0"].to_list() == [None, 200.0]
         assert obs_and_responses["1"].to_list() == [300.0, 300.0]
+        assert obs_and_responses["qc_error_0"].to_list() == [msg, None]
+        assert obs_and_responses["qc_error_1"].to_list() == [None, None]
+
+
+def test_that_get_observations_and_responses_combines_error_messages(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        rft_config = RFTConfig(
+            input_files=["BASE.RFT"],
+            data_to_read={"WELL": {"2000-01-01": ["SWAT"]}},
+        )
+
+        obs1 = rft_observation1(zone="zone1")
+        obs2 = rft_observation2(zone="zone2")
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [
+                    obs1.model_dump(mode="json"),
+                    obs2.model_dump(mode="json"),
+                ],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=2, iteration=0, name="prior"
+        )
+
+        ensemble.save_response("rft", rft_response(values=200.0), 0)
+        ensemble.save_observation_location_metadata(
+            location_metadata(
+                zones1=["zone0"], zones2=["zone2"], well_connection_cell1=None
+            ),
+            0,
+        )
+
+        ensemble.save_response("rft", rft_response(values=300.0), 1)
+        ensemble.save_observation_location_metadata(
+            location_metadata(
+                zones1=["zone1"], zones2=["zone2"], well_connection_cell1=None
+            ),
+            1,
+        )
+
+        iens_active_index = np.array([0, 1])
+        active_observations = ["RFT_OBS1", "RFT_OBS2"]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["observation_key"].to_list() == active_observations
+
+        msg1 = "expected zone 'zone1' did not match any of the simulated zones: zone0"
+        msg2 = "did not find grid coordinate for location 100.0, 105.0, 1000.0"
+        msg3 = (
+            "no response matched observation data: "
+            "response_key=WELL:2000-01-01:SWAT, well_connection_cell=None"
+        )
+        msg_real0 = f"{msg1};\n{msg2};\n{msg3}"
+        msg_real1 = f"{msg2};\n{msg3}"
+        assert obs_and_responses["0"].to_list() == [None, 200.0]
+        assert obs_and_responses["1"].to_list() == [None, 300.0]
+        assert obs_and_responses["qc_error_0"].to_list() == [msg_real0, None]
+        assert obs_and_responses["qc_error_1"].to_list() == [msg_real1, None]
+
+
+@pytest.mark.parametrize(
+    ("rft_kwargs"),
+    [
+        pytest.param(
+            {"well": "OTHER_WELL"},
+            id="on response key",
+        ),
+        pytest.param(
+            {"well_connection_cell": [11, 11, 11]},
+            id="on match key",
+        ),
+    ],
+)
+def test_that_get_observations_and_responses_adds_qc_error_on_rft_mismatch(
+    tmp_path, rft_kwargs
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        rft_config = RFTConfig(
+            input_files=["BASE.RFT"],
+            data_to_read={"WELL": {"2000-01-01": ["SWAT"]}},
+        )
+
+        obs1 = rft_observation1()
+        if "well" in rft_kwargs:
+            obs2 = rft_observation2(well=rft_kwargs["well"])
+        else:
+            obs2 = rft_observation2()
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [
+                    obs1.model_dump(mode="json"),
+                    obs2.model_dump(mode="json"),
+                ],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=2, iteration=0, name="prior"
+        )
+
+        ensemble.save_response("rft", rft_response(**rft_kwargs), 0)
+        ensemble.save_response("rft", rft_response(**rft_kwargs), 1)
+
+        if "well_connection_cell" in rft_kwargs:
+            ensemble.save_observation_location_metadata(
+                location_metadata(
+                    well_connection_cell2=rft_kwargs["well_connection_cell"]
+                ),
+                0,
+            )
+            ensemble.save_observation_location_metadata(
+                location_metadata(
+                    well_connection_cell2=rft_kwargs["well_connection_cell"]
+                ),
+                1,
+            )
+        else:
+            ensemble.save_observation_location_metadata(location_metadata(), 0)
+            ensemble.save_observation_location_metadata(location_metadata(), 1)
+
+        iens_active_index = np.array([0, 1])
+        active_observations = ["RFT_OBS1", "RFT_OBS2"]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["observation_key"].to_list() == active_observations
+
+        msg = (
+            "no response matched observation data: "
+            "response_key=WELL:2000-01-01:SWAT, well_connection_cell=[10, 10, 10]"
+        )
+        np.testing.assert_equal(obs_and_responses["0"].to_list(), [None, 100.0])
+        np.testing.assert_equal(obs_and_responses["1"].to_list(), [None, 100.0])
+        assert obs_and_responses["qc_error_0"].to_list() == [msg, None]
+        assert obs_and_responses["qc_error_1"].to_list() == [msg, None]
+
+
+def summary_response(*, key="FOPR", time="2000-01-01", values=100.0) -> pl.DataFrame:
+    return pl.DataFrame(
+        {
+            "response_key": [key],
+            "time": pl.Series([datetime.fromisoformat(time)], dtype=pl.Datetime("ms")),
+            "values": [values],
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    ("summary_kwargs"),
+    [
+        pytest.param(
+            {"key": "Fluffy"},
+            id="on response key",
+        ),
+        pytest.param(
+            {"time": "2024-01-01"},
+            id="on match key",
+        ),
+    ],
+)
+def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
+    tmp_path, summary_kwargs
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        obs_date = datetime(2000, 1, 1)  # noqa: DTZ001
+
+        summary_config = SummaryConfig(input_files=["not_relevant"], keys=["*"])
+
+        summary_observation = SummaryObservation(
+            name="Summary_OBS",
+            key="FOPR",
+            date=obs_date.isoformat(),
+            value=1.0,
+            error=0.1,
+        )
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [summary_config.model_dump(mode="json")],
+                "observations": [
+                    summary_observation.model_dump(mode="json"),
+                ],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=2, iteration=0, name="prior"
+        )
+
+        ensemble.save_response("summary", summary_response(**summary_kwargs), 0)
+        ensemble.save_response("summary", summary_response(**summary_kwargs), 1)
+
+        iens_active_index = np.array([0, 1])
+        active_observations = [
+            "Summary_OBS",
+        ]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["observation_key"].to_list() == active_observations
+
+        msg = (
+            "no response matched observation data: "
+            "response_key=FOPR, time=2000-01-01 00:00:00.000"
+        )
+        np.testing.assert_equal(obs_and_responses["0"].to_list(), [None])
+        np.testing.assert_equal(obs_and_responses["1"].to_list(), [None])
+        assert obs_and_responses["qc_error_0"].to_list() == [msg]
+        assert obs_and_responses["qc_error_1"].to_list() == [msg]
 
 
 def add_to_name(prefix: str):

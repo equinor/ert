@@ -19,6 +19,7 @@ from ert.analysis._es_update import (
 )
 from ert.analysis._update_commons import (
     _compute_observation_statuses,
+    _missing_realizations_expr,
     _OutlierColumns,
     _preprocess_observations_and_responses,
 )
@@ -812,6 +813,60 @@ def setup_dataframe_for_compute_observation_statuses(
     )
 
     assert expected_statuses.tolist() == df_with_statuses["status"].to_list()
+
+
+def test_that_compute_observation_statuses_uses_qc_error_columns_when_available():
+    num_reals = 4
+    df = pl.DataFrame(
+        [
+            {
+                "observation_key": "OBS1",
+                "observations": 42.0,
+                "std": 1.0,
+                "0": None,
+                "1": 42.0,
+                "2": 12.0,
+                "3": 42.0,
+                "qc_error_2": "terror that flaps in the night",
+                "qc_error_3": None,
+            }
+        ]
+    )
+
+    df_with_statuses = _compute_observation_statuses(
+        df,
+        active_realizations=[str(i) for i in range(num_reals)],
+        global_std_scaling=1.0,
+    )
+
+    assert df_with_statuses["missing_realizations"].to_list() == [
+        "0: unknown\n\n2: terror that flaps in the night"
+    ]
+
+
+def test_that_missing_realizations_expr_populates_error_message() -> None:
+    active_realizations = ["0", "1", "2"]
+    df = pl.DataFrame(
+        {
+            "0": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "1": [1.0, np.nan, None, 4.0, 5.0],
+            "2": [1.0, 2.0, 3.0, 4.0, None],
+            "qc_error_0": [None, None, None, None, None],
+            "qc_error_1": [None, None, None, None, "new /error/"],
+            "qc_error_2": [None, None, None, "Houston, we have a problem", None],
+        }
+    )
+
+    result = df.select(_missing_realizations_expr(active_realizations))[
+        "missing_realizations"
+    ]
+
+    assert result.shape == (5,)
+    assert not result[0]
+    assert result[1] == "1: unknown"
+    assert result[2] == "1: unknown"
+    assert result[3] == "2: Houston, we have a problem"
+    assert result[4] == "1: new /error/\n\n2: unknown"
 
 
 def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):

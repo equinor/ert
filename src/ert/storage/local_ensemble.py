@@ -28,6 +28,11 @@ from ert.config import (
     SummaryConfig,
 )
 from ert.config.field import Field, field_transform
+from ert.config.observation_quality_control import (
+    append_to_qc_error,
+    ensure_qc_error_column,
+    qc_rft_observations,
+)
 from ert.config.rft_config import RFTConfig
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
@@ -1000,18 +1005,20 @@ class LocalEnsemble(BaseMode):
                 first_columns: pl.DataFrame | None = None
                 realization_columns: list[pl.DataFrame] = []
                 for real in reals:
+                    observations = ensure_qc_error_column(observations_for_type)
                     if response_type == "rft":
                         observation_metadata_in_realization = (
                             self.load_observation_location_metadata(real)
                         )
-                        observations = RFTConfig.enrich_observations_with_metadata_and_warn_on_zone_mismatch(  # noqa: E501
-                            observations_for_type,
-                            observation_metadata_in_realization,
-                            real,
-                            self.iteration,
+                        enriched_observations = (
+                            RFTConfig.enrich_observations_with_metadata(
+                                observations, observation_metadata_in_realization
+                            )
                         )
-                    else:
-                        observations = observations_for_type
+
+                        observations = qc_rft_observations(
+                            enriched_observations,
+                        )
 
                     observed_cols = {
                         k: observations[k].unique()
@@ -1070,6 +1077,24 @@ class LocalEnsemble(BaseMode):
                             nulls_equal=True,
                         )
 
+                    no_matched_response_condition = pl.col(str(real)).is_null()
+                    no_matched_response_error = pl.concat_str(
+                        [
+                            pl.lit("no response matched observation data: "),
+                            pl.lit("response_key="),
+                            pl.col("response_key").cast(pl.String),
+                            pl.lit(", "),
+                            response_cls.match_key_dict_expr(),
+                        ],
+                        separator="",
+                    )
+
+                    joined = joined.with_columns(
+                        append_to_qc_error(
+                            no_matched_response_condition, no_matched_response_error
+                        ).alias(f"qc_error_{real}")
+                    )
+
                     # Avoid potential collision with "index" column (it could be a part
                     # of the index_key)
                     joined = joined.with_columns(
@@ -1079,13 +1104,12 @@ class LocalEnsemble(BaseMode):
                         joined = joined.drop("index")
                     joined = joined.rename({"__tmp_index_key__": "index"})
 
-                    if "is_valid" in joined.columns:
-                        joined = joined.with_columns(
-                            pl.when(pl.col("is_valid"))
-                            .then(pl.col(str(real)))
-                            .otherwise(pl.lit(None, dtype=pl.Float32))
-                            .alias(str(real))
-                        )
+                    joined = joined.with_columns(
+                        pl.when(pl.col(f"qc_error_{real}").is_null())
+                        .then(pl.col(str(real)))
+                        .otherwise(pl.lit(None, dtype=pl.Float32))
+                        .alias(str(real))
+                    )
 
                     if first_columns is None:
                         # The "leftmost" index columns are not yet collected.
@@ -1105,7 +1129,9 @@ class LocalEnsemble(BaseMode):
                             ]
                         )
 
-                    realization_columns.append(joined.select(str(real)))
+                    realization_columns.append(
+                        joined.select(str(real), f"qc_error_{real}")
+                    )
 
                 if first_columns is None:
                     # Not a single realization had any responses to the

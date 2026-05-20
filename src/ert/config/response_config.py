@@ -25,6 +25,23 @@ class BaseResponseConfig(BaseModel):
         observation data. For example 'time' for summary and ['report_step','index'] for
         gen data."""
 
+    def match_key_dict_expr(self) -> pl.Expr:
+        """Polars expression for representing match key-values as a label=value string.
+
+        Concatenates `match_key` columns with ", ". Null components are rendered as the
+        literal "None" so positional meaning is preserved.
+        """
+        return pl.concat_str(
+            [
+                pl.concat_str(
+                    [pl.lit(f"{col}="), pl.col(col).cast(pl.String).fill_null("None")],
+                    separator="",
+                )
+                for col in self.match_key
+            ],
+            separator=", ",
+        )
+
     @property
     def index_key(self) -> list[str]:
         """Identification columns for observations."""

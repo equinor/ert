@@ -118,7 +118,7 @@ def test_that_report_log_table_only_shows_message_on_nan_status_click(qtbot: QtB
     ]
 
     nan_rows = [1]
-    nan_message = "Missing responses from active realizations: 1, 3"
+    nan_message = "Missing responses from active realizations:\n\n1, 3"
 
     report_table = ReportLogTable(DataSection(header=headers, data=observations))
     qtbot.addWidget(report_table)
@@ -164,8 +164,8 @@ def test_that_report_log_table_matches_data_on_sort(qtbot: QtBot):
     row100 = 0
     row200 = 1
 
-    nan_message100 = "Missing responses from active realizations: 10"
-    nan_message200 = "Missing responses from active realizations: 11"
+    nan_message100 = "Missing responses from active realizations:\n\n10"
+    nan_message200 = "Missing responses from active realizations:\n\n11"
 
     verify_disabled_observations_dialog_shows_on_click(
         qtbot, report_table, nan_message100, row100, status_column
