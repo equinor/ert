@@ -1,7 +1,6 @@
 import copy
 import logging
 import os
-import os.path
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -212,8 +211,8 @@ def validate_forward_model(forward_model, forward_model_config):
 
 def generate_step_from_dict(forward_model_config):
     forward_model_config = copy.deepcopy(forward_model_config)
-    forward_model_config["executable"] = os.path.join(
-        Path.cwd(), forward_model_config["executable"]
+    forward_model_config["executable"] = str(
+        Path.cwd() / forward_model_config["executable"]
     )
     forward_model = _generate_step(
         forward_model_config["name"],

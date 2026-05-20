@@ -488,7 +488,7 @@ def test_default_ens_path():
     dict_set_ens_path = ErtConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 1,
-            "ENSPATH": os.path.join(Path.cwd(), "storage"),
+            "ENSPATH": str(Path.cwd() / "storage"),
         }
     ).ens_path
 
@@ -670,10 +670,10 @@ def test_that_magic_strings_get_substituted_in_workflow():
         script <ZERO>
         """
     )
-    script_file_path = os.path.join(Path.cwd(), "script")
-    workflow_file_path = os.path.join(Path.cwd(), "workflow")
-    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
-    Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
+    script_file_path = Path.cwd() / "script"
+    workflow_file_path = Path.cwd() / "workflow"
+    script_file_path.write_text(script_file_contents, encoding="utf-8")
+    workflow_file_path.write_text(workflow_file_contents, encoding="utf-8")
 
     Path("script.py").write_text(
         dedent(
@@ -1424,10 +1424,10 @@ def test_parsing_workflow_with_multiple_args():
         script <ZERO>
         """
     )
-    script_file_path = os.path.join(Path.cwd(), "script")
-    workflow_file_path = os.path.join(Path.cwd(), "workflow")
-    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
-    Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
+    script_file_path = Path.cwd() / "script"
+    workflow_file_path = Path.cwd() / "workflow"
+    script_file_path.write_text(script_file_contents, encoding="utf-8")
+    workflow_file_path.write_text(workflow_file_contents, encoding="utf-8")
 
     Path("script.py").write_text(
         dedent(
@@ -1986,9 +1986,9 @@ def test_parsing_define_within_workflow():
         """
     )
 
-    script_file_path = os.path.join(Path.cwd(), "script")
-    workflow_file_path = os.path.join(Path.cwd(), "workflow")
-    workflow2_file_path = os.path.join(Path.cwd(), "workflow2")
+    script_file_path = Path.cwd() / "script"
+    workflow_file_path = Path.cwd() / "workflow"
+    workflow2_file_path = Path.cwd() / "workflow2"
 
     Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
 
@@ -2214,8 +2214,8 @@ def test_run_template_raises_configvalidationerror_with_more_than_two_arguments(
 
 @pytest.fixture
 def setup_workflow_file():
-    workflow_file_path = os.path.join(Path.cwd(), "workflow")
-    Path(workflow_file_path).write_text("TEST_SCRIPT", encoding="utf-8")
+    workflow_file_path = Path.cwd() / "workflow"
+    workflow_file_path.write_text("TEST_SCRIPT", encoding="utf-8")
 
     Path("config.ert").write_text(
         dedent(
@@ -2309,8 +2309,8 @@ def test_ert_script_hook_pre_experiment_essettings_fails():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_script_hook_valid_essettings_succeed():
-    workflow_file_path = os.path.join(Path.cwd(), "workflow")
-    Path(workflow_file_path).write_text("TEST_SCRIPT", encoding="utf-8")
+    workflow_file_path = Path.cwd() / "workflow"
+    workflow_file_path.write_text("TEST_SCRIPT", encoding="utf-8")
 
     Path("config.ert").write_text(
         dedent(

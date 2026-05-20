@@ -45,26 +45,27 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_config.write_to_file("config_minimal.yml")
     start_everest(["everest", "run", "config_minimal.yml", "--skip-prompt"])
 
-    everest_output_path = os.path.join(Path.cwd(), "everest_output")
-    everest_logs_dir_path = everest_config.log_dir
-    everserver_log_path = os.path.join(everest_logs_dir_path, "everserver.log")
-    everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")
-    forward_model_log_path = os.path.join(everest_logs_dir_path, "forward_models.log")
+    everest_output_path = Path.cwd() / "everest_output"
+    everest_logs_dir_path = Path(everest_config.log_dir)
+    everserver_log_path = everest_logs_dir_path / "everserver.log"
+    everest_log_path = everest_logs_dir_path / "everest.log"
+    forward_model_log_path = everest_logs_dir_path / "forward_models.log"
 
-    assert Path(everest_output_path).exists()
-    assert Path(everest_logs_dir_path).exists()
-    assert Path(forward_model_log_path).exists()
-    assert Path(everest_log_path).exists()
-    assert Path(everserver_log_path).exists()
+    assert everest_output_path.exists()
+    assert everest_logs_dir_path.exists()
+    assert forward_model_log_path.exists()
+    assert everest_log_path.exists()
+    assert everserver_log_path.exists()
 
-    assert "everest.detached.everserver INFO: Output directory:" in Path(
-        everest_log_path
-    ).read_text(encoding="utf-8")
-    assert "Process exited with status code 1" in Path(
-        forward_model_log_path
-    ).read_text(encoding="utf-8")
+    assert (
+        "everest.detached.everserver INFO: Output directory:"
+        in everest_log_path.read_text(encoding="utf-8")
+    )
+    assert "Process exited with status code 1" in forward_model_log_path.read_text(
+        encoding="utf-8"
+    )
 
-    endpoint_logs = Path(everserver_log_path).read_text(encoding="utf-8")
+    endpoint_logs = everserver_log_path.read_text(encoding="utf-8")
     # Avoid cases where optimization finished before we get a chance to check that
     # the everest server has started
     if endpoint_logs:

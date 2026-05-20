@@ -1,6 +1,5 @@
 import importlib
 import json
-import os
 import subprocess
 from pathlib import Path
 
@@ -19,10 +18,7 @@ from ._import_from_location import import_from_location
 
 template_render = import_from_location(
     "template_render",
-    os.path.join(
-        SOURCE_DIR,
-        "src/ert/resources/forward_models/template_render.py",
-    ),
+    SOURCE_DIR / "src" / "ert" / "resources" / "forward_models" / "template_render.py",
 )
 
 render_template = template_render.render_template
