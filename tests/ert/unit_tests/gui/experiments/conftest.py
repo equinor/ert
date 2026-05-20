@@ -1,6 +1,10 @@
+import threading
 from datetime import UTC, datetime
 from uuid import uuid4
 
+import pytest
+
+from ert.gui.experiments.experiment_panel import GUI_SIMULATION_THREAD_NAME
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_ensemble import _Index as _EnsembleIndex
 from ert.storage.local_experiment import ExperimentType, LocalExperiment
@@ -81,3 +85,22 @@ class MockStorage(LocalStorage):
         )
         self._ensembles[mock_ensemble2.id] = mock_ensemble2
         self._experiments[mock_experiment.id] = mock_experiment
+
+
+@pytest.fixture(autouse=True)
+def join_simulation_threads():
+    """Wait for GUI simulation threads to finish before a test tears down.
+
+    The GUI runs experiments in a background ``GUI_SIMULATION_THREAD_NAME`` thread
+    which clears the run model's process-global ``_ERT_*`` environment variables
+    when it finishes. Joining the thread before teardown ensures that cleanup has
+    happened, so the variables cannot leak into unrelated tests.
+    """
+    yield
+    for thread in threading.enumerate():
+        if thread.name == GUI_SIMULATION_THREAD_NAME:
+            thread.join(timeout=5)
+            assert not thread.is_alive(), (
+                f"{thread.name} did not finish within the timeout; its "
+                "environment cleanup may leak into other tests"
+            )

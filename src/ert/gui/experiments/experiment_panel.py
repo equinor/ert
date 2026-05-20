@@ -49,6 +49,8 @@ if TYPE_CHECKING:
 
 EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute selected"
 
+GUI_SIMULATION_THREAD_NAME = "ert_gui_simulation_thread"
+
 
 def create_md_table(kv: dict[str, str], output: str) -> str:
     for key, unescaped_value in kv.items():
@@ -72,7 +74,7 @@ def get_simulation_thread(
             rerun_failed_realizations=rerun_failed_realizations,
         )
 
-    return ErtThread(name="ert_gui_simulation_thread", target=run, daemon=True)
+    return ErtThread(name=GUI_SIMULATION_THREAD_NAME, target=run, daemon=True)
 
 
 class ExperimentPanel(QWidget):
