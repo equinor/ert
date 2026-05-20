@@ -127,7 +127,7 @@ class ReportLogTable(UpdateLogTable):
             )
 
             missing_realizations = hidden_item.text()
-            reasoning = "Missing responses from active realizations: " + str(
+            reasoning = "Missing responses from active realizations:\n\n" + str(
                 missing_realizations
             )
             QMessageBox.information(

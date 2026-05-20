@@ -257,6 +257,43 @@ def _preprocess_observations_and_responses(
     return observations_and_responses
 
 
+def _missing_realizations_expr(active_realizations: list[str]) -> pl.Expr:
+    """
+    For each active realization column, check if the realization has an error (value
+    is missing - NaN or null - or if the error column is set). If so, include the
+    realization name together with its error message. Combine all missing realizations
+    from one observation into a string. Set empty string for observations with no
+    missing realizations.
+    """
+    return (
+        pl.concat_list(
+            [
+                pl.when(
+                    pl.col(c).is_nan()
+                    | pl.col(c).is_null()
+                    | pl.col(f"qc_error_{c}").is_not_null()
+                )
+                .then(
+                    pl.concat_str(
+                        [
+                            pl.lit(c),
+                            pl.lit(": "),
+                            pl.col(f"qc_error_{c}")
+                            .fill_null("unknown")
+                            .cast(pl.String),
+                        ]
+                    )
+                )
+                .otherwise(pl.lit(None))
+                for c in active_realizations
+            ]
+        )
+        .list.join("\n\n")
+        .fill_null("")
+        .alias("missing_realizations")
+    )
+
+
 def _compute_observation_statuses(
     observations_and_responses: pl.DataFrame,
     active_realizations: list[str],
@@ -276,26 +313,15 @@ def _compute_observation_statuses(
 
     df_with_status = observations_and_responses
 
-    # For each active realization column, check if value is missing (NaN or null). If
-    # missing, include the realization name; otherwise, use None. Combine all missing
-    # realization names from one observation into a list, then join them into a
-    # comma-separated string. Set empty string for observations with no missing
-    # realizations.
-    missing_realizations_expr = (
-        pl.concat_list(
-            [
-                pl.when(pl.col(c).is_nan() | pl.col(c).is_null())
-                .then(pl.lit(c))
-                .otherwise(pl.lit(None))
-                for c in active_realizations
-            ]
-        )
-        .list.join(", ")
-        .fill_null("")
-        .alias("missing_realizations")
-    )
+    df_with_missing_realizations = df_with_status.with_columns(
+        [
+            pl.lit(None, dtype=pl.String).alias(f"qc_error_{realization}")
+            for realization in active_realizations
+            if f"qc_error_{realization}" not in df_with_status.columns
+        ]
+    ).select(_missing_realizations_expr(active_realizations))
 
-    df_with_status = df_with_status.with_columns(missing_realizations_expr)
+    df_with_status = df_with_status.hstack(df_with_missing_realizations)
 
     if outlier_settings is None:
         return df_with_status.with_columns(

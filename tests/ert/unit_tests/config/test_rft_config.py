@@ -1,5 +1,6 @@
 import io
 import os
+from datetime import datetime
 from io import BytesIO, StringIO
 from typing import cast
 
@@ -18,7 +19,6 @@ from ert.config import (
 from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
-from ert.warnings import PostExperimentWarning
 from tests.ert.rft_generator import cell_start, float_arr
 
 original_open = open
@@ -80,6 +80,41 @@ def test_that_rfts_match_key_is_well_connection_cell():
             data_to_read={"*": {"*": ["*"]}},
         ).match_key
     ) == {"well_connection_cell"}
+
+
+def test_that_match_key_dict_expr_fits_match_key():
+    date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+
+    def response(well_connection_cell) -> pl.DataFrame:
+        return pl.DataFrame(
+            {
+                "response_key": ["WELL:2000-01-01:SWAT"],
+                "well": ["WELL"],
+                "date": [date.isoformat()],
+                "property": ["SWAT"],
+                "time": [date],
+                "depth": [1006.6],
+                "values": [100.0],
+                "well_connection_cell": pl.Series(
+                    [well_connection_cell], dtype=pl.Array(pl.Int64, 3)
+                ),
+            },
+            schema=RFTConfig.response_schema(),
+        )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+    )
+
+    response1 = response([10, 11, 12]).with_columns(
+        rft_config.match_key_dict_expr().alias("response_dict")
+    )
+    assert response1["response_dict"].to_list() == ["well_connection_cell=[10, 11, 12]"]
+
+    response2 = response(None).with_columns(
+        rft_config.match_key_dict_expr().alias("response_dict")
+    )
+    assert response2["response_dict"].to_list() == ["well_connection_cell=None"]
 
 
 def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo_file):
@@ -578,266 +613,6 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     assert "radius" in df.columns
     assert df["radius"].to_list() == [provided_radius]
     assert df["radius"].dtype == pl.Float32
-
-
-def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
-    mock_resfo_file, egrid, mocked_files
-):
-    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO("1 zone1\n200 zone2\n")
-    config = ErtConfig.from_dict(
-        {
-            "ZONEMAP": "zonemap.txt",
-            "ECLBASE": "ECLBASE<IENS>",
-            "OBS_CONFIG": (
-                "obsconf",
-                [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL2",
-                        "VALUE": "700",
-                        "ZONE": "zone2",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 1.0,
-                    }
-                ],
-            ),
-        }
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/ECLBASE1.EGRID",
-        egrid,
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/ECLBASE1.RFT",
-        [
-            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(1, 1, 1)]),
-            ("PRESSURE", float_arr([0.1])),
-            ("DEPTH   ", float_arr([0.1])),
-        ],
-    )
-
-    rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
-    iens = 1
-    iter_ = 1
-    observations = pl.DataFrame(config.observation_declarations)
-    observation_metadata = rft_config.obtain_location_metadata(
-        "/tmp/does_not_exist", iens, iter_, observations
-    )
-
-    with pytest.warns(PostExperimentWarning, match="did not match expected zone"):
-        RFTConfig.enrich_observations_with_metadata_and_warn_on_zone_mismatch(
-            observations, observation_metadata, iens, iter_
-        )
-
-
-@pytest.mark.filterwarnings("ignore:.*did not match expected zone")
-@pytest.mark.parametrize(
-    ("point", "expected_values"),
-    [
-        pytest.param(
-            (1.0, 1.0, 0.5),
-            [
-                (1.0, 1.0, 0.5, "zone1", ["zone1"], [1, 1, 1], True),
-                (1.0, 1.0, 0.5, "zone2", ["zone1"], [1, 1, 1], False),
-            ],
-            id="Point only in the zone of first observation",
-        ),
-        pytest.param(
-            (1.0, 1.0, 1.5),
-            [
-                (1.0, 1.0, 1.5, "zone1", ["zone1", "zone2"], [1, 1, 2], True),
-                (1.0, 1.0, 1.5, "zone2", ["zone1", "zone2"], [1, 1, 2], True),
-            ],
-            id="Point in the zone of both observations",
-        ),
-        pytest.param(
-            (1.0, 1.0, 2.5),
-            [
-                (1.0, 1.0, 2.5, "zone1", ["zone2"], [1, 1, 3], False),
-                (1.0, 1.0, 2.5, "zone2", ["zone2"], [1, 1, 3], True),
-            ],
-            id="Point only in the zone of second observation",
-        ),
-    ],
-)
-def test_that_same_point_observations_with_different_zone_are_disabled_independently(
-    mock_resfo_file, point, expected_values, egrid, mocked_files
-):
-    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
-        "1 zone1\n2 zone1 zone2\n3 zone2"
-    )
-    config = ErtConfig.from_dict(
-        {
-            "ZONEMAP": "zonemap.txt",
-            "ECLBASE": "ECLBASE<IENS>",
-            "OBS_CONFIG": (
-                "obsconf",
-                [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": point[0],
-                        "EAST": point[1],
-                        "TVD": point[2],
-                        "ZONE": "zone1",
-                    },
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": point[0],
-                        "EAST": point[1],
-                        "TVD": point[2],
-                        "ZONE": "zone2",
-                    },
-                ],
-            ),
-        }
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/ECLBASE1.EGRID",
-        egrid,
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/ECLBASE1.RFT",
-        [
-            *cell_start(
-                date=(1, 1, 2000),
-                well_name="WELL",
-                ijks=[(1, 1, 1), (1, 1, 2), (1, 1, 3)],
-            ),
-            ("PRESSURE", float_arr([0.0, 1.0, 2.0])),
-            ("DEPTH   ", float_arr([0.0, 1.0, 2.0])),
-        ],
-    )
-
-    rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
-    observations = pl.DataFrame(config.observation_declarations)
-    iens = 1
-    iter_ = 1
-    observation_metadata = rft_config.obtain_location_metadata(
-        "/tmp/does_not_exist", iens, iter_, observations
-    )
-
-    res = RFTConfig.enrich_observations_with_metadata_and_warn_on_zone_mismatch(
-        observations, observation_metadata, iens, iter_
-    )
-
-    assert (
-        sorted(
-            zip(
-                res["east"].to_list(),
-                res["north"].to_list(),
-                res["tvd"].to_list(),
-                res["expected_zone"].to_list(),
-                res["actual_zones"].to_list(),
-                res["well_connection_cell"].to_list(),
-                res["is_valid"].to_list(),
-                strict=True,
-            )
-        )
-        == expected_values
-    )
-
-
-def test_that_observation_without_zones_are_not_disabled_by_zone_check(
-    mock_resfo_file, egrid, mocked_files
-):
-    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
-        "1 zone1\n2 zone1 zone2\n3 zone2"
-    )
-    config = ErtConfig.from_dict(
-        {
-            "ZONEMAP": "zonemap.txt",
-            "ECLBASE": "ECLBASE<IENS>",
-            "OBS_CONFIG": (
-                "obsconf",
-                [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                    },
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                        "ZONE": "zone2",
-                    },
-                ],
-            ),
-        }
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/ECLBASE1.EGRID",
-        egrid,
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/ECLBASE1.RFT",
-        [
-            *cell_start(
-                date=(1, 1, 2000),
-                well_name="WELL",
-                ijks=[(1, 1, 1), (1, 1, 2), (1, 1, 3)],
-            ),
-            ("PRESSURE", float_arr([0.0, 1.0, 2.0])),
-            ("DEPTH   ", float_arr([0.0, 1.0, 2.0])),
-        ],
-    )
-    rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
-    iens = 1
-    iter_ = 1
-    observations = pl.DataFrame(config.observation_declarations)
-    observation_metadata = rft_config.obtain_location_metadata(
-        "/tmp/does_not_exist", iens, iter_, observations
-    )
-    with pytest.warns(PostExperimentWarning, match="did not match expected zone"):
-        res = RFTConfig.enrich_observations_with_metadata_and_warn_on_zone_mismatch(
-            observations, observation_metadata, iens, iter_
-        )
-    assert list(
-        zip(
-            res["east"].to_list(),
-            res["north"].to_list(),
-            res["tvd"].to_list(),
-            res["expected_zone"].to_list(),
-            res["actual_zones"].to_list(),
-            res["well_connection_cell"].to_list(),
-            res["is_valid"].to_list(),
-            strict=True,
-        )
-    ) == [
-        (1.0, 1.0, 0.5, None, ["zone1"], [1, 1, 1], True),
-        (1.0, 1.0, 0.5, "zone2", ["zone1"], [1, 1, 1], False),
-    ]
 
 
 def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepended(
