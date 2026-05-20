@@ -152,7 +152,8 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
     run_dialog = gui.findChild(RunDialog)
     assert run_dialog
-    return run_dialog
+    yield run_dialog
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=10000)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
