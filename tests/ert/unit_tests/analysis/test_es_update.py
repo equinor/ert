@@ -1191,7 +1191,6 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         parameters=["KEY_1", "KEY_2"],
         param_configs=prior.experiment.parameter_configuration,
         enkf_truncation=1.0,
-        rng=rng,
         correlation_threshold=lambda x: 1.0,
     )
 

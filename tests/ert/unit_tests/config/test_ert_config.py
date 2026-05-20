@@ -3104,11 +3104,12 @@ def test_that_analysis_set_var_parameters_updates_update_strategy_when_update_is
     )
     ert_config = ErtConfig.from_file("config.ert")
     param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
-    assert param.update_strategy == "ADAPTIVE"
+    assert param.update_strategy == "adaptive"
 
 
-# is this what we want for CONST?
-def test_that_analysis_set_var_parameters_overrides_const_gen_kw(change_to_tmpdir):
+def test_that_analysis_set_var_parameters_do_not_override_const_gen_kw(
+    change_to_tmpdir,
+):
     Path("prior.txt").write_text("MY_PARAM CONST 1", encoding="utf-8")
     Path("config.ert").write_text(
         dedent("""\
@@ -3134,7 +3135,7 @@ def test_that_gen_kw_defaults_to_global_without_analysis_set_var(change_to_tmpdi
     )
     ert_config = ErtConfig.from_file("config.ert")
     param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
-    assert param.update_strategy == "GLOBAL"
+    assert param.update_strategy == "global"
 
 
 def test_that_gen_kw_defaults_to_global_with_update_true(change_to_tmpdir):
@@ -3148,7 +3149,7 @@ def test_that_gen_kw_defaults_to_global_with_update_true(change_to_tmpdir):
     )
     ert_config = ErtConfig.from_file("config.ert")
     param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
-    assert param.update_strategy == "GLOBAL"
+    assert param.update_strategy == "global"
 
 
 def test_that_gen_kw_defaults_to_none_with_update_false(change_to_tmpdir):

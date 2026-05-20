@@ -7,7 +7,7 @@ from ert.analysis._update_strategies._protocol import (
     ObservationContext,
     ObservationLocations,
 )
-from ert.config import Field, SurfaceConfig, LocalizationType
+from ert.config import Field, LocalizationType, SurfaceConfig
 from ert.field_utils import AxisOrientation, ErtboxParameters, FieldFileFormat
 from ert.storage import open_storage
 

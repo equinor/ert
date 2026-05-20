@@ -45,7 +45,7 @@ def mock_ert():
         forward_init_file="input_%d",
         output_file="output",
         base_surface_path="base_surface",
-        update_strategy="GLOBAL",
+        update_strategy="global",
     )
 
     ertbox_params = ErtboxParameters(
@@ -72,7 +72,7 @@ def mock_ert():
         forward_init_file="",
         output_file="",
         grid_file="",
-        update_strategy="GLOBAL",
+        update_strategy="global",
     )
 
     ert_mock.ensemble_config.parameter_configs = {

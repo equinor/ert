@@ -22,7 +22,7 @@ def parameters():
         create_mock_parameter(
             name="gen_kw_param1",
             type="gen_kw",
-            update_strategy="GLOBAL",
+            update_strategy="global",
             forward_init=False,
             input_source="sampled",
             group_name="groupA",
@@ -38,7 +38,7 @@ def parameters():
         create_mock_parameter(
             name="ext_param1",
             type="everest_parameters",
-            update_strategy="GLOBAL",
+            update_strategy="global",
             forward_init=False,
             group_name="ext_param1",
         ),
@@ -52,7 +52,7 @@ def parameters():
         create_mock_parameter(
             name="surface_param1",
             type="surface",
-            update_strategy="GLOBAL",
+            update_strategy="global",
             forward_init=False,
             group_name="surface_param1",
         ),
@@ -66,7 +66,7 @@ def parameters():
         create_mock_parameter(
             name="field_param1",
             type="field",
-            update_strategy="GLOBAL",
+            update_strategy="global",
             forward_init=False,
             group_name="field_param1",
         ),
@@ -167,9 +167,9 @@ def test_that_collapse_expand_happens_when_button_clicked(viewer, qtbot):
 @pytest.mark.parametrize(
     ("filter_value", "expected_update_values"),
     [
-        ("Updatable", ["GLOBAL"]),
+        ("Updatable", ["global"]),
         ("Non-updatable", [None]),
-        ("All parameters", ["GLOBAL", None]),
+        ("All parameters", ["global", None]),
     ],
 )
 def test_that_filtering_shows_expected_nodes(

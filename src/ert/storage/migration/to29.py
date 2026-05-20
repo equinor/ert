@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from ert.config.parameter_config import LocalizationType
+
 info = "Migrate 'update' field from bool to strategy string"
 
 
@@ -26,7 +28,9 @@ def _migrate_update_bool_to_strategy(path: Path) -> None:
         modified = False
         for param in params_config:
             if "update" in param and isinstance(param["update"], bool):
-                param["update_strategy"] = "GLOBAL" if param["update"] else None
+                param["update_strategy"] = (
+                    LocalizationType.GLOBAL.value if param["update"] else None
+                )
                 modified = True
                 param.pop("update")
 

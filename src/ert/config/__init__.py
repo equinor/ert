@@ -35,7 +35,7 @@ from .known_derived_response_types import KnownDerivedResponseTypes
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
 from .model_config import ModelConfig
-from .parameter_config import ParameterCardinality, ParameterConfig
+from .parameter_config import LocalizationType, ParameterCardinality, ParameterConfig
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -120,6 +120,7 @@ __all__ = [
     "KnownResponseTypes",
     "LegacyWorkflowConfigs",
     "LocalQueueOptions",
+    "LocalizationType",
     "ModelConfig",
     "Observation",
     "ObservationGroups",

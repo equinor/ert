@@ -17,7 +17,7 @@ from typing_extensions import TypedDict
 from ert.config._get_update_from_options import get_update_from_options
 
 from .distribution import DISTRIBUTION_CLASSES, DistributionSettings, get_distribution
-from .parameter_config import ParameterCardinality, ParameterConfig
+from .parameter_config import LocalizationType, ParameterCardinality, ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -63,7 +63,7 @@ class DataSource(StrEnum):
 class GenKwOptions:
     """Typed representation of GEN_KW keyword options."""
 
-    update_strategy: str | None = "GLOBAL"
+    update_strategy: LocalizationType | None = LocalizationType.GLOBAL
     # Deprecated – only kept to produce a helpful migration error.
     init_files: str | None = None
 
@@ -104,7 +104,7 @@ class GenKwConfig(ParameterConfig):
     dimensionality: Literal[1] = 1
     distribution: DistributionSettings
     forward_init: bool = False
-    update_strategy: str | None = "GLOBAL"
+    update_strategy: LocalizationType | None = LocalizationType.GLOBAL
     group: str | None = None
     input_source: DataSource = DataSource.SAMPLED
 

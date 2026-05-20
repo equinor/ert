@@ -446,8 +446,8 @@ def test_that_parameter_type_update_strategies_is_set_correctly():
     ).parameter_type_update_strategies
 
     assert len(strategies) == 2
-    assert strategies["FIELD"] == "DISTANCE"
-    assert strategies["GEN_KW"] == "ADAPTIVE"
+    assert strategies["FIELD"] == "distance"
+    assert strategies["GEN_KW"] == "adaptive"
 
 
 def test_that_parameter_strategy_with_unknown_strategy_raises_validation_error():

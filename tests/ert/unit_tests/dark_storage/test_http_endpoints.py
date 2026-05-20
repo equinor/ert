@@ -191,7 +191,7 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
             "input_source": "sampled",
             "name": "a",
             "type": "gen_kw",
-            "update_strategy": "GLOBAL",
+            "update_strategy": "global",
         },
         "b": {
             "dimensionality": 1,
@@ -205,7 +205,7 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
             "input_source": "sampled",
             "name": "b",
             "type": "gen_kw",
-            "update_strategy": "GLOBAL",
+            "update_strategy": "global",
         },
         "c": {
             "dimensionality": 1,
@@ -219,7 +219,7 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
             "input_source": "sampled",
             "name": "c",
             "type": "gen_kw",
-            "update_strategy": "GLOBAL",
+            "update_strategy": "global",
         },
     }
 

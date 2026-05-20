@@ -19,6 +19,12 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
+class LocalizationType(StrEnum):
+    GLOBAL = "global"
+    ADAPTIVE = "adaptive"
+    DISTANCE = "distance"
+
+
 class InvalidParameterFile(Exception):
     """
     Raised when a parameter file does not fulfill its
@@ -43,7 +49,7 @@ class ParameterConfig(BaseModel):
     type: str
     name: str
     forward_init: bool
-    update_strategy: str | None
+    update_strategy: LocalizationType | None
 
     @property
     @abstractmethod

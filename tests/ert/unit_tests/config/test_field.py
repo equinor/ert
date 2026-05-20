@@ -92,7 +92,7 @@ def create_dummy_field(nx, ny, nz, mask):
     return Field(
         name="some_name",
         forward_init=True,
-        update_strategy="GLOBAL",
+        update_strategy="global",
         ertbox_params=ertbox_params,
         file_format=FieldFileFormat.ROFF,
         output_transformation=None,
@@ -440,7 +440,7 @@ def field_with_ertbox_params():
         type="field",
         name="MyField",
         forward_init=True,
-        update_strategy="GLOBAL",
+        update_strategy="global",
         ertbox_params=params,
         file_format=FieldFileFormat.ROFF,
         output_transformation=None,
@@ -490,7 +490,7 @@ def test_that_create_storage_datasets_produces_float32_values(input_dtype):
     field = Field(
         name="TEST",
         forward_init=False,
-        update_strategy="GLOBAL",
+        update_strategy="global",
         ertbox_params=ErtboxParameters(nx=nx, ny=ny, nz=nz),
         file_format=FieldFileFormat.GRDECL,
         forward_init_file="init_%d.grdecl",

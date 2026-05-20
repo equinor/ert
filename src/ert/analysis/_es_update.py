@@ -15,6 +15,7 @@ from ert.config import (
     ObservationSettings,
     SurfaceConfig,
 )
+from ert.config.parameter_config import LocalizationType
 
 from ._update_commons import (
     ErtAnalysisError,
@@ -337,23 +338,23 @@ def build_strategy_map(
     for param_name in parameters:
         param_cfg = param_configs[param_name]
         if isinstance(param_cfg, Field):
-            if param_cfg.update_strategy == "DISTANCE":
+            if param_cfg.update_strategy == LocalizationType.DISTANCE:
                 strategy_map[param_name] = field_distance_strategy
-            elif param_cfg.update_strategy == "ADAPTIVE":
+            elif param_cfg.update_strategy == LocalizationType.ADAPTIVE:
                 strategy_map[param_name] = adaptive_localization_strategy
-            elif param_cfg.update_strategy == "GLOBAL":
+            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
                 strategy_map[param_name] = global_strategy
         elif isinstance(param_cfg, SurfaceConfig):
-            if param_cfg.update_strategy == "DISTANCE":
+            if param_cfg.update_strategy == LocalizationType.DISTANCE:
                 strategy_map[param_name] = surface_distance_strategy
-            elif param_cfg.update_strategy == "ADAPTIVE":
+            elif param_cfg.update_strategy == LocalizationType.ADAPTIVE:
                 strategy_map[param_name] = adaptive_localization_strategy
-            elif param_cfg.update_strategy == "GLOBAL":
+            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
                 strategy_map[param_name] = global_strategy
         elif isinstance(param_cfg, GenKwConfig):
-            if param_cfg.update_strategy == "ADAPTIVE":
+            if param_cfg.update_strategy == LocalizationType.ADAPTIVE:
                 strategy_map[param_name] = adaptive_localization_strategy
-            elif param_cfg.update_strategy == "GLOBAL":
+            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
                 strategy_map[param_name] = global_strategy
         else:
             logger.warning(

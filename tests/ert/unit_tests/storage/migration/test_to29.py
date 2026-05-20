@@ -55,7 +55,7 @@ def test_that_migration_converts_bool_update_to_strategy_string(tmp_path):
     assert "update" not in updated_params[2]
     assert "update" not in updated_params[3]
 
-    assert updated_params[0]["update_strategy"] == "GLOBAL"
+    assert updated_params[0]["update_strategy"] == "global"
     assert updated_params[1]["update_strategy"] is None
-    assert updated_params[2]["update_strategy"] == "GLOBAL"
+    assert updated_params[2]["update_strategy"] == "global"
     assert updated_params[3]["update_strategy"] is None

@@ -1,17 +1,18 @@
 import pytest
 
 from ert.config._get_update_from_options import get_update_from_options
+from ert.config.parameter_config import LocalizationType
 from ert.config.parsing.config_errors import ConfigValidationError
 
 
 @pytest.mark.parametrize(
     ("options", "expected"),
     [
-        ({}, "GLOBAL"),
+        ({}, LocalizationType.GLOBAL),
         ({"UPDATE": "FALSE"}, None),
-        ({"UPDATE": "TRUE"}, "GLOBAL"),
-        ({"UPDATE": "true"}, "GLOBAL"),
-        ({"UPDATE": "True"}, "GLOBAL"),
+        ({"UPDATE": "TRUE"}, LocalizationType.GLOBAL),
+        ({"UPDATE": "true"}, LocalizationType.GLOBAL),
+        ({"UPDATE": "True"}, LocalizationType.GLOBAL),
         ({"UPDATE": "false"}, None),
     ],
 )

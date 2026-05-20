@@ -6,12 +6,12 @@ from dataclasses import field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
-from typing import Any, Final, get_args
+from typing import Any, Final
 
 from pydantic import Field, PositiveFloat, ValidationError
 from pydantic.dataclasses import dataclass
 
-from ert.config._get_update_from_options import StrategyName
+from ert.config.parameter_config import LocalizationType
 
 from .analysis_module import ESSettings
 from .design_matrix import DesignMatrix
@@ -51,7 +51,7 @@ class AnalysisConfig:
     )
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
-    parameter_type_update_strategies: dict[str, StrategyName] = field(
+    parameter_type_update_strategies: dict[str, LocalizationType] = field(
         default_factory=dict
     )
 
@@ -111,13 +111,13 @@ class AnalysisConfig:
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         errors = []
         all_errors = []
-        parameter_type_update_strategies: dict[str, StrategyName] = {}
+        parameter_type_update_strategies: dict[str, LocalizationType] = {}
 
         for module_name, var_name, value in analysis_set_var:
             if var_name == "DISTANCE_LOCALIZATION" and value.upper() == "TRUE":
-                parameter_type_update_strategies["FIELD"] = "DISTANCE"
-                parameter_type_update_strategies["SURFACE"] = "DISTANCE"
-                parameter_type_update_strategies["GEN_KW"] = "ADAPTIVE"
+                parameter_type_update_strategies["FIELD"] = LocalizationType.DISTANCE
+                parameter_type_update_strategies["SURFACE"] = LocalizationType.DISTANCE
+                parameter_type_update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
 
                 ConfigWarning.deprecation_warn(
                     "DISTANCE_LOCALIZATION is deprecated and will be removed in a "
@@ -126,9 +126,9 @@ class AnalysisConfig:
                 )
 
             if var_name == "LOCALIZATION" and value.upper() == "TRUE":
-                parameter_type_update_strategies["FIELD"] = "ADAPTIVE"
-                parameter_type_update_strategies["SURFACE"] = "ADAPTIVE"
-                parameter_type_update_strategies["GEN_KW"] = "ADAPTIVE"
+                parameter_type_update_strategies["FIELD"] = LocalizationType.ADAPTIVE
+                parameter_type_update_strategies["SURFACE"] = LocalizationType.ADAPTIVE
+                parameter_type_update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
 
             if module_name == "PARAMETERS":
                 parameter_type = var_name
@@ -153,17 +153,19 @@ class AnalysisConfig:
                     )
                     continue
 
-                if strategy_name not in get_args(StrategyName):
+                if strategy_name not in LocalizationType.__members__:
                     all_errors.append(
                         ConfigValidationError(
                             f"Invalid strategy name {strategy_name!r} for "
                             "ANALYSIS_SET_VAR PARAMETERS STRATEGY\nValid options are: "
-                            f"{get_args(StrategyName)}"
+                            f"{tuple(LocalizationType.__members__)}"
                         )
                     )
                     continue
 
-                parameter_type_update_strategies[parameter_type] = strategy_name
+                parameter_type_update_strategies[parameter_type] = LocalizationType[
+                    strategy_name
+                ]
                 continue
 
             if module_name == "IES_ENKF":

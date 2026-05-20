@@ -188,7 +188,7 @@
       "type": "gen_kw",
       "name": "t",
       "forward_init": false,
-      "update_strategy": "ADAPTIVE",
+      "update_strategy": "adaptive",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -202,7 +202,7 @@
       "type": "gen_kw",
       "name": "x",
       "forward_init": false,
-      "update_strategy": "ADAPTIVE",
+      "update_strategy": "adaptive",
       "dimensionality": 1,
       "distribution": {
         "name": "normal",
@@ -216,7 +216,7 @@
       "type": "field",
       "name": "COND",
       "forward_init": true,
-      "update_strategy": "ADAPTIVE",
+      "update_strategy": "adaptive",
       "dimensionality": 3,
       "ertbox_params": {
         "nx": 50,
