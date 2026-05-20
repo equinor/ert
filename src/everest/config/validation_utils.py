@@ -228,7 +228,7 @@ def check_path_valid(path: Any) -> None:
     root = os.path.sep
     for dirname in str(path).split(os.path.sep):
         try:
-            os.lstat(os.path.join(root, dirname))
+            os.lstat(Path(root) / dirname)
 
         except OSError as e:
             if e.errno in {errno.ENAMETOOLONG, errno.ERANGE}:
@@ -262,9 +262,9 @@ def check_for_duplicate_names(
 
 
 def as_abs_path(path: str, config_dir: str) -> str:
-    if os.path.isabs(path):
+    if Path(path).is_absolute():
         return path
-    return os.path.realpath(os.path.join(config_dir, path))
+    return str((Path(config_dir) / path).resolve())
 
 
 def expand_model_id_paths(path_source: str, realizations: list[int]) -> list[str]:
@@ -294,7 +294,7 @@ def check_path_exists(
         pre, pos = path_source.split("<CONFIG_PATH>")
         if pos and pos[0] == "/":
             pos = pos[1:]
-            path_source = os.path.join(pre, config_dir, pos)
+            path_source = str(Path(pre) / config_dir / pos)
 
     expanded_paths = expand_model_id_paths(str(path_source), realizations)
     for exp_path in [as_abs_path(p, str(config_dir)) for p in expanded_paths]:

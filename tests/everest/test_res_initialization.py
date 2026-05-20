@@ -120,7 +120,7 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
         runmodel = EverestRunModel.create(ever_config, runtime_plugins=site_plugins)
 
     matching_fm_step = next(fm for fm in runmodel.forward_model_steps if fm.name == cmd)
-    assert matching_fm_step.arglist == [f"./{source}", target]
+    assert matching_fm_step.arglist == [source, target]
 
 
 def test_workflow_job(tmp_path, monkeypatch):

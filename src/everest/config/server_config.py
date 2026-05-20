@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
@@ -86,4 +86,4 @@ class ServerConfig(BaseModel, extra="forbid"):
     def get_session_dir(output_dir: str) -> str:
         """Return path to the session directory containing information about the
         certificates and host information"""
-        return os.path.join(os.path.abspath(output_dir), SESSION_DIR)
+        return str(Path(output_dir).resolve() / SESSION_DIR)

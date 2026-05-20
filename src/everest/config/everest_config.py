@@ -979,7 +979,7 @@ to read summary data from forward model, do:
         if cfgdir is None:
             return path
 
-        return os.path.join(cfgdir, path)
+        return str(Path(cfgdir) / path)
 
     @property
     def simulation_dir(self) -> str:
@@ -988,11 +988,10 @@ to read summary data from forward model, do:
         if os.path.isabs(path):
             return path
 
-        cfgdir = self.output_dir
-        return os.path.join(cfgdir, path)
+        return str(Path(self.output_dir) / path)
 
     def _get_output_subdirectory(self, subdirname: str) -> str:
-        return os.path.join(os.path.abspath(self.output_dir), subdirname)
+        return str(Path(self.output_dir).resolve() / subdirname)
 
     @property
     def optimization_output_dir(self) -> str:
