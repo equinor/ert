@@ -139,6 +139,7 @@ types = [
     "types-tqdm",
     "types-psutil",
     "types-setuptools",
+    "types-tabulate",
     "types-networkx",
 ]
 
