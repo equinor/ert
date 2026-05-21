@@ -4,9 +4,6 @@ import itertools
 from copy import copy
 from typing import Any
 
-from matplotlib import colors as mcolors
-from matplotlib import pyplot as plt
-
 from .plot_limits import PlotLimits
 from .plot_style import PlotStyle
 
@@ -24,18 +21,22 @@ class PlotConfig:
         if self._plot_settings is None:
             self._plot_settings = {"SHOW_HISTORY": True}
 
-        colour_map_positions = [0.25, 1.0, 0.5, 0.0, 0.75]
+        tableau_colorblind10_hex = [
+            "#006BA4",
+            "#FF800E",
+            "#ABABAB",
+            "#595959",
+            "#5F9ED1",
+            "#C85200",
+            "#898989",
+            "#A2C8EC",
+            "#FFBC79",
+            "#CFCFCF",
+        ]
 
-        # Scale (0,1) interval to (0,0.9) to avoid the lightest shade:
-        colour_map_positions = [val / (1 / 0.9) for val in colour_map_positions]
-
-        colour_map = plt.get_cmap("viridis")
         alpha_value = 1.0
         self.set_line_color_cycle(
-            [
-                (mcolors.to_hex(colour_map(pos)).upper(), alpha_value)
-                for pos in colour_map_positions
-            ]
+            [(colour, alpha_value) for colour in tableau_colorblind10_hex]
         )
 
         self._legend_items: list[Any] = []
