@@ -165,6 +165,31 @@ def test_that_workflow_widget_adds_all_workflows_as_pending_on_started_batch(
         assert _get_row_data(widget, row, STDERR_COLUMN) == ""  # noqa: PLC1901
 
 
+def test_that_workflow_widget_resets_rows_when_a_new_batch_starts(
+    qtbot: QtBot,
+) -> None:
+    widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT)
+    qtbot.addWidget(widget)
+
+    widget.handle_event(WORKFLOW_BATCH_START_EVENT)
+    widget.handle_event(GENERATE_FILES_WORKFLOW_START_EVENT)
+    widget.handle_event(GENERATE_FILES_WORKFLOW_FAIL_EVENT)
+
+    widget.handle_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_names=["new workflow"],
+        )
+    )
+
+    assert widget._status_label.text() == "Pre-experiment workflows running"
+    assert widget._table.rowCount() == 1
+    assert _get_row_data(widget, 0, WORKFLOW_JOB_NAME_COLUMN) == "new workflow"
+    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.PENDING.value
+    assert _get_row_data(widget, 0, STDOUT_COLUMN) == ""  # noqa: PLC1901
+    assert _get_row_data(widget, 0, STDERR_COLUMN) == ""  # noqa: PLC1901
+
+
 def test_that_workflows_give_correct_tooltip_on_hover(qtbot: QtBot) -> None:
     widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT)
     qtbot.addWidget(widget)

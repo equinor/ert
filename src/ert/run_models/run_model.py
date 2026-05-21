@@ -865,6 +865,14 @@ class RunModel(RunModelConfig, ABC):
                 self._workflow_runner = None
 
             if self._end_event.is_set():
+                self._status_queue.put(
+                    WorkflowBatchFinishedEvent(
+                        hook=fixtures.hook,
+                        iteration=workflow_iteration,
+                        workflow_names=workflow_names,
+                        status=WorkflowStatus.CANCELLED,
+                    )
+                )
                 raise UserCancelled("Experiment cancelled by user during workflows")
         self._status_queue.put(
             WorkflowBatchFinishedEvent(
