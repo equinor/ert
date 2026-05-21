@@ -5,7 +5,7 @@ import shutil
 import stat
 import tempfile
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 from typing import Any
@@ -1240,57 +1240,81 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
 
 
 def rft_response(
-    *, well="WELL", values=100.0, well_connection_cell=(10, 10, 10)
+    *,
+    well: tuple[str, ...] = ("WELL",),
+    date: tuple[date, ...] = (datetime(2000, 1, 1).date(),),  # noqa: DTZ001
+    prop: tuple[str, ...] = ("SWAT",),
+    depth: tuple[float, ...] = (1006.6,),
+    values: tuple[float, ...] = (100.0,),
+    well_connection_cell: tuple[tuple[int, int, int], ...] = ((10, 10, 10),),
+    cell_center: tuple[tuple[float, float, float], ...] = ((100.0, 105.0, 1000.0),),
+    cell_zones: tuple[tuple[str, ...], ...] = (("zone1",),),
 ) -> pl.DataFrame:
-    date = datetime(2000, 1, 1).date()  # noqa: DTZ001
-    df = pl.DataFrame(
-        {
-            "response_key": [f"{well}:{date.isoformat()}:SWAT"],
-            "well": [well],
-            "date": [date.isoformat()],
-            "property": ["SWAT"],
-            "time": [date],
-            "depth": [1006.6],
-            "values": [values],
-            "well_connection_cell": pl.Series(
-                [well_connection_cell], dtype=pl.Array(pl.Int64, 3)
-            ),
-            "cell_center": pl.Series(
-                [[100.0, 105.0, 1000.0]], dtype=pl.Array(pl.Float32, 3)
-            ),
-            "cell_zones": pl.Series([[]], dtype=pl.List(pl.String)),
-        },
-        schema=RFTConfig.response_schema(),
+    return (
+        pl.DataFrame(
+            {
+                "well": well,
+                "property": prop,
+                "time": date,
+                "depth": pl.Series(depth, dtype=pl.Float32),
+                "values": pl.Series(values, dtype=pl.Float32),
+                "well_connection_cell": pl.Series(
+                    well_connection_cell, dtype=pl.Array(pl.Int64, 3)
+                ),
+                "cell_center": pl.Series(cell_center, dtype=pl.Array(pl.Float32, 3)),
+                "cell_zones": pl.Series(cell_zones, dtype=pl.List(pl.String)),
+            }
+        )
+        .with_columns(pl.col("time").dt.to_string("%Y-%m-%d").alias("date"))
+        .with_columns(
+            pl.concat_str(
+                [pl.col("well"), pl.col("date"), pl.col("property")], separator=":"
+            ).alias("response_key"),
+        )
+        .select(RFTConfig.response_schema().keys())
+        .pipe(RFTConfig._assert_schema, RFTConfig.response_schema())
     )
-    RFTConfig._assert_schema(df, RFTConfig.response_schema())
-    return df
 
 
-def rft_observation1(*, zone=None, well="WELL"):
-    date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+def rft_observation(
+    *,
+    name="RFT_OBS1",
+    well="WELL",
+    date="2000-01-01",
+    prop="PRESSURE",
+    value=100.0,
+    error=10.0,
+    east=100.0,
+    north=105.0,
+    tvd=1000.0,
+    zone=None,
+):
     return RFTObservation(
-        name="RFT_OBS1",
+        name=name,
         well=well,
-        date=date.isoformat(),
-        property="SWAT",
-        value=100.0,
-        error=10.0,
-        east=100.0,
-        north=105.0,
-        tvd=1000.0,
+        date=date,
+        property=prop,
+        value=value,
+        error=error,
+        east=east,
+        north=north,
+        tvd=tvd,
         zone=zone,
     )
 
 
-def rft_observation2(*, zone=None, well="WELL"):
-    date = datetime(2000, 1, 1).date()  # noqa: DTZ001
-    return RFTObservation(
+def rft_observation1(*, zone=None):
+    return rft_observation(
+        prop="SWAT",
+        zone=zone,
+    )
+
+
+def rft_observation2(*, well="WELL", zone=None):
+    return rft_observation(
         name="RFT_OBS2",
         well=well,
-        date=date.isoformat(),
-        property="SWAT",
-        value=100.0,
-        error=10.0,
+        prop="SWAT",
         east=300.0,
         north=405.0,
         tvd=2000.0,
@@ -1300,36 +1324,24 @@ def rft_observation2(*, zone=None, well="WELL"):
 
 def location_metadata(
     *,
-    zones1=("zone1",),
-    zones2=("zone2",),
-    well_connection_cell1=(
-        10,
-        10,
-        10,
-    ),
-    well_connection_cell2=(
-        10,
-        10,
-        10,
-    ),
+    east=(100.0, 300.0),
+    north=(105.0, 405.0),
+    tvd=(1000.0, 2000.0),
+    actual_zones=(("zone1",), ("zone2",)),
+    well_connection_cell=((10, 10, 10), (10, 10, 10)),
 ) -> pl.DataFrame:
     df = pl.DataFrame(
-        [
-            {
-                "east": 100.0,
-                "north": 105.0,
-                "tvd": 1000.0,
-                "actual_zones": zones1,
-                "well_connection_cell": well_connection_cell1,
-            },
-            {
-                "east": 300.0,
-                "north": 405.0,
-                "tvd": 2000.0,
-                "actual_zones": zones2,
-                "well_connection_cell": well_connection_cell2,
-            },
-        ],
+        {
+            "east": east,
+            "north": north,
+            "tvd": tvd,
+            "actual_zones": actual_zones,
+            "well_connection_cell": well_connection_cell,
+            "well_connection_cell_center": pl.Series(
+                [(e, n, t) for e, n, t in zip(east, north, tvd, strict=True)],
+                dtype=pl.Array(pl.Float32, 3),
+            ),
+        },
         schema=RFTConfig.location_metadata_schema(),
     )
     RFTConfig._assert_schema(df, RFTConfig.location_metadata_schema())
@@ -1360,10 +1372,10 @@ def test_that_get_observations_and_responses_applies_rft_metadata(tmp_path):
             experiment, ensemble_size=2, iteration=0, name="prior"
         )
 
-        ensemble.save_response("rft", rft_response(values=200.0), 0)
+        ensemble.save_response("rft", rft_response(values=(200.0,)), 0)
         ensemble.save_observation_location_metadata(location_metadata(), 0)
 
-        ensemble.save_response("rft", rft_response(values=300.0), 1)
+        ensemble.save_response("rft", rft_response(values=(300.0,)), 1)
         ensemble.save_observation_location_metadata(location_metadata(), 1)
 
         iens_active_index = np.array([0, 1])
@@ -1404,14 +1416,18 @@ def test_that_get_observations_and_responses_disables_observation(tmp_path):
             experiment, ensemble_size=2, iteration=0, name="prior"
         )
 
-        ensemble.save_response("rft", rft_response(values=200.0), 0)
+        ensemble.save_response(
+            "rft", rft_response(values=(200.0,), cell_zones=(("zone1",),)), 0
+        )
         ensemble.save_observation_location_metadata(
-            location_metadata(zones1=["zone1"], zones2=["zone3"]), 0
+            location_metadata(actual_zones=(("zone1",), ("zone3",))), 0
         )
 
-        ensemble.save_response("rft", rft_response(values=300.0), 1)
+        ensemble.save_response(
+            "rft", rft_response(values=(300.0,), cell_zones=(("zone2",),)), 1
+        )
         ensemble.save_observation_location_metadata(
-            location_metadata(zones1=["zone2"], zones2=["zone3"]), 1
+            location_metadata(actual_zones=(("zone2",), ("zone3",))), 1
         )
 
         iens_active_index = np.array([0, 1])
@@ -1453,18 +1469,24 @@ def test_that_get_observations_and_responses_combines_error_messages(tmp_path):
             experiment, ensemble_size=2, iteration=0, name="prior"
         )
 
-        ensemble.save_response("rft", rft_response(values=200.0), 0)
+        ensemble.save_response(
+            "rft", rft_response(values=(200.0,), cell_zones=(("zone1",),)), 0
+        )
         ensemble.save_observation_location_metadata(
             location_metadata(
-                zones1=["zone0"], zones2=["zone2"], well_connection_cell1=None
+                actual_zones=(("zone0",), ("zone2",)),
+                well_connection_cell=(None, (10, 10, 10)),
             ),
             0,
         )
 
-        ensemble.save_response("rft", rft_response(values=300.0), 1)
+        ensemble.save_response(
+            "rft", rft_response(values=(300.0,), cell_zones=(("zone2",),)), 1
+        )
         ensemble.save_observation_location_metadata(
             location_metadata(
-                zones1=["zone1"], zones2=["zone2"], well_connection_cell1=None
+                actual_zones=(("zone1",), ("zone2",)),
+                well_connection_cell=(None, (10, 10, 10)),
             ),
             1,
         )
@@ -1493,20 +1515,24 @@ def test_that_get_observations_and_responses_combines_error_messages(tmp_path):
 
 
 @pytest.mark.parametrize(
-    ("rft_kwargs"),
+    ("obs2_kwargs", "response_kwargs", "meta_kwargs"),
     [
         pytest.param(
             {"well": "OTHER_WELL"},
+            {"well": ("OTHER_WELL",)},
+            {},
             id="on response key",
         ),
         pytest.param(
-            {"well_connection_cell": [11, 11, 11]},
+            {},
+            {"well_connection_cell": ([11, 11, 11],)},
+            {"well_connection_cell": ([10, 10, 10], [11, 11, 11])},
             id="on match key",
         ),
     ],
 )
 def test_that_get_observations_and_responses_adds_qc_error_on_rft_mismatch(
-    tmp_path, rft_kwargs
+    tmp_path, obs2_kwargs, response_kwargs, meta_kwargs
 ):
     with open_storage(tmp_path, mode="w") as storage:
         rft_config = RFTConfig(
@@ -1515,10 +1541,7 @@ def test_that_get_observations_and_responses_adds_qc_error_on_rft_mismatch(
         )
 
         obs1 = rft_observation1()
-        if "well" in rft_kwargs:
-            obs2 = rft_observation2(well=rft_kwargs["well"])
-        else:
-            obs2 = rft_observation2()
+        obs2 = rft_observation2(**obs2_kwargs)
 
         experiment = storage.create_experiment(
             experiment_config={
@@ -1534,25 +1557,11 @@ def test_that_get_observations_and_responses_adds_qc_error_on_rft_mismatch(
             experiment, ensemble_size=2, iteration=0, name="prior"
         )
 
-        ensemble.save_response("rft", rft_response(**rft_kwargs), 0)
-        ensemble.save_response("rft", rft_response(**rft_kwargs), 1)
+        ensemble.save_response("rft", rft_response(**response_kwargs), 0)
+        ensemble.save_response("rft", rft_response(**response_kwargs), 1)
 
-        if "well_connection_cell" in rft_kwargs:
-            ensemble.save_observation_location_metadata(
-                location_metadata(
-                    well_connection_cell2=rft_kwargs["well_connection_cell"]
-                ),
-                0,
-            )
-            ensemble.save_observation_location_metadata(
-                location_metadata(
-                    well_connection_cell2=rft_kwargs["well_connection_cell"]
-                ),
-                1,
-            )
-        else:
-            ensemble.save_observation_location_metadata(location_metadata(), 0)
-            ensemble.save_observation_location_metadata(location_metadata(), 1)
+        ensemble.save_observation_location_metadata(location_metadata(**meta_kwargs), 0)
+        ensemble.save_observation_location_metadata(location_metadata(**meta_kwargs), 1)
 
         iens_active_index = np.array([0, 1])
         active_observations = ["RFT_OBS1", "RFT_OBS2"]
