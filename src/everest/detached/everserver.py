@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
+from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import ErtServerController, ErtServerExit, create_ertserver_client
 from ert.storage import ExperimentStatus
@@ -44,6 +45,7 @@ def _configure_loggers(
             "filename": path,
         }
 
+    ert_loggers = yaml.safe_load(LOGGING_CONFIG.read_text(encoding="utf-8"))["loggers"]
     logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -58,11 +60,11 @@ def _configure_loggers(
         },
         "loggers": {
             "root": {"handlers": ["endpoint_log"], "level": logging_level},
-            "uvicorn": {
-                "level": logging.WARNING,
-            },
-            "httpcore": {
-                "level": logging.WARNING,
+            "uvicorn": {"level": logging.WARNING},
+            **{
+                logger_name: {"level": logging.WARNING}
+                for logger_name, logger_config in ert_loggers.items()
+                if logger_config.get("level") == "WARNING"
             },
             EVERSERVER: {
                 "handlers": ["endpoint_log"],
