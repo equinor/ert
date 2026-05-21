@@ -4,8 +4,8 @@ from io import BytesIO
 from pathlib import Path
 from textwrap import dedent
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 import pytest
 from PyQt6.QtCore import QBuffer, QByteArray, QIODeviceBase, Qt

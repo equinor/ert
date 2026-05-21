@@ -100,6 +100,8 @@ class WorkflowWidget(QWidget):
     ) -> None:
         match event:
             case WorkflowBatchStartedEvent(workflow_names=workflow_names):
+                self._reset_table()
+                self._status_label.setText(f"{workflow_tab_title(self.hook)} running")
                 for row, workflow_name in enumerate(workflow_names):
                     self._add_row(row, workflow_name, WorkflowStatus.PENDING)
                 self._resize_columns()
@@ -209,6 +211,10 @@ class WorkflowWidget(QWidget):
         assert stderr_item is not None
         self._set_output_item(stdout_item, stdout)
         self._set_output_item(stderr_item, stderr)
+
+    def _reset_table(self) -> None:
+        self._table.clearContents()
+        self._table.setRowCount(0)
 
     def _cancel_pending_rows(self) -> None:
         for row in range(self._table.rowCount()):

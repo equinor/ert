@@ -1588,10 +1588,42 @@ def test_that_run_dialog_places_all_workflow_hooks_in_expected_tabs(
         second_iteration_widget._tab_widget.widget(0).hook == HookRuntime.PRE_SIMULATION
     )
 
-    first_pre_simulation_widget = run_dialog._select_or_create_workflow_tab(
+    first_pre_simulation_widget = run_dialog._get_workflow_tab_widget(
         HookRuntime.PRE_SIMULATION, 0
     )
-    second_pre_simulation_widget = run_dialog._select_or_create_workflow_tab(
+    second_pre_simulation_widget = run_dialog._get_workflow_tab_widget(
         HookRuntime.PRE_SIMULATION, 1
     )
+    assert first_pre_simulation_widget is not None
+    assert second_pre_simulation_widget is not None
     assert first_pre_simulation_widget is not second_pre_simulation_widget
+
+
+def test_that_run_dialog_keeps_selected_subtab_when_creating_workflow_subtab(
+    qtbot: QtBot,
+):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    tab_group_widget = run_dialog._create_tab_group_widget(0, "iteration-0")
+    realization_widget = run_dialog._create_realization_tab_widget(tab_group_widget)
+    run_dialog._tab_widget.setCurrentWidget(tab_group_widget)
+
+    workflow_widget = run_dialog._create_workflow_tab_widget(
+        HookRuntime.PRE_SIMULATION, 0
+    )
+
+    assert isinstance(workflow_widget, WorkflowWidget)
+    assert (
+        run_dialog._get_workflow_tab_widget(HookRuntime.PRE_SIMULATION, 0)
+        is workflow_widget
+    )
+    assert tab_group_widget._tab_widget.currentWidget() is realization_widget
