@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from ert.analysis._update_strategies._batching import (
     calculate_localization_batch_size,
@@ -8,6 +9,24 @@ from ert.analysis._update_strategies._batching import (
 
 def test_that_batch_size_equals_num_params_when_no_observations() -> None:
     assert calculate_localization_batch_size(num_params=7, num_obs=0) == 7
+
+
+def test_that_batch_size_is_clamped_to_one_when_available_memory_is_low(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class VirtualMemory:
+        available = 1
+
+    monkeypatch.setattr(
+        "ert.analysis._update_strategies._batching.psutil.virtual_memory",
+        VirtualMemory,
+    )
+
+    assert calculate_localization_batch_size(num_params=7, num_obs=1) == 1
+
+
+def test_that_batch_size_is_zero_when_there_are_no_parameters() -> None:
+    assert calculate_localization_batch_size(num_params=0, num_obs=7) == 0
 
 
 def test_that_split_by_batch_size_keeps_batches_within_batch_size() -> None:
