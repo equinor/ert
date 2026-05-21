@@ -15,7 +15,10 @@ def split_by_batch_size(
     arr: npt.NDArray[np.int_], batch_size: int
 ) -> list[npt.NDArray[np.int_]]:
     """Split an array into sub-arrays of a specified batch size."""
-    sections = 1 if batch_size > len(arr) else len(arr) // batch_size
+    if len(arr) == 0:
+        return []
+
+    sections = (len(arr) + batch_size - 1) // batch_size
     return np.array_split(arr, sections)
 
 
