@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.utils import LEGEND_THRESHOLD
 
 from .plot_tools import PlotTools
@@ -50,6 +51,7 @@ class EverestObjectiveFunctionPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
+        plot_context.plot_type = PlotType.LINE
         plot_context.deactivate_date_support()
 
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
@@ -67,6 +69,8 @@ class EverestObjectiveFunctionPlot:
 
         realizations = sorted(combined["realization"].unique())
 
+        tooltip_data = []
+        tooltip_labels = []
         color = config.next_color()
         for realization in realizations:
             data = combined[combined["realization"] == realization].sort_values(
@@ -82,11 +86,24 @@ class EverestObjectiveFunctionPlot:
                 color=color,
                 markersize=4,
             )
+            tooltip_data.append(lines)
+            tooltip_labels.append(f"Realization {int(realization)}")
             if len(realizations) <= LEGEND_THRESHOLD:
                 color = config.next_color()
                 config.add_legend_item(f"Realization {int(realization)}", lines[0])
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        PlotTools.labels_on_hover(
+            axes,
+            plot_context,
+            figure,
+            data=tooltip_data,
+            labels=tooltip_labels,
+            disable_values=True,
+            hover_color=config.next_color()[0],
+        )
+
         PlotTools.finalizePlot(
             plot_context,
             figure,

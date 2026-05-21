@@ -4,8 +4,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
 from resfo_utilities import is_rate
 
+from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.utils import is_everest_application
 
 from .history import plotHistory
@@ -41,8 +43,11 @@ class EnsemblePlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
+        plot_context.plot_type = PlotType.LINE
         draw_style = "steps-pre" if is_rate(plot_context.key()) else None
         zorder = 0
+        tooltip_data = []
+        tooltip_labels = []
         for (ensemble, untransposed_data), color_index in zip(
             ensemble_to_data_map.items(),
             plot_context.ensembles_color_indexes(),
@@ -55,22 +60,36 @@ class EnsemblePlot:
                     plot_context.deactivate_date_support()
                     plot_context.x_axis = plot_context.INDEX_AXIS
                 config.set_current_color(color_index)
-                self._plotLines(
+                label = (
+                    f"{ensemble.name}"
+                    if is_everest_application()
+                    else f"{ensemble.experiment_name} : {ensemble.name}"
+                )
+                lines = self._plotLines(
                     axes,
                     config,
                     data,
-                    f"{ensemble.name}"
-                    if is_everest_application()
-                    else f"{ensemble.experiment_name} : {ensemble.name}",
+                    label,
                     draw_style,
                     zorder=zorder,
                 )
+                tooltip_data.append(lines)
+                tooltip_labels.append(label)
                 zorder -= 1
 
         plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
+
+        PlotTools.labels_on_hover(
+            axes,
+            plot_context,
+            figure,
+            data=tooltip_data,
+            labels=tooltip_labels,
+        )
+
         PlotTools.finalizePlot(
             plot_context,
             figure,
@@ -87,7 +106,7 @@ class EnsemblePlot:
         ensemble_label: str,
         draw_style: str | None = None,
         zorder: float = 1,
-    ) -> None:
+    ) -> list[Line2D]:
         style = plot_config.default_style()
 
         if len(data) == 1 and not style.marker:
@@ -115,3 +134,5 @@ class EnsemblePlot:
 
         if len(lines) > 0:
             plot_config.add_legend_item(ensemble_label, lines[0])
+
+        return lines

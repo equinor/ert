@@ -6,9 +6,14 @@ from typing import TYPE_CHECKING, Any
 
 import matplotlib.ticker as mticker
 from matplotlib.backend_bases import Event
-from matplotlib.text import Annotation
+from matplotlib.container import BarContainer
+from matplotlib.lines import Line2D
 
 from ert.gui.tools.plot.plottery.plot_context import PlotType
+from ert.gui.tools.plot.plottery.plots.tooltip_manager import (
+    BarTooltipManager,
+    LineTooltipManager,
+)
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -178,7 +183,9 @@ class PlotTools:
         axes: Axes,
         plot_context: PlotContext,
         figure: Figure,
-        **kawgs: Any,
+        data: list[Any],
+        labels: list[str],
+        **options: Any,
     ) -> None:
         hover_box = axes.annotate(
             "",
@@ -189,45 +196,93 @@ class PlotTools:
         )
         hover_box.set_visible(False)
 
-        if plot_context.plot_type == PlotType.BAR:
-            try:
-                data = kawgs["data"]
-                labels = kawgs["labels"]
+        match plot_context.plot_type:
+            case PlotType.BAR:
+                bar_manager = BarTooltipManager(hover_box=hover_box, figure=figure)
                 figure.canvas.mpl_connect(
                     "motion_notify_event",
                     lambda event: PlotTools.__on_hover_bar_group(
-                        event, axes, hover_box, figure, data, labels
+                        event, axes, bar_manager, data, labels
                     ),
                 )
-            except KeyError:
-                logger.warning("Missing 'data' or 'labels' for bar hover labels")
-                return
-        else:
-            raise NotImplementedError(
-                f"Hover labels not implemented for: {plot_context.plot_type}"
-            )
+
+            case PlotType.LINE:
+                if len(data) != len(labels) or len(labels) < 1:
+                    logger.warning(
+                        "'data' and 'labels' should be equal and be greater than 0"
+                    )
+                    return
+                disable_values = options.get("disable_values", False)
+                hover_color = options.get("hover_color")
+                line_manager = LineTooltipManager(
+                    hover_box=hover_box,
+                    figure=figure,
+                    hover_color=hover_color,
+                )
+                figure.canvas.mpl_connect(
+                    "motion_notify_event",
+                    lambda event: PlotTools.__on_hover_line(
+                        event,
+                        axes,
+                        line_manager,
+                        data,
+                        labels,
+                        disable_values=disable_values,
+                    ),
+                )
+
+            case _:
+                raise NotImplementedError(
+                    f"Hover labels not implemented for: {plot_context.plot_type}"
+                )
 
     @staticmethod
     def __on_hover_bar_group(
         event: Event,
         axes: Axes,
-        hover_box: Annotation,
-        figure: Figure,
-        data: list[Any],
+        manager: BarTooltipManager,
+        data: list[BarContainer],
         labels: list[str],
     ) -> None:
-        if event.inaxes == axes:  # type: ignore
-            for bar_container_idx, bars in enumerate(data):
-                for bar_idx, bar in enumerate(bars):
-                    if bar.contains(event)[0]:
-                        value = bar.get_height()
+        if event.inaxes != axes:  # type: ignore
+            manager.on_exit()
+            return
+        for bar_container_idx, bars in enumerate(data):
+            for bar_idx, bar in enumerate(bars.patches):
+                if bar.contains(event)[0]:  # type: ignore
+                    value = bar.get_height()
 
-                        hover_box.xy = (event.xdata, event.ydata)  # type: ignore
-                        idx = bar_idx * len(data) + bar_container_idx
-                        hover_box.set_text(f"{labels[idx]}\nValue: {value:.3g}")
-                        hover_box.set_visible(True)
-                        figure.canvas.draw_idle()
-                        return
+                    manager.on_enter(
+                        bar, f"{labels[bar_idx]}\nValue: {value:.3g}", event
+                    )
+                    idx = bar_idx * len(data) + bar_container_idx
+                    manager.on_enter(bar, f"{labels[idx]}\nValue: {value:.3g}", event)
+                    return
 
-        hover_box.set_visible(False)
-        figure.canvas.draw_idle()
+        manager.on_exit()
+
+    @staticmethod
+    def __on_hover_line(
+        event: Event,
+        axes: Axes,
+        manager: LineTooltipManager,
+        data: list[list[Line2D]],
+        labels: list[str],
+        *,
+        disable_values: bool = False,
+    ) -> None:
+        if event.inaxes != axes:  # type: ignore
+            manager.on_exit()
+            return
+
+        for lines, label in zip(data, labels, strict=True):
+            for line in lines:
+                contains, idx = line.contains(event)  # type: ignore
+                if contains:
+                    hover_text = label
+                    if not disable_values:
+                        hover_text += f"\nValue: {line.get_ydata()[idx['ind'][0]]:.3g}"  # type: ignore
+                    manager.on_enter(line, hover_text, event)
+                    return
+
+        manager.on_exit()
