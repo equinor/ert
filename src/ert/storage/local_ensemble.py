@@ -1031,6 +1031,16 @@ class LocalEnsemble(BaseMode):
                         response_type, (real,)
                     ).with_columns([pl.col("response_key").cast(pl.Categorical)])
 
+                    if (
+                        response_type == "rft"
+                        and cast(
+                            RFTConfig, self.experiment.response_configuration["rft"]
+                        ).approximate_missing_values
+                    ):
+                        responses = RFTConfig.approximate_missing_rft_responses(
+                            responses, observations
+                        )
+
                     # Filter out responses without observations
                     for col, observed_values in observed_cols.items():
                         if col != "time":
@@ -1230,6 +1240,12 @@ class LocalEnsemble(BaseMode):
                 pure_observations,
                 observation_metadata_in_realization,
             )
+            if cast(
+                RFTConfig, self.experiment.response_configuration["rft"]
+            ).approximate_missing_values:
+                responses = RFTConfig.approximate_missing_rft_responses(
+                    responses.lazy(), observations
+                ).collect()
 
             join_keys = ["well", "date", "well_connection_cell"]
             observed_values = {k: observations[k].unique() for k in join_keys}

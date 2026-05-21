@@ -1,6 +1,7 @@
 import contextlib
 import json
 from enum import IntEnum
+from typing import cast
 
 import polars as pl
 import seaborn as sns
@@ -381,6 +382,15 @@ class _EnsembleWidget(QWidget):
                 for real in reals_with_responses:
                     response = ens.load_responses(response_key, (real,))
                     observation_metadata = ens.load_observation_location_metadata(real)
+                    if cast(
+                        RFTConfig, selected.response_config
+                    ).approximate_missing_values:
+                        response = RFTConfig.approximate_missing_rft_responses(
+                            response.lazy(),
+                            RFTConfig.enrich_observations_with_metadata(
+                                obs, observation_metadata
+                            ),
+                        ).collect()
                     res = _filter_by_match_key(response, observation_metadata)
                     per_realization.append(res)
                 return pl.concat(per_realization)

@@ -1658,6 +1658,96 @@ def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
         assert obs_and_responses["qc_error_1"].to_list() == [msg]
 
 
+@pytest.mark.parametrize(
+    (
+        "approximate_missing_values",
+        "missing_required_columns",
+        "expected_response_values",
+    ),
+    [
+        pytest.param(True, False, [110.0, 310.0], id="interpolate enabled"),
+        pytest.param(False, False, [None, None], id="interpolate disabled"),
+        pytest.param(True, True, [None, None], id="missing required columns"),
+    ],
+)
+def test_that_get_observations_and_responses_interpolates_rft_values(
+    tmp_path,
+    approximate_missing_values,
+    missing_required_columns,
+    expected_response_values,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        rft_config = RFTConfig(
+            input_files=["BASE.RFT"],
+            data_to_read={"WELL": {"2000-01-01": ["PRESSURE"]}},
+            approximate_missing_values=approximate_missing_values,
+        )
+
+        obs1 = rft_observation(name="RFT_OBS1", value=100.0, tvd=1000.0, zone="zone1")
+        obs2 = rft_observation(name="RFT_OBS2", value=200.0, tvd=2000.0, zone="zone1")
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [
+                    obs1.model_dump(mode="json"),
+                    obs2.model_dump(mode="json"),
+                ],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+
+        # If the response is missing the required columns for interpolation,
+        # we should skip interpolation and return None, even if interpolation is
+        # enabled. The test drops the columns to simulate a legacy response without
+        # these columns.
+        drop_columns = ["cell_center", "cell_zones"] if missing_required_columns else []
+        ensemble.save_response(
+            "rft",
+            rft_response(
+                well=("WELL", "WELL"),
+                date=(date, date),
+                prop=("PRESSURE", "PRESSURE"),
+                depth=(500.0, 1500.0),
+                values=(50.0, 150.0),
+                well_connection_cell=((10, 10, 10), (10, 10, 12)),
+                cell_center=((100.0, 105.0, 700.0), (100.0, 105.0, 1200.0)),
+                cell_zones=(("zone1",), ("zone1",)),
+            ).drop(drop_columns),
+            0,
+        )
+        ensemble.save_observation_location_metadata(
+            location_metadata(
+                east=(100.0, 100.0),
+                north=(105.0, 105.0),
+                tvd=(1000.0, 2000.0),
+                actual_zones=(("zone1",), ("zone1",)),
+                well_connection_cell=((10, 10, 11), (10, 10, 13)),
+            ),
+            0,
+        )
+
+        iens_active_index = np.array([0])
+        active_observations = ["RFT_OBS1", "RFT_OBS2"]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["response_key"].to_list() == [
+            "WELL:2000-01-01:PRESSURE",
+            "WELL:2000-01-01:PRESSURE",
+        ]
+        np.testing.assert_array_equal(
+            obs_and_responses["0"].to_list(), expected_response_values
+        )
+
+
 def add_to_name(prefix: str):
     def _inner(params):
         for param in params:

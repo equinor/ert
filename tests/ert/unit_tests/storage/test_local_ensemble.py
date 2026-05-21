@@ -318,14 +318,23 @@ def _create_rft_location_metadata_df(
 
 @contextmanager
 def _create_rft_ensemble(
-    ensemble_size, observations, *, with_summary=False, zonemap=None
+    ensemble_size,
+    observations,
+    *,
+    with_summary=False,
+    zonemap=None,
+    approximate_missing_values=False,
 ):
     if zonemap is not None:
         zonemap_file = Path("zonemap.txt")
         zonemap_file.write_text(zonemap, encoding="utf-8")
     else:
         zonemap_file = None
-    rft_config = RFTConfig(input_files=["DUMMY"], zonemap=zonemap_file)
+    rft_config = RFTConfig(
+        input_files=["DUMMY"],
+        zonemap=zonemap_file,
+        approximate_missing_values=approximate_missing_values,
+    )
     result_config = [rft_config.model_dump(mode="json")]
 
     if with_summary:
@@ -391,6 +400,60 @@ def test_that_get_rft_observations_and_responses_returns_joined_data():
             "observed": [150.0],
             "error": [5.0],
         }
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    ("approximate_missing_values", "expected_approximated_values"),
+    [
+        (True, 165.0),
+        (False, None),
+    ],
+)
+def test_that_get_rft_observations_and_responses_includes_approximated_values_when_enabled(  # noqa: E501
+    approximate_missing_values, expected_approximated_values
+):
+    observation = _create_rft_observation(zone="zone1")
+    with _create_rft_ensemble(
+        1, [observation], approximate_missing_values=approximate_missing_values
+    ) as ensemble:
+        realization = 0
+        # Save two responses that does not match the observation, but can be used to
+        # approximate a response at the observation location.
+        ensemble.save_response(
+            "rft",
+            pl.concat(
+                [
+                    _create_rft_response_df(
+                        i=0,
+                        j=0,
+                        k=1,
+                        cell_center=(100.0, 200.0, 20.0),
+                        cell_zones=("zone1",),
+                        value=160.0,
+                    ),
+                    _create_rft_response_df(
+                        i=0,
+                        j=0,
+                        k=3,
+                        cell_center=(100.0, 200.0, 30.0),
+                        cell_zones=("zone1",),
+                        value=170.0,
+                    ),
+                ]
+            ),
+            realization,
+        )
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(i=0, j=0, k=2, zone="zone1"),
+            realization,
+        )
+        result = ensemble.get_rft_observations_and_responses()
+
+        # The approximated response value is in the result dataframe:
+        assert result["pressure"].to_list() == [
+            pytest.approx(expected_approximated_values)
+        ]
 
 
 @pytest.mark.usefixtures("use_tmpdir")

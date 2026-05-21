@@ -229,6 +229,108 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
     assert len(plot[0].collections) == 2
 
 
+@pytest.mark.parametrize(
+    ("approximate_missing_rft_values", "visualized_responses"), [(True, 1), (False, 0)]
+)
+@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_enabled(
+    qtbot, storage, approximate_missing_rft_values, visualized_responses
+):
+    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASE",
+            "RFT": [{"WELL": "WELL", "DATE": "2000-01-01", "PROPERTIES": "PRESSURE"}],
+            "APPROXIMATE_MISSING_RFT_VALUES": approximate_missing_rft_values,
+            "OBS_CONFIG": (
+                "obs_config",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "RFT_approx",
+                        "WELL": "WELL",
+                        "VALUE": "150",
+                        "ERROR": "0.1",
+                        "DATE": date.isoformat(),
+                        "PROPERTY": "PRESSURE",
+                        "EAST": 0.0,
+                        "NORTH": 0.0,
+                        "TVD": 2.0,
+                        "ZONE": "zone1",
+                    },
+                ],
+            ),
+        }
+    )
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
+
+    # Two responses bracketing the observation location along the z-axis in zone1.
+    # Cell centers are at (0, 0, 1) and (0, 0, 3); the observation is at tvd=2,
+    # so it projects onto the midpoint (t=0.5), giving an interpolated value of 150.
+    rft_responses = pl.DataFrame(
+        {
+            "response_key": [
+                "WELL:2000-01-01:PRESSURE",
+                "WELL:2000-01-01:PRESSURE",
+            ],
+            "well": ["WELL", "WELL"],
+            "date": [date.isoformat(), date.isoformat()],
+            "property": ["PRESSURE", "PRESSURE"],
+            "time": [date, date],
+            "depth": pl.Series([1.0, 3.0], dtype=pl.Float32),
+            "values": pl.Series([100.0, 200.0], dtype=pl.Float32),
+            "well_connection_cell": pl.Series(
+                [[1, 1, 1], [1, 1, 3]], dtype=pl.Array(pl.Int64, 3)
+            ),
+            "cell_center": pl.Series(
+                [[0.0, 0.0, 1.0], [0.0, 0.0, 3.0]], dtype=pl.Array(pl.Float32, 3)
+            ),
+            "cell_zones": [["zone1"], ["zone1"]],
+        },
+        schema=RFTConfig.response_schema(),
+    )
+
+    # The observation maps to cell [1, 1, 2], which has no corresponding response.
+    location_metadata = pl.DataFrame(
+        {
+            "east": [0.0],
+            "north": [0.0],
+            "tvd": [2.0],
+            "actual_zones": [["zone1"]],
+            "well_connection_cell": pl.Series([[1, 1, 2]], dtype=pl.Array(pl.Int64, 3)),
+            "well_connection_cell_center": pl.Series(
+                [[0.0, 0.0, 2.0]], dtype=pl.Array(pl.Float32, 3)
+            ),
+        },
+        schema=RFTConfig.location_metadata_schema(),
+    )
+
+    ensemble.save_response("rft", rft_responses, 0)
+    ensemble.save_observation_location_metadata(location_metadata, 0)
+
+    ensemble_widget = _EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    qtbot.addWidget(ensemble_widget)
+
+    panels_widget = ensemble_widget._tab_widget
+    panels_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    plot = ensemble_widget._figure.get_axes()
+    assert len(plot) == 1
+    collections = plot[0].collections
+    if visualized_responses > 0:
+        assert len(collections) == 2
+        strip_plot_response_collection = collections[-1]
+        displayed_responses = np.asarray(strip_plot_response_collection.get_offsets())
+        assert len(displayed_responses) == visualized_responses
+    else:
+        # Without approximation no responses match, so only the observation
+        # errorbar is rendered and no response strip plot is added.
+        assert len(collections) == 1
+
+
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
 def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     qtbot, storage
