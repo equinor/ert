@@ -90,6 +90,8 @@ class RFTConfig(ResponseConfig):
     Parameters:
         data_to_read: dictionary of the values that should be read from the rft file.
         zonemap: The mapping from grid layer index to zone name.
+        approximate_missing_values: option to fill missing values by interpolation or
+        extrapolation from points within same zone.
     """
 
     type: Literal["rft"] = "rft"
@@ -99,6 +101,7 @@ class RFTConfig(ResponseConfig):
         default_factory=dict
     )
     zonemap: Path | None = None
+    approximate_missing_values: bool = False
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -452,6 +455,166 @@ class RFTConfig(ResponseConfig):
             pl.col("actual_zones")
         )
 
+    @staticmethod
+    def approximate_missing_rft_responses(
+        responses: pl.LazyFrame,
+        observations: pl.DataFrame,
+    ) -> pl.LazyFrame:
+        """Attempts to fill missing response values by interpolation or extrapolation
+        from nearby points
+
+        In some cases rft responses may be missing for well connection points, e.g.
+        due to inactive cells. For each such point, missing a response, this function
+        finds the two nearest responses, within the same zone, whose connecting segment
+        contains the projection of the missing point, and estimates the missing value by
+        linear interpolation. Falls back to extrapolation from the two nearest responses
+        if no pair of responses allowing for interpolation is found.
+        """
+
+        responses_df = responses.filter(
+            pl.col("values").is_not_nan() & pl.col("values").is_not_null()
+        ).collect()
+
+        if (
+            # Only proceed if the response schema contains the necessary metadata for
+            # interpolation/extrapolation. These columns may be missing in legacy
+            # responses. Once all stored responses are guaranteed to include them, this
+            # guard can be removed.
+            "cell_center" not in responses_df.schema
+            or "cell_zones" not in responses_df.schema
+        ):
+            return responses
+
+        observations_with_missing_response = observations.join(
+            responses_df,
+            on=["response_key", "well_connection_cell"],
+            how="anti",
+        )
+
+        if observations_with_missing_response.is_empty():
+            return responses
+
+        def _find_best_pair_for_value_approximation(
+            point_to_approximate: tuple[float, float, float],
+            points_with_responses: npt.NDArray[np.float32],
+        ) -> tuple[int, int, float] | None:
+            """
+            Finds the two nearest points in points_with_responses to
+            point_to_approximate so that interpolation can be performed. If no such pair
+            exists it falls back to the best pair for extrapolation. If there are
+            not at least two non-overlapping points in points_with_responses,
+            returns None.
+
+            Returns (ia, ib, t) where ia and ib are indices of the chosen point pair in
+            points_with_responses and t is the scalar projection of point_to_approximate
+            onto the segment from points_with_responses[ia] to points_with_responses[ib]
+            (t=0 at ia, t=1 at ib). t in [0, 1] means interpolation;
+            t outside that range means extrapolation.
+
+            Note: candidate points are sorted by their individual distance to
+            point_to_approximate and pairs are tried in that order (nearest–second,
+            nearest–third, …). This is simple and works well for the typical case where
+            well paths are quite straight without sharp curves.
+
+            Alternatives such as ranking pairs by perpendicular distance from
+            the missing point to the segment, or by the sum of both point distances were
+            considered but not adopted.
+
+            The assumption is that the approach of simply sorting individual points by
+            distance, instead of sorting point-pairs by distance, will quickly find
+            a good pair of points for interpolation if such a pair exists without having
+            to check every combination of point-pairs.
+            """
+            dists = np.linalg.norm(points_with_responses - point_to_approximate, axis=1)
+            order = np.argsort(dists)
+            best_pair = None
+            for a_idx in range(len(order)):
+                for b_idx in range(a_idx + 1, len(order)):
+                    ia, ib = int(order[a_idx]), int(order[b_idx])
+                    seg = points_with_responses[ib] - points_with_responses[ia]
+                    seg_len_sq = float(np.dot(seg, seg))
+                    if seg_len_sq > 0:
+                        t = (
+                            float(
+                                np.dot(
+                                    point_to_approximate - points_with_responses[ia],
+                                    seg,
+                                )
+                            )
+                            / seg_len_sq
+                        )
+                        if 0.0 <= t <= 1.0:
+                            return (ia, ib, t)
+                        if best_pair is None:
+                            # This is the best pair for extrapolation if no
+                            # interpolating pair is found
+                            best_pair = (ia, ib, t)
+            return best_pair
+
+        approximated_rows: list[dict[str, Any]] = []
+
+        # Since there can be multiple observations at the same location with different
+        # properties (e.g. pressure, swat, sgas), we might repeat the search for the
+        # same pair of points for approximation multiple times since we handle missing
+        # responses per response_key, which includes the property. However, handling
+        # missing responses based on response_key is convenient and keeps complexity
+        # down.
+        for missing in observations_with_missing_response.iter_rows(named=True):
+            # Use the cell center for approximation if available since responses
+            # are associated with cells. Fall back to the east, north, tvd coordinates
+            # of the observation if the cell center is not available due to legacy
+            # location metadata.
+            missing_response_point = missing.get(
+                "well_connection_cell_center",
+                (
+                    missing["east"],
+                    missing["north"],
+                    missing["tvd"],
+                ),
+            )
+
+            # Find candidate points for interpolation/extrapolation within the same
+            # zone.
+            candidate_points = responses_df.filter(
+                (pl.col("response_key") == missing["response_key"])
+                & pl.col("cell_zones").list.contains(missing["zone"])
+            )
+            if len(candidate_points) < 2:
+                continue
+            centers = candidate_points.get_column("cell_center").to_numpy()
+            best_pair = _find_best_pair_for_value_approximation(
+                missing_response_point, centers
+            )
+
+            if best_pair:
+                ia, ib, t = best_pair
+                values = (
+                    candidate_points.get_column("values").gather([ia, ib]).to_list()
+                )
+                v0, v1 = values[0], values[1]
+
+                template = candidate_points.row(ia, named=True)
+
+                approximated_rows.append(
+                    {
+                        **template,
+                        "depth": float(missing_response_point[2]),
+                        "values": np.float32(v0 + t * (v1 - v0)),
+                        "well_connection_cell": missing["well_connection_cell"],
+                        "cell_center": [np.nan, np.nan, np.nan],
+                        "cell_zones": [missing["zone"]],
+                    }
+                )
+
+        if approximated_rows:
+            responses = pl.concat(
+                [
+                    responses_df,
+                    pl.DataFrame(approximated_rows, schema=responses_df.schema),
+                ]
+            ).lazy()
+        return responses
+
     @property
     def response_type(self) -> str:
         return "rft"
@@ -540,6 +703,9 @@ class RFTConfig(ResponseConfig):
                 keys=keys,
                 data_to_read=data_to_read,
                 zonemap=config_dict.get(ConfigKeys.ZONEMAP),
+                approximate_missing_values=config_dict.get(
+                    ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
+                ),
             )
 
         return None

@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from io import BytesIO, StringIO
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import polars as pl
@@ -1082,3 +1082,314 @@ def test_that_cell_center_and_cell_zones_are_populated_from_egrid_and_zonemap(
     np.testing.assert_allclose(
         data["cell_center"].to_numpy(), [[25.0, 25.0, 0.5], [25.0, 25.0, 1.5]]
     )
+
+
+def _rft_responses_for_approximation(
+    well: str = "WELL",
+    date: str = "2000-01-01",
+    layers_with_responses: tuple[tuple[int, str | None], ...] = (
+        (1, "zone1"),
+        (5, "zone1"),
+    ),
+) -> pl.LazyFrame:
+    # fmt: off
+    layers = [  # depth  pressure    swat    sgas
+              (   5.0,    100.0,     0.1,     0.2),  # layer 1  # noqa: E201, E241
+              (  15.0,    200.0,     0.2,     0.3),  # layer 2  # noqa: E201, E241
+              (  25.0,     None,  np.nan,  np.nan),  # layer 3  # noqa: E201, E241, E272
+              (  35.0,     None,    None,    None),  # layer 4  # noqa: E201, E241, E272
+              (  45.0,    200.0,     0.2,     0.3),  # layer 5  # noqa: E201, E241
+              (  55.0,   1000.0,     0.3,     0.2),  # layer 6  # noqa: E201, E241
+    ]
+    # fmt: on
+    depth, pressures, swat, sgas = zip(*layers, strict=True)
+
+    def _make_dataframe(prop: str, values: tuple) -> pl.DataFrame:
+        return pl.DataFrame(
+            {
+                "well": [well] * len(layers_with_responses),
+                "property": [prop] * len(layers_with_responses),
+                "date": [date] * len(layers_with_responses),
+                "depth": pl.Series(
+                    [depth[i - 1] for i, _ in layers_with_responses],
+                    dtype=pl.Float32,
+                ),
+                "values": pl.Series(
+                    [values[i - 1] for i, _ in layers_with_responses],
+                    dtype=pl.Float32,
+                ),
+                "well_connection_cell": pl.Series(
+                    [(1, 1, i) for i, _ in layers_with_responses],
+                    dtype=pl.Array(pl.Int64, 3),
+                ),
+                "cell_center": pl.Series(
+                    [(5.0, 5.0, depth[i - 1]) for i, _ in layers_with_responses],
+                    dtype=pl.Array(pl.Float32, 3),
+                ),
+                "cell_zones": [
+                    (cell_zones,) for _, cell_zones in layers_with_responses
+                ],
+            }
+        )
+
+    return (
+        pl.concat(
+            [
+                _make_dataframe("PRESSURE", pressures),
+                _make_dataframe("SWAT", swat),
+                _make_dataframe("SGAS", sgas),
+            ]
+        )
+        .with_columns(
+            pl.concat_str(
+                [pl.col("well"), pl.col("date"), pl.col("property")], separator=":"
+            ).alias("response_key"),
+        )
+        .lazy()
+    )
+
+
+def _rft_observation_for_approximation(
+    well: str = "WELL",
+    date: str = "2000-01-01",
+    east: float = 5.0,
+    north: float = 5.0,
+    tvd: float = 15.0,
+    well_connection_cell: tuple[int, int, int] = (1, 1, 3),
+    well_connection_cell_center: tuple[float, float, float] = (5.0, 5.0, 25.0),
+    zone: str | None = "zone1",
+) -> pl.DataFrame:
+    def _make_dataframe(prop: str) -> pl.DataFrame:
+        return pl.DataFrame(
+            {
+                "well": [well],
+                "date": [date],
+                "property": [prop],
+                "well_connection_cell": pl.Series(
+                    [well_connection_cell],
+                    dtype=pl.Array(pl.Int64, 3),
+                ),
+                "well_connection_cell_center": pl.Series(
+                    [well_connection_cell_center],
+                    dtype=pl.Array(pl.Float32, 3),
+                ),
+                "east": pl.Series([east], dtype=pl.Float32),
+                "north": pl.Series([north], dtype=pl.Float32),
+                "tvd": pl.Series([tvd], dtype=pl.Float32),
+                "zone": [zone],
+            }
+        )
+
+    return pl.concat(
+        [_make_dataframe(prop) for prop in ["PRESSURE", "SWAT", "SGAS"]],
+    ).with_columns(
+        pl.concat_str(
+            [pl.col("well"), pl.col("date"), pl.col("property")], separator=":"
+        ).alias("response_key"),
+    )
+
+
+def _expected_approximated_values(
+    approximated_values: tuple[float, float, float] | None,
+):
+    if approximated_values:
+        return {
+            "PRESSURE": pytest.approx(approximated_values[0]),
+            "SWAT": pytest.approx(approximated_values[1]),
+            "SGAS": pytest.approx(approximated_values[2]),
+        }
+    return {}
+
+
+@pytest.mark.parametrize(
+    (
+        "rft_responses",
+        "rft_observations",
+        "expected_approximated_values",
+    ),
+    [
+        pytest.param(
+            _rft_responses_for_approximation(),
+            _rft_observation_for_approximation(),
+            (150.0, 0.15, 0.25),
+            id="Test that rft values are interpolated for missing response",
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(),
+            _rft_observation_for_approximation().drop("well_connection_cell_center"),
+            (125.0, 0.125, 0.225),
+            id=(
+                "Test that interpolation falls back to east, north, tvd"
+                "if well_connection_cell_center is missing"
+            ),
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(
+                layers_with_responses=((1, "zone1"), (3, "zone1"), (5, "zone1")),
+            ),
+            _rft_observation_for_approximation(),
+            (150.0, 0.15, 0.25),
+            id="Test that rft values are interpolated for None and NaN response value",
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(
+                layers_with_responses=((1, "zone1"), (2, "zone1"))
+            ),
+            _rft_observation_for_approximation(),
+            (300.0, 0.3, 0.4),
+            id="Test that rft values are extrapolated if interpolation is not possible",
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(
+                layers_with_responses=((1, "zone1"), (2, "zone1"), (6, "zone1")),
+            ),
+            _rft_observation_for_approximation(),
+            (400.0, 0.225, 0.275),
+            id=(
+                "Test that rft value approximation prefers interpolation over "
+                "extrapolation"
+            ),
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(
+                layers_with_responses=((1, "zone1"), (2, "zone1"), (6, "zone2")),
+            ),
+            _rft_observation_for_approximation(),
+            (300.0, 0.3, 0.4),
+            id="Test that approximation does not cross zones",
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(
+                layers_with_responses=((1, "zone1"), (5, "zone2")),
+            ),
+            _rft_observation_for_approximation(),
+            None,
+            id="Test that approximation is not done when only one known value in zone",
+        ),
+        pytest.param(
+            pl.concat(
+                [
+                    _rft_responses_for_approximation(
+                        layers_with_responses=((1, "zone1"),),
+                    ),
+                    _rft_responses_for_approximation(
+                        well="WELL2", layers_with_responses=((1, "zone1"), (2, "zone1"))
+                    ),
+                ]
+            ),
+            _rft_observation_for_approximation(),
+            None,
+            id="Test that approximation does not use values from a different well",
+        ),
+        pytest.param(
+            pl.concat(
+                [
+                    _rft_responses_for_approximation(
+                        layers_with_responses=((1, "zone1"),),
+                    ),
+                    _rft_responses_for_approximation(
+                        date="2000-01-02",
+                        layers_with_responses=((1, "zone1"), (2, "zone1")),
+                    ),
+                ]
+            ),
+            _rft_observation_for_approximation(),
+            None,
+            id="Test that approximation does not use values from a different date",
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(
+                layers_with_responses=((1, "zone1"), (1, "zone1")),
+            ),
+            _rft_observation_for_approximation(),
+            None,
+            id=(
+                "Test that approximation is not done from multiple candidates points "
+                "in same cell"
+            ),
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(),
+            _rft_observation_for_approximation(zone=None),
+            None,
+            id=(
+                "Test that approximation is not done when observation zone info is not "
+                "available"
+            ),
+        ),
+        pytest.param(
+            _rft_responses_for_approximation(
+                layers_with_responses=((1, None), (5, None))
+            ),
+            _rft_observation_for_approximation(),
+            None,
+            id=(
+                "Test that approximation is not done when response zone info is not "
+                "available. I.e. no zonemap file."
+            ),
+        ),
+    ],
+)
+def test_rft_value_approximation(
+    rft_responses,
+    rft_observations,
+    expected_approximated_values,
+):
+    responses_with_approximations = RFTConfig.approximate_missing_rft_responses(
+        responses=rft_responses, observations=rft_observations
+    )
+
+    approximated_values = responses_with_approximations.filter(
+        pl.col("well_connection_cell") == [1, 1, 3]  # The cell of the observation
+    ).collect()
+
+    assert dict(
+        zip(
+            approximated_values["property"].to_list(),
+            approximated_values["values"].to_list(),
+            strict=True,
+        )
+    ) == _expected_approximated_values(expected_approximated_values)
+
+
+@pytest.mark.parametrize(
+    ("approximate_missing_rft_values", "expected_setting"),
+    [(None, False), (False, False), (True, True)],
+)
+@pytest.mark.parametrize(
+    ("rft_response_config", "rft_obs_config"),
+    [(False, True), (True, False), (True, True)],
+)
+def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_on_rft_config(  # noqa: E501
+    approximate_missing_rft_values,
+    expected_setting,
+    rft_response_config,
+    rft_obs_config,
+):
+    config_dict: dict[str, Any] = {"ECLBASE": "BASE"}
+    if approximate_missing_rft_values is not None:
+        config_dict["APPROXIMATE_MISSING_RFT_VALUES"] = approximate_missing_rft_values
+    if rft_response_config:
+        config_dict["RFT"] = [{"WELL": "*", "DATE": "*", "PROPERTIES": "*"}]
+    if rft_obs_config:
+        config_dict["OBS_CONFIG"] = (
+            "obsconf",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "WELL": "WELL",
+                    "VALUE": "700",
+                    "ERROR": "0.1",
+                    "DATE": "2000-01-01",
+                    "PROPERTY": "PRESSURE",
+                    "NORTH": 1.0,
+                    "EAST": 1.0,
+                    "TVD": 0.5,
+                }
+            ],
+        )
+
+    config = ErtConfig.from_dict(config_dict)
+    rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
+    assert rft_config.approximate_missing_values is expected_setting

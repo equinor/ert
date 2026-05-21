@@ -1238,6 +1238,9 @@ class ErtConfig(BaseModel):
                     input_files=[summary_file_base_name],
                     data_to_read={},
                     zonemap=cls_config.zonemap,
+                    approximate_missing_values=config_dict.get(
+                        ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
+                    ),
                 )
 
             bt_obs = [o for o in obs_configs if isinstance(o, BreakthroughObservation)]
