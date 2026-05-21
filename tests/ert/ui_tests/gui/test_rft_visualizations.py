@@ -11,14 +11,14 @@ from pytestqt.qtbot import QtBot
 from ert.config import ErtConfig
 from ert.config.parsing.observations_parser import ObservationType
 from ert.gui.main import GUILogHandler, _setup_main_window
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_ensemble_selection_widget import (
-    EnsembleSelectListWidget,
-)
 from ert.gui.tools.plot.plot_window import (
     ENSEMBLE,
     STATISTICS,
     PlotWindow,
+)
+from ert.gui.tools.plot.widgets.data_type_keys_widget import DataTypeKeysWidget
+from ert.gui.tools.plot.widgets.plot_ensemble_selection_widget import (
+    EnsembleSelectListWidget,
 )
 from ert.services import ErtServerController
 from ert.storage import open_storage

@@ -9,8 +9,7 @@ from matplotlib.patches import Rectangle
 from typing_extensions import TypedDict
 
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
-
-from .plot_tools import ConditionalAxisFormatter, PlotTools
+from ert.gui.tools.plot.utils.plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
     from pandas import DataFrame
 
-    from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
+    from ert.gui.tools.plot.utils import PlotConfig, PlotContext
 
 
 class CcsData(TypedDict):

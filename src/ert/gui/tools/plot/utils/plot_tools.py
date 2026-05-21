@@ -8,7 +8,7 @@ import matplotlib.ticker as mticker
 from matplotlib.backend_bases import Event
 from matplotlib.text import Annotation
 
-from ert.gui.tools.plot.plottery.plot_context import PlotType
+from ert.gui.tools.plot.utils.plot_context import PlotType
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.tools.plot.plottery import PlotContext
+    from ert.gui.tools.plot.utils import PlotContext
 
 
 class ConditionalAxisFormatter(mticker.Formatter):

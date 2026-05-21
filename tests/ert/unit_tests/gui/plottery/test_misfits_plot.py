@@ -5,9 +5,9 @@ import polars as pl
 from matplotlib.figure import Figure
 from polars.testing import assert_frame_equal
 
+from ert.gui.tools.plot.ert_plots import MisfitsPlot
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
-from ert.gui.tools.plot.plottery.plots.misfits import MisfitsPlot
+from ert.gui.tools.plot.utils import PlotConfig, PlotContext
 
 
 def test_that_misfits_plot_is_empty_when_observations_are_missing():

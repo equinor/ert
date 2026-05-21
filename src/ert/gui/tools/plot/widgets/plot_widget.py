@@ -28,28 +28,27 @@ from typing_extensions import override
 from ert.config.distribution import ConstSettings
 from ert.config.gen_kw_config import GenKwConfig
 from ert.gui.icon_utils import load_icon
-from ert.gui.tools.plot.plottery.plots import EverestGradientsPlot
-
-from .plot_api import EnsembleObject, PlotApiKeyDefinition
+from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
 
 if TYPE_CHECKING:
-    from .plottery import PlotContext
-    from .plottery.plots.cesp import CrossEnsembleStatisticsPlot
-    from .plottery.plots.distribution import DistributionPlot
-    from .plottery.plots.ensemble import EnsemblePlot
-    from .plottery.plots.everest_batch_objective_function_plot import (
-        EverestBatchObjectiveFunctionPlot,
+    from ert.gui.tools.plot.ert_plots import (
+        CrossEnsembleStatisticsPlot,
+        DistributionPlot,
+        GaussianKDEPlot,
+        HistogramPlot,
+        MisfitsPlot,
+        StatisticsPlot,
+        StdDevPlot,
     )
-    from .plottery.plots.everest_constraints_plot import EverestConstraintsPlot
-    from .plottery.plots.everest_controls_plot import EverestControlsPlot
-    from .plottery.plots.everest_objective_function_plot import (
+    from ert.gui.tools.plot.everest_plots import (
+        EverestBatchObjectiveFunctionPlot,
+        EverestConstraintsPlot,
+        EverestControlsPlot,
+        EverestGradientsPlot,
         EverestObjectiveFunctionPlot,
     )
-    from .plottery.plots.gaussian_kde import GaussianKDEPlot
-    from .plottery.plots.histogram import HistogramPlot
-    from .plottery.plots.misfits import MisfitsPlot
-    from .plottery.plots.statistics import StatisticsPlot
-    from .plottery.plots.std_dev import StdDevPlot
+    from ert.gui.tools.plot.shared_plots.ensemble import EnsemblePlot
+    from ert.gui.tools.plot.utils import PlotContext
 
 logger = logging.getLogger(__name__)
 

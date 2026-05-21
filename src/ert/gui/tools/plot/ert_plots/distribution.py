@@ -6,15 +6,14 @@ import numpy as np
 import pandas as pd
 
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
-
-from .plot_tools import ConditionalAxisFormatter, PlotTools
+from ert.gui.tools.plot.utils.plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
+    from ert.gui.tools.plot.utils import PlotConfig, PlotContext
 
 
 class DistributionPlot:

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from ert.gui.tools.plot.plottery import PlotStyle
+from ert.gui.tools.plot.utils import PlotStyle
 
 STYLE_OFF = ("Off", None)
 STYLE_AREA = ("Area", "#")

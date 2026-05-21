@@ -7,7 +7,7 @@ from ert.gui.utils import is_everest_application
 from .customization_view import CustomizationView, WidgetProperty
 
 if TYPE_CHECKING:
-    from ert.gui.tools.plot.plottery import PlotConfig
+    from ert.gui.tools.plot.utils import PlotConfig
 
 
 def _label_msg(label: str) -> str:

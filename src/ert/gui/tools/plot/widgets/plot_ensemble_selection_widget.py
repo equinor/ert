@@ -30,9 +30,8 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
+from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.utils import is_everest_application
-
-from .plot_api import EnsembleObject
 
 
 class EnsembleSelectionWidget(QWidget):

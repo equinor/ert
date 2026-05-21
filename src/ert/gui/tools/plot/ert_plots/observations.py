@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from pandas import DataFrame
 
-    from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
+    from ert.gui.tools.plot.utils import PlotConfig, PlotContext
 
 
 def plotObservations(

@@ -8,13 +8,13 @@ from PyQt6.QtGui import QDoubleValidator, QIntValidator
 from PyQt6.QtWidgets import QLabel, QLineEdit, QStackedWidget
 from typing_extensions import override
 
-from ert.gui.tools.plot.plottery import PlotContext, PlotLimits
+from ert.gui.tools.plot.utils import PlotContext, PlotLimits
 from ert.gui.tools.plot.widgets import ClearableLineEdit, CustomDateEdit
 
 from .customization_view import CustomizationView
 
 if TYPE_CHECKING:
-    from ert.gui.tools.plot.plottery import PlotConfig
+    from ert.gui.tools.plot.utils import PlotConfig
 
 
 class StackedInput(QStackedWidget):

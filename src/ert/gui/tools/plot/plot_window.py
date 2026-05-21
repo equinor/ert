@@ -34,27 +34,29 @@ from ert.services import ServerBootFail
 from ert.utils import log_duration
 
 from .customize import PlotCustomizer
-from .data_type_keys_widget import DataTypeKeysWidget
-from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
-from .plot_ensemble_selection_widget import EnsembleSelectionWidget
-from .plot_widget import PlotWidget
-from .plottery import PlotConfig, PlotContext
-from .plottery.plots import (
+from .ert_plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
-    EnsemblePlot,
-    EverestBatchObjectiveFunctionPlot,
-    EverestConstraintsPlot,
-    EverestControlsPlot,
-    EverestGradientsPlot,
-    EverestObjectiveFunctionPlot,
     GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
 )
+from .everest_plots import (
+    EverestBatchObjectiveFunctionPlot,
+    EverestConstraintsPlot,
+    EverestControlsPlot,
+    EverestGradientsPlot,
+    EverestObjectiveFunctionPlot,
+)
+from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
+from .shared_plots import EnsemblePlot
+from .utils import PlotConfig, PlotContext
+from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
+from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
+from .widgets.plot_widget import PlotWidget
 
 CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
 DISTRIBUTION = "Distribution"

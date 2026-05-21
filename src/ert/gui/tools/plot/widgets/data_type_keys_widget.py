@@ -13,12 +13,15 @@ from typing_extensions import override
 
 from ert.gui.ertwidgets import SearchBox
 from ert.gui.icon_utils import load_icon
+from ert.gui.tools.plot.models.data_type_keys_list_model import (
+    DataTypeKeysListModel,
+    DataTypeSeparator,
+)
+from ert.gui.tools.plot.models.data_type_proxy_model import DataTypeProxyModel
+from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from ert.gui.utils import is_everest_application
 
-from .data_type_keys_list_model import DataTypeKeysListModel, DataTypeSeparator
-from .data_type_proxy_model import DataTypeProxyModel
-from .plot_api import PlotApiKeyDefinition
-from .widgets import FilterPopup
+from .filter_popup import FilterPopup
 
 _EVEREST_GROUP_ORDER = [
     "everest_batch_objectives",

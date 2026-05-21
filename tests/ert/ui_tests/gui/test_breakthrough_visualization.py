@@ -13,8 +13,8 @@ from pytestqt.qtbot import QtBot
 from ert.config import ErtConfig, ObservationType
 from ert.gui.main import _setup_main_window
 from ert.gui.tools.event_viewer import GUILogHandler
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_window import ENSEMBLE, STD_DEV, PlotWindow
+from ert.gui.tools.plot.widgets.data_type_keys_widget import DataTypeKeysWidget
 from ert.services import ErtServerController
 from ert.storage import open_storage
 

@@ -6,9 +6,11 @@ from matplotlib.figure import Figure
 from resfo_utilities import is_rate
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectListWidget
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
-from ert.gui.tools.plot.plottery.plots import EnsemblePlot
+from ert.gui.tools.plot.shared_plots import EnsemblePlot
+from ert.gui.tools.plot.utils import PlotConfig, PlotContext
+from ert.gui.tools.plot.widgets.plot_ensemble_selection_widget import (
+    EnsembleSelectListWidget,
+)
 
 
 @pytest.fixture(
@@ -34,7 +36,7 @@ def plot_context(request):
 def test_ensemble_plot_handles_rate(plot_context: PlotContext):
     figure = Figure()
     with patch(
-        "ert.gui.tools.plot.plottery.plots.ensemble.EnsemblePlot._plotLines"
+        "ert.gui.tools.plot.shared_plots.EnsemblePlot._plotLines"
     ) as mock_plotLines:
         EnsemblePlot().plot(
             figure,

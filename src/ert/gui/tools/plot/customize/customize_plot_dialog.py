@@ -26,7 +26,7 @@ from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
-from ert.gui.tools.plot.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
+from ert.gui.tools.plot.utils import PlotConfig, PlotConfigFactory, PlotConfigHistory
 from ert.gui.tools.plot.widgets import CopyStyleToDialog
 from ert.gui.utils import is_everest_application
 

@@ -6,11 +6,10 @@ import numpy as np
 import pandas as pd
 from resfo_utilities import is_rate
 
+from ert.gui.tools.plot.ert_plots.history import plotHistory
+from ert.gui.tools.plot.ert_plots.observations import plotObservations
+from ert.gui.tools.plot.utils.plot_tools import PlotTools
 from ert.gui.utils import is_everest_application
-
-from .history import plotHistory
-from .observations import plotObservations
-from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
-    from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
+    from ert.gui.tools.plot.utils import PlotConfig, PlotContext
 
 
 class EnsemblePlot:

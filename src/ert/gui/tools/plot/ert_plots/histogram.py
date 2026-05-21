@@ -9,16 +9,15 @@ import pandas as pd
 from matplotlib.patches import Rectangle
 
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
+from ert.gui.tools.plot.utils.plot_tools import ConditionalAxisFormatter, PlotTools
 from ert.shared.status.utils import convert_to_numeric
-
-from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.tools.plot.plottery import PlotContext, PlotStyle
+    from ert.gui.tools.plot.utils import PlotContext, PlotStyle
 
 
 class HistogramPlot:
