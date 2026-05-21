@@ -52,10 +52,13 @@ from ert.run_models.event import (
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
+from ert.run_models.run_model import RunModel
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
+
+_original_run_ensemble_evaluator_async = RunModel.run_ensemble_evaluator_async
 
 
 @pytest.fixture
@@ -1042,10 +1045,17 @@ def test_that_run_dialog_clears_warnings_when_rerun(
     monkeypatch.setattr(
         QMessageBox, "exec", value=lambda _: QMessageBox.StandardButton.Ok
     )
-    run_dialog.rerun_failed_realizations()
-    qtbot.wait_until(run_dialog.is_experiment_done, timeout=5000)
+    assert run_dialog.is_experiment_done()
 
-    assert len(run_dialog.post_experiment_warnings) == 0
+    with patch(
+        "ert.run_models.run_model.RunModel.run_ensemble_evaluator_async",
+        _original_run_ensemble_evaluator_async,
+    ):
+        run_dialog.rerun_failed_realizations()
+        assert not run_dialog.is_experiment_done()
+        qtbot.wait_until(run_dialog.is_experiment_done, timeout=5000)
+
+        assert len(run_dialog.post_experiment_warnings) == 0
 
 
 @pytest.mark.timeout(10)

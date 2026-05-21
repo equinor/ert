@@ -119,7 +119,12 @@ def env_save():
         (key, val) for key, val in os.environ.items() if key not in exceptions
     ]
     set_xor = set(environment_pre).symmetric_difference(set(environment_post))
-    assert len(set_xor) == 0, f"Detected differences in environment: {set_xor}"
+    set_pre_post = set(environment_pre).difference(set(environment_post))
+    set_post_pre = set(environment_post).difference(set(environment_pre))
+    assert len(set_xor) == 0, (
+        f"Detected differences in environment: {set_xor}. "
+        f"Pre-post: {set_pre_post}, post-pre: {set_post_pre}"
+    )
 
 
 @pytest.fixture
