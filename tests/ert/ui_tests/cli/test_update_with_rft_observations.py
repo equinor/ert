@@ -22,6 +22,9 @@ def test_that_rft_example_with_rft_observation_keyword_yelds_same_result_as_gend
     Created snapshot of rft pressures by using the GENDATA_RFT in combination
     with GENERAL_OBSERVATION. This test runs the same experiment using RFT_OBSERVATION
     to verify that the resulting RFT pressure data is the same.
+
+    Note that the snapshot might depend on version of Flow. Snapshot values
+    were changed upon the release of Flow 2026.04
     """
     shutil.copytree(
         os.path.join(source_root, "test-data", "ert", "rft_example"), "test-data"
