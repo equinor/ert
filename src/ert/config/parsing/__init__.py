@@ -1,3 +1,5 @@
+from _ert.hook_runtime import HookRuntime
+
 from ._parse_zonemap import parse_zonemap
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
@@ -8,7 +10,6 @@ from .error_info import ErrorInfo, WarningInfo
 from .forward_model_keywords import ForwardModelStepKeys
 from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
-from .hook_runtime import HookRuntime
 from .lark_parser import parse, parse_contents, read_file
 from .observations_parser import (
     ObservationConfigError,

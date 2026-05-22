@@ -31,7 +31,15 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from _ert.events import EnsembleEvaluationWarning
+from _ert.events import (
+    EnsembleEvaluationWarning,
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
+    WorkflowCancelledEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+)
+from _ert.hook_runtime import HookRuntime
 from ert.config import ErrorInfo, WarningInfo
 from ert.ensemble_evaluator import (
     EndEvent,
@@ -43,6 +51,7 @@ from ert.ensemble_evaluator import (
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import Suggestor
+from ert.gui.experiments.view.workflow import workflow_tab_title
 from ert.gui.model.fm_step_list import FMStepListProxyModel
 from ert.gui.model.node import IterNode
 from ert.gui.model.real_list import RealListModel
@@ -83,7 +92,9 @@ from .view import (
     ProgressWidget,
     RealizationWidget,
     RunpathProgressWidget,
+    TabGroupWidget,
     UpdateWidget,
+    WorkflowWidget,
 )
 from .view.disk_space_widget import MountType
 
@@ -389,10 +400,15 @@ class RunDialog(QFrame):
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
-        if isinstance(widget, RealizationWidget):
-            widget.refresh_current_selection()
+        if isinstance(widget, TabGroupWidget):
+            current_widget = widget.current_widget()
+            if isinstance(current_widget, RealizationWidget):
+                current_widget.refresh_current_selection()
 
-        self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
+            self.fm_step_frame.setHidden(isinstance(current_widget, UpdateWidget))
+            return
+
+        self.fm_step_frame.setHidden(False)
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -402,26 +418,27 @@ class RunDialog(QFrame):
             index = self._snapshot_model.index(start, 0, parent)
             iteration = int(cast(IterNode, index.internalPointer()).id_)
             self._latest_iteration = iteration
-            iter_row = start
             self._iteration_progress_label.setText(
                 f"Progress for iteration {iteration}"
                 if not self.is_everest
                 else f"Progress for batch {iteration}"
             )
 
-            widget = RealizationWidget(iter_row)
+            tab_group_widget = self._get_tab_group_widget(
+                iteration, f"iteration-{iteration}"
+            )
+            if tab_group_widget is None:
+                tab_group_widget = self._create_tab_group_widget(
+                    iteration, f"iteration-{iteration}"
+                )
+            widget = self._get_realization_tab_widget(tab_group_widget)
+            if widget is None:
+                widget = self._create_realization_tab_widget(tab_group_widget)
             widget.setSnapshotModel(self._snapshot_model)
             widget.itemClicked.connect(self._select_real)
             widget.setProperty("identifier", f"tab-iter-{iteration}")
             self._select_real(widget._real_list_model.index(0, 0))
-            tab_index = self._tab_widget.addTab(
-                widget,
-                f"Realizations for iteration {iteration}"
-                if not self.is_everest
-                else f"Batch {iteration}...",
-            )
-            if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                self._tab_widget.setCurrentIndex(tab_index)
+            self._tab_widget.setCurrentWidget(tab_group_widget)
 
             if self.is_everest:
                 self._batch_result_types.append(set())
@@ -581,6 +598,21 @@ class RunDialog(QFrame):
                 self.post_experiment_warnings.append(msg)
             case EnsembleEvaluationWarning(warning_message=msg):
                 self._show_warning(msg)
+            case (
+                WorkflowBatchStartedEvent()
+                | WorkflowStartedEvent()
+                | WorkflowFinishedEvent()
+                | WorkflowCancelledEvent()
+                | WorkflowBatchFinishedEvent()
+            ):
+                workflow_widget = self._get_workflow_tab_widget(
+                    event.hook, event.iteration
+                )
+                if workflow_widget is None:
+                    workflow_widget = self._create_workflow_tab_widget(
+                        event.hook, event.iteration
+                    )
+                workflow_widget.handle_event(event)
 
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count
@@ -606,22 +638,49 @@ class RunDialog(QFrame):
                 )
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
-                widget = UpdateWidget(iteration)
-                tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
-                if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                    self._tab_widget.setCurrentIndex(tab_index)
+                tab_group_widget = self._get_tab_group_widget(
+                    iteration, f"update-{iteration}"
+                )
+                if tab_group_widget is None:
+                    tab_group_widget = self._create_tab_group_widget(
+                        iteration, f"update-{iteration}"
+                    )
+                widget = self._get_update_tab_widget(tab_group_widget)
+                if widget is None:
+                    widget = self._create_update_tab_widget(tab_group_widget)
+                self._tab_widget.setCurrentWidget(tab_group_widget)
                 widget.begin(event)
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()
-                self._get_update_widget(event.iteration).end(event)
+                update_widget = self._get_update_tab_for_iteration(event.iteration)
+                if update_widget is None:
+                    update_widget = self._create_update_tab_for_iteration(
+                        event.iteration
+                    )
+                update_widget.end(event)
                 event.write_as_csv(self.output_path)
             case RunModelStatusEvent() | RunModelTimeEvent():
-                self._get_update_widget(event.iteration).update_status(event)
+                update_widget = self._get_update_tab_for_iteration(event.iteration)
+                if update_widget is None:
+                    update_widget = self._create_update_tab_for_iteration(
+                        event.iteration
+                    )
+                update_widget.update_status(event)
             case RunModelDataEvent():
-                self._get_update_widget(event.iteration).add_table(event)
+                update_widget = self._get_update_tab_for_iteration(event.iteration)
+                if update_widget is None:
+                    update_widget = self._create_update_tab_for_iteration(
+                        event.iteration
+                    )
+                update_widget.add_table(event)
                 event.write_as_csv(self.output_path)
             case RunModelErrorEvent():
-                self._get_update_widget(event.iteration).error(event)
+                update_widget = self._get_update_tab_for_iteration(event.iteration)
+                if update_widget is None:
+                    update_widget = self._create_update_tab_for_iteration(
+                        event.iteration
+                    )
+                update_widget.error(event)
                 event.write_as_csv(self.output_path)
             case EverestBatchResultEvent():
                 batch_types = self._batch_result_types[event.batch]
@@ -654,12 +713,183 @@ class RunDialog(QFrame):
                 ):
                     runpath_widget.advance()
 
-    def _get_update_widget(self, iteration: int) -> UpdateWidget:
-        for i in range(self._tab_widget.count()):
-            widget = self._tab_widget.widget(i)
-            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
+    def _get_update_tab_for_iteration(self, iteration: int) -> UpdateWidget | None:
+        tab_group_widget = self._get_tab_group_widget(iteration, f"update-{iteration}")
+        if tab_group_widget is None:
+            return None
+        return self._get_update_tab_widget(tab_group_widget)
+
+    def _create_update_tab_for_iteration(self, iteration: int) -> UpdateWidget:
+        tab_group_widget = self._get_tab_group_widget(iteration, f"update-{iteration}")
+        if tab_group_widget is None:
+            tab_group_widget = self._create_tab_group_widget(
+                iteration, f"update-{iteration}"
+            )
+        update_widget = self._get_update_tab_widget(tab_group_widget)
+        if update_widget is not None:
+            return update_widget
+        return self._create_update_tab_widget(tab_group_widget)
+
+    @staticmethod
+    def _select_subtab_if_none_selected(
+        tab_group_widget: TabGroupWidget, widget: QWidget
+    ) -> None:
+        if tab_group_widget.current_widget() is None:
+            tab_group_widget._tab_widget.setCurrentWidget(widget)
+
+    def _get_realization_tab_widget(
+        self, tab_group_widget: TabGroupWidget
+    ) -> RealizationWidget | None:
+        for index in range(tab_group_widget._tab_widget.count()):
+            widget = tab_group_widget._tab_widget.widget(index)
+            if isinstance(widget, RealizationWidget):
                 return widget
-        raise ValueError("Could not find UpdateWidget")
+
+        return None
+
+    def _create_realization_tab_widget(
+        self, tab_group_widget: TabGroupWidget
+    ) -> RealizationWidget:
+        widget = RealizationWidget(tab_group_widget.iteration, tab_group_widget)
+        tab_group_widget._tab_widget.addTab(widget, "Run")
+        self._select_subtab_if_none_selected(tab_group_widget, widget)
+        return widget
+
+    def _get_update_tab_widget(
+        self, tab_group_widget: TabGroupWidget
+    ) -> UpdateWidget | None:
+        for index in range(tab_group_widget._tab_widget.count()):
+            widget = tab_group_widget._tab_widget.widget(index)
+            if isinstance(widget, UpdateWidget):
+                return widget
+
+        return None
+
+    def _create_update_tab_widget(
+        self, tab_group_widget: TabGroupWidget
+    ) -> UpdateWidget:
+        widget = UpdateWidget(tab_group_widget.iteration, tab_group_widget)
+        tab_group_widget._tab_widget.addTab(widget, "Update")
+        self._select_subtab_if_none_selected(tab_group_widget, widget)
+        return widget
+
+    def _get_workflow_subtab(
+        self,
+        tab_group_widget: TabGroupWidget,
+        hook: HookRuntime,
+    ) -> WorkflowWidget | None:
+        for index in range(tab_group_widget._tab_widget.count()):
+            widget = tab_group_widget._tab_widget.widget(index)
+            if isinstance(widget, WorkflowWidget) and widget.hook == hook:
+                return widget
+
+        return None
+
+    def _create_workflow_subtab(
+        self,
+        tab_group_widget: TabGroupWidget,
+        hook: HookRuntime,
+    ) -> WorkflowWidget:
+        widget = WorkflowWidget(hook, parent=tab_group_widget)
+        tab_group_widget._tab_widget.addTab(widget, workflow_tab_title(hook))
+        self._select_subtab_if_none_selected(tab_group_widget, widget)
+        return widget
+
+    def _get_tab_group_widget(
+        self, iteration: int, tab_title: str
+    ) -> TabGroupWidget | None:
+        for index in range(self._tab_widget.count()):
+            widget = self._tab_widget.widget(index)
+            if (
+                isinstance(widget, TabGroupWidget)
+                and widget.iteration == iteration
+                and self._tab_widget.tabText(index) == tab_title
+            ):
+                return widget
+
+        return None
+
+    def _create_tab_group_widget(
+        self, iteration: int, tab_title: str
+    ) -> TabGroupWidget:
+        widget = TabGroupWidget(iteration, self)
+        widget.currentTabChanged.connect(
+            lambda tab_group_widget=widget: self._on_tab_group_widget_changed(
+                tab_group_widget
+            )
+        )
+
+        self._tab_widget.addTab(widget, tab_title)
+        return widget
+
+    def _on_tab_group_widget_changed(self, tab_group_widget: TabGroupWidget) -> None:
+        if self._tab_widget.currentWidget() is tab_group_widget:
+            self._current_tab_changed(self._tab_widget.currentIndex())
+
+    @staticmethod
+    def _workflow_belongs_to_update(hook: HookRuntime) -> bool:
+        return hook in {
+            HookRuntime.PRE_FIRST_UPDATE,
+            HookRuntime.PRE_UPDATE,
+            HookRuntime.POST_UPDATE,
+        }
+
+    def _get_workflow_tab_widget(
+        self,
+        hook: HookRuntime | None,
+        iteration: int | None,
+    ) -> WorkflowWidget | None:
+        assert hook is not None
+        if iteration is not None:
+            tab_title = (
+                f"update-{iteration}"
+                if self._workflow_belongs_to_update(hook)
+                else f"iteration-{iteration}"
+            )
+            tab_group_widget = self._get_tab_group_widget(iteration, tab_title)
+            if tab_group_widget is None:
+                return None
+            widget = self._get_workflow_subtab(tab_group_widget, hook)
+            if widget is None:
+                return None
+            self._tab_widget.setCurrentWidget(tab_group_widget)
+            return widget
+
+        for index in range(self._tab_widget.count()):
+            existing_widget = self._tab_widget.widget(index)
+            if (
+                isinstance(existing_widget, WorkflowWidget)
+                and existing_widget.hook == hook
+            ):
+                return existing_widget
+
+        return None
+
+    def _create_workflow_tab_widget(
+        self,
+        hook: HookRuntime | None,
+        iteration: int | None,
+    ) -> WorkflowWidget:
+        assert hook is not None
+        if iteration is not None:
+            tab_title = (
+                f"update-{iteration}"
+                if self._workflow_belongs_to_update(hook)
+                else f"iteration-{iteration}"
+            )
+            tab_group_widget = self._get_tab_group_widget(iteration, tab_title)
+            if tab_group_widget is None:
+                tab_group_widget = self._create_tab_group_widget(iteration, tab_title)
+            widget = self._get_workflow_subtab(tab_group_widget, hook)
+            if widget is None:
+                widget = self._create_workflow_subtab(tab_group_widget, hook)
+            self._tab_widget.setCurrentWidget(tab_group_widget)
+            return widget
+
+        widget = WorkflowWidget(hook, parent=self)
+        tab_index = self._tab_widget.addTab(widget, workflow_tab_title(hook))
+        self._tab_widget.setCurrentIndex(tab_index)
+        return widget
 
     def update_total_progress(
         self, progress_value: float, iteration_label: str, iteration: int | None = None

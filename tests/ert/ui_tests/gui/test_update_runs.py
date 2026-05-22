@@ -1,16 +1,30 @@
 import fileinput
 import shutil
+from io import BytesIO
 from pathlib import Path
+from textwrap import dedent
 
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QComboBox, QTextEdit
+from PyQt6.QtCore import QBuffer, QByteArray, QIODeviceBase, Qt
+from PyQt6.QtWidgets import QComboBox, QTextEdit, QWidget
+from pytestqt.qtbot import QtBot
 
+from _ert.events import (
+    WorkflowStatus,
+)
+from ert.config import HookRuntime
 from ert.gui.experiments import ExperimentPanel
 from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments.view import RealizationWidget, TabGroupWidget
 from ert.gui.experiments.view.update import UpdateLogTable, UpdateWidget
+from ert.gui.experiments.view.workflow import (
+    HEADER_TO_COLUMN,
+    WorkflowWidget,
+    workflow_tab_title,
+)
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
@@ -22,6 +36,84 @@ from tests.ert.ui_tests.gui.conftest import (
     get_child,
     open_gui_with_config,
 )
+
+ALL_WORKFLOW_HOOKS = (
+    (HookRuntime.PRE_EXPERIMENT, "pre_experiment"),
+    (HookRuntime.PRE_SIMULATION, "pre_simulation"),
+    (HookRuntime.POST_SIMULATION, "post_simulation"),
+    (HookRuntime.PRE_FIRST_UPDATE, "pre_first_update"),
+    (HookRuntime.PRE_UPDATE, "pre_update"),
+    (HookRuntime.POST_UPDATE, "post_update"),
+    (HookRuntime.POST_EXPERIMENT, "post_experiment"),
+)
+
+
+def _tab_texts(widget) -> list[str]:
+    return [widget.tabText(index) for index in range(widget.count())]
+
+
+def _widget_for_tab_text(widget, tab_text: str):
+    for index in range(widget.count()):
+        if widget.tabText(index) == tab_text:
+            return widget.widget(index)
+    raise AssertionError(f"Did not find tab with text: {tab_text}")
+
+
+def _append_all_workflow_hooks(config_path: Path) -> None:
+    config_dir = config_path.parent
+    (config_dir / "print_job").write_text("EXECUTABLE echo\n", encoding="utf-8")
+
+    config_lines = ["", "LOAD_WORKFLOW_JOB print_job PRINT"]
+    for hook, workflow_name in ALL_WORKFLOW_HOOKS:
+        (config_dir / workflow_name).write_text(
+            dedent(
+                f"""\
+                PRINT {workflow_name}
+                """
+            ),
+            encoding="utf-8",
+        )
+        config_lines.extend(
+            [
+                f"LOAD_WORKFLOW {workflow_name} {workflow_name}",
+                f"HOOK_WORKFLOW {workflow_name} {hook.value}",
+            ]
+        )
+
+    with config_path.open("a", encoding="utf-8") as config_file:
+        config_file.write("\n".join(config_lines) + "\n")
+
+
+def _assert_finished_workflow_widget(
+    widget: WorkflowWidget,
+    workflow_name: str,
+) -> None:
+    assert widget._status_label.text() == f"{workflow_tab_title(widget.hook)} finished"
+    assert widget._table.rowCount() == 1
+    name_item = widget._table.item(0, HEADER_TO_COLUMN["WORKFLOW"])
+    assert name_item is not None
+    assert name_item.text() == workflow_name
+    status_item = widget._table.item(0, HEADER_TO_COLUMN["STATUS"])
+    assert status_item is not None
+    assert status_item.text() == WorkflowStatus.FINISHED.value
+
+
+def _render_widget_to_figure(widget: RunDialog):
+    pixmap = widget.grab()
+    byte_array = QByteArray()
+    buffer = QBuffer(byte_array)
+    assert buffer.open(QIODeviceBase.OpenModeFlag.WriteOnly)
+    assert pixmap.save(buffer, "PNG")
+    image = plt.imread(BytesIO(byte_array.data()), format="png")
+
+    figure, axis = plt.subplots(
+        figsize=(image.shape[1] / 100, image.shape[0] / 100),
+        dpi=100,
+    )
+    axis.imshow(image)
+    axis.axis("off")
+    figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
+    return figure
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -61,7 +153,7 @@ def copy_run_to_current_test(tmp_path, monkeypatch):
     return _copy_case
 
 
-def remove_responses_in_realization0(gui, indices_to_drop):
+def remove_responses_in_realization0(gui: QWidget, indices_to_drop: list[int]):
     """Removes responses in the first realization of the only ensemble.
     indices_to_drop are expected to correspond to observation indices that must
     be disabled."""
@@ -303,3 +395,131 @@ def test_that_response_mean_is_calculated_on_mismatched_responses(
 
     for obs_index, row in enumerate(update_log_table.data.data):
         assert not np.isnan(row[response_mean_index]), f"at row {obs_index}"
+
+
+@pytest.mark.mpl_image_compare(tolerance=10.0)
+@pytest.mark.skip_mac_ci  # test is slow
+@pytest.mark.filterwarnings(
+    "ignore:Use of legacy_ertscript_workflow is deprecated.*:DeprecationWarning"
+)
+def test_that_esmda_with_all_workflows_produces_expected_tabs(
+    qtbot: QtBot, tmp_path, source_root, run_experiment
+):
+    _new_poly_example(source_root, tmp_path, 3)
+    config_path = tmp_path / "poly.ert"
+    _append_all_workflow_hooks(config_path)
+
+    with open_gui_with_config(config_path) as gui:
+        qtbot.addWidget(gui)
+        run_experiment(
+            MultipleDataAssimilation,
+            gui,
+            check_realizations=False,
+        )
+
+        run_dialog = gui.findChildren(RunDialog)[-1]
+        assert run_dialog.is_experiment_done() is True
+        assert (
+            run_dialog._total_progress_label.text()
+            == "Total progress 100% — Experiment completed."
+        )
+
+        assert _tab_texts(run_dialog._tab_widget) == [
+            "Pre-experiment workflows",
+            "iteration-0",
+            "update-0",
+            "iteration-1",
+            "update-1",
+            "iteration-2",
+            "update-2",
+            "iteration-3",
+            "Post-experiment workflows",
+        ]
+        assert (
+            run_dialog._tab_widget.tabText(run_dialog._tab_widget.currentIndex())
+            == "Post-experiment workflows"
+        )
+
+        pre_experiment_widget = _widget_for_tab_text(
+            run_dialog._tab_widget, "Pre-experiment workflows"
+        )
+        post_experiment_widget = _widget_for_tab_text(
+            run_dialog._tab_widget, "Post-experiment workflows"
+        )
+        assert isinstance(pre_experiment_widget, WorkflowWidget)
+        assert isinstance(post_experiment_widget, WorkflowWidget)
+        _assert_finished_workflow_widget(pre_experiment_widget, "pre_experiment")
+        _assert_finished_workflow_widget(post_experiment_widget, "post_experiment")
+
+        for iteration in range(4):
+            iteration_widget = _widget_for_tab_text(
+                run_dialog._tab_widget, f"iteration-{iteration}"
+            )
+            assert isinstance(iteration_widget, TabGroupWidget)
+            assert set(_tab_texts(iteration_widget._tab_widget)) == {
+                "Run",
+                "Pre-simulation workflows",
+                "Post-simulation workflows",
+            }
+
+            realization_widget = _widget_for_tab_text(
+                iteration_widget._tab_widget, "Run"
+            )
+            assert isinstance(realization_widget, RealizationWidget)
+            assert realization_widget._real_view.model().rowCount() == 3
+
+            pre_simulation_widget = _widget_for_tab_text(
+                iteration_widget._tab_widget, "Pre-simulation workflows"
+            )
+            post_simulation_widget = _widget_for_tab_text(
+                iteration_widget._tab_widget, "Post-simulation workflows"
+            )
+            assert isinstance(pre_simulation_widget, WorkflowWidget)
+            assert isinstance(post_simulation_widget, WorkflowWidget)
+            _assert_finished_workflow_widget(pre_simulation_widget, "pre_simulation")
+            _assert_finished_workflow_widget(post_simulation_widget, "post_simulation")
+
+        for iteration in range(3):
+            update_iteration_widget = _widget_for_tab_text(
+                run_dialog._tab_widget, f"update-{iteration}"
+            )
+            assert isinstance(update_iteration_widget, TabGroupWidget)
+
+            expected_tabs = {
+                "Update",
+                "Pre-update workflows",
+                "Post-update workflows",
+            }
+            if iteration == 0:
+                expected_tabs.add("Pre-first-update workflows")
+
+            assert set(_tab_texts(update_iteration_widget._tab_widget)) == expected_tabs
+
+            update_widget = _widget_for_tab_text(
+                update_iteration_widget._tab_widget, "Update"
+            )
+            assert isinstance(update_widget, UpdateWidget)
+
+            pre_update_widget = _widget_for_tab_text(
+                update_iteration_widget._tab_widget, "Pre-update workflows"
+            )
+            post_update_widget = _widget_for_tab_text(
+                update_iteration_widget._tab_widget, "Post-update workflows"
+            )
+            assert isinstance(pre_update_widget, WorkflowWidget)
+            assert isinstance(post_update_widget, WorkflowWidget)
+            _assert_finished_workflow_widget(pre_update_widget, "pre_update")
+            _assert_finished_workflow_widget(post_update_widget, "post_update")
+
+            if iteration == 0:
+                pre_first_update_widget = _widget_for_tab_text(
+                    update_iteration_widget._tab_widget,
+                    "Pre-first-update workflows",
+                )
+                assert isinstance(pre_first_update_widget, WorkflowWidget)
+                _assert_finished_workflow_widget(
+                    pre_first_update_widget,
+                    "pre_first_update",
+                )
+
+        return _render_widget_to_figure(run_dialog)

@@ -31,6 +31,8 @@ class ExternalErtScript(ErtScript):
         sys.stdout.write(self._stdoutdata)
 
         if self.__job.returncode != 0:
+            if self.isCancelled():
+                return
             raise RuntimeError(self._stderrdata)
 
     def cancel(self) -> Any:

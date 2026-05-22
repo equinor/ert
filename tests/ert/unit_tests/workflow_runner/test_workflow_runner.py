@@ -3,7 +3,16 @@ from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
+from _ert.events import (
+    WorkflowCancelledEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+    WorkflowStatus,
+)
+from _ert.hook_runtime import HookRuntime
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
     ExecutableWorkflow,
@@ -178,6 +187,51 @@ def test_workflow_run():
     assert Path("dump2").read_text(encoding="utf-8") == "dump_text_2"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+@settings(
+    max_examples=25,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+@given(
+    hook=st.sampled_from(list(HookRuntime)),
+    iteration=st.none() | st.integers(min_value=0, max_value=9),
+)
+def test_that_workflow_runner_emits_events_with_hook_and_iteration(
+    hook: HookRuntime,
+    iteration: int | None,
+):
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    events: list[WorkflowStartedEvent | WorkflowFinishedEvent] = []
+
+    WorkflowRunner(
+        workflow,
+        fixtures={},
+        hook=hook,
+        iteration=iteration,
+        send_event=events.append,
+    ).run_blocking()
+
+    assert [type(event) for event in events] == [
+        WorkflowStartedEvent,
+        WorkflowFinishedEvent,
+    ]
+    assert events[0].hook == hook
+    assert events[0].iteration == iteration
+    assert events[0].workflow_name == "dump_workflow"
+    assert events[1].hook == hook
+    assert events[1].iteration == iteration
+    assert events[1].workflow_name == "dump_workflow"
+    assert events[1].status == WorkflowStatus.FINISHED
+    assert events[1].stdout == "Hello World\n\nHello World\n"
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
@@ -219,11 +273,73 @@ def test_workflow_thread_cancel_ert_script():
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+@pytest.mark.parametrize(
+    ("config_file", "cancelled_marker"),
+    [
+        pytest.param("wait_job", "wait_cancelled_1", id="internal"),
+        pytest.param("external_wait_job", None, id="external"),
+    ],
+)
+def test_that_cancelling_workflow_runner_emits_expected_events(
+    config_file: str,
+    cancelled_marker: str | None,
+):
+    WorkflowCommon.createWaitJob()
+
+    wait_job = workflow_job_from_file(
+        name="WAIT", config_file=config_file, origin="user"
+    )
+    workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
+
+    events: list[
+        WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent
+    ] = []
+    workflow_runner = WorkflowRunner(workflow, fixtures={}, send_event=events.append)
+
+    assert not workflow_runner.isRunning()
+
+    with workflow_runner:
+        wait_until(workflow_runner.isRunning)
+        wait_until(lambda: Path("wait_started_0").exists())
+        wait_until(lambda: Path("wait_finished_0").exists())
+        wait_until(lambda: Path("wait_started_1").exists())
+
+        workflow_runner.cancel()
+
+        if cancelled_marker is not None:
+            wait_until(lambda: Path(cancelled_marker).exists())
+
+        assert workflow_runner.isCancelled()
+
+    assert [type(event) for event in events] == [
+        WorkflowStartedEvent,
+        WorkflowCancelledEvent,
+    ]
+    assert events[0].hook is None
+    assert events[0].iteration is None
+    assert events[0].workflow_name == "wait_workflow"
+    assert events[1].hook is None
+    assert events[1].iteration is None
+    assert events[1].workflow_name == "wait_workflow"
+    assert not events[1].stdout
+    assert events[1].stderr == "Cancelled by user"
+    assert not Path("wait_finished_1").exists()
+    assert not Path("wait_started_2").exists()
+    assert not Path("wait_finished_2").exists()
+    if cancelled_marker is not None:
+        assert Path(cancelled_marker).exists()
+    else:
+        assert not Path("wait_cancelled_2").exists()
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_workflow_thread_cancel_external():
     WorkflowCommon.createWaitJob()
 
     wait_job = workflow_job_from_file(
-        name="WAIT", config_file="wait_job", origin="user"
+        name="WAIT", config_file="external_wait_job", origin="user"
     )
     workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
 
