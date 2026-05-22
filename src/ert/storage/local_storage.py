@@ -522,7 +522,7 @@ class LocalStorage(BaseMode):
             to29,
         )
 
-        try:
+        try:  # noqa: PLW0717
             self._index = self._load_index()
             if version == 0:
                 # Make a backup of current storage,

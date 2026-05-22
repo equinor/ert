@@ -130,7 +130,7 @@ class ErtScript:
             else:
                 arguments.append(None)
         fixtures["workflow_args"] = arguments
-        try:
+        try:  # noqa: PLW0717
             func_args = inspect.signature(self.run).parameters
             # If the user has specified *args, we skip injecting fixtures, and just
             # pass the user configured arguments

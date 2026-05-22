@@ -150,8 +150,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
-        try:
-            if ensemble:
+        if ensemble:
+            try:  # noqa: PLW0717
                 parameters = ensemble.get_realization_mask_with_parameters()
                 responses = ensemble.get_realization_mask_with_responses()
                 mask = np.logical_and(parameters, responses)
@@ -176,13 +176,13 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 )
                 self._analysis_module_edit.ensemble_size = active_realizations_size
                 self._analysis_module_edit.setEnabled(bool(active_realizations_size))
-        except OSError as err:
-            logger.error(str(err))
-            Suggestor(
-                errors=[ErrorInfo(str(err))],
-                widget_info='<p style="font-size: 28px;">Error reading storage</p>',
-                parent=self,
-            ).show()
+            except OSError as err:
+                logger.error(str(err))
+                Suggestor(
+                    errors=[ErrorInfo(str(err))],
+                    widget_info='<p style="font-size: 28px;">Error reading storage</p>',
+                    parent=self,
+                ).show()
 
     @override
     @Slot(QWidget)

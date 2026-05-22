@@ -70,7 +70,7 @@ def test_missing_runpath_has_isolated_failures(
 
         return inner
 
-    try:
+    try:  # noqa: PLW0717
         with open_gui_with_config(tmp_path / "config.ert") as gui:
             qtbot.addWidget(gui)
             run_experiment(
@@ -128,7 +128,7 @@ def test_missing_runpath_does_not_show_waiting_bar(
 
         return inner
 
-    try:
+    try:  # noqa: PLW0717
         with open_gui_with_config(tmp_path / "config.ert") as gui:
             qtbot.addWidget(gui)
             run_experiment(

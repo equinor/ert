@@ -64,7 +64,7 @@ def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
         log_dir.mkdir(exist_ok=True)
     except PermissionError as err:
         sys.exit(str(err))
-    try:
+    try:  # noqa: PLW0717
         os.environ["ERT_LOG_DIR"] = str(log_dir)
 
         config_dict = yaml.safe_load(LOGGING_CONFIG.read_text(encoding="utf-8"))
@@ -212,7 +212,7 @@ class _DetachedMonitor:
         self._snapshots: dict[int, EnsembleSnapshot] = {}
 
     def update(self, status: dict[str, Any]) -> None:
-        try:
+        try:  # noqa: PLW0717
             if OPT_PROGRESS_ID in status:
                 opt_status = status[OPT_PROGRESS_ID]
                 if opt_status:

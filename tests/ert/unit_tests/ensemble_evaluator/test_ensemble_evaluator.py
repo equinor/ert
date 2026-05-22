@@ -128,7 +128,7 @@ async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
     ee_config = make_ee_config(use_ipc_protocol=False)
     ctx = zmq.asyncio.Context()
     socket = ctx.socket(zmq.ROUTER)
-    try:
+    try:  # noqa: PLW0717
         ee_config.router_port = socket.bind_to_random_port(
             "tcp://*",
             min_port=ee_config.min_port,

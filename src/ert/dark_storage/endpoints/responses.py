@@ -356,9 +356,9 @@ def data_for_response(
                 response_key, tuple(realizations_with_responses)
             )
 
-            try:
-                assert filter_on is not None
-                assert "report_step" in filter_on
+            assert filter_on is not None
+            assert "report_step" in filter_on
+            try:  # noqa: PLW0717
                 report_step = int(filter_on["report_step"])
                 vals = data.filter(pl.col("report_step").eq(report_step))
                 pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010

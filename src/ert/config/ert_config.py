@@ -1037,7 +1037,7 @@ class ErtConfig(BaseModel):
         except ConfigValidationError as e:
             errors.append(e)
 
-        try:
+        try:  # noqa: PLW0717
             site_installed_forward_model_steps = dict(
                 copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
             )
@@ -1075,7 +1075,7 @@ class ErtConfig(BaseModel):
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
         obs_configs: list[Observation] = []
         shape_registry = ShapeRegistry()
-        try:
+        try:  # noqa: PLW0717
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
                 log_observation_keys(obs_config_input)
@@ -1198,7 +1198,7 @@ class ErtConfig(BaseModel):
         zonemap = config_dict.get(ConfigKeys.ZONEMAP)
         if zonemap:
             zonemap = substituter.substitute(zonemap)
-        try:
+        try:  # noqa: PLW0717
             cls_config = cls(
                 substitutions=substitutions,
                 ensemble_config=ensemble_config,

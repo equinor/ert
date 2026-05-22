@@ -253,7 +253,7 @@ class PlotWidget(QWidget):
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         self.resetPlot()
-        try:
+        try:  # noqa: PLW0717
             self._sync_log_checkbox(key_def)
             self._sync_extended_plot_information_checkbox()
             plot_context.log_scale = (
