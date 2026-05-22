@@ -26,7 +26,7 @@ from .parsing.file_context_token import FileContextToken
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_LOCALIZATION_RADIUS = 2000
+DEFAULT_LOCALIZATION_RADIUS = 3000
 
 
 class ErrorModes(StrEnum):
