@@ -100,7 +100,6 @@ class EnsembleSelector(QComboBox):
                     first_ensemble_id, Qt.ItemDataRole.UserRole
                 )
                 self.setCurrentIndex(max(current_index, 0))
-
         except OSError as err:
             logger.error(str(err))
             Suggestor(
@@ -109,9 +108,9 @@ class EnsembleSelector(QComboBox):
                 parent=self,
             ).show()
             return
-
-        self.blockSignals(block)
-        self.ensemble_populated.emit()
+        finally:
+            self.blockSignals(block)
+            self.ensemble_populated.emit()
 
     def _ensemble_list(self) -> Iterable[Ensemble]:
         if not self._or_filters:
