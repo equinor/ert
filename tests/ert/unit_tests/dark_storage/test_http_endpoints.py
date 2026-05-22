@@ -384,5 +384,7 @@ def test_that_get_update_artifacts_returns_blob_storage_data(
         assert blob_types == {"matrix", "observation_report"}
         assert all(a["ensemble_id"] == ensemble_id for a in artifacts)
         assert all(a["file_size"] > 0 for a in artifacts)
-        shapes = {a["shape"] for a in artifacts if a["blob_type"] == "matrix"}
+        shapes = {
+            tuple(a.get("shape")) for a in artifacts if a["blob_type"] == "matrix"
+        }
         assert shapes == {(10, 5), (10, 10)}
