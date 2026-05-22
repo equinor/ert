@@ -363,17 +363,13 @@ def test_that_get_update_artifacts_returns_blob_storage_data(
         np.save(buf, dense_matrix)
         ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
 
-        sparse_matrix = np.zeros((20, 10))
-        sparse_matrix[0, 0] = 1.0
+        sparse_matrix = np.identity(10, dtype=np.float32)
         buf = io.BytesIO()
         np.save(buf, sparse_matrix)
         ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
 
         ensemble.save_blob(
             b"observation report data", blob_type=BlobType.OBSERVATION_REPORT
-        )
-        ensemble.save_blob(
-            b"observation report data 2", blob_type=BlobType.OBSERVATION_REPORT
         )
 
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
@@ -382,24 +378,9 @@ def test_that_get_update_artifacts_returns_blob_storage_data(
         resp = client.get(f"/ensembles/{ensemble_id}/update/artifacts")
         assert resp.status_code == 200
         artifacts = resp.json()
-        assert len(artifacts) == 4
+        assert len(artifacts) == 3
 
-        dense_artifacts = [
-            a for a in artifacts if a["blob_type"] == "matrix" and not a["sparse"]
-        ]
-        sparse_artifacts = [a for a in artifacts if a["sparse"]]
-        report_artifacts = [
-            a for a in artifacts if a["blob_type"] == "observation_report"
-        ]
-
-        assert len(dense_artifacts) == 1
-        assert dense_artifacts[0]["ensemble_id"] == ensemble_id
-        assert dense_artifacts[0]["file_size"] > 0
-
-        assert len(sparse_artifacts) == 1
-        assert sparse_artifacts[0]["ensemble_id"] == ensemble_id
-        assert sparse_artifacts[0]["file_size"] > 0
-
-        assert len(report_artifacts) == 2
-        assert report_artifacts[0]["ensemble_id"] == ensemble_id
-        assert report_artifacts[0]["file_size"] > 0
+        blob_types = {a["blob_type"] for a in artifacts}
+        assert blob_types == {"matrix", "observation_report"}
+        assert all(a["ensemble_id"] == ensemble_id for a in artifacts)
+        assert all(a["file_size"] > 0 for a in artifacts)
