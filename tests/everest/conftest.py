@@ -64,59 +64,54 @@ def control_data_no_variables() -> dict[str, str | float]:
 
 
 @pytest.fixture
-def setup_minimal_everest_case(tmp_path) -> AbstractContextManager[str]:
+def setup_minimal_everest_case(change_to_tmpdir) -> AbstractContextManager[str]:
     @contextmanager
     def make_config(forward_model_sleep_time: int = 1) -> Generator[str, None, None]:
-        cwd = Path.cwd()
-        try:
-            os.chdir(tmp_path)
+        job_path = Path("dummy_job.py")
+        job_path.write_text(
+            dedent(
+                f"""#!/usr/bin/env python3
+                import sys
+                import os
+                import time
+                from pathlib import Path
 
-            job_path = tmp_path / "dummy_job.py"
-            job_path.write_text(
-                dedent(f"""#!/usr/bin/env python3
-                    import sys
-                    import os
-                    import time
-                    from pathlib import Path
+                def main(argv):
+                    time.sleep({forward_model_sleep_time})
+                    Path('my_objective').write_text('0.5')
 
-                    def main(argv):
-                        time.sleep({forward_model_sleep_time})
-                        Path('my_objective').write_text('0.5')
+                if __name__ == '__main__':
+                    main(sys.argv)
+            """
+            ),
+            encoding="utf-8",
+        )
 
-                    if __name__ == '__main__':
-                        main(sys.argv)
-                """)
-            )
+        Path(job_path).chmod(job_path.stat().st_mode | stat.S_IEXEC)
 
-            Path(job_path).chmod(job_path.stat().st_mode | stat.S_IEXEC)
+        config = EverestConfig.with_plugins(
+            {
+                "controls": [
+                    {
+                        "name": "the_control",
+                        "min": -1,
+                        "max": 1,
+                        "initial_guess": 0,
+                        "perturbation_magnitude": 0.01,
+                        "variables": [{"name": "x"}],
+                    }
+                ],
+                "config_path": ".",
+                "model": {"realizations": [0], "realizations_weights": [1]},
+                "objective_functions": [{"name": "my_objective"}],
+                "forward_model": [{"job": "dummy_job"}],
+                "install_jobs": [{"name": "dummy_job", "executable": str(job_path)}],
+            }
+        )
+        Path("config.yml").touch()
+        config.write_to_file("config.yml")
 
-            config = EverestConfig.with_plugins(
-                {
-                    "controls": [
-                        {
-                            "name": "the_control",
-                            "min": -1,
-                            "max": 1,
-                            "initial_guess": 0,
-                            "perturbation_magnitude": 0.01,
-                            "variables": [{"name": "x"}],
-                        }
-                    ],
-                    "config_path": str(tmp_path),
-                    "model": {"realizations": [0], "realizations_weights": [1]},
-                    "objective_functions": [{"name": "my_objective"}],
-                    "forward_model": [{"job": "dummy_job"}],
-                    "install_jobs": [
-                        {"name": "dummy_job", "executable": str(job_path)}
-                    ],
-                }
-            )
-            Path("config.yml").touch()
-            config.write_to_file("config.yml")
-
-            yield "config.yml"
-        finally:
-            os.chdir(cwd)
+        yield "config.yml"
 
     return make_config
 
