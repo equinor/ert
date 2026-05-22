@@ -116,27 +116,28 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
-        try:
-            if ensemble:
+        if ensemble:
+            try:
                 parameters = ensemble.get_realization_mask_with_parameters()
                 missing_responses = ~ensemble.get_realization_mask_with_responses()
                 failures = ~ensemble.get_realization_mask_without_failure()
-                mask = np.logical_and(
-                    parameters, np.logical_or(missing_responses, failures)
-                )
-                if not any(mask):
-                    mask = parameters
-                self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
-                self._number_of_realizations_label.setText(
-                    f"<b>{ensemble.ensemble_size}</b>"
-                )
-        except OSError as err:
-            logger.error(str(err))
-            Suggestor(
-                errors=[ErrorInfo(str(err))],
-                widget_info='<p style="font-size: 28px;">Error reading storage</p>',
-                parent=self,
-            ).show()
+            except OSError as err:
+                logger.error(str(err))
+                Suggestor(
+                    errors=[ErrorInfo(str(err))],
+                    widget_info='<p style="font-size: 28px;">Error reading storage</p>',
+                    parent=self,
+                ).show()
+                return
+            mask = np.logical_and(
+                parameters, np.logical_or(missing_responses, failures)
+            )
+            if not any(mask):
+                mask = parameters
+            self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+            self._number_of_realizations_label.setText(
+                f"<b>{ensemble.ensemble_size}</b>"
+            )
 
     @override
     @Slot(QWidget)

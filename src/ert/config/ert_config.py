@@ -1013,6 +1013,13 @@ class ErtConfig(BaseModel):
 
         try:
             model_config = ModelConfig.from_dict(config_dict)
+
+        except ConfigValidationError as e:
+            errors.append(e)
+        except PydanticValidationError as err:
+            errors.append(ConfigValidationError.from_pydantic(err))
+
+        if model_config is not None:
             runpath = model_config.runpath_format_string
             summary_file_base_name = model_config.summary_file_base_name
             substitutions["<RUNPATH>"] = runpath
@@ -1022,11 +1029,6 @@ class ErtConfig(BaseModel):
             else:
                 substitutions["<ECL_BASE>"] = DEFAULT_ECLBASE_FORMAT
                 substitutions["<ECLBASE>"] = DEFAULT_ECLBASE_FORMAT
-
-        except ConfigValidationError as e:
-            errors.append(e)
-        except PydanticValidationError as err:
-            errors.append(ConfigValidationError.from_pydantic(err))
 
         try:
             workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
@@ -1039,7 +1041,6 @@ class ErtConfig(BaseModel):
             site_installed_forward_model_steps = dict(
                 copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
             )
-
             user_installed_forward_model_steps = (
                 installed_forward_model_steps_from_dict(config_dict)
             )
@@ -1091,18 +1092,18 @@ class ErtConfig(BaseModel):
         except ObservationConfigError as err:
             errors.append(err)
 
+        if obs_configs:
+            obs_summary_keys = {
+                obs.key
+                for obs in obs_configs
+                if isinstance(obs, SummaryObservation | BreakthroughObservation)
+            }
+            if obs_summary_keys:
+                summary_keys = ErtConfig._read_summary_keys(config_dict)
+                config_dict[ConfigKeys.SUMMARY] = [summary_keys] + [
+                    [key] for key in obs_summary_keys if key not in summary_keys
+                ]
         try:
-            if obs_configs:
-                obs_summary_keys = {
-                    obs.key
-                    for obs in obs_configs
-                    if isinstance(obs, SummaryObservation | BreakthroughObservation)
-                }
-                if obs_summary_keys:
-                    summary_keys = ErtConfig._read_summary_keys(config_dict)
-                    config_dict[ConfigKeys.SUMMARY] = [summary_keys] + [
-                        [key] for key in obs_summary_keys if key not in summary_keys
-                    ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         except ConfigValidationError as err:
             errors.append(err)
@@ -1515,7 +1516,6 @@ def _get_files_in_directory(
 
 
 def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
-
     substitutions = dict(config_dict.get("DEFINE", []))
 
     if "<CONFIG_PATH>" not in substitutions:

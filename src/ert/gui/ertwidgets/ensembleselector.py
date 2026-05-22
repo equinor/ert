@@ -83,12 +83,11 @@ class EnsembleSelector(QComboBox):
         block = self.blockSignals(True)
 
         self.clear()
-        ensemble_list = list(self._ensemble_list())
+        ensemble_list: list[Ensemble] = list(self._ensemble_list())
 
+        if ensemble_list:
+            self.setEnabled(True)
         try:
-            if ensemble_list:
-                self.setEnabled(True)
-
             for ensemble in ensemble_list:
                 self.addItem(
                     f"{ensemble.experiment.name} : {ensemble.name}",

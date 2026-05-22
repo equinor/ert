@@ -821,7 +821,6 @@ class RunModel(RunModelConfig, ABC):
         ensemble: Ensemble,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
-
         try:
             asyncio.run(
                 create_run_path(
