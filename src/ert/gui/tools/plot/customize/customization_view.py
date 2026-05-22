@@ -17,6 +17,7 @@ from ert.gui.tools.plot.widgets import ClearableLineEdit
 from .style_chooser import STYLESET_DEFAULT, StyleChooser
 
 if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotConfig
 
 
@@ -27,6 +28,7 @@ class CustomizationView(QWidget):
         self._layout = QFormLayout()
         self.setLayout(self._layout)
         self._widgets: dict[str, QWidget] = {}
+        self._row_widgets: dict[str, QWidget] = {}
 
     def add_row(self, title: str, widget: QWidget) -> None:
         self._layout.addRow(title, widget)
@@ -40,6 +42,7 @@ class CustomizationView(QWidget):
     ) -> None:
         self[attribute_name] = ClearableLineEdit(placeholder=placeholder)
         self.add_row(title, self[attribute_name])
+        self._row_widgets[attribute_name] = self[attribute_name]
 
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
@@ -62,6 +65,7 @@ class CustomizationView(QWidget):
     ) -> None:
         self[attribute_name] = QCheckBox()
         self.add_row(title, self[attribute_name])
+        self._row_widgets[attribute_name] = self[attribute_name]
 
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
@@ -90,6 +94,7 @@ class CustomizationView(QWidget):
         sb_layout.addWidget(sb)
         sb_layout.addStretch()
         self.add_row(title, sb_layout)  # type: ignore
+        self._row_widgets[attribute_name] = sb
 
         if tool_tip is not None:
             sb.setToolTip(tool_tip)
@@ -117,6 +122,7 @@ class CustomizationView(QWidget):
         style_chooser = StyleChooser(line_style_set=line_style_set)
         self[attribute_name] = style_chooser
         self.add_row(title, self[attribute_name])
+        self._row_widgets[attribute_name] = self[attribute_name]
 
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
@@ -140,6 +146,16 @@ class CustomizationView(QWidget):
     def add_spacing(self, pixels: int = 10) -> None:
         self._layout.addItem(QSpacerItem(1, pixels))
 
+    def set_row_visible(self, attribute_name: str, visible: bool) -> None:
+        widget = self._row_widgets.get(attribute_name)
+        if widget is None:
+            return
+
+        label = self._layout.labelForField(widget)
+        if label is not None:
+            label.setVisible(visible)
+        widget.setVisible(visible)
+
     def add_heading(self, title: str) -> None:
         self.add_spacing(10)
         self._layout.addRow(title, None)
@@ -162,6 +178,9 @@ class CustomizationView(QWidget):
             f"Class '{self.__class__.__name__}' has not implemented "
             "the revert_customization() function!"
         )
+
+    def set_key_definition(self, key_def: PlotApiKeyDefinition) -> None:
+        pass
 
 
 class WidgetProperty:

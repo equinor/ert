@@ -185,6 +185,7 @@ class PlotCustomizer(QObject):
                 )
                 self._customization_dialog.add_copyable_key(key)
             self._customization_dialog.current_plot_key_changed(key)
+            self._customization_dialog.set_key_definition(key_def)
             self._previous_key = self._plot_config_key
             self._plot_config_key = key
             self._revert_customization(self.get_plot_config(), emit=False)
@@ -319,6 +320,10 @@ class CustomizePlotDialog(QDialog):
 
     def current_plot_key_changed(self, new_key: str | None) -> None:
         self.current_key = new_key
+
+    def set_key_definition(self, key_def: PlotApiKeyDefinition) -> None:
+        for customization_view in self:
+            customization_view.set_key_definition(key_def)
 
     def log_fn(self, action: str) -> None:
         logger.info(f"Customization dialog action: {action}")

@@ -53,6 +53,27 @@ def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
     )
 
 
+def test_stddev_plot_observation_locations_follow_observation_setting(
+    plot_context: PlotContext,
+):
+    rng = np.random.default_rng()
+    figure = Figure()
+    std_dev_data = rng.random((5, 5))
+    obs_loc = np.array([[1, 2], [3, 4]])
+    plot_context.plotConfig.return_value.set_observations_enabled(False)
+
+    StdDevPlot().plot(
+        figure,
+        plot_context,
+        {},
+        {},
+        {"id": std_dev_data},
+        obs_loc,
+    )
+
+    assert len(figure.axes[0].collections) == 0
+
+
 def test_that_stddev_plot_does_not_crash_and_returns_early_when_no_ensembles():
     figure = Figure()
     context = Mock(spec=PlotContext)

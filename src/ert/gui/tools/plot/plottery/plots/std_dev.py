@@ -63,7 +63,10 @@ class StdDevPlot:
 
                     im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
 
-                    if obs_loc is not None:
+                    if (
+                        obs_loc is not None
+                        and plot_context.plotConfig().is_observations_enabled()
+                    ):
                         xs = obs_loc[:, 0] - 0.5
                         ys = obs_loc[:, 1] - 0.5
 
