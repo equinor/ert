@@ -134,7 +134,7 @@ class Job:
         await sem.acquire()
         timeout_task: asyncio.Task[None] | None = None
         submit_task: asyncio.Task[None] | None = None
-        try:
+        try:  # noqa: PLW0717
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)

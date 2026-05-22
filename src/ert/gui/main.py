@@ -175,7 +175,7 @@ def _start_initial_gui_window(
 
     storage_path = None
     if ert_config is not None:
-        try:
+        try:  # noqa: PLW0717
             if LocalStorage.check_migration_needed(Path(ert_config.ens_path)):
                 storage_version = _storage_version(Path(ert_config.ens_path))
                 current_version = _LOCAL_STORAGE_VERSION

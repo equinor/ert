@@ -158,7 +158,7 @@ class MockZMQServer:
 
     async def _handler(self):
         while True:
-            try:
+            try:  # noqa: PLW0717
                 dealer, __, frame = await self.router_socket.recv_multipart()
                 if self.store_messages and frame not in self.filtered_message_types:
                     self.messages.append(frame.decode("utf-8"))
@@ -216,7 +216,7 @@ async def poll(
 
     poll_task = asyncio.create_task(driver.poll())
     completed = set()
-    try:
+    try:  # noqa: PLW0717
         while True:
             event = await driver.event_queue.get()
             if isinstance(event, StartedEvent):

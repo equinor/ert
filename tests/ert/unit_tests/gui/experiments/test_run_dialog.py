@@ -821,7 +821,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                 raise AssertionError("No DesignMatrixPanel dialog found")
             dialog = dialogs[0]
 
-            try:
+            try:  # noqa: PLW0717
                 model = dialog.model
                 assert model.rowCount() == 3
                 assert model.columnCount() == 1

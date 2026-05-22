@@ -77,7 +77,7 @@ class ExperimentClient:
         event_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
 
         def passthrough_ws_events() -> None:
-            try:
+            try:  # noqa: PLW0717
                 with connect(
                     self._url.replace("https://", "wss://")
                     + f"/{EverEndpoints.events}/{self._run_id}",

@@ -35,7 +35,7 @@ class PluginRunner:
 
     def run(self) -> None:
         ert_config = self.ert_config
-        try:
+        try:  # noqa: PLW0717
             plugin = self.__plugin
             run_paths = Runpaths.from_config(ert_config)
             arguments = plugin.getArguments(

@@ -1685,9 +1685,9 @@ async def _read_parameters(
     for config in parameter_configuration:
         if not config.forward_init:
             continue
-        try:
-            start_time = time.perf_counter()
-            logger.debug(f"Starting to load parameter: {config.name}")
+        start_time = time.perf_counter()
+        logger.debug(f"Starting to load parameter: {config.name}")
+        try:  # noqa: PLW0717
             ds = config.read_from_runpath(Path(run_path), realization, iteration)
             await asyncio.sleep(0)
             logger.debug(
@@ -1714,7 +1714,7 @@ async def _read_parameters(
 def _log_grid_contents(
     run_path: str, summary_config: SummaryConfig, iens: int, iter_: int
 ) -> None:
-    try:
+    try:  # noqa: PLW0717
         filename = substitute_runpath_name(summary_config.input_files[0], iens, iter_)
         base, extension = os.path.splitext(filename)
         # Cut of extensions ".data", ".smspec" or ".unsmry"
@@ -1754,7 +1754,7 @@ async def _write_responses_to_storage(
     errors = []
     response_configs = ensemble.experiment.response_configuration.values()
     for config in response_configs:
-        try:
+        try:  # noqa: PLW0717
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.type}")
             try:

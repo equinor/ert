@@ -89,7 +89,7 @@ class PlotApi:
 
         self._all_ensembles = []
         with create_ertserver_client(self.ens_path) as client:
-            try:
+            try:  # noqa: PLW0717
                 http_response = client.get("/experiments", timeout=self._timeout)
                 self._check_http_response(http_response)
                 experiments = http_response.json()

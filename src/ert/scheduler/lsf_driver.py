@@ -219,7 +219,7 @@ def parse_bhist(bhist_output: str) -> dict[str, dict[str, int]]:
         if not line or not line[0].isdigit():
             continue
         tokens = line.split()
-        try:
+        try:  # noqa: PLW0717
             # The bhist output has data in 10 columns in fixed positions,
             # with spaces possible in field 3. Since `split()` is used
             # to parse the output, we branch on the number of tokens found.

@@ -102,7 +102,7 @@ def _bind_socket(host: str, port: int) -> socket.socket:
     all interfaces (ipv4) or a specific interface (ipv6).
     """
 
-    try:
+    try:  # noqa: PLW0717
         family = get_family(host=host)
         sock = socket.socket(family=family, type=socket.SOCK_STREAM)
         if family == socket.AF_INET6:
@@ -139,7 +139,7 @@ def get_family(host: str) -> socket.AddressFamily:
 
 # See https://stackoverflow.com/a/28950776
 def get_ip_address() -> str:
-    try:
+    try:  # noqa: PLW0717
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.settimeout(0)

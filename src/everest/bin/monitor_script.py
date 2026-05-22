@@ -82,7 +82,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 def monitor_everest(options: argparse.Namespace) -> None:
     config: EverestConfig = options.config
-    try:
+    try:  # noqa: PLW0717
         with create_ertserver_client(
             Path(ServerConfig.get_session_dir(config.output_dir)), timeout=1
         ) as client:
@@ -108,7 +108,7 @@ def monitor_everest(options: argparse.Namespace) -> None:
                 print(f"Error reading experiment status: {err}")
 
     except TimeoutError:
-        try:
+        try:  # noqa: PLW0717
             experiment_status = get_experiment_status(str(config.storage_dir))
             if (
                 experiment_status is None

@@ -156,7 +156,7 @@ def main() -> None:
         tracer.start_as_current_span("everest.everserver", context=ctx),
         NamedTemporaryFile() as log_file,
     ):
-        try:
+        try:  # noqa: PLW0717
             _configure_loggers(
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
                 logging_level=options.logging_level,

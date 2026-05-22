@@ -423,7 +423,7 @@ class PlotWindow(QMainWindow):
             def fetch_data(
                 ensemble: EnsembleObject,
             ) -> tuple[EnsembleObject, pd.DataFrame | BaseException | None]:
-                try:
+                try:  # noqa: PLW0717
                     data = None
                     if is_gradient_plot:
                         data = self._api.data_for_gradient(ensemble.id, key)

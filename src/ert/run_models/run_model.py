@@ -376,7 +376,7 @@ class RunModel(RunModelConfig, ABC):
             self.send_event(WarningEvent(msg=str(message)))
 
         start_timestamp = datetime.datetime.now(tz=datetime.UTC)
-        try:
+        try:  # noqa: PLW0717
             self.send_event(StartEvent(timestamp=start_timestamp))
             with (
                 capture_specific_warning(PostExperimentWarning, handle_captured_event),

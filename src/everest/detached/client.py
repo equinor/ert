@@ -245,7 +245,7 @@ def start_monitor(
     username, password = auth
     credentials = b64encode(f"{username}:{password}".encode()).decode()
 
-    try:
+    try:  # noqa: PLW0717
         with connect(
             url.replace("https://", "wss://") + f"/{EverEndpoints.events}/{run_id}",
             ssl=ssl_context,
@@ -253,7 +253,7 @@ def start_monitor(
             additional_headers={"Authorization": f"Basic {credentials}"},
         ) as websocket:
             while True:
-                try:
+                try:  # noqa: PLW0717
                     message = websocket.recv(timeout=1.0)
                     event = status_event_from_json(message)
                     if isinstance(event, EverestBatchResultEvent):

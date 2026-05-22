@@ -209,7 +209,7 @@ class RFTConfig(ResponseConfig):
         )
 
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry] = {}
-        try:
+        try:  # noqa: PLW0717
             with RFTReader.open(filepath) as rft:
                 for entry in rft:
                     date = entry.date

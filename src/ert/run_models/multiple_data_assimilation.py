@@ -82,7 +82,7 @@ class MultipleDataAssimilation(
         if self.restart_run:
             id_ = self.prior_ensemble_id
             assert id_ is not None
-            try:
+            try:  # noqa: PLW0717
                 ensemble_id = UUID(id_)
                 prior = self._storage.get_ensemble(ensemble_id)
                 experiment = prior.experiment

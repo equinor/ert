@@ -126,7 +126,7 @@ class SurfaceConfig(ParameterConfig):
         assert out_file is not None
         assert base_surface is not None
         file_format = "binary"
-        try:
+        try:  # noqa: PLW0717
             try:
                 surf = IrapSurface.from_binary_file(Path(base_surface))
                 logger.info("Loaded surface in binary format")
