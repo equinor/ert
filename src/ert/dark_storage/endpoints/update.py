@@ -29,17 +29,14 @@ async def get_update_artifacts_for_ensemble(
             continue
         with path.open() as f:
             data = json.load(f)
-        blob_type = data.get("blob_type", "")
-        if blob_type:
+        if blob_type := data.get("blob_type", ""):
             artifacts.append(
                 js.ArtifactOut(
                     blob_type=blob_type,
                     name=path.stem,
                     uri=data["uri"],
-                    ensemble_id=data["ensemble_id"],
                     file_size=data.get("file_size", 0),
                     sparse=data.get("sparse", False),
-                    update_alg=data.get("update_alg", ""),
                     shape=tuple(data.get("shape", (0, 0))),
                 )
             )

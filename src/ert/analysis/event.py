@@ -87,5 +87,4 @@ class AnalysisCompleteEvent(AnalysisEvent):
 class AnalysisMatrixEvent(AnalysisEvent):
     event_type: Literal["AnalysisMatrixEvent"] = "AnalysisMatrixEvent"
     name: str
-    # matrix: np.ndarray = Field(exclude=True)
     matrix: bytes = Field(exclude=True)

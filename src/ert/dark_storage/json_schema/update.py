@@ -29,8 +29,6 @@ class ArtifactOut:
     blob_type: str
     name: str
     uri: str
-    ensemble_id: str
     file_size: int = 0
     sparse: bool = False
-    update_alg: str = ""
     shape: tuple[int, int] = (0, 0)
