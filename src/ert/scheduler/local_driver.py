@@ -41,20 +41,23 @@ class LocalDriver(Driver):
 
     async def kill(self, realizations: Iterable[int]) -> None:
         for realization in realizations:
-            try:
+            if realization in self._tasks:
                 self._tasks[realization].cancel()
                 logger.info(f"Killing realization {realization}")
-                with contextlib.suppress(asyncio.CancelledError):
-                    await self._tasks[realization]
-                del self._tasks[realization]
-                await self._dispatch_finished_event(
-                    realization, signal.SIGTERM + SIGNAL_OFFSET
-                )
+                try:
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await self._tasks[realization]
+                    del self._tasks[realization]
+                    await self._dispatch_finished_event(
+                        realization, signal.SIGTERM + SIGNAL_OFFSET
+                    )
 
-            except KeyError:
-                logger.info(f"Realization {realization} is already killed")
-            except Exception as e:
-                logger.error(f"Killing realization {realization} failed with error {e}")
+                except KeyError:
+                    logger.info(f"Realization {realization} is already killed")
+                except Exception as e:
+                    logger.error(
+                        f"Killing realization {realization} failed with error {e}"
+                    )
 
     async def finish(self) -> None:
         results = await asyncio.gather(*self._tasks.values(), return_exceptions=True)

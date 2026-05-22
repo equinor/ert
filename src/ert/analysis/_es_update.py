@@ -383,38 +383,38 @@ def smoother_update(
     ens_mask = _create_combined_ensemble_mask(ens_mask, active_realizations)
 
     smoother_snapshot: SmootherSnapshot | None = None
-    try:
-        with warnings.catch_warnings():
-            original_showwarning = warnings.showwarning
+    with warnings.catch_warnings():
+        original_showwarning = warnings.showwarning
 
-            ILL_CONDITIONED_RE = re.compile(
-                r"^LinAlgWarning:.*ill[- ]?conditioned\s+matrix", re.IGNORECASE
-            )
-            LIMIT_ILL_CONDITIONED_WARNING = 1000
-            illconditioned_warn_counter = 0
+        ILL_CONDITIONED_RE = re.compile(
+            r"^LinAlgWarning:.*ill[- ]?conditioned\s+matrix", re.IGNORECASE
+        )
+        LIMIT_ILL_CONDITIONED_WARNING = 1000
+        illconditioned_warn_counter = 0
 
-            def log_warning(
-                message: Warning | str,
-                category: type[Warning],
-                filename: str,
-                lineno: int,
-                file: TextIO | None = None,
-                line: str | None = None,
-            ) -> None:
-                nonlocal illconditioned_warn_counter
+        def log_warning(
+            message: Warning | str,
+            category: type[Warning],
+            filename: str,
+            lineno: int,
+            file: TextIO | None = None,
+            line: str | None = None,
+        ) -> None:
+            nonlocal illconditioned_warn_counter
 
-                if ILL_CONDITIONED_RE.search(str(message)):
-                    illconditioned_warn_counter += 1
+            if ILL_CONDITIONED_RE.search(str(message)):
+                illconditioned_warn_counter += 1
 
-                if illconditioned_warn_counter < LIMIT_ILL_CONDITIONED_WARNING:
-                    logger.warning(
-                        f"{category.__name__}: {message} (from {filename}:{lineno})"
-                    )
-                    original_showwarning(
-                        message, category, filename, lineno, file=file, line=line
-                    )
+            if illconditioned_warn_counter < LIMIT_ILL_CONDITIONED_WARNING:
+                logger.warning(
+                    f"{category.__name__}: {message} (from {filename}:{lineno})"
+                )
+                original_showwarning(
+                    message, category, filename, lineno, file=file, line=line
+                )
 
-            warnings.showwarning = log_warning
+        warnings.showwarning = log_warning
+        try:
             smoother_snapshot = perform_ensemble_update(
                 observations,
                 update_settings,
@@ -426,12 +426,12 @@ def smoother_update(
                 strategy_map,
                 rng,
             )
-    except Exception as e:
-        data = None
-        if isinstance(e, ErtAnalysisError):
-            data = e.data
-        progress_callback(AnalysisErrorEvent(error_msg=str(e), data=data))
-        raise
+        except Exception as e:
+            data = None
+            if isinstance(e, ErtAnalysisError):
+                data = e.data
+            progress_callback(AnalysisErrorEvent(error_msg=str(e), data=data))
+            raise
 
     progress_callback(
         AnalysisCompleteEvent(
