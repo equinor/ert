@@ -10,6 +10,7 @@ import hypothesis.strategies as st
 import numpy as np
 import polars as pl
 import pytest
+import scipy as sp
 from hypothesis import given
 
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
@@ -17,6 +18,7 @@ from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
 from ert.exceptions import StorageError
 from ert.storage import open_storage
+from ert.storage.blob_data import BlobType
 from ert.storage.local_ensemble import _write_responses_to_storage
 from ert.storage.mode import ModeError
 
@@ -740,3 +742,43 @@ def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
         assert metadata["uri"].endswith(".parquet")
         assert metadata["file_size"] > 0
         assert metadata["ensemble_id"] == str(ensemble.id)
+
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        pytest.param(
+            np.random.default_rng(0).random((10, 5)),
+            id="dense",
+        ),
+        pytest.param(
+            np.eye(10, 5),
+            id="sparse",
+        ),
+    ],
+)
+def test_that_save_blob_matrix_shape_agrees_on_read_back(tmp_path, matrix):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        buf = io.BytesIO()
+        np.save(buf, matrix)
+        ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
+
+        blob_dir = ensemble._path / "blobs"
+        json_files = list(blob_dir.glob("*.json"))
+        assert len(json_files) == 1
+
+        metadata = json.loads(json_files[0].read_text(encoding="utf-8"))
+        assert metadata["blob_type"] == "matrix"
+        assert metadata["shape"] == list(matrix.shape)
+
+        is_sparse = metadata["sparse"]
+        uri = metadata["uri"]
+
+        loaded = sp.sparse.load_npz(uri).toarray() if is_sparse else np.load(uri)
+
+        assert loaded.shape == matrix.shape
