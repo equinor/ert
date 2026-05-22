@@ -104,8 +104,10 @@ def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]
             add_gui_log_handler() as log_handler,
         ):
             gui = _setup_main_window(config, args_mock, log_handler, config.ens_path)
-            yield gui, config.ens_path, config
-            gui.close()
+            try:
+                yield gui, config.ens_path, config
+            finally:
+                gui.close()
 
 
 @pytest.fixture

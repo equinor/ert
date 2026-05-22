@@ -113,10 +113,10 @@ def open_plotter(config: ErtConfig, qtbot: QtBot):
 
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
         plot_window = get_child(gui, PlotWindow)
-
-        yield plot_window
-
-        plot_window.close()
+        try:
+            yield plot_window
+        finally:
+            plot_window.close()
 
 
 def setup_storage(config):

@@ -41,8 +41,10 @@ def _open_main_window(
     # RuntimeError: wrapped C/C++ object of type GUILogHandler
     handler = GUILogHandler()
     gui = _setup_main_window(config, args_mock, handler, config.ens_path)
-    yield gui
-    gui.close()
+    try:
+        yield gui
+    finally:
+        gui.close()
 
 
 @pytest.fixture
