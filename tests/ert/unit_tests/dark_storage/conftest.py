@@ -81,8 +81,10 @@ def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage")
 
-    yield app
-    reset_dark_storage()
+    try:
+        yield app
+    finally:
+        reset_dark_storage()
 
 
 @pytest.fixture

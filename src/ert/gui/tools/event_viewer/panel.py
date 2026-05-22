@@ -92,7 +92,7 @@ def add_gui_log_handler() -> Iterator[GUILogHandler]:
 
     gui_handler = GUILogHandler()
     logger.addHandler(gui_handler.handler)
-
-    yield gui_handler
-
-    logger.removeHandler(gui_handler.handler)
+    try:
+        yield gui_handler
+    finally:
+        logger.removeHandler(gui_handler.handler)

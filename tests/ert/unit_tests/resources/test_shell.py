@@ -20,10 +20,10 @@ from ._import_from_location import import_from_location
 def pushd(path):
     cwd0 = Path.cwd()
     os.chdir(path)
-
-    yield
-
-    os.chdir(cwd0)
+    try:
+        yield
+    finally:
+        os.chdir(cwd0)
 
 
 symlink = import_from_location(
