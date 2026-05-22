@@ -267,6 +267,7 @@ ignore = [
     "PLR0904", # too-many-public-methods
     "PLR1702", # too-many-nested-blocks
     "RUF067",  # code in __init__ files
+    "PLW0717", # too-many-try-statements
 ]
 
 # Allow EN DASH (U+2013)
