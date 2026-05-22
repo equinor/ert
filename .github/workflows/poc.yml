@@ -1,0 +1,39 @@
+name: POC upload tarball to ert-testdata
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload-poc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out ert
+        uses: actions/checkout@v4
+
+      - name: Create sample tarball
+        run: |
+          mkdir -p poc-data
+          echo "hello from ert CI" > poc-data/README.txt
+          tar -czf baselines.tar.gz poc-data
+
+      - name: Check out ert-testdata
+        uses: actions/checkout@v4
+        with:
+          repository: equinor/ert-testdata
+          ref: ci-baseline-poc
+          path: ert-testdata
+          token: ${{ secrets.ERT_TESTDATA_TOKEN }}
+
+      - name: Copy tarball into ert-testdata
+        run: |
+          mkdir -p ert-testdata/image-baseline-poc/from-ert/${{ github.run_id }}
+          cp baselines.tar.gz ert-testdata/image-baseline-poc/from-ert/${{ github.run_id }}/
+
+      - name: Commit and push
+        run: |
+          cd ert-testdata
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "POC: upload tarball from ert CI run ${{ github.run_id }}" || exit 0
+          git push
