@@ -58,10 +58,22 @@ def visualization_entry(args: list[str] | None = None) -> None:
             logger.info("Migrating ERT storage from everest results entrypoint")
             LocalStorage.perform_migration(Path(ever_config.storage_dir))
 
-        experiment = EverestStorage.get_everest_experiment(
-            storage_path=ever_config.storage_dir,
-        )
-
+        try:
+            experiment = EverestStorage.get_everest_experiment(
+                storage_path=ever_config.storage_dir,
+            )
+        except StopIteration as e:
+            logger.error(
+                f"Failed to load experiment from storage at {ever_config.storage_dir}",
+                exc_info=e,
+            )
+            print(
+                f"Failed to load experiment from storage at {ever_config.storage_dir}."
+                f"\nAt least one batch needs to be initialized "
+                f"to be able to visualize results."
+                f"\nPlease check the logs for more details."
+            )
+            return
         if not experiment.ensembles_with_function_results:
             print(
                 f"No data found in storage at {experiment._storage.path}. "
