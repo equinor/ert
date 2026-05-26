@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSplitter,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -54,14 +55,27 @@ class ManageExperimentsPanel(QTabWidget):
         panel = QWidget()
         panel.setObjectName("create_new_ensemble_tab")
 
-        layout = QHBoxLayout()
         storage_widget = StorageWidget(
             self.notifier, self.ert_config, self.ensemble_size
         )
         self._storage_info_widget = StorageInfoWidget()
 
-        layout.addWidget(storage_widget)
-        layout.addWidget(self._storage_info_widget, stretch=1)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(storage_widget)
+        splitter.addWidget(self._storage_info_widget)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([250, 900])
+        splitter.setCollapsible(0, False)
+        splitter.setCollapsible(1, False)
+        splitter.setHandleWidth(6)
+        splitter.setStyleSheet(
+            "QSplitter::handle { background-color: palette(mid); border-radius: 2px; }"
+        )
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(splitter)
         panel.setLayout(layout)
 
         storage_widget.onSelectExperiment.connect(
