@@ -41,10 +41,6 @@ mkdir = import_from_location(
     "make_directory",
     SHELL_SCRIPTS / "make_directory.py",
 ).mkdir
-careful_copy_file = import_from_location(
-    "careful_copy",
-    SHELL_SCRIPTS / "careful_copy_file.py",
-).careful_copy_file
 copy_directory = import_from_location(
     "careful_copy",
     SHELL_SCRIPTS / "copy_directory.py",
