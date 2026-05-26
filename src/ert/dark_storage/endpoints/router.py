@@ -6,7 +6,6 @@ from .experiments import router as experiments_router
 from .observations import router as observations_router
 from .parameters import router as parameters_router
 from .responses import router as responses_router
-from .update import router as update_router
 from .version import router as version_router
 
 router = APIRouter()
@@ -17,4 +16,3 @@ router.include_router(parameters_router)
 router.include_router(responses_router)
 router.include_router(experiment_server_router)
 router.include_router(version_router)
-router.include_router(update_router)

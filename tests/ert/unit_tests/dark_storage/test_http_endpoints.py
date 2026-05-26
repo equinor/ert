@@ -349,7 +349,7 @@ def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
     assert dataframe.shape == (3, 1)
 
 
-def test_that_get_update_artifacts_returns_blob_storage_data(
+def test_that_get_ensemble_returns_blob_storage_data(
     tmp_path, monkeypatch, dark_storage_app
 ):
     storage_path = tmp_path / "storage"
@@ -363,7 +363,7 @@ def test_that_get_update_artifacts_returns_blob_storage_data(
         np.save(buf, dense_matrix)
         ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
 
-        sparse_matrix = np.identity(10, dtype=np.float32)
+        sparse_matrix = np.eye(10, dtype=np.float32)
         buf = io.BytesIO()
         np.save(buf, sparse_matrix)
         ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
@@ -375,15 +375,18 @@ def test_that_get_update_artifacts_returns_blob_storage_data(
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
 
     with TestClient(dark_storage_app) as client:
-        resp = client.get(f"/ensembles/{ensemble_id}/update/artifacts")
+        resp = client.get(f"/ensembles/{ensemble_id}")
         assert resp.status_code == 200
-        artifacts = resp.json()
-        assert len(artifacts) == 3
+        blobs = resp.json()["blobs"]
 
-        blob_types = {a["blob_type"] for a in artifacts}
-        assert blob_types == {"matrix", "observation_report"}
-        assert all(a["file_size"] > 0 for a in artifacts)
-        shapes = {
-            tuple(a.get("shape")) for a in artifacts if a["blob_type"] == "matrix"
-        }
-        assert shapes == {(10, 5), (10, 10)}
+        matrix_blobs = [blob for blob in blobs if blob["blob_type"] == "matrix"]
+        observation_report_blobs = [
+            blob for blob in blobs if blob["blob_type"] == "observation_report"
+        ]
+
+        assert len(matrix_blobs) == 2
+        assert len(observation_report_blobs) == 1
+        assert {tuple(blob["shape"]) for blob in matrix_blobs} == {(10, 5), (10, 10)}
+        assert {blob["sparse"] for blob in matrix_blobs} == {"True", "False"}
+        assert all(int(blob["file_size"]) > 0 for blob in matrix_blobs)
+        assert int(observation_report_blobs[0]["file_size"]) > 0

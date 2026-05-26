@@ -1,4 +1,4 @@
-from .ensemble import EnsembleIn, EnsembleOut
+from .ensemble import BlobOut, EnsembleIn, EnsembleOut
 from .experiment import ExperimentIn, ExperimentOut
 from .observation import (
     ObservationIn,
@@ -8,4 +8,4 @@ from .observation import (
 )
 from .prior import Prior
 from .record import RecordOut
-from .update import ArtifactOut, UpdateIn, UpdateOut
+from .update import UpdateIn, UpdateOut

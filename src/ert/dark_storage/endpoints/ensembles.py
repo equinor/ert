@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import Counter
 from uuid import UUID
@@ -24,6 +25,30 @@ def get_ensemble(
     with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
 
+    blobs: list[js.BlobOut] = []
+    for path in sorted(ensemble.list_blob_data()):
+        if path.suffix != ".json":
+            continue
+
+        metadata = json.loads(path.read_text())
+        blob_type = metadata.get("blob_type")
+        if not blob_type:
+            continue
+
+        shape = metadata.get("shape", (0, 0))
+        if not isinstance(shape, list | tuple) or len(shape) != 2:
+            shape = (0, 0)
+
+        blobs.append(
+            js.BlobOut(
+                blob_type=str(blob_type),
+                uri=str(metadata.get("uri", "")),
+                file_size=str(metadata.get("file_size", "")),
+                sparse=str(metadata.get("sparse", "")),
+                shape=(int(shape[0]), int(shape[1])),
+            )
+        )
+
     return js.EnsembleOut(
         id=ensemble_id,
         experiment_id=ensemble.experiment_id,
@@ -38,4 +63,5 @@ def get_ensemble(
         realization_storage_states=Counter(
             state for states in ensemble.get_ensemble_state() for state in states
         ),
+        blobs=blobs or None,
     )
