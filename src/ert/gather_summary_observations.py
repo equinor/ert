@@ -3,7 +3,7 @@ import datetime
 import json
 import ssl
 import sys
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 from collections import defaultdict
 from dataclasses import dataclass, fields
 from functools import partial
@@ -164,14 +164,6 @@ def convert_summary_observations(
                 fout.write(f"{date.isoformat()}\n")
 
 
-def parser(prog: str) -> ArgumentParser:
-    p = ArgumentParser(prog=prog, description=__doc__)
-    p.add_argument("ert_config", type=str)
-    p.add_argument("experiment", nargs="?", type=str, default=None)
-    p.add_argument("--output-csv-file", default="summary_observations.csv", type=str)
-    return p
-
-
 async def get_healthy_url(urls: list[str], token: str, ssl_context: SSLContext) -> str:
     for url in urls:
         try:
@@ -276,8 +268,3 @@ def main(args: Namespace, _site_plugins: ErtRuntimePlugins | None = None) -> Non
         convert_summary_observations(summary_observations, args.output_csv_file)
     finally:
         proc.terminate()
-
-
-if __name__ == "__main__":
-    args = parser(sys.argv[0]).parse_args(sys.argv[1:])
-    main(args)
