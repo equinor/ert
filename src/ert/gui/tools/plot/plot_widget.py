@@ -1,7 +1,7 @@
 import logging
 import sys
 import traceback
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 import numpy.typing as npt
@@ -28,30 +28,31 @@ from typing_extensions import override
 from ert.config.distribution import ConstSettings
 from ert.config.gen_kw_config import GenKwConfig
 from ert.gui.icon_utils import load_icon
-from ert.gui.tools.plot.plottery.plots import EverestGradientsPlot
 
 from .plot_api import EnsembleObject, PlotApiKeyDefinition
 
 if TYPE_CHECKING:
     from .plottery import PlotContext
-    from .plottery.plots.cesp import CrossEnsembleStatisticsPlot
-    from .plottery.plots.distribution import DistributionPlot
-    from .plottery.plots.ensemble import EnsemblePlot
-    from .plottery.plots.everest_batch_objective_function_plot import (
-        EverestBatchObjectiveFunctionPlot,
-    )
-    from .plottery.plots.everest_constraints_plot import EverestConstraintsPlot
-    from .plottery.plots.everest_controls_plot import EverestControlsPlot
-    from .plottery.plots.everest_objective_function_plot import (
-        EverestObjectiveFunctionPlot,
-    )
-    from .plottery.plots.gaussian_kde import GaussianKDEPlot
-    from .plottery.plots.histogram import HistogramPlot
-    from .plottery.plots.misfits import MisfitsPlot
-    from .plottery.plots.statistics import StatisticsPlot
-    from .plottery.plots.std_dev import StdDevPlot
 
 logger = logging.getLogger(__name__)
+
+
+class Plotter(Protocol):
+    """Protocol for plot strategies used by PlotWidget."""
+
+    dimensionality: int
+    requires_observations: bool
+
+    def plot(
+        self,
+        figure: Figure,
+        plot_context: "PlotContext",
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
+        observations: pd.DataFrame,
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
+        key_def: PlotApiKeyDefinition | None = None,
+    ) -> None: ...
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
@@ -130,21 +131,7 @@ class PlotWidget(QWidget):
     def __init__(
         self,
         name: str,
-        plotter: Union[
-            "EnsemblePlot",
-            "StatisticsPlot",
-            "HistogramPlot",
-            "GaussianKDEPlot",
-            "DistributionPlot",
-            "CrossEnsembleStatisticsPlot",
-            "StdDevPlot",
-            "MisfitsPlot",
-            "EverestBatchObjectiveFunctionPlot",
-            "EverestConstraintsPlot",
-            "EverestControlsPlot",
-            "EverestGradientsPlot",
-            "EverestObjectiveFunctionPlot",
-        ],
+        plotter: Plotter,
         parent: QWidget | None = None,
     ) -> None:
         QWidget.__init__(self, parent)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 import numpy as np
 import pandas as pd
@@ -37,7 +37,7 @@ from .customize import PlotCustomizer
 from .data_type_keys_widget import DataTypeKeysWidget
 from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from .plot_ensemble_selection_widget import EnsembleSelectionWidget
-from .plot_widget import PlotWidget
+from .plot_widget import Plotter, PlotWidget
 from .plottery import PlotConfig, PlotContext
 from .plottery.plots import (
     CrossEnsembleStatisticsPlot,
@@ -76,6 +76,12 @@ STD_DEV_DEFAULT = 7
 
 
 logger = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class SelectableControlsPlotter(Protocol):
+    def set_selected_controls(self, controls: list[str]) -> None: ...
+
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -411,7 +417,8 @@ class PlotWindow(QMainWindow):
                 selected_controls = (
                     self._everest_control_selection_widget.get_selected_controls()
                 )
-                plot_widget._plotter.set_selected_controls(selected_controls)  # type: ignore
+                if isinstance(plot_widget._plotter, SelectableControlsPlotter):
+                    plot_widget._plotter.set_selected_controls(selected_controls)
 
             def fetch_data(
                 ensemble: EnsembleObject,
@@ -587,19 +594,7 @@ class PlotWindow(QMainWindow):
     def addPlotWidget(
         self,
         name: str,
-        plotter: EnsemblePlot
-        | StatisticsPlot
-        | HistogramPlot
-        | GaussianKDEPlot
-        | DistributionPlot
-        | CrossEnsembleStatisticsPlot
-        | StdDevPlot
-        | MisfitsPlot
-        | EverestBatchObjectiveFunctionPlot
-        | EverestConstraintsPlot
-        | EverestControlsPlot
-        | EverestGradientsPlot
-        | EverestObjectiveFunctionPlot,
+        plotter: Plotter,
         *,
         enabled: bool = True,
     ) -> None:
