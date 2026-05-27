@@ -185,7 +185,7 @@
   "analysis_settings": {
     "enkf_truncation": 1.0,
     "inversion": "EXACT",
-    "localization": true,
+    "localization": false,
     "localization_correlation_threshold": 0.1,
     "distance_localization": false
   },

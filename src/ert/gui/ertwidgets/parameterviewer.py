@@ -74,10 +74,10 @@ class ParametersViewer(QDialog):
                 self.type_nodes[parameter.type], [parameter.name]
             )
             parameter_node.setData(
-                0, Qt.ItemDataRole.UserRole, parameter.update
+                0, Qt.ItemDataRole.UserRole, parameter.update_strategy
             )  # Store update value for filtering
             self.parameter_nodes.append(parameter_node)
-            QTreeWidgetItem(parameter_node, [f"Update: {parameter.update}"])
+            QTreeWidgetItem(parameter_node, [f"Update: {parameter.update_strategy}"])
             QTreeWidgetItem(parameter_node, [f"Forward Init: {parameter.forward_init}"])
             if parameter.group_name:
                 QTreeWidgetItem(

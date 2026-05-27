@@ -60,15 +60,15 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             prior.iteration,
             prior.id,
         )
+
         strategy_map = build_strategy_map(
             parameters=prior.experiment.update_parameters,
             param_configs=prior.experiment.parameter_configuration,
             enkf_truncation=self.analysis_settings.enkf_truncation,
-            distance_localization=self.analysis_settings.distance_localization,
-            localization=self.analysis_settings.localization,
             correlation_threshold=self.analysis_settings.correlation_threshold,
             progress_callback=progress_callback,
         )
+
         smoother_update(
             prior,
             posterior,

@@ -3071,3 +3071,96 @@ def test_that_using_too_long_sheetname_in_design_matrix_raises_validation_error(
                 """
             )
         )
+
+
+def test_that_analysis_set_var_parameters_do_not_update_strategy_when_update_is_false(
+    change_to_tmpdir,
+):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:FALSE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None
+
+
+def test_that_analysis_set_var_parameters_updates_update_strategy_when_update_is_true(
+    change_to_tmpdir,
+):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:TRUE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "adaptive"
+
+
+def test_that_analysis_set_var_parameters_do_not_override_const_gen_kw(
+    change_to_tmpdir,
+):
+    Path("prior.txt").write_text("MY_PARAM CONST 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None
+
+
+def test_that_gen_kw_defaults_to_global_without_analysis_set_var(change_to_tmpdir):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "global"
+
+
+def test_that_gen_kw_defaults_to_global_with_update_true(change_to_tmpdir):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:TRUE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "global"
+
+
+def test_that_gen_kw_defaults_to_none_with_update_false(change_to_tmpdir):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:FALSE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None

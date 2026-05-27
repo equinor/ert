@@ -14,7 +14,7 @@ import xarray as xr
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from ropt.workflow import find_sampler_plugin
 
-from .parameter_config import ParameterCardinality, ParameterConfig
+from .parameter_config import LocalizationType, ParameterCardinality, ParameterConfig
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -152,7 +152,7 @@ class EverestControl(ParameterConfig):
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
-    update: bool = False
+    update_strategy: LocalizationType | None = None
     control_type_: Literal["well_control", "generic_control"]
     initial_guess: float
     control_type: Literal["real", "integer"]

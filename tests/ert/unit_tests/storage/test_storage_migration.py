@@ -423,6 +423,7 @@ def test_that_manual_update_from_migrated_storage_works(
                 list(experiment.observation_keys),
                 ObservationSettings(),
                 rng=np.random.default_rng(42),
+                strategy_map={},
             )
 
 

@@ -9,7 +9,13 @@ from typing import TYPE_CHECKING, TextIO
 import numpy as np
 import polars as pl
 
-from ert.config import ESSettings, Field, ObservationSettings, SurfaceConfig
+from ert.config import (
+    Field,
+    GenKwConfig,
+    ObservationSettings,
+    SurfaceConfig,
+)
+from ert.config.parameter_config import LocalizationType
 
 from ._update_commons import (
     ErtAnalysisError,
@@ -276,10 +282,8 @@ def build_strategy_map(
     parameters: Iterable[str],
     param_configs: Mapping[str, ParameterConfig],
     enkf_truncation: float,
+    correlation_threshold: Callable[[int], float],
     *,
-    distance_localization: bool = False,
-    localization: bool = False,
-    correlation_threshold: Callable[[int], float] | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
 ) -> dict[str, UpdateStrategy]:
     """Build a mapping from parameter group names to update strategies.
@@ -296,13 +300,9 @@ def build_strategy_map(
         Parameter configuration mapping from the experiment.
     enkf_truncation : float
         Singular value truncation threshold (0, 1].
-    distance_localization : bool
-        Whether to use distance-based localization for Field/Surface params.
-    localization : bool
-        Whether to use adaptive localization.
-    correlation_threshold : Callable[[int], float] | None
+    correlation_threshold : Callable[[int], float]
         Function that takes ensemble size and returns the correlation
-        threshold. Required when ``localization`` is True.
+        threshold.
     progress_callback : Callable[[AnalysisEvent], None] | None
         Callback for reporting progress.
 
@@ -316,45 +316,51 @@ def build_strategy_map(
 
     strategy_map: dict[str, UpdateStrategy] = {}
 
-    if distance_localization:
-        field_strategy = DistanceLocalizationUpdate(
-            enkf_truncation, Field, progress_callback
-        )
-        surface_strategy = DistanceLocalizationUpdate(
-            enkf_truncation, SurfaceConfig, progress_callback
-        )
-        global_strategy = GlobalESUpdate(
-            enkf_truncation,
-            progress_callback,
-        )
+    field_distance_strategy = DistanceLocalizationUpdate(
+        enkf_truncation, Field, progress_callback
+    )
 
-        for param_name in parameters:
-            param_cfg = param_configs[param_name]
-            if isinstance(param_cfg, Field):
-                strategy_map[param_name] = field_strategy
-            elif isinstance(param_cfg, SurfaceConfig):
-                strategy_map[param_name] = surface_strategy
-            else:
+    surface_distance_strategy = DistanceLocalizationUpdate(
+        enkf_truncation, SurfaceConfig, progress_callback
+    )
+
+    global_strategy = GlobalESUpdate(
+        enkf_truncation,
+        progress_callback,
+    )
+
+    adaptive_localization_strategy = AdaptiveLocalizationUpdate(
+        correlation_threshold,
+        enkf_truncation,
+        progress_callback,
+    )
+
+    for param_name in parameters:
+        param_cfg = param_configs[param_name]
+        if isinstance(param_cfg, Field):
+            if param_cfg.update_strategy == LocalizationType.DISTANCE:
+                strategy_map[param_name] = field_distance_strategy
+            elif param_cfg.update_strategy == LocalizationType.ADAPTIVE:
+                strategy_map[param_name] = adaptive_localization_strategy
+            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
                 strategy_map[param_name] = global_strategy
-
-    elif localization:
-        if correlation_threshold is None:
-            raise ValueError(
-                "correlation_threshold is required when localization is enabled"
+        elif isinstance(param_cfg, SurfaceConfig):
+            if param_cfg.update_strategy == LocalizationType.DISTANCE:
+                strategy_map[param_name] = surface_distance_strategy
+            elif param_cfg.update_strategy == LocalizationType.ADAPTIVE:
+                strategy_map[param_name] = adaptive_localization_strategy
+            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
+                strategy_map[param_name] = global_strategy
+        elif isinstance(param_cfg, GenKwConfig):
+            if param_cfg.update_strategy == LocalizationType.ADAPTIVE:
+                strategy_map[param_name] = adaptive_localization_strategy
+            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
+                strategy_map[param_name] = global_strategy
+        else:
+            logger.warning(
+                f"Parameter '{param_name}' has unrecognized config type "
+                f"'{type(param_cfg).__name__}'. Parameter will not be updated"
             )
-        adaptive_strategy = AdaptiveLocalizationUpdate(
-            correlation_threshold, enkf_truncation, progress_callback
-        )
-        for param_name in parameters:
-            strategy_map[param_name] = adaptive_strategy
-
-    else:
-        global_strategy = GlobalESUpdate(
-            enkf_truncation,
-            progress_callback,
-        )
-        for param_name in parameters:
-            strategy_map[param_name] = global_strategy
 
     return strategy_map
 
@@ -365,23 +371,13 @@ def smoother_update(
     observations: Iterable[str],
     update_settings: ObservationSettings,
     rng: np.random.Generator,
-    strategy_map: dict[str, UpdateStrategy] | None = None,
+    strategy_map: dict[str, UpdateStrategy],
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
     active_realizations: list[bool] | None = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
-
-    if strategy_map is None:
-        settings = ESSettings()
-        experiment = prior_storage.experiment
-        strategy_map = build_strategy_map(
-            parameters=experiment.update_parameters,
-            param_configs=experiment.parameter_configuration,
-            enkf_truncation=settings.enkf_truncation,
-            progress_callback=progress_callback,
-        )
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
     ens_mask = _create_combined_ensemble_mask(ens_mask, active_realizations)

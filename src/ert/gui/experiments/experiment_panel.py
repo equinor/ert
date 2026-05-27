@@ -204,7 +204,8 @@ class ExperimentPanel(QWidget):
         )
 
         experiment_type_valid = any(
-            p.update for p in config.ensemble_config.parameter_configs.values()
+            p.update_strategy is not None
+            for p in config.ensemble_config.parameter_configs.values()
         ) and bool(config.observation_declarations)
 
         self.addExperimentConfigPanel(

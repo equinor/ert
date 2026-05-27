@@ -1698,6 +1698,73 @@ proportional to the identity matrix.
 * Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
 
 
+
+.. _parameters_section:
+
+PARAMETERS
+^^^^^^^^^^
+
+The ``PARAMETERS`` module allows you to set the update strategy for all parameters
+of a given type. This controls how parameters are updated during the history
+matching (data assimilation) step. The strategy set here acts as a default for
+all parameters of that type.
+*Syntax:*
+
+::
+
+        ANALYSIS_SET_VAR PARAMETERS <PARAMETER_TYPE> <STRATEGY>
+
+Where:
+
+- ``<PARAMETER_TYPE>`` is one of: ``FIELD``, ``GEN_KW``, or ``SURFACE``.
+- ``<STRATEGY>`` is one of the available update strategies listed below.
+
+*Available strategies:*
+
+``GLOBAL``
+    Standard global update. All parameters of this type are updated using
+    the full ensemble and all active observations. This is the default
+    behavior when ``UPDATE:TRUE`` is set on a parameter.
+
+``DISTANCE``
+    Distance-based localization. Correlations between parameters and
+    observations are restricted based on their spatial distance. Only
+    observations with location data and a defined radius of influence
+    will affect a given parameter during the update.
+
+``ADAPTIVE``
+    Adaptive localization. Uses an adaptive correlation threshold to
+    determine which observation–parameter pairs are significantly correlated.
+    Only pairs exceeding the threshold are included in the update.
+
+*Example:*
+
+::
+
+        ANALYSIS_SET_VAR PARAMETERS FIELD DISTANCE
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        ANALYSIS_SET_VAR PARAMETERS SURFACE DISTANCE
+
+In this example, all ``FIELD`` parameters will use distance-based localization,
+all ``GEN_KW`` parameters will use adaptive localization, and all ``SURFACE``
+parameters will use distance-based localization during the update step.
+
+
+.. note::
+
+        The update strategy set with ``ANALYSIS_SET_VAR PARAMETERS`` acts as a default for all parameters of that type.
+        You can still turn off update for individual parameters by setting ``UPDATE:FALSE``.
+
+        *Example:*
+
+        ::
+                FIELD  PERMX  PARAMETER  permx.grdecl  UPDATE:FALSE
+
+
+        If ``UPDATE:TRUE`` is set for a parameter, it will use the default strategy defined for its type.
+        If no strategy is defined for that type, it will default to ``GLOBAL``.
+
+
 .. _keywords_controlling_the_es_algorithm:
 
 Keywords controlling the ES algorithm

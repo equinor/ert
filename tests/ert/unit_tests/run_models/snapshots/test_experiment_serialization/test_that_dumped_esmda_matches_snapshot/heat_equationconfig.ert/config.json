@@ -185,7 +185,7 @@
   "analysis_settings": {
     "enkf_truncation": 1.0,
     "inversion": "EXACT",
-    "localization": true,
+    "localization": false,
     "localization_correlation_threshold": 0.1,
     "distance_localization": false
   },
@@ -203,7 +203,7 @@
       "type": "gen_kw",
       "name": "t",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "adaptive",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -217,7 +217,7 @@
       "type": "gen_kw",
       "name": "x",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "adaptive",
       "dimensionality": 1,
       "distribution": {
         "name": "normal",
@@ -231,7 +231,7 @@
       "type": "field",
       "name": "COND",
       "forward_init": true,
-      "update": true,
+      "update_strategy": "adaptive",
       "dimensionality": 3,
       "ertbox_params": {
         "nx": 50,

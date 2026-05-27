@@ -178,7 +178,7 @@
       "type": "gen_kw",
       "name": "a",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "global",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -192,7 +192,7 @@
       "type": "gen_kw",
       "name": "b",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "global",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -206,7 +206,7 @@
       "type": "gen_kw",
       "name": "c",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "global",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",

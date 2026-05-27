@@ -166,14 +166,14 @@ def test_update_multiple_param():
         [
             prior_ensemble.load_parameters_numpy(g, iens)
             for g, c in prior_ensemble.experiment.parameter_configuration.items()
-            if c.update
+            if c.update_strategy is not None
         ]
     )
     posterior_array = np.vstack(
         [
             posterior_ensemble.load_parameters_numpy(g, iens)
             for g, c in posterior_ensemble.experiment.parameter_configuration.items()
-            if c.update
+            if c.update_strategy is not None
         ]
     )
 
