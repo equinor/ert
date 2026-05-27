@@ -8,6 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass, fields
 from functools import partial
 from pathlib import Path
+from ssl import SSLContext
 from typing import Any, assert_never
 from urllib.parse import quote
 
@@ -83,62 +84,50 @@ def escape(s: str) -> str:
     return quote(s, safe="")
 
 
+async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Path]:
+    proc = await asyncio.create_subprocess_exec(
+        "ert",
+        "api",
+        ert_config,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    line = ""
+    prefix = "Serving storage directory:"
+    assert proc.stdout is not None
+    while not line.startswith(prefix):
+        bline = await proc.stdout.readline()
+        line = bline.decode("utf-8")
+        await asyncio.sleep(0.01)
+
+    config_path = Path(line[len(prefix) :].strip()) / "storage_server.json"
+
+    async def path_exists() -> None:
+        while not config_path.exists():  # noqa: ASYNC110
+            await asyncio.sleep(1)
+
+    await asyncio.wait_for(path_exists(), timeout=10)
+    return proc, config_path
+
+
 async def extract_summary_observations(
-    ert_config: str, experiment: str
+    url: str,
+    token: str,
+    ssl_context: ssl.SSLContext,
+    config_path: Path,
+    experiment: str,
 ) -> dict[str, list[str]] | None:
-    proc = None
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            "ert",
-            "api",
-            ert_config,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        line = ""
-        prefix = "Serving storage directory:"
-        assert proc.stdout is not None
-        while not line.startswith(prefix):
-            bline = await proc.stdout.readline()
-            line = bline.decode("utf-8")
-            await asyncio.sleep(0.01)
-
-        config_path = Path(line[len(prefix) :].strip()) / "storage_server.json"
-
-        async def path_exists() -> None:
-            while not config_path.exists():  # noqa: ASYNC110
-                await asyncio.sleep(1)
-
-        await asyncio.wait_for(path_exists(), timeout=10)
-
-        content = await anyio.Path(config_path).read_text()
-        storage_config = json.loads(content)
-
-        ssl_context = ssl.create_default_context()
-        ssl_context.load_verify_locations(cafile=storage_config["cert"])
-        ssl_context.check_hostname = False
-
-        async with httpx.AsyncClient(
-            base_url=storage_config["urls"][0],
-            headers={"Token": storage_config["authtoken"]},
-            verify=ssl_context,
-        ) as client:
-            experiments = json.loads((_ := await client.get("/experiments")).text)
-            summary_observations = next(
-                filter(lambda x: x["id"] == experiment, experiments)
-            )["observations"]["summary"]
-            response_key = {v: k for k, vs in summary_observations.items() for v in vs}
-            result = defaultdict(list)
-            for obs in json.loads(
-                (_ := await client.get(f"/experiments/{experiment}/observations")).text
-            ):
-                if obs["name"] in response_key:
-                    result[response_key[obs["name"]]].append(obs)
-            return result
-    finally:
-        if proc is not None:
-            proc.terminate()
+    experiments = await get_experiments(url, token, ssl_context)
+    summary_observations = next(filter(lambda x: x["id"] == experiment, experiments))[
+        "observations"
+    ]["summary"]
+    response_key = {v: k for k, vs in summary_observations.items() for v in vs}
+    result: dict[str, list[Any]] = defaultdict(list)
+    for obs in await get_observations(experiment, config_path):
+        if obs["name"] in response_key:
+            result[response_key[obs["name"]]].append(obs)
+    return result
 
 
 def non_empty_fields(skds: list[SummaryKeyData]) -> list[str]:
@@ -178,19 +167,98 @@ def convert_summary_observations(
 def parser(prog: str) -> ArgumentParser:
     p = ArgumentParser(prog=prog, description=__doc__)
     p.add_argument("ert_config", type=str)
-    p.add_argument("experiment", type=str)
+    p.add_argument("experiment", nargs="?", type=str, default=None)
     p.add_argument("--output-csv-file", default="summary_observations.csv", type=str)
     return p
 
 
-def main(args: Namespace, _site_plugins: ErtRuntimePlugins | None = None) -> None:
-    summary_observations = asyncio.run(
-        extract_summary_observations(args.config, args.experiment)
-    )
-    if summary_observations is None:
-        return
+async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
+    content = await anyio.Path(config_path).read_text()
+    storage_config = json.loads(content)
 
-    convert_summary_observations(summary_observations, args.output_csv_file)
+    ssl_context = ssl.create_default_context()
+    ssl_context.load_verify_locations(cafile=storage_config["cert"])
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    return ssl_context, storage_config
+
+
+async def get_experiments(
+    url: str, token: str, ssl_context: ssl.SSLContext
+) -> list[dict[str, Any]]:
+    async with httpx.AsyncClient(
+        base_url=url,
+        headers={"Token": token},
+        verify=ssl_context,
+    ) as client:
+        return json.loads((_ := await client.get("/experiments")).text)
+
+
+async def get_observations(
+    experiment: str, config_path: Path | str
+) -> list[dict[str, Any]]:
+    ssl_context, storage_config = await get_storage_auth(config_path)
+
+    async with httpx.AsyncClient(
+        base_url=storage_config["urls"][0],
+        headers={"Token": storage_config["authtoken"]},
+        verify=ssl_context,
+    ) as client:
+        return json.loads(
+            (await client.get(f"/experiments/{experiment}/observations")).text
+        )
+
+
+def query_user_for_experiment(url: str, token: str, ssl_context: SSLContext) -> str:
+    experiments = asyncio.run(get_experiments(url, token, ssl_context))
+    if not experiments:
+        print("No experiments found.")
+        sys.exit(1)
+
+    print("Available experiments:")
+    for idx, exp in enumerate(experiments, 1):
+        print(f"  {idx}. {exp['name']} (ID: {exp['id']})")
+
+    while True:
+        try:
+            choice = input("\nSelect an experiment (enter number): ").strip()
+            selected_idx = int(choice) - 1
+            if 0 <= selected_idx < len(experiments):
+                return experiments[selected_idx]["id"]
+            print(
+                f"Invalid choice. "
+                f"Please enter a number between 1 and {len(experiments)}"
+            )
+        except (ValueError, KeyboardInterrupt):
+            print("\nExiting.")
+            sys.exit(1)
+
+
+def main(args: Namespace, _site_plugins: ErtRuntimePlugins | None = None) -> None:
+    proc, config_path = asyncio.run(start_ert_api(args.config))
+    assert Path(config_path).is_file()
+    ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
+    storage_url = next(
+        (url for url in storage_config["urls"] if "localhost" in url),
+        storage_config["urls"][0],
+    )
+    storage_token = storage_config["authtoken"]
+    experiment = (
+        args.experiment
+        if args.experiment is not None
+        else query_user_for_experiment(storage_url, storage_token, ssl_certificate)
+    )
+    try:
+        summary_observations = asyncio.run(
+            extract_summary_observations(
+                storage_url, storage_token, ssl_certificate, config_path, experiment
+            )
+        )
+        if summary_observations is None:
+            return
+        convert_summary_observations(summary_observations, args.output_csv_file)
+    finally:
+        proc.terminate()
 
 
 if __name__ == "__main__":
