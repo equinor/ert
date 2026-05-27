@@ -10,6 +10,8 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
+from ert.gui.tools.plot.plot_types import LocalizationProvider, ObservationPlotLocations
+
 if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.figure import Figure
@@ -156,6 +158,7 @@ class MisfitsPlot:
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         assert key_def is not None

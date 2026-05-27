@@ -6,6 +6,7 @@ import pandas as pd
 from matplotlib.patches import Patch
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.tools.plot.plot_types import LocalizationProvider, ObservationPlotLocations
 from ert.gui.utils import LEGEND_THRESHOLD
 
 from .plot_tools import PlotTools
@@ -45,6 +46,7 @@ class EverestConstraintsPlot:
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()

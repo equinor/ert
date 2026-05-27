@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.tools.plot.plot_types import LocalizationProvider, ObservationPlotLocations
 from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.utils import LEGEND_THRESHOLD
 
@@ -49,6 +50,7 @@ class EverestControlsPlot:
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()

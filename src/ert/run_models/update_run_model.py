@@ -67,6 +67,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             enkf_truncation=self.analysis_settings.enkf_truncation,
             correlation_threshold=self.analysis_settings.correlation_threshold,
             progress_callback=progress_callback,
+            experiment=posterior.experiment,
         )
 
         smoother_update(

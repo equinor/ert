@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.config import ParameterConfig
-    from ert.storage import Ensemble
+    from ert.storage import Ensemble, Experiment
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +213,12 @@ def perform_ensemble_update(
             xpos=filtered_data["east"].to_numpy()[has_location],
             ypos=filtered_data["north"].to_numpy()[has_location],
             main_range=filtered_data["radius"].to_numpy()[has_location],
+            observation_key=filtered_data["observation_key"]
+            .to_numpy()[has_location]
+            .astype(str),
+            observation_index=filtered_data["index"]
+            .to_numpy()[has_location]
+            .astype(str),
             location_mask=has_location,
         )
 
@@ -285,6 +291,7 @@ def build_strategy_map(
     correlation_threshold: Callable[[int], float],
     *,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
+    experiment: Experiment | None = None,
 ) -> dict[str, UpdateStrategy]:
     """Build a mapping from parameter group names to update strategies.
 
@@ -317,11 +324,11 @@ def build_strategy_map(
     strategy_map: dict[str, UpdateStrategy] = {}
 
     field_distance_strategy = DistanceLocalizationUpdate(
-        enkf_truncation, Field, progress_callback
+        enkf_truncation, Field, progress_callback, experiment=experiment
     )
 
     surface_distance_strategy = DistanceLocalizationUpdate(
-        enkf_truncation, SurfaceConfig, progress_callback
+        enkf_truncation, SurfaceConfig, progress_callback, experiment=experiment
     )
 
     global_strategy = GlobalESUpdate(
@@ -333,6 +340,7 @@ def build_strategy_map(
         correlation_threshold,
         enkf_truncation,
         progress_callback,
+        experiment=experiment,
     )
 
     for param_name in parameters:

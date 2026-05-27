@@ -77,6 +77,42 @@ def get_parameter_std_dev(
     return Response(content=buffer.getvalue(), media_type="application/octet-stream")
 
 
+@router.get("/ensembles/{ensemble_id}/parameters/{key}/localization")
+def get_parameter_localization(
+    *,
+    storage: Storage = DEFAULT_STORAGE,
+    ensemble_id: UUID,
+    key: str,
+    observation_key: str,
+    observation_index: str,
+) -> Response:
+    key = unquote(key)
+    with reraise_as_http_errors(logger):
+        ensemble = storage.get_ensemble(ensemble_id)
+        artifact = ensemble.experiment.load_sparse_matrix(f"localization/{key}")
+
+    if artifact is None:
+        raise HTTPException(status_code=404, detail="Localization matrix not found")
+
+    observation_keys = artifact.metadata["observation_key"].astype(str)
+    observation_indices = artifact.metadata["observation_index"].astype(str)
+    matches = np.flatnonzero(
+        (observation_keys == observation_key)
+        & (observation_indices == observation_index)
+    )
+    if matches.size == 0:
+        raise HTTPException(
+            status_code=404, detail="Localization observation not found"
+        )
+
+    nx, ny = artifact.metadata["grid_shape"]
+    buffer = io.BytesIO()
+    # Convert only the selected sparse observation column to dense for serialization.
+    rho = artifact.matrix[:, int(matches[0])].toarray().reshape(nx, ny)
+    np.save(buffer, rho.astype(np.float32))
+    return Response(content=buffer.getvalue(), media_type="application/octet-stream")
+
+
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     param_info = ensemble.experiment.parameter_info.get(key)
 

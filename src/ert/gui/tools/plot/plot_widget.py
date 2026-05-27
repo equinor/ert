@@ -30,7 +30,7 @@ from ert.config.gen_kw_config import GenKwConfig
 from ert.gui.icon_utils import load_icon
 
 from .plot_api import EnsembleObject, PlotApiKeyDefinition
-from .plot_types import ObservationPlotLocations
+from .plot_types import LocalizationProvider, ObservationPlotLocations
 
 if TYPE_CHECKING:
     from .plottery import PlotContext
@@ -52,6 +52,7 @@ class Plotter(Protocol):
         observations: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None: ...
 
@@ -252,6 +253,7 @@ class PlotWidget(QWidget):
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
+        localization_provider: LocalizationProvider | None = None,
     ) -> None:
         self.resetPlot()
         try:  # noqa: PLW0717
@@ -273,7 +275,8 @@ class PlotWidget(QWidget):
                 observations,
                 std_dev_images,
                 obs_loc,
-                key_def,
+                localization_provider=localization_provider,
+                key_def=key_def,
             )
             self._canvas.draw()
         except Exception as e:

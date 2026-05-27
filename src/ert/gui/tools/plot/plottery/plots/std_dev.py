@@ -1,25 +1,40 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from matplotlib.colors import LinearSegmentedColormap, to_rgba
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from ert.gui.tools.plot.plot_types import ObservationPlotLocations
+from ert.field_utils.field_utils import gaspari_cohn
+from ert.gui.tools.plot.plot_types import LocalizationProvider, ObservationPlotLocations
 
 if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.backend_bases import MouseEvent
+
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotContext
 
 
 class StdDevPlot:
+    _PICK_RADIUS_PIXELS = 8.0
+    # Show localization rho as increasing opacity over a fixed orange color.
+    _LOCALIZATION_RHO_CMAP = LinearSegmentedColormap.from_list(
+        "ert_localization_rho",
+        [(*to_rgba("#ffb000")[:3], 0.0), (*to_rgba("#ffb000")[:3], 0.35)],
+    )
+
     def __init__(self) -> None:
         self.dimensionality = 3
         self.requires_observations = False
+        self._selected_observation_artists: dict[Any, list[Any]] = {}
+        self._observation_click_callback_ids: dict[Any, list[int]] = {}
 
     def plot(
         self,
@@ -29,9 +44,12 @@ class StdDevPlot:
         observation_data: pd.DataFrame,
         std_dev_data: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         ensembles = plot_context.ensembles()
+        self._clear_observation_callbacks(figure)
+        self._selected_observation_artists.clear()
         if (ensemble_count := len(ensembles)) == 0:
             return
         layer = plot_context.layer
@@ -63,21 +81,37 @@ class StdDevPlot:
                     vmin = min(vmin, float(np.min(data)))
                     vmax = max(vmax, float(np.max(data)))
 
-                    im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
+                    im = ax_heat.imshow(data.T, cmap="viridis", aspect="equal")
 
                     if obs_loc is not None:
-                        xs = obs_loc.x - 0.5
-                        ys = obs_loc.y - 0.5
+                        xs = obs_loc.x.astype(np.float32) - 0.5
+                        ys = obs_loc.y.astype(np.float32) - 0.5
 
                         ax_heat.scatter(
                             xs,
                             ys,
-                            c="red",
+                            c="tab:orange",
                             marker="o",
                             edgecolors="black",
                             linewidths=0.5,
                             label="Observations",
+                            zorder=4,
                         )
+                        callback_id = figure.canvas.mpl_connect(
+                            "button_press_event",
+                            partial(
+                                self._on_observation_click,
+                                ax=ax_heat,
+                                data_shape=data.shape,
+                                parameter_key=plot_context.key(),
+                                ensemble_id=ensemble.id,
+                                obs_loc=obs_loc,
+                                localization_provider=localization_provider,
+                            ),
+                        )
+                        self._observation_click_callback_ids.setdefault(
+                            figure.canvas, []
+                        ).append(callback_id)
                     heatmaps.append(im)
 
                     ax_box.boxplot(data.flatten(), orientation="vertical", widths=0.5)
@@ -135,6 +169,143 @@ class StdDevPlot:
             if padding > 0.0:
                 for ax_box in boxplot_axes:
                     ax_box.set_ylim(vmin - padding, vmax + padding)
+
+    @staticmethod
+    def _localization_overlay(
+        data_shape: tuple[int, ...],
+        observation: npt.NDArray[np.float32],
+    ) -> npt.NDArray[np.float32]:
+        x, y, radius_x, radius_y = observation[:4].astype(np.float32)
+        nx, ny = data_shape[:2]
+        x_grid, y_grid = np.meshgrid(
+            np.linspace(0, nx - 1, nx, dtype=np.float32),
+            np.linspace(0, ny - 1, ny, dtype=np.float32),
+        )
+        distance = np.hypot(
+            (x_grid - (x - 0.5)) / radius_x,
+            (y_grid - (y - 0.5)) / radius_y,
+        )
+        taper = gaspari_cohn(distance).astype(np.float32)
+        overlay = np.zeros((*taper.shape, 4), dtype=np.float32)
+        overlay[..., :3] = to_rgba("#ffb000")[:3]
+        overlay[..., 3] = taper * 0.35
+        return overlay
+
+    def _on_observation_click(
+        self,
+        event: MouseEvent,
+        ax: Axes,
+        data_shape: tuple[int, ...],
+        parameter_key: str,
+        ensemble_id: str,
+        obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None,
+    ) -> None:
+        if event.inaxes != ax or event.xdata is None or event.ydata is None:
+            self._clear_selected_observation(ax)
+            if event.canvas is not None:
+                event.canvas.draw_idle()
+            return
+
+        assert obs_loc is not None
+        obs_xy = np.column_stack((obs_loc.x, obs_loc.y)).astype(np.float32) - 0.5
+        display_points = ax.transData.transform(obs_xy)
+        distances = np.hypot(
+            display_points[:, 0] - event.x, display_points[:, 1] - event.y
+        )
+        index = int(np.argmin(distances))
+        if distances[index] > self._PICK_RADIUS_PIXELS:
+            self._clear_selected_observation(ax)
+            if event.canvas is not None:
+                event.canvas.draw_idle()
+            return
+
+        self._draw_selected_observation(
+            ax,
+            data_shape,
+            parameter_key,
+            ensemble_id,
+            index,
+            obs_loc,
+            localization_provider,
+        )
+        if event.canvas is not None:
+            event.canvas.draw_idle()
+
+    def _clear_selected_observation(self, ax: Axes) -> None:
+        for artist in self._selected_observation_artists.pop(ax, []):
+            artist.remove()
+
+    def _clear_observation_callbacks(self, figure: Figure) -> None:
+        for callback_id in self._observation_click_callback_ids.pop(figure.canvas, []):
+            figure.canvas.mpl_disconnect(callback_id)
+
+    def _draw_selected_observation(
+        self,
+        ax: Axes,
+        data_shape: tuple[int, ...],
+        parameter_key: str,
+        ensemble_id: str,
+        observation_index: int,
+        obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
+    ) -> None:
+        self._clear_selected_observation(ax)
+        assert obs_loc is not None
+        radius_x = obs_loc.radius_x[observation_index]
+        radius_y = obs_loc.radius_y[observation_index]
+        if radius_x <= 0.0 or radius_y <= 0.0:
+            return
+        rho = self._rho_for_observation(
+            parameter_key,
+            ensemble_id,
+            observation_index,
+            obs_loc,
+            localization_provider,
+        )
+        overlay = ax.imshow(
+            rho.T
+            if rho is not None
+            else self._localization_overlay(
+                data_shape,
+                np.array(
+                    [
+                        obs_loc.x[observation_index],
+                        obs_loc.y[observation_index],
+                        radius_x,
+                        radius_y,
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            aspect="equal",
+            cmap=self._LOCALIZATION_RHO_CMAP if rho is not None else None,
+            interpolation="bilinear",
+            extent=(-0.5, data_shape[0] - 0.5, data_shape[1] - 0.5, -0.5),
+            vmin=0.0 if rho is not None else None,
+            vmax=1.0 if rho is not None else None,
+            zorder=2,
+        )
+        ax.set_xlim(-0.5, data_shape[0] - 0.5)
+        ax.set_ylim(data_shape[1] - 0.5, -0.5)
+        self._selected_observation_artists[ax] = [overlay]
+
+    @staticmethod
+    def _rho_for_observation(
+        parameter_key: str,
+        ensemble_id: str,
+        observation_index: int,
+        obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None,
+    ) -> npt.NDArray[np.float32] | None:
+        if localization_provider is None or obs_loc is None:
+            return None
+        return localization_provider(
+            parameter_key,
+            ensemble_id,
+            obs_loc.observation_key[observation_index],
+            obs_loc.observation_index[observation_index],
+        )
 
     @staticmethod
     def _colorbar(mappable: Any) -> Any:

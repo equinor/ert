@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import humanize
 import numpy as np
+import scipy.sparse as sp
 from iterative_ensemble_smoother import LocalizedESMDA
 
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
@@ -19,6 +20,7 @@ from ert.field_utils import (
     transform_local_ellipse_angle_to_local_coords,
     transform_positions_to_local_field_coordinates,
 )
+from ert.storage import SparseMatrixArtifact
 
 from ._batching import calculate_localization_batch_size, split_by_batch_size
 from ._protocol import ObservationLocations
@@ -27,6 +29,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.config import ParameterConfig
+    from ert.storage import Experiment
 
     from ._protocol import ObservationContext
 
@@ -39,10 +42,12 @@ class DistanceLocalizationUpdate:
         enkf_truncation: float,
         param_type: type[Field | SurfaceConfig],
         progress_callback: Callable[[AnalysisEvent], None],
+        experiment: Experiment | None = None,
     ) -> None:
         self._enkf_truncation = enkf_truncation
         self._param_type = param_type
         self._progress_callback = progress_callback
+        self._experiment = experiment
         self._obs_loc: ObservationLocations | None = None
         self._smoother: LocalizedESMDA | None = None
         self._ensemble_size: int = 0
@@ -137,6 +142,90 @@ class DistanceLocalizationUpdate:
             rho[:, self._location_mask] = located_rho.astype(np.float32, copy=False)
         return rho
 
+    def _load_rho(
+        self,
+        parameter_group: str,
+        nx: int,
+        ny: int,
+    ) -> sp.csr_array | None:
+        if self._experiment is None or self._obs_loc is None:
+            return None
+        artifact = self._experiment.load_sparse_matrix(
+            f"localization/{parameter_group}"
+        )
+        if artifact is None:
+            return None
+        rho = artifact.matrix
+        grid_shape = tuple(artifact.metadata["grid_shape"])
+        if grid_shape != (nx, ny):
+            raise ValueError(
+                f"Stored localization matrix for parameter group {parameter_group!r} "
+                f"has grid shape {grid_shape}, expected {(nx, ny)}"
+            )
+        expected_num_rows = nx * ny
+        if rho.shape[0] != expected_num_rows:
+            raise ValueError(
+                f"Stored localization matrix for parameter group {parameter_group!r} "
+                f"has {rho.shape[0]} grid rows, "
+                f"expected {expected_num_rows}"
+            )
+
+        stored_observation_key = artifact.metadata["observation_key"].astype(str)
+        stored_observation_index = artifact.metadata["observation_index"].astype(str)
+        if len(stored_observation_key) != rho.shape[1]:
+            raise ValueError(
+                f"Stored localization matrix for parameter group {parameter_group!r} "
+                f"has {rho.shape[1]} observation columns, "
+                f"but {len(stored_observation_key)} observation keys"
+            )
+        if len(stored_observation_index) != rho.shape[1]:
+            raise ValueError(
+                f"Stored localization matrix for parameter group {parameter_group!r} "
+                f"has {rho.shape[1]} observation columns, "
+                f"but {len(stored_observation_index)} observation indices"
+            )
+
+        stored_columns = {
+            (key, index): column
+            for column, (key, index) in enumerate(
+                zip(stored_observation_key, stored_observation_index, strict=True)
+            )
+        }
+        columns: list[int] = []
+        for key, index in zip(
+            self._obs_loc.observation_key.astype(str),
+            self._obs_loc.observation_index.astype(str),
+            strict=True,
+        ):
+            column = stored_columns.get((key, index))
+            if column is None:
+                return None
+            columns.append(column)
+        if columns == list(range(rho.shape[1])):
+            return rho
+        return rho[:, columns]
+
+    def _save_rho(
+        self,
+        parameter_group: str,
+        rho_matrix: sp.csr_array,
+        nx: int,
+        ny: int,
+    ) -> None:
+        if self._experiment is None or self._obs_loc is None:
+            return
+        self._experiment.save_sparse_matrix(
+            f"localization/{parameter_group}",
+            SparseMatrixArtifact(
+                matrix=rho_matrix.astype(np.float32),
+                metadata={
+                    "grid_shape": np.asarray((nx, ny), dtype=np.int64),
+                    "observation_key": self._obs_loc.observation_key,
+                    "observation_index": self._obs_loc.observation_index,
+                },
+            ),
+        )
+
     def _update_field(
         self,
         param_ensemble: npt.NDArray[np.floating],
@@ -182,20 +271,23 @@ class DistanceLocalizationUpdate:
             np.zeros_like(self._obs_loc.main_range),
         )
 
-        rho_matrix = calc_rho_for_2d_grid_layer(
-            nx=ertbox.nx,
-            ny=ertbox.ny,
-            xinc=ertbox.xinc,
-            yinc=ertbox.yinc,
-            obs_xpos=xpos,
-            obs_ypos=ypos,
-            obs_main_range=self._obs_loc.main_range,
-            obs_perp_range=self._obs_loc.main_range,
-            obs_anisotropy_angle=ellipse_rotation,
-            axis_orientation=ertbox.axis_orientation,
-        )
-
-        rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
+        rho_matrix = self._load_rho(param_config.name, ertbox.nx, ertbox.ny)
+        if rho_matrix is None:
+            rho_matrix = sp.csr_array(
+                calc_rho_for_2d_grid_layer(
+                    nx=ertbox.nx,
+                    ny=ertbox.ny,
+                    xinc=ertbox.xinc,
+                    yinc=ertbox.yinc,
+                    obs_xpos=xpos,
+                    obs_ypos=ypos,
+                    obs_main_range=self._obs_loc.main_range,
+                    obs_perp_range=self._obs_loc.main_range,
+                    obs_anisotropy_angle=ellipse_rotation,
+                    axis_orientation=ertbox.axis_orientation,
+                ).reshape(ertbox.nx * ertbox.ny, -1)
+            )
+            self._save_rho(param_config.name, rho_matrix, ertbox.nx, ertbox.ny)
 
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
@@ -203,7 +295,7 @@ class DistanceLocalizationUpdate:
                 continue
             xy_idx = update_idx // ertbox.nz
             rho_batch = self._full_localization_matrix(
-                len(update_idx), rho_2d[xy_idx, :]
+                len(update_idx), rho_matrix[xy_idx, :].toarray()
             )
 
             def localization_callback(
@@ -259,26 +351,33 @@ class DistanceLocalizationUpdate:
                 f"Expected SurfaceConfig.yflip == 1, got {param_config.yflip}"
             )
 
-        rho_matrix = calc_rho_for_2d_grid_layer(
-            nx=param_config.ncol,
-            ny=param_config.nrow,
-            xinc=param_config.xinc,
-            yinc=param_config.yinc,
-            obs_xpos=xpos,
-            obs_ypos=ypos,
-            obs_main_range=self._obs_loc.main_range,
-            obs_perp_range=self._obs_loc.main_range,
-            obs_anisotropy_angle=rotation_angle,
-            axis_orientation=AxisOrientation.LEFT_HANDED,
+        rho_matrix = self._load_rho(
+            param_config.name, param_config.ncol, param_config.nrow
         )
-
-        rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
+        if rho_matrix is None:
+            rho_matrix = sp.csr_array(
+                calc_rho_for_2d_grid_layer(
+                    nx=param_config.ncol,
+                    ny=param_config.nrow,
+                    xinc=param_config.xinc,
+                    yinc=param_config.yinc,
+                    obs_xpos=xpos,
+                    obs_ypos=ypos,
+                    obs_main_range=self._obs_loc.main_range,
+                    obs_perp_range=self._obs_loc.main_range,
+                    obs_anisotropy_angle=rotation_angle,
+                    axis_orientation=AxisOrientation.LEFT_HANDED,
+                ).reshape(param_config.ncol * param_config.nrow, -1)
+            )
+            self._save_rho(
+                param_config.name, rho_matrix, param_config.ncol, param_config.nrow
+            )
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
             if update_idx.size == 0:
                 continue
             rho_batch = self._full_localization_matrix(
-                len(update_idx), rho_flat[update_idx, :]
+                len(update_idx), rho_matrix[update_idx, :].toarray()
             )
 
             def localization_callback(

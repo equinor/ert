@@ -37,7 +37,7 @@ from .data_type_keys_widget import DataTypeKeysWidget
 from .observation_locations import transform_observation_locations
 from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from .plot_ensemble_selection_widget import EnsembleSelectionWidget
-from .plot_types import ObservationPlotLocations
+from .plot_types import ObservationPlotLocations, transform_observation_locations
 from .plot_widget import Plotter, PlotWidget
 from .plottery import PlotConfig, PlotContext
 from .plottery.plots import (
@@ -570,6 +570,11 @@ class PlotWindow(QMainWindow):
                 std_dev_images,
                 obs_loc,
                 key_def,
+                localization_provider=(
+                    self._api.localization_for_parameter
+                    if obs_loc is not None
+                    else None
+                ),
             )
 
     def _updateCustomizer(

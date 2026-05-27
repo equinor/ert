@@ -437,6 +437,8 @@ class PlotApi:
                         (
                             pd.DataFrame(
                                 {
+                                    "observation_key": obs["name"],
+                                    "observation_index": obs["x_axis"],
                                     "east": obs["east"],
                                     "north": obs["north"],
                                     "radius": obs["radius"],
@@ -580,3 +582,28 @@ class PlotApi:
                 # Deserialize the numpy array
                 return np.load(io.BytesIO(http_response.content))
             return np.array([])
+
+    def localization_for_parameter(
+        self,
+        key: str,
+        ensemble_id: str,
+        observation_key: str,
+        observation_index: str,
+    ) -> npt.NDArray[np.float32] | None:
+        ensemble = self._get_ensemble_by_id(ensemble_id)
+        if not ensemble:
+            return None
+
+        with create_ertserver_client(self.ens_path) as client:
+            http_response = client.get(
+                f"/ensembles/{ensemble.id}/parameters/{PlotApi.escape(key)}/localization",
+                params={
+                    "observation_key": observation_key,
+                    "observation_index": observation_index,
+                },
+                timeout=self._timeout,
+            )
+
+            if http_response.status_code != 200:
+                return None
+            return np.load(io.BytesIO(http_response.content))

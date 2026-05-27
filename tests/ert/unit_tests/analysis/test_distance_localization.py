@@ -108,6 +108,8 @@ def test_that_distance_localization_updates_all_z_layers_at_observation_xy(
         xpos=obs_x,
         ypos=obs_y,
         main_range=main_range,
+        observation_key=np.array(["obs"]),
+        observation_index=np.array(["0"]),
         location_mask=np.ones(responses.shape[0], dtype=bool),
     )
 
@@ -289,6 +291,8 @@ def test_that_distance_localization_matrix_uses_float32() -> None:
             xpos=np.array([0.0]),
             ypos=np.array([0.0]),
             main_range=np.array([1.0]),
+            observation_key=np.array(["obs"]),
+            observation_index=np.array(["0"]),
             location_mask=np.array([True, False]),
         ),
     )
@@ -343,6 +347,8 @@ def test_that_mixed_unlocated_observations_update_distant_field_parameters(
             xpos=np.array([0.5]),
             ypos=np.array([0.5]),
             main_range=np.array([1.0]),
+            observation_key=np.array(["obs"]),
+            observation_index=np.array(["0"]),
             location_mask=np.array([True, False]),
         ),
     )
@@ -404,6 +410,8 @@ def test_that_mixed_unlocated_observations_update_distant_surface_parameters(
             xpos=np.array([0.5]),
             ypos=np.array([0.5]),
             main_range=np.array([1.0]),
+            observation_key=np.array(["obs"]),
+            observation_index=np.array(["0"]),
             location_mask=np.array([True, False]),
         ),
     )
@@ -458,6 +466,8 @@ def test_that_distance_localization_batch_size_does_not_change_result(
             xpos=np.array([0.5, 2.5]),
             ypos=np.array([0.5, 2.5]),
             main_range=np.array([2.0, 2.0]),
+            observation_key=np.array(["obs", "obs"]),
+            observation_index=np.array(["0", "1"]),
             location_mask=np.ones(2, dtype=bool),
         ),
     )
@@ -505,6 +515,8 @@ def test_that_distance_localization_respects_non_zero_variance_mask(
             xpos=np.array([0.5]),
             ypos=np.array([0.5]),
             main_range=np.array([5.0]),
+            observation_key=np.array(["obs"]),
+            observation_index=np.array(["0"]),
             location_mask=np.ones(1, dtype=bool),
         ),
     )

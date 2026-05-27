@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
+from ert.gui.tools.plot.plot_types import LocalizationProvider, ObservationPlotLocations
 
 from .plot_tools import ConditionalAxisFormatter, PlotTools
 
@@ -31,6 +32,7 @@ class DistributionPlot:
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotDistribution(figure, plot_context, ensemble_to_data_map, observation_data)

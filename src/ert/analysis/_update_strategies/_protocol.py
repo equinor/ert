@@ -101,6 +101,12 @@ class ObservationLocations:
     main_range: npt.NDArray[np.floating]
     """Correlation range (radius) for each observation."""
 
+    observation_key: npt.NDArray[np.str_]
+    """Observation keys for observations with location data."""
+
+    observation_index: npt.NDArray[np.str_]
+    """Observation indices for observations with location data."""
+
     location_mask: npt.NDArray[np.bool_]
     """Boolean mask indicating which observations have valid location data."""
 

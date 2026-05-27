@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import contextlib
+import io
 import json
 import logging
 import shutil
 from collections.abc import Generator
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum, auto
 from functools import cached_property
@@ -12,7 +14,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
+import numpy as np
+import numpy.typing as npt
 import polars as pl
+import scipy.sparse as sp
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 from typing_extensions import TypedDict
@@ -34,6 +39,7 @@ from ert.config._create_observation_dataframes import create_observation_datafra
 from ert.config._observations import Observation
 from ert.config.response_config import DerivedResponseConfig
 
+from .local_ensemble import _escape_filename
 from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
@@ -41,6 +47,12 @@ if TYPE_CHECKING:
     from .local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class SparseMatrixArtifact:
+    matrix: sp.csr_array
+    metadata: dict[str, npt.NDArray[Any]]
 
 
 class ExperimentState(StrEnum):
@@ -146,6 +158,8 @@ class LocalExperiment(BaseMode):
 
     _templates_file = Path("templates.json")
     _index_file = Path("index.json")
+    _localization_dir = Path("localization")
+    _sparse_matrices_dir = Path("sparse_matrices")
 
     def __init__(
         self,
@@ -409,6 +423,45 @@ class LocalExperiment(BaseMode):
         """
 
         return IrapSurface.from_ascii_file(self.mount_point / f"{name}.irap")
+
+    @require_write
+    def save_sparse_matrix(
+        self, name: str, sparse_matrix: SparseMatrixArtifact
+    ) -> None:
+        output_dir = self.mount_point / self._sparse_matrices_dir
+        output_dir.mkdir(exist_ok=True)
+        escaped_name = _escape_filename(name)
+        path = output_dir / f"{escaped_name}.npz"
+        metadata_path = output_dir / f"{escaped_name}.metadata.npz"
+
+        matrix = sparse_matrix.matrix
+        buffer = io.BytesIO()
+        sp.save_npz(buffer, matrix, compressed=True)
+        self._storage._write_transaction(path, buffer.getvalue())
+
+        metadata_buffer = io.BytesIO()
+        np.savez_compressed(
+            metadata_buffer,
+            sparse_shape=np.asarray(matrix.shape, dtype=np.int64),
+            **sparse_matrix.metadata,
+        )
+        self._storage._write_transaction(metadata_path, metadata_buffer.getvalue())
+
+    def load_sparse_matrix(self, name: str) -> SparseMatrixArtifact | None:
+        escaped_name = _escape_filename(name)
+        path = self.mount_point / self._sparse_matrices_dir / f"{escaped_name}.npz"
+        metadata_path = (
+            self.mount_point
+            / self._sparse_matrices_dir
+            / f"{escaped_name}.metadata.npz"
+        )
+        if not path.exists() or not metadata_path.exists():
+            return None
+
+        matrix = sp.load_npz(path)
+        with np.load(metadata_path, allow_pickle=False) as archive:
+            metadata = {key: archive[key] for key in archive.files}
+        return SparseMatrixArtifact(matrix=sp.csr_array(matrix), metadata=metadata)
 
     @cached_property
     def parameter_configuration(self) -> dict[str, ParameterConfig]:
