@@ -119,9 +119,10 @@ async def extract_summary_observations(
     experiment: str,
 ) -> dict[str, list[str]] | None:
     experiments = await get_experiments(url, token, ssl_context)
-    summary_observations = next(filter(lambda x: x["id"] == experiment, experiments))[
-        "observations"
-    ]["summary"]
+    experiment_match = next(filter(lambda x: x["id"] == experiment, experiments), None)
+    if experiment_match is None:
+        raise ValueError(f"Provided experiment id {experiment} not found in storage")
+    summary_observations = experiment_match["observations"]["summary"]
     response_key = {v: k for k, vs in summary_observations.items() for v in vs}
     result: dict[str, list[Any]] = defaultdict(list)
     for obs in await get_observations(experiment, config_path):
