@@ -1,10 +1,33 @@
 import subprocess
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import pytest
 
 
+@pytest.fixture(name="use_feature_flag")
+def use_feature_flag(monkeypatch):
+    monkeypatch.setenv("ERT_FEATURE_GATHER_OBS", "1")
+
+
 @pytest.mark.usefixtures("copy_snake_oil_case_storage", "use_tmpdir")
+def test_that_cli_command_without_feature_flag_raises_called_process_error() -> None:
+    config_path = "test_data/snake_oil.ert"
+    storage_path = "test_data/storage/"
+    experiment_path = "snake_oil/ensemble/experiments/"
+    experiment = next(iter(Path(storage_path + experiment_path).iterdir()))
+
+    with pytest.raises(CalledProcessError) as e:
+        subprocess.run(
+            ["ert", "gather_summary_observations", config_path, experiment.name],
+            check=True,
+        )
+    assert e.value.returncode == 2
+
+
+@pytest.mark.usefixtures(
+    "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
+)
 def test_that_cli_command_outputs_csv_containing_observation_data():
     config_path = "test_data/snake_oil.ert"
     storage_path = "test_data/storage/"
@@ -27,7 +50,9 @@ def test_that_cli_command_outputs_csv_containing_observation_data():
     assert all(line in csv_content for line in expected_csv_content)
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case_storage", "use_tmpdir")
+@pytest.mark.usefixtures(
+    "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
+)
 def test_that_not_providing_an_experiment_id_queries_the_user_for_experiments():
     config_path = "test_data/snake_oil.ert"
     select_experiment_input = "1"
