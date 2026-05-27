@@ -172,6 +172,22 @@ def parser(prog: str) -> ArgumentParser:
     return p
 
 
+async def get_healthy_url(urls: list[str], token: str, ssl_context: SSLContext) -> str:
+    for url in urls:
+        try:
+            async with httpx.AsyncClient(
+                base_url=url,
+                headers={"Token": token},
+                verify=ssl_context,
+                timeout=5.0,
+            ) as client:
+                if (await client.get("healthcheck")).status_code == 200:
+                    return url
+        except httpx.TransportError:
+            pass
+    raise RuntimeError(f"Failed to detect a working URL among candidates: {urls}")
+
+
 async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
     content = await anyio.Path(config_path).read_text()
     storage_config = json.loads(content)
@@ -180,6 +196,10 @@ async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
     ssl_context.load_verify_locations(cafile=storage_config["cert"])
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
+    working_url = await get_healthy_url(
+        storage_config["urls"], storage_config["authtoken"], ssl_context
+    )
+    storage_config["url"] = working_url
     return ssl_context, storage_config
 
 
@@ -200,7 +220,7 @@ async def get_observations(
     ssl_context, storage_config = await get_storage_auth(config_path)
 
     async with httpx.AsyncClient(
-        base_url=storage_config["urls"][0],
+        base_url=storage_config["url"],
         headers={"Token": storage_config["authtoken"]},
         verify=ssl_context,
     ) as client:
@@ -238,10 +258,7 @@ def main(args: Namespace, _site_plugins: ErtRuntimePlugins | None = None) -> Non
     proc, config_path = asyncio.run(start_ert_api(args.config))
     assert Path(config_path).is_file()
     ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
-    storage_url = next(
-        (url for url in storage_config["urls"] if "localhost" in url),
-        storage_config["urls"][0],
-    )
+    storage_url = storage_config["url"]
     storage_token = storage_config["authtoken"]
     experiment = (
         args.experiment
