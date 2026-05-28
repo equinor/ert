@@ -8,6 +8,7 @@ from .customization_view import CustomizationView, WidgetProperty
 from .style_chooser import STYLESET_TOGGLE, StyleChooser
 
 if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotConfig
 
 
@@ -58,7 +59,9 @@ class StyleCustomizationView(CustomizationView):
         )
 
         self._observations_color_box = self.create_color_box("observations_color")
+        self["observations_color"] = self._observations_color_box
         self.add_row("Observations color", self._observations_color_box)
+        self._row_widgets["observations_color"] = self._observations_color_box
         self.update_property(
             "observations_color",
             StyleCustomizationView.get_observations_color,
@@ -107,3 +110,11 @@ class StyleCustomizationView(CustomizationView):
         self.observations_style = plot_config.observations_style()
         self.observations_color = plot_config.observations_color()
         self.color_cycle = plot_config.line_color_cycle()
+
+    @override
+    def set_key_definition(self, key_def: "PlotApiKeyDefinition") -> None:
+        is_response = key_def.response is not None
+
+        self.set_row_visible("history_style", is_response)
+        self.set_row_visible("observations_style", key_def.observations)
+        self.set_row_visible("observations_color", key_def.observations)

@@ -7,7 +7,12 @@ from ert.gui.utils import is_everest_application
 from .customization_view import CustomizationView, WidgetProperty
 
 if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotConfig
+
+
+def _supports_observations(key_def: "PlotApiKeyDefinition") -> bool:
+    return key_def.observations or key_def.metadata.get("data_origin") == "field"
 
 
 def _label_msg(label: str) -> str:
@@ -92,3 +97,12 @@ class DefaultCustomizationView(CustomizationView):
         if not self.is_everest:
             self.history = plot_config.is_history_enabled()
             self.observations = plot_config.is_observations_enabled()
+
+    @override
+    def set_key_definition(self, key_def: "PlotApiKeyDefinition") -> None:
+        if self.is_everest:
+            return
+
+        is_response = key_def.response is not None
+        self.set_row_visible("history", is_response)
+        self.set_row_visible("observations", _supports_observations(key_def))
