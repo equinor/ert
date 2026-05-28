@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
+
+from ert.gui.tools.plot.plottery.plot_context import PlotType
+from ert.gui.utils import SIGNIFICANT_DIGITS
 
 from .plot_tools import PlotTools
 
@@ -82,9 +86,11 @@ class EverestBatchObjectiveFunctionPlot:
             color=color,
         )
 
+        rejected_scatter_labels = []
+        rejected_scatter_data = None
         rejected_data = data[~data["is_improvement"]]
         if not rejected_data.empty:
-            axes.scatter(
+            rejected_scatter_data = axes.scatter(
                 rejected_data["batch_id"],
                 rejected_data[value_col],
                 c="red",
@@ -96,6 +102,16 @@ class EverestBatchObjectiveFunctionPlot:
                 val_type = row.get("constraint_violation_type", "N/A")
                 val = row.get("constraint_violation_value", float("nan"))
 
+                rejected_scatter_labels.append(
+                    dedent(
+                        f"""
+                        Batch {batch_id}
+                        Objective value: {row[value_col]:.{SIGNIFICANT_DIGITS}g}
+                        Violation value: {val:.{SIGNIFICANT_DIGITS}g}
+                        Type: {val_type}
+                        """
+                    ).strip("\n")
+                )
                 axes.annotate(
                     f"Batch {batch_id}\nViolation value: {val:.3g}\nType: {val_type}"
                     if plot_context.extended_plot_information
@@ -141,6 +157,15 @@ class EverestBatchObjectiveFunctionPlot:
         )
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        if rejected_scatter_data and rejected_scatter_labels:
+            PlotTools.labels_on_hover(
+                PlotType.SCATTER,
+                axes,
+                figure,
+                data=rejected_scatter_data,
+                labels=rejected_scatter_labels,
+            )
 
         PlotTools.finalizePlot(
             plot_context,
