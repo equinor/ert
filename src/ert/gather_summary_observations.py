@@ -16,8 +16,6 @@ import anyio
 import httpx
 from resfo_utilities import SummaryKeyType
 
-from ert.plugins import ErtRuntimePlugins
-
 
 class InvalidSummaryKeyError(ValueError):
     pass
@@ -247,7 +245,7 @@ def query_user_for_experiment(url: str, token: str, ssl_context: SSLContext) -> 
             sys.exit(1)
 
 
-def main(args: Namespace, _site_plugins: ErtRuntimePlugins | None = None) -> None:
+def main(args: Namespace, _site_plugins: Any | None = None) -> None:
     proc, config_path = asyncio.run(start_ert_api(args.config))
     assert Path(config_path).is_file()
     ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
