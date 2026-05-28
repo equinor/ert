@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import polars as pl
-from fastexcel import CalamineError
+from fastexcel import CalamineCellError, CalamineError
 from polars.exceptions import InvalidOperationError
 
 from ert.config.parsing.config_errors import ConfigWarning
@@ -252,31 +253,33 @@ class DesignMatrix:
 
         try:
             param_names = (
-                pl.read_excel(
-                    self.xls_filename,
-                    sheet_name=self.design_sheet,
-                    has_header=False,
-                    read_options={"n_rows": 1, "dtypes": "string"},
+                _read_excel_with_context(
+                    lambda: pl.read_excel(
+                        self.xls_filename,
+                        sheet_name=self.design_sheet,
+                        has_header=False,
+                        read_options={"n_rows": 1, "dtypes": "string"},
+                    ),
+                    f"Design sheet '{self.design_sheet}' headers",
                 )
                 .select(pl.all().str.strip_chars())
                 .row(0)
             )
         except pl.exceptions.NoDataError as err:
             raise ValueError("Design sheet headers are empty.") from err
-        except CalamineError as err:
-            raise ValueError(
-                "File could not be loaded. It seems to be either invalid or corrupted."
-            ) from err
         design_matrix_df = (
-            pl.read_excel(
-                self.xls_filename,
-                sheet_name=self.design_sheet,
-                has_header=False,
-                drop_empty_cols=False,
-                drop_empty_rows=True,
-                raise_if_empty=False,
-                infer_schema_length=None,
-                read_options={"skip_rows": 1},
+            _read_excel_with_context(
+                lambda: pl.read_excel(
+                    self.xls_filename,
+                    sheet_name=self.design_sheet,
+                    has_header=False,
+                    drop_empty_cols=False,
+                    drop_empty_rows=True,
+                    raise_if_empty=False,
+                    infer_schema_length=None,
+                    read_options={"skip_rows": 1},
+                ),
+                f"Design sheet '{self.design_sheet}'",
             )
             .with_columns(pl.col(pl.Float32, pl.Float64).fill_nan(None))
             .with_columns(pl.col(pl.String).str.strip_chars())
@@ -443,21 +446,23 @@ class DesignMatrix:
 
         :raises: ValueError if defaults sheet is non-empty but non-parsable
         """
-        default_df = pl.read_excel(
-            xls_filename,
-            sheet_name=defaults_sheetname,
-            has_header=False,
-            drop_empty_cols=True,
-            drop_empty_rows=True,
-            raise_if_empty=False,
-            read_options={"dtypes": "string"},
+        default_df = _read_excel_with_context(
+            lambda: pl.read_excel(
+                xls_filename,
+                sheet_name=defaults_sheetname,
+                has_header=False,
+                drop_empty_cols=True,
+                drop_empty_rows=True,
+                raise_if_empty=False,
+            ),
+            f"Default sheet '{defaults_sheetname}'",
         )
         if default_df.is_empty():
             return {}
         if len(default_df.columns) < 2:
             raise ValueError("Defaults sheet must have at least two columns")
         default_df = default_df.select(pl.nth(0, 1)).with_columns(
-            pl.nth(0, 1).str.strip_chars()
+            pl.nth(0, 1).cast(pl.String).str.strip_chars()
         )
         default_df = default_df.with_columns(
             [
@@ -486,6 +491,21 @@ class DesignMatrix:
             for row in default_df.iter_rows()
             if row[0] not in existing_parameters
         }
+
+
+def _read_excel_with_context(
+    read_excel: Callable[[], pl.DataFrame], sheet_description: str
+) -> pl.DataFrame:
+    try:
+        return read_excel()
+    except CalamineCellError as err:
+        raise ValueError(
+            f"{sheet_description} contains invalid Excel cell values: {err}"
+        ) from err
+    except CalamineError as err:
+        raise ValueError(
+            "File could not be loaded. It seems to be either invalid or corrupted."
+        ) from err
 
 
 def convert_numeric_string_columns(df: pl.DataFrame) -> pl.DataFrame:

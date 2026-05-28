@@ -5,7 +5,7 @@ import polars as pl
 import pytest
 from xlsxwriter import Workbook
 
-from ert.config import DataSource, DesignMatrix, GenKwConfig
+from ert.config import ConfigValidationError, DataSource, DesignMatrix, GenKwConfig
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.parsing.config_errors import ConfigWarning
 from tests.ert.conftest import _create_design_matrix
@@ -609,3 +609,51 @@ def test_that_excel_datetime_columns_are_converted_to_strings_with_warning(tmp_p
     assert df.schema["date_col"] == pl.String
     assert "2026-03-01" in df["date_col"][0]
     assert "2026-03-02" in df["date_col"][1]
+
+
+def test_that_design_sheet_excel_error_cells_raise_config_validation_error(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    with Workbook(design_path) as wb:
+        ws = wb.add_worksheet("DesignSheet")
+
+        ws.write(0, 0, "REAL")
+        ws.write(0, 1, "a")
+        ws.write(0, 11, "")
+
+        ws.write(1, 0, 0)
+        ws.write(1, 1, 1)
+        ws.write_formula(1, 11, "=DOES_NOT_EXIST()", None, "#NAME?")
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Design sheet 'DesignSheet' contains invalid Excel cell values: "
+            r".*#NAME\?"
+        ),
+    ):
+        DesignMatrix(design_path, "DesignSheet", None)
+
+
+def test_that_default_sheet_excel_error_cells_raise_config_validation_error(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    with Workbook(design_path) as wb:
+        design_sheet = wb.add_worksheet("DesignSheet")
+        design_sheet.write(0, 0, "REAL")
+        design_sheet.write(0, 1, "a")
+        design_sheet.write(1, 0, 0)
+        design_sheet.write(1, 1, 1)
+
+        default_sheet = wb.add_worksheet("DefaultSheet")
+        default_sheet.write(0, 0, "b")
+        default_sheet.write(0, 1, "2")
+        default_sheet.write(1, 0, "c")
+        default_sheet.write_formula(1, 1, "=DOES_NOT_EXIST()", None, "#NAME?")
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Default sheet 'DefaultSheet' contains invalid Excel cell values: "
+            r".*#NAME\?"
+        ),
+    ):
+        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
