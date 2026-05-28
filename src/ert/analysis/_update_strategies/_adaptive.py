@@ -16,7 +16,7 @@ from iterative_ensemble_smoother import AdaptiveESMDA
 from ert.analysis.event import AnalysisEvent, AnalysisMatrixEvent, AnalysisStatusEvent
 
 from ._batching import calculate_localization_batch_size, split_by_batch_size
-from .utils import matrix_to_bytes
+from ._utils import matrix_to_bytes
 
 if TYPE_CHECKING:
     import numpy.typing as npt

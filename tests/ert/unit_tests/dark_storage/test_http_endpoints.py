@@ -361,15 +361,34 @@ def test_that_get_ensemble_returns_blob_storage_data(
         dense_matrix = np.ones((10, 5))
         buf = io.BytesIO()
         np.save(buf, dense_matrix)
-        ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
+        ensemble.save_blob(
+            data=buf.getvalue(),
+            file_type="numpy",
+            blob_type=BlobType.MATRIX,
+            update_algorithm="ensemble_smoother",
+            data_type=str(dense_matrix.dtype),
+            shape=(10, 5),
+            sparse=False,
+        )
 
         sparse_matrix = np.eye(10, dtype=np.float32)
         buf = io.BytesIO()
         np.save(buf, sparse_matrix)
-        ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
+        ensemble.save_blob(
+            data=buf.getvalue(),
+            file_type="numpy",
+            blob_type=BlobType.MATRIX,
+            update_algorithm="ensemble_smoother",
+            data_type=str(sparse_matrix.dtype),
+            shape=(10, 10),
+            sparse=True,
+        )
 
         ensemble.save_blob(
-            b"observation report data", blob_type=BlobType.OBSERVATION_REPORT
+            data=b"observation report data",
+            file_type="parquet",
+            blob_type=BlobType.OBSERVATION_REPORT,
+            update_algorithm="ensemble_smoother",
         )
 
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))

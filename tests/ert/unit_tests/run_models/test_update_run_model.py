@@ -23,7 +23,10 @@ def test_that_send_smoother_event_persists_observation_report_on_analysis_comple
         header=["observation_key", "status"],
         data=[("OBS_1", "Active"), ("OBS_2", "Deactivated, outlier")],
     )
-    event = AnalysisCompleteEvent(data=data_section)
+    event = AnalysisCompleteEvent(
+        update_algorithm="ensemble_smoother",
+        data=data_section,
+    )
 
     UpdateRunModel.send_smoother_event(
         model, iteration=0, run_id=uuid.uuid4(), ensemble=mock_ensemble, event=event
