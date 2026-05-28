@@ -53,12 +53,10 @@ def test_that_cli_command_outputs_csv_containing_observation_data():
 @pytest.mark.usefixtures(
     "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
 )
-def test_that_not_providing_an_experiment_id_queries_the_user_for_experiments():
+def test_that_single_experiment_in_storage_is_automatically_selected():
     config_path = "test_data/snake_oil.ert"
-    select_experiment_input = "1"
     captured = subprocess.run(
         ["ert", "gather_summary_observations", config_path],
-        input=select_experiment_input,
         capture_output=True,
         text=True,
         check=True,
@@ -66,10 +64,11 @@ def test_that_not_providing_an_experiment_id_queries_the_user_for_experiments():
 
     storage_path = "test_data/storage/"
     experiment_path = "snake_oil/ensemble/experiments/"
-    available_experiments = list(Path(storage_path + experiment_path).iterdir())
-    assert all(exp.name in captured.stdout for exp in available_experiments)
-    assert "Available experiments:" in captured.stdout
-    assert "Select an experiment" in captured.stdout
+    experiment = next(iter(Path(storage_path + experiment_path).iterdir()))
+    assert (
+        f"Only one experiment found, picking experiment with id '{experiment.name}'"
+        in captured.stdout
+    )
     assert Path("summary_observations.csv").is_file()
     csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
     expected_csv_content = [
