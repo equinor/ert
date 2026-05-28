@@ -260,7 +260,7 @@ class DesignMatrix:
                         has_header=False,
                         read_options={"n_rows": 1, "dtypes": "string"},
                     ),
-                    f"Design sheet '{self.design_sheet}' headers",
+                    f"Design sheet '{self.design_sheet}' header row",
                 )
                 .select(pl.all().str.strip_chars())
                 .row(0)
@@ -454,6 +454,7 @@ class DesignMatrix:
                 drop_empty_cols=True,
                 drop_empty_rows=True,
                 raise_if_empty=False,
+                infer_schema_length=None,
             ),
             f"Default sheet '{defaults_sheetname}'",
         )
@@ -462,8 +463,11 @@ class DesignMatrix:
         if len(default_df.columns) < 2:
             raise ValueError("Defaults sheet must have at least two columns")
         default_df = default_df.select(pl.nth(0, 1)).with_columns(
-            pl.nth(0, 1).cast(pl.String).str.strip_chars()
+            pl.col(pl.String).str.strip_chars()
         )
+        string_cols = [
+            col for col, dtype in default_df.schema.items() if dtype == pl.String
+        ]
         default_df = default_df.with_columns(
             [
                 pl.when(
@@ -472,7 +476,7 @@ class DesignMatrix:
                 .then(None)
                 .otherwise(pl.col(col))
                 .alias(col)
-                for col in default_df.columns
+                for col in string_cols
             ]
         )
         empty_cells = [
@@ -528,7 +532,11 @@ def convert_numeric_string_columns(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
-def convert_to_numeric(x: str) -> str | float | int:
+def convert_to_numeric(x: str | float) -> str | float | int:
+    if isinstance(x, float):
+        return int(x) if x.is_integer() else x
+    if isinstance(x, int):
+        return x
     try:
         return int(x)
     except ValueError:

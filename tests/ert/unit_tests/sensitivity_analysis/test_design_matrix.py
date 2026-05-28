@@ -533,6 +533,65 @@ def test_default_values_used(tmp_path):
     )
 
 
+def test_that_default_sheet_preserves_string_defaults_after_numeric_values(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    with Workbook(design_path) as wb:
+        design_sheet = wb.add_worksheet("DesignSheet")
+        design_sheet.write(0, 0, "REAL")
+        design_sheet.write(0, 1, "a")
+        design_sheet.write(1, 0, 0)
+        design_sheet.write(1, 1, 1)
+        design_sheet.write(2, 0, 1)
+        design_sheet.write(2, 1, 2)
+
+        default_sheet = wb.add_worksheet("DefaultSheet")
+        for row in range(150):
+            default_sheet.write(row, 0, f"default_{row}")
+            default_sheet.write(row, 1, row)
+        default_sheet.write(150, 0, "string_default")
+        default_sheet.write(150, 1, "case_name")
+
+    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+
+    np.testing.assert_equal(
+        design_matrix.design_matrix_df["string_default"],
+        np.array(["case_name", "case_name"]),
+    )
+
+
+def test_that_default_sheet_preserves_integer_defaults_when_float_defaults_exist(
+    tmp_path,
+):
+    design_path = tmp_path / "design_matrix.xlsx"
+    with Workbook(design_path) as wb:
+        design_sheet = wb.add_worksheet("DesignSheet")
+        design_sheet.write(0, 0, "REAL")
+        design_sheet.write(0, 1, "a")
+        design_sheet.write(1, 0, 0)
+        design_sheet.write(1, 1, 1)
+        design_sheet.write(2, 0, 1)
+        design_sheet.write(2, 1, 2)
+
+        default_sheet = wb.add_worksheet("DefaultSheet")
+        default_sheet.write(0, 0, "integer_default")
+        default_sheet.write(0, 1, 7)
+        default_sheet.write(1, 0, "float_default")
+        default_sheet.write(1, 1, 9.5)
+
+    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+
+    assert design_matrix.design_matrix_df.schema["integer_default"].is_integer()
+    assert design_matrix.design_matrix_df.schema["float_default"].is_float()
+    np.testing.assert_equal(
+        design_matrix.design_matrix_df["integer_default"],
+        np.array([7, 7]),
+    )
+    np.testing.assert_equal(
+        design_matrix.design_matrix_df["float_default"],
+        np.array([9.5, 9.5]),
+    )
+
+
 def test_whitespace_is_stripped_from_string_parameters(tmp_path):
     design_path = tmp_path / "design_matrix.xlsx"
     design_matrix_df = pl.DataFrame(
