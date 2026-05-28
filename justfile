@@ -97,12 +97,6 @@ ert-tests:
 check-all:
     parallel -j8 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just ert-doc-tests' 'just everest-tests' 'just check-types' 'just build-everest-docs' 'just build-ert-docs'
 
-update-matplotlib-screenshots:
-    pytest --mpl --mpl-generate-path={{justfile_directory()}}/.pics {{pytest_args}} -m "mpl_image_compare" tests/ert/ui_tests/gui
-    mv {{justfile_directory()}}/.pics/* {{justfile_directory()}}/tests/ert/ui_tests/gui/baseline/
-    pytest --mpl --mpl-generate-path={{justfile_directory()}}/.pics {{pytest_args}} -m "mpl_image_compare" tests/ert/unit_tests/gui/plottery
-    mv {{justfile_directory()}}/.pics/* {{justfile_directory()}}/tests/ert/unit_tests/gui/plottery/baseline/
-    rm -rf .pics
 
 update-ert-snapshots:
     pytest --snapshot-update {{pytest_args}} -m "snapshot_test" tests/ert
