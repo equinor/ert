@@ -37,7 +37,7 @@ screenshot-comparison-test:
     rm -rf /tmp/test_docs_screenshots
     pytest --mpl --mpl-results-path=pytest-mpl_results -v -m "mpl_image_compare or screenshot_test" tests
 
-pack_updated_screenshots:
+pack-updated-screenshots:
     #!/bin/bash
     staging="updated-screenshots"
     mkdir -p "$staging"

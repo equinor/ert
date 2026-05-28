@@ -48,7 +48,7 @@ jobs:
     - name: Pack updated screenshot in case of failure
       if: ${{ failure() }}
       run: |
-        uv run just pack_updated_screenshots
+        uv run just pack-updated-screenshots
 
     - name: Upload updated screenshot images from failed image comparison test
       id: upload-screenshot-images
