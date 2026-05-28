@@ -27,7 +27,6 @@ from PyQt6.QtWidgets import (
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
-from ert.field_utils import transform_observation_locations
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.gui.utils import is_everest_application
 from ert.services import ServerBootFail
@@ -35,8 +34,10 @@ from ert.utils import log_duration
 
 from .customize import PlotCustomizer
 from .data_type_keys_widget import DataTypeKeysWidget
+from .observation_locations import transform_observation_locations
 from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from .plot_ensemble_selection_widget import EnsembleSelectionWidget
+from .plot_types import ObservationPlotLocations
 from .plot_widget import Plotter, PlotWidget
 from .plottery import PlotConfig, PlotContext
 from .plottery.plots import (
@@ -488,7 +489,7 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
-            obs_loc: npt.NDArray[np.float32] | None = None
+            obs_loc: ObservationPlotLocations | None = None
             if isinstance(key_def.parameter, Field):
                 plot_widget.showLayerWidget.emit(True)
                 layers = key_def.parameter.ertbox_params.nz

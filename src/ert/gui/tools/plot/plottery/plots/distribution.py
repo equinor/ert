@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
+    from ert.gui.tools.plot.plot_types import ObservationPlotLocations
     from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
@@ -29,7 +30,7 @@ class DistributionPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
-        obs_loc: npt.NDArray[np.float32] | None,
+        obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotDistribution(figure, plot_context, ensemble_to_data_map, observation_data)

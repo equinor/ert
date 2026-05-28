@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
+    from ert.gui.tools.plot.plot_types import ObservationPlotLocations
     from ert.gui.tools.plot.plottery import PlotContext
 
 
@@ -154,7 +155,7 @@ class MisfitsPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
-        obs_loc: npt.NDArray[np.float32] | None,
+        obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         assert key_def is not None
