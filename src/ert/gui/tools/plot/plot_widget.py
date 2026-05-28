@@ -30,6 +30,7 @@ from ert.config.gen_kw_config import GenKwConfig
 from ert.gui.icon_utils import load_icon
 
 from .plot_api import EnsembleObject, PlotApiKeyDefinition
+from .plot_types import ObservationPlotLocations
 
 if TYPE_CHECKING:
     from .plottery import PlotContext
@@ -50,7 +51,7 @@ class Plotter(Protocol):
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
-        obs_loc: npt.NDArray[np.float32] | None,
+        obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None: ...
 
@@ -249,7 +250,7 @@ class PlotWidget(QWidget):
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
-        obs_loc: npt.NDArray[np.float32] | None,
+        obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         self.resetPlot()

@@ -6,6 +6,7 @@ import pytest
 from matplotlib.figure import Figure
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plot_types import ObservationPlotLocations
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots import StdDevPlot
 
@@ -28,7 +29,10 @@ def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
     rng = np.random.default_rng()
     figure = Figure()
     std_dev_data = rng.random((5, 5))
-    obs_loc = np.array([[1, 2], [3, 4]])
+    obs_loc = ObservationPlotLocations(
+        x=np.array([1, 3], dtype=np.float32),
+        y=np.array([2, 4], dtype=np.float32),
+    )
     StdDevPlot().plot(
         figure,
         plot_context,

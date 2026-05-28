@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
+    from ert.gui.tools.plot.plot_types import ObservationPlotLocations
 
 
 class StatisticsPlot:
@@ -33,7 +34,7 @@ class StatisticsPlot:
         ensemble_to_data_map: dict[EnsembleObject, DataFrame],
         observation_data: DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
-        obs_loc: npt.NDArray[np.float32] | None,
+        obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()

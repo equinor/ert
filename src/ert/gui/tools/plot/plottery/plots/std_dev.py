@@ -9,6 +9,8 @@ import pandas as pd
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from ert.gui.tools.plot.plot_types import ObservationPlotLocations
+
 if TYPE_CHECKING:
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotContext
@@ -26,7 +28,7 @@ class StdDevPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_data: dict[str, npt.NDArray[np.float32]],
-        obs_loc: npt.NDArray[np.float32] | None,
+        obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         ensembles = plot_context.ensembles()
@@ -64,8 +66,8 @@ class StdDevPlot:
                     im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
 
                     if obs_loc is not None:
-                        xs = obs_loc[:, 0] - 0.5
-                        ys = obs_loc[:, 1] - 0.5
+                        xs = obs_loc.x - 0.5
+                        ys = obs_loc.y - 0.5
 
                         ax_heat.scatter(
                             xs,
