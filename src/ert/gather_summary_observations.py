@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import json
 import ssl
-import sys
 from argparse import Namespace
 from collections import defaultdict
 from collections.abc import AsyncGenerator
@@ -17,6 +16,10 @@ from urllib.parse import quote
 import anyio
 import httpx
 from resfo_utilities import SummaryKeyType
+
+
+class GatherObsException(Exception):
+    pass
 
 
 class InvalidSummaryKeyError(ValueError):
@@ -95,11 +98,16 @@ async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Pa
 
     line = ""
     prefix = "Serving storage directory:"
+    print("Waiting for storage server ...")
     assert proc.stdout is not None
-    while not line.startswith(prefix):
-        bline = await proc.stdout.readline()
-        line = bline.decode("utf-8")
-        await asyncio.sleep(0.01)
+    try:
+        async with asyncio.timeout(30.0):
+            while not line.startswith(prefix):
+                bline = await proc.stdout.readline()
+                line = bline.decode("utf-8")
+                await asyncio.sleep(0.01)
+    except TimeoutError as e:
+        raise GatherObsException("ert api failed to start within 30 seconds") from e
 
     config_path = Path(line[len(prefix) :].strip()) / "storage_server.json"
 
@@ -114,17 +122,27 @@ async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Pa
 async def extract_summary_observations(
     client: httpx.AsyncClient,
     experiment: str,
-) -> dict[str, list[Any]] | None:
-    experiments = await get_experiments(client)
+    experiments: list[Any],
+) -> dict[str, list[Any]]:
     experiment_match = next(filter(lambda x: x["id"] == experiment, experiments), None)
     if experiment_match is None:
-        raise ValueError(f"Provided experiment id {experiment} not found in storage")
+        raise GatherObsException(
+            f"Provided experiment id {experiment} not found in storage"
+        )
+    if "summary" not in experiment_match["observations"]:
+        raise GatherObsException(
+            f"No summary observations found for experiment '{experiment}'"
+        )
     summary_observations = experiment_match["observations"]["summary"]
     response_key = {v: k for k, vs in summary_observations.items() for v in vs}
     result: dict[str, list[Any]] = defaultdict(list)
     for obs in await get_observations(experiment, client):
         if obs["name"] in response_key:
             result[response_key[obs["name"]]].append(obs)
+    if len(result) == 0:
+        raise GatherObsException(
+            f"No summary observations found for experiment '{experiment}'"
+        )
     return result
 
 
@@ -176,7 +194,13 @@ async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
 async def get_experiments(
     client: httpx.AsyncClient,
 ) -> list[dict[str, Any]]:
-    return json.loads((_ := await client.get("/experiments")).text)
+    all_experiments = json.loads((_ := await client.get("/experiments")).text)
+    if (
+        isinstance(all_experiments, dict)
+        and all_experiments.get("detail", {}).get("error") is not None
+    ):
+        raise GatherObsException("Could not find any experiments in storage.")
+    return all_experiments
 
 
 async def get_observations(
@@ -188,9 +212,15 @@ async def get_observations(
 
 
 def query_user_for_experiment(experiments: list[dict[str, Any]]) -> str:
+    if len(experiments) == 1:
+        print(
+            f"Only one experiment found, "
+            f"picking experiment with id '{experiments[0]['id']}'"
+        )
+        return experiments[0]["id"]
     print("Available experiments:")
     for idx, exp in enumerate(experiments, 1):
-        print(f"  {idx}. {exp['name']} (ID: {exp['id']})")
+        print(f"  {idx}. {exp['id']} ({exp['name']})")
 
     while True:
         try:
@@ -202,9 +232,8 @@ def query_user_for_experiment(experiments: list[dict[str, Any]]) -> str:
                 f"Invalid choice. "
                 f"Please enter a number between 1 and {len(experiments)}"
             )
-        except (ValueError, KeyboardInterrupt):
-            print("\nExiting.")
-            sys.exit(1)
+        except (ValueError, KeyboardInterrupt) as e:
+            raise GatherObsException("No experiment selected, exiting ...") from e
 
 
 @asynccontextmanager
@@ -226,45 +255,53 @@ async def connect(
                     found_url = True
                     yield client
     if not found_url:
-        raise RuntimeError(f"Failed to detect a working URL among candidates: {urls}")
+        raise GatherObsException(
+            f"Failed to detect a working URL among candidates: {urls}"
+        )
+
+
+async def _run_with_client(
+    ssl_certificate: SSLContext, storage_config: Any, args: Namespace
+) -> None:
+    async with connect(
+        storage_config["urls"], storage_config["authtoken"], ssl_certificate
+    ) as client:
+        all_experiments = await get_experiments(client)
+
+        assert isinstance(all_experiments, list)
+        if args.experiment is not None:
+            experiment = args.experiment
+            experiment_ids = [ex["id"] for ex in all_experiments]
+            if experiment not in experiment_ids:
+                raise GatherObsException(
+                    f"An experiment with id '{experiment}' does not exist.\n"
+                    f"Available experiments:\n  "
+                    + "\n  ".join(
+                        [
+                            f"{i}. {ex['id']} ({ex['name']})"
+                            for i, ex in enumerate(all_experiments)
+                        ]
+                    )
+                )
+        else:
+            experiment = query_user_for_experiment(all_experiments)
+
+        summary_observations = await extract_summary_observations(
+            client, experiment, all_experiments
+        )
+
+        convert_summary_observations(summary_observations, args.output_csv_file)
 
 
 def main(args: Namespace, _site_plugins: Any | None = None) -> None:
-    proc, config_path = asyncio.run(start_ert_api(args.config))
-    ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
-
-    async def _run_with_client() -> None:
-        async with connect(
-            storage_config["urls"], storage_config["authtoken"], ssl_certificate
-        ) as client:
-            all_experiments = await get_experiments(client)
-            if not all_experiments:
-                print("Found no experiments in storage, exiting ...")
-                return
-            if args.experiment is not None:
-                experiment = args.experiment
-                experiment_ids = [ex["id"] for ex in all_experiments]
-                if experiment not in experiment_ids:
-                    print(
-                        f"The experiment '{args.experiment}' does not exist.\n"
-                        f"Possible experiments are:\n\t" + "\n\t".join(experiment_ids)
-                    )
-                    return
-            else:
-                experiment = query_user_for_experiment(all_experiments)
-
-            summary_observations = await extract_summary_observations(
-                client, experiment
-            )
-            if summary_observations is None:
-                print(
-                    f"No summary observations found for "
-                    f"experiment '{experiment}', exiting ..."
-                )
-                return
-            convert_summary_observations(summary_observations, args.output_csv_file)
-
+    proc = None
     try:
-        asyncio.run(_run_with_client())
+        proc, config_path = asyncio.run(start_ert_api(args.config))
+        ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
+        asyncio.run(_run_with_client(ssl_certificate, storage_config, args))
+    except GatherObsException as e:
+        print(e)
+        return
     finally:
-        proc.terminate()
+        if proc is not None:
+            proc.terminate()

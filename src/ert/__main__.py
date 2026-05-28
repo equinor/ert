@@ -598,7 +598,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
 
     # Experimental feature
     if os.environ.get("ERT_FEATURE_GATHER_OBS"):
-        # Extract summary keys
         extract_obs_summary_keys_parser = subparsers.add_parser(
             "gather_summary_observations",
             help=(
