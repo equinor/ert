@@ -203,7 +203,15 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         name=event.name,
                     )
                 )
-                ensemble.save_blob(event.matrix, blob_type=BlobType.MATRIX)
+                ensemble.save_blob(
+                    data=event.matrix_bytes,
+                    file_type="npy",
+                    blob_type=BlobType.MATRIX,
+                    update_algorithm=event.update_algorithm,
+                    data_type=event.data_type,
+                    shape=event.shape,
+                    sparse=event.sparse,
+                )
             case AnalysisCompleteEvent():
                 buf = io.BytesIO()
                 pl.DataFrame(
@@ -212,7 +220,10 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     orient="row",
                 ).write_parquet(buf)
                 ensemble.save_blob(
-                    buf.getvalue(), blob_type=BlobType.OBSERVATION_REPORT
+                    buf.getvalue(),
+                    file_type="parquet",
+                    blob_type=BlobType.OBSERVATION_REPORT,
+                    update_algorithm=event.update_algorithm,
                 )
                 self.send_event(
                     RunModelUpdateEndEvent(

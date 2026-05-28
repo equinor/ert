@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import io
 import logging
 import time
 from collections.abc import Callable
@@ -17,6 +16,7 @@ from iterative_ensemble_smoother import AdaptiveESMDA
 from ert.analysis.event import AnalysisEvent, AnalysisMatrixEvent, AnalysisStatusEvent
 
 from ._batching import calculate_localization_batch_size, split_by_batch_size
+from .utils import matrix_to_bytes
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -173,12 +173,15 @@ class AdaptiveLocalizationUpdate:
         if corr_XY_batches:
             corr_XY_matrix = np.concatenate(corr_XY_batches, axis=0)
             corr_XY_matrix[np.abs(corr_XY_matrix) <= threshold] = 0.0
-            buf = io.BytesIO()
-            np.save(buf, corr_XY_matrix)
+            matrix_bytes, data_type, shape, sparse = matrix_to_bytes(corr_XY_matrix)
             self._progress_callback(
                 AnalysisMatrixEvent(
                     name=f"corr_XY_{param_config.name}",
-                    matrix=buf.getvalue(),
+                    matrix_bytes=matrix_bytes,
+                    data_type=data_type,
+                    shape=shape,
+                    sparse=sparse,
+                    update_algorithm="adaptive_localization",
                 )
             )
 

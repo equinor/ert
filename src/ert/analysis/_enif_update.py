@@ -100,6 +100,7 @@ def enif_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
+            update_algorithm="EnIF",
         )
     )
     return smoother_snapshot

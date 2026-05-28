@@ -443,6 +443,7 @@ def smoother_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
+            update_algorithm="ensemble_smoother",
         )
     )
     return smoother_snapshot

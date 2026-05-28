@@ -81,10 +81,15 @@ class AnalysisErrorEvent(AnalysisEvent):
 
 class AnalysisCompleteEvent(AnalysisEvent):
     event_type: Literal["AnalysisCompleteEvent"] = "AnalysisCompleteEvent"
+    update_algorithm: str
     data: DataSection
 
 
 class AnalysisMatrixEvent(AnalysisEvent):
     event_type: Literal["AnalysisMatrixEvent"] = "AnalysisMatrixEvent"
     name: str
-    matrix: bytes = Field(exclude=True)
+    sparse: bool
+    shape: tuple[int, int]
+    data_type: str
+    update_algorithm: str
+    matrix_bytes: bytes = Field(exclude=True)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import io
 import logging
 import os
 import time
@@ -19,7 +18,6 @@ from uuid import UUID
 import numpy as np
 import polars as pl
 import resfo
-import scipy as sp
 import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
@@ -1341,60 +1339,44 @@ class LocalEnsemble(BaseMode):
     def save_blob(
         self,
         data: bytes,
-        blob_type: BlobType = BlobType.OBSERVATION_REPORT,
+        file_type: str,
+        blob_type: BlobType,
+        update_algorithm: str,
+        data_type: str | None = None,
+        shape: tuple[int, int] | None = None,
+        sparse: bool | None = None,
     ) -> None:
-        if blob_type == BlobType.MATRIX:
-            self._save_matrix_blob(data)
-            return
         blob_dir = self._path / BLOB_DATA_DIR
         blob_dir.mkdir(parents=True, exist_ok=True)
         stem = uuid.uuid4().hex[:8]
-        parquet_path = blob_dir / f"{stem}.parquet"
-        self._storage._write_transaction(parquet_path, data)
-        blob_data = BlobStorageData(
-            blob_type=blob_type,
-            uri=f"{stem}.parquet",
-            file_size=len(data),
-            ensemble_id=str(self.id),
-        )
+        blob_path = blob_dir / f"{stem}.blob"
+        if blob_type == BlobType.MATRIX:
+            assert data_type is not None, "data_type must be provided for matrix blobs"
+            assert shape is not None, "shape must be provided for matrix blobs"
+            assert sparse is not None, "sparse must be provided for matrix blobs"
+            blob_data = MatrixStorageData(
+                blob_type=blob_type,
+                uri=f"{stem}.blob",
+                file_size=len(data),
+                file_type=file_type,
+                update_algorithm=update_algorithm,
+                data_type=data_type,
+                shape=shape,
+                sparse=sparse,
+            )
+        else:
+            blob_data = BlobStorageData(
+                blob_type=blob_type,
+                uri=f"{stem}.blob",
+                file_size=len(data),
+                file_type=file_type,
+                update_algorithm=update_algorithm,
+            )
+
+        self._storage._write_transaction(blob_path, data)
         self._storage._write_transaction(
             blob_dir / f"{stem}.json",
             blob_data.model_dump_json(indent=2).encode("utf-8"),
-        )
-
-    @require_write
-    def _save_matrix_blob(
-        self,
-        data: bytes,
-    ) -> None:
-        blob = np.load(io.BytesIO(data))
-
-        blob_dir = self._path / BLOB_DATA_DIR
-        blob_dir.mkdir(parents=True, exist_ok=True)
-        stem = uuid.uuid4().hex[:8]
-
-        sparsity = 1.0 - np.count_nonzero(blob) / blob.size
-        is_sparse = bool(sparsity > 0.5)
-
-        if is_sparse:
-            sparse_blob = sp.sparse.csc_array(blob)
-            blob_path = blob_dir / f"{stem}.npz"
-            sp.sparse.save_npz(blob_path, sparse_blob)
-        else:
-            blob_path = blob_dir / f"{stem}.npy"
-            np.save(blob_path, blob)
-
-        blob_data = MatrixStorageData(
-            blob_type=BlobType.MATRIX,
-            uri=str(blob_path),
-            file_size=blob_path.stat().st_size,
-            ensemble_id=str(self.id),
-            sparse=is_sparse,
-            shape=(blob.shape[0], blob.shape[1]),
-        )
-        json_path = blob_dir / f"{stem}.json"
-        self._storage._write_transaction(
-            json_path, blob_data.model_dump_json().encode("utf-8")
         )
 
     @require_write
