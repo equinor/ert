@@ -17,9 +17,7 @@ import anyio
 import httpx
 from resfo_utilities import SummaryKeyType
 
-
-class GatherObsException(Exception):
-    pass
+from ert.cli.main import ErtCliError
 
 
 class InvalidSummaryKeyError(ValueError):
@@ -107,7 +105,7 @@ async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Pa
                 line = bline.decode("utf-8")
                 await asyncio.sleep(0.01)
     except TimeoutError as e:
-        raise GatherObsException("ert api failed to start within 30 seconds") from e
+        raise ErtCliError("ert api failed to start within 30 seconds") from e
 
     config_path = Path(line[len(prefix) :].strip()) / "storage_server.json"
 
@@ -126,11 +124,9 @@ async def extract_summary_observations(
 ) -> dict[str, list[Any]]:
     experiment_match = next(filter(lambda x: x["id"] == experiment, experiments), None)
     if experiment_match is None:
-        raise GatherObsException(
-            f"Provided experiment id {experiment} not found in storage"
-        )
+        raise ErtCliError(f"Provided experiment id {experiment} not found in storage")
     if "summary" not in experiment_match["observations"]:
-        raise GatherObsException(
+        raise ErtCliError(
             f"No summary observations found for experiment '{experiment}'"
         )
     summary_observations = experiment_match["observations"]["summary"]
@@ -140,7 +136,7 @@ async def extract_summary_observations(
         if obs["name"] in response_key:
             result[response_key[obs["name"]]].append(obs)
     if len(result) == 0:
-        raise GatherObsException(
+        raise ErtCliError(
             f"No summary observations found for experiment '{experiment}'"
         )
     return result
@@ -199,7 +195,7 @@ async def get_experiments(
         isinstance(all_experiments, dict)
         and all_experiments.get("detail", {}).get("error") is not None
     ):
-        raise GatherObsException("Could not find any experiments in storage.")
+        raise ErtCliError("Could not find any experiments in storage.")
     return all_experiments
 
 
@@ -233,7 +229,7 @@ def query_user_for_experiment(experiments: list[dict[str, Any]]) -> str:
                 f"Please enter a number between 1 and {len(experiments)}"
             )
         except (ValueError, KeyboardInterrupt) as e:
-            raise GatherObsException("No experiment selected, exiting ...") from e
+            raise ErtCliError("No experiment selected, exiting ...") from e
 
 
 @asynccontextmanager
@@ -255,9 +251,7 @@ async def connect(
                     found_url = True
                     yield client
     if not found_url:
-        raise GatherObsException(
-            f"Failed to detect a working URL among candidates: {urls}"
-        )
+        raise ErtCliError(f"Failed to detect a working URL among candidates: {urls}")
 
 
 async def _run_with_client(
@@ -273,7 +267,7 @@ async def _run_with_client(
             experiment = args.experiment
             experiment_ids = [ex["id"] for ex in all_experiments]
             if experiment not in experiment_ids:
-                raise GatherObsException(
+                raise ErtCliError(
                     f"An experiment with id '{experiment}' does not exist.\n"
                     f"Available experiments:\n  "
                     + "\n  ".join(
@@ -299,9 +293,6 @@ def main(args: Namespace, _site_plugins: Any | None = None) -> None:
         proc, config_path = asyncio.run(start_ert_api(args.config))
         ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
         asyncio.run(_run_with_client(ssl_certificate, storage_config, args))
-    except GatherObsException as e:
-        print(e)
-        return
     finally:
         if proc is not None:
             proc.terminate()
