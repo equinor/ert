@@ -406,6 +406,6 @@ def test_that_get_ensemble_returns_blob_storage_data(
         assert len(matrix_blobs) == 2
         assert len(observation_report_blobs) == 1
         assert {tuple(blob["shape"]) for blob in matrix_blobs} == {(10, 5), (10, 10)}
-        assert {blob["sparse"] for blob in matrix_blobs} == {"True", "False"}
-        assert all(int(blob["file_size"]) > 0 for blob in matrix_blobs)
-        assert int(observation_report_blobs[0]["file_size"]) > 0
+        assert {blob["sparse"] for blob in matrix_blobs} == {True, False}
+        assert all(blob["file_size"] > 0 for blob in matrix_blobs)
+        assert observation_report_blobs[0]["file_size"] > 0

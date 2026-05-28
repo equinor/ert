@@ -1,4 +1,4 @@
-from .ensemble import BlobOut, EnsembleIn, EnsembleOut
+from .ensemble import EnsembleIn, EnsembleOut
 from .experiment import ExperimentIn, ExperimentOut
 from .observation import (
     ObservationIn,
