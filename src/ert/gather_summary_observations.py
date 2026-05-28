@@ -5,6 +5,8 @@ import ssl
 import sys
 from argparse import Namespace
 from collections import defaultdict
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, fields
 from functools import partial
 from pathlib import Path
@@ -39,7 +41,7 @@ def make_summary_key_data(summary_key: str) -> SummaryKeyData:
     fields = summary_key.split(":")
     summary_variable = fields[0]
     skd = partial(SummaryKeyData, keyword=summary_variable)
-    try:
+    try:  # noqa: PLW0717
         match SummaryKeyType.from_variable(summary_variable):
             case SummaryKeyType.FIELD | SummaryKeyType.OTHER:
                 return skd()
@@ -110,20 +112,17 @@ async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Pa
 
 
 async def extract_summary_observations(
-    url: str,
-    token: str,
-    ssl_context: ssl.SSLContext,
-    config_path: Path,
+    client: httpx.AsyncClient,
     experiment: str,
-) -> dict[str, list[str]] | None:
-    experiments = await get_experiments(url, token, ssl_context)
+) -> dict[str, list[Any]] | None:
+    experiments = await get_experiments(client)
     experiment_match = next(filter(lambda x: x["id"] == experiment, experiments), None)
     if experiment_match is None:
         raise ValueError(f"Provided experiment id {experiment} not found in storage")
     summary_observations = experiment_match["observations"]["summary"]
     response_key = {v: k for k, vs in summary_observations.items() for v in vs}
     result: dict[str, list[Any]] = defaultdict(list)
-    for obs in await get_observations(experiment, config_path):
+    for obs in await get_observations(experiment, client):
         if obs["name"] in response_key:
             result[response_key[obs["name"]]].append(obs)
     return result
@@ -163,22 +162,6 @@ def convert_summary_observations(
                 fout.write(f"{date.isoformat()}\n")
 
 
-async def get_healthy_url(urls: list[str], token: str, ssl_context: SSLContext) -> str:
-    for url in urls:
-        try:
-            async with httpx.AsyncClient(
-                base_url=url,
-                headers={"Token": token},
-                verify=ssl_context,
-                timeout=5.0,
-            ) as client:
-                if (await client.get("healthcheck")).status_code == 200:
-                    return url
-        except httpx.TransportError:
-            pass
-    raise RuntimeError(f"Failed to detect a working URL among candidates: {urls}")
-
-
 async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
     content = await anyio.Path(config_path).read_text()
     storage_config = json.loads(content)
@@ -187,45 +170,24 @@ async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
     ssl_context.load_verify_locations(cafile=storage_config["cert"])
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
-    working_url = await get_healthy_url(
-        storage_config["urls"], storage_config["authtoken"], ssl_context
-    )
-    storage_config["url"] = working_url
     return ssl_context, storage_config
 
 
 async def get_experiments(
-    url: str, token: str, ssl_context: ssl.SSLContext
+    client: httpx.AsyncClient,
 ) -> list[dict[str, Any]]:
-    async with httpx.AsyncClient(
-        base_url=url,
-        headers={"Token": token},
-        verify=ssl_context,
-    ) as client:
-        return json.loads((_ := await client.get("/experiments")).text)
+    return json.loads((_ := await client.get("/experiments")).text)
 
 
 async def get_observations(
-    experiment: str, config_path: Path | str
+    experiment: str, client: httpx.AsyncClient
 ) -> list[dict[str, Any]]:
-    ssl_context, storage_config = await get_storage_auth(config_path)
-
-    async with httpx.AsyncClient(
-        base_url=storage_config["url"],
-        headers={"Token": storage_config["authtoken"]},
-        verify=ssl_context,
-    ) as client:
-        return json.loads(
-            (await client.get(f"/experiments/{experiment}/observations")).text
-        )
+    return json.loads(
+        (await client.get(f"/experiments/{experiment}/observations")).text
+    )
 
 
-def query_user_for_experiment(url: str, token: str, ssl_context: SSLContext) -> str:
-    experiments = asyncio.run(get_experiments(url, token, ssl_context))
-    if not experiments:
-        print("No experiments found.")
-        sys.exit(1)
-
+def query_user_for_experiment(experiments: list[dict[str, Any]]) -> str:
     print("Available experiments:")
     for idx, exp in enumerate(experiments, 1):
         print(f"  {idx}. {exp['name']} (ID: {exp['id']})")
@@ -245,25 +207,64 @@ def query_user_for_experiment(url: str, token: str, ssl_context: SSLContext) -> 
             sys.exit(1)
 
 
+@asynccontextmanager
+async def connect(
+    urls: list[str], token: str, ssl_context: SSLContext
+) -> AsyncGenerator[httpx.AsyncClient, None]:
+    found_url = False
+    for url in urls:
+        if found_url:
+            continue
+        with suppress(httpx.TransportError):
+            async with httpx.AsyncClient(
+                base_url=url,
+                headers={"Token": token},
+                verify=ssl_context,
+                timeout=5.0,
+            ) as client:
+                if (await client.get("healthcheck")).status_code == 200:
+                    found_url = True
+                    yield client
+    if not found_url:
+        raise RuntimeError(f"Failed to detect a working URL among candidates: {urls}")
+
+
 def main(args: Namespace, _site_plugins: Any | None = None) -> None:
     proc, config_path = asyncio.run(start_ert_api(args.config))
-    assert Path(config_path).is_file()
     ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
-    storage_url = storage_config["url"]
-    storage_token = storage_config["authtoken"]
-    experiment = (
-        args.experiment
-        if args.experiment is not None
-        else query_user_for_experiment(storage_url, storage_token, ssl_certificate)
-    )
-    try:
-        summary_observations = asyncio.run(
-            extract_summary_observations(
-                storage_url, storage_token, ssl_certificate, config_path, experiment
+
+    async def _run_with_client() -> None:
+        async with connect(
+            storage_config["urls"], storage_config["authtoken"], ssl_certificate
+        ) as client:
+            all_experiments = await get_experiments(client)
+            if not all_experiments:
+                print("Found no experiments in storage, exiting ...")
+                return
+            if args.experiment is not None:
+                experiment = args.experiment
+                experiment_ids = [ex["id"] for ex in all_experiments]
+                if experiment not in experiment_ids:
+                    print(
+                        f"The experiment '{args.experiment}' does not exist.\n"
+                        f"Possible experiments are:\n\t" + "\n\t".join(experiment_ids)
+                    )
+                    return
+            else:
+                experiment = query_user_for_experiment(all_experiments)
+
+            summary_observations = await extract_summary_observations(
+                client, experiment
             )
-        )
-        if summary_observations is None:
-            return
-        convert_summary_observations(summary_observations, args.output_csv_file)
+            if summary_observations is None:
+                print(
+                    f"No summary observations found for "
+                    f"experiment '{experiment}', exiting ..."
+                )
+                return
+            convert_summary_observations(summary_observations, args.output_csv_file)
+
+    try:
+        asyncio.run(_run_with_client())
     finally:
         proc.terminate()
