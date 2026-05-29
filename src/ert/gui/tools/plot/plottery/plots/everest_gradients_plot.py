@@ -10,7 +10,6 @@ from ert.gui.tools.plot.plottery.plot_context import PlotType
 from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
-    import numpy as np
     import numpy.typing as npt
     from matplotlib.figure import Figure
 
