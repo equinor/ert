@@ -22,7 +22,7 @@ jobs:
           repository: equinor/ert-testdata
           ref: ci-baseline-poc
           path: ert-testdata
-          token: ${{ secrets.ERT_TESTDATA_TOKEN }}
+          token: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
 
       - name: Copy tarball into ert-testdata
         run: |
