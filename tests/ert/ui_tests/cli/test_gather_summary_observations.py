@@ -1,8 +1,11 @@
 import subprocess
+from argparse import Namespace
 from pathlib import Path
 from subprocess import CalledProcessError
 
 import pytest
+
+from ert.gather_summary_observations import main
 
 
 @pytest.fixture(name="use_feature_flag")
@@ -28,14 +31,20 @@ def test_that_cli_command_without_feature_flag_raises_called_process_error() -> 
 @pytest.mark.usefixtures(
     "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
 )
-def test_that_cli_command_outputs_csv_containing_observation_data():
+def test_that_gather_summary_observations_outputs_csv_containing_observation_data(
+    monkeypatch,
+):
     config_path = "test_data/snake_oil.ert"
     storage_path = "test_data/storage/"
     experiment_path = "snake_oil/ensemble/experiments/"
     experiment = next(iter(Path(storage_path + experiment_path).iterdir()))
-    subprocess.run(
-        ["ert", "gather_summary_observations", config_path, experiment.name], check=True
+
+    args = Namespace(
+        config=config_path,
+        experiment=experiment.name,
+        output_csv_file="summary_observations.csv",
     )
+    main(args)
     assert Path("summary_observations.csv").is_file()
     csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
     expected_csv_content = [
@@ -53,21 +62,21 @@ def test_that_cli_command_outputs_csv_containing_observation_data():
 @pytest.mark.usefixtures(
     "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
 )
-def test_that_single_experiment_in_storage_is_automatically_selected():
+def test_that_single_experiment_in_storage_is_automatically_selected(capsys):
     config_path = "test_data/snake_oil.ert"
-    captured = subprocess.run(
-        ["ert", "gather_summary_observations", config_path],
-        capture_output=True,
-        text=True,
-        check=True,
+    args = Namespace(
+        config=config_path,
+        experiment=None,
+        output_csv_file="summary_observations.csv",
     )
+    main(args)
 
     storage_path = "test_data/storage/"
     experiment_path = "snake_oil/ensemble/experiments/"
     experiment = next(iter(Path(storage_path + experiment_path).iterdir()))
     assert (
         f"Only one experiment found, picking experiment with id '{experiment.name}'"
-        in captured.stdout
+        in capsys.readouterr().out
     )
     assert Path("summary_observations.csv").is_file()
     csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
