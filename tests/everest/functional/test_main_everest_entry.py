@@ -204,7 +204,7 @@ def test_that_cli_gui_commands_fail_without_visualization_module(monkeypatch):
 
 def setup_main_without_visualization_module(monkeypatch):
     # Remove module from cache to force reimport
-    sys.modules.pop("everest.bin.visualization_script", None)
+    monkeypatch.delitem(sys.modules, "everest.bin.visualization_script", raising=False)
 
     original_import = builtins.__import__
 
