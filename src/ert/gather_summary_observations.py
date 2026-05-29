@@ -234,24 +234,25 @@ def query_user_for_experiment(experiments: list[dict[str, Any]]) -> str:
 
 @asynccontextmanager
 async def connect(
-    urls: list[str], token: str, ssl_context: SSLContext
+    urls: list[str], token: str, ssl_context: SSLContext, retries: int = 3
 ) -> AsyncGenerator[httpx.AsyncClient, None]:
-    found_url = False
-    for url in urls:
-        if found_url:
-            continue
-        with suppress(httpx.TransportError):
-            async with httpx.AsyncClient(
-                base_url=url,
-                headers={"Token": token},
-                verify=ssl_context,
-                timeout=5.0,
-            ) as client:
-                if (await client.get("healthcheck")).status_code == 200:
-                    found_url = True
-                    yield client
-    if not found_url:
-        raise ErtCliError(f"Failed to detect a working URL among candidates: {urls}")
+    for attempt in range(retries):
+        for url in urls:
+            with suppress(httpx.TransportError):
+                async with httpx.AsyncClient(
+                    base_url=url,
+                    headers={"Token": token},
+                    verify=ssl_context,
+                    timeout=5.0,
+                ) as client:
+                    if (await client.get("healthcheck")).status_code == 200:
+                        yield client
+                        return
+        if attempt < retries - 1:
+            await asyncio.sleep(1)
+    raise ErtCliError(
+        f"Failed to detect a working storage URL after {retries} retries."
+    )
 
 
 async def _run_with_client(
