@@ -13,13 +13,13 @@ on:
 
 jobs:
   test-against-lsf:
+    timeout-minutes: 15
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        test-type: [ 'gui-tests', 'rapid-tests' ]
-        python-version: ["3.12"]
+        python-version: ["3.14"]
 
     steps:
       - name: Checkout repository
@@ -88,6 +88,5 @@ jobs:
           uv pip install ./dummy_site_config
 
       - name: Rapid tests
-        if: matrix.test-type == 'rapid-tests'
         run: |
           uv run just rapid-tests

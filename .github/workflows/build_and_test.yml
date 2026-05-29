@@ -77,7 +77,7 @@ jobs:
           python-version: '3.12'
         - os: 'ubuntu-latest'
           test-type: 'doc'
-          python-version: '3.14'
+          python-version: '3.13'
     uses: ./.github/workflows/test_everest.yml
     with:
       os: ${{ matrix.os }}
@@ -90,7 +90,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.12' ]
+        python-version: [ '3.14' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_screenshots.yml
     with:
@@ -132,7 +132,7 @@ jobs:
       matrix:
         test-type: [ 'test' ]
         os: [ 'macos-latest' ]
-        python-version: [ '3.12' ]
+        python-version: [ '3.14' ]
 
     uses: ./.github/workflows/test_everest.yml
     with:
@@ -148,7 +148,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
-        python-version: [ '3.12' ]
+        python-version: [ '3.14' ]
         os: [ 'macos-latest']
 
     uses: ./.github/workflows/test_ert.yml
