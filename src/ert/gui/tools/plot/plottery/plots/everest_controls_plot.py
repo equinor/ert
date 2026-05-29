@@ -51,20 +51,77 @@ class EverestControlsPlot:
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
+        plot_context.deactivate_date_support()
+        all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
+
+        if all_dfs:
+            combined = pd.concat(all_dfs, ignore_index=True)
+            if plot_context.by_batch:
+                self.plot_pr_batch(figure, plot_context, combined)
+            else:
+                self.plot_pr_control(figure, plot_context, combined)
+
+    def plot_pr_control(
+        self,
+        figure: Figure,
+        plot_context: PlotContext,
+        combined_data: pd.DataFrame,
+    ) -> None:
+        config = plot_context.plotConfig()
+        axes = figure.add_subplot(111)
+
+        plot_context.y_axis = plot_context.VALUE_AXIS
+        plot_context.x_axis = plot_context.INDEX_AXIS
+        plot_context.plot_type = PlotType.SCATTER
+
+        x_positions = list(range(len(self.selected_controls)))
+        batch_ids = sorted(combined_data["batch_id"].unique().tolist())
+
+        for batch_id in batch_ids:
+            batch_data = combined_data[combined_data["batch_id"] == batch_id]
+            control_name_list = []
+            control_value_list = []
+            for x, control in zip(x_positions, self.selected_controls, strict=True):
+                control_rows = batch_data[batch_data["control_name"] == control]
+                if not control_rows.empty:
+                    for value in control_rows["control_value"]:
+                        control_name_list.append(x)
+                        control_value_list.append(value)
+            if control_name_list:
+                label = "initial batch" if batch_id == 0 else f"batch_{batch_id}"
+                scatter = axes.scatter(
+                    control_name_list,
+                    control_value_list,
+                    color=config.next_color(),
+                    s=20,
+                )
+                if len(batch_ids) <= LEGEND_THRESHOLD:
+                    config.add_legend_item(label, scatter)
+
+        axes.set_xticks(x_positions)
+        axes.set_xticklabels(self.selected_controls, rotation=-30, ha="left")
+
+        config.set_title("Control values by control")
+        PlotTools.finalizePlot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label="",
+            default_y_label="Control value",
+        )
+
+    def plot_pr_batch(
+        self,
+        figure: Figure,
+        plot_context: PlotContext,
+        combined_data: pd.DataFrame,
+    ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
         plot_context.plot_type = PlotType.LINE
-        plot_context.deactivate_date_support()
-
-        all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
-
-        if not all_dfs:
-            return
-
-        combined = pd.concat(all_dfs, ignore_index=True)
 
         tooltip_data = []
         tooltip_labels = []
@@ -72,31 +129,31 @@ class EverestControlsPlot:
         for i, control in (
             enumerate(self.selected_controls) if self.selected_controls else []
         ):
-            data = combined[combined["control_name"] == control].sort_values("batch_id")
-            if data.empty:
-                continue
-
-            color = config.next_color()
-            if i < n_colors:
-                style = "-o"
-            elif i < n_colors * 2:
-                style = "--o"
-            elif i < n_colors * 3:
-                style = ":o"
-            else:
-                style = "-.o"
-            lines = axes.plot(
-                data["batch_id"],
-                data["control_value"],
-                style,
-                color=color,
-                markersize=4,
+            data = combined_data[combined_data["control_name"] == control].sort_values(
+                "batch_id"
             )
-            tooltip_data.append(lines)
-            tooltip_labels.append(control)
-            if len(self.selected_controls) <= LEGEND_THRESHOLD:
-                config.add_legend_item(control, lines[0])
-            if len(control) <= 20:
+            if not data.empty:
+                if i < n_colors:
+                    style = "-o"
+                elif i < n_colors * 2:
+                    style = "--o"
+                elif i < n_colors * 3:
+                    style = ":o"
+                else:
+                    style = "-.o"
+
+                color = config.next_color()
+                lines = axes.plot(
+                    data["batch_id"],
+                    data["control_value"],
+                    style,
+                    color=color,
+                    markersize=4,
+                )
+                tooltip_data.append(lines)
+                tooltip_labels.append(control)
+                if len(self.selected_controls) <= LEGEND_THRESHOLD:
+                    config.add_legend_item(control, lines[0])
                 axes.annotate(
                     control,
                     xy=(data["batch_id"].iloc[-1], data["control_value"].iloc[-1]),
@@ -119,7 +176,7 @@ class EverestControlsPlot:
             disable_values=True,
             hover_color=config.next_color()[0],
         )
-
+        config.set_title("Control values by batch")
         PlotTools.finalizePlot(
             plot_context,
             figure,

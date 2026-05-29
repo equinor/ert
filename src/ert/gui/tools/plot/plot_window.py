@@ -11,12 +11,14 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QApplication,
+    QButtonGroup,
     QDialog,
     QDockWidget,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QRadioButton,
     QStyle,
     QTabWidget,
     QTextEdit,
@@ -304,29 +306,60 @@ class PlotWindow(QMainWindow):
                 self.updatePlot
             )
 
-            group_style = "QGroupBox { font-style: italic; }"
-
-            def create_group_box(title: str, widget: QWidget) -> QGroupBox:
-                group_box = QGroupBox(title)
-                group_box.setStyleSheet(group_style)
+            def create_group_layout(
+                widgets: list[QWidget] | None = None,
+            ) -> QVBoxLayout:
                 layout = QVBoxLayout()
                 layout.setContentsMargins(0, 0, 0, 0)
-                layout.addWidget(widget)
+                for w in widgets or []:
+                    layout.addWidget(w)
+                return layout
+
+            def create_group_box(title: str, layout: QVBoxLayout) -> QGroupBox:
+                group_box = QGroupBox(title)
+                group_box.setStyleSheet("QGroupBox { font-style: italic; }")
                 group_box.setLayout(layout)
                 return group_box
 
             self._everest_controls_group = create_group_box(
-                "Select control(s)", self._everest_control_selection_widget
+                "Select control(s)",
+                create_group_layout([self._everest_control_selection_widget]),
             )
             self._ensemble_group = create_group_box(
-                "Select ensemble(s)", self._ensemble_selection_widget
+                "Select ensemble(s)",
+                create_group_layout([self._ensemble_selection_widget]),
+            )
+
+            self._display_over_batches_radio = QRadioButton("batches")
+            self._display_over_batches_radio.setObjectName("display_over_batches_radio")
+            self._display_over_batches_radio.setChecked(True)
+            self._display_over_controls_radio = QRadioButton("controls")
+            self._display_over_controls_radio.setObjectName(
+                "display_over_controls_radio"
+            )
+            self._display_over_button_group = QButtonGroup(self)
+            self._display_over_button_group.addButton(self._display_over_batches_radio)
+            self._display_over_button_group.addButton(self._display_over_controls_radio)
+            self._display_over_button_group.buttonClicked.connect(self.updatePlot)
+
+            self._display_over_group = create_group_box(
+                "X-axis:",
+                create_group_layout(
+                    [
+                        self._display_over_batches_radio,
+                        self._display_over_controls_radio,
+                    ]
+                ),
             )
 
             right_container = QWidget()
-            right_layout = QVBoxLayout()
-            right_layout.setContentsMargins(0, 0, 0, 0)
-            right_layout.addWidget(self._ensemble_group)
-            right_layout.addWidget(self._everest_controls_group)
+            right_layout = create_group_layout(
+                [
+                    self._ensemble_group,
+                    self._display_over_group,
+                    self._everest_controls_group,
+                ]
+            )
             right_container.setLayout(right_layout)
 
             right_dock = QDockWidget()
@@ -340,6 +373,7 @@ class PlotWindow(QMainWindow):
             self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right_dock)
 
             self._everest_controls_group.setVisible(False)
+            self._display_over_group.setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
     def get_plot_api_version(self) -> str:
@@ -384,6 +418,7 @@ class PlotWindow(QMainWindow):
         }
         is_everest_ensemble = plot_widget.name == ENSEMBLE and self.is_everest
         self._everest_controls_group.setVisible(is_gradient_plot or is_controls_plot)
+        self._display_over_group.setVisible(is_controls_plot)
 
         self._ensemble_selection_widget.apply_ensemble_filtering(
             require_func_eval=is_objective_plot
@@ -524,6 +559,7 @@ class PlotWindow(QMainWindow):
                 key,
                 layer,
             )
+            plot_context.by_batch = self._display_over_batches_radio.isChecked()
 
             # Check if key is a history key.
             # If it is it already has the data it needs
@@ -635,32 +671,35 @@ class PlotWindow(QMainWindow):
         self._plot_customizer.switch_plot_config_history(key_def)
 
         is_everest_specific_widget = key_def.metadata.get("data_origin") in {
-            "everest_parameters",
             "everest_objectives",
             "everest_constraints",
             "everest_batch_objectives",
         }
-        if (
-            self.is_everest
-            and key_def.response is not None
-            and key_def.response.type in {"summary", "gen_data"}
-        ):
-            if self._prev_key_origin and self._prev_key_origin not in {
+        if self.is_everest:
+            if key_def.response is not None and key_def.response.type in {
                 "summary",
                 "gen_data",
             }:
-                self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
-                self._ensemble_selection_widget.set_minimum_ensemble_limit(0)
-                self._ensemble_selection_widget.clear_ensemble_selection()
-        elif is_everest_specific_widget:
-            if key_def.key != self._prev_key:
-                self._ensemble_selection_widget.set_maximum_ensemble_limit(
-                    EVEREST_UPPER_BATCH_LIMIT
-                )
-                self._ensemble_selection_widget.reset_minimum_ensemble_limit_to_default()
-                self._ensemble_selection_widget.select_all_ensembles()
-        else:
-            self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
+                if self._prev_key_origin and self._prev_key_origin not in {
+                    "summary",
+                    "gen_data",
+                }:
+                    self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+                    self._ensemble_selection_widget.set_minimum_ensemble_limit(0)
+                    self._ensemble_selection_widget.clear_ensemble_selection()
+            elif is_everest_specific_widget:
+                if key_def.key != self._prev_key:
+                    self._ensemble_selection_widget.set_maximum_ensemble_limit(
+                        EVEREST_UPPER_BATCH_LIMIT
+                    )
+                    self._ensemble_selection_widget.reset_minimum_ensemble_limit_to_default()
+                    self._ensemble_selection_widget.select_all_ensembles()
+            elif key_def.metadata.get("data_origin") == "everest_parameters":
+                if key_def.key != self._prev_key:
+                    self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
+                    self._ensemble_selection_widget.clear_ensemble_selection()
+            else:
+                self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
 
         max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
         str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
