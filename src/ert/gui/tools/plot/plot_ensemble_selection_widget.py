@@ -185,7 +185,11 @@ class EnsembleSelectListWidget(QListWidget):
         for index in range(self._ensemble_count):
             item = self.item(index)
             if item:
-                should_be_checked = index < self._minimum_selected
+                should_be_checked = (
+                    index == self._ensemble_count - 1
+                    if is_everest_application()  # Batch_0
+                    else index <= self._minimum_selected - 1  # Latest ensemble
+                )
                 is_checked = bool(item.data(Qt.ItemDataRole.CheckStateRole))
                 if is_checked and not should_be_checked:
                     self.release_color(

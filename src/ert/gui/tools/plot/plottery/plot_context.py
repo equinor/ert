@@ -54,6 +54,7 @@ class PlotContext:
         self._y_axis: str | None = None
         self._log_scale = False
         self._extended_plot_information = False
+        self._by_batch: bool = True
 
         self._plot_type: PlotType | None = None
 
@@ -148,3 +149,11 @@ class PlotContext:
     @log_scale.setter
     def log_scale(self, value: bool) -> None:
         self._log_scale = value
+
+    @property
+    def by_batch(self) -> bool:
+        return self._by_batch
+
+    @by_batch.setter
+    def by_batch(self, value: bool) -> None:
+        self._by_batch = value
