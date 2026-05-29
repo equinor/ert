@@ -287,12 +287,17 @@ async def _run_with_client(
         convert_summary_observations(summary_observations, args.output_csv_file)
 
 
-def main(args: Namespace, _site_plugins: Any | None = None) -> None:
+async def _async_main(args: Namespace) -> None:
     proc = None
     try:
-        proc, config_path = asyncio.run(start_ert_api(args.config))
-        ssl_certificate, storage_config = asyncio.run(get_storage_auth(config_path))
-        asyncio.run(_run_with_client(ssl_certificate, storage_config, args))
+        proc, config_path = await start_ert_api(args.config)
+        ssl_certificate, storage_config = await get_storage_auth(config_path)
+        await _run_with_client(ssl_certificate, storage_config, args)
     finally:
-        if proc is not None:
+        if proc is not None and proc.returncode is None:
             proc.terminate()
+            await proc.wait()
+
+
+def main(args: Namespace, _site_plugins: Any | None = None) -> None:
+    asyncio.run(_async_main(args))
