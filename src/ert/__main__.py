@@ -23,6 +23,7 @@ from opentelemetry.trace import Status, StatusCode
 
 import ert.shared
 from _ert.threading import set_signal_handler
+from ert import gather_summary_observations
 from ert.base_model_context import use_runtime_plugins
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
@@ -594,6 +595,36 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     convert_obs_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
+
+    # Experimental feature
+    if os.environ.get("ERT_FEATURE_GATHER_OBS"):
+        extract_obs_summary_keys_parser = subparsers.add_parser(
+            "gather_summary_observations",
+            help=(
+                "Extracts all summary observations from one experiment into a shared "
+                "configuration with a csv file containing the observation values.\n"
+                "This command requires the path to an ert config file as first "
+                "argument and optionally an experiment ID as second argument."
+            ),
+        )
+        extract_obs_summary_keys_parser.set_defaults(
+            func=gather_summary_observations.main
+        )
+        extract_obs_summary_keys_parser.add_argument(
+            "config", type=valid_file, help="Path to ERT config file"
+        )
+        extract_obs_summary_keys_parser.add_argument(
+            "experiment", nargs="?", type=str, default=None, help="Experiment ID"
+        )
+        extract_obs_summary_keys_parser.add_argument(
+            "--output-csv-file",
+            default="summary_observations.csv",
+            type=str,
+            help="Output CSV file name",
+        )
+        extract_obs_summary_keys_parser.add_argument(
+            "--verbose", action="store_true", help="Show verbose output.", default=False
+        )
 
     # Common arguments/defaults for all non-gui modes
     for cli_parser in [

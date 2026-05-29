@@ -226,7 +226,7 @@ def run_server(
     if args.debug or debug:
         logger.info("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
-
+    logger.info(f"Serving storage directory: {os.environ['ERT_STORAGE_ENS_PATH']}")
     if config.should_reload:
         supervisor = ChangeReload(config, target=server.run, sockets=[sock])
         supervisor.run()
