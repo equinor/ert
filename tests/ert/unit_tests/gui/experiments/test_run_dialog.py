@@ -62,11 +62,13 @@ _original_run_ensemble_evaluator_async = RunModel.run_ensemble_evaluator_async
 
 
 @pytest.fixture
-def event_queue(events):
+def event_queue(events, request):
+    successful_realizations = getattr(request, "param", [0])
+
     async def _add_event(self, *_):
         for event in events:
             self.send_event(event)
-        return [0]
+        return successful_realizations
 
     with patch(
         "ert.run_models.run_model.RunModel.run_ensemble_evaluator_async",
@@ -96,7 +98,6 @@ def event_queue_large_snapshot(large_snapshot):
             status_count={"Finished": 2, "Unknown": 2},
             iteration=1,
         ),
-        EndEvent(failed=False, msg=""),
     ]
 
     async def _add_event(self, *_):
@@ -293,7 +294,6 @@ def test_large_snapshot(
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             1,
             id="real_less_partial",
@@ -331,7 +331,6 @@ def test_large_snapshot(
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             1,
             id="fm_stepless_partial",
@@ -394,7 +393,6 @@ def test_large_snapshot(
                     status_count={"Finished": 2, "Failed": 1, "Unknown": 1},
                     iteration=0,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             1,
             id="two_fm_step_updates_over_two_partials",
@@ -437,7 +435,6 @@ def test_large_snapshot(
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=1,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             2,
             id="two_iterations",
@@ -510,7 +507,6 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
                     status_count={"Finished": 4},
                     iteration=0,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             1,
             id="running_fm_step_with_memory_usage",
@@ -578,7 +574,6 @@ def test_run_dialog_memory_usage_showing(
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             1,
             ", assigned to host: COMP_01",
@@ -610,7 +605,6 @@ def test_run_dialog_memory_usage_showing(
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             1,
             "",
@@ -887,7 +881,6 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                     status_count={"Finished": 1, "Pending": 1},
                     iteration=1,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             2,
             id="changing from between tabs",
@@ -1030,12 +1023,12 @@ def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog)
         pytest.param(
             [
                 WarningEvent(msg="warning"),
-                EndEvent(failed=True, msg="Failed"),
             ],
             id="one warning issued",
         ),
     ],
 )
+@pytest.mark.parametrize("event_queue", [[]], indirect=True)
 def test_that_run_dialog_clears_warnings_when_rerun(
     events, event_queue, qtbot, monkeypatch, run_dialog
 ):
@@ -1102,7 +1095,6 @@ def test_that_run_dialog_clears_warnings_when_rerun(
                     status_count={"Finished": 1, "Pending": 1},
                     iteration=1,
                 ),
-                EndEvent(failed=False, msg=""),
             ],
             id="scheduler_warning_event_between_snapshot_events",
         ),
