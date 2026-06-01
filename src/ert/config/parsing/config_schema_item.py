@@ -214,12 +214,9 @@ class SchemaItem:
                         absolute_path = Path(potential_executable)
                         is_command = True
                     else:
-                        absolute_path = None
-
-                if absolute_path is None:
-                    raise ConfigValidationError.with_context(
-                        f"Could not find executable {token.value!r}", token
-                    )
+                        raise ConfigValidationError.with_context(
+                            f"Could not find executable {token.value!r}", token
+                        )
 
                 if os.path.isdir(absolute_path):
                     raise ConfigValidationError.with_context(
