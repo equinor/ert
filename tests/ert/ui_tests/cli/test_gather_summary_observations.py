@@ -31,6 +31,7 @@ def test_that_cli_command_without_feature_flag_raises_called_process_error() -> 
 @pytest.mark.usefixtures(
     "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
 )
+@pytest.mark.skip_mac_ci  # Ert api is too slow to start for mac tests
 def test_that_gather_summary_observations_outputs_csv_containing_observation_data(
     monkeypatch,
 ):
@@ -62,6 +63,7 @@ def test_that_gather_summary_observations_outputs_csv_containing_observation_dat
 @pytest.mark.usefixtures(
     "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
 )
+@pytest.mark.skip_mac_ci  # Ert api is too slow to start for mac tests
 def test_that_single_experiment_in_storage_is_automatically_selected(capsys):
     config_path = "test_data/snake_oil.ert"
     args = Namespace(
