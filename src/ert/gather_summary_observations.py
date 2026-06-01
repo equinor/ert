@@ -105,7 +105,7 @@ async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Pa
                 line = bline.decode("utf-8")
                 await asyncio.sleep(0.01)
     except TimeoutError as e:
-        raise ErtCliError("ert api failed to start within 30 seconds") from e
+        raise ErtCliError("ert api failed to start within 60 seconds") from e
 
     config_path = Path(line[len(prefix) :].strip()) / "storage_server.json"
 
