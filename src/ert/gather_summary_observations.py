@@ -99,7 +99,7 @@ async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Pa
     print("Waiting for storage server ...")
     assert proc.stdout is not None
     try:
-        async with asyncio.timeout(30.0):
+        async with asyncio.timeout(60.0):
             while not line.startswith(prefix):
                 bline = await proc.stdout.readline()
                 line = bline.decode("utf-8")
