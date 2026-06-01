@@ -6,8 +6,7 @@ from textwrap import dedent
 import numpy as np
 import polars as pl
 import pytest
-from scipy.ndimage import gaussian_filter
-from xtgeo import RegularSurface, surface_from_file
+from xtgeo import surface_from_file
 
 from ert.config import ErtConfig, GenKwConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
@@ -77,26 +76,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     """This is a regression test to make sure ert does not use the wrong order
     (row-major / column-major) when working with surfaces.
     """
-    rng = np.random.default_rng()
-
-    def sample_prior(nx, ny):
-        return np.exp(
-            5
-            * gaussian_filter(
-                gaussian_filter(rng.random(size=(nx, ny)), sigma=2.0), sigma=1.0
-            )
-        )
-
-    nx = 5
-    ny = 7
     ensemble_size = 2
-
-    Path("./surface").mkdir()
-    for i in range(ensemble_size):
-        surf = RegularSurface(
-            ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=sample_prior(nx, ny)
-        )
-        surf.to_file(f"surface/surf_init_{i}.irap", fformat="irap_binary")
 
     # Single observation with a large ERROR to make sure the update is minimal.
     obs = """
@@ -137,6 +117,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     ]
 
     assert surf_prior.shape == surf_posterior.shape
+    assert ens_posterior.calculate_std_dev_for_parameter_group("TOP").shape == (5, 7)
 
     for i in range(ensemble_size):
         with pytest.raises(AssertionError):

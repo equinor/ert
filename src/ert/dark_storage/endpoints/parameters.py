@@ -65,11 +65,13 @@ def get_parameter_std_dev(
         ensemble = storage.get_ensemble(ensemble_id)
         da = ensemble.calculate_std_dev_for_parameter_group(key)
 
-    if z >= int(da.shape[2]):
+    if da.ndim == 2:
+        data_2d = da
+    elif z >= int(da.shape[2]):
         logger.error("invalid z index")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-    data_2d = da[:, :, z]
+    else:
+        data_2d = da[:, :, z]
 
     buffer = io.BytesIO()
     np.save(buffer, data_2d)
