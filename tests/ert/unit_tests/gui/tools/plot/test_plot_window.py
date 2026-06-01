@@ -147,7 +147,7 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     plot_widget = plot_window._central_tab.currentWidget()
     assert plot_widget is not None
 
-    log_checkbox = plot_widget.findChild(QCheckBox, name="log_scale_checkbox")
+    log_checkbox = plot_window.log_scale_checkbox
     assert log_checkbox.isVisible()
     assert not log_checkbox.isChecked()
 

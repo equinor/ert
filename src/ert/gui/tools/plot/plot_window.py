@@ -12,6 +12,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
     QDialog,
     QDockWidget,
     QGroupBox,
@@ -352,12 +353,49 @@ class PlotWindow(QMainWindow):
                 ),
             )
 
+            self.log_scale_checkbox = QCheckBox("Log scale")
+            self.log_scale_checkbox.stateChanged.connect(self.updatePlot)
+            self.log_scale_checkbox.setVisible(False)
+
+            plot_config = self._plot_customizer.get_plot_config()
+            self.legend_checkbox = QCheckBox("Legend")
+            self.legend_checkbox.setChecked(plot_config.is_legend_enabled())
+            self.legend_checkbox.stateChanged.connect(self.updatePlot)
+
+            self.grid_checkbox = QCheckBox("Grid")
+            self.grid_checkbox.setChecked(plot_config.is_grid_enabled())
+            self.grid_checkbox.stateChanged.connect(self.updatePlot)
+
+            self.history_checkbox = QCheckBox("History")
+            self.history_checkbox.setChecked(plot_config.is_history_enabled())
+            self.history_checkbox.stateChanged.connect(self.updatePlot)
+            self.history_checkbox.setVisible(False)
+
+            self.observations_checkbox = QCheckBox("Observations")
+            self.observations_checkbox.setChecked(plot_config.is_observations_enabled())
+            self.observations_checkbox.stateChanged.connect(self.updatePlot)
+            self.observations_checkbox.setVisible(False)
+
+            self.customization_group = create_group_box(
+                "Customize",
+                create_group_layout(
+                    [
+                        self.legend_checkbox,
+                        self.grid_checkbox,
+                        self.history_checkbox,
+                        self.observations_checkbox,
+                        self.log_scale_checkbox,
+                        self._display_over_group,
+                    ]
+                ),
+            )
+
             right_container = QWidget()
             right_layout = create_group_layout(
                 [
                     self._ensemble_group,
-                    self._display_over_group,
                     self._everest_controls_group,
+                    self.customization_group,
                 ]
             )
             right_container.setLayout(right_layout)
@@ -502,8 +540,9 @@ class PlotWindow(QMainWindow):
                     elif result is not None:
                         ensemble_to_data_map[ensemble] = result
 
-            log_scale_valid_values = True
+            log_scale_valid_values = False
             if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
+                log_scale_valid_values = True
                 for data in ensemble_to_data_map.values():
                     numeric = data.select_dtypes(include=["number"])
                     # Need non-unique check to disable log scale for
@@ -514,8 +553,12 @@ class PlotWindow(QMainWindow):
                     ):
                         log_scale_valid_values = False
                         break
+            self.log_scale_checkbox.setVisible(log_scale_valid_values)
 
-            plot_widget._log_scale_valid_values = log_scale_valid_values
+            self._plot_customizer.get_plot_config().set_grid_enabled(
+                self.grid_checkbox.isChecked()
+            )
+
             observations = pd.DataFrame()
             if key_def.observations and selected_ensembles:
                 try:
@@ -525,6 +568,10 @@ class PlotWindow(QMainWindow):
                     )
                 except BaseException as e:
                     handle_exception(e)
+            if not observations.empty:
+                self.observations_checkbox.setVisible(True)
+            else:
+                self.observations_checkbox.setVisible(False)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
             obs_loc: ObservationPlotLocations | None = None
@@ -576,6 +623,13 @@ class PlotWindow(QMainWindow):
                 except BaseException as e:
                     handle_exception(e)
                     plot_context.history_data = None
+            if plot_context.history_data is None or plot_context.history_data.empty:
+                self.history_checkbox.setVisible(False)
+            else:
+                self.history_checkbox.setVisible(True)
+                self._plot_customizer.get_plot_config().set_history_enabled(
+                    self.history_checkbox.isChecked()
+                )
 
             if key_def.response is not None and key_def.response.type == "rft":
                 plot_context.setXLabel(key.split(":")[-1])
@@ -596,6 +650,13 @@ class PlotWindow(QMainWindow):
                 if not data.empty and data.index.inferred_type == "datetime64":
                     self._preferred_ensemble_x_axis_format = PlotContext.DATE_AXIS
                     break
+
+            plot_config.set_legend_enabled(self.legend_checkbox.isChecked())
+            plot_config.set_grid_enabled(self.grid_checkbox.isChecked())
+            plot_config.set_history_enabled(self.history_checkbox.isChecked())
+            plot_config.set_observations_enabled(self.observations_checkbox.isChecked())
+
+            plot_context.log_scale = self.log_scale_checkbox.isChecked()
 
             self._updateCustomizer(plot_widget, self._preferred_ensemble_x_axis_format)
 
