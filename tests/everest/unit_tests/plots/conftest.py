@@ -14,3 +14,8 @@ def generic_plot_context():
         ensembles_color_indexes=[],
         key="test",
     )
+
+
+@pytest.fixture
+def palette_size(generic_plot_context):
+    return generic_plot_context.plotConfig().get_number_of_colors()
