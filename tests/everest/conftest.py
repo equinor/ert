@@ -2,7 +2,6 @@ import os
 import queue
 import shutil
 import stat
-import tempfile
 from collections.abc import Callable, Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from copy import deepcopy
@@ -168,10 +167,12 @@ def copy_math_func_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def cached_example(pytestconfig):
+def cached_example(pytestconfig, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     cache = pytestconfig.cache
+    copy_index = 0
 
     def run_config(test_data_case: str):
+        nonlocal copy_index
         test_data_name = test_data_case.replace("/", ".")
         if cache.get(f"cached_example:{test_data_case}", None) is None:
             my_tmpdir = cache.mkdir("cached_example_case" + test_data_name)
@@ -189,6 +190,7 @@ def cached_example(pytestconfig):
                 shutil.rmtree(my_tmpdir / "everest")
 
             shutil.copytree(config_path.parent, my_tmpdir / "everest")
+            monkeypatch.chdir(my_tmpdir / "everest")
             config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)
             config.simulator.queue_system = LocalQueueOptions(max_running=2)
             status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
@@ -227,13 +229,13 @@ def cached_example(pytestconfig):
             f"cached_example:{test_data_case}", (None, None, None, None)
         )
 
-        copied_tmpdir = tempfile.mkdtemp()
-        shutil.copytree(result_path, Path(copied_tmpdir) / "everest")
-        copied_path = str(Path(copied_tmpdir) / "everest")
-        os.chdir(copied_path)
+        copied_path = tmp_path / f"everest-{copy_index}"
+        copy_index += 1
+        shutil.copytree(result_path, copied_path)
+        monkeypatch.chdir(copied_path)
 
         return (
-            copied_path,
+            str(copied_path),
             config_file,
             optimal_result_json,
             [status_event_from_json(e) for e in events_list_json],

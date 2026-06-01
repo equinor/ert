@@ -5,6 +5,7 @@ import shutil
 import sys
 from contextlib import suppress
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -37,14 +38,16 @@ careful_copy_file = import_from_location(
     "careful_copy",
     SHELL_SCRIPTS / "careful_copy_file.py",
 ).careful_copy_file
-mkdir = import_from_location(
+make_directory = import_from_location(
     "make_directory",
     SHELL_SCRIPTS / "make_directory.py",
-).mkdir
-copy_directory = import_from_location(
-    "careful_copy",
-    SHELL_SCRIPTS / "copy_directory.py",
-).copy_directory
+)
+mkdir = make_directory.mkdir
+with patch.dict(sys.modules, {"make_directory": make_directory}):
+    copy_directory = import_from_location(
+        "copy_directory",
+        SHELL_SCRIPTS / "copy_directory.py",
+    ).copy_directory
 copy_file = import_from_location(
     "copy_file",
     SHELL_SCRIPTS / "copy_file.py",
@@ -362,9 +365,8 @@ def test_that_delete_directory_can_delete_directories_with_internal_symlinks():
     mkdir("to_be_deleted")
     Path("to_be_deleted/link_target.txt").write_text("hei", encoding="utf-8")
 
-    os.chdir("to_be_deleted")  # symlink() requires this
-    symlink("link_target.txt", "link")
-    os.chdir("..")
+    with pushd("to_be_deleted"):
+        symlink("link_target.txt", "link")
     assert Path("to_be_deleted/link").exists()
 
     delete_directory("to_be_deleted")

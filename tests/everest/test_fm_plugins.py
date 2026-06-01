@@ -107,8 +107,9 @@ def test_add_logging_handle(plugin_manager):
 
 def test_logging_from_plugin(caplog, plugin_manager):
     handle = logging.StreamHandler()
+    logger = logging.getLogger("my.test")
 
-    logging.getLogger("my.test").addHandler(handle)
+    logger.addHandler(handle)
 
     class Plugin:
         @hookimpl
@@ -123,8 +124,12 @@ def test_logging_from_plugin(caplog, plugin_manager):
 
     caplog.set_level(logging.DEBUG)
 
-    logging.getLogger("my.test").debug("Hello from my test")
-    Plugin().log()
+    try:
+        logger.debug("Hello from my test")
+        Plugin().log()
 
-    assert re.search(r"DEBUG.*my\.test:.*Hello from my test", caplog.text)
-    assert re.search(r"INFO.*my\.plugin:.*Hello from plugin", caplog.text)
+        assert re.search(r"DEBUG.*my\.test:.*Hello from my test", caplog.text)
+        assert re.search(r"INFO.*my\.plugin:.*Hello from plugin", caplog.text)
+    finally:
+        logger.removeHandler(handle)
+        handle.close()

@@ -19,7 +19,9 @@ def ensure_bin_in_path():
     """
     path = os.environ["PATH"]
     exec_path = os.path.dirname(sys.executable)
-    os.environ["PATH"] = exec_path + ":" + path
+    os.environ["PATH"] = exec_path + os.pathsep + path
+    yield
+    os.environ["PATH"] = path
 
 
 @pytest.fixture

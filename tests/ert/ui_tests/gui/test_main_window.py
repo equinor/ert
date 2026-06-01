@@ -262,7 +262,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
-def test_that_ert_changes_to_config_directory(qtbot):
+def test_that_ert_changes_to_config_directory(qtbot, monkeypatch):
     """
     This is a regression test that verifies that ert changes directories
     to the config dir (where .ert is).
@@ -280,7 +280,7 @@ def test_that_ert_changes_to_config_directory(qtbot):
     surf.to_file("surface/surf_init_0.irap", fformat="irap_binary")
 
     args = Mock()
-    os.chdir("..")
+    monkeypatch.chdir("..")
     args.config = "test_data/snake_oil_surface.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)

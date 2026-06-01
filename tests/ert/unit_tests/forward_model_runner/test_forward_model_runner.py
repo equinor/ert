@@ -22,11 +22,6 @@ def create_jobs_json(fm_step_list):
 
 @pytest.fixture(autouse=True)
 def set_up_environ():
-    if "ERT_RUN_ID" in os.environ:
-        del os.environ["ERT_RUN_ID"]
-
-    yield
-
     keys = (
         "KEY_ONE",
         "KEY_TWO",
@@ -35,10 +30,18 @@ def set_up_environ():
         "PATH104",
         "ERT_RUN_ID",
     )
+    original_env = {key: os.environ.get(key) for key in keys}
 
     for key in keys:
-        if key in os.environ:
-            del os.environ[key]
+        os.environ.pop(key, None)
+
+    yield
+
+    for key, value in original_env.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
 
 
 @pytest.mark.usefixtures("use_tmpdir")
