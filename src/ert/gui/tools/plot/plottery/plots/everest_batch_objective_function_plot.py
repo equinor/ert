@@ -113,10 +113,9 @@ class EverestBatchObjectiveFunctionPlot:
                         """
                     ).strip("\n")
                 )
+
                 axes.annotate(
-                    f"Batch {batch_id}\nViolation value: {val:.3g}\nType: {val_type}"
-                    if plot_context.extended_plot_information
-                    else f"Batch {batch_id}",
+                    f"Batch {batch_id}",
                     xy=(row["batch_id"], row[value_col]),
                     xytext=(5, -5),
                     textcoords="offset points",
@@ -124,21 +123,12 @@ class EverestBatchObjectiveFunctionPlot:
                     verticalalignment="top",
                     horizontalalignment="left",
                 )
-                if plot_context.extended_plot_information:
-                    axes.margins(y=0.2)
 
         annotation_color = {True: color, False: "red"}
         for _, row in improvement_data.iterrows():
-            improvement_value = (
-                0
-                if row.get("improvement_value", float("nan")) == float("-inf")
-                else row.get("improvement_value", float("nan"))
-            )
             batch_id = int(row["batch_id"])
             axes.annotate(
-                f"Batch {batch_id}\nImprovement value: {improvement_value:.3g}"
-                if plot_context.extended_plot_information
-                else f"Batch {batch_id}",
+                f"Batch {batch_id}",
                 xy=(row["batch_id"], row[value_col]),
                 xytext=(5, -5),
                 textcoords="offset points",
@@ -146,8 +136,6 @@ class EverestBatchObjectiveFunctionPlot:
                 verticalalignment="top",
                 horizontalalignment="left",
             )
-            if plot_context.extended_plot_information:
-                axes.margins(y=0.2)
 
         config.add_legend_item("Accepted", lines[0])
         config.add_legend_item(

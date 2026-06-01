@@ -53,7 +53,6 @@ class PlotContext:
         self._x_axis: str | None = None
         self._y_axis: str | None = None
         self._log_scale = False
-        self._extended_plot_information = False
         self._by_batch: bool = True
 
         self._plot_type: PlotType | None = None
@@ -133,14 +132,6 @@ class PlotContext:
 
     def setYLabel(self, value: str) -> None:
         self._plot_config.set_y_label(value)
-
-    @property
-    def extended_plot_information(self) -> bool:
-        return self._extended_plot_information
-
-    @extended_plot_information.setter
-    def extended_plot_information(self, value: bool) -> None:
-        self._extended_plot_information = value
 
     @property
     def log_scale(self) -> bool:
