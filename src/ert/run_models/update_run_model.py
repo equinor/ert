@@ -1,9 +1,6 @@
 import dataclasses
 import functools
-import io
 import uuid
-
-import polars as pl
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
@@ -12,6 +9,7 @@ from ert.analysis.event import (
     AnalysisDataEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
+    AnalysisMatrixEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
 )
@@ -59,6 +57,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             self.send_smoother_event,
             prior.iteration,
             prior.id,
+            posterior,
         )
 
         strategy_map = build_strategy_map(
@@ -148,7 +147,11 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         return posterior
 
     def send_smoother_event(
-        self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
+        self,
+        iteration: int,
+        run_id: uuid.UUID,
+        ensemble: Ensemble,
+        event: AnalysisEvent,
     ) -> None:
         match event:
             case AnalysisStatusEvent():
@@ -187,17 +190,14 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         data=event.data,
                     )
                 )
+            case AnalysisMatrixEvent():
+                ensemble.save_blob(event)
             case AnalysisCompleteEvent():
-                ensemble = self._storage.get_ensemble(event.ensemble_id)
-                buf = io.BytesIO()
-                pl.DataFrame(
-                    event.data.data,
-                    schema=event.data.header,
-                    orient="row",
-                ).write_parquet(buf)
-                ensemble.save_blob(buf.getvalue())
+                ensemble.save_blob(event)
                 self.send_event(
                     RunModelUpdateEndEvent(
-                        iteration=iteration, run_id=run_id, data=event.data
+                        iteration=iteration,
+                        run_id=run_id,
+                        data=event.data,
                     )
                 )

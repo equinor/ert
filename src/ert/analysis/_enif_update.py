@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import time
 from collections.abc import Callable, Iterable
 
@@ -28,6 +29,7 @@ from .event import (
     AnalysisCompleteEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
+    AnalysisMatrixEvent,
     AnalysisStatusEvent,
     DataSection,
 )
@@ -100,7 +102,6 @@ def enif_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
-            ensemble_id=str(posterior_storage.id),
         )
     )
     return smoother_snapshot
@@ -252,6 +253,33 @@ def analysis_EnIF(
         offsets=[0],
         shape=(num_obs, num_obs),
         format="csc",
+    )
+
+    # Emit H and Prec_u matrices as events for blob storage
+    h_buf = io.BytesIO()
+    sp.sparse.save_npz(h_buf, H)
+    progress_callback(
+        AnalysisMatrixEvent(
+            name="H",
+            sparse=True,
+            shape=(H.shape[0], H.shape[1]),
+            data_type=str(H.dtype),
+            update_algorithm="enif",
+            matrix_bytes=h_buf.getvalue(),
+        )
+    )
+
+    prec_buf = io.BytesIO()
+    sp.sparse.save_npz(prec_buf, Prec_u)
+    progress_callback(
+        AnalysisMatrixEvent(
+            name="Prec_u",
+            sparse=True,
+            shape=Prec_u.shape,
+            data_type=str(Prec_u.dtype),
+            update_algorithm="enif",
+            matrix_bytes=prec_buf.getvalue(),
+        )
     )
 
     # Initialize EnIF object with full precision matrices

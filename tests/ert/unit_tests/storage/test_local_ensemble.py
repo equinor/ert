@@ -1,5 +1,4 @@
 import asyncio
-import io
 import json
 from contextlib import contextmanager
 from datetime import datetime
@@ -12,6 +11,7 @@ import polars as pl
 import pytest
 from hypothesis import given
 
+from ert.analysis.event import AnalysisCompleteEvent, DataSection
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
 from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
@@ -766,10 +766,14 @@ def test_that_save_blob_raises_in_read_mode(tmp_path):
 
     with open_storage(tmp_path, mode="r") as storage:
         ensemble = next(iter(storage.ensembles))
-        buf = io.BytesIO()
-        pl.DataFrame({"x": [1]}).write_parquet(buf)
+        event = AnalysisCompleteEvent(
+            data=DataSection(
+                header=["x"],
+                data=[(1,)],
+            ),
+        )
         with pytest.raises(ModeError):
-            ensemble.save_blob(buf.getvalue())
+            ensemble.save_blob(event)
 
 
 def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
@@ -779,34 +783,31 @@ def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
 
-        df = pl.DataFrame(
-            {
-                "observation_key": ["OBS_1", "OBS_2"],
-                "status": ["Active", "Deactivated, outlier"],
-                "value": [1.5, 2.0],
-            }
+        event = AnalysisCompleteEvent(
+            data=DataSection(
+                header=["observation_key", "status", "value"],
+                data=[
+                    ("OBS_1", "Active", 1.5),
+                    ("OBS_2", "Deactivated, outlier", 2.0),
+                ],
+            ),
         )
-        buf = io.BytesIO()
-        df.write_parquet(buf)
-
-        ensemble.save_blob(buf.getvalue())
+        ensemble.save_blob(event)
 
         blob_dir = ensemble._path / "blobs"
 
         assert blob_dir.is_dir(), "Expected blob directory to be created"
 
-        parquet_files = list(blob_dir.glob("*.parquet"))
-        json_files = list(blob_dir.glob("*.json"))
-        assert len(parquet_files) == 1
+        blob_files = list(blob_dir.glob("*.blob"))
+        json_files = list(blob_dir.glob("*.blob.json"))
+        assert len(blob_files) == 1
         assert len(json_files) == 1
 
-        loaded_df = pl.read_parquet(parquet_files[0])
+        loaded_df = pl.read_parquet(blob_files[0])
         assert loaded_df.columns == ["observation_key", "status", "value"]
         assert len(loaded_df) == 2
         assert loaded_df["observation_key"][0] == "OBS_1"
 
         metadata = json.loads(json_files[0].read_text(encoding="utf-8"))
         assert metadata["blob_type"] == "observation_report"
-        assert metadata["uri"].endswith(".parquet")
         assert metadata["file_size"] > 0
-        assert metadata["ensemble_id"] == str(ensemble.id)
