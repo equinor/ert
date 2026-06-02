@@ -82,7 +82,6 @@ class AnalysisErrorEvent(AnalysisEvent):
 class AnalysisCompleteEvent(AnalysisEvent):
     event_type: Literal["AnalysisCompleteEvent"] = "AnalysisCompleteEvent"
     data: DataSection
-    ensemble_id: str
 
 
 class AnalysisMatrixEvent(AnalysisEvent):

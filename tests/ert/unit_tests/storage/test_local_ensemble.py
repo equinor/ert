@@ -771,7 +771,6 @@ def test_that_save_blob_raises_in_read_mode(tmp_path):
                 header=["x"],
                 data=[(1,)],
             ),
-            ensemble_id="dummy",
         )
         with pytest.raises(ModeError):
             ensemble.save_blob(event)
@@ -792,7 +791,6 @@ def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
                     ("OBS_2", "Deactivated, outlier", 2.0),
                 ],
             ),
-            ensemble_id=str(ensemble.id),
         )
         ensemble.save_blob(event)
 
