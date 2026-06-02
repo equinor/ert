@@ -129,11 +129,15 @@ async def extract_observations(
     if obs_type not in experiment["observations"]:
         return {}
     observations = experiment["observations"][obs_type]
-    response_key = {v: k for k, vs in observations.items() for v in vs}
+    obs_name_to_summary_key = {
+        obs_name: summary_key
+        for summary_key, obs_names in observations.items()
+        for obs_name in obs_names
+    }
     result: dict[str, list[Any]] = defaultdict(list)
     for obs in await get_observations(experiment_id, client):
-        if obs["name"] in response_key:
-            result[response_key[obs["name"]]].append(obs)
+        if obs["name"] in obs_name_to_summary_key:
+            result[obs_name_to_summary_key[obs["name"]]].append(obs)
     return result
 
 
