@@ -234,7 +234,6 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
                 "parameter_configuration": [gen_kw.model_dump(mode="json")],
                 "response_configuration": [
                     GenDataConfig(
-                        name="gen_data",
                         input_files=["poly.out"],
                         keys=["RES"],
                         has_finalized_keys=True,

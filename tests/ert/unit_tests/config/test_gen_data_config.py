@@ -120,7 +120,6 @@ def test_that_invalid_gendata_outfile_error_propagates(tmp_path):
     """)
 
     config = GenDataConfig(
-        name="gen_data",
         keys=["something"],
         report_steps_list=[None],
         input_files=["poly.out"],
@@ -142,7 +141,6 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(con
     Path("./output").write_bytes(contents)
     with suppress(InvalidResponseFile):
         GenDataConfig(
-            name="gen_data",
             keys=["something"],
             report_steps_list=[None],
             input_files=["output"],
@@ -152,7 +150,6 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(con
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmpdir):
     with pytest.raises(FileNotFoundError, match="DOES_NOT_EXIST not found"):
         GenDataConfig(
-            name="gen_data",
             keys=["something"],
             report_steps_list=[None],
             input_files=["DOES_NOT_EXIST"],
@@ -164,7 +161,6 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_director
 ):
     with pytest.raises(FileNotFoundError, match="DOES_NOT_EXIST not found"):
         GenDataConfig(
-            name="gen_data",
             keys=["something"],
             report_steps_list=[None],
             input_files=["DOES_NOT_EXIST"],
