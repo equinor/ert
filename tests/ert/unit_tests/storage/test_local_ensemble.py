@@ -1,6 +1,7 @@
 import asyncio
 import io
 import json
+import logging
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -684,20 +685,22 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_rft_artifacts_are_saved_atomically():
+def test_that_rft_artifacts_are_saved_atomically(caplog):
+    caplog.set_level(logging.WARNING)
+
     def read_from_file_mock(run_path, iens, iter_) -> pl.DataFrame:
-        if iens in {0, 2}:
-            return _create_rft_response_df()
         if iens == 1:
             raise InvalidResponseFile("Mock error for realization 1")
-        return pl.DataFrame()
+        if iens == 3:
+            raise Exception("Mock error for realization 3")
+        return _create_rft_response_df()
 
     def location_metadata_mock(run_path, iens, iter_, observations) -> pl.DataFrame:
-        if iens in {0, 1}:
-            return _create_rft_location_metadata_df()
         if iens == 2:
             raise InvalidResponseFile("Mock error for realization 2")
-        return pl.DataFrame()
+        if iens == 4:
+            raise Exception("Mock error for realization 4")
+        return _create_rft_location_metadata_df()
 
     async def run_test():
         with (
@@ -708,28 +711,43 @@ def test_that_rft_artifacts_are_saved_atomically():
                 side_effect=location_metadata_mock,
             ),
         ):
-            num_realizations = 3
+            num_realizations = 5
             observations = [
                 _create_rft_observation(),
             ]
 
             with _create_rft_ensemble(num_realizations, observations) as ensemble:
-                await _write_responses_to_storage("", 0, ensemble)
-                await _write_responses_to_storage("", 1, ensemble)
-                await _write_responses_to_storage("", 2, ensemble)
+                results = []
+                for realization in range(num_realizations):
+                    result = await _write_responses_to_storage(
+                        "", realization, ensemble
+                    )
+                    results.append(result)
+
+                assert results[0].successful
+                for realization in range(1, num_realizations):
+                    assert not results[realization].successful
+
+                logs = [
+                    (r.levelno, " ".join(r.getMessage().split()[:5]))
+                    for r in caplog.records
+                ]
+                assert logs == [
+                    (logging.WARNING, "Failed to read response from"),
+                    (logging.WARNING, "Failed to write observation metadata"),
+                    (logging.ERROR, "Unexpected exception while reading from"),
+                    (logging.ERROR, "Unexpected exception while writing RFT"),
+                ]
 
                 ensemble.load_responses("rft", (0,))
-                with pytest.raises(KeyError):
-                    ensemble.load_responses("rft", (1,))
-
-                with pytest.raises(KeyError):
-                    ensemble.load_responses("rft", (2,))
+                for realization in range(1, num_realizations):
+                    with pytest.raises(KeyError):
+                        ensemble.load_responses("rft", (realization,))
 
                 ensemble.load_observation_location_metadata(0)
-                with pytest.raises(FileNotFoundError):
-                    ensemble.load_observation_location_metadata(1)
-                with pytest.raises(FileNotFoundError):
-                    ensemble.load_observation_location_metadata(2)
+                for realization in range(1, num_realizations):
+                    with pytest.raises(FileNotFoundError):
+                        ensemble.load_observation_location_metadata(realization)
 
                 assert ensemble.get_realization_list_with_responses() == [0]
 
