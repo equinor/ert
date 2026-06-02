@@ -359,7 +359,9 @@ class ServerStatus:
 )
 @pytest.mark.slow
 def test_that_everest_run_warns_on_nonempty_runpath(
-    mock_warn_nonempty, change_to_tmpdir
+    # injected by @patch above; mock params must precede fixtures
+    mock_warn_user_that_runpath_is_nonempty,
+    change_to_tmpdir,
 ):
     existing_runpath = tempfile.TemporaryDirectory()
     (Path(existing_runpath.name) / "somefile").touch()
