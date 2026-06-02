@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import time
 from collections.abc import Callable, Iterable
 
@@ -28,6 +29,7 @@ from .event import (
     AnalysisCompleteEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
+    AnalysisMatrixEvent,
     AnalysisStatusEvent,
     DataSection,
 )
@@ -100,7 +102,7 @@ def enif_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
-            ensemble_id=str(posterior_storage.id),
+            update_algorithm="enif",
         )
     )
     return smoother_snapshot
@@ -255,6 +257,46 @@ def analysis_EnIF(
         format="csc",
     )
 
+    # Emit H and Prec_u matrices as events for blob storage
+    h_buf = io.BytesIO()
+    sp.sparse.save_npz(h_buf, H)
+    progress_callback(
+        AnalysisMatrixEvent(
+            name="H",
+            sparse=True,
+            shape=(H.shape[0], H.shape[1]),
+            data_type=str(H.dtype),
+            update_algorithm="enif",
+            matrix_bytes=h_buf.getvalue(),
+        )
+    )
+
+    prec_buf = io.BytesIO()
+    sp.sparse.save_npz(prec_buf, Prec_u)
+    progress_callback(
+        AnalysisMatrixEvent(
+            name="Prec_u",
+            sparse=True,
+            shape=Prec_u.shape,
+            data_type=str(Prec_u.dtype),
+            update_algorithm="enif",
+            matrix_bytes=prec_buf.getvalue(),
+        )
+    )
+
+    prec_eps_buf = io.BytesIO()
+    sp.sparse.save_npz(prec_eps_buf, Prec_eps)
+    progress_callback(
+        AnalysisMatrixEvent(
+            name="Prec_eps",
+            sparse=True,
+            shape=Prec_eps.shape,
+            data_type=str(Prec_eps.dtype),
+            update_algorithm="enif",
+            matrix_bytes=prec_eps_buf.getvalue(),
+        )
+    )
+
     # Initialize EnIF object with full precision matrices
     gtmap = EnIF(
         Prec_u=Prec_u,
@@ -278,6 +320,31 @@ def analysis_EnIF(
         update_indices=update_indices,
         iterative=False,
         seed=random_seed,
+    )
+
+    # Kalman gain K = Prec_u^{-1} H^T Prec_r, where Prec_r accounts for both
+    # observation error and unexplained regression variance. Available after
+    # transport() which sets unexplained_variance on the EnIF object.
+    # Also, this avoids forming inv(Prec_u) explicitly by factorizing Prec_u with
+    # sparse LU and solving Prec_u K = H^T Prec_r.
+    Prec_r = gtmap.Prec_residual_noisy()
+    B = H.T @ Prec_r
+    if sp.sparse.issparse(B):
+        B = B.toarray()
+
+    lu = sp.sparse.linalg.splu(sp.sparse.csc_matrix(Prec_u))
+    K = lu.solve(B)
+    k_buf = io.BytesIO()
+    np.save(k_buf, K)
+    progress_callback(
+        AnalysisMatrixEvent(
+            name="K",
+            sparse=False,
+            shape=K.shape,
+            data_type=str(K.dtype),
+            update_algorithm="enif",
+            matrix_bytes=k_buf.getvalue(),
+        )
     )
     X_updated = X_clean_scaler.inverse_transform(X_updated).T
 

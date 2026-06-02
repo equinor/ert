@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import io
 import logging
 import os
 import time
-import uuid
+import uuid as _uuid
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -20,7 +21,7 @@ import pandas as pd
 import polars as pl
 import resfo
 import xarray as xr
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 from typing_extensions import TypedDict
 
 from ert.config import (
@@ -41,7 +42,12 @@ from ert.data._measured_data import ObservationError, ResponseError
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
-from .blob_data import BlobStorageData, BlobType
+from .blob_data import (
+    BlobStorageData,
+    BlobType,
+    MatrixStorageData,
+    ObservationReportData,
+)
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
@@ -49,10 +55,15 @@ from .realization_storage_state import RealizationStorageState
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent
+
     from .local_experiment import LocalExperiment
     from .local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
+
+
+_blob_adapter: TypeAdapter[BlobStorageData] = TypeAdapter(BlobStorageData)
 
 
 class EverestRealizationInfo(TypedDict):
@@ -1341,23 +1352,82 @@ class LocalEnsemble(BaseMode):
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
 
+    def load_blobs(
+        self,
+        blob_type: BlobType | None = None,
+    ) -> list[BlobStorageData]:
+        """List blob metadata, filtered by type."""
+        blob_dir = self._path / BLOB_DATA_DIR
+        if not blob_dir.exists():
+            return []
+        results = []
+        for json_path in blob_dir.glob("*.json"):
+            meta = _blob_adapter.validate_json(json_path.read_bytes())
+            if blob_type is None or meta.blob_info.blob_type == blob_type:
+                results.append(meta)
+        return results
+
+    def load_blob(
+        self,
+        uri: str,
+    ) -> bytes:
+        """Load blob bytes by URI"""
+        blob_dir = (self._path / BLOB_DATA_DIR).resolve()
+        blob_path = (blob_dir / uri).resolve()
+        try:
+            blob_path.relative_to(blob_dir)
+        except ValueError:
+            raise FileNotFoundError(uri) from None
+        return blob_path.read_bytes()
+
     @require_write
     def save_blob(
-        self, data: bytes, blob_type: BlobType = BlobType.OBSERVATION_REPORT
+        self,
+        blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent,
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
         blob_dir.mkdir(parents=True, exist_ok=True)
-        blob_id = uuid.uuid4().hex[:8]
-        parquet_path = blob_dir / f"{blob_id}.parquet"
-        self._storage._write_transaction(parquet_path, data)
-        blob_data = BlobStorageData(
-            blob_type=blob_type,
-            uri=f"{blob_id}.parquet",
-            file_size=len(data),
-            ensemble_id=str(self.id),
-        )
+        blob_id = _uuid.uuid4().hex[:8]
+        uri = f"{blob_id}.blob"
+        blob_data: BlobStorageData
+        if blob_event.event_type == "AnalysisMatrixEvent":
+            file_type = (
+                "application/x-npz" if blob_event.sparse else "application/x-npy"
+            )
+            blob_data = BlobStorageData(
+                uri=uri,
+                file_size=len(blob_event.matrix_bytes),
+                file_type=file_type,
+                name=blob_event.name,
+                blob_info=MatrixStorageData(
+                    update_algorithm=blob_event.update_algorithm,
+                    sparse=blob_event.sparse,
+                    shape=blob_event.shape,
+                    data_type=blob_event.data_type,
+                ),
+            )
+            data = blob_event.matrix_bytes
+        else:
+            buf = io.BytesIO()
+            pl.DataFrame(
+                blob_event.data.data,
+                schema=blob_event.data.header,
+                orient="row",
+            ).write_parquet(buf)
+            data = buf.getvalue()
+            blob_data = BlobStorageData(
+                uri=uri,
+                file_size=len(data),
+                file_type="application/parquet",
+                name="observation_report",
+                blob_info=ObservationReportData(
+                    update_algorithm=blob_event.update_algorithm,
+                ),
+            )
+
+        self._storage._write_transaction(blob_dir / uri, data)
         self._storage._write_transaction(
-            blob_dir / f"{blob_id}.json",
+            blob_dir / f"{uri}.json",
             blob_data.model_dump_json(indent=2).encode("utf-8"),
         )
 

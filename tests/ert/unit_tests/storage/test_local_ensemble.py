@@ -11,13 +11,22 @@ import hypothesis.strategies as st
 import numpy as np
 import polars as pl
 import pytest
+import scipy.sparse as sp
 from hypothesis import given
+from pydantic import ValidationError
 
+from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent, DataSection
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
 from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
 from ert.exceptions import StorageError
 from ert.storage import open_storage
+from ert.storage.blob_data import (
+    BlobStorageData,
+    BlobType,
+    MatrixStorageData,
+    ObservationReportData,
+)
 from ert.storage.local_ensemble import _write_responses_to_storage
 from ert.storage.mode import ModeError
 
@@ -784,47 +793,264 @@ def test_that_save_blob_raises_in_read_mode(tmp_path):
 
     with open_storage(tmp_path, mode="r") as storage:
         ensemble = next(iter(storage.ensembles))
-        buf = io.BytesIO()
-        pl.DataFrame({"x": [1]}).write_parquet(buf)
+        event = AnalysisCompleteEvent(
+            data=DataSection(
+                header=["x"],
+                data=[(1,)],
+            ),
+            update_algorithm="ensemble_smoother",
+        )
         with pytest.raises(ModeError):
-            ensemble.save_blob(buf.getvalue())
+            ensemble.save_blob(event)
 
 
-def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
+def test_that_observation_report_blob_writes_parquet_metadata_and_can_be_loaded(
+    tmp_path,
+):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
 
-        df = pl.DataFrame(
-            {
-                "observation_key": ["OBS_1", "OBS_2"],
-                "status": ["Active", "Deactivated, outlier"],
-                "value": [1.5, 2.0],
-            }
+        event = AnalysisCompleteEvent(
+            data=DataSection(
+                header=["observation_key", "status", "value"],
+                data=[
+                    ("OBS_1", "Active", 1.5),
+                    ("OBS_2", "Deactivated, outlier", 2.0),
+                ],
+            ),
+            update_algorithm="ensemble_smoother",
         )
-        buf = io.BytesIO()
-        df.write_parquet(buf)
-
-        ensemble.save_blob(buf.getvalue())
+        ensemble.save_blob(event)
 
         blob_dir = ensemble._path / "blobs"
 
         assert blob_dir.is_dir(), "Expected blob directory to be created"
 
-        parquet_files = list(blob_dir.glob("*.parquet"))
-        json_files = list(blob_dir.glob("*.json"))
-        assert len(parquet_files) == 1
+        blob_files = list(blob_dir.glob("*.blob"))
+        json_files = list(blob_dir.glob("*.blob.json"))
+        assert len(blob_files) == 1
         assert len(json_files) == 1
 
-        loaded_df = pl.read_parquet(parquet_files[0])
+        loaded_df = pl.read_parquet(blob_files[0])
         assert loaded_df.columns == ["observation_key", "status", "value"]
         assert len(loaded_df) == 2
         assert loaded_df["observation_key"][0] == "OBS_1"
 
         metadata = json.loads(json_files[0].read_text(encoding="utf-8"))
-        assert metadata["blob_type"] == "observation_report"
-        assert metadata["uri"].endswith(".parquet")
+        assert metadata["blob_info"]["blob_type"] == "observation_report"
+        assert metadata["blob_info"]["update_algorithm"] == "ensemble_smoother"
+        assert metadata["name"] == "observation_report"
         assert metadata["file_size"] > 0
-        assert metadata["ensemble_id"] == str(ensemble.id)
+
+        loaded_blobs = ensemble.load_blobs(BlobType.OBSERVATION_REPORT)
+        assert len(loaded_blobs) == 1
+        assert isinstance(loaded_blobs[0], BlobStorageData)
+        assert isinstance(loaded_blobs[0].blob_info, ObservationReportData)
+        assert loaded_blobs[0].blob_info.update_algorithm == "ensemble_smoother"
+        assert loaded_blobs[0].name == "observation_report"
+        assert loaded_blobs[0].file_type == "application/parquet"
+
+
+@pytest.mark.parametrize(
+    ("blob_event", "expected_exception"),
+    [
+        pytest.param(
+            AnalysisMatrixEvent.model_construct(
+                event_type="AnalysisMatrixEvent",
+                name="bad_shape",
+                sparse=False,
+                shape=(2,),
+                data_type="float64",
+                update_algorithm="enif",
+                matrix_bytes=b"matrix-bytes",
+            ),
+            ValidationError,
+            id="matrix-shape-has-one-dimension",
+        ),
+        pytest.param(
+            AnalysisMatrixEvent.model_construct(
+                event_type="AnalysisMatrixEvent",
+                name="bad_bytes",
+                sparse=False,
+                shape=(1, 1),
+                data_type="float64",
+                update_algorithm="enif",
+                matrix_bytes="matrix-bytes",
+            ),
+            TypeError,
+            id="matrix-bytes-are-text",
+        ),
+        pytest.param(
+            AnalysisCompleteEvent.model_construct(
+                event_type="AnalysisCompleteEvent",
+                data={"header": ["x"], "data": [(1,)]},
+                update_algorithm="ensemble_smoother",
+            ),
+            AttributeError,
+            id="observation-data-is-a-dict",
+        ),
+    ],
+)
+def test_that_save_blob_rejects_malformed_blob_events(
+    tmp_path,
+    blob_event,
+    expected_exception,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        with pytest.raises(expected_exception):
+            ensemble.save_blob(blob_event)
+
+        blob_dir = ensemble._path / "blobs"
+        assert not list(blob_dir.glob("*.blob"))
+        assert not list(blob_dir.glob("*.json"))
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        pytest.param(b"{", id="invalid-json"),
+        pytest.param(
+            json.dumps(
+                {
+                    "uri": "metadata.blob",
+                    "file_size": 1,
+                    "file_type": "application/parquet",
+                    "name": "observation_report",
+                }
+            ).encode("utf-8"),
+            id="missing-blob-info",
+        ),
+        pytest.param(
+            json.dumps(
+                {
+                    "uri": "metadata.blob",
+                    "file_size": 1,
+                    "file_type": "application/parquet",
+                    "name": "observation_report",
+                    "blob_info": {
+                        "blob_type": "unknown",
+                        "update_algorithm": "ensemble_smoother",
+                    },
+                }
+            ).encode("utf-8"),
+            id="unknown-blob-type",
+        ),
+    ],
+)
+def test_that_load_blobs_rejects_malformed_blob_metadata(
+    tmp_path,
+    metadata,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+        blob_dir = ensemble._path / "blobs"
+        blob_dir.mkdir()
+        (blob_dir / "metadata.blob.json").write_bytes(metadata)
+
+        with pytest.raises(ValidationError):
+            ensemble.load_blobs()
+
+
+@pytest.mark.parametrize(
+    "uri_template",
+    [
+        pytest.param("missing.blob", id="missing-file"),
+        pytest.param("../index.json", id="parent-directory"),
+        pytest.param("{ensemble_path}/index.json", id="absolute-path"),
+    ],
+)
+def test_that_load_blob_raises_file_not_found_for_invalid_uri(
+    tmp_path,
+    uri_template,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+        uri = uri_template.format(ensemble_path=ensemble._path)
+
+        with pytest.raises(FileNotFoundError):
+            ensemble.load_blob(uri)
+
+
+def test_that_sparse_and_dense_matrix_blobs_can_be_saved_and_loaded(tmp_path):
+
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        # Create a sparse matrix and serialize it
+        sparse_matrix = sp.csc_array(np.array([[1.0, 0.0], [0.0, 2.0]]))
+        sparse_buf = io.BytesIO()
+        sp.save_npz(sparse_buf, sparse_matrix)
+        sparse_bytes = sparse_buf.getvalue()
+
+        sparse_event = AnalysisMatrixEvent(
+            name="H",
+            sparse=True,
+            shape=(2, 2),
+            data_type="float64",
+            update_algorithm="enif",
+            matrix_bytes=sparse_bytes,
+        )
+        ensemble.save_blob(sparse_event)
+
+        # Create a dense matrix and serialize it
+        dense_matrix = np.array([[3.0, 4.0], [5.0, 6.0]])
+        dense_buf = io.BytesIO()
+        np.save(dense_buf, dense_matrix)
+        dense_bytes = dense_buf.getvalue()
+
+        dense_event = AnalysisMatrixEvent(
+            name="Prec_u",
+            sparse=False,
+            shape=(2, 2),
+            data_type="float64",
+            update_algorithm="enif",
+            matrix_bytes=dense_bytes,
+        )
+        ensemble.save_blob(dense_event)
+
+        # load_blobs returns all matrix metadata
+        all_blobs = ensemble.load_blobs(BlobType.MATRIX)
+        assert len(all_blobs) == 2
+        assert all(isinstance(m, BlobStorageData) for m in all_blobs)
+        assert all(isinstance(m.blob_info, MatrixStorageData) for m in all_blobs)
+
+        by_name = {m.name: m for m in all_blobs}
+        assert "H" in by_name
+        assert "Prec_u" in by_name
+
+        h_meta = by_name["H"]
+        assert isinstance(h_meta.blob_info, MatrixStorageData)
+        assert h_meta.blob_info.sparse is True
+        assert h_meta.blob_info.shape == (2, 2)
+        assert h_meta.file_type == "application/x-npz"
+
+        prec_meta = by_name["Prec_u"]
+        assert isinstance(prec_meta.blob_info, MatrixStorageData)
+        assert prec_meta.blob_info.sparse is False
+        assert prec_meta.blob_info.shape == (2, 2)
+        assert prec_meta.file_type == "application/x-npy"
+
+        h_bytes = ensemble.load_blob(h_meta.uri)
+        loaded_sparse = sp.load_npz(io.BytesIO(h_bytes))
+        np.testing.assert_array_equal(loaded_sparse.toarray(), sparse_matrix.toarray())
+
+        prec_bytes = ensemble.load_blob(prec_meta.uri)
+        loaded_dense = np.load(io.BytesIO(prec_bytes))
+        np.testing.assert_array_equal(loaded_dense, dense_matrix)
