@@ -75,6 +75,7 @@ def test_that_distance_localization_reduces_posterior_variance():
         experiment = storage.get_experiment_by_name("heat_dl")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
+        assert experiment.load_sparse_matrix("localization/COND") is not None
 
         assert_stronger_variance_reduction_at_observation_location(
             prior, posterior, "COND", obs_pos=(25, 25), unobserved_pos=(5, 5)

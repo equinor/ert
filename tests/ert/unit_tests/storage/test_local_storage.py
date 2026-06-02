@@ -16,6 +16,7 @@ import hypothesis.strategies as st
 import numpy as np
 import polars as pl
 import pytest
+import scipy.sparse as sp
 import xarray as xr
 from hypothesis import assume, given, note
 from hypothesis.extra.numpy import arrays
@@ -52,6 +53,7 @@ from ert.storage import (
     ErtStorageException,
     LocalEnsemble,
     RealizationStorageState,
+    SparseMatrixArtifact,
     open_storage,
 )
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
@@ -74,6 +76,60 @@ def test_create_experiment(tmp_path):
             index = json.load(f)
             assert index["id"] == str(experiment.id)
             assert index["name"] == "test-experiment"
+
+
+def test_localization_matrix_storage_escapes_parameter_group_names(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        artifact = SparseMatrixArtifact(
+            matrix=sp.csr_array(np.eye(2, dtype=np.float32)),
+            metadata={
+                "grid_shape": np.asarray((1, 2), dtype=np.int64),
+                "observation_key": np.array(["obs", "obs"]),
+                "observation_index": np.array(["0", "1"]),
+            },
+        )
+
+        experiment.save_sparse_matrix("localization/GROUP/NAME", artifact)
+
+        assert (
+            experiment.mount_point
+            / "sparse_matrices"
+            / "localization%2FGROUP%2FNAME.npz"
+        ).exists()
+        loaded = experiment.load_sparse_matrix("localization/GROUP/NAME")
+        assert loaded is not None
+        np.testing.assert_array_equal(
+            loaded.matrix.toarray(), artifact.matrix.toarray()
+        )
+        np.testing.assert_array_equal(
+            loaded.metadata["grid_shape"], artifact.metadata["grid_shape"]
+        )
+
+
+def test_sparse_matrix_storage_escapes_artifact_names(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        artifact = SparseMatrixArtifact(
+            matrix=sp.csr_array(np.eye(2, dtype=bool)),
+            metadata={
+                "kind": np.asarray("thresholded_cross_covariance"),
+                "threshold": np.asarray(0.7),
+            },
+        )
+
+        experiment.save_sparse_matrix("GROUP/NAME/artifact", artifact)
+
+        assert (
+            experiment.mount_point / "sparse_matrices" / "GROUP%2FNAME%2Fartifact.npz"
+        ).exists()
+        loaded = experiment.load_sparse_matrix("GROUP/NAME/artifact")
+        assert loaded is not None
+        np.testing.assert_array_equal(
+            loaded.matrix.toarray(), artifact.matrix.toarray()
+        )
+        assert loaded.metadata["kind"] == "thresholded_cross_covariance"
+        assert loaded.metadata["threshold"] == pytest.approx(0.7)
 
 
 def test_that_loading_non_existing_experiment_throws(tmp_path):

@@ -11,9 +11,11 @@ from typing import TYPE_CHECKING
 import humanize
 import numpy as np
 import psutil
+import scipy.sparse as sp
 from iterative_ensemble_smoother import AdaptiveESMDA
 
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
+from ert.storage import SparseMatrixArtifact
 
 from ._batching import calculate_localization_batch_size, split_by_batch_size
 
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.config import ParameterConfig
+    from ert.storage import Experiment
 
     from ._protocol import ObservationContext
 
@@ -31,6 +34,9 @@ logger = logging.getLogger(__name__)
 RESERVED_CPU_CORES = 2
 NUM_JOBS_ADAPTIVE_LOC = max(
     1, ((psutil.cpu_count(logical=False) or 1) - RESERVED_CPU_CORES)
+)
+ADAPTIVE_THRESHOLDED_CROSS_COVARIANCE_ARTIFACT = (
+    "adaptive_localization/{parameter_group}/thresholded_cross_covariance"
 )
 
 
@@ -63,10 +69,12 @@ class AdaptiveLocalizationUpdate:
         correlation_threshold: Callable[[int], float],
         enkf_truncation: float,
         progress_callback: Callable[[AnalysisEvent], None],
+        experiment: Experiment | None = None,
     ) -> None:
         self._correlation_threshold_fn = correlation_threshold
         self._enkf_truncation = enkf_truncation
         self._progress_callback = progress_callback
+        self._experiment = experiment
         self._smoother: AdaptiveESMDA | None = None
         self._num_obs: int = 0
         self._ensemble_size: int = 0
@@ -146,17 +154,26 @@ class AdaptiveLocalizationUpdate:
         )
 
         threshold = self._correlation_threshold_fn(self._ensemble_size)
+        thresholded_blocks: list[sp.csr_array] = []
+        thresholded_block_rows: list[npt.NDArray[np.int_]] = []
 
         def correlation_callback(
             corr_XY: npt.NDArray[np.float64],
             observations_per_parameter: npt.NDArray[np.int_],
         ) -> npt.NDArray[np.bool_]:
-            return np.abs(corr_XY) > threshold
+            mask = np.abs(corr_XY) > threshold
+            thresholded_blocks.append(
+                sp.csr_array(np.where(mask, corr_XY, 0.0), dtype=np.float32)
+            )
+            return mask
 
         start_time = time.perf_counter()
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
+            if update_idx.size == 0:
+                continue
             X_local = param_ensemble[update_idx, :]
+            thresholded_block_rows.append(update_idx)
 
             param_ensemble[update_idx, :] = self._smoother.assimilate_batch(
                 X=X_local,
@@ -165,6 +182,14 @@ class AdaptiveLocalizationUpdate:
                 n_jobs=NUM_JOBS_ADAPTIVE_LOC,
             )
         elapsed = time.perf_counter() - start_time
+
+        self._save_thresholded_cross_covariance(
+            param_config.name,
+            num_params,
+            threshold,
+            thresholded_blocks,
+            thresholded_block_rows,
+        )
 
         self._progress_callback(
             AnalysisStatusEvent(
@@ -175,3 +200,35 @@ class AdaptiveLocalizationUpdate:
         )
 
         return param_ensemble
+
+    def _save_thresholded_cross_covariance(
+        self,
+        parameter_group: str,
+        num_params: int,
+        threshold: float,
+        blocks: list[sp.csr_array],
+        block_rows: list[npt.NDArray[np.int_]],
+    ) -> None:
+        if self._experiment is None or not blocks:
+            return
+
+        matrix = sp.lil_array((num_params, self._num_obs), dtype=np.float32)
+        updated_rows = np.concatenate(block_rows).astype(np.int64, copy=False)
+        for rows, block in zip(block_rows, blocks, strict=True):
+            matrix[rows, :] = block
+
+        self._experiment.save_sparse_matrix(
+            ADAPTIVE_THRESHOLDED_CROSS_COVARIANCE_ARTIFACT.format(
+                parameter_group=parameter_group
+            ),
+            SparseMatrixArtifact(
+                matrix=matrix.tocsr(),
+                metadata={
+                    "parameter_group": np.asarray(parameter_group),
+                    "threshold": np.asarray(threshold, dtype=np.float64),
+                    "num_parameters": np.asarray(num_params, dtype=np.int64),
+                    "num_observations": np.asarray(self._num_obs, dtype=np.int64),
+                    "updated_parameter_indices": updated_rows,
+                },
+            ),
+        )

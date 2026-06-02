@@ -9,6 +9,7 @@ import pandas as pd
 from matplotlib.patches import Rectangle
 
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
+from ert.gui.tools.plot.plot_types import LocalizationProvider, ObservationPlotLocations
 from ert.shared.status.utils import convert_to_numeric
 
 from .plot_tools import ConditionalAxisFormatter, PlotTools
@@ -35,6 +36,7 @@ class HistogramPlot:
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotHistogram(figure, plot_context, ensemble_to_data_map)

@@ -32,6 +32,8 @@ def _make_context(
         xpos=np.linspace(0.5, n_obs - 0.5, n_obs),
         ypos=np.full(n_obs, 0.5),
         main_range=np.full(n_obs, 5.0),
+        observation_key=np.array([f"obs_{i}" for i in range(n_obs)]),
+        observation_index=np.array([str(i) for i in range(n_obs)]),
         location_mask=np.ones(n_obs, dtype=bool),
     )
     return ObservationContext(

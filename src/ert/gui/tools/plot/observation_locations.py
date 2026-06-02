@@ -45,5 +45,9 @@ def transform_observation_locations(
             return ObservationPlotLocations(
                 x=xpos[inside_box].astype(np.float32),
                 y=ypos[inside_box].astype(np.float32),
+                radius_x=np.ones(inside_box.sum(), dtype=np.float64),
+                radius_y=np.ones(inside_box.sum(), dtype=np.float64),
+                observation_key=np.full(inside_box.sum(), "", dtype=str),
+                observation_index=np.full(inside_box.sum(), "", dtype=str),
             )
     return None

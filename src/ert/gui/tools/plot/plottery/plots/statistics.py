@@ -7,6 +7,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from pandas import DataFrame
 
+from ert.gui.tools.plot.plot_types import LocalizationProvider, ObservationPlotLocations
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext, PlotStyle
 
 from .history import plotHistory
@@ -35,6 +36,7 @@ class StatisticsPlot:
         observation_data: DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
+        localization_provider: LocalizationProvider | None = None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()
