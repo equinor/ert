@@ -16,7 +16,6 @@ from .config import (
     WorkflowConfigs,
 )
 from .data import MeasuredData
-from .libres_facade import LibresFacade
 from .workflow_runner import WorkflowRunner
 from .plugins import plugin
 from .scheduler import JobState
@@ -30,7 +29,6 @@ __all__ = [
     "ForwardModelStepValidationError",
     "ForwardModelStepWarning",
     "JobState",
-    "LibresFacade",
     "MeasuredData",
     "WorkflowConfigs",
     "WorkflowRunner",

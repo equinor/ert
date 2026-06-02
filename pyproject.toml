@@ -286,6 +286,7 @@ allowed-confusables = ["–"]
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 "src/ert/dark_storage/*" = ["RUF029"] # unused-async
+"src/ert/storage/local_ensemble.py" = ["PD010"] # polars .pivot, not pandas
 "*.ipynb" = ["E402"]
 
 
