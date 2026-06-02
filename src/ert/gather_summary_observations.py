@@ -16,6 +16,7 @@ from urllib.parse import quote
 import anyio
 import httpx
 from httpx import AsyncClient
+from natsort import natsorted
 from resfo_utilities import SummaryKeyType
 
 from ert.cli.main import ErtCliError
@@ -199,9 +200,9 @@ def convert_summary_observations(
     with Path(csv_file_name).open(mode="w", encoding="utf-8") as fout:
         fout.write(", ".join([*header_fields, "value", "error", "date"]))
         fout.write("\n")
-        for key, observations in summary_observations.items():
+        for key in natsorted(summary_observations.keys()):
             skd = make_summary_key_data(key)
-            for observation in observations:
+            for observation in summary_observations[key]:
                 for f in header_fields:
                     v = getattr(skd, f)
                     if v is None:
