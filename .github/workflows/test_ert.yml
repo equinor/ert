@@ -52,6 +52,14 @@ jobs:
       run: |
         uv sync --group dev
 
+    # Randomizes test ordering (and reseeds RNGs) to detect order-dependent
+    # flaky tests. The chosen seed is printed in
+    # the test output so failures can be reproduced with --randomly-seed=N.
+    - name: Enable randomized test ordering (Python 3.14)
+      if: inputs.python-version == '3.14'
+      run: |
+        uv pip install pytest-randomly
+
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
