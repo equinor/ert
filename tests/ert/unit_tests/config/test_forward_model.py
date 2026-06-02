@@ -748,8 +748,9 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
 
 @pytest.mark.slow
 def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
-    tmp_path,
+    tmp_path, monkeypatch
 ):
+    monkeypatch.chdir(tmp_path)
     (tmp_path / "test.ert").write_text(
         dedent(
             """
@@ -779,12 +780,8 @@ def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
     runtime_plugins = ErtRuntimePlugins(
         installed_forward_model_steps={"WILL_FAIL_VALIDATION": FM()}
     )
-    original_cwd = Path.cwd()
-    try:
-        with pytest.raises(ErtCliError) as exc_info:
-            run_cli(args, runtime_plugins)
-    finally:
-        os.chdir(original_cwd)
+    with pytest.raises(ErtCliError) as exc_info:
+        run_cli(args, runtime_plugins)
     assert (
         "Validation failed for forward model step WILL_FAIL_VALIDATION: No go"
         in str(exc_info.value)
@@ -793,11 +790,12 @@ def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
 
 @pytest.mark.slow
 def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_overwrites(  # noqa: E501
-    tmp_path,
+    tmp_path, monkeypatch
 ):
     """If a site plugin defines a forward model step that will fail validation, but
     the user has defined her own step that does not have any validation,
     the site-installed step validation should not run"""
+    monkeypatch.chdir(tmp_path)
     (tmp_path / "A_POPULAR_STEP_NAME").write_text("EXECUTABLE echo", encoding="utf-8")
     (tmp_path / "test.ert").write_text(
         dedent(
@@ -829,11 +827,7 @@ def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_
     runtime_plugins = ErtRuntimePlugins(
         installed_forward_model_steps={"A_POPULAR_STEP_NAME": FM()}
     )
-    original_cwd = Path.cwd()
-    try:
-        run_cli(args, runtime_plugins)
-    finally:
-        os.chdir(original_cwd)
+    run_cli(args, runtime_plugins)
 
 
 def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
