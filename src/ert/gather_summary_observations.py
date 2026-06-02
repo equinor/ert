@@ -24,6 +24,11 @@ class InvalidSummaryKeyError(ValueError):
     pass
 
 
+INDENT2 = " " * 2
+INDENT4 = " " * 4
+INDENT6 = " " * 6
+
+
 @dataclass
 class SummaryKeyData:
     keyword: str
@@ -152,11 +157,46 @@ def non_empty_fields(skds: list[SummaryKeyData]) -> list[str]:
     ]
 
 
+def localization_to_string(
+    east: float | None, north: float | None, radius: float | None
+) -> str | None:
+    if east is None or north is None:
+        return None
+    lines = [
+        f"{INDENT4}LOCALIZATION {{",
+        f"{INDENT6}EAST={east};",
+        f"{INDENT6}NORTH={north};",
+    ]
+    if radius is not None:
+        lines.append(f"{INDENT6}RADIUS={radius};")
+    lines.append(f"{INDENT4}}};")
+    return "\n".join(lines)
+
+
+def get_first_loc_value(loc_key: str, summary_obs: list[Any]) -> float | None:
+    for obs in summary_obs:
+        key_value = obs.get(loc_key, [None])[0]
+        if key_value is not None:
+            return key_value
+    return None
+
+
 def convert_summary_observations(
     summary_observations: dict[str, list[Any]], csv_file_name: str
 ) -> None:
-    print(f"SUMMARY {{\n  VALUES = {csv_file_name};\n}};\n")
-    skds = [make_summary_key_data(key) for key in summary_observations]
+    skds = []
+
+    localization = {}
+    for key in summary_observations:  # noqa: PLC0206
+        summary_key = make_summary_key_data(key)
+        skds.append(summary_key)
+        east = get_first_loc_value("east", summary_observations[key])
+        north = get_first_loc_value("north", summary_observations[key])
+        radius = get_first_loc_value("radius", summary_observations[key])
+        loc_string = localization_to_string(east, north, radius)
+        if loc_string is not None and (well := summary_key.well) is not None:
+            localization[well] = loc_string
+
     header_fields = non_empty_fields(skds)
     with Path(csv_file_name).open(mode="w", encoding="utf-8") as fout:
         fout.write(", ".join([*header_fields, "value", "error", "date"]))
@@ -174,6 +214,13 @@ def convert_summary_observations(
                 fout.write(f"{observation['values'][0]:.3g}, ")
                 fout.write(f"{observation['errors'][0]:.3g}, ")
                 fout.write(f"{date.isoformat()}\n")
+
+    print(f"SUMMARY {{\n  VALUES = {csv_file_name};")
+    for well, loc in localization.items():
+        print(f"{INDENT2}WELL {well} {{")
+        print(loc)
+        print(f"{INDENT2}}};")
+    print("};")
 
 
 async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
