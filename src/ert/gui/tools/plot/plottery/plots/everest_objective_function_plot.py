@@ -77,21 +77,19 @@ class EverestObjectiveFunctionPlot:
             data = combined[combined["realization"] == realization].sort_values(
                 "batch_id"
             )
-            if data.empty:
-                continue
-
-            lines = axes.plot(
-                data["batch_id"],
-                data[value_col],
-                "-o",
-                color=color,
-                markersize=4,
-            )
-            tooltip_data.append(lines)
-            tooltip_labels.append(f"Realization {int(realization)}")
-            if len(realizations) <= LEGEND_THRESHOLD:
-                color = config.next_color()
-                config.add_legend_item(f"Realization {int(realization)}", lines[0])
+            if not data.empty:
+                lines = axes.plot(
+                    data["batch_id"],
+                    data[value_col],
+                    "-o",
+                    color=color,
+                    markersize=4,
+                )
+                tooltip_data.append(lines)
+                tooltip_labels.append(f"Realization {int(realization)}")
+                if len(realizations) <= LEGEND_THRESHOLD:
+                    color = config.next_color()
+                    config.add_legend_item(f"Realization {int(realization)}", lines[0])
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
