@@ -49,22 +49,24 @@ def test_that_convert_summary_observations_extracts_localization_information(cap
         ],
     }
     convert_summary_observations(
-        summary_observations=summary_obs, csv_file_name="foo.csv"
+        summary_observations=summary_obs,
+        breakthrough_observations={},
+        csv_file_name="foo.csv",
     )
     expected_print_with_localization = dedent("""\
     SUMMARY {
       VALUES = foo.csv;
+      WELL WELL_WITHOUT_RADIUS {
+        LOCALIZATION {
+          EAST=40;
+          NORTH=50;
+        };
+      };
       WELL WELL_WITH_LOCALIZATION {
         LOCALIZATION {
           EAST=10;
           NORTH=20;
           RADIUS=2500;
-        };
-      };
-      WELL WELL_WITHOUT_RADIUS {
-        LOCALIZATION {
-          EAST=40;
-          NORTH=50;
         };
       };
     };""")
