@@ -338,6 +338,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         description="Expose ERT data through an HTTP server",
     )
     ert_api_parser.set_defaults(func=run_ert_storage)
+    ert_api_parser.add_argument("config", type=valid_file, help=config_help)
     ert_api_add_parser_options(ert_api_parser)
 
     # test_run_parser
