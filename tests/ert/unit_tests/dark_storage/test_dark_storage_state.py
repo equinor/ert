@@ -109,6 +109,8 @@ class DarkStorageStateTest(StatefulStorageTest):
             del os.environ["ERT_STORAGE_ENS_PATH"]
 
 
-TestDarkStorage = pytest.mark.fuzzing(
-    pytest.mark.skip_mac_ci(pytest.mark.slow(DarkStorageStateTest.TestCase))
+TestDarkStorage = pytest.mark.timeout(900)(
+    pytest.mark.fuzzing(
+        pytest.mark.skip_mac_ci(pytest.mark.slow(DarkStorageStateTest.TestCase))
+    )
 )
