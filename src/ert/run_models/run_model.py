@@ -65,6 +65,7 @@ from ert.run_models.run_model_configs import RunModelConfig
 from ert.runpaths import Runpaths
 from ert.storage import (
     Ensemble,
+    Experiment,
     LocalStorage,
     Storage,
     open_storage,
@@ -587,6 +588,7 @@ class RunModel(RunModelConfig, ABC):
         self,
         event: EEEvent,
         iteration: int,
+        experiment: Experiment,
     ) -> None:
         if type(event) is EESnapshot:
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
@@ -619,6 +621,18 @@ class RunModel(RunModelConfig, ABC):
             current_progress = self.calculate_current_progress()
             realization_count = self.get_number_of_active_realizations()
             status = self.get_current_status()
+            experiment.save_status_snapshot(
+                FullSnapshotEvent(
+                    iteration_label=f"Running forecast for iteration: {iteration}",
+                    total_iterations=self._total_iterations,
+                    progress=current_progress,
+                    realization_count=realization_count,
+                    status_count=status,
+                    iteration=iteration,
+                    snapshot=copy.deepcopy(self._iter_snapshot[iteration]),
+                ),
+                iteration,
+            )
             self.send_event(
                 SnapshotUpdateEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
@@ -649,7 +663,9 @@ class RunModel(RunModelConfig, ABC):
             ee_config,
             end_event=self._end_event,
             event_handler=functools.partial(
-                self.forward_event_from_ee, iteration=ensemble.iteration
+                self.forward_event_from_ee,
+                iteration=ensemble.iteration,
+                experiment=ensemble.experiment,
             ),
         )
         evaluator_task = asyncio.create_task(

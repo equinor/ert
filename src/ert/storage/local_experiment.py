@@ -37,6 +37,8 @@ from ert.config.response_config import DerivedResponseConfig
 from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
+    from ert.ensemble_evaluator.event import FullSnapshotEvent
+
     from .local_ensemble import LocalEnsemble
     from .local_storage import LocalStorage
 
@@ -857,3 +859,14 @@ class LocalExperiment(BaseMode):
         combined_df, _, _ = self.export_dataframes()
         combined_df.write_csv(full_path)
         return full_path
+
+    @require_write
+    def save_status_snapshot(self, event: FullSnapshotEvent, iteration: int) -> Path:
+        status_path = self._path / "status"
+        status_path.mkdir(parents=True, exist_ok=True)
+        snapshot_path = status_path / f"snapshot_{iteration}.json"
+        self._storage._write_transaction(
+            snapshot_path,
+            event.model_dump_json(indent=2).encode("utf-8"),
+        )
+        return snapshot_path
