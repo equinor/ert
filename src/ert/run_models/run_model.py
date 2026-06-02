@@ -65,6 +65,7 @@ from ert.run_models.run_model_configs import RunModelConfig
 from ert.runpaths import Runpaths
 from ert.storage import (
     Ensemble,
+    Experiment,
     LocalStorage,
     Storage,
     open_storage,
@@ -631,6 +632,23 @@ class RunModel(RunModelConfig, ABC):
         elif type(event) is EnsembleEvaluationWarning:
             self.send_event(event)
 
+    def _persist_status_snapshot(self, experiment: Experiment, iteration: int) -> None:
+        snapshot = self._iter_snapshot.get(iteration)
+        if snapshot is None:
+            return
+        event = FullSnapshotEvent(
+            iteration_label=f"Running forecast for iteration: {iteration}",
+            total_iterations=self._total_iterations,
+            progress=self.calculate_current_progress(),
+            realization_count=self.get_number_of_active_realizations(),
+            status_count=self.get_current_status(),
+            iteration=iteration,
+            snapshot=snapshot,
+        )
+        experiment.write_status_snapshot(
+            iteration, event.model_dump_json(indent=2).encode("utf-8")
+        )
+
     async def run_ensemble_evaluator_async(
         self,
         run_args: list[RunArg],
@@ -647,9 +665,24 @@ class RunModel(RunModelConfig, ABC):
             ee_config,
             end_event=self._end_event,
             event_handler=functools.partial(
-                self.forward_event_from_ee, iteration=ensemble.iteration
+                self.forward_event_from_ee,
+                iteration=ensemble.iteration,
             ),
         )
+        try:
+            return await self._run_evaluator(evaluator, ensemble)
+        finally:
+            try:
+                self._persist_status_snapshot(ensemble.experiment, ensemble.iteration)
+            except Exception:
+                logger.exception(
+                    f"Failed to persist status snapshot for "
+                    f"iteration {ensemble.iteration}"
+                )
+
+    async def _run_evaluator(
+        self, evaluator: EnsembleEvaluator, ensemble: Ensemble
+    ) -> list[int]:
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
