@@ -5,7 +5,6 @@ import contextlib
 import logging
 import os
 import time
-import uuid
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -38,7 +37,7 @@ from ert.config.rft_config import RFTConfig
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
-from .blob_data import BlobStorageData, BlobType
+from .blob_data import BlobStorageData, MatrixStorageData
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
@@ -1345,24 +1344,41 @@ class LocalEnsemble(BaseMode):
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
 
+    # @require_write
+    # def save_blob(
+    #     self,
+    #     data: bytes,
+    #     file_type: str,
+    #     update_algorithm: str = "ensemble_smoother",
+    #     blob_type: BlobType = BlobType.OBSERVATION_REPORT,
+    # ) -> None:
+    #     blob_dir = self._path / BLOB_DATA_DIR
+    #     blob_dir.mkdir(parents=True, exist_ok=True)
+    #     blob_id = uuid.uuid4().hex[:8]
+    #     blob_path = blob_dir / f"{blob_id}.blob"
+    #     self._storage._write_transaction(blob_path, data)
+    #     blob_data = BlobStorageData(
+    #         blob_type=blob_type,
+    #         uri=str(blob_path.relative_to(self._path)),
+    #         file_size=len(data),
+    #         file_type=file_type,
+    #         update_algorithm=update_algorithm,
+    #     )
+    #     self._storage._write_transaction(
+    #         blob_dir / f"{blob_id}.json",
+    #         blob_data.model_dump_json(indent=2).encode("utf-8"),
+    #     )
     @require_write
     def save_blob(
-        self, data: bytes, blob_type: BlobType = BlobType.OBSERVATION_REPORT
+        self, data: bytes, blob_json: BlobStorageData | MatrixStorageData
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
         blob_dir.mkdir(parents=True, exist_ok=True)
-        blob_id = uuid.uuid4().hex[:8]
-        parquet_path = blob_dir / f"{blob_id}.parquet"
-        self._storage._write_transaction(parquet_path, data)
-        blob_data = BlobStorageData(
-            blob_type=blob_type,
-            uri=f"{blob_id}.parquet",
-            file_size=len(data),
-            ensemble_id=str(self.id),
-        )
+        blob_path = blob_dir / f"{blob_json.uri}"
+        self._storage._write_transaction(blob_path, data)
         self._storage._write_transaction(
-            blob_dir / f"{blob_id}.json",
-            blob_data.model_dump_json(indent=2).encode("utf-8"),
+            blob_dir / f"{blob_json.uri}.json",
+            blob_json.model_dump_json(indent=2).encode("utf-8"),
         )
 
     @require_write
