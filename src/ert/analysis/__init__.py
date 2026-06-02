@@ -4,6 +4,7 @@ from ._update_commons import ErtAnalysisError
 from .event import (
     AnalysisErrorEvent,
     AnalysisEvent,
+    AnalysisMatrixEvent,
     AnalysisReportEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
@@ -16,6 +17,7 @@ from .snapshots import (
 __all__ = [
     "AnalysisErrorEvent",
     "AnalysisEvent",
+    "AnalysisMatrixEvent",
     "AnalysisReportEvent",
     "AnalysisStatusEvent",
     "AnalysisTimeEvent",

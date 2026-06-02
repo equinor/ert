@@ -10,6 +10,7 @@ import hypothesis.strategies as st
 import numpy as np
 import polars as pl
 import pytest
+import scipy as sp
 from hypothesis import given
 
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
@@ -17,6 +18,7 @@ from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
 from ert.exceptions import StorageError
 from ert.storage import open_storage
+from ert.storage.blob_data import BlobType
 from ert.storage.local_ensemble import _write_responses_to_storage
 from ert.storage.mode import ModeError
 
@@ -769,7 +771,12 @@ def test_that_save_blob_raises_in_read_mode(tmp_path):
         buf = io.BytesIO()
         pl.DataFrame({"x": [1]}).write_parquet(buf)
         with pytest.raises(ModeError):
-            ensemble.save_blob(buf.getvalue())
+            ensemble.save_blob(
+                data=buf.getvalue(),
+                file_type="parquet",
+                blob_type=BlobType.OBSERVATION_REPORT,
+                update_algorithm="ensemble_smoother",
+            )
 
 
 def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
@@ -789,24 +796,82 @@ def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
         buf = io.BytesIO()
         df.write_parquet(buf)
 
-        ensemble.save_blob(buf.getvalue())
+        ensemble.save_blob(
+            data=buf.getvalue(),
+            file_type="parquet",
+            blob_type=BlobType.OBSERVATION_REPORT,
+            update_algorithm="ensemble_smoother",
+        )
 
         blob_dir = ensemble._path / "blobs"
 
         assert blob_dir.is_dir(), "Expected blob directory to be created"
 
-        parquet_files = list(blob_dir.glob("*.parquet"))
+        blob_files = list(blob_dir.glob("*.blob"))
         json_files = list(blob_dir.glob("*.json"))
-        assert len(parquet_files) == 1
+        assert len(blob_files) == 1
         assert len(json_files) == 1
 
-        loaded_df = pl.read_parquet(parquet_files[0])
+        loaded_df = pl.read_parquet(blob_files[0])
         assert loaded_df.columns == ["observation_key", "status", "value"]
         assert len(loaded_df) == 2
         assert loaded_df["observation_key"][0] == "OBS_1"
 
         metadata = json.loads(json_files[0].read_text(encoding="utf-8"))
         assert metadata["blob_type"] == "observation_report"
-        assert metadata["uri"].endswith(".parquet")
+        assert metadata["uri"].endswith(".blob")
         assert metadata["file_size"] > 0
-        assert metadata["ensemble_id"] == str(ensemble.id)
+        assert metadata["file_type"] == "parquet"
+        assert metadata["update_algorithm"] == "ensemble_smoother"
+
+
+@pytest.mark.parametrize(
+    ("matrix", "sparse"),
+    [
+        pytest.param(np.random.default_rng(0).random((10, 5)), False, id="dense"),
+        pytest.param(np.eye(10, 5), True, id="sparse"),
+    ],
+)
+def test_that_save_blob_matrix_shape_agrees_on_read_back(tmp_path, matrix, sparse):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        if sparse:
+            matrix_data = sp.sparse.csc_array(matrix)
+            buf = io.BytesIO()
+            sp.sparse.save_npz(buf, matrix_data)
+        else:
+            buf = io.BytesIO()
+            np.save(buf, matrix)
+
+        ensemble.save_blob(
+            data=buf.getvalue(),
+            file_type="numpy",
+            blob_type=BlobType.MATRIX,
+            update_algorithm="ensemble_smoother",
+            data_type=str(matrix.dtype),
+            shape=matrix.shape,
+            sparse=sparse,
+        )
+
+        blob_dir = ensemble._path / "blobs"
+        json_files = list(blob_dir.glob("*.json"))
+        assert len(json_files) == 1
+
+        metadata = json.loads(json_files[0].read_text(encoding="utf-8"))
+        assert metadata["blob_type"] == "matrix"
+        assert metadata["shape"] == list(matrix.shape)
+
+        is_sparse = metadata["sparse"]
+        uri = metadata["uri"]
+
+        blob_path = blob_dir / uri
+        if is_sparse:
+            loaded = sp.sparse.load_npz(io.BytesIO(blob_path.read_bytes())).toarray()
+        else:
+            loaded = np.load(io.BytesIO(blob_path.read_bytes()))
+
+        assert loaded.shape == matrix.shape
