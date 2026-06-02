@@ -8,14 +8,12 @@ from ert.run_models.update_run_model import UpdateRunModel
 def test_that_send_smoother_event_persists_observation_report_on_analysis_complete():
     model = MagicMock(spec=UpdateRunModel)
     mock_ensemble = MagicMock()
-    ensemble_id = str(uuid.uuid4())
-    mock_ensemble.id = uuid.UUID(ensemble_id)
 
     data_section = DataSection(
         header=["observation_key", "status"],
         data=[("OBS_1", "Active"), ("OBS_2", "Deactivated, outlier")],
     )
-    event = AnalysisCompleteEvent(data=data_section, ensemble_id=ensemble_id)
+    event = AnalysisCompleteEvent(data=data_section)
 
     UpdateRunModel.send_smoother_event(
         model,
