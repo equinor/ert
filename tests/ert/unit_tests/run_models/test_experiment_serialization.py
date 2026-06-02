@@ -51,7 +51,7 @@ from ert.mode_definitions import (
     MANUAL_UPDATE_MODE,
     TEST_RUN_MODE,
 )
-from ert.plugins import ErtRuntimePlugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
@@ -663,8 +663,24 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     )
 
 
-def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
-    runmodel = create_model(config, cli_args, queue.SimpleQueue())
+def _config_with_site_plugins(config_file):
+    runtime_plugins = get_site_plugins()
+    with use_runtime_plugins(runtime_plugins):
+        config = ErtConfig.with_plugins(runtime_plugins).from_file(config_file)
+
+    config.random_seed = 1  # Ensure deterministic
+    return config, runtime_plugins
+
+
+def _create_and_verify_runmodel_snapshot(
+    config,
+    runtime_plugins,
+    snapshot,
+    cli_args,
+    case,
+):
+    with use_runtime_plugins(runtime_plugins):
+        runmodel = create_model(config, cli_args, queue.SimpleQueue())
 
     # Override these to avoid user time/env-specifics in snapshots
     runmodel.queue_config.queue_options.activate_script = "activate"
@@ -704,8 +720,7 @@ def test_that_dumped_manual_update_matches_snapshot(
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
-    config = ErtConfig.from_file(config_file)
-    config.random_seed = 1  # Ensure deterministic
+    config, runtime_plugins = _config_with_site_plugins(config_file)
     with (
         open_storage(config.ens_path, mode="w") as storage,
         unittest.mock.patch(  # Ensure deterministic uuid generation
@@ -720,6 +735,7 @@ def test_that_dumped_manual_update_matches_snapshot(
 
     _create_and_verify_runmodel_snapshot(
         config,
+        runtime_plugins,
         snapshot,
         cli_args=Namespace(
             mode=MANUAL_UPDATE_MODE,
@@ -739,8 +755,7 @@ def test_that_dumped_evaluate_ensemble_matches_snapshot(
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
-    config = ErtConfig.from_file(config_file)
-    config.random_seed = 1  # Ensure deterministic
+    config, runtime_plugins = _config_with_site_plugins(config_file)
     with (
         open_storage(config.ens_path, mode="w") as storage,
         unittest.mock.patch(  # Ensure deterministic uuid generation
@@ -755,6 +770,7 @@ def test_that_dumped_evaluate_ensemble_matches_snapshot(
 
     _create_and_verify_runmodel_snapshot(
         config,
+        runtime_plugins,
         snapshot,
         cli_args=Namespace(
             mode=EVALUATE_ENSEMBLE_MODE,
@@ -773,11 +789,11 @@ def test_that_dumped_ensemble_experiment_matches_snapshot(
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
-    config = ErtConfig.from_file(config_file)
-    config.random_seed = 1  # Ensure deterministic
+    config, runtime_plugins = _config_with_site_plugins(config_file)
 
     _create_and_verify_runmodel_snapshot(
         config,
+        runtime_plugins,
         snapshot,
         cli_args=Namespace(
             mode=ENSEMBLE_EXPERIMENT_MODE,
@@ -797,11 +813,11 @@ def test_that_dumped_ensemble_smoother_matches_snapshot(
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
-    config = ErtConfig.from_file(config_file)
-    config.random_seed = 1  # Ensure deterministic
+    config, runtime_plugins = _config_with_site_plugins(config_file)
 
     _create_and_verify_runmodel_snapshot(
         config,
+        runtime_plugins,
         snapshot,
         cli_args=Namespace(
             mode=ENSEMBLE_SMOOTHER_MODE,
@@ -819,11 +835,11 @@ def test_that_dumped_enif_matches_snapshot(case, copy_case, snapshot, change_to_
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
-    config = ErtConfig.from_file(config_file)
-    config.random_seed = 1  # Ensure deterministic
+    config, runtime_plugins = _config_with_site_plugins(config_file)
 
     _create_and_verify_runmodel_snapshot(
         config,
+        runtime_plugins,
         snapshot,
         cli_args=Namespace(
             mode=ENIF_MODE,
@@ -843,11 +859,11 @@ def test_that_dumped_esmda_matches_snapshot(
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
-    config = ErtConfig.from_file(config_file)
-    config.random_seed = 1  # Ensure deterministic
+    config, runtime_plugins = _config_with_site_plugins(config_file)
 
     _create_and_verify_runmodel_snapshot(
         config,
+        runtime_plugins,
         snapshot,
         cli_args=Namespace(
             mode=ES_MDA_MODE,
