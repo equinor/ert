@@ -168,8 +168,8 @@ class EverestControlsPlot:
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
         PlotTools.labels_on_hover(
+            PlotType.LINE,
             axes,
-            plot_context,
             figure,
             data=tooltip_data,
             labels=tooltip_labels,

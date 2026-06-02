@@ -128,7 +128,7 @@ class EverestGradientsPlot:
             for control in self.selected_controls
         ]
         PlotTools.labels_on_hover(
-            axes, plot_context, figure, data=bar_containers, labels=bar_labels
+            PlotType.BAR, axes, figure, data=bar_containers, labels=bar_labels
         )
 
         PlotTools.finalizePlot(

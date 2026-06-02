@@ -95,8 +95,8 @@ class EnsemblePlot:
         default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
 
         PlotTools.labels_on_hover(
+            PlotType.LINE,
             axes,
-            plot_context,
             figure,
             data=tooltip_data,
             labels=tooltip_labels,
