@@ -800,12 +800,12 @@ def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
 
         assert blob_dir.is_dir(), "Expected blob directory to be created"
 
-        parquet_files = list(blob_dir.glob("*.parquet"))
-        json_files = list(blob_dir.glob("*.json"))
-        assert len(parquet_files) == 1
+        blob_files = list(blob_dir.glob("*.blob"))
+        json_files = list(blob_dir.glob("*.blob.json"))
+        assert len(blob_files) == 1
         assert len(json_files) == 1
 
-        loaded_df = pl.read_parquet(parquet_files[0])
+        loaded_df = pl.read_parquet(blob_files[0])
         assert loaded_df.columns == ["observation_key", "status", "value"]
         assert len(loaded_df) == 2
         assert loaded_df["observation_key"][0] == "OBS_1"

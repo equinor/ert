@@ -196,6 +196,8 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 ensemble.save_blob(event)
                 self.send_event(
                     RunModelUpdateEndEvent(
-                        iteration=iteration, run_id=run_id, data=event.data
+                        iteration=iteration,
+                        run_id=run_id,
+                        data=event.data,
                     )
                 )

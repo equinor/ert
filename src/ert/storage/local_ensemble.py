@@ -23,7 +23,6 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent
 from ert.config import (
     InvalidResponseFile,
     ParameterCardinality,
@@ -47,6 +46,8 @@ from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+
+    from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent
 
     from .local_experiment import LocalExperiment
     from .local_storage import LocalStorage
@@ -1355,11 +1356,9 @@ class LocalEnsemble(BaseMode):
         blob_dir = self._path / BLOB_DATA_DIR
         blob_dir.mkdir(parents=True, exist_ok=True)
         blob_id = _uuid.uuid4().hex[:8]
-
+        uri = f"{blob_id}.blob"
         blob_data: BlobStorageData | MatrixStorageData
-        if isinstance(blob_event, AnalysisMatrixEvent):
-            ext = "blob"
-            uri = f"{blob_id}.{ext}"
+        if blob_event.event_type == "AnalysisMatrixEvent":
             file_type = (
                 "application/x-npz" if blob_event.sparse else "application/x-npy"
             )
@@ -1375,8 +1374,6 @@ class LocalEnsemble(BaseMode):
             )
             data = blob_event.matrix_bytes
         else:
-            ext = "parquet"
-            uri = f"{blob_id}.{ext}"
             buf = io.BytesIO()
             pl.DataFrame(
                 blob_event.data.data,
