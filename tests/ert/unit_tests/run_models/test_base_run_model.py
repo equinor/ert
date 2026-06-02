@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import math
 import os
 import uuid
@@ -11,13 +12,18 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from pydantic import ConfigDict
 
+from _ert.events import EESnapshotUpdate
 from ert.config import ErtConfig, ModelConfig, QueueConfig, QueueSystem, ShapeRegistry
 from ert.config.queue_config import LsfQueueOptions
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
 from ert.ensemble_evaluator.evaluator import ParallelismViolation
+from ert.ensemble_evaluator.event import FullSnapshotEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import ErtRuntimePlugins
-from ert.run_models.run_model import RunModel, UserCancelled
+from ert.run_models.run_model import (
+    RunModel,
+    UserCancelled,
+)
 from ert.warnings import PostExperimentWarning
 
 
@@ -733,3 +739,72 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
         brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
         assert any(isinstance(w.message, PostExperimentWarning) for w in W)
         assert any(expected_msg in str(w.message) for w in W)
+
+
+def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tmpdir):
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2")
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=[True, True],
+    )
+    brm._iter_snapshot[0] = EnsembleSnapshot.from_nested_dict(
+        {"reals": {"0": {"status": "Pending"}, "1": {"status": "Pending"}}}
+    )
+    experiment = brm._storage.create_experiment(name="exp")
+
+    brm.forward_event_from_ee(
+        EESnapshotUpdate(snapshot={"reals": {"0": {"status": "Finished"}}}),
+        iteration=0,
+    )
+    brm.forward_event_from_ee(
+        EESnapshotUpdate(snapshot={"reals": {"1": {"status": "Running"}}}),
+        iteration=0,
+    )
+
+    assert not experiment.status_snapshot_path(0).exists()
+
+    brm._persist_status_snapshot(experiment, 0)
+
+    snapshot_file = experiment.status_snapshot_path(0)
+    assert snapshot_file.exists()
+
+    persisted = FullSnapshotEvent.model_validate_json(
+        snapshot_file.read_text(encoding="utf-8")
+    )
+    assert persisted.event_type == "FullSnapshotEvent"
+    assert persisted.iteration == 0
+    assert persisted.snapshot is not None
+    assert persisted.snapshot.get_real("0")["status"] == "Finished"
+    assert persisted.snapshot.get_real("1")["status"] == "Running"
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+async def test_that_status_snapshot_write_failure_does_not_mask_evaluation_error(
+    evaluator, use_tmpdir, caplog, monkeypatch
+):
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation()
+    brm = create_run_model()
+
+    class EvaluationError(Exception):
+        pass
+
+    async def failing_run_evaluator(self, *args, **kwargs):
+        raise EvaluationError("primary failure")
+
+    def failing_persist(self, *args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(RunModel, "_run_evaluator", failing_run_evaluator)
+    monkeypatch.setattr(RunModel, "_persist_status_snapshot", failing_persist)
+
+    ensemble = Mock()
+    ensemble.iteration = 0
+
+    with (
+        caplog.at_level(logging.WARNING),
+        pytest.raises(EvaluationError, match="primary failure"),
+    ):
+        await brm.run_ensemble_evaluator_async(AsyncMock(), ensemble, AsyncMock())
+
+    assert "Failed to persist status snapshot" in caplog.text
