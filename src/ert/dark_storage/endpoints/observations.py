@@ -41,6 +41,7 @@ def get_observations(
             north=observation["north"],
             radius=observation["radius"],
             name=observation["name"],
+            response_key=observation["response_key"],
         )
         for observation in _get_observations(experiment)
     ]
@@ -91,6 +92,7 @@ async def get_observations_for_response(
             north=obs["north"],
             radius=obs["radius"],
             name=obs["name"],
+            response_key=obs["response_key"],
         )
         for obs in obss
     ]
@@ -146,6 +148,7 @@ def _get_observations(
             observations.append(
                 {
                     "name": obs_key[0],
+                    "response_key": obs_df["response_key"].to_list(),
                     "values": values,
                     "errors": obs_df["errors"].to_list(),
                     "x_axis": obs_df["x_axis"].to_list(),
