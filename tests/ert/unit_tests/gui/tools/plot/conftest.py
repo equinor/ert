@@ -41,7 +41,7 @@ def api(tmpdir, source_root, monkeypatch):
         test_data_root = source_root / "test-data" / "ert"
         test_data_dir = test_data_root / "snake_oil"
         shutil.copytree(test_data_dir, "test_data")
-        os.chdir("test_data")
+        os.chdir("test_data")  # noqa: TID251  inside tmpdir.as_cwd() which restores
         yield PlotApi(test_data_dir)
 
 

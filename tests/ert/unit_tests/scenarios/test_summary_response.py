@@ -1,4 +1,4 @@
-import os
+import contextlib
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -84,14 +84,11 @@ def create_responses(prior_ensemble, response_times):
     cwd = Path().absolute()
     rng = np.random.default_rng(seed=1234)
     base_path = cwd / "simulations" / "realization-<IENS>" / "iter-0"
-    try:
-        for i, response_time in enumerate(response_times):
-            sim_path = Path(str(base_path).replace("<IENS>", str(i)))
-            sim_path.mkdir(parents=True, exist_ok=True)
-            os.chdir(sim_path)
+    for i, response_time in enumerate(response_times):
+        sim_path = Path(str(base_path).replace("<IENS>", str(i)))
+        sim_path.mkdir(parents=True, exist_ok=True)
+        with contextlib.chdir(sim_path):
             run_sim(response_time, rng.standard_normal(), fname=f"ECLIPSE_CASE_{i}")
-    finally:
-        os.chdir(cwd)
     load_parameters_and_responses_from_runpath(
         str(base_path), prior_ensemble, range(len(response_times))
     )

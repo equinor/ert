@@ -182,7 +182,7 @@ async def test_initialize_random_seed(
         # Make a clean directory for the second case, which is identical
         # to the first, except that it uses the random seed from the first
         os.makedirs("second")
-        os.chdir("second")
+        os.chdir("second")  # noqa: TID251  use_tmpdir fixture restores cwd
         random_seed = (
             next(
                 message

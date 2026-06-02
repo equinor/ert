@@ -16,17 +16,6 @@ from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-
-@contextlib.contextmanager
-def pushd(path):
-    cwd0 = Path.cwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(cwd0)
-
-
 SHELL_SCRIPTS = SOURCE_DIR / "src" / "ert" / "resources" / "shell_scripts"
 
 symlink = import_from_location(
@@ -365,7 +354,7 @@ def test_that_delete_directory_can_delete_directories_with_internal_symlinks():
     mkdir("to_be_deleted")
     Path("to_be_deleted/link_target.txt").write_text("hei", encoding="utf-8")
 
-    with pushd("to_be_deleted"):
+    with contextlib.chdir("to_be_deleted"):
         symlink("link_target.txt", "link")
     assert Path("to_be_deleted/link").exists()
 
@@ -470,7 +459,7 @@ def test_copy_file2():
 
     Path("file2").write_text("Hei ...", encoding="utf-8")
 
-    with pushd("root/sub/path"):
+    with contextlib.chdir("root/sub/path"):
         copy_file("../../../file2")
         assert os.path.isfile("file2")
 
