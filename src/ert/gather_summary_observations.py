@@ -15,6 +15,7 @@ from urllib.parse import quote
 
 import anyio
 import httpx
+from httpx import AsyncClient
 from resfo_utilities import SummaryKeyType
 
 from ert.cli.main import ErtCliError
@@ -122,28 +123,17 @@ async def start_ert_api(ert_config: str) -> tuple[asyncio.subprocess.Process, Pa
     return proc, config_path
 
 
-async def extract_summary_observations(
-    client: httpx.AsyncClient,
-    experiment: str,
-    experiments: list[Any],
-) -> dict[str, list[Any]]:
-    experiment_match = next(filter(lambda x: x["id"] == experiment, experiments), None)
-    if experiment_match is None:
-        raise ErtCliError(f"Provided experiment id {experiment} not found in storage")
-    if "summary" not in experiment_match["observations"]:
-        raise ErtCliError(
-            f"No summary observations found for experiment '{experiment}'"
-        )
-    summary_observations = experiment_match["observations"]["summary"]
-    response_key = {v: k for k, vs in summary_observations.items() for v in vs}
+async def extract_observations(
+    obs_type: str, experiment: dict[str, Any], experiment_id: str, client: AsyncClient
+) -> dict[str, Any]:
+    if obs_type not in experiment["observations"]:
+        return {}
+    observations = experiment["observations"][obs_type]
+    response_key = {v: k for k, vs in observations.items() for v in vs}
     result: dict[str, list[Any]] = defaultdict(list)
-    for obs in await get_observations(experiment, client):
+    for obs in await get_observations(experiment_id, client):
         if obs["name"] in response_key:
             result[response_key[obs["name"]]].append(obs)
-    if len(result) == 0:
-        raise ErtCliError(
-            f"No summary observations found for experiment '{experiment}'"
-        )
     return result
 
 
@@ -157,9 +147,10 @@ def non_empty_fields(skds: list[SummaryKeyData]) -> list[str]:
     ]
 
 
-def localization_to_string(
-    east: float | None, north: float | None, radius: float | None
-) -> str | None:
+def obs_to_localization_str(obs: list[Any]) -> str | None:
+    east = get_first_loc_value("east", obs)
+    north = get_first_loc_value("north", obs)
+    radius = get_first_loc_value("radius", obs)
     if east is None or north is None:
         return None
     lines = [
@@ -170,38 +161,41 @@ def localization_to_string(
     if radius is not None:
         lines.append(f"{INDENT6}RADIUS={radius};")
     lines.append(f"{INDENT4}}};")
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n"
 
 
-def get_first_loc_value(loc_key: str, summary_obs: list[Any]) -> str | None:
-    return next(
-        (
-            val
-            for obs in summary_obs
-            for val in obs.get(loc_key, [None])
-            if val is not None
-        ),
-        None,
-    )
+def get_first_loc_value(loc_key: str, obs: list[dict[str, Any]]) -> float | int | None:
+    for o in obs:
+        key_value = o.get(loc_key, [None])[0]
+        if key_value is not None:
+            return key_value
+    return None
+
+
+def breakthrough_to_string(obss: list[dict[str, Any]], key: str) -> str:
+    obs = obss[0]
+    lines = [
+        f"{INDENT4}BREAKTHROUGH {{",
+        f"{INDENT6}THRESHOLD={obs['values'][0]};",
+        f"{INDENT6}DATE={obs['x_axis'][0]};",
+        f"{INDENT6}ERROR={obs['errors'][0]};",
+        f"{INDENT6}KEY={key};",
+        f"{INDENT4}}};",
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def convert_summary_observations(
-    summary_observations: dict[str, list[Any]], csv_file_name: str
+    summary_observations: dict[str, list[Any]],
+    breakthrough_observations: dict[str, list[Any]],
+    csv_file_name: str,
 ) -> None:
-    skds = []
-
-    localization = {}
-    for key in summary_observations:  # noqa: PLC0206
+    summary_keys = []
+    for key in summary_observations:
         summary_key = make_summary_key_data(key)
-        skds.append(summary_key)
-        east = get_first_loc_value("east", summary_observations[key])
-        north = get_first_loc_value("north", summary_observations[key])
-        radius = get_first_loc_value("radius", summary_observations[key])
-        loc_string = localization_to_string(east, north, radius)
-        if loc_string is not None and (well := summary_key.well) is not None:
-            localization[well] = loc_string
+        summary_keys.append(summary_key)
 
-    header_fields = non_empty_fields(skds)
+    header_fields = non_empty_fields(summary_keys)
     with Path(csv_file_name).open(mode="w", encoding="utf-8") as fout:
         fout.write(", ".join([*header_fields, "value", "error", "date"]))
         fout.write("\n")
@@ -219,10 +213,27 @@ def convert_summary_observations(
                 fout.write(f"{observation['errors'][0]:.3g}, ")
                 fout.write(f"{date.isoformat()}\n")
 
+    breakthrough = {}
+    for brt_key, obs in breakthrough_observations.items():
+        key = brt_key.removeprefix("BREAKTHROUGH:")
+        summary_key = make_summary_key_data(key)
+        if (well := summary_key.well) is not None:
+            breakthrough[well] = breakthrough_to_string(obs, summary_key.keyword)
+
+    localization = {}
+    for key in summary_observations | breakthrough_observations:
+        summary_key = make_summary_key_data(key.removeprefix("BREAKTHROUGH:"))
+        loc_string = obs_to_localization_str(
+            summary_observations.get(key, []) + breakthrough_observations.get(key, [])
+        )
+        if loc_string is not None and (well := summary_key.well) is not None:
+            localization[well] = loc_string
+
     print(f"SUMMARY {{\n  VALUES = {csv_file_name};")
-    for well, loc in localization.items():
+    for well in sorted(localization.keys() | breakthrough.keys()):
         print(f"{INDENT2}WELL {well} {{")
-        print(loc)
+        print(localization.get(well, ""), end="")
+        print(breakthrough.get(well, ""), end="")
         print(f"{INDENT2}}};")
     print("};")
 
@@ -316,11 +327,11 @@ async def _run_with_client(
 
         assert isinstance(all_experiments, list)
         if args.experiment is not None:
-            experiment = args.experiment
+            experiment_id = args.experiment
             experiment_ids = [ex["id"] for ex in all_experiments]
-            if experiment not in experiment_ids:
+            if experiment_id not in experiment_ids:
                 raise ErtCliError(
-                    f"An experiment with id '{experiment}' does not exist.\n"
+                    f"An experiment with id '{experiment_id}' does not exist.\n"
                     f"Available experiments:\n  "
                     + "\n  ".join(
                         [
@@ -330,13 +341,29 @@ async def _run_with_client(
                     )
                 )
         else:
-            experiment = query_user_for_experiment(all_experiments)
+            experiment_id = query_user_for_experiment(all_experiments)
 
-        summary_observations = await extract_summary_observations(
-            client, experiment, all_experiments
+        experiment = next(
+            filter(lambda x: x["id"] == experiment_id, all_experiments), None
+        )
+        if experiment is None:
+            raise ErtCliError(
+                f"Provided experiment id {experiment_id} not found in storage"
+            )
+        if "summary" not in experiment["observations"]:
+            raise ErtCliError(
+                f"No summary observations found for experiment '{experiment_id}'"
+            )
+        summary_observations = await extract_observations(
+            "summary", experiment, experiment_id, client
+        )
+        breakthrough_observations = await extract_observations(
+            "breakthrough", experiment, experiment_id, client
         )
 
-        convert_summary_observations(summary_observations, args.output_csv_file)
+        convert_summary_observations(
+            summary_observations, breakthrough_observations, args.output_csv_file
+        )
 
 
 async def _async_main(args: Namespace) -> None:
