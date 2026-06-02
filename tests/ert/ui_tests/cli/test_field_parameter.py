@@ -16,6 +16,7 @@ from ert.analysis import build_strategy_map, smoother_update
 from ert.config import ErtConfig, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
+from ert.storage.blob_data import BlobType, MatrixStorageData
 
 from .run_cli import run_cli
 
@@ -41,6 +42,52 @@ def test_field_param_update_using_heat_equation_enif(
 
         posterior_result = posterior.load_parameters("COND")["values"]
         assert posterior_result.dtype == np.float32
+
+        # Verify that EnIF matrix blobs are stored on the posterior ensemble
+        n_cond = param_config.nx * param_config.ny * param_config.nz
+        n_params = n_cond + 2  # + INIT_TEMP_SCALE + CORR_LENGTH
+        n_obs = len(experiment.observations["summary"])
+
+        matrix_blobs = posterior.load_blobs(BlobType.MATRIX)
+        blob_by_name = {m.name: m for m in matrix_blobs}
+        assert set(blob_by_name) == {"H", "Prec_u", "Prec_eps", "K"}
+
+        h = blob_by_name["H"]
+        assert isinstance(h.blob_info, MatrixStorageData)
+        assert h.blob_info.sparse
+        assert h.blob_info.shape == (n_obs, n_params)
+        assert h.file_type == "application/x-npz"
+        assert h.blob_info.update_algorithm == "enif"
+        assert len(posterior.load_blob(h.uri)) == h.file_size
+
+        prec_u = blob_by_name["Prec_u"]
+        assert isinstance(prec_u.blob_info, MatrixStorageData)
+        assert prec_u.blob_info.sparse
+        assert prec_u.blob_info.shape == (n_params, n_params)
+        assert prec_u.file_type == "application/x-npz"
+        assert prec_u.blob_info.update_algorithm == "enif"
+        assert len(posterior.load_blob(prec_u.uri)) == prec_u.file_size
+
+        prec_eps = blob_by_name["Prec_eps"]
+        assert isinstance(prec_eps.blob_info, MatrixStorageData)
+        assert prec_eps.blob_info.sparse
+        assert prec_eps.blob_info.shape == (n_obs, n_obs)
+        assert prec_eps.file_type == "application/x-npz"
+        assert prec_eps.blob_info.update_algorithm == "enif"
+        assert len(posterior.load_blob(prec_eps.uri)) == prec_eps.file_size
+
+        k = blob_by_name["K"]
+        assert isinstance(k.blob_info, MatrixStorageData)
+        assert not k.blob_info.sparse
+        assert k.blob_info.shape == (n_params, n_obs)
+        assert k.file_type == "application/x-npy"
+        assert k.blob_info.update_algorithm == "enif"
+        assert len(posterior.load_blob(k.uri)) == k.file_size
+
+        obs_blobs = posterior.load_blobs(BlobType.OBSERVATION_REPORT)
+        assert len(obs_blobs) == 1
+        assert obs_blobs[0].file_type == "application/parquet"
+        assert obs_blobs[0].file_size > 0
 
     # Check that fields in the runpath are different between iterations
     cond_iter0 = resfo.read("simulations/realization-0/iter-0/cond.bgrdecl")[0][1]
