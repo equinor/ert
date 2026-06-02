@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
+from ert.config.surface_config import SurfaceConfig
 from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.gui.utils import is_everest_application
@@ -430,6 +431,10 @@ class PlotWindow(QMainWindow):
         if (
             plot_widget._plotter.dimensionality == key_def.dimensionality
             or (
+                isinstance(key_def.parameter, SurfaceConfig)
+                and plot_widget.name == STD_DEV
+            )
+            or (
                 plot_widget.name
                 in {
                     EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
@@ -543,6 +548,16 @@ class PlotWindow(QMainWindow):
                     try:
                         std_dev_images[ensemble.id] = self._api.std_dev_for_parameter(
                             key, ensemble.id, layer
+                        )
+                    except BaseException as e:
+                        handle_exception(e)
+            elif isinstance(key_def.parameter, SurfaceConfig):
+                plot_widget.showLayerWidget.emit(False)
+                layer = 0
+                for ensemble in selected_ensembles:
+                    try:
+                        std_dev_images[ensemble.id] = self._api.std_dev_for_parameter(
+                            key, ensemble.id, 0
                         )
                     except BaseException as e:
                         handle_exception(e)
@@ -716,6 +731,10 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
         ]
+        if isinstance(key_def.parameter, SurfaceConfig):
+            available_widgets = [
+                widget for widget in self._plot_widgets if widget.name == STD_DEV
+            ]
 
         def everest_data_origin_check(origin: list[str]) -> bool:
             return key_def.metadata.get("data_origin") in origin

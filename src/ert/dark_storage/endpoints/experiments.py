@@ -2,7 +2,6 @@ import logging
 
 from fastapi import APIRouter, Body, Depends
 
-from ert.config import SurfaceConfig
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import get_storage
 from ert.storage import Storage
@@ -28,7 +27,6 @@ def get_experiments(
             parameters={
                 group: config.model_dump()
                 for group, config in experiment.parameter_configuration.items()
-                if not isinstance(config, SurfaceConfig)
             },
             responses={
                 response_type: config.model_dump()

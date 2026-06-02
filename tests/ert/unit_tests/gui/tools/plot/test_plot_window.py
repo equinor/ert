@@ -1,6 +1,7 @@
 from typing import cast
 from unittest.mock import MagicMock
 
+import numpy as np
 import pandas as pd
 import pytest
 from matplotlib.figure import Figure
@@ -10,11 +11,12 @@ from pytestqt.qtbot import QtBot
 
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
+from ert.config.surface_config import SurfaceConfig
 from ert.gui.tools.plot.data_type_keys_list_model import DataTypeSeparator
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.tools.plot.plot_widget import PlotWidget
-from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
+from ert.gui.tools.plot.plot_window import STD_DEV, PlotWindow, create_error_dialog
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots.gaussian_kde import plotGaussianKDE
 from ert.gui.tools.plot.plottery.plots.histogram import HistogramPlot
@@ -248,6 +250,69 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
 
     # This is the call that previously crashed with TypeError.
     plot_window.updatePlot()
+
+
+@pytest.mark.slow
+def test_that_surface_parameter_uses_std_dev_plot(qtbot: QtBot, monkeypatch):
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.tools.plot.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.tools.plot.plot_window.PlotApi", mock_plot_api_cls)
+
+    surface = SurfaceConfig(
+        name="TOP",
+        ncol=5,
+        nrow=7,
+        xori=0.0,
+        yori=0.0,
+        xinc=1.0,
+        yinc=1.0,
+        rotation=0.0,
+        yflip=1,
+        forward_init=False,
+        update_strategy="global",
+        forward_init_file="surface/surf_init_<IENS>.irap",
+        output_file="surface/surf_updated.irap",
+        base_surface_path="surface/surf_init_0.irap",
+    )
+    surface_key_def = PlotApiKeyDefinition(
+        "TOP",
+        index_type=None,
+        metadata={"data_origin": "surface"},
+        observations=False,
+        dimensionality=2,
+        parameter=surface,
+    )
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = [surface_key_def]
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.std_dev_for_parameter.return_value = np.ones((5, 7), dtype=np.float32)
+
+    plot_window = PlotWindow(config_file="", ens_path="", parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    plot_widget = cast(PlotWidget, plot_window._central_tab.currentWidget())
+    assert plot_widget.name == STD_DEV
+    assert plot_widget._figure.axes[0].images
+    mock_plot_api.std_dev_for_parameter.assert_called_with("TOP", "ensemble", 0)
 
 
 def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():

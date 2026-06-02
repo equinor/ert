@@ -1,5 +1,4 @@
--- This can't currently be run as there are no .irap files in `snake_oil_field`.
--- The file is used in tests.
+-- Surface parameter variant of the snake oil field case.
 
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 10
