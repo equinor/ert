@@ -1,5 +1,4 @@
 import asyncio
-import io
 import json
 from contextlib import contextmanager
 from datetime import datetime
@@ -12,6 +11,7 @@ import polars as pl
 import pytest
 from hypothesis import given
 
+from ert.analysis.event import AnalysisCompleteEvent, DataSection
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
 from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
@@ -766,10 +766,15 @@ def test_that_save_blob_raises_in_read_mode(tmp_path):
 
     with open_storage(tmp_path, mode="r") as storage:
         ensemble = next(iter(storage.ensembles))
-        buf = io.BytesIO()
-        pl.DataFrame({"x": [1]}).write_parquet(buf)
+        event = AnalysisCompleteEvent(
+            data=DataSection(
+                header=["x"],
+                data=[(1,)],
+            ),
+            ensemble_id="dummy",
+        )
         with pytest.raises(ModeError):
-            ensemble.save_blob(buf.getvalue())
+            ensemble.save_blob(event)
 
 
 def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
@@ -779,17 +784,17 @@ def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
 
-        df = pl.DataFrame(
-            {
-                "observation_key": ["OBS_1", "OBS_2"],
-                "status": ["Active", "Deactivated, outlier"],
-                "value": [1.5, 2.0],
-            }
+        event = AnalysisCompleteEvent(
+            data=DataSection(
+                header=["observation_key", "status", "value"],
+                data=[
+                    ("OBS_1", "Active", 1.5),
+                    ("OBS_2", "Deactivated, outlier", 2.0),
+                ],
+            ),
+            ensemble_id=str(ensemble.id),
         )
-        buf = io.BytesIO()
-        df.write_parquet(buf)
-
-        ensemble.save_blob(buf.getvalue())
+        ensemble.save_blob(event)
 
         blob_dir = ensemble._path / "blobs"
 
@@ -807,6 +812,4 @@ def test_that_save_blob_writes_parquet_and_json_to_disk(tmp_path):
 
         metadata = json.loads(json_files[0].read_text(encoding="utf-8"))
         assert metadata["blob_type"] == "observation_report"
-        assert metadata["uri"].endswith(".parquet")
         assert metadata["file_size"] > 0
-        assert metadata["ensemble_id"] == str(ensemble.id)

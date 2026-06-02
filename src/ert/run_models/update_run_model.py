@@ -1,9 +1,6 @@
 import dataclasses
 import functools
-import io
 import uuid
-
-import polars as pl
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
@@ -33,7 +30,6 @@ from ert.run_models.event import (
 from ert.run_models.run_model import ErtRunError, RunModel
 from ert.run_models.run_model_configs import UpdateRunModelConfig
 from ert.storage import Ensemble, LocalExperiment
-from ert.storage.blob_data import BlobStorageData, BlobType, MatrixStorageData
 
 
 class UpdateRunModel(RunModel, UpdateRunModelConfig):
@@ -61,6 +57,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             self.send_smoother_event,
             prior.iteration,
             prior.id,
+            posterior,
         )
 
         strategy_map = build_strategy_map(
@@ -150,7 +147,11 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         return posterior
 
     def send_smoother_event(
-        self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
+        self,
+        iteration: int,
+        run_id: uuid.UUID,
+        ensemble: Ensemble,
+        event: AnalysisEvent,
     ) -> None:
         match event:
             case AnalysisStatusEvent():
@@ -190,38 +191,9 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisMatrixEvent():
-                ensemble = self._storage.get_ensemble(run_id)
-                blob_id = uuid.uuid4().hex[:8]
-                file_type = "application/x-npz" if event.sparse else "application/x-npy"
-                blob_data = MatrixStorageData(
-                    blob_type=BlobType.MATRIX,
-                    uri=f"{blob_id}.blob",
-                    file_size=len(event.matrix_bytes),
-                    file_type=file_type,
-                    update_algorithm=event.update_algorithm,
-                    sparse=event.sparse,
-                    shape=event.shape,
-                    data_type=event.data_type,
-                )
-                ensemble.save_blob(event.matrix_bytes, blob_data)
+                ensemble.save_blob(event)
             case AnalysisCompleteEvent():
-                ensemble = self._storage.get_ensemble(event.ensemble_id)
-                buf = io.BytesIO()
-                pl.DataFrame(
-                    event.data.data,
-                    schema=event.data.header,
-                    orient="row",
-                ).write_parquet(buf)
-                blob_id = uuid.uuid4().hex[:8]
-                blob_bytes = buf.getvalue()
-                blob_data = BlobStorageData(
-                    blob_type=BlobType.OBSERVATION_REPORT,
-                    uri=f"{blob_id}.parquet",
-                    file_size=len(blob_bytes),
-                    file_type="application/parquet",
-                    update_algorithm=self.update_settings.algorithm,
-                )
-                ensemble.save_blob(blob_bytes, blob_data)
+                ensemble.save_blob(event)
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration, run_id=run_id, data=event.data

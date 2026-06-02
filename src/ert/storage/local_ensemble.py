@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import io
 import logging
 import os
 import time
+import uuid as _uuid
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -21,6 +23,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
+from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent
 from ert.config import (
     InvalidResponseFile,
     ParameterCardinality,
@@ -37,7 +40,7 @@ from ert.config.rft_config import RFTConfig
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
-from .blob_data import BlobStorageData, MatrixStorageData
+from .blob_data import BlobStorageData, BlobType, MatrixStorageData
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
@@ -1344,41 +1347,54 @@ class LocalEnsemble(BaseMode):
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
 
-    # @require_write
-    # def save_blob(
-    #     self,
-    #     data: bytes,
-    #     file_type: str,
-    #     update_algorithm: str = "ensemble_smoother",
-    #     blob_type: BlobType = BlobType.OBSERVATION_REPORT,
-    # ) -> None:
-    #     blob_dir = self._path / BLOB_DATA_DIR
-    #     blob_dir.mkdir(parents=True, exist_ok=True)
-    #     blob_id = uuid.uuid4().hex[:8]
-    #     blob_path = blob_dir / f"{blob_id}.blob"
-    #     self._storage._write_transaction(blob_path, data)
-    #     blob_data = BlobStorageData(
-    #         blob_type=blob_type,
-    #         uri=str(blob_path.relative_to(self._path)),
-    #         file_size=len(data),
-    #         file_type=file_type,
-    #         update_algorithm=update_algorithm,
-    #     )
-    #     self._storage._write_transaction(
-    #         blob_dir / f"{blob_id}.json",
-    #         blob_data.model_dump_json(indent=2).encode("utf-8"),
-    #     )
     @require_write
     def save_blob(
-        self, data: bytes, blob_json: BlobStorageData | MatrixStorageData
+        self,
+        blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent,
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
         blob_dir.mkdir(parents=True, exist_ok=True)
-        blob_path = blob_dir / f"{blob_json.uri}"
-        self._storage._write_transaction(blob_path, data)
+        blob_id = _uuid.uuid4().hex[:8]
+
+        blob_data: BlobStorageData | MatrixStorageData
+        if isinstance(blob_event, AnalysisMatrixEvent):
+            ext = "blob"
+            uri = f"{blob_id}.{ext}"
+            file_type = (
+                "application/x-npz" if blob_event.sparse else "application/x-npy"
+            )
+            blob_data = MatrixStorageData(
+                blob_type=BlobType.MATRIX,
+                uri=uri,
+                file_size=len(blob_event.matrix_bytes),
+                file_type=file_type,
+                update_algorithm=blob_event.update_algorithm,
+                sparse=blob_event.sparse,
+                shape=blob_event.shape,
+                data_type=blob_event.data_type,
+            )
+            data = blob_event.matrix_bytes
+        else:
+            ext = "parquet"
+            uri = f"{blob_id}.{ext}"
+            buf = io.BytesIO()
+            pl.DataFrame(
+                blob_event.data.data,
+                schema=blob_event.data.header,
+                orient="row",
+            ).write_parquet(buf)
+            data = buf.getvalue()
+            blob_data = BlobStorageData(
+                blob_type=BlobType.OBSERVATION_REPORT,
+                uri=uri,
+                file_size=len(data),
+                file_type="application/parquet",
+            )
+
+        self._storage._write_transaction(blob_dir / uri, data)
         self._storage._write_transaction(
-            blob_dir / f"{blob_json.uri}.json",
-            blob_json.model_dump_json(indent=2).encode("utf-8"),
+            blob_dir / f"{uri}.json",
+            blob_data.model_dump_json(indent=2).encode("utf-8"),
         )
 
     @require_write

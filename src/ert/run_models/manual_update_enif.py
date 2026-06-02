@@ -33,5 +33,6 @@ class ManualUpdateEnIF(ManualUpdate):
                 self.send_smoother_event,
                 prior.iteration,
                 prior.id,
+                posterior,
             ),
         )
