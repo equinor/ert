@@ -2231,7 +2231,7 @@ def setup_workflow_file():
 
 
 @pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
-def test_ert_script_hook_pre_experiment_but_asks_for_storage():
+def test_ert_script_hook_pre_experiment_but_asks_for_storage(monkeypatch):
     class SomeScript(ErtScript):
         def run(self, storage: Storage):
             pass
@@ -2240,7 +2240,7 @@ def test_ert_script_hook_pre_experiment_but_asks_for_storage():
         name="TEST_SCRIPT",
         ert_script=SomeScript,
     )
-    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
 
     with pytest.raises(
         ConfigValidationError,
@@ -2251,7 +2251,7 @@ def test_ert_script_hook_pre_experiment_but_asks_for_storage():
 
 
 @pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
-def test_ert_script_hook_pre_experiment_but_asks_for_ensemble():
+def test_ert_script_hook_pre_experiment_but_asks_for_ensemble(monkeypatch):
     class SomeScript(ErtScript):
         def run(self, ensemble: LocalEnsemble):
             pass
@@ -2260,7 +2260,7 @@ def test_ert_script_hook_pre_experiment_but_asks_for_ensemble():
         name="TEST_SCRIPT",
         ert_script=SomeScript,
     )
-    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
 
     with pytest.raises(
         ConfigValidationError,
@@ -2271,7 +2271,7 @@ def test_ert_script_hook_pre_experiment_but_asks_for_ensemble():
 
 
 @pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
-def test_ert_script_hook_pre_experiment_but_asks_for_random_seed():
+def test_ert_script_hook_pre_experiment_but_asks_for_random_seed(monkeypatch):
     class SomeScript(ErtScript):
         def run(self, random_seed: int):
             pass
@@ -2280,13 +2280,13 @@ def test_ert_script_hook_pre_experiment_but_asks_for_random_seed():
         name="TEST_SCRIPT",
         ert_script=SomeScript,
     )
-    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
 
     ErtConfig.from_file("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
-def test_ert_script_hook_pre_experiment_essettings_fails():
+def test_ert_script_hook_pre_experiment_essettings_fails(monkeypatch):
     class SomeScript(ErtScript):
         def run(self, es_settings: ESSettings):
             pass
@@ -2295,7 +2295,7 @@ def test_ert_script_hook_pre_experiment_essettings_fails():
         name="TEST_SCRIPT",
         ert_script=SomeScript,
     )
-    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
 
     with pytest.raises(
         ConfigValidationError,
@@ -2308,7 +2308,7 @@ def test_ert_script_hook_pre_experiment_essettings_fails():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ert_script_hook_valid_essettings_succeed():
+def test_ert_script_hook_valid_essettings_succeed(monkeypatch):
     workflow_file_path = Path.cwd() / "workflow"
     workflow_file_path.write_text("TEST_SCRIPT", encoding="utf-8")
 
@@ -2334,7 +2334,7 @@ def test_ert_script_hook_valid_essettings_succeed():
         name="TEST_SCRIPT",
         ert_script=SomeScript,
     )
-    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
     ErtConfig.from_file("config.ert")
 
 
