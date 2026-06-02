@@ -1844,13 +1844,18 @@ async def _write_responses_to_storage(
                 try:
                     _write_observation_metadata(run_path, realization, ensemble)
                     await asyncio.sleep(0)
+                except (FileNotFoundError, InvalidResponseFile) as err:
+                    errors.append(str(err))
+                    logger.warning(
+                        "Failed to write observation metadata "
+                        f"for realization {realization}: {err}"
+                    )
+                    continue
                 except Exception as err:
                     errors.append(str(err))
                     logger.exception(
-                        "Unexpected exception while reading from runpath or "
-                        "writing RFT observation metadata "
+                        "Unexpected exception while writing RFT observation metadata "
                         f"for realization {realization}",
-                        exc_info=err,
                     )
                     continue
 
@@ -1866,8 +1871,7 @@ async def _write_responses_to_storage(
             logger.exception(
                 "Unexpected exception while reading from runpath or "
                 "writing response to storage "
-                f"for realization {realization=}",
-                exc_info=err,
+                f"for realization {realization}",
             )
             continue
 
