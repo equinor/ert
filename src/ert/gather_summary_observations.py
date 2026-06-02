@@ -174,15 +174,11 @@ def localization_to_string(
 
 
 def get_first_loc_value(loc_key: str, summary_obs: list[Any]) -> float | None:
-    return next(
-        (
-            val
-            for obs in summary_obs
-            for val in obs.get(loc_key, [None])
-            if val is not None
-        ),
-        None,
-    )
+    for obs in summary_obs:
+        key_value = obs.get(loc_key, [None])[0]
+        if key_value is not None:
+            return key_value
+    return None
 
 
 def convert_summary_observations(
