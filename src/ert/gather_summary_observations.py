@@ -190,8 +190,6 @@ def convert_summary_observations(
     for key in summary_observations:  # noqa: PLC0206
         summary_key = make_summary_key_data(key)
         skds.append(summary_key)
-        # Pick the first localization value which is not None for all localization
-        # keywords. These might get fetched from different observations.
         east = get_first_loc_value("east", summary_observations[key])
         north = get_first_loc_value("north", summary_observations[key])
         radius = get_first_loc_value("radius", summary_observations[key])
