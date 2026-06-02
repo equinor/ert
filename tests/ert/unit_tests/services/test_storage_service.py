@@ -16,9 +16,10 @@ from ert.shared import find_available_socket
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
-def test_create_connection_string():
+def test_create_connection_string(monkeypatch):
     authtoken = "very_secret_token"
     sock = find_available_socket()
+    monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
 
     _create_connection_info(sock, authtoken, Path("path/to/cert"))
 
@@ -33,8 +34,6 @@ def test_create_connection_string():
     assert len(connection_string["urls"]) == len(
         set(connection_string["urls"])
     )  # all unique
-
-    del os.environ["ERT_STORAGE_CONNECTION_STRING"]
 
 
 def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpdir):
@@ -217,11 +216,11 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
-def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir):
+def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkeypatch):
     auth_token = "very_secret_token"
     sock = find_available_socket()
-
     cert_path, _, _ = _generate_certificate(Path())
+    monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
 
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable
@@ -230,9 +229,7 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir):
 
     # extract hostname from the url strings "https://<hostname>:<port>/..."
     hosts_from_urls = [u.split("https://")[1].split(":")[0] for u in conn_info["urls"]]
-
     assert set(sans) == set(hosts_from_urls)
-    del os.environ["ERT_STORAGE_CONNECTION_STRING"]
 
 
 def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(

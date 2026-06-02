@@ -358,7 +358,11 @@ class ServerStatus:
     side_effect=RuntimeError("runpath is nonempty"),
 )
 @pytest.mark.slow
-def test_that_everest_run_warns_on_nonempty_runpath(change_to_tmpdir):
+def test_that_everest_run_warns_on_nonempty_runpath(
+    # injected by @patch above; mock params must precede fixtures
+    mock_warn_user_that_runpath_is_nonempty,
+    change_to_tmpdir,
+):
     existing_runpath = tempfile.TemporaryDirectory()
     (Path(existing_runpath.name) / "somefile").touch()
     assert Path(existing_runpath.name).is_absolute(), (

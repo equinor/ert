@@ -30,6 +30,17 @@ class DarkStorageStateTest(StatefulStorageTest):
         os.environ["ERT_STORAGE_ENS_PATH"] = str(self.storage.path)
         self.client = TestClient(app)
 
+    def _restore_environment(self) -> None:
+        if self.prev_no_token is not None:
+            os.environ["ERT_STORAGE_NO_TOKEN"] = self.prev_no_token
+        else:
+            os.environ.pop("ERT_STORAGE_NO_TOKEN", None)
+
+        if self.prev_ens_path is not None:
+            os.environ["ERT_STORAGE_ENS_PATH"] = self.prev_ens_path
+        else:
+            os.environ.pop("ERT_STORAGE_ENS_PATH", None)
+
     @rule()
     def get_experiments_through_client(self):
         self.client.get("/updates/storage")
@@ -94,19 +105,14 @@ class DarkStorageStateTest(StatefulStorageTest):
         }
 
     def teardown(self):
-        super().teardown()
-        if common._storage is not None:
-            common._storage.close()
-        common._storage = None
-        gc.collect()
-        if self.prev_no_token is not None:
-            os.environ["ERT_STORAGE_NO_TOKEN"] = self.prev_no_token
-        else:
-            del os.environ["ERT_STORAGE_NO_TOKEN"]
-        if self.prev_ens_path is not None:
-            os.environ["ERT_STORAGE_ENS_PATH"] = self.prev_ens_path
-        else:
-            del os.environ["ERT_STORAGE_ENS_PATH"]
+        try:
+            super().teardown()
+            if common._storage is not None:
+                common._storage.close()
+            common._storage = None
+            gc.collect()
+        finally:
+            self._restore_environment()
 
 
 TestDarkStorage = pytest.mark.fuzzing(
