@@ -151,17 +151,33 @@ class ErtScript:
             if not hasattr(self, "run"):
                 error_msg = "No 'run' function implemented"
             self.output_stack_trace(error=error_msg)
+            logger.error(
+                f"Attribute error in workflow script {self.__class__.__name__}:"
+                f" {error_msg}"
+            )
             return None
         except KeyboardInterrupt:
             error_msg = "Script cancelled (CTRL+C)"
             self.output_stack_trace(error=error_msg)
+            logger.info(
+                f"Script cancelled in workflow script {self.__class__.__name__}:"
+                f" {error_msg}"
+            )
             return None
         except UserWarning as uw:
             self.__failed = True
+            self.output_stack_trace(error=str(uw))
+            logger.warning(
+                f"User warning in workflow script {self.__class__.__name__}: {uw}"
+            )
             return uw.args[0]
         except BaseException as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
             self.output_stack_trace(f"{e!s}\n{full_trace}")
+            logger.exception(
+                f"Exception in workflow script {self.__class__.__name__}:"
+                f" {e!s}\n{full_trace}"
+            )
             return None
         finally:
             self.cleanup()
