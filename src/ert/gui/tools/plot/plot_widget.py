@@ -164,27 +164,8 @@ class PlotWidget(QWidget):
         self._log_checkbox.clicked.connect(self.logLogScaleButtonUsage)
         self._log_checkbox.toggled.connect(self._plotUpdateRequested)
 
-        self._extended_plot_information_checkbox = QCheckBox(
-            "Extended plot information", self
-        )
-        self._extended_plot_information_checkbox.setObjectName(
-            "extended_plot_information_checkbox"
-        )
-        self._extended_plot_information_checkbox.setCheckable(True)
-        self._extended_plot_information_checkbox.setVisible(False)
-        self._extended_plot_information_checkbox.setToolTip(
-            "Toggle extended plot information"
-        )
-        self._extended_plot_information_checkbox.clicked.connect(
-            self.logExtendedPlotInformationButtonUsage
-        )
-        self._extended_plot_information_checkbox.toggled.connect(
-            self._plotUpdateRequested
-        )
-
         checkbox_row = QHBoxLayout()
         checkbox_row.addWidget(self._log_checkbox)
-        checkbox_row.addWidget(self._extended_plot_information_checkbox)
         checkbox_row.setContentsMargins(16, 8, 16, 8)
         checkbox_row.addStretch()
         vbox.addLayout(checkbox_row)
@@ -223,12 +204,6 @@ class PlotWidget(QWidget):
         else:
             self._log_checkbox.setVisible(False)
 
-    def _sync_extended_plot_information_checkbox(self) -> None:
-        if type(self._plotter).__name__ == "EverestBatchObjectiveFunctionPlot":
-            self._extended_plot_information_checkbox.setVisible(True)
-        else:
-            self._extended_plot_information_checkbox.setVisible(False)
-
     @property
     def name(self) -> str:
         return self._name
@@ -236,13 +211,6 @@ class PlotWidget(QWidget):
     def logLogScaleButtonUsage(self) -> None:
         logger.info(f"Plotwidget utility used: 'Log scale button' in tab '{self.name}'")
         self._log_checkbox.clicked.disconnect()  # Log only once
-
-    def logExtendedPlotInformationButtonUsage(self) -> None:
-        logger.info(
-            "Plotwidget utility used: "
-            f"'Extended plot information button' in tab '{self.name}'"
-        )
-        self._extended_plot_information_checkbox.clicked.disconnect()  # Log only once
 
     def updatePlot(
         self,
@@ -254,17 +222,12 @@ class PlotWidget(QWidget):
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         self.resetPlot()
-        try:  # noqa: PLW0717
+        try:
             self._sync_log_checkbox(key_def)
-            self._sync_extended_plot_information_checkbox()
             plot_context.log_scale = (
                 self._log_checkbox.isVisible()
                 and self._log_checkbox.isChecked()
                 and self._log_scale_valid_values
-            )
-            plot_context.extended_plot_information = (
-                self._extended_plot_information_checkbox.isVisible()
-                and self._extended_plot_information_checkbox.isChecked()
             )
             self._plotter.plot(
                 self._figure,
