@@ -6,13 +6,7 @@ import pytest
 
 from ert.data import MeasuredData
 from ert.data._measured_data import ResponseError
-from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
-
-
-@pytest.fixture
-def facade_snake_oil(snake_oil_case_storage):
-    return LibresFacade(snake_oil_case_storage)
 
 
 @pytest.fixture

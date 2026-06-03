@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import polars as pl
 
-from ert import ErtScript, LibresFacade
+from ert import ErtScript
 from ert.storage import Storage
 
 if TYPE_CHECKING:
@@ -100,7 +100,7 @@ class CSVExportJob(ErtScript):
                 if not design_matrix_data.empty:
                     ensemble_data = ensemble_data.join(design_matrix_data, how="outer")
 
-            misfit_data = LibresFacade.load_all_misfit_data(ensemble)
+            misfit_data = ensemble.load_all_misfit_data()
             if not misfit_data.empty:
                 ensemble_data = ensemble_data.join(misfit_data, how="outer")
             realizations = ensemble.get_realization_list_with_responses()

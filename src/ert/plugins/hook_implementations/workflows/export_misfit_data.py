@@ -31,9 +31,7 @@ class ExportMisfitDataJob(ErtScript):
 
         realizations = ensemble.get_realization_list_with_responses()
 
-        from ert import LibresFacade  # noqa: PLC0415 (circular import)
-
-        misfit = LibresFacade.load_all_misfit_data(ensemble)
+        misfit = ensemble.load_all_misfit_data()
         if len(realizations) == 0 or misfit.empty:
             raise StorageError("No responses loaded")
         misfit.columns = pd.Index([val.split(":")[1] for val in misfit.columns])
