@@ -370,9 +370,8 @@ def test_that_hover_labels_are_set_correctly_for_by_batch_plot(
     )
 
     annotations = [text for text in axes.texts if "ctrl_a" in text.get_text()]
-    hover_annotation = annotations[
-        1
-    ]  # Will be the second annotation, since the first is legend entry
+    hover_annotation = annotations[1]  # Will be the second annotation
+    # First annotation is the right hand side label for the line
     assert len(annotations) == 2
     assert hover_annotation.get_text() == "ctrl_a"
     assert hover_annotation.get_visible()
