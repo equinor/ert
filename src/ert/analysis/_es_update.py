@@ -244,6 +244,18 @@ def perform_ensemble_update(
         param_variance = np.var(param_ensemble_array, axis=1)
         non_zero_variance_mask = ~np.isclose(param_variance, 0.0)
 
+        if not non_zero_variance_mask.any():
+            log_msg = (
+                f"All {non_zero_variance_mask.size} parameters in '{param_group}' "
+                f"have 0 variance across realizations and will not be updated."
+            )
+            logger.warning(log_msg)
+            progress_callback(AnalysisStatusEvent(msg=log_msg))
+            target_ensemble.save_parameters_numpy(
+                param_ensemble_array, param_group, iens_active_index
+            )
+            continue
+
         if (param_count := (~non_zero_variance_mask).sum()) > 0:
             log_msg = (
                 f"There are {param_count} parameters with 0 variance "
