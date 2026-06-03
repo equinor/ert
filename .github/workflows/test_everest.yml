@@ -87,7 +87,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
-        files: cov1.xml,cov2.xml
+        files: cov1.xml
         flags: ${{ inputs.test-type }}
     - name: codecov retry sleep
       if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
@@ -98,7 +98,7 @@ jobs:
       if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: cov1.xml,cov2.xml
+        files: cov1.xml
         flags: ${{ inputs.test-type }}
         fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
@@ -116,7 +116,7 @@ jobs:
         # Remove things we have generated on purpose:
         ls -la
         rm -rf .coverage
-        rm -f coverage.xml cov1.xml cov2.xml junit.xml
+        rm -f coverage.xml cov1.xml junit.xml
         rm -f ert.*.whl
         rm -f codecov.SHA*
         rm -f codecov
