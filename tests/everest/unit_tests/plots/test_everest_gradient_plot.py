@@ -4,17 +4,9 @@ from matplotlib.container import BarContainer
 from matplotlib.figure import Figure
 from tests.everest.unit_tests.plots.utils import move_cursor
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plottery.plots.everest_gradients_plot import (
     EverestGradientsPlot,
 )
-
-
-@pytest.fixture
-def ensemble():
-    return EnsembleObject(
-        "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
-    )
 
 
 @pytest.fixture
@@ -31,10 +23,10 @@ def controls_data():
 
 
 @pytest.fixture
-def generic_plot_args(generic_plot_context, ensemble, controls_data):
+def generic_plot_args(generic_plot_context, everest_ensemble, controls_data):
     return (
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -89,7 +81,7 @@ def test_gradient_plot_legends_appear(generic_plot_args):
     assert "control_2" in legend_texts
 
 
-def test_gradient_plot_hatches(generic_plot_context, ensemble, palette_size):
+def test_gradient_plot_hatches(generic_plot_context, everest_ensemble, palette_size):
     figure, plot = Figure(), EverestGradientsPlot()
 
     data = pd.DataFrame(
@@ -103,7 +95,13 @@ def test_gradient_plot_hatches(generic_plot_context, ensemble, palette_size):
     )
     plot.set_selected_controls([f"control_{i}" for i in range(palette_size * 4)])
     plot.plot(
-        figure, generic_plot_context, {ensemble: data}, pd.DataFrame(), {}, None, None
+        figure,
+        generic_plot_context,
+        {everest_ensemble: data},
+        pd.DataFrame(),
+        {},
+        None,
+        None,
     )
     bars = [b for b in figure.get_axes()[0].containers if isinstance(b, BarContainer)]
     hatches = [b.patches[0].get_hatch() for b in bars]

@@ -1,7 +1,15 @@
 import pytest
 
+from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plottery.plot_config import PlotConfig
 from ert.gui.tools.plot.plottery.plot_context import PlotContext
+
+
+@pytest.fixture
+def everest_ensemble():
+    return EnsembleObject(
+        "batch_0", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
+    )
 
 
 @pytest.fixture
