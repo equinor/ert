@@ -376,9 +376,9 @@ def _qt_excepthook(monkeypatch):
     monkeypatch.setattr(sys, "excepthook", excepthook)
 
 
-def _run_snake_oil(source_root: Path):
+def _run_snake_oil(source_root: Path, monkeypatch: pytest.MonkeyPatch):
     shutil.copytree(source_root / "test-data" / "ert" / "snake_oil", "test_data")
-    os.chdir("test_data")
+    monkeypatch.chdir("test_data")
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:
             if "NUM_REALIZATIONS 25" in line:
@@ -401,9 +401,9 @@ def _run_snake_oil(source_root: Path):
     run_cli(parsed)
 
 
-def _run_heat_equation(source_root: Path, run_mode):
+def _run_heat_equation(source_root: Path, run_mode, monkeypatch: pytest.MonkeyPatch):
     shutil.copytree(source_root / "test-data" / "ert" / "heat_equation", "test_data")
-    os.chdir("test_data")
+    monkeypatch.chdir("test_data")
     with Path("config.ert").open("a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
     parser = ArgumentParser(prog="test_main")
@@ -430,7 +430,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root: Path):
     )
     monkeypatch.chdir(cache_path)
     if not (cache_path / "test_data").exists():
-        _run_snake_oil(source_root)
+        _run_snake_oil(source_root, monkeypatch)
     else:
         monkeypatch.chdir("test_data")
 
@@ -448,7 +448,7 @@ def _shared_heat_equation_es(request, monkeypatch, source_root: Path):
     )
     monkeypatch.chdir(cache_path)
     if not os.listdir(cache_path):
-        _run_heat_equation(source_root, ENSEMBLE_SMOOTHER_MODE)
+        _run_heat_equation(source_root, ENSEMBLE_SMOOTHER_MODE, monkeypatch)
     else:
         monkeypatch.chdir("test_data")
 
@@ -466,7 +466,7 @@ def _shared_heat_equation_esmda(request, monkeypatch, source_root: Path):
     )
     monkeypatch.chdir(cache_path)
     if not os.listdir(cache_path):
-        _run_heat_equation(source_root, ES_MDA_MODE)
+        _run_heat_equation(source_root, ES_MDA_MODE, monkeypatch)
     else:
         monkeypatch.chdir("test_data")
 
@@ -484,7 +484,7 @@ def _shared_heat_equation_enif(request, monkeypatch, source_root: Path):
     )
     monkeypatch.chdir(cache_path)
     if not os.listdir(cache_path):
-        _run_heat_equation(source_root, ENIF_MODE)
+        _run_heat_equation(source_root, ENIF_MODE, monkeypatch)
     else:
         monkeypatch.chdir("test_data")
 

@@ -1,8 +1,7 @@
-import os
 import queue
 import shutil
 import stat
-from collections.abc import Callable, Generator, Iterator
+from collections.abc import Callable, Generator
 from contextlib import AbstractContextManager, contextmanager
 from copy import deepcopy
 from pathlib import Path
@@ -39,17 +38,15 @@ def testdata() -> Path:
 
 @pytest.fixture
 def copy_testdata_tmpdir(
-    testdata: Path, tmp_path: Path
-) -> Iterator[Callable[[str | None], Path]]:
+    testdata: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Callable[[str | None], Path]:
     def _copy_tree(path: str | None = None):
         path_ = testdata if path is None else testdata / path
         shutil.copytree(path_, tmp_path, dirs_exist_ok=True)
         return path_
 
-    cwd = Path.cwd()
-    os.chdir(tmp_path)
-    yield _copy_tree
-    os.chdir(cwd)
+    monkeypatch.chdir(tmp_path)
+    return _copy_tree
 
 
 @pytest.fixture(scope="module")
