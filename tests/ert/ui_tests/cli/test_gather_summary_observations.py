@@ -97,6 +97,7 @@ def test_that_single_experiment_in_storage_is_automatically_selected(capsys):
 @pytest.mark.usefixtures(
     "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
 )
+@pytest.mark.skip_mac_ci
 def test_that_gather_summary_obs_can_gather_well_localization_from_breakthrough(capsys):
     config_path = "test_data/snake_oil.ert"
     storage_path = "test_data/storage/"
