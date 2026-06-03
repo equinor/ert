@@ -21,7 +21,7 @@ def source_dir() -> Path:
         if (current_path / ".git").is_dir():
             return current_path
         # This is to find root dir for git worktrees
-        elif (current_path / ".git").is_file():
+        if (current_path / ".git").is_file():
             with (current_path / ".git").open(encoding="utf-8") as f:
                 for line in f:
                     if "gitdir:" in line:
@@ -183,7 +183,8 @@ def fixture_setup_case(tmp_path_factory, source_root, monkeypatch):
     def copy_case(path, config_file):
         tmp_path = tmp_path_factory.mktemp(path.replace("/", "-"))
         shutil.copytree(
-            os.path.join(source_root, "test-data/ert", path), tmp_path / "test_data"
+            Path(source_root) / "test-data" / "ert" / path,
+            tmp_path / "test_data",
         )
         monkeypatch.chdir(tmp_path / "test_data")
         return ErtConfig.from_file(config_file)

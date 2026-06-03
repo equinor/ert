@@ -79,7 +79,7 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     assert all(client.failed_realizations_mask())
 
     write_poly_eval(failing_reals=False)
-    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
+    qtbot.waitUntil(run_dialog.rerun_button.isEnabled, timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
@@ -178,16 +178,14 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
     # Check we have failed realizations
     assert any(client.failed_realizations_mask())
     failed_realizations = [
-        i
-        for i, mask in enumerate(client.failed_realizations_mask())
-        if mask
+        i for i, mask in enumerate(client.failed_realizations_mask()) if mask
     ]
 
     assert set(failed_realizations) == failing_reals_first_try
 
     failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 3)}
     write_poly_eval(failing_reals=failing_reals_second_try)
-    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
+    qtbot.waitUntil(run_dialog.rerun_button.isEnabled, timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
@@ -211,9 +209,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
     # Second restart
     assert any(client.failed_realizations_mask())
     failed_realizations = [
-        i
-        for i, mask in enumerate(client.failed_realizations_mask())
-        if mask
+        i for i, mask in enumerate(client.failed_realizations_mask()) if mask
     ]
     assert set(failed_realizations) == (
         failing_reals_second_try.union(failing_reals_second_try)
@@ -221,7 +217,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
 
     failing_reals_third_try = {*random.sample(list(failing_reals_second_try), 2)}
     write_poly_eval(failing_reals=failing_reals_third_try)
-    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
+    qtbot.waitUntil(run_dialog.rerun_button.isEnabled, timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
@@ -339,16 +335,14 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     # Check we have failed realizations
     assert any(client.failed_realizations_mask())
     failed_realizations = [
-        i
-        for i, mask in enumerate(client.failed_realizations_mask())
-        if mask
+        i for i, mask in enumerate(client.failed_realizations_mask()) if mask
     ]
 
     assert set(failed_realizations) == failing_reals_first_try
 
     failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 5)}
     write_poly_eval(failing_reals=failing_reals_second_try)
-    qtbot.waitUntil(lambda: run_dialog.rerun_button.isEnabled(), timeout=10000)
+    qtbot.waitUntil(run_dialog.rerun_button.isEnabled, timeout=10000)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is False, timeout=5000)
 
@@ -368,8 +362,6 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     # Second restart
     assert any(client.failed_realizations_mask())
     failed_realizations = [
-        i
-        for i, mask in enumerate(client.failed_realizations_mask())
-        if mask
+        i for i, mask in enumerate(client.failed_realizations_mask()) if mask
     ]
     assert set(failed_realizations) == failing_reals_second_try

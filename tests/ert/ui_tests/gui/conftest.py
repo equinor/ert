@@ -59,9 +59,7 @@ def fail_on_unexpected_warning_dialog(monkeypatch: pytest.MonkeyPatch) -> None:
 
     @staticmethod  # type: ignore[misc]
     def patched(parent, title, text, *args, **kwargs):  # type: ignore[override]
-        raise AssertionError(
-            f"Unexpected QMessageBox.warning: {title!r}\n{text}"
-        )
+        raise AssertionError(f"Unexpected QMessageBox.warning: {title!r}\n{text}")
 
     monkeypatch.setattr(QMessageBox, "warning", patched)
 
