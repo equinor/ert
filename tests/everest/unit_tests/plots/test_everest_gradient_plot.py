@@ -89,31 +89,30 @@ def test_gradient_plot_legends_appear(generic_plot_args):
     assert "control_2" in legend_texts
 
 
-def test_gradient_plot_hatches(generic_plot_context, ensemble):
+def test_gradient_plot_hatches(generic_plot_context, ensemble, palette_size):
     figure, plot = Figure(), EverestGradientsPlot()
-    n_colors = generic_plot_context.plotConfig().get_number_of_colors()
 
     data = pd.DataFrame(
         {
-            "batch_id": list(range(n_colors * 4)),
-            "realization": list(range(n_colors * 4)),
-            "control_name": [f"control_{i}" for i in range(n_colors * 4)],
-            "control_value": [i * 0.1 for i in range(n_colors * 4)],
-            "Response": list(range(n_colors * 4)),
+            "batch_id": list(range(palette_size * 4)),
+            "realization": list(range(palette_size * 4)),
+            "control_name": [f"control_{i}" for i in range(palette_size * 4)],
+            "control_value": [i * 0.1 for i in range(palette_size * 4)],
+            "Response": list(range(palette_size * 4)),
         }
     )
-    plot.set_selected_controls([f"control_{i}" for i in range(n_colors * 4)])
+    plot.set_selected_controls([f"control_{i}" for i in range(palette_size * 4)])
     plot.plot(
         figure, generic_plot_context, {ensemble: data}, pd.DataFrame(), {}, None, None
     )
     bars = [b for b in figure.get_axes()[0].containers if isinstance(b, BarContainer)]
     hatches = [b.patches[0].get_hatch() for b in bars]
     for i, patch in enumerate(hatches):
-        if i < n_colors:
+        if i < palette_size:
             assert not patch
-        elif i < n_colors * 2:
+        elif i < palette_size * 2:
             assert patch == "//"
-        elif i < n_colors * 3:
+        elif i < palette_size * 3:
             assert patch == ".."
         else:
             assert patch == "-"
