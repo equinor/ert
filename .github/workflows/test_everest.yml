@@ -108,6 +108,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         report_type: test_results
+        files: junit.xml
 
     - name: Test for a clean repository
       if: ${{ inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' }}

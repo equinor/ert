@@ -124,6 +124,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         report_type: test_results
+        files: junit.xml,junit-doc.xml,junit-mem.xml
 
     - name: Test CLI
       run: |
