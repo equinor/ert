@@ -3,7 +3,6 @@ import sys
 import pandas as pd
 import pytest
 
-from ert.exceptions import StorageError
 from ert.plugins import ErtPluginManager
 from ert.plugins.hook_implementations.workflows.export_misfit_data import (
     ExportMisfitDataJob,
@@ -24,7 +23,7 @@ def test_export_misfit(snake_oil_default_storage, snapshot):
 
 
 def test_export_misfit_no_responses_in_storage(new_ensemble):
-    with pytest.raises(StorageError, match="No responses loaded"):
+    with pytest.raises(UserWarning, match="No responses loaded"):
         ExportMisfitDataJob().run(new_ensemble, [])
 
 
