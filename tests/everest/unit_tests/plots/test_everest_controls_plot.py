@@ -3,16 +3,8 @@ import pytest
 from matplotlib.figure import Figure
 from tests.everest.unit_tests.plots.utils import move_cursor
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.tools.plot.plottery.plots import EverestControlsPlot
-
-
-@pytest.fixture
-def ensemble():
-    return EnsembleObject(
-        "batch_0", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
-    )
 
 
 @pytest.fixture
@@ -42,14 +34,14 @@ def many_controls(palette_size):
 
 
 def test_that_plot_pr_batch_creates_one_line_per_selected_control(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a", "ctrl_b"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -61,14 +53,14 @@ def test_that_plot_pr_batch_creates_one_line_per_selected_control(
 
 
 def test_that_plot_pr_batch_creates_one_for_single_control(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -83,14 +75,14 @@ def test_that_plot_pr_batch_creates_one_for_single_control(
 
 
 def test_that_no_collections_are_created_when_by_batch_is_true(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a", "ctrl_b"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -102,7 +94,7 @@ def test_that_no_collections_are_created_when_by_batch_is_true(
 
 
 def test_that_no_lines_are_created_when_by_batch_is_false(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     generic_plot_context.by_batch = False
 
@@ -111,7 +103,7 @@ def test_that_no_lines_are_created_when_by_batch_is_false(
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -123,7 +115,7 @@ def test_that_no_lines_are_created_when_by_batch_is_false(
 
 
 def test_that_plot_pr_control_creates_one_scatter_collection_per_batch(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     generic_plot_context.by_batch = False
     plot, figure = EverestControlsPlot(), Figure()
@@ -131,7 +123,7 @@ def test_that_plot_pr_control_creates_one_scatter_collection_per_batch(
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -143,14 +135,14 @@ def test_that_plot_pr_control_creates_one_scatter_collection_per_batch(
 
 
 def test_that_plot_pr_batch_with_empty_data_creates_no_axes(
-    generic_plot_context, ensemble
+    generic_plot_context, everest_ensemble
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: pd.DataFrame()},
+        {everest_ensemble: pd.DataFrame()},
         pd.DataFrame(),
         {},
         None,
@@ -160,14 +152,14 @@ def test_that_plot_pr_batch_with_empty_data_creates_no_axes(
 
 
 def test_that_plot_pr_batch_uses_correct_x_and_y_values(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -181,7 +173,7 @@ def test_that_plot_pr_batch_uses_correct_x_and_y_values(
 
 
 def test_that_plot_pr_control_uses_correct_x_and_y_values(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     generic_plot_context.by_batch = False
     plot, figure = EverestControlsPlot(), Figure()
@@ -189,7 +181,7 @@ def test_that_plot_pr_control_uses_correct_x_and_y_values(
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -208,14 +200,14 @@ def test_that_plot_pr_control_uses_correct_x_and_y_values(
 
 
 def test_that_plot_contains_legend_items_when_number_of_entries_is_below_threshold(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a", "ctrl_b"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -227,14 +219,14 @@ def test_that_plot_contains_legend_items_when_number_of_entries_is_below_thresho
 
 
 def test_that_plot_does_not_contain_legend_when_number_of_entries_is_above_threshold(
-    generic_plot_context, ensemble, many_controls, palette_size
+    generic_plot_context, everest_ensemble, many_controls, palette_size
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls([f"ctrl_{i}" for i in range(palette_size * 4)])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: many_controls},
+        {everest_ensemble: many_controls},
         pd.DataFrame(),
         {},
         None,
@@ -244,7 +236,7 @@ def test_that_plot_does_not_contain_legend_when_number_of_entries_is_above_thres
 
 
 def test_that_plot_rename_batch_0_in_legend_for_by_controls_plot(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     generic_plot_context.by_batch = False
     plot, figure = EverestControlsPlot(), Figure()
@@ -252,7 +244,7 @@ def test_that_plot_rename_batch_0_in_legend_for_by_controls_plot(
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -265,14 +257,14 @@ def test_that_plot_rename_batch_0_in_legend_for_by_controls_plot(
 
 
 def test_that_line_style_matches_when_number_of_controls_exceeds_color_palette_length(
-    generic_plot_context, ensemble, many_controls, palette_size
+    generic_plot_context, everest_ensemble, many_controls, palette_size
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls([f"ctrl_{i}" for i in range(palette_size * 4)])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: many_controls},
+        {everest_ensemble: many_controls},
         pd.DataFrame(),
         {},
         None,
@@ -296,14 +288,14 @@ def test_that_line_style_matches_when_number_of_controls_exceeds_color_palette_l
 
 
 def test_that_plot_type_matches_line_when_by_batch_is_true(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -313,7 +305,7 @@ def test_that_plot_type_matches_line_when_by_batch_is_true(
 
 
 def test_that_plot_type_matches_scatter_when_by_batch_is_false(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     generic_plot_context.by_batch = False
     plot, figure = EverestControlsPlot(), Figure()
@@ -321,7 +313,7 @@ def test_that_plot_type_matches_scatter_when_by_batch_is_false(
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -331,14 +323,14 @@ def test_that_plot_type_matches_scatter_when_by_batch_is_false(
 
 
 def test_that_date_support_is_deactivated(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
@@ -348,14 +340,14 @@ def test_that_date_support_is_deactivated(
 
 
 def test_that_hover_labels_are_set_correctly_for_by_batch_plot(
-    generic_plot_context, ensemble, controls_data
+    generic_plot_context, everest_ensemble, controls_data
 ):
     plot, figure = EverestControlsPlot(), Figure()
     plot.set_selected_controls(["ctrl_a", "ctrl_b"])
     plot.plot(
         figure,
         generic_plot_context,
-        {ensemble: controls_data},
+        {everest_ensemble: controls_data},
         pd.DataFrame(),
         {},
         None,
