@@ -60,7 +60,6 @@ class EverestBatchObjectiveFunctionPlot:
 
         if not all_dfs:
             return
-
         combined = pd.concat(all_dfs, ignore_index=True)
 
         value_col = next(
@@ -86,6 +85,20 @@ class EverestBatchObjectiveFunctionPlot:
             "-o",
             color=color,
         )
+
+        improvement_scatter_labels = []
+        improvement_scatter_data = None
+        if not improvement_data.empty:
+            improvement_scatter_data = axes.scatter(
+                improvement_data["batch_id"],
+                improvement_data[value_col],
+                c=color,
+                s=20,
+                zorder=5,
+            )
+            for _, row in improvement_data.iterrows():
+                batch_id = int(row["batch_id"])
+                improvement_scatter_labels.append(f"Batch {batch_id}")
 
         rejected_scatter_labels = []
         rejected_scatter_data = None
@@ -113,41 +126,6 @@ class EverestBatchObjectiveFunctionPlot:
                         """
                     ).strip("\n")
                 )
-                axes.annotate(
-                    f"Batch {batch_id}\nViolation value: {val:.3g}\nType: {val_type}"
-                    if plot_context.extended_plot_information
-                    else f"Batch {batch_id}",
-                    xy=(row["batch_id"], row[value_col]),
-                    xytext=(5, -5),
-                    textcoords="offset points",
-                    color="red",
-                    verticalalignment="top",
-                    horizontalalignment="left",
-                )
-                if plot_context.extended_plot_information:
-                    axes.margins(y=0.2)
-
-        annotation_color = {True: color, False: "red"}
-        for _, row in improvement_data.iterrows():
-            improvement_value = (
-                0
-                if row.get("improvement_value", float("nan")) == float("-inf")
-                else row.get("improvement_value", float("nan"))
-            )
-            batch_id = int(row["batch_id"])
-            axes.annotate(
-                f"Batch {batch_id}\nImprovement value: {improvement_value:.3g}"
-                if plot_context.extended_plot_information
-                else f"Batch {batch_id}",
-                xy=(row["batch_id"], row[value_col]),
-                xytext=(5, -5),
-                textcoords="offset points",
-                color=annotation_color[row["is_improvement"]],
-                verticalalignment="top",
-                horizontalalignment="left",
-            )
-            if plot_context.extended_plot_information:
-                axes.margins(y=0.2)
 
         config.add_legend_item("Accepted", lines[0])
         config.add_legend_item(
@@ -159,14 +137,19 @@ class EverestBatchObjectiveFunctionPlot:
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-        if rejected_scatter_data and rejected_scatter_labels:
-            PlotTools.labels_on_hover(
-                PlotType.SCATTER,
-                axes,
-                figure,
-                data=rejected_scatter_data,
-                labels=rejected_scatter_labels,
-            )
+        hover_label_and_data_tuples = [
+            (rejected_scatter_labels, rejected_scatter_data),
+            (improvement_scatter_labels, improvement_scatter_data),
+        ]
+        for labels, scatter_data in hover_label_and_data_tuples:
+            if labels and scatter_data:
+                PlotTools.labels_on_hover(
+                    PlotType.SCATTER,
+                    axes,
+                    figure,
+                    data=scatter_data,
+                    labels=labels,
+                )
 
         PlotTools.finalizePlot(
             plot_context,
@@ -175,4 +158,3 @@ class EverestBatchObjectiveFunctionPlot:
             default_x_label="Batch iteration",
             default_y_label="Aggregated objective value",
         )
-        return
