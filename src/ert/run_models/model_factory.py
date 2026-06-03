@@ -130,6 +130,16 @@ _MODEL_MAP: dict[ExperimentType, type[RunModel]] = {
 }
 
 
+def _get_supports_rerunning(runmodel_config: RunModelConfigs | EverestConfig) -> bool:
+    """Return whether the config's model supports rerunning failed realizations."""
+    if isinstance(runmodel_config, EverestConfig):
+        return False
+    model_cls = _MODEL_MAP.get(runmodel_config.experiment_type)
+    if model_cls is None:
+        return False
+    return model_cls.supports_rerunning_failed_realizations
+
+
 def _instantiate_run_model(
     runmodel_config: RunModelConfigs | EverestConfig,
     status_queue: SimpleQueue[StatusEvents],

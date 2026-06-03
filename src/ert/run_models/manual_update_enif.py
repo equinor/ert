@@ -36,6 +36,10 @@ class ManualUpdateEnIF(ManualUpdate):
     def description(cls) -> str:
         return "Load parameters and responses from existing → EnIF update"
 
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.MANUAL
+
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
     ) -> None:

@@ -35,6 +35,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
 )
 from ert.storage import open_storage
+from ert.storage.local_storage import LocalStorage, local_storage_set_ert_config
 
 st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
 
@@ -488,6 +489,10 @@ def snake_oil_storage(snake_oil_case_storage):
 
 @pytest.fixture
 def snake_oil_default_storage(snake_oil_case_storage):
+    # Ensure old storage versions are migrated before read-only access.
+    local_storage_set_ert_config(snake_oil_case_storage)
+    LocalStorage.perform_migration(Path(snake_oil_case_storage.ens_path))
+
     with open_storage(snake_oil_case_storage.ens_path) as storage:
         experiment = storage.get_experiment_by_name("ensemble-experiment")
         yield experiment.get_ensemble_by_name("default_0")
