@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from ert import ErtScript
-from ert.exceptions import StorageError
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
@@ -30,10 +29,13 @@ class ExportMisfitDataJob(ErtScript):
         target_file = "misfit.hdf" if not workflow_args else workflow_args[0]
 
         realizations = ensemble.get_realization_list_with_responses()
+        if len(realizations) == 0:
+            raise UserWarning("No responses loaded")
 
         misfit = ensemble.load_all_misfit_data()
-        if len(realizations) == 0 or misfit.empty:
-            raise StorageError("No responses loaded")
+        if misfit.empty:
+            raise UserWarning("No responses loaded")
+
         misfit.columns = pd.Index([val.split(":")[1] for val in misfit.columns])
         misfit = misfit.drop("TOTAL", axis=1)
         misfit.to_hdf(target_file, key="misfit", mode="w")
