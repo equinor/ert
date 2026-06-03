@@ -217,6 +217,8 @@ class AdaptiveLocalizationUpdate:
         start_time = time.perf_counter()
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
+            if update_idx.size == 0:
+                continue
             X_local = param_ensemble[update_idx, :]
 
             param_ensemble[update_idx, :] = self._smoother.assimilate_batch(

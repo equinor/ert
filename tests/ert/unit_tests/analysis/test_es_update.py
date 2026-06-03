@@ -1,3 +1,4 @@
+import logging
 from contextlib import ExitStack as does_not_raise
 from typing import Any
 from unittest.mock import patch
@@ -502,6 +503,99 @@ def test_that_alpha_can_be_used_for_outlier_detection(
         assert (
             posterior_update.observations_and_responses["status"].to_list() == expected
         )
+
+
+@pytest.mark.parametrize("localization", [True, False])
+def test_that_constant_parameter_is_skipped_with_warning_and_carried_over(
+    storage, obs, caplog, localization
+):
+    """A parameter that is constant across all realizations has zero variance, so
+    no parameters are selected for update. Regardless of the
+    update strategy, the group should now be skipped with a warning and carried
+    over to the posterior unchanged.
+    """
+    constant_parameter = GenKwConfig(
+        name="KEY_1",
+        group="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+    ).model_dump(mode="json")
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    experiment = storage.create_experiment(
+        name="constant_param",
+        experiment_config={
+            "parameter_configuration": [constant_parameter],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
+    )
+    prior_storage = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+
+    prior_storage.save_parameters(
+        dataset=pl.concat(
+            [
+                pl.DataFrame({"KEY_1": [0.5], "realization": iens})
+                for iens in range(prior_storage.ensemble_size)
+            ],
+            how="vertical",
+        )
+    )
+
+    for iens in range(prior_storage.ensemble_size):
+        values = rng.uniform(0.8, 1, 3)
+        prior_storage.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series(np.full(len(values), 0), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(values)), dtype=pl.UInt16),
+                    "values": values,
+                }
+            ),
+            iens,
+        )
+
+    posterior_storage = storage.create_ensemble(
+        prior_storage.experiment_id,
+        ensemble_size=prior_storage.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior_storage,
+    )
+
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=["KEY_1"],
+        param_configs=prior_storage.experiment.parameter_configuration,
+        enkf_truncation=es_settings.enkf_truncation,
+        correlation_threshold=es_settings.correlation_threshold,
+        localization=localization,
+    )
+    with caplog.at_level(logging.WARNING):
+        smoother_update(
+            prior_storage,
+            posterior_storage,
+            observations=["OBSERVATION"],
+            update_settings=ObservationSettings(),
+            rng=rng,
+            strategy_map=strategy_map,
+        )
+
+    assert "have 0 variance across realizations and will not be updated" in caplog.text
+
+    prior_values = prior_storage.load_parameters_numpy(
+        "KEY_1", np.arange(prior_storage.ensemble_size)
+    )
+    posterior_values = posterior_storage.load_parameters_numpy(
+        "KEY_1", np.arange(prior_storage.ensemble_size)
+    )
+    assert np.array_equal(prior_values, posterior_values)
 
 
 @pytest.mark.slow
