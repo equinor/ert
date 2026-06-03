@@ -246,6 +246,7 @@ select = [
     "SIM",   # flake-8-simplify
     "SLOT",
     "TD",
+    "TID251", # banned-api (bare os.chdir in tests)
     "TID",
     "TRY203",
     "TRY300",
@@ -288,6 +289,7 @@ allowed-confusables = ["–"]
 "src/ert/dark_storage/*" = ["RUF029"] # unused-async
 "src/ert/storage/local_ensemble.py" = ["PD010"] # polars .pivot, not pandas
 "*.ipynb" = ["E402"]
+"!tests/**" = ["TID251"]
 
 
 [tool.ruff.lint.pylint]
@@ -300,6 +302,9 @@ allow-dunder-method-names = [
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"os.chdir".msg = "Use monkeypatch.chdir or the use_tmpdir fixture so the working directory is restored on teardown."
 
 [tool.pyright]
 include = ["src"]
