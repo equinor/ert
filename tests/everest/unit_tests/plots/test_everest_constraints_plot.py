@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from matplotlib.figure import Figure
+from tests.everest.unit_tests.plots.utils import create_everest_figure
 
 from ert.gui.tools.plot.plottery.plots import EverestConstraintsPlot
 
@@ -21,16 +21,13 @@ def constraints_data():
 def test_that_bounds_and_realization_are_plotted(
     everest_ensemble, generic_plot_context, constraints_data
 ):
-    plot, figure = EverestConstraintsPlot(), Figure()
-    plot.plot(
-        figure,
+    figure = create_everest_figure(
+        EverestConstraintsPlot(),
+        constraints_data,
         generic_plot_context,
-        {everest_ensemble: constraints_data},
-        pd.DataFrame(),
-        {},
-        None,
-        None,
+        everest_ensemble,
     )
+
     axes = figure.axes[0]
     lines = axes.get_lines()
     assert len(lines) == 3  # Realization line + lower bound + upper bound
@@ -46,16 +43,13 @@ def test_that_bounds_and_realization_are_plotted(
 def test_that_bounds_have_correct_style(
     everest_ensemble, generic_plot_context, constraints_data
 ):
-    plot, figure = EverestConstraintsPlot(), Figure()
-    plot.plot(
-        figure,
+    figure = create_everest_figure(
+        EverestConstraintsPlot(),
+        constraints_data,
         generic_plot_context,
-        {everest_ensemble: constraints_data},
-        pd.DataFrame(),
-        {},
-        None,
-        None,
+        everest_ensemble,
     )
+
     axes = figure.get_axes()[0]
     lines = axes.get_lines()
     bound_lines = lines[1:]
