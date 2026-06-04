@@ -2,6 +2,7 @@ import io
 import json
 import re
 
+import numpy as np
 import pandas as pd
 import pytest
 from requests import Response
@@ -10,7 +11,7 @@ from starlette.testclient import TestClient
 from ert.config._observations import SummaryObservation
 from ert.config._shapes import CircleShapeConfig, ShapeRegistry
 from ert.dark_storage.common import get_storage_api_version
-from ert.storage import open_storage
+from ert.storage import BlobType, open_storage
 
 
 @pytest.mark.slow
@@ -346,3 +347,65 @@ def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
     assert all(dataframe.index.to_numpy() == [1, 2, 4])
     assert dataframe.index.name == "Realization"
     assert dataframe.shape == (3, 1)
+
+
+def test_that_get_ensemble_returns_blob_storage_data(
+    tmp_path, monkeypatch, dark_storage_app
+):
+    storage_path = tmp_path / "storage"
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
+        ensemble_id = str(ensemble.id)
+
+        dense_matrix = np.ones((10, 5))
+        buf = io.BytesIO()
+        np.save(buf, dense_matrix)
+        ensemble.save_blob(
+            data=buf.getvalue(),
+            file_type="numpy",
+            blob_type=BlobType.MATRIX,
+            update_algorithm="ensemble_smoother",
+            data_type=str(dense_matrix.dtype),
+            shape=(10, 5),
+            sparse=False,
+        )
+
+        sparse_matrix = np.eye(10, dtype=np.float32)
+        buf = io.BytesIO()
+        np.save(buf, sparse_matrix)
+        ensemble.save_blob(
+            data=buf.getvalue(),
+            file_type="numpy",
+            blob_type=BlobType.MATRIX,
+            update_algorithm="ensemble_smoother",
+            data_type=str(sparse_matrix.dtype),
+            shape=(10, 10),
+            sparse=True,
+        )
+
+        ensemble.save_blob(
+            data=b"observation report data",
+            file_type="parquet",
+            blob_type=BlobType.OBSERVATION_REPORT,
+            update_algorithm="ensemble_smoother",
+        )
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+
+    with TestClient(dark_storage_app) as client:
+        resp = client.get(f"/ensembles/{ensemble_id}")
+        assert resp.status_code == 200
+        blobs = resp.json()["blobs"]
+
+        matrix_blobs = [blob for blob in blobs if blob["blob_type"] == "matrix"]
+        observation_report_blobs = [
+            blob for blob in blobs if blob["blob_type"] == "observation_report"
+        ]
+
+        assert len(matrix_blobs) == 2
+        assert len(observation_report_blobs) == 1
+        assert {tuple(blob["shape"]) for blob in matrix_blobs} == {(10, 5), (10, 10)}
+        assert {blob["sparse"] for blob in matrix_blobs} == {True, False}
+        assert all(blob["file_size"] > 0 for blob in matrix_blobs)
+        assert observation_report_blobs[0]["file_size"] > 0

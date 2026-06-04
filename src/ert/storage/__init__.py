@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from .blob_data import BlobStorageData, BlobType, MatrixStorageData
 from .local_ensemble import LocalEnsemble, load_realization_parameters_and_responses
 from .local_experiment import ExperimentState, ExperimentStatus, LocalExperiment
 from .local_storage import LocalStorage, local_storage_set_ert_config
@@ -55,10 +56,13 @@ def open_storage(
 
 
 __all__ = [
+    "BlobStorageData",
+    "BlobType",
     "Ensemble",
     "Experiment",
     "ExperimentState",
     "ExperimentStatus",
+    "MatrixStorageData",
     "Mode",
     "RealizationStorageState",
     "Storage",

@@ -41,7 +41,7 @@ from ert.data._measured_data import ObservationError, ResponseError
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
-from .blob_data import BlobStorageData, BlobType
+from .blob_data import BlobStorageData, BlobType, MatrixStorageData
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
@@ -706,6 +706,12 @@ class LocalEnsemble(BaseMode):
 
         return None
 
+    def list_blob_data(self) -> list[Path]:
+        blobs_dir = self.mount_point / BLOB_DATA_DIR
+        if not blobs_dir.exists():
+            return []
+        return list(blobs_dir.iterdir())
+
     @staticmethod
     def sample_parameter(
         parameter: ParameterConfig,
@@ -1350,21 +1356,45 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def save_blob(
-        self, data: bytes, blob_type: BlobType = BlobType.OBSERVATION_REPORT
+        self,
+        data: bytes,
+        file_type: str,
+        blob_type: BlobType,
+        update_algorithm: str,
+        data_type: str | None = None,
+        shape: tuple[int, int] | None = None,
+        sparse: bool | None = None,
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
         blob_dir.mkdir(parents=True, exist_ok=True)
-        blob_id = uuid.uuid4().hex[:8]
-        parquet_path = blob_dir / f"{blob_id}.parquet"
-        self._storage._write_transaction(parquet_path, data)
-        blob_data = BlobStorageData(
-            blob_type=blob_type,
-            uri=f"{blob_id}.parquet",
-            file_size=len(data),
-            ensemble_id=str(self.id),
-        )
+        stem = uuid.uuid4().hex[:8]
+        blob_path = blob_dir / f"{stem}.blob"
+        if blob_type == BlobType.MATRIX:
+            assert data_type is not None, "data_type must be provided for matrix blobs"
+            assert shape is not None, "shape must be provided for matrix blobs"
+            assert sparse is not None, "sparse must be provided for matrix blobs"
+            blob_data = MatrixStorageData(
+                blob_type=blob_type,
+                uri=f"{stem}.blob",
+                file_size=len(data),
+                file_type=file_type,
+                update_algorithm=update_algorithm,
+                data_type=data_type,
+                shape=shape,
+                sparse=sparse,
+            )
+        else:
+            blob_data = BlobStorageData(
+                blob_type=blob_type,
+                uri=f"{stem}.blob",
+                file_size=len(data),
+                file_type=file_type,
+                update_algorithm=update_algorithm,
+            )
+
+        self._storage._write_transaction(blob_path, data)
         self._storage._write_transaction(
-            blob_dir / f"{blob_id}.json",
+            blob_dir / f"{stem}.json",
             blob_data.model_dump_json(indent=2).encode("utf-8"),
         )
 

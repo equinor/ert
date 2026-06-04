@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from tabulate import tabulate
 
 
@@ -81,5 +81,15 @@ class AnalysisErrorEvent(AnalysisEvent):
 
 class AnalysisCompleteEvent(AnalysisEvent):
     event_type: Literal["AnalysisCompleteEvent"] = "AnalysisCompleteEvent"
+    update_algorithm: str
     data: DataSection
-    ensemble_id: str
+
+
+class AnalysisMatrixEvent(AnalysisEvent):
+    event_type: Literal["AnalysisMatrixEvent"] = "AnalysisMatrixEvent"
+    name: str
+    sparse: bool
+    shape: tuple[int, int]
+    data_type: str
+    update_algorithm: str
+    matrix_bytes: bytes = Field(exclude=True)

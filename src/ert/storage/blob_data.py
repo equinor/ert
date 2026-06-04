@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 
 class BlobType(StrEnum):
     OBSERVATION_REPORT = "observation_report"
+    MATRIX = "matrix"
 
 
 class BlobStorageData(BaseModel):
@@ -14,4 +15,11 @@ class BlobStorageData(BaseModel):
     blob_type: BlobType
     uri: str
     file_size: int
-    ensemble_id: str
+    file_type: str
+    update_algorithm: str
+
+
+class MatrixStorageData(BlobStorageData):
+    sparse: bool = False
+    shape: tuple[int, int] = (0, 0)
+    data_type: str

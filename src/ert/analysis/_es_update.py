@@ -317,7 +317,6 @@ def build_strategy_map(
         threshold.
     progress_callback : Callable[[AnalysisEvent], None] | None
         Callback for reporting progress.
-
     Returns
     -------
     dict[str, UpdateStrategy]
@@ -452,7 +451,7 @@ def smoother_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
-            ensemble_id=str(posterior_storage.id),
+            update_algorithm="ensemble_smoother",
         )
     )
     return smoother_snapshot
