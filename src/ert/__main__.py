@@ -614,7 +614,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
             "config", type=valid_file, help="Path to ERT config file"
         )
         extract_obs_summary_keys_parser.add_argument(
-            "experiment", nargs="?", type=str, default=None, help="Experiment ID"
+            "experiment_id", nargs="?", type=str, default=None, help="Experiment ID"
         )
         extract_obs_summary_keys_parser.add_argument(
             "--output-csv-file",
