@@ -13,8 +13,14 @@ from starlette.websockets import WebSocketDisconnect
 
 from ert.config import ConfigWarning
 from ert.dark_storage.app import app
-from ert.dark_storage.endpoints.experiment_server import ExperimentRunnerState, _runs
+from ert.dark_storage.endpoints.experiment_server import (
+    ExperimentRunner,
+    ExperimentRunnerState,
+    _runs,
+)
 from ert.ensemble_evaluator import EndEvent
+from ert.namespace import Namespace
+from ert.run_models.model_factory import build_run_model_config
 from ert.scheduler.event import FinishedEvent
 from ert.services import create_ertserver_client
 from ert.storage import ExperimentState
@@ -30,7 +36,12 @@ from everest.everest_storage import EverestStorage
 from everest.strings import (
     OPT_FAILURE_ALL_REALIZATIONS,
     OPT_FAILURE_REALIZATIONS,
+    EverEndpoints,
 )
+
+_FAKE_ENSEMBLE_ID = "00000000-0000-0000-0000-000000000001"
+
+_START_EXPERIMENT_URL = f"/experiment_server/{EverEndpoints.start_experiment}"
 
 
 @pytest.fixture
@@ -377,3 +388,182 @@ async def test_websocket_no_events_on_connect(setup_client):
         result.append(await receive_task)
 
     assert result == [jsonable_encoder(expected_result)]
+
+
+@pytest.fixture
+def start_experiment_client(monkeypatch):
+    original = dict(_runs)
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    client = TestClient(app)
+    credentials = b64encode(b"username:password").decode()
+    yield client, {"Authorization": f"Basic {credentials}"}
+    _runs.clear()
+    _runs.update(original)
+
+
+@pytest.mark.parametrize(
+    ("mode", "extra_kwargs"),
+    [
+        pytest.param(
+            "test_run",
+            {
+                "experiment_name": None,
+                "current_ensemble": "prior",
+                "realizations": None,
+            },
+            id="single_test_run",
+        ),
+        pytest.param(
+            "ensemble_experiment",
+            {
+                "experiment_name": "exp",
+                "current_ensemble": "prior",
+                "realizations": None,
+            },
+            id="ensemble_experiment",
+        ),
+        pytest.param(
+            "ensemble_smoother",
+            {
+                "experiment_name": "exp",
+                "target_ensemble": "prior_%d",
+                "realizations": None,
+            },
+            id="ensemble_smoother",
+        ),
+        pytest.param(
+            "ensemble_information_filter",
+            {
+                "experiment_name": "exp",
+                "target_ensemble": "prior_%d",
+                "realizations": None,
+            },
+            id="ensemble_information_filter",
+        ),
+        pytest.param(
+            "es_mda",
+            {
+                "experiment_name": "exp",
+                "target_ensemble": "prior_%d",
+                "weights": "4, 2, 1",
+                "restart_ensemble_id": None,
+                "realizations": None,
+            },
+            id="multiple_data_assimilation",
+        ),
+        pytest.param(
+            "manual_update",
+            {
+                "ensemble_id": _FAKE_ENSEMBLE_ID,
+                "target_ensemble": "prior_1",
+                "realizations": None,
+            },
+            id="manual_update",
+        ),
+        pytest.param(
+            "evaluate_ensemble",
+            {"ensemble_id": _FAKE_ENSEMBLE_ID, "realizations": None},
+            id="evaluate_ensemble",
+        ),
+    ],
+)
+def test_that_start_experiment_accepts_all_ert_run_model_config_types(
+    start_experiment_client, poly_ert_config, mode, extra_kwargs
+):
+    client, auth_headers = start_experiment_client
+    run_model_config = build_run_model_config(
+        poly_ert_config, Namespace(mode=mode, **extra_kwargs)
+    )
+    payload = run_model_config.model_dump(mode="json")
+
+    with patch.object(ExperimentRunner, "run", new_callable=AsyncMock) as mock_run:
+        response = client.post(
+            _START_EXPERIMENT_URL, json=payload, headers=auth_headers
+        )
+    mock_run.assert_called_once()
+    assert response.status_code == 200
+    body = response.json()
+    assert "run_id" in body
+    assert body["run_id"] in _runs
+
+
+def test_that_start_experiment_sets_paths_from_ert_config(
+    start_experiment_client, poly_ert_config
+):
+    client, auth_headers = start_experiment_client
+    run_model_config = build_run_model_config(
+        poly_ert_config,
+        Namespace(
+            mode="ensemble_experiment",
+            experiment_name="exp",
+            current_ensemble="prior",
+            realizations=None,
+        ),
+    )
+    payload = run_model_config.model_dump(mode="json")
+
+    with patch.object(ExperimentRunner, "run", new_callable=AsyncMock):
+        response = client.post(
+            _START_EXPERIMENT_URL, json=payload, headers=auth_headers
+        )
+
+    assert response.status_code == 200
+    run_id = response.json()["run_id"]
+    run_state = _runs[run_id]
+    assert str(run_state.config_path) == str(run_model_config.user_config_file)
+    assert run_state.run_path == run_model_config.runpath_config.runpath_format_string
+    assert run_state.storage_path == run_model_config.storage_path
+    assert run_state.start_time_unix is not None
+
+
+def test_that_start_experiment_with_invalid_ert_payload_returns_an_error_response():
+    client = TestClient(app, raise_server_exceptions=False)
+    credentials = b64encode(b"username:password").decode()
+    auth_headers = {"Authorization": f"Basic {credentials}"}
+    response = client.post(
+        _START_EXPERIMENT_URL,
+        json={"type": "not_a_valid_type"},
+        headers=auth_headers,
+    )
+    assert response.status_code >= 400
+
+
+def test_that_start_experiment_requires_authentication(
+    start_experiment_client, poly_ert_config
+):
+    client, _ = start_experiment_client
+    run_model_config = build_run_model_config(
+        poly_ert_config,
+        Namespace(
+            mode="ensemble_experiment",
+            experiment_name="exp",
+            current_ensemble="prior",
+            realizations=None,
+        ),
+    )
+    response = client.post(
+        _START_EXPERIMENT_URL, json=run_model_config.model_dump(mode="json")
+    )
+    assert response.status_code == 401
+
+
+def test_that_start_experiment_rejects_wrong_password(
+    start_experiment_client, poly_ert_config
+):
+    client, _ = start_experiment_client
+    wrong_credentials = b64encode(b"username:wrong_password").decode()
+    run_model_config = build_run_model_config(
+        poly_ert_config,
+        Namespace(
+            mode="ensemble_experiment",
+            experiment_name="exp",
+            current_ensemble="prior",
+            realizations=None,
+        ),
+    )
+    response = client.post(
+        _START_EXPERIMENT_URL,
+        json=run_model_config.model_dump(mode="json"),
+        headers={"Authorization": f"Basic {wrong_credentials}"},
+    )
+    assert response.status_code == 401

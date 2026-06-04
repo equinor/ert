@@ -34,7 +34,7 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
-from ert.storage import Storage
+from ert.services import ErtServerController
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
 DEFAULT_NUM_REALIZATIONS = 10
@@ -46,6 +46,22 @@ def setup_svg_search_path():
     QDir.addSearchPath(
         "img", str(files("ert.gui").joinpath("../../ert/gui/resources/gui/img"))
     )
+
+
+@pytest.fixture(autouse=True)
+def fail_on_unexpected_warning_dialog(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fail immediately if QMessageBox.warning fires unexpectedly.
+
+    Without this, a modal QMessageBox blocks the Qt event loop indefinitely
+    because no test code dismisses it, causing the test to hang rather than
+    fail with a useful error message.
+    """
+
+    @staticmethod  # type: ignore[misc]
+    def patched(parent, title, text, *args, **kwargs):  # type: ignore[override]
+        raise AssertionError(f"Unexpected QMessageBox.warning: {title!r}\n{text}")
+
+    monkeypatch.setattr(QMessageBox, "warning", patched)
 
 
 @contextmanager
@@ -93,15 +109,19 @@ def _new_poly_example(
 
 
 @contextmanager
-def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
+def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, str, ErtConfig]]:
     args_mock = Mock()
     args_mock.config = str(path)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         config = ErtConfig.with_plugins(site_plugins).from_file(path)
+        ens_path = Path(config.ens_path).absolute()
+        ens_path.mkdir(parents=True, exist_ok=True)
         with (
             add_gui_log_handler() as log_handler,
+            ErtServerController.init_service(project=ens_path) as server,
         ):
+            server.wait_until_ready()
             gui = _setup_main_window(config, args_mock, log_handler, config.ens_path)
             try:
                 yield gui, config.ens_path, config

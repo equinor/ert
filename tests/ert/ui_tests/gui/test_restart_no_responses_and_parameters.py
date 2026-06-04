@@ -18,6 +18,7 @@ from ert.gui.main_window import ErtMainWindow
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.run_models import EnsembleExperiment
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
+from ert.services import ErtServerController
 from ert.storage import Storage
 from ert.validation import rangestring_to_mask
 
@@ -60,6 +61,8 @@ def _open_main_window(
         fh.writelines(config)
 
     config = ErtConfig.from_file(path / "config.ert")
+    ens_path = Path(config.ens_path).absolute()
+    ens_path.mkdir(parents=True, exist_ok=True)
 
     args_mock = Mock()
     args_mock.config = "config.ert"
@@ -67,11 +70,12 @@ def _open_main_window(
     # it will cause the following error:
     # RuntimeError: wrapped C/C++ object of type GUILogHandler
     handler = GUILogHandler()
-    gui = _setup_main_window(config, args_mock, handler, config.ens_path)
-    try:
-        yield gui, config.ens_path, config
-    finally:
-        gui.close()
+    with ErtServerController.init_service(project=ens_path):
+        gui = _setup_main_window(config, args_mock, handler, config.ens_path)
+        try:
+            yield gui, config.ens_path, config
+        finally:
+            gui.close()
 
 
 @pytest.fixture

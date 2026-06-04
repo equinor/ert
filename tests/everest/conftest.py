@@ -12,6 +12,7 @@ import pytest
 import yaml
 
 from ert.base_model_context import use_runtime_plugins
+from ert.config import ErtConfig
 from ert.config.queue_config import LocalQueueOptions, LsfQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
@@ -161,6 +162,11 @@ def copy_math_func_test_data_to_tmp(tmp_path, monkeypatch):
     path = relpath("..", "..", "test-data", "everest", "math_func")
     shutil.copytree(path, tmp_path, dirs_exist_ok=True)
     monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def poly_ert_config(poly_case) -> ErtConfig:
+    return ErtConfig.from_file("poly.ert")
 
 
 @pytest.fixture

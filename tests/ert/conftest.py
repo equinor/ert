@@ -35,8 +35,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
 )
 from ert.storage import open_storage
-
-from .utils import SOURCE_DIR
+from ert.storage.local_storage import LocalStorage, local_storage_set_ert_config
 
 st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
 
@@ -97,11 +96,6 @@ settings.register_profile(
 )
 
 
-@pytest.fixture(scope="session", name="source_root")
-def fixture_source_root() -> Path:
-    return SOURCE_DIR
-
-
 @pytest.fixture(scope="class")
 def class_source_root(request, source_root):
     request.cls.SOURCE_ROOT = source_root
@@ -119,24 +113,6 @@ def maximize_ulimits():
     resource.setrlimit(resource.RLIMIT_NOFILE, (limits[1], limits[1]))
     yield
     resource.setrlimit(resource.RLIMIT_NOFILE, limits)
-
-
-@pytest.fixture(name="setup_case")
-def fixture_setup_case(tmp_path_factory, source_root: Path, monkeypatch):
-    def copy_case(path, config_file):
-        tmp_path = tmp_path_factory.mktemp(path.replace("/", "-"))
-        shutil.copytree(
-            source_root / "test-data" / "ert" / path, tmp_path / "test_data"
-        )
-        monkeypatch.chdir(tmp_path / "test_data")
-        return ErtConfig.from_file(config_file)
-
-    return copy_case
-
-
-@pytest.fixture
-def poly_case(setup_case):
-    return setup_case("poly_example", "poly.ert")
 
 
 @pytest.fixture
@@ -513,6 +489,10 @@ def snake_oil_storage(snake_oil_case_storage):
 
 @pytest.fixture
 def snake_oil_default_storage(snake_oil_case_storage):
+    # Ensure old storage versions are migrated before read-only access.
+    local_storage_set_ert_config(snake_oil_case_storage)
+    LocalStorage.perform_migration(Path(snake_oil_case_storage.ens_path))
+
     with open_storage(snake_oil_case_storage.ens_path) as storage:
         experiment = storage.get_experiment_by_name("ensemble-experiment")
         yield experiment.get_ensemble_by_name("default_0")

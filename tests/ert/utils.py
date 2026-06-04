@@ -5,7 +5,6 @@ import contextlib
 import time
 import uuid
 from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
 import zmq
@@ -27,31 +26,6 @@ from ert.scheduler.event import (
 
 if TYPE_CHECKING:
     from ert.scheduler.driver import Driver
-
-
-def source_dir() -> Path:
-    src = Path("@CMAKE_CURRENT_SOURCE_DIR@/../..")
-    if src.is_dir():
-        return src.relative_to(Path.cwd())
-
-    # If the file was not correctly configured by cmake, look for the source
-    # folder, assuming the build folder is inside the source folder.
-    current_path = Path(__file__)
-    while current_path != Path("/"):
-        if (current_path / ".git").is_dir():
-            return current_path
-        # This is to find root dir for git worktrees
-        if (current_path / ".git").is_file():
-            with (current_path / ".git").open(encoding="utf-8") as f:
-                for line in f:
-                    if "gitdir:" in line:
-                        return current_path
-
-        current_path = current_path.parent
-    raise RuntimeError("Cannot find the source folder")
-
-
-SOURCE_DIR: Path = source_dir()
 
 
 def wait_until(func, interval=0.5, timeout=30):
