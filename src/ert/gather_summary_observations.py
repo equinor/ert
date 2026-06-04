@@ -329,7 +329,8 @@ async def _run_with_client(
         storage_config["urls"], storage_config["authtoken"], ssl_certificate
     ) as client:
         all_experiments = await get_experiments(client)
-
+        if len(all_experiments) == 0:
+            raise ErtCliError("Could not find any experiments in storage.")
         assert isinstance(all_experiments, list)
         if args.experiment is not None:
             experiment_id = args.experiment
