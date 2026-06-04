@@ -323,7 +323,7 @@ async def _run_with_client(
     ) as client:
         all_experiments = await fetch_experiments(client)
         assert isinstance(all_experiments, list)
-        experiment_id = get_experiment_id(all_experiments, args.experiment)
+        experiment_id = get_experiment_id(all_experiments, args.experiment_id)
         experiment = get_experiment(all_experiments, experiment_id)
         summary_observations = await extract_observations(
             "summary", experiment, experiment_id, client
@@ -344,17 +344,17 @@ async def _run_with_client(
 def get_experiment(
     all_experiments: list[dict[str, Any]], experiment_id: str
 ) -> dict[str, Any]:
-    experiment = next(ex for ex in all_experiments if ex["id"] == experiment_id)
+    experiment = next((ex for ex in all_experiments if ex["id"] == experiment_id), None)
     if experiment is None:
         raise ErtCliError(f"No experiment with id {experiment_id} found in storage")
     return experiment
 
 
 def get_experiment_id(
-    all_experiments: list[dict[str, Any]], arg_experiment: str | None
+    all_experiments: list[dict[str, Any]], arg_experiment_id: str | None
 ) -> str:
-    if arg_experiment is not None:
-        experiment_id = arg_experiment
+    if arg_experiment_id is not None:
+        experiment_id = arg_experiment_id
         experiment_ids = [ex["id"] for ex in all_experiments]
         if experiment_id not in experiment_ids:
             raise ErtCliError(

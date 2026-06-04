@@ -40,7 +40,7 @@ def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
 
     args = Namespace(
         config=config_path,
-        experiment=experiment.name,
+        experiment_id=experiment.name,
         output_csv_file="summary_observations.csv",
     )
     main(args)
