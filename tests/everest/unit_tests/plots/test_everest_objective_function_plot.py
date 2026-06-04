@@ -2,17 +2,9 @@ import pandas as pd
 import pytest
 from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.tools.plot.plottery.plots import EverestObjectiveFunctionPlot
 from ert.gui.utils import LEGEND_THRESHOLD
-
-
-@pytest.fixture
-def ensemble():
-    return EnsembleObject(
-        "batch_0", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
-    )
 
 
 def realization_data():
@@ -38,13 +30,13 @@ def lots_of_realization_data():
 
 
 def test_that_plot_type_is_set_to_line_and_style_is_correct(
-    generic_plot_context, ensemble
+    generic_plot_context, everest_ensemble
 ):
     figure = create_everest_figure(
         EverestObjectiveFunctionPlot(),
         realization_data(),
         generic_plot_context,
-        ensemble,
+        everest_ensemble,
     )
 
     assert generic_plot_context.plot_type == PlotType.LINE
@@ -62,10 +54,13 @@ def test_that_plot_type_is_set_to_line_and_style_is_correct(
     ],
 )
 def test_that_all_realizations_are_plotted(
-    generic_plot_context, ensemble, realization_data, expected_num_lines
+    generic_plot_context, everest_ensemble, realization_data, expected_num_lines
 ):
     figure = create_everest_figure(
-        EverestObjectiveFunctionPlot(), realization_data, generic_plot_context, ensemble
+        EverestObjectiveFunctionPlot(),
+        realization_data,
+        generic_plot_context,
+        everest_ensemble,
     )
     assert len(figure.get_axes()[0].get_lines()) == expected_num_lines
 
@@ -78,10 +73,13 @@ def test_that_all_realizations_are_plotted(
     ],
 )
 def test_that_color_is_correctly_set_based_on_amount_of_realizations(
-    realization_data, expected_num_of_colors, generic_plot_context, ensemble
+    realization_data, expected_num_of_colors, generic_plot_context, everest_ensemble
 ):
     figure = create_everest_figure(
-        EverestObjectiveFunctionPlot(), realization_data, generic_plot_context, ensemble
+        EverestObjectiveFunctionPlot(),
+        realization_data,
+        generic_plot_context,
+        everest_ensemble,
     )
     colors = [line.get_color() for line in figure.get_axes()[0].get_lines()]
     assert len(set(colors)) == expected_num_of_colors
@@ -95,22 +93,25 @@ def test_that_color_is_correctly_set_based_on_amount_of_realizations(
     ],
 )
 def test_that_legend_is_conditionally_shown(
-    generic_plot_context, ensemble, realization_data, expected_legend_length
+    generic_plot_context, everest_ensemble, realization_data, expected_legend_length
 ):
     figure = create_everest_figure(
-        EverestObjectiveFunctionPlot(), realization_data, generic_plot_context, ensemble
+        EverestObjectiveFunctionPlot(),
+        realization_data,
+        generic_plot_context,
+        everest_ensemble,
     )
     legend = figure.get_axes()[0].get_legend()
     legend_length = len(legend.get_texts()) if legend else None
     assert legend_length == expected_legend_length
 
 
-def test_that_on_hover_labels_are_correct(generic_plot_context, ensemble):
+def test_that_on_hover_labels_are_correct(generic_plot_context, everest_ensemble):
     figure = create_everest_figure(
         EverestObjectiveFunctionPlot(),
         realization_data(),
         generic_plot_context,
-        ensemble,
+        everest_ensemble,
     )
     axes = figure.get_axes()[0]
 

@@ -2,15 +2,7 @@ import pandas as pd
 import pytest
 from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plottery.plots import EverestBatchObjectiveFunctionPlot
-
-
-@pytest.fixture
-def ensemble():
-    return EnsembleObject(
-        "batch_0", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
-    )
 
 
 @pytest.fixture
@@ -43,13 +35,13 @@ def test_that_date_support_is_disabled(generic_plot_context):
 
 
 def test_that_accepted_and_rejected_is_plotted_correctly(
-    ensemble, batch_objective_data, generic_plot_context
+    everest_ensemble, batch_objective_data, generic_plot_context
 ):
     figure = create_everest_figure(
         EverestBatchObjectiveFunctionPlot(),
         batch_objective_data,
         generic_plot_context,
-        ensemble,
+        everest_ensemble,
     )
 
     axes = figure.get_axes()[0]
@@ -65,13 +57,13 @@ def test_that_accepted_and_rejected_is_plotted_correctly(
 
 
 def test_that_hovering_over_points_shows_correct_tooltip(
-    ensemble, batch_objective_data, generic_plot_context
+    everest_ensemble, batch_objective_data, generic_plot_context
 ):
     figure = create_everest_figure(
         EverestBatchObjectiveFunctionPlot(),
         batch_objective_data,
         generic_plot_context,
-        ensemble,
+        everest_ensemble,
     )
 
     axes = figure.get_axes()[0]
