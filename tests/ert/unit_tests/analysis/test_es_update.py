@@ -24,6 +24,8 @@ from ert.analysis._update_commons import (
     _OutlierColumns,
     _preprocess_observations_and_responses,
 )
+from ert.analysis._update_strategies._adaptive import AdaptiveLocalizationUpdate
+from ert.analysis._update_strategies._protocol import ObservationContext
 from ert.analysis.event import AnalysisCompleteEvent
 from ert.config import (
     ESSettings,
@@ -606,6 +608,66 @@ def test_that_constant_parameter_is_skipped_with_warning_and_carried_over(
         "KEY_1", np.arange(prior_storage.ensemble_size)
     )
     assert np.array_equal(prior_values, posterior_values)
+
+
+def test_that_adaptive_localization_skips_batch_where_all_parameters_are_constant():
+    """When adaptive localization splits parameters into several batches and a
+    whole batch consists only of zero-variance parameters, that batch must be
+    skipped.
+    """
+    rng = np.random.default_rng(42)
+    num_obs = 2
+    ensemble_size = 50
+
+    responses = rng.standard_normal((num_obs, ensemble_size))
+    observation_values = np.array([0.0, 0.0])
+    observation_errors = np.array([1.0, 1.0])
+    observation_perturbations = (
+        rng.standard_normal((num_obs, ensemble_size)) * observation_errors[:, None]
+    )
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=observation_values,
+        observation_errors=observation_errors,
+        observation_perturbations=observation_perturbations,
+    )
+
+    # First batch is fully constant (zero variance), second batch has variance.
+    param_ensemble = np.vstack(
+        [
+            np.full(ensemble_size, 0.5),
+            np.full(ensemble_size, 1.5),
+            rng.standard_normal(ensemble_size),
+            rng.standard_normal(ensemble_size),
+        ]
+    )
+    non_zero_variance_mask = np.array([False, False, True, True])
+    prior = param_ensemble.copy()
+
+    strategy = AdaptiveLocalizationUpdate(
+        correlation_threshold=lambda _: 0.0,
+        enkf_truncation=1.0,
+        progress_callback=lambda _: None,
+    )
+    strategy.prepare(obs_context)
+
+    param_config = GenKwConfig(
+        name="KEY",
+        group="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=LocalizationType.ADAPTIVE,
+    )
+
+    with patch(
+        "ert.analysis._update_strategies._adaptive.calculate_localization_batch_size",
+        return_value=2,
+    ):
+        updated = strategy.update(param_ensemble, param_config, non_zero_variance_mask)
+
+    # Constant parameters in the skipped first batch are carried over unchanged.
+    assert np.array_equal(updated[:2], prior[:2])
+    # Parameters with variance in the second batch are updated.
+    assert not np.array_equal(updated[2:], prior[2:])
 
 
 @pytest.mark.slow
