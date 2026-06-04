@@ -58,6 +58,34 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.setObjectName("enif_panel")
 
+        if analysis_config.parameter_type_update_strategies:
+            strategies_html = "".join(
+                f"<li><b>{param_type}</b>: {strategy.name}</li>"
+                for param_type, strategy in (
+                    analysis_config.parameter_type_update_strategies.items()
+                )
+            )
+            warning_label = QLabel(
+                "<b>Warning:</b> Any given update strategy will be ignored "
+                "when running Ensemble Information Filter."
+                "<p>The following parameter update strategies were found "
+                "in the configuration:"
+                f"<ul>{strategies_html}</ul>"
+            )
+            warning_label.setObjectName("enif_warning_panel")
+            warning_label.setWordWrap(True)
+            warning_label.setTextFormat(Qt.TextFormat.RichText)
+            warning_label.setStyleSheet(
+                "QLabel#enif_warning_panel {"
+                " background-color: #fff3cd;"
+                " color: #664d03;"
+                " border: 1px solid #ffe69c;"
+                " border-radius: 4px;"
+                " padding: 8px;"
+                "}"
+            )
+            layout.addRow(warning_label)
+
         self._experiment_name_field = StringBox(
             TextModel(""),
             placeholder_text=self.notifier.storage.get_unique_experiment_name(
