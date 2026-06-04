@@ -1,9 +1,16 @@
 import pathlib
 from textwrap import dedent
+from unittest.mock import AsyncMock
 
 import pytest
 
-from ert.gather_summary_observations import convert_summary_observations
+from ert import gather_summary_observations
+from ert.cli.main import ErtCliError
+from ert.gather_summary_observations import (
+    _run_with_client,
+    convert_summary_observations,
+)
+from ert.namespace import Namespace
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -104,3 +111,20 @@ def test_that_convert_summary_observations_produces_natsorted_csv_rows(capsys):
         csv_content = f.readlines()
     well_names = [row.split(",")[1].strip() for row in csv_content[1:]]
     assert well_names == ["OP2", "OP4", "OP10", "OP30"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_no_experiments_in_storage_raises_ert_cli_error(monkeypatch):
+    async def mock_get_experiments(client):
+        return []
+
+    monkeypatch.setattr(
+        gather_summary_observations, "get_experiments", mock_get_experiments
+    )
+    monkeypatch.setattr(gather_summary_observations, "connect", lambda *a: AsyncMock())
+
+    args = Namespace(experiment=None, output_csv_file="foo.csv")
+    with pytest.raises(
+        ErtCliError, match=r"Could not find any experiments in storage."
+    ):
+        await _run_with_client(None, {"urls": None, "authtoken": None}, args)
