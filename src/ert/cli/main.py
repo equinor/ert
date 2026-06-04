@@ -70,6 +70,24 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
             f"'OBS_CONFIG observation_file.txt'."
         )
 
+    if (
+        args.mode == ENIF_MODE
+        and ert_config.analysis_config.parameter_type_update_strategies
+    ):
+        strategies = "".join(
+            f"  {param_type}: {strategy.name}\n"
+            for param_type, strategy in (
+                ert_config.analysis_config.parameter_type_update_strategies.items()
+            )
+        )
+        print(
+            "Warning: Any given update strategy will be ignored "
+            "when running Ensemble Information Filter.\n"
+            "The following parameter update strategies were found "
+            "in the configuration:\n"
+            f"{strategies}"
+        )
+
     if args.mode in {
         ENSEMBLE_SMOOTHER_MODE,
         ENIF_MODE,
