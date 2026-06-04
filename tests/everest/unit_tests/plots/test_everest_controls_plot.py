@@ -32,21 +32,32 @@ def many_controls(palette_size):
     )
 
 
+@pytest.mark.parametrize(
+    ("selected_controls", "expected_line_amount"),
+    [
+        (["ctrl_a", "ctrl_b"], 2),
+        (["ctrl_a"], 1),
+    ],
+)
 def test_that_plot_pr_batch_creates_one_line_per_selected_control(
-    generic_plot_context, everest_ensemble, controls_data
+    generic_plot_context,
+    everest_ensemble,
+    controls_data,
+    selected_controls,
+    expected_line_amount,
 ):
     plot = EverestControlsPlot()
-    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
+    plot.set_selected_controls(selected_controls)
     figure = create_everest_figure(
         plot, controls_data, generic_plot_context, everest_ensemble
     )
 
     axes = figure.get_axes()[0]
     lines = axes.get_lines()
-    assert len(lines) == 2
+    assert len(lines) == expected_line_amount
 
 
-def test_that_plot_pr_batch_creates_one_for_single_control(
+def test_that_by_batch_plot_uses_batch_id_for_x_and_control_value_for_y(
     generic_plot_context, everest_ensemble, controls_data
 ):
     plot = EverestControlsPlot()
@@ -63,9 +74,22 @@ def test_that_plot_pr_batch_creates_one_for_single_control(
     assert list(line.get_ydata()) == [1.0, 1.5]
 
 
-def test_that_no_collections_are_created_when_by_batch_is_true(
-    generic_plot_context, everest_ensemble, controls_data
+@pytest.mark.parametrize(
+    ("expected_collections", "expected_lines", "by_batch"),
+    [
+        (2, 0, False),
+        (0, 2, True),
+    ],
+)
+def test_that_plot_creates_lines_in_by_batch_and_scatter_collections_in_by_control(
+    generic_plot_context,
+    everest_ensemble,
+    controls_data,
+    expected_collections,
+    expected_lines,
+    by_batch,
 ):
+    generic_plot_context.by_batch = by_batch
     plot = EverestControlsPlot()
     plot.set_selected_controls(["ctrl_a", "ctrl_b"])
     figure = create_everest_figure(
@@ -74,37 +98,9 @@ def test_that_no_collections_are_created_when_by_batch_is_true(
 
     axes = figure.get_axes()[0]
     collections = axes.collections
-    assert len(collections) == 0
-
-
-def test_that_no_lines_are_created_when_by_batch_is_false(
-    generic_plot_context, everest_ensemble, controls_data
-):
-    generic_plot_context.by_batch = False
-    plot = EverestControlsPlot()
-    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
-    figure = create_everest_figure(
-        plot, controls_data, generic_plot_context, everest_ensemble
-    )
-
-    axes = figure.get_axes()[0]
     lines = axes.get_lines()
-    assert len(lines) == 0
-
-
-def test_that_plot_pr_control_creates_one_scatter_collection_per_batch(
-    generic_plot_context, everest_ensemble, controls_data
-):
-    generic_plot_context.by_batch = False
-    plot = EverestControlsPlot()
-    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
-    figure = create_everest_figure(
-        plot, controls_data, generic_plot_context, everest_ensemble
-    )
-
-    axes = figure.get_axes()[0]
-    collections = axes.collections
-    assert len(collections) == 2
+    assert len(collections) == expected_collections
+    assert len(lines) == expected_lines
 
 
 def test_that_plot_pr_batch_with_empty_data_creates_no_axes(
@@ -119,9 +115,30 @@ def test_that_plot_pr_batch_with_empty_data_creates_no_axes(
     assert len(figure.get_axes()) == 0
 
 
-def test_that_plot_pr_batch_uses_correct_x_and_y_values(
-    generic_plot_context, everest_ensemble, controls_data
+@pytest.mark.parametrize(
+    (
+        "collections_x_value",
+        "collections_y_value",
+        "lines_x_value",
+        "lines_y_value",
+        "by_batch",
+    ),
+    [
+        ([0.0], [1.0], None, None, False),
+        (None, None, [0, 1], [1.0, 1.5], True),
+    ],
+)
+def test_that_plot_uses_expected_x_and_y_values_in_by_batch_and_by_control_modes(
+    generic_plot_context,
+    everest_ensemble,
+    controls_data,
+    collections_x_value,
+    collections_y_value,
+    lines_x_value,
+    lines_y_value,
+    by_batch,
 ):
+    generic_plot_context.by_batch = by_batch
     plot = EverestControlsPlot()
     plot.set_selected_controls(["ctrl_a"])
     figure = create_everest_figure(
@@ -129,58 +146,55 @@ def test_that_plot_pr_batch_uses_correct_x_and_y_values(
     )
 
     axes = figure.get_axes()[0]
-    line = axes.get_lines()[0]
-    # x is batch_id, y is control_value for ctrl_a
-    assert list(line.get_xdata()) == [0, 1]
-    assert list(line.get_ydata()) == [1.0, 1.5]
+    if by_batch:
+        lines = axes.get_lines()
+        assert len(lines) == 1
+        line = lines[0]
+        assert list(line.get_xdata()) == lines_x_value
+        assert list(line.get_ydata()) == lines_y_value
+    else:
+        offsets = axes.collections[0].get_offsets()
+        assert len(offsets) == 1
+        assert list(offsets[:, 0]) == collections_x_value
+        assert list(offsets[:, 1]) == collections_y_value
 
 
-def test_that_plot_pr_control_uses_correct_x_and_y_values(
-    generic_plot_context, everest_ensemble, controls_data
+@pytest.mark.parametrize(
+    ("is_visible", "number_of_legend_items", "increased_data"),
+    [
+        (True, 2, False),
+        (False, 0, True),
+    ],
+)
+def test_that_legend_is_hidden_when_number_of_controls_exceeds_legend_threshold(
+    generic_plot_context,
+    everest_ensemble,
+    controls_data,
+    many_controls,
+    is_visible,
+    number_of_legend_items,
+    increased_data,
+    palette_size,
 ):
-    generic_plot_context.by_batch = False
     plot = EverestControlsPlot()
-    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
-    figure = create_everest_figure(
-        plot, controls_data, generic_plot_context, everest_ensemble
+    plot.set_selected_controls(
+        [f"ctrl_{i}" for i in range(palette_size * 4)]
+        if increased_data
+        else ["ctrl_a", "ctrl_b"]
     )
-
-    axes = figure.get_axes()[0]
-    offsets_0 = axes.collections[0].get_offsets()
-    assert len(offsets_0) == 2
-    assert list(offsets_0[:, 0]) == [0.0, 1.0]  # x positions
-    assert list(offsets_0[:, 1]) == [1.0, 2.0]  # y values
-
-    offsets_1 = axes.collections[1].get_offsets()
-    assert len(offsets_1) == 2
-    assert list(offsets_1[:, 0]) == [0.0, 1.0]
-    assert list(offsets_1[:, 1]) == [1.5, 2.5]
-
-
-def test_that_plot_contains_legend_items_when_number_of_entries_is_below_threshold(
-    generic_plot_context, everest_ensemble, controls_data
-):
-    plot = EverestControlsPlot()
-    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
     figure = create_everest_figure(
-        plot, controls_data, generic_plot_context, everest_ensemble
+        plot,
+        many_controls if increased_data else controls_data,
+        generic_plot_context,
+        everest_ensemble,
     )
 
     legend = figure.get_axes()[0].get_legend()
-    legend_texts = [text.get_text() for text in legend.get_texts()]
-    assert legend_texts == ["ctrl_a", "ctrl_b"]
-
-
-def test_that_plot_does_not_contain_legend_when_number_of_entries_is_above_threshold(
-    generic_plot_context, everest_ensemble, many_controls, palette_size
-):
-    plot = EverestControlsPlot()
-    plot.set_selected_controls([f"ctrl_{i}" for i in range(palette_size * 4)])
-    figure = create_everest_figure(
-        plot, many_controls, generic_plot_context, everest_ensemble
-    )
-
-    assert figure.get_axes()[0].get_legend() is None
+    assert (legend is not None) == is_visible
+    if is_visible:
+        legend_texts = [text.get_text() for text in legend.get_texts()]
+        assert len(legend_texts) == number_of_legend_items
+        assert legend_texts == ["ctrl_a", "ctrl_b"]
 
 
 def test_that_plot_rename_batch_0_in_legend_for_by_controls_plot(
@@ -225,25 +239,22 @@ def test_that_line_style_matches_when_number_of_controls_exceeds_color_palette_l
             assert line.get_marker() == "o"
 
 
-def test_that_plot_type_matches_line_when_by_batch_is_true(
-    generic_plot_context, everest_ensemble, controls_data
+@pytest.mark.parametrize(
+    ("by_batch", "expected_plot_type"),
+    [
+        (True, PlotType.LINE),
+        (False, PlotType.SCATTER),
+    ],
+)
+def test_that_plot_type_matches_by_batch_setting(
+    by_batch, expected_plot_type, generic_plot_context, everest_ensemble, controls_data
 ):
-    plot = EverestControlsPlot()
-    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
-    create_everest_figure(plot, controls_data, generic_plot_context, everest_ensemble)
-
-    assert generic_plot_context.plot_type == PlotType.LINE
-
-
-def test_that_plot_type_matches_scatter_when_by_batch_is_false(
-    generic_plot_context, everest_ensemble, controls_data
-):
-    generic_plot_context.by_batch = False
+    generic_plot_context.by_batch = by_batch
     plot = EverestControlsPlot()
     plot.set_selected_controls(["ctrl_a"])
     create_everest_figure(plot, controls_data, generic_plot_context, everest_ensemble)
 
-    assert generic_plot_context.plot_type == PlotType.SCATTER
+    assert generic_plot_context.plot_type == expected_plot_type
 
 
 def test_that_date_support_is_deactivated(
@@ -256,7 +267,7 @@ def test_that_date_support_is_deactivated(
     assert not generic_plot_context.is_date_support_active()
 
 
-def test_that_hover_labels_are_set_correctly_for_by_batch_plot(
+def test_that_hover_annotation_displays_control_name_for_by_batch_plot(
     generic_plot_context, everest_ensemble, controls_data
 ):
     plot = EverestControlsPlot()
