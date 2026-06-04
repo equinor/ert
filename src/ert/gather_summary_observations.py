@@ -254,14 +254,13 @@ async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
     return ssl_context, storage_config
 
 
-async def get_experiments(
+async def fetch_experiments(
     client: httpx.AsyncClient,
 ) -> list[dict[str, Any]]:
     all_experiments = json.loads((_ := await client.get("/experiments")).text)
-    if (
-        isinstance(all_experiments, dict)
-        and all_experiments.get("detail", {}).get("error") is not None
-    ):
+    if not isinstance(all_experiments, list):
+        raise ErtCliError("Could not fetch experiments from storage.")
+    if len(all_experiments) == 0:
         raise ErtCliError("Could not find any experiments in storage.")
     return all_experiments
 
@@ -275,12 +274,6 @@ async def get_observations(
 
 
 def query_user_for_experiment(experiments: list[dict[str, Any]]) -> str:
-    if len(experiments) == 1:
-        print(
-            f"Only one experiment found, "
-            f"picking experiment with id '{experiments[0]['id']}'"
-        )
-        return experiments[0]["id"]
     print("Available experiments:")
     for idx, exp in enumerate(experiments, 1):
         print(f"  {idx}. {exp['id']} ({exp['name']})")
@@ -328,41 +321,17 @@ async def _run_with_client(
     async with connect(
         storage_config["urls"], storage_config["authtoken"], ssl_certificate
     ) as client:
-        all_experiments = await get_experiments(client)
-        if len(all_experiments) == 0:
-            raise ErtCliError("Could not find any experiments in storage.")
+        all_experiments = await fetch_experiments(client)
         assert isinstance(all_experiments, list)
-        if args.experiment is not None:
-            experiment_id = args.experiment
-            experiment_ids = [ex["id"] for ex in all_experiments]
-            if experiment_id not in experiment_ids:
-                raise ErtCliError(
-                    f"An experiment with id '{experiment_id}' does not exist.\n"
-                    f"Available experiments:\n  "
-                    + "\n  ".join(
-                        [
-                            f"{i}. {ex['id']} ({ex['name']})"
-                            for i, ex in enumerate(all_experiments)
-                        ]
-                    )
-                )
-        else:
-            experiment_id = query_user_for_experiment(all_experiments)
-
-        experiment = next(
-            filter(lambda x: x["id"] == experiment_id, all_experiments), None
-        )
-        if experiment is None:
-            raise ErtCliError(
-                f"Provided experiment id {experiment_id} not found in storage"
-            )
-        if "summary" not in experiment["observations"]:
-            raise ErtCliError(
-                f"No summary observations found for experiment '{experiment_id}'"
-            )
+        experiment_id = get_experiment_id(all_experiments, args.experiment)
+        experiment = get_experiment(all_experiments, experiment_id)
         summary_observations = await extract_observations(
             "summary", experiment, experiment_id, client
         )
+        if not summary_observations:
+            raise ErtCliError(
+                f"No summary observations found for experiment '{experiment_id}'"
+            )
         breakthrough_observations = await extract_observations(
             "breakthrough", experiment, experiment_id, client
         )
@@ -370,6 +339,43 @@ async def _run_with_client(
         convert_summary_observations(
             summary_observations, breakthrough_observations, args.output_csv_file
         )
+
+
+def get_experiment(
+    all_experiments: list[dict[str, Any]], experiment_id: str
+) -> dict[str, Any]:
+    experiment = next(ex for ex in all_experiments if ex["id"] == experiment_id)
+    if experiment is None:
+        raise ErtCliError(f"No experiment with id {experiment_id} found in storage")
+    return experiment
+
+
+def get_experiment_id(
+    all_experiments: list[dict[str, Any]], arg_experiment: str | None
+) -> str:
+    if arg_experiment is not None:
+        experiment_id = arg_experiment
+        experiment_ids = [ex["id"] for ex in all_experiments]
+        if experiment_id not in experiment_ids:
+            raise ErtCliError(
+                f"An experiment with id '{experiment_id}' does not exist.\n"
+                f"Available experiments:\n  "
+                + "\n  ".join(
+                    [
+                        f"{i}. {ex['id']} ({ex['name']})"
+                        for i, ex in enumerate(all_experiments, 1)
+                    ]
+                )
+            )
+    elif len(all_experiments) == 1:
+        experiment_id = all_experiments[0]["id"]
+        print(
+            f"Gathering observations for sole experiment in storage: '{experiment_id}'"
+        )
+    else:
+        experiment_id = query_user_for_experiment(all_experiments)
+
+    return experiment_id
 
 
 async def _async_main(args: Namespace) -> None:
