@@ -1,3 +1,4 @@
+import pathlib
 from textwrap import dedent
 
 import pytest
@@ -72,3 +73,34 @@ def test_that_convert_summary_observations_extracts_localization_information(cap
     };""")
 
     assert expected_print_with_localization in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_convert_summary_observations_produces_natsorted_csv_rows(capsys):
+    def make_summary_obs(number: int):
+        return {
+            f"WOPR:OP{number}": [
+                {
+                    "name": f"WOPR_OP{number}",
+                    "errors": [0.02],
+                    "values": [0.5],
+                    "x_axis": ["2010-01-27T00:00:00"],
+                },
+            ]
+        }
+
+    summary_obs = (
+        make_summary_obs(30)
+        | make_summary_obs(10)
+        | make_summary_obs(4)
+        | make_summary_obs(2)
+    )
+    convert_summary_observations(
+        summary_observations=summary_obs,
+        breakthrough_observations={},
+        csv_file_name="foo.csv",
+    )
+    with pathlib.Path("foo.csv").open(encoding="utf-8") as f:
+        csv_content = f.readlines()
+    well_names = [row.split(",")[1].strip() for row in csv_content[1:]]
+    assert well_names == ["OP2", "OP4", "OP10", "OP30"]

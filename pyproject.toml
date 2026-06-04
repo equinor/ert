@@ -79,6 +79,7 @@ dependencies = [
     "xarray",
     "xtgeo >= 3.3.0",
     "resfo-utilities>=0.5.0",
+    "natsort>=8.4.0",
 ]
 
 [project.scripts]
