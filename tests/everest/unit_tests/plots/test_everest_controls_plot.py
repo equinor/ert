@@ -224,6 +224,7 @@ def test_that_line_style_matches_when_number_of_controls_exceeds_color_palette_l
 
     axes = figure.get_axes()[0]
     lines = axes.get_lines()
+    assert len(lines) == palette_size * 4
     for i, line in enumerate(lines):
         if i < palette_size:
             assert line.get_linestyle() == "-"

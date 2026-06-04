@@ -41,6 +41,7 @@ def test_that_plot_type_is_set_to_line_and_style_is_correct(
 
     assert generic_plot_context.plot_type == PlotType.LINE
     lines = figure.get_axes()[0].get_lines()
+    assert len(lines) > 0
     for line in lines:
         assert line.get_linestyle() == "-"
         assert line.get_marker() == "o"
