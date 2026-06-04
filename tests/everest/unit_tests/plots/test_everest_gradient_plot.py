@@ -21,39 +21,22 @@ def controls_data():
     )
 
 
-@pytest.fixture
-def generic_plot_args(generic_plot_context, everest_ensemble, controls_data):
-    return (
-        generic_plot_context,
-        {everest_ensemble: controls_data},
-        pd.DataFrame(),
-        {},
-        None,
-        None,
-    )
-
-
-def test_gradient_plot_with_zero_controls_selected_generates_helper_text(
-    generic_plot_context,
-):
-    figure = create_everest_figure(
-        EverestGradientsPlot(), pd.DataFrame(), generic_plot_context, None
-    )
-    assert (
-        figure.axes[0].texts[0].get_text()
-        == "Select control(s) from the right side panel to view gradients"
-    )
-
-
-def test_gradient_plot_with_no_data_generates_helper_text(
-    generic_plot_context, everest_ensemble
+@pytest.mark.parametrize(
+    ("selected_controls", "expected_text"),
+    [
+        ([], "Select control(s) from the right side panel to view gradients"),
+        (["control_1"], "No data"),
+    ],
+)
+def test_gradient_plot_with_no_controls_or_data_shows_helper_text(
+    generic_plot_context, everest_ensemble, selected_controls, expected_text
 ):
     plot = EverestGradientsPlot()
-    plot.set_selected_controls(["control_1"])
+    plot.set_selected_controls(selected_controls)
     figure = create_everest_figure(
         plot, pd.DataFrame(), generic_plot_context, everest_ensemble
     )
-    assert figure.axes[0].texts[0].get_text() == "No data"
+    assert figure.axes[0].texts[0].get_text() == expected_text
 
 
 def test_gradient_plot_with_control_selected(
