@@ -1,8 +1,7 @@
 import pandas as pd
 import pytest
 from matplotlib.container import BarContainer
-from matplotlib.figure import Figure
-from tests.everest.unit_tests.plots.utils import move_cursor
+from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
 from ert.gui.tools.plot.plottery.plots.everest_gradients_plot import (
     EverestGradientsPlot,
@@ -37,27 +36,34 @@ def generic_plot_args(generic_plot_context, everest_ensemble, controls_data):
 def test_gradient_plot_with_zero_controls_selected_generates_helper_text(
     generic_plot_context,
 ):
-    figure, plot = Figure(), EverestGradientsPlot()
-    plot.plot(figure, generic_plot_context, {}, pd.DataFrame(), {}, None, None)
-
+    figure = create_everest_figure(
+        EverestGradientsPlot(), pd.DataFrame(), generic_plot_context, None
+    )
     assert (
         figure.axes[0].texts[0].get_text()
         == "Select control(s) from the right side panel to view gradients"
     )
 
 
-def test_gradient_plot_with_no_data_generates_helper_text(generic_plot_context):
-    figure, plot = Figure(), EverestGradientsPlot()
+def test_gradient_plot_with_no_data_generates_helper_text(
+    generic_plot_context, everest_ensemble
+):
+    plot = EverestGradientsPlot()
     plot.set_selected_controls(["control_1"])
-    plot.plot(figure, generic_plot_context, {}, pd.DataFrame(), {}, None, None)
-
+    figure = create_everest_figure(
+        plot, pd.DataFrame(), generic_plot_context, everest_ensemble
+    )
     assert figure.axes[0].texts[0].get_text() == "No data"
 
 
-def test_gradient_plot_with_control_selected(generic_plot_args):
-    figure, plot = Figure(), EverestGradientsPlot()
+def test_gradient_plot_with_control_selected(
+    controls_data, generic_plot_context, everest_ensemble
+):
+    plot = EverestGradientsPlot()
     plot.set_selected_controls(["control_1"])
-    plot.plot(figure, *generic_plot_args)
+    figure = create_everest_figure(
+        plot, controls_data, generic_plot_context, everest_ensemble
+    )
 
     bars = [b for b in figure.get_axes()[0].containers if isinstance(b, BarContainer)]
     assert len(bars) == 1
@@ -69,10 +75,14 @@ def test_gradient_plot_with_control_selected(generic_plot_args):
     assert children[1].get_height() == pytest.approx(0.7)
 
 
-def test_gradient_plot_legends_appear(generic_plot_args):
-    figure, plot = Figure(), EverestGradientsPlot()
+def test_gradient_plot_legends_appear(
+    controls_data, generic_plot_context, everest_ensemble
+):
+    plot = EverestGradientsPlot()
     plot.set_selected_controls(["control_1", "control_2"])
-    plot.plot(figure, *generic_plot_args)
+    figure = create_everest_figure(
+        plot, controls_data, generic_plot_context, everest_ensemble
+    )
 
     legend = figure.get_axes()[0].get_legend()
     assert legend is not None
@@ -82,8 +92,6 @@ def test_gradient_plot_legends_appear(generic_plot_args):
 
 
 def test_gradient_plot_hatches(generic_plot_context, everest_ensemble, palette_size):
-    figure, plot = Figure(), EverestGradientsPlot()
-
     data = pd.DataFrame(
         {
             "batch_id": list(range(palette_size * 4)),
@@ -93,16 +101,9 @@ def test_gradient_plot_hatches(generic_plot_context, everest_ensemble, palette_s
             "Response": list(range(palette_size * 4)),
         }
     )
+    plot = EverestGradientsPlot()
     plot.set_selected_controls([f"control_{i}" for i in range(palette_size * 4)])
-    plot.plot(
-        figure,
-        generic_plot_context,
-        {everest_ensemble: data},
-        pd.DataFrame(),
-        {},
-        None,
-        None,
-    )
+    figure = create_everest_figure(plot, data, generic_plot_context, everest_ensemble)
     bars = [b for b in figure.get_axes()[0].containers if isinstance(b, BarContainer)]
     hatches = [b.patches[0].get_hatch() for b in bars]
     for i, patch in enumerate(hatches):
@@ -116,10 +117,14 @@ def test_gradient_plot_hatches(generic_plot_context, everest_ensemble, palette_s
             assert patch == "-"
 
 
-def test_gradient_plot_on_hover_functionality(generic_plot_args):
-    figure, plot = Figure(), EverestGradientsPlot()
+def test_gradient_plot_on_hover_functionality(
+    controls_data, generic_plot_context, everest_ensemble
+):
+    plot = EverestGradientsPlot()
     plot.set_selected_controls(["control_1"])
-    plot.plot(figure, *generic_plot_args)
+    figure = create_everest_figure(
+        plot, controls_data, generic_plot_context, everest_ensemble
+    )
 
     axes = figure.get_axes()[0]
     bars = [b for b in axes.containers if isinstance(b, BarContainer)]
