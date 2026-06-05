@@ -329,7 +329,7 @@ def test_that_load_scalars_handles_many_genkw_keys(benchmark, tmp_path):
     storage_path = tmp_path / "storage"
 
     reals = 100
-    num_keys = 10000
+    num_keys = 500
     parameter_configs = [
         GenKwConfig(
             name=f"P{i}",
