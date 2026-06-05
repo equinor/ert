@@ -93,14 +93,14 @@ class EnsemblePlot:
         plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
-
-        PlotTools.labels_on_hover(
-            PlotType.LINE,
-            axes,
-            figure,
-            data=tooltip_data,
-            labels=tooltip_labels,
-        )
+        if is_everest:
+            PlotTools.labels_on_hover(
+                PlotType.LINE,
+                axes,
+                figure,
+                data=tooltip_data,
+                labels=tooltip_labels,
+            )
 
         PlotTools.finalizePlot(
             plot_context,
