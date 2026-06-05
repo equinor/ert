@@ -1,5 +1,7 @@
+import io
 import os
 import sys
+from io import BytesIO, StringIO
 
 import pytest
 
@@ -22,6 +24,47 @@ def ensure_bin_in_path():
     os.environ["PATH"] = exec_path + os.pathsep + path
     yield
     os.environ["PATH"] = path
+
+
+original_open = open
+original_io_open = io.open
+original_stat = os.stat
+
+
+@pytest.fixture
+def mocked_files(mocker):
+    mocked_files = {}
+
+    def _fresh_buffer(data):
+        if isinstance(data, bytes):
+            return BytesIO(data)
+        return StringIO(data)
+
+    def mock_open(*args, **kwargs):
+        path = args[0] if args else kwargs.get("file")
+        data = mocked_files.get(str(path))
+        if data is not None:
+            return _fresh_buffer(data)
+        return original_open(*args, **kwargs)
+
+    def mock_io_open(*args, **kwargs):
+        path = args[0] if args else kwargs.get("file")
+        data = mocked_files.get(str(path))
+        if data is not None:
+            return _fresh_buffer(data)
+        return original_io_open(*args, **kwargs)
+
+    def mock_stat(*args, **kwargs):
+        path = args[0] if args else kwargs.get("path")
+        if str(path) in mocked_files:
+            return os.stat_result([0x777, *([1] * 10)])
+        return original_stat(*args, **kwargs)
+
+    mocker.patch("builtins.open", mock_open)
+    mocker.patch("io.open", mock_io_open)
+    mocker.patch("os.stat", mock_stat)
+
+    return mocked_files
 
 
 @pytest.fixture
