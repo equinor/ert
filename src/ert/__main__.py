@@ -600,12 +600,28 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     if os.environ.get("ERT_FEATURE_GATHER_OBS"):
         extract_obs_summary_keys_parser = subparsers.add_parser(
             "gather_summary_observations",
-            help=(
-                "Extracts all summary observations from one experiment into a shared "
-                "configuration with a csv file containing the observation values.\n"
+            description=(
+                "Identify all summary and breakthrough observations and output them "
+                "in a bulk config format. A CSV file containing the observation values "
+                "is written to disk while the bulk config is printed to terminal to be "
+                "copied into the observation configuration.\n"
+                "Given no experiment argument, will prompt for which experiment to "
+                "extract observations from if there are multiple to choose from in "
+                "storage.\n"
+                "This workflow will not overwrite any existing configuration files, so "
+                "the output will have to be manually integrated.\n"
                 "This command requires the path to an ert config file as first "
-                "argument and optionally an experiment ID as second argument."
+                "argument and optionally an experiment ID as second argument. The name "
+                "of the produced CSV filename is defaulted to "
+                "'summary_observations.csv', but can be manually set using the keyword "
+                "argument:\n"
+                "--output-csv-file <filename>"
             ),
+            help="This command requires the path to an ert config file as first "
+            "argument and optionally an experiment ID as second argument. The name "
+            "of the produced CSV filename is defaulted to 'summary_observations.csv', "
+            "but can be manually set using the keyword argument:\n"
+            "--output-csv-file <filename>",
         )
         extract_obs_summary_keys_parser.set_defaults(
             func=gather_summary_observations.main

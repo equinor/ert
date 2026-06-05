@@ -15,7 +15,9 @@ from ert.gather_summary_observations import (
 
 
 @pytest.fixture(name="patched_csv_writer")
-def patch_csv_writing(monkeypatch):
+def patched_csv_writing(monkeypatch):
+    """Avoid writing to file.
+    Fixture mock can be used to assert what has been written to file."""
     write_buffer = io.StringIO()
 
     @contextmanager
@@ -26,7 +28,7 @@ def patch_csv_writing(monkeypatch):
     return write_buffer
 
 
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("patched_csv_writer")
 def test_that_convert_summary_observations_extracts_localization_information(capsys):
     summary_obs = {
         "WOPR:WELL_WITH_LOCALIZATION": [
@@ -95,13 +97,13 @@ def test_that_convert_summary_observations_extracts_localization_information(cap
     assert expected_print_with_localization in capsys.readouterr().out
 
 
-def make_summary_obs(number: int, extra_entries=None):
+def _make_summary_obs(n: int, extra_entries=None):
     if extra_entries is None:
         extra_entries = {}
     return {
-        f"WOPR:OP{number}": [
+        f"WOPR:OP{n}": [
             {
-                "name": f"WOPR_OP{number}",
+                "name": f"WOPR_OP{n}",
                 "errors": [0.02],
                 "values": [0.5],
                 "x_axis": ["2010-01-27T00:00:00"],
@@ -111,16 +113,36 @@ def make_summary_obs(number: int, extra_entries=None):
     }
 
 
-@pytest.mark.usefixtures("use_tmpdir")
+def _make_brt_obs(number: int, extra_entries=None):
+    if extra_entries is None:
+        extra_entries = {}
+    return {
+        f"BREAKTHROUGH:WWCT:OP{number}": [
+            {
+                "name": "BREAKTHROUGH_WWCT_OP1",
+                "errors": [0.02],
+                "values": [0.5],
+                "x_axis": ["2010-02-27T00:00:00"],
+                **extra_entries,
+            }
+        ]
+    }
+
+
+def _make_localization(e=None, n=None, r=None):
+    return {"east": [e], "north": [n], "radius": [r]}
+
+
+@pytest.mark.usefixtures("patched_csv_writer")
 def test_that_convert_summary_observations_produces_natsorted_csv_rows(
     monkeypatch, patched_csv_writer
 ):
 
     summary_obs = (
-        make_summary_obs(30)
-        | make_summary_obs(10)
-        | make_summary_obs(4)
-        | make_summary_obs(2)
+        _make_summary_obs(30)
+        | _make_summary_obs(10)
+        | _make_summary_obs(4)
+        | _make_summary_obs(2)
     )
 
     convert_summary_observations(
@@ -171,22 +193,12 @@ def test_that_given_experiment_id_not_in_storage_raises_cli_error():
 
 @pytest.mark.usefixtures("patched_csv_writer")
 def test_that_localization_can_be_gathered_from_breakthrough(capsys):
-    summary_obs = make_summary_obs(
-        1, {"east": [None], "north": [None], "radius": [None]}
+    summary_obs = _make_summary_obs(1, _make_localization())
+    brt_obs = _make_brt_obs(
+        1,
+        _make_localization(10, 20, 2500),
     )
-    brt_obs = {
-        "BREAKTHROUGH:WWCT:OP1": [
-            {
-                "name": "BREAKTHROUGH_WWCT_OP1",
-                "errors": [0.02],
-                "values": [0.5],
-                "x_axis": ["2010-02-27T00:00:00"],
-                "east": [10],
-                "north": [20],
-                "radius": [2500],
-            }
-        ]
-    }
+
     convert_summary_observations(summary_obs, brt_obs, "foo")
     assert (
         "  WELL OP1 {\n"
@@ -198,6 +210,7 @@ def test_that_localization_can_be_gathered_from_breakthrough(capsys):
     ) in capsys.readouterr().out
 
 
+@pytest.mark.usefixtures("patched_csv_writer")
 def test_that_multiple_breakthrough_observations_for_the_same_well_raises_cli_error(
     monkeypatch,
 ):
@@ -213,3 +226,13 @@ def test_that_multiple_breakthrough_observations_for_the_same_well_raises_cli_er
         r"Found 2 breakthroughs for well 'OP1'.",
     ):
         convert_summary_observations(summary_obs, brt_obs, "foo")
+
+
+@pytest.mark.usefixtures("patched_csv_writer")
+def test_that_the_correct_number_of_observations_are_mentioned_in_helper_text(capsys):
+    summary_obs = _make_summary_obs(1) | _make_summary_obs(2) | _make_summary_obs(3)
+    brt_obs = _make_brt_obs(4)
+    convert_summary_observations(summary_obs, brt_obs, "foo")
+    assert (
+        f"{len(summary_obs) + len(brt_obs)} observations can be replaced"
+    ) in capsys.readouterr().out
