@@ -984,183 +984,176 @@ class LocalEnsemble(BaseMode):
 
         observations_by_type = self.experiment.observations
 
-        with pl.StringCache():
-            dfs_per_response_type = []
-            for (
-                response_type,
-                response_cls,
-            ) in (
-                self.experiment.response_configuration
-                | self.experiment.derived_response_configuration
-            ).items():
-                if response_type not in observations_by_type:
-                    continue
+        dfs_per_response_type = []
+        for (
+            response_type,
+            response_cls,
+        ) in (
+            self.experiment.response_configuration
+            | self.experiment.derived_response_configuration
+        ).items():
+            if response_type not in observations_by_type:
+                continue
 
-                observations_for_type = (
-                    observations_by_type[response_type]
-                    .filter(
-                        pl.col("observation_key").is_in(list(selected_observations))
+            observations_for_type = (
+                observations_by_type[response_type]
+                .filter(pl.col("observation_key").is_in(list(selected_observations)))
+                .with_columns([pl.col("response_key").cast(pl.Categorical)])
+            )
+
+            reals = np.sort(iens_active_index).tolist()
+
+            # Load and join one realization at a time to reduce peak memory usage
+            first_columns: pl.DataFrame | None = None
+            realization_columns: list[pl.DataFrame] = []
+            for real in reals:
+                observations = ensure_qc_error_column(observations_for_type)
+                if response_type == "rft":
+                    observation_metadata_in_realization = (
+                        self.load_observation_location_metadata(real)
                     )
-                    .with_columns([pl.col("response_key").cast(pl.Categorical)])
+                    enriched_observations = RFTConfig.enrich_observations_with_metadata(
+                        observations, observation_metadata_in_realization
+                    )
+
+                    observations = qc_rft_observations(
+                        enriched_observations,
+                    )
+
+                observed_cols = {
+                    k: observations[k].unique()
+                    for k in ["response_key", *response_cls.match_key]
+                }
+
+                responses = self._load_responses_lazy(
+                    response_type, (real,)
+                ).with_columns([pl.col("response_key").cast(pl.Categorical)])
+
+                if (
+                    response_type == "rft"
+                    and cast(
+                        RFTConfig, self.experiment.response_configuration["rft"]
+                    ).approximate_missing_values
+                ):
+                    responses = RFTConfig.approximate_missing_rft_responses(
+                        responses, observations
+                    )
+
+                # Filter out responses without observations
+                for col, observed_values in observed_cols.items():
+                    if col != "time":
+                        responses = responses.filter(
+                            pl.col(col).is_in(
+                                observed_values.implode(), nulls_equal=True
+                            )
+                        )
+
+                pivoted = responses.collect(engine="streaming").pivot(
+                    on="realization",
+                    index=["response_key", *response_cls.match_key],
+                    values="values",
+                    aggregate_function="mean",
                 )
 
-                reals = np.sort(iens_active_index).tolist()
-
-                # Load and join one realization at a time to reduce peak memory usage
-                first_columns: pl.DataFrame | None = None
-                realization_columns: list[pl.DataFrame] = []
-                for real in reals:
-                    observations = ensure_qc_error_column(observations_for_type)
-                    if response_type == "rft":
-                        observation_metadata_in_realization = (
-                            self.load_observation_location_metadata(real)
-                        )
-                        enriched_observations = (
-                            RFTConfig.enrich_observations_with_metadata(
-                                observations, observation_metadata_in_realization
-                            )
-                        )
-
-                        observations = qc_rft_observations(
-                            enriched_observations,
-                        )
-
-                    observed_cols = {
-                        k: observations[k].unique()
-                        for k in ["response_key", *response_cls.match_key]
-                    }
-
-                    responses = self._load_responses_lazy(
-                        response_type, (real,)
-                    ).with_columns([pl.col("response_key").cast(pl.Categorical)])
-
-                    if (
-                        response_type == "rft"
-                        and cast(
-                            RFTConfig, self.experiment.response_configuration["rft"]
-                        ).approximate_missing_values
-                    ):
-                        responses = RFTConfig.approximate_missing_rft_responses(
-                            responses, observations
-                        )
-
-                    # Filter out responses without observations
-                    for col, observed_values in observed_cols.items():
-                        if col != "time":
-                            responses = responses.filter(
-                                pl.col(col).is_in(
-                                    observed_values.implode(), nulls_equal=True
-                                )
-                            )
-
-                    pivoted = responses.collect(engine="streaming").pivot(
-                        on="realization",
-                        index=["response_key", *response_cls.match_key],
-                        values="values",
-                        aggregate_function="mean",
+                if pivoted.is_empty():
+                    # There are no responses for this realization,
+                    # so we explicitly create a column of Nones
+                    # to represent this. We are basically saying that
+                    # for this realization, each observation points
+                    # to a None response.
+                    joined = observations.with_columns(
+                        pl.lit(None, dtype=pl.Float32).alias(str(real)),
+                    )
+                elif "time" in pivoted:
+                    by_cols = [
+                        "response_key",
+                        *[k for k in response_cls.match_key if k != "time"],
+                    ]
+                    joined = observations.sort(
+                        by=[*by_cols, "time"]
+                    ).join_asof(
+                        pivoted.sort(by=[*by_cols, "time"]),
+                        by=by_cols,
+                        on="time",
+                        check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
+                        strategy="nearest",
+                        tolerance="1s",
+                    )
+                else:
+                    joined = observations.join(
+                        pivoted,
+                        how="left",
+                        on=["response_key", *response_cls.match_key],
+                        nulls_equal=True,
                     )
 
-                    if pivoted.is_empty():
-                        # There are no responses for this realization,
-                        # so we explicitly create a column of Nones
-                        # to represent this. We are basically saying that
-                        # for this realization, each observation points
-                        # to a None response.
-                        joined = observations.with_columns(
-                            pl.lit(None, dtype=pl.Float32).alias(str(real)),
-                        )
-                    elif "time" in pivoted:
-                        by_cols = [
-                            "response_key",
-                            *[k for k in response_cls.match_key if k != "time"],
-                        ]
-                        joined = observations.sort(
-                            by=[*by_cols, "time"]
-                        ).join_asof(
-                            pivoted.sort(by=[*by_cols, "time"]),
-                            by=by_cols,
-                            on="time",
-                            check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
-                            strategy="nearest",
-                            tolerance="1s",
-                        )
-                    else:
-                        joined = observations.join(
-                            pivoted,
-                            how="left",
-                            on=["response_key", *response_cls.match_key],
-                            nulls_equal=True,
-                        )
+                no_matched_response_condition = pl.col(str(real)).is_null()
+                no_matched_response_error = pl.concat_str(
+                    [
+                        pl.lit("no response matched observation data: "),
+                        pl.lit("response_key="),
+                        pl.col("response_key").cast(pl.String),
+                        pl.lit(", "),
+                        response_cls.match_key_dict_expr(),
+                    ],
+                    separator="",
+                )
 
-                    no_matched_response_condition = pl.col(str(real)).is_null()
-                    no_matched_response_error = pl.concat_str(
-                        [
-                            pl.lit("no response matched observation data: "),
-                            pl.lit("response_key="),
-                            pl.col("response_key").cast(pl.String),
-                            pl.lit(", "),
-                            response_cls.match_key_dict_expr(),
-                        ],
-                        separator="",
-                    )
+                joined = joined.with_columns(
+                    append_to_qc_error(
+                        no_matched_response_condition, no_matched_response_error
+                    ).alias(f"qc_error_{real}")
+                )
 
-                    joined = joined.with_columns(
-                        append_to_qc_error(
-                            no_matched_response_condition, no_matched_response_error
-                        ).alias(f"qc_error_{real}")
-                    )
+                # Avoid potential collision with "index" column (it could be a part
+                # of the index_key)
+                joined = joined.with_columns(
+                    response_cls.index_column_expr().alias("__tmp_index_key__")
+                )
+                if "index" in joined.columns:
+                    joined = joined.drop("index")
+                joined = joined.rename({"__tmp_index_key__": "index"})
 
-                    # Avoid potential collision with "index" column (it could be a part
-                    # of the index_key)
-                    joined = joined.with_columns(
-                        response_cls.index_column_expr().alias("__tmp_index_key__")
-                    )
-                    if "index" in joined.columns:
-                        joined = joined.drop("index")
-                    joined = joined.rename({"__tmp_index_key__": "index"})
-
-                    joined = joined.with_columns(
-                        pl.when(pl.col(f"qc_error_{real}").is_null())
-                        .then(pl.col(str(real)))
-                        .otherwise(pl.lit(None, dtype=pl.Float32))
-                        .alias(str(real))
-                    )
-
-                    if first_columns is None:
-                        # The "leftmost" index columns are not yet collected.
-                        # They are the same for all iterations, and indexed the same
-                        # because we do a left join for the observations.
-                        # Hence, we select these columns only once.
-                        first_columns = joined.select(
-                            [
-                                "response_key",
-                                "index",
-                                "observation_key",
-                                "observations",
-                                "std",
-                                "east",
-                                "north",
-                                "radius",
-                            ]
-                        )
-
-                    realization_columns.append(
-                        joined.select(str(real), f"qc_error_{real}")
-                    )
+                joined = joined.with_columns(
+                    pl.when(pl.col(f"qc_error_{real}").is_null())
+                    .then(pl.col(str(real)))
+                    .otherwise(pl.lit(None, dtype=pl.Float32))
+                    .alias(str(real))
+                )
 
                 if first_columns is None:
-                    # Not a single realization had any responses to the
-                    # observations. Hence, there is no need to include
-                    # it in the dataset
-                    continue
+                    # The "leftmost" index columns are not yet collected.
+                    # They are the same for all iterations, and indexed the same
+                    # because we do a left join for the observations.
+                    # Hence, we select these columns only once.
+                    first_columns = joined.select(
+                        [
+                            "response_key",
+                            "index",
+                            "observation_key",
+                            "observations",
+                            "std",
+                            "east",
+                            "north",
+                            "radius",
+                        ]
+                    )
 
-                dfs_per_response_type.append(
-                    pl.concat([first_columns, *realization_columns], how="horizontal")
-                )
+                realization_columns.append(joined.select(str(real), f"qc_error_{real}"))
 
-            return pl.concat(dfs_per_response_type, how="vertical").with_columns(
-                pl.col("response_key").cast(pl.String).alias("response_key")
+            if first_columns is None:
+                # Not a single realization had any responses to the
+                # observations. Hence, there is no need to include
+                # it in the dataset
+                continue
+
+            dfs_per_response_type.append(
+                pl.concat([first_columns, *realization_columns], how="horizontal")
             )
+
+        return pl.concat(dfs_per_response_type, how="vertical").with_columns(
+            pl.col("response_key").cast(pl.String).alias("response_key")
+        )
 
     def get_rft_observations_and_responses(
         self,
