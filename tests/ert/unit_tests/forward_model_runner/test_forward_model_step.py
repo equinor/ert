@@ -4,6 +4,7 @@ import os
 import stat
 import sys
 import textwrap
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -41,25 +42,29 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
         next(run)
 
 
-@pytest.mark.slow
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.high_utilization
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_usage_counts_grandchildren():
     scriptname = "recursive_memory_hog.py"
-    blobsize = 1e7
+    blobsize = 1e8
     Path(scriptname).write_text(
         textwrap.dedent(
             """\
             #!/usr/bin/env python
+            import gc
             import os
             import sys
             import time
 
+            gc.disable()
+
             counter = int(sys.argv[-2])
             blobsize = int(sys.argv[-1])
 
-            # Allocate memory
-            _blob = list(range(blobsize))
+            _blob = bytearray(blobsize)
+            # Make sure every page is written to
+            for offset in range(0, blobsize, 4096):
+                _blob[offset] = 1
 
             if counter > 0:
                 parent = os.fork()
@@ -72,7 +77,14 @@ def test_memory_usage_counts_grandchildren():
                             str(blobsize)
                         ]
                         )
-            time.sleep(3)"""  # Too low sleep will make the test faster but flaky
+
+            # Signal readiness with file
+            open("ready_" + str(counter), "w").close()
+
+            # Block until the test releases with "release" file
+            deadline = time.time() + 30
+            while not os.path.exists("release") and time.time() < deadline:
+                time.sleep(0.01)"""
         ),
         encoding="utf-8",
     )
@@ -80,6 +92,11 @@ def test_memory_usage_counts_grandchildren():
     Path(scriptname).chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
     def max_memory_per_subprocess_layer(layers: int) -> int:
+        # Remove stale synchronization files
+        for stale in Path(".").glob("ready_*"):
+            stale.unlink()
+        Path("release").unlink(missing_ok=True)
+
         fmstep = ForwardModelStep(
             {
                 "executable": executable,
@@ -88,21 +105,27 @@ def test_memory_usage_counts_grandchildren():
             0,
         )
         fmstep.MEMORY_POLL_PERIOD = 0.01
+        expected_ready = [Path(f"ready_{n}") for n in range(layers + 1)]
         max_seen = 0
+        all_ready_at: float | None = None
         for status in fmstep.run():
-            if isinstance(status, Running):
+            if not isinstance(status, Running):
+                continue
+            if all_ready_at is not None:
                 max_seen = max(max_seen, status.memory_status.max_rss)
+                if time.time() - all_ready_at > 0.2:
+                    Path("release").write_text("", encoding="utf-8")
+            elif all(path.exists() for path in expected_ready):
+                all_ready_at = time.time()
         return max_seen
 
-    # size of the list that gets forked. we will use this when
-    # comparing the memory used with different amounts of forks done.
-    # subtract a little bit (* 0.9) due to natural variance in memory used
-    # when running the program.
-    memory_per_numbers_list = sys.getsizeof(0) * blobsize * 0.90
+    # The amount of memory allocated per process layer. Subtract a little
+    # bit (* 0.9) to tolerate minor variance in the measured RSS.
+    memory_per_blob = blobsize * 0.90
 
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
-    assert max_seens[0] + memory_per_numbers_list < max_seens[1]
-    assert max_seens[1] + memory_per_numbers_list < max_seens[2]
+    assert max_seens[0] + memory_per_blob < max_seens[1]
+    assert max_seens[1] + memory_per_blob < max_seens[2]
 
 
 @dataclass
