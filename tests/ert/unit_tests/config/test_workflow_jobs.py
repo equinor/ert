@@ -241,3 +241,16 @@ def test_that_site_and_user_installed_fm_steps_are_serialized_differently():
 
     with use_runtime_plugins(site_plugins):
         assert Workflow(**workflow.model_dump(mode="json")) == workflow
+
+
+def test_that_argument_types_returns_the_schema_types_as_python_types(mocked_files):
+    filename = "/tmp/does_not_exist/my_wf_job.wf"
+    mocked_files[filename] = """
+       ARG_TYPE    0  BOOL
+       ARG_TYPE    1  FLOAT
+       ARG_TYPE    2  INT
+       ARG_TYPE    3  STRING
+    """
+    wf_job = workflow_job_from_file(filename)
+    assert not wf_job.is_plugin()
+    assert wf_job.argument_types() == [bool, float, int, str]
