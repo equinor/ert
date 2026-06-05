@@ -40,6 +40,19 @@ def test_that_bounds_and_realization_are_plotted(
     assert list(line3.get_ydata()) == [0.25, 0.25]  # Upper bound
 
 
+def test_that_empty_data_returns_early_with_helper_text(
+    generic_plot_context, everest_ensemble
+):
+    figure = create_everest_figure(
+        EverestConstraintsPlot(),
+        pd.DataFrame(),
+        generic_plot_context,
+        everest_ensemble,
+    )
+    assert len(figure.get_axes()[0].get_lines()) == 0
+    assert figure.get_axes()[0].texts[0].get_text() == "No data"
+
+
 def test_that_bounds_have_correct_style(
     everest_ensemble, generic_plot_context, constraints_data
 ):

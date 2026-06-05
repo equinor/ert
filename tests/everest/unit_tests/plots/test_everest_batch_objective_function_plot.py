@@ -34,7 +34,20 @@ def test_that_date_support_is_disabled(generic_plot_context):
     assert not generic_plot_context.is_date_support_active()
 
 
-def test_that_accepted_and_rejected_is_plotted_correctly(
+def test_that_empty_data_returns_early_with_helper_text(
+    generic_plot_context, everest_ensemble
+):
+    figure = create_everest_figure(
+        EverestBatchObjectiveFunctionPlot(),
+        pd.DataFrame(),
+        generic_plot_context,
+        everest_ensemble,
+    )
+    assert len(figure.get_axes()[0].get_lines()) == 0
+    assert figure.get_axes()[0].texts[0].get_text() == "No data"
+
+
+def test_that_plot_adds_accepted_line_and_scatter_for_accepted_and_rejected_batches(
     everest_ensemble, batch_objective_data, generic_plot_context
 ):
     figure = create_everest_figure(

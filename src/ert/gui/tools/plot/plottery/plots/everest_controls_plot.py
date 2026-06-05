@@ -60,6 +60,9 @@ class EverestControlsPlot:
                 self.plot_pr_batch(figure, plot_context, combined)
             else:
                 self.plot_pr_control(figure, plot_context, combined)
+        else:
+            axes = figure.add_subplot(111)
+            axes.text(0.5, 0.5, "No data", ha="center", va="center")
 
     def plot_pr_control(
         self,

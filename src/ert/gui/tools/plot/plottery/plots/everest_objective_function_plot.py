@@ -58,6 +58,7 @@ class EverestObjectiveFunctionPlot:
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
 
         if not all_dfs:
+            axes.text(0.5, 0.5, "No data", ha="center", va="center")
             return
 
         combined = pd.concat(all_dfs, ignore_index=True)
