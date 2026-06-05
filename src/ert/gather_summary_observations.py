@@ -166,7 +166,7 @@ def obs_to_localization_str(obs: list[Any]) -> str | None:
     if radius is not None:
         lines.append(f"{INDENT6}RADIUS={radius};")
     lines.append(f"{INDENT4}}};")
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines)
 
 
 def get_first_loc_value(loc_key: str, obs: list[dict[str, Any]]) -> float | int | None:
@@ -186,7 +186,7 @@ def breakthrough_to_string(obs: dict[str, Any], key: str) -> str:
         f"{INDENT6}KEY={key};",
         f"{INDENT4}}};",
     ]
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines)
 
 
 def convert_summary_observations(
@@ -238,13 +238,47 @@ def convert_summary_observations(
         if loc_string is not None and (well := summary_key.well) is not None:
             localization[well] = loc_string
 
-    print(f"SUMMARY {{\n  VALUES = {csv_file_name};")
+    num_obs = sum(len(obs_list) for obs_list in summary_observations.values()) + (
+        1 if breakthrough else 0
+    )
+    obs_names = [
+        obs_dict["name"]
+        for obs_list in summary_observations.values()
+        for obs_dict in obs_list
+    ] + [
+        obs_dict["name"]
+        for obs_list in breakthrough_observations.values()
+        for obs_dict in obs_list
+    ]
+    obs_names_str = INDENT4 + f"\n{INDENT4}".join(obs_names)
+    bulk_config_list = ["SUMMARY {", f"{INDENT2}VALUES = {csv_file_name};"]
     for well in sorted(localization.keys() | breakthrough.keys()):
-        print(f"{INDENT2}WELL {well} {{")
-        print(localization.get(well, ""), end="")
-        print(breakthrough.get(well, ""), end="")
-        print(f"{INDENT2}}};")
-    print("};")
+        bulk_config_list.extend(
+            [
+                f"{INDENT2}WELL {well} {{",
+                localization.get(well, ""),
+                breakthrough.get(well, ""),
+                f"{INDENT2}}};",
+            ]
+        )
+    bulk_config_list.append("};")
+    bulk_config_str = "\n".join(
+        filter(None, bulk_config_list)  # Filter out empty (falsy) strings
+    )
+
+    print(
+        f"\n{num_obs} observations can be replaced by: \n"
+        f"{INDENT2}1.  Copying the file '{csv_file_name}' to the folder containing "
+        f"your observation  configuration.\n"
+        f"{INDENT2}2.  Replacing the named observations below with the bulk "
+        f"configuration\n\n"
+        f"Observation names (to replace):\n"
+        f"==============================\n"
+        f"{obs_names_str}\n\n"
+        f"Bulk configuration (replace with):\n"
+        f"=================================\n"
+        f"{bulk_config_str}"
+    )
 
 
 async def get_storage_auth(config_path: Path | str) -> tuple[SSLContext, Any]:
