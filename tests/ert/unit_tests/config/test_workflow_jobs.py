@@ -3,14 +3,16 @@ from textwrap import dedent
 
 import pytest
 
-from ert import ErtScript
+from ert import ErtScript, ErtScriptWorkflow
 from ert.base_model_context import use_runtime_plugins
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, Workflow
-from ert.config.workflow_job import (
-    ErtScriptWorkflow,
-    UserInstalledErtScriptWorkflow,
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    Workflow,
     workflow_job_from_file,
 )
+from ert.config.workflow_job import UserInstalledErtScriptWorkflow
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.storage import Storage
 
@@ -113,18 +115,19 @@ def test_that_site_ertscript_is_serialized_to_name_and_deserialized_from_plugins
         )
 
 
-def test_that_user_installed_ertscript_serializes_as_source_and_loads_class_on_demand(
-    use_tmpdir,
-):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_user_installed_ertscript_serializes_as_source_and_loads_class_on_demand():
     Path("script.py").write_text(
-        """
-from ert import ErtScript
-from ert.storage import Storage
+        dedent(
+            """\
+            from ert import ErtScript
+            from ert.storage import Storage
 
-class SomeScript(ErtScript):
-    def run(self, storage: Storage):
-        return 'i am here'
-    """,
+            class SomeScript(ErtScript):
+                def run(self, storage: Storage):
+                    return 'i am here'
+            """
+        ),
         encoding="utf-8",
     )
 
@@ -153,21 +156,24 @@ class SomeScript(ErtScript):
     )
 
 
-def test_that_site_and_user_installed_fm_steps_are_serialized_differently(use_tmpdir):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_site_and_user_installed_fm_steps_are_serialized_differently():
     Path("USER_EXECUTABLE_JOB_FILE").write_text(
         "EXECUTABLE echo",
         encoding="utf-8",
     )
 
     Path("script.py").write_text(
-        """
-from ert import ErtScript
-from ert.storage import Storage
+        dedent(
+            """\
+            from ert import ErtScript
+            from ert.storage import Storage
 
-class SomeScript(ErtScript):
-    def run(self, storage: Storage):
-        return 'i am here'
-    """,
+            class SomeScript(ErtScript):
+                def run(self, storage: Storage):
+                    return 'i am here'
+            """
+        ),
         encoding="utf-8",
     )
 
@@ -175,7 +181,7 @@ class SomeScript(ErtScript):
         """
         INTERNAL True
         SCRIPT script.py
-""",
+        """,
         encoding="utf-8",
     )
 
@@ -184,7 +190,7 @@ class SomeScript(ErtScript):
         USR_INSTALLED_EXECUTABLE_JOB
         SITE_INSTALLED_JOB
         USR_INSTALLED_ERTSCRIPT_JOB
-    """,
+        """,
         encoding="utf-8",
     )
 
