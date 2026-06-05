@@ -2,6 +2,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+from pydantic import ValidationError
 
 from ert import ErtScript, ErtScriptWorkflow
 from ert.base_model_context import use_runtime_plugins
@@ -12,7 +13,10 @@ from ert.config import (
     Workflow,
     workflow_job_from_file,
 )
-from ert.config.workflow_job import UserInstalledErtScriptWorkflow
+from ert.config.workflow_job import (
+    ErtScriptLoadFailure,
+    UserInstalledErtScriptWorkflow,
+)
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.storage import Storage
 
@@ -254,3 +258,39 @@ def test_that_argument_types_returns_the_schema_types_as_python_types(mocked_fil
     wf_job = workflow_job_from_file(filename)
     assert not wf_job.is_plugin()
     assert wf_job.argument_types() == [bool, float, int, str]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_user_installed_ertscript_from_source_without_ertscript_raises():
+    Path("script.py").write_text("x = 1  # no ErtScript subclass\n", encoding="utf-8")
+
+    with pytest.raises(
+        ValidationError,
+        match=r"Failed to load Script1: .*does not contain an ErtScript",
+    ):
+        UserInstalledErtScriptWorkflow(name="Script1", source="script.py")
+
+
+def test_that_site_installed_ertscript_without_a_script_class_raises():
+    with pytest.raises(
+        ValidationError,
+        match="Failed to load Script1, ert_script is instance, expected type",
+    ):
+        ErtScriptWorkflow(name="Script1")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_loading_workflow_job_with_unloadable_internal_script_raises():
+    Path("bad_script.py").write_text(
+        "x = 1  # no ErtScript subclass\n", encoding="utf-8"
+    )
+    Path("job").write_text("INTERNAL True\nSCRIPT bad_script.py\n", encoding="utf-8")
+
+    with (
+        pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"),
+        pytest.raises(
+            ErtScriptLoadFailure,
+            match=r"Failed to load MYJOB: .*does not contain an ErtScript",
+        ),
+    ):
+        workflow_job_from_file("job", origin="user", name="MYJOB")
