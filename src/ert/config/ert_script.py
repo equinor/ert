@@ -5,12 +5,9 @@ import inspect
 import logging
 import sys
 import traceback
-import warnings
 from abc import abstractmethod
 from types import MappingProxyType, ModuleType
 from typing import Any
-
-from typing_extensions import deprecated
 
 from .workflow_fixtures import (
     WorkflowFixtures,
@@ -64,33 +61,6 @@ class ErtScript:
         if isinstance(self._stderrdata, bytes):
             self._stderrdata = self._stderrdata.decode()
         return self._stderrdata
-
-    @deprecated("Use fixtures to the run function instead")
-    def ert(self) -> None:
-        logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
-        raise AttributeError("Attribute 'ert' is deprecated, use fixtures instead.")
-
-    @property
-    def ensemble(self) -> None:
-        warnings.warn(
-            "The ensemble property is deprecated, "
-            "use the fixture to the run function instead",
-            DeprecationWarning,
-            stacklevel=1,
-        )
-        logger.info(f"Accessing ensemble from workflow: {self.__class__.__name__}")
-        raise AttributeError("Attribute 'ensemble' is deprecated, use fixture instead.")
-
-    @property
-    def storage(self) -> None:
-        warnings.warn(
-            "The storage property is deprecated, "
-            "use the fixture to the run function instead",
-            DeprecationWarning,
-            stacklevel=1,
-        )
-        logger.info(f"Accessing storage from workflow: {self.__class__.__name__}")
-        raise AttributeError("Attribute 'storage' is deprecated, use fixture instead.")
 
     def isCancelled(self) -> bool:
         return self.__is_cancelled
