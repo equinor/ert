@@ -5,12 +5,14 @@ import math
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.ticker as mticker
+from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.collections import PathCollection
 from matplotlib.container import BarContainer
 from matplotlib.lines import Line2D
 
 from ert.gui.plotting.utils.plot_context import PlotType
 from ert.gui.plotting.utils.tooltip_manager import (
+    ValidatedMouseEvent,
     create_tooltip_manager,
 )
 
@@ -182,7 +184,10 @@ class PlotTools:
         plot_type: PlotType,
         axes: Axes,
         figure: Figure,
-        data: list[list[Line2D]] | PathCollection | list[BarContainer],
+        data: list[list[Line2D]]
+        | PathCollection
+        | list[PathCollection]
+        | list[BarContainer],
         labels: list[str],
         **options: Any,
     ) -> None:
@@ -197,16 +202,39 @@ class PlotTools:
 
         hover_color = options.get("hover_color")
         disable_values = options.get("disable_values", False)
-        tooltip_manager = create_tooltip_manager(
-            plot_type,
-            hover_box,
-            figure,
-            axes,
-            hover_color=hover_color,
-            disable_values=disable_values,
-        )
+
+        try:
+            tooltip_manager = create_tooltip_manager(
+                data,
+                labels,
+                plot_type,
+                hover_box,
+                figure,
+                axes,
+                hover_color=hover_color,
+                disable_values=disable_values,
+            )
+        except (TypeError, ValueError) as e:
+            logger.warning(f"Failed to create tooltip manager: {e}")
+            return
+
+        wrong_event_type_flagged = False
+
+        def _handle_event(event: Event) -> None:
+            if not isinstance(event, MouseEvent):
+                nonlocal wrong_event_type_flagged
+                if not wrong_event_type_flagged:
+                    logger.warning(f"Expected a MouseEvent, got {type(event).__name__}")
+                    wrong_event_type_flagged = True
+                return
+            if event.inaxes != axes:
+                hover_box.set_visible(False)
+                figure.canvas.draw_idle()
+                return
+            custom_event = ValidatedMouseEvent(event, axes)
+            tooltip_manager.on_hover(custom_event)
 
         figure.canvas.mpl_connect(
             "motion_notify_event",
-            lambda event: tooltip_manager.on_hover(event, data, labels),  # type: ignore
+            _handle_event,
         )

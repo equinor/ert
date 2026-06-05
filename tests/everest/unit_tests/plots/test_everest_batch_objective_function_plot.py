@@ -84,16 +84,17 @@ def test_that_hovering_over_points_shows_correct_tooltip(
     move_cursor(axes=axes, x=0, y=8.0)
 
     annotations = list(axes.texts)
-    assert len(annotations) == 2
-    rejected_batches = annotations[0]
-    accepted_batches = annotations[1]
+    assert len(annotations) == 1
 
-    accepted_batches_text = accepted_batches.get_text()
+    tooltip = annotations[0]
+
+    accepted_batches_text = tooltip.get_text()
     assert "Batch 0" in accepted_batches_text
-    assert accepted_batches.get_visible()
-    assert not rejected_batches.get_visible()
+    assert tooltip.get_visible()
 
-    move_cursor(axes=axes, x=2, y=10.0)
-    assert rejected_batches.get_visible()
-    assert "Batch 2" in rejected_batches.get_text()
-    assert not accepted_batches.get_visible()
+    move_cursor(axes=axes, x=2.0, y=10.0)
+    assert tooltip.get_visible()
+    assert "Batch 2" in tooltip.get_text()
+
+    move_cursor(axes=axes, x=0.0, y=0.0)
+    assert not tooltip.get_visible()
