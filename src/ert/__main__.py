@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import locale
 import logging
 import logging.config
@@ -15,7 +14,6 @@ from argparse import ArgumentParser, ArgumentTypeError
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 from uuid import UUID
 
 import yaml
@@ -247,29 +245,6 @@ def run_lint_wrapper(args: Namespace, _: ErtRuntimePlugins) -> None:
     lint_file(args.config)
 
 
-class DeprecatedAction(argparse.Action):
-    def __init__(self, alternative_option: str | None = None, **kwargs: Any) -> None:
-        self.alternative_option: str | None = alternative_option
-        super().__init__(**kwargs)
-
-    def __call__(
-        self,
-        parser: ArgumentParser,
-        namespace: argparse.Namespace,
-        values: Any,
-        option_string: str | None = None,
-    ) -> None:
-        alternative_msg: str = (
-            f"Use {self.alternative_option} instead." if self.alternative_option else ""
-        )
-        warnings.warn(
-            f"{option_string} is deprecated and will be removed in "
-            f"future versions. {alternative_msg}",
-            stacklevel=1,
-        )
-        setattr(namespace, self.dest, values)
-
-
 def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     if parser is None:
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
@@ -346,15 +321,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         TEST_RUN_MODE, help=test_run_description, description=test_run_description
     )
     test_run_parser.add_argument(
-        "--current-case",
-        type=valid_name,
-        default="default",
-        action=DeprecatedAction,
-        dest="current_ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --current-ensemble instead.",
-    )
-    test_run_parser.add_argument(
         "--current-ensemble",
         type=valid_name,
         default="default",
@@ -378,15 +344,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
         "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded.",
-    )
-    ensemble_experiment_parser.add_argument(
-        "--current-case",
-        type=valid_ensemble,
-        default="default",
-        action=DeprecatedAction,
-        dest="current_ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --current-ensemble instead.",
     )
     ensemble_experiment_parser.add_argument(
         "--current-ensemble",
@@ -413,29 +370,10 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         help=ensemble_smoother_description,
     )
     ensemble_smoother_parser.add_argument(
-        "--current-case",
-        type=valid_name,
-        action=DeprecatedAction,
-        alternative_option="--current-ensemble",
-        dest="current_ensemble",
-        default="default",
-        help="Deprecated: This argument is deprecated and has no effect.",
-    )
-    ensemble_smoother_parser.add_argument(
         "--current-ensemble",
         type=valid_name,
         default="default",
         help="This argument is deprecated and has no effect.",
-    )
-    ensemble_smoother_parser.add_argument(
-        "--target-case",
-        type=valid_name_format,
-        default="iter-%d",
-        action=DeprecatedAction,
-        alternative_option="--target-ensemble",
-        dest="target_ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --target-ensemble instead.",
     )
     ensemble_smoother_parser.add_argument(
         "--target-ensemble",
@@ -499,15 +437,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         ES_MDA_MODE, description=es_mda_description, help=es_mda_description
     )
     es_mda_parser.add_argument(
-        "--target-case",
-        type=valid_name_format,
-        action=DeprecatedAction,
-        alternative_option="--target-ensemble",
-        dest="target_ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --target-ensemble instead.",
-    )
-    es_mda_parser.add_argument(
         "--target-ensemble",
         type=valid_name_format,
         help="The es_mda creates multiple ensembles for the different "
@@ -530,15 +459,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         help="Example custom relative weights: '8,4,2,1'. This means multiple data "
         "assimilation ensemble smoother will half the weight applied to the "
         "observation errors from one iteration to the next across 4 iterations.",
-    )
-    es_mda_parser.add_argument(
-        "--restart-case",
-        type=valid_name,
-        default=None,
-        action=DeprecatedAction,
-        dest="restart_ensemble_id",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --restart-ensemble instead.",
     )
     es_mda_parser.add_argument(
         "--restart-ensemble",

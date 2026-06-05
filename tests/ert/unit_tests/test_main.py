@@ -52,16 +52,15 @@ def test_argparse_exec_ensemble_experiment_valid_case():
 
 
 def test_argparse_exec_ensemble_experiment_current_case():
-    with pytest.warns(UserWarning, match="current-case is deprecated"):
-        parsed = ert_parser(
-            None,
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
-                "--current-case",
-                "test_case",
-                "path/to/config.ert",
-            ],
-        )
+    parsed = ert_parser(
+        None,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--current-ensemble",
+            "test_case",
+            "path/to/config.ert",
+        ],
+    )
     assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
     assert parsed.current_ensemble == "test_case"
     assert parsed.func.__name__ == "run_cli"
