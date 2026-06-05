@@ -203,6 +203,9 @@ def convert_summary_observations(
     with Path(csv_file_name).open(mode="w", encoding="utf-8") as fout:
         fout.write(", ".join([*header_fields, "value", "error", "date"]))
         fout.write("\n")
+        # Sort observations chronologically before natsort
+        for obs_list in summary_observations.values():
+            obs_list.sort(key=lambda obs: obs["x_axis"][0])
         for key in natsorted(summary_observations.keys()):
             skd = make_summary_key_data(key)
             for observation in summary_observations[key]:
