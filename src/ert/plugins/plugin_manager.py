@@ -15,7 +15,6 @@ from ert.config import (
     ForwardModelStepDocumentation,
     ForwardModelStepPlugin,
     KnownQueueOptions,
-    LegacyWorkflowConfigs,
     LocalQueueOptions,
     SiteInstalledForwardModelStep,
     WorkflowConfigs,
@@ -270,7 +269,6 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_documentation_for_workflows(self) -> dict[str, JobDoc]:
         workflow_config = self.get_ertscript_workflows()
-        legacy_workflow_config = self.get_legacy_ertscript_workflows()
 
         job_docs: dict[str, JobDoc] = {  # type: ignore
             workflow.name: {
@@ -282,16 +280,6 @@ class ErtPluginManager(pluggy.PluginManager):
                 "category": workflow.category,
             }
             for workflow in workflow_config._workflows
-        } | {
-            workflow.name: {
-                "description": workflow.description,
-                "examples": workflow.examples,
-                "parser": legacy_workflow_config.parsers[workflow.name],
-                "config_file": None,
-                "source_package": workflow.source_package,
-                "category": workflow.category,
-            }
-            for workflow in legacy_workflow_config._workflows
         }
 
         fm_step_doc = self.get_documentation_for_forward_model_steps()
@@ -312,11 +300,6 @@ class ErtPluginManager(pluggy.PluginManager):
     def get_ertscript_workflows(self) -> WorkflowConfigs:
         config = WorkflowConfigs()
         self.hook.ertscript_workflow(config=config)
-        return config
-
-    def get_legacy_ertscript_workflows(self) -> WorkflowConfigs:
-        config = LegacyWorkflowConfigs()
-        self.hook.legacy_ertscript_workflow(config=config)
         return config
 
     def add_logging_handle_to_root(self, logger: logging.Logger) -> None:
@@ -371,8 +354,6 @@ def get_site_plugins(
 
     all_workflow_jobs: dict[str, WorkflowJob] = dict[str, WorkflowJob](
         plugin_manager.get_ertscript_workflows().get_workflows()
-    ) | dict[str, WorkflowJob](
-        plugin_manager.get_legacy_ertscript_workflows().get_workflows()
     )
 
     for job_path in installable_workflow_jobs.values():

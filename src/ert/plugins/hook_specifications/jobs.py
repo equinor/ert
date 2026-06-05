@@ -44,9 +44,3 @@ def ertscript_workflow(config: WorkflowConfigs) -> None:
 
     :param config: A handle to the main workflow config.
     """
-
-
-@no_type_check
-@hook_specification
-def legacy_ertscript_workflow(config: WorkflowConfigs) -> None:
-    """Deprecated Variant of the hook ertscript_workflow"""

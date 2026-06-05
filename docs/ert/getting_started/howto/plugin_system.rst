@@ -181,7 +181,7 @@ Implement the hook specification as follows to register the workflow job ``CSV_E
             "CSV_EXPORT": "/path/to/csv_export"
         }
 
-.. _legacy_ert_workflow_jobs:
+.. _ert_workflow_jobs:
 
 2. **Using the ertscript_workflow hook**
 

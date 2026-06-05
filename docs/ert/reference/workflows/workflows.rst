@@ -76,4 +76,4 @@ state of the experiment that is running:
         ):
             print(f"Provided user arguments: {workflow_args}")
 
-For how to load internal workflow jobs into ERT, see: :ref:`installing workflows <legacy_ert_workflow_jobs>`
+For how to load internal workflow jobs into ERT, see: :ref:`installing workflows <ert_workflow_jobs>`

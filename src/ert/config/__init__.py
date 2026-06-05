@@ -56,7 +56,7 @@ from .rft_config import RFTConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
-from .workflow_config import LegacyWorkflowConfigs, WorkflowConfigs
+from .workflow_config import WorkflowConfigs
 from .workflow_fixtures import (
     HookedWorkflowFixtures,
     PostExperimentFixtures,
@@ -118,7 +118,6 @@ __all__ = [
     "KnownQueueOptions",
     "KnownQueueOptionsAdapter",
     "KnownResponseTypes",
-    "LegacyWorkflowConfigs",
     "LocalQueueOptions",
     "LocalizationType",
     "ModelConfig",
