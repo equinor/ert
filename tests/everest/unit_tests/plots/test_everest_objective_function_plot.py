@@ -29,6 +29,19 @@ def lots_of_realization_data():
     )
 
 
+def test_that_empty_data_returns_early_with_helper_text(
+    generic_plot_context, everest_ensemble
+):
+    figure = create_everest_figure(
+        EverestObjectiveFunctionPlot(),
+        pd.DataFrame(),
+        generic_plot_context,
+        everest_ensemble,
+    )
+    assert len(figure.get_axes()[0].get_lines()) == 0
+    assert figure.get_axes()[0].texts[0].get_text() == "No data"
+
+
 def test_that_plot_type_is_set_to_line_and_style_is_correct(
     generic_plot_context, everest_ensemble
 ):
@@ -73,7 +86,7 @@ def test_that_all_realizations_are_plotted(
         (lots_of_realization_data(), 1),
     ],
 )
-def test_that_color_is_correctly_set_based_on_amount_of_realizations(
+def test_that_unique_colors_only_if_num_of_realizations_is_at_or_below_legend_threshold(
     realization_data, expected_num_of_colors, generic_plot_context, everest_ensemble
 ):
     figure = create_everest_figure(

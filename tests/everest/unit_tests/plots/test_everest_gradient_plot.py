@@ -36,7 +36,7 @@ def test_gradient_plot_with_no_controls_or_data_shows_helper_text(
     figure = create_everest_figure(
         plot, pd.DataFrame(), generic_plot_context, everest_ensemble
     )
-    assert figure.axes[0].texts[0].get_text() == expected_text
+    assert figure.get_axes()[0].texts[0].get_text() == expected_text
 
 
 def test_gradient_plot_with_control_selected(

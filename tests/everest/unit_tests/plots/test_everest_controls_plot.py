@@ -103,16 +103,18 @@ def test_that_plot_creates_lines_in_by_batch_and_scatter_collections_in_by_contr
     assert len(lines) == expected_lines
 
 
-def test_that_plot_pr_batch_with_empty_data_creates_no_axes(
-    generic_plot_context, everest_ensemble
+@pytest.mark.parametrize("by_batch", [True, False])
+def test_that_plot_with_empty_data_creates_helper_text(
+    generic_plot_context, everest_ensemble, by_batch
 ):
+    generic_plot_context.by_batch = by_batch
     plot = EverestControlsPlot()
     plot.set_selected_controls(["ctrl_a"])
     figure = create_everest_figure(
         plot, pd.DataFrame(), generic_plot_context, everest_ensemble
     )
 
-    assert len(figure.get_axes()) == 0
+    assert figure.get_axes()[0].texts[0].get_text() == "No data"
 
 
 @pytest.mark.parametrize(
