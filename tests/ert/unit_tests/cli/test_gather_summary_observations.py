@@ -196,3 +196,20 @@ def test_that_localization_can_be_gathered_from_breakthrough(capsys):
         "      RADIUS=2500;\n"
         "    };\n"
     ) in capsys.readouterr().out
+
+
+def test_that_multiple_breakthrough_observations_for_the_same_well_raises_cli_error(
+    monkeypatch,
+):
+    summary_obs = {}
+    brt_obs = _make_brt_obs(
+        1,
+    )
+    obs_name = next(name for name in brt_obs)
+    brt_obs[obs_name] *= 2
+    with pytest.raises(
+        ErtCliError,
+        match=r"Can only have one breakthrough observation per well.\n"
+        r"Found 2 breakthroughs for well 'OP1'.",
+    ):
+        convert_summary_observations(summary_obs, brt_obs, "foo")

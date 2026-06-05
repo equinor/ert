@@ -177,8 +177,7 @@ def get_first_loc_value(loc_key: str, obs: list[dict[str, Any]]) -> float | int 
     return None
 
 
-def breakthrough_to_string(obss: list[dict[str, Any]], key: str) -> str:
-    obs = obss[0]
+def breakthrough_to_string(obs: dict[str, Any], key: str) -> str:
     lines = [
         f"{INDENT4}BREAKTHROUGH {{",
         f"{INDENT6}THRESHOLD={obs['values'][0]};",
@@ -223,7 +222,12 @@ def convert_summary_observations(
         key = brt_key.removeprefix("BREAKTHROUGH:")
         summary_key = make_summary_key_data(key)
         if (well := summary_key.well) is not None:
-            breakthrough[well] = breakthrough_to_string(obs, summary_key.keyword)
+            if len(obs) > 1:
+                raise ErtCliError(
+                    f"Can only have one breakthrough observation per well.\n"
+                    f"Found {len(obs)} breakthroughs for well '{well}'."
+                )
+            breakthrough[well] = breakthrough_to_string(obs[0], summary_key.keyword)
 
     localization = {}
     for key in summary_observations | breakthrough_observations:
