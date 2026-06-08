@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
+from matplotlib.axes import Axes
 from matplotlib.ticker import MaxNLocator
 
 from ert.gui.tools.plot.plottery.plot_context import PlotType
@@ -53,56 +54,46 @@ class EverestControlsPlot:
     ) -> None:
         plot_context.deactivate_date_support()
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
-
+        plot_context.y_axis = plot_context.VALUE_AXIS
+        plot_context.x_axis = plot_context.INDEX_AXIS
+        plot_context.plot_type = (
+            PlotType.LINE if plot_context.by_batch else PlotType.SCATTER
+        )
+        axes = figure.add_subplot(111)
         if all_dfs:
             combined = pd.concat(all_dfs, ignore_index=True)
             if plot_context.by_batch:
-                self.plot_pr_batch(figure, plot_context, combined)
+                self._plot_per_batch(figure, axes, plot_context, combined)
             else:
-                self.plot_pr_control(figure, plot_context, combined)
+                self._plot_per_control(figure, axes, plot_context, combined)
         else:
-            axes = figure.add_subplot(111)
             axes.text(0.5, 0.5, "No data", ha="center", va="center")
 
-    def plot_pr_control(
+    def _plot_per_control(
         self,
         figure: Figure,
+        axes: Axes,
         plot_context: PlotContext,
         combined_data: pd.DataFrame,
     ) -> None:
         config = plot_context.plotConfig()
-        axes = figure.add_subplot(111)
 
-        plot_context.y_axis = plot_context.VALUE_AXIS
-        plot_context.x_axis = plot_context.INDEX_AXIS
-        plot_context.plot_type = PlotType.SCATTER
-
-        x_positions = list(range(len(self.selected_controls)))
-        batch_ids = sorted(combined_data["batch_id"].unique().tolist())
+        data = combined_data[combined_data["control_name"].isin(self.selected_controls)]
+        batch_ids = sorted(data["batch_id"].unique().tolist())
 
         for batch_id in batch_ids:
-            batch_data = combined_data[combined_data["batch_id"] == batch_id]
-            control_name_list = []
-            control_value_list = []
-            for x, control in zip(x_positions, self.selected_controls, strict=True):
-                control_rows = batch_data[batch_data["control_name"] == control]
-                if not control_rows.empty:
-                    for value in control_rows["control_value"]:
-                        control_name_list.append(x)
-                        control_value_list.append(value)
-            if control_name_list:
+            batch_data = data[data["batch_id"] == batch_id]
+            if not batch_data.empty:
                 label = "initial batch" if batch_id == 0 else f"batch_{batch_id}"
                 scatter = axes.scatter(
-                    control_name_list,
-                    control_value_list,
+                    batch_data["control_name"],
+                    batch_data["control_value"],
                     color=config.next_color(),
                     s=20,
                 )
                 if len(batch_ids) <= LEGEND_THRESHOLD:
                     config.add_legend_item(label, scatter)
-
-        axes.set_xticks(x_positions)
-        axes.set_xticklabels(self.selected_controls, rotation=-30, ha="left")
+        axes.tick_params(axis="x", rotation=-30)
 
         config.set_title("Control values by control")
         PlotTools.finalizePlot(
@@ -113,18 +104,14 @@ class EverestControlsPlot:
             default_y_label="Control value",
         )
 
-    def plot_pr_batch(
+    def _plot_per_batch(
         self,
         figure: Figure,
+        axes: Axes,
         plot_context: PlotContext,
         combined_data: pd.DataFrame,
     ) -> None:
         config = plot_context.plotConfig()
-        axes = figure.add_subplot(111)
-
-        plot_context.y_axis = plot_context.VALUE_AXIS
-        plot_context.x_axis = plot_context.INDEX_AXIS
-        plot_context.plot_type = PlotType.LINE
 
         tooltip_data = []
         tooltip_labels = []
