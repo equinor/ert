@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 from tests.everest.unit_tests.plots.utils import create_everest_figure
 
+from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.tools.plot.plottery.plots import EverestConstraintsPlot
 
 
@@ -18,6 +19,25 @@ def constraints_data():
     )
 
 
+def test_that_plot_type_is_set_to_line_and_line_style_is_correct(
+    generic_plot_context, everest_ensemble, constraints_data
+):
+    figure = create_everest_figure(
+        EverestConstraintsPlot(),
+        constraints_data,
+        generic_plot_context,
+        everest_ensemble,
+    )
+
+    assert generic_plot_context.plot_type == PlotType.LINE
+    axes = figure.get_axes()[0]
+    lines = axes.get_lines()
+    assert len(lines) == 3  # constraint_value + lower_bound  + upper_bound
+    value_line = lines[0]
+    assert value_line.get_linestyle() == "-"
+    assert value_line.get_marker() == "o"
+
+
 def test_that_bounds_and_realization_are_plotted(
     everest_ensemble, generic_plot_context, constraints_data
 ):
@@ -28,7 +48,7 @@ def test_that_bounds_and_realization_are_plotted(
         everest_ensemble,
     )
 
-    axes = figure.axes[0]
+    axes = figure.get_axes()[0]
     lines = axes.get_lines()
     assert len(lines) == 3  # Realization line + lower bound + upper bound
     line1, line2, line3 = lines
@@ -69,6 +89,7 @@ def test_that_bounds_have_correct_style(
     assert len(bound_lines) > 0
     for line in bound_lines:
         assert line.get_linestyle() == "--"
+        assert line.get_marker() == "None"
 
     spans = axes.patches
     assert len(spans) == 2
