@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 import numpy as np
 import pandas as pd
+from httpx import RequestError
 from pandas import DataFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -140,10 +141,21 @@ def handle_exception(e: BaseException) -> None:
             "Plot API request timed out. Please check your connection ",
             "or the storage server status",
         )
+        logger.exception(e)  # noqa: LOG004
+        open_error_dialog(type(e).__name__, str(e))
+    elif isinstance(e, RequestError):
+        e.args = (
+            "An error occurred while making a request to the Plot API. ",
+            "Please check your connection or the storage server status",
+        )
+        logger.exception(e)  # noqa: LOG004
+        open_error_dialog(type(e).__name__, str(e))
     elif isinstance(e, ServerBootFail):
         e.args = ("The storage server failed to start",)
-    logger.exception(e)  # noqa: LOG004
-    open_error_dialog(type(e).__name__, str(e))
+        logger.exception(e)  # noqa: LOG004
+        open_error_dialog(type(e).__name__, str(e))
+    else:
+        raise e
 
 
 class PlotWindow(QMainWindow):
