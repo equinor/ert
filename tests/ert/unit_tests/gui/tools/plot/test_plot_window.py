@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import cast
 from unittest.mock import MagicMock
 
@@ -226,7 +227,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
         assert parameter_key == "animal_type"
         return pd.DataFrame(
             {
-                "animal_type": ["cat", "dog", "fish"],
+                0: ["cat", "dog", "fish"],
             }
         )
 
@@ -242,7 +243,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
         )
     ]
 
-    plot_window = PlotWindow(config_file="", ens_path="", parent=None)
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
 
