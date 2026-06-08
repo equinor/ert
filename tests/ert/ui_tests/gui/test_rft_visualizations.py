@@ -22,7 +22,7 @@ from ert.gui.tools.plot.plot_window import (
 )
 from ert.services import ErtServerController
 from ert.storage import open_storage
-from tests.ert.rft_generator import cell_start
+from tests.ert.rft_generator import cell_start, create_egrid
 
 from .conftest import (
     add_experiment_manually,
@@ -37,35 +37,7 @@ def pad_to(lst: list[int], target_len: int):
 
 
 def write_egrid(path: Path):
-    nz = 50
-    resfo.write(
-        path,
-        [
-            ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-            ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
-            ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-            ("GRIDHEAD", pad_to([1, 1, 1, nz], 100)),
-            (
-                "COORD   ",
-                np.array(
-                    [
-                        [[[0, 0, 0], [0, 0, nz]], [[0, 1, 0], [0, 1, nz]]],
-                        [[[1, 0, 0], [1, 0, nz]], [[1, 1, 0], [1, 1, nz]]],
-                    ],
-                    dtype=">f4",
-                ).ravel(),
-            ),
-            (
-                "ZCORN   ",
-                np.array(
-                    [v for k in range(nz) for v in [k] * 4 + [k + 1] * 4],
-                    dtype=">f4",
-                ),
-            ),
-            ("ACTNUM  ", np.ones((nz,), dtype=">i4")),
-            ("ENDGRID ", np.array([], dtype=">i4")),
-        ],
-    )
+    resfo.write(path, create_egrid(1, 1, 50, 1, 1, 1))
 
 
 @pytest.fixture
@@ -77,7 +49,7 @@ def rft_config(tmp_path: Path):
         rft_file = runpath / "BASE.RFT"
         offset = i / 2
         depth = np.linspace(0, 2 * np.pi, dtype=np.float32)
-        write_egrid(runpath / "BASE.EGRID")
+        resfo.write(runpath / "BASE.EGRID", create_egrid(1, 1, 50, 1, 1, 1))
         resfo.write(
             rft_file,
             [

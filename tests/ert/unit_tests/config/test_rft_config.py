@@ -19,7 +19,7 @@ from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.config.rft_config import _get_zonemap, _read_egrid
-from tests.ert.rft_generator import cell_start, float_arr
+from tests.ert.rft_generator import cell_start, create_egrid, float_arr
 
 
 @pytest.fixture(autouse=True)
@@ -355,52 +355,6 @@ def test_that_number_of_connections_can_be_different_per_well(mock_resfo_file, e
     ]
 
 
-def pad_to(lst: list[int], target_len: int):
-    return np.pad(
-        np.array(lst, dtype=np.int32), (0, target_len - len(lst)), mode="constant"
-    )
-
-
-def _egrid(nx, ny, nz, x_width, y_width, layer_height):
-    """EGrid file contents with nz layers, nx cells in the i direction and ny cells in
-    the j direction.
-
-    Each cell has width x_width in the i direction and y_width in the j direction and
-    height layer_height in the z direction.
-    """
-
-    height = nz * layer_height
-    cells_per_layer = nx * ny
-
-    coord = np.array(
-        [
-            [i * x_width, j * y_width, 0, i * x_width, j * y_width, height]
-            for j in range(ny + 1)
-            for i in range(nx + 1)
-        ],
-        dtype=">f4",
-    )
-
-    zcoord = np.array(
-        [
-            [z * layer_height] * (cells_per_layer * 4)
-            + [(z + 1) * layer_height] * (cells_per_layer * 4)
-            for z in range(nz)
-        ],
-        dtype=">f4",
-    )
-    return [
-        ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
-        ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-        ("GRIDHEAD", pad_to([1, nx, ny, nz], 100)),
-        ("COORD   ", coord.ravel()),
-        ("ZCORN   ", zcoord.ravel()),
-        ("ACTNUM  ", np.ones(nx * ny * nz, dtype=">i4")),
-        ("ENDGRID ", np.array([], dtype=">i4")),
-    ]
-
-
 @pytest.fixture
 def egrid():
     """EGrid file contents with three layers.
@@ -413,7 +367,7 @@ def egrid():
     Third layer depth is from 2.0 to 3.0
 
     """
-    return _egrid(2, 2, 3, 50.0, 50.0, 1.0)
+    return create_egrid(2, 2, 3, 50.0, 50.0, 1.0)
 
 
 def test_that_locations_are_found_in_corresponding_grid(mock_resfo_file, egrid):
@@ -550,7 +504,7 @@ def test_that_connection_cells_are_processed_independently(mock_resfo_file):
 
     mock_resfo_file(
         "/tmp/does_not_exist/ECLBASE1.EGRID",
-        _egrid(5, 2, 3, 50.0, 50.0, 1.0),
+        create_egrid(5, 2, 3, 50.0, 50.0, 1.0),
     )
     mock_resfo_file(
         "/tmp/does_not_exist/ECLBASE1.RFT",
