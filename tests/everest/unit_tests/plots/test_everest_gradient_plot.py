@@ -3,6 +3,7 @@ import pytest
 from matplotlib.container import BarContainer
 from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
+from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.tools.plot.plottery.plots.everest_gradients_plot import (
     EverestGradientsPlot,
 )
@@ -28,7 +29,7 @@ def controls_data():
         (["control_1"], "No data"),
     ],
 )
-def test_gradient_plot_with_no_controls_or_data_shows_helper_text(
+def test_that_plot_with_no_controls_or_data_shows_helper_text(
     generic_plot_context, everest_ensemble, selected_controls, expected_text
 ):
     plot = EverestGradientsPlot()
@@ -39,7 +40,7 @@ def test_gradient_plot_with_no_controls_or_data_shows_helper_text(
     assert figure.get_axes()[0].texts[0].get_text() == expected_text
 
 
-def test_gradient_plot_with_control_selected(
+def test_that_plot_bars_display_correct_heights(
     controls_data, generic_plot_context, everest_ensemble
 ):
     plot = EverestGradientsPlot()
@@ -58,7 +59,7 @@ def test_gradient_plot_with_control_selected(
     assert children[1].get_height() == pytest.approx(0.7)
 
 
-def test_gradient_plot_legends_appear(
+def test_that_legend_appear_and_displays_control_names(
     controls_data, generic_plot_context, everest_ensemble
 ):
     plot = EverestGradientsPlot()
@@ -74,7 +75,9 @@ def test_gradient_plot_legends_appear(
     assert "control_2" in legend_texts
 
 
-def test_gradient_plot_hatches(generic_plot_context, everest_ensemble, palette_size):
+def test_that_type_and_style_is_correct(
+    generic_plot_context, everest_ensemble, palette_size
+):
     data = pd.DataFrame(
         {
             "batch_id": list(range(palette_size * 4)),
@@ -87,20 +90,23 @@ def test_gradient_plot_hatches(generic_plot_context, everest_ensemble, palette_s
     plot = EverestGradientsPlot()
     plot.set_selected_controls([f"control_{i}" for i in range(palette_size * 4)])
     figure = create_everest_figure(plot, data, generic_plot_context, everest_ensemble)
+
+    assert generic_plot_context.plot_type == PlotType.BAR
+
     bars = [b for b in figure.get_axes()[0].containers if isinstance(b, BarContainer)]
     hatches = [b.patches[0].get_hatch() for b in bars]
-    for i, patch in enumerate(hatches):
+    for i, style in enumerate(hatches):
         if i < palette_size:
-            assert not patch
+            assert not style
         elif i < palette_size * 2:
-            assert patch == "//"
+            assert style == "//"
         elif i < palette_size * 3:
-            assert patch == ".."
+            assert style == ".."
         else:
-            assert patch == "-"
+            assert style == "-"
 
 
-def test_gradient_plot_on_hover_functionality(
+def test_that_on_hover_displays_batch_and_control_info(
     controls_data, generic_plot_context, everest_ensemble
 ):
     plot = EverestGradientsPlot()
