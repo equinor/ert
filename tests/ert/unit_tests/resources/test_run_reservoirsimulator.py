@@ -127,26 +127,30 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
     #  * If the writer thread is starved, two consecutive polls may
     #    yield the same summary length, resulting in premature exit.
     #  * Heavily loaded hardware can make everything go too slow.
+    smry_path = Path("FOO_SLOW.UNSMRY").absolute()
+
     def slow_smry_writer():
         for size in range(10):
             resfo.write(
-                "FOO_SLOW.UNSMRY",
+                smry_path,
                 (size + 1) * [("INTEHEAD", np.array([1], dtype=np.int32))],
             )
             time.sleep(0.05)
 
     thread = threading.Thread(target=slow_smry_writer)
     thread.start()
-    time.sleep(0.1)  # Let the thread start writing
-    assert (
-        0.5
-        # Minimal wait time is around 0.55
-        < run_reservoirsimulator.await_completed_unsmry_file(
-            "FOO_SLOW.UNSMRY", max_wait=4, poll_interval=0.21
+    try:
+        time.sleep(0.1)  # Let the thread start writing
+        assert (
+            0.5
+            # Minimal wait time is around 0.55
+            < run_reservoirsimulator.await_completed_unsmry_file(
+                str(smry_path), max_wait=4, poll_interval=0.21
+            )
+            < 2
         )
-        < 2
-    )
-    thread.join()
+    finally:
+        thread.join()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
