@@ -325,8 +325,8 @@ fork-strategy = "requires-python"
 exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
+aiohttp = false # Needed until 15.06 for sequrity update
 iterative_ensemble_smoother = false # Developed by Equinor
-jupyter-server = false # Needed until 14.05 for security update
 graphite-maps = false # Developed by Equinor
 oil_reservoir_synthesizer = false # Developed by Equinor
 resdata = false # Developed by Equinor
@@ -334,5 +334,4 @@ resfo = false # Developed by Equinor
 resfo-utilities = false # Developed by Equinor
 ropt = false # Developed in cooperation with Equinor
 ropt-dakota = false # Developed in cooperation with Equinor
-urllib3 = false # Needed until 14.05 for security update
 xtgeo = false # Developed by Equinor
