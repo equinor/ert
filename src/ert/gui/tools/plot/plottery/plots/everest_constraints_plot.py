@@ -6,6 +6,7 @@ import pandas as pd
 from matplotlib.patches import Patch
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.utils import LEGEND_THRESHOLD
 
 from .plot_tools import PlotTools
@@ -53,6 +54,7 @@ class EverestConstraintsPlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
         plot_context.deactivate_date_support()
+        plot_context.plot_type = PlotType.LINE
 
         all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
 
