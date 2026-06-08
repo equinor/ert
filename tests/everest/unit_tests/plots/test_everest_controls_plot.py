@@ -103,9 +103,11 @@ def test_that_plot_creates_lines_in_by_batch_and_scatter_collections_in_by_contr
     assert len(lines) == expected_lines
 
 
-@pytest.mark.parametrize("by_batch", [True, False])
-def test_that_plot_with_empty_data_creates_helper_text(
-    generic_plot_context, everest_ensemble, by_batch
+@pytest.mark.parametrize(
+    ("by_batch", "plottype"), [(True, PlotType.LINE), (False, PlotType.SCATTER)]
+)
+def test_that_plot_with_empty_data_have_correct_plot_type_and_creates_helper_text(
+    generic_plot_context, everest_ensemble, by_batch, plottype
 ):
     generic_plot_context.by_batch = by_batch
     plot = EverestControlsPlot()
@@ -113,7 +115,7 @@ def test_that_plot_with_empty_data_creates_helper_text(
     figure = create_everest_figure(
         plot, pd.DataFrame(), generic_plot_context, everest_ensemble
     )
-
+    assert generic_plot_context.plot_type == plottype
     assert figure.get_axes()[0].texts[0].get_text() == "No data"
 
 
