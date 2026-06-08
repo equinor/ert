@@ -100,9 +100,17 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-        parameter_list, parameter_count = summary.get_parameters()
+        parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
+            summary.get_parameters()
+        )
         text = SummaryTemplate(f"Parameters ({parameter_count:,})")
-        for parameters in parameter_list:
+
+        text.addRow("Update: True")
+        for parameters in parameter_list_updatable:
+            text.addRow(parameters)
+
+        text.addRow("Update: False")
+        for parameters in parameter_list_not_updatable:
             text.addRow(parameters)
 
         self.addColumn(text.getText())
@@ -132,7 +140,7 @@ class SummaryPanel(QFrame):
         observations = summary.getObservations()
         observations_count = sum(e["count"] for e in observations)
 
-        _, parameter_count = summary.get_parameters()
+        _, _, parameter_count = summary.get_parameters()
 
         logger.info(
             f"Experiment summary:\n"
