@@ -73,12 +73,6 @@ def write_to_pipe(connection_info: str | dict[str, Any]) -> None:
 
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "config",
-        type=str,
-        help=("ERT config file to start the server from "),
-        nargs="?",  # optional
-    )
     add_parser_options(ap)
     return ap.parse_args()
 
