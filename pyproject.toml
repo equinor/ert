@@ -159,7 +159,9 @@ everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
 
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-markers"
+# --dist loadgroup ensures @pytest.mark.xdist_group markers are honored
+# whenever parallelism (-n) is enabled. It is a no-op for serial runs.
+addopts = "-ra --strict-markers --dist loadgroup"
 norecursedirs = [
     "*.egg",
     ".*",
