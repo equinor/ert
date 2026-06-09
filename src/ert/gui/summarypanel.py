@@ -23,17 +23,18 @@ logger = logging.getLogger(__name__)
 
 
 class SummaryTemplate:
-    def __init__(self, title: str) -> None:
+    def __init__(self, title: str, width: int = 150) -> None:
         super().__init__()
 
         self.text = ""
         self.__finished = False
-        self.startGroup(title)
+        self.startGroup(title, width)
 
-    def startGroup(self, title: str) -> None:
+    def startGroup(self, title: str, width: int = 150) -> None:
         if not self.__finished:
             style = (
-                "display: inline-block; width: 150px; vertical-align: top; float: left"
+                f"display: inline-block; width: {width}px; "
+                "vertical-align: top; float: left"
             )
             self.text += f'<div style="{style}">\n'
             self.addTitle(title)
@@ -47,6 +48,23 @@ class SummaryTemplate:
         if not self.__finished:
             style = "text-indent: 5px;"
             self.text += f'<div style="{style}">{value}</div>'
+
+    def addColumn(self, header: str, items: list[Any]) -> None:
+        if not self.__finished:
+            header_style = "font-weight: bold; padding: 0px 10px 0px 5px;"
+            row_style = "padding: 0px 10px 0px 5px;"
+            cell = f'<div style="{header_style}">{header}</div>'
+            for item in items:
+                cell += f'<div style="{row_style}">{item}</div>'
+            self.text += f'<td style="vertical-align: top;">{cell}</td>'
+
+    def startColumns(self) -> None:
+        if not self.__finished:
+            self.text += "<table><tr>"
+
+    def endColumns(self) -> None:
+        if not self.__finished:
+            self.text += "</tr></table>"
 
     def endGroup(self) -> None:
         if not self.__finished:
@@ -103,15 +121,12 @@ class SummaryPanel(QFrame):
         parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
             summary.get_parameters()
         )
-        text = SummaryTemplate(f"Parameters ({parameter_count:,})")
+        text = SummaryTemplate(f"Parameters ({parameter_count:,})", width=320)
 
-        text.addRow("Update: True")
-        for parameters in parameter_list_updatable:
-            text.addRow(parameters)
-
-        text.addRow("Update: False")
-        for parameters in parameter_list_not_updatable:
-            text.addRow(parameters)
+        text.startColumns()
+        text.addColumn("Updatable", parameter_list_updatable)
+        text.addColumn("Non-updatable", parameter_list_not_updatable)
+        text.endColumns()
 
         self.addColumn(text.getText())
 
