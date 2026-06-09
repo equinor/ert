@@ -43,9 +43,10 @@ class EverestControlSelectionWidget(QWidget):
         self._pinned_control = control
         self._controls_list.blockSignals(True)
         self._controls_list.clearSelection()
-        matches = self._controls_list.findItems(control, Qt.MatchFlag.MatchExactly)
-        for item in matches:
-            item.setSelected(True)
+        if control is not None:
+            matches = self._controls_list.findItems(control, Qt.MatchFlag.MatchExactly)
+            for item in matches:
+                item.setSelected(True)
         self._controls_list.blockSignals(False)
 
     def get_selected_controls(self) -> list[str]:
