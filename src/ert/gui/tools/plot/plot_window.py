@@ -287,15 +287,7 @@ class PlotWindow(QMainWindow):
 
             self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
-            left_dock = QDockWidget()
-            left_dock.setObjectName("NavigationDock")
-            left_title = QLabel("View data type")
-            left_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            left_title.setStyleSheet("padding-bottom: 7px;")
-            left_dock.setTitleBarWidget(left_title)
-            left_dock.setWidget(self._data_type_keys_widget)
-            left_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
-            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left_dock)
+            self.addDock("Navigation", "View data type", self._data_type_keys_widget)
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
@@ -374,15 +366,12 @@ class PlotWindow(QMainWindow):
             )
             right_container.setLayout(right_layout)
 
-            right_dock = QDockWidget()
-            right_dock.setObjectName("PlotControlsDock")
-            right_title = QLabel("Plot controls")
-            right_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            right_title.setStyleSheet("padding-bottom: 7px;")
-            right_dock.setTitleBarWidget(right_title)
-            right_dock.setWidget(right_container)
-            right_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
-            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right_dock)
+            self.addDock(
+                "PlotControls",
+                "Plot controls",
+                right_container,
+                area=Qt.DockWidgetArea.RightDockWidgetArea,
+            )
 
             self._everest_controls_group.setVisible(False)
             self._display_over_group.setVisible(False)
@@ -662,15 +651,26 @@ class PlotWindow(QMainWindow):
     def addDock(
         self,
         name: str,
+        title: str,
         widget: QWidget,
         area: Qt.DockWidgetArea = Qt.DockWidgetArea.LeftDockWidgetArea,
         allowed_areas: Qt.DockWidgetArea = Qt.DockWidgetArea.AllDockWidgetAreas,
     ) -> QDockWidget:
         dock_widget = QDockWidget(name)
         dock_widget.setObjectName(f"{name}Dock")
+
+        title_label = QLabel(title)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setStyleSheet("padding-bottom: 7px;")
+        title_label.setCursor(Qt.CursorShape.SizeAllCursor)  # drag/move cursor
+
+        dock_widget.setTitleBarWidget(title_label)
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
-        dock_widget.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        dock_widget.setFeatures(
+            QDockWidget.DockWidgetFeature.DockWidgetMovable
+            | QDockWidget.DockWidgetFeature.DockWidgetFloatable
+        )
 
         self.addDockWidget(area, dock_widget)
         return dock_widget
