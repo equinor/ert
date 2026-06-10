@@ -75,6 +75,14 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
         )
 
 
+def test_that_the_cli_raises_exceptions_when_config_is_missing_for_api(
+    capsys: pytest.CaptureFixture[str],
+):
+    with pytest.raises(SystemExit, match="2"):
+        run_cli("api")
+    assert "the following arguments are required: config" in capsys.readouterr().err
+
+
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
     with pytest.raises(

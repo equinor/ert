@@ -320,12 +320,6 @@ def main() -> None:
 
 def add_parser_options(ap: ArgumentParser) -> None:
     ap.add_argument(
-        "config",
-        type=str,
-        help=("ERT config file to start the server from "),
-        nargs="?",  # optional
-    )
-    ap.add_argument(
         "--project",
         "-p",
         type=Path,
