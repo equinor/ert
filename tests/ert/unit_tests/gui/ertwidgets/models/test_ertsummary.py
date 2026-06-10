@@ -95,7 +95,7 @@ def test_getForwardModels(mock_ert):
 
 def test_getParameters(mock_ert):
     expected_list = ["field (10, 5, 3)", "gen_kw (3)", "surface (10, 7)"]
-    parameter_list, parameter_count = ErtSummary(mock_ert).get_parameters()
+    parameter_list, _, parameter_count = ErtSummary(mock_ert).get_parameters()
     assert parameter_list == expected_list
     assert parameter_count == 223
 
@@ -126,7 +126,7 @@ def test_that_design_matrix_parameters_are_included_in_the_parameter_count(mock_
         dm_param3,
     ]
 
-    parameter_list, parameter_count = ErtSummary(mock_ert).get_parameters()
+    parameter_list, _, parameter_count = ErtSummary(mock_ert).get_parameters()
 
     # Check that design matrix parameters are counted
     assert "DESIGN_MATRIX (3)" in parameter_list
@@ -145,7 +145,7 @@ def test_design_matrix_parameters_counted_when_loaded_from_real_config(
     config = ErtConfig.from_file("poly.ert")
     summary = ErtSummary(config)
 
-    parameter_list, parameter_count = summary.get_parameters()
+    _, parameter_list, parameter_count = summary.get_parameters()
 
     # Should have 3 parameters from design matrix (a, b, c)
     assert "DESIGN_MATRIX (3)" in parameter_list
@@ -162,7 +162,7 @@ def test_snake_oil(snake_oil_case):
         "SNAKE_OIL_DIFF",
     ]
 
-    assert summary.get_parameters() == (["SNAKE_OIL_PARAM (10)"], 10)
+    assert summary.get_parameters() == (["SNAKE_OIL_PARAM (10)"], [], 10)
 
     assert summary.getObservations() == [
         {"observation_key": "WOPR_OP1_108", "count": 1},
@@ -173,3 +173,15 @@ def test_snake_oil(snake_oil_case):
         {"observation_key": "WOPR_OP1_9", "count": 1},
         {"observation_key": "WPR_DIFF_1", "count": 4},
     ]
+
+
+def test_that_updatable_and_not_updatable_parameters_are_separated(mock_ert):
+    mock_ert.ensemble_config.parameter_configs["field"].update_strategy = "global"
+    mock_ert.ensemble_config.parameter_configs["surface"].update_strategy = None
+
+    parameter_list_updatable, parameter_list_not_updatable, _ = ErtSummary(
+        mock_ert
+    ).get_parameters()
+
+    assert "field (10, 5, 3)" in parameter_list_updatable
+    assert "surface (10, 7)" in parameter_list_not_updatable

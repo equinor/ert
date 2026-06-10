@@ -17,28 +17,52 @@ class ErtSummary:
     def getForwardModels(self) -> list[str]:
         return self.ert_config.forward_model_step_name_list()
 
-    def get_parameters(self) -> tuple[list[str], int]:
-        parameters = []
-        genkw_groups: dict[str, int] = defaultdict(int)
+    def get_parameters(self) -> tuple[list[str], list[str], int]:
+        parameters_updatable = []
+        parameters_not_updatable = []
+        genkw_groups_updadatable: dict[str, int] = defaultdict(int)
+        genkw_groups_not_updadatable: dict[str, int] = defaultdict(int)
         count = 0
         for config in self.ert_config.parameter_configurations_with_design_matrix:
             match config:
                 case GenKwConfig(name=key):
-                    if config.group_name:
-                        genkw_groups[config.group_name] += 1
+                    if config.update_strategy is not None:
+                        if config.group_name:
+                            genkw_groups_updadatable[config.group_name] += 1
+                        else:
+                            genkw_groups_updadatable["gen_kw"] += 1
+                    elif config.group_name:
+                        genkw_groups_not_updadatable[config.group_name] += 1
                     else:
-                        genkw_groups["gen_kw"] += 1
+                        genkw_groups_not_updadatable["gen_kw"] += 1
                     count += 1
                 case Field(name=key, nx=nx, ny=ny, nz=nz):
-                    parameters.append(f"{key} ({nx}, {ny}, {nz})")
+                    if config.update_strategy is not None:
+                        parameters_updatable.append(f"{key} ({nx}, {ny}, {nz})")
+                    else:
+                        parameters_not_updatable.append(f"{key} ({nx}, {ny}, {nz})")
                     count += len(config)
                 case SurfaceConfig(name=key, ncol=ncol, nrow=nrow):
-                    parameters.append(f"{key} ({ncol}, {nrow})")
+                    if config.update_strategy is not None:
+                        parameters_updatable.append(f"{key} ({ncol}, {nrow})")
+                    else:
+                        parameters_not_updatable.append(f"{key} ({ncol}, {nrow})")
                     count += len(config)
-        parameters += [
-            f"{group_name} ({cnt})" for group_name, cnt in genkw_groups.items()
+
+        parameters_updatable += [
+            f"{group_name} ({cnt})"
+            for group_name, cnt in genkw_groups_updadatable.items()
         ]
-        return sorted(parameters, key=lambda k: k.lower()), count
+        parameters_not_updatable += [
+            f"{group_name} ({cnt})"
+            for group_name, cnt in genkw_groups_not_updadatable.items()
+        ]
+
+        return (
+            sorted(parameters_updatable, key=lambda k: k.lower()),
+            sorted(parameters_not_updatable, key=lambda k: k.lower()),
+            count,
+        )
 
     def getObservations(self) -> list[ObservationCount]:
         name_to_types = defaultdict(set)
