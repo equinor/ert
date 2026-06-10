@@ -50,12 +50,12 @@ class CrossEnsembleStatisticsPlot:
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
-        plotCrossEnsembleStatistics(
+        plot_cross_ensemble_statistics(
             figure, plot_context, ensemble_to_data_map, observation_data
         )
 
 
-def plotCrossEnsembleStatistics(
+def plot_cross_ensemble_statistics(
     figure: Figure,
     plot_context: PlotContext,
     ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
@@ -92,7 +92,7 @@ def plotCrossEnsembleStatistics(
         std_dev_factor = config.get_standard_deviation_factor()
 
         if not data.empty:
-            numeric_data = _assertNumeric(data)
+            numeric_data = _assert_numeric(data)
             if numeric_data is not None:
                 ccs["index"].append(ensemble_index)
                 ccs["mean"][ensemble_index] = numeric_data.mean()
@@ -105,12 +105,12 @@ def plotCrossEnsembleStatistics(
                 ccs["p67"][ensemble_index] = numeric_data.quantile(0.67)
                 ccs["p90"][ensemble_index] = numeric_data.quantile(0.9)
 
-                _plotCrossEnsembleStatistics(axes, config, ccs, ensemble_index)
+                _plot_cross_ensemble_statistics(axes, config, ccs, ensemble_index)
 
     if config.is_distribution_line_enabled() and len(ccs["index"]) > 1:
-        _plotConnectionLines(axes, config, ccs)
+        _plot_connection_lines(axes, config, ccs)
 
-    _addStatisticsLegends(config)
+    _add_statistics_legends(config)
 
     axes.set_xticks([-1, *ensemble_indexes, len(ensemble_indexes)])
 
@@ -133,16 +133,16 @@ def plotCrossEnsembleStatistics(
     )
 
 
-def _addStatisticsLegends(plot_config: PlotConfig) -> None:
-    _addStatisticsLegend(plot_config, "mean")
-    _addStatisticsLegend(plot_config, "p50")
-    _addStatisticsLegend(plot_config, "min-max", 0.2)
-    _addStatisticsLegend(plot_config, "p10-p90", 0.4)
-    _addStatisticsLegend(plot_config, "std", 0.4)
-    _addStatisticsLegend(plot_config, "p33-p67", 0.6)
+def _add_statistics_legends(plot_config: PlotConfig) -> None:
+    _add_statistics_legend(plot_config, "mean")
+    _add_statistics_legend(plot_config, "p50")
+    _add_statistics_legend(plot_config, "min-max", 0.2)
+    _add_statistics_legend(plot_config, "p10-p90", 0.4)
+    _add_statistics_legend(plot_config, "std", 0.4)
+    _add_statistics_legend(plot_config, "p33-p67", 0.6)
 
 
-def _addStatisticsLegend(
+def _add_statistics_legend(
     plot_config: PlotConfig, style_name: str, alpha_multiplier: float = 1.0
 ) -> None:
     style = plot_config.get_statistics_style(style_name)
@@ -165,7 +165,7 @@ def _addStatisticsLegend(
             plot_config.add_legend_item(style.name, line)
 
 
-def _assertNumeric(data: pd.DataFrame) -> pd.Series | None:
+def _assert_numeric(data: pd.DataFrame) -> pd.Series | None:
     data_series = data[0]
     if not pd.api.types.is_numeric_dtype(data_series):
         data_series = pd.to_numeric(data_series, errors="coerce")
@@ -175,7 +175,7 @@ def _assertNumeric(data: pd.DataFrame) -> pd.Series | None:
     return data_series
 
 
-def _plotCrossEnsembleStatistics(
+def _plot_cross_ensemble_statistics(
     axes: Axes, plot_config: PlotConfig, data: CcsData, index: int
 ) -> None:
     axes.set_xlabel(plot_config.x_label())  # type: ignore
@@ -290,7 +290,7 @@ def _plotCrossEnsembleStatistics(
         )
 
 
-def _plotConnectionLines(
+def _plot_connection_lines(
     axes: Axes,
     plot_config: PlotConfig,
     ccs: CcsData,
