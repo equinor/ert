@@ -263,7 +263,7 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
         Path("everest_output")
         / "sim_output"
         / "batch_0"
-        / "realization_0"
+        / "realization-0"
         / "perturbation_0"
         / "well_drill_constants.json"
     )

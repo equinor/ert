@@ -168,7 +168,7 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
     config_dict["install_jobs"].append(
         {"name": "fail_simulation", "executable": "jobs/fail_simulation.py"}
     )
-    config_dict["forward_model"].append("fail_simulation --fail realization_0")
+    config_dict["forward_model"].append("fail_simulation --fail realization-0")
     with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
         config = EverestConfig.model_validate(config_dict)
 

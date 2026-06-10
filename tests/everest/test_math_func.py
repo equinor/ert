@@ -91,16 +91,16 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
     run_model.run_experiment(evaluator_server_config)
 
     # Check the failed simulation folder still exists
-    assert (Path(simulation_dir) / "batch_0/realization_0/perturbation_1").exists(), (
+    assert (Path(simulation_dir) / "batch_0/realization-0/perturbation_1").exists(), (
         "Simulation folder should be there, something went wrong and was removed!"
     )
 
     # Check the successful simulation folders do not exist
-    assert not (Path(simulation_dir) / "batch_0/realization_0/evaluation_0").exists(), (
+    assert not (Path(simulation_dir) / "batch_0/realization-0/evaluation_0").exists(), (
         "Simulation folder should not be there, something went wrong!"
     )
 
-    assert not (Path(simulation_dir) / "batch_0/realization_0/simulation_1").exists(), (
+    assert not (Path(simulation_dir) / "batch_0/realization-0/simulation_1").exists(), (
         "Simulation folder should not be there, something went wrong!"
     )
 
@@ -116,15 +116,15 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
     run_model.run_experiment(evaluator_server_config)
 
     # Check the all simulation folder exist when delete_run_path is set to False
-    assert (Path(simulation_dir) / "batch_0/realization_0/perturbation_1").exists(), (
+    assert (Path(simulation_dir) / "batch_0/realization-0/perturbation_1").exists(), (
         "Simulation folder should be there, something went wrong and was removed!"
     )
 
-    assert (Path(simulation_dir) / "batch_0/realization_0/evaluation_0").exists(), (
+    assert (Path(simulation_dir) / "batch_0/realization-0/evaluation_0").exists(), (
         "Simulation folder should be there, something went wrong and was removed"
     )
 
-    assert (Path(simulation_dir) / "batch_0/realization_0/perturbation_0").exists(), (
+    assert (Path(simulation_dir) / "batch_0/realization-0/perturbation_0").exists(), (
         "Simulation folder should be there, something went wrong and was removed"
     )
 

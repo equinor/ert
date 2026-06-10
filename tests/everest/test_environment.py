@@ -39,6 +39,6 @@ def test_that_runpath_strings_are_generated_correctly(
         str(Path(run_arg.runpath).relative_to(Path().absolute()))
         for run_arg in run_args
     ] == [
-        f"everest_output/simulation_folder/batch_{iteration}/realization_0/evaluation_0",
-        f"everest_output/simulation_folder/batch_{iteration}/realization_2/evaluation_0",
+        f"everest_output/simulation_folder/batch_{iteration}/realization-0/evaluation_0",
+        f"everest_output/simulation_folder/batch_{iteration}/realization-2/evaluation_0",
     ]
