@@ -771,7 +771,7 @@ def test_that_install_data_with_inline_data_generates_a_file(
     run_model.run_experiment(EvaluatorServerConfig())
     for expected_dir in ("evaluation_0", "perturbation_0"):
         expected_file = Path(
-            f"everest_output/sim_output/batch_0/realization_0/{expected_dir}/output.json"
+            f"everest_output/sim_output/batch_0/realization-0/{expected_dir}/output.json"
         )
         assert expected_file.exists()
         with expected_file.open(encoding="utf-8") as fp:

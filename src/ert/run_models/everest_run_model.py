@@ -311,7 +311,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             runpath_format_string=str(
                 Path(everest_config.simulation_dir)
                 / "batch_<ITER>"
-                / "realization_<REALIZATION_ID>"
+                / "realization-<REALIZATION_ID>"
                 / "<SIM_DIR>"
             ),
             eclbase_format_string=eclbase
