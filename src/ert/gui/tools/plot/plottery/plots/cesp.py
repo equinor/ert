@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
-class CcsData(TypedDict):
+class CrossEnsembleStatisticsData(TypedDict):
     index: list[int]
     mean: dict[int, float]
     min: dict[int, float]
@@ -70,7 +70,7 @@ def plot_cross_ensemble_statistics(
 
     ensemble_list = plot_context.ensembles()
     ensemble_indexes = []
-    ccs: CcsData = {
+    ces: CrossEnsembleStatisticsData = {
         "index": [],
         "mean": {},
         "min": {},
@@ -94,21 +94,21 @@ def plot_cross_ensemble_statistics(
         if not data.empty:
             numeric_data = _assert_numeric(data)
             if numeric_data is not None:
-                ccs["index"].append(ensemble_index)
-                ccs["mean"][ensemble_index] = numeric_data.mean()
-                ccs["min"][ensemble_index] = numeric_data.min()
-                ccs["max"][ensemble_index] = numeric_data.max()
-                ccs["std"][ensemble_index] = numeric_data.std() * std_dev_factor
-                ccs["p10"][ensemble_index] = numeric_data.quantile(0.1)
-                ccs["p33"][ensemble_index] = numeric_data.quantile(0.33)
-                ccs["p50"][ensemble_index] = numeric_data.quantile(0.5)
-                ccs["p67"][ensemble_index] = numeric_data.quantile(0.67)
-                ccs["p90"][ensemble_index] = numeric_data.quantile(0.9)
+                ces["index"].append(ensemble_index)
+                ces["mean"][ensemble_index] = numeric_data.mean()
+                ces["min"][ensemble_index] = numeric_data.min()
+                ces["max"][ensemble_index] = numeric_data.max()
+                ces["std"][ensemble_index] = numeric_data.std() * std_dev_factor
+                ces["p10"][ensemble_index] = numeric_data.quantile(0.1)
+                ces["p33"][ensemble_index] = numeric_data.quantile(0.33)
+                ces["p50"][ensemble_index] = numeric_data.quantile(0.5)
+                ces["p67"][ensemble_index] = numeric_data.quantile(0.67)
+                ces["p90"][ensemble_index] = numeric_data.quantile(0.9)
 
-                _plot_cross_ensemble_statistics(axes, config, ccs, ensemble_index)
+                _plot_cross_ensemble_statistics(axes, config, ces, ensemble_index)
 
-    if config.is_distribution_line_enabled() and len(ccs["index"]) > 1:
-        _plot_connection_lines(axes, config, ccs)
+    if config.is_distribution_line_enabled() and len(ces["index"]) > 1:
+        _plot_connection_lines(axes, config, ces)
 
     _add_statistics_legends(config)
 
@@ -176,7 +176,7 @@ def _assert_numeric(data: pd.DataFrame) -> pd.Series | None:
 
 
 def _plot_cross_ensemble_statistics(
-    axes: Axes, plot_config: PlotConfig, data: CcsData, index: int
+    axes: Axes, plot_config: PlotConfig, data: CrossEnsembleStatisticsData, index: int
 ) -> None:
     axes.set_xlabel(plot_config.x_label())  # type: ignore
     axes.set_ylabel(plot_config.y_label())  # type: ignore
@@ -293,10 +293,10 @@ def _plot_cross_ensemble_statistics(
 def _plot_connection_lines(
     axes: Axes,
     plot_config: PlotConfig,
-    ccs: CcsData,
+    ces: CrossEnsembleStatisticsData,
 ) -> None:
     line_style = plot_config.distributionLineStyle()
-    index_list = ccs["index"]
+    index_list = ces["index"]
     for index in range(len(index_list) - 1):
         from_index = index_list[index]
         to_index = index_list[index + 1]
@@ -305,7 +305,7 @@ def _plot_connection_lines(
 
         style = plot_config.get_statistics_style("mean")
         if style.is_visible():
-            y = [ccs["mean"][from_index], ccs["mean"][to_index]]
+            y = [ces["mean"][from_index], ces["mean"][to_index]]
             axes.plot(
                 x,
                 y,
@@ -317,7 +317,7 @@ def _plot_connection_lines(
 
         style = plot_config.get_statistics_style("p50")
         if style.is_visible():
-            y = [ccs["p50"][from_index], ccs["p50"][to_index]]
+            y = [ces["p50"][from_index], ces["p50"][to_index]]
             axes.plot(
                 x,
                 y,
@@ -329,8 +329,8 @@ def _plot_connection_lines(
 
         style = plot_config.get_statistics_style("std")
         if style.is_visible():
-            mean = [ccs["mean"][from_index], ccs["mean"][to_index]]
-            std = [ccs["std"][from_index], ccs["std"][to_index]]
+            mean = [ces["mean"][from_index], ces["mean"][to_index]]
+            std = [ces["std"][from_index], ces["std"][to_index]]
 
             y_1 = [mean[0] + std[0], mean[1] + std[1]]
             y_2 = [mean[0] - std[0], mean[1] - std[1]]
@@ -358,8 +358,8 @@ def _plot_connection_lines(
 
         style = plot_config.get_statistics_style("min-max")
         if style.is_visible():
-            y_1 = [ccs["min"][from_index], ccs["min"][to_index]]
-            y_2 = [ccs["max"][from_index], ccs["max"][to_index]]
+            y_1 = [ces["min"][from_index], ces["min"][to_index]]
+            y_2 = [ces["max"][from_index], ces["max"][to_index]]
 
             linestyle = style.line_style
             if linestyle == "#":
@@ -384,8 +384,8 @@ def _plot_connection_lines(
 
         style = plot_config.get_statistics_style("p10-p90")
         if style.is_visible():
-            y_1 = [ccs["p10"][from_index], ccs["p10"][to_index]]
-            y_2 = [ccs["p90"][from_index], ccs["p90"][to_index]]
+            y_1 = [ces["p10"][from_index], ces["p10"][to_index]]
+            y_2 = [ces["p90"][from_index], ces["p90"][to_index]]
 
             linestyle = style.line_style
             if linestyle == "#":
@@ -410,8 +410,8 @@ def _plot_connection_lines(
 
         style = plot_config.get_statistics_style("p33-p67")
         if style.is_visible():
-            y_1 = [ccs["p33"][from_index], ccs["p33"][to_index]]
-            y_2 = [ccs["p67"][from_index], ccs["p67"][to_index]]
+            y_1 = [ces["p33"][from_index], ces["p33"][to_index]]
+            y_2 = [ces["p67"][from_index], ces["p67"][to_index]]
 
             linestyle = style.line_style
             if linestyle == "#":
