@@ -10,7 +10,7 @@ from resfo_utilities import is_rate
 from ert.gui.tools.plot.plottery.plot_context import PlotType
 from ert.gui.utils import is_everest_application
 
-from .history import plotHistory
+from .history import plot_history
 from .observations import plotObservations
 from .plot_tools import PlotTools
 
@@ -90,7 +90,7 @@ class EnsemblePlot:
                 zorder -= 1
 
         plotObservations(observation_data, plot_context, axes)
-        plotHistory(plot_context, axes)
+        plot_history(plot_context, axes)
 
         default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
         if is_everest:

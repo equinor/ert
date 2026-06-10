@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext, PlotStyle
 
-from .history import plotHistory
+from .history import plot_history
 from .observations import plotObservations
 from .plot_tools import PlotTools
 
@@ -81,7 +81,7 @@ class StatisticsPlot:
         _addStatisticsLegends(plot_config=config)
 
         plotObservations(observation_data, plot_context, axes)
-        plotHistory(plot_context, axes)
+        plot_history(plot_context, axes)
 
         default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
         PlotTools.finalizePlot(
