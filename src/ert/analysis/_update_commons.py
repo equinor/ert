@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import logging
 from collections.abc import Callable, Iterable
 from enum import StrEnum
@@ -16,6 +17,7 @@ from . import misfit_preprocessor
 from .event import (
     AnalysisDataEvent,
     AnalysisEvent,
+    AnalysisScalingEvent,
     DataSection,
 )
 from .snapshots import (
@@ -232,7 +234,22 @@ def _preprocess_observations_and_responses(
         )
 
         if updated_std_scales is not None and scaling_factors_df is not None:
-            posterior_ensemble.save_observation_scaling_factors(scaling_factors_df)
+            buf = io.BytesIO()
+            scaling_factors_df.write_parquet(buf)
+            scaling_bytes = buf.getvalue()
+            num_groups = (
+                scaling_factors_df["input_group"].n_unique()
+                if "input_group" in scaling_factors_df.columns
+                else 1
+            )
+            progress_callback(
+                AnalysisScalingEvent(
+                    update_algorithm="ensemble_smoother",
+                    scaling_bytes=scaling_bytes,
+                    num_observations=len(scaling_factors_df),
+                    num_groups=num_groups,
+                )
+            )
 
             # Recompute with updated scales
             observations_and_responses = observations_and_responses.with_columns(

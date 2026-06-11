@@ -10,6 +10,7 @@ from ert.analysis.event import (
     AnalysisErrorEvent,
     AnalysisEvent,
     AnalysisMatrixEvent,
+    AnalysisScalingEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
 )
@@ -191,6 +192,8 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisMatrixEvent():
+                ensemble.save_blob(event)
+            case AnalysisScalingEvent():
                 ensemble.save_blob(event)
             case AnalysisCompleteEvent():
                 ensemble.save_blob(event)

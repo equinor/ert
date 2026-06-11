@@ -47,6 +47,7 @@ from .blob_data import (
     BlobType,
     MatrixStorageData,
     ObservationReportData,
+    ScalingFactorsData,
 )
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
@@ -55,7 +56,11 @@ from .realization_storage_state import RealizationStorageState
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent
+    from ert.analysis.event import (
+        AnalysisCompleteEvent,
+        AnalysisMatrixEvent,
+        AnalysisScalingEvent,
+    )
 
     from .local_experiment import LocalExperiment
     from .local_storage import LocalStorage
@@ -701,21 +706,6 @@ class LocalEnsemble(BaseMode):
         return df.rename(
             {config.name: f"{config.group_name}:{config.name}" for config in gen_kws}
         )
-
-    @require_write
-    def save_observation_scaling_factors(self, dataset: pl.DataFrame) -> None:
-        self._storage._to_parquet_transaction(
-            self.mount_point / "observation_scaling_factors.parquet", dataset
-        )
-
-    def load_observation_scaling_factors(
-        self,
-    ) -> pl.DataFrame | None:
-        ds_path = self.mount_point / "observation_scaling_factors.parquet"
-        if ds_path.exists():
-            return pl.read_parquet(ds_path)
-
-        return None
 
     @staticmethod
     def sample_parameter(
@@ -1376,13 +1366,17 @@ class LocalEnsemble(BaseMode):
         try:
             blob_path.relative_to(blob_dir)
         except ValueError:
+            logger.warning("Blob URI %s resolves outside of blob directory", uri)
             raise FileNotFoundError(uri) from None
+        if not blob_path.exists():
+            logger.warning("Blob file %s not found", uri)
+            raise FileNotFoundError(uri)
         return blob_path.read_bytes()
 
     @require_write
     def save_blob(
         self,
-        blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent,
+        blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent | AnalysisScalingEvent,
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
         blob_dir.mkdir(parents=True, exist_ok=True)
@@ -1406,6 +1400,19 @@ class LocalEnsemble(BaseMode):
                 ),
             )
             data = blob_event.matrix_bytes
+        elif blob_event.event_type == "AnalysisScalingEvent":
+            blob_data = BlobStorageData(
+                uri=uri,
+                file_size=len(blob_event.scaling_bytes),
+                file_type="application/parquet",
+                name="scaling_factors",
+                blob_info=ScalingFactorsData(
+                    update_algorithm=blob_event.update_algorithm,
+                    num_observations=blob_event.num_observations,
+                    num_groups=blob_event.num_groups,
+                ),
+            )
+            data = blob_event.scaling_bytes
         else:
             buf = io.BytesIO()
             pl.DataFrame(

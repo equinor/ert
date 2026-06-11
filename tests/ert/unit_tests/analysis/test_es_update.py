@@ -1,3 +1,4 @@
+import io
 import logging
 from contextlib import ExitStack as does_not_raise
 from typing import Any
@@ -26,7 +27,7 @@ from ert.analysis._update_commons import (
 )
 from ert.analysis._update_strategies._adaptive import AdaptiveLocalizationUpdate
 from ert.analysis._update_strategies._protocol import ObservationContext
-from ert.analysis.event import AnalysisCompleteEvent
+from ert.analysis.event import AnalysisCompleteEvent, AnalysisScalingEvent
 from ert.config import (
     ESSettings,
     Field,
@@ -38,6 +39,7 @@ from ert.config import (
 )
 from ert.field_utils import AxisOrientation, ErtboxParameters, FieldFileFormat
 from ert.storage import Ensemble, open_storage
+from ert.storage.blob_data import BlobType
 
 
 @pytest.fixture
@@ -840,6 +842,10 @@ def test_that_autoscaling_saves_scaling_factors_to_posterior_ensemble(storage):
             name="dummy_posterior", ensemble_size=10
         )
 
+        def progress_callback(event):
+            if isinstance(event, AnalysisScalingEvent):
+                posterior_ensemble.save_blob(event)
+
         _mock_preprocess_observations_and_responses(
             observations_and_responses,
             observation_settings=ObservationSettings(
@@ -847,13 +853,15 @@ def test_that_autoscaling_saves_scaling_factors_to_posterior_ensemble(storage):
                 auto_scale_observations=[["obs1*"]],
             ),
             global_std_scaling=1,
-            progress_callback=lambda _: None,
+            progress_callback=progress_callback,
             prior_ensemble=prior_ensemble,
             posterior_ensemble=posterior_ensemble,
         )
 
-        scaling_factors = posterior_ensemble.load_observation_scaling_factors()
-        assert scaling_factors is not None
+        scaling_blobs = posterior_ensemble.load_blobs(BlobType.SCALING_FACTORS)
+        assert len(scaling_blobs) == 1
+        raw = posterior_ensemble.load_blob(scaling_blobs[0].uri)
+        scaling_factors = pl.read_parquet(io.BytesIO(raw))
         assert "input_group" in scaling_factors.columns
         assert "obs_key" in scaling_factors.columns
         assert "scaling_factor" in scaling_factors.columns
@@ -861,7 +869,7 @@ def test_that_autoscaling_saves_scaling_factors_to_posterior_ensemble(storage):
         assert scaling_factors["scaling_factor"].to_list() == [2.0, 3.0]
 
         # Verify nothing was saved to the prior ensemble
-        assert prior_ensemble.load_observation_scaling_factors() is None
+        assert prior_ensemble.load_blobs(BlobType.SCALING_FACTORS) == []
 
 
 @pytest.mark.parametrize(
