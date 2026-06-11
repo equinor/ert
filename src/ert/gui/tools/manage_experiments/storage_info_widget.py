@@ -1,4 +1,5 @@
 import contextlib
+import io
 import json
 from enum import IntEnum
 from typing import cast
@@ -32,6 +33,7 @@ from PyQt6.QtWidgets import (
 from ert.config.response_config import BaseResponseConfig
 from ert.config.rft_config import RFTConfig
 from ert.storage import Ensemble, Experiment, RealizationStorageState
+from ert.storage.blob_data import BlobType
 from ert.warnings import capture_specific_warning
 
 from .export_dialog import ExportDialog
@@ -313,7 +315,15 @@ class _EnsembleWidget(QWidget):
         ax.set_title(selected.observation_key)
         ax.grid(True)
         obs = selected.observation_data
-        scaling_df = self._ensemble.load_observation_scaling_factors()
+        scaling_blobs = self._ensemble.load_blobs(BlobType.SCALING_FACTORS)
+        if scaling_blobs:
+            try:
+                raw = self._ensemble.load_blob(scaling_blobs[0].uri)
+                scaling_df = pl.read_parquet(io.BytesIO(raw))
+            except FileNotFoundError:
+                scaling_df = None
+        else:
+            scaling_df = None
 
         def _try_render_scaled_obs() -> None:
             if scaling_df is None:

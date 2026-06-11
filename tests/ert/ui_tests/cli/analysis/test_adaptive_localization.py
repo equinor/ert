@@ -1,13 +1,16 @@
+import io
 import shutil
 from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
+import polars as pl
 import pytest
 
 from ert.config import ErtConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
+from ert.storage.blob_data import BlobType
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 random_seed_line = "RANDOM_SEED 1234\n\n"
@@ -216,8 +219,10 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         "poly_localization_0.ert", "test_experiment"
     )
     with open_storage(storage_path) as storage:
-        sf = storage.get_ensemble(posterior_ens_id).load_observation_scaling_factors()
-        assert sf is not None
+        ensemble = storage.get_ensemble(posterior_ens_id)
+        scaling_blobs = ensemble.load_blobs(BlobType.SCALING_FACTORS)
+        assert len(scaling_blobs) == 1
+        sf = pl.read_parquet(io.BytesIO(ensemble.load_blob(scaling_blobs[0].uri)))
         records_from_pl = (
             sf.select(["input_group", "obs_key", "index"]).to_numpy().tolist()
         )

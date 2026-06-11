@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Discriminator
 class BlobType(StrEnum):
     OBSERVATION_REPORT = "observation_report"
     MATRIX = "matrix"
+    SCALING_FACTORS = "scaling_factors"
 
 
 class ObservationReportData(BaseModel):
@@ -24,6 +25,13 @@ class MatrixStorageData(BaseModel):
     data_type: str
 
 
+class ScalingFactorsData(BaseModel):
+    blob_type: Literal[BlobType.SCALING_FACTORS] = BlobType.SCALING_FACTORS
+    update_algorithm: str
+    num_observations: int
+    num_groups: int
+
+
 class BlobStorageData(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -32,6 +40,6 @@ class BlobStorageData(BaseModel):
     file_type: str
     name: str
     blob_info: Annotated[
-        MatrixStorageData | ObservationReportData,
+        MatrixStorageData | ObservationReportData | ScalingFactorsData,
         Discriminator("blob_type"),
     ]

@@ -93,3 +93,11 @@ class AnalysisMatrixEvent(AnalysisEvent):
     data_type: str
     update_algorithm: str
     matrix_bytes: bytes = Field(exclude=True)
+
+
+class AnalysisScalingEvent(AnalysisEvent):
+    event_type: Literal["AnalysisScalingEvent"] = "AnalysisScalingEvent"
+    update_algorithm: str
+    scaling_bytes: bytes = Field(exclude=True)
+    num_observations: int
+    num_groups: int
