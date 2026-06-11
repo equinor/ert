@@ -11,7 +11,6 @@ from .closabledialog import ClosableDialog
 from .copy_button import CopyButton
 from .copyablelabel import CopyableLabel
 from .create_experiment_dialog import CreateExperimentDialog
-from .customdialog import CustomDialog
 from .ensembleselector import EnsembleSelector
 from .models import (
     ActiveRealizationsModel,
@@ -51,7 +50,6 @@ __all__ = [
     "CopyButton",
     "CopyableLabel",
     "CreateExperimentDialog",
-    "CustomDialog",
     "EnsembleSelector",
     "ErtSummary",
     "PathChooser",
