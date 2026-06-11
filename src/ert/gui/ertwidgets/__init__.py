@@ -13,7 +13,6 @@ from .copyablelabel import CopyableLabel
 from .create_experiment_dialog import CreateExperimentDialog
 from .customdialog import CustomDialog
 from .ensembleselector import EnsembleSelector
-from .listeditbox import ListEditBox
 from .models import (
     ActiveRealizationsModel,
     ErtSummary,
@@ -55,7 +54,6 @@ __all__ = [
     "CustomDialog",
     "EnsembleSelector",
     "ErtSummary",
-    "ListEditBox",
     "PathChooser",
     "PathModel",
     "SearchBox",
