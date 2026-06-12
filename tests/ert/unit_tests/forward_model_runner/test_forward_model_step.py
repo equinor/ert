@@ -19,7 +19,7 @@ from _ert.forward_model_runner.forward_model_step import (
 from _ert.forward_model_runner.reporting.message import Exited, Running, Start
 
 
-@patch("_ert.forward_model_runner.forward_model_step.check_executable")
+@patch("_ert.forward_model_runner.forward_model_step._check_executable")
 @patch("_ert.forward_model_runner.forward_model_step.Popen")
 @patch("_ert.forward_model_runner.forward_model_step.Process")
 @pytest.mark.usefixtures("use_tmpdir")
