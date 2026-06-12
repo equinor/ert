@@ -76,9 +76,7 @@ def run_simulator(time_step_count, start_date) -> Summary:
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 def test_load_forward_model(snake_oil_default_storage):
-    """
-    Checking that we are able to load from forward model
-    """
+    """Checking that we are able to load from forward model"""
     realisation_number = 0
 
     with open_storage("storage/snake_oil/ensemble", mode="w") as storage:

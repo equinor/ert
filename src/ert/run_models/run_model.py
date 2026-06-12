@@ -353,9 +353,7 @@ class RunModel(RunModelConfig, ABC):
         self.set_env_key("_ERT_SIMULATION_MODE", simulation_mode)
 
     def _clean_env_context(self) -> None:
-        """
-        Clean all previously environment variables set using set_env_key
-        """
+        """Clean all previously environment variables set using set_env_key"""
         for key in list(self._context_env.keys()):
             self._context_env.pop(key)
             os.environ.pop(key, None)

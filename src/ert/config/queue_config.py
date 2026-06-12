@@ -504,9 +504,7 @@ class QueueConfig(BaseModelWithContextSupport):
 
 
 def parse_string_to_bytes(input_str: str) -> int:
-    """
-    Convert a string (e.g., "1GB", "512MB") to bytes.
-    """
+    """Convert a string (e.g., "1GB", "512MB") to bytes."""
 
     if input_str.strip().startswith("-"):
         raise ConfigValidationError.with_context(

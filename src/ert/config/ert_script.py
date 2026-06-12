@@ -72,9 +72,7 @@ class ErtScript:
         self.__is_cancelled = True
 
     def cleanup(self) -> None:
-        """
-        Override to perform cleanup after a run.
-        """
+        """Override to perform cleanup after a run."""
 
     @property
     def requested_fixtures(self) -> set[str]:

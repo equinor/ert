@@ -6,10 +6,7 @@ import sys
 
 
 def move_directory(src_dir: str, target: str) -> None:
-    """
-    Will raise IOError if src_dir is not a folder.
-
-    """
+    """Will raise IOError if src_dir is not a folder."""
     if os.path.isdir(src_dir):
         if pathlib.Path(target).exists():
             shutil.rmtree(target)

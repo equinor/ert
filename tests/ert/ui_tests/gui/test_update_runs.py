@@ -281,9 +281,7 @@ def test_that_report_table_is_displayed_on_missing_responses(
 def poly_case_with_changed_response_on_match_key(
     source_root, tmp_path, monkeypatch, run_experiment, request
 ):
-    """
-    Sets up a poly case with all responses changed on match key in realization 0.
-    """
+    """Sets up a poly case with all responses changed on match key in realization 0."""
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path, 2)
     config_path = tmp_path / "poly.ert"

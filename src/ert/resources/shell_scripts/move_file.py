@@ -5,10 +5,7 @@ from pathlib import Path
 
 
 def move_file(src_file: str | Path, target: str | Path) -> None:
-    """
-    Will raise IOError if src_file is not a file.
-
-    """
+    """Will raise IOError if src_file is not a file."""
     src_file = Path(src_file)
     target = Path(target)
     if src_file.is_file():

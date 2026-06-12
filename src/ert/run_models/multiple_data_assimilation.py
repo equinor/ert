@@ -31,9 +31,7 @@ MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
 class MultipleDataAssimilation(
     UpdateRunModel, InitialEnsembleRunModel, MultipleDataAssimilationConfig
 ):
-    """
-    Run multiple data assimilation (MDA) ensemble smoother with custom weights.
-    """
+    """Run multiple data assimilation (MDA) ensemble smoother with custom weights."""
 
     _parsed_weights: list[float] = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=2)

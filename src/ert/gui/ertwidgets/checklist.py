@@ -138,9 +138,7 @@ class CheckList(QWidget):
                 item.setHidden(True)
 
     def checkAll(self) -> None:
-        """
-        Checks all visible items in the list.
-        """
+        """Checks all visible items in the list."""
         for index in range(self._list.count()):
             item = self._list.item(index)
             assert item is not None
@@ -148,9 +146,7 @@ class CheckList(QWidget):
                 self._model.selectValue(str(item.text()))
 
     def uncheckAll(self) -> None:
-        """
-        Unchecks all items in the list, visible or not
-        """
+        """Unchecks all items in the list, visible or not"""
         self._model.unselectAll()
 
     def checkSelected(self) -> None:

@@ -168,9 +168,7 @@ def _stop_reporters(
 
 
 class Namespace(argparse.Namespace):
-    """
-    fm_dispatch argument parser namespace
-    """
+    """fm_dispatch argument parser namespace"""
 
     run_path: str | None = None
     steps: list[str]

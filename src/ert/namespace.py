@@ -7,9 +7,7 @@ from ert.plugins import ErtRuntimePlugins
 
 
 class Namespace(argparse.Namespace):
-    """
-    ERT argument parser namespace
-    """
+    """ERT argument parser namespace"""
 
     mode: str
     config: str

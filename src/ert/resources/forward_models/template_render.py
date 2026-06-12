@@ -47,9 +47,7 @@ def _generate_file_namespace(filename: str) -> str:
 
 
 def _load_input(input_files: Sequence[str]) -> dict[str, Any]:
-    """
-    Loads input files (JSON or YAML) and returns the content as dict.
-    """
+    """Loads input files (JSON or YAML) and returns the content as dict."""
     data = {}
     for input_file in input_files:
         input_namespace = _generate_file_namespace(input_file)

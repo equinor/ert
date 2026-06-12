@@ -48,9 +48,7 @@ def bhist_formatter(jobstats: list[Job]) -> str:
 
 
 def bhist_long_formatter(jobstats: list[Job]) -> str:
-    """
-    This function outputs stub data entirely independent from the input.
-    """
+    """This function outputs stub data entirely independent from the input."""
     formatted_job_outputs = []
     for job in jobstats:
         job_output = dedent(

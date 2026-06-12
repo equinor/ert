@@ -594,9 +594,7 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
 )
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
-    """
-    This checks that deprecated runpath substitution, using %d, remain intact.
-    """
+    """This checks that deprecated runpath substitution, using %d, remain intact."""
     site_plugins = get_site_plugins()
     ert_config = ErtConfig.with_plugins(site_plugins).from_file_contents(
         dedent(
@@ -741,9 +739,7 @@ async def test_assert_export(make_run_path):
     ],
 )
 async def test_num_cpu_subst(append, numcpu, make_run_path):
-    """
-    Make sure that <NUM_CPU> is substituted to the correct values
-    """
+    """Make sure that <NUM_CPU> is substituted to the correct values"""
     Path("DATA").write_text("PARALLEL 8 /", encoding="utf-8")
     Path("DUMP").write_text("EXECUTABLE echo\nARGLIST <NUM_CPU>\n", encoding="utf-8")
 

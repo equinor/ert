@@ -171,9 +171,7 @@ class _Proc(threading.Thread):
                 )
 
     def _ensure_connection_info_file_is_deleted(self) -> None:
-        """
-        Ensure that the JSON connection information file is deleted
-        """
+        """Ensure that the JSON connection information file is deleted"""
         with contextlib.suppress(OSError):
             self._service_config_path.unlink(missing_ok=True)
 

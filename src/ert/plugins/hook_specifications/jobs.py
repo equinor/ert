@@ -30,9 +30,7 @@ def job_documentation(job_name: str) -> PluginResponse[dict[str, str] | None]:
 @no_type_check
 @hook_specification
 def installable_workflow_jobs() -> PluginResponse[dict[str, str]]:
-    """
-    :return: dict with workflow job names as keys and path to config as value
-    """
+    """:return: dict with workflow job names as keys and path to config as value"""
 
 
 @no_type_check

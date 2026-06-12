@@ -54,9 +54,7 @@ class ParameterConfig(BaseModel):
     @property
     @abstractmethod
     def parameter_keys(self) -> list[str]:
-        """
-        Returns a list of parameter keys within this parameter group
-        """
+        """Returns a list of parameter keys within this parameter group"""
 
     @abstractmethod
     def __len__(self) -> int:

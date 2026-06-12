@@ -4,9 +4,7 @@ from fastapi import status
 
 
 class ErtStorageError(RuntimeError):
-    """
-    Base error class for all the rest of errors
-    """
+    """Base error class for all the rest of errors"""
 
     __status_code__ = status.HTTP_200_OK
 

@@ -103,9 +103,7 @@ class LegacyErtScriptWorkflow:
 
 
 class WorkflowConfigs:
-    """
-    Top level workflow config object, holds all workflow configs.
-    """
+    """Top level workflow config object, holds all workflow configs."""
 
     def __init__(self) -> None:
         self._workflows: list[ErtScriptWorkflow] = []

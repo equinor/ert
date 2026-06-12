@@ -1,6 +1,4 @@
-"""
-Client methods for interacting with everserver
-"""
+"""Client methods for interacting with everserver"""
 
 from .client import (
     PROXY,

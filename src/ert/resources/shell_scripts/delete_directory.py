@@ -39,9 +39,7 @@ def delete_empty_directory(dirname: str) -> None:
 
 
 def delete_directory(path: str) -> None:
-    """
-    Will ignore if you are not owner.
-    """
+    """Will ignore if you are not owner."""
     if Path(path).exists():
         if os.path.isdir(path):
             for root, dirs, files in os.walk(path, topdown=False, followlinks=False):

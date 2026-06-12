@@ -255,9 +255,7 @@ def mock_server(monkeypatch):
 
 @pytest.fixture
 def use_site_configurations_with_lsf_queue_options():
-    """
-    Mimic site config
-    """
+    """Mimic site config"""
 
     lsf_queue_options = LsfQueueOptions(
         name="lsf",

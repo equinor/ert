@@ -1,7 +1,4 @@
-"""
-This is the main EVEREST module.
-
-"""
+"""This is the main EVEREST module."""
 
 try:
     from ert.shared.version import version

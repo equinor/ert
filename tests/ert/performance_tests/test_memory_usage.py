@@ -230,9 +230,7 @@ def test_field_param_memory(tmpdir):
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def create_poly_with_field(field_dim: tuple[int, int, int], realisations: int):
-    """
-    This replicates the poly example, only it uses FIELD parameter
-    """
+    """This replicates the poly example, only it uses FIELD parameter"""
     grid_size = field_dim[0] * field_dim[1] * field_dim[2]
     config = dedent(
         f"""
