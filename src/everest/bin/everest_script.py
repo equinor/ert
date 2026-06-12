@@ -25,9 +25,9 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
+from everest.strings import EVEREST
 from everest.util import (
     version_info,
-    warn_user_that_runpath_is_nonempty,
 )
 
 from .utils import (
@@ -297,6 +297,18 @@ async def run_everest(options: argparse.Namespace) -> None:
         )
         logger.info(msg)
         print(msg)
+
+
+def warn_user_that_runpath_is_nonempty() -> None:
+    print(
+        "EVEREST is running in an existing runpath.\n\n"
+        "Please be aware of the following:\n"
+        "- Previously generated results "
+        "might be overwritten.\n"
+        "- Previously generated files might "
+        "be used if not configured correctly.\n"
+    )
+    logging.getLogger(EVEREST).warning("EVEREST is running in an existing runpath")
 
 
 if __name__ == "__main__":
