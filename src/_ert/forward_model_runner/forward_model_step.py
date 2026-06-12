@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
-from .io import check_executable
 from .reporting.message import (
     Exited,
     ProcessTreeStatus,
@@ -31,6 +30,35 @@ if TYPE_CHECKING:
     from ert.config import ForwardModelStepJSON
 
 logger = logging.getLogger(__name__)
+
+
+def _check_executable(fname: str | None) -> str:
+    """Returns an error message if the given file is not an executable.
+
+    Will check whether the given fname is a file.
+
+    If the given file name is an absolute path, its functionality is straight
+    forward. When given a relative path it will look for the given file in the
+    current directory as well as all locations specified by the environment
+    path.
+    """
+    if not fname:
+        return "No executable provided!"
+    filepath = Path(fname).expanduser()
+
+    potential_executables = [filepath.resolve()]
+    if not filepath.is_absolute():
+        potential_executables += [
+            Path(location) / filepath
+            for location in os.environ["PATH"].split(os.pathsep)
+        ]
+
+    if not any(path.is_file() for path in potential_executables):
+        return f"{filepath} is not a file!"
+
+    if not any(os.access(path, os.X_OK) for path in potential_executables):
+        return f"{filepath} is not an executable!"
+    return ""
 
 
 def killed_by_oom(pids: Iterable[int]) -> bool:
@@ -355,7 +383,7 @@ class ForwardModelStep:
         ).exists():
             os.unlink(error_file)
 
-        if executable_error := check_executable(self.step_data.get("executable")):
+        if executable_error := _check_executable(self.step_data.get("executable")):
             errors.append(executable_error)
 
         return errors
