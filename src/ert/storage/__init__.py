@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 from .local_ensemble import LocalEnsemble, load_realization_parameters_and_responses
 from .local_experiment import ExperimentState, ExperimentStatus, LocalExperiment
-from .local_storage import LocalStorage, local_storage_set_ert_config
+from .local_storage import LocalStorage, local_storage_set_ert_config, open_storage
 from .mode import Mode, ModeLiteral
 from .realization_storage_state import RealizationStorageState
 
@@ -36,30 +33,13 @@ class ErtStoragePermissionError(ErtStorageException):
     pass
 
 
-def open_storage(
-    path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
-) -> Storage:
-    _ = LocalStorage.check_migration_needed(Path(path))
-
-    try:
-        return LocalStorage(Path(path), Mode(mode))
-    except PermissionError as err:
-        raise ErtStoragePermissionError(
-            "Permission error when accessing storage at: "
-            f"{path} with mode: '{mode}'. Error: {err}"
-        ) from err
-    except Exception as err:
-        raise ErtStorageException(
-            f"Failed to open storage: {path} with error: {err}"
-        ) from err
-
-
 __all__ = [
     "Ensemble",
     "Experiment",
     "ExperimentState",
     "ExperimentStatus",
     "Mode",
+    "ModeLiteral",
     "RealizationStorageState",
     "Storage",
     "load_realization_parameters_and_responses",
