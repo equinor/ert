@@ -1,11 +1,11 @@
 import json
+from importlib import util
 from pathlib import Path
 
 import jinja2
 import pytest
 from ruamel.yaml import YAML
 
-import everest
 from ert.base_model_context import use_runtime_plugins
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
@@ -59,6 +59,14 @@ template_render = import_from_location(
     "template_render",
     SOURCE_DIR / "src" / "ert" / "resources" / "forward_models" / "template_render.py",
 )
+
+
+def fetch_template(template_name: str) -> str:
+    module_spec = util.find_spec("everest.templates")
+    assert module_spec, "everest.templates not found"
+    assert module_spec.origin, "everest.templates has no origin"
+
+    return str(Path(module_spec.origin).parent / template_name)
 
 
 def test_render_invalid(change_to_tmpdir):
@@ -162,7 +170,7 @@ def test_install_template(change_to_tmpdir):
 
 
 def test_well_order_template(change_to_tmpdir):
-    order_tmpl = everest.templates.fetch_template("well_order.tmpl")
+    order_tmpl = fetch_template("well_order.tmpl")
 
     well_order = {
         "PROD1": 0.3,
