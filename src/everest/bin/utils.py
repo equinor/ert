@@ -64,7 +64,7 @@ def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
         log_dir.mkdir(exist_ok=True)
     except PermissionError as err:
         sys.exit(str(err))
-    try:  # noqa: PLW0717
+    try:
         os.environ["ERT_LOG_DIR"] = str(log_dir)
 
         config_dict = yaml.safe_load(LOGGING_CONFIG.read_text(encoding="utf-8"))

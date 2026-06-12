@@ -318,7 +318,7 @@ def test_that_multiple_started_experiments_each_receive_distinct_run_ids(
     monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
     original = dict(_runs)
     _runs.clear()
-    try:  # noqa: PLW0717
+    try:
         credentials = b64encode(b"username:password").decode()
         auth_headers = {"Authorization": f"Basic {credentials}"}
         client = TestClient(app)
