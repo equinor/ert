@@ -1,4 +1,3 @@
-import os.path
 from pathlib import Path
 
 import pytest
@@ -194,7 +193,7 @@ def test_old_file_deletion(reporter):
     reporter._delete_old_status_files()
 
     for f in [ERROR_file, STATUS_file]:
-        assert not os.path.isfile(f), f"{reporter} was not deleted"
+        assert not Path(f).is_file(), f"{reporter} was not deleted"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

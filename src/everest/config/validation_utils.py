@@ -242,7 +242,7 @@ def check_writable_filepath(path: str) -> None:
 
     if os.path.isdir(path) or not os.path.basename(path):
         raise ValueError("Invalid type")
-    if os.path.isfile(path) and not os.access(path, os.W_OK):
+    if Path(path).is_file() and not os.access(path, os.W_OK):
         raise ValueError(f"User does not have write access to {path}")
 
 
@@ -311,7 +311,7 @@ def check_writeable_path(path_source: str, config_path: Path) -> None:
         if os.path.isdir(path):
             if os.access(path, os.W_OK | os.X_OK):
                 break
-        elif os.path.isfile(path):
+        elif Path(path).is_file():
             raise ValueError(f"{path} is a file, cannot create folders inside it")
         parent = os.path.dirname(path)
         if parent == path:  # ie, if path is root

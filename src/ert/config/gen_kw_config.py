@@ -280,7 +280,7 @@ class GenKwConfig(ParameterConfig):
         template_context: str | tuple[str, str] | dict[str, str],
         output_context: str | tuple[str, str] | dict[str, str],
     ) -> None:
-        if not os.path.isfile(template_file):
+        if not Path(template_file).is_file():
             raise ConfigValidationError.with_context(
                 f"No such template file: {template_file}", template_context
             )

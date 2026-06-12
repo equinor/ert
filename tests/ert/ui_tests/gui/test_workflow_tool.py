@@ -1,6 +1,6 @@
-import os
 from collections.abc import Generator
 from contextlib import contextmanager
+from pathlib import Path
 from textwrap import dedent
 from unittest.mock import Mock
 
@@ -76,7 +76,7 @@ def test_run_export_runpath_workflow(open_gui, qtbot, run_experiment):
     QTimer.singleShot(1000, handle_run_workflow_tool)
     gui.workflows_tool.trigger()
 
-    assert os.path.isfile(".ert_runpath_list")
+    assert Path(".ert_runpath_list").is_file()
 
 
 def test_run_workflow_with_no_ensemble_selected(qtbot, tmp_path, capsys, monkeypatch):

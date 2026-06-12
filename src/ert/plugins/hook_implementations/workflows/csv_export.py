@@ -1,7 +1,6 @@
 import json
-import os
-import pathlib
 from collections.abc import Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
-def loadDesignMatrix(filename: str) -> pd.DataFrame:
+def loadDesignMatrix(filename: Path) -> pd.DataFrame:
     dm = pd.read_csv(filename, sep=r"\s+")
     dm = dm.rename(columns={dm.columns[0]: "Realization"})
     return dm.set_index(["Realization"])
@@ -61,7 +60,7 @@ class CSVExportJob(ErtScript):
     ) -> str:
         output_file = workflow_args[0]
         ensemble_data_as_json = None if len(workflow_args) < 2 else workflow_args[1]
-        design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
+        design_matrix_path = None if len(workflow_args) < 3 else Path(workflow_args[2])
         drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
 
         ensemble_data_as_dict = (
@@ -76,10 +75,10 @@ class CSVExportJob(ErtScript):
             ensembles.append(ensemble)
 
         if design_matrix_path is not None:
-            if not pathlib.Path(design_matrix_path).exists():
+            if not design_matrix_path.exists():
                 raise UserWarning("The design matrix file does not exist!")
 
-            if not os.path.isfile(design_matrix_path):
+            if not design_matrix_path.is_file():
                 raise UserWarning("The design matrix is not a file!")
 
         data = pd.DataFrame()

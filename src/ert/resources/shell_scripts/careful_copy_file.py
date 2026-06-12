@@ -11,7 +11,7 @@ def careful_copy_file(src: str, target: str | None = None) -> None:
     if Path(target).exists():
         print(f"File: {target} already present - not updated")
         return
-    if os.path.isfile(src):
+    if Path(src).is_file():
         if os.path.isdir(target):
             target_file = str(Path(target) / Path(src).name)
             shutil.copyfile(src, target_file)

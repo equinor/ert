@@ -1,5 +1,4 @@
 import math
-import os
 from pathlib import Path
 
 import numpy as np
@@ -71,7 +70,7 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
             permx_field.write_to_runpath(
                 Path(f"export/with/path/{real}"), real, prior_ensemble
             )
-        assert not os.path.isfile(f"export/with/path/{real}/permx.grdecl")
+        assert not Path(f"export/with/path/{real}/permx.grdecl").is_file()
 
 
 def create_dummy_field(nx, ny, nz, mask):

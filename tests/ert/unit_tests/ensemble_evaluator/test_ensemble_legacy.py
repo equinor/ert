@@ -1,5 +1,5 @@
 import asyncio
-import os
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -36,7 +36,7 @@ async def test_run_legacy_ensemble(
 
         # realisations should finish, each creating a status-file
         for i in range(num_reals):
-            assert os.path.isfile(f"real_{i}/status.txt")
+            assert Path(f"real_{i}/status.txt").is_file()
 
 
 @pytest.mark.slow
@@ -64,4 +64,4 @@ async def test_run_and_cancel_legacy_ensemble(
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
         # realisations should not finish, thus not creating a status-file
         for i in range(num_reals):
-            assert not os.path.isfile(f"real_{i}/status.txt")
+            assert not Path(f"real_{i}/status.txt").is_file()

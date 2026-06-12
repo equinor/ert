@@ -212,9 +212,9 @@ def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     )
     fm_dispatch_process.wait()
 
-    assert not os.path.isfile("step_A.out")
-    assert os.path.isfile("step_B.out")
-    assert os.path.isfile("step_C.out")
+    assert not Path("step_A.out").is_file()
+    assert Path("step_B.out").is_file()
+    assert Path("step_C.out").is_file()
 
 
 def test_no_jobs_json_file_raises_IOError(tmp_path: Path):

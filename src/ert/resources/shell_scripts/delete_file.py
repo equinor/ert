@@ -6,7 +6,7 @@ import sys
 
 def delete_file(filename: str) -> None:
     if pathlib.Path(filename).exists():
-        if os.path.isfile(filename):
+        if pathlib.Path(filename).is_file():
             stat_info = os.stat(filename)
             uid = stat_info.st_uid
             if uid == os.getuid():

@@ -240,6 +240,7 @@ select = [
     "PTH101",
     "PTH109",
     "PTH110",
+    "PTH113",
     "PTH118",
     "PTH123",
     "PYI",
