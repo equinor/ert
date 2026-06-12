@@ -10,7 +10,7 @@ import socket
 import sys
 import time
 import uuid
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, Iterable, Sequence
 from dataclasses import dataclass, field
 from os import path
 from pathlib import Path
@@ -33,13 +33,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def killed_by_oom(pids: set[int]) -> bool:
-    """Will try to detect if a process (or any of its descendants) was killed
-    by the Linux OOM-killer.
+def killed_by_oom(pids: Iterable[int]) -> bool:
+    """Detects whether any of the processes were killed due to OOM.
 
     Debug information will be logged through the system logger.
-
     Since pids can be reused, this can in theory give false positives.
+    Always just returns False on mac.
     """
 
     if sys.platform == "darwin":
