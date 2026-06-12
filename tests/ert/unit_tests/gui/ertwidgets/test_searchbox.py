@@ -4,7 +4,7 @@ from ert.gui.ertwidgets.searchbox import SearchBox
 
 
 def test_search_box_does_not_emit_filter_changed_when_focused(qtbot):
-    search_box = SearchBox(debounce_timeout=10, show_pending_indicator=True)
+    search_box = SearchBox(debounce_timeout=10)
     qtbot.addWidget(search_box)
 
     signal_spy = QSignalSpy(search_box.filterChanged)
@@ -18,7 +18,7 @@ def test_search_box_does_not_emit_filter_changed_when_focused(qtbot):
 
 
 def test_search_box_shows_pending_indicator_while_debounce_is_active(qtbot):
-    search_box = SearchBox(debounce_timeout=100, show_pending_indicator=True)
+    search_box = SearchBox(debounce_timeout=100)
     qtbot.addWidget(search_box)
     search_box.show()
 

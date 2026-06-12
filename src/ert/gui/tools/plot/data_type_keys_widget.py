@@ -131,7 +131,7 @@ class DataTypeKeysWidget(QWidget):
 
         filter_layout = QHBoxLayout()
 
-        self.search_box = SearchBox(show_pending_indicator=True)
+        self.search_box = SearchBox()
         self.search_box.filterChanged.connect(self.setSearchString)
         filter_layout.addWidget(self.search_box)
 

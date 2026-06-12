@@ -2,8 +2,8 @@ from typing import Any
 
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QColor, QFocusEvent, QKeyEvent, QMovie, QResizeEvent
-from PyQt6.QtWidgets import QLabel, QLineEdit, QStyle
+from PyQt6.QtGui import QColor, QCursor, QFocusEvent, QKeyEvent, QMovie, QResizeEvent
+from PyQt6.QtWidgets import QApplication, QLabel, QLineEdit, QStyle
 from typing_extensions import override
 
 
@@ -12,18 +12,12 @@ class SearchBox(QLineEdit):
 
     filterChanged = Signal(object)
 
-    def __init__(
-        self,
-        debounce_timeout: int = 1000,
-        *,
-        show_pending_indicator: bool = False,
-    ) -> None:
+    def __init__(self, debounce_timeout: int = 1000) -> None:
         QLineEdit.__init__(self)
 
         self.setToolTip("Type to search!")
         self.active_color = self.palette().color(self.foregroundRole())
         self.disable_search = True
-        self._use_pending_indicator = show_pending_indicator
         self._pending_movie = QMovie("img:loading.gif")
         self._pending_movie.setScaledSize(QSize(16, 16))
 
@@ -40,30 +34,25 @@ class SearchBox(QLineEdit):
         self._debounce_timer.timeout.connect(self._emit_filter_changed)
         self._search_pending = False
 
-        if self._use_pending_indicator:
-            self.setTextMargins(0, 0, self._pending_indicator.width() + 4, 0)
+        self.setTextMargins(0, 0, self._pending_indicator.width() + 4, 0)
         self.presentSearch()
 
-    def _show_pending_indicator(self) -> None:
-        if not self._use_pending_indicator:
-            return
-
+    def _show_pending_state(self) -> None:
         self._pending_indicator.show()
         self._pending_movie.start()
+        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
 
-    def _hide_pending_indicator(self) -> None:
-        if not self._use_pending_indicator:
-            return
-
+    def _hide_pending_state(self) -> None:
         self._pending_movie.stop()
         self._pending_indicator.hide()
+        QApplication.restoreOverrideCursor()
 
     def _start_debounce_timer(self, _filter: Any) -> None:
         if self.disable_search:
             return
 
         if not self._search_pending:
-            self._show_pending_indicator()
+            self._show_pending_state()
             self._search_pending = True
 
         if not self._debounce_timer.isActive():
@@ -71,12 +60,10 @@ class SearchBox(QLineEdit):
         self._debounce_timer.setInterval(self._debounce_timeout)
 
     def _emit_filter_changed(self) -> None:
-        try:
-            self.filterChanged.emit(self.filter())
-        finally:
-            if self._search_pending:
-                self._hide_pending_indicator()
-                self._search_pending = False
+        self.filterChanged.emit(self.filter())
+        if self._search_pending:
+            self._hide_pending_state()
+            self._search_pending = False
 
     def filter(self) -> str:
         if self.disable_search:
@@ -86,6 +73,9 @@ class SearchBox(QLineEdit):
     def presentSearch(self) -> None:
         """Is called to present the greyed out search"""
         self.disable_search = True
+        if self._search_pending:
+            self._hide_pending_state()
+            self._search_pending = False
         self.setText("Search")
         palette = self.palette()
         palette.setColor(self.foregroundRole(), self.passive_color)
@@ -122,7 +112,8 @@ class SearchBox(QLineEdit):
     @override
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
         style = self.style()
-        assert style is not None
+        if style is None:
+            raise RuntimeError("SearchBox style is unexpectedly None")
         frame_width = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
         self._pending_indicator.move(
             self.rect().right() - frame_width - self._pending_indicator.width(),
