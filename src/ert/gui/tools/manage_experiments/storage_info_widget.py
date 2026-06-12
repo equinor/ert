@@ -32,6 +32,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config.response_config import BaseResponseConfig
 from ert.config.rft_config import RFTConfig
+from ert.gui.experiments.view.run_status import RunStatusView
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 from ert.storage.blob_data import BlobType
 from ert.warnings import capture_specific_warning
@@ -59,6 +60,7 @@ class _EnsembleWidgetTabs(IntEnum):
     OBSERVATIONS_TAB = 2
     PARAMETERS_TAB = 3
     MISFIT_TAB = 4
+    RUN_STATUS_TAB = 5
 
 
 class _ExperimentWidget(QWidget):
@@ -270,6 +272,8 @@ class _EnsembleWidget(QWidget):
             self._misfit_table, self._export_misfit_button
         )
 
+        self._run_status_view = RunStatusView()
+
         self._tab_widget = QTabWidget()
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.ENSEMBLE_TAB, info_frame, "Ensemble"
@@ -283,6 +287,9 @@ class _EnsembleWidget(QWidget):
         )
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.MISFIT_TAB, misfit_frame, "Misfit"
+        )
+        self._tab_widget.insertTab(
+            _EnsembleWidgetTabs.RUN_STATUS_TAB, self._run_status_view, "Run status"
         )
         self._tab_widget.currentChanged.connect(self._currentTabChanged)
 
@@ -543,6 +550,12 @@ class _EnsembleWidget(QWidget):
 
             table.resizeColumnsToContents()
             table.setUpdatesEnabled(True)
+
+        elif index == _EnsembleWidgetTabs.RUN_STATUS_TAB:
+            assert self._ensemble is not None
+            self._run_status_view.load_snapshot(
+                self._ensemble.experiment.status_snapshot_path(self._ensemble.iteration)
+            )
 
     def get_misfit_df(self) -> DataFrame:
         assert self._ensemble is not None
