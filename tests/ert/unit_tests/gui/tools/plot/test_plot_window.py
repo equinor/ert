@@ -83,7 +83,8 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
 ):
     """This test verifies that the log scale checkbox is hidden when plotting a gen_kw
     with negative values. It also makes sure that the plotter remembers if log scale
-    was used, and re-applies it when switching back."""
+    was used, and re-applies it when switching back.
+    """
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api

@@ -54,7 +54,8 @@ class MeasuredData:
 
     def remove_failed_realizations(self) -> None:
         """Removes rows with no simulated data, leaving observations and
-        standard deviations as-is."""
+        standard deviations as-is.
+        """
         pre_index = self.data.index
         post_index = list(self.data.dropna(axis=0, how="all").index)
         drop_index = set(pre_index) - {*post_index, "STD", "OBS"}

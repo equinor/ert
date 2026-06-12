@@ -361,7 +361,8 @@ async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     * Note that what is called a "queue" in Ert is a "partition" in Slurm lingo.
 
     As Ert does not keep track of which queue a job is executed in, we can only
-    test for success for the job."""
+    test for success for the job.
+    """
     monkeypatch.chdir(tmp_path)
     driver = SlurmDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
     driver._poll_period = 0.01

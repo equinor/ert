@@ -1955,7 +1955,8 @@ def _write_observation_metadata(
     observation-related data from simulations must be obtained and saved in the storage.
     As simulation files containing required information are not copied from runpath to
     storage due to their size, extract of observation metadata must be stored
-    instead."""
+    instead.
+    """
 
     rft_config = cast(RFTConfig, ensemble.experiment.response_configuration["rft"])
     rft_observations = ensemble.experiment.observations.get("rft")

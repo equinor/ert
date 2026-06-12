@@ -171,7 +171,8 @@ class SummaryPanel(QFrame):
 
         Returns a list of tuples, first element is the string, and the second
         element is the count of consecutive occurrences of the string at the current
-        position."""
+        position.
+        """
         string_counts: list[tuple[str, int]] = []
         for string in strings:
             if not string_counts or string_counts[-1][0] != string:

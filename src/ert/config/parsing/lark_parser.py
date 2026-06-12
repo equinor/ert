@@ -85,7 +85,8 @@ class ArgumentToStringTransformer(
     Transformer[FileContextToken, Tree[FileContextToken]]
 ):
     """Flattens all argument types to just tokens or
-    relevant python datastructures"""
+    relevant python datastructures
+    """
 
     @staticmethod
     def arg(rule: list[FileContextToken]) -> FileContextToken:
@@ -117,7 +118,8 @@ class InstructionTransformer(Transformer[FileContextToken, Tree[Instruction]]):
     resulting in a Tree where each child is one
     instruction from the file, as a list of tokens or
     in the case of job arguments, a list of tuples of
-    tokens"""
+    tokens
+    """
 
     @staticmethod
     def instruction(children: list[FileContextToken]) -> FileContextToken:

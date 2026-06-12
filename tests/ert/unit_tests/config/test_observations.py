@@ -1985,7 +1985,8 @@ def obs_config_with_breakthrough_obs():
 def test_that_breakthrough_observations_df_have_obs_value_zero():
     """This test ensures that the observed value is converted
     from a datetime to 0 as this will be the relative value
-    to responses, which value will be hours from observed date."""
+    to responses, which value will be hours from observed date.
+    """
     obs_config_contents = """
         BREAKTHROUGH_OBSERVATION name {
         KEY=WWCT:OP_1;

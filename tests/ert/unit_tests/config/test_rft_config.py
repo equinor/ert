@@ -25,7 +25,8 @@ from tests.ert.rft_generator import cell_start, create_egrid, float_arr
 @pytest.fixture(autouse=True)
 def _clear_rft_caches():
     """Reset the module-level EGRID and zonemap caches so cached entries from
-    previous tests do not leak into tests that expect a missing or different file."""
+    previous tests do not leak into tests that expect a missing or different file.
+    """
     _read_egrid.cache_clear()
     _get_zonemap.cache_clear()
     yield

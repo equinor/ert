@@ -95,7 +95,8 @@ class SnapshotModel(QAbstractItemModel):
     def prerender(ensemble: EnsembleSnapshot) -> EnsembleSnapshot | None:
         """Pre-render some data that is required by this model. Ideally, this
         is called outside the GUI thread. This is a requirement of the model,
-        so it has to be called."""
+        so it has to be called.
+        """
 
         reals = ensemble.reals
         fm_step_snapshots = ensemble.get_fm_steps_for_all_reals()

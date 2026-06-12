@@ -255,7 +255,8 @@ def test_parsing_forward_model_with_double_dash_is_possible(plugins_ert_config):
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
-    parser this is allowed"""
+    parser this is allowed
+    """
 
     res_config = plugins_ert_config.from_file_contents(
         """
@@ -279,7 +280,8 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces(
 
     the use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser is interpreted as a comment - to circumvent the
-    comment interpretation, quotation marks are used"""
+    comment interpretation, quotation marks are used
+    """
 
     str_with_quotes = """smt/<foo>"/bar"/xx/"t--s.s"/yy/"z/z"/oo"""
     ert_config = plugins_ert_config.from_file_contents(
@@ -301,7 +303,8 @@ def test_that_comments_are_ignored(plugins_ert_config):
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
-    parser this is allowed"""
+    parser this is allowed
+    """
 
     res_config = plugins_ert_config.from_file_contents(
         """
@@ -323,7 +326,8 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly(
 ):
     """This is a regression test, making sure that quoted strings behave consistently.
     They should all result in the same.
-    See https://github.com/equinor/ert/issues/2766"""
+    See https://github.com/equinor/ert/issues/2766
+    """
 
     res_config = plugins_ert_config.from_file_contents(
         """
@@ -794,7 +798,8 @@ def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_
 ):
     """If a site plugin defines a forward model step that will fail validation, but
     the user has defined her own step that does not have any validation,
-    the site-installed step validation should not run"""
+    the site-installed step validation should not run
+    """
     monkeypatch.chdir(tmp_path)
     (tmp_path / "A_POPULAR_STEP_NAME").write_text("EXECUTABLE echo", encoding="utf-8")
     (tmp_path / "test.ert").write_text(

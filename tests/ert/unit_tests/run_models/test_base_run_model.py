@@ -352,7 +352,8 @@ def test_get_current_status_when_rerun(
     use_tmpdir,
 ):
     """Active realizations gets changed when we choose to rerun, and the result from
-    the previous run should be included in the current_status."""
+    the previous run should be included in the current_status.
+    """
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
     brm = create_run_model(
         queue_config=config.queue_config,
@@ -374,7 +375,8 @@ def test_get_current_status_for_new_iteration_when_realization_failed_in_previou
     use_tmpdir,
 ):
     """Active realizations gets changed when we run next iteration, and the failed
-    realizations from the previous run should not be present in the current_status."""
+    realizations from the previous run should not be present in the current_status.
+    """
     initial_active_realizations = [True] * 5
     # Realization 0,1, and 3 failed in the previous iteration
     new_active_realizations = [False, False, True, False, True]
@@ -420,7 +422,8 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
 ):
     """When rerunning, we include all realizations in the total amount of active
     realization. When running a new iteration based on the result of the previous
-    iteration, we only include the successful realizations."""
+    iteration, we only include the successful realizations.
+    """
     initial_active_realizations = [True] * 5
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
 

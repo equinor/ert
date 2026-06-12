@@ -264,6 +264,7 @@ class SurfaceConfig(ParameterConfig):
         a 2D cube with shape (px,py) in the same way as
         reshaping such a surface into a one-dimensional array.
         The indexing scheme used to create the graph reflects
-        this flattening process"""
+        this flattening process
+        """
 
         return create_flattened_cube_graph(px=self.ncol, py=self.nrow, pz=1)

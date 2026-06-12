@@ -606,7 +606,8 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
 def _create_gradient_only_ensemble(storage):
     """Create an Everest experiment+ensemble where all realizations
     are gradient perturbations (perturbation >= 0) with no function evaluations
-    (perturbation == -1)."""
+    (perturbation == -1).
+    """
     objective_key = "npv"
     ensemble_size = 3
 

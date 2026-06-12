@@ -11,7 +11,8 @@ from .types import FileContextToken
 
 class FileContextTransformer(Transformer[Token, Tree[FileContextToken]]):
     """Adds filename to each token,
-    to ensure we have enough context for error messages"""
+    to ensure we have enough context for error messages
+    """
 
     def __init__(self, filename: str) -> None:
         self.filename = filename

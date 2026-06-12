@@ -202,7 +202,8 @@ async def test_events_produced_from_jobstate_updates(
 @pytest.mark.timeout(10)
 async def test_that_hanging_bhist_history_does_not_block_finished_event():
     """This is a regression test to make sure that if bhist hangs for some reason,
-    job_updates are still processed and we get the finished event."""
+    job_updates are still processed and we get the finished event.
+    """
     driver = LsfDriver()
     driver._jobs["1"] = JobData(
         iens=0,
@@ -1050,7 +1051,8 @@ def mock_lsf(pytestconfig, monkeypatch, tmp_path):
 @pytest.fixture
 def not_found_bjobs(monkeypatch, tmp_path):
     """This creates a bjobs command that will always claim a job
-    does not exist, mimicking a job that has 'fallen out of the bjobs cache'."""
+    does not exist, mimicking a job that has 'fallen out of the bjobs cache'.
+    """
     patch_queue_commands(
         monkeypatch, tmp_path, bjobs_script='echo "Job <$1> is not found"'
     )
@@ -1188,7 +1190,8 @@ async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     a job will be attempted submitted to that queue.
 
     As Ert does not keep track of which queue a job is executed in, we can only
-    test for success for the job."""
+    test for success for the job.
+    """
     monkeypatch.chdir(tmp_path)
     driver = LsfDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
     driver._poll_period = 0.01
@@ -1373,7 +1376,8 @@ async def test_no_exception_when_no_access_to_bjobs_executable(
     not_found_bjobs, caplog, job_name
 ):
     """The intent of this test is to ensure the driver will not
-    go down if the filesystem is temporarily flaky."""
+    go down if the filesystem is temporarily flaky.
+    """
     driver = LsfDriver()
     driver._poll_period = 0.01
     Path("bin/bjobs").chmod(0o000)  # Modify the bjobs from the fixture

@@ -3,7 +3,8 @@ from .plot_config import PlotConfig
 
 class PlotConfigHistory:
     """A Class for tracking changes to a PlotConfig class (supports undo, redo
-    and reset)"""
+    and reset)
+    """
 
     def __init__(self, name: str, initial: PlotConfig) -> None:
         super().__init__()

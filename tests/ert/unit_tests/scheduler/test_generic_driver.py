@@ -134,7 +134,8 @@ async def test_kill_gives_correct_state(driver: Driver, use_tmpdir, request):
 async def test_repeated_submit_same_iens(driver: Driver, tmp_path, monkeypatch):
     """Submits are allowed to be repeated for the same iens, and are to be
     handled according to FIFO, but this order cannot be guaranteed as it depends
-    on the host operating system."""
+    on the host operating system.
+    """
     monkeypatch.chdir(tmp_path)
     await driver.submit(
         0,
@@ -208,7 +209,8 @@ async def test_num_cpu_sets_env_variables(
     the num_cpu requirement correctly for the relevant queue system.
 
     How this can be verified depends on the queue system, there is no single
-    environment variable that they all set."""
+    environment variable that they all set.
+    """
     if isinstance(driver, LocalDriver):
         pytest.skip("LocalDriver has no NUM_CPU concept")
     monkeypatch.chdir(tmp_path)
@@ -275,7 +277,8 @@ async def test_that_driver_emits_warning_event_when_polling_fails_for_timeout_pe
 ):
     """This test is to make sure that a WarningEvent from driver is emitted in case
     polling fails completely, and does not get back on its feet within the set
-    period"""
+    period
+    """
     if isinstance(driver, LocalDriver):
         pytest.skip("LocalDriver has no polling concept")
     monkeypatch.chdir(tmp_path)

@@ -23,7 +23,8 @@ class BaseResponseConfig(BaseModel, extra="forbid"):
         """Matching columns for observations and responses. Along with
         'response_key' they create the key on which response data should match
         observation data. For example 'time' for summary and ['report_step','index'] for
-        gen data."""
+        gen data.
+        """
 
     def match_key_dict_expr(self) -> pl.Expr:
         """Polars expression for representing match key-values as a label=value string.
@@ -102,7 +103,8 @@ class ResponseConfig(BaseResponseConfig):
     def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
         """Creates a config, given an ert config dict.
         A response config may depend on several config kws, such as REFCASE
-        for summary."""
+        for summary.
+        """
 
     def are_keys_finalized(self) -> bool:
         return self.has_finalized_keys

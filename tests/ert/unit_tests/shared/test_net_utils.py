@@ -38,7 +38,8 @@ def test_that_get_machine_name_is_predictive(mocker):
     that get_machine_name() is predictive to avoid mismatch for SSL certificates.
 
     The order DNS servers respond to reverse DNS lookups for such hosts is not
-    defined."""
+    defined.
+    """
 
     # GIVEN that reverse DNS resolution results in two names (in random order):
     ptr_records = ["barfoo01.internaldomain.barf.", "foobar01.equinor.com."]

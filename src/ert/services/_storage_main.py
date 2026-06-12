@@ -63,7 +63,8 @@ def generate_authtoken() -> str:
 
 def write_to_pipe(connection_info: str | dict[str, Any]) -> None:
     """Write connection information directly to the calling program (ERT) via a
-    communication pipe."""
+    communication pipe.
+    """
     fd = os.environ.get("ERT_COMM_FD")
     if fd is None:
         return

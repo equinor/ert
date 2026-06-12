@@ -142,7 +142,8 @@ class Scheduler:
 
     def confirm_job_killed_by_evaluator(self, real_id: int) -> None:
         """Set the job as killed by the evaluator, if the flag for \
-            evaluator started killing job is already set."""
+            evaluator started killing job is already set.
+        """
         if self._jobs[real_id]._started_killing_by_evaluator:
             self._jobs[int(real_id)]._was_killed_by_evaluator.set()
 
@@ -211,7 +212,8 @@ class Scheduler:
 
     async def _kill_if_driver_lags(self, iens: int) -> None:
         """Kill realization *iens* if the driver hasn't reported it
-        finished within the grace period after checksum arrival."""
+        finished within the grace period after checksum arrival.
+        """
         job = self._jobs[iens]
         try:
             await asyncio.wait_for(

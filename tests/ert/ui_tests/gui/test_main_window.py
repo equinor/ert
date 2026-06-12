@@ -1128,7 +1128,8 @@ def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_des
         @contextlib.contextmanager
         def mock_run_dialog():
             """Mocking run dialog and catching exceptions shaves off 2 seconds for this
-            test, taking about 0.5 sec as a result"""
+            test, taking about 0.5 sec as a result
+            """
             original_init = RunDialog.__init__
             RunDialog.__init__ = Mock(return_value=None)
             try:

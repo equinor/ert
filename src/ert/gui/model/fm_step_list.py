@@ -23,7 +23,8 @@ from ert.gui.model.snapshot import (
 
 class FMStepListProxyModel(QAbstractProxyModel):
     """This proxy model presents two-dimensional views (row-column) of
-    forward model data for a specific realization in a specific iteration."""
+    forward model data for a specific realization in a specific iteration.
+    """
 
     def __init__(self, parent: QObject | None, iter_: int, real_: int) -> None:
         super().__init__(parent=parent)
@@ -33,7 +34,8 @@ class FMStepListProxyModel(QAbstractProxyModel):
     @Slot(int, int)
     def set_real(self, iter_: int, real: int) -> None:
         """Called when the user clicks a specific realization in
-        the run_dialog window."""
+        the run_dialog window.
+        """
         self._disconnect()
         self.modelAboutToBeReset.emit()
         self._iter = iter_
