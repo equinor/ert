@@ -402,7 +402,8 @@ class QueueConfig(BaseModelWithContextSupport):
 
         A ConfigDict is parsed from an Ert configuration.
 
-        site_queue_options is overridden by config_dict"""
+        site_queue_options is overridden by config_dict
+        """
         site_queue_options_dict = (
             site_queue_options.model_dump(exclude_unset=True)
             if site_queue_options

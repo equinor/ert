@@ -253,7 +253,8 @@ def filter_job_ids_on_submission_time(
 
 class BhistProcessingFinishedSentinel:
     """This sentinel is put when we are finishing polling, so
-    that the bhist processing task can also finish gracefully."""
+    that the bhist processing task can also finish gracefully.
+    """
 
 
 class LsfDriver(Driver):

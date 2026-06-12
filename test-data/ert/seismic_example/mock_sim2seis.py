@@ -224,7 +224,8 @@ def generate_many(
     monitors: list[MonitorDate] | None = None,
 ) -> None:
     """Generate CSV files for every combination of the supplied setup parameter
-    lists."""
+    lists.
+    """
     fields = fields or [FieldName.FIELD]
     attributes = attributes or [Attribute.AMPLITUDE]
     stacking_offsets = stacking_offsets or [StackingOffset.FULL]

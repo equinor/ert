@@ -951,7 +951,8 @@ def test_that_init_files_option_raises_removal_error(tmp_path):
 @pytest.mark.parametrize("order", list(permutations([("A", 1), ("AA", 2), ("AAA", 3)])))
 async def test_that_gen_kw_substitutes_correctly(order, tmpdir, storage, run_args):
     """This is a regression test to check that the substitution mechanism
-    works correctly when there are multiple parameters with similar names."""
+    works correctly when there are multiple parameters with similar names.
+    """
     with tmpdir.as_cwd():
         config = dedent(
             """

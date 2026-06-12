@@ -17,7 +17,8 @@ if TYPE_CHECKING:
 
 class TextBox(QTextEdit):
     """TextBox shows a multi line string. The data structure expected and sent to the
-    getter and setter is a multi line string."""
+    getter and setter is a multi line string.
+    """
 
     def __init__(
         self,

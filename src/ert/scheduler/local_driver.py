@@ -100,7 +100,8 @@ class LocalDriver(Driver):
 
     async def _dispatch_finished_event(self, iens: int, returncode: int) -> None:
         """Dispatch a finished event unless we have already
-        done so for a given realization (iens)"""
+        done so for a given realization (iens)
+        """
         if iens not in self._sent_finished_events:
             await self.event_queue.put(FinishedEvent(iens=iens, returncode=returncode))
             self._sent_finished_events.add(iens)

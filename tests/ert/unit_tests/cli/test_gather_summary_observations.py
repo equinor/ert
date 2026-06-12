@@ -17,7 +17,8 @@ from ert.gather_summary_observations import (
 @pytest.fixture(name="patched_csv_writer")
 def patched_csv_writing(monkeypatch):
     """Avoid writing to file.
-    Fixture mock can be used to assert what has been written to file."""
+    Fixture mock can be used to assert what has been written to file.
+    """
     write_buffer = io.StringIO()
 
     @contextmanager

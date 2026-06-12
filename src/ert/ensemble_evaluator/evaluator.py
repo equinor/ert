@@ -697,7 +697,8 @@ class EnsembleEvaluator:
         self, num_cpu: int, real_id: str, fm_step: FMStepSnapshot
     ) -> None:
         """Produces a message warning about misconfiguration of NUM_CPU if
-        so is detected. Returns an empty string if everything is ok."""
+        so is detected. Returns an empty string if everything is ok.
+        """
         allowed_overspending = self.ALLOWED_CPU_OVERSPENDING * num_cpu
         overspending_warning_threshold = (
             self.CPU_OVERSPENDING_WARNING_THRESHOLD * num_cpu

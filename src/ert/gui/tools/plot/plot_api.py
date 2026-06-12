@@ -463,7 +463,8 @@ class PlotApi:
         for a given ensembles. The row index is the realization number, and the column
         index is a multi-index with (obs_key, index/date, obs_index), where index/date
         is used to relate the observation to the data point it relates to, and obs_index
-        is the index for the observation itself"""
+        is the index for the observation itself
+        """
         all_observations = pd.DataFrame()
         for ensemble_id in ensemble_ids:
             ensemble = self._get_ensemble_by_id(ensemble_id)
@@ -542,7 +543,8 @@ class PlotApi:
     ) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
-        index is the key."""
+        index is the key.
+        """
         if not ensemble_ids:
             return pd.DataFrame()
 

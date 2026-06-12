@@ -469,7 +469,8 @@ def test_that_get_rft_observations_and_responses_includes_approximated_values_wh
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_is_active_based_on_matching_pressure_response():
     """Test that is_active is True when there is a matching PRESSURE response,
-    and False if not"""
+    and False if not
+    """
     observations = [
         _create_rft_observation(),
         _create_rft_observation(

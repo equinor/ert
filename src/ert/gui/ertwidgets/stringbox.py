@@ -18,7 +18,8 @@ if TYPE_CHECKING:
 
 class StringBox(QLineEdit):
     """StringBox shows a string. The data structure expected and sent to the
-    getter and setter is a string."""
+    getter and setter is a string.
+    """
 
     def __init__(
         self,

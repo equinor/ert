@@ -97,7 +97,8 @@ def test_that_service_can_be_started_with_empty_conn_info_json(
     start_server_mock, change_to_tmpdir
 ):
     """An empty file on disk is an erroneous scenario in which we should
-    ignore the file on disk and overwrite it by launching a new server"""
+    ignore the file on disk and overwrite it by launching a new server
+    """
     Path("storage_server.json").touch()
     ErtServerController.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
@@ -114,7 +115,8 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
 
     Without this, the new server's subprocess or any client calling
     create_ert_server_controller will read the stale file and try to connect
-    to a dead server, causing a TimeoutError."""
+    to a dead server, causing a TimeoutError.
+    """
     stale_file = Path("storage_server.json")
     connection_info = {
         "urls": ["http://127.0.0.1:1"],
@@ -146,7 +148,8 @@ def test_that_service_can_be_started_with_empty_json_content(
     start_server_mock, change_to_tmpdir
 ):
     """An empty JSON document on disk is an erroneous scenario in which we should
-    ignore the file on disk and overwrite it by launching a new server"""
+    ignore the file on disk and overwrite it by launching a new server
+    """
     Path("storage_server.json").write_text("{}", encoding="utf-8")
     ErtServerController.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()

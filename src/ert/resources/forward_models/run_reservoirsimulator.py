@@ -103,7 +103,8 @@ def await_completed_unsmry_file(
     This function will always wait for at least one poll interval, the polling
     interval is specified in seconds.
 
-    The return value is the waited time (in seconds)"""
+    The return value is the waited time (in seconds)
+    """
     start_time = datetime.datetime.now(tz=datetime.UTC)
     prev_len = 0
     while (

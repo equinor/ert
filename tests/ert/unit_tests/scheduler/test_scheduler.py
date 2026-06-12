@@ -905,7 +905,8 @@ async def test_that_scheduler_kills_jobs_when_driver_lags_after_checksum(
     reported the job as finished, the scheduler should kill the job after
     ORPHAN_KILL_DELAY seconds.  This handles the case where orphaned child
     processes (spawned outside the cluster job's process group) keep the
-    cluster job alive indefinitely."""
+    cluster job alive indefinitely.
+    """
     wait_started = asyncio.Event()
     kill_called = asyncio.Event()
 

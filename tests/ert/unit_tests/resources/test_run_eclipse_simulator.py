@@ -67,7 +67,8 @@ def test_run_eclipseX00_can_run_eclipse_and_verify(source_root):
 @pytest.mark.requires_eclipse
 def test_ecl100_binary_can_handle_extra_dots_in_casename(source_root):
     """There is code dealing with file extensions in the Eclipse runner
-    so it better be tested to work as expected."""
+    so it better be tested to work as expected.
+    """
     shutil.copy(
         source_root / "test-data/ert/eclipse/EIGHTCELLS.DATA",
         "EIGHTCELLS.DOT.DATA",
@@ -208,7 +209,8 @@ def test_run_reservoirsimulator_on_nosim_with_mpi_and_existing_unsmry_file(sourc
 
     The wait for timeout will not happen, since there are no summary files present.
 
-    This test only effectively asserts that no crash occurs"""
+    This test only effectively asserts that no crash occurs
+    """
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
     deck = deck.replace("TITLE", "NOSIM\n\nPARALLEL\n 2 /\n\nTITLE")
     Path("SPE1.UNSMRY").write_text("", encoding="utf-8")

@@ -8,7 +8,8 @@ from lark import Token
 class FileContextToken(Token):
     """Represents a token, its location (line and column)
     within a file which is not necessarily the .ert config itself,
-    but a file that is pointed to by the ert config."""
+    but a file that is pointed to by the ert config.
+    """
 
     filename: str
 

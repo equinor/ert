@@ -128,7 +128,8 @@ def test_everest_entry_detached_already_run(
     change_to_tmpdir,
 ):
     """Test everest detached, when an optimization has already run
-    In this case we should just start a new run"""
+    In this case we should just start a new run
+    """
 
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")

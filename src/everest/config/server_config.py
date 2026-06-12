@@ -85,5 +85,6 @@ class ServerConfig(BaseModel, extra="forbid"):
     @staticmethod
     def get_session_dir(output_dir: str) -> str:
         """Return path to the session directory containing information about the
-        certificates and host information"""
+        certificates and host information
+        """
         return str(Path(output_dir).resolve() / SESSION_DIR)

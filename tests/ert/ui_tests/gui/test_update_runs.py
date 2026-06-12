@@ -64,7 +64,8 @@ def copy_run_to_current_test(tmp_path, monkeypatch):
 def remove_responses_in_realization0(gui, indices_to_drop):
     """Removes responses in the first realization of the only ensemble.
     indices_to_drop are expected to correspond to observation indices that must
-    be disabled."""
+    be disabled.
+    """
     ensemble_path = gui.notifier.storage._ensemble_path(
         next(iter(gui.notifier.storage._ensembles.keys()))
     )

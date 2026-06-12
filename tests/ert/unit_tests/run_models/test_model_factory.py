@@ -362,7 +362,8 @@ def test_that_setting_up_experiment_with_update_step_raises_config_validation_er
     experiment is not allowed.
     Though confusing, the active realizations are derived from args.realizations (the
     ones specified in the gui) and all active realization in the 'config', meaning we
-    are referring to two different active realizations."""
+    are referring to two different active realizations.
+    """
     args = MagicMock(realizations="0", restart_run=False, prior_ensemble_id="")
     config = MagicMock()
     config.active_realizations = [True] * 10

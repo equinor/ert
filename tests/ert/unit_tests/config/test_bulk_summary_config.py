@@ -461,7 +461,8 @@ def test_that_optional_csv_columns_are_included_in_summary_observation_name():
 @settings(max_examples=10)
 def test_that_fully_populated_csv_does_not_crash_given_arbitrary_keyword(keyword):
     """We expect that when all columns are populated, there should not exist a keyword
-    which would crash given too few columns."""
+    which would crash given too few columns.
+    """
     obs_config = """
     SUMMARY {
         VALUES = summary_values.csv;
@@ -546,7 +547,8 @@ def test_that_strip_dataframe_whitespaces_converts_empty_strings_to_none():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_docs_setup_results_in_expected_observation_dataframes():
     """This test replicates the example made in observations.rst, ensuring
-    that our documentation is a working happy path."""
+    that our documentation is a working happy path.
+    """
     obs_config = """
     SUMMARY {
         VALUES = summary_values.csv;
@@ -647,7 +649,8 @@ def test_that_docs_setup_results_in_expected_observation_dataframes():
 )
 def test_that_missing_value_in_required_column_raises_config_error(missing_col):
     """If a required column has missing values in the csv, the error message
-    reports the column name, offending row numbers, and filename."""
+    reports the column name, offending row numbers, and filename.
+    """
     obs_config = """
     SUMMARY {
         VALUES = summary_values.csv;

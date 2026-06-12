@@ -141,7 +141,8 @@ def test_memory_profile_is_logged_as_csv(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
     """This tests that a csv is produced and has basic validity.
-    It does not try to verify the validity of the logged RSS values."""
+    It does not try to verify the validity of the logged RSS values.
+    """
     fm_stepname = "do_nothing"
     scriptname = fm_stepname + ".py"
     fm_step_repeats = 3
@@ -319,7 +320,8 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_killed_by_oom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Test out-of-memory detection for pid and descendants based
-    on a mocked dmesg system utility."""
+    on a mocked dmesg system utility.
+    """
     parent_pid = 666
     child_pid = 667
     killed_pid = child_pid

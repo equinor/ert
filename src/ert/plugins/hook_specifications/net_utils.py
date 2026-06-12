@@ -10,4 +10,5 @@ def get_ip_address() -> str:  # type: ignore
 
     On machines exposing several IP addresses, the correct IP is non-trivial
     to pick, and by specifying this hook in an installed plugin, any custom
-    code can be injected in order to pick the correct IP."""
+    code can be injected in order to pick the correct IP.
+    """

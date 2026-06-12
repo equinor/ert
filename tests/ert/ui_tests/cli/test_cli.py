@@ -801,7 +801,8 @@ def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_a_custom_eclrun_can_be_activated_through_setenv():
     """Mock an eclrun binary that will output the list of valid versions and also
-    mock Eclipse100 output"""
+    mock Eclipse100 output
+    """
     Path("bin").mkdir()
     eclrun = Path("bin") / "eclrun"
     eclrun.write_text(

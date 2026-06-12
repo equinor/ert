@@ -11,7 +11,8 @@ def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
     a 3D cube with shape (px,py,pz) in the same way as
     reshaping such a cube into a one-dimensional array.
     The indexing scheme used to create the graph reflects
-    this flattening process"""
+    this flattening process
+    """
 
     graph: nx.Graph[int] = nx.Graph()
     for x, y, z in itertools.product(range(px), range(py), range(pz)):

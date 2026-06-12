@@ -72,7 +72,8 @@ class _CopyButton(CopyButton):
 
 class CopyableLabel(QHBoxLayout):
     """CopyableLabel shows a string that is copyable via
-    selection or clicking of a copy button"""
+    selection or clicking of a copy button
+    """
 
     def __init__(self, text: str) -> None:
         super().__init__()

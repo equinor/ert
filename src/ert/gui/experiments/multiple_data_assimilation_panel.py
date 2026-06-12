@@ -147,7 +147,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             """
             Only non-leafs of ES-MDA experiment are eligible for restart.
             Easiest way to get those is to compare ensemble iteration with total
-            number of ES-MDA iterations found via relative weights list length."""
+            number of ES-MDA iterations found via relative weights list length.
+            """
             return (
                 ensemble
                 for ensemble in ensembles
@@ -161,7 +162,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             """Ensemble experiment type, which consists just from one iteration,
             is always eligible for MDA "restart". Used to spare some computing
             time if users decide to run ES-MDA based on Ensemble Experiment
-            results."""
+            results.
+            """
             return (
                 ensemble
                 for ensemble in ensembles
