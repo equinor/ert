@@ -26,12 +26,30 @@ from ert.shared import __version__
 
 from .local_ensemble import LocalEnsemble
 from .local_experiment import ExperimentConfig, LocalExperiment
-from .mode import BaseMode, Mode, require_write
+from .mode import BaseMode, Mode, ModeLiteral, require_write
 from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
 _LOCAL_STORAGE_VERSION = 30
+
+
+def open_storage(
+    path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
+) -> ert.storage.Storage:
+    _ = LocalStorage.check_migration_needed(Path(path))
+
+    try:
+        return LocalStorage(Path(path), Mode(mode))
+    except PermissionError as err:
+        raise ert.storage.ErtStoragePermissionError(
+            "Permission error when accessing storage at: "
+            f"{path} with mode: '{mode}'. Error: {err}"
+        ) from err
+    except Exception as err:
+        raise ert.storage.ErtStorageException(
+            f"Failed to open storage: {path} with error: {err}"
+        ) from err
 
 
 class _Migrations(BaseModel, extra="forbid"):
