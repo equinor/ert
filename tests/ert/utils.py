@@ -216,7 +216,7 @@ async def poll(
 
     poll_task = asyncio.create_task(driver.poll())
     completed = set()
-    try:  # noqa: PLW0717
+    try:
         while True:
             event = await driver.event_queue.get()
             if isinstance(event, StartedEvent):

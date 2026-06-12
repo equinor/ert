@@ -444,7 +444,7 @@ class EnsembleEvaluator:
             self._server_started.set_exception(e)
             zmq_context.destroy(linger=0)
             return
-        try:  # noqa: PLW0717
+        try:
             await self._server_done.wait()
             try:
                 await asyncio.wait_for(self._dispatchers_empty.wait(), timeout=5)
