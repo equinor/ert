@@ -354,9 +354,7 @@ class _EnsembleWidget(QWidget):
         def _filter_by_match_key(
             df: pl.DataFrame, observation_metadata: pl.DataFrame | None
         ) -> pl.DataFrame:
-            """
-            Filter df to match 'selected' observation on match keys.
-            """
+            """Filter df to match 'selected' observation on match keys."""
             match_data = selected.match_key_data(observation_metadata)
             if not match_data:
                 return df.filter(pl.lit(False))

@@ -12,9 +12,7 @@ from ert.dark_storage.exceptions import ErtStorageError
 
 
 class JSONEncoder(json.JSONEncoder):
-    """
-    Custom JSON encoder with support for Python 3.4 enums
-    """
+    """Custom JSON encoder with support for Python 3.4 enums"""
 
     def default(self, obj: Any) -> Any:
         if isinstance(obj, Enum):

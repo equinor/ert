@@ -8,18 +8,14 @@ class PriorBaseModel(BaseModel):
 
 
 class PriorConst(PriorBaseModel):
-    """
-    Constant parameter prior
-    """
+    """Constant parameter prior"""
 
     function: Literal["const"] = "const"
     value: float
 
 
 class PriorTrig(PriorBaseModel):
-    """
-    Triangular distribution parameter prior
-    """
+    """Triangular distribution parameter prior"""
 
     function: Literal["trig"] = "trig"
     min: float
@@ -28,9 +24,7 @@ class PriorTrig(PriorBaseModel):
 
 
 class PriorNormal(PriorBaseModel):
-    """
-    Normal distribution parameter prior
-    """
+    """Normal distribution parameter prior"""
 
     function: Literal["normal"] = "normal"
     mean: float
@@ -38,9 +32,7 @@ class PriorNormal(PriorBaseModel):
 
 
 class PriorLogNormal(PriorBaseModel):
-    """
-    Log-normal distribution parameter prior
-    """
+    """Log-normal distribution parameter prior"""
 
     function: Literal["lognormal"] = "lognormal"
     mean: float
@@ -74,9 +66,7 @@ class PriorStdNormal(PriorBaseModel):
 
 
 class PriorUniform(PriorBaseModel):
-    """
-    Uniform distribution parameter prior
-    """
+    """Uniform distribution parameter prior"""
 
     function: Literal["uniform"] = "uniform"
     min: float
@@ -101,9 +91,7 @@ class PriorErtDUniform(PriorBaseModel):
 
 
 class PriorLogUniform(PriorBaseModel):
-    """
-    Logarithmic uniform distribution parameter prior
-    """
+    """Logarithmic uniform distribution parameter prior"""
 
     function: Literal["loguniform"] = "loguniform"
     min: float
@@ -111,9 +99,7 @@ class PriorLogUniform(PriorBaseModel):
 
 
 class PriorErtErf(PriorBaseModel):
-    """
-    ERT Error function distribution parameter prior
-    """
+    """ERT Error function distribution parameter prior"""
 
     function: Literal["ert_erf"] = "ert_erf"
     min: float
@@ -123,9 +109,7 @@ class PriorErtErf(PriorBaseModel):
 
 
 class PriorErtDErf(PriorBaseModel):
-    """
-    ERT Discrete error function distribution parameter prior
-    """
+    """ERT Discrete error function distribution parameter prior"""
 
     function: Literal["ert_derf"] = "ert_derf"
     bins: int

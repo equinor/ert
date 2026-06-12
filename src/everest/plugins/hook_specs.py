@@ -16,9 +16,7 @@ def install_job_directories() -> list[str]:  # type: ignore[empty-body]
 
 @hookspec(firstresult=True)
 def lint_forward_model(job: str, args: Sequence[str]) -> list[str]:  # type: ignore[empty-body]
-    """
-    Return a error string, if forward model job failed to lint.
-    """
+    """Return a error string, if forward model job failed to lint."""
 
 
 @hookspec
@@ -31,9 +29,7 @@ def get_forward_models_schemas() -> dict[str, dict[str, type[BaseModel]]]:  # ty
 
 @hookspec
 def parse_forward_model_schema(path: str, schema: type[BaseModel]) -> BaseModel:  # type: ignore[empty-body]
-    """
-    Given a path and schema type, this hook will parse the file.
-    """
+    """Given a path and schema type, this hook will parse the file."""
 
 
 @hookspec
@@ -51,6 +47,4 @@ def get_forward_model_documentations() -> dict[str, Any]:  # type: ignore[empty-
 
 @hookspec()
 def check_forward_model_arguments(forward_model_steps: list[str]) -> None:
-    """
-    Check if the given arguments given to the forward model steps are valid
-    """
+    """Check if the given arguments given to the forward model steps are valid"""

@@ -213,9 +213,7 @@ class _SerializedSiteInstalledErtScriptWorkflow(TypedDict):
 
 
 class SiteInstalledErtScriptWorkflow(BaseErtScriptWorkflow):
-    """
-    Single workflow configuration object installed from site plugins
-    """
+    """Single workflow configuration object installed from site plugins"""
 
     type: Literal["site_installed"] = "site_installed"
     ert_script: builtins.type[ErtScript] = None  # type: ignore

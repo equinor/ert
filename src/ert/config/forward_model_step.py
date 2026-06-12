@@ -366,9 +366,7 @@ class ForwardModelStepPlugin(SiteInstalledForwardModelStep):
 
     @staticmethod
     def documentation() -> ForwardModelStepDocumentation | None:
-        """
-        Returns the documentation for the plugin forward model
-        """
+        """Returns the documentation for the plugin forward model"""
         return None
 
 

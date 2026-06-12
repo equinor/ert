@@ -210,6 +210,7 @@ select = [
     "ASYNC", # flake8-async
     "B",     # flake-8-bugbear
     "C4",    # flake8-comprehensions
+    "D200",  # unnecessary-multiline-docstring
     "DJ",
     "DTZ",
     "E",     # pycodestyle

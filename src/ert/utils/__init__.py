@@ -17,9 +17,7 @@ def log_duration(
     logging_level: int = logging.DEBUG,
     custom_name: str | None = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """
-    This is a decorator that logs the time it takes for a function to execute
-    """
+    """This is a decorator that logs the time it takes for a function to execute"""
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         @wraps(func)

@@ -1,6 +1,4 @@
-"""
-Contains code that was used to generate files expected by ert.
-"""
+"""Contains code that was used to generate files expected by ert."""
 
 import datetime
 from collections.abc import Callable

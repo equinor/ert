@@ -788,9 +788,8 @@ class LocalEnsemble(BaseMode):
         group: str | None = None,
         realization: int | None = None,
     ) -> None:
-        """
-        Saves the provided dataset under a parameter group and realization index(es)
-
+        """Saves the provided dataset under a parameter group
+        and realization index(es).
         """
         assert isinstance(dataset, (xr.Dataset | pl.DataFrame)), (
             f"Dataset must be either an xarray Dataset or polars Dataframe, "

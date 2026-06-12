@@ -210,9 +210,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
 
 
 def run_sim(dates, value, fname="ECLIPSE_CASE"):
-    """
-    Create summary files, the contents of which are not important
-    """
+    """Create summary files, the contents of which are not important"""
     start_date = dates[0]
     summary = Summary.writer(fname, start_date, 3, 3, 3)
     summary.add_variable("FOPR", unit="SM3/DAY")

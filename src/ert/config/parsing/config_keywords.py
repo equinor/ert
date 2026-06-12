@@ -2,9 +2,7 @@ from enum import StrEnum
 
 
 class ConfigKeys(StrEnum):
-    """
-    Keywords that are the first word of each statement in the user config file.
-    """
+    """Keywords that are the first word of each statement in the user config file."""
 
     DEFINE = "DEFINE"
     INCLUDE = "INCLUDE"

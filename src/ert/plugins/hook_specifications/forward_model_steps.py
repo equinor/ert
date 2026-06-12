@@ -23,6 +23,17 @@ def installable_forward_model_steps() -> PluginResponse[
 @no_type_check
 @hook_specification
 def forward_model_configuration() -> PluginResponse[dict[str, dict[str, Any]]]:
-    """
-    :return: List of configurations to be merged to be provided to forward model steps.
+    """Used to declare a forward model plugins configuration.
+
+    Example:
+
+       import ert
+
+       @ert.plugin(name="my_plugin")
+       def forward_model_configuration():
+            return {
+                "forward_model_step_name": {
+                    "config_key" : <config value>
+                },
+            }
     """

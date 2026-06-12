@@ -237,9 +237,7 @@ def run_server(
 def terminate_on_parent_death(
     stopped: threading.Event, parent: int, poll_interval: float = 1.0
 ) -> None:
-    """
-    Quit the server when the parent process is no longer running.
-    """
+    """Quit the server when the parent process is no longer running."""
 
     def check_parent_alive() -> bool:
         return os.getppid() == parent

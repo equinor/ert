@@ -42,9 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 async def start_server(config: EverestConfig, logging_level: int) -> Driver:
-    """
-    Start an EVEREST server running the optimization defined in the config
-    """
+    """Start an EVEREST server running the optimization defined in the config"""
     driver = create_driver(config.server.queue_system, poll_period=0.1)  # type: ignore
     try:
         args = [
@@ -75,9 +73,7 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
 def stop_server(
     server_context: tuple[str, str, tuple[str, str]], retries: int = 5
 ) -> bool:
-    """
-    Stop server if found and it is running.
-    """
+    """Stop server if found and it is running."""
     for retry in range(retries):
         try:
             url, cert, auth = server_context

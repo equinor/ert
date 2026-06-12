@@ -14,9 +14,7 @@ def ensure_qc_error_column(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def append_to_qc_error(condition: pl.Expr, error_message: pl.Expr) -> pl.Expr:
-    """
-    Append error_message to qc_error if condition is true, otherwise keep qc_error.
-    """
+    """Append error_message to qc_error if condition."""
     return (
         pl.when(condition)
         .then(
