@@ -19,7 +19,7 @@ from ert.ensemble_evaluator import (
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshotMetadata
 from ert.resources import all_shell_script_fm_steps
 from everest.bin.utils import run_detached_monitor
-from tests.ert import SnapshotBuilder
+from tests.ert.utils import SnapshotBuilder
 
 METADATA = EnsembleSnapshotMetadata(
     fm_step_status=defaultdict(dict),
