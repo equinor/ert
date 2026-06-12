@@ -80,6 +80,8 @@ class EverestControlsPlot:
         data = combined_data[combined_data["control_name"].isin(self.selected_controls)]
         batch_ids = sorted(data["batch_id"].unique().tolist())
 
+        scatter_data = []
+        scatter_labels = []
         for batch_id in batch_ids:
             batch_data = data[data["batch_id"] == batch_id]
             if not batch_data.empty:
@@ -90,11 +92,22 @@ class EverestControlsPlot:
                     color=config.next_color(),
                     s=20,
                 )
+                scatter_data.append(scatter)
+                scatter_labels.extend([label] * len(batch_data))
                 if len(batch_ids) <= LEGEND_THRESHOLD:
                     config.add_legend_item(label, scatter)
         axes.tick_params(axis="x", rotation=-30)
 
         config.set_title("Control values by control")
+
+        PlotTools.labels_on_hover(
+            PlotType.SCATTER,
+            axes,
+            figure,
+            data=scatter_data,
+            labels=scatter_labels,
+        )
+
         PlotTools.finalizePlot(
             plot_context,
             figure,

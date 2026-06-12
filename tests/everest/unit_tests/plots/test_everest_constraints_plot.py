@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from tests.everest.unit_tests.plots.utils import create_everest_figure
+from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
 from ert.gui.plotting.everest_plots import EverestConstraintsPlot
 from ert.gui.plotting.utils.plot_context import PlotType
@@ -93,3 +93,38 @@ def test_that_bounds_have_correct_style(
 
     spans = axes.patches
     assert len(spans) == 2
+
+
+def test_that_tooltip_shows_on_hover(
+    everest_ensemble, generic_plot_context, constraints_data
+):
+    figure = create_everest_figure(
+        EverestConstraintsPlot(),
+        constraints_data,
+        generic_plot_context,
+        everest_ensemble,
+    )
+
+    axes = figure.get_axes()[0]
+
+    move_cursor(
+        axes,
+        x=0.0,
+        y=0.1,
+    )
+
+    annotations = axes.texts
+    assert len(annotations) == 1
+
+    hover_annotation = annotations[0]
+
+    assert hover_annotation.get_text() == "Realization 0"
+    assert hover_annotation.get_visible()
+
+    move_cursor(
+        axes,
+        x=0.0,
+        y=1.0,
+    )
+
+    assert not hover_annotation.get_visible()

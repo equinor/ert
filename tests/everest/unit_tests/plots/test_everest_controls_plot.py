@@ -303,3 +303,47 @@ def test_that_hover_annotation_displays_control_name_for_by_batch_plot(
     )
 
     assert not hover_annotation.get_visible()
+
+
+def test_that_hover_annotation_displays_batch_id_for_by_control_plot(
+    generic_plot_context, everest_ensemble, controls_data
+):
+    generic_plot_context.by_batch = False
+    plot = EverestControlsPlot()
+    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
+    figure = create_everest_figure(
+        plot, controls_data, generic_plot_context, everest_ensemble
+    )
+
+    axes = figure.get_axes()[0]
+
+    move_cursor(
+        axes=axes,
+        x=0.0,
+        y=1.0,
+    )
+
+    annotations = [text for text in axes.texts if "batch" in text.get_text()]
+
+    assert len(annotations) == 1
+
+    hover_annotation = annotations[0]
+    assert hover_annotation.get_text() == "initial batch"
+    assert hover_annotation.get_visible()
+
+    move_cursor(
+        axes=axes,
+        x=0,
+        y=1.5,
+    )
+
+    assert hover_annotation.get_text() == "batch_1"
+    assert hover_annotation.get_visible()
+
+    move_cursor(
+        axes=axes,
+        x=0,
+        y=0,
+    )
+
+    assert not hover_annotation.get_visible()
