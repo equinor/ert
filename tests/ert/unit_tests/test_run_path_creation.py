@@ -680,7 +680,7 @@ async def test_write_runpath_file(storage, itr):
             continue
         assert os.path.isdir(f"simulations/{10 * run_arg.iens}")
 
-    assert os.path.isfile(runpath_list_path)
+    assert Path(runpath_list_path).is_file()
 
     exp_runpaths = [
         runpath_fmt.replace("<ITER>", str(itr))

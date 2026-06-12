@@ -171,8 +171,10 @@ class SchemaItem:
                 if not Path(token).is_absolute():
                     path = str((Path(token.filename).parent / token).resolve())
                 if val_type != SchemaItemType.PATH:
-                    if val_type == SchemaItemType.EXISTING_FILE and not os.path.isfile(
-                        str(path)
+                    if (
+                        val_type == SchemaItemType.EXISTING_FILE
+                        and path is not None
+                        and not Path(path).is_file()
                     ):
                         raise ConfigValidationError.with_context(
                             f"{self.kw} {token} is not a file.",

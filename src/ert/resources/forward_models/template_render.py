@@ -67,10 +67,10 @@ def _assert_input(
     Throws TypeError if output_file is not a string.
     """
     for input_file in input_files:
-        if not os.path.isfile(input_file):
+        if not Path(input_file).is_file():
             raise ValueError(f"Input file: {input_file}, does not exist..")
 
-    if not os.path.isfile(template_file):
+    if not Path(template_file).is_file():
         raise ValueError(f"Template file: {template_file}, does not exist..")
 
     if not isinstance(output_file, str):
@@ -92,7 +92,7 @@ def render_template(
     all_input_files: tuple[str, ...] = ()
 
     gen_kw_export_path = DEFAULT_GEN_KW_EXPORT_NAME + ".json"
-    if os.path.isfile(gen_kw_export_path):
+    if Path(gen_kw_export_path).is_file():
         all_input_files += (gen_kw_export_path,)
 
     if input_files:

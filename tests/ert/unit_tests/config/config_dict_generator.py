@@ -666,7 +666,7 @@ def config_generators(draw, use_eclbase=booleans):
                     os.mkdir(dirname)
 
             for filename in should_exist_files:
-                if not os.path.isfile(filename):
+                if not Path(filename).is_file():
                     touch(filename)
 
             with Path(config_values.obs_config).open("w", encoding="utf-8") as fh:

@@ -19,7 +19,7 @@ def byte_with_unit(byte_count: float) -> str:
 
 
 def file_has_content(file_path: str) -> bool:
-    file_path_exists = os.path.isfile(str(file_path))
+    file_path_exists = Path(str(file_path)).is_file()
     if file_path_exists:
         return os.path.getsize(file_path) > 0
     return False

@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def copy_file(src: str, target: str | None = None) -> None:
-    if os.path.isfile(src):
+    if Path(src).is_file():
         if target is None:
             target = os.path.basename(src)
 

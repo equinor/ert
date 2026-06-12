@@ -1057,7 +1057,7 @@ to read summary data from forward model, do:
     def load_file(cls, config_file: str) -> Self:
         config_path = os.path.realpath(config_file)
 
-        if not os.path.isfile(config_path):
+        if not Path(config_path).is_file():
             raise FileNotFoundError(f"File not found: {config_path}")
 
         config_dict = yaml_file_to_substituted_config_dict(config_path)

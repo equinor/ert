@@ -1,4 +1,3 @@
-import os
 from argparse import Namespace
 from pathlib import Path
 
@@ -20,4 +19,4 @@ def test_executing_workflow(storage):
     rc = ErtConfig.with_plugins(get_site_plugins()).from_file(config_file)
     args = Namespace(name="test_wf")
     execute_workflow(rc, storage, args.name)
-    assert os.path.isfile("test_workflow_output.csv")
+    assert Path("test_workflow_output.csv").is_file()

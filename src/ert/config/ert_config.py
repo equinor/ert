@@ -616,7 +616,7 @@ def installed_forward_model_steps_from_dict(
 
     for fm_step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
         for file_name in _get_files_in_directory(Path(fm_step_path), errors):
-            if not path.isfile(file_name):
+            if not file_name.is_file():
                 continue
             try:
                 config_contents = read_file(str(file_name))

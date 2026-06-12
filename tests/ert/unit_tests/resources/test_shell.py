@@ -128,16 +128,16 @@ def test_move_file():
     Path("file").write_text("hei", encoding="utf-8")
 
     move_file("file", "file2")
-    assert os.path.isfile("file2")
-    assert not os.path.isfile("file")
+    assert Path("file2").is_file()
+    assert not Path("file").is_file()
 
     with pytest.raises(OSError, match="No such file or directory"):
         move_file("file2", "path/file2")
 
     mkdir("path")
     move_file("file2", "path/file2")
-    assert os.path.isfile("path/file2")
-    assert not os.path.isfile("file2")
+    assert Path("path/file2").is_file()
+    assert not Path("file2").is_file()
 
     with pytest.raises(OSError, match="not an existing file"):
         move_file("path", "path2")
@@ -148,8 +148,8 @@ def test_move_file():
     Path("file2").write_text("123", encoding="utf-8")
 
     move_file("file2", "path/file2")
-    assert os.path.isfile("path/file2")
-    assert not os.path.isfile("file2")
+    assert Path("path/file2").is_file()
+    assert not Path("file2").is_file()
 
     mkdir("rms/ipl")
     Path("global_variables.ipl").write_text("123", encoding="utf-8")
@@ -439,13 +439,13 @@ def test_copy_file():
     Path("file1").write_text("hei", encoding="utf-8")
 
     copy_file("file1", "file2")
-    assert os.path.isfile("file2")
+    assert Path("file2").is_file()
 
     copy_file("file1", "path")
-    assert os.path.isfile("path/file1")
+    assert Path("path/file1").is_file()
 
     copy_file("file1", "path2/file1")
-    assert os.path.isfile("path2/file1")
+    assert Path("path2/file1").is_file()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -461,7 +461,7 @@ def test_copy_file2():
 
     with contextlib.chdir("root/sub/path"):
         copy_file("../../../file2")
-        assert os.path.isfile("file2")
+        assert Path("file2").is_file()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -93,8 +93,8 @@ def test_run_multiple_ok():
 
     for dir_number in dir_list:
         assert os.path.isdir(dir_number)
-        assert os.path.isfile(f"mkdir_out.{dir_number}")
-        assert os.path.isfile(f"mkdir_err.{dir_number}")
+        assert Path(f"mkdir_out.{dir_number}").is_file()
+        assert Path(f"mkdir_err.{dir_number}").is_file()
         assert os.path.getsize(f"mkdir_err.{dir_number}") == 0
 
 
