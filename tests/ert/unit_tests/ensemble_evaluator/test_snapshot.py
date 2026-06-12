@@ -8,7 +8,7 @@ from _ert.events import (
 )
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot, FMStepSnapshot
-from tests.ert import SnapshotBuilder
+from tests.ert.utils import SnapshotBuilder
 
 
 def test_snapshot_merge(snapshot: EnsembleSnapshot):

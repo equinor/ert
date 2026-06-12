@@ -22,7 +22,7 @@ from ert.run_models.event import (
     status_event_from_json,
     status_event_to_json,
 )
-from tests.ert import SnapshotBuilder
+from tests.ert.utils import SnapshotBuilder
 
 METADATA = EnsembleSnapshotMetadata(
     fm_step_status=defaultdict(dict),

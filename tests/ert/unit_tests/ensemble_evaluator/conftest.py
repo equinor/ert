@@ -21,7 +21,7 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.run_arg import RunArg
 from ert.storage import Ensemble
 from ert.storage.load_status import LoadResult
-from tests.ert import SnapshotBuilder
+from tests.ert.utils import SnapshotBuilder
 
 from .ensemble_evaluator_utils import TestEnsemble
 

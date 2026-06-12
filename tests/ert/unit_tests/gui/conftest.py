@@ -17,7 +17,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_RUNNING,
     REALIZATION_STATE_UNKNOWN,
 )
-from tests.ert import SnapshotBuilder
+from tests.ert.utils import SnapshotBuilder
 
 
 @pytest.fixture

@@ -16,7 +16,7 @@ from ert.ensemble_evaluator.state import (
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.model.node import ForwardModelStepNode, IterNode, RealNode, RootNode
 from ert.gui.model.snapshot import SnapshotModel
-from tests.ert import SnapshotBuilder
+from tests.ert.utils import SnapshotBuilder
 
 
 @pytest.fixture
