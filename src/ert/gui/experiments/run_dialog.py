@@ -905,9 +905,13 @@ class RunDialog(QFrame):
             self._tab_widget.setCurrentWidget(tab_group_widget)
             return widget
 
+        top_level_tab_count_before_create = self._tab_widget.count()
         widget = WorkflowWidget(hook, parent=self)
-        tab_index = self._tab_widget.addTab(widget, workflow_tab_title(hook))
-        self._tab_widget.setCurrentIndex(tab_index)
+        self._tab_widget.addTab(widget, workflow_tab_title(hook))
+        self._select_top_level_tab_if_user_was_on_previous_last_tab(
+            widget,
+            top_level_tab_count_before_create,
+        )
         return widget
 
     def update_total_progress(

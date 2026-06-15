@@ -1699,11 +1699,11 @@ def test_that_run_dialog_keeps_selected_update_subtab_when_creating_workflow_sub
                     .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                 ),
                 iteration_label="Foo",
-                total_iterations=1,
+                total_iterations=2,
                 progress=0.25,
                 realization_count=1,
                 status_count={"Unknown": 1},
-                iteration=0,
+                iteration=1,
             ),
             id="new_iteration_tab",
         ),
@@ -1711,6 +1711,15 @@ def test_that_run_dialog_keeps_selected_update_subtab_when_creating_workflow_sub
             "update-0",
             RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()),
             id="new_update_tab",
+        ),
+        pytest.param(
+            "Post-experiment workflows",
+            WorkflowBatchStartedEvent(
+                hook=HookRuntime.POST_EXPERIMENT,
+                iteration=None,
+                workflow_names=["prepare_experiment"],
+            ),
+            id="new_top_level_workflow_tab",
         ),
     ],
 )
@@ -1733,10 +1742,29 @@ def test_that_new_tab_does_not_steal_top_level_focus(
     pre_experiment_widget = run_dialog._create_workflow_tab_widget(
         HookRuntime.PRE_EXPERIMENT, None
     )
-    run_dialog._create_workflow_tab_widget(HookRuntime.POST_EXPERIMENT, None)
+    run_dialog._on_event(
+        FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label="Foo",
+            total_iterations=2,
+            progress=0.25,
+            realization_count=1,
+            status_count={"Unknown": 1},
+            iteration=0,
+        )
+    )
     run_dialog._tab_widget.setCurrentWidget(pre_experiment_widget)
 
     run_dialog._on_event(event)
 
-    assert run_dialog._get_tab_group_widget(0, tab_title) is not None
+    assert run_dialog._tab_widget.count() == 3
     assert run_dialog._tab_widget.currentWidget() is pre_experiment_widget
