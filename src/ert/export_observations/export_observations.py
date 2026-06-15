@@ -7,7 +7,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote
 
 import anyio
@@ -144,30 +144,26 @@ async def connect(
     )
 
 
-async def _run_with_client(
-    ssl_certificate: SSLContext, storage_config: Any, args: Namespace
-) -> None:
-    async with connect(
-        storage_config["urls"], storage_config["authtoken"], ssl_certificate
-    ) as client:
-        all_experiments = await fetch_experiments(client)
-        assert isinstance(all_experiments, list)
-        experiment_id = get_experiment_id(all_experiments, args.experiment_id)
-        experiment = get_experiment(all_experiments, experiment_id)
-        summary_observations = await extract_observations(
-            "summary", experiment, experiment_id, client
-        )
-        if not summary_observations:
-            raise ErtCliError(
-                f"No summary observations found for experiment '{experiment_id}'"
-            )
-        breakthrough_observations = await extract_observations(
-            "breakthrough", experiment, experiment_id, client
-        )
+ObsDict = dict[Literal["summary", "breakthrough"], Any]
 
-        exporter = BulkConfigExporter(summary_observations, breakthrough_observations)
-        exporter.write_csv()
-        exporter.print_bulk_config()
+
+async def collect_all_observations(client: AsyncClient, args: Namespace) -> ObsDict:
+    observations: ObsDict = {}
+    all_experiments = await fetch_experiments(client)
+    experiment_id = get_experiment_id(all_experiments, args.experiment_id)
+    experiment = get_experiment(all_experiments, experiment_id)
+    observations["summary"] = await extract_observations(
+        "summary", experiment, experiment_id, client
+    )
+    if not observations["summary"]:
+        raise ErtCliError(
+            f"No summary observations found for experiment '{experiment_id}'"
+        )
+    observations["breakthrough"] = await extract_observations(
+        "breakthrough", experiment, experiment_id, client
+    )
+
+    return observations
 
 
 def get_experiment(
@@ -212,11 +208,22 @@ async def _async_main(args: Namespace) -> None:
     try:
         proc, config_path = await start_ert_api(args.config)
         ssl_certificate, storage_config = await get_storage_auth(config_path)
-        await _run_with_client(ssl_certificate, storage_config, args)
+        async with connect(
+            storage_config["urls"], storage_config["authtoken"], ssl_certificate
+        ) as client:
+            observations = await collect_all_observations(client, args)
     finally:
         if proc is not None and proc.returncode is None:
             proc.terminate()
             await proc.wait()
+
+    bulk_exporter = BulkConfigExporter(
+        observations["summary"],
+        observations["breakthrough"],
+        args.output_csv_file,
+    )
+    bulk_exporter.write_csv()
+    bulk_exporter.print_bulk_config()
 
 
 def main(args: Namespace, _site_plugins: Any | None = None) -> None:
