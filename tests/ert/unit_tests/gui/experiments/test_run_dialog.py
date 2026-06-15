@@ -65,7 +65,7 @@ from ert.run_models.event import (
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
-from ert.run_models.run_model import RunModel
+from ert.run_models.run_model import RunModel, RunModelAPI
 from ert.scheduler.job import Job
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
@@ -1627,3 +1627,68 @@ def test_that_run_dialog_keeps_selected_subtab_when_creating_workflow_subtab(
         is workflow_widget
     )
     assert tab_group_widget._tab_widget.currentWidget() is realization_widget
+
+
+def test_that_new_iteration_tab_does_not_steal_top_level_focus(qtbot: QtBot):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    pre_experiment_widget = run_dialog._create_workflow_tab_widget(
+        HookRuntime.PRE_EXPERIMENT, None
+    )
+    run_dialog._tab_widget.setCurrentWidget(pre_experiment_widget)
+
+    run_dialog._on_event(
+        FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label="Foo",
+            total_iterations=1,
+            progress=0.25,
+            realization_count=1,
+            status_count={"Unknown": 1},
+            iteration=0,
+        )
+    )
+
+    assert run_dialog._get_tab_group_widget(0, "iteration-0") is not None
+    assert run_dialog._tab_widget.currentWidget() is pre_experiment_widget
+
+
+def test_that_new_update_tab_does_not_steal_top_level_focus(qtbot: QtBot):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble smoother",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    pre_experiment_widget = run_dialog._create_workflow_tab_widget(
+        HookRuntime.PRE_EXPERIMENT, None
+    )
+    run_dialog._tab_widget.setCurrentWidget(pre_experiment_widget)
+
+    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
+
+    assert run_dialog._get_tab_group_widget(0, "update-0") is not None
+    assert run_dialog._tab_widget.currentWidget() is pre_experiment_widget
