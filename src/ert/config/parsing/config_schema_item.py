@@ -167,13 +167,12 @@ class SchemaItem:
                 | SchemaItemType.EXISTING_PATH
                 | SchemaItemType.EXISTING_PATH_INLINE
             ):
-                path: str | None = str(token)
+                path: str = str(token)
                 if not Path(token).is_absolute():
                     path = str((Path(token.filename).parent / token).resolve())
                 if val_type != SchemaItemType.PATH:
                     if (
                         val_type == SchemaItemType.EXISTING_FILE
-                        and path is not None
                         and not Path(path).is_file()
                     ):
                         raise ConfigValidationError.with_context(
