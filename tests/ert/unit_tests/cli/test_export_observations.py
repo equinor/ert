@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.gather_summary_observations import (
-    convert_summary_observations,
+from ert.export_observations.bulk_config_exporter import BulkConfigExporter
+from ert.export_observations.export_observations import (
     fetch_experiments,
     get_experiment_id,
 )
@@ -72,14 +72,15 @@ def test_that_convert_summary_observations_extracts_localization_information(cap
             },
         ],
     }
-    convert_summary_observations(
-        summary_observations=summary_obs,
+
+    BulkConfigExporter(
+        summary_obs,
         breakthrough_observations={},
-        csv_file_name="foo.csv",
-    )
+    ).print_bulk_config()
+
     expected_print_with_localization = dedent("""\
     SUMMARY {
-      VALUES = foo.csv;
+      VALUES = summary_observation_values.csv;
       WELL WELL_WITHOUT_RADIUS {
         LOCALIZATION {
           EAST=40;
@@ -146,11 +147,10 @@ def test_that_convert_summary_observations_produces_natsorted_csv_rows(
         | _make_summary_obs(2)
     )
 
-    convert_summary_observations(
+    BulkConfigExporter(
         summary_observations=summary_obs,
         breakthrough_observations={},
-        csv_file_name="foo.csv",
-    )
+    ).write_csv()
 
     ordered_wells = ["OP2", "OP4", "OP10", "OP30"]
     csv_content = patched_csv_writer.getvalue()
@@ -200,7 +200,11 @@ def test_that_localization_can_be_gathered_from_breakthrough(capsys):
         _make_localization(10, 20, 2500),
     )
 
-    convert_summary_observations(summary_obs, brt_obs, "foo")
+    BulkConfigExporter(
+        summary_obs,
+        brt_obs,
+    ).print_bulk_config()
+
     assert (
         "  WELL OP1 {\n"
         "    LOCALIZATION {\n"
@@ -226,14 +230,14 @@ def test_that_multiple_breakthrough_observations_for_the_same_well_raises_cli_er
         match=r"Can only have one breakthrough observation per well.\n"
         r"Found 2 breakthroughs for well 'OP1'.",
     ):
-        convert_summary_observations(summary_obs, brt_obs, "foo")
+        BulkConfigExporter(summary_obs, brt_obs)
 
 
 @pytest.mark.usefixtures("patched_csv_writer")
 def test_that_the_correct_number_of_observations_are_mentioned_in_helper_text(capsys):
     summary_obs = _make_summary_obs(1) | _make_summary_obs(2) | _make_summary_obs(3)
     brt_obs = _make_brt_obs(4)
-    convert_summary_observations(summary_obs, brt_obs, "foo")
+    BulkConfigExporter(summary_obs, brt_obs).print_bulk_config()
     assert (
         f"{len(summary_obs) + len(brt_obs)} observations can be replaced"
     ) in capsys.readouterr().out

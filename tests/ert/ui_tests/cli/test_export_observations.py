@@ -7,7 +7,7 @@ from subprocess import CalledProcessError
 import pytest
 
 from ert.config import ErtConfig
-from ert.gather_summary_observations import main
+from ert.export_observations.export_observations import main
 
 
 @pytest.fixture(name="use_feature_flag")
@@ -24,7 +24,7 @@ def test_that_cli_command_without_feature_flag_raises_called_process_error() -> 
 
     with pytest.raises(CalledProcessError) as e:
         subprocess.run(
-            ["ert", "gather_summary_observations", config_path, experiment.name],
+            ["ert", "export_observations", config_path, experiment.name],
             check=True,
         )
     assert e.value.returncode == 2

@@ -54,6 +54,7 @@ from .queue_config import (
 from .response_config import DerivedResponseConfig, InvalidResponseFile, ResponseConfig
 from .rft_config import RFTConfig
 from .summary_config import SummaryConfig
+from .summary_key_data import SummaryKeyData, make_summary_key_data
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
 from .workflow_config import LegacyWorkflowConfigs, WorkflowConfigs
@@ -147,6 +148,7 @@ __all__ = [
     "SiteInstalledForwardModelStep",
     "SiteOrUserForwardModelStep",
     "SummaryConfig",
+    "SummaryKeyData",
     "SurfaceConfig",
     "UserInstalledForwardModelStep",
     "WarningInfo",
@@ -160,5 +162,6 @@ __all__ = [
     "fixtures_per_hook",
     "forward_model_step_from_config_contents",
     "lint_file",
+    "make_summary_key_data",
     "workflow_job_from_file",
 ]
