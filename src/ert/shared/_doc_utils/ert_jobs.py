@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Generator
 from typing import Any, ClassVar
 
 from docutils import nodes
@@ -110,34 +111,8 @@ class _ErtDocumentation(SphinxDirective):
 
         main_node = self._create_forward_model_section_node(section_id, title)
 
-        for category_index, category in enumerate(sorted(job_categories.keys())):
-            category_section_node = _create_section_with_title(
-                section_id=category + "-category", title=category.capitalize()
-            )
-            sub_jobs_map = job_categories[category]
-            for sub_i, sub in enumerate(sorted(sub_jobs_map.keys())):
-                sub_section_node = _create_section_with_title(
-                    section_id=category + "-" + sub + "-subcategory",
-                    title=sub.capitalize(),
-                )
-
-                for job in sub_jobs_map[sub]:
-                    job_section_node = job.create_node(self.state)
-                    sub_section_node.append(job_section_node)
-
-                # A section is not allowed to end with a transition,
-                # so we don't add after the last sub-category
-                if sub_i < len(sub_jobs_map) - 1:
-                    sub_section_node.append(nodes.transition())
-
-                category_section_node.append(sub_section_node)
-
+        for category_section_node in self._generate_category_sections(job_categories):
             main_node.append(category_section_node)
-
-            # A section is not allowed to end with a transition,
-            # so we don't add after the last category
-            if category_index < len(job_categories) - 1:
-                category_section_node.append(nodes.transition())
         return [main_node]
 
     def _generate_job_documentation_without_title(
@@ -145,8 +120,11 @@ class _ErtDocumentation(SphinxDirective):
         jobs: dict[str, JobDoc] | dict[str, ForwardModelStepDocumentation | JobDoc],
     ) -> list[nodes.section]:
         job_categories = _ErtDocumentation._divide_into_categories(jobs)
-        node_list = []
+        return list(self._generate_category_sections(job_categories))
 
+    def _generate_category_sections(
+        self, job_categories: dict[str, dict[str, list[_ForwardModelDocumentation]]]
+    ) -> Generator[nodes.section]:
         for category_index, category in enumerate(sorted(job_categories.keys())):
             category_section_node = _create_section_with_title(
                 section_id=category + "-category", title=category.capitalize()
@@ -166,16 +144,14 @@ class _ErtDocumentation(SphinxDirective):
                 # so we don't add after the last sub-category
                 if sub_i < len(sub_jobs_map) - 1:
                     sub_section_node.append(nodes.transition())
-
                 category_section_node.append(sub_section_node)
 
-            node_list.append(category_section_node)
+            yield category_section_node
 
             # A section is not allowed to end with a transition,
             # so we don't add after the last category
             if category_index < len(job_categories) - 1:
                 category_section_node.append(nodes.transition())
-        return node_list
 
 
 class ErtForwardModelDocumentation(_ErtDocumentation):
