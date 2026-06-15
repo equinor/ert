@@ -325,7 +325,7 @@ def test_that_terminating_experiment_during_hooked_workflows_marks_batch_cancell
     )
     iteration_widget = run_dialog._tab_widget.currentWidget()
     assert isinstance(iteration_widget, TabGroupWidget)
-    workflow_widget = iteration_widget._tab_widget.currentWidget()
+    workflow_widget = iteration_widget.tabs.currentWidget()
     assert isinstance(workflow_widget, WorkflowWidget)
     assert workflow_widget._status_label.text() == "Pre-simulation workflows running"
 
@@ -634,7 +634,7 @@ def test_run_dialog_memory_usage_showing(
     iteration_widget = run_dialog._tab_widget.widget(0)
     assert type(iteration_widget) is TabGroupWidget
     # This is the container of realization boxes
-    realization_box = iteration_widget._tab_widget.widget(0)
+    realization_box = iteration_widget.tabs.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -734,7 +734,7 @@ def test_run_dialog_fm_label_show_correct_info(
     iteration_widget = run_dialog._tab_widget.widget(0)
     assert type(iteration_widget) is TabGroupWidget
     # This is the container of realization boxes
-    realization_box = iteration_widget._tab_widget.widget(0)
+    realization_box = iteration_widget.tabs.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -1005,7 +1005,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
 ):
     def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
         iteration_widget: TabGroupWidget = run_dialog._tab_widget.widget(iteration)
-        view = iteration_widget._tab_widget.widget(0)._real_view
+        view = iteration_widget.tabs.widget(0)._real_view
         model_index = view.model().index(realization_index, 0)
         view.scrollTo(model_index)
         rect = view.visualRect(model_index)
@@ -1296,7 +1296,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
     iteration_widget: TabGroupWidget = dialog._tab_widget.widget(0)
 
-    assert isinstance(iteration_widget._tab_widget.widget(0), RealizationWidget)
+    assert isinstance(iteration_widget.tabs.widget(0), RealizationWidget)
     qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)
 
 
@@ -1548,45 +1548,39 @@ def test_that_run_dialog_places_all_workflow_hooks_in_expected_tabs(
 
     assert pre_experiment_widget.hook == HookRuntime.PRE_EXPERIMENT
     assert post_experiment_widget.hook == HookRuntime.POST_EXPERIMENT
-    assert first_iteration_widget._tab_widget.tabText(0) == "Pre-simulation workflows"
-    assert first_iteration_widget._tab_widget.tabText(1) == "Run"
-    assert first_iteration_widget._tab_widget.tabText(2) == "Post-simulation workflows"
-    assert update_widget._tab_widget.tabText(0) == "Pre-first-update workflows"
-    assert update_widget._tab_widget.tabText(1) == "Pre-update workflows"
-    assert update_widget._tab_widget.tabText(2) == "Update"
-    assert update_widget._tab_widget.tabText(3) == "Post-update workflows"
-    assert second_iteration_widget._tab_widget.tabText(0) == "Pre-simulation workflows"
+    assert first_iteration_widget.tabs.tabText(0) == "Pre-simulation workflows"
+    assert first_iteration_widget.tabs.tabText(1) == "Run"
+    assert first_iteration_widget.tabs.tabText(2) == "Post-simulation workflows"
+    assert update_widget.tabs.tabText(0) == "Pre-first-update workflows"
+    assert update_widget.tabs.tabText(1) == "Pre-update workflows"
+    assert update_widget.tabs.tabText(2) == "Update"
+    assert update_widget.tabs.tabText(3) == "Post-update workflows"
+    assert second_iteration_widget.tabs.tabText(0) == "Pre-simulation workflows"
 
     assert isinstance(
-        first_iteration_widget._tab_widget.widget(0),
+        first_iteration_widget.tabs.widget(0),
         WorkflowWidget,
     )
     assert isinstance(
-        first_iteration_widget._tab_widget.widget(1),
+        first_iteration_widget.tabs.widget(1),
         RealizationWidget,
     )
     assert isinstance(
-        first_iteration_widget._tab_widget.widget(2),
+        first_iteration_widget.tabs.widget(2),
         WorkflowWidget,
     )
-    assert isinstance(update_widget._tab_widget.widget(0), WorkflowWidget)
-    assert isinstance(update_widget._tab_widget.widget(1), WorkflowWidget)
-    assert isinstance(update_widget._tab_widget.widget(2), UpdateWidget)
-    assert isinstance(update_widget._tab_widget.widget(3), WorkflowWidget)
-    assert isinstance(second_iteration_widget._tab_widget.widget(0), WorkflowWidget)
+    assert isinstance(update_widget.tabs.widget(0), WorkflowWidget)
+    assert isinstance(update_widget.tabs.widget(1), WorkflowWidget)
+    assert isinstance(update_widget.tabs.widget(2), UpdateWidget)
+    assert isinstance(update_widget.tabs.widget(3), WorkflowWidget)
+    assert isinstance(second_iteration_widget.tabs.widget(0), WorkflowWidget)
 
-    assert (
-        first_iteration_widget._tab_widget.widget(0).hook == HookRuntime.PRE_SIMULATION
-    )
-    assert (
-        first_iteration_widget._tab_widget.widget(2).hook == HookRuntime.POST_SIMULATION
-    )
-    assert update_widget._tab_widget.widget(0).hook == HookRuntime.PRE_FIRST_UPDATE
-    assert update_widget._tab_widget.widget(1).hook == HookRuntime.PRE_UPDATE
-    assert update_widget._tab_widget.widget(3).hook == HookRuntime.POST_UPDATE
-    assert (
-        second_iteration_widget._tab_widget.widget(0).hook == HookRuntime.PRE_SIMULATION
-    )
+    assert first_iteration_widget.tabs.widget(0).hook == HookRuntime.PRE_SIMULATION
+    assert first_iteration_widget.tabs.widget(2).hook == HookRuntime.POST_SIMULATION
+    assert update_widget.tabs.widget(0).hook == HookRuntime.PRE_FIRST_UPDATE
+    assert update_widget.tabs.widget(1).hook == HookRuntime.PRE_UPDATE
+    assert update_widget.tabs.widget(3).hook == HookRuntime.POST_UPDATE
+    assert second_iteration_widget.tabs.widget(0).hook == HookRuntime.PRE_SIMULATION
 
     first_pre_simulation_widget = run_dialog._get_workflow_tab_widget(
         HookRuntime.PRE_SIMULATION, 0
