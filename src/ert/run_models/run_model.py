@@ -856,7 +856,7 @@ class RunModel(RunModelConfig, ABC):
                 iteration=workflow_iteration,
             )
             self._workflow_runner = workflow_runner
-            try:
+            try:  # noqa: PLW0717
                 if self._end_event.is_set():
                     self._status_queue.put(
                         WorkflowBatchFinishedEvent(

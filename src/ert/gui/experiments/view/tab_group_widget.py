@@ -10,16 +10,12 @@ class TabGroupWidget(QWidget):
     def __init__(self, iteration: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.iteration = iteration
-        self._tabs = QTabWidget(self)
-        self._tabs.currentChanged.connect(lambda _index: self.currentTabChanged.emit())
+        self.tabs = QTabWidget(self)
+        self.tabs.currentChanged.connect(lambda _index: self.currentTabChanged.emit())
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._tabs)
-
-    @property
-    def _tab_widget(self) -> QTabWidget:
-        return self._tabs
+        layout.addWidget(self.tabs)
 
     def current_widget(self) -> QWidget | None:
-        return self._tabs.currentWidget()
+        return self.tabs.currentWidget()
