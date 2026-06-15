@@ -1397,6 +1397,7 @@ class LocalEnsemble(BaseMode):
                     sparse=blob_event.sparse,
                     shape=blob_event.shape,
                     data_type=blob_event.data_type,
+                    parameter_group_sizes=blob_event.parameter_group_sizes,
                 ),
             )
             data = blob_event.matrix_bytes
