@@ -16,8 +16,8 @@ from starlette.testclient import TestClient
 from ert.config import EverestObjectivesConfig, GenKwConfig, SummaryConfig
 from ert.dark_storage import common
 from ert.dark_storage.app import app
-from ert.gui.tools.plot import plot_api
-from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
+from ert.gui.plotting import plot_api
+from ert.gui.plotting.plot_api import PlotApi, PlotApiKeyDefinition
 from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 

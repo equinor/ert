@@ -31,8 +31,8 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
 )
 from ert.config.rft_config import RFTConfig
-from ert.gui.tools.plot.plottery import PlotConfig
-from ert.gui.tools.plot.plottery.plots.observations import _plotObservations
+from ert.gui.plotting.ert_plots.observations import _plotObservations
+from ert.gui.plotting.utils import PlotConfig
 from ert.namespace import Namespace
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")

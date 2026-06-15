@@ -1,4 +1,4 @@
-from ert.gui.tools.plot.plottery import PlotConfig, PlotConfigHistory
+from ert.gui.plotting.utils import PlotConfig, PlotConfigHistory
 
 
 def test_plot_config_history():

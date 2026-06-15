@@ -12,7 +12,7 @@ from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
-from ert.gui.tools.plot.plot_window import PlotWindow
+from ert.gui.plotting.plot_window import PlotWindow
 from ert.services import ErtServerController
 from ert.storage import LocalStorage
 from everest.bin.utils import setup_logging

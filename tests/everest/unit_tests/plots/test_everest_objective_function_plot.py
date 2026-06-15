@@ -2,8 +2,8 @@ import pandas as pd
 import pytest
 from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
-from ert.gui.tools.plot.plottery.plot_context import PlotType
-from ert.gui.tools.plot.plottery.plots import EverestObjectiveFunctionPlot
+from ert.gui.plotting.everest_plots import EverestObjectiveFunctionPlot
+from ert.gui.plotting.utils.plot_context import PlotType
 from ert.gui.utils import LEGEND_THRESHOLD
 
 

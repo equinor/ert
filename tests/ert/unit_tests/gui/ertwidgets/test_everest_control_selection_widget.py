@@ -1,7 +1,7 @@
 import pytest
 from PyQt6.QtCore import Qt
 
-from ert.gui.tools.plot.widgets.everest_control_selection_widget import (
+from ert.gui.plotting.widgets.everest_control_selection_widget import (
     EverestControlSelectionWidget,
 )
 

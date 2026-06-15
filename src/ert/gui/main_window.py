@@ -25,10 +25,10 @@ from ert.config import ErtConfig, ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
+from ert.gui.plotting.plot_window import PlotWindow
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
-from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtRuntimePlugins

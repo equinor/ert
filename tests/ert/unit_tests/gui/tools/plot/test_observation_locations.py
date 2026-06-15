@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from ert.field_utils import AxisOrientation, ErtboxParameters
-from ert.gui.tools.plot.observation_locations import transform_observation_locations
+from ert.gui.plotting.utils.observation_locations import transform_observation_locations
 
 
 @pytest.mark.parametrize(

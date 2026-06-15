@@ -5,9 +5,9 @@ import pytest
 from matplotlib.figure import Figure
 
 import ert
-from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
-from ert.gui.tools.plot.plottery.plots import HistogramPlot
+from ert.gui.plotting.ert_plots import HistogramPlot
+from ert.gui.plotting.plot_api import EnsembleObject
+from ert.gui.plotting.utils import PlotConfig, PlotContext
 
 
 @pytest.fixture(
@@ -93,7 +93,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
     figure = Figure()
     mock_plot_histogram = Mock()
     monkeypatch.setattr(
-        ert.gui.tools.plot.plottery.plots.histogram,
+        ert.gui.plotting.ert_plots.histogram,
         "_plotHistogram",
         mock_plot_histogram,
     )
