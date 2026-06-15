@@ -1,6 +1,6 @@
 import pytest
 
-from ert.gui.tools.plot.plot_window import MISFITS
+from ert.gui.plotting.plot_window import MISFITS
 from tests.ert.ui_tests.gui.test_breakthrough_visualization import (
     create_breakthrough_figure,
 )

@@ -24,8 +24,8 @@ from ert.dark_storage.app import app
 from ert.dark_storage.endpoints import ensembles, experiments
 from ert.dark_storage.endpoints.observations import get_observations_for_response
 from ert.dark_storage.endpoints.responses import get_response
-from ert.gui.tools.plot import plot_api
-from ert.gui.tools.plot.plot_api import PlotApi
+from ert.gui.plotting import plot_api
+from ert.gui.plotting.plot_api import PlotApi
 from ert.storage import Storage, open_storage
 
 T = TypeVar("T")

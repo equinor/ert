@@ -11,14 +11,14 @@ from pytestqt.qtbot import QtBot
 
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
-from ert.gui.tools.plot.data_type_keys_list_model import DataTypeSeparator
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
-from ert.gui.tools.plot.plot_widget import PlotWidget
-from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
-from ert.gui.tools.plot.plottery.plots.gaussian_kde import plotGaussianKDE
-from ert.gui.tools.plot.plottery.plots.histogram import HistogramPlot
+from ert.gui.plotting.ert_plots.gaussian_kde import plotGaussianKDE
+from ert.gui.plotting.ert_plots.histogram import HistogramPlot
+from ert.gui.plotting.models import DataTypeSeparator
+from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
+from ert.gui.plotting.plot_window import PlotWindow, create_error_dialog
+from ert.gui.plotting.utils import PlotConfig, PlotContext
+from ert.gui.plotting.widgets import DataTypeKeysWidget
+from ert.gui.plotting.widgets.plot_widget import PlotWidget
 from ert.services import ErtServerController
 
 EVEREST_KEY_DEFS = [
@@ -62,9 +62,7 @@ def test_warning_is_visible_on_incompatible_plot_api_version(
 ):
     mock_get_data = MagicMock()
     mock_get_data.return_value = "0.2"
-    monkeypatch.setattr(
-        "ert.gui.tools.plot.plot_api.PlotApi.api_version", mock_get_data
-    )
+    monkeypatch.setattr("ert.gui.plotting.plot_api.PlotApi.api_version", mock_get_data)
 
     with ErtServerController.init_service(project=tmp_path):
         pw = PlotWindow("", tmp_path, None)
@@ -92,10 +90,10 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     storage_version = "0.0"
     mock_plot_api.api_version = storage_version
     monkeypatch.setattr(
-        "ert.gui.tools.plot.plot_window.get_storage_api_version",
+        "ert.gui.plotting.plot_window.get_storage_api_version",
         lambda: storage_version,
     )
-    monkeypatch.setattr("ert.gui.tools.plot.plot_window.PlotApi", mock_plot_api_cls)
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     plot_api_key_def_positive = PlotApiKeyDefinition(
         "gen_kw_a",
@@ -200,10 +198,10 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
     storage_version = "0.0"
     mock_plot_api.api_version = storage_version
     monkeypatch.setattr(
-        "ert.gui.tools.plot.plot_window.get_storage_api_version",
+        "ert.gui.plotting.plot_window.get_storage_api_version",
         lambda: storage_version,
     )
-    monkeypatch.setattr("ert.gui.tools.plot.plot_window.PlotApi", mock_plot_api_cls)
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     plot_api_key_def = PlotApiKeyDefinition(
         "animal_type",
@@ -350,7 +348,7 @@ def test_that_separators_are_included_in_everest(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
     )
 
@@ -365,7 +363,7 @@ def test_that_datatype_separators_are_not_selectable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
     )
     widget = DataTypeKeysWidget(EVEREST_KEY_DEFS)
@@ -383,7 +381,7 @@ def test_that_datatype_separators_are_never_set_as_default(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
     )
     widget = DataTypeKeysWidget(EVEREST_KEY_DEFS)

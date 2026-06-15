@@ -3,8 +3,8 @@ from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseEvent
 from matplotlib.figure import Figure
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.gui.tools.plot.plottery.plot_context import PlotContext
+from ert.gui.plotting.plot_api import EnsembleObject
+from ert.gui.plotting.utils.plot_context import PlotContext
 
 
 def move_cursor(axes: Axes, x: float, y: float) -> None:

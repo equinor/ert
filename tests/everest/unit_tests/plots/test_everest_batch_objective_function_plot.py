@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
-from ert.gui.tools.plot.plottery.plots import EverestBatchObjectiveFunctionPlot
+from ert.gui.plotting.everest_plots import EverestBatchObjectiveFunctionPlot
 
 
 @pytest.fixture

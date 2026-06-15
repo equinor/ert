@@ -2,9 +2,8 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
-from ert.gui.tools.plot.plottery.plot_config import PlotConfig
-from ert.gui.tools.plot.plottery.plot_context import PlotContext
-from ert.gui.tools.plot.plottery.plots.history import plot_history
+from ert.gui.plotting.ert_plots.history import plot_history
+from ert.gui.plotting.utils import PlotConfig, PlotContext
 
 HISTORY_DATA_VALUES = [10, 11, 12, 13, 14]
 

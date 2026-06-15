@@ -4,8 +4,8 @@ import pytest
 from PyQt6.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.gui.tools.plot.plot_ensemble_selection_widget import (
+from ert.gui.plotting.plot_api import EnsembleObject
+from ert.gui.plotting.widgets import (
     EnsembleSelectionWidget,
     EnsembleSelectListWidget,
 )

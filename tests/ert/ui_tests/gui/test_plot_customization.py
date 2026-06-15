@@ -1,7 +1,9 @@
 import logging
 
-from ert.gui.tools.plot.customize.customize_plot_dialog import CustomizePlotDialog
-from ert.gui.tools.plot.customize.default_customization_view import (
+from ert.gui.plotting.customization_dialog.customize_plot_dialog import (
+    CustomizePlotDialog,
+)
+from ert.gui.plotting.customization_dialog.default_customization_view import (
     DefaultCustomizationView,
 )
 
@@ -9,7 +11,7 @@ from ert.gui.tools.plot.customize.default_customization_view import (
 def test_that_first_tab_is_not_logged_when_opening_customize_plot_dialog(qtbot, caplog):
     caplog.set_level(
         logging.INFO,
-        logger="ert.gui.tools.plot.customize.customize_plot_dialog",
+        logger="ert.gui.plotting.customization_dialog.customize_plot_dialog",
     )
 
     plot = CustomizePlotDialog(title="Test Plot", parent=None, key_defs=[])
