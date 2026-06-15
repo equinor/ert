@@ -23,13 +23,13 @@ from opentelemetry.trace import Status, StatusCode
 
 import ert.shared
 from _ert.threading import set_signal_handler
-from ert import gather_summary_observations
 from ert.base_model_context import use_runtime_plugins
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
+from ert.export_observations import export_observations
 from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -600,7 +600,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     # Experimental feature
     if os.environ.get("ERT_FEATURE_GATHER_OBS"):
         extract_obs_summary_keys_parser = subparsers.add_parser(
-            "gather_summary_observations",
+            "export_observations",
             description=(
                 "Identify all summary and breakthrough observations and output them "
                 "in a bulk config format. A CSV file containing the observation values "
@@ -624,9 +624,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
             "but can be manually set using the keyword argument:\n"
             "--output-csv-file <filename>",
         )
-        extract_obs_summary_keys_parser.set_defaults(
-            func=gather_summary_observations.main
-        )
+        extract_obs_summary_keys_parser.set_defaults(func=export_observations.main)
         extract_obs_summary_keys_parser.add_argument(
             "config", type=valid_file, help="Path to ERT config file"
         )
