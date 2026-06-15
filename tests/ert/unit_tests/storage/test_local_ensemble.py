@@ -1055,3 +1055,34 @@ def test_that_sparse_and_dense_matrix_blobs_can_be_saved_and_loaded(tmp_path):
         prec_bytes = ensemble.load_blob(prec_meta.uri)
         loaded_dense = np.load(io.BytesIO(prec_bytes))
         np.testing.assert_array_equal(loaded_dense, dense_matrix)
+
+        assert h_meta.blob_info.parameter_group_sizes == {}
+        assert prec_meta.blob_info.parameter_group_sizes == {}
+
+
+def test_that_parameter_group_sizes_is_stored_in_matrix_blob_metadata(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        dense_matrix = np.array([[1.0, 2.0], [3.0, 4.0]])
+        dense_buf = io.BytesIO()
+        np.save(dense_buf, dense_matrix)
+
+        event = AnalysisMatrixEvent(
+            name="K",
+            sparse=False,
+            shape=(2, 2),
+            data_type="float64",
+            update_algorithm="enif",
+            parameter_group_sizes={"PORO": 8, "PERM": 3},
+            matrix_bytes=dense_buf.getvalue(),
+        )
+        ensemble.save_blob(event)
+
+        blobs = ensemble.load_blobs(BlobType.MATRIX)
+        assert len(blobs) == 1
+        assert isinstance(blobs[0].blob_info, MatrixStorageData)
+        assert blobs[0].blob_info.parameter_group_sizes == {"PORO": 8, "PERM": 3}

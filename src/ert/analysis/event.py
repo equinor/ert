@@ -92,6 +92,7 @@ class AnalysisMatrixEvent(AnalysisEvent):
     shape: tuple[int, int]
     data_type: str
     update_algorithm: str
+    parameter_group_sizes: dict[str, int] = Field(default_factory=dict)
     matrix_bytes: bytes = Field(exclude=True)
 
 

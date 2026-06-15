@@ -23,6 +23,7 @@ class MatrixStorageData(BaseModel):
     sparse: bool = False
     shape: tuple[int, int] = (0, 0)
     data_type: str
+    parameter_group_sizes: dict[str, int] = {}
 
 
 class ScalingFactorsData(BaseModel):

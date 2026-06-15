@@ -56,6 +56,41 @@ def prune_nan_nodes(
     )
 
 
+def compute_nan_masks(
+    param_arrays: dict[str, npt.NDArray[np.floating]],
+) -> tuple[
+    dict[str, npt.NDArray[np.bool_]],
+    dict[str, int],
+    npt.NDArray[np.floating],
+    npt.NDArray[np.bool_],
+]:
+    """Compute per-group NaN masks and the combined clean parameter matrix.
+
+    Returns
+    -------
+    param_nan_masks :
+        Per-group boolean mask where True means the row has any NaN.
+    parameter_group_sizes :
+        Number of non-NaN rows per group.
+    X_full :
+        Vertically stacked parameter arrays (all groups).
+    nan_row_mask :
+        Concatenated mask across all groups.
+    """
+    param_nan_masks: dict[str, npt.NDArray[np.bool_]] = {}
+    parameter_group_sizes: dict[str, int] = {}
+
+    for group, arr in param_arrays.items():
+        mask = np.any(np.isnan(arr), axis=1)
+        param_nan_masks[group] = mask
+        parameter_group_sizes[group] = int((~mask).sum())
+
+    X_full = np.vstack(list(param_arrays.values()))
+    nan_row_mask = np.concatenate(list(param_nan_masks.values()))
+
+    return param_nan_masks, parameter_group_sizes, X_full, nan_row_mask
+
+
 def enif_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
@@ -172,15 +207,17 @@ def analysis_EnIF(
         is not None
     ]
 
-    # Load each parameter group once and reuse throughout
-    param_arrays = {
-        group: source_ensemble.load_parameters_numpy(group, iens_active_index)
-        for group in updated_parameters
-    }
+    # Load each parameter group once and compute per-group NaN masks
+    param_arrays: dict[str, npt.NDArray[np.floating]] = {}
 
-    X_full = np.vstack(list(param_arrays.values()))
+    for group in updated_parameters:
+        param_arrays[group] = source_ensemble.load_parameters_numpy(
+            group, iens_active_index
+        )
 
-    nan_row_mask = np.any(np.isnan(X_full), axis=1)
+    param_nan_masks, parameter_group_sizes, X_full, nan_row_mask = compute_nan_masks(
+        param_arrays
+    )
     if nan_row_mask.any():
         num_nan = int(nan_row_mask.sum())
         num_all_nan = int(np.all(np.isnan(X_full), axis=1).sum())
@@ -224,8 +261,7 @@ def analysis_EnIF(
     for param_group in updated_parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
         X_local = param_arrays[param_group]
-
-        local_nan_mask = np.any(np.isnan(X_local), axis=1)
+        local_nan_mask = param_nan_masks[param_group]
         X_local_clean = X_local[~local_nan_mask]
 
         if X_local_clean.shape[0] == 0:
@@ -267,6 +303,7 @@ def analysis_EnIF(
             shape=(H.shape[0], H.shape[1]),
             data_type=str(H.dtype),
             update_algorithm="enif",
+            parameter_group_sizes=parameter_group_sizes,
             matrix_bytes=h_buf.getvalue(),
         )
     )
@@ -280,6 +317,7 @@ def analysis_EnIF(
             shape=Prec_u.shape,
             data_type=str(Prec_u.dtype),
             update_algorithm="enif",
+            parameter_group_sizes=parameter_group_sizes,
             matrix_bytes=prec_buf.getvalue(),
         )
     )
@@ -343,6 +381,7 @@ def analysis_EnIF(
             shape=K.shape,
             data_type=str(K.dtype),
             update_algorithm="enif",
+            parameter_group_sizes=parameter_group_sizes,
             matrix_bytes=k_buf.getvalue(),
         )
     )

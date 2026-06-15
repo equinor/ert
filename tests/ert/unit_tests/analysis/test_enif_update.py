@@ -1,7 +1,8 @@
 import networkx as nx
 import numpy as np
+import pytest
 
-from ert.analysis._enif_update import prune_nan_nodes
+from ert.analysis._enif_update import compute_nan_masks, prune_nan_nodes
 from ert.config import SurfaceConfig
 
 
@@ -125,3 +126,72 @@ def test_that_prune_nan_wall_creates_disconnected_components():
     for left in (0, 2, 4):
         for right in (1, 3, 5):
             assert not pruned.has_edge(left, right)
+
+
+NAN = np.nan
+
+
+@pytest.mark.parametrize(
+    ("param_arrays", "expected_sizes", "expected_nan_count", "expected_clean_rows"),
+    [
+        pytest.param(
+            {
+                "A": np.array(
+                    [[1, 2, 3], [NAN, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float
+                ),
+                "B": np.array([[10, 11, 12], [13, 14, 15]], dtype=float),
+            },
+            {"A": 3, "B": 2},
+            1,
+            5,
+            id="one_nan_row_in_first_group",
+        ),
+        pytest.param(
+            {"P": np.array([[1, 2, 3], [1, NAN, 3], [1, 2, 3]], dtype=float)},
+            {"P": 2},
+            1,
+            2,
+            id="partial_nan_in_single_realization",
+        ),
+        pytest.param(
+            {
+                "A": np.array([[1, 2], [3, 4]], dtype=float),
+                "B": np.array([[5, 6]], dtype=float),
+            },
+            {"A": 2, "B": 1},
+            0,
+            3,
+            id="no_nans",
+        ),
+        pytest.param(
+            {"X": np.array([[NAN, NAN], [NAN, NAN]], dtype=float)},
+            {"X": 0},
+            2,
+            0,
+            id="all_nan",
+        ),
+        pytest.param(
+            {
+                "A": np.array([[1, 2], [NAN, NAN]], dtype=float),
+                "B": np.array([[3, 4]], dtype=float),
+                "C": np.array([[NAN, 5], [6, 7], [8, 9]], dtype=float),
+            },
+            {"A": 1, "B": 1, "C": 2},
+            2,
+            4,
+            id="multiple_groups_mixed_nans",
+        ),
+    ],
+)
+def test_that_compute_nan_masks_filters_nan_rows(
+    param_arrays, expected_sizes, expected_nan_count, expected_clean_rows
+):
+    _masks, sizes, X_full, nan_row_mask = compute_nan_masks(param_arrays)
+
+    assert sizes == expected_sizes
+    assert int(nan_row_mask.sum()) == expected_nan_count
+    assert X_full[~nan_row_mask].shape[0] == expected_clean_rows
+
+    total_rows = sum(a.shape[0] for a in param_arrays.values())
+    assert X_full.shape[0] == total_rows
+    assert len(nan_row_mask) == total_rows
