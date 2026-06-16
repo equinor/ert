@@ -624,7 +624,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
             "but can be manually set using the keyword argument:\n"
             "--output-csv-file <filename>",
         )
-        extract_obs_summary_keys_parser.set_defaults(func=export_observations.main)
+        extract_obs_summary_keys_parser.set_defaults(func=export_observations)
         extract_obs_summary_keys_parser.add_argument(
             "config", type=valid_file, help="Path to ERT config file"
         )

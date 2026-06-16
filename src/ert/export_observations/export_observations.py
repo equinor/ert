@@ -203,7 +203,7 @@ def get_experiment_id(
     return experiment_id
 
 
-async def _async_main(args: Namespace) -> None:
+async def _async_export_observations(args: Namespace) -> None:
     proc = None
     try:
         proc, config_path = await start_ert_api(args.config)
@@ -226,5 +226,5 @@ async def _async_main(args: Namespace) -> None:
     bulk_exporter.print_bulk_config()
 
 
-def main(args: Namespace, _site_plugins: Any | None = None) -> None:
-    asyncio.run(_async_main(args))
+def export_observations(args: Namespace, _site_plugins: Any | None = None) -> None:
+    asyncio.run(_async_export_observations(args))
