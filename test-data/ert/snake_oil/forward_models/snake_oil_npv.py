@@ -77,9 +77,9 @@ OIL_PRICES = {
 
 if __name__ == "__main__":
     ecl_sum = Summary("SNAKE_OIL_FIELD")
-    start_time = ecl_sum.getStartTime()
-    date_ranges = ecl_sum.timeRange(start_time, interval="1M")
-    production_sums = ecl_sum.blockedProduction("FOPT", date_ranges)
+    start_time = ecl_sum.get_start_time()
+    date_ranges = ecl_sum.time_range(start_time, interval="1M")
+    production_sums = ecl_sum.blocked_production("FOPT", date_ranges)
 
     npv = 0.0
     for index in range(len(date_ranges) - 1):
