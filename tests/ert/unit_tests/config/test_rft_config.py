@@ -90,27 +90,20 @@ def test_that_match_key_dict_expr_fits_match_key():
     assert response2["response_dict"].to_list() == ["well_connection_cell=None"]
 
 
-def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo_file):
+def test_that_rft_with_no_matching_well_and_dates_raise_error(mock_resfo_file):
     mock_resfo_file("/tmp/does_not_exist/BASE.RFT", [])
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"No such well": {"2000-01-01": ["PRESSURE", "SWAT"]}},
     )
-    df = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
-
-    assert df.is_empty()
-    assert set(df.columns) == {
-        "response_key",
-        "date",
-        "well",
-        "property",
-        "time",
-        "depth",
-        "values",
-        "well_connection_cell",
-        "cell_center",
-        "cell_zones",
-    }
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            "Did not find any responses matching the "
+            r"observation well\(s\): '\['No such well'\]'"
+        ),
+    ):
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
 
 def test_that_rft_with_empty_data_to_read_returns_empty_df(mock_resfo_file):

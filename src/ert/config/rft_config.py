@@ -299,7 +299,10 @@ class RFTConfig(ResponseConfig):
         rft_data = self._scan_rft(rft_filepath)
 
         if not rft_data:
-            return pl.DataFrame(schema=self.response_schema())
+            raise ConfigValidationError(
+                f"Did not find any responses matching the observation well(s): "
+                f"'{list(self.data_to_read.keys())}'",
+            )
 
         egrid_filepath = self._ergrid_filepath(rft_filepath)
         grid = _read_egrid(egrid_filepath)
