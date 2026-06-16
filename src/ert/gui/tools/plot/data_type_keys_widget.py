@@ -163,7 +163,7 @@ class DataTypeKeysWidget(QWidget):
 
         self.setLayout(layout)
 
-    def _clear_current_index_if_filtered_out(
+    def _clear_current_index_if_source_item_is_hidden(
         self, previous_source_index: QModelIndex
     ) -> None:
         previous_proxy_index = self.filter_model.mapFromSource(previous_source_index)
@@ -182,7 +182,7 @@ class DataTypeKeysWidget(QWidget):
             for value, visible in item.items():
                 self.filter_model.setFilterOnMetadata("data_origin", value, visible)
 
-            self._clear_current_index_if_filtered_out(previous_source_index)
+            self._clear_current_index_if_source_item_is_hidden(previous_source_index)
         finally:
             self._updating_filter = False
 
@@ -214,7 +214,7 @@ class DataTypeKeysWidget(QWidget):
         self._updating_filter = True
         try:
             self.filter_model.setFilterFixedString(filter_ or "")
-            self._clear_current_index_if_filtered_out(previous_source_index)
+            self._clear_current_index_if_source_item_is_hidden(previous_source_index)
         finally:
             self._updating_filter = False
 
