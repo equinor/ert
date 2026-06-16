@@ -1,3 +1,4 @@
+import json
 import queue
 import string
 import unittest
@@ -680,6 +681,31 @@ def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
         serialized,
         f"{Path(config.user_config_file).stem}.json",
     )
+
+    # Also verify what actually lands in storage for models that create experiments
+    if cli_args.mode != EVALUATE_ENSEMBLE_MODE:
+        runmodel._create_experiment_storage()
+        experiments_dir = Path(config.ens_path) / "experiments"
+        experiment_dir = next(experiments_dir.iterdir())
+        index_json_path = experiment_dir / "index.json"
+        index_text = index_json_path.read_text(encoding="utf-8")
+        index_serialized = index_text.replace(cwd, f"test-data/ert/{case}")
+        index_data = json.loads(index_serialized)
+        saved_experiment = index_data["experiment"]
+        for key, val in json.loads(serialized).items():
+            if val is None:
+                assert key not in saved_experiment, (
+                    "None values should be excluded from saved experiment"
+                )
+                continue
+            assert key in saved_experiment, (
+                f"Key '{key}' not found in saved experiment. Expected value: '{val}'"
+            )
+
+            assert saved_experiment[key] == val, (
+                f"Mismatch in key '{key}'. Found "
+                f"'{index_data['experiment'][key]}', expected '{val}'"
+            )
 
 
 cases_to_test = [
