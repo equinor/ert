@@ -169,7 +169,6 @@ class DataTypeKeysWidget(QWidget):
         previous_proxy_index = self.filter_model.mapFromSource(previous_source_index)
 
         if not previous_proxy_index.isValid():
-            self.data_type_keys_widget.clearSelection()
             self.data_type_keys_widget.setCurrentIndex(QModelIndex())
 
     def _current_source_index(self) -> QModelIndex:
