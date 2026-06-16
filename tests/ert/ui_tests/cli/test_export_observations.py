@@ -7,7 +7,7 @@ from subprocess import CalledProcessError
 import pytest
 
 from ert.config import ErtConfig
-from ert.export_observations.export_observations import main
+from ert.export_observations.export_observations import export_observations
 
 
 @pytest.fixture(name="use_feature_flag")
@@ -52,7 +52,7 @@ def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
         experiment_id=experiment.name,
         output_csv_file="summary_observations.csv",
     )
-    main(args)
+    export_observations(args)
     assert Path("summary_observations.csv").is_file()
     csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
     expected_csv_content = [
