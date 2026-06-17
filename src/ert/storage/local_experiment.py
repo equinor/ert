@@ -32,6 +32,7 @@ from ert.config import (
 from ert.config import Field as FieldConfig
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import Observation
+from ert.config.parsing.hook_runtime import HookRuntime
 from ert.config.response_config import DerivedResponseConfig
 
 from .mode import BaseMode, Mode, require_write
@@ -72,6 +73,23 @@ class ExperimentConfig(TypedDict, total=False):
     """
 
     experiment_type: ExperimentType
+
+    # Common fields
+    minimum_required_realizations: int
+    random_seed: int
+    storage_path: str
+    user_config_file: str
+    runpath_file: str
+    log_path: str
+    start_iteration: int
+    active_realizations: list[bool]
+    hooked_workflows: dict[HookRuntime, list[dict[str, Any]]]
+    substitutions: dict[str, str]
+    queue_config: dict[str, Any]
+    env_vars: dict[str, Any]
+    env_pr_fm_step: dict[str, Any]
+    runpath_config: dict[str, Any]
+    forward_model_steps: list[dict[str, Any]]
 
     # Initial-ensemble fields
     ert_templates: list[tuple[str, str]]

@@ -55,7 +55,7 @@ from ert.run_models.run_model_configs import EverestRunModelConfig
 from ert.runpaths import Runpaths
 from ert.storage import ExperimentState, ExperimentStatus
 from ert.storage.local_ensemble import EverestRealizationInfo
-from ert.storage.local_experiment import ExperimentType
+from ert.storage.local_experiment import ExperimentType, LocalExperiment
 from ert.substitutions import Substitutions
 from everest.config import (
     ControlConfig,
@@ -806,6 +806,11 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 ensemble.update_improvement_flag(is_improvement=True)
                 max_total_objective = total_objective
 
+    def _create_experiment_storage(self) -> LocalExperiment:
+        return self._storage.create_experiment(
+            name=self.experiment_name, experiment_config=self.to_experiment_config()
+        )
+
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
@@ -815,9 +820,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config
 
-        self._experiment = self._experiment or self._storage.create_experiment(
-            name=self.experiment_name, experiment_config=self.to_experiment_config()
-        )
+        self._experiment = self._experiment or self._create_experiment_storage()
 
         self._experiment.status = ExperimentStatus(
             message="Experiment started", status=ExperimentState.running
