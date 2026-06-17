@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QModelIndex, QSize
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import (
@@ -117,6 +117,8 @@ class DataTypeKeysWidget(QWidget):
     def __init__(self, key_defs: list[PlotApiKeyDefinition]) -> None:
         QWidget.__init__(self)
 
+        self._updating_filter = False
+
         self.__filter_popup = FilterPopup(self, key_defs)
         self.__filter_popup.filterSettingsChanged.connect(self.onItemChanged)
 
@@ -144,8 +146,9 @@ class DataTypeKeysWidget(QWidget):
         self.data_type_keys_widget = QListView()
         self.data_type_keys_widget.setModel(self.filter_model)
         self._sel_model = self.data_type_keys_widget.selectionModel()
-        assert self._sel_model is not None
-        self._sel_model.selectionChanged.connect(self.itemSelected)
+        if not self._sel_model:
+            raise RuntimeError("Selection model was not defined")
+        self._sel_model.currentChanged.connect(self.itemSelected)
 
         layout.addSpacing(15)
         layout.addWidget(self.data_type_keys_widget, 2)
@@ -160,11 +163,33 @@ class DataTypeKeysWidget(QWidget):
 
         self.setLayout(layout)
 
-    def onItemChanged(self, item: dict[str, bool]) -> None:
-        for value, visible in item.items():
-            self.filter_model.setFilterOnMetadata("data_origin", value, visible)
+    def _clear_current_index_if_source_item_is_hidden(
+        self, previous_source_index: QModelIndex
+    ) -> None:
+        previous_proxy_index = self.filter_model.mapFromSource(previous_source_index)
 
-    def itemSelected(self) -> None:
+        if not previous_proxy_index.isValid():
+            self.data_type_keys_widget.setCurrentIndex(QModelIndex())
+
+    def _current_source_index(self) -> QModelIndex:
+        return self.filter_model.mapToSource(self.data_type_keys_widget.currentIndex())
+
+    def onItemChanged(self, item: dict[str, bool]) -> None:
+        previous_source_index = self._current_source_index()
+
+        self._updating_filter = True
+        try:
+            for value, visible in item.items():
+                self.filter_model.setFilterOnMetadata("data_origin", value, visible)
+
+            self._clear_current_index_if_source_item_is_hidden(previous_source_index)
+        finally:
+            self._updating_filter = False
+
+    def itemSelected(self, current: QModelIndex, previous: QModelIndex) -> None:
+        if self._updating_filter:
+            return
+
         selected_item = self.getSelectedItem()
         if selected_item is not None:
             self.dataTypeKeySelected.emit()
@@ -184,7 +209,14 @@ class DataTypeKeysWidget(QWidget):
                 return
 
     def setSearchString(self, filter_: str | None) -> None:
-        self.filter_model.setFilterFixedString(filter_ or "")
+        previous_source_index = self._current_source_index()
+
+        self._updating_filter = True
+        try:
+            self.filter_model.setFilterFixedString(filter_ or "")
+            self._clear_current_index_if_source_item_is_hidden(previous_source_index)
+        finally:
+            self._updating_filter = False
 
     def showFilterPopup(self) -> None:
         self.__filter_popup.show()
