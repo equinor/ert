@@ -18,7 +18,11 @@ from ert.run_models.initial_ensemble_run_model import (
 from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentConfig, ExperimentType
+from ert.storage.local_experiment import (
+    ExperimentConfig,
+    ExperimentType,
+    LocalExperiment,
+)
 from ert.trace import tracer
 
 from .run_model import ErtRunError
@@ -56,6 +60,12 @@ class MultipleDataAssimilation(
 
         self._start_iteration = start_iteration
         self._total_iterations = total_iterations
+
+    def _create_experiment_storage(self) -> LocalExperiment:
+        return self._storage.create_experiment(
+            experiment_config=self.to_experiment_config(),
+            name=self.experiment_name,
+        )
 
     def _create_experiment_for_restart(
         self, original_experiment: ExperimentConfig
@@ -110,10 +120,7 @@ class MultipleDataAssimilation(
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            experiment_storage = self._storage.create_experiment(
-                experiment_config=self.to_experiment_config(),
-                name=self.experiment_name,
-            )
+            experiment_storage = self._create_experiment_storage()
 
             prior = self._storage.create_ensemble(
                 experiment_storage,
