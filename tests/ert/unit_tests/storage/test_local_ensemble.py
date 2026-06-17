@@ -20,14 +20,16 @@ from ert.config import GenKwConfig, RFTConfig, SummaryConfig
 from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
 from ert.exceptions import StorageError
-from ert.storage import open_storage
+from ert.storage import LocalExperiment, open_storage
 from ert.storage.blob_data import (
     BlobStorageData,
     BlobType,
     MatrixStorageData,
     ObservationReportData,
 )
-from ert.storage.local_ensemble import _write_responses_to_storage
+from ert.storage.local_ensemble import (
+    _write_responses_to_storage,
+)
 from ert.storage.mode import ModeError
 
 
@@ -1086,3 +1088,48 @@ def test_that_parameter_group_sizes_is_stored_in_matrix_blob_metadata(tmp_path):
         assert len(blobs) == 1
         assert isinstance(blobs[0].blob_info, MatrixStorageData)
         assert blobs[0].blob_info.parameter_group_sizes == {"PORO": 8, "PERM": 3}
+
+
+async def test_that_writing_and_reading_empty_response_in_storage_results_in_empty_df_with_schema_columns(  # noqa: E501
+    tmp_path, monkeypatch
+):
+    """This test writes an empty set of responses to storage and asserts that the
+    parquet file contains the correct columns.
+    Then the test also checks that loading said file through ensemble results in an
+    empty dataframe.
+    """
+    response_column_scheme = ["realization", "response_key", "time", "values"]
+    empty_response = pl.DataFrame({"response_key": [], "time": [], "values": []})
+    monkeypatch.setattr(SummaryConfig, "read_from_file", lambda *args: empty_response)
+    monkeypatch.setattr(
+        LocalExperiment, "response_configuration", {"summary": SummaryConfig()}
+    )
+
+    storage = open_storage(tmp_path, mode="w")
+
+    experiment = storage.create_experiment()
+    ensemble = storage.create_ensemble(experiment.id, ensemble_size=1, name="test")
+    await _write_responses_to_storage(str(tmp_path), 0, ensemble)
+
+    summary_response_path = ensemble._realization_dir(0) / "summary.parquet"
+    assert Path(summary_response_path).is_file()
+    responses = pl.read_parquet(summary_response_path)
+    assert responses.is_empty()
+    assert responses.columns == response_column_scheme
+
+    # Mock response config to contain a response key, else the parquet file will never
+    # be read as the code exits earlier.
+    monkeypatch.setattr(
+        LocalExperiment,
+        "response_configuration",
+        {"summary": SummaryConfig(keys=["FOPR"])},
+    )
+    monkeypatch.setattr(
+        LocalExperiment, "response_key_to_response_type", {"FOPR": "summary"}
+    )
+
+    responses = ensemble.load_responses("FOPR", (0,))
+    assert responses.is_empty()
+    assert responses.columns == response_column_scheme
+
+    storage.close()
