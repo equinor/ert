@@ -89,6 +89,30 @@ class RunModelConfig(BaseModelWithContextSupport):
     minimum_required_realizations: int = 0
     supports_rerunning_failed_realizations: ClassVar[bool] = False
 
+    def _common_fields(self) -> ExperimentConfig:
+        return {
+            "storage_path": self.storage_path,
+            "runpath_file": str(self.runpath_file),
+            "user_config_file": str(self.user_config_file),
+            "env_vars": self.env_vars,
+            "env_pr_fm_step": self.env_pr_fm_step,
+            "runpath_config": self.runpath_config.model_dump(mode="json"),
+            "queue_config": self.queue_config.model_dump(mode="json"),
+            "forward_model_steps": [
+                fm_step.model_dump(mode="json") for fm_step in self.forward_model_steps
+            ],
+            "substitutions": self.substitutions,
+            "hooked_workflows": {
+                hook: [workflow.model_dump(mode="json") for workflow in workflows]
+                for hook, workflows in self.hooked_workflows.items()
+            },
+            "active_realizations": self.active_realizations,
+            "log_path": str(self.log_path),
+            "random_seed": self.random_seed,
+            "start_iteration": self.start_iteration,
+            "minimum_required_realizations": self.minimum_required_realizations,
+        }
+
     @model_validator(mode="after")
     def _restore_plugin_forward_model_step_subclasses(self) -> Self:
         runtime_plugins = init_context_var.get()
@@ -151,6 +175,7 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
                 resp.model_dump(mode="json")
                 for resp in self.derived_response_configuration
             ],
+            "experiment_name": self.experiment_name,
         }
 
         if self.observations is not None:
@@ -187,9 +212,10 @@ class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": ExperimentType.ENSEMBLE_SMOOTHER,
             **self._initial_ensemble_experiment_config(),
             **self._update_experiment_config(),
+            **self._common_fields(),
+            "experiment_type": ExperimentType.ENSEMBLE_SMOOTHER,
         }
 
 
@@ -200,9 +226,10 @@ class EnsembleInformationFilterConfig(
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": ExperimentType.ENSEMBLE_INFORMATION_FILTER,
             **self._initial_ensemble_experiment_config(),
             **self._update_experiment_config(),
+            **self._common_fields(),
+            "experiment_type": ExperimentType.ENSEMBLE_INFORMATION_FILTER,
         }
 
 
@@ -213,9 +240,10 @@ class EnsembleExperimentConfig(InitialEnsembleRunModelConfig):
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": self.experiment_type,
             **self._initial_ensemble_experiment_config(),
             "target_ensemble": self.target_ensemble,
+            **self._common_fields(),
+            "experiment_type": self.experiment_type,
         }
 
 
@@ -253,7 +281,6 @@ class EverestRunModelConfig(RunModelConfig):
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": ExperimentType.EVEREST,
             "optimization_output_dir": self.optimization_output_dir,
             "simulation_dir": self.simulation_dir,
             "parameter_configuration": [
@@ -270,6 +297,8 @@ class EverestRunModelConfig(RunModelConfig):
             "keep_run_path": self.keep_run_path,
             "experiment_name": self.experiment_name,
             "target_ensemble": self.target_ensemble,
+            **self._common_fields(),
+            "experiment_type": ExperimentType.EVEREST,
         }
 
 
@@ -282,18 +311,21 @@ class ManualUpdateConfig(UpdateRunModelConfig):
         self, *, prior_experiment_config: ExperimentConfig
     ) -> ExperimentConfig:
         return {
-            "experiment_type": ExperimentType.MANUAL_UPDATE,
             "ensemble_id": self.ensemble_id,
             "ert_templates": self.ert_templates,
             **self._update_experiment_config(),
-            "parameter_configuration": prior_experiment_config[
-                "parameter_configuration"
-            ],
-            "response_configuration": prior_experiment_config["response_configuration"],
+            "parameter_configuration": prior_experiment_config.get(
+                "parameter_configuration", []
+            ),
+            "response_configuration": prior_experiment_config.get(
+                "response_configuration", []
+            ),
             "derived_response_configuration": prior_experiment_config.get(
                 "derived_response_configuration", []
             ),
             "observations": prior_experiment_config.get("observations", []),
+            **self._common_fields(),
+            "experiment_type": ExperimentType.MANUAL_UPDATE,
         }
 
 
@@ -308,12 +340,13 @@ class MultipleDataAssimilationConfig(
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": ExperimentType.ES_MDA,
             **self._initial_ensemble_experiment_config(),
             **self._update_experiment_config(),
+            **self._common_fields(),
             "restart_run": self.restart_run,
             "prior_ensemble_id": self.prior_ensemble_id,
             "weights": self.weights,
+            "experiment_type": ExperimentType.ES_MDA,
         }
 
 

@@ -16,6 +16,7 @@ from ert.run_models.initial_ensemble_run_model import (
 )
 from ert.run_models.run_model_configs import EnsembleSmootherConfig
 from ert.run_models.update_run_model import UpdateRunModel
+from ert.storage.local_experiment import LocalExperiment
 from ert.trace import tracer
 
 from .run_model import ErtRunError
@@ -25,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
     _total_iterations: int = PrivateAttr(default=2)
+
+    def _create_experiment_storage(self) -> LocalExperiment:
+        return self._storage.create_experiment(
+            experiment_config=self.to_experiment_config(),
+            name=self.experiment_name,
+        )
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -39,10 +46,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
 
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
-        experiment_storage = self._storage.create_experiment(
-            experiment_config=self.to_experiment_config(),
-            name=self.experiment_name,
-        )
+        experiment_storage = self._create_experiment_storage()
 
         prior = self._storage.create_ensemble(
             experiment_storage,

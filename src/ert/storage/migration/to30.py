@@ -32,6 +32,21 @@ _ALLOWED_EXPERIMENT_KEYS = frozenset(
         "model",
         "keep_run_path",
         "experiment_name",
+        "minimum_required_realizations",
+        "random_seed",
+        "storage_path",
+        "user_config_file",
+        "runpath_file",
+        "log_path",
+        "start_iteration",
+        "active_realizations",
+        "hooked_workflows",
+        "substitutions",
+        "queue_config",
+        "env_vars",
+        "env_pr_fm_step",
+        "runpath_config",
+        "forward_model_steps",
     }
 )
 

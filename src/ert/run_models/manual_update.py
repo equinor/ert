@@ -10,7 +10,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.run_model_configs import ManualUpdateConfig
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentType
+from ert.storage.local_experiment import ExperimentType, LocalExperiment
 
 from .run_model import ErtRunError
 
@@ -42,14 +42,7 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
 
-        experiment_config = self.to_experiment_config(
-            prior_experiment_config=prior_experiment.experiment_config
-        )
-
-        target_experiment = self._storage.create_experiment(
-            experiment_config=experiment_config,
-            name=f"Manual update of {self._prior.name}",
-        )
+        target_experiment = self._create_experiment_storage()
         self.update(
             self._prior,
             self.target_ensemble % (self._prior.iteration + 1),
@@ -67,6 +60,16 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     @classmethod
     def _experiment_type(cls) -> ExperimentType:
         return ExperimentType.MANUAL_UPDATE
+
+    def _create_experiment_storage(self) -> LocalExperiment:
+        experiment_config = self.to_experiment_config(
+            prior_experiment_config=self._prior.experiment.experiment_config
+        )
+
+        return self._storage.create_experiment(
+            experiment_config=experiment_config,
+            name=f"Manual update of {self._prior.name}",
+        )
 
     def check_if_runpath_exists(self) -> bool:
         # Will not run a forward model, so does not create files on runpath

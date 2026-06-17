@@ -34,6 +34,7 @@ def test_that_migration_removes_fields_not_in_experiment_config(tmp_path):
             "start_iteration": 0,
             "minimum_required_realizations": 1,
             "some_future_unknown_field": {"foo": "bar"},
+            "some_future_unknown_field2": "value",
         },
     }
     (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
@@ -45,21 +46,7 @@ def test_that_migration_removes_fields_not_in_experiment_config(tmp_path):
 
     stripped_fields = {
         "some_future_unknown_field",
-        "storage_path",
-        "runpath_file",
-        "user_config_file",
-        "env_vars",
-        "env_pr_fm_step",
-        "runpath_config",
-        "queue_config",
-        "forward_model_steps",
-        "substitutions",
-        "hooked_workflows",
-        "active_realizations",
-        "log_path",
-        "random_seed",
-        "start_iteration",
-        "minimum_required_realizations",
+        "some_future_unknown_field2",
     }
     assert stripped_fields.isdisjoint(experiment)
 
@@ -83,6 +70,22 @@ def test_that_migration_leaves_experiment_with_only_known_fields_untouched(tmp_p
         "experiment": {
             "experiment_type": "Ensemble Experiment",
             "parameter_configuration": [{"type": "gen_kw", "name": "PARAM1"}],
+            "minimum_required_realizations": 1,
+            "random_seed": 123456,
+            "storage_path": "/some/path",
+            "runpath_file": "/some/runpath",
+            "user_config_file": "/some/config",
+            "env_vars": {"VAR": "value"},
+            "env_pr_fm_step": {"MODEL": {"VAR2": "value2"}},
+            "runpath_config": {"num_realizations": 100},
+            "queue_config": {"max_submit": 10},
+            "forward_model_steps": [{"type": "site_installed"}],
+            "substitutions": {"<KEY>": "value"},
+            "hooked_workflows": {"PRE_SIMULATION": [{"name": "workflow1"}]},
+            "active_realizations": [True, True, False],
+            "log_path": "/some/log",
+            "start_iteration": 0,
+            "experiment_name": "Experiment 1",
         },
     }
     (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
@@ -108,6 +111,8 @@ def test_that_migration_logs_the_stripped_keys(tmp_path, caplog):
             "experiment_type": "Ensemble Experiment",
             "queue_config": {"max_submit": 1},
             "random_seed": 123456,
+            "unknown_field": "foo",
+            "old_legacy_field": "bar",
         },
     }
     (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
@@ -115,6 +120,6 @@ def test_that_migration_logs_the_stripped_keys(tmp_path, caplog):
     with caplog.at_level(logging.INFO):
         migrate(root)
 
-    assert "queue_config" in caplog.text
-    assert "random_seed" in caplog.text
+    assert "unknown_field" in caplog.text
+    assert "old_legacy_field" in caplog.text
     assert str(exp_path / "index.json") in caplog.text
