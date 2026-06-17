@@ -73,7 +73,7 @@ class PlotTools:
     def showGrid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.is_grid_enabled():
-            if plot_context.plot_type == PlotType.BAR:
+            if plot_context.plot_type in {PlotType.BAR, PlotType.BOX}:
                 axes.grid(axis="y", color="black", alpha=0.1)
             else:
                 axes.grid(visible=True, color="black", alpha=0.4)

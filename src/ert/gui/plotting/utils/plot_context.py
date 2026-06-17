@@ -15,6 +15,7 @@ class PlotType(StrEnum):
     LINE = auto()
     BAR = auto()
     SCATTER = auto()
+    BOX = auto()
 
 
 class PlotContext:

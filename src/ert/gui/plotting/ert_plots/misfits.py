@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, cast
 
-import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 import polars as pl
 import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
+
+from ert.gui.plotting.utils import PlotTools
+from ert.gui.plotting.utils.plot_context import PlotType
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -61,8 +63,7 @@ class MisfitsPlot:
         ]
         figure.legend(
             handles=legend_handles,
-            loc="upper center",
-            bbox_to_anchor=(0.5, 0.93),
+            loc="lower center",
             ncol=min(len(legend_handles), 4),
         )
 
@@ -331,51 +332,65 @@ class MisfitsPlot:
         data_with_misfits: dict[tuple[str, str], pl.DataFrame],
         plot_context: PlotContext,
     ) -> None:
-        # Calculate shared y-axis limits from all misfits
+        plot_context.plot_type = PlotType.BOX
+        plot_context.y_axis = plot_context.VALUE_AXIS
+        plot_context.x_axis = plot_context.DATE_AXIS
+
+        config = plot_context.plotConfig()
+
         all_misfits = pl.concat(
             [df.select("misfit") for df in data_with_misfits.values()]
         )
         y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
 
-        # Prepare ensemble colors and draw the legend
         sorted_ensemble_keys = sorted(data_with_misfits.keys())
         color_map = self._map_ensembles_to_colours(
             sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
         )
-        self._draw_legend(
-            figure=figure,
-            ensemble_colors=color_map,
-            sorted_ensemble_keys=sorted_ensemble_keys,
-        )
 
-        # Create all subplots at once with shared axes
         n_ens = len(sorted_ensemble_keys)
-        axes = figure.subplots(nrows=n_ens, ncols=1, sharex=True, sharey=True)
-        axes = [axes] if n_ens == 1 else axes.tolist()
-        axes[0].set_ylim(y_min, y_max)
+        axes = figure.add_subplot(111)
+        axes.set_ylim(y_min, y_max)
 
-        for ax, ensemble_key in zip(axes, sorted_ensemble_keys, strict=True):
+        all_timesteps = sorted(
+            {
+                ts
+                for df in data_with_misfits.values()
+                if not df.is_empty()
+                for ts in df["key_index"].unique().to_list()
+            }
+        )
+        timestep_to_pos = {ts: i for i, ts in enumerate(all_timesteps)}
+        pos = np.arange(len(all_timesteps))
+
+        for idx in pos:
+            if idx % 2 == 0:
+                axes.axvspan(idx - 0.5, idx + 0.5, color="grey", alpha=0.07, zorder=0)
+
+        box_width = 0.8 / n_ens
+
+        # multiplier to downsize outlier sizes etc
+        # (without this, outliers, whiskers etc are sized way
+        # out of proportion when there are many tiny boxplots)
+        many_boxes_factor = min(1, len(all_timesteps) / 50)
+        axes.axhline(0.0, color="black", linewidth=0.8, alpha=0.4, zorder=0)
+
+        for ens_idx, ensemble_key in enumerate(sorted_ensemble_keys):
             df = data_with_misfits[ensemble_key]
             if df.is_empty():
                 continue
 
             df = df.select(["key_index", "misfit"]).sort("key_index")
-            times_py = df["key_index"].unique(maintain_order=True).to_list()
-            positions = mdates.date2num(times_py)  # type: ignore[no-untyped-call]
 
-            # Calculate dynamic box width based on time spacing
-            min_dt = np.min(np.diff(positions)) if len(positions) > 1 else 1.0
-
-            # multiplier to downsize outlier sizes etc
-            # (without this, outliers, whiskers etc are sized way
-            # out of proportion when there are many tiny boxplots)
-            many_boxes_factor = min(1, len(times_py) / 50)
-            box_width = min_dt * (0.7 - 0.3 * (1 - many_boxes_factor))
-
-            # One boxplot per time step
             grouped_misfits = df.group_by("key_index", maintain_order=True).agg(
                 pl.col("misfit")
             )
+
+            offset = (ens_idx - (n_ens - 1) / 2) * box_width
+            positions = [
+                timestep_to_pos[ts] + offset
+                for ts in grouped_misfits["key_index"].to_list()
+            ]
             data_for_boxes = [
                 s.to_numpy() if s.len() > 0 else np.array([np.nan])
                 for s in grouped_misfits["misfit"]
@@ -383,8 +398,7 @@ class MisfitsPlot:
 
             color = color_map.get(ensemble_key)
 
-            # Draw the boxplots with inlined styles
-            bp = ax.boxplot(
+            boxplot = axes.boxplot(
                 data_for_boxes,
                 positions=positions,
                 widths=box_width,
@@ -394,64 +408,79 @@ class MisfitsPlot:
                 patch_artist=True,
                 boxprops={
                     "facecolor": color,
-                    "alpha": 0.18,
+                    "alpha": 1,
                     "edgecolor": color,
                     "linewidth": 0.7,
                 },
-                whiskerprops={"color": color, "alpha": 0.6, "linewidth": 0.7},
-                capprops={"color": color, "alpha": 0.6, "linewidth": 0.7},
-                medianprops={"color": color, "linewidth": 0.6, "alpha": 0.9},
+                whiskerprops={
+                    "color": color,
+                    "alpha": 1,
+                    "linewidth": 0.8,
+                    "linestyle": "--",
+                },
+                capprops={"color": color, "alpha": 1, "linewidth": 0.8},
+                medianprops={"color": "black", "linewidth": 0.8, "alpha": 1},
                 flierprops={
                     "marker": "o",
-                    "markersize": min(6, box_width * (0.4 - (0.2 * many_boxes_factor))),
-                    "alpha": 0.7,
+                    "alpha": 1,
                     "markeredgewidth": 0.3 + (0.4 * (1 - many_boxes_factor)),
                     "markeredgecolor": color,
                     "markerfacecolor": "none",
                 },
             )
-            plt.setp(bp["fliers"], zorder=1.5)  # Put fliers behind other elements
-
-            # Add ensemble name text and a horizontal line at y=0
-            ax.text(
-                0.01,
-                0.85,
-                f"{ensemble_key[0]}",
-                transform=ax.transAxes,
-                ha="left",
-                va="center",
-                fontsize=9,
-                alpha=0.75,
+            axes.plot(
+                positions,
+                np.mean(data_for_boxes, axis=1),
+                "o",
+                markersize=4,
+                color="black",
             )
-            ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.4, zorder=0)
 
-        # Apply common styling to all axes
-        for ax in axes:
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["left"].set_visible(True)
-            ax.tick_params(axis="y", labelsize=10, width=0.5, length=3)
-            ax.grid(True, axis="y", linestyle=":", linewidth=0.5, alpha=0.75)
-            self._fade_axis_ticklabels(ax)
+            config.add_legend_item(ensemble_key[0], boxplot["boxes"][0])
 
-        # Hide the x-axis on all but the last plot
-        for ax in axes[:-1]:
-            ax.spines["bottom"].set_visible(False)
-            ax.tick_params(axis="x", which="both", bottom=False, labelbottom=False)
-
-        # Style the x-axis only on the last plot
-        bottom_ax = axes[-1]
-        bottom_ax.spines["bottom"].set_visible(True)
-        bottom_ax.xaxis.set_major_locator(mdates.AutoDateLocator())  # type: ignore[no-untyped-call]
-        bottom_ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))  # type: ignore[no-untyped-call]
-
-        bottom_ax.tick_params(axis="x", labelsize=8, width=0.5, length=3)
-        plt.setp(bottom_ax.get_xticklabels(), rotation=25, ha="right")
-
-        figure.suptitle(
-            f"{plot_context.key()} (Signed Chi-squared misfits over time)",
-            fontsize=14,
-            y=0.97,
-            alpha=0.9,
+        config.add_legend_item(
+            "Median", Line2D([0], [0], color="black", linewidth=0.6, alpha=1)
         )
-        figure.tight_layout(rect=(0.02, 0.02, 0.98, 0.92))
+        config.add_legend_item(
+            "Mean",
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="black",
+                markersize=4,
+                linestyle="None",
+                alpha=1,
+            ),
+        )
+        config.add_legend_item(
+            "Outliers",
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="none",
+                markeredgecolor="black",
+                markerfacecolor="none",
+                markersize=6,
+                alpha=1,
+            ),
+        )
+        config.add_legend_item(
+            "Whiskers (5-95%)",
+            Line2D([0], [0], color="black", linewidth=0.7, linestyle="--", alpha=1),
+        )
+
+        axes.set_xlim(-0.5, len(all_timesteps) - 0.5)
+        axes.set_xticks(pos, labels=[ts.strftime("%Y-%m-%d") for ts in all_timesteps])
+
+        config.set_title(
+            f"{plot_context.key()} (Signed Chi-squared misfits per timestep)"
+        )
+        PlotTools.finalizePlot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label="",
+            default_y_label="Value",
+        )
