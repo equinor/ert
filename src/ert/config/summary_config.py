@@ -11,7 +11,7 @@ from ert.substitutions import substitute_runpath_name
 from ._read_summary import read_summary
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import ResponseConfig
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -29,21 +29,11 @@ class SummaryConfig(ResponseConfig):
     @field_validator("keys", mode="before")
     @classmethod
     def dedupe_and_sort_keys(cls, keys: list[str]) -> list[str]:
-        if len(keys) < 1:
-            raise ValueError("SummaryConfig must be given at least one key")
-
         return sorted(set(keys))
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
-        if len(data) == 0 or len(keys) == 0:
-            # https://github.com/equinor/ert/issues/6974
-            # There is a bug with storing empty responses so we have
-            # to raise an error in that case
-            raise InvalidResponseFile(
-                f"Did not find any summary values matching {self.keys} in {filename}"
-            )
 
         # Important: Pick lowest unit resolution to allow for using
         # datetimes many years into the future

@@ -95,42 +95,6 @@ def test_that_loading_non_existing_ensemble_throws(tmp_path):
             experiment.get_ensemble_by_name("non-existing-ensemble")
 
 
-def test_that_saving_empty_responses_fails_nicely(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment()
-        ensemble = storage.create_ensemble(
-            experiment, ensemble_size=1, iteration=0, name="prior"
-        )
-
-        # Test for entirely empty dataset
-        with pytest.raises(
-            ValueError,
-            match=(
-                "Dataset for response group 'RESPONSE' must contain a 'values' variable"
-            ),
-        ):
-            ensemble.save_response("RESPONSE", pl.DataFrame(), 0)
-
-        # Test for dataset with 'values' but no actual data
-        empty_data = pl.DataFrame(
-            {
-                "response_key": [],
-                "report_step": [],
-                "index": [],
-                "values": [],
-            }
-        )
-
-        with pytest.raises(
-            ValueError,
-            match=(
-                "Responses RESPONSE are empty\\. "
-                "Cannot proceed with saving to storage\\."
-            ),
-        ):
-            ensemble.save_response("RESPONSE", empty_data, 0)
-
-
 def test_that_local_ensemble_save_parameter_raises_value_error_given_xr_array_dataset(
     tmp_path,
 ):
@@ -1812,7 +1776,7 @@ response_configs = st.lists(
                 min_size=1,
                 max_size=1,
             ),
-            keys=st.lists(summary_selectors, min_size=1),
+            keys=st.lists(summary_selectors),
         ),
     ),
     unique_by=lambda x: x.type,
@@ -2185,8 +2149,8 @@ class StatefulStorageTest(RuleBasedStateMachine):
         expected_summary_keys = (
             st.just(smry_config.keys)
             if smry_config.has_finalized_keys
-            else st.lists(summary_variables(), min_size=1)
-        )
+            else st.lists(summary_variables())
+        ).map(lambda xs: [x for x in xs if x != "TIME"])
 
         summaries_strategy = summaries(
             summary_keys=expected_summary_keys,
@@ -2216,11 +2180,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         smspec.to_file(self.tmpdir + f"/{summary.input_files[0]}.SMSPEC")
         unsmry.to_file(self.tmpdir + f"/{summary.input_files[0]}.UNSMRY")
 
-        try:
-            ds = summary.read_from_file(self.tmpdir, self.iens_to_edit, 0)
-        except Exception as e:  # no match in keys
-            assume(False)
-            raise AssertionError from e
+        ds = summary.read_from_file(self.tmpdir, self.iens_to_edit, 0)
         storage_ensemble.save_response(summary.type, ds, self.iens_to_edit)
 
         model_ensemble.response_values[summary.type] = ds
