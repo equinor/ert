@@ -10,6 +10,7 @@ from matplotlib.patches import Rectangle
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter, PlotTools
+from ert.gui.utils import truncate_experiment_name
 from ert.shared.status.utils import convert_to_numeric
 
 if TYPE_CHECKING:
@@ -103,7 +104,8 @@ def plotHistogram(
         axes[ensemble.name] = figure.add_subplot(ensemble_count, 1, index + 1)
 
         axes[ensemble.name].set_title(
-            f"{config.title()} ({ensemble.experiment_name} : {ensemble.name})"
+            f"{config.title()} ({truncate_experiment_name(ensemble.experiment_name)}"
+            f" : {ensemble.name})"
         )
         axes[ensemble.name].set_xlabel(x_label)
         axes[ensemble.name].set_ylabel(y_label)
@@ -136,7 +138,12 @@ def plotHistogram(
                 )
                 axes[ensemble.name].legend(
                     [legend_patch],
-                    [f"{ensemble.experiment_name} : {ensemble.name}"],
+                    [
+                        (
+                            f"{truncate_experiment_name(ensemble.experiment_name)}"
+                            f" : {ensemble.name}"
+                        )
+                    ],
                     numpoints=1,
                 )
                 if index != 0:

@@ -8,6 +8,7 @@ from scipy.stats import gaussian_kde
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter, PlotTools
+from ert.gui.utils import truncate_experiment_name
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -64,7 +65,11 @@ def plotGaussianKDE(
             continue
         if not _array_is_constant(data[0]):
             _plotGaussianKDE(
-                axes, config, data[0], f"{ensemble.experiment_name} : {ensemble.name}"
+                axes,
+                config,
+                data[0],
+                f"{truncate_experiment_name(ensemble.experiment_name)}"
+                f" : {ensemble.name}",
             )
 
     if plot_context.log_scale:

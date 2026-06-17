@@ -10,6 +10,7 @@ from typing_extensions import TypedDict
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils import ConditionalAxisFormatter, PlotTools
+from ert.gui.utils import truncate_experiment_name
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -120,7 +121,7 @@ def plot_cross_ensemble_statistics(
     axes.set_xticklabels(
         [""]
         + [
-            f"{ensemble.experiment_name} : {ensemble.name}"
+            f"{truncate_experiment_name(ensemble.experiment_name)} : {ensemble.name}"
             for ensemble in ensemble_list
         ]
         + [""],
