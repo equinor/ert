@@ -11,7 +11,7 @@ from ert.gui.plotting.ert_plots.history import plot_history
 from ert.gui.plotting.ert_plots.observations import plotObservations
 from ert.gui.plotting.utils.plot_context import PlotType
 from ert.gui.plotting.utils.plot_tools import PlotTools
-from ert.gui.utils import is_everest_application
+from ert.gui.utils import is_everest_application, truncate_experiment_name
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -74,7 +74,8 @@ class EnsemblePlot:
                 label = (
                     f"{ensemble.name}"
                     if is_everest
-                    else f"{ensemble.experiment_name} : {ensemble.name}"
+                    else f"{truncate_experiment_name(ensemble.experiment_name)}"
+                    f" : {ensemble.name}"
                 )
                 lines = self._plotLines(
                     axes,

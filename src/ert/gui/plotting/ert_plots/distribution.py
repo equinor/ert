@@ -7,6 +7,7 @@ import pandas as pd
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter, PlotTools
+from ert.gui.utils import truncate_experiment_name
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -75,7 +76,7 @@ def plotDistribution(
     axes.set_xticklabels(
         [""]
         + [
-            f"{ensemble.experiment_name} : {ensemble.name}"
+            f"{truncate_experiment_name(ensemble.experiment_name)} : {ensemble.name}"
             for ensemble in ensemble_list
         ]
         + [""],

@@ -10,6 +10,7 @@ from pandas import DataFrame
 
 from ert.gui.plotting.utils import PlotConfig, PlotContext, PlotStyle
 from ert.gui.plotting.utils.plot_tools import PlotTools
+from ert.gui.utils import truncate_experiment_name
 
 from .history import plot_history
 from .observations import plotObservations
@@ -56,7 +57,10 @@ class StatisticsPlot:
                     plot_context.deactivate_date_support()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 
-                label = f"{ensemble.experiment_name} : {ensemble.name}"
+                label = (
+                    f"{truncate_experiment_name(ensemble.experiment_name)}"
+                    f" : {ensemble.name}"
+                )
                 style = config.get_statistics_style("mean")
                 rectangle = Rectangle(
                     (0, 0), 1, 1, color=style.color, alpha=0.8

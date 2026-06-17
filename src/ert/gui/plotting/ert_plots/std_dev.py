@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ert.gui.plotting.utils.plot_types import ObservationPlotLocations
+from ert.gui.utils import truncate_experiment_name
 
 if TYPE_CHECKING:
     from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
@@ -55,7 +56,9 @@ class StdDevPlot:
                     ax_heat.text(
                         0.5,
                         0.5,
-                        f"No data for {ensemble.experiment_name} : {ensemble.name}",
+                        f"No data for "
+                        f"{truncate_experiment_name(ensemble.experiment_name)}"
+                        f" : {ensemble.name}",
                         ha="center",
                         va="center",
                     )
@@ -122,7 +125,8 @@ class StdDevPlot:
                     self._colorbar(im)
 
                 ax_heat.set_title(
-                    f"{ensemble.experiment_name} : {ensemble.name} layer={layer}",
+                    f"{truncate_experiment_name(ensemble.experiment_name)}"
+                    f" : {ensemble.name} layer={layer}",
                     wrap=True,
                     fontsize=10,  # Reduced font size
                 )

@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 
 from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import EnsembleObject
-from ert.gui.utils import is_everest_application
+from ert.gui.utils import is_everest_application, truncate_experiment_name
 
 
 class EnsembleSelectionWidget(QWidget):
@@ -126,7 +126,8 @@ class EnsembleSelectListWidget(QListWidget):
         cutoff = self._maximum_selected if is_everest else self._minimum_selected
         for i, ensemble in enumerate(sorted_ensembles):
             item_text = (
-                f"{ensemble.experiment_name} : {ensemble.name}"
+                f"{truncate_experiment_name(ensemble.experiment_name)}"
+                f" : {ensemble.name}"
                 if not is_everest
                 else ensemble.name
             )
