@@ -2072,6 +2072,20 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
     assert "DESIGN_MATRIX validation of DESIGN2PARAMS" in caplog.text
 
 
+def test_design2params_positional_arguments_explain_named_argument_syntax():
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            "DESIGN2PARAMS forward model arguments must be named, not positional"
+        ),
+    ):
+        ErtConfig.from_file_contents(
+            """\
+                NUM_REALIZATIONS 1
+                FORWARD_MODEL DESIGN2PARAMS(dm.xlsx,DesignSheet,DefaultValues)"""
+        )
+
+
 def test_two_design2params_validates_design_matrix_merging(
     tmp_path, caplog, monkeypatch
 ):
