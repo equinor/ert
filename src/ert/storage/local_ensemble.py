@@ -874,12 +874,6 @@ class LocalEnsemble(BaseMode):
                 f"must contain a 'values' variable"
             )
 
-        if len(data) == 0:
-            raise ValueError(
-                f"Responses {response_type} are empty. "
-                "Cannot proceed with saving to storage."
-            )
-
         if "realization" not in data.columns:
             data.insert_column(
                 0,
