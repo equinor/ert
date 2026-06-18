@@ -1,10 +1,37 @@
+import warnings
 from abc import abstractmethod
-from typing import Any, Self
+from typing import Any, Literal, Self
 
 import polars as pl
 from pydantic import BaseModel, Field
 
+from ert.warnings import PostExperimentWarning
+
 from .parsing import ConfigDict
+
+_RESPONSE_WARNING_LIMIT = 5
+
+
+def _warn_about_missing_responses(
+    missing_items: list[str],
+    item_label: Literal["key(s)", "well(s) at time(s)"],
+    filename: str,
+) -> None:
+    if not missing_items:
+        return
+
+    num_excess = len(missing_items) - _RESPONSE_WARNING_LIMIT
+
+    warning = (
+        f"Could not find responses for {item_label} in '{filename}':\n"
+        + "\n".join(missing_items[:_RESPONSE_WARNING_LIMIT])
+        + (f"\n... and {num_excess} other missing responses" if num_excess > 0 else "")
+    )
+    warnings.warn(
+        warning,
+        PostExperimentWarning,
+        stacklevel=1,
+    )
 
 
 class InvalidResponseFile(Exception):

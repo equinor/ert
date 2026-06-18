@@ -21,6 +21,7 @@ def escape(s):
     return quote(quote(quote(s, safe="")))
 
 
+@pytest.mark.filterwarnings(r"ignore:Could not find responses for key\(s\)")
 class DarkStorageStateTest(StatefulStorageTest):
     def __init__(self) -> None:
         super().__init__()

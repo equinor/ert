@@ -31,7 +31,11 @@ from .parsing import (
     ConfigWarning,
     parse_zonemap,
 )
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import (
+    InvalidResponseFile,
+    ResponseConfig,
+    _warn_about_missing_responses,
+)
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -288,6 +292,28 @@ class RFTConfig(ResponseConfig):
             "cell_zones": pl.List(pl.String),
         }
 
+    def _warn_about_missing_rft_responses(
+        self,
+        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry],
+        rft_filename: str,
+    ) -> None:
+        well_time_keys = {
+            (well, time)
+            for well, time_dict in self.data_to_read.items()
+            for time in time_dict
+        }
+        well_time_keys_rft_data = {(well, time.isoformat()) for well, time in rft_data}
+        well_time_without_response: set[tuple[str, str]] = (
+            well_time_keys - well_time_keys_rft_data
+        )
+
+        formatted_items = [
+            f"{well}: {time}" for well, time in sorted(well_time_without_response)
+        ]
+        _warn_about_missing_responses(
+            formatted_items, "well(s) at time(s)", rft_filename
+        )
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT"""
         if not self.data_to_read:
@@ -296,6 +322,8 @@ class RFTConfig(ResponseConfig):
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
         rft_data = self._scan_rft(rft_filepath)
+
+        self._warn_about_missing_rft_responses(rft_data, Path(rft_filepath).name)
 
         if not rft_data:
             return pl.DataFrame(schema=self.response_schema())

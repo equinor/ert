@@ -11,7 +11,7 @@ from ert.substitutions import substitute_runpath_name
 from ._read_summary import read_summary
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
-from .response_config import ResponseConfig
+from .response_config import ResponseConfig, _warn_about_missing_responses
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -31,10 +31,17 @@ class SummaryConfig(ResponseConfig):
     def dedupe_and_sort_keys(cls, keys: list[str]) -> list[str]:
         return sorted(set(keys))
 
+    def _warn_about_missing_summary_responses(
+        self, response_keys: list[str], filename: str
+    ) -> None:
+        keys_missing_responses = sorted(set(self.keys) - set(response_keys) - {"*"})
+        _warn_about_missing_responses(keys_missing_responses, "key(s)", filename)
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
 
+        self._warn_about_missing_summary_responses(keys, filename)
         # Important: Pick lowest unit resolution to allow for using
         # datetimes many years into the future
         time_map_series = pl.Series(time_map).dt.cast_time_unit("ms")
