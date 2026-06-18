@@ -112,13 +112,12 @@ class SearchBox(QLineEdit):
     @override
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
         style = self.style()
-        if style is None:
-            raise RuntimeError("SearchBox style is unexpectedly None")
-        frame_width = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
-        self._pending_indicator.move(
-            self.rect().right() - frame_width - self._pending_indicator.width(),
-            int((self.height() - self._pending_indicator.height()) / 2),
-        )
+        if style:
+            frame_width = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
+            self._pending_indicator.move(
+                self.rect().right() - frame_width - self._pending_indicator.width(),
+                int((self.height() - self._pending_indicator.height()) / 2),
+            )
 
         QLineEdit.resizeEvent(self, a0)
 
