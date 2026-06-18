@@ -7,7 +7,6 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, Mock, patch
 
-import numpy as np
 import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QAction
@@ -23,7 +22,6 @@ from PyQt6.QtWidgets import (
     QTreeView,
     QWidget,
 )
-from xtgeo import RegularSurface
 
 import ert.gui
 from ert.config import ErtConfig
@@ -267,18 +265,8 @@ def test_that_ert_changes_to_config_directory(qtbot, monkeypatch):
     This is a regression test that verifies that ert changes directories
     to the config dir (where .ert is).
     Failure to do so would in this case result in SURFACE keyword not
-    finding the INIT_FILE provided (surface/small.irap)
+    finding the INIT_FILE provided (surface/surf_init_0.irap)
     """
-    rng = np.random.default_rng()
-
-    Path("./surface").mkdir()
-    nx = 5
-    ny = 10
-    surf = RegularSurface(
-        ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=rng.standard_normal(size=(nx, ny))
-    )
-    surf.to_file("surface/surf_init_0.irap", fformat="irap_binary")
-
     args = Mock()
     monkeypatch.chdir("..")
     args.config = "test_data/snake_oil_surface.ert"
