@@ -2075,9 +2075,7 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
 def test_design2params_positional_arguments_explain_named_argument_syntax():
     with pytest.raises(
         ConfigValidationError,
-        match=(
-            "DESIGN2PARAMS forward model arguments must be named, not positional"
-        ),
+        match=("DESIGN2PARAMS forward model arguments must be named, not positional"),
     ):
         ErtConfig.from_file_contents(
             """\

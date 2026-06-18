@@ -488,8 +488,8 @@ def _is_design2params_forward_model_line(line: str) -> bool:
     except ValueError:
         return False
     value = value.lstrip()
-    return keyword == "FORWARD_MODEL" and (
-        value.startswith("DESIGN2PARAMS(") or value.startswith("DESIGN2PARAMS ")
+    return keyword == "FORWARD_MODEL" and value.startswith(
+        ("DESIGN2PARAMS(", "DESIGN2PARAMS ")
     )
 
 
