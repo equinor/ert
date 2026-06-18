@@ -5,6 +5,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      all-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "uv"
     directory: "/"
@@ -24,3 +28,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      all-commit-hooks:
+        patterns:
+          - "*"
