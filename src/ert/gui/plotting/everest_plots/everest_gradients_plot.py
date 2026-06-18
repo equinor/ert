@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+from matplotlib.container import BarContainer
 
 from ert.gui.plotting.utils.plot_context import PlotType
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter, PlotTools
@@ -84,7 +85,7 @@ class EverestGradientsPlot:
         n_controls = len(self.selected_controls)
         bar_width = 0.8 / n_controls
 
-        bar_containers = []
+        bar_containers: list[BarContainer] = []
         n_colors = config.get_number_of_colors()
         for i, control in enumerate(self.selected_controls):
             values = []

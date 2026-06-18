@@ -86,37 +86,39 @@ class EverestBatchObjectiveFunctionPlot:
             color=color,
         )
 
-        improvement_scatter_labels = []
-        improvement_scatter_data = None
+        scatter_labels = []
+        scatter_data = []
         if not improvement_data.empty:
-            improvement_scatter_data = axes.scatter(
-                improvement_data["batch_id"],
-                improvement_data[value_col],
-                c=color,
-                s=20,
-                zorder=5,
+            scatter_data.append(
+                axes.scatter(
+                    improvement_data["batch_id"],
+                    improvement_data[value_col],
+                    c=color,
+                    s=20,
+                    zorder=5,
+                )
             )
             for _, row in improvement_data.iterrows():
                 batch_id = int(row["batch_id"])
-                improvement_scatter_labels.append(f"Batch {batch_id}")
+                scatter_labels.append(f"Batch {batch_id}")
 
-        rejected_scatter_labels = []
-        rejected_scatter_data = None
         rejected_data = data[~data["is_improvement"]]
         if not rejected_data.empty:
-            rejected_scatter_data = axes.scatter(
-                rejected_data["batch_id"],
-                rejected_data[value_col],
-                c="red",
-                s=20,
-                zorder=5,
+            scatter_data.append(
+                axes.scatter(
+                    rejected_data["batch_id"],
+                    rejected_data[value_col],
+                    c="red",
+                    s=20,
+                    zorder=5,
+                )
             )
             for _, row in rejected_data.iterrows():
                 batch_id = int(row["batch_id"])
                 val_type = row.get("constraint_violation_type", "N/A")
                 val = row.get("constraint_violation_value", float("nan"))
 
-                rejected_scatter_labels.append(
+                scatter_labels.append(
                     dedent(
                         f"""
                         Batch {batch_id}
@@ -137,19 +139,14 @@ class EverestBatchObjectiveFunctionPlot:
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-        hover_label_and_data_tuples = [
-            (rejected_scatter_labels, rejected_scatter_data),
-            (improvement_scatter_labels, improvement_scatter_data),
-        ]
-        for labels, scatter_data in hover_label_and_data_tuples:
-            if labels and scatter_data:
-                PlotTools.labels_on_hover(
-                    PlotType.SCATTER,
-                    axes,
-                    figure,
-                    data=scatter_data,
-                    labels=labels,
-                )
+        if scatter_labels and scatter_data:
+            PlotTools.labels_on_hover(
+                PlotType.SCATTER,
+                axes,
+                figure,
+                data=scatter_data,
+                labels=scatter_labels,
+            )
 
         PlotTools.finalizePlot(
             plot_context,
