@@ -1,194 +1,82 @@
-import json
-import logging
+import io
+from pathlib import Path
 
-import numpy as np
+import polars as pl
 
+from ert.storage.blob_data import BlobStorageData, ScalingFactorsData
 from ert.storage.migration.to32 import migrate
 
 
-def test_that_migration_removes_fields_not_in_observation_models(tmp_path):
+def _read_blob_metadata(blob_meta_path: Path) -> BlobStorageData:
+    return BlobStorageData.model_validate_json(
+        blob_meta_path.read_text(encoding="utf-8")
+    )
+
+
+def test_that_migration_moves_scaling_factor_parquet_to_blob_storage(tmp_path):
     root = tmp_path / "project"
     root.mkdir()
 
-    exp_path = root / "experiments" / "exp1"
-    exp_path.mkdir(parents=True)
+    ensemble_dir = root / "ensembles" / "ens-1"
+    ensemble_dir.mkdir(parents=True)
 
-    index_data = {
-        "id": "exp-id",
-        "name": "exp1",
-        "ensembles": [],
-        "experiment": {
-            "experiment_type": "Ensemble Experiment",
-            "observations": [
-                {
-                    "type": "summary_observation",
-                    "name": "FOPR_1",
-                    "value": 1.0,
-                    "error": 0.1,
-                    "key": "FOPR",
-                    "date": "2024-01-15",
-                    "shape_id": None,
-                    "some_future_unknown_field": {"foo": "bar"},
-                    "std": 0.5,
-                },
-                {
-                    "type": "general_observation",
-                    "name": "GEN_1",
-                    "data": "POLY_RES",
-                    "value": 2.0,
-                    "error": 0.2,
-                    "restart": 0,
-                    "index": 3,
-                    "shape_id": None,
-                    "response_key": "POLY_RES",
-                    "report_step": 0,
-                },
-                {
-                    "type": "rft_observation",
-                    "name": "RFT_1",
-                    "well": "OP_1",
-                    "date": "2024-01-15",
-                    "property": "PRESSURE",
-                    "value": 250.0,
-                    "error": 5.0,
-                    "east": 123.5,
-                    "north": 456.7,
-                    "tvd": 2500.0,
-                    "md": None,
-                    "shape_id": None,
-                    "zone": None,
-                    "radius": 3000.0,
-                },
-                {
-                    "type": "breakthrough",
-                    "name": "BT_1",
-                    "key": "FWPR",
-                    "date": "2024-01-15T00:00:00",
-                    "error": 0.1,
-                    "threshold": 0.5,
-                    "shape_id": None,
-                    "obsolete_key": "remove me",
-                },
-            ],
-        },
-    }
-    (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
+    old_path = ensemble_dir / "observation_scaling_factors.parquet"
+    old_df = pl.DataFrame(
+        {
+            "input_group": ["obs1*", "obs2*"],
+            "index": ["r0", "r1"],
+            "obs_key": ["OBS_1", "OBS_2"],
+            "scaling_factor": pl.Series([2.0, 3.0], dtype=pl.Float32),
+        }
+    )
+    old_df.write_parquet(old_path)
 
     migrate(root)
 
-    updated = json.loads((exp_path / "index.json").read_text(encoding="utf-8"))
-    observations = updated["experiment"]["observations"]
+    assert not old_path.exists()
 
-    summary, general, rft, breakthrough = observations
+    blob_dir = ensemble_dir / "blobs"
+    blob_data_files = list(blob_dir.glob("*.blob"))
+    blob_meta_files = list(blob_dir.glob("*.blob.json"))
+    assert len(blob_data_files) == 1
+    assert len(blob_meta_files) == 1
 
-    assert "some_future_unknown_field" not in summary
-    assert "std" not in summary
-    assert summary["key"] == "FOPR"
-    assert np.isclose(summary["value"], 1.0)
+    meta = _read_blob_metadata(blob_meta_files[0])
+    assert meta.name == "scaling_factors"
+    assert meta.file_type == "application/parquet"
+    assert isinstance(meta.blob_info, ScalingFactorsData)
+    assert meta.blob_info.update_algorithm == "ensemble_smoother"
+    assert meta.blob_info.num_observations == 2
+    assert meta.blob_info.num_groups == 2
 
-    assert "response_key" not in general
-    assert "report_step" not in general
-    assert general["data"] == "POLY_RES"
-    assert general["index"] == 3
-
-    assert "radius" not in rft
-    assert rft["well"] == "OP_1"
-    assert np.isclose(rft["east"], 123.5)
-
-    assert "obsolete_key" not in breakthrough
-    assert np.isclose(breakthrough["threshold"], 0.5)
+    migrated_df = pl.read_parquet(io.BytesIO((blob_dir / meta.uri).read_bytes()))
+    assert migrated_df.to_dict(as_series=False) == old_df.to_dict(as_series=False)
 
 
-def test_that_migration_leaves_observations_with_only_known_fields_untouched(tmp_path):
+def test_that_migration_defaults_num_groups_to_one_when_input_group_is_missing(
+    tmp_path,
+):
     root = tmp_path / "project"
     root.mkdir()
 
-    exp_path = root / "experiments" / "exp1"
-    exp_path.mkdir(parents=True)
+    ensemble_dir = root / "ensembles" / "ens-1"
+    ensemble_dir.mkdir(parents=True)
 
-    index_data = {
-        "id": "exp-id",
-        "name": "exp1",
-        "ensembles": [],
-        "experiment": {
-            "experiment_type": "Ensemble Experiment",
-            "observations": [
-                {
-                    "type": "summary_observation",
-                    "name": "FOPR_1",
-                    "value": 1.0,
-                    "error": 0.1,
-                    "key": "FOPR",
-                    "date": "2024-01-15",
-                    "shape_id": None,
-                },
-            ],
-        },
-    }
-    (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
+    old_path = ensemble_dir / "observation_scaling_factors.parquet"
+    pl.DataFrame(
+        {
+            "index": ["r0", "r1"],
+            "obs_key": ["OBS_1", "OBS_2"],
+            "scaling_factor": pl.Series([2.0, 3.0], dtype=pl.Float32),
+        }
+    ).write_parquet(old_path)
 
     migrate(root)
 
-    updated = json.loads((exp_path / "index.json").read_text(encoding="utf-8"))
-    assert updated == index_data
+    blob_meta_files = list((ensemble_dir / "blobs").glob("*.blob.json"))
+    assert len(blob_meta_files) == 1
 
-
-def test_that_migration_handles_experiments_without_observations(tmp_path):
-    root = tmp_path / "project"
-    root.mkdir()
-
-    exp_path = root / "experiments" / "exp1"
-    exp_path.mkdir(parents=True)
-
-    index_data = {
-        "id": "exp-id",
-        "name": "exp1",
-        "ensembles": [],
-        "experiment": {
-            "experiment_type": "Ensemble Experiment",
-            "parameter_configuration": [{"type": "gen_kw", "name": "PARAM1"}],
-        },
-    }
-    (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
-
-    migrate(root)
-
-    updated = json.loads((exp_path / "index.json").read_text(encoding="utf-8"))
-    assert updated == index_data
-
-
-def test_that_migration_logs_the_stripped_keys(tmp_path, caplog):
-    root = tmp_path / "project"
-    root.mkdir()
-
-    exp_path = root / "experiments" / "exp1"
-    exp_path.mkdir(parents=True)
-
-    index_data = {
-        "id": "exp-id",
-        "name": "exp1",
-        "ensembles": [],
-        "experiment": {
-            "experiment_type": "Ensemble Experiment",
-            "observations": [
-                {
-                    "type": "summary_observation",
-                    "name": "FOPR_1",
-                    "value": 1.0,
-                    "error": 0.1,
-                    "key": "FOPR",
-                    "date": "2024-01-15",
-                    "std": 0.5,
-                    "response_key": "FOPR",
-                },
-            ],
-        },
-    }
-    (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
-
-    with caplog.at_level(logging.INFO):
-        migrate(root)
-
-    assert "std" in caplog.text
-    assert "response_key" in caplog.text
-    assert str(exp_path / "index.json") in caplog.text
+    meta = _read_blob_metadata(blob_meta_files[0])
+    assert isinstance(meta.blob_info, ScalingFactorsData)
+    assert meta.blob_info.num_observations == 2
+    assert meta.blob_info.num_groups == 1
