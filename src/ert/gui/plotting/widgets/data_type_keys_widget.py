@@ -149,9 +149,8 @@ class DataTypeKeysWidget(QWidget):
         self.data_type_keys_widget = QListView()
         self.data_type_keys_widget.setModel(self.filter_model)
         self._sel_model = self.data_type_keys_widget.selectionModel()
-        if not self._sel_model:
-            raise RuntimeError("Selection model was not defined")
-        self._sel_model.currentChanged.connect(self.itemSelected)
+        if self._sel_model:
+            self._sel_model.currentChanged.connect(self.itemSelected)
 
         layout.addSpacing(15)
         layout.addWidget(self.data_type_keys_widget, 2)
