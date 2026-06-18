@@ -1,5 +1,6 @@
 import re
 from contextlib import suppress
+from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
@@ -14,15 +15,18 @@ from ert.config import (
     ErtConfig,
     InvalidResponseFile,
     SummaryConfig,
+    summary_config,
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import DEFAULT_LOCALIZATION_RADIUS
+from ert.warnings import PostExperimentWarning
 
 
 @settings(max_examples=10)
 @given(summaries(summary_keys=st.just(["WOPR:OP1"])))
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.slow
+@pytest.mark.filterwarnings(r"ignore:Could not find responses for key\(s\)")
 def test_that_reading_empty_summaries_returns_empty_df_with_column_schema(wopr_summary):
     smspec, unsmry = wopr_summary
     smspec.to_file("CASE.SMSPEC")
@@ -234,3 +238,34 @@ def test_that_defaulted_summary_obs_values_have_type_float32(tmpdir):
     assert summary_observations["east"].dtype == pl.Float32
     assert summary_observations["north"].dtype == pl.Float32
     assert summary_observations["radius"].dtype == pl.Float32
+
+
+def test_that_when_not_finding_response_obs_keys_raises_warning(monkeypatch):
+    response_keys = ["WOPR:OP1", "FOPR"]
+    obs_keys = ["WOPR:OP1", "WWCT:OP1", "WOPR:OP2"]
+
+    def mock_read_summary(*args):
+        return (
+            None,
+            response_keys,
+            [datetime.fromisoformat("2012-10-10")] * 2,
+            [[None] * 2] * 2,
+        )
+
+    monkeypatch.setattr(summary_config, "read_summary", mock_read_summary)
+
+    with pytest.warns(PostExperimentWarning) as warnings:
+        SummaryConfig(input_files=["CASE"], keys=list(obs_keys)).read_from_file(
+            ".", 0, 0
+        )
+
+    warning = next(
+        str(w.message) for w in warnings if "Could not find response" in str(w.message)
+    )
+    expected_warning = dedent(
+        """\
+        Could not find responses for key(s) in 'CASE':
+        WOPR:OP2
+        WWCT:OP1"""
+    )
+    assert warning == expected_warning

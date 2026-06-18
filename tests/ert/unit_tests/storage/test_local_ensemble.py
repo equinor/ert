@@ -1105,31 +1105,28 @@ async def test_that_writing_and_reading_empty_response_in_storage_results_in_emp
         LocalExperiment, "response_configuration", {"summary": SummaryConfig()}
     )
 
-    storage = open_storage(tmp_path, mode="w")
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(experiment.id, ensemble_size=1, name="test")
+        await _write_responses_to_storage(str(tmp_path), 0, ensemble)
 
-    experiment = storage.create_experiment()
-    ensemble = storage.create_ensemble(experiment.id, ensemble_size=1, name="test")
-    await _write_responses_to_storage(str(tmp_path), 0, ensemble)
+        summary_response_path = ensemble._realization_dir(0) / "summary.parquet"
+        assert Path(summary_response_path).is_file()
+        responses = pl.read_parquet(summary_response_path)
+        assert responses.is_empty()
+        assert responses.columns == response_column_scheme
 
-    summary_response_path = ensemble._realization_dir(0) / "summary.parquet"
-    assert Path(summary_response_path).is_file()
-    responses = pl.read_parquet(summary_response_path)
-    assert responses.is_empty()
-    assert responses.columns == response_column_scheme
+        # Mock response config to contain a response key, else the parquet file
+        # will never be read as the code exits earlier.
+        monkeypatch.setattr(
+            LocalExperiment,
+            "response_configuration",
+            {"summary": SummaryConfig(keys=["FOPR"])},
+        )
+        monkeypatch.setattr(
+            LocalExperiment, "response_key_to_response_type", {"FOPR": "summary"}
+        )
 
-    # Mock response config to contain a response key, else the parquet file will never
-    # be read as the code exits earlier.
-    monkeypatch.setattr(
-        LocalExperiment,
-        "response_configuration",
-        {"summary": SummaryConfig(keys=["FOPR"])},
-    )
-    monkeypatch.setattr(
-        LocalExperiment, "response_key_to_response_type", {"FOPR": "summary"}
-    )
-
-    responses = ensemble.load_responses("FOPR", (0,))
-    assert responses.is_empty()
-    assert responses.columns == response_column_scheme
-
-    storage.close()
+        responses = ensemble.load_responses("FOPR", (0,))
+        assert responses.is_empty()
+        assert responses.columns == response_column_scheme
