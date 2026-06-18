@@ -6,25 +6,88 @@ from ert.gui.plotting.everest_plots import EverestConstraintsPlot
 from ert.gui.plotting.utils.plot_context import PlotType
 
 
-@pytest.fixture
-def constraints_data():
+def generate_constraints_data(num_realizations: int):
     return pd.DataFrame(
         {
-            "batch_id": [0, 1],
-            "realization": [0, 0],
-            "constraint_value": [0.1, 0.2],
-            "lower_bound": [0.05, 0.05],
-            "upper_bound": [0.25, 0.25],
+            "batch_id": [0, 1] * num_realizations,
+            "realization": list(range(num_realizations)) * 2,
+            "constraint_value": [0.1, 0.2] * num_realizations,
+            "lower_bound": [0.05, 0.05] * num_realizations,
+            "upper_bound": [0.25, 0.25] * num_realizations,
         }
     )
 
 
-def test_that_plot_type_is_set_to_line_and_line_style_is_correct(
-    generic_plot_context, everest_ensemble, constraints_data
+def num_of_lines_to_be_plotted_incl_bound_lines(df: pd.DataFrame):
+    num_realizations = len(df["realization"].unique())
+    return num_realizations + 2
+
+
+def test_that_plot_type_is_set_to_line(generic_plot_context, everest_ensemble):
+    create_everest_figure(
+        EverestConstraintsPlot(),
+        generate_constraints_data(1),
+        generic_plot_context,
+        everest_ensemble,
+    )
+    assert generic_plot_context.plot_type == PlotType.LINE
+
+
+@pytest.mark.parametrize(
+    ("realization_data", "expected_num_of_colors"),
+    [
+        (
+            generate_constraints_data(1),
+            num_of_lines_to_be_plotted_incl_bound_lines(generate_constraints_data(1))
+            - 1,
+        ),  # One color for each realization line, one for bounds
+        (generate_constraints_data(6), 2),
+    ],
+)
+def test_that_unique_colors_only_if_num_of_realizations_is_at_or_below_legend_threshold(
+    realization_data, expected_num_of_colors, generic_plot_context, everest_ensemble
 ):
     figure = create_everest_figure(
         EverestConstraintsPlot(),
-        constraints_data,
+        realization_data,
+        generic_plot_context,
+        everest_ensemble,
+    )
+    colors = [line.get_color() for line in figure.get_axes()[0].get_lines()]
+    assert len(set(colors)) == expected_num_of_colors
+
+
+@pytest.mark.parametrize(
+    ("realization_data", "expected_legend_length"),
+    [
+        (
+            generate_constraints_data(5),
+            num_of_lines_to_be_plotted_incl_bound_lines(generate_constraints_data(5))
+            - 1,
+        ),  # One legend item for each realization line, one for bounds
+        (generate_constraints_data(6), 1),  # Only bounds in legend
+    ],
+)
+def test_that_legend_items_are_conditionally_shown(
+    generic_plot_context, everest_ensemble, realization_data, expected_legend_length
+):
+    figure = create_everest_figure(
+        EverestConstraintsPlot(),
+        realization_data,
+        generic_plot_context,
+        everest_ensemble,
+    )
+    legend = figure.get_axes()[0].get_legend()
+    legend_length = len(legend.get_texts()) if legend else None
+    assert legend_length == expected_legend_length
+
+
+def test_that_plot_type_is_set_to_line_and_line_style_is_correct(
+    generic_plot_context, everest_ensemble
+):
+    figure = create_everest_figure(
+        EverestConstraintsPlot(),
+        generate_constraints_data(1),
         generic_plot_context,
         everest_ensemble,
     )
@@ -39,11 +102,11 @@ def test_that_plot_type_is_set_to_line_and_line_style_is_correct(
 
 
 def test_that_bounds_and_realization_are_plotted(
-    everest_ensemble, generic_plot_context, constraints_data
+    everest_ensemble, generic_plot_context
 ):
     figure = create_everest_figure(
         EverestConstraintsPlot(),
-        constraints_data,
+        generate_constraints_data(1),
         generic_plot_context,
         everest_ensemble,
     )
@@ -73,12 +136,10 @@ def test_that_empty_data_returns_early_with_helper_text(
     assert figure.get_axes()[0].texts[0].get_text() == "No data"
 
 
-def test_that_bounds_have_correct_style(
-    everest_ensemble, generic_plot_context, constraints_data
-):
+def test_that_bounds_have_correct_style(everest_ensemble, generic_plot_context):
     figure = create_everest_figure(
         EverestConstraintsPlot(),
-        constraints_data,
+        generate_constraints_data(1),
         generic_plot_context,
         everest_ensemble,
     )
@@ -95,12 +156,10 @@ def test_that_bounds_have_correct_style(
     assert len(spans) == 2
 
 
-def test_that_tooltip_shows_on_hover(
-    everest_ensemble, generic_plot_context, constraints_data
-):
+def test_that_tooltip_shows_on_hover(everest_ensemble, generic_plot_context):
     figure = create_everest_figure(
         EverestConstraintsPlot(),
-        constraints_data,
+        generate_constraints_data(1),
         generic_plot_context,
         everest_ensemble,
     )

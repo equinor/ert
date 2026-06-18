@@ -73,6 +73,7 @@ class EverestConstraintsPlot:
 
         line_data = []
         line_labels = []
+        color = config.next_color()
         for realization in realizations:
             data = combined[combined["realization"] == realization].sort_values(
                 "batch_id"
@@ -80,7 +81,6 @@ class EverestConstraintsPlot:
             if data.empty:
                 continue
 
-            color = config.next_color()
             lines = axes.plot(
                 data["batch_id"],
                 data[value_col],
@@ -91,6 +91,7 @@ class EverestConstraintsPlot:
             line_data.append(lines)
             line_labels.append(f"Realization {int(realization)}")
             if len(realizations) <= LEGEND_THRESHOLD:
+                color = config.next_color()
                 config.add_legend_item(f"Realization {int(realization)}", lines[0])
 
         if "lower_bound" in combined.columns or "upper_bound" in combined.columns:
