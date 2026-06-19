@@ -361,9 +361,8 @@ class MisfitsPlot:
             }
         )
         timestep_to_pos = {ts: i for i, ts in enumerate(all_timesteps)}
-        pos = np.arange(len(all_timesteps))
 
-        for idx in pos:
+        for idx in timestep_to_pos.values():
             if idx % 2 == 0:
                 axes.axvspan(idx - 0.5, idx + 0.5, color="grey", alpha=0.07, zorder=0)
 
@@ -431,12 +430,46 @@ class MisfitsPlot:
             axes.plot(
                 positions,
                 np.mean(data_for_boxes, axis=1),
-                "o",
+                "D",
                 markersize=4,
                 color="black",
             )
+            rng = np.random.default_rng(42) 
+            jitter = box_width * 0.5
 
+            x_points: list[np.ndarray] = []
+            y_points: list[np.ndarray] = []
+            for position, box_data in zip(positions, data_for_boxes, strict=True):
+                x_points.append(
+                    position + rng.uniform(-jitter / 2, jitter / 2, size=len(box_data))
+                )
+                y_points.append(box_data)
+
+            x_all = np.concatenate(x_points)
+            y_all = np.concatenate(y_points)
+
+            axes.scatter(
+                x_all,
+                y_all,
+                color=color,
+                alpha=0.35,
+                linewidths=0,
+                zorder=2,  # above bands/boxes
+            )
             config.add_legend_item(ensemble_key[0], boxplot["boxes"][0])
+
+        config.add_legend_item(
+            "Scatter points",
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="black",
+                markeredgecolor="None",
+                linestyle="None",
+                alpha=0.35,
+            ),
+        )
 
         config.add_legend_item(
             "Median", Line2D([0], [0], color="black", linewidth=0.6, alpha=1)
@@ -446,7 +479,7 @@ class MisfitsPlot:
             Line2D(
                 [0],
                 [0],
-                marker="o",
+                marker="D",
                 color="black",
                 markersize=4,
                 linestyle="None",
@@ -472,7 +505,10 @@ class MisfitsPlot:
         )
 
         axes.set_xlim(-0.5, len(all_timesteps) - 0.5)
-        axes.set_xticks(pos, labels=[ts.strftime("%Y-%m-%d") for ts in all_timesteps])
+        axes.set_xticks(
+            list(timestep_to_pos.values()),
+            labels=[ts.strftime("%Y-%m-%d") for ts in all_timesteps],
+        )
 
         config.set_title(
             f"{plot_context.key()} (Signed Chi-squared misfits per timestep)"
