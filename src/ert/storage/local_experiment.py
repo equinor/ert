@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 from typing_extensions import TypedDict
 
+from _ert.hook_runtime import HookRuntime
 from ert.config import (
     EverestConstraintsConfig,
     EverestControl,
@@ -32,7 +33,6 @@ from ert.config import (
 from ert.config import Field as FieldConfig
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import Observation
-from ert.config.parsing.hook_runtime import HookRuntime
 from ert.config.response_config import DerivedResponseConfig
 
 from .mode import BaseMode, Mode, require_write
