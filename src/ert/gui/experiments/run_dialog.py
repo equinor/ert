@@ -404,11 +404,10 @@ class RunDialog(QFrame):
             current_widget = widget.current_widget()
             if isinstance(current_widget, RealizationWidget):
                 current_widget.refresh_current_selection()
+                self.fm_step_frame.setHidden(False)
+                return
 
-            self.fm_step_frame.setHidden(isinstance(current_widget, UpdateWidget))
-            return
-
-        self.fm_step_frame.setHidden(False)
+        self.fm_step_frame.setHidden(True)
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -424,18 +423,9 @@ class RunDialog(QFrame):
                 else f"Progress for batch {iteration}"
             )
 
-            tab_group_widget = self._get_tab_group_widget(
+            tab_group_widget = self._get_or_create_tab_group_widget(
                 iteration, f"iteration-{iteration}"
             )
-            top_level_tab_count_before_create = self._tab_widget.count()
-            if tab_group_widget is None:
-                tab_group_widget = self._create_tab_group_widget(
-                    iteration, f"iteration-{iteration}"
-                )
-                self._select_top_level_tab_if_user_was_on_previous_last_tab(
-                    tab_group_widget,
-                    top_level_tab_count_before_create,
-                )
             widget = self._get_realization_tab_widget(tab_group_widget)
             if widget is None:
                 widget = self._create_realization_tab_widget(tab_group_widget)
@@ -642,18 +632,10 @@ class RunDialog(QFrame):
                 )
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
-                tab_group_widget = self._get_tab_group_widget(
-                    iteration, f"update-{iteration}"
+                tab_group_widget = self._get_or_create_tab_group_widget(
+                    iteration,
+                    f"update-{iteration}",
                 )
-                top_level_tab_count_before_create = self._tab_widget.count()
-                if tab_group_widget is None:
-                    tab_group_widget = self._create_tab_group_widget(
-                        iteration, f"update-{iteration}"
-                    )
-                    self._select_top_level_tab_if_user_was_on_previous_last_tab(
-                        tab_group_widget,
-                        top_level_tab_count_before_create,
-                    )
                 widget = self._get_update_tab_widget(tab_group_widget)
                 if widget is None:
                     widget = self._create_update_tab_widget(tab_group_widget)
@@ -742,20 +724,33 @@ class RunDialog(QFrame):
     def _select_subtab_if_none_selected(
         tab_group_widget: TabGroupWidget, widget: QWidget
     ) -> None:
+        """Select the created subtab only when no subtab is selected yet."""
         if tab_group_widget.current_widget() is None:
             tab_group_widget.tabs.setCurrentWidget(widget)
 
     def _select_top_level_tab_if_user_was_on_previous_last_tab(
         self,
         widget: QWidget,
-        top_level_tab_count_before_create: int,
     ) -> None:
+        """If there was no previous tab, or if the user had the previously
+        last tab selected, select the newly created tab. Otherwise keep the
+        current selection.
+        """
+        top_level_tab_count_before_create = self._tab_widget.count() - 1
         if top_level_tab_count_before_create == 0:
             self._tab_widget.setCurrentWidget(widget)
             return
 
-        if self._tab_widget.currentIndex() == top_level_tab_count_before_create - 1:
+        if self._user_was_on_previous_last_top_level_tab(
+            top_level_tab_count_before_create
+        ):
             self._tab_widget.setCurrentWidget(widget)
+
+    def _user_was_on_previous_last_top_level_tab(
+        self,
+        top_level_tab_count_before_create: int,
+    ) -> bool:
+        return self._tab_widget.currentIndex() == top_level_tab_count_before_create - 1
 
     def _get_realization_tab_widget(
         self, tab_group_widget: TabGroupWidget
@@ -842,6 +837,17 @@ class RunDialog(QFrame):
         self._tab_widget.addTab(widget, tab_title)
         return widget
 
+    def _get_or_create_tab_group_widget(
+        self, iteration: int, tab_title: str
+    ) -> TabGroupWidget:
+        tab_group_widget = self._get_tab_group_widget(iteration, tab_title)
+        if tab_group_widget is None:
+            tab_group_widget = self._create_tab_group_widget(iteration, tab_title)
+            self._select_top_level_tab_if_user_was_on_previous_last_tab(
+                tab_group_widget,
+            )
+        return tab_group_widget
+
     def _on_tab_group_widget_changed(self, tab_group_widget: TabGroupWidget) -> None:
         if self._tab_widget.currentWidget() is tab_group_widget:
             self._current_tab_changed(self._tab_widget.currentIndex())
@@ -906,12 +912,10 @@ class RunDialog(QFrame):
             self._tab_widget.setCurrentWidget(tab_group_widget)
             return widget
 
-        top_level_tab_count_before_create = self._tab_widget.count()
         widget = WorkflowWidget(hook, parent=self)
         self._tab_widget.addTab(widget, workflow_tab_title(hook))
         self._select_top_level_tab_if_user_was_on_previous_last_tab(
             widget,
-            top_level_tab_count_before_create,
         )
         return widget
 

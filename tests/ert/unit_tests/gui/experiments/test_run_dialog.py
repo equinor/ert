@@ -1768,3 +1768,104 @@ def test_that_new_tab_does_not_steal_top_level_focus(
 
     assert run_dialog._tab_widget.count() == 3
     assert run_dialog._tab_widget.currentWidget() is pre_experiment_widget
+
+
+def test_that_fm_step_frame_is_visible_only_for_realization_widget(
+    qtbot: QtBot,
+):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=["prepare_experiment"],
+        )
+    )
+    run_dialog._on_event(
+        FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label="Foo",
+            total_iterations=1,
+            progress=0.25,
+            realization_count=1,
+            status_count={"Unknown": 1},
+            iteration=0,
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=0,
+            workflow_names=["prepare_iteration_0"],
+        )
+    )
+    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
+
+    def click_top_level_tab(tab_title: str) -> None:
+        tab_index = next(
+            i
+            for i in range(run_dialog._tab_widget.count())
+            if run_dialog._tab_widget.tabText(i) == tab_title
+        )
+        tab_bar = run_dialog._tab_widget.tabBar()
+        tab_rect = tab_bar.tabRect(tab_index)
+        qtbot.mouseClick(
+            tab_bar,
+            Qt.MouseButton.LeftButton,
+            pos=tab_rect.center(),
+        )
+
+    def click_subtab(tab_group_widget: TabGroupWidget, tab_title: str) -> None:
+        tab_index = next(
+            i
+            for i in range(tab_group_widget.tabs.count())
+            if tab_group_widget.tabs.tabText(i) == tab_title
+        )
+        tab_bar = tab_group_widget.tabs.tabBar()
+        tab_rect = tab_bar.tabRect(tab_index)
+        qtbot.mouseClick(
+            tab_bar,
+            Qt.MouseButton.LeftButton,
+            pos=tab_rect.center(),
+        )
+
+    click_top_level_tab("iteration-0")
+    qtbot.waitUntil(lambda: not run_dialog.fm_step_frame.isHidden(), timeout=2000)
+
+    iteration_tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
+    assert iteration_tab_group_widget is not None
+    click_subtab(iteration_tab_group_widget, "Pre-simulation workflows")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    click_top_level_tab("update-0")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    click_top_level_tab("Pre-experiment workflows")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    click_top_level_tab("iteration-0")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    iteration_tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
+    assert iteration_tab_group_widget is not None
+    click_subtab(iteration_tab_group_widget, "Run")
+    qtbot.waitUntil(lambda: not run_dialog.fm_step_frame.isHidden(), timeout=2000)
