@@ -56,6 +56,12 @@ class PlotContext:
         self._log_scale = False
         self._by_batch: bool = True
 
+        # Misfit plot
+        self._outliers: bool = True
+        self._scatter_plot: bool = False
+        self._box_plot: bool = True
+        self._mean: bool = True
+
         self._plot_type: PlotType | None = None
 
     @property
@@ -149,3 +155,35 @@ class PlotContext:
     @by_batch.setter
     def by_batch(self, value: bool) -> None:
         self._by_batch = value
+
+    @property
+    def outliers(self) -> bool:
+        return self._outliers
+
+    @outliers.setter
+    def outliers(self, value: bool) -> None:
+        self._outliers = value
+
+    @property
+    def scatter_plot(self) -> bool:
+        return self._scatter_plot
+
+    @scatter_plot.setter
+    def scatter_plot(self, value: bool) -> None:
+        self._scatter_plot = value
+
+    @property
+    def box_plot(self) -> bool:
+        return self._box_plot
+
+    @box_plot.setter
+    def box_plot(self, value: bool) -> None:
+        self._box_plot = value
+
+    @property
+    def mean(self) -> bool:
+        return self._mean
+
+    @mean.setter
+    def mean(self, value: bool) -> None:
+        self._mean = value
