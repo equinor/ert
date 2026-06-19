@@ -74,6 +74,20 @@ from tests.ert.utils import SnapshotBuilder
 _original_run_ensemble_evaluator_async = RunModel.run_ensemble_evaluator_async
 
 
+def _run_model_api_stub(
+    *,
+    experiment_name: str = "Test Experiment",
+    cancel=None,
+) -> RunModelAPI:
+    return RunModelAPI(
+        experiment_name=experiment_name,
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=cancel or (lambda: None),
+        has_failed_realizations=lambda: False,
+    )
+
+
 @pytest.fixture
 def event_queue(events, request):
     successful_realizations = getattr(request, "param", [0])
@@ -284,12 +298,9 @@ def test_that_terminating_experiment_during_hooked_workflows_marks_batch_cancell
             EndEvent(failed=True, msg="Experiment cancelled by user during workflows")
         )
 
-    run_model_api = RunModelAPI(
+    run_model_api = _run_model_api_stub(
         experiment_name="Ensemble experiment",
-        supports_rerunning_failed_realizations=False,
-        start_simulations_thread=lambda *_args, **_kwargs: None,
         cancel=cancel,
-        has_failed_realizations=lambda: False,
     )
     notifier = Mock()
     run_dialog = RunDialog(
@@ -1429,13 +1440,7 @@ HOOK_WORKFLOW_JOB slow_workflow_02 TOUCH_WORKFLOW {file_c} PRE_SIMULATION
 def test_that_run_dialog_places_all_workflow_hooks_in_expected_tabs(
     qtbot: QtBot, tmp_path: Path
 ):
-    run_model_api = RunModelAPI(
-        experiment_name="Ensemble smoother",
-        supports_rerunning_failed_realizations=False,
-        start_simulations_thread=lambda *_args, **_kwargs: None,
-        cancel=lambda: None,
-        has_failed_realizations=lambda: False,
-    )
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble smoother")
     notifier = Mock()
 
     run_dialog = RunDialog(
@@ -1464,25 +1469,16 @@ def test_that_run_dialog_places_all_workflow_hooks_in_expected_tabs(
         )
     )
     run_dialog._on_event(
-        FullSnapshotEvent(
-            snapshot=(
-                SnapshotBuilder()
-                .add_fm_step(
-                    fm_step_id="0",
-                    index="0",
-                    name="fm_step_0",
-                    max_memory_usage="1000",
-                    current_memory_usage="500",
-                    status=state.FORWARD_MODEL_STATE_FINISHED,
-                )
-                .build([str(i) for i in range(10)], state.REALIZATION_STATE_FINISHED)
-            ),
-            iteration_label="Foo",
+        _minimal_snapshot_event(
+            iteration=0,
             total_iterations=0,
             progress=1.0,
-            realization_count=10,
+            realization_ids=[str(i) for i in range(10)],
+            realization_state=state.REALIZATION_STATE_FINISHED,
+            fm_step_status=state.FORWARD_MODEL_STATE_FINISHED,
+            max_memory_usage="1000",
+            current_memory_usage="500",
             status_count={"Finished": 10},
-            iteration=0,
         )
     )
     run_dialog._on_event(
@@ -1593,39 +1589,53 @@ def test_that_run_dialog_places_all_workflow_hooks_in_expected_tabs(
     assert first_pre_simulation_widget is not second_pre_simulation_widget
 
 
+def _minimal_snapshot_event(
+    *,
+    iteration: int,
+    total_iterations: int,
+    progress: float,
+    iteration_label: str = "Foo",
+    realization_ids: list[str] | None = None,
+    realization_state: str = state.REALIZATION_STATE_UNKNOWN,
+    fm_step_status: str = state.FORWARD_MODEL_STATE_START,
+    max_memory_usage: str | None = None,
+    current_memory_usage: str | None = None,
+    status_count: dict[str, int] | None = None,
+) -> FullSnapshotEvent:
+    ids = realization_ids or ["0"]
+
+    return FullSnapshotEvent(
+        snapshot=(
+            SnapshotBuilder()
+            .add_fm_step(
+                fm_step_id="0",
+                index="0",
+                name="fm_step_0",
+                max_memory_usage=max_memory_usage,
+                current_memory_usage=current_memory_usage,
+                status=fm_step_status,
+            )
+            .build(ids, realization_state)
+        ),
+        iteration_label=iteration_label,
+        total_iterations=total_iterations,
+        progress=progress,
+        realization_count=len(ids),
+        status_count=status_count or {"Unknown": len(ids)},
+        iteration=iteration,
+    )
+
+
 def test_that_run_dialog_keeps_selected_subtab_when_creating_workflow_subtab(
     qtbot: QtBot,
 ):
-    run_model_api = RunModelAPI(
-        experiment_name="Ensemble experiment",
-        supports_rerunning_failed_realizations=False,
-        start_simulations_thread=lambda *_args, **_kwargs: None,
-        cancel=lambda: None,
-        has_failed_realizations=lambda: False,
-    )
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble experiment")
     notifier = Mock()
     run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
     qtbot.addWidget(run_dialog)
 
     run_dialog._on_event(
-        FullSnapshotEvent(
-            snapshot=(
-                SnapshotBuilder()
-                .add_fm_step(
-                    fm_step_id="0",
-                    index="0",
-                    name="fm_step_0",
-                    status=state.FORWARD_MODEL_STATE_START,
-                )
-                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
-            ),
-            iteration_label="Foo",
-            total_iterations=1,
-            progress=0.25,
-            realization_count=1,
-            status_count={"Unknown": 1},
-            iteration=0,
-        )
+        _minimal_snapshot_event(iteration=0, total_iterations=1, progress=0.25)
     )
 
     tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
@@ -1650,13 +1660,7 @@ def test_that_run_dialog_keeps_selected_subtab_when_creating_workflow_subtab(
 def test_that_run_dialog_keeps_selected_update_subtab_when_creating_workflow_subtab(
     qtbot: QtBot,
 ):
-    run_model_api = RunModelAPI(
-        experiment_name="Ensemble smoother",
-        supports_rerunning_failed_realizations=False,
-        start_simulations_thread=lambda *_args, **_kwargs: None,
-        cancel=lambda: None,
-        has_failed_realizations=lambda: False,
-    )
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble smoother")
     notifier = Mock()
     run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
     qtbot.addWidget(run_dialog)
@@ -1683,33 +1687,20 @@ def test_that_run_dialog_keeps_selected_update_subtab_when_creating_workflow_sub
 
 
 @pytest.mark.parametrize(
-    ("tab_title", "event"),
+    ("tab_title", "event", "expected_tab_count", "expected_workflow_hook"),
     [
         pytest.param(
             "iteration-0",
-            FullSnapshotEvent(
-                snapshot=(
-                    SnapshotBuilder()
-                    .add_fm_step(
-                        fm_step_id="0",
-                        index="0",
-                        name="fm_step_0",
-                        status=state.FORWARD_MODEL_STATE_START,
-                    )
-                    .build(["0"], state.REALIZATION_STATE_UNKNOWN)
-                ),
-                iteration_label="Foo",
-                total_iterations=2,
-                progress=0.25,
-                realization_count=1,
-                status_count={"Unknown": 1},
-                iteration=1,
-            ),
+            _minimal_snapshot_event(iteration=1, total_iterations=2, progress=0.25),
+            3,
+            None,
             id="new_iteration_tab",
         ),
         pytest.param(
             "update-0",
             RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()),
+            3,
+            None,
             id="new_update_tab",
         ),
         pytest.param(
@@ -1719,7 +1710,20 @@ def test_that_run_dialog_keeps_selected_update_subtab_when_creating_workflow_sub
                 iteration=None,
                 workflow_names=["prepare_experiment"],
             ),
+            3,
+            None,
             id="new_top_level_workflow_tab",
+        ),
+        pytest.param(
+            "iteration-0",
+            WorkflowBatchStartedEvent(
+                hook=HookRuntime.PRE_SIMULATION,
+                iteration=0,
+                workflow_names=["prepare_iteration_0"],
+            ),
+            2,
+            HookRuntime.PRE_SIMULATION,
+            id="iteration_workflow_event",
         ),
     ],
 )
@@ -1727,14 +1731,10 @@ def test_that_new_tab_does_not_steal_top_level_focus(
     qtbot: QtBot,
     tab_title: str,
     event: object,
+    expected_tab_count: int,
+    expected_workflow_hook: HookRuntime | None,
 ):
-    run_model_api = RunModelAPI(
-        experiment_name="Test Experiment",
-        supports_rerunning_failed_realizations=False,
-        start_simulations_thread=lambda *_args, **_kwargs: None,
-        cancel=lambda: None,
-        has_failed_realizations=lambda: False,
-    )
+    run_model_api = _run_model_api_stub(experiment_name="Test Experiment")
     notifier = Mock()
     run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
     qtbot.addWidget(run_dialog)
@@ -1743,43 +1743,24 @@ def test_that_new_tab_does_not_steal_top_level_focus(
         HookRuntime.PRE_EXPERIMENT, None
     )
     run_dialog._on_event(
-        FullSnapshotEvent(
-            snapshot=(
-                SnapshotBuilder()
-                .add_fm_step(
-                    fm_step_id="0",
-                    index="0",
-                    name="fm_step_0",
-                    status=state.FORWARD_MODEL_STATE_START,
-                )
-                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
-            ),
-            iteration_label="Foo",
-            total_iterations=2,
-            progress=0.25,
-            realization_count=1,
-            status_count={"Unknown": 1},
-            iteration=0,
-        )
+        _minimal_snapshot_event(iteration=0, total_iterations=2, progress=0.25)
     )
     run_dialog._tab_widget.setCurrentWidget(pre_experiment_widget)
 
     run_dialog._on_event(event)
 
-    assert run_dialog._tab_widget.count() == 3
+    assert run_dialog._tab_widget.count() == expected_tab_count
+    if expected_workflow_hook is not None:
+        tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
+        assert tab_group_widget is not None
+        assert run_dialog._get_workflow_subtab(tab_group_widget, expected_workflow_hook)
     assert run_dialog._tab_widget.currentWidget() is pre_experiment_widget
 
 
 def test_that_fm_step_frame_is_visible_only_for_realization_widget(
     qtbot: QtBot,
 ):
-    run_model_api = RunModelAPI(
-        experiment_name="Ensemble experiment",
-        supports_rerunning_failed_realizations=False,
-        start_simulations_thread=lambda *_args, **_kwargs: None,
-        cancel=lambda: None,
-        has_failed_realizations=lambda: False,
-    )
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble experiment")
     notifier = Mock()
     run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
     qtbot.addWidget(run_dialog)
@@ -1792,24 +1773,7 @@ def test_that_fm_step_frame_is_visible_only_for_realization_widget(
         )
     )
     run_dialog._on_event(
-        FullSnapshotEvent(
-            snapshot=(
-                SnapshotBuilder()
-                .add_fm_step(
-                    fm_step_id="0",
-                    index="0",
-                    name="fm_step_0",
-                    status=state.FORWARD_MODEL_STATE_START,
-                )
-                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
-            ),
-            iteration_label="Foo",
-            total_iterations=1,
-            progress=0.25,
-            realization_count=1,
-            status_count={"Unknown": 1},
-            iteration=0,
-        )
+        _minimal_snapshot_event(iteration=0, total_iterations=1, progress=0.25)
     )
     run_dialog._on_event(
         WorkflowBatchStartedEvent(

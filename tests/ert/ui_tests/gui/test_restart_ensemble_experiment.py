@@ -164,7 +164,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
 
     # Assert that the number of boxes in the detailed view is
     # equal to the number of realizations
-    realization_widget = iteration_widget._tab_widget.currentWidget()
+    realization_widget = iteration_widget.tabs.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert list_model
@@ -200,7 +200,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
-    realization_widget = iteration_widget._tab_widget.currentWidget()
+    realization_widget = iteration_widget.tabs.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert list_model
@@ -234,7 +234,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
-    realization_widget = iteration_widget._tab_widget.currentWidget()
+    realization_widget = iteration_widget.tabs.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert list_model
@@ -328,7 +328,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
-    realization_widget = iteration_widget._tab_widget.currentWidget()
+    realization_widget = iteration_widget.tabs.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert list_model
@@ -358,7 +358,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     assert isinstance(iteration_widget, TabGroupWidget)
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
-    realization_widget = iteration_widget._tab_widget.currentWidget()
+    realization_widget = iteration_widget.tabs.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert list_model
