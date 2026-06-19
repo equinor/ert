@@ -462,23 +462,21 @@ def test_that_esmda_with_all_workflows_produces_expected_tabs(
                 run_dialog._tab_widget, f"iteration-{iteration}"
             )
             assert isinstance(iteration_widget, TabGroupWidget)
-            assert set(_tab_texts(iteration_widget._tab_widget)) == {
+            assert set(_tab_texts(iteration_widget.tabs)) == {
                 "Run",
                 "Pre-simulation workflows",
                 "Post-simulation workflows",
             }
 
-            realization_widget = _widget_for_tab_text(
-                iteration_widget._tab_widget, "Run"
-            )
+            realization_widget = _widget_for_tab_text(iteration_widget.tabs, "Run")
             assert isinstance(realization_widget, RealizationWidget)
             assert realization_widget._real_view.model().rowCount() == 3
 
             pre_simulation_widget = _widget_for_tab_text(
-                iteration_widget._tab_widget, "Pre-simulation workflows"
+                iteration_widget.tabs, "Pre-simulation workflows"
             )
             post_simulation_widget = _widget_for_tab_text(
-                iteration_widget._tab_widget, "Post-simulation workflows"
+                iteration_widget.tabs, "Post-simulation workflows"
             )
             assert isinstance(pre_simulation_widget, WorkflowWidget)
             assert isinstance(post_simulation_widget, WorkflowWidget)
@@ -499,18 +497,16 @@ def test_that_esmda_with_all_workflows_produces_expected_tabs(
             if iteration == 0:
                 expected_tabs.add("Pre-first-update workflows")
 
-            assert set(_tab_texts(update_iteration_widget._tab_widget)) == expected_tabs
+            assert set(_tab_texts(update_iteration_widget.tabs)) == expected_tabs
 
-            update_widget = _widget_for_tab_text(
-                update_iteration_widget._tab_widget, "Update"
-            )
+            update_widget = _widget_for_tab_text(update_iteration_widget.tabs, "Update")
             assert isinstance(update_widget, UpdateWidget)
 
             pre_update_widget = _widget_for_tab_text(
-                update_iteration_widget._tab_widget, "Pre-update workflows"
+                update_iteration_widget.tabs, "Pre-update workflows"
             )
             post_update_widget = _widget_for_tab_text(
-                update_iteration_widget._tab_widget, "Post-update workflows"
+                update_iteration_widget.tabs, "Post-update workflows"
             )
             assert isinstance(pre_update_widget, WorkflowWidget)
             assert isinstance(post_update_widget, WorkflowWidget)
@@ -519,7 +515,7 @@ def test_that_esmda_with_all_workflows_produces_expected_tabs(
 
             if iteration == 0:
                 pre_first_update_widget = _widget_for_tab_text(
-                    update_iteration_widget._tab_widget,
+                    update_iteration_widget.tabs,
                     "Pre-first-update workflows",
                 )
                 assert isinstance(pre_first_update_widget, WorkflowWidget)
