@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
+from matplotlib.typing import LineStyleType
 from typing_extensions import TypedDict
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
@@ -157,7 +158,7 @@ def _add_statistics_legend(
                 [],
                 color="black",
                 marker=style.marker,
-                linestyle=style.line_style,
+                linestyle=cast(LineStyleType, style.line_style),
                 linewidth=style.width,
                 alpha=style.alpha,
             )
