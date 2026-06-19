@@ -878,7 +878,6 @@ class RunDialog(QFrame):
             widget = self._get_workflow_subtab(tab_group_widget, hook)
             if widget is None:
                 return None
-            self._tab_widget.setCurrentWidget(tab_group_widget)
             return widget
 
         for index in range(self._tab_widget.count()):
@@ -903,13 +902,13 @@ class RunDialog(QFrame):
                 if self._workflow_belongs_to_update(hook)
                 else f"iteration-{iteration}"
             )
-            tab_group_widget = self._get_tab_group_widget(iteration, tab_title)
-            if tab_group_widget is None:
-                tab_group_widget = self._create_tab_group_widget(iteration, tab_title)
+            tab_group_widget = self._get_or_create_tab_group_widget(
+                iteration,
+                tab_title,
+            )
             widget = self._get_workflow_subtab(tab_group_widget, hook)
             if widget is None:
                 widget = self._create_workflow_subtab(tab_group_widget, hook)
-            self._tab_widget.setCurrentWidget(tab_group_widget)
             return widget
 
         widget = WorkflowWidget(hook, parent=self)
