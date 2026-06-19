@@ -332,7 +332,7 @@ def run_experiment_fixture(request):
                 # equal to the number of realizations
                 iteration_widget = run_dialog._tab_widget.currentWidget()
                 assert isinstance(iteration_widget, TabGroupWidget)
-                realization_widget = iteration_widget._tab_widget.currentWidget()
+                realization_widget = iteration_widget.tabs.currentWidget()
                 assert isinstance(realization_widget, RealizationWidget)
                 list_model = realization_widget._real_view.model()
                 expected_num_realizations = (
