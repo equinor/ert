@@ -336,6 +336,11 @@ class MisfitsPlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
 
+        outlier = plot_context.outliers
+        scatter = plot_context.scatter_plot
+        box = plot_context.box_plot
+        mean = plot_context.mean
+
         config = plot_context.plotConfig()
 
         all_misfits = pl.concat(
@@ -397,112 +402,124 @@ class MisfitsPlot:
 
             color = color_map.get(ensemble_key)
 
-            boxplot = axes.boxplot(
-                data_for_boxes,
-                positions=positions,
-                widths=box_width,
-                whis=(5, 95),
-                showfliers=True,
-                manage_ticks=False,
-                patch_artist=True,
-                boxprops={
-                    "facecolor": color,
-                    "alpha": 1,
-                    "edgecolor": color,
-                    "linewidth": 0.7,
-                },
-                whiskerprops={
-                    "color": color,
-                    "alpha": 1,
-                    "linewidth": 0.8,
-                    "linestyle": "--",
-                },
-                capprops={"color": color, "alpha": 1, "linewidth": 0.8},
-                medianprops={"color": "black", "linewidth": 0.8, "alpha": 1},
-                flierprops={
-                    "marker": "o",
-                    "alpha": 1,
-                    "markeredgewidth": 0.3 + (0.4 * (1 - many_boxes_factor)),
-                    "markeredgecolor": color,
-                    "markerfacecolor": "none",
-                },
-            )
-            axes.plot(
-                positions,
-                np.mean(data_for_boxes, axis=1),
-                "D",
-                markersize=4,
-                color="black",
-            )
-            rng = np.random.default_rng(42) 
-            jitter = box_width * 0.5
-
-            x_points: list[np.ndarray] = []
-            y_points: list[np.ndarray] = []
-            for position, box_data in zip(positions, data_for_boxes, strict=True):
-                x_points.append(
-                    position + rng.uniform(-jitter / 2, jitter / 2, size=len(box_data))
+            if box:
+                boxplot = axes.boxplot(
+                    data_for_boxes,
+                    positions=positions,
+                    widths=box_width,
+                    whis=(5, 95),
+                    showfliers=outlier,
+                    manage_ticks=False,
+                    patch_artist=True,
+                    boxprops={
+                        "facecolor": color,
+                        "alpha": 1,
+                        "edgecolor": color,
+                        "linewidth": 0.7,
+                    },
+                    whiskerprops={
+                        "color": color,
+                        "alpha": 1,
+                        "linewidth": 0.8,
+                        "linestyle": "--",
+                    },
+                    capprops={"color": color, "alpha": 1, "linewidth": 0.8},
+                    medianprops={"color": "black", "linewidth": 0.8, "alpha": 1},
+                    flierprops={
+                        "marker": "o",
+                        "alpha": 1,
+                        "markeredgewidth": 0.3 + (0.4 * (1 - many_boxes_factor)),
+                        "markeredgecolor": color,
+                        "markerfacecolor": "none",
+                    },
                 )
-                y_points.append(box_data)
+                config.add_legend_item(ensemble_key[0], boxplot["boxes"][0])
 
-            x_all = np.concatenate(x_points)
-            y_all = np.concatenate(y_points)
+            if mean:
+                axes.plot(
+                    positions,
+                    np.mean(data_for_boxes, axis=1),
+                    "D",
+                    markersize=4,
+                    color="black",
+                    zorder=3,  # Above boxes and scatter
+                )
 
-            axes.scatter(
-                x_all,
-                y_all,
-                color=color,
-                alpha=0.35,
-                linewidths=0,
-                zorder=2,  # above bands/boxes
+            if scatter:
+                rng = np.random.default_rng(42)
+                jitter = box_width * 0.5
+
+                x_points: list[np.ndarray] = []
+                y_points: list[np.ndarray] = []
+                for position, box_data in zip(positions, data_for_boxes, strict=True):
+                    x_points.append(
+                        position
+                        + rng.uniform(-jitter / 2, jitter / 2, size=len(box_data))
+                    )
+                    y_points.append(box_data)
+
+                x_all = np.concatenate(x_points)
+                y_all = np.concatenate(y_points)
+
+                axes.scatter(
+                    x_all,
+                    y_all,
+                    color=color,
+                    alpha=0.35,
+                    linewidths=0,
+                    zorder=2,  # above bands/boxes
+                )
+
+        if scatter:
+            config.add_legend_item(
+                "Scatter points",
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="black",
+                    markeredgecolor="None",
+                    linestyle="None",
+                    alpha=0.35,
+                ),
             )
-            config.add_legend_item(ensemble_key[0], boxplot["boxes"][0])
 
-        config.add_legend_item(
-            "Scatter points",
-            Line2D(
-                [0],
-                [0],
-                marker="o",
-                color="black",
-                markeredgecolor="None",
-                linestyle="None",
-                alpha=0.35,
-            ),
-        )
+        if box:
+            config.add_legend_item(
+                "Median", Line2D([0], [0], color="black", linewidth=0.6, alpha=1)
+            )
+            config.add_legend_item(
+                "Whiskers (5-95%)",
+                Line2D([0], [0], color="black", linewidth=0.7, linestyle="--", alpha=1),
+            )
 
-        config.add_legend_item(
-            "Median", Line2D([0], [0], color="black", linewidth=0.6, alpha=1)
-        )
-        config.add_legend_item(
-            "Mean",
-            Line2D(
-                [0],
-                [0],
-                marker="D",
-                color="black",
-                markersize=4,
-                linestyle="None",
-                alpha=1,
-            ),
-        )
-        config.add_legend_item(
-            "Outliers",
-            Line2D(
-                [0],
-                [0],
-                marker="o",
-                color="none",
-                markeredgecolor="black",
-                markerfacecolor="none",
-                markersize=6,
-                alpha=1,
-            ),
-        )
-        config.add_legend_item(
-            "Whiskers (5-95%)",
-            Line2D([0], [0], color="black", linewidth=0.7, linestyle="--", alpha=1),
-        )
+        if mean:
+            config.add_legend_item(
+                "Mean",
+                Line2D(
+                    [0],
+                    [0],
+                    marker="D",
+                    color="black",
+                    markersize=4,
+                    linestyle="None",
+                    alpha=1,
+                ),
+            )
+        if outlier:
+            config.add_legend_item(
+                "Outliers",
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="none",
+                    markeredgecolor="black",
+                    markerfacecolor="none",
+                    markersize=6,
+                    alpha=1,
+                ),
+            )
 
         axes.set_xlim(-0.5, len(all_timesteps) - 0.5)
         axes.set_xticks(

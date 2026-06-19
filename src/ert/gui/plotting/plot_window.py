@@ -13,6 +13,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
     QDialog,
     QDockWidget,
     QGroupBox,
@@ -358,12 +359,39 @@ class PlotWindow(QMainWindow):
                 ),
             )
 
+            # Misfits plot options
+            self._toggle_mean = QCheckBox("Show mean")
+            self._toggle_mean.setChecked(True)
+            self._toggle_mean.stateChanged.connect(self.updatePlot)
+            self._toggle_outliers = QCheckBox("Show outliers")
+            self._toggle_outliers.setChecked(True)
+            self._toggle_outliers.stateChanged.connect(self.updatePlot)
+            self._toggle_scatter_plot = QCheckBox("Show scatter")
+            self._toggle_scatter_plot.setChecked(False)
+            self._toggle_scatter_plot.stateChanged.connect(self.updatePlot)
+            self._toggle_box = QCheckBox("Show box plot")
+            self._toggle_box.setChecked(True)
+            self._toggle_box.stateChanged.connect(self.updatePlot)
+
+            self._misfits_options_group = create_group_box(
+                "Plot options",
+                create_group_layout(
+                    [
+                        self._toggle_scatter_plot,
+                        self._toggle_box,
+                        self._toggle_mean,
+                        self._toggle_outliers,
+                    ]
+                ),
+            )
+
             right_container = QWidget()
             right_layout = create_group_layout(
                 [
                     self._ensemble_group,
                     self._display_over_group,
                     self._everest_controls_group,
+                    self._misfits_options_group,
                 ]
             )
             right_container.setLayout(right_layout)
@@ -377,6 +405,7 @@ class PlotWindow(QMainWindow):
 
             self._everest_controls_group.setVisible(False)
             self._display_over_group.setVisible(False)
+            self._misfits_options_group.setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
     def get_plot_api_version(self) -> str:
@@ -413,16 +442,18 @@ class PlotWindow(QMainWindow):
         ):
             key = key.replace("BREAKTHROUGH:", "")
 
+        self._misfits_options_group.setVisible(plot_widget.name == MISFITS)
+
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
         is_objective_plot = plot_widget.name in {
             EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
             EVEREST_OBJECTIVE_FUNCTION_PLOT,
         }
+
         is_everest_ensemble = plot_widget.name == ENSEMBLE and self.is_everest
         self._everest_controls_group.setVisible(is_gradient_plot or is_controls_plot)
         self._display_over_group.setVisible(is_controls_plot)
-
         self._ensemble_selection_widget.apply_ensemble_filtering(
             require_func_eval=is_objective_plot
             or is_everest_ensemble
@@ -563,6 +594,11 @@ class PlotWindow(QMainWindow):
                 layer,
             )
             plot_context.by_batch = self._display_over_batches_radio.isChecked()
+
+            plot_context.scatter_plot = self._toggle_scatter_plot.isChecked()
+            plot_context.box_plot = self._toggle_box.isChecked()
+            plot_context.mean = self._toggle_mean.isChecked()
+            plot_context.outliers = self._toggle_outliers.isChecked()
 
             # Check if key is a history key.
             # If it is it already has the data it needs
