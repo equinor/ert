@@ -72,7 +72,7 @@ class SuggestorMessage(QWidget):
 
         self._icon = icon
         self._message = message.replace("<", "&lt;").replace(">", "&gt;")
-        self._locations = locations
+        self._locations = [loc for loc in locations if loc]
 
         if self._locations and not self._locations[0]:
             self._locations.pop(0)

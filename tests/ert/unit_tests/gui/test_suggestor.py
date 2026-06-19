@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 from ert.config import ErrorInfo, WarningInfo
 from ert.gui.ertwidgets import Suggestor
+from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.ertwidgets.suggestor.suggestor import _CopyAllButton
 
 
@@ -55,3 +56,8 @@ def test_that_copy_all_button_concatenates_errors_warnings_and_deprecations(qtbo
     assert remove_whitespaces(QApplication.clipboard().text()) == remove_whitespaces(
         expected_clipboard
     )
+
+
+def test_that_empty_locations_are_filtered_out_of_the_suggestor_message(qtbot):
+    suggestor_message = SuggestorMessage("", "", "", QWidget(), "", [""] * 20)
+    assert suggestor_message._locations == []
