@@ -1174,13 +1174,16 @@ def _resolve_path(directory: str, filename: str) -> str:
 
 def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f'Could not convert {value} to {type_name}. Failed to validate "{value}"',
+        f'Could not convert "{value}" to {type_name} for key "{token}". '
+        f'Failed to validate "{value}"',
         token,
     )
 
 
 def _unknown_key_error(key: str, context: FileContextToken) -> ObservationConfigError:
-    raise ObservationConfigError.with_context(f"Unknown {key} in {context!s}", context)
+    raise ObservationConfigError.with_context(
+        f"Unknown key '{key}' in {context!s}", context
+    )
 
 
 def _unknown_observation_type_error(obs: ObservationDict) -> ObservationConfigError:

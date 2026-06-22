@@ -196,9 +196,9 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
         non_segments = {k: v for k, v in object_.items() if not isinstance(k, tuple)}
         segments = [(k[1], v) for k, v in object_.items() if isinstance(k, tuple)]
         error_list = [
-            ErrorInfo(f"Unknown {unknown_key} in {observation_type!s}").set_context(
-                context_token
-            )
+            ErrorInfo(
+                f"Unknown key '{unknown_key}' in {observation_type!s}"
+            ).set_context(context_token)
             for unknown_key in ["type", "segments", "name"]
             if unknown_key in non_segments
         ]
