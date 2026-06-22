@@ -63,7 +63,7 @@ class Scheduler:
     BATCH_KILLING_INTERVAL = 1.5
 
     # Seconds for driver to report job as finished after checksum arrival
-    ORPHAN_KILL_DELAY = 60
+    ORPHAN_KILL_DELAY = 300
 
     def __init__(
         self,
