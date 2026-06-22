@@ -205,13 +205,22 @@ def create_forward_model_json(
     def handle_default(fm_step: ForwardModelStep, arg: str) -> str:
         return fm_step.default_mapping.get(arg, arg)
 
+    fm_steps_with_overwritten_globals: list[dict[str, Any]] = []
     for fm_step in forward_model_steps:
-        for key, val in fm_step.private_args.items():
-            if key in context and key != val and context[key] != val:
-                logger.info(
-                    f"Private arg '{key}':'{val}' chosen over"
-                    f" global '{context[key]}' in forward model step {fm_step.name}"
-                )
+        overwritten_keys = {
+            key: {"private_arg": val, "global_arg": context[key]}
+            for key, val in fm_step.private_args.items()
+            if key in context and key != val and context[key] != val
+        }
+        if overwritten_keys:
+            fm_steps_with_overwritten_globals.append(
+                {"forward_model_step_name": fm_step.name, "key": overwritten_keys}
+            )
+    if fm_steps_with_overwritten_globals:
+        logger.info(
+            "Private args chosen over global args for the following "
+            f"forward model steps and variables: {fm_steps_with_overwritten_globals}"
+        )
     config_file_path = Path(user_config_file) if user_config_file is not None else None
     config_path = str(config_file_path.parent) if config_file_path else ""
     config_file = str(config_file_path.name) if config_file_path else ""

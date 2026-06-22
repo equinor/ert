@@ -606,13 +606,27 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
         ),
         encoding="utf-8",
     )
-
+    Path("step_file").write_text(
+        "EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n", encoding="utf-8"
+    )
+    Path("step_file2").write_text(
+        "EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3> <VAR4>\n", encoding="utf-8"
+    )
     # Write a minimal config file
     Path("config_file.ert").write_text(
         "NUM_REALIZATIONS 1\n"
         "DEFINE <ARG> A\n"
         "INSTALL_JOB job_name job_file\n"
-        "FORWARD_MODEL job_name(<ARG>=B)",
+        "FORWARD_MODEL job_name(<ARG>=B)\n"
+        "DEFINE <VAR1> 10\n"
+        "DEFINE <VAR2> 20\n"
+        "DEFINE <VAR3> 55\n"
+        "DEFINE <VAR4> 105\n"
+        "INSTALL_JOB step_name step_file\n"
+        "INSTALL_JOB step_name2 step_file2\n"
+        "FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n"
+        "FORWARD_MODEL step_name2(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=7, <VAR4>=100)\n"
+        "FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=6)\n",
         encoding="utf-8",
     )
 
@@ -627,9 +641,28 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
 
     fm_data = data["jobList"][0]
 
-    assert len(ert_config.forward_model_steps) == 1
+    assert len(ert_config.forward_model_steps) == 4
     assert fm_data["argList"] == ["B"]
-    assert "Private arg '<ARG>':'B' chosen over global 'A'" in caplog.text
+    private_args_messages = [
+        msg for msg in caplog.messages if "Private args chosen over global args" in msg
+    ]
+    assert len(private_args_messages) == 1
+    message = private_args_messages[0]
+    assert (
+        "Private args chosen over global args for the following forward model "
+        "steps and variables: ["
+        "{'forward_model_step_name': 'job_name', "
+        "'key': {'<ARG>': {'private_arg': 'B', 'global_arg': 'A'}}}, "
+        "{'forward_model_step_name': 'step_name', "
+        "'key': {'<VAR3>': {'private_arg': '5', 'global_arg': '55'}}}, "
+        "{'forward_model_step_name': 'step_name2', "
+        "'key': {'<VAR3>': {'private_arg': '7', 'global_arg': '55'}, "
+        "'<VAR4>': {'private_arg': '100', 'global_arg': '105'}}}, "
+        "{'forward_model_step_name': 'step_name', "
+        "'key': {'<VAR3>': {'private_arg': '6', 'global_arg': '55'}}}]"
+    ) in message
+    assert "'<VAR1>'" not in message
+    assert "'<VAR2>'" not in message
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -669,7 +702,7 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
     fm_data = data["jobList"][0]
     assert len(ert_config.forward_model_steps) == 1
     assert fm_data["argList"] == ["A"]
-    assert "Private arg '<ARG>':'<ARG>' chosen over global 'A'" not in caplog.text
+    assert "Private args chosen over global args" not in caplog.text
 
 
 @pytest.mark.usefixtures("use_tmpdir")
