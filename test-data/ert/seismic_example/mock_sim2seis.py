@@ -130,12 +130,16 @@ def _create_value(
     Data row is already mocked to one value, so no separate calculation (mean/min) is
     happening. It means data can be inconsistent (min > mean), but it shouldn't matter.
     """
-    a = parameters["a"]["value"]
-    b = parameters["b"]["value"]
-    setup_str = f"{filename}:{value_index}:a={a}:b={b}"
-    normalized_value = _string_to_normalized_float(setup_str)
-    setup_offset = (normalized_value - 0.5) * 0.2  # map [0,1) -> [-0.1, 0.1)
-    return (BASE_DATA[value_index] + setup_offset) / 2.0
+
+    a = parameters["a"]["value"]  # [0, 1)
+    b = parameters["b"]["value"]  # [0, 2)
+    setup_str = f"{filename}:{value_index}"
+    setup_value = _string_to_normalized_float(setup_str)  # [0, 1)
+    a_contribution = (a - 0.5) * setup_value  # [-0.5, 0.5)
+    b_contribution = (b - 1.0) * 0.5  # [-0.5, 0.5)
+    blending_factor = 0.02
+    offset = (a_contribution + b_contribution) * blending_factor
+    return BASE_DATA[value_index] + offset
 
 
 def _obs_error(obs_value: float) -> float:
@@ -165,7 +169,7 @@ def _build_filename(
         f"{attribute.value}_{stacking_offset.value}"
         f"_{calculation.value}_{vertical_domain.value}"
     )
-    return f"{field.value}--{attr_part}--{base.value}_{monitor.value}.csv"
+    return f"{field.value}--{attr_part}--{monitor.value}_{base.value}.csv"
 
 
 def generate_csv(
