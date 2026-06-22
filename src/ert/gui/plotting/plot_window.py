@@ -379,6 +379,24 @@ class PlotWindow(QMainWindow):
             self._display_over_group.setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
+            if self.getSelectedKey() is None:
+                self._show_no_data_message()
+
+    def _show_no_data_message(self) -> None:
+        current_widget = self._central_tab.currentWidget()
+        if not isinstance(current_widget, PlotWidget):
+            return
+
+        current_widget.resetPlot()
+        current_widget._figure.text(
+            0.5,
+            0.5,
+            "No data to visualize. Head over to 'Start experiment' to get started!",
+            ha="center",
+            va="center",
+        )
+        current_widget._canvas.draw()
+
     def get_plot_api_version(self) -> str:
         return self._api.api_version
 
@@ -399,6 +417,7 @@ class PlotWindow(QMainWindow):
     def updatePlot(self, layer: int | None = None) -> None:
         key_def = self.getSelectedKey()
         if key_def is None:
+            self._show_no_data_message()
             return
         key = key_def.key
 
@@ -681,6 +700,7 @@ class PlotWindow(QMainWindow):
     def keySelected(self) -> None:
         key_def = self.getSelectedKey()
         if key_def is None:
+            self._show_no_data_message()
             return
         self._plot_customizer.switch_plot_config_history(key_def)
 
