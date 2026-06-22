@@ -464,8 +464,8 @@ def test_that_invalid_numeric_values_in_rft_observations_csv_raises_error():
         )
 
     assert (
-        'Could not convert invalid_value to float. Failed to validate "invalid_value"'
-        in str(err.value)
+        'Could not convert "invalid_value" to float for key "PRESSURE". '
+        'Failed to validate "invalid_value"' in str(err.value)
     )
 
 
