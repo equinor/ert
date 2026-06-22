@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pandas as pd
 import polars as pl
+import pytest
 from matplotlib.figure import Figure
 from polars.testing import assert_frame_equal
 
@@ -221,3 +222,172 @@ def test_that_misfit_conversion_for_gen_data_converts_to_equivalent_long_polars_
     ).with_columns(pl.col("key_index").cast(pl.UInt16))
 
     assert_frame_equal(result_df, expected_df)
+
+
+def test_that_box_and_scatter_plot_is_being_plotted_for_summary_data():
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+    plot_context = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="FOPR",
+        layer=None,
+    )
+    plot_context.scatter_plot = True  # box is true by default
+
+    key_def = PlotApiKeyDefinition(
+        "FOPR",
+        index_type=None,
+        metadata={"data_origin": "summary"},
+        observations=True,
+        dimensionality=2,
+    )
+    figure = Figure()
+
+    MisfitsPlot().plot(
+        figure,
+        plot_context,
+        {
+            ensemble: pd.DataFrame(
+                {"2023-01-01": [12.0], "2023-01-02": [18.0]},
+                index=pd.Index([0], name="Realization"),
+            )
+        },
+        observation_data=pd.DataFrame(
+            data={
+                0: [2.0, 10.0, "2023-01-01"],
+                1: [2.0, 20.0, "2023-01-02"],
+            },
+            index=["STD", "OBS", "key_index"],
+        ),
+        std_dev_images={},
+        obs_loc=None,
+        key_def=key_def,
+    )
+
+    assert len(figure.axes) == 1
+    axes = figure.axes[0]
+    assert len(axes.collections) == 1  # scatter
+    assert len(axes.patches) == 3  # 2 boxes + background patch
+
+
+def test_that_mean_gets_plotted_for_summary_data_when_enabled():
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+    plot_context = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="FOPR",
+        layer=None,
+    )
+    plot_context.box_plot = False
+    plot_context.mean = True
+
+    key_def = PlotApiKeyDefinition(
+        "FOPR",
+        index_type=None,
+        metadata={"data_origin": "summary"},
+        observations=True,
+        dimensionality=2,
+    )
+    figure = Figure()
+
+    MisfitsPlot().plot(
+        figure,
+        plot_context,
+        {
+            ensemble: pd.DataFrame(
+                {"2023-01-01": [12.0], "2023-01-02": [18.0]},
+                index=pd.Index([0], name="Realization"),
+            )
+        },
+        observation_data=pd.DataFrame(
+            data={
+                0: [2.0, 10.0, "2023-01-01"],
+                1: [2.0, 20.0, "2023-01-02"],
+            },
+            index=["STD", "OBS", "key_index"],
+        ),
+        std_dev_images={},
+        obs_loc=None,
+        key_def=key_def,
+    )
+
+    assert len(figure.axes) == 1
+    axes = figure.axes[0]
+    axes_lines = axes.get_lines()
+    assert len(axes_lines) == 2  # mean line + hline
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_that_legend_items_for_summary_data_is_toggleable(enabled):
+    legend_items = [
+        "Mean",
+        "Median",
+        "Outliers",
+        "Scatter points",
+    ]
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+    plot_context = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="FOPR",
+        layer=None,
+    )
+    plot_context.mean = enabled
+    plot_context.scatter_plot = enabled
+    plot_context.box_plot = enabled
+
+    key_def = PlotApiKeyDefinition(
+        "FOPR",
+        index_type=None,
+        metadata={"data_origin": "summary"},
+        observations=True,
+        dimensionality=2,
+    )
+    figure = Figure()
+
+    MisfitsPlot().plot(
+        figure,
+        plot_context,
+        {
+            ensemble: pd.DataFrame(
+                {"2023-01-01": [12.0], "2023-01-02": [18.0]},
+                index=pd.Index([0], name="Realization"),
+            )
+        },
+        observation_data=pd.DataFrame(
+            data={
+                0: [2.0, 10.0, "2023-01-01"],
+                1: [2.0, 20.0, "2023-01-02"],
+            },
+            index=["STD", "OBS", "key_index"],
+        ),
+        std_dev_images={},
+        obs_loc=None,
+        key_def=key_def,
+    )
+
+    axes = figure.axes[0]
+    legend_texts = [text.get_text() for text in axes.get_legend().get_texts()]
+    for item in legend_items:
+        assert (item in legend_texts) == enabled

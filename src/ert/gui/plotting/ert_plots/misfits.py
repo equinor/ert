@@ -403,7 +403,7 @@ class MisfitsPlot:
             color = color_map.get(ensemble_key)
 
             if box:
-                boxplot = axes.boxplot(
+                axes.boxplot(
                     data_for_boxes,
                     positions=positions,
                     widths=box_width,
@@ -433,7 +433,6 @@ class MisfitsPlot:
                         "markerfacecolor": "none",
                     },
                 )
-                config.add_legend_item(ensemble_key[0], boxplot["boxes"][0])
 
             if mean:
                 axes.plot(
@@ -469,6 +468,18 @@ class MisfitsPlot:
                     linewidths=0,
                     zorder=2,  # above bands/boxes
                 )
+
+            config.add_legend_item(
+                ensemble_key[0],
+                Line2D(
+                    [],
+                    [],
+                    marker="s",
+                    linestyle="None",
+                    color=color,
+                    label=ensemble_key[0],
+                ),
+            )
 
         if scatter:
             config.add_legend_item(
@@ -506,7 +517,7 @@ class MisfitsPlot:
                     alpha=1,
                 ),
             )
-        if outlier:
+        if outlier and box:
             config.add_legend_item(
                 "Outliers",
                 Line2D(
