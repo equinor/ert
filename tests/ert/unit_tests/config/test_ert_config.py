@@ -1508,17 +1508,11 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         )
 
     assert (
-        "Private arg '<VAR3>':'5' chosen over global '55' "
-        "in forward model step step_name"
+        "{'forward_model_step_name': 'step_name', 'key': {'<VAR3>': "
+        "{'private_arg': '5', 'global_arg': '55'}}}"
     ) in caplog.text
-    assert (
-        "Private arg '<VAR1>':'10' chosen over global '10' "
-        "in forward model step step_name"
-    ) not in caplog.text
-    assert (
-        "Private arg '<VAR2>':'20' chosen over global '20' "
-        "in forward model step step_name"
-    ) not in caplog.text
+    assert ("'<VAR1>': {'private_arg':") not in caplog.text
+    assert ("'<VAR2>': {'private_arg':") not in caplog.text
 
 
 def test_that_unresolved_forward_model_placeholders_are_logged_at_startup(caplog):
