@@ -50,8 +50,8 @@ RFTProperty: TypeAlias = str
 
 @dataclass(frozen=True)
 class WellConnectionCell:
-    grid_index: GridIndex
-    cell_center: Point
+    grid_index: GridIndex | None
+    cell_center: Point | None
 
 
 # The egrid and zonemap are needed in both ``read_from_file`` and
@@ -162,15 +162,15 @@ class RFTConfig(ResponseConfig):
             strict=True,
         ):
             if cell is None:
-                raise InvalidResponseFile(
-                    f"Did not find grid coordinate for location(s) {location}"
+                location_cell_map[location] = WellConnectionCell(
+                    None,
+                    None,
                 )
-            # cells returned by grid are 0-based, while zonemap
-            # and RFTEntry.connections are 1-based, so unifying
-            location_cell_map[location] = WellConnectionCell(
-                (cell[0] + 1, cell[1] + 1, cell[2] + 1),
-                grid.cell_corners(*cell).mean(axis=0),
-            )
+            else:
+                location_cell_map[location] = WellConnectionCell(
+                    (cell[0] + 1, cell[1] + 1, cell[2] + 1),
+                    tuple(grid.cell_corners(*cell).mean(axis=0)),
+                )
         return location_cell_map
 
     @staticmethod
@@ -415,15 +415,18 @@ class RFTConfig(ResponseConfig):
 
         location_cell_map = self._map_locations_to_cells(grid_filepath, locations)
 
+        def _get_zone_list(loc: Point) -> list[str]:
+            grid_index = location_cell_map[loc].grid_index
+            if grid_index is None:
+                return []
+            return zonemap.get(grid_index[-1], [])
+
         return pl.DataFrame(
             {
                 "east": [loc[0] for loc in locations],
                 "north": [loc[1] for loc in locations],
                 "tvd": [loc[2] for loc in locations],
-                "actual_zones": [
-                    zonemap.get(location_cell_map[loc].grid_index[-1], [])
-                    for loc in locations
-                ],
+                "actual_zones": [_get_zone_list(loc) for loc in locations],
                 "well_connection_cell": [
                     location_cell_map[loc].grid_index for loc in locations
                 ],
