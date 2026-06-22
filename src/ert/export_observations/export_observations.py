@@ -7,7 +7,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Literal
+from typing import Any, Literal, get_args
 from urllib.parse import quote
 
 import anyio
@@ -15,7 +15,12 @@ import httpx
 from httpx import AsyncClient
 
 from ert.cli.main import ErtCliError
-from ert.export_observations.bulk_config_exporter import BulkConfigExporter
+from ert.config import make_summary_key_data
+from ert.export_observations.bulk_config_exporter import (
+    BulkConfigExporter,
+    LocalizationDict,
+    LocalizationKeys,
+)
 
 
 def escape(s: str) -> str:
@@ -203,6 +208,37 @@ def get_experiment_id(
     return experiment_id
 
 
+def _get_first_loc_value(loc_key: str, obs: list[dict[str, Any]]) -> float | int | None:
+    for o in obs:
+        key_value = o.get(loc_key, [None])[0]
+        if key_value is not None:
+            return key_value
+    return None
+
+
+def _map_localization_to_well(
+    obs_type_to_observations: dict[Literal["summary", "breakthrough"], Any],
+) -> dict[str, LocalizationDict]:
+    well_to_localization: dict[str, LocalizationDict] = defaultdict(dict)
+
+    for observations_ in obs_type_to_observations.values():
+        for obs_key, obs_values in observations_.items():
+            summary_key = make_summary_key_data(obs_key.removeprefix("BREAKTHROUGH:"))
+            if well := summary_key.well:
+                for loc_key in get_args(LocalizationKeys):
+                    loc_value = _get_first_loc_value(loc_key, obs_values)
+                    if loc_value is not None:
+                        well_to_localization[well][loc_key] = loc_value
+
+    for well, localization in well_to_localization.items():
+        if "radius" not in localization:
+            localization["radius"] = None
+        if "east" not in localization or "north" not in localization:
+            del well_to_localization[well]
+
+    return well_to_localization
+
+
 async def _async_export_observations(args: Namespace) -> None:
     proc = None
     try:
@@ -216,10 +252,11 @@ async def _async_export_observations(args: Namespace) -> None:
         if proc is not None and proc.returncode is None:
             proc.terminate()
             await proc.wait()
-
+    well_localization = _map_localization_to_well(observations)
     bulk_exporter = BulkConfigExporter(
         observations["summary"],
         observations["breakthrough"],
+        well_localization,
         args.output_csv_file,
     )
     bulk_exporter.write_csv()
