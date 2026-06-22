@@ -1,3 +1,4 @@
+import datetime
 import io
 import json
 import re
@@ -7,10 +8,20 @@ import pytest
 from requests import Response
 from starlette.testclient import TestClient
 
-from ert.config._observations import SummaryObservation
+from ert.config._observations import (
+    SummaryObservation,
+)
 from ert.config._shapes import CircleShapeConfig, ShapeRegistry
+from ert.config.rft_config import RFTConfig
 from ert.dark_storage.common import get_storage_api_version
+from ert.dark_storage.endpoints.observations import _get_observations
 from ert.storage import open_storage
+from tests.ert.defaults_generator import (
+    _create_breakthrough_observation,
+    _create_general_observation,
+    _create_rft_observation,
+    _create_summary_observation,
+)
 
 
 @pytest.mark.slow
@@ -346,3 +357,51 @@ def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
     assert all(dataframe.index.to_numpy() == [1, 2, 4])
     assert dataframe.index.name == "Realization"
     assert dataframe.shape == (3, 1)
+
+
+def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
+    rft_config = RFTConfig(input_files=["DUMMY"])
+    storage_path = tmp_path / "storage"
+    observations = [
+        _create_summary_observation(name="SUMMARY_OBSERVATION", date="2010-11-01"),
+        _create_summary_observation(name="SUMMARY_OBSERVATION", date="2010-07-01"),
+        _create_general_observation(name="GENERAL_OBSERVATION", index=11),
+        _create_general_observation(name="GENERAL_OBSERVATION", index=7),
+        _create_breakthrough_observation(
+            name="BREAKTHROUGH_OBSERVATION",
+            date=datetime.datetime(2010, 11, 1, tzinfo=datetime.UTC),
+        ),
+        _create_breakthrough_observation(
+            name="BREAKTHROUGH_OBSERVATION",
+            date=datetime.datetime(2010, 7, 1, tzinfo=datetime.UTC),
+        ),
+        _create_rft_observation(name="RFT_OBSERVATION", tvd=11.0),
+        _create_rft_observation(name="RFT_OBSERVATION", tvd=7.0),
+    ]
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            name="test-experiment",
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [obs.model_dump(mode="json") for obs in observations],
+            },
+        )
+        experiment.create_ensemble(name="prior", ensemble_size=1)
+
+    obs_with_x_axis = _get_observations(experiment)
+    for observation in obs_with_x_axis:
+        match observation["name"]:
+            case "SUMMARY_OBSERVATION":
+                assert observation["x_axis"] == [
+                    "2010-07-01T00:00:00.000",
+                    "2010-11-01T00:00:00.000",
+                ]
+            case "BREAKTHROUGH_OBSERVATION":
+                assert observation["x_axis"] == [
+                    "2010-07-01T00:00:00.000+00:00",
+                    "2010-11-01T00:00:00.000+00:00",
+                ]
+            case "GENERAL_OBSERVATION":
+                assert observation["x_axis"] == ["7", "11"]
+            case "RFT_OBSERVATION":
+                assert observation["x_axis"] == ["7.0", "11.0"]

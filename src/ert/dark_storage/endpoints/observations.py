@@ -10,7 +10,6 @@ from fastapi import APIRouter, Body, Depends, Query
 
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import get_storage, reraise_as_http_errors
-from ert.dark_storage.endpoints.responses import response_to_pandas_x_axis_fns
 from ert.storage import Experiment, Storage
 
 router = APIRouter(tags=["ensemble"])
@@ -128,7 +127,6 @@ def _get_observations(
         if df.is_empty():
             continue
 
-        x_axis_fn = response_to_pandas_x_axis_fns[stored_response_type]
         df = df.rename(
             {
                 "observation_key": "name",
@@ -136,8 +134,27 @@ def _get_observations(
                 "observations": "values",
             }
         )
-        df = df.with_columns(pl.Series(name="x_axis", values=df.map_rows(x_axis_fn)))
-        df = df.sort("x_axis")
+        match stored_response_type:
+            case "summary" | "breakthrough":
+                sort_expr = pl.col("time")
+                x_axis_expr = sort_expr.dt.to_string("iso:strict")
+            case "gen_data":
+                sort_expr = pl.col("index")
+                x_axis_expr = sort_expr.cast(pl.Utf8)
+            case "rft":
+                sort_expr = pl.col("tvd")
+                x_axis_expr = sort_expr.cast(pl.Utf8)
+            case _:
+                raise ValueError(f"Unknown response type {stored_response_type}")
+
+        df = (
+            df.with_columns(
+                x_axis_expr.alias("x_axis"),
+                sort_expr.alias("_sort_key"),
+            )
+            .sort("_sort_key")
+            .drop("_sort_key")
+        )
 
         for obs_key, obs_df in df.group_by("name"):
             values = obs_df["values"].to_list()
