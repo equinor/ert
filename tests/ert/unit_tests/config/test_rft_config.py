@@ -582,9 +582,7 @@ def test_that_connection_cells_are_processed_independently(mock_resfo_file):
     assert observation_metadata["actual_zones"].to_list() == [[]]
 
 
-def test_that_location_outside_of_the_grid_raises_invalid_response_file(
-    mock_resfo_file, egrid
-):
+def test_that_location_outside_of_the_grid_maps_to_none(mock_resfo_file, egrid):
     config = ErtConfig.from_dict(
         {
             "ECLBASE": "ECLBASE<IENS>",
@@ -593,7 +591,7 @@ def test_that_location_outside_of_the_grid_raises_invalid_response_file(
                 [
                     {
                         "type": ObservationType.RFT,
-                        "name": "NAME",
+                        "name": "Outside_grid",
                         "WELL": "WELL",
                         "VALUE": "700",
                         "ERROR": "0.1",
@@ -602,6 +600,18 @@ def test_that_location_outside_of_the_grid_raises_invalid_response_file(
                         "NORTH": 1000.0,
                         "EAST": 1000.0,
                         "TVD": 1500.0,
+                    },
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "Inside_grid",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1.0,
+                        "EAST": 1.0,
+                        "TVD": 1.5,
                     },
                 ],
             ),
@@ -615,8 +625,17 @@ def test_that_location_outside_of_the_grid_raises_invalid_response_file(
 
     rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
     observations = pl.DataFrame(config.observation_declarations)
-    with pytest.raises(InvalidResponseFile, match="Did not find grid coordinate"):
-        rft_config.obtain_location_metadata("/tmp/does_not_exist", 1, 1, observations)
+    observation_metadata = rft_config.obtain_location_metadata(
+        "/tmp/does_not_exist", 1, 1, observations
+    )
+    assert observation_metadata.row(0, named=True) == {
+        "east": 1000.0,
+        "north": 1000.0,
+        "tvd": 1500.0,
+        "actual_zones": [],
+        "well_connection_cell": None,
+        "well_connection_cell_center": None,
+    }
 
 
 def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
