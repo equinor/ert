@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from ert.storage.blob_data import BlobStorageData
 from ert.storage.realization_storage_state import RealizationStorageState
 
 
@@ -22,3 +23,4 @@ class EnsembleOut(_Ensemble):
     experiment_id: UUID | None = None
     userdata: Mapping[str, Any]
     realization_storage_states: Mapping[RealizationStorageState, int] | None = None
+    blobs: list[BlobStorageData] = []
