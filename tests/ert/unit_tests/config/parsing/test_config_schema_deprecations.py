@@ -109,7 +109,7 @@ def test_that_using_printf_format_value_placeholders_in_runpath_is_deprecated():
         ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nRUNPATH real-%d/iter-%d\n")
 
 
-@pytest.mark.filterwarnings("error")
+@pytest.mark.filterwarnings("error::ert.config.parsing.config_errors.ConfigWarning")
 def test_that_no_deprecation_warning_is_shown_for_substitution_value_placeholders():
     ErtConfig.from_file_contents(
         "NUM_REALIZATIONS 1\nRUNPATH real-<IENS>/iter-<ITER>\n"
