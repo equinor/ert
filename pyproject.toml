@@ -331,10 +331,10 @@ fork-strategy = "requires-python"
 exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
-aiohttp = false # Needed until 15.06 for sequrity update
 iterative_ensemble_smoother = false # Developed by Equinor
 graphite-maps = false # Developed by Equinor
 oil_reservoir_synthesizer = false # Developed by Equinor
+pytest = false # needed until 29.06
 resdata = false # Developed by Equinor
 resfo = false # Developed by Equinor
 resfo-utilities = false # Developed by Equinor
