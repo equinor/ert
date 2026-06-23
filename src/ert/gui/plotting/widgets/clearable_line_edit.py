@@ -1,7 +1,8 @@
+from typing import override
+
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QColor, QFocusEvent, QKeyEvent, QResizeEvent
 from PyQt6.QtWidgets import QLineEdit, QPushButton, QStyle
-from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
 

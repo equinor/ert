@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import Any, overload
+from typing import Any, overload, override
 
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PyQt6.QtGui import QColor, QFont
-from typing_extensions import override
 
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.icon_utils import load_icon

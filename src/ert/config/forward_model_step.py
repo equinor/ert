@@ -10,6 +10,7 @@ from typing import (
     Literal,
     NotRequired,
     Self,
+    Unpack,
     cast,
 )
 
@@ -21,7 +22,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic_core.core_schema import ValidationInfo
-from typing_extensions import TypedDict, Unpack
+from typing_extensions import TypedDict
 
 from ert.base_model_context import BaseModelWithContextSupport
 

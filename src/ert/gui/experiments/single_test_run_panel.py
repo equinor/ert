@@ -1,8 +1,8 @@
 from dataclasses import dataclass
+from typing import override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFormLayout, QLabel
-from typing_extensions import override
 
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier

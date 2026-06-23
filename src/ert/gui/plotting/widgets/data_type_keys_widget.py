@@ -1,3 +1,5 @@
+from typing import override
+
 from PyQt6.QtCore import QModelIndex, QSize
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QPainter, QPaintEvent
@@ -9,7 +11,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.gui.ertwidgets import SearchBox
 from ert.gui.icon_utils import load_icon

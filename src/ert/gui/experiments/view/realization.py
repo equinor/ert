@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, override
 
 from PyQt6.QtCore import (
     QAbstractItemModel,
@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (

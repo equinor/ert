@@ -9,7 +9,7 @@ from collections import defaultdict
 from dataclasses import InitVar, dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import IO, Any, Literal, TypeAlias
+from typing import IO, Any, Literal, override
 
 import numpy as np
 import numpy.typing as npt
@@ -21,7 +21,6 @@ from resfo_utilities import (
     InvalidRFTError,
     RFTReader,
 )
-from typing_extensions import override
 
 from ert.substitutions import substitute_runpath_name
 
@@ -39,13 +38,13 @@ logger = logging.getLogger(__name__)
 
 
 # A Point in UTM/TVD coordinates
-Point: TypeAlias = tuple[float, float, float]
+type Point = tuple[float, float, float]
 # Index to a cell in a grid
-GridIndex: TypeAlias = tuple[int, int, int]
-ZoneName: TypeAlias = str
-WellName: TypeAlias = str
-DateString: TypeAlias = str
-RFTProperty: TypeAlias = str
+type GridIndex = tuple[int, int, int]
+type ZoneName = str
+type WellName = str
+type DateString = str
+type RFTProperty = str
 
 
 @dataclass(frozen=True)

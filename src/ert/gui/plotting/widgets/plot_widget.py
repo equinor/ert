@@ -1,7 +1,7 @@
 import logging
 import sys
 import traceback
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, override
 
 import numpy as np
 import numpy.typing as npt
@@ -23,7 +23,6 @@ from PyQt6.QtWidgets import (
     QWidget,
     QWidgetAction,
 )
-from typing_extensions import override
 
 from ert.config.distribution import ConstSettings
 from ert.config.gen_kw_config import GenKwConfig

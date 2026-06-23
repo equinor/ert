@@ -12,7 +12,6 @@ from typing import (
     Any,
     Literal,
     Self,
-    TypeAlias,
     cast,
 )
 
@@ -43,7 +42,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ContentTypes: TypeAlias = type[int] | type[bool] | type[float] | type[str]
+type ContentTypes = type[int | bool | float | str]
 
 
 class ErtScriptLoadFailure(ValueError):
@@ -277,7 +276,7 @@ class UserInstalledErtScriptWorkflow(BaseErtScriptWorkflow):
             raise ErtScriptLoadFailure(f"Failed to load {self.name}: {err}") from err
 
 
-WorkflowJob: TypeAlias = Annotated[
+type WorkflowJob = Annotated[
     (
         SiteInstalledErtScriptWorkflow
         | UserInstalledErtScriptWorkflow

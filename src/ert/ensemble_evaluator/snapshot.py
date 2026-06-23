@@ -4,7 +4,7 @@ import logging
 from collections import Counter, defaultdict
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 from typing_extensions import TypedDict
 
@@ -495,8 +495,5 @@ def _realization_dict_to_realization_snapshot(
     return _filter_nones(realization)
 
 
-T = TypeVar("T", RealizationSnapshot, FMStepSnapshot)
-
-
-def _filter_nones(data: T) -> T:
+def _filter_nones[T: (RealizationSnapshot, FMStepSnapshot)](data: T) -> T:
     return cast(T, {k: v for k, v in data.items() if v is not None})

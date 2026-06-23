@@ -1,13 +1,13 @@
 import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import override
 
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QDialog, QPlainTextEdit, QVBoxLayout
-from typing_extensions import override
 
 from ert.gui.tools.search_bar import SearchBar
 

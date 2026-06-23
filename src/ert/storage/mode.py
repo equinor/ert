@@ -74,7 +74,7 @@ C = TypeVar("C", bound=BaseMode)
 F = Callable[Concatenate[C, P], T]
 
 
-def require_write(func: F[C, P, T]) -> F[C, P, T]:
+def require_write[C: BaseMode, **P, T](func: F[C, P, T]) -> F[C, P, T]:
     """
     Decorator to ensure a method can only be called in write mode.
 

@@ -1,8 +1,7 @@
-from typing import overload
+from typing import overload, override
 
 from PyQt6.QtCore import QAbstractItemModel, QAbstractProxyModel, QModelIndex, QObject
 from PyQt6.QtCore import pyqtSlot as Slot
-from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
 

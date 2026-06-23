@@ -10,7 +10,6 @@ from typing import (
     Annotated,
     Any,
     Literal,
-    TypeAlias,
     cast,
     overload,
 )
@@ -263,7 +262,7 @@ class SlurmQueueOptions(QueueOptions):
         return driver_dict
 
 
-KnownQueueOptions: TypeAlias = (
+type KnownQueueOptions = (
     LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
 )
 

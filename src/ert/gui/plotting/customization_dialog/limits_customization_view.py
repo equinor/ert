@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from copy import copy
 from datetime import date
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast, override
 
 from PyQt6.QtGui import QDoubleValidator, QIntValidator
 from PyQt6.QtWidgets import QLabel, QLineEdit, QStackedWidget
-from typing_extensions import override
 
 from ert.gui.plotting.utils import PlotContext, PlotLimits
 from ert.gui.plotting.widgets import ClearableLineEdit, CustomDateEdit

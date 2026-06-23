@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 from textwrap import dedent
-from typing import TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -417,20 +416,17 @@ def add_experiment_manually(
     experiments_panel.close()
 
 
-V = TypeVar("V")
-
-
-def wait_for_child(gui, qtbot: QtBot, typ: type[V], timeout=5000, **kwargs) -> V:
+def wait_for_child[V](gui, qtbot: QtBot, typ: type[V], timeout=5000, **kwargs) -> V:
     qtbot.waitUntil(lambda: gui.findChild(typ) is not None, timeout=timeout)
     return get_child(gui, typ, **kwargs)
 
 
-def get_child(gui: QWidget, typ: type[V], *args, **kwargs) -> V:
+def get_child[V](gui: QWidget, typ: type[V], *args, **kwargs) -> V:
     child = gui.findChild(typ, *args, **kwargs)
     assert isinstance(child, typ)
     return child
 
 
-def get_children(gui: QWidget, typ: type[V], *args, **kwargs) -> list[V]:
+def get_children[V](gui: QWidget, typ: type[V], *args, **kwargs) -> list[V]:
     children: list[typ] = gui.findChildren(typ, *args, **kwargs)
     return children

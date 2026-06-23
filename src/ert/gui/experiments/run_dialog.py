@@ -4,7 +4,7 @@ import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from queue import SimpleQueue
-from typing import cast
+from typing import cast, override
 
 import humanize
 from PyQt6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer
@@ -29,7 +29,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErrorInfo, WarningInfo

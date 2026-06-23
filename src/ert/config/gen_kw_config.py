@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Self, TypeAlias, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 # Represents one parsed GEN_KW config line as produced by the lark parser.
 # Each element is either a plain string, an EXISTING_PATH_INLINE tuple
 # (resolved_path, file_contents), or the trailing options dict.
-GenKwConfigList: TypeAlias = list[str | tuple[str, str] | dict[str, str]]
+type GenKwConfigList = list[str | tuple[str, str] | dict[str, str]]
 
 
 class PriorDict(TypedDict):

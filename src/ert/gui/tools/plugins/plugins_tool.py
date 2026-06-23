@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtWidgets import QMenu
-from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
 from ert.gui.tools import Tool

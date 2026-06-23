@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from typing import override
 
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -8,7 +9,6 @@ from PyQt6.QtWidgets import (
     QLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.gui.plotting.utils import PlotStyle
 

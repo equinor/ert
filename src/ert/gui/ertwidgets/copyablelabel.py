@@ -1,8 +1,8 @@
 from os import path
+from typing import override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLabel
-from typing_extensions import override
 
 from .copy_button import CopyButton
 

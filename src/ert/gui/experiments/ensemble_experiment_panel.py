@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -8,7 +9,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier

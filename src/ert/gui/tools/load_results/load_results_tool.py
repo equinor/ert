@@ -1,7 +1,5 @@
 import logging
-from typing import Any
-
-from typing_extensions import override
+from typing import Any, override
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier

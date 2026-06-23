@@ -3,11 +3,10 @@ from collections import defaultdict
 from collections.abc import Sequence
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Final, cast, overload
+from typing import Any, Final, cast, overload, override
 
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt
 from PyQt6.QtGui import QColor, QFont
-from typing_extensions import override
 
 from ert.ensemble_evaluator import EnsembleSnapshot, state
 from ert.ensemble_evaluator import identifiers as ids

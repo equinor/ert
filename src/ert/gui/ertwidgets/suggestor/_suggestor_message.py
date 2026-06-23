@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Self
+from typing import Any, Self, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertwidgets.copy_button import CopyButton
