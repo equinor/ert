@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "ert"
 authors = [{ name = "Equinor ASA", email = "fg_sib-scout@equinor.com" }]
 description = "Ensemble based Reservoir Tool (ERT)"
-requires-python = ">=3.11, <3.15"
+requires-python = ">=3.12, <3.15"
 readme = "README.md"
 license = "GPL-3.0-only"
 classifiers = [
@@ -15,7 +15,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -318,7 +317,7 @@ include = ["src"]
 exclude = ["tests"]
 reportMissingImports = "error"
 typeCheckingMode = "standard"
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 
 [tool.pyright.defineConstant]
 PYSIDE6 = false

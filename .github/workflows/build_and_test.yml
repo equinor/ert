@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.11', '3.12', '3.13', '3.14' ]
+        python-version: [ '3.12', '3.13', '3.14' ]
 
     uses: ./.github/workflows/build-wheels.yml
     with:
@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests', 'fuzz' ]
-        python-version: [ '3.11', '3.12', '3.13', '3.14' ]
+        python-version: [ '3.12', '3.13', '3.14' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_ert.yml
     with:
@@ -66,12 +66,9 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'test', 'doc' ]
-        python-version: [ '3.11', '3.12', '3.13', '3.14' ]
+        python-version: ['3.12', '3.13', '3.14' ]
         os: [ ubuntu-latest ]
         exclude:
-        - os: 'ubuntu-latest'
-          test-type: 'doc'
-          python-version: '3.11'
         - os: 'ubuntu-latest'
           test-type: 'doc'
           python-version: '3.12'
