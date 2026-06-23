@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Literal, cast
 import numpy as np
 import pandas as pd
 import polars as pl
-from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 
 from ert.gui.plotting.utils import PlotTools
@@ -36,38 +35,6 @@ class MisfitsPlot:
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = True
-
-    @staticmethod
-    def _fade_axis_ticklabels(ax: Axes) -> None:
-        """Apply the same alpha to all tick labels on an axis."""
-        for label in (*ax.get_xticklabels(), *ax.get_yticklabels()):
-            label.set_alpha(0.4)
-
-        ax.xaxis.label.set_alpha(0.4)
-        ax.yaxis.label.set_alpha(0.4)
-
-    @staticmethod
-    def _draw_legend(
-        figure: Figure,
-        ensemble_colors: dict[tuple[str, str], str],
-        sorted_ensemble_keys: list[tuple[str, str]],
-    ) -> None:
-        legend_handles = [
-            Line2D(
-                [],
-                [],
-                marker="s",
-                linestyle="None",
-                color=ensemble_colors[key],
-                label=key[0],
-            )
-            for key in sorted_ensemble_keys
-        ]
-        figure.legend(
-            handles=legend_handles,
-            loc="lower center",
-            ncol=min(len(legend_handles), 4),
-        )
 
     @staticmethod
     def _show_no_data(figure: Figure, message: str) -> None:
@@ -178,118 +145,34 @@ class MisfitsPlot:
             return
 
         if response_type in {"summary", "breakthrough"}:
-            self._plot_summary_misfits_boxplots(
+            self._plot_misfits(
                 figure,
                 data_with_misfits,
                 plot_context,
             )
 
         elif response_type in {"gen_data", "rft"}:
-            self._plot_gendata_misfits(
+            self._plot_misfits(
                 figure,
                 data_with_misfits,
                 plot_context,
+                summary_or_breakthrough=False,
             )
 
-    def _plot_gendata_misfits(
+    def _plot_misfits(
         self,
         figure: Figure,
         data_with_misfits: dict[tuple[str, str], pl.DataFrame],
         plot_context: PlotContext,
+        *,
+        summary_or_breakthrough: bool = True,
     ) -> None:
-        # Only plot ensembles with data (i.e., they pertain to an experiment
-        # with observations, and there are responses towards those in the ens)
-        ensemble_to_misfit_df = {
-            k: v for k, v in data_with_misfits.items() if not v.is_empty()
-        }
 
         all_misfits = pl.concat(
-            [
-                df.with_columns(pl.lit(key).alias("ensemble_key"))
-                for key, df in ensemble_to_misfit_df.items()
-            ]
-        ).select(["Realization", "key_index", "misfit", "ensemble_key"])
-
-        distinct_gendata_index = all_misfits["key_index"].unique().sort().to_list()
-
-        axes = self._setup_and_plot(
-            figure=figure,
-            raw_index_format=distinct_gendata_index,
-            all_misfits=all_misfits,
-            plot_context=plot_context,
-            data_with_misfits=ensemble_to_misfit_df,
-        )
-        axes.set_xticks(
-            np.arange(len(distinct_gendata_index)),
-            labels=[str(int(k)) for k in distinct_gendata_index],
-        )
-        axes.set_xlim(-0.5, len(distinct_gendata_index) - 0.5)
-
-        plot_context.plotConfig().set_title(
-            f"{plot_context.key()} (Signed Chi-squared misfits per index)"
-        )
-        PlotTools.finalizePlot(
-            plot_context,
-            figure,
-            axes,
-            default_x_label="",
-            default_y_label="Value",
+            [df.select(["misfit", "key_index"]) for df in data_with_misfits.values()]
         )
 
-    def _plot_summary_misfits_boxplots(
-        self,
-        figure: Figure,
-        data_with_misfits: dict[tuple[str, str], pl.DataFrame],
-        plot_context: PlotContext,
-    ) -> None:
-        all_misfits = pl.concat(
-            [df.select("misfit") for df in data_with_misfits.values()]
-        )
-
-        all_timesteps = sorted(
-            {
-                ts
-                for df in data_with_misfits.values()
-                if not df.is_empty()
-                for ts in df["key_index"].unique().to_list()
-            }
-        )
-
-        axes = self._setup_and_plot(
-            figure=figure,
-            raw_index_format=all_timesteps,
-            all_misfits=all_misfits,
-            plot_context=plot_context,
-            data_with_misfits=data_with_misfits,
-        )
-
-        timestep_to_pos = {ts: i for i, ts in enumerate(all_timesteps)}
-
-        axes.set_xlim(-0.5, len(all_timesteps) - 0.5)
-        axes.set_xticks(
-            list(timestep_to_pos.values()),
-            labels=[ts.strftime("%Y-%m-%d") for ts in all_timesteps],
-        )
-
-        plot_context.plotConfig().set_title(
-            f"{plot_context.key()} (Signed Chi-squared misfits per timestep)"
-        )
-        PlotTools.finalizePlot(
-            plot_context,
-            figure,
-            axes,
-            default_x_label="",
-            default_y_label="Value",
-        )
-
-    def _setup_and_plot(
-        self,
-        figure: Figure,
-        raw_index_format,
-        all_misfits,
-        plot_context,
-        data_with_misfits,
-    ):
+        all_unique_indexes = all_misfits["key_index"].unique().sort().to_list()
         plot_context.plot_type = PlotType.BOX
         config = plot_context.plotConfig()
         outlier = plot_context.outliers
@@ -297,9 +180,9 @@ class MisfitsPlot:
         box = plot_context.box_plot
         mean = plot_context.mean
 
-        index_to_pos = {idx: i for i, idx in enumerate(raw_index_format)}
+        index_to_pos = {idx: i for i, idx in enumerate(all_unique_indexes)}
 
-        many_boxes_factor = min(1, len(raw_index_format) / 50)
+        many_boxes_factor = min(1, len(all_unique_indexes) / 50)
         sorted_ensemble_keys = sorted(data_with_misfits.keys())
         color_map = self._map_ensembles_to_colours(
             sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
@@ -351,7 +234,7 @@ class MisfitsPlot:
                     patch_artist=True,
                     boxprops={
                         "facecolor": color,
-                        "alpha": 1,
+                        "alpha": 0.8,
                         "edgecolor": color,
                         "linewidth": 0.7,
                     },
@@ -422,10 +305,6 @@ class MisfitsPlot:
                 ),
             )
 
-        self._setup_legend(config, scatter, box, mean, outlier)
-        return axes
-
-    def _setup_legend(self, config, scatter, box, mean, outlier):
         if scatter:
             config.add_legend_item(
                 "Scatter points",
@@ -476,3 +355,27 @@ class MisfitsPlot:
                     alpha=1,
                 ),
             )
+
+        axes.set_xlim(-0.5, len(all_unique_indexes) - 0.5)
+        if summary_or_breakthrough:
+            axes.set_xticks(
+                list(index_to_pos.values()),
+                labels=[ts.strftime("%Y-%m-%d") for ts in all_unique_indexes],
+            )
+        else:
+            axes.set_xticks(
+                np.arange(len(all_unique_indexes)),
+                labels=[str(int(k)) for k in all_unique_indexes],
+            )
+
+        index_string = "timestep" if summary_or_breakthrough else "index"
+        plot_context.plotConfig().set_title(
+            f"{plot_context.key()} (Signed Chi-squared misfits per {index_string})"
+        )
+        PlotTools.finalizePlot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label="",
+            default_y_label="Value",
+        )
