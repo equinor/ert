@@ -1,9 +1,10 @@
+from typing import override
+
 from PyQt6.QtCore import QRect, QSize
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QColorDialog, QFrame
-from typing_extensions import override
 
 
 class ColorBox(QFrame):

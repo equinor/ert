@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -14,7 +14,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 if TYPE_CHECKING:
     from ert.gui.plotting.plot_api import PlotApiKeyDefinition

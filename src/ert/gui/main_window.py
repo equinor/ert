@@ -4,6 +4,7 @@ import functools
 import logging
 import webbrowser
 from pathlib import Path
+from typing import override
 
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -19,7 +20,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.config import ErtConfig, ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog

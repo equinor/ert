@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout
-from typing_extensions import override
 
 from .customization_view import CustomizationView, WidgetProperty
 from .style_chooser import STYLESET_AREA, StyleChooser

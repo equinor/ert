@@ -6,7 +6,6 @@ from typing import (
     Any,
     Literal,
     Self,
-    TypeAlias,
 )
 
 from pydantic import AfterValidator, BaseModel, Field, model_validator
@@ -26,7 +25,7 @@ from .validation_utils import (
     valid_range,
 )
 
-ControlVariable: TypeAlias = (
+type ControlVariable = (
     list[ControlVariableConfig] | list[ControlVariableGuessListConfig]
 )
 

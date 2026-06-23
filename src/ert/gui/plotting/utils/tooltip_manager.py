@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
-from typing import Generic, TypeVar, cast
+from typing import cast
 
 import numpy as np
 from matplotlib.axes import Axes
@@ -18,9 +18,6 @@ from numpy.typing import ArrayLike
 
 from ert.gui.plotting.utils.plot_context import PlotType
 from ert.gui.utils import SIGNIFICANT_DIGITS
-
-PlotDataType = TypeVar("PlotDataType")
-ShapeType = TypeVar("ShapeType")
 
 # A fallback bounding box with a width and height of 200px
 # in case the hover box has not been rendered yet and returns a degenerate bbox.
@@ -64,7 +61,7 @@ class ValidatedMouseEvent:
         return self._event
 
 
-class ToolTipManager(ABC, Generic[PlotDataType, ShapeType]):
+class ToolTipManager[PlotDataType, ShapeType](ABC):
     PADDING = 10
 
     def __init__(

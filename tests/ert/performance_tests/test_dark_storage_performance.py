@@ -6,7 +6,6 @@ import json
 import os
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
-from typing import TypeVar
 from urllib.parse import quote
 from uuid import UUID
 
@@ -27,8 +26,6 @@ from ert.dark_storage.endpoints.responses import get_response
 from ert.gui.plotting import plot_api
 from ert.gui.plotting.plot_api import PlotApi
 from ert.storage import Storage, open_storage
-
-T = TypeVar("T")
 
 
 def get_response_autofilter(
@@ -68,7 +65,7 @@ def use_testclient(monkeypatch):
     PlotApi.escape = test_escape
 
 
-def run_in_loop(coro: Awaitable[T]) -> T:
+def run_in_loop[T](coro: Awaitable[T]) -> T:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:

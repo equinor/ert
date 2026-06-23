@@ -1,10 +1,9 @@
-from typing import Any
+from typing import Any, override
 
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QCursor, QFocusEvent, QKeyEvent, QMovie, QResizeEvent
 from PyQt6.QtWidgets import QApplication, QLabel, QLineEdit, QStyle
-from typing_extensions import override
 
 
 class SearchBox(QLineEdit):

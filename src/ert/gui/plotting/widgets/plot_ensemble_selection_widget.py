@@ -1,7 +1,7 @@
 from collections import deque
 from collections.abc import Iterator
 from enum import IntEnum
-from typing import Any
+from typing import Any, override
 
 from PyQt6.QtCore import (
     QModelIndex,
@@ -27,7 +27,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import EnsembleObject

@@ -5,7 +5,7 @@ import types
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Self, TypeVar
+from typing import Any, Self
 
 from pydantic import BaseModel
 
@@ -174,10 +174,7 @@ def no_dots_in_string(value: str) -> str:
     return value
 
 
-T = TypeVar("T", bound=BaseModel)
-
-
-def _duplicate_string(items: Sequence[T]) -> str:
+def _duplicate_string[T: BaseModel](items: Sequence[T]) -> str:
     def duplicate_values(item: T) -> str:
         return ", ".join(
             f"{key}: {getattr(item, key) or 'null'}"
@@ -191,7 +188,7 @@ def _duplicate_string(items: Sequence[T]) -> str:
     )
 
 
-def uniform_variables(items: Sequence[T]) -> Sequence[T]:
+def uniform_variables[T: BaseModel](items: Sequence[T]) -> Sequence[T]:
     if (
         len(
             {
@@ -206,7 +203,7 @@ def uniform_variables(items: Sequence[T]) -> Sequence[T]:
     return items
 
 
-def unique_items(items: Sequence[T]) -> Sequence[T]:
+def unique_items[T: BaseModel](items: Sequence[T]) -> Sequence[T]:
     if duplicates := _duplicate_string(items):
         raise ValueError(
             f"Subfield(s) `{items[0].uniqueness}` must be unique. "  # type: ignore

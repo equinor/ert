@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QModelIndex, QObject, QSortFilterProxyModel, Qt
-from typing_extensions import override
 
 if TYPE_CHECKING:
     from .data_type_keys_list_model import DataTypeKeysListModel

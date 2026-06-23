@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 
 from PyQt6.QtCore import QModelIndex, QPoint, QSize
 from PyQt6.QtGui import QColor, QRegion
@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 LABEL_ROLE = -3994
 DESCRIPTION_ROLE = -4893

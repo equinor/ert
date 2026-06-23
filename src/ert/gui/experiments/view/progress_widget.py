@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import override
+
 from PyQt6.QtGui import QColor, QResizeEvent
 from PyQt6.QtWidgets import (
     QFrame,
@@ -8,7 +10,6 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QVBoxLayout,
 )
-from typing_extensions import override
 
 from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, REAL_STATE_TO_COLOR
 

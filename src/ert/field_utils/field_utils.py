@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import numpy as np
 import resfo
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     import xtgeo
 
-_PathLike: TypeAlias = str | os.PathLike[str]
+type _PathLike = str | os.PathLike[str]
 
 
 class AxisOrientation(Enum):

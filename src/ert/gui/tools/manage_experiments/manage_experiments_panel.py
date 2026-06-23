@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.gui.ertwidgets import (
     CheckList,

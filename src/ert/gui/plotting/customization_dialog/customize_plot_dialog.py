@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QObject, QSignalBlocker, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
     QWidget,
     QWidgetAction,
 )
-from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import PlotApiKeyDefinition

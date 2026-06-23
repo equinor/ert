@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Generic, NamedTuple, TypeVar
-
-T = TypeVar("T")
+from dataclasses import dataclass
+from typing import NamedTuple
 
 
 class PluginMetadata(NamedTuple):
@@ -10,7 +9,7 @@ class PluginMetadata(NamedTuple):
     function_name: str
 
 
-class PluginResponse(Generic[T]):
-    def __init__(self, data: T, plugin_metadata: PluginMetadata) -> None:
-        self.data = data
-        self.plugin_metadata = plugin_metadata
+@dataclass
+class PluginResponse[T]:
+    data: T
+    plugin_metadata: PluginMetadata

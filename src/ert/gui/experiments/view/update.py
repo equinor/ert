@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import time
 from datetime import timedelta
+from typing import override
 
 import humanize
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -23,7 +24,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.analysis.event import DataSection
 from ert.analysis.snapshots import ObservationStatus

@@ -1,6 +1,7 @@
+from typing import override
+
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSlot as Slot
-from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
 from ert.gui.tools import Tool

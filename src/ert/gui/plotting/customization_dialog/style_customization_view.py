@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 from PyQt6.QtWidgets import QHBoxLayout
-from typing_extensions import override
 
 from .color_chooser import ColorBox
 from .customization_view import CustomizationView, WidgetProperty

@@ -1,6 +1,5 @@
 from collections.abc import Collection
-
-from typing_extensions import override
+from typing import override
 
 from ert.validation import ActiveRange, mask_to_rangestring
 

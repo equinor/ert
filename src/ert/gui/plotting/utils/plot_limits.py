@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import TypeAlias
 
-Num: TypeAlias = float | int
+type Num = float | int
 
 
 @dataclass
