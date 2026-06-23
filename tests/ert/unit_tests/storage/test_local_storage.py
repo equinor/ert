@@ -39,8 +39,6 @@ from ert.config._create_observation_dataframes import create_observation_datafra
 from ert.config._observations import (
     BreakthroughObservation,
     GeneralObservation,
-    RFTObservation,
-    SummaryObservation,
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import DISTRIBUTION_CLASSES
@@ -56,6 +54,10 @@ from ert.storage import (
 )
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
 from ert.storage.mode import ModeError
+from tests.ert.defaults_generator import (
+    _create_rft_observation,
+    _create_summary_observation,
+)
 from tests.ert.grid_generator import xtgeo_box_grids
 
 
@@ -1253,11 +1255,11 @@ def rft_observation(
     tvd=1000.0,
     zone=None,
 ):
-    return RFTObservation(
+    return _create_rft_observation(
         name=name,
         well=well,
         date=date,
-        property=prop,
+        prop=prop,
         value=value,
         error=error,
         east=east,
@@ -1577,12 +1579,10 @@ def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
 
         summary_config = SummaryConfig(input_files=["not_relevant"], keys=["*"])
 
-        summary_observation = SummaryObservation(
+        summary_observation = _create_summary_observation(
             name="Summary_OBS",
             key="FOPR",
             date=obs_date.isoformat(),
-            value=1.0,
-            error=0.1,
         )
 
         experiment = storage.create_experiment(
