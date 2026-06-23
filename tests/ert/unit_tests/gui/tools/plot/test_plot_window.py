@@ -45,6 +45,16 @@ EVEREST_KEY_DEFS = [
     ),
 ]
 
+OBSERVATION_KEY_DEFS = [
+    PlotApiKeyDefinition(
+        "obs1",
+        index_type="VALUE",
+        metadata={"data_origin": "everest_observations"},
+        observations=True,
+        dimensionality=2,
+    )
+]
+
 
 def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
     qd = create_error_dialog("hello", "world")
@@ -54,6 +64,108 @@ def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
         qd.findChild(QPushButton, name="copy_button"), Qt.MouseButton.LeftButton
     )
     assert QApplication.clipboard().text() == "world"
+
+
+@pytest.mark.slow
+def test_that_no_data_message_is_displayed(
+    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
+):
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    with ErtServerController.init_service(project=tmp_path):
+        pw = PlotWindow("", tmp_path, None)
+        qtbot.addWidget(pw)
+        pw.show()
+        widget = pw._central_tab.currentWidget()
+
+        assert isinstance(widget, PlotWidget)
+
+        fig = widget._figure
+        texts = fig.texts
+        assert len(texts) == 1
+        assert (
+            texts[0].get_text()
+            == "No data to visualize. Head over to 'Start experiment' to get started!"
+        )
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    ("key_defs", "expected"),
+    [(OBSERVATION_KEY_DEFS, "Observations available"), ([], None)],
+)
+def test_that_legend_displays_correct_message(
+    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir, key_defs, expected
+):
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = key_defs
+
+    with ErtServerController.init_service(project=tmp_path):
+        pw = PlotWindow("", tmp_path, None)
+        qtbot.addWidget(pw)
+        pw.show()
+
+        legend_label = pw._data_type_keys_widget.findChild(
+            QLabel, name="observation_legend_label"
+        )
+        if expected is None:
+            assert not legend_label
+        else:
+            assert legend_label
+            assert legend_label.text() == expected
+
+
+@pytest.mark.slow
+def test_that_observation_legend_is_not_displayed_when_its_everest(
+    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
+):
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+    monkeypatch.setattr(
+        "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
+        lambda: True,
+    )
+
+    with ErtServerController.init_service(project=tmp_path):
+        pw = PlotWindow("", tmp_path, None)
+        qtbot.addWidget(pw)
+        pw.show()
+
+        legend_label = pw._data_type_keys_widget.findChild(
+            QLabel, name="observation_legend_label"
+        )
+        assert not legend_label
 
 
 @pytest.mark.slow

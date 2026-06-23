@@ -108,6 +108,7 @@ class _Legend(QWidget):
 
         layout.addWidget(self.legend_marker)
         self.legend_label = QLabel(legend)
+        self.legend_label.setObjectName("observation_legend_label")
         layout.addWidget(self.legend_label)
         layout.addStretch()
 
@@ -156,7 +157,9 @@ class DataTypeKeysWidget(QWidget):
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
-        if not is_everest:
+        observations = key_defs and any(key_def.observations for key_def in key_defs)
+
+        if not is_everest and observations:
             layout.addWidget(
                 _Legend(
                     "Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS
