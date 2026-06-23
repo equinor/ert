@@ -17,7 +17,6 @@ from pydantic import ValidationError
 
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent, DataSection
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
-from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
 from ert.exceptions import StorageError
 from ert.storage import LocalExperiment, open_storage
@@ -31,6 +30,7 @@ from ert.storage.local_ensemble import (
     _write_responses_to_storage,
 )
 from ert.storage.mode import ModeError
+from tests.ert.defaults_generator import _create_rft_observation
 
 
 def test_that_load_scalar_keys_loads_all_parameters(tmp_path):
@@ -243,34 +243,6 @@ def test_that_load_scalar_keys_raises_index_error_for_missing_realizations(tmp_p
             ensemble.load_scalar_keys(keys=["param1"], realizations=np.array([5, 6]))
 
 
-def _create_rft_observation(
-    well: str = "WELL1",
-    date: str = "2020-01-01",
-    prop: str = "PRESSURE",
-    obs_name: str = "obs1",
-    east: float = 100.0,
-    north: float = 200.0,
-    tvd: float = 25.0,
-    md: float | None = 50.0,
-    zone: str | None = None,
-    value: float = 150.0,
-    error: float = 5.0,
-) -> RFTObservation:
-    return RFTObservation(
-        name=obs_name,
-        well=well,
-        date=date,
-        property=prop,
-        value=value,
-        error=error,
-        north=north,
-        east=east,
-        tvd=tvd,
-        md=md,
-        zone=zone,
-    )
-
-
 def _create_rft_response_df(
     *,
     well: str = "WELL1",
@@ -476,7 +448,7 @@ def test_that_get_rft_observations_is_active_based_on_matching_pressure_response
     observations = [
         _create_rft_observation(),
         _create_rft_observation(
-            obs_name="obs2",
+            name="obs2",
             tvd=30.0,
             md=60.0,
             value=160.0,
@@ -507,13 +479,13 @@ def test_that_get_rft_observations_and_responses_sets_valid_zone_with_null_equal
     observations = [
         _create_rft_observation(zone="Z1"),
         _create_rft_observation(
-            obs_name="obs2",
+            name="obs2",
             tvd=30.0,
             md=60.0,
             value=160.0,
         ),
         _create_rft_observation(
-            obs_name="obs3",
+            name="obs3",
             tvd=35.0,
             md=70.0,
             zone="Z2",
@@ -551,11 +523,11 @@ def test_that_get_rft_observations_and_responses_sets_valid_zone_with_null_equal
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_order_is_row_index_within_well():
     observations = [
-        _create_rft_observation(obs_name="obs1", tvd=25.0, md=50.0),
-        _create_rft_observation(obs_name="obs2", tvd=30.0, md=60.0),
-        _create_rft_observation(obs_name="obs3", tvd=35.0, md=70.0),
-        _create_rft_observation(well="WELL2", obs_name="obs4", tvd=40.0, md=80.0),
-        _create_rft_observation(well="WELL2", obs_name="obs5", tvd=45.0, md=90.0),
+        _create_rft_observation(name="obs1", tvd=25.0, md=50.0),
+        _create_rft_observation(name="obs2", tvd=30.0, md=60.0),
+        _create_rft_observation(name="obs3", tvd=35.0, md=70.0),
+        _create_rft_observation(well="WELL2", name="obs4", tvd=40.0, md=80.0),
+        _create_rft_observation(well="WELL2", name="obs5", tvd=45.0, md=90.0),
     ]
 
     with _create_rft_ensemble(1, observations) as ensemble:
@@ -660,7 +632,7 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
         _create_rft_observation(date="2020-01-15"),
         _create_rft_observation(
             date="2020-02-15",
-            obs_name="obs2",
+            name="obs2",
             tvd=30.0,
             md=60.0,
             value=160.0,
