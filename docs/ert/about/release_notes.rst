@@ -27,6 +27,21 @@
 Highlighted changes
 ===================
 
+Version 22.0
+------------
+
+Inline workflow jobs
+####################
+Added new keywords `HOOK_WORKFLOW_JOB <../reference/configuration/keywords.html#hook-workflow-job>`_ and
+`CREATE_WORKFLOW_FROM_JOB <../reference/configuration/keywords.html#create-workflow-from-job>`_ for
+inline configuration of workflow jobs.
+
+Option to export RFT data for visualization
+#########################################################
+
+Added the `EXPORT_RFT <../reference/workflows/added_workflow_jobs.html#EXPORT_RFT>`_ workflow job for exporting RFT data for visualization. See
+:ref:`Exporting RFT data for visualization <exporting_rft_data_for_visualization>` for more information.
+
 Version 18.0
 ------------
 
