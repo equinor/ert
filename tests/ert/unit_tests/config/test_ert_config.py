@@ -36,7 +36,7 @@ from ert.config.forward_model_step import (
     ForwardModelStepPlugin,
     SiteInstalledForwardModelStep,
 )
-from ert.config.parsing import ConfigKeys, ConfigWarning
+from ert.config.parsing import ConfigKeys, ConfigWarning, lark_parser
 from ert.config.parsing.context_values import (
     ContextBool,
     ContextBoolEncoder,
@@ -2082,6 +2082,17 @@ def test_design2params_positional_arguments_explain_named_argument_syntax():
                 NUM_REALIZATIONS 1
                 FORWARD_MODEL DESIGN2PARAMS(dm.xlsx,DesignSheet,DefaultValues)"""
         )
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "FORWARD_MODEL",
+        "GEN_KW DESIGN2PARAMS(dm.xlsx,DesignSheet,DefaultValues)",
+    ],
+)
+def test_design2params_forward_model_line_rejects_non_matches(line):
+    assert not lark_parser._is_design2params_forward_model_line(line)
 
 
 def test_two_design2params_validates_design_matrix_merging(
