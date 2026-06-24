@@ -872,6 +872,27 @@ def test_that_more_than_two_printf_format_placeholders_is_invalid(runpath):
         )
 
 
+@pytest.mark.parametrize(
+    "runpath",
+    [
+        pytest.param("realization-<IENS>/iter-<ITER> spaced", id="internal-space"),
+        pytest.param("   realization-<IENS>/iter-<ITER>", id="leading-space"),
+        pytest.param("realization-<IENS>/iter-<ITER>   ", id="trailing-space"),
+        pytest.param("realization-<IENS>/iter-<ITER>\ttabbed", id="tab"),
+    ],
+)
+def test_that_whitespace_in_runpath_is_invalid(runpath):
+    with pytest.raises(
+        ConfigValidationError, match="RUNPATH cannot contain whitespace"
+    ):
+        _ = ErtConfig.from_file_contents(
+            f"""\
+            NUM_REALIZATIONS 1
+            RUNPATH "{runpath}"
+            """
+        )
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "placeholder",

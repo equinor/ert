@@ -61,6 +61,10 @@ class ModelConfig(BaseModel):
                 "RUNPATH cannot contain more than two value placeholders: "
                 f"`{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
             )
+        if any(char.isspace() for char in runpath_format_string):
+            raise ConfigValidationError(
+                f"RUNPATH cannot contain whitespace: `{runpath_format_string}`"
+            )
         result = _replace_runpath_format(runpath_format_string)
         if not any(x in result for x in ["<ITER>", "<IENS>"]):
             msg = (
