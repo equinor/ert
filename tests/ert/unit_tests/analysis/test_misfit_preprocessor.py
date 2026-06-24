@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from scipy.stats import spearmanr
 
 from ert.analysis.misfit_preprocessor import (
     cluster_responses,
@@ -345,71 +346,28 @@ def test_autoscale_clusters_observations_by_correlation_pattern_ignoring_sign(
 @pytest.mark.parametrize(
     ("corr_de_target", "expect_de_merged"),
     [
-        (0.55, True),  # Above threshold ~0.42: D-E merges first
-        (0.50, True),
-        (0.45, True),
-        (0.40, False),  # Below threshold: A-B or B-C merges first
+        (0.85, True),  # Above A-B/B-C correlation (~0.707): D-E merges first
+        (0.80, True),
+        (0.60, False),  # Below A-B/B-C correlation: A-B or B-C merges first
+        (0.40, False),
         (0.30, False),
     ],
 )
-def test_that_clustering_prioritizes_global_similarity_over_local_correlation(
+def test_that_clustering_merges_most_correlated_pair_first(
     corr_de_target, expect_de_merged
 ):
     """
-    This test demonstrates that the current clustering implementation (using
-    Euclidean distance on correlation rows) can behave unintuitively by prioritizing
-    pairs with LOWER direct correlation for merging over pairs with HIGHER direct
-    correlation. This happens when the higher-correlation pair disagrees strongly on
-    other variables.
-
-    "Prioritizing" here means that the hierarchical clustering algorithm considers
-    the lower-correlation pair to be "closer" (more similar) and thus merges them
-    earlier in the bottom-up clustering process.
+    Verify that hierarchical clustering with distance = 1 - |correlation|
+    merges the pair with the highest absolute pairwise correlation first.
 
     Scenario:
-    - Group 1: A, B, C.
-      A and C are independent.
-      B = A + C (correlated ~0.707 with both).
-      In other words, A and B are correlated ~0.7, the same is true for B and C.
-      However, the Euclidean distance between A's and B's correlation rows is large
-      because of the disagreement on C
+    - Group 1: A, B, C where B = A + C, giving corr(A,B) ~ corr(B,C) ~ 0.707.
+    - Group 2: D, E with controlled correlation `corr_de_target`.
 
-    - Group 2: D, E.
-      D and E are isolated and correlated with strength rho (varied by parametrization).
-      They agree perfectly on A, B, C (zero correlation with all).
-      The Euclidean distance between D's and E's correlation rows is relatively
-      small because they have consistent (zero) correlations with everything else.
-
-    Each variable's correlation row (the corresponding row in the correlation matrix)
-    includes its correlation with all variables, including itself (1.0 on diagonal).
-    For D and E we have:
-
-    D's row: [corr(D,A)=0, corr(D,B)=0, corr(D,C)=0, corr(D,D)=1.0, corr(D,E)=rho]
-    E's row: [corr(E,A)=0, corr(E,B)=0, corr(E,C)=0, corr(E,D)=rho, corr(E,E)=1.0]
-
-    For A, B and C we have:
-    A's row: [corr(A,A)=1.0, corr(A,B)=0.7, corr(A,C)=0, corr(A,D)=0, corr(A,E)=0]
-    B's row: [corr(B,A)=0.7, corr(B,B)=1.0, corr(B,C)=0.7, corr(B,D)=0, corr(B,E)=0]
-    C's row: [corr(C,A)=0, corr(C,B)=0.7, corr(C,C)=1.0, corr(C,D)=0, corr(C,E)=0]
-
-    Threshold calculations (based on Euclidean distance between correlation rows):
-      dist(D,E) = sqrt((0-0)^2 + (0-0)^2 + (0-0)^2 + (1-rho)^2 + (rho-1)^2))
-                = sqrt(2 * (1 - rho)^2)
-      dist(A,B) = dist(B,C) = sqrt((1-0.7)^2 + (0.7-1)^2 + (0-0.7)^2 + (0-0)^2+(0-0)^2))
-                = 0.82
-
-      Solve dist(D,E) < dist(A,B) for rho:
-      sqrt(2 * (1 - rho)^2) < 0.82
-        2 * (1 - rho)^2 < 0.82^2
-        (1 - rho)^2 < 0.82^2 / 2
-        1 - rho < sqrt(0.82^2 / 2)
-        rho > 1 - sqrt(0.82^2 / 2) ≈ 0.42
-      Hence, when rho > 0.42, D-E merges first; otherwise either A-B or B-C merges first
-      (depending on random variation in the sampling).
-
-    This test is parametrized to verify both regimes:
-    - rho > 0.42: D-E merges first despite corr(A,B) > rho and corr(B,C) > rho
-    - rho < 0.42: D-E no longer the closest pair (either A-B or B-C merges first)
+    With distance = 1 - |rho|, the pair with the highest |rho| has the
+    smallest distance and merges first:
+    - When corr_de_target > 0.707: D-E distance < A-B distance, so D-E merges first.
+    - When corr_de_target < 0.707: A-B (or B-C) merges first.
     """
 
     rng = np.random.default_rng(42)
@@ -580,3 +538,46 @@ def test_clustering_and_scaling_edge_case():
     # eigenvalues spread even for independent data, so the top ~91 components
     # already explain 95% of variance.
     assert len(np.unique(clusters)) == 91
+
+
+def test_that_cluster_responses_handles_asymmetric_distance_matrix():
+    """
+    This test documents why we symmetrize the distance matrix in cluster_responses.
+    When testing the algorithm on Drogon, `squareform` raised an error about the
+    distance matrix being non-symmetric. We could call `squareform` with
+    `checks=False` to bypass this, but it is cleaner to symmetrize the matrix directly.
+    """
+    # By creating responses with a very restricted integer range, we guarantee
+    # large numbers of tied values (which happens in real reservoir models when,
+    # e.g., wells are shut-in or inactive). The tie-averaging math inside
+    # `scipy.stats.spearmanr` reliably reproduces the floating-point symmetry drift.
+    rng = np.random.default_rng(2)
+    responses = rng.integers(0, 3, size=(15, 8)).astype(np.float64)
+
+    # Verify the precondition: spearmanr actually produces an asymmetric
+    # distance matrix for this input.
+    corr = spearmanr(responses).statistic
+    raw_distance = 1.0 - np.abs(corr)
+    assert not np.allclose(raw_distance, raw_distance.T, atol=0, rtol=0), (
+        "Expected asymmetric distance matrix from tied ranks; "
+        "if scipy fixed this, the test no longer exercises symmetrization"
+    )
+
+    clusters = cluster_responses(responses, nr_clusters=2)
+
+    assert len(clusters) == 8
+    assert set(clusters).issubset({1, 2})
+
+
+def test_that_cluster_responses_raises_on_constant_observation():
+    """
+    When an observation is constant across all realizations, spearmanr
+    returns NaN for that row/column. cluster_responses should raise a
+    clear ValueError rather than propagating NaN into the distance matrix.
+    """
+    rng = np.random.default_rng(0)
+    responses = rng.standard_normal((100, 5))
+    responses[:, 2] = 7.0  # make one observation constant
+
+    with pytest.raises(ValueError, match="contains NaN"):
+        cluster_responses(responses, nr_clusters=2)
