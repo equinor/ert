@@ -1,7 +1,10 @@
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Annotated, Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+
+from _ert.hook_runtime import HookRuntime
 
 
 class Id:
@@ -239,3 +242,56 @@ def dispatcher_event_from_json(raw_msg: str | bytes) -> DispatcherEvent:
 
 def dispatcher_event_to_json(event: DispatcherEvent) -> str:
     return event.model_dump_json()
+
+
+class WorkflowStatus(StrEnum):
+    PENDING = "Pending"
+    RUNNING = "Running"
+    FINISHED = "Finished"
+    FAILED = "Failed"
+    CANCELLED = "Cancelled"
+
+
+class _WorkflowEvent(BaseModel):
+    hook: HookRuntime | None = None
+    iteration: int | None = None
+
+
+class WorkflowBatchStartedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowBatchStartedEvent"] = "WorkflowBatchStartedEvent"
+    workflow_names: list[str]
+
+
+class WorkflowBatchFinishedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowBatchFinishedEvent"] = "WorkflowBatchFinishedEvent"
+    status: WorkflowStatus
+    workflow_names: list[str]
+
+
+class WorkflowStartedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowStartedEvent"] = "WorkflowStartedEvent"
+    workflow_name: str
+
+
+class WorkflowFinishedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowFinishedEvent"] = "WorkflowFinishedEvent"
+    workflow_name: str
+    status: WorkflowStatus
+    stdout: str | None = None
+    stderr: str | None = None
+
+
+class WorkflowCancelledEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowCancelledEvent"] = "WorkflowCancelledEvent"
+    workflow_name: str
+    stdout: str | None = None
+    stderr: str | None = None
+
+
+WorkflowEvent = (
+    WorkflowBatchStartedEvent
+    | WorkflowBatchFinishedEvent
+    | WorkflowStartedEvent
+    | WorkflowFinishedEvent
+    | WorkflowCancelledEvent
+)

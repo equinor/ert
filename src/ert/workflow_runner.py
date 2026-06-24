@@ -2,15 +2,24 @@ from __future__ import annotations
 
 import logging
 import types
+from collections.abc import Callable
 from concurrent import futures
 from concurrent.futures import Future
+from contextlib import suppress
 from typing import Any, Self
 
+from _ert.events import (
+    WorkflowCancelledEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+    WorkflowStatus,
+)
 from ert import ErtScript
 from ert.config import (
     BaseErtScriptWorkflow,
     ErtScriptWorkflow,
     ExternalErtScript,
+    HookRuntime,
     Workflow,
     WorkflowFixtures,
     WorkflowJob,
@@ -56,13 +65,12 @@ class WorkflowJobRunner:
                 self.job.executable,  # type: ignore
             )
             self.stop_on_fail = self.job.stop_on_fail
-
-        result = self.__script.initializeAndRun(
-            self.job.argument_types(), arguments, fixtures
-        )
-        self.__running = False
-
-        return result
+        try:
+            return self.__script.initializeAndRun(
+                self.job.argument_types(), arguments, fixtures
+            )
+        finally:
+            self.__running = False
 
     @property
     def name(self) -> str:
@@ -107,9 +115,20 @@ class WorkflowRunner:
         self,
         workflow: Workflow,
         fixtures: WorkflowFixtures,
+        send_event: Callable[
+            [WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent],
+            None,
+        ]
+        | None = None,
+        hook: HookRuntime | None = None,
+        iteration: int | None = None,
     ) -> None:
         self.__workflow = workflow
         self.fixtures = fixtures
+        self._send_event = send_event
+        self._workflow_name = workflow.name
+        self._hook = hook
+        self._iteration = iteration
 
         self.__workflow_result: bool | None = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -132,6 +151,13 @@ class WorkflowRunner:
     ) -> None:
         self.wait()
 
+    def send_event(
+        self,
+        event: WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent,
+    ) -> None:
+        if self._send_event is not None:
+            self._send_event(event)
+
     def run(self) -> None:
         if self.isRunning():
             raise AssertionError("An instance of workflow is already running!")
@@ -145,46 +171,133 @@ class WorkflowRunner:
         # Reset status
         self.__status = {}
         self.__running = True
+        workflow_failed = False
+        workflow_stdout: list[str] = []
+        workflow_stderr: list[str] = []
 
-        for job, args in self.__workflow:
-            jobrunner = WorkflowJobRunner(job)
-            self.__current_job = jobrunner
-            if not self.__cancelled:
-                logger.info(f"Workflow job {jobrunner.name} starting")
-                jobrunner.run(args, fixtures=self.fixtures)
-                self.__status[jobrunner.name] = {
-                    "stdout": jobrunner.stdoutdata(),
-                    "stderr": jobrunner.stderrdata(),
-                    "completed": not jobrunner.hasFailed(),
-                }
+        self.send_event(
+            WorkflowStartedEvent(
+                hook=self._hook,
+                iteration=self._iteration,
+                workflow_name=self._workflow_name,
+            )
+        )
 
-                info = {
-                    "class": "WORKFLOW_JOB",
-                    "job_name": jobrunner.name,
-                    "arguments": " ".join(args),
-                    "stdout": jobrunner.stdoutdata(),
-                    "stderr": jobrunner.stderrdata(),
-                    "execution_type": jobrunner.execution_type,
-                }
+        try:
+            for job, args in self.__workflow:
+                jobrunner = WorkflowJobRunner(job)
+                self.__current_job = jobrunner
+                if not self.__cancelled:
+                    logger.info(f"Workflow job {jobrunner.name} starting")
+                    try:
+                        jobrunner.run(args, fixtures=self.fixtures)
+                    except Exception as err:
+                        stdout = ""
+                        stderr = str(err)
+                        with suppress(ValueError):
+                            stdout = jobrunner.stdoutdata()
+                        with suppress(ValueError):
+                            stderr = jobrunner.stderrdata() or stderr
 
-                if jobrunner.hasFailed():
-                    if jobrunner.stop_on_fail:
-                        self.__running = False
-                        raise RuntimeError(
-                            f"Workflow job {info['job_name']}"
-                            f" failed with error: {info['stderr']}"
+                        if stdout:
+                            workflow_stdout.append(stdout)
+                        if stderr:
+                            workflow_stderr.append(stderr)
+
+                        self.send_event(
+                            WorkflowFinishedEvent(
+                                hook=self._hook,
+                                iteration=self._iteration,
+                                workflow_name=self._workflow_name,
+                                status=WorkflowStatus.FAILED,
+                                stderr="\n".join(workflow_stderr),
+                                stdout="\n".join(workflow_stdout),
+                            )
                         )
+                        raise
 
-                    logger.error(f"Workflow job {jobrunner.name} failed", extra=info)
-                else:
-                    logger.info(
-                        f"Workflow job {jobrunner.name} completed successfully",
-                        extra=info,
-                    )
+                    stdout = jobrunner.stdoutdata()
+                    stderr = jobrunner.stderrdata()
+                    if stdout:
+                        workflow_stdout.append(stdout)
+                    if stderr:
+                        workflow_stderr.append(stderr)
+                    self.__status[jobrunner.name] = {
+                        "stdout": stdout,
+                        "stderr": stderr,
+                        "completed": not jobrunner.hasFailed(),
+                    }
 
-        self.__current_job = None
-        self.__running = False
+                    info = {
+                        "class": "WORKFLOW_JOB",
+                        "job_name": jobrunner.name,
+                        "arguments": " ".join(args),
+                        "stdout": jobrunner.stdoutdata(),
+                        "stderr": jobrunner.stderrdata(),
+                        "execution_type": jobrunner.execution_type,
+                    }
+
+                    if jobrunner.hasFailed():
+                        workflow_failed = True
+                        if jobrunner.stop_on_fail:
+                            self.send_event(
+                                WorkflowFinishedEvent(
+                                    hook=self._hook,
+                                    iteration=self._iteration,
+                                    workflow_name=self._workflow_name,
+                                    status=WorkflowStatus.FAILED,
+                                    stderr="\n".join(workflow_stderr),
+                                    stdout="\n".join(workflow_stdout),
+                                )
+                            )
+                            raise RuntimeError(
+                                f"Workflow job {info['job_name']}"
+                                f" failed with error: {info['stderr']}"
+                            )
+
+                        logger.error(
+                            f"Workflow job {jobrunner.name} failed", extra=info
+                        )
+                    else:
+                        logger.info(
+                            f"Workflow job {jobrunner.name} completed successfully",
+                            extra=info,
+                        )
+        finally:
+            self.__current_job = None
+            self.__running = False
+
+        if self.__cancelled:
+            stderr = "Cancelled by user"
+            existing_stderr = "\n".join(workflow_stderr)
+            if existing_stderr:
+                stderr = f"{existing_stderr}\n{stderr}"
+            self.send_event(
+                WorkflowCancelledEvent(
+                    hook=self._hook,
+                    iteration=self._iteration,
+                    workflow_name=self._workflow_name,
+                    stdout="\n".join(workflow_stdout),
+                    stderr=stderr,
+                )
+            )
+            return
+
         self.__workflow_result = True
+        self.send_event(
+            WorkflowFinishedEvent(
+                hook=self._hook,
+                iteration=self._iteration,
+                workflow_name=self._workflow_name,
+                status=(
+                    WorkflowStatus.FAILED
+                    if workflow_failed
+                    else WorkflowStatus.FINISHED
+                ),
+                stdout="\n".join(workflow_stdout),
+                stderr="\n".join(workflow_stderr),
+            )
+        )
 
     def isRunning(self) -> bool:
         if self.__running:

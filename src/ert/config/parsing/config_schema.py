@@ -1,3 +1,5 @@
+from _ert.hook_runtime import HookRuntime
+
 from .config_dict import ConfigDict
 from .config_keywords import ConfigKeys
 from .config_schema_deprecations import deprecated_keywords_list
@@ -15,7 +17,6 @@ from .config_schema_item import (
     string_keyword,
 )
 from .history_source import HistorySource
-from .hook_runtime import HookRuntime
 from .observations_parser import parse_observations
 from .queue_system import QueueSystem
 from .schema_dict import SchemaItemDict

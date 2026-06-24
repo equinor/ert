@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
+from uuid import uuid4
 
 import pandas as pd
 import pytest
@@ -19,7 +20,15 @@ from PyQt6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 import ert.run_models
-from _ert.events import EnsembleEvaluationWarning
+from _ert.events import (
+    EnsembleEvaluationWarning,
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
+    WorkflowCancelledEvent,
+    WorkflowStartedEvent,
+    WorkflowStatus,
+)
+from _ert.hook_runtime import HookRuntime
 from ert.config import ErtConfig
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
@@ -40,6 +49,9 @@ from ert.gui.experiments.multiple_data_assimilation_panel import (
 )
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
+from ert.gui.experiments.view.tab_group_widget import TabGroupWidget
+from ert.gui.experiments.view.update import UpdateWidget
+from ert.gui.experiments.view.workflow import WorkflowWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
@@ -49,16 +61,31 @@ from ert.run_models import (
 )
 from ert.run_models.event import (
     FinishedTotalRunPathCreationEvent,
+    RunModelUpdateBeginEvent,
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
-from ert.run_models.run_model import RunModel
+from ert.run_models.run_model import RunModel, RunModelAPI
 from ert.scheduler.job import Job
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
 from tests.ert.utils import SnapshotBuilder
 
 _original_run_ensemble_evaluator_async = RunModel.run_ensemble_evaluator_async
+
+
+def _run_model_api_stub(
+    *,
+    experiment_name: str = "Test Experiment",
+    cancel=None,
+) -> RunModelAPI:
+    return RunModelAPI(
+        experiment_name=experiment_name,
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=cancel or (lambda: None),
+        has_failed_realizations=lambda: False,
+    )
 
 
 @pytest.fixture
@@ -235,6 +262,101 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
     assert not kill_button.isEnabled()
     assert (
         "Experiment cancelled by user during evaluation"
+        in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
+        .findChild(QLabel)
+        .text()
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.timeout(10)
+def test_that_terminating_experiment_during_hooked_workflows_marks_batch_cancelled(
+    qtbot: QtBot, tmp_path, monkeypatch
+):
+    queue: SimpleQueue = SimpleQueue()
+    cancel_calls: list[str] = []
+
+    def cancel() -> None:
+        cancel_calls.append("cancel")
+        queue.put(
+            WorkflowCancelledEvent(
+                hook=HookRuntime.PRE_SIMULATION,
+                iteration=0,
+                workflow_name="slow_workflow_01",
+                stderr="Cancelled by user",
+            )
+        )
+        queue.put(
+            WorkflowBatchFinishedEvent(
+                hook=HookRuntime.PRE_SIMULATION,
+                iteration=0,
+                workflow_names=["slow_workflow_01", "slow_workflow_02"],
+                status=WorkflowStatus.CANCELLED,
+            )
+        )
+        queue.put(
+            EndEvent(failed=True, msg="Experiment cancelled by user during workflows")
+        )
+
+    run_model_api = _run_model_api_stub(
+        experiment_name="Ensemble experiment",
+        cancel=cancel,
+    )
+    notifier = Mock()
+    run_dialog = RunDialog(
+        "Test",
+        run_model_api,
+        queue,
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+    run_dialog.setup_event_monitoring()
+
+    queue.put(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=0,
+            workflow_names=["slow_workflow_01", "slow_workflow_02"],
+        )
+    )
+    queue.put(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=0,
+            workflow_name="slow_workflow_01",
+        )
+    )
+
+    qtbot.waitUntil(
+        lambda: isinstance(run_dialog._tab_widget.currentWidget(), TabGroupWidget),
+        timeout=5000,
+    )
+    iteration_widget = run_dialog._tab_widget.currentWidget()
+    assert isinstance(iteration_widget, TabGroupWidget)
+    workflow_widget = iteration_widget.tabs.currentWidget()
+    assert isinstance(workflow_widget, WorkflowWidget)
+    assert workflow_widget._status_label.text() == "Pre-simulation workflows running"
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "question",
+        lambda *_args, **_kwargs: QMessageBox.StandardButton.Yes,
+    )
+
+    with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
+        qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
+
+    qtbot.waitUntil(lambda: run_dialog.fail_msg_box is not None, timeout=10000)
+    assert workflow_widget._status_label.text() == "Pre-simulation workflows cancelled"
+    assert workflow_widget._table.item(0, 1).text() == WorkflowStatus.FAILED.value
+    assert workflow_widget._table.item(0, 3).text() == "Cancelled by user"
+    assert workflow_widget._table.item(1, 1).text() == WorkflowStatus.CANCELLED.value
+    assert cancel_calls == ["cancel"]
+    assert (
+        "Experiment cancelled by user during workflows"
         in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
         .findChild(QLabel)
         .text()
@@ -520,9 +642,10 @@ def test_run_dialog_memory_usage_showing(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
-
+    iteration_widget = run_dialog._tab_widget.widget(0)
+    assert type(iteration_widget) is TabGroupWidget
     # This is the container of realization boxes
-    realization_box = run_dialog._tab_widget.widget(0)
+    realization_box = iteration_widget.tabs.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -619,9 +742,10 @@ def test_run_dialog_fm_label_show_correct_info(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
-
+    iteration_widget = run_dialog._tab_widget.widget(0)
+    assert type(iteration_widget) is TabGroupWidget
     # This is the container of realization boxes
-    realization_box = run_dialog._tab_widget.widget(0)
+    realization_box = iteration_widget.tabs.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -891,7 +1015,8 @@ def test_forward_model_overview_label_selected_on_tab_change(
     events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):
     def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
-        view = run_dialog._tab_widget.widget(iteration)._real_view
+        iteration_widget: TabGroupWidget = run_dialog._tab_widget.widget(iteration)
+        view = iteration_widget.tabs.widget(0)._real_view
         model_index = view.model().index(realization_index, 0)
         view.scrollTo(model_index)
         rect = view.visualRect(model_index)
@@ -1180,7 +1305,9 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     queue.put(EndEvent(failed=False, msg=""))
 
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
-    assert isinstance(dialog._tab_widget.widget(0), RealizationWidget)
+    iteration_widget: TabGroupWidget = dialog._tab_widget.widget(0)
+
+    assert isinstance(iteration_widget.tabs.widget(0), RealizationWidget)
     qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)
 
 
@@ -1305,3 +1432,404 @@ HOOK_WORKFLOW_JOB slow_workflow_02 TOUCH_WORKFLOW {file_c} PRE_SIMULATION
         .findChild(QLabel)
         .text()
     )
+
+
+@pytest.mark.filterwarnings(
+    "ignore:Use of legacy_ertscript_workflow is deprecated.*:DeprecationWarning"
+)
+def test_that_run_dialog_places_all_workflow_hooks_in_expected_tabs(
+    qtbot: QtBot, tmp_path: Path
+):
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble smoother")
+    notifier = Mock()
+
+    run_dialog = RunDialog(
+        "Running experiment",
+        run_model_api,
+        SimpleQueue(),
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=["prepare_experiment"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=0,
+            workflow_names=["prepare_iteration_0"],
+        )
+    )
+    run_dialog._on_event(
+        _minimal_snapshot_event(
+            iteration=0,
+            total_iterations=0,
+            progress=1.0,
+            realization_ids=[str(i) for i in range(10)],
+            realization_state=state.REALIZATION_STATE_FINISHED,
+            fm_step_status=state.FORWARD_MODEL_STATE_FINISHED,
+            max_memory_usage="1000",
+            current_memory_usage="500",
+            status_count={"Finished": 10},
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.POST_SIMULATION,
+            iteration=0,
+            workflow_names=["collect_iteration_0"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_FIRST_UPDATE,
+            iteration=0,
+            workflow_names=["pre_first_update_iteration_0"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_UPDATE,
+            iteration=0,
+            workflow_names=["pre_update_iteration_0"],
+        )
+    )
+    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.POST_UPDATE,
+            iteration=0,
+            workflow_names=["post_update_iteration_0"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=1,
+            workflow_names=["prepare_iteration_1"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_names=["archive_experiment"],
+        )
+    )
+    assert run_dialog._tab_widget.tabText(0) == "Pre-experiment workflows"
+    assert run_dialog._tab_widget.tabText(1) == "iteration-0"
+    assert run_dialog._tab_widget.tabText(2) == "update-0"
+    assert run_dialog._tab_widget.tabText(3) == "iteration-1"
+    assert run_dialog._tab_widget.tabText(4) == "Post-experiment workflows"
+
+    pre_experiment_widget = run_dialog._tab_widget.widget(0)
+    first_iteration_widget = run_dialog._tab_widget.widget(1)
+    update_widget = run_dialog._tab_widget.widget(2)
+    second_iteration_widget = run_dialog._tab_widget.widget(3)
+    post_experiment_widget = run_dialog._tab_widget.widget(4)
+
+    assert isinstance(pre_experiment_widget, WorkflowWidget)
+    assert isinstance(post_experiment_widget, WorkflowWidget)
+    assert isinstance(first_iteration_widget, TabGroupWidget)
+    assert isinstance(update_widget, TabGroupWidget)
+    assert isinstance(second_iteration_widget, TabGroupWidget)
+
+    assert pre_experiment_widget.hook == HookRuntime.PRE_EXPERIMENT
+    assert post_experiment_widget.hook == HookRuntime.POST_EXPERIMENT
+    assert first_iteration_widget.tabs.tabText(0) == "Pre-simulation workflows"
+    assert first_iteration_widget.tabs.tabText(1) == "Run"
+    assert first_iteration_widget.tabs.tabText(2) == "Post-simulation workflows"
+    assert update_widget.tabs.tabText(0) == "Pre-first-update workflows"
+    assert update_widget.tabs.tabText(1) == "Pre-update workflows"
+    assert update_widget.tabs.tabText(2) == "Update"
+    assert update_widget.tabs.tabText(3) == "Post-update workflows"
+    assert second_iteration_widget.tabs.tabText(0) == "Pre-simulation workflows"
+
+    assert isinstance(
+        first_iteration_widget.tabs.widget(0),
+        WorkflowWidget,
+    )
+    assert isinstance(
+        first_iteration_widget.tabs.widget(1),
+        RealizationWidget,
+    )
+    assert isinstance(
+        first_iteration_widget.tabs.widget(2),
+        WorkflowWidget,
+    )
+    assert isinstance(update_widget.tabs.widget(0), WorkflowWidget)
+    assert isinstance(update_widget.tabs.widget(1), WorkflowWidget)
+    assert isinstance(update_widget.tabs.widget(2), UpdateWidget)
+    assert isinstance(update_widget.tabs.widget(3), WorkflowWidget)
+    assert isinstance(second_iteration_widget.tabs.widget(0), WorkflowWidget)
+
+    assert first_iteration_widget.tabs.widget(0).hook == HookRuntime.PRE_SIMULATION
+    assert first_iteration_widget.tabs.widget(2).hook == HookRuntime.POST_SIMULATION
+    assert update_widget.tabs.widget(0).hook == HookRuntime.PRE_FIRST_UPDATE
+    assert update_widget.tabs.widget(1).hook == HookRuntime.PRE_UPDATE
+    assert update_widget.tabs.widget(3).hook == HookRuntime.POST_UPDATE
+    assert second_iteration_widget.tabs.widget(0).hook == HookRuntime.PRE_SIMULATION
+
+    first_pre_simulation_widget = run_dialog._get_workflow_tab_widget(
+        HookRuntime.PRE_SIMULATION, 0
+    )
+    second_pre_simulation_widget = run_dialog._get_workflow_tab_widget(
+        HookRuntime.PRE_SIMULATION, 1
+    )
+    assert first_pre_simulation_widget is not None
+    assert second_pre_simulation_widget is not None
+    assert first_pre_simulation_widget is not second_pre_simulation_widget
+
+
+def _minimal_snapshot_event(
+    *,
+    iteration: int,
+    total_iterations: int,
+    progress: float,
+    iteration_label: str = "Foo",
+    realization_ids: list[str] | None = None,
+    realization_state: str = state.REALIZATION_STATE_UNKNOWN,
+    fm_step_status: str = state.FORWARD_MODEL_STATE_START,
+    max_memory_usage: str | None = None,
+    current_memory_usage: str | None = None,
+    status_count: dict[str, int] | None = None,
+) -> FullSnapshotEvent:
+    ids = realization_ids or ["0"]
+
+    return FullSnapshotEvent(
+        snapshot=(
+            SnapshotBuilder()
+            .add_fm_step(
+                fm_step_id="0",
+                index="0",
+                name="fm_step_0",
+                max_memory_usage=max_memory_usage,
+                current_memory_usage=current_memory_usage,
+                status=fm_step_status,
+            )
+            .build(ids, realization_state)
+        ),
+        iteration_label=iteration_label,
+        total_iterations=total_iterations,
+        progress=progress,
+        realization_count=len(ids),
+        status_count=status_count or {"Unknown": len(ids)},
+        iteration=iteration,
+    )
+
+
+def test_that_run_dialog_keeps_selected_subtab_when_creating_workflow_subtab(
+    qtbot: QtBot,
+):
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble experiment")
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    run_dialog._on_event(
+        _minimal_snapshot_event(iteration=0, total_iterations=1, progress=0.25)
+    )
+
+    tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
+    assert tab_group_widget is not None
+    realization_widget = tab_group_widget.tabs.currentWidget()
+    assert isinstance(realization_widget, RealizationWidget)
+    run_dialog._tab_widget.setCurrentWidget(tab_group_widget)
+
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=0,
+            workflow_names=["prepare_iteration_0"],
+        )
+    )
+
+    workflow_widget = run_dialog._get_workflow_tab_widget(HookRuntime.PRE_SIMULATION, 0)
+    assert isinstance(workflow_widget, WorkflowWidget)
+    assert tab_group_widget.tabs.currentWidget() is realization_widget
+
+
+def test_that_run_dialog_keeps_selected_update_subtab_when_creating_workflow_subtab(
+    qtbot: QtBot,
+):
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble smoother")
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
+
+    update_tab_group_widget = run_dialog._get_tab_group_widget(0, "update-0")
+    assert update_tab_group_widget is not None
+    update_widget = update_tab_group_widget.tabs.currentWidget()
+    assert isinstance(update_widget, UpdateWidget)
+    run_dialog._tab_widget.setCurrentWidget(update_tab_group_widget)
+
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_UPDATE,
+            iteration=0,
+            workflow_names=["pre_update_iteration_0"],
+        )
+    )
+
+    workflow_widget = run_dialog._get_workflow_tab_widget(HookRuntime.PRE_UPDATE, 0)
+    assert isinstance(workflow_widget, WorkflowWidget)
+    assert update_tab_group_widget.tabs.currentWidget() is update_widget
+
+
+@pytest.mark.parametrize(
+    ("tab_title", "event", "expected_tab_count", "expected_workflow_hook"),
+    [
+        pytest.param(
+            "iteration-0",
+            _minimal_snapshot_event(iteration=1, total_iterations=2, progress=0.25),
+            3,
+            None,
+            id="new_iteration_tab",
+        ),
+        pytest.param(
+            "update-0",
+            RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()),
+            3,
+            None,
+            id="new_update_tab",
+        ),
+        pytest.param(
+            "Post-experiment workflows",
+            WorkflowBatchStartedEvent(
+                hook=HookRuntime.POST_EXPERIMENT,
+                iteration=None,
+                workflow_names=["prepare_experiment"],
+            ),
+            3,
+            None,
+            id="new_top_level_workflow_tab",
+        ),
+        pytest.param(
+            "iteration-0",
+            WorkflowBatchStartedEvent(
+                hook=HookRuntime.PRE_SIMULATION,
+                iteration=0,
+                workflow_names=["prepare_iteration_0"],
+            ),
+            2,
+            HookRuntime.PRE_SIMULATION,
+            id="iteration_workflow_event",
+        ),
+    ],
+)
+def test_that_new_tab_does_not_steal_top_level_focus(
+    qtbot: QtBot,
+    tab_title: str,
+    event: object,
+    expected_tab_count: int,
+    expected_workflow_hook: HookRuntime | None,
+):
+    run_model_api = _run_model_api_stub(experiment_name="Test Experiment")
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    pre_experiment_widget = run_dialog._create_workflow_tab_widget(
+        HookRuntime.PRE_EXPERIMENT, None
+    )
+    run_dialog._on_event(
+        _minimal_snapshot_event(iteration=0, total_iterations=2, progress=0.25)
+    )
+    run_dialog._tab_widget.setCurrentWidget(pre_experiment_widget)
+
+    run_dialog._on_event(event)
+
+    assert run_dialog._tab_widget.count() == expected_tab_count
+    if expected_workflow_hook is not None:
+        tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
+        assert tab_group_widget is not None
+        assert run_dialog._get_workflow_subtab(tab_group_widget, expected_workflow_hook)
+    assert run_dialog._tab_widget.currentWidget() is pre_experiment_widget
+
+
+def test_that_fm_step_frame_is_visible_only_for_realization_widget(
+    qtbot: QtBot,
+):
+    run_model_api = _run_model_api_stub(experiment_name="Ensemble experiment")
+    notifier = Mock()
+    run_dialog = RunDialog("Test", run_model_api, SimpleQueue(), notifier)
+    qtbot.addWidget(run_dialog)
+
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=["prepare_experiment"],
+        )
+    )
+    run_dialog._on_event(
+        _minimal_snapshot_event(iteration=0, total_iterations=1, progress=0.25)
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=0,
+            workflow_names=["prepare_iteration_0"],
+        )
+    )
+    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
+
+    def click_top_level_tab(tab_title: str) -> None:
+        tab_index = next(
+            i
+            for i in range(run_dialog._tab_widget.count())
+            if run_dialog._tab_widget.tabText(i) == tab_title
+        )
+        tab_bar = run_dialog._tab_widget.tabBar()
+        tab_rect = tab_bar.tabRect(tab_index)
+        qtbot.mouseClick(
+            tab_bar,
+            Qt.MouseButton.LeftButton,
+            pos=tab_rect.center(),
+        )
+
+    def click_subtab(tab_group_widget: TabGroupWidget, tab_title: str) -> None:
+        tab_index = next(
+            i
+            for i in range(tab_group_widget.tabs.count())
+            if tab_group_widget.tabs.tabText(i) == tab_title
+        )
+        tab_bar = tab_group_widget.tabs.tabBar()
+        tab_rect = tab_bar.tabRect(tab_index)
+        qtbot.mouseClick(
+            tab_bar,
+            Qt.MouseButton.LeftButton,
+            pos=tab_rect.center(),
+        )
+
+    click_top_level_tab("iteration-0")
+    qtbot.waitUntil(lambda: not run_dialog.fm_step_frame.isHidden(), timeout=2000)
+
+    iteration_tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
+    assert iteration_tab_group_widget is not None
+    click_subtab(iteration_tab_group_widget, "Pre-simulation workflows")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    click_top_level_tab("update-0")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    click_top_level_tab("Pre-experiment workflows")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    click_top_level_tab("iteration-0")
+    qtbot.waitUntil(run_dialog.fm_step_frame.isHidden, timeout=2000)
+
+    iteration_tab_group_widget = run_dialog._get_tab_group_widget(0, "iteration-0")
+    assert iteration_tab_group_widget is not None
+    click_subtab(iteration_tab_group_widget, "Run")
+    qtbot.waitUntil(lambda: not run_dialog.fm_step_frame.isHidden(), timeout=2000)

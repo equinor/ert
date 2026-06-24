@@ -2925,10 +2925,35 @@ def test_that_create_workflow_from_job_creates_and_registers_workflow(
     )
     assert "my_wf" in ert_config.workflows
     wf = ert_config.workflows["my_wf"]
+    assert wf.name == "my_wf"
     assert len(wf.cmd_list) == 1
     job, args = wf.cmd_list[0]
     assert job.name == "MY_JOB"
     assert args == ["foo", "bar"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("mode", [HookRuntime.PRE_EXPERIMENT, HookRuntime.PRE_UPDATE])
+def test_that_load_workflow_alias_is_preserved_on_registered_and_hooked_workflow(
+    ert_config_with_job, mode
+):
+    workflow_file = Path("aliased_workflow.wf")
+    workflow_file.write_text("MY_JOB\n", encoding="utf-8")
+
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        LOAD_WORKFLOW {workflow_file} workflow_alias
+        HOOK_WORKFLOW workflow_alias {mode.name}
+        """),
+    )
+
+    workflow = ert_config.workflows["workflow_alias"]
+
+    assert workflow.name == "workflow_alias"
+    assert Path(workflow.src_file).name == workflow_file.name
+    assert workflow.name != Path(workflow.src_file).stem
+    assert ert_config.hooked_workflows[mode][0].name == "workflow_alias"
 
 
 @pytest.mark.parametrize("mode", list(HookRuntime))
