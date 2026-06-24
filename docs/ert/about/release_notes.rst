@@ -27,6 +27,24 @@
 Highlighted changes
 ===================
 
+Version 20.0
+------------
+
+Breakthrough observation
+########################
+
+We’ve added a new observation type, namely the breakthrough observation. The breakthrough
+observation is used to condition the history matching on *when* a summary key in
+the simulation passes a certain threshold.
+
+It's similar to a summary observation, but the observed and uncertain property is the date
+instead of the value.
+
+.. image:: breakthrough.png
+
+The details regarding breakthrough observation can be read about in
+:ref:`breakthrough observation <breakthrough_observation>`.
+
 Version 18.0
 ------------
 

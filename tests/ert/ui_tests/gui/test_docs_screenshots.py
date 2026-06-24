@@ -64,6 +64,7 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/about/click-show-details.png",
     "docs/ert/about/v9_update_param.png",
     "docs/ert/about/version-8.0-suggestor.png",
+    "doct/ert/about/breakthrough.png",
     "docs/ert/img/logo.png",
     "docs/ert/reference/configuration/fig/errf_symmetric_uniform.png",
     "docs/ert/reference/configuration/fig/truncated_ok.png",
