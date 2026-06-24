@@ -331,7 +331,10 @@ exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
 iterative_ensemble_smoother = false # Developed by Equinor
+jupyterlab = false # needed until 01.07
+jupyter-server = false # needed until 01.07
 graphite-maps = false # Developed by Equinor
+msgpack = false # needed until 01.07
 oil_reservoir_synthesizer = false # Developed by Equinor
 pytest = false # needed until 29.06
 resdata = false # Developed by Equinor
