@@ -113,7 +113,7 @@ def _get_source_package() -> str:
     return "not found"
 
 
-class ForwardModelStepDocumentation(BaseModel):
+class ForwardModelStepDocumentation(BaseModel, extra="forbid"):
     config_file: str | None = Field(default=None)
     source_package: str = Field(default_factory=_get_source_package)
     source_function_name: str = Field(default="ert")

@@ -91,7 +91,6 @@ def test_key_def_structure(api: PlotApi):
             {
                 "name": "BPR_138_PERSISTENCE",
                 "forward_init": False,
-                "update": True,
                 "dimensionality": 1,
                 "distribution": {"name": "uniform", "min": 0.2, "max": 0.7},
                 "group": "SNAKE_OIL_PARAM",
