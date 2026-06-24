@@ -51,6 +51,17 @@ Option to export RFT data for visualization
 Added the `EXPORT_RFT <../reference/workflows/added_workflow_jobs.html#EXPORT_RFT>`_ workflow job for exporting RFT data for visualization. See
 :ref:`Exporting RFT data for visualization <exporting_rft_data_for_visualization>` for more information.
 
+Version 19.0
+------------
+
+Export misfit to csv option
+###########################
+
+Under Manage experiments, by selecting an ensemble, it is now possible to export the
+misfit data to a csv file.
+
+.. image:: misfit_export.png
+
 Version 18.0
 ------------
 
