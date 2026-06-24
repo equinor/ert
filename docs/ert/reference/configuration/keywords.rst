@@ -634,6 +634,7 @@ By default, RUNPATH is set to "simulations/realization-<IENS>/iter-<ITER>".
 
 Deprecated syntax still allow use of two `%d` specifiers. Use of more than two `%d` specifiers,
 using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.
+The RUNPATH cannot contain whitespace.
 
 *Example:*
 
