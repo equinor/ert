@@ -51,6 +51,24 @@ Option to export RFT data for visualization
 Added the `EXPORT_RFT <../reference/workflows/added_workflow_jobs.html#EXPORT_RFT>`_ workflow job for exporting RFT data for visualization. See
 :ref:`Exporting RFT data for visualization <exporting_rft_data_for_visualization>` for more information.
 
+Version 20.0
+------------
+
+Breakthrough observation
+########################
+
+We’ve added a new observation type, namely the breakthrough observation. The breakthrough
+observation is used to condition the history matching on *when* a summary key in
+the simulation passes a certain threshold.
+
+It's similar to a summary observation, but the observed and uncertain property is the date
+instead of the value.
+
+.. image:: breakthrough.png
+
+The details regarding breakthrough observation can be read about in
+:ref:`breakthrough observation <breakthrough_observation>`.
+
 Version 19.0
 ------------
 
