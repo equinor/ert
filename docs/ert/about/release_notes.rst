@@ -27,6 +27,44 @@
 Highlighted changes
 ===================
 
+
+Version 22.0
+------------
+
+Add default observation names
+#############################
+
+We've added the possibility of not giving names to the observations. Should a name be
+lacking, a default name will be derived from the observation values. The name will contain
+enough information to be unique from other observations.
+
+For example:
+
+.. code-block:: text
+
+     SUMMARY_OBSERVATION
+     {
+         VALUE   = 0.1;
+         ERROR   = 0.05;
+         DATE    = 2010-03-31;  -- (RESTART = 9)
+         KEY     = WOPR:OP1;
+     };
+
+     RFT_OBSERVATION {
+         WELL=PROD;
+         DATE=2015-02-01;
+         PROPERTY=PRESSURE;
+         VALUE=3800;
+         ERROR=10;
+         TVD=8400;
+         EAST=9500;
+         NORTH=9500;
+     };
+
+
+Would receive the default names of `WOPR:OP1:2010-03-31` and
+`PROD:2015-02-01:PRESSURE:9500.0:9500.0:8400.0` respectively.
+
 Version 18.0
 ------------
 
