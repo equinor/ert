@@ -22,7 +22,7 @@ def use_runtime_plugins(value: ErtRuntimePlugins) -> Iterator[None]:
         init_context_var.reset(token)
 
 
-class BaseModelWithContextSupport(BaseModel):
+class BaseModelWithContextSupport(BaseModel, extra="forbid"):
     def __init__(__pydantic_self__, **data: Any) -> None:
         __pydantic_self__.__pydantic_validator__.validate_python(
             data,

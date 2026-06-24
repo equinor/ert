@@ -7,7 +7,7 @@ from typing import Annotated, Any, ClassVar, Literal, Self
 
 import polars as pl
 from polars.datatypes import DataTypeClass
-from pydantic import BaseModel, Field, TypeAdapter, model_validator
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 from ert.base_model_context import BaseModelWithContextSupport, init_context_var
 from ert.config import (
@@ -72,6 +72,8 @@ class DictEncodedDataFrame(BaseModel):
 
 
 class RunModelConfig(BaseModelWithContextSupport):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
     storage_path: str
     runpath_file: Path
     user_config_file: Path
@@ -251,6 +253,7 @@ class EvaluateEnsembleConfig(RunModelConfig):
     experiment_type: ExperimentType = ExperimentType.EVALUATE_ENSEMBLE
     ensemble_id: str
     supports_rerunning_failed_realizations: ClassVar[bool] = True
+    shape_registry: ShapeRegistry | None = None
 
 
 EverestResponseTypes = (
@@ -265,6 +268,8 @@ EverestResponseTypesAdapter = TypeAdapter(  # type: ignore
 
 
 class EverestRunModelConfig(RunModelConfig):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
     experiment_type: ExperimentType = ExperimentType.EVEREST
     optimization_output_dir: str
     simulation_dir: str
@@ -278,6 +283,7 @@ class EverestRunModelConfig(RunModelConfig):
     keep_run_path: bool
     experiment_name: str
     target_ensemble: str
+    shape_registry: ShapeRegistry | None = None
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
@@ -306,6 +312,7 @@ class ManualUpdateConfig(UpdateRunModelConfig):
     experiment_type: ExperimentType = ExperimentType.MANUAL_UPDATE
     ensemble_id: str
     ert_templates: list[tuple[str, str]]
+    shape_registry: ShapeRegistry | None = None
 
     def to_experiment_config(
         self, *, prior_experiment_config: ExperimentConfig
