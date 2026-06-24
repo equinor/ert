@@ -176,13 +176,6 @@ class RFTConfig(ResponseConfig):
                 )
         return location_cell_map
 
-    @staticmethod
-    def _assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
-        if df.schema != schema:
-            msg = f"Expected schema {schema}, got {df.schema}."
-            raise AssertionError(msg)
-        return df
-
     @dataclass(frozen=True)
     class ValidRFTEntry:
         property_values: dict[RFTProperty, npt.NDArray[np.float32]]
