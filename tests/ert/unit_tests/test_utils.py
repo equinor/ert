@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from ert.utils import makedirs_if_needed
+import polars as pl
+import pytest
+
+from ert.utils import assert_schema, makedirs_if_needed
 
 
 def test_makedirs(change_to_tmpdir):
@@ -52,3 +55,34 @@ def test_makedirs_roll_existing(change_to_tmpdir):
     makedirs_if_needed(output_dir, roll_if_exists=True)
     assert output_dir.is_dir()
     assert len(list(cwd.iterdir())) == 3
+
+
+def test_that_assert_schema_raises_when_schema_datatype_is_not_as_expected():
+    schema = {"col": pl.Float32}
+    df1 = pl.DataFrame({"col": pl.Series([1.11, 2.22], dtype=pl.Float32)})
+    df2 = pl.DataFrame({"col": [1.11, 2.22]})
+
+    assert_schema(df1, schema)
+    with pytest.raises(AssertionError, match="Expected schema"):
+        assert_schema(df2, schema)
+
+
+def test_that_assert_schema_raises_when_schema_column_order_is_not_as_expected():
+    schema = {"col1": pl.String, "col2": pl.String}
+    df1 = pl.DataFrame(
+        {
+            "col1": pl.Series(["a", "b"], dtype=pl.String),
+            "col2": pl.Series(["c", "d"], dtype=pl.String),
+        }
+    )
+    df2 = pl.DataFrame(
+        {
+            "col2": pl.Series(["c", "d"], dtype=pl.String),
+            "col1": pl.Series(["a", "b"], dtype=pl.String),
+        }
+    )
+
+    assert_schema(df1, schema)
+    with pytest.raises(AssertionError, match="Expected schema"):
+        assert_schema(df2, schema)
+    assert_schema(df2, schema, check_column_order=False)

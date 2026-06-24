@@ -5,6 +5,7 @@ from typing import Any, Literal, Self
 import polars as pl
 from pydantic import BaseModel, Field
 
+from ert.utils import assert_schema
 from ert.warnings import PostExperimentWarning
 
 from .parsing import ConfigDict
@@ -102,6 +103,10 @@ class BaseResponseConfig(BaseModel, extra="forbid"):
         True if keys are finalized, False otherwise (for example, keys were declared
         with wildcard and have not been resolved yet).
         """
+
+    @staticmethod
+    def _assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
+        return assert_schema(df, schema)
 
 
 class ResponseConfig(BaseResponseConfig):
