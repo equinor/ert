@@ -129,6 +129,8 @@ def _create_value(
     'Calculation' file parameter is expected to be included in the file identification.
     Data row is already mocked to one value, so no separate calculation (mean/min) is
     happening. It means data can be inconsistent (min > mean), but it shouldn't matter.
+
+    Comments in the code below show expected ranges of the variables.
     """
 
     a = parameters["a"]["value"]  # [0, 1)
