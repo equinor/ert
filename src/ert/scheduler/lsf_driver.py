@@ -377,7 +377,6 @@ class LsfDriver(Driver):
             "-J",
             name,
             str(script_path),
-            str(runpath),
         ]
 
         if iens not in self._submit_locks:
