@@ -35,7 +35,10 @@ from ert.config._observations import Observation
 from ert.config.parsing.hook_runtime import HookRuntime
 from ert.config.response_config import DerivedResponseConfig
 
+from .blob_data import BlobStorageData, BlobType, RhoStorageData
 from .mode import BaseMode, Mode, require_write
+
+BLOB_DATA_DIR = "blobs"
 
 if TYPE_CHECKING:
     from .local_ensemble import LocalEnsemble
@@ -674,6 +677,35 @@ class LocalExperiment(BaseMode):
             for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
             if b.has_gradient_results
         ]
+
+    def load_blobs(
+        self,
+        blob_type: BlobType | None = None,
+    ) -> list[BlobStorageData]:
+        """List blob metadata stored at experiment level, filtered by type."""
+        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
+
+    def load_blob(self, uri: str) -> bytes:
+        """Load blob bytes by URI from the experiment-level blob directory."""
+        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
+
+    @require_write
+    def save_blob(
+        self,
+        name: str,
+        data: bytes,
+        blob_info: RhoStorageData,
+    ) -> None:
+        """Save a rho-matrix blob at experiment level."""
+        file_type = "application/x-npz" if blob_info.sparse else "application/x-npy"
+        BlobStorageData.save_blob(
+            name=name,
+            data=data,
+            blob_info=blob_info,
+            file_type=file_type,
+            storage=self._storage,
+            blob_dir=self._path / BLOB_DATA_DIR,
+        )
 
     def export_dataframes(
         self,
