@@ -17,15 +17,16 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-iterative-ensemble-smoother = false
 pytest = false
-tqdm = false
-resfo = false
-oil-reservoir-synthesizer = false
-resdata = false
-msgpack = false
 ropt-dakota = false
 xtgeo = false
+resfo = false
+resdata = false
+iterative-ensemble-smoother = false
+carolina = false
+tqdm = false
+oil-reservoir-synthesizer = false
+msgpack = false
 jupyterlab = false
 graphite-maps = false
 ropt = false
@@ -427,18 +428,18 @@ wheels = [
 
 [[package]]
 name = "carolina"
-version = "2.0.4"
+version = "2.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/85/10e4ca5f6ee96201d35bae0f38ba832b87678dbc3719e7ed65098d9e83bb/carolina-2.0.4-cp312-cp312-macosx_15_0_arm64.whl", hash = "sha256:5cac53bbcf655b3bfb2f42ba19de57dbfc685736b3642bdf1ac6a8fbbc296567", size = 15164512, upload-time = "2026-03-10T12:29:57.208Z" },
-    { url = "https://files.pythonhosted.org/packages/cd/1b/a67b0ee4dba127c5315bcdb484e2209b5403f688b2a8dd13dac59b8795fa/carolina-2.0.4-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:329b4e1cc52fc9410f1c0b4e28e3d88f5ad1381554e71d56d0eebef404bddd28", size = 27638267, upload-time = "2026-03-10T12:29:59.761Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/73/d43485991604759f741389787a9aaf1d70c75448a45559be18e9deb99a4e/carolina-2.0.4-cp313-cp313-macosx_15_0_arm64.whl", hash = "sha256:2f32207c867591962565d93e082f33e5d555d40cfc2a370076fb1f3b3f2580df", size = 15164399, upload-time = "2026-03-10T12:30:02.387Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/ec/011c0589dafcd6d29c256978d2af03cade731996b78c6829187ba945a8c0/carolina-2.0.4-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:75a0a7dd0bee8cb270f8f17d34ea675f48d9991317066df7099e2667ce3bab67", size = 27638179, upload-time = "2026-03-10T12:30:04.875Z" },
-    { url = "https://files.pythonhosted.org/packages/d5/21/134e318436d7acceb3df34d8c9a4af248ec4d95197b3a254db2136779181/carolina-2.0.4-cp314-cp314-macosx_15_0_arm64.whl", hash = "sha256:247572722211c14e105729ee3db4c2a4f11083062d8becef9df16f9ae99d4234", size = 15165699, upload-time = "2026-03-10T12:30:08.042Z" },
-    { url = "https://files.pythonhosted.org/packages/23/6e/a6791101c2a1338c1aaa128d6622e1cfbac95a929bb1b4140e805d2efa7e/carolina-2.0.4-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:f4e284a9c2c4a4fa74edb42ab9ed01dfb9bea09c8d8ef96c8d7a3802b238bab3", size = 27640871, upload-time = "2026-03-10T12:30:10.641Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/f5/3bc7cfbf808b6bbfab8a2f7c92d0ede321905a4800747d748747d70ab467/carolina-2.0.5-cp312-cp312-macosx_15_0_arm64.whl", hash = "sha256:c9abd6c673a3651bf46ef70208bc542a3b4a80265a761e2576fcecc2925b2c2b", size = 23477360, upload-time = "2026-06-25T08:10:56.575Z" },
+    { url = "https://files.pythonhosted.org/packages/73/4c/bd24ec0d05b3c3e53ba9c6891ed3cee64ccf8df7bb4bfb3f3279ad0a81f0/carolina-2.0.5-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:dd74806ae4ef1c3e68daa4966d9606d8745c7607610157e17b39084e0be2b818", size = 35773698, upload-time = "2026-06-25T08:10:59.795Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/0f/0e830a6f13e925c42c686edeb9024173fd5e66c87084b32b9c59c1ba01b6/carolina-2.0.5-cp313-cp313-macosx_15_0_arm64.whl", hash = "sha256:480d3725cf1801902793a6cf07d1714afc0ff95f04cd79a4a5e442612a86b471", size = 23478262, upload-time = "2026-06-25T08:11:02.614Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/90/da5163de81918d2c242c478179a10317165e81437dc093b58974ce56a11c/carolina-2.0.5-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:f1a4a864e27113f4cfb9250bb0cb17cc1c92a716779007d6cbcab8efce6b3db6", size = 35773443, upload-time = "2026-06-25T08:11:05.871Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/61/49bf3b740d949a16b5db7d21d44287011f5a11e00897cd635d9f12a5a7af/carolina-2.0.5-cp314-cp314-macosx_15_0_arm64.whl", hash = "sha256:f256740ad3ef7848a98bc748a4378efbae9eefd2b5c0674dad8c88010a965fa2", size = 23477349, upload-time = "2026-06-25T08:11:09.47Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/80/44eddce1afc27a219d9452be06dc37f1d57f4c6295f673742f18a1c358a6/carolina-2.0.5-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:5cbbffc60af44ee4472978882a2435499f209e36a5c093bc5e35e157571c43e6", size = 35776093, upload-time = "2026-06-25T08:11:13.256Z" },
 ]
 
 [[package]]

@@ -330,6 +330,7 @@ fork-strategy = "requires-python"
 exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
+carolina = false  # Developed by Equinor
 iterative_ensemble_smoother = false # Developed by Equinor
 jupyterlab = false # needed until 01.07
 jupyter-server = false # needed until 01.07
