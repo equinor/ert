@@ -109,6 +109,34 @@ The details regarding breakthrough observation can be read about in
 Version 19.0
 ------------
 
+Deprecation of History Observations
+###################################
+
+History observations becomes deprecated as of this release.
+
+As history observations are a collection of summary observations, they are convertible.
+To ease the process of converting from history observations to summary observations, a
+command line tool was added in the release.
+
+By running:
+
+.. code-block:: text
+
+    ert convert_observations <config.ert>
+
+The tooling will attempt to rewrite the history observations in the observation config to
+summary observations. The changes are written to a copy of the observation config,
+appended with .updated in the filename.
+
+Example output from this tool:
+
+.. code-block:: text
+
+    > ert convert_observations config.ert
+    Making copy of obs config @ observations/observations.txt -> observations/observations.txt.updated
+    Applying change to obs config @ observations/observations.txt.updated...
+    History obs FOPR -> 200 summary observations
+
 Export misfit to csv option
 ###########################
 
