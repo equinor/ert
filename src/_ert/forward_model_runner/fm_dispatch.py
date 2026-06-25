@@ -225,6 +225,7 @@ def fm_dispatch(args: list[str]) -> None:
 
     signal.signal(signal.SIGTERM, sigterm_handler)
     _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
+    print("fm dispatch completed successfully")
 
 
 def main() -> None:
