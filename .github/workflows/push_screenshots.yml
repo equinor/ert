@@ -1,0 +1,10 @@
+name: Push screenshots to ert-testdata
+
+on:
+  workflow_dispatch:
+
+jobs:
+  push-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Placeholder - not yet implemented"
