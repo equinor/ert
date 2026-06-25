@@ -3,7 +3,13 @@ from uuid import uuid4
 import numpy as np
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QMessageBox, QTableWidget
+from PyQt6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QLabel,
+    QTableWidget,
+    QTextEdit,
+)
 from pytestqt.qtbot import QtBot
 
 from ert.analysis.event import DataSection
@@ -85,12 +91,20 @@ def verify_disabled_observations_dialog_shows_on_click(
     qtbot, report_table, nan_message, row, column
 ):
     def handle_disabled_observations_blocking_dialog(qtbot, report_table, nan_message):
-        message_box = report_table.findChild(QMessageBox)
+        dialog = report_table.findChild(QDialog)
+        assert dialog is not None
         try:
-            assert message_box.text() == nan_message
+            label = dialog.findChild(QLabel)
+            assert label is not None
+            assert label.text() == "Missing responses from active realizations:"
+
+            text_edit = dialog.findChild(QTextEdit)
+            assert text_edit is not None
+            assert text_edit.toPlainText() == nan_message
         finally:
+            button_box = dialog.findChild(QDialogButtonBox)
             qtbot.mouseClick(
-                message_box.button(QMessageBox.StandardButton.Ok),
+                button_box.button(QDialogButtonBox.StandardButton.Ok),
                 Qt.MouseButton.LeftButton,
             )
 
@@ -118,7 +132,7 @@ def test_that_report_log_table_only_shows_message_on_nan_status_click(qtbot: QtB
     ]
 
     nan_rows = [1]
-    nan_message = "Missing responses from active realizations:\n\n1, 3"
+    nan_message = "1, 3"
 
     report_table = ReportLogTable(DataSection(header=headers, data=observations))
     qtbot.addWidget(report_table)
@@ -132,16 +146,22 @@ def test_that_report_log_table_only_shows_message_on_nan_status_click(qtbot: QtB
             )
         else:
             click_on_table_cell(qtbot, report_table, row, column)
-            assert report_table.findChild(QMessageBox) is None
+            dialog = report_table.findChild(QDialog)
+            assert dialog is None or not dialog.isVisible()
 
     def verify_that_data_column_click_does_not_produce_dialog(row, column):
         click_on_table_cell(qtbot, report_table, row, column)
-        assert report_table.findChild(QMessageBox) is None
+        dialog = report_table.findChild(QDialog)
+        assert dialog is None or not dialog.isVisible()
 
-    assert report_table.horizontalHeader().isSectionHidden(hidden_column)
+    header = report_table.horizontalHeader()
+    assert header is not None
+    assert header.isSectionHidden(hidden_column)
 
     for row in range(len(observations)):
-        assert report_table.item(row, status_column).text() == observations[row][0]
+        item = report_table.item(row, status_column)
+        assert item is not None
+        assert item.text() == observations[row][0]
 
         verify_that_status_column_click_shows_dialog_for_missing_observations_only(
             row, status_column
@@ -164,8 +184,8 @@ def test_that_report_log_table_matches_data_on_sort(qtbot: QtBot):
     row100 = 0
     row200 = 1
 
-    nan_message100 = "Missing responses from active realizations:\n\n10"
-    nan_message200 = "Missing responses from active realizations:\n\n11"
+    nan_message100 = "10"
+    nan_message200 = "11"
 
     verify_disabled_observations_dialog_shows_on_click(
         qtbot, report_table, nan_message100, row100, status_column
