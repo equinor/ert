@@ -52,9 +52,21 @@ def _roll_dir(old_name: Path) -> None:
     logging.getLogger().info(f"renamed {old_name} to {new_name}")
 
 
-def assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
+def assert_schema(
+    df: pl.DataFrame,
+    schema: dict[str, Any],
+    *,
+    check_column_order: bool = True,
+) -> pl.DataFrame:
     """Asserts that a polars DataFrame has the expected schema."""
-    if df.schema != schema:
-        msg = f"Expected schema {schema}, got {df.schema}."
-        raise AssertionError(msg)
+    if check_column_order:
+        if df.schema != schema:
+            msg = f"Expected schema {schema}, got {df.schema}."
+            raise AssertionError(msg)
+    else:
+        actual = dict(sorted(df.schema.items()))
+        expected = dict(sorted(schema.items()))
+        if actual != expected:
+            msg = f"Expected schema {schema}, got {df.schema}."
+            raise AssertionError(msg)
     return df
