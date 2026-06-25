@@ -305,6 +305,16 @@ def design_matrix_keyword() -> SchemaItem:
     )
 
 
+def seismic_4d_attribute_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.SEISMIC_4D_ATTRIBUTE,
+        argc_min=3,
+        argc_max=3,
+        type_map=[SchemaItemType.STRING, SchemaItemType.STRING, SchemaItemType.PATH],
+        multi_occurrence=True,
+    )
+
+
 class ConfigSchemaDict(SchemaItemDict):
     def check_required(
         self,
@@ -378,6 +388,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         hook_workflow_keyword(),
         hook_workflow_job_keyword(),
         create_workflow_from_job_keyword(),
+        seismic_4d_attribute_keyword(),
     ]:
         schema[item.kw] = item
         if item.kw in ConfigAliases:
