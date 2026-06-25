@@ -1,0 +1,129 @@
+{
+  "timestamp": "20260625_122356",
+  "modes": {
+    "cached": {
+      "summary": {
+        "n": 10,
+        "min": 4.401394749991596,
+        "p50": 4.579409333498916,
+        "mean": 4.568787908398372,
+        "p90": 4.7002226755925225,
+        "max": 4.886245625006268
+      },
+      "runs": [
+        {
+          "run_index": 1,
+          "elapsed_seconds": 4.587550290991203,
+          "exit_code": -9
+        },
+        {
+          "run_index": 2,
+          "elapsed_seconds": 4.409245542003191,
+          "exit_code": -9
+        },
+        {
+          "run_index": 3,
+          "elapsed_seconds": 4.575498584003071,
+          "exit_code": -9
+        },
+        {
+          "run_index": 4,
+          "elapsed_seconds": 4.58332008299476,
+          "exit_code": -9
+        },
+        {
+          "run_index": 5,
+          "elapsed_seconds": 4.886245625006268,
+          "exit_code": -9
+        },
+        {
+          "run_index": 6,
+          "elapsed_seconds": 4.401394749991596,
+          "exit_code": -9
+        },
+        {
+          "run_index": 7,
+          "elapsed_seconds": 4.615584917002707,
+          "exit_code": -9
+        },
+        {
+          "run_index": 8,
+          "elapsed_seconds": 4.5337991249980405,
+          "exit_code": -9
+        },
+        {
+          "run_index": 9,
+          "elapsed_seconds": 4.679553458990995,
+          "exit_code": -9
+        },
+        {
+          "run_index": 10,
+          "elapsed_seconds": 4.415686708001886,
+          "exit_code": -9
+        }
+      ]
+    },
+    "cold": {
+      "summary": {
+        "n": 10,
+        "min": 4.524164000002202,
+        "p50": 4.618040437497257,
+        "mean": 4.626788516499801,
+        "p90": 4.733169624995208,
+        "max": 4.737978999997722
+      },
+      "runs": [
+        {
+          "run_index": 1,
+          "elapsed_seconds": 4.583704291013419,
+          "exit_code": -9
+        },
+        {
+          "run_index": 2,
+          "elapsed_seconds": 4.524164000002202,
+          "exit_code": -9
+        },
+        {
+          "run_index": 3,
+          "elapsed_seconds": 4.626496665994637,
+          "exit_code": -9
+        },
+        {
+          "run_index": 4,
+          "elapsed_seconds": 4.61002966700471,
+          "exit_code": -9
+        },
+        {
+          "run_index": 5,
+          "elapsed_seconds": 4.58504137500131,
+          "exit_code": -9
+        },
+        {
+          "run_index": 6,
+          "elapsed_seconds": 4.690297791996272,
+          "exit_code": -9
+        },
+        {
+          "run_index": 7,
+          "elapsed_seconds": 4.6260512079898035,
+          "exit_code": -9
+        },
+        {
+          "run_index": 8,
+          "elapsed_seconds": 4.551485916003003,
+          "exit_code": -9
+        },
+        {
+          "run_index": 9,
+          "elapsed_seconds": 4.732635249994928,
+          "exit_code": -9
+        },
+        {
+          "run_index": 10,
+          "elapsed_seconds": 4.737978999997722,
+          "exit_code": -9
+        }
+      ]
+    }
+  }
+}
