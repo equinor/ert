@@ -29,6 +29,7 @@ from ert.config.forward_model_step import (
 from ert.config.parsing import SchemaItemType
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
+from ert.plugins.hook_implementations.forward_model_steps import Flow
 
 from .config_dict_generator import config_generators
 
@@ -614,6 +615,38 @@ def test_that_flow_fm_gives_config_warning_on_unknown_options(plugins_ert_config
         plugins_ert_config.from_file_contents(
             "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<DUMMY>=moredummy)\n"
         )
+
+
+def _flow_fm_json(arg_list: list[str]) -> ForwardModelStepJSON:
+    return ForwardModelStepJSON(
+        name="FLOW",
+        executable="flow",
+        target_file=None,
+        error_file=None,
+        start_file=None,
+        stdout=None,
+        stderr=None,
+        stdin=None,
+        argList=arg_list,
+        environment={},
+        max_running_minutes=None,
+    )
+
+
+def test_that_flow_validation_without_version_argument_gives_validation_error():
+    with pytest.raises(
+        ForwardModelStepValidationError,
+        match="FLOW argList must contain '--version <VERSION>'",
+    ):
+        Flow().validate_pre_experiment(_flow_fm_json(["flow", "<ECLBASE>"]))
+
+
+def test_that_flow_validation_with_trailing_version_argument_gives_validation_error():
+    with pytest.raises(
+        ForwardModelStepValidationError,
+        match="FLOW argList must contain '--version <VERSION>'",
+    ):
+        Flow().validate_pre_experiment(_flow_fm_json(["flow", "--version"]))
 
 
 def test_that_plugin_forward_models_are_installed(tmp_path):
