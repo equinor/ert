@@ -9,7 +9,11 @@ import polars as pl
 from fastapi import APIRouter, Body, Depends, Query
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_storage, reraise_as_http_errors
+from ert.dark_storage.common import (
+    get_storage,
+    reraise_as_http_errors,
+    seismic_distance_expression,
+)
 from ert.storage import Experiment, Storage
 
 router = APIRouter(tags=["ensemble"])
@@ -143,6 +147,9 @@ def _get_observations(
                 x_axis_expr = sort_expr.cast(pl.Utf8)
             case "rft":
                 sort_expr = pl.col("tvd")
+                x_axis_expr = sort_expr.cast(pl.Utf8)
+            case "seismic":
+                sort_expr = seismic_distance_expression("name")
                 x_axis_expr = sort_expr.cast(pl.Utf8)
             case _:
                 raise ValueError(f"Unknown response type {stored_response_type}")

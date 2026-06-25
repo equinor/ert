@@ -20,6 +20,7 @@ from tests.ert.defaults_generator import (
     _create_breakthrough_observation,
     _create_general_observation,
     _create_rft_observation,
+    _create_seismic_observation,
     _create_summary_observation,
 )
 
@@ -377,6 +378,21 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
         ),
         _create_rft_observation(name="RFT_OBSERVATION", tvd=11.0),
         _create_rft_observation(name="RFT_OBSERVATION", tvd=7.0),
+        _create_seismic_observation(
+            name="SEISMIC_OBSERVATION",
+            east=15.0,
+            north=25.0,
+        ),
+        _create_seismic_observation(
+            name="SEISMIC_OBSERVATION",
+            east=18.0,  # +3
+            north=29.0,  # +4
+        ),
+        _create_seismic_observation(
+            name="SEISMIC_OBSERVATION",
+            east=23.0,  # +5
+            north=41.0,  # +12
+        ),
     ]
     with open_storage(storage_path, mode="w") as storage:
         experiment = storage.create_experiment(
@@ -405,3 +421,5 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
                 assert observation["x_axis"] == ["7", "11"]
             case "RFT_OBSERVATION":
                 assert observation["x_axis"] == ["7.0", "11.0"]
+            case "SEISMIC_OBSERVATION":
+                assert observation["x_axis"] == ["0.0", "5.0", "18.0"]

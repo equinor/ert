@@ -17,6 +17,7 @@ from resfo_utilities.testing import (
 )
 
 from ert.config import GenDataConfig, SummaryConfig
+from ert.config.seismic_config import SeismicConfig
 from ert.dark_storage.common import ErtStoragePermissionError, get_storage
 from ert.dark_storage.endpoints.responses import data_for_response
 from ert.dark_storage.exceptions import InternalServerError
@@ -138,6 +139,43 @@ def test_data_for_response_returns_empty_gen_data_config(tmp_path):
         ensemble.refresh_ensemble_state()
         data = data_for_response(ensemble, "response", filter_on={"report_step": 0})
         assert not data.empty
+
+
+def test_that_seismic_response_has_distance_columns_and_values(
+    tmp_path,
+):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment = storage.create_experiment(
+            name=None,
+            experiment_config={
+                "response_configuration": [
+                    SeismicConfig(
+                        input_files=["filename.csv"],
+                        keys=["filename"],
+                    ).model_dump(mode="json")
+                ],
+            },
+        )
+
+        ensemble = experiment.create_ensemble(ensemble_size=1, name="ens")
+
+        df = pl.DataFrame(
+            {
+                "response_key": ["filename", "filename"],
+                "east": [1.0, 4.0],
+                "north": [1.0, 5.0],
+                "values": [1.0, 2.0],
+            }
+        )
+
+        ensemble.save_response("seismic", df, 0)
+
+        result_df = data_for_response(ensemble, "filename")
+
+        assert result_df.index.name == "Realization"
+        assert list(result_df.columns) == [0.0, 5.0]
+        assert result_df.iloc[0][0.0] == pytest.approx(1.0)
+        assert result_df.iloc[0][5.0] == pytest.approx(2.0)
 
 
 @patch(

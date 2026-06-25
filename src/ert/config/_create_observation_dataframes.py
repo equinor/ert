@@ -3,15 +3,18 @@ from __future__ import annotations
 import datetime
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import assert_never
+from typing import Any, assert_never
 
 import polars as pl
+
+from ert.utils import assert_schema
 
 from ._observations import (
     BreakthroughObservation,
     GeneralObservation,
     Observation,
     RFTObservation,
+    SeismicObservation,
     SummaryObservation,
 )
 from ._shapes import CircleShapeConfig, ShapeRegistry
@@ -66,6 +69,12 @@ def create_observation_dataframes(
                         _handle_breakthrough_observation(
                             obs,
                             shape_registry,
+                        )
+                    )
+                case SeismicObservation():
+                    grouped["seismic"].append(
+                        _handle_seismic_observation(
+                            obs,
                         )
                     )
                 case default:
@@ -229,3 +238,40 @@ def _handle_breakthrough_observation(
             "radius": pl.Series([radius], dtype=pl.Float32),
         }
     )
+
+
+def _seismic_observation_schema() -> dict[str, Any]:
+    return {
+        "response_key": pl.String,
+        "observation_key": pl.String,
+        "observations": pl.Float32,
+        "std": pl.Float32,
+        "east": pl.Float32,
+        "north": pl.Float32,
+        "radius": pl.Float32,
+    }
+
+
+def _handle_seismic_observation(
+    seismic_observation: SeismicObservation,
+) -> pl.DataFrame:
+    response_key = seismic_observation.filepath.stem
+    obs_key = seismic_observation.name
+    value = seismic_observation.value
+    std_dev = seismic_observation.error
+    east = seismic_observation.east
+    north = seismic_observation.north
+    radius = None
+
+    df = pl.DataFrame(
+        {
+            "response_key": [response_key],
+            "observation_key": [obs_key],
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
+        }
+    )
+    return assert_schema(df, _seismic_observation_schema())

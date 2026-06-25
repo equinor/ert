@@ -1,0 +1,15 @@
+SEISMIC_OBSERVATION OBS_MEAN_2025{
+   CSV=share/preprocessed/tables/field--amplitude_full_mean_depth--20250101_20240101.csv;
+};
+
+SEISMIC_OBSERVATION OBS_MEAN_2026{
+   CSV=share/preprocessed/tables/field--amplitude_full_mean_depth--20260101_20240101.csv;
+};
+
+SEISMIC_OBSERVATION OBS_MIN_2025{
+   CSV=share/preprocessed/tables/field--amplitude_full_min_depth--20250101_20240101.csv;
+};
+
+SEISMIC_OBSERVATION OBS_MIN_2026{
+   CSV=share/preprocessed/tables/field--amplitude_full_min_depth--20260101_20240101.csv;
+};

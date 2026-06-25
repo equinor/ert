@@ -648,6 +648,10 @@ class PlotWindow(QMainWindow):
             if key_def.response is not None and key_def.response.type == "breakthrough":
                 plot_context.flip_observation_axis = True
 
+            if key_def.response is not None and key_def.response.type == "seismic":
+                plot_context.setXLabel("Cumulative euclidean distance to the point")
+                plot_context.deactivate_date_support()
+
             for untransposed_data in ensemble_to_data_map.values():
                 data = untransposed_data.T
 
