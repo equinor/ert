@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
-from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
 from ert.gui.plotting.everest_plots import EverestControlsPlot
 from ert.gui.plotting.utils.plot_context import PlotType
+from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
 
 @pytest.fixture

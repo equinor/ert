@@ -225,6 +225,7 @@ select = [
     "G",     # logging-format
     "I",     # isort
     "ICN",   # flake8-import-conventions
+    "INP",
     "INT",
     "ISC",
     "LOG",   # logging
