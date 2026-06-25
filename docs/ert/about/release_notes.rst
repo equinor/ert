@@ -36,6 +36,16 @@ Option to approximate missing rft responses
 Added the keyword `APPROXIMATE_MISSING_RFT_VALUES <../reference/configuration/keywords.html#approximate-missing-rft-values>`_
 to interpolate/extrapolate RFT values for observation locations with missing simulator responses.
 
+Bulk configuration of summary observations
+##############################################
+
+Added the possibility of configuring summary observations in a more concise format,
+containing observation values in a csv files and metadata regarding wells in the
+observation config.
+
+Read more in the documentation for the
+:ref:`bulk config <bulk_configuration_of_summary_observations>`.
+
 Version 22.0
 ------------
 
