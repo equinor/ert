@@ -7,9 +7,11 @@ import textwrap
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
+from psutil import Process
 
 from _ert.forward_model_runner.forward_model_step import (
     ForwardModelStep,
@@ -23,8 +25,10 @@ from _ert.forward_model_runner.reporting.message import Exited, Running, Start
 @patch("_ert.forward_model_runner.forward_model_step.Popen")
 @patch("_ert.forward_model_runner.forward_model_step.Process")
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_with_process_failing(mock_process, mock_popen, mock_check_executable):
-    fmstep = ForwardModelStep({}, 0)
+def test_run_with_process_failing(
+    mock_process: MagicMock, mock_popen: MagicMock, mock_check_executable: MagicMock
+) -> None:
+    fmstep = ForwardModelStep({"name": "", "executable": ""}, 0)
     mock_check_executable.return_value = ""
     type(mock_process.return_value.memory_info.return_value).rss = PropertyMock(
         return_value=10
@@ -44,7 +48,7 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
 
 @pytest.mark.high_utilization
 @pytest.mark.usefixtures("use_tmpdir")
-def test_memory_usage_counts_grandchildren():
+def test_memory_usage_counts_grandchildren() -> None:
     scriptname = "recursive_memory_hog.py"
     blobsize = 1e8
     Path(scriptname).write_text(
@@ -99,6 +103,7 @@ def test_memory_usage_counts_grandchildren():
 
         fmstep = ForwardModelStep(
             {
+                "name": "",
                 "executable": executable,
                 "argList": [str(layers), str(int(blobsize))],
             },
@@ -112,6 +117,7 @@ def test_memory_usage_counts_grandchildren():
             if not isinstance(status, Running):
                 continue
             if all_ready_at is not None:
+                assert status.memory_status.max_rss is not None
                 max_seen = max(max_seen, status.memory_status.max_rss)
                 if time.time() - all_ready_at > 0.2:
                     Path("release").write_text("", encoding="utf-8")
@@ -142,7 +148,7 @@ class MockedProcess:
     pid: int
     memory_info = MagicMock()
 
-    def cpu_times(self):
+    def cpu_times(self) -> CpuTimes:
         return CpuTimes(user=self.pid / 10.0)
 
     def children(self, recursive: bool) -> list["MockedProcess"]:
@@ -151,18 +157,18 @@ class MockedProcess:
             return [MockedProcess(124)]
         return []
 
-    def oneshot(self):
+    def oneshot(self) -> contextlib.nullcontext[None]:
         return contextlib.nullcontext()
 
 
-def test_cpu_seconds_for_process_with_children():
-    (_, cpu_seconds, _, _) = _get_processtree_data(MockedProcess(123))
+def test_cpu_seconds_for_process_with_children() -> None:
+    (_, cpu_seconds, _, _) = _get_processtree_data(cast(Process, MockedProcess(123)))
     assert cpu_seconds == {"123": 12.3, "124": 12.4}
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
-def test_oom_score_is_max_over_processtree():
-    def read_text_side_effect(self: Path, *args, **kwargs) -> str:
+def test_oom_score_is_max_over_processtree() -> None:
+    def read_text_side_effect(self: Path, *args: Any, **kwargs: Any) -> str:
         if self.absolute() == Path("/proc/123/oom_score"):
             return "234"
         if self.absolute() == Path("/proc/124/oom_score"):
@@ -171,13 +177,13 @@ def test_oom_score_is_max_over_processtree():
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
         mocked_read_text.side_effect = read_text_side_effect
-        (_, _, oom_score, _) = _get_processtree_data(MockedProcess(123))
+        (_, _, oom_score, _) = _get_processtree_data(cast(Process, MockedProcess(123)))
 
     assert oom_score == 456
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_fails_using_exit_bash_builtin():
+def test_run_fails_using_exit_bash_builtin() -> None:
     fmstep = ForwardModelStep(
         {
             "name": "exit 1",
@@ -192,6 +198,7 @@ def test_run_fails_using_exit_bash_builtin():
     statuses = list(fmstep.run())
 
     assert len(statuses) == 2, "Wrong statuses count"
+    assert isinstance(statuses[1], Exited), "Last status is not Exited"
     assert statuses[1].exit_code == 1, "Exited status wrong exit_code"
     assert statuses[1].error_message == "Process exited with status code 1", (
         "Exited status wrong error_message"
@@ -199,7 +206,7 @@ def test_run_fails_using_exit_bash_builtin():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_with_defined_executable_but_missing():
+def test_run_with_defined_executable_but_missing() -> None:
     executable = str(Path.cwd() / "this" / "is" / "not" / "a" / "file")
     fmstep = ForwardModelStep(
         {
@@ -213,11 +220,12 @@ def test_run_with_defined_executable_but_missing():
 
     start_message = next(fmstep.run())
     assert isinstance(start_message, Start)
+    assert start_message.error_message is not None
     assert "this/is/not/a/file is not a file" in start_message.error_message
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_with_empty_executable():
+def test_run_with_empty_executable() -> None:
     empty_executable = Path.cwd() / "foo"
     with empty_executable.open("a", encoding="utf-8"):
         pass
@@ -239,11 +247,12 @@ def test_run_with_empty_executable():
     assert isinstance(start_msg, Start)
     assert isinstance(exit_msg, Exited)
     assert exit_msg.exit_code == 8
+    assert exit_msg.error_message is not None
     assert "Missing execution format information" in exit_msg.error_message
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_with_defined_executable_no_exec_bit():
+def test_run_with_defined_executable_no_exec_bit() -> None:
     non_executable = Path.cwd() / "foo"
     with non_executable.open("a", encoding="utf-8"):
         pass
@@ -259,21 +268,24 @@ def test_run_with_defined_executable_no_exec_bit():
     )
     start_message = next(fmstep.run())
     assert isinstance(start_message, Start)
+    assert start_message.error_message is not None
     assert "foo is not an executable" in start_message.error_message
 
 
-def test_init_fmstep_no_std():
+def test_init_fmstep_no_std() -> None:
     fmstep = ForwardModelStep(
-        {},
+        {"name": "", "executable": ""},
         0,
     )
     assert fmstep.std_err is None
     assert fmstep.std_out is None
 
 
-def test_init_fmstep_with_std():
+def test_init_fmstep_with_std() -> None:
     fmstep = ForwardModelStep(
         {
+            "name": "",
+            "executable": "",
             "stdout": "exit_out",
             "stderr": "exit_err",
         },
@@ -283,7 +295,7 @@ def test_init_fmstep_with_std():
     assert fmstep.std_out == "exit_out"
 
 
-def test_makedirs(monkeypatch, tmp_path):
+def test_makedirs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """
     Test that the directories for the output process streams are created if
     they don't exist
@@ -291,6 +303,7 @@ def test_makedirs(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     fmstep = ForwardModelStep(
         {
+            "name": "test_makedirs",
             "executable": "true",
             "stdout": "a/file",
             "stderr": "b/c/file",
@@ -316,7 +329,7 @@ def test_makedirs(monkeypatch, tmp_path):
 )
 def test_processtree_timer(
     snapshots: list[dict[str, float]], expected_total_seconds: float
-):
+) -> None:
     timer = ProcesstreeTimer()
     for snapshot in snapshots:
         timer.update(snapshot)
@@ -375,8 +388,11 @@ def test_processtree_timer(
     ],
 )
 def test_target_file_only_sets_error_if_specified_and_fm_step_succeeded(
-    command, exit_code, expected_error_message, target_file_name
-):
+    command: str,
+    exit_code: int,
+    expected_error_message: str | None,
+    target_file_name: str,
+) -> None:
     Path("already_existing_file").touch()
     fmstep = ForwardModelStep(
         {
@@ -394,15 +410,21 @@ def test_target_file_only_sets_error_if_specified_and_fm_step_succeeded(
     statuses = list(fmstep.run())
 
     assert len(statuses) == 2, "Wrong statuses count"
+    assert isinstance(statuses[1], Exited), "Last status is not Exited"
     assert statuses[1].exit_code == exit_code, "Exited status wrong exit_code"
     if expected_error_message:
+        assert statuses[1].error_message is not None
         assert expected_error_message in statuses[1].error_message
     else:
         assert statuses[1].error_message is None
 
 
-def test_that_max_running_minutes_timeout_triggers_for_jobs_running_over_24_hours():
-    fmstep = ForwardModelStep({"name": "timeout_step", "max_running_minutes": 1440}, 0)
+def test_that_max_running_minutes_timeout_triggers_for_jobs_running_over_24_hours() -> (
+    None
+):
+    fmstep = ForwardModelStep(
+        {"executable": "", "name": "timeout_step", "max_running_minutes": 1440}, 0
+    )
     mock_proc = MagicMock()
     mock_proc.pid = os.getpid()
 
@@ -417,11 +439,14 @@ def test_that_max_running_minutes_timeout_triggers_for_jobs_running_over_24_hour
     assert result is not None, (
         "Timeout should have triggered for a job running 25h with a 1440-minute limit"
     )
+    assert result.error_message is not None
     assert "explicitly killed" in result.error_message
 
 
-def test_that_max_running_minutes_timeout_does_not_trigger_before_limit():
-    fmstep = ForwardModelStep({"name": "timeout_step", "max_running_minutes": 1440}, 0)
+def test_that_max_running_minutes_timeout_does_not_trigger_before_limit() -> None:
+    fmstep = ForwardModelStep(
+        {"executable": "", "name": "timeout_step", "max_running_minutes": 1440}, 0
+    )
     mock_proc = MagicMock()
 
     # Simulate a job that has been running for 23 hours (within the 24-hour limit)

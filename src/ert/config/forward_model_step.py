@@ -74,15 +74,15 @@ class ForwardModelStepJSON(TypedDict):
 
     name: str
     executable: str
-    target_file: str | None
-    error_file: str | None
-    start_file: str | None
-    stdout: str | None
-    stderr: str | None
-    stdin: str | None
-    argList: list[str]
-    environment: dict[str, str] | None
-    max_running_minutes: int | None
+    target_file: NotRequired[str | None]
+    error_file: NotRequired[str | None]
+    start_file: NotRequired[str | None]
+    stdout: NotRequired[str | None]
+    stderr: NotRequired[str | None]
+    stdin: NotRequired[str | None]
+    argList: NotRequired[list[str] | None]
+    environment: NotRequired[dict[str, str] | None]
+    max_running_minutes: NotRequired[int | None]
 
 
 class ForwardModelStepOptions(TypedDict, total=False):

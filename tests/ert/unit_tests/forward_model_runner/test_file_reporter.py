@@ -16,18 +16,19 @@ from ert.constant_filenames import ERROR_file, LOG_file, STATUS_file, STATUS_jso
 
 
 @pytest.fixture
-def reporter():
+def reporter() -> File:
     return File()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_init_message_argument(reporter):
+def test_report_with_init_message_argument(reporter: File) -> None:
     r = reporter
     fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "/stdout", "stderr": "/stderr"}, 0
+        {"executable": "", "name": "fmstep1", "stdout": "/stdout", "stderr": "/stderr"},
+        0,
     )
 
-    r.report(Init([fmstep1], 1, 19))
+    r.report(Init([fmstep1], "1", "19"))
 
     with Path(STATUS_file).open(encoding="utf-8") as f:
         assert "Current host" in f.readline(), "STATUS file missing expected value"
@@ -38,7 +39,7 @@ def test_report_with_init_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_successful_start_message_argument(reporter):
+def test_report_with_successful_start_message_argument(reporter: File) -> None:
     msg = Start(
         ForwardModelStep(
             {
@@ -51,7 +52,10 @@ def test_report_with_successful_start_message_argument(reporter):
             0,
         )
     )
-    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
+    assert msg.step is not None
+    reporter.status_dict = reporter._init_step_status_dict(
+        msg.timestamp, "0", [msg.step]
+    )
 
     reporter.report(msg)
 
@@ -69,9 +73,14 @@ def test_report_with_successful_start_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_failed_start_message_argument(reporter):
-    msg = Start(ForwardModelStep({"name": "fmstep1"}, 0)).with_error("massive_failure")
-    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
+def test_report_with_failed_start_message_argument(reporter: File) -> None:
+    msg = Start(ForwardModelStep({"executable": "", "name": "fmstep1"}, 0)).with_error(
+        "massive_failure"
+    )
+    assert msg.step is not None
+    reporter.status_dict = reporter._init_step_status_dict(
+        msg.timestamp, "0", [msg.step]
+    )
 
     reporter.report(msg)
 
@@ -91,9 +100,12 @@ def test_report_with_failed_start_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_successful_exit_message_argument(reporter):
-    msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 0)
-    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
+def test_report_with_successful_exit_message_argument(reporter: File) -> None:
+    msg = Exited(ForwardModelStep({"executable": "", "name": "fmstep1"}, 0), 0)
+    assert msg.step is not None
+    reporter.status_dict = reporter._init_step_status_dict(
+        msg.timestamp, "0", [msg.step]
+    )
 
     reporter.report(msg)
 
@@ -103,11 +115,14 @@ def test_report_with_successful_exit_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_failed_exit_message_argument(reporter):
-    msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 1).with_error(
-        "massive_failure"
+def test_report_with_failed_exit_message_argument(reporter: File) -> None:
+    msg = Exited(
+        ForwardModelStep({"executable": "", "name": "fmstep1"}, 0), 1
+    ).with_error("massive_failure")
+    assert msg.step is not None
+    reporter.status_dict = reporter._init_step_status_dict(
+        msg.timestamp, "0", [msg.step]
     )
-    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
 
     reporter.report(msg)
 
@@ -132,12 +147,15 @@ def test_report_with_failed_exit_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_running_message_argument(reporter):
+def test_report_with_running_message_argument(reporter: File) -> None:
     msg = Running(
-        ForwardModelStep({"name": "fmstep1"}, 0),
+        ForwardModelStep({"executable": "", "name": "fmstep1"}, 0),
         ProcessTreeStatus(max_rss=100, rss=10, cpu_seconds=1.1),
     )
-    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
+    assert msg.step is not None
+    reporter.status_dict = reporter._init_step_status_dict(
+        msg.timestamp, "0", [msg.step]
+    )
 
     reporter.report(msg)
 
@@ -154,15 +172,15 @@ def test_report_with_running_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_successful_finish_message_argument(reporter):
+def test_report_with_successful_finish_message_argument(reporter: File) -> None:
     msg = Finish()
-    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [])
+    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, "0", [])
 
     reporter.report(msg)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_dump_error_file_with_stderr(reporter):
+def test_dump_error_file_with_stderr(reporter: File) -> None:
     """
     Assert that, in the case of an stderr file, it is included in the XML
     that constitutes the ERROR file.
@@ -173,7 +191,9 @@ def test_dump_error_file_with_stderr(reporter):
         stderr.write("E_MASSIVE_FAILURE\n")
 
     reporter._dump_error_file(
-        ForwardModelStep({"name": "fmstep1", "stderr": "stderr.out.0"}, 0),
+        ForwardModelStep(
+            {"executable": "", "name": "fmstep1", "stderr": "stderr.out.0"}, 0
+        ),
         "massive_failure",
     )
 
@@ -184,7 +204,7 @@ def test_dump_error_file_with_stderr(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_old_file_deletion(reporter):
+def test_old_file_deletion(reporter: File) -> None:
     # touch all files that are to be removed
     for f in [ERROR_file, STATUS_file]:
         with Path(f).open("a", encoding="utf-8"):
@@ -197,7 +217,7 @@ def test_old_file_deletion(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_status_file_is_correct(reporter):
+def test_status_file_is_correct(reporter: File) -> None:
     """The STATUS file is a file to which we append data about steps as they
     are run. So this involves multiple reports, and should be tested as
     such.
@@ -205,7 +225,7 @@ def test_status_file_is_correct(reporter):
     """
     j_1 = ForwardModelStep({"name": "j_1", "executable": "", "argList": []}, 0)
     j_2 = ForwardModelStep({"name": "j_2", "executable": "", "argList": []}, 0)
-    init = Init([j_1, j_2], 1, 1)
+    init = Init([j_1, j_2], "1", "1")
     start_j_1 = Start(j_1)
     exited_j_1 = Exited(j_1, 0)
     start_j_2 = Start(j_2)
