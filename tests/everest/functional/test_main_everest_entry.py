@@ -9,17 +9,17 @@ from textwrap import dedent
 import pytest
 import yaml
 from ruamel.yaml import YAML
-from tests.everest.utils import (
-    capture_streams,
-    everest_config_with_defaults,
-    get_optimal_result,
-)
 
 from ert.storage import ExperimentState
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig
+from tests.everest.utils import (
+    capture_streams,
+    everest_config_with_defaults,
+    get_optimal_result,
+)
 
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
