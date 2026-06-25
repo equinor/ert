@@ -12,12 +12,10 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QApplication,
-    QButtonGroup,
     QDialog,
     QHBoxLayout,
     QLabel,
     QMainWindow,
-    QRadioButton,
     QSplitter,
     QStyle,
     QTabWidget,
@@ -59,7 +57,7 @@ from .utils.plot_types import ObservationPlotLocations
 from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
-from .widgets.plot_controls.misfits_options import MisfitsOptions
+from .widgets.plot_controls import EverestControlsPlotOptions, MisfitsOptions
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
@@ -321,26 +319,8 @@ class PlotWindow(QMainWindow):
                 create_group_layout([self._ensemble_selection_widget]),
             )
 
-            self._display_over_batches_radio = QRadioButton("batches")
-            self._display_over_batches_radio.setObjectName("display_over_batches_radio")
-            self._display_over_batches_radio.setChecked(True)
-            self._display_over_controls_radio = QRadioButton("controls")
-            self._display_over_controls_radio.setObjectName(
-                "display_over_controls_radio"
-            )
-            self._display_over_button_group = QButtonGroup(self)
-            self._display_over_button_group.addButton(self._display_over_batches_radio)
-            self._display_over_button_group.addButton(self._display_over_controls_radio)
-            self._display_over_button_group.buttonClicked.connect(self.updatePlot)
-
-            self._display_over_group = create_group_box(
-                "X-axis:",
-                create_group_layout(
-                    [
-                        self._display_over_batches_radio,
-                        self._display_over_controls_radio,
-                    ]
-                ),
+            self._everest_controls_plot_options = EverestControlsPlotOptions(
+                self.updatePlot
             )
 
             self._misfits_options = MisfitsOptions(self.updatePlot)
@@ -349,7 +329,7 @@ class PlotWindow(QMainWindow):
             right_layout = create_group_layout(
                 [
                     self._ensemble_group,
-                    self._display_over_group,
+                    self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
                     self._misfits_options.get_widget(),
                 ]
@@ -357,7 +337,7 @@ class PlotWindow(QMainWindow):
             right_container.setLayout(right_layout)
 
             self._everest_controls_group.setVisible(False)
-            self._display_over_group.setVisible(False)
+            self._everest_controls_plot_options.get_widget().setVisible(False)
             self._misfits_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
@@ -435,7 +415,7 @@ class PlotWindow(QMainWindow):
 
         is_everest_ensemble = plot_widget.name == ENSEMBLE and self.is_everest
         self._everest_controls_group.setVisible(is_gradient_plot or is_controls_plot)
-        self._display_over_group.setVisible(is_controls_plot)
+        self._everest_controls_plot_options.get_widget().setVisible(is_controls_plot)
         self._ensemble_selection_widget.apply_ensemble_filtering(
             require_func_eval=is_objective_plot
             or is_everest_ensemble
@@ -575,7 +555,9 @@ class PlotWindow(QMainWindow):
                 key,
                 layer,
             )
-            plot_context.by_batch = self._display_over_batches_radio.isChecked()
+            plot_context.by_batch = (
+                self._everest_controls_plot_options.is_batches_selected()
+            )
 
             plot_context.scatter_plot = self._misfits_options.scatter_checkbox_state
             plot_context.box_plot = self._misfits_options.box_checkbox_state
