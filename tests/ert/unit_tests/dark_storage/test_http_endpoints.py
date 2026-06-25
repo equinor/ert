@@ -375,7 +375,7 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
         *[
             _create_breakthrough_observation(
                 name="BREAKTHROUGH_OBSERVATION",
-                date=datetime.datetime(2010, month, 1, tzinfo=datetime.UTC),
+                date=datetime.datetime(2010, month, 1),  # noqa: DTZ001
             )
             for month in [11, 7, 12]
         ],
@@ -410,17 +410,11 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
     obs_with_x_axis = _get_observations(experiment)
     for observation in obs_with_x_axis:
         match observation["name"]:
-            case "SUMMARY_OBSERVATION":
+            case "SUMMARY_OBSERVATION" | "BREAKTHROUGH_OBSERVATION":
                 assert observation["x_axis"] == [
                     "2010-07-01T00:00:00.000",
                     "2010-11-01T00:00:00.000",
                     "2010-12-01T00:00:00.000",
-                ]
-            case "BREAKTHROUGH_OBSERVATION":
-                assert observation["x_axis"] == [
-                    "2010-07-01T00:00:00.000+00:00",
-                    "2010-11-01T00:00:00.000+00:00",
-                    "2010-12-01T00:00:00.000+00:00",
                 ]
             case "GENERAL_OBSERVATION":
                 assert observation["x_axis"] == ["7", "11", "12"]
