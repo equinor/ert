@@ -364,36 +364,39 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
     rft_config = RFTConfig(input_files=["DUMMY"])
     storage_path = tmp_path / "storage"
     observations = [
-        _create_summary_observation(name="SUMMARY_OBSERVATION", date="2010-11-01"),
-        _create_summary_observation(name="SUMMARY_OBSERVATION", date="2010-07-01"),
-        _create_general_observation(name="GENERAL_OBSERVATION", index=11),
-        _create_general_observation(name="GENERAL_OBSERVATION", index=7),
-        _create_breakthrough_observation(
-            name="BREAKTHROUGH_OBSERVATION",
-            date=datetime.datetime(2010, 11, 1, tzinfo=datetime.UTC),
-        ),
-        _create_breakthrough_observation(
-            name="BREAKTHROUGH_OBSERVATION",
-            date=datetime.datetime(2010, 7, 1, tzinfo=datetime.UTC),
-        ),
-        _create_rft_observation(name="RFT_OBSERVATION", tvd=11.0),
-        _create_rft_observation(name="RFT_OBSERVATION", tvd=7.0),
-        _create_seismic_observation(
-            name="SEISMIC_OBSERVATION",
-            east=15.0,
-            north=25.0,
-        ),
-        _create_seismic_observation(
-            name="SEISMIC_OBSERVATION",
-            east=18.0,  # +3
-            north=29.0,  # +4
-        ),
-        _create_seismic_observation(
-            name="SEISMIC_OBSERVATION",
-            east=23.0,  # +5
-            north=41.0,  # +12
-        ),
+        *[
+            _create_summary_observation(name="SUMMARY_OBSERVATION", date=date)
+            for date in ["2010-11-01", "2010-07-01", "2010-12-01"]
+        ],
+        *[
+            _create_general_observation(name="GENERAL_OBSERVATION", index=index)
+            for index in [11, 7, 12]
+        ],
+        *[
+            _create_breakthrough_observation(
+                name="BREAKTHROUGH_OBSERVATION",
+                date=datetime.datetime(2010, month, 1, tzinfo=datetime.UTC),
+            )
+            for month in [11, 7, 12]
+        ],
+        *[
+            _create_rft_observation(name="RFT_OBSERVATION", tvd=tvd)
+            for tvd in [11.0, 7.0, 12.0]
+        ],
+        *[
+            _create_seismic_observation(
+                name="SEISMIC_OBSERVATION",
+                east=east,
+                north=north,
+            )
+            for east, north in [
+                (15.0, 25.0),
+                (15.0 + 3, 25.0 + 4),
+                (15.0 + 3 + 5, 25.0 + 4 + 12),
+            ]
+        ],
     ]
+
     with open_storage(storage_path, mode="w") as storage:
         experiment = storage.create_experiment(
             name="test-experiment",
@@ -411,15 +414,17 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
                 assert observation["x_axis"] == [
                     "2010-07-01T00:00:00.000",
                     "2010-11-01T00:00:00.000",
+                    "2010-12-01T00:00:00.000",
                 ]
             case "BREAKTHROUGH_OBSERVATION":
                 assert observation["x_axis"] == [
                     "2010-07-01T00:00:00.000+00:00",
                     "2010-11-01T00:00:00.000+00:00",
+                    "2010-12-01T00:00:00.000+00:00",
                 ]
             case "GENERAL_OBSERVATION":
-                assert observation["x_axis"] == ["7", "11"]
+                assert observation["x_axis"] == ["7", "11", "12"]
             case "RFT_OBSERVATION":
-                assert observation["x_axis"] == ["7.0", "11.0"]
+                assert observation["x_axis"] == ["7.0", "11.0", "12.0"]
             case "SEISMIC_OBSERVATION":
                 assert observation["x_axis"] == ["0.0", "5.0", "18.0"]

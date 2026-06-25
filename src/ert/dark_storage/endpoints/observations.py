@@ -154,14 +154,7 @@ def _get_observations(
             case _:
                 raise ValueError(f"Unknown response type {stored_response_type}")
 
-        df = (
-            df.with_columns(
-                x_axis_expr.alias("x_axis"),
-                sort_expr.alias("_sort_key"),
-            )
-            .sort("_sort_key")
-            .drop("_sort_key")
-        )
+        df = df.with_columns(x_axis_expr.alias("x_axis")).sort(sort_expr)
 
         for obs_key, obs_df in df.group_by("name"):
             values = obs_df["values"].to_list()
