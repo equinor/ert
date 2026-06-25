@@ -14,12 +14,11 @@ from PyQt6.QtWidgets import (
     QApplication,
     QButtonGroup,
     QDialog,
-    QDockWidget,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
     QRadioButton,
+    QSplitter,
     QStyle,
     QTabWidget,
     QTextEdit,
@@ -57,6 +56,7 @@ from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from .utils import PlotConfig, PlotContext
 from .utils.observation_locations import transform_observation_locations
 from .utils.plot_types import ObservationPlotLocations
+from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls.misfits_options import MisfitsOptions
@@ -290,7 +290,6 @@ class PlotWindow(QMainWindow):
 
             self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
-            self.addDock("Navigation", "View data type", self._data_type_keys_widget)
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
@@ -312,21 +311,6 @@ class PlotWindow(QMainWindow):
             self._everest_control_selection_widget.controlSelectionChanged.connect(
                 self.updatePlot
             )
-
-            def create_group_layout(
-                widgets: list[QWidget] | None = None,
-            ) -> QVBoxLayout:
-                layout = QVBoxLayout()
-                layout.setContentsMargins(0, 0, 0, 0)
-                for w in widgets or []:
-                    layout.addWidget(w)
-                return layout
-
-            def create_group_box(title: str, layout: QVBoxLayout) -> QGroupBox:
-                group_box = QGroupBox(title)
-                group_box.setStyleSheet("QGroupBox { font-style: italic; }")
-                group_box.setLayout(layout)
-                return group_box
 
             self._everest_controls_group = create_group_box(
                 "Select control(s)",
@@ -372,17 +356,20 @@ class PlotWindow(QMainWindow):
             )
             right_container.setLayout(right_layout)
 
-            self.addDock(
-                "PlotControls",
-                "Plot controls",
-                right_container,
-                area=Qt.DockWidgetArea.RightDockWidgetArea,
-            )
-
             self._everest_controls_group.setVisible(False)
             self._display_over_group.setVisible(False)
             self._misfits_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
+
+            splitter = QSplitter(Qt.Orientation.Horizontal)
+            splitter.addWidget(
+                create_side_panel("View data type", self._data_type_keys_widget)
+            )
+            splitter.addWidget(self._central_tab)
+            splitter.addWidget(create_side_panel("Plot controls", right_container))
+            splitter.setStretchFactor(1, 1)
+
+            self.setCentralWidget(splitter)
 
             if self.getSelectedKey() is None:
                 self._show_no_data_message()
@@ -680,33 +667,6 @@ class PlotWindow(QMainWindow):
         index = self._central_tab.addTab(plot_widget, name)
         self._plot_widgets.append(plot_widget)
         self._central_tab.setTabEnabled(index, enabled)
-
-    def addDock(
-        self,
-        name: str,
-        title: str,
-        widget: QWidget,
-        area: Qt.DockWidgetArea = Qt.DockWidgetArea.LeftDockWidgetArea,
-        allowed_areas: Qt.DockWidgetArea = Qt.DockWidgetArea.AllDockWidgetAreas,
-    ) -> QDockWidget:
-        dock_widget = QDockWidget(name)
-        dock_widget.setObjectName(f"{name}Dock")
-
-        title_label = QLabel(title)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("padding-bottom: 7px;")
-        title_label.setCursor(Qt.CursorShape.SizeAllCursor)  # drag/move cursor
-
-        dock_widget.setTitleBarWidget(title_label)
-        dock_widget.setWidget(widget)
-        dock_widget.setAllowedAreas(allowed_areas)
-        dock_widget.setFeatures(
-            QDockWidget.DockWidgetFeature.DockWidgetMovable
-            | QDockWidget.DockWidgetFeature.DockWidgetFloatable
-        )
-
-        self.addDockWidget(area, dock_widget)
-        return dock_widget
 
     @showWaitCursorWhileWaiting
     def keySelected(self) -> None:
