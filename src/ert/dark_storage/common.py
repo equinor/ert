@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from importlib import metadata
 
 import pandas as pd
+import polars as pl
 from fastapi import HTTPException, status
 from fastapi.responses import Response
 
@@ -91,3 +92,28 @@ def serialize_dataframe_to_response(
             )
         case _:
             raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+
+def seismic_distance_expression(partition_by: str) -> pl.Expr:
+    """Cumulative distance for seismic points.
+
+    The order of the rows in the original dataframe determines the order of the distance
+    calculation. The first row in each partition (name of the observation, realization
+    number or anything else data must be grouped by) will have a distance of 0.0 and
+    each subsequent row will have the cumulative distance from the first row in the
+    partition.
+
+    Args:
+        partition_by: Column name to partition the calculation by
+            (e.g. "name" for observations, "Realization" for responses).
+    """
+    return (
+        (
+            pl.col("east").diff().over(partition_by) ** 2
+            + pl.col("north").diff().over(partition_by) ** 2
+        )
+        .sqrt()
+        .fill_null(0.0)
+        .cum_sum()
+        .over(partition_by)
+    )

@@ -134,4 +134,10 @@ It is not about being correct, it is about being relevant and coherent.
         simulation grid. A well typically has multiple such connections, one for each
         grid cell along its path.
 
+    horizon
+    surface
+        Continuous 2D surface in 3D space marking a specific position within the
+        subsurface, typically defined as a named boundary and often related to changes
+        in rock properties.
+
 .. _OPM Flow manual: https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf

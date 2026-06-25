@@ -966,6 +966,7 @@ class LocalEnsemble(BaseMode):
         - GenData: "0, 42" (report_step, index)
         - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
                 or "123.5, 456.7, 2500.0, None" when zone is missing
+        - Seismic "123.5, 456.7" (east, north)
         """
         known_observations = self.experiment.observation_keys
 
