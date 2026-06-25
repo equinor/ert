@@ -98,6 +98,24 @@ def create_observation_dataframes(
     return datasets
 
 
+def _base_observation_schema() -> dict[str, Any]:
+    return {
+        "response_key": pl.String,
+        "observation_key": pl.String,
+        "observations": pl.Float32,
+        "std": pl.Float32,
+        "east": pl.Float32,
+        "north": pl.Float32,
+        "radius": pl.Float32,
+    }
+
+
+def _summary_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {
+        "time": pl.Datetime(time_unit="ms", time_zone=None)
+    }
+
+
 def _handle_summary_observation(
     summary_dict: SummaryObservation,
     obs_key: str,
@@ -128,7 +146,11 @@ def _handle_summary_observation(
             "north": pl.Series([north], dtype=pl.Float32),
             "radius": pl.Series([radius], dtype=pl.Float32),
         }
-    )
+    ).pipe(assert_schema, _summary_observation_schema(), check_column_order=False)
+
+
+def _general_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {"report_step": pl.UInt16, "index": pl.UInt16}
 
 
 def _handle_general_observation(
@@ -158,7 +180,17 @@ def _handle_general_observation(
             "north": pl.Series([north], dtype=pl.Float32),
             "radius": pl.Series([radius], dtype=pl.Float32),
         }
-    )
+    ).pipe(assert_schema, _general_observation_schema(), check_column_order=False)
+
+
+def _rft_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {
+        "well": pl.String,
+        "date": pl.String,
+        "tvd": pl.Float32,
+        "md": pl.Float32,
+        "zone": pl.String,
+    }
 
 
 def _handle_rft_observation(
@@ -210,7 +242,14 @@ def _handle_rft_observation(
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
             "radius": pl.Series([localization_radius], dtype=pl.Float32),
         }
-    )
+    ).pipe(assert_schema, _rft_observation_schema(), check_column_order=False)
+
+
+def _breakthrough_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {
+        "time": pl.Datetime(time_unit="ms", time_zone=None),
+        "threshold": pl.Float64,
+    }
 
 
 def _handle_breakthrough_observation(
@@ -237,19 +276,11 @@ def _handle_breakthrough_observation(
             "north": pl.Series([north], dtype=pl.Float32),
             "radius": pl.Series([radius], dtype=pl.Float32),
         }
-    )
+    ).pipe(assert_schema, _breakthrough_observation_schema(), check_column_order=False)
 
 
 def _seismic_observation_schema() -> dict[str, Any]:
-    return {
-        "response_key": pl.String,
-        "observation_key": pl.String,
-        "observations": pl.Float32,
-        "std": pl.Float32,
-        "east": pl.Float32,
-        "north": pl.Float32,
-        "radius": pl.Float32,
-    }
+    return _base_observation_schema()
 
 
 def _handle_seismic_observation(
@@ -263,7 +294,7 @@ def _handle_seismic_observation(
     north = seismic_observation.north
     radius = None
 
-    df = pl.DataFrame(
+    return pl.DataFrame(
         {
             "response_key": [response_key],
             "observation_key": [obs_key],
@@ -273,5 +304,4 @@ def _handle_seismic_observation(
             "north": pl.Series([north], dtype=pl.Float32),
             "radius": pl.Series([radius], dtype=pl.Float32),
         }
-    )
-    return assert_schema(df, _seismic_observation_schema())
+    ).pipe(assert_schema, _seismic_observation_schema(), check_column_order=False)
