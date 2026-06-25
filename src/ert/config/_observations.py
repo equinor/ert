@@ -1295,11 +1295,11 @@ def _resolve_path(directory: str, filename: str) -> str:
     return str(filepath)
 
 
-def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConfigError:
+def _conversion_error(key: str, value: Any, type_name: str) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f'Could not convert "{value}" to {type_name} for key "{token}". '
+        f'Could not convert "{value}" to {type_name} for key "{key}". '
         f'Failed to validate "{value}"',
-        token,
+        key,
     )
 
 
