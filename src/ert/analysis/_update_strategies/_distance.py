@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import time
 from collections.abc import Callable
 from datetime import timedelta
@@ -9,9 +10,14 @@ from typing import TYPE_CHECKING
 
 import humanize
 import numpy as np
+import scipy as sp
 from iterative_ensemble_smoother import LocalizedESMDA
 
-from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
+from ert.analysis.event import (
+    AnalysisEvent,
+    AnalysisRhoMatrixEvent,
+    AnalysisStatusEvent,
+)
 from ert.config import Field, SurfaceConfig
 from ert.field_utils import (
     AxisOrientation,
@@ -197,6 +203,20 @@ class DistanceLocalizationUpdate:
 
         rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
 
+        if self._obs_loc.observation_keys:
+            rho_sparse = sp.sparse.csc_matrix(rho_2d)
+            buf = io.BytesIO()
+            sp.sparse.save_npz(buf, rho_sparse)
+            self._progress_callback(
+                AnalysisRhoMatrixEvent(
+                    param_name=param_config.name,
+                    observation_keys=self._obs_loc.observation_keys,
+                    shape=rho_2d.shape,
+                    data_type=str(rho_2d.dtype),
+                    matrix_bytes=buf.getvalue(),
+                )
+            )
+
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
             if update_idx.size == 0:
@@ -273,6 +293,21 @@ class DistanceLocalizationUpdate:
         )
 
         rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
+
+        if self._obs_loc.observation_keys:
+            rho_sparse = sp.sparse.csc_matrix(rho_flat)
+            buf = io.BytesIO()
+            sp.sparse.save_npz(buf, rho_sparse)
+            self._progress_callback(
+                AnalysisRhoMatrixEvent(
+                    param_name=param_config.name,
+                    observation_keys=self._obs_loc.observation_keys,
+                    shape=rho_flat.shape,
+                    data_type=str(rho_flat.dtype),
+                    matrix_bytes=buf.getvalue(),
+                )
+            )
+
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
             if update_idx.size == 0:

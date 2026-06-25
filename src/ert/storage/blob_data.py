@@ -43,6 +43,7 @@ class ScalingFactorsData(BaseModel):
 class RhoStorageData(MatrixStorageData):
     blob_type: Literal[BlobType.RHO_MATRIX] = BlobType.RHO_MATRIX  # type: ignore[assignment]
     param_name: str
+    observation_keys: list[str] = []
 
 
 BlobInfo = (

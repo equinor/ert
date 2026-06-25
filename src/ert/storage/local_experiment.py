@@ -41,6 +41,8 @@ from .mode import BaseMode, Mode, require_write
 BLOB_DATA_DIR = "blobs"
 
 if TYPE_CHECKING:
+    from ert.analysis.event import AnalysisRhoMatrixEvent
+
     from .local_ensemble import LocalEnsemble
     from .local_storage import LocalStorage
 
@@ -690,19 +692,20 @@ class LocalExperiment(BaseMode):
         return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
 
     @require_write
-    def save_blob(
-        self,
-        name: str,
-        data: bytes,
-        blob_info: RhoStorageData,
-    ) -> None:
-        """Save a rho-matrix blob at experiment level."""
-        file_type = "application/x-npz" if blob_info.sparse else "application/x-npy"
+    def save_blob(self, event: AnalysisRhoMatrixEvent) -> None:
+        """Save the rho-matrix blob emitted during a distance-localization update."""
         BlobStorageData.save_blob(
-            name=name,
-            data=data,
-            blob_info=blob_info,
-            file_type=file_type,
+            name=event.param_name,
+            data=event.matrix_bytes,
+            blob_info=RhoStorageData(
+                update_algorithm="distance",
+                sparse=True,
+                shape=event.shape,
+                data_type=event.data_type,
+                param_name=event.param_name,
+                observation_keys=event.observation_keys,
+            ),
+            file_type="application/x-npz",
             storage=self._storage,
             blob_dir=self._path / BLOB_DATA_DIR,
         )

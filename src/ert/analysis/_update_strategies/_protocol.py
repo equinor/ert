@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol, Self
 
 import numpy as np
@@ -100,6 +100,9 @@ class ObservationLocations:
 
     location_mask: npt.NDArray[np.bool_]
     """Boolean mask indicating which observations have valid location data."""
+
+    observation_keys: list[str] = field(default_factory=list)
+    """Observation keys for the located observations (same order as xpos/ypos)."""
 
 
 @dataclass(frozen=True)

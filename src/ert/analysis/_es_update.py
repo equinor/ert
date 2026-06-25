@@ -215,6 +215,9 @@ def perform_ensemble_update(
             ypos=filtered_data["north"].to_numpy()[has_location],
             main_range=filtered_data["radius"].to_numpy()[has_location],
             location_mask=has_location,
+            observation_keys=filtered_data["observation_key"]
+            .to_numpy()[has_location]
+            .tolist(),
         )
 
     obs_context = ObservationContext(
