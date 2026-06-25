@@ -14,7 +14,6 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QApplication,
     QButtonGroup,
-    QCheckBox,
     QDialog,
     QDockWidget,
     QGroupBox,
@@ -61,6 +60,7 @@ from .utils.observation_locations import transform_observation_locations
 from .utils.plot_types import ObservationPlotLocations
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
+from .widgets.plot_controls.misfits_options import MisfitsOptions
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
@@ -360,31 +360,7 @@ class PlotWindow(QMainWindow):
                 ),
             )
 
-            # Misfits plot options
-            self._toggle_mean = QCheckBox("Show mean")
-            self._toggle_mean.setChecked(True)
-            self._toggle_mean.stateChanged.connect(self.updatePlot)
-            self._toggle_outliers = QCheckBox("Show outliers")
-            self._toggle_outliers.setChecked(True)
-            self._toggle_outliers.stateChanged.connect(self.updatePlot)
-            self._toggle_scatter_plot = QCheckBox("Show scatter")
-            self._toggle_scatter_plot.setChecked(False)
-            self._toggle_scatter_plot.stateChanged.connect(self.updatePlot)
-            self._toggle_box = QCheckBox("Show box plot")
-            self._toggle_box.setChecked(True)
-            self._toggle_box.stateChanged.connect(self.updatePlot)
-
-            self._misfits_options_group = create_group_box(
-                "Plot options",
-                create_group_layout(
-                    [
-                        self._toggle_scatter_plot,
-                        self._toggle_box,
-                        self._toggle_mean,
-                        self._toggle_outliers,
-                    ]
-                ),
-            )
+            self._misfits_options = MisfitsOptions(self.updatePlot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
@@ -392,7 +368,7 @@ class PlotWindow(QMainWindow):
                     self._ensemble_group,
                     self._display_over_group,
                     self._everest_controls_group,
-                    self._misfits_options_group,
+                    self._misfits_options.get_widget(),
                 ]
             )
             right_container.setLayout(right_layout)
@@ -406,7 +382,7 @@ class PlotWindow(QMainWindow):
 
             self._everest_controls_group.setVisible(False)
             self._display_over_group.setVisible(False)
-            self._misfits_options_group.setVisible(False)
+            self._misfits_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
             if self.getSelectedKey() is None:
@@ -462,7 +438,7 @@ class PlotWindow(QMainWindow):
         ):
             key = key.replace("BREAKTHROUGH:", "")
 
-        self._misfits_options_group.setVisible(plot_widget.name == MISFITS)
+        self._misfits_options.get_widget().setVisible(plot_widget.name == MISFITS)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
@@ -615,10 +591,10 @@ class PlotWindow(QMainWindow):
             )
             plot_context.by_batch = self._display_over_batches_radio.isChecked()
 
-            plot_context.scatter_plot = self._toggle_scatter_plot.isChecked()
-            plot_context.box_plot = self._toggle_box.isChecked()
-            plot_context.mean = self._toggle_mean.isChecked()
-            plot_context.outliers = self._toggle_outliers.isChecked()
+            plot_context.scatter_plot = self._misfits_options.scatter_checkbox_state
+            plot_context.box_plot = self._misfits_options.box_checkbox_state
+            plot_context.mean = self._misfits_options.mean_checkbox_state
+            plot_context.outliers = self._misfits_options.outliers_checkbox_state
 
             # Check if key is a history key.
             # If it is it already has the data it needs
