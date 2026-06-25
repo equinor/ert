@@ -5,20 +5,14 @@ Complete workflows
 
 A workflow is a list of calls to workflow jobs, with additional arguments. The
 job name should be the first element on each line. Based on the two
-jobs PLOT and ECL_HIST we can create a small workflow example:
+imagined jobs, WF_1 and WF_2, we can create a small workflow example:
 
 ::
 
-	PLOT      WWCT:OP_1   WWCT:OP_3  PRESSURE:10,10,10
-	PLOT      FGPT        FOPT
-	ECL_HIST  <RUNPATH_FILE>   <QC_PATH>/<ERTCASE>/wwct_hist   WWCT:OP_1  WWCT:OP_2
+	WF_1    FGPT            FOPT
+	WF_2   <RUNPATH_FILE>   <QC_PATH>/<ERTCASE>/wwct_hist   WWCT:OP_1  WWCT:OP_2
 
-In this workflow we create plots of the nodes
-:code:`WWCT` : :code:`OP_1`, :code:`WWCT` : :code:`OP_3`, :code:`PRESSURE`:10,10,10, :code:`FGPT` and :code:`FOPT`. The plot job we
-have created in this example is general, if we limited
-ourselves to ECLIPSE summary variables we could get wildcard
-support. Then we invoke the ECL_HIST example job to create a
-histogram. See documentation of :ref:`RUNPATH_FILE <ms_runpath_file>` and
+In this case we use two built-in magic strings, see documentation of :ref:`RUNPATH_FILE <ms_runpath_file>` and
 :ref:`ERTCASE <ms_ertcase>`.
 
 :code:`DEFINE` usage in workflows
