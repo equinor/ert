@@ -53,6 +53,7 @@ from .queue_config import (
 )
 from .response_config import DerivedResponseConfig, InvalidResponseFile, ResponseConfig
 from .rft_config import RFTConfig
+from .seismic_config import SeismicConfig
 from .summary_config import SummaryConfig
 from .summary_key_data import SummaryKeyData, make_summary_key_data
 from .surface_config import SurfaceConfig
@@ -143,6 +144,7 @@ __all__ = [
     "RFTConfig",
     "ResponseConfig",
     "SamplerConfig",
+    "SeismicConfig",
     "ShapeConfig",
     "ShapeRegistry",
     "SiteInstalledForwardModelStep",

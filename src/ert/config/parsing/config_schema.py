@@ -305,6 +305,15 @@ def design_matrix_keyword() -> SchemaItem:
     )
 
 
+def seismic_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.SEISMIC,
+        argc_min=1,
+        argc_max=1,
+        multi_occurrence=True,
+    )
+
+
 class ConfigSchemaDict(SchemaItemDict):
     def check_required(
         self,
@@ -341,6 +350,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         summary_keyword(),
         rft_keyword(),
         approximate_missing_rft_values_keyword(),
+        seismic_keyword(),
         surface_keyword(),
         field_keyword(),
         single_arg_keyword(ConfigKeys.ECLBASE),

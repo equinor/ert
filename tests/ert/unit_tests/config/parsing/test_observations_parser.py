@@ -55,6 +55,10 @@ def test_parse_observations():
            ERROR=3;
            THRESHOLD=0.1;
         };
+
+        SEISMIC_OBSERVATION SEIS_OBS {
+           CSV=path/to/seismic_obs.csv;
+        };
     """,
         "",
     ) == [
@@ -96,6 +100,11 @@ def test_parse_observations():
             "DATE": "2012-10-01",
             "ERROR": "3",
             "THRESHOLD": "0.1",
+        },
+        {
+            "type": ObservationType.SEISMIC,
+            "name": "SEIS_OBS",
+            "CSV": "path/to/seismic_obs.csv",
         },
     ]
 
@@ -281,6 +290,10 @@ def test_that_parser_sets_undefined_observation_names_to_none():
             DATE=2012-10-01;
             ERROR=3;
             THRESHOLD=0.1;
+        };
+        SEISMIC_OBSERVATION
+        {
+           CSV=path/to/seismic_obs.csv;
         };
     """
     parsed_obs = parse_observations(

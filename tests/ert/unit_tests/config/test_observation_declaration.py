@@ -29,6 +29,7 @@ from ert.config.parsing.observations_parser import (
     observations_parser,
 )
 from ert.namespace import Namespace
+from tests.ert.defaults_generator import _create_seismic_observation
 
 observation_contents = stlark.from_lark(observations_parser)
 
@@ -827,3 +828,277 @@ def test_that_shape_registry_assigns_new_id_for_different_shapes():
         CircleShapeConfig(east=10.0, north=20.0, radius=3000.0)
     )
     assert shape_id_1 != shape_id_2
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_instantiates(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            461231.55375274725,5933187.729869121,-0.00035666953938864876,0.005,4.0
+            461156.9532936567,5933317.28138355,-0.0005293887515127136,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "NAME",
+                    "CSV": "obs.csv",
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        _create_seismic_observation(
+            name="NAME",
+            filepath=Path("obs.csv"),
+            east=461231.5537527473,
+            north=5933187.729869121,
+            value=-0.0003566695393886,
+            error=0.005,
+        ),
+        _create_seismic_observation(
+            name="NAME",
+            filepath=Path("obs.csv"),
+            east=461156.9532936567,
+            north=5933317.28138355,
+            value=-0.0005293887515127,
+            error=0.005,
+        ),
+    ]
+
+
+def test_that_non_existent_seismic_observation_file_raises_error(file_context_token):
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "CSV": "seismic_observations.csv",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "The CSV file (seismic_observations.csv) does not exist or is not accessible."
+        in str(err.value)
+    )
+
+
+def test_that_missing_seismic_csv_filename_raises_error(file_context_token):
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert 'Missing item "CSV" in SEISMIC_OBSERVATION' in str(err.value)
+
+
+def test_that_unknown_seismic_key_raises_error(file_context_token):
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "CSV": "seismic_observations.csv",
+                        "UNKNOWN_KEY": "unexpected_value",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert "Unknown key 'UNKNOWN_KEY' in SEISMIC_OBSERVATION" in str(err.value)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_columns_in_seismic_observation_file_raises(file_context_token):
+    Path("seismic_observations.csv").write_text(
+        dedent(
+            """
+            OBS,OBS_ERROR,REGION,CAT
+            -0.00035666953938864876,0.005,3.0,Persian
+            0.0005293887515127136,0.005,1.0,Siamese
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "CSV": "seismic_observations.csv",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "The seismic observations file seismic_observations.csv "
+        "is missing required column(s) X_UTME, Y_UTMN." in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_defaults_all_names_to_filename(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            1.0,1.0,1.0,0.005,1.0
+            1.0,2.0,1.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": None,
+                    "CSV": "obs.csv",
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        _create_seismic_observation(
+            name="obs",
+            filepath=Path("obs.csv"),
+            east=1.0,
+            north=1.0,
+            value=1.0,
+            error=0.005,
+        ),
+        _create_seismic_observation(
+            name="obs",
+            filepath=Path("obs.csv"),
+            east=1.0,
+            north=2.0,
+            value=1.0,
+            error=0.005,
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_value_type_in_seismic_observation_raises_error(
+    file_context_token,
+):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,REGION,OBS,OBS_ERROR
+            100,-100,1.0,unexpected_value,0.005
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "CSV": "obs.csv",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        'Could not convert "unexpected_value" to float for key "OBS". '
+        'Failed to validate "unexpected_value"' in str(err.value)
+    )
+
+
+@pytest.mark.parametrize(
+    ("east", "north"),
+    [
+        pytest.param([111.11, 111.11], [222.22, 222.22], id="same coordinates"),
+        pytest.param(
+            [111.1111111111111111111111, 111.11111111111111],
+            [222.2222222222222222222222222222222, 222.22222222222223],
+            id="lost precision",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_duplicate_location_in_seismic_observation_raises(
+    file_context_token, east, north
+):
+
+    Path("obs.csv").write_text(
+        dedent(
+            f"""
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            {east[0]},{north[0]},1.0,0.005,1.0
+            {east[1]},{north[1]},2.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "CSV": "obs.csv",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        f"Seismic observation coordinates ({east[1]}, {north[1]}) "
+        "were not unique (after rounding from f64 to f32)." in str(err.value)
+    )

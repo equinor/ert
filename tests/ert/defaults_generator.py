@@ -5,6 +5,7 @@ from ert.config._observations import (
     BreakthroughObservation,
     GeneralObservation,
     RFTObservation,
+    SeismicObservation,
     SummaryObservation,
 )
 
@@ -84,4 +85,22 @@ def _create_rft_observation(
         tvd=tvd,
         md=md,
         zone=zone,
+    )
+
+
+def _create_seismic_observation(
+    name: str = "seismic_observation",
+    filepath: Path = Path("obs.csv"),
+    east: float = 1.0,
+    north: float = 1.0,
+    value: float = 1.0,
+    error: float = 0.005,
+) -> SeismicObservation:
+    return SeismicObservation(
+        name=name,
+        filepath=filepath,
+        east=east,
+        north=north,
+        value=value,
+        error=error,
     )

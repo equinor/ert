@@ -48,6 +48,7 @@ from ert.config.parsing.context_values import (
 from ert.config.parsing.observations_parser import ObservationDict, ObservationType
 from ert.config.queue_config import LocalQueueOptions
 from ert.config.refcase import Refcase
+from ert.config.seismic_config import SeismicConfig
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
 from ert.shared import ert_share_path
 from ert.storage import LocalEnsemble, Storage
@@ -2743,6 +2744,30 @@ def test_that_rft_properties_can_be_given_with_spaces():
     assert isinstance(rft, RFTConfig)
     assert rft.data_to_read == {
         "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
+    }
+
+
+def test_that_seismics_are_parsed():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+
+        SEISMIC tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv
+        SEISMIC tables/horizon--amplitude_full_min_depth--20250101_20240101.csv
+        """,
+    )
+    seismic = config.ensemble_config.response_configs["seismic"]
+    assert isinstance(seismic, SeismicConfig)
+    assert seismic.type == "seismic"
+    assert seismic.name == "seismic"
+    assert seismic.response_type == "seismic"
+    assert seismic.input_files == [
+        "tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv",
+        "tables/horizon--amplitude_full_min_depth--20250101_20240101.csv",
+    ]
+    assert set(seismic.keys) == {
+        "horizon--amplitude_full_mean_depth--20250101_20240101",
+        "horizon--amplitude_full_min_depth--20250101_20240101",
     }
 
 
