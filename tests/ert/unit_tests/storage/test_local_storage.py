@@ -21,6 +21,7 @@ from hypothesis import assume, given, note
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 from pandas import DataFrame, ExcelWriter
+from pydantic import ValidationError
 from resfo_utilities.testing import summaries, summary_variables
 
 from ert.config import (
@@ -439,6 +440,46 @@ def test_open_storage_with_corrupted_storage(tmp_path):
     os.remove(tmp_path / "storage" / "index.json")
     with pytest.raises(ErtStorageException, match="No index\\.json"):
         open_storage(tmp_path / "storage", mode="w")
+
+
+def test_that_create_experiment_rejects_general_observation_with_rft_locality_keys(
+    tmp_path,
+):
+    general_observation = {
+        "type": "general_observation",
+        "name": "POLY_OBS",
+        "data": "POLY_RES",
+        "value": 1.0,
+        "error": 0.1,
+        "restart": 0,
+        "index": 0,
+    }
+    experiment_config = {
+        "observations": [general_observation],
+        "response_configuration": [
+            GenDataConfig(keys=["POLY_RES"]).model_dump(mode="json")
+        ],
+    }
+
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        storage.create_experiment(experiment_config=experiment_config, name="clean")
+
+        polluted_observation = {
+            **general_observation,
+            "east": None,
+            "north": None,
+            "radius": None,
+        }
+        experiment_config["observations"] = [polluted_observation]
+
+        with pytest.raises(ValidationError) as exc_info:
+            storage.create_experiment(
+                experiment_config=experiment_config, name="polluted"
+            )
+
+    errors = exc_info.value.errors()
+    extra_fields = {e["loc"][-1] for e in errors if e.get("type") == "extra_forbidden"}
+    assert {"east", "north", "radius"} <= extra_fields
 
 
 def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(tmp_path):
