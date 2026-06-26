@@ -46,6 +46,7 @@ if TYPE_CHECKING:
 
     from ert.config import ParameterConfig
     from ert.storage import Ensemble
+    from ert.storage.local_experiment import LocalExperiment
 
 logger = logging.getLogger(__name__)
 
@@ -301,6 +302,7 @@ def build_strategy_map(
     correlation_threshold: Callable[[int], float],
     *,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
+    experiment: LocalExperiment | None = None,
 ) -> dict[str, UpdateStrategy]:
     """Build a mapping from parameter group names to update strategies.
 
@@ -321,6 +323,8 @@ def build_strategy_map(
         threshold.
     progress_callback : Callable[[AnalysisEvent], None] | None
         Callback for reporting progress.
+    experiment : LocalExperiment | None
+        Optional experiment for loading cached rho matrices.
 
     Returns
     -------
@@ -333,11 +337,11 @@ def build_strategy_map(
     strategy_map: dict[str, UpdateStrategy] = {}
 
     field_distance_strategy = DistanceLocalizationUpdate(
-        enkf_truncation, Field, progress_callback
+        enkf_truncation, Field, progress_callback, experiment
     )
 
     surface_distance_strategy = DistanceLocalizationUpdate(
-        enkf_truncation, SurfaceConfig, progress_callback
+        enkf_truncation, SurfaceConfig, progress_callback, experiment
     )
 
     global_strategy = GlobalESUpdate(

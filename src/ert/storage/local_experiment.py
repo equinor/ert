@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import io
 import json
 import logging
 import shutil
@@ -12,7 +13,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
+import numpy as np
+import numpy.typing as npt
 import polars as pl
+import scipy as sp
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 from typing_extensions import TypedDict
@@ -690,6 +694,21 @@ class LocalExperiment(BaseMode):
     def load_blob(self, uri: str) -> bytes:
         """Load blob bytes by URI from the experiment-level blob directory."""
         return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
+
+    def load_rho_matrix(self, param_name: str) -> npt.NDArray[np.floating] | None:
+        """Load a cached rho matrix for the given parameter name.
+
+        Returns the dense array if found, or None if no blob exists.
+        """
+        for blob in self.load_blobs(BlobType.RHO_MATRIX):
+            if (
+                isinstance(blob.blob_info, RhoStorageData)
+                and blob.blob_info.param_name == param_name
+            ):
+                data = self.load_blob(blob.uri)
+                sparse_matrix = sp.sparse.load_npz(io.BytesIO(data))
+                return sparse_matrix.toarray()  # type: ignore[no-any-return]
+        return None
 
     @require_write
     def save_blob(self, event: AnalysisRhoMatrixEvent) -> None:

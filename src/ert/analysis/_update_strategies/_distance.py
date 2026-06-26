@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.config import ParameterConfig
+    from ert.storage.local_experiment import LocalExperiment
 
     from ._protocol import ObservationContext
 
@@ -45,10 +46,12 @@ class DistanceLocalizationUpdate:
         enkf_truncation: float,
         param_type: type[Field | SurfaceConfig],
         progress_callback: Callable[[AnalysisEvent], None],
+        experiment: LocalExperiment | None = None,
     ) -> None:
         self._enkf_truncation = enkf_truncation
         self._param_type = param_type
         self._progress_callback = progress_callback
+        self._experiment = experiment
         self._obs_loc: ObservationLocations | None = None
         self._smoother: LocalizedESMDA | None = None
         self._ensemble_size: int = 0
@@ -131,6 +134,14 @@ class DistanceLocalizationUpdate:
 
         return result
 
+    def _load_rho_from_storage(
+        self, param_name: str
+    ) -> npt.NDArray[np.floating] | None:
+        """Try to load a cached rho matrix from experiment blob storage."""
+        if self._experiment is None:
+            return None
+        return self._experiment.load_rho_matrix(param_name)
+
     def _full_localization_matrix(
         self,
         num_params: int,
@@ -176,46 +187,50 @@ class DistanceLocalizationUpdate:
         if ertbox.axis_orientation is None:
             raise ValueError("Field grid axis orientation must be defined")
 
-        xpos, ypos = transform_positions_to_local_field_coordinates(
-            ertbox.origin,
-            ertbox.rotation_angle,
-            self._obs_loc.xpos,
-            self._obs_loc.ypos,
-        )
-
-        ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
-            ertbox.rotation_angle,
-            np.zeros_like(self._obs_loc.main_range),
-        )
-
-        rho_matrix = calc_rho_for_2d_grid_layer(
-            nx=ertbox.nx,
-            ny=ertbox.ny,
-            xinc=ertbox.xinc,
-            yinc=ertbox.yinc,
-            obs_xpos=xpos,
-            obs_ypos=ypos,
-            obs_main_range=self._obs_loc.main_range,
-            obs_perp_range=self._obs_loc.main_range,
-            obs_anisotropy_angle=ellipse_rotation,
-            axis_orientation=ertbox.axis_orientation,
-        )
-
-        rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
-
-        if self._obs_loc.observation_keys:
-            rho_sparse = sp.sparse.csc_matrix(rho_2d)
-            buf = io.BytesIO()
-            sp.sparse.save_npz(buf, rho_sparse)
-            self._progress_callback(
-                AnalysisRhoMatrixEvent(
-                    param_name=param_config.name,
-                    observation_keys=self._obs_loc.observation_keys,
-                    shape=rho_2d.shape,
-                    data_type=str(rho_2d.dtype),
-                    matrix_bytes=buf.getvalue(),
-                )
+        cached_rho = self._load_rho_from_storage(param_config.name)
+        if cached_rho is not None:
+            rho_2d = cached_rho
+        else:
+            xpos, ypos = transform_positions_to_local_field_coordinates(
+                ertbox.origin,
+                ertbox.rotation_angle,
+                self._obs_loc.xpos,
+                self._obs_loc.ypos,
             )
+
+            ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
+                ertbox.rotation_angle,
+                np.zeros_like(self._obs_loc.main_range),
+            )
+
+            rho_matrix = calc_rho_for_2d_grid_layer(
+                nx=ertbox.nx,
+                ny=ertbox.ny,
+                xinc=ertbox.xinc,
+                yinc=ertbox.yinc,
+                obs_xpos=xpos,
+                obs_ypos=ypos,
+                obs_main_range=self._obs_loc.main_range,
+                obs_perp_range=self._obs_loc.main_range,
+                obs_anisotropy_angle=ellipse_rotation,
+                axis_orientation=ertbox.axis_orientation,
+            )
+
+            rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
+
+            if self._obs_loc.observation_keys:
+                rho_sparse = sp.sparse.csc_matrix(rho_2d)
+                buf = io.BytesIO()
+                sp.sparse.save_npz(buf, rho_sparse)
+                self._progress_callback(
+                    AnalysisRhoMatrixEvent(
+                        param_name=param_config.name,
+                        observation_keys=self._obs_loc.observation_keys,
+                        shape=rho_2d.shape,
+                        data_type=str(rho_2d.dtype),
+                        matrix_bytes=buf.getvalue(),
+                    )
+                )
 
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
@@ -262,51 +277,55 @@ class DistanceLocalizationUpdate:
 
         assert self._obs_loc is not None
 
-        xpos, ypos = transform_positions_to_local_field_coordinates(
-            (param_config.xori, param_config.yori),
-            param_config.rotation,
-            self._obs_loc.xpos,
-            self._obs_loc.ypos,
-        )
-
-        rotation_angle = transform_local_ellipse_angle_to_local_coords(
-            param_config.rotation,
-            np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
-        )
-
-        if param_config.yflip != 1:
-            raise ValueError(
-                f"Expected SurfaceConfig.yflip == 1, got {param_config.yflip}"
+        cached_rho = self._load_rho_from_storage(param_config.name)
+        if cached_rho is not None:
+            rho_flat = cached_rho
+        else:
+            xpos, ypos = transform_positions_to_local_field_coordinates(
+                (param_config.xori, param_config.yori),
+                param_config.rotation,
+                self._obs_loc.xpos,
+                self._obs_loc.ypos,
             )
 
-        rho_matrix = calc_rho_for_2d_grid_layer(
-            nx=param_config.ncol,
-            ny=param_config.nrow,
-            xinc=param_config.xinc,
-            yinc=param_config.yinc,
-            obs_xpos=xpos,
-            obs_ypos=ypos,
-            obs_main_range=self._obs_loc.main_range,
-            obs_perp_range=self._obs_loc.main_range,
-            obs_anisotropy_angle=rotation_angle,
-            axis_orientation=AxisOrientation.LEFT_HANDED,
-        )
+            rotation_angle = transform_local_ellipse_angle_to_local_coords(
+                param_config.rotation,
+                np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
+            )
 
-        rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
-
-        if self._obs_loc.observation_keys:
-            rho_sparse = sp.sparse.csc_matrix(rho_flat)
-            buf = io.BytesIO()
-            sp.sparse.save_npz(buf, rho_sparse)
-            self._progress_callback(
-                AnalysisRhoMatrixEvent(
-                    param_name=param_config.name,
-                    observation_keys=self._obs_loc.observation_keys,
-                    shape=rho_flat.shape,
-                    data_type=str(rho_flat.dtype),
-                    matrix_bytes=buf.getvalue(),
+            if param_config.yflip != 1:
+                raise ValueError(
+                    f"Expected SurfaceConfig.yflip == 1, got {param_config.yflip}"
                 )
+
+            rho_matrix = calc_rho_for_2d_grid_layer(
+                nx=param_config.ncol,
+                ny=param_config.nrow,
+                xinc=param_config.xinc,
+                yinc=param_config.yinc,
+                obs_xpos=xpos,
+                obs_ypos=ypos,
+                obs_main_range=self._obs_loc.main_range,
+                obs_perp_range=self._obs_loc.main_range,
+                obs_anisotropy_angle=rotation_angle,
+                axis_orientation=AxisOrientation.LEFT_HANDED,
             )
+
+            rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
+
+            if self._obs_loc.observation_keys:
+                rho_sparse = sp.sparse.csc_matrix(rho_flat)
+                buf = io.BytesIO()
+                sp.sparse.save_npz(buf, rho_sparse)
+                self._progress_callback(
+                    AnalysisRhoMatrixEvent(
+                        param_name=param_config.name,
+                        observation_keys=self._obs_loc.observation_keys,
+                        shape=rho_flat.shape,
+                        data_type=str(rho_flat.dtype),
+                        matrix_bytes=buf.getvalue(),
+                    )
+                )
 
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
