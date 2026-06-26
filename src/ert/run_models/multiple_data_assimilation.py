@@ -90,29 +90,42 @@ class MultipleDataAssimilation(
         if self.restart_run:
             id_ = self.prior_ensemble_id
             assert id_ is not None
-            try:  # noqa: PLW0717
+
+            try:
                 ensemble_id = UUID(id_)
                 prior = self._storage.get_ensemble(ensemble_id)
-                experiment = prior.experiment
-                self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-                self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-                assert isinstance(prior, Ensemble)
-                if self._start_iteration != prior.iteration + 1:
-                    raise ValueError(
-                        "Experiment misconfigured, got starting "
-                        f"iteration: {self._start_iteration},"
-                        f"restart iteration = {prior.iteration + 1}"
-                    )
+            except (KeyError, ValueError) as err:
+                logger.error(f"Could not load prior ensemble '{id_}': {err}")
+                raise ErtRunError(
+                    f"Prior ensemble with ID: {id_} does not exist"
+                ) from err
+
+            experiment = prior.experiment
+            self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
+            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+            assert isinstance(prior, Ensemble)
+            if self._start_iteration != prior.iteration + 1:
+                raise ErtRunError(
+                    "Experiment misconfigured, got starting "
+                    f"iteration: {self._start_iteration}, "
+                    f"restart iteration = {prior.iteration + 1}"
+                )
+
+            try:
                 target_experiment = self._storage.create_experiment(
                     experiment_config=self._create_experiment_for_restart(
                         experiment.experiment_config
                     ),
                     name=f"Restart from {prior.name}",
                 )
-
-            except (KeyError, ValueError) as err:
+            except Exception as err:
+                logger.exception(
+                    f"Failed to create restart experiment from prior ensemble "
+                    f"'{prior.name}' (ID: {id_})"
+                )
                 raise ErtRunError(
-                    f"Prior ensemble with ID: {id_} does not exists"
+                    f"Could not restart from prior ensemble '{prior.name}' "
+                    f"(ID: {id_}): {err}"
                 ) from err
         else:
             self.run_workflows(
