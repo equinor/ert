@@ -707,7 +707,7 @@ class LocalExperiment(BaseMode):
             ):
                 data = self.load_blob(blob.uri)
                 sparse_matrix = sp.sparse.load_npz(io.BytesIO(data))
-                return sparse_matrix.toarray()  # type: ignore[no-any-return]
+                return sparse_matrix.toarray()
         return None
 
     @require_write
