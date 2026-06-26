@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from textwrap import dedent
 
 import numpy as np
 import polars as pl
@@ -679,7 +680,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
                     "DATA": "GEN",
                     "RESTART": "11",
                     "INDEX_LIST": "60,400,1200,1600,1800",
-                    "OBS_FILE": "<OBS_FILE_PLACEHOLDER>",
+                    "OBS_FILE": "gen_obs_data.txt",
                 },
                 {
                     "type": ObservationType.GENERAL,
@@ -687,7 +688,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
                     "DATA": "GEN",
                     "RESTART": "100",
                     "INDEX_LIST": "60,400,1200,1600,1800",
-                    "OBS_FILE": "<OBS_FILE_PLACEHOLDER>",
+                    "OBS_FILE": "gen_obs_data.txt",
                 },
             ],
             [
@@ -704,34 +705,60 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
             ],
             id="general",
         ),
+        pytest.param(
+            [
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "SEISMIC1",
+                    "CSV": "seismic--20250101_20240101.csv",
+                },
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "SEISMIC2",
+                    "CSV": "seismic--20260101_20240101.csv",
+                },
+            ],
+            ["99.0, 200.0", "100.0, 200.0"],
+            id="seismic",
+        ),
     ],
 )
 def test_that_observations_are_identified_and_sorted_by_full_index_key(
-    qtbot, storage, tmp_path, observations, expected_name_order
+    qtbot, storage, observations, expected_name_order, mocked_files
 ):
-    def patch_gen_obs_file(observations_list):
-        obs_file = tmp_path / "obs_data.txt"
+
+    def mock_gen_obs_file():
+        gen_obs_file = "gen_obs_data.txt"
         gen_obs = [float(i + 1) for i in range(5)]
-        obs_file.write_text(
-            "\n".join(f"{obs} {obs}" for obs in gen_obs),
-            encoding="utf-8",
+        gen_obs_data = "\n".join(f"{obs} {obs}" for obs in gen_obs)
+        mocked_files[gen_obs_file] = gen_obs_data
+
+    def mock_seismic_obs_file():
+        seismic_obs_file_1 = "seismic--20250101_20240101.csv"
+        seismic_obs_file_2 = "seismic--20260101_20240101.csv"
+        seismic_obs_data = dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            99.00,200.00,1.0,0.005,1.0
+            100.00,200.00,2.0,0.005,1.0
+            """
         )
+        mocked_files[seismic_obs_file_1] = seismic_obs_data
+        mocked_files[seismic_obs_file_2] = seismic_obs_data
 
-        return [
-            {
-                k: str(obs_file) if v == "<OBS_FILE_PLACEHOLDER>" else v
-                for k, v in observation_dict.items()
-            }
-            for observation_dict in observations_list
-        ]
+    mock_gen_obs_file()
+    mock_seismic_obs_file()
 
-    observations = patch_gen_obs_file(observations)
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
             "ECLBASE": "BASE",
             "GEN_DATA": [
                 ["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": "100,11"}]
+            ],
+            "SEISMIC": [
+                "seismic--20250101_20240101.csv",
+                "seismic--20260101_20240101.csv",
             ],
             "OBS_CONFIG": (
                 "obs_config",

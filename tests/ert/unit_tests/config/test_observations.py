@@ -712,7 +712,7 @@ def test_that_error_types_are_not_allowed_in_general_observations(error_type):
         encoding="utf-8",
     )
 
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_*"):
+    with pytest.raises(ConfigValidationError, match=r"Unknown key 'ERROR_(MODE|MIN)'"):
         run_convert_observations(Namespace(config="config.ert"))
 
 
@@ -1542,14 +1542,14 @@ def test_that_summary_default_error_min_is_applied():
     [
         ("ERROR", "-1", 'Failed to validate "-1"'),
         ("ERROR_MIN", "-1", 'Failed to validate "-1"'),
-        ("START", "1.1", "Could not convert 1.1 to int"),
-        ("STOP", "1.1", "Could not convert 1.1 to int"),
+        ("START", "1.1", 'Could not convert "1.1" to int'),
+        ("STOP", "1.1", 'Could not convert "1.1" to int'),
         ("START", "1", 'Missing item "STOP"'),
         ("STOP", "1", 'Missing item "START"'),
-        ("SMERROR", "0.02", "Unknown SMERROR"),
-        ("name", "0.02", "Unknown name"),
-        ("type", "0.02", "Unknown type"),
-        ("segments", "0.02", "Unknown segments"),
+        ("SMERROR", "0.02", "Unknown key 'SMERROR'"),
+        ("name", "0.02", "Unknown key 'name'"),
+        ("type", "0.02", "Unknown key 'type'"),
+        ("segments", "0.02", "Unknown key 'segments'"),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1905,10 +1905,10 @@ def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key)
             ),
             encoding="utf-8",
         )
-        with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
+        with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
             run_convert_observations(Namespace(config="config.ert"))
     else:
-        with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
+        with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
             ert_config_from_parser(
                 f"{observation_type} FOPR {{{unknown_key}=0.1;DATA=key;}};"
             )
@@ -2192,8 +2192,8 @@ def test_that_extract_localization_values_raises_error_given_non_float():
         values = {key: "Not a float"}
         with pytest.raises(
             ObservationConfigError,
-            match=r"Could not convert Not a float to float. "
-            r'Failed to validate "Not a float"',
+            match=rf'Could not convert "Not a float" to float for key "{key}". '
+            rf'Failed to validate "Not a float"',
         ):
             extract_localization_values(values)
 
@@ -2345,3 +2345,65 @@ def test_that_providing_no_name_or_object_to_obs_raises_config_error(obs_content
     expected_error = r'Missing item "(.+)" in ' + obs_content.replace(";", "")
     with pytest.raises(ConfigValidationError, match=expected_error):
         ert_config_from_parser(obs_content)
+
+
+def test_that_seismic_observation_dataframes_are_created(
+    mocked_files, file_context_token
+):
+    content1 = dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        100.25,200.25,1.1,0.005,1.0
+        100.55,200.65,1.2,0.005,1.0
+        """
+    )
+    content2 = dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        100.85,200.95,1.3,0.005,1.0
+        """
+    )
+    mocked_files["obs1.csv"] = content1
+    mocked_files["obs2.csv"] = content2
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": "NAME1",
+                            "CSV": "obs1.csv",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": None,
+                            "CSV": "obs2.csv",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                ],
+            ),
+        }
+    )
+    observations = create_observation_dataframes(
+        ert_config.observation_declarations, None, ert_config.shape_registry
+    )["seismic"]
+    assert_frame_equal(
+        observations,
+        pl.DataFrame(
+            {
+                "response_key": ["obs1", "obs1", "obs2"],
+                "observation_key": ["NAME1", "NAME1", "obs2"],
+                "observations": pl.Series([1.1, 1.2, 1.3], dtype=pl.Float32),
+                "std": pl.Series([0.005, 0.005, 0.005], dtype=pl.Float32),
+                "east": pl.Series([100.25, 100.55, 100.85], dtype=pl.Float32),
+                "north": pl.Series([200.25, 200.65, 200.95], dtype=pl.Float32),
+                "radius": pl.Series([None, None, None], dtype=pl.Float32),
+            }
+        ),
+    )

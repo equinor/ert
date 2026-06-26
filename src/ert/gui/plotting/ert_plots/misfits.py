@@ -74,7 +74,7 @@ class MisfitsPlot:
     def _wide_pandas_to_long_polars_with_misfits(
         ensemble_to_data_map: dict[tuple[str, str], pd.DataFrame],
         observation_data: pd.DataFrame,
-        response_type: Literal["summary", "gen_data"],
+        response_type: Literal["summary", "gen_data", "rft", "breakthrough", "seismic"],
     ) -> dict[tuple[str, str], pl.DataFrame]:
         if response_type in {"summary", "breakthrough"}:
             key_index_with_correct_dtype = pl.col("key_index").str.to_datetime(
@@ -83,6 +83,10 @@ class MisfitsPlot:
         elif response_type in {"gen_data", "rft"}:
             key_index_with_correct_dtype = (
                 pl.col("key_index").cast(pl.Float32).cast(pl.UInt16)
+            )
+        elif response_type == "seismic":
+            key_index_with_correct_dtype = (
+                pl.col("key_index").cast(pl.Float32).cast(pl.Int32)
             )
         else:
             raise ValueError(f"Unsupported response_type: {response_type}")
@@ -151,7 +155,7 @@ class MisfitsPlot:
                 plot_context,
             )
 
-        elif response_type in {"gen_data", "rft"}:
+        elif response_type in {"gen_data", "rft", "seismic"}:
             self._plot_misfits(
                 figure,
                 data_with_misfits,

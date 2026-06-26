@@ -391,3 +391,27 @@ def test_that_legend_items_for_summary_data_is_toggleable(enabled):
     legend_texts = [text.get_text() for text in axes.get_legend().get_texts()]
     for item in legend_items:
         assert (item in legend_texts) == enabled
+
+
+def test_that_misfit_conversion_for_seismic_casts_key_index_to_int32():
+    ensemble_df = pd.DataFrame(
+        {"0": [110.0], "5": [180.0]}, index=pd.Index([0], name="Realization")
+    )
+    ensemble_to_data_map = {("ens1", "id1"): ensemble_df}
+
+    observation_data = pd.DataFrame(
+        data={
+            0: [10.0, 100.0, "0"],
+            1: [10.0, 200.0, "5"],
+        },
+        index=["STD", "OBS", "key_index"],
+    )
+
+    result = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+        ensemble_to_data_map=ensemble_to_data_map,
+        observation_data=observation_data,
+        response_type="seismic",
+    )
+
+    result_df = result["ens1", "id1"]
+    assert result_df["key_index"].dtype == pl.Int32

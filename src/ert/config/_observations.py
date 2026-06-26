@@ -950,12 +950,134 @@ class BreakthroughObservation(BaseObservation):
         return None
 
 
+class SeismicObservation(BaseObservation):
+    type: Literal["seismic_observation"] = "seismic_observation"
+    name: str
+    filepath: Path
+    east: float
+    north: float
+    value: float
+    error: float
+
+    @classmethod
+    def from_csv(
+        cls,
+        directory: str,
+        name: str,
+        filepath: str | Path,
+    ) -> list[Self]:
+        """Create seismic observations from a CSV file.
+
+        Args:
+            directory: Directory where observation config is located.
+            name: Name of the observation
+            filepath: Path to the CSV file containing seismic observations.
+              Relative to the directory.
+        """
+        filepath = Path(directory) / filepath
+        if not filepath.exists():
+            raise ObservationConfigError.with_context(
+                f"The CSV file ({filepath}) does not exist or is not accessible.",
+                filepath,
+            )
+        csv_file = pd.read_csv(
+            filepath,
+            encoding="utf-8",
+            on_bad_lines="error",
+        )
+
+        required_columns = {
+            "X_UTME",
+            "Y_UTMN",
+            "OBS",
+            "OBS_ERROR",
+        }
+        missing_required_columns = required_columns - set(csv_file.keys())
+        if missing_required_columns:
+            raise ObservationConfigError.with_context(
+                f"The seismic observations file {filepath} "
+                "is missing required column(s) "
+                f"{', '.join(sorted(missing_required_columns))}.",
+                filepath,
+            )
+
+        if not name:
+            name = filepath.stem
+
+        seismic_observations = []
+        seen_coordinates: set[tuple[np.float32, np.float32]] = set()
+        for row in csv_file.itertuples():
+            seismic_observation = cls(
+                name=name,
+                filepath=filepath,
+                east=validate_float(str(row.X_UTME), "X_UTME"),
+                north=validate_float(str(row.Y_UTMN), "Y_UTMN"),
+                value=validate_float(str(row.OBS), "OBS"),
+                error=validate_float(str(row.OBS_ERROR), "OBS_ERROR"),
+            )
+            coordinates = (
+                np.float32(seismic_observation.east),
+                np.float32(seismic_observation.north),
+            )
+            if coordinates in seen_coordinates:
+                original_coordinates = (row.X_UTME, row.Y_UTMN)
+                raise ObservationConfigError.with_context(
+                    f"Seismic observation coordinates {original_coordinates} "
+                    "were not unique (after rounding from f64 to f32).",
+                    filepath,
+                )
+            seen_coordinates.add(coordinates)
+            seismic_observations.append(seismic_observation)
+
+        return seismic_observations
+
+    @classmethod
+    def from_obs_dict(
+        cls,
+        directory: str,
+        observation_dict: ObservationDict,
+        shape_registry: ShapeRegistry,
+    ) -> list[Self]:
+        """Create seismic observations from an observation dictionary.
+
+        Args:
+            directory: Directory where observation config is located.
+            observation_dict: Dictionary containing the observation configuration.
+            shape_registry: ShapeRegistry for storing geometry.
+        """
+        name = ""
+        csv_filename: str | None = None
+        for key, value in observation_dict.items():
+            match key:
+                case "type":
+                    pass
+                case "name":
+                    name = value
+                case "CSV":
+                    csv_filename = value
+                case _:
+                    raise _unknown_key_error(str(key), observation_dict.context)
+
+        if csv_filename is None:
+            raise _missing_value_error(observation_dict.context, "CSV")
+
+        return cls.from_csv(
+            directory,
+            name,
+            csv_filename,
+        )
+
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        return None
+
+
 Observation = Annotated[
     (
         SummaryObservation
         | GeneralObservation
         | RFTObservation
         | BreakthroughObservation
+        | SeismicObservation
     ),
     Field(discriminator="type"),
 ]
@@ -965,6 +1087,7 @@ _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.GENERAL: GeneralObservation,
     ObservationType.RFT: RFTObservation,
     ObservationType.BREAKTHROUGH: BreakthroughObservation,
+    ObservationType.SEISMIC: SeismicObservation,
     ObservationType.BULK_SUMMARY: SummaryObservation,
 }
 
@@ -1172,15 +1295,18 @@ def _resolve_path(directory: str, filename: str) -> str:
     return str(filepath)
 
 
-def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConfigError:
+def _conversion_error(key: str, value: Any, type_name: str) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f'Could not convert {value} to {type_name}. Failed to validate "{value}"',
-        token,
+        f'Could not convert "{value}" to {type_name} for key "{key}". '
+        f'Failed to validate "{value}"',
+        key,
     )
 
 
 def _unknown_key_error(key: str, context: FileContextToken) -> ObservationConfigError:
-    raise ObservationConfigError.with_context(f"Unknown {key} in {context!s}", context)
+    raise ObservationConfigError.with_context(
+        f"Unknown key '{key}' in {context!s}", context
+    )
 
 
 def _unknown_observation_type_error(obs: ObservationDict) -> ObservationConfigError:

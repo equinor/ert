@@ -15,7 +15,11 @@ from ert.gui.plotting.ert_plots.gaussian_kde import plotGaussianKDE
 from ert.gui.plotting.ert_plots.histogram import HistogramPlot
 from ert.gui.plotting.models import DataTypeSeparator
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
-from ert.gui.plotting.plot_window import PlotWindow, create_error_dialog
+from ert.gui.plotting.plot_window import (
+    PlotWindow,
+    create_error_dialog,
+    make_seismic_y_label,
+)
 from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.plotting.widgets.plot_widget import PlotWidget
@@ -502,3 +506,19 @@ def test_that_datatype_separators_are_never_set_as_default(
     selected = widget.getSelectedItem()
     assert selected is not None
     assert isinstance(selected, PlotApiKeyDefinition)
+
+
+@pytest.mark.parametrize(
+    ("key", "expected_y_label"),
+    [
+        pytest.param(
+            "topvolantis--relai_full_rms_depth--20180701_20180101",
+            "Rms Relai",
+            id="parsable key",
+        ),
+        pytest.param("cat1_cat2_cat3", "Value", id="unexpected key"),
+    ],
+)
+def test_that_seismic_y_label_is_created(key, expected_y_label):
+    label = make_seismic_y_label(key)
+    assert label == expected_y_label

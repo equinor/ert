@@ -189,7 +189,7 @@ def test_that_summary_observations_raises_error_given_unknown_localization_key(
     with (
         pytest.raises(
             ConfigValidationError,
-            match=r"Unknown FOO in LOCALIZATION for SUMMARY_OBSERVATION",
+            match=r"Unknown key 'FOO' in LOCALIZATION for SUMMARY_OBSERVATION",
         ),
         tmpdir.as_cwd(),
     ):
