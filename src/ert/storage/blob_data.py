@@ -26,6 +26,14 @@ class MatrixStorageData(BaseModel):
     parameter_group_sizes: dict[str, int] = {}
 
 
+class MatrixStorageDataOut(BaseModel):
+    blob_type: Literal[BlobType.MATRIX] = BlobType.MATRIX
+    update_algorithm: str
+    sparse: bool = False
+    shape: tuple[int, int] = (0, 0)
+    data_type: str
+
+
 class ScalingFactorsData(BaseModel):
     blob_type: Literal[BlobType.SCALING_FACTORS] = BlobType.SCALING_FACTORS
     update_algorithm: str
@@ -42,5 +50,21 @@ class BlobStorageData(BaseModel):
     name: str
     blob_info: Annotated[
         MatrixStorageData | ObservationReportData | ScalingFactorsData,
+        Discriminator("blob_type"),
+    ]
+
+    def to_out(self) -> BlobStorageDataOut:
+        return BlobStorageDataOut.model_validate(self.model_dump())
+
+
+class BlobStorageDataOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    uri: str
+    file_size: int
+    file_type: str
+    name: str
+    blob_info: Annotated[
+        MatrixStorageDataOut | ObservationReportData | ScalingFactorsData,
         Discriminator("blob_type"),
     ]

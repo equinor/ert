@@ -7,6 +7,7 @@ import pytest
 from requests import Response
 from starlette.testclient import TestClient
 
+from ert.analysis.event import AnalysisCompleteEvent, DataSection
 from ert.config._observations import SummaryObservation
 from ert.config._shapes import CircleShapeConfig, ShapeRegistry
 from ert.dark_storage.common import get_storage_api_version
@@ -299,6 +300,72 @@ def test_that_experiment_observations_endpoint_returns_localization(
     assert observations_by_name["OBSERVATION_2"]["east"] == [9.5]
     assert observations_by_name["OBSERVATION_2"]["north"] == [3.5]
     assert observations_by_name["OBSERVATION_2"]["radius"] == [20.0]
+
+
+def test_that_ensemble_endpoint_returns_blob_metadata(
+    tmp_path, monkeypatch, dark_storage_app
+):
+    storage_path = tmp_path / "storage"
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="test-ensemble"
+        )
+        ensemble.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(
+                    header=["observation_key", "status", "value"],
+                    data=[("OBS", "Active", 1.5)],
+                ),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+        ensemble_id = ensemble.id
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+    with TestClient(dark_storage_app) as client:
+        resp: Response = client.get(f"/ensembles/{ensemble_id}")
+
+    response_json = resp.json()
+
+    assert len(response_json["blobs"]) == 1
+    blob = response_json["blobs"][0]
+    assert blob["name"] == "observation_report"
+    assert blob["file_type"] == "application/parquet"
+    assert blob["file_size"] > 0
+    assert blob["blob_info"] == {
+        "blob_type": "observation_report",
+        "update_algorithm": "ensemble_smoother",
+    }
+
+
+def test_that_blob_endpoint_returns_blob_bytes(tmp_path, monkeypatch, dark_storage_app):
+    storage_path = tmp_path / "storage"
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="test-ensemble"
+        )
+        ensemble.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(
+                    header=["observation_key", "status", "value"],
+                    data=[("OBS", "Active", 1.5)],
+                ),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+        blob = ensemble.load_blobs()[0]
+        blob_bytes = ensemble.load_blob(blob.uri)
+        ensemble_id = ensemble.id
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+    with TestClient(dark_storage_app) as client:
+        resp: Response = client.get(f"/ensembles/{ensemble_id}/blobs/{blob.uri}")
+
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/octet-stream"
+    assert resp.content == blob_bytes
 
 
 @pytest.mark.slow
