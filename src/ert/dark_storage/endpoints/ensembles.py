@@ -38,7 +38,7 @@ def get_ensemble(
         realization_storage_states=Counter(
             state for states in ensemble.get_ensemble_state() for state in states
         ),
-        blobs=ensemble.load_blobs(),
+        blobs=[blob.to_out() for blob in ensemble.load_blobs()],
     )
 
 
