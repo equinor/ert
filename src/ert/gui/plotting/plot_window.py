@@ -12,15 +12,11 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QApplication,
-    QButtonGroup,
-    QCheckBox,
     QDialog,
-    QDockWidget,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
-    QRadioButton,
+    QSplitter,
     QStyle,
     QTabWidget,
     QTextEdit,
@@ -58,8 +54,10 @@ from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from .utils import PlotConfig, PlotContext
 from .utils.observation_locations import transform_observation_locations
 from .utils.plot_types import ObservationPlotLocations
+from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
+from .widgets.plot_controls import EverestControlsPlotOptions, MisfitsOptions
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
@@ -290,7 +288,6 @@ class PlotWindow(QMainWindow):
 
             self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
-            self.addDock("Navigation", "View data type", self._data_type_keys_widget)
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
@@ -313,21 +310,6 @@ class PlotWindow(QMainWindow):
                 self.updatePlot
             )
 
-            def create_group_layout(
-                widgets: list[QWidget] | None = None,
-            ) -> QVBoxLayout:
-                layout = QVBoxLayout()
-                layout.setContentsMargins(0, 0, 0, 0)
-                for w in widgets or []:
-                    layout.addWidget(w)
-                return layout
-
-            def create_group_box(title: str, layout: QVBoxLayout) -> QGroupBox:
-                group_box = QGroupBox(title)
-                group_box.setStyleSheet("QGroupBox { font-style: italic; }")
-                group_box.setLayout(layout)
-                return group_box
-
             self._everest_controls_group = create_group_box(
                 "Select control(s)",
                 create_group_layout([self._everest_control_selection_widget]),
@@ -337,76 +319,37 @@ class PlotWindow(QMainWindow):
                 create_group_layout([self._ensemble_selection_widget]),
             )
 
-            self._display_over_batches_radio = QRadioButton("batches")
-            self._display_over_batches_radio.setObjectName("display_over_batches_radio")
-            self._display_over_batches_radio.setChecked(True)
-            self._display_over_controls_radio = QRadioButton("controls")
-            self._display_over_controls_radio.setObjectName(
-                "display_over_controls_radio"
-            )
-            self._display_over_button_group = QButtonGroup(self)
-            self._display_over_button_group.addButton(self._display_over_batches_radio)
-            self._display_over_button_group.addButton(self._display_over_controls_radio)
-            self._display_over_button_group.buttonClicked.connect(self.updatePlot)
-
-            self._display_over_group = create_group_box(
-                "X-axis:",
-                create_group_layout(
-                    [
-                        self._display_over_batches_radio,
-                        self._display_over_controls_radio,
-                    ]
-                ),
+            self._everest_controls_plot_options = EverestControlsPlotOptions(
+                self.updatePlot
             )
 
-            # Misfits plot options
-            self._toggle_mean = QCheckBox("Show mean")
-            self._toggle_mean.setChecked(True)
-            self._toggle_mean.stateChanged.connect(self.updatePlot)
-            self._toggle_outliers = QCheckBox("Show outliers")
-            self._toggle_outliers.setChecked(True)
-            self._toggle_outliers.stateChanged.connect(self.updatePlot)
-            self._toggle_scatter_plot = QCheckBox("Show scatter")
-            self._toggle_scatter_plot.setChecked(False)
-            self._toggle_scatter_plot.stateChanged.connect(self.updatePlot)
-            self._toggle_box = QCheckBox("Show box plot")
-            self._toggle_box.setChecked(True)
-            self._toggle_box.stateChanged.connect(self.updatePlot)
-
-            self._misfits_options_group = create_group_box(
-                "Plot options",
-                create_group_layout(
-                    [
-                        self._toggle_scatter_plot,
-                        self._toggle_box,
-                        self._toggle_mean,
-                        self._toggle_outliers,
-                    ]
-                ),
-            )
+            self._misfits_options = MisfitsOptions(self.updatePlot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
                 [
                     self._ensemble_group,
-                    self._display_over_group,
+                    self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
-                    self._misfits_options_group,
+                    self._misfits_options.get_widget(),
                 ]
             )
             right_container.setLayout(right_layout)
 
-            self.addDock(
-                "PlotControls",
-                "Plot controls",
-                right_container,
-                area=Qt.DockWidgetArea.RightDockWidgetArea,
-            )
-
             self._everest_controls_group.setVisible(False)
-            self._display_over_group.setVisible(False)
-            self._misfits_options_group.setVisible(False)
+            self._everest_controls_plot_options.get_widget().setVisible(False)
+            self._misfits_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
+
+            splitter = QSplitter(Qt.Orientation.Horizontal)
+            splitter.addWidget(
+                create_side_panel("View data type", self._data_type_keys_widget)
+            )
+            splitter.addWidget(self._central_tab)
+            splitter.addWidget(create_side_panel("Plot controls", right_container))
+            splitter.setStretchFactor(1, 1)
+
+            self.setCentralWidget(splitter)
 
             if self.getSelectedKey() is None:
                 self._show_no_data_message()
@@ -461,7 +404,7 @@ class PlotWindow(QMainWindow):
         ):
             key = key.replace("BREAKTHROUGH:", "")
 
-        self._misfits_options_group.setVisible(plot_widget.name == MISFITS)
+        self._misfits_options.get_widget().setVisible(plot_widget.name == MISFITS)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
@@ -472,7 +415,7 @@ class PlotWindow(QMainWindow):
 
         is_everest_ensemble = plot_widget.name == ENSEMBLE and self.is_everest
         self._everest_controls_group.setVisible(is_gradient_plot or is_controls_plot)
-        self._display_over_group.setVisible(is_controls_plot)
+        self._everest_controls_plot_options.get_widget().setVisible(is_controls_plot)
         self._ensemble_selection_widget.apply_ensemble_filtering(
             require_func_eval=is_objective_plot
             or is_everest_ensemble
@@ -612,12 +555,14 @@ class PlotWindow(QMainWindow):
                 key,
                 layer,
             )
-            plot_context.by_batch = self._display_over_batches_radio.isChecked()
+            plot_context.by_batch = (
+                self._everest_controls_plot_options.is_batches_selected()
+            )
 
-            plot_context.scatter_plot = self._toggle_scatter_plot.isChecked()
-            plot_context.box_plot = self._toggle_box.isChecked()
-            plot_context.mean = self._toggle_mean.isChecked()
-            plot_context.outliers = self._toggle_outliers.isChecked()
+            plot_context.scatter_plot = self._misfits_options.scatter_checkbox_state
+            plot_context.box_plot = self._misfits_options.box_checkbox_state
+            plot_context.mean = self._misfits_options.mean_checkbox_state
+            plot_context.outliers = self._misfits_options.outliers_checkbox_state
 
             # Check if key is a history key.
             # If it is it already has the data it needs
@@ -704,33 +649,6 @@ class PlotWindow(QMainWindow):
         index = self._central_tab.addTab(plot_widget, name)
         self._plot_widgets.append(plot_widget)
         self._central_tab.setTabEnabled(index, enabled)
-
-    def addDock(
-        self,
-        name: str,
-        title: str,
-        widget: QWidget,
-        area: Qt.DockWidgetArea = Qt.DockWidgetArea.LeftDockWidgetArea,
-        allowed_areas: Qt.DockWidgetArea = Qt.DockWidgetArea.AllDockWidgetAreas,
-    ) -> QDockWidget:
-        dock_widget = QDockWidget(name)
-        dock_widget.setObjectName(f"{name}Dock")
-
-        title_label = QLabel(title)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("padding-bottom: 7px;")
-        title_label.setCursor(Qt.CursorShape.SizeAllCursor)  # drag/move cursor
-
-        dock_widget.setTitleBarWidget(title_label)
-        dock_widget.setWidget(widget)
-        dock_widget.setAllowedAreas(allowed_areas)
-        dock_widget.setFeatures(
-            QDockWidget.DockWidgetFeature.DockWidgetMovable
-            | QDockWidget.DockWidgetFeature.DockWidgetFloatable
-        )
-
-        self.addDockWidget(area, dock_widget)
-        return dock_widget
 
     @showWaitCursorWhileWaiting
     def keySelected(self) -> None:
