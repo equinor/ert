@@ -192,6 +192,10 @@ timeout = 360
 session_timeout = 2400
 timeout_func_only = true # Do not apply timeout to fixtures which can be slow but cached
 
+filterwarnings = [ # Ignore warnings cluttering stdout generated on MacOS due to matplotlib
+    "ignore:Matplotlib is currently using agg:UserWarning"
+]
+
 [tool.setuptools_scm]
 version_file = "src/ert/shared/version.py"
 # Fallback needed due to https://github.com/dependabot/dependabot-core/issues/12340
