@@ -483,3 +483,12 @@ async def test_fm_dispatch_main_signals_sigterm_on_exception(
     assert "forward model critical error" in capsys.readouterr().out
 
     mock_killpg.assert_called_with(17, signal.SIGTERM)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_fm_dispatch_logs_success_before_exiting(
+    capsys: pytest.CaptureFixture[str],
+):
+    write_forward_model_description({"ens_id": "_id_", "jobList": []})
+    fm_dispatch(args=[])
+    assert "fm dispatch completed successfully" in capsys.readouterr().out
