@@ -13,9 +13,9 @@ GEN_KW COEFFS coeff_priors
 INSTALL_JOB mock_sim2seis MOCK_SIM2SEIS
 FORWARD_MODEL mock_sim2seis
 
-SEISMIC share/results/tables/field--amplitude_full_mean_depth--20250101_20240101.csv
-SEISMIC share/results/tables/field--amplitude_full_mean_depth--20260101_20240101.csv
-SEISMIC share/results/tables/field--amplitude_full_min_depth--20250101_20240101.csv
-SEISMIC share/results/tables/field--amplitude_full_min_depth--20260101_20240101.csv
+SEISMIC share/results/tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv
+SEISMIC share/results/tables/horizon--amplitude_full_mean_depth--20260101_20240101.csv
+SEISMIC share/results/tables/horizon--amplitude_full_min_depth--20250101_20240101.csv
+SEISMIC share/results/tables/horizon--amplitude_full_min_depth--20260101_20240101.csv
 
 OBS_CONFIG obs.txt

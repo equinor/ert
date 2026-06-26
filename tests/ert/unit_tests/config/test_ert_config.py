@@ -2752,8 +2752,8 @@ def test_that_seismics_are_parsed():
         """
         NUM_REALIZATIONS 1
 
-        SEISMIC tables/field--amplitude_full_mean_depth--20250101_20240101.csv
-        SEISMIC tables/field--amplitude_full_min_depth--20250101_20240101.csv
+        SEISMIC tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv
+        SEISMIC tables/horizon--amplitude_full_min_depth--20250101_20240101.csv
         """,
     )
     seismic = config.ensemble_config.response_configs["seismic"]
@@ -2762,12 +2762,12 @@ def test_that_seismics_are_parsed():
     assert seismic.name == "seismic"
     assert seismic.response_type == "seismic"
     assert seismic.input_files == [
-        "tables/field--amplitude_full_mean_depth--20250101_20240101.csv",
-        "tables/field--amplitude_full_min_depth--20250101_20240101.csv",
+        "tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv",
+        "tables/horizon--amplitude_full_min_depth--20250101_20240101.csv",
     ]
     assert set(seismic.keys) == {
-        "field--amplitude_full_mean_depth--20250101_20240101",
-        "field--amplitude_full_min_depth--20250101_20240101",
+        "horizon--amplitude_full_mean_depth--20250101_20240101",
+        "horizon--amplitude_full_min_depth--20250101_20240101",
     }
 
 

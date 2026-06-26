@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
@@ -650,6 +651,7 @@ class PlotWindow(QMainWindow):
 
             if key_def.response is not None and key_def.response.type == "seismic":
                 plot_context.setXLabel("Cumulative euclidean distance to the point")
+                plot_context.setYLabel(make_seismic_y_label(key))
                 plot_context.deactivate_date_support()
 
             for untransposed_data in ensemble_to_data_map.values():
@@ -859,3 +861,18 @@ class PlotWindow(QMainWindow):
 
     def toggleCustomizeDialog(self) -> None:
         self._plot_customizer.toggle_customization_dialog()
+
+
+def make_seismic_y_label(s: str) -> str:
+    pattern = (
+        r"^[a-zA-Z0-9]+"
+        r"--([a-zA-Z0-9]+)"
+        r"_[a-zA-Z0-9]+"
+        r"_([a-zA-Z0-9]+)"
+        r"_depth--[a-zA-Z0-9_]+$"
+    )
+    match = re.match(pattern, s)
+    if not match:
+        return "Value"
+    attribute, calc = match.group(1), match.group(2)
+    return f"{calc.capitalize()} {attribute.capitalize()}"

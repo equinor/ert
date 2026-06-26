@@ -1100,5 +1100,5 @@ def test_that_duplicate_location_in_seismic_observation_raises(
 
     assert (
         f"Seismic observation coordinates ({east[1]}, {north[1]}) "
-        "were not unique (after rounding)." in str(err.value)
+        "were not unique (after rounding from f64 to f32)." in str(err.value)
     )

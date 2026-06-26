@@ -1023,7 +1023,7 @@ class SeismicObservation(BaseObservation):
                 original_coordinates = (row.X_UTME, row.Y_UTMN)
                 raise ObservationConfigError.with_context(
                     f"Seismic observation coordinates {original_coordinates} "
-                    "were not unique (after rounding).",
+                    "were not unique (after rounding from f64 to f32).",
                     filepath,
                 )
             seen_coordinates.add(coordinates)

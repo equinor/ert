@@ -57,7 +57,9 @@ class SeismicConfig(ResponseConfig):
                     "response_key": key,
                     "east": csv["X_UTME"].cast(pl.Float32),
                     "north": csv["Y_UTMN"].cast(pl.Float32),
-                    "values": csv["OBS"].cast(pl.Float32),  # yes, column is named "OBS"
+                    # even though this is a simulated response file, fmu-sim2seis named
+                    # the column "OBS"
+                    "values": csv["OBS"].cast(pl.Float32),
                 }
             )
             duplicates = (
@@ -71,8 +73,8 @@ class SeismicConfig(ResponseConfig):
             )
             if len(duplicates) > 0:
                 raise InvalidResponseFile(
-                    "Seismic response coordinates were not unique (after rounding). "
-                    "Approximate locations are:\n"
+                    "Seismic response coordinates were not unique (after rounding "
+                    "from f64 to f32). Approximate locations are:\n"
                     f"{duplicates_str}"
                 )
 

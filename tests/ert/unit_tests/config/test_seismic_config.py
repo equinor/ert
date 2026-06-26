@@ -14,7 +14,7 @@ from ert.config.seismic_config import SeismicConfig
 def test_that_seismic_observation_response_key_matches_simulated_response_key(
     mocked_files,
 ):
-    expected_response_key = "field--amplitude_full_min_depth--20250101_20240101"
+    expected_response_key = "horizon--amplitude_full_min_depth--20250101_20240101"
     name = f"{expected_response_key}.csv"
     runpath = "/runpath"
     obs_path = "share/preprocessed/tables/" + name
@@ -77,8 +77,8 @@ def test_that_seismic_config_raises_when_reading_from_non_existing_file(tmp_path
 
 
 def test_that_seismic_config_reads_from_all_input_files(mocked_files):
-    key1 = "field--amplitude_full_min_depth--20250101_20240101"
-    key2 = "field--amplitude_full_mean_depth--20260101_20240101"
+    key1 = "horizon--amplitude_full_min_depth--20250101_20240101"
+    key2 = "horizon--amplitude_full_mean_depth--20260101_20240101"
     name1 = f"{key1}.csv"
     name2 = f"{key2}.csv"
     runpath = "/runpath"
@@ -127,7 +127,7 @@ def test_that_seismic_config_reads_from_all_input_files(mocked_files):
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_duplicate_location_in_seismic_response_raises(mocked_files, east, north):
-    key = "field--amplitude_full_min_depth--20250101_20240101"
+    key = "horizon--amplitude_full_min_depth--20250101_20240101"
     name = f"{key}.csv"
     runpath = "/runpath"
     simulated_path = runpath + "/" + name
@@ -148,6 +148,5 @@ def test_that_duplicate_location_in_seismic_response_raises(mocked_files, east, 
     with pytest.raises(InvalidResponseFile) as err:
         seismic_config.read_from_file(runpath, 1, 1)
 
-    assert "Seismic response coordinates were not unique (after rounding)" in str(
-        err.value
-    )
+    m = "Seismic response coordinates were not unique (after rounding from f64 to f32)"
+    assert m in str(err.value)

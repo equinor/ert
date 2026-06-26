@@ -51,8 +51,8 @@ def test_that_seismic_entries_are_parsable():
         """
         NUM_REALIZATIONS 1
 
-        SEISMIC tables/field--amplitude_full_mean_depth--20250101_20240101.csv
-        SEISMIC tables/field--amplitude_full_min_depth--20250101_20240101.csv
+        SEISMIC tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv
+        SEISMIC tables/horizon--amplitude_full_min_depth--20250101_20240101.csv
         """,
         init_user_config_schema(),
         "unused",
@@ -63,8 +63,8 @@ def test_that_seismic_entries_are_parsable():
     assert parsed == {
         "NUM_REALIZATIONS": 1,
         "SEISMIC": [
-            "tables/field--amplitude_full_mean_depth--20250101_20240101.csv",
-            "tables/field--amplitude_full_min_depth--20250101_20240101.csv",
+            "tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv",
+            "tables/horizon--amplitude_full_min_depth--20250101_20240101.csv",
         ],
     }
 
