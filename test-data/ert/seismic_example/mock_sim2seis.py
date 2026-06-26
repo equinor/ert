@@ -18,9 +18,9 @@ from pathlib import Path
 import pandas as pd
 
 
-class FieldName(StrEnum):
-    FIELD = "field"
-    OTHER_FIELD = "tulip_field"
+class HorizonName(StrEnum):
+    HORIZON = "horizon"
+    OTHER_HORIZON = "fantastic_horizon"
 
 
 class Attribute(StrEnum):
@@ -158,7 +158,7 @@ def _obs_error(obs_value: float) -> float:
 
 
 def _build_filename(
-    field: FieldName,
+    horizon: HorizonName,
     attribute: Attribute,
     stacking_offset: StackingOffset,
     calculation: Calculation,
@@ -171,13 +171,13 @@ def _build_filename(
         f"{attribute.value}_{stacking_offset.value}"
         f"_{calculation.value}_{vertical_domain.value}"
     )
-    return f"{field.value}--{attr_part}--{monitor.value}_{base.value}.csv"
+    return f"{horizon.value}--{attr_part}--{monitor.value}_{base.value}.csv"
 
 
 def generate_csv(
     parameters: dict[str, dict[str, float]],
     output_dir: Path,
-    field: FieldName,
+    horizon: HorizonName,
     attribute: Attribute,
     stacking_offset: StackingOffset,
     calculation: Calculation,
@@ -194,7 +194,7 @@ def generate_csv(
     expected.
     """
     filename = _build_filename(
-        field, attribute, stacking_offset, calculation, vertical_domain, base, monitor
+        horizon, attribute, stacking_offset, calculation, vertical_domain, base, monitor
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     filepath = output_dir / filename
@@ -221,7 +221,7 @@ def generate_csv(
 def generate_many(
     parameters: dict[str, dict[str, float]],
     output_dir: Path,
-    fields: list[FieldName] | None = None,
+    horizons: list[HorizonName] | None = None,
     attributes: list[Attribute] | None = None,
     stacking_offsets: list[StackingOffset] | None = None,
     calculations: list[Calculation] | None = None,
@@ -232,7 +232,7 @@ def generate_many(
     """Generate CSV files for every combination of the supplied setup parameter
     lists.
     """
-    fields = fields or [FieldName.FIELD]
+    horizons = horizons or [HorizonName.HORIZON]
     attributes = attributes or [Attribute.AMPLITUDE]
     stacking_offsets = stacking_offsets or [StackingOffset.FULL]
     calculations = calculations or [Calculation.MEAN]
@@ -241,7 +241,7 @@ def generate_many(
     monitors = monitors or [MonitorDate.JAN2025]
 
     for combo in itertools.product(
-        fields,
+        horizons,
         attributes,
         stacking_offsets,
         calculations,
