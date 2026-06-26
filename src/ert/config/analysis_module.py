@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_ENKF_TRUNCATION_EXACT = 1.0
 DEFAULT_ENKF_TRUNCATION_SUBSPACE = 0.98
 DEFAULT_LOCALIZATION = False
+DEFAULT_WEIGHTS = "4, 2, 1"
 
 
 def _upper(v: str) -> str:
@@ -47,6 +48,8 @@ class ESSettings(BaseModel):
     inversion: Annotated[
         InversionTypeES, Field(title="Inversion algorithm", description=es_description)
     ] = "EXACT"
+    weights: str = DEFAULT_WEIGHTS
+    weights_from_config: bool = False
 
     @model_validator(mode="before")
     @classmethod
