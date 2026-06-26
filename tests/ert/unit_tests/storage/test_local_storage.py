@@ -477,11 +477,9 @@ def test_that_create_experiment_rejects_general_observation_with_rft_locality_ke
                 experiment_config=experiment_config, name="polluted"
             )
 
-    message = str(exc_info.value)
-    assert "general_observation.east" in message
-    assert "general_observation.north" in message
-    assert "general_observation.radius" in message
-    assert "Extra inputs are not permitted" in message
+    errors = exc_info.value.errors()
+    extra_fields = {e["loc"][-1] for e in errors if e.get("type") == "extra_forbidden"}
+    assert {"east", "north", "radius"} <= extra_fields
 
 
 def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(tmp_path):
