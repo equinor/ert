@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import io
 import json
 import logging
 import shutil
@@ -12,7 +13,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
+import numpy as np
+import numpy.typing as npt
 import polars as pl
+import scipy as sp
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 from typing_extensions import TypedDict
@@ -35,9 +39,14 @@ from ert.config._observations import Observation
 from ert.config.parsing.hook_runtime import HookRuntime
 from ert.config.response_config import DerivedResponseConfig
 
+from .blob_data import BlobStorageData, BlobType, RhoStorageData
 from .mode import BaseMode, Mode, require_write
 
+BLOB_DATA_DIR = "blobs"
+
 if TYPE_CHECKING:
+    from ert.analysis.event import AnalysisRhoMatrixEvent
+
     from .local_ensemble import LocalEnsemble
     from .local_storage import LocalStorage
 
@@ -674,6 +683,51 @@ class LocalExperiment(BaseMode):
             for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
             if b.has_gradient_results
         ]
+
+    def load_blobs(
+        self,
+        blob_type: BlobType | None = None,
+    ) -> list[BlobStorageData]:
+        """List blob metadata stored at experiment level, filtered by type."""
+        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
+
+    def load_blob(self, uri: str) -> bytes:
+        """Load blob bytes by URI from the experiment-level blob directory."""
+        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
+
+    def load_rho_matrix(self, param_name: str) -> npt.NDArray[np.floating] | None:
+        """Load a cached rho matrix for the given parameter name.
+
+        Returns the dense array if found, or None if no blob exists.
+        """
+        for blob in self.load_blobs(BlobType.RHO_MATRIX):
+            if (
+                isinstance(blob.blob_info, RhoStorageData)
+                and blob.blob_info.param_name == param_name
+            ):
+                data = self.load_blob(blob.uri)
+                sparse_matrix = sp.sparse.load_npz(io.BytesIO(data))
+                return sparse_matrix.toarray()
+        return None
+
+    @require_write
+    def save_blob(self, event: AnalysisRhoMatrixEvent) -> None:
+        """Save the rho-matrix blob emitted during a distance-localization update."""
+        BlobStorageData.save_blob(
+            name=event.param_name,
+            data=event.matrix_bytes,
+            blob_info=RhoStorageData(
+                update_algorithm="distance",
+                sparse=True,
+                shape=event.shape,
+                data_type=event.data_type,
+                param_name=event.param_name,
+                observation_keys=event.observation_keys,
+            ),
+            file_type="application/x-npz",
+            storage=self._storage,
+            blob_dir=self._path / BLOB_DATA_DIR,
+        )
 
     def export_dataframes(
         self,
