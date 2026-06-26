@@ -1,15 +1,21 @@
+import json
+from argparse import Namespace
 from collections.abc import Callable
 from pathlib import Path
+from queue import SimpleQueue
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import pytest
 from polars import Float32, Series
 from polars.testing import assert_series_equal
 
+from ert.config import ErtConfig
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ES_MDA_MODE,
 )
+from ert.run_models import ErtRunError, create_model
 from ert.storage import open_storage
 
 from .run_cli import run_cli
@@ -177,3 +183,97 @@ def test_that_running_esmda_from_restart_uses_previous_observations_and_paramete
         experiment.observations["gen_data"]["std"],
         Series("std", [0.5, 1.5, 3.0, 6.0, 12.0], dtype=Float32),
     )
+
+
+@pytest.fixture
+def poly_prior_ensemble_id(
+    use_tmpdir,
+    ert_config,
+    parameters,
+    poly_eval,
+    ert_script,
+    observations,
+    observations_data,
+):
+    Path("config.ert").write_text(ert_config, encoding="utf-8")
+    Path("coeff_priors").write_text(parameters, encoding="utf-8")
+    Path("ERT_EVAL").write_text(poly_eval, encoding="utf-8")
+    Path("observations").write_text(observations(), encoding="utf-8")
+    Path("obs_data.txt").write_text(observations_data, encoding="utf-8")
+    Path("ert_eval.py").write_text(ert_script, encoding="utf-8")
+    Path("ert_eval.py").chmod(0o755)
+
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "config.ert",
+    )
+
+    with open_storage("storage") as storage:
+        ensemble = storage.get_experiment_by_name(
+            "ensemble-experiment"
+        ).get_ensemble_by_name("default")
+        return str(ensemble.id)
+
+
+def _build_esmda_restart_model(prior_ensemble_id: str):
+    config = ErtConfig.from_file("config.ert")
+    return create_model(
+        config,
+        Namespace(
+            mode=ES_MDA_MODE,
+            realizations=None,
+            target_ensemble="iter-<ITER>",
+            weights="1,1",
+            restart_run=True,
+            prior_ensemble_id=prior_ensemble_id,
+            experiment_name="restart-experiment",
+        ),
+        SimpleQueue(),
+    )
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_that_restarting_esmda_with_invalid_prior_ensemble_id_gives_error_message(
+    poly_prior_ensemble_id,
+):
+    model = _build_esmda_restart_model(poly_prior_ensemble_id)
+
+    model.prior_ensemble_id = "not-a-valid-uuid"
+
+    with pytest.raises(
+        ErtRunError,
+        match="Prior ensemble with ID: not-a-valid-uuid does not exist or is broken",
+    ):
+        model.run_experiment(MagicMock())
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_that_restarting_esmda_from_prior_with_localized_gen_obs_gives_error_message(
+    poly_prior_ensemble_id,
+):
+    with open_storage("storage", mode="w") as storage:
+        experiment = storage.get_experiment_by_name("ensemble-experiment")
+        index_path = experiment._path / "index.json"
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+
+        # Add invalid keys to observation to trigger validation failure
+        for observation in index["experiment"]["observations"]:
+            observation["east"] = None
+            observation["north"] = None
+            observation["radius"] = None
+        index_path.write_text(json.dumps(index), encoding="utf-8")
+
+    model = _build_esmda_restart_model(poly_prior_ensemble_id)
+
+    try:
+        with pytest.raises(
+            ErtRunError,
+            match=(
+                f"Could not restart from prior ensemble 'default' "
+                f"\\(ID: {poly_prior_ensemble_id}\\):"
+            ),
+        ):
+            model.run_experiment(MagicMock())
+    finally:
+        model._clean_env_context()

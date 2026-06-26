@@ -103,7 +103,7 @@ class MultipleDataAssimilation(
             except (KeyError, ValueError) as err:
                 logger.error(f"Could not load prior ensemble '{id_}': {err}")
                 raise ErtRunError(
-                    f"Prior ensemble with ID: {id_} does not exist"
+                    f"Prior ensemble with ID: {id_} does not exist or is broken"
                 ) from err
 
             experiment = prior.experiment
