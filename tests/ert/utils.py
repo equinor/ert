@@ -4,9 +4,11 @@ import asyncio
 import contextlib
 import time
 import uuid
-from collections.abc import Callable
+from collections import defaultdict
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Self
+from types import ModuleType, TracebackType
+from typing import TYPE_CHECKING, Any, Self
 
 import zmq
 import zmq.asyncio
@@ -34,19 +36,19 @@ import sys
 from collections.abc import Sequence
 from copy import deepcopy
 from datetime import datetime
-from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshot,
+    EnsembleSnapshotMetadata,
     FMStepSnapshot,
     RealizationSnapshot,
     _filter_nones,
 )
 
 
-def import_from_location(name, location):
+def import_from_location(name: str, location: str | None = None) -> ModuleType:
     spec = importlib.util.spec_from_file_location(name, location)
     if spec is None:
         raise ImportError(f"Could not find {name}")
@@ -59,8 +61,15 @@ def import_from_location(name, location):
 
 
 class SnapshotBuilder(BaseModel):
-    fm_steps: dict[str, FMStepSnapshot] = {}
-    metadata: dict[str, Any] = {}
+    fm_steps: dict[str, FMStepSnapshot] = Field(default_factory=dict)
+    metadata: Any = Field(
+        default_factory=lambda: EnsembleSnapshotMetadata(
+            fm_step_status=defaultdict(dict),
+            real_status={},
+            sorted_real_ids=[],
+            sorted_fm_step_ids=defaultdict(list),
+        )
+    )
 
     def build(
         self,
@@ -96,8 +105,8 @@ class SnapshotBuilder(BaseModel):
         index: str,
         name: str | None,
         status: str | None,
-        current_memory_usage: str | None = None,
-        max_memory_usage: str | None = None,
+        current_memory_usage: int | None = None,
+        max_memory_usage: int | None = None,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
         stdout: str | None = None,
@@ -146,14 +155,16 @@ def source_dir() -> Path:
 SOURCE_DIR: Path = source_dir()
 
 
-def wait_until(func, interval=0.5, timeout=30):
+def wait_until(
+    func: Callable[[], bool], interval: float = 0.5, timeout: float = 30.0
+) -> None:
     """Waits until func returns True.
 
     Repeatedly calls 'func' until it returns true.
     Waits 'interval' seconds before each invocation. If 'timeout' is
     reached, will raise the AssertionError.
     """
-    t = 0
+    t = 0.0
     while t < timeout:
         time.sleep(interval)
         if func():
@@ -170,7 +181,7 @@ class MockZMQServer:
         self,
         *,
         store_messages: bool = True,
-        filtered_message_types=(CONNECT_MSG, DISCONNECT_MSG),
+        filtered_message_types: tuple[bytes, ...] = (CONNECT_MSG, DISCONNECT_MSG),
         no_response: bool = False,
         dont_ack_disconnect: bool = False,
         dont_ack_messages: bool = False,
@@ -184,11 +195,11 @@ class MockZMQServer:
         dont_ack_messages: Server will not send ack to messages that are not connect
            or disconnect (effected by the dont_ack_disconnect parameter).
         """
-        self.messages = []
-        self.loop = None
-        self.server_task = None
-        self.handler_task = None
-        self.dealers = set()
+        self.messages: list[str] = []
+        self.loop: asyncio.AbstractEventLoop | None = None
+        self.server_task: asyncio.Task[None] | None = None
+        self.handler_task: asyncio.Task[None] | None = None
+        self.dealers: set[bytes] = set()
         self.no_dealers = asyncio.Event()
         self.no_dealers.set()
         self.uri = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
@@ -199,9 +210,10 @@ class MockZMQServer:
         self.ack_disconnect = not dont_ack_disconnect
         self.ack_messages = not dont_ack_messages
 
-    def start_event_loop(self):
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.mock_zmq_server())
+    def start_event_loop(self) -> None:
+        if self.loop is not None:
+            asyncio.set_event_loop(self.loop)
+            self.loop.run_until_complete(self.mock_zmq_server())
 
     def __enter__(self) -> Self:
         self.loop = asyncio.new_event_loop()
@@ -209,25 +221,36 @@ class MockZMQServer:
         self.thread.start()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        if self.handler_task and not self.handler_task.done():
+    def __exit__(
+        self,
+        exc_type: object,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if self.handler_task and not self.handler_task.done() and self.loop is not None:
             self.loop.call_soon_threadsafe(self.handler_task.cancel)
         self.thread.join()
-        self.loop.close()
+        if self.loop is not None and not self.loop.is_closed():
+            self.loop.close()
 
     async def __aenter__(self) -> Self:
         self.server_task = asyncio.create_task(self.mock_zmq_server())
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
-        if not self.server_task.done():
+    async def __aexit__(
+        self,
+        exc_type: object,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if self.server_task is not None and not self.server_task.done():
             with contextlib.suppress(asyncio.TimeoutError):
                 await asyncio.wait_for(self.no_dealers.wait(), timeout=2.0)
             self.server_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self.server_task
 
-    async def mock_zmq_server(self):
+    async def mock_zmq_server(self) -> None:
         zmq_context = zmq.asyncio.Context()
         self.router_socket = zmq_context.socket(zmq.ROUTER)
         self.router_socket.setsockopt(zmq.LINGER, 0)
@@ -240,15 +263,15 @@ class MockZMQServer:
             self.router_socket.close()
             zmq_context.term()
 
-    async def do_heartbeat(self):
+    async def do_heartbeat(self) -> None:
         for dealer in self.dealers:
             await self.router_socket.send_multipart([dealer, b"", HEARTBEAT_MSG])
 
-    async def send_terminate_message(self):
+    async def send_terminate_message(self) -> None:
         for dealer in self.dealers:
             await self.router_socket.send_multipart([dealer, b"", TERMINATE_MSG])
 
-    async def _handler(self):
+    async def _handler(self) -> None:
         while True:
             try:  # noqa: PLW0717
                 dealer, __, frame = await self.router_socket.recv_multipart()
@@ -276,10 +299,10 @@ async def poll(
     driver: Driver,
     expected: set[int],
     *,
-    started: Callable[[int], None] | None = None,
-    finished=None,
+    started: Callable[[list[int]], Awaitable[None]] | None = None,
+    finished: Callable[[int, int], Awaitable[None]] | None = None,
     handle_warning: Callable[[EnsembleEvaluationWarning], None] | None = None,
-):
+) -> None:
     """Poll driver until expected realisations finish
 
     This function polls the given `driver` until realisations given by
@@ -294,10 +317,10 @@ async def poll(
         Driver to poll
     expected : set[int]
         Set of realisation indices that we should wait for
-    started : Callable[[int], None]
+    started : Callable[[int], Awaitable[None]]
         Called for each job when it starts. Its associated realisation index is
         passed.
-    finished : Callable[[int, int], None]
+    finished : Callable[[int, int], Awaitable[None]]
         Called for each job when it finishes. The first argument is the
         associated realisation index and the second is the returncode of the job
         process.
