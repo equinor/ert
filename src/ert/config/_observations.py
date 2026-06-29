@@ -54,7 +54,7 @@ class _SummaryValues(BaseObservation):
 
 def _parse_date(date_str: str) -> datetime:
     try:
-        return datetime.fromisoformat(date_str)
+        date = datetime.fromisoformat(date_str)
     except ValueError:
         try:
             date = datetime.strptime(date_str, "%d/%m/%Y")  # noqa: DTZ007
@@ -69,7 +69,13 @@ def _parse_date(date_str: str) -> datetime:
                 " Please use ISO date format YYYY-MM-DD",
                 date_str,
             )
-            return date
+    if date.tzinfo is not None:
+        raise ObservationConfigError.with_context(
+            f"Date {date_str!r} must not include a timezone offset. "
+            "Please use ISO date format YYYY-MM-DD.",
+            date_str,
+        )
+    return date
 
 
 def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
@@ -916,6 +922,9 @@ class BreakthroughObservation(BaseObservation):
         if threshold is None:
             raise _missing_value_error(obs_dict.context, "THRESHOLD")
 
+        assert date is not None
+        parsed_date = _parse_date(date)
+
         # Register shape if localization is present
         shape_id = None
         if east is not None and north is not None:
@@ -937,7 +946,7 @@ class BreakthroughObservation(BaseObservation):
             cls(
                 name=name,
                 key=summary_key,
-                date=date,
+                date=parsed_date,
                 error=error,
                 threshold=threshold,
                 shape_id=shape_id,
