@@ -156,7 +156,7 @@ def test_that_multiple_data_assimilation_panel_uses_config_weights(
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(
             minimum_required_realizations=1,
-            es_settings=ESSettings(weights="8, 4, 2, 1", weights_from_config=True),
+            es_settings=ESSettings(weights="8, 4, 2, 1"),
         ),
         parameter_configuration=EnsembleConfig().parameter_configuration,
         run_path="",

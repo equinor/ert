@@ -111,7 +111,6 @@ class ExperimentConfig(TypedDict, total=False):
     # ESMDA
     restart_run: bool
     prior_ensemble_id: str | None
-    weights: str
 
     # Everest
     optimization_output_dir: str
@@ -334,7 +333,7 @@ class LocalExperiment(BaseMode):
     @property
     def relative_weights(self) -> str:
         assert self.experiment_config is not None
-        return self.experiment_config.get("weights", "")
+        return self.experiment_config.get("analysis_settings", {}).get("weights", "")
 
     @property
     def name(self) -> str:

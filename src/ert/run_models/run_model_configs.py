@@ -344,7 +344,6 @@ class MultipleDataAssimilationConfig(
             self.arg_weights
         ) != parse_es_mda_weights(self.analysis_settings.weights):
             self.analysis_settings.weights = self.arg_weights
-            self.analysis_settings.weights_from_config = False
         return self
 
     def to_experiment_config(self) -> ExperimentConfig:
@@ -354,7 +353,6 @@ class MultipleDataAssimilationConfig(
             **self._common_fields(),
             "restart_run": self.restart_run,
             "prior_ensemble_id": self.prior_ensemble_id,
-            "weights": self.analysis_settings.weights,
             "experiment_type": ExperimentType.ES_MDA,
         }
 

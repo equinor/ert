@@ -207,7 +207,6 @@ def test_that_setup_multiple_data_assimilation_works_as_expected(tmp_path):
     )
     assert isinstance(model, MultipleDataAssimilation)
     assert model.analysis_settings.weights == "6,4,2"
-    assert model.analysis_settings.weights_from_config is False
     assert model._parsed_weights == MultipleDataAssimilation.parse_weights("6,4,2")
     assert (
         model.active_realizations
@@ -243,7 +242,6 @@ def test_that_setup_multiple_data_assimilation_uses_config_weights_when_cli_omit
         queue.SimpleQueue(),
     )
     assert model.analysis_settings.weights == "8, 4, 2, 1"
-    assert model.analysis_settings.weights_from_config is True
 
 
 @pytest.mark.parametrize(

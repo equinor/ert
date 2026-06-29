@@ -49,7 +49,6 @@ class ESSettings(BaseModel):
         InversionTypeES, Field(title="Inversion algorithm", description=es_description)
     ] = "EXACT"
     weights: str = DEFAULT_WEIGHTS
-    weights_from_config: bool = False
 
     @model_validator(mode="before")
     @classmethod

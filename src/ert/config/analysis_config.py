@@ -113,7 +113,6 @@ class AnalysisConfig:
         all_errors = []
         parameter_type_update_strategies: dict[str, LocalizationType] = {}
         es_mda_weights: str | None = None
-        es_mda_weights_from_config: bool = False
 
         for module_name, var_name, value in analysis_set_var:
             if var_name == "DISTANCE_LOCALIZATION" and value.upper() == "TRUE":
@@ -195,7 +194,6 @@ class AnalysisConfig:
                     all_errors.append(ConfigValidationError(str(err)))
                     continue
                 es_mda_weights = value
-                es_mda_weights_from_config = True
                 continue
 
             module_options = options.get(module_name)
@@ -274,7 +272,6 @@ class AnalysisConfig:
 
         if es_mda_weights is not None and es_settings is not None:
             es_settings.weights = es_mda_weights
-            es_settings.weights_from_config = es_mda_weights_from_config
 
         design_matrices = [
             DesignMatrix.from_config_list(design_matrix_config_list)

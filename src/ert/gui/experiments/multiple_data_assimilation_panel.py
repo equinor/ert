@@ -80,7 +80,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         super().__init__(MultipleDataAssimilation)
         self.notifier = notifier
         self._configured_weights = analysis_config.es_settings.weights
-        self._weights_source_is_config = analysis_config.es_settings.weights_from_config
         self._weights_source = self._configured_weights
 
         layout = QFormLayout()
@@ -388,16 +387,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         if not differs_from_source:
             self._weights_mismatch_icon.setToolTip("")
             return
-        if self._weights_source_is_config:
-            self._weights_mismatch_icon.setToolTip(
-                "This value differs from the ES-MDA weights specified in the "
-                "config file. The GUI value will be used for this run."
-            )
-        else:
-            self._weights_mismatch_icon.setToolTip(
-                "This value differs from the default ES-MDA weights. The GUI value "
-                "will be used for this run."
-            )
+        self._weights_mismatch_icon.setToolTip(
+            "This value differs from the default ES-MDA weights. The GUI value "
+            "will be used for this run."
+        )
 
     def _weights_differ_from_source(self) -> bool:
         try:

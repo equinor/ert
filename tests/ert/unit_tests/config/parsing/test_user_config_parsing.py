@@ -78,7 +78,6 @@ def test_that_es_mda_weights_are_stored_in_analysis_config():
     )
 
     assert config.analysis_config.es_settings.weights == "8, 4, 2, 1"
-    assert config.analysis_config.es_settings.weights_from_config
 
 
 def test_that_invalid_es_mda_weights_fail_validation():
