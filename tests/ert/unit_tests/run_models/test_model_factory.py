@@ -190,7 +190,9 @@ def test_setup_ensemble_smoother(tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
-def test_that_setup_multiple_data_assimilation_works_as_expected(tmp_path):
+def test_that_setup_multiple_data_assimilation_uses_the_arguments_from_the_cli(
+    tmp_path,
+):
     model = model_factory._setup_multiple_data_assimilation(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(

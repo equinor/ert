@@ -412,7 +412,6 @@ def multidass(_):
     return {
         "restart_run": False,
         "prior_ensemble_id": None,
-        "weights": "4,2,1",
     }
 
 
