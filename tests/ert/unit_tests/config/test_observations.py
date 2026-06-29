@@ -156,22 +156,38 @@ def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
         pytest.param("02.01.2020", True),
         pytest.param("02.1.2020", True),
         pytest.param("02-01-2020", True),
+        pytest.param("2026-06-28T15:03:57-12:00", True),
         pytest.param("02/01/2020", False),
     ],
 )
-def test_date_parsing_in_observations(datestring, errors):
-    obs = [
-        (
+@pytest.mark.parametrize(
+    "observation_dict",
+    [
+        pytest.param(
             {
                 "type": ObservationType.SUMMARY,
                 "name": "FOPR",
                 "KEY": "FOPR",
                 "VALUE": "1",
                 "ERROR": "1",
-                "DATE": datestring,
+                "DATE": "",
             }
-        )
-    ]
+        ),
+        pytest.param(
+            {
+                "type": ObservationType.BREAKTHROUGH,
+                "name": "breakthrough",
+                "KEY": "WWCT:OP_1",
+                "ERROR": "1",
+                "THRESHOLD": "0.2",
+                "DATE": "",
+            }
+        ),
+    ],
+)
+def test_date_parsing_in_observations(datestring, errors, observation_dict):
+    obs_dict = {**observation_dict, "DATE": datestring}
+    obs = [obs_dict]
     if errors:
         with pytest.raises(ValueError, match="Please use ISO date format"):
             make_observations("", obs, ShapeRegistry())
