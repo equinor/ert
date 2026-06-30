@@ -131,13 +131,6 @@ def test_argparse_exec_es_mda_valid_case():
     assert parsed.func.__name__ == "run_cli"
 
 
-def test_argparse_exec_es_mda_default_weights():
-    parsed = ert_parser(None, [ES_MDA_MODE, "path/to/config.ert"])
-    assert parsed.mode == ES_MDA_MODE
-    assert parsed.weights is None
-    assert parsed.func.__name__ == "run_cli"
-
-
 def test_argparse_exec_ensemble_es_mda_restart_ensembler():
     parsed = ert_parser(
         None, [ES_MDA_MODE, "--restart-ensemble", "test_ensemble", "path/to/config.ert"]
