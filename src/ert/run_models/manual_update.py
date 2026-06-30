@@ -68,7 +68,7 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
 
         return self._storage.create_experiment(
             experiment_config=experiment_config,
-            name=f"Manual update of {self._prior.name}",
+            name=self.experiment_name,
         )
 
     def check_if_runpath_exists(self) -> bool:
