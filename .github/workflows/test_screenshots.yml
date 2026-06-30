@@ -44,7 +44,6 @@ jobs:
     - name: Run screenshot tests
       id: screenshot-tests
       run: uv run just screenshot-comparison-test
-      continue-on-error: true
 
     - name: Pack updated screenshots
       if: steps.screenshot-tests.outcome == 'failure'

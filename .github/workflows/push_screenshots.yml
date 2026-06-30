@@ -26,7 +26,7 @@ jobs:
       with:
         name: screenshot-results
         path: artifact
-        run-id: ${{ inputs.run-id || github.event.workflow_run.id }}
+        run-id: ${{ inputs['run-id'] || github.event.workflow_run.id }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Read metadata
