@@ -752,6 +752,7 @@ def test_that_dumped_manual_update_matches_snapshot(
             realizations="1,2",
             ensemble_id=str(prior.id),
             target_ensemble="posterior<ITER>",
+            experiment_name="my_experiment",
         ),
         case=f"{config_dir}.{config_file}",
     )
