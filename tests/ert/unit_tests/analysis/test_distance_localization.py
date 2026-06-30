@@ -7,9 +7,11 @@ from ert.analysis._update_strategies._protocol import (
     ObservationContext,
     ObservationLocations,
 )
+from ert.analysis.event import AnalysisRhoMatrixEvent
 from ert.config import Field, LocalizationType, SurfaceConfig
 from ert.field_utils import AxisOrientation, ErtboxParameters, FieldFileFormat
 from ert.storage import open_storage
+from ert.storage.blob_data import BlobType, RhoStorageData
 
 
 def _noop_callback(_event: object) -> None:
@@ -531,3 +533,98 @@ def test_that_distance_localization_respects_non_zero_variance_mask(
 
     np.testing.assert_allclose(posterior[0, :], prior[0, :])
     assert not np.allclose(posterior[1:, :], prior[1:, :])
+
+
+@pytest.mark.parametrize(
+    ("param_type", "param_config_fn", "n_params"),
+    [
+        (Field, lambda: _field_config(4, 4, 1), 16),
+        (SurfaceConfig, lambda: _surface_config(4, 4), 16),
+    ],
+)
+def test_that_distance_localization_stores_and_reuses_rho_blob(
+    tmp_path,
+    param_type,
+    param_config_fn,
+    n_params,
+):
+    param_config = param_config_fn()
+    n_real = 20
+    rng = np.random.default_rng(99)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+
+    obs_keys = ["WOPR:OP1", "FOPR"]
+    obs_context = ObservationContext(
+        responses=np.vstack([param_ensemble[0], param_ensemble[-1]]),
+        observation_values=np.array([1.0, -1.0]),
+        observation_errors=np.array([0.1, 0.1]),
+        observation_perturbations=rng.standard_normal((2, n_real)) * 0.1,
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.5, 2.5]),
+            ypos=np.array([0.5, 2.5]),
+            main_range=np.array([2.0, 2.0]),
+            location_mask=np.ones(2, dtype=bool),
+            observation_keys=obs_keys,
+        ),
+    )
+
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment = storage.create_experiment()
+
+        # First run: compute rho, emit event, save blob
+        iter0_events: list[AnalysisRhoMatrixEvent] = []
+
+        def save_callback(event):
+            if isinstance(event, AnalysisRhoMatrixEvent):
+                iter0_events.append(event)
+                experiment.save_blob(event)
+
+        updater1 = DistanceLocalizationUpdate(
+            enkf_truncation=0.99,
+            param_type=param_type,
+            progress_callback=save_callback,
+            experiment=experiment,
+        )
+        updater1.prepare(obs_context)
+        result1 = updater1.update(
+            param_ensemble=param_ensemble.copy(),
+            param_config=param_config,
+            non_zero_variance_mask=np.ones(n_params, dtype=bool),
+        )
+
+        assert len(iter0_events) == 1
+        assert iter0_events[0].param_name == param_config.name
+        assert iter0_events[0].observation_keys == obs_keys
+
+        blobs = experiment.load_blobs(BlobType.RHO_MATRIX)
+        assert len(blobs) == 1
+        assert isinstance(blobs[0].blob_info, RhoStorageData)
+        assert blobs[0].blob_info.param_name == param_config.name
+        assert blobs[0].blob_info.observation_keys == obs_keys
+
+        loaded_rho = experiment.load_rho_matrix(param_config.name)
+        assert loaded_rho is not None
+        assert loaded_rho.shape == iter0_events[0].shape
+
+        # Second run: should load from cache, no new events emitted
+        iter1_events: list[AnalysisRhoMatrixEvent] = []
+
+        def track_callback(event):
+            if isinstance(event, AnalysisRhoMatrixEvent):
+                iter1_events.append(event)
+
+        updater2 = DistanceLocalizationUpdate(
+            enkf_truncation=0.99,
+            param_type=param_type,
+            progress_callback=track_callback,
+            experiment=experiment,
+        )
+        updater2.prepare(obs_context)
+        result2 = updater2.update(
+            param_ensemble=param_ensemble.copy(),
+            param_config=param_config,
+            non_zero_variance_mask=np.ones(n_params, dtype=bool),
+        )
+
+        assert len(iter1_events) == 0, "Expected no new rho events on second run"
+        np.testing.assert_allclose(result1, result2)
