@@ -39,7 +39,7 @@ def test_that_load_rho_matrix_returns_none_when_no_blob_exists(tmp_path):
 
 def test_that_rho_matrix_metadata_contains_observation_keys(tmp_path):
     obs_keys = ["WOPR:OP1", "WGPR:OP2", "FOPR"]
-    event, _ = _make_rho_event(observation_keys=obs_keys)
+    event, _ = _make_rho_event(observation_keys=obs_keys, shape=(6, 3))
 
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
@@ -53,7 +53,7 @@ def test_that_rho_matrix_metadata_contains_observation_keys(tmp_path):
     assert blob.blob_info.param_name == "FIELD_A"
     assert blob.blob_info.observation_keys == obs_keys
     assert blob.blob_info.sparse is True
-    assert blob.blob_info.shape == (6, 2)
+    assert blob.blob_info.shape == (6, 3)
     assert blob.file_type == "application/x-npz"
 
 
@@ -79,8 +79,12 @@ def test_that_rho_matrix_blob_files_are_written_to_disk(tmp_path):
 
 
 def test_that_load_rho_matrix_distinguishes_parameters_by_name(tmp_path):
-    event_a, dense_a = _make_rho_event(param_name="PORO", shape=(4, 3))
-    event_b, dense_b = _make_rho_event(param_name="PERM", shape=(5, 2))
+    event_a, dense_a = _make_rho_event(
+        param_name="PORO", shape=(4, 3), observation_keys=["O1", "O2", "O3"]
+    )
+    event_b, dense_b = _make_rho_event(
+        param_name="PERM", shape=(5, 2), observation_keys=["O4", "O5"]
+    )
 
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
