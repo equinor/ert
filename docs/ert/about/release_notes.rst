@@ -30,6 +30,15 @@ Highlighted changes
 Version 23.0
 ------------
 
+
+
+Per-parameter-type update strategy
+##################################
+
+Added the possibility of selecting an update strategy per parameter type using
+`ANALYSIS_SET_VAR PARAMETERS <../reference/configuration/keywords.html#parameters>`_.
+
+
 Option to approximate missing rft responses
 ###########################################
 
