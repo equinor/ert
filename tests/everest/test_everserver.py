@@ -4,7 +4,9 @@ from base64 import b64encode
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
-from unittest.mock import AsyncMock, MagicMock, patch
+from signal import SIGTERM, getsignal, signal
+from typing import cast
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastapi.encoders import jsonable_encoder
@@ -15,6 +17,7 @@ from ert.config import ConfigWarning
 from ert.dark_storage.app import app
 from ert.dark_storage.endpoints.experiment_server import ExperimentRunnerState, _runs
 from ert.ensemble_evaluator import EndEvent
+from ert.run_models.event import StatusEvents
 from ert.scheduler.event import FinishedEvent
 from ert.services import create_ertserver_client
 from ert.storage import ExperimentState
@@ -43,7 +46,7 @@ def setup_client(monkeypatch):
         _runs.clear()
         run_id = "test-run-id"
         state = ExperimentRunnerState()
-        state.events = events
+        state.events = cast(list[StatusEvents], events)
         _runs[run_id] = state
 
         monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
@@ -116,8 +119,9 @@ async def test_status_exception(mock_configure_loggers, change_to_tmpdir, min_co
 
     await wait_for_server_to_complete(config)
 
-    status = get_experiment_status(config.storage_dir)
+    status = get_experiment_status(str(config.storage_dir))
 
+    assert status is not None
     assert status.status == ExperimentState.failed
     assert "Optimization failed: all realizations failed" in status.message
 
@@ -140,9 +144,10 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
     await wait_for_server_to_complete(config)
 
-    status = get_experiment_status(config.storage_dir)
+    status = get_experiment_status(str(config.storage_dir))
 
     # The server should complete without error.
+    assert status is not None
     assert status.status == ExperimentState.completed
     assert status.message == "Maximum number of batches reached."
     experiment = EverestStorage.get_everest_experiment(config.storage_dir)
@@ -174,9 +179,10 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
 
     await wait_for_server_to_complete(config)
 
-    status = get_experiment_status(config.storage_dir)
+    status = get_experiment_status(str(config.storage_dir))
 
     # The server should complete without error.
+    assert status is not None
     assert status.status == ExperimentState.failed
     assert OPT_FAILURE_REALIZATIONS in status.message
 
@@ -201,9 +207,10 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
 
     await wait_for_server_to_complete(config)
 
-    status = get_experiment_status(config.storage_dir)
+    status = get_experiment_status(str(config.storage_dir))
 
     # The server should complete without error.
+    assert status is not None
     assert status.status == ExperimentState.failed
     assert OPT_FAILURE_ALL_REALIZATIONS in status.message
 
@@ -225,8 +232,9 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
 
     await wait_for_server_to_complete(config)
 
-    status = get_experiment_status(config.storage_dir)
+    status = get_experiment_status(str(config.storage_dir))
 
+    assert status is not None
     assert status.status == ExperimentState.failed
     assert "The run is cancelled due to reaching MAX_RUNTIME" in status.message
 
@@ -377,3 +385,125 @@ async def test_websocket_no_events_on_connect(setup_client):
         result.append(await receive_task)
 
     assert result == [jsonable_encoder(expected_result)]
+
+
+def test_that_get_status_returns_successfully(setup_client):
+    client, _, _ = setup_client()
+    credentials = b64encode(b"username:password").decode()
+
+    response = client.get(
+        "/experiment_server/",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == 200
+    assert response.text == "EVEREST is running"
+
+
+@pytest.mark.parametrize(
+    ("run_id", "credentials", "expected_status_code", "expected_response"),
+    [
+        (
+            "1",
+            b64encode(b"username:password").decode(),
+            404,
+            {"detail": "Run '1' not found"},
+        ),
+        (
+            None,
+            b64encode(b"username:wrong_password").decode(),
+            401,
+            {"detail": "Invalid credentials"},
+        ),
+        (
+            None,
+            b64encode(b"username:password").decode(),
+            200,
+            {"status": "pending", "message": ""},
+        ),
+    ],
+)
+def test_that_get_status_by_run_id_endpoint_returns_expected_response(
+    setup_client, run_id, credentials, expected_status_code, expected_response
+):
+    client, _, valid_run_id = setup_client()
+
+    response = client.get(
+        f"/experiment_server/status/{run_id or valid_run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == expected_status_code
+    assert response.json() == expected_response
+
+
+def test_that_get_config_path_returns_not_found_for_pending_experiment_state(
+    setup_client,
+):
+    client, _, run_id = setup_client()
+    credentials = b64encode(b"username:password").decode()
+
+    response = client.get(
+        f"/experiment_server/config_path/{run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == 404
+    assert response.json() == "No experiment started"
+
+
+def test_that_get_config_path_returns_successfully_for_running_experiment(
+    setup_client,
+):
+    client, _, run_id = setup_client()
+    credentials = b64encode(b"username:password").decode()
+
+    assert run_id in _runs
+    _runs[run_id].status.status = ExperimentState.running
+    response = client.get(
+        f"/experiment_server/config_path/{run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == 200
+
+
+def test_that_experiment_stop_endpoint_returns_successfully(setup_client):
+    client, _, run_id = setup_client()
+
+    assert run_id in _runs
+    assert _runs[run_id].status.status == ExperimentState.pending
+
+    credentials = b64encode(b"username:password").decode()
+
+    response = client.post(
+        "/experiment_server/stop",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+
+    assert response.status_code == 200
+    assert response.text == "Raise STOP flag succeeded. EVEREST initiates shutdown.."
+
+    # ExperimentState should be updated to 'stopped' after the stop endpoint is called
+    assert _runs[run_id].status.status == ExperimentState.stopped
+    assert _runs[run_id].status.message == "Server stopped by user"
+
+
+def test_that_experiment_stop_endpoint_correctly_shuts_down_server(setup_client):
+    client, _, _ = setup_client()
+
+    # Clear _runs to force server shutdown when stop endpoint is called
+    _runs.clear()
+
+    credentials = b64encode(b"username:password").decode()
+    previous_handler = getsignal(SIGTERM)
+    try:
+        handler = Mock(return_value=None)
+        signal(SIGTERM, handler)
+
+        _ = client.post(
+            "/experiment_server/stop",
+            headers={"Authorization": f"Basic {credentials}"},
+        )
+
+        handler.assert_called_once()
+        assert len(handler.call_args_list) == 1
+        assert handler.call_args_list[0].args[0] == SIGTERM
+    finally:
+        signal(SIGTERM, previous_handler)
