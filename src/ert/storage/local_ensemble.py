@@ -6,7 +6,6 @@ import io
 import logging
 import os
 import time
-import uuid as _uuid
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -21,7 +20,7 @@ import pandas as pd
 import polars as pl
 import resfo
 import xarray as xr
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ert.config import (
@@ -66,9 +65,6 @@ if TYPE_CHECKING:
     from .local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
-
-
-_blob_adapter: TypeAdapter[BlobStorageData] = TypeAdapter(BlobStorageData)
 
 
 class EverestRealizationInfo(TypedDict):
@@ -1341,32 +1337,11 @@ class LocalEnsemble(BaseMode):
         blob_type: BlobType | None = None,
     ) -> list[BlobStorageData]:
         """List blob metadata, filtered by type."""
-        blob_dir = self._path / BLOB_DATA_DIR
-        if not blob_dir.exists():
-            return []
-        results = []
-        for json_path in blob_dir.glob("*.json"):
-            meta = _blob_adapter.validate_json(json_path.read_bytes())
-            if blob_type is None or meta.blob_info.blob_type == blob_type:
-                results.append(meta)
-        return results
+        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
 
-    def load_blob(
-        self,
-        uri: str,
-    ) -> bytes:
-        """Load blob bytes by URI"""
-        blob_dir = (self._path / BLOB_DATA_DIR).resolve()
-        blob_path = (blob_dir / uri).resolve()
-        try:
-            blob_path.relative_to(blob_dir)
-        except ValueError:
-            logger.warning("Blob URI %s resolves outside of blob directory", uri)
-            raise FileNotFoundError(uri) from None
-        if not blob_path.exists():
-            logger.warning("Blob file %s not found", uri)
-            raise FileNotFoundError(uri)
-        return blob_path.read_bytes()
+    def load_blob(self, uri: str) -> bytes:
+        """Load blob bytes by URI."""
+        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
 
     @require_write
     def save_blob(
@@ -1374,19 +1349,13 @@ class LocalEnsemble(BaseMode):
         blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent | AnalysisScalingEvent,
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
-        blob_dir.mkdir(parents=True, exist_ok=True)
-        blob_id = _uuid.uuid4().hex[:8]
-        uri = f"{blob_id}.blob"
-        blob_data: BlobStorageData
         if blob_event.event_type == "AnalysisMatrixEvent":
             file_type = (
                 "application/x-npz" if blob_event.sparse else "application/x-npy"
             )
-            blob_data = BlobStorageData(
-                uri=uri,
-                file_size=len(blob_event.matrix_bytes),
-                file_type=file_type,
+            BlobStorageData.save_blob(
                 name=blob_event.name,
+                data=blob_event.matrix_bytes,
                 blob_info=MatrixStorageData(
                     update_algorithm=blob_event.update_algorithm,
                     sparse=blob_event.sparse,
@@ -1394,21 +1363,23 @@ class LocalEnsemble(BaseMode):
                     data_type=blob_event.data_type,
                     parameter_group_sizes=blob_event.parameter_group_sizes,
                 ),
+                file_type=file_type,
+                storage=self._storage,
+                blob_dir=blob_dir,
             )
-            data = blob_event.matrix_bytes
         elif blob_event.event_type == "AnalysisScalingEvent":
-            blob_data = BlobStorageData(
-                uri=uri,
-                file_size=len(blob_event.scaling_bytes),
-                file_type="application/parquet",
+            BlobStorageData.save_blob(
                 name="scaling_factors",
+                data=blob_event.scaling_bytes,
                 blob_info=ScalingFactorsData(
                     update_algorithm=blob_event.update_algorithm,
                     num_observations=blob_event.num_observations,
                     num_groups=blob_event.num_groups,
                 ),
+                file_type="application/parquet",
+                storage=self._storage,
+                blob_dir=blob_dir,
             )
-            data = blob_event.scaling_bytes
         else:
             buf = io.BytesIO()
             pl.DataFrame(
@@ -1416,22 +1387,16 @@ class LocalEnsemble(BaseMode):
                 schema=blob_event.data.header,
                 orient="row",
             ).write_parquet(buf)
-            data = buf.getvalue()
-            blob_data = BlobStorageData(
-                uri=uri,
-                file_size=len(data),
-                file_type="application/parquet",
+            BlobStorageData.save_blob(
                 name="observation_report",
+                data=buf.getvalue(),
                 blob_info=ObservationReportData(
                     update_algorithm=blob_event.update_algorithm,
                 ),
+                file_type="application/parquet",
+                storage=self._storage,
+                blob_dir=blob_dir,
             )
-
-        self._storage._write_transaction(blob_dir / uri, data)
-        self._storage._write_transaction(
-            blob_dir / f"{uri}.json",
-            blob_data.model_dump_json(indent=2).encode("utf-8"),
-        )
 
     @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
