@@ -19,6 +19,7 @@ def test_mathfunc_cvar(copy_math_func_test_data_to_tmp):
             "algorithm": "scipy/slsqp",
             "cvar": {"percentile": 0.5},
             "max_batch_num": 5,
+            "min_realizations_success": 1,
         },
         "model": {"realizations": [0, 1]},
         "forward_model": [
