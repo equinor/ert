@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import inspect
 import logging
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self, assert_never, get_args, get_type_hints
+from typing import Annotated, Any, Literal, Self, assert_never, get_type_hints
 
 import numpy as np
 import pandas as pd
@@ -91,6 +90,33 @@ def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
         .otherwise(pl.col(col).str.strip_chars())
         .alias(col)
         for col in string_cols
+    )
+
+
+def _make_summary_key(
+    keyword: str,
+    number: str | None = None,
+    well: str | None = None,
+    nx: str | None = None,
+    ny: str | None = None,
+    lgr_name: str | None = None,
+    i: str | None = None,
+    j: str | None = None,
+    k: str | None = None,
+) -> str:
+    def _int_or_none(s: str | None) -> int | None:
+        return int(s) if s is not None else None
+
+    return make_summary_key(
+        keyword=keyword,
+        number=_int_or_none(number),
+        name=well,
+        nx=_int_or_none(nx),
+        ny=_int_or_none(ny),
+        lgr_name=lgr_name,
+        li=_int_or_none(i),
+        lj=_int_or_none(j),
+        lk=_int_or_none(k),
     )
 
 
@@ -219,12 +245,6 @@ class SummaryObservation(_SummaryValues):
 
         required_csv_columns = ["keyword", "value", "error", "date"]
 
-        make_summary_key_optional_args = [
-            name
-            for name, param in inspect.signature(make_summary_key).parameters.items()
-            if param.default is not inspect.Parameter.empty
-        ]
-
         csv_file = observation_dict.get("VALUES")
         if csv_file is None:
             raise _missing_value_error(context, "VALUES")
@@ -241,9 +261,10 @@ class SummaryObservation(_SummaryValues):
             ) from err
         csv_df = strip_dataframe_whitespaces(csv_df)
 
-        # Rename 'well' column to 'name' to match make_summary_key parameter names
-        if "well" in csv_df.columns:
-            csv_df = csv_df.rename({"well": "name"})
+        make_summary_key_optional_args = set(get_type_hints(_make_summary_key)) - {
+            "keyword",  # keyword is not optional
+            "return",  # return is not a parameter
+        }
 
         for col in csv_df.columns:
             if col not in {
@@ -319,18 +340,13 @@ class SummaryObservation(_SummaryValues):
         for i, row in enumerate(csv_df.iter_rows(named=True)):
             kw = validate_nonempty_string(row["keyword"], "keyword", context)
 
-            arg_type_hints = get_type_hints(make_summary_key)
             optional_kw_args = {
-                kw_arg: validate_int(val, kw)
-                if (val := row.get(kw_arg)) is not None
-                and int in get_args(arg_type_hints.get(kw_arg))
-                else val
-                for kw_arg in make_summary_key_optional_args
+                kw_arg: row.get(kw_arg) for kw_arg in make_summary_key_optional_args
             }
             try:
-                summary_key = make_summary_key(
+                summary_key = _make_summary_key(
                     keyword=kw,
-                    **optional_kw_args,  # type: ignore[arg-type]
+                    **optional_kw_args,
                 )
             except InvalidSummaryKeyError as e:
                 raise _ill_configured_summary_key(kw, csv_file, i + 1, e) from e
@@ -342,7 +358,7 @@ class SummaryObservation(_SummaryValues):
             date = row["date"]
             standardized_date = _parse_date(date).isoformat()
 
-            loc_values = well_localization.get(row.get("name"), {})
+            loc_values = well_localization.get(row.get("well"), {})
             shape_id = cls.get_shape_id(
                 loc_values.get("east"),
                 loc_values.get("north"),
