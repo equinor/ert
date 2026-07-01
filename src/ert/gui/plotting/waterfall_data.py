@@ -56,6 +56,7 @@ def compute_waterfall_data(
         logger.info("No K matrix blob found on ensemble %s", ensemble.id)
         return pl.DataFrame()
 
+    assert k_blob.blob_info.blob_type == BlobType.MATRIX
     parameter_group_sizes: dict[str, int] = k_blob.blob_info.parameter_group_sizes
     if not parameter_group_sizes:
         logger.info("K blob has no parameter_group_sizes metadata")
