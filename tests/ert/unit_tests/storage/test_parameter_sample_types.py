@@ -8,6 +8,7 @@ from textwrap import dedent
 import numpy as np
 import polars as pl
 import pytest
+import scipy as sp
 from xtgeo import RegularSurface, surface_from_file
 
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
@@ -225,7 +226,7 @@ async def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
         _, fs = await create_runpath(storage, "config.ert", [True] * 3)
         prior = fs.load_parameters_numpy("KW_NAME", np.arange(3)).flatten()
-        expected = np.array([-0.8814228, 1.5847818, 1.009956])
+        expected = np.array([-0.3922276, -1.4083002, -0.7613266])
         np.testing.assert_almost_equal(prior, expected)
 
 
@@ -308,7 +309,10 @@ def test_that_sampling_is_fixed_from_name(
 
         key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
-        expected = np.random.default_rng(seed).standard_normal(num_realisations)
+        rng = np.random.default_rng(seed)
+        sampler = sp.stats.qmc.LatinHypercube(d=1, rng=rng)
+        quantiles = sampler.random(num_realisations)[:, 0]
+        expected = sp.stats.norm.ppf(quantiles)
         df = fs.load_parameters("KW_NAME")
         assert isinstance(df, pl.DataFrame)
         assert df.select("MY_KEYWORD").to_numpy().ravel().tolist() == list(expected)
@@ -320,20 +324,17 @@ def test_that_sampling_is_fixed_from_name(
         pytest.param(
             [True] * 5,
             [
-                -0.8814227775506998,
-                1.5847817694032422,
-                1.009956004559659,
-                -0.3614874716984976,
-                0.12143084130052884,
+                -1.311229963813986,
+                -0.3610201471513453,
+                -0.13460521040053444,
+                0.5506531521053208,
+                1.0523866446764671,
             ],
             id="Sampling all values, checking that we get length of 5",
         ),
         pytest.param(
             [False, True, False, True],
-            [
-                1.5847817694032422,
-                -0.3614874716984976,
-            ],
+            [-0.3610201471513453, 0.5506531521053208],
             id=(
                 "Sampling a subset of parameters (at index 1 and 4), checking"
                 "that those values match the corresponding values from the full"
@@ -390,7 +391,7 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
     [
         (
             "GEN_KW KW_NAME prior.txt\nRANDOM_SEED 1234",
-            -0.881423,
+            -0.064087682,
         ),
     ],
 )
@@ -424,7 +425,7 @@ def write_file(fname, contents):
     [
         (
             "GEN_KW KW_NAME template.txt kw.txt prior.txt\nRANDOM_SEED 1234",
-            "MY_KEYWORD -0.881423",
+            "MY_KEYWORD -0.0640877",
             [],
             does_not_raise(),
         ),
@@ -494,19 +495,19 @@ async def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectat
     [
         pytest.param(
             "GEN_KW KW_NAME template.txt kw.txt prior.txt",
-            "MY_KEYWORD -0.881423\nNOT KEYWORD <DONT_REPLACE>",
+            "MY_KEYWORD -0.0640877\nNOT KEYWORD <DONT_REPLACE>",
             [["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNOT KEYWORD <DONT_REPLACE>"]],
             id="Second magic string that should not be replaced",
         ),
         pytest.param(
             "GEN_KW KW_NAME template.txt kw.txt prior.txt",
-            "MY_KEYWORD -0.881423\n-- if K<=28 then blah blah",
+            "MY_KEYWORD -0.0640877\n-- if K<=28 then blah blah",
             [["template.txt", "MY_KEYWORD <MY_KEYWORD>\n-- if K<=28 then blah blah"]],
             id="Comment in file with <",
         ),
         pytest.param(
             "GEN_KW KW_NAME template.txt kw.txt prior.txt",
-            "MY_KEYWORD -0.881423\nNR_TWO 0.654691",
+            "MY_KEYWORD -0.0640877\nNR_TWO -1.14073",
             [
                 ["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNR_TWO <NR_TWO>"],
                 ["prior.txt", "MY_KEYWORD NORMAL 0 1\nNR_TWO NORMAL 0 1"],
