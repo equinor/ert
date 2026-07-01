@@ -1,6 +1,7 @@
 import logging
 import os
 import pathlib
+import re
 import sys
 from collections.abc import Callable
 from datetime import datetime
@@ -92,3 +93,38 @@ def suppress_logs(logs_to_suppress: list[str]) -> Callable[[logging.LogRecord], 
         return True
 
     return log_filter
+
+
+class ObjectAttributeFilter(logging.Filter):
+    def __init__(self, objects: list[str], attributes: list[str]) -> None:
+        super().__init__()
+        self._obj_regex = rf"\b(?:{'|'.join(objects)})\([^\)]*\)"
+        self._attr_regex = rf"(?:{'|'.join(attributes)})=((?:'[^']*'|[^\s,\)]+))"
+
+    def _redact(self, msg: str | Any) -> str | Any:
+        # Record.msg is implemented as str | Any, but should be str in
+        # most cases according to the documentation.
+        # In our case, it is sometimes an exception, for example TimeoutError.
+        # This will return early should the record message not be a str.
+        if not isinstance(msg, str):
+            return msg
+
+        # Mutating msg will alter the indices of the succeeding- but not
+        # preceding text. Reversing the matches allows us to safely mutate
+        # the string from back to front.
+        for obj_match in reversed(list(re.finditer(self._obj_regex, msg))):
+            for attr_match in reversed(
+                list(re.finditer(self._attr_regex, obj_match.group()))
+            ):
+                attr = attr_match.group()
+                attr_value = attr.split("=")[1]
+                match_censored = re.sub(attr_value, "REDACTED", attr)
+
+                attr_start = obj_match.start() + attr_match.start()
+                attr_end = attr_start + len(attr)
+                msg = msg[:attr_start] + match_censored + msg[attr_end:]
+        return msg
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = self._redact(record.msg)
+        return True
