@@ -128,27 +128,6 @@ def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None
         server.wait()
 
 
-def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
-    yellow = "\x1b[33m"
-    green = "\x1b[32m"
-    bold = "\x1b[1m"
-    reset = "\x1b[0m"
-
-    print(
-        f"""
-    ---------------------------------------------------------------
-
-    {yellow}{bold}Webviz-ERT is removed.
-
-    {green}{bold}Plotting capabilities provided by Webviz-ERT are now available
-    using the ERT plotter{reset}
-
-    ---------------------------------------------------------------
-    """
-    )
-    logger.info("Show Webviz-ert removal warning")
-
-
 def strip_error_message_and_raise_exception(validated: ValidationStatus) -> None:
     error = validated.message()
     error = re.sub(r"\<[^>]*\>", " ", error)
