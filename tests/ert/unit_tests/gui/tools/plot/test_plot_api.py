@@ -23,6 +23,26 @@ def _autouse_patch_ertclient_to_testclient(patch_ertclient_to_testclient):
     pass
 
 
+@pytest.mark.parametrize(
+    ("status_code", "blobs", "expected"),
+    [
+        (200, [{"name": "K", "blob_info": {"blob_type": "matrix"}}], True),
+        (200, [{"name": "K", "blob_info": {"blob_type": "rho_matrix"}}], False),
+        (404, [], False),
+    ],
+)
+def test_that_has_kalman_gain_requires_a_matrix_k_blob(
+    api: PlotApi, monkeypatch, status_code, blobs, expected
+) -> None:
+    monkeypatch.setattr(
+        api._client,
+        "ensemble_blobs",
+        lambda _ensemble_id: blobs if status_code == 200 else [],
+    )
+
+    assert api.has_kalman_gain("ensemble-id") is expected
+
+
 def test_key_def_structure(api: PlotApi):
     key_defs = api.parameters_api_key_defs + api.responses_api_key_defs
     fopr = next(x for x in key_defs if x.key == "FOPR")
