@@ -43,16 +43,10 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
         if self.observations is None:
             return {}
 
-        rft_config = next(
-            (r for r in self.response_configuration if r.type == "rft"),
-            None,
-        )
-
         shape_registry = self._storage.get_experiment_by_name(
             self.experiment_name
         ).shape_registry
         return create_observation_dataframes(
             observations=self.observations,
-            rft_config=rft_config,
             shape_registry=shape_registry,
         )

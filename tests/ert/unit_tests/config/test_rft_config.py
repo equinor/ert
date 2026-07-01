@@ -22,6 +22,7 @@ from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.config.response_config import _RESPONSE_WARNING_LIMIT
 from ert.config.rft_config import _get_zonemap, _read_egrid
 from ert.warnings import PostExperimentWarning
+from tests.ert.defaults_generator import create_rft_observation_dict
 from tests.ert.rft_generator import cell_start, create_egrid, float_arr
 
 
@@ -601,10 +602,6 @@ def test_that_location_outside_of_the_grid_maps_to_none(mock_resfo_file, egrid):
 
 def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     provided_radius = 2400
-    rft_config = RFTConfig(
-        input_files=["BASE.RFT"],
-        data_to_read={"*": {"*": ["*"]}},
-    )
     shape_registry = ShapeRegistry()
     shape_id = shape_registry.register(
         CircleShapeConfig(
@@ -625,7 +622,7 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
         tvd=2000.0,
         shape_id=shape_id,
     )
-    df = _handle_rft_observation(rft_config, rft_observation, shape_registry)
+    df = _handle_rft_observation(rft_observation, shape_registry)
     assert "radius" in df.columns
     assert df["radius"].to_list() == [provided_radius]
     assert df["radius"].dtype == pl.Float32
@@ -659,19 +656,7 @@ def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepe
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                        "ZONE": "zone2",
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -731,19 +716,7 @@ def test_that_substitutions_are_applied_to_zonemap_filename(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                        "ZONE": "zone1",
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -780,18 +753,7 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 1.0,
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -1318,20 +1280,7 @@ def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_
     if rft_obs_config:
         config_dict["OBS_CONFIG"] = (
             "obsconf",
-            [
-                {
-                    "type": ObservationType.RFT,
-                    "name": "NAME",
-                    "WELL": "WELL",
-                    "VALUE": "700",
-                    "ERROR": "0.1",
-                    "DATE": "2000-01-01",
-                    "PROPERTY": "PRESSURE",
-                    "NORTH": 1.0,
-                    "EAST": 1.0,
-                    "TVD": 0.5,
-                }
-            ],
+            [create_rft_observation_dict()],
         )
 
     config = ErtConfig.from_dict(config_dict)

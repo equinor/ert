@@ -231,16 +231,6 @@ class LocalExperiment(BaseMode):
             output_path = path / "observations"
             output_path.mkdir(parents=True, exist_ok=True)
 
-            responses_list = experiment_config.get("response_configuration", [])
-            rft_config_json = next(
-                (r for r in responses_list if r.get("type") == "rft"), None
-            )
-            rft_config = (
-                _responses_adapter.validate_python(rft_config_json)
-                if rft_config_json is not None
-                else None
-            )
-
             obs_adapter = TypeAdapter(Observation)  # type: ignore
             obs_objs: list[Observation] = [
                 obs_adapter.validate_python(od) for od in observation_declarations
@@ -252,9 +242,7 @@ class LocalExperiment(BaseMode):
                 if shape_registry_data
                 else ShapeRegistry()
             )
-            datasets = create_observation_dataframes(
-                obs_objs, rft_config, shape_registry
-            )
+            datasets = create_observation_dataframes(obs_objs, shape_registry)
             for response_type, df in datasets.items():
                 storage._to_parquet_transaction(output_path / response_type, df)
 
@@ -517,22 +505,12 @@ class LocalExperiment(BaseMode):
         output_path = self.mount_point / "observations"
         output_path.mkdir(parents=True, exist_ok=True)
 
-        rft_cfg = None
-        try:
-            responses_list = self.experiment_config.get("response_configuration", [])
-            for r in responses_list:
-                if r.get("type") == "rft":
-                    rft_cfg = _responses_adapter.validate_python(r)
-                    break
-        except Exception:
-            rft_cfg = None
-
         obs_adapter = TypeAdapter(Observation)  # type: ignore
         obs_objs: list[Observation] = [
             obs_adapter.validate_python(od) for od in serialized_observations
         ]
 
-        datasets = create_observation_dataframes(obs_objs, rft_cfg, self.shape_registry)
+        datasets = create_observation_dataframes(obs_objs, self.shape_registry)
         for response_type, df in datasets.items():
             self._storage._to_parquet_transaction(output_path / response_type, df)
 
