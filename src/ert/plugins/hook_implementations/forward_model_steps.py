@@ -39,8 +39,6 @@ class CarefulCopyFile(ForwardModelStepPlugin):
                 argument has a directory component, that directory will be created.
                 This is an extension of the normal :code:`cp` command
                 which will *not* create directories in this way.
-                This supersedes an older version called :code:`CAREFULL_COPY`
-                and should be used instead.
                 """
             ),
             examples="""
