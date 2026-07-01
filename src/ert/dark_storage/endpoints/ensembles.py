@@ -88,7 +88,7 @@ def get_waterfall_data(
         df = compute_waterfall_data(ensemble, unquote(parameter_key), nobservations)
 
     buf = io.BytesIO()
-    df.to_parquet(buf, index=False)
+    df.write_parquet(buf)
     return Response(
         content=buf.getvalue(),
         media_type="application/x-parquet",
