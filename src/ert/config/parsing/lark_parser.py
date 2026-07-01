@@ -435,7 +435,7 @@ def _parse_contents(content: str, file: str) -> Tree[Instruction]:
     except UnexpectedToken as e:
         unexpected_token = e.token
         allowed = e.expected
-        message = f"Did not expect token: {unexpected_token}. Expected one of {allowed}"
+        message = _unexpected_token_message(content, e, unexpected_token, allowed)
         raise ConfigValidationError.from_info(
             ErrorInfo(
                 message=message,
@@ -462,6 +462,35 @@ def _parse_contents(content: str, file: str) -> Tree[Instruction]:
                 filename=file,
             )
         ) from e
+
+
+def _unexpected_token_message(
+    content: str,
+    error: UnexpectedToken,
+    unexpected_token: Token,
+    allowed: set[str],
+) -> str:
+    if "EQUAL" in allowed:
+        line = content.splitlines()[error.line - 1].strip()
+        if _is_design2params_forward_model_line(line):
+            return (
+                "DESIGN2PARAMS forward model arguments must be named, not "
+                "positional. Use "
+                "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=dm.xlsx, "
+                "<designsheet>=DesignSheet, <defaultssheet>=DefaultValues)"
+            )
+    return f"Did not expect token: {unexpected_token}. Expected one of {allowed}"
+
+
+def _is_design2params_forward_model_line(line: str) -> bool:
+    try:
+        keyword, value = line.split(maxsplit=1)
+    except ValueError:
+        return False
+    value = value.lstrip()
+    return keyword == "FORWARD_MODEL" and value.startswith(
+        ("DESIGN2PARAMS(", "DESIGN2PARAMS ")
+    )
 
 
 def _parse_file(file: str) -> Tree[Instruction]:
