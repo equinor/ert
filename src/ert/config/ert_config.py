@@ -17,7 +17,6 @@ from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
-from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -1207,7 +1206,7 @@ class ErtConfig(BaseModel):
         zonemap = config_dict.get(ConfigKeys.ZONEMAP)
         if zonemap:
             zonemap = substituter.substitute(zonemap)
-        try:  # noqa: PLW0717
+        try:
             cls_config = cls(
                 substitutions=substitutions,
                 ensemble_config=ensemble_config,
@@ -1232,51 +1231,8 @@ class ErtConfig(BaseModel):
                 shape_registry=shape_registry,
             )
 
-            # The observations are created here because create_observation_dataframes
-            # will perform additional validation which needs the context in
-            # obs_configs which is stripped by pydantic
-            has_rft_observations = any(
-                isinstance(o, RFTObservation) for o in obs_configs
-            )
-            if (
-                has_rft_observations
-                and "rft" not in ensemble_config.response_configs
-                and summary_file_base_name
-            ):
-                ensemble_config.response_configs["rft"] = RFTConfig(
-                    input_files=[summary_file_base_name],
-                    data_to_read={},
-                    zonemap=cls_config.zonemap,
-                    approximate_missing_values=config_dict.get(
-                        ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
-                    ),
-                )
-
-            bt_obs = [o for o in obs_configs if isinstance(o, BreakthroughObservation)]
-
-            if (
-                bt_obs
-                and "breakthrough" not in ensemble_config.derived_response_configs
-            ):
-                ensemble_config.derived_response_configs["breakthrough"] = (
-                    BreakthroughConfig(
-                        keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
-                        summary_keys=[o.key for o in bt_obs],
-                        thresholds=[o.threshold for o in bt_obs],
-                        observed_dates=[o.date for o in bt_obs],
-                    )
-                )
-
-            # PS:
-            # This mutates the rft config and is necessary for the moment
-            # Consider changing this pattern
-            _ = create_observation_dataframes(
-                observations=obs_configs,
-                rft_config=cast(
-                    RFTConfig | None, ensemble_config.response_configs.get("rft")
-                ),
-                shape_registry=shape_registry,
-            )
+            cls_config.derive_rft_response_input_from_observations(config_dict)
+            cls_config.derive_breakthrough_response_input_from_observations()
 
             cls_config.random_seed_generator.user_defined_seed = config_dict.get(
                 ConfigKeys.RANDOM_SEED
@@ -1285,6 +1241,61 @@ class ErtConfig(BaseModel):
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
         return cls_config
+
+    def derive_rft_response_input_from_observations(
+        self, config_dict: ConfigDict
+    ) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        rft_observations = [o for o in observations if isinstance(o, RFTObservation)]
+        if not rft_observations:
+            return
+
+        summary_file_base_name = self.runpath_config.summary_file_base_name
+        if "rft" not in ensemble_config.response_configs and summary_file_base_name:
+            ensemble_config.response_configs["rft"] = RFTConfig(
+                input_files=[summary_file_base_name],
+                data_to_read={},
+                zonemap=self.zonemap,
+                approximate_missing_values=config_dict.get(
+                    ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
+                ),
+            )
+
+        if "rft" not in ensemble_config.response_configs:
+            return
+
+        rft_config = cast(RFTConfig, ensemble_config.response_configs.get("rft"))
+
+        for rft_observation in rft_observations:
+            data_to_read = rft_config.data_to_read
+            if rft_observation.well not in data_to_read:
+                rft_config.data_to_read[rft_observation.well] = {}
+
+            well_dict = data_to_read[rft_observation.well]
+            if rft_observation.date not in well_dict:
+                well_dict[rft_observation.date] = []
+
+            property_list = well_dict[rft_observation.date]
+            if rft_observation.property not in property_list:
+                property_list.append(rft_observation.property)
+
+    def derive_breakthrough_response_input_from_observations(self) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        bt_obs = [o for o in observations if isinstance(o, BreakthroughObservation)]
+
+        if "breakthrough" not in ensemble_config.derived_response_configs and bt_obs:
+            ensemble_config.derived_response_configs["breakthrough"] = (
+                BreakthroughConfig(
+                    keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
+                    summary_keys=[o.key for o in bt_obs],
+                    thresholds=[o.threshold for o in bt_obs],
+                    observed_dates=[o.date for o in bt_obs],
+                )
+            )
 
     @classmethod
     def _create_list_of_forward_model_steps_to_run(

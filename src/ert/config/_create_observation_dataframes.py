@@ -206,18 +206,6 @@ def _handle_rft_observation(
         else None
     )
 
-    data_to_read = rft_config.data_to_read
-    if rft_observation.well not in data_to_read:
-        rft_config.data_to_read[rft_observation.well] = {}
-
-    well_dict = data_to_read[rft_observation.well]
-    if rft_observation.date not in well_dict:
-        well_dict[rft_observation.date] = []
-
-    property_list = well_dict[rft_observation.date]
-    if rft_observation.property not in property_list:
-        property_list.append(rft_observation.property)
-
     if rft_observation.error <= 0.0:
         raise ObservationConfigError.with_context(
             "Observation uncertainty must be strictly > 0", rft_observation.well
