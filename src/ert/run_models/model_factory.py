@@ -506,7 +506,7 @@ def _setup_multiple_data_assimilation(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         target_ensemble=_iterative_ensemble_format(args),
-        weights=args.weights,
+        arg_weights=args.weights,
         restart_run=restart_run,
         prior_ensemble_id=prior_ensemble,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,

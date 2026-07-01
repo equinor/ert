@@ -60,7 +60,6 @@ from ert.run_models import (
     MultipleDataAssimilation,
     create_model,
 )
-from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
 from ert.storage import open_storage
 from ert.storage.local_experiment import LocalExperiment
 
@@ -413,7 +412,6 @@ def multidass(_):
     return {
         "restart_run": False,
         "prior_ensemble_id": None,
-        "weights": MultipleDataAssimilationConfig.default_weights,
     }
 
 

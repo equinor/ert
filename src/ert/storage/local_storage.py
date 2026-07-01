@@ -31,7 +31,7 @@ from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 34
+_LOCAL_STORAGE_VERSION = 35
 
 
 def open_storage(
@@ -543,6 +543,7 @@ class LocalStorage(BaseMode):
             to32,
             to33,
             to34,
+            to35,
         )
 
         try:  # noqa: PLW0717
@@ -606,6 +607,7 @@ class LocalStorage(BaseMode):
                     31: to32,
                     32: to33,
                     33: to34,
+                    34: to35,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)

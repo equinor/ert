@@ -10,12 +10,15 @@ from ert.config import (
     PostExperimentFixtures,
     PreExperimentFixtures,
 )
+from ert.config.analysis_config import parse_es_mda_weights
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
 )
-from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
+from ert.run_models.run_model_configs import (
+    MultipleDataAssimilationConfig,
+)
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.storage.local_experiment import (
@@ -43,7 +46,7 @@ class MultipleDataAssimilation(
 
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
-        self._parsed_weights = self.parse_weights(self.weights)
+        self._parsed_weights = self.parse_weights(self.analysis_settings.weights)
         start_iteration = 0
         total_iterations = len(self._parsed_weights) + 1
         if self.restart_run:
@@ -83,6 +86,9 @@ class MultipleDataAssimilation(
         rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()
+        logger.info(
+            "Running ES-MDA with relative weights: %s", self.analysis_settings.weights
+        )
         if rerun_failed_realizations:
             raise ErtRunError("ESMDA does not support restart")
 
@@ -170,27 +176,7 @@ class MultipleDataAssimilation(
         38 of evensen2018 - Analysis of iterative ensemble
         smoothers for solving inverse problems.
         """
-        if not weights:
-            raise ValueError(f"Must provide weights, got {weights}")
-
-        elements = weights.split(",")
-        elements = [element.strip() for element in elements if element.strip()]
-
-        result: list[float] = []
-        for element in elements:
-            try:
-                f = float(element)
-                if f == 0:
-                    logger.info("Warning: 0 weight, will ignore")
-                else:
-                    result.append(f)
-            except ValueError as e:
-                raise ValueError(f"Warning: cannot parse weight {element}") from e
-        if not result:
-            raise ValueError(f"Invalid weights: {weights}")
-
-        length = sum(1.0 / x for x in result)
-        return [x * length for x in result]
+        return parse_es_mda_weights(weights)
 
     @classmethod
     def name(cls) -> str:

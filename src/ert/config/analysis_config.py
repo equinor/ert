@@ -112,6 +112,7 @@ class AnalysisConfig:
         errors = []
         all_errors = []
         parameter_type_update_strategies: dict[str, LocalizationType] = {}
+        es_mda_weights: str | None = None
 
         for module_name, var_name, value in analysis_set_var:
             if var_name == "DISTANCE_LOCALIZATION" and value.upper() == "TRUE":
@@ -186,6 +187,15 @@ class AnalysisConfig:
                     )
                 continue
 
+            if module_name == "STD_ENKF" and var_name == "WEIGHTS":
+                try:
+                    parse_es_mda_weights(value)
+                except ValueError as err:
+                    all_errors.append(ConfigValidationError(str(err)))
+                    continue
+                es_mda_weights = value
+                continue
+
             module_options = options.get(module_name)
             if module_options is None:
                 all_errors.append(
@@ -238,6 +248,7 @@ class AnalysisConfig:
                 )
             )
 
+        es_settings: ESSettings | None = None
         try:
             es_settings = ESSettings(**options["STD_ENKF"])
             outlier_settings: dict[str, Any] = {
@@ -258,6 +269,9 @@ class AnalysisConfig:
 
         if all_errors:
             raise ConfigValidationError.from_collected(all_errors)
+
+        if es_mda_weights is not None and es_settings is not None:
+            es_settings.weights = es_mda_weights
 
         design_matrices = [
             DesignMatrix.from_config_list(design_matrix_config_list)
@@ -280,7 +294,7 @@ class AnalysisConfig:
             minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             observation_settings=obs_settings,
-            es_settings=es_settings,
+            es_settings=es_settings if es_settings is not None else ESSettings(),
             design_matrix=design_matrix,
             parameter_type_update_strategies=parameter_type_update_strategies,
         )
@@ -288,3 +302,26 @@ class AnalysisConfig:
     @property
     def log_path(self) -> Path:
         return Path(realpath(self.update_log_path))
+
+
+def parse_es_mda_weights(weights: str) -> list[float]:
+    if not weights:
+        raise ValueError(f"Must provide weights, got {weights}")
+
+    result = []
+    for element in [element.strip() for element in weights.split(",")]:
+        if not element:
+            continue
+        weight = float(element)
+        if weight <= 0:
+            raise ValueError(
+                f"Invalid weights: {weights}. "
+                "Weights must be positive non zero numbers."
+            )
+        result.append(weight)
+
+    if not result:
+        raise ValueError(f"Invalid weights: {weights}")
+
+    length = sum(1.0 / x for x in result)
+    return [x * length for x in result]

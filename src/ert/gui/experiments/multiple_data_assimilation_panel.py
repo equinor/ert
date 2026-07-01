@@ -7,7 +7,16 @@ from typing import TYPE_CHECKING, Any, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QStyle,
+    QWidget,
+)
 
 from ert.config import ErrorInfo, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -25,7 +34,6 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
-from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
 from ert.storage.local_experiment import ExperimentType
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import (
@@ -71,6 +79,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     ) -> None:
         super().__init__(MultipleDataAssimilation)
         self.notifier = notifier
+        self._configured_weights = analysis_config.es_settings.weights
+        self._weights_source = self._configured_weights
 
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -114,7 +124,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
 
-        self.weights = MultipleDataAssimilationConfig.default_weights
+        self.weights = self._configured_weights
         self.weights_valid = True
         self._createInputForWeights(layout)
 
@@ -255,8 +265,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
             self._relative_iteration_weights_box.setText(
                 self._ensemble_selector.selected_ensemble.relative_weights
-                or MultipleDataAssimilationConfig.default_weights
+                or self._configured_weights
             )
+            self._weights_source = self._relative_iteration_weights_box.text()
+            self._update_weights_mismatch_warning()
             self._evaluate_weights_box_enabled()
 
     @Slot(bool)
@@ -290,10 +302,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._ensemble_selector.selected_ensemble is not None
                 and self._ensemble_selector.selected_ensemble.relative_weights
             )
-            or MultipleDataAssimilationConfig.default_weights
+            or self._configured_weights
             if self._restart_box.isChecked()
-            else MultipleDataAssimilationConfig.default_weights
+            else self._configured_weights
         )
+        self._weights_source = self._relative_iteration_weights_box.text()
+        self._update_weights_mismatch_warning()
         if self._restart_box.isChecked():
             self._active_realizations_field.setValidator(
                 self._previous_ensemble_realizations_validator
@@ -310,20 +324,82 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
+        weights_container = QWidget()
+        weights_layout = QHBoxLayout(weights_container)
+        weights_layout.setContentsMargins(0, 0, 0, 0)
         self._relative_iteration_weights_box = StringBox(
             relative_iteration_weights_model,  # type: ignore
             continuous_update=True,
         )
+        weights_layout.addWidget(self._relative_iteration_weights_box)
+        self._weights_mismatch_icon = QLabel()
+        self._weights_mismatch_icon.setObjectName("warning_icon_weights_esmda")
+        style = QApplication.style()
+        if style is not None:
+            self._weights_mismatch_icon.setPixmap(
+                style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning).pixmap(
+                    16, 16
+                )
+            )
+        self._weights_mismatch_icon.hide()
+        weights_layout.addWidget(self._weights_mismatch_icon)
+        weights_layout.setSpacing(2)
+        weights_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._relative_iteration_weights_box.setObjectName("weights_input_esmda")
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
-        layout.addRow("Weights:", self._relative_iteration_weights_box)
+        layout.addRow("Relative weights:", weights_container)
 
         relative_iteration_weights_model.valueChanged.connect(self.setWeights)
+
+        normalized_weights_model = ValueModel()
+        normalized_weights_widget = _ActiveLabel(normalized_weights_model)
+        layout.addRow("Normalized weights:", normalized_weights_widget)
+
+        def updateVisualizationOfNormalizedWeights() -> None:
+            self.weights_valid = False
+
+            if self._relative_iteration_weights_box.isValid():
+                try:
+                    normalized_weights = MultipleDataAssimilation.parse_weights(
+                        relative_iteration_weights_model.getValue()  # type: ignore
+                    )
+                    normalized_weights_model.setValue(
+                        ", ".join(f"{x:.2f}" for x in normalized_weights)
+                    )
+                    self.weights_valid = True
+                except ValueError:
+                    normalized_weights_model.setValue("The weights are invalid!")
+            else:
+                normalized_weights_model.setValue("The weights are invalid!")
+            self._update_weights_mismatch_warning()
+
         self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
-            self._validate_weights
+            updateVisualizationOfNormalizedWeights
         )
 
-        self._validate_weights()  # To validate the default weights
+        updateVisualizationOfNormalizedWeights()  # To normalize the default weights
+
+    def _update_weights_mismatch_warning(self) -> None:
+        if not hasattr(self, "_weights_mismatch_icon"):
+            return
+        differs_from_source = self._weights_differ_from_source()
+        self._weights_mismatch_icon.setVisible(differs_from_source)
+        if not differs_from_source:
+            self._weights_mismatch_icon.setToolTip("")
+            return
+        self._weights_mismatch_icon.setToolTip(
+            "This value differs from the default ES-MDA weights. The GUI value "
+            "will be used for this run."
+        )
+
+    def _weights_differ_from_source(self) -> bool:
+        try:
+            current = MultipleDataAssimilation.parse_weights(self.weights)
+            source = MultipleDataAssimilation.parse_weights(self._weights_source)
+        except ValueError:
+            return self.weights.strip() != self._weights_source.strip()
+        else:
+            return current != source
 
     @override
     def isConfigurationValid(self) -> bool:
@@ -354,6 +430,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def setWeights(self, weights: Any) -> None:
         self.weights = str(weights)
+        self._update_weights_mismatch_warning()
 
     def _validate_weights(self) -> None:
         self.weights_valid = False
@@ -379,3 +456,26 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 widget_info='<p style="font-size: 28px;">Error reading storage</p>',
                 parent=self,
             ).show()
+
+
+class _ActiveLabel(QLabel):
+    def __init__(self, model: ValueModel) -> None:
+        super().__init__()
+
+        self._model = model
+
+        font = self.font()
+        font.setWeight(QFont.Weight.Bold)
+        self.setFont(font)
+
+        self._model.valueChanged.connect(self.updateLabel)
+
+        self.updateLabel()
+
+    def updateLabel(self) -> None:
+        """Retrieves data from the model and inserts it into the edit line"""
+        model_value = self._model.getValue()
+        if model_value is None:
+            model_value = ""
+
+        self.setText(str(model_value))
