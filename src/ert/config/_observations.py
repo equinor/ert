@@ -90,7 +90,7 @@ def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
 def _make_summary_key(
     keyword: str,
     number: str | None = None,
-    name: str | None = None,
+    well: str | None = None,
     nx: str | None = None,
     ny: str | None = None,
     lgr_name: str | None = None,
@@ -102,12 +102,12 @@ def _make_summary_key(
         return int(s) if s is not None else None
 
     return make_summary_key(
-        keyword,
-        _int_or_none(number),
-        name,
-        _int_or_none(nx),
-        _int_or_none(ny),
-        lgr_name,
+        keyword=keyword,
+        number=_int_or_none(number),
+        name=well,
+        nx=_int_or_none(nx),
+        ny=_int_or_none(ny),
+        lgr_name=lgr_name,
         li=_int_or_none(i),
         lj=_int_or_none(j),
         lk=_int_or_none(k),
@@ -255,10 +255,6 @@ class SummaryObservation(_SummaryValues):
             ) from err
         csv_df = strip_dataframe_whitespaces(csv_df)
 
-        # Rename 'well' column to 'name' to match make_summary_key parameter names
-        if "well" in csv_df.columns:
-            csv_df = csv_df.rename({"well": "name"})
-
         make_summary_key_optional_args = set(get_type_hints(_make_summary_key)) - {
             "keyword",  # keyword is not optional
             "return",  # return is not a parameter
@@ -356,7 +352,7 @@ class SummaryObservation(_SummaryValues):
             date = row["date"]
             standardized_date = _parse_date(date).isoformat()
 
-            loc_values = well_localization.get(row.get("name"), {})
+            loc_values = well_localization.get(row.get("well"), {})
             shape_id = cls.get_shape_id(
                 loc_values.get("east"),
                 loc_values.get("north"),
