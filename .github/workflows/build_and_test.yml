@@ -128,7 +128,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'test' ]
-        os: [ 'macos-latest' ]
+        os: [ 'macos-26' ]
         python-version: [ '3.14' ]
 
     uses: ./.github/workflows/test_everest.yml
@@ -146,7 +146,7 @@ jobs:
       matrix:
         test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.14' ]
-        os: [ 'macos-latest']
+        os: [ 'macos-26']
 
     uses: ./.github/workflows/test_ert.yml
     with:

@@ -40,7 +40,7 @@ jobs:
         fetch-depth: 0
         filter: tree:0
 
-    - if: ${{ inputs.os == 'macos-latest' }}
+    - if: ${{ runner.os == 'macOS' }}
       run: echo "ERT_TESTS_RUN_ON_MAC_CI=true" >> "$GITHUB_ENV"
 
     - uses: ./.github/actions/install_dependencies_qt

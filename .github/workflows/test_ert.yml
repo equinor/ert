@@ -29,7 +29,7 @@ jobs:
         submodules: true
         lfs: true
 
-    - if: ${{ inputs.os == 'macos-latest' }}
+    - if: ${{ runner.os == 'macOS' }}
       run: echo "ERT_TESTS_RUN_ON_MAC_CI=true" >> "$GITHUB_ENV"
 
     - uses: ./.github/actions/install_dependencies_qt
