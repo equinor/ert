@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import pytest
 
@@ -21,16 +22,17 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from _ert.forward_model_runner.reporting.statemachine import TransitionError
+from tests.ert.unit_tests.forward_model_runner import (
+    create_stub_forward_model_step_json,
+)
 from tests.ert.utils import MockZMQServer
 
 
-def test_report_with_successful_start_message_argument():
-    fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-    )
+def test_report_with_successful_start_message_argument() -> None:
+    fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri)
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Start(fmstep1))
         reporter.report(Finish())
 
@@ -40,18 +42,18 @@ def test_report_with_successful_start_message_argument():
     assert event.ensemble == "ens_id"
     assert event.real == "0"
     assert event.fm_step == "0"
+    assert event.std_out is not None
+    assert event.std_err is not None
     assert os.path.basename(event.std_out) == "stdout"
     assert os.path.basename(event.std_err) == "stderr"
 
 
-def test_report_with_failed_start_message_argument():
-    fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-    )
+def test_report_with_failed_start_message_argument() -> None:
+    fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri)
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
 
         msg = Start(fmstep1).with_error("massive_failure")
 
@@ -64,14 +66,12 @@ def test_report_with_failed_start_message_argument():
     assert event.error_msg == "massive_failure"
 
 
-async def test_report_with_successful_exit_message_argument():
-    fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-    )
+async def test_report_with_successful_exit_message_argument() -> None:
+    fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri)
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Exited(fmstep1, 0))
         reporter.report(Finish().with_error("failed"))
 
@@ -80,14 +80,12 @@ async def test_report_with_successful_exit_message_argument():
     assert type(event) is ForwardModelStepSuccess
 
 
-def test_report_with_failed_exit_message_argument():
-    fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-    )
+def test_report_with_failed_exit_message_argument() -> None:
+    fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri)
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Exited(fmstep1, 1).with_error("massive_failure"))
         reporter.report(Finish())
 
@@ -97,14 +95,12 @@ def test_report_with_failed_exit_message_argument():
     assert event.error_msg == "massive_failure"
 
 
-def test_report_with_running_message_argument():
-    fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-    )
+def test_report_with_running_message_argument() -> None:
+    fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri)
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Finish())
 
@@ -115,35 +111,31 @@ def test_report_with_running_message_argument():
     assert event.current_memory_usage == 10
 
 
-def test_report_only_job_running_for_successful_run():
-    fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-    )
+def test_report_only_job_running_for_successful_run() -> None:
+    fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri)
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Finish())
 
     assert len(mock_server.messages) == 1
 
 
-def test_report_with_failed_finish_message_argument():
-    fmstep1 = ForwardModelStep(
-        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-    )
+def test_report_with_failed_finish_message_argument() -> None:
+    fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri)
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Finish().with_error("massive_failure"))
 
     assert len(mock_server.messages) == 1
 
 
-def test_report_inconsistent_events():
+def test_report_inconsistent_events() -> None:
     reporter = Event(evaluator_url="")
 
     with pytest.raises(
@@ -152,7 +144,7 @@ def test_report_inconsistent_events():
         reporter.report(Finish())
 
 
-def test_report_with_failed_reporter_but_finished_jobs():
+def test_report_with_failed_reporter_but_finished_jobs() -> None:
     # this is to show when the reporter fails ert won't crash nor
     # staying hanging but instead finishes up the job;
     # see reporter._event_publisher_thread.join()
@@ -167,15 +159,13 @@ def test_report_with_failed_reporter_but_finished_jobs():
             max_retries=0,
             finished_event_timeout=0.01,
         )
-        fmstep1 = ForwardModelStep(
-            {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-        )
+        fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
         # prevent router to receive messages
         mock_server.store_messages = False
         mock_server.ack_messages = False
 
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
@@ -186,21 +176,19 @@ def test_report_with_failed_reporter_but_finished_jobs():
     assert len(mock_server.messages) == 0, "expected 0 Job running messages"
 
 
-def test_report_with_reconnected_reporter_but_finished_jobs():
+def test_report_with_reconnected_reporter_but_finished_jobs() -> None:
     # this is to show when the reporter fails but reconnects
     # reporter still manages to send events and completes fine
     # see reporter._event_publisher for more details.
     with MockZMQServer() as mock_server:
         reporter = Event(evaluator_url=mock_server.uri, ack_timeout=1, max_retries=1)
-        fmstep1 = ForwardModelStep(
-            {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-        )
+        fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
         # prevent router from receiving messages
         mock_server.ack_messages = False
         mock_server.store_messages = False
 
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
@@ -241,8 +229,12 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
     ],
 )
 def test_event_reporter_does_not_hang_after_failed(
-    mocked_server_params, ack_timeout, expected_message, monkeypatch, caplog
-):
+    mocked_server_params: dict[str, Any],
+    ack_timeout: float,
+    expected_message: str,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     monkeypatch.setattr(
         "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 0
     )
@@ -250,15 +242,13 @@ def test_event_reporter_does_not_hang_after_failed(
         reporter = Event(
             evaluator_url=mock_server.uri, ack_timeout=ack_timeout, max_retries=0
         )
-        fmstep1 = ForwardModelStep(
-            {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
-        )
+        fmstep1 = ForwardModelStep(create_stub_forward_model_step_json(), 0)
 
         errored = False
         # May raise ClientConnectionError if connection retries already finished
         # in which case reporter._reporter_exception is set
         try:
-            reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+            reporter.report(Init([fmstep1], "1", "19", ens_id="ens_id", real_id=0))
             reporter.report(Start(fmstep1))
             reporter.report(Finish())
         except ClientConnectionError:
