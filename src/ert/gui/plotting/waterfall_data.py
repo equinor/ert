@@ -11,7 +11,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
-import pandas as pd
+import polars as pl
 import scipy.sparse
 
 from ert.storage.blob_data import BlobType
@@ -26,8 +26,13 @@ def compute_waterfall_data(
     ensemble: Ensemble,
     parameter_key: str,
     nobservations: int = 10,
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """Compute waterfall chart data for a scalar parameter.
+
+    This decomposes the update of a single scalar parameter
+    (from prior to posterior) into per-observation contributions,
+    showing how much each observation "pushed" the parameter during
+    the EnIF analysis step.
 
     Parameters
     ----------
@@ -40,21 +45,21 @@ def compute_waterfall_data(
 
     Returns
     -------
-    pd.DataFrame
+    pl.DataFrame
         Columns: "type" (prior|contribution|posterior), "name", "value".
         Empty DataFrame if data is unavailable.
     """
-    # Find K matrix blob
+    # Find K matrix blob representing the Kalman gain
     blobs = ensemble.load_blobs(BlobType.MATRIX)
     k_blob = next((b for b in blobs if b.name == "K"), None)
     if k_blob is None:
         logger.info("No K matrix blob found on ensemble %s", ensemble.id)
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     parameter_group_sizes: dict[str, int] = k_blob.blob_info.parameter_group_sizes
     if not parameter_group_sizes:
         logger.info("K blob has no parameter_group_sizes metadata")
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     # Resolve parameter config name from the UI key
     config_name = (
@@ -65,7 +70,7 @@ def compute_waterfall_data(
 
     if config_name not in parameter_group_sizes:
         logger.info("Parameter %r not found in parameter_group_sizes", config_name)
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     # Compute row offset in K for this parameter
     row_offset = 0
@@ -81,7 +86,7 @@ def compute_waterfall_data(
             config_name,
             param_size,
         )
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     # Load K matrix
     k_bytes = ensemble.load_blob(k_blob.uri)
@@ -96,7 +101,7 @@ def compute_waterfall_data(
     parent_id = ensemble.parent
     if parent_id is None:
         logger.info("Ensemble %s has no parent (prior)", ensemble.id)
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     storage = ensemble._storage
     prior = storage.get_ensemble(parent_id)
@@ -105,12 +110,12 @@ def compute_waterfall_data(
     ens_mask = prior.get_realization_mask_with_responses()
     iens = np.flatnonzero(ens_mask)
     if len(iens) == 0:
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     # Load observations and responses to compute innovation mean
     obs_keys = ensemble.experiment.observation_keys
     if not obs_keys:
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     obs_resp_df = prior.get_observations_and_responses(obs_keys, iens)
 
@@ -125,7 +130,7 @@ def compute_waterfall_data(
     real_cols = [str(i) for i in iens]
     available_cols = [c for c in real_cols if c in obs_resp_df.columns]
     if not available_cols:
-        return pd.DataFrame()
+        return pl.DataFrame()
 
     S = obs_resp_df.select(available_cols).to_numpy()
     innovation_mean = observation_values - S.mean(axis=1)
@@ -137,31 +142,29 @@ def compute_waterfall_data(
             k_row.shape[0],
             len(innovation_mean),
         )
-        return pd.DataFrame()
+        return pl.DataFrame()
 
-    # Load prior and posterior parameter values
-    prior_values = prior.load_parameters_numpy(config_name, iens)  # (1, n_real)
-    posterior_values = ensemble.load_parameters_numpy(config_name, iens)  # (1, n_real)
+    # Load prior and posterior parameter values for the scalar parameter.
+    prior_values = prior.load_parameters_numpy(config_name, iens)
+    posterior_values = ensemble.load_parameters_numpy(config_name, iens)
 
-    # Standardize using prior statistics
     prior_flat = prior_values.flatten()
     posterior_flat = posterior_values.flatten()
     prior_mean_raw = float(prior_flat.mean())
     prior_std = float(prior_flat.std())
 
     if prior_std < 1e-12:
-        # No variance in prior - standardization meaningless
-        param_prior = prior_mean_raw
-        param_posterior = float(posterior_flat.mean())
+        # If the prior has no variability, we can only report the raw shift.
+        param_prior = 0.0
+        param_posterior = float(posterior_flat.mean() - prior_mean_raw)
     else:
-        param_prior = 0.0  # standardized prior mean is always 0
+        param_prior = 0.0
         param_posterior = float((posterior_flat.mean() - prior_mean_raw) / prior_std)
 
-    # Compute scaled contributions
-    update = param_posterior - param_prior
+    # Compute scaled contributions that sum to the standardized mean update.
     k_scaled = k_row * innovation_mean
     total_raw = float(k_row @ innovation_mean)
-    factor = update / total_raw if abs(total_raw) > 1e-15 else 1.0
+    factor = param_posterior / total_raw if abs(total_raw) > 1e-15 else 0.0
 
     contributions = factor * k_scaled
 
@@ -185,4 +188,4 @@ def compute_waterfall_data(
     names = ["Prior", *top_names, "Posterior"]
     values = [param_prior, *top_values.tolist(), param_posterior]
 
-    return pd.DataFrame({"type": types, "name": names, "value": values})
+    return pl.DataFrame({"type": types, "name": names, "value": values})
