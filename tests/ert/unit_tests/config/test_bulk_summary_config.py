@@ -320,7 +320,7 @@ def test_that_summary_bulk_config_resolves_csv_in_subdirectory_from_main_config(
 
     ert_conf = ErtConfig.from_file("config.ert")
     obs = create_observation_dataframes(
-        ert_conf.observation_declarations, None, ert_conf.shape_registry
+        ert_conf.observation_declarations, ert_conf.shape_registry
     )
     assert len(obs["summary"]) == 3
     assert len(obs["breakthrough"]) == 1

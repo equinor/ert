@@ -114,7 +114,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     with open_storage(path, mode="w") as storage:
         ens_config = ert_config.ensemble_config
         observations = create_observation_dataframes(
-            ert_config.observation_declarations, None
+            ert_config.observation_declarations
         )
         experiment_id = storage.create_experiment(
             experiment_config={

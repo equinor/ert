@@ -1946,7 +1946,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         model_experiment = Experiment(experiment_id)
         model_experiment.parameters = parameters
         model_experiment.responses = responses
-        model_experiment.observations = create_observation_dataframes(obs, None)
+        model_experiment.observations = create_observation_dataframes(obs)
 
         # Ensure that there is at least one ensemble in the experiment
         # to avoid https://github.com/equinor/ert/issues/7040
