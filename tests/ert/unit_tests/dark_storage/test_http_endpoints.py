@@ -16,11 +16,11 @@ from ert.dark_storage.common import get_storage_api_version
 from ert.dark_storage.endpoints.observations import _get_observations
 from ert.storage import open_storage
 from tests.ert.defaults_generator import (
-    _create_breakthrough_observation,
-    _create_general_observation,
-    _create_rft_observation,
-    _create_seismic_observation,
-    _create_summary_observation,
+    create_breakthrough_observation,
+    create_general_observation,
+    create_rft_observation,
+    create_seismic_observation,
+    create_summary_observation,
 )
 
 
@@ -431,26 +431,26 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
     storage_path = tmp_path / "storage"
     observations = [
         *[
-            _create_summary_observation(name="SUMMARY_OBSERVATION", date=date)
+            create_summary_observation(name="SUMMARY_OBSERVATION", date=date)
             for date in ["2010-11-01", "2010-07-01", "2010-12-01"]
         ],
         *[
-            _create_general_observation(name="GENERAL_OBSERVATION", index=index)
+            create_general_observation(name="GENERAL_OBSERVATION", index=index)
             for index in [11, 7, 12]
         ],
         *[
-            _create_breakthrough_observation(
+            create_breakthrough_observation(
                 name="BREAKTHROUGH_OBSERVATION",
                 date=datetime.datetime(2010, month, 1),  # noqa: DTZ001
             )
             for month in [11, 7, 12]
         ],
         *[
-            _create_rft_observation(name="RFT_OBSERVATION", tvd=tvd)
+            create_rft_observation(name="RFT_OBSERVATION", tvd=tvd)
             for tvd in [11.0, 7.0, 12.0]
         ],
         *[
-            _create_seismic_observation(
+            create_seismic_observation(
                 name="SEISMIC_OBSERVATION",
                 east=east,
                 north=north,

@@ -34,6 +34,10 @@ from ert.config.rft_config import RFTConfig
 from ert.gui.plotting.ert_plots.observations import _plotObservations
 from ert.gui.plotting.utils import PlotConfig
 from ert.namespace import Namespace
+from tests.ert.defaults_generator import (
+    create_breakthrough_observation_dict,
+    create_summary_observation_dict,
+)
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 
@@ -163,26 +167,8 @@ def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
 @pytest.mark.parametrize(
     "observation_dict",
     [
-        pytest.param(
-            {
-                "type": ObservationType.SUMMARY,
-                "name": "FOPR",
-                "KEY": "FOPR",
-                "VALUE": "1",
-                "ERROR": "1",
-                "DATE": "",
-            }
-        ),
-        pytest.param(
-            {
-                "type": ObservationType.BREAKTHROUGH,
-                "name": "breakthrough",
-                "KEY": "WWCT:OP_1",
-                "ERROR": "1",
-                "THRESHOLD": "0.2",
-                "DATE": "",
-            }
-        ),
+        pytest.param(create_summary_observation_dict()),
+        pytest.param(create_breakthrough_observation_dict()),
     ],
 )
 def test_date_parsing_in_observations(datestring, errors, observation_dict):

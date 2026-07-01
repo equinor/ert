@@ -30,7 +30,7 @@ from ert.storage.local_ensemble import (
     _write_responses_to_storage,
 )
 from ert.storage.mode import ModeError
-from tests.ert.defaults_generator import _create_rft_observation
+from tests.ert.defaults_generator import create_rft_observation
 
 
 def test_that_load_scalar_keys_loads_all_parameters(tmp_path):
@@ -340,7 +340,7 @@ def _create_rft_ensemble(
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_returns_joined_data():
     with _create_rft_ensemble(
-        1, [_create_rft_observation(zone="Z1")], zonemap="1 Z1"
+        1, [create_rft_observation(zone="Z1")], zonemap="1 Z1"
     ) as ensemble:
         realization = 0
         ensemble.save_response(
@@ -397,7 +397,7 @@ def test_that_get_rft_observations_and_responses_returns_joined_data():
 def test_that_get_rft_observations_and_responses_includes_approximated_values_when_enabled(  # noqa: E501
     approximate_missing_values, expected_approximated_values
 ):
-    observation = _create_rft_observation(zone="zone1")
+    observation = create_rft_observation(zone="zone1")
     with _create_rft_ensemble(
         1, [observation], approximate_missing_values=approximate_missing_values
     ) as ensemble:
@@ -446,8 +446,8 @@ def test_that_get_rft_observations_is_active_based_on_matching_pressure_response
     and False if not
     """
     observations = [
-        _create_rft_observation(),
-        _create_rft_observation(
+        create_rft_observation(),
+        create_rft_observation(
             name="obs2",
             tvd=30.0,
             md=60.0,
@@ -477,14 +477,14 @@ def test_that_get_rft_observations_is_active_based_on_matching_pressure_response
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_sets_valid_zone_with_null_equality():
     observations = [
-        _create_rft_observation(zone="Z1"),
-        _create_rft_observation(
+        create_rft_observation(zone="Z1"),
+        create_rft_observation(
             name="obs2",
             tvd=30.0,
             md=60.0,
             value=160.0,
         ),
-        _create_rft_observation(
+        create_rft_observation(
             name="obs3",
             tvd=35.0,
             md=70.0,
@@ -523,11 +523,11 @@ def test_that_get_rft_observations_and_responses_sets_valid_zone_with_null_equal
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_order_is_row_index_within_well():
     observations = [
-        _create_rft_observation(name="obs1", tvd=25.0, md=50.0),
-        _create_rft_observation(name="obs2", tvd=30.0, md=60.0),
-        _create_rft_observation(name="obs3", tvd=35.0, md=70.0),
-        _create_rft_observation(well="WELL2", name="obs4", tvd=40.0, md=80.0),
-        _create_rft_observation(well="WELL2", name="obs5", tvd=45.0, md=90.0),
+        create_rft_observation(name="obs1", tvd=25.0, md=50.0),
+        create_rft_observation(name="obs2", tvd=30.0, md=60.0),
+        create_rft_observation(name="obs3", tvd=35.0, md=70.0),
+        create_rft_observation(well="WELL2", name="obs4", tvd=40.0, md=80.0),
+        create_rft_observation(well="WELL2", name="obs5", tvd=45.0, md=90.0),
     ]
 
     with _create_rft_ensemble(1, observations) as ensemble:
@@ -560,7 +560,7 @@ def test_that_get_rft_observations_and_responses_handles_multiple_realizations(
     response_values: list[float], prop: str
 ):
     with _create_rft_ensemble(
-        len(response_values), [_create_rft_observation()]
+        len(response_values), [create_rft_observation()]
     ) as ensemble:
         for i, r in enumerate(response_values):
             ensemble.save_response(
@@ -592,7 +592,7 @@ def test_that_get_rft_observations_and_responses_raises_error_for_no_observation
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_raises_error_when_response_not_saved():
     with (
-        _create_rft_ensemble(1, [_create_rft_observation()]) as ensemble,
+        _create_rft_ensemble(1, [create_rft_observation()]) as ensemble,
         pytest.raises(KeyError, match="No response for key rft"),
     ):
         ensemble.get_rft_observations_and_responses()
@@ -600,7 +600,7 @@ def test_that_get_rft_observations_and_responses_raises_error_when_response_not_
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_raises_error_when_location_metadata_not_saved():  # noqa: E501
-    with _create_rft_ensemble(1, [_create_rft_observation()]) as ensemble:
+    with _create_rft_ensemble(1, [create_rft_observation()]) as ensemble:
         ensemble.save_response("rft", _create_rft_response_df(), 0)
         with pytest.raises(FileNotFoundError, match="observation_location_metadata"):
             ensemble.get_rft_observations_and_responses()
@@ -609,7 +609,7 @@ def test_that_get_rft_observations_and_responses_raises_error_when_location_meta
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_adds_missing_saturation_columns():
     realization = 0
-    with _create_rft_ensemble(1, [_create_rft_observation()]) as ensemble:
+    with _create_rft_ensemble(1, [create_rft_observation()]) as ensemble:
         # Save a response that does not contain saturations
         ensemble.save_response("rft", _create_rft_response_df(), realization)
         ensemble.save_observation_location_metadata(
@@ -629,8 +629,8 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
     tmp_path,
 ):
     observations = [
-        _create_rft_observation(date="2020-01-15"),
-        _create_rft_observation(
+        create_rft_observation(date="2020-01-15"),
+        create_rft_observation(
             date="2020-02-15",
             name="obs2",
             tvd=30.0,
@@ -697,7 +697,7 @@ def test_that_rft_artifacts_are_saved_atomically(caplog):
         ):
             num_realizations = 5
             observations = [
-                _create_rft_observation(),
+                create_rft_observation(),
             ]
 
             with _create_rft_ensemble(num_realizations, observations) as ensemble:

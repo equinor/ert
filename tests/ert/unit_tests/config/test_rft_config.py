@@ -22,6 +22,7 @@ from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.config.response_config import _RESPONSE_WARNING_LIMIT
 from ert.config.rft_config import _get_zonemap, _read_egrid
 from ert.warnings import PostExperimentWarning
+from tests.ert.defaults_generator import create_rft_observation_dict
 from tests.ert.rft_generator import cell_start, create_egrid, float_arr
 
 
@@ -659,19 +660,7 @@ def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepe
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                        "ZONE": "zone2",
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -731,19 +720,7 @@ def test_that_substitutions_are_applied_to_zonemap_filename(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                        "ZONE": "zone1",
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -780,18 +757,7 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 1.0,
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -1318,20 +1284,7 @@ def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_
     if rft_obs_config:
         config_dict["OBS_CONFIG"] = (
             "obsconf",
-            [
-                {
-                    "type": ObservationType.RFT,
-                    "name": "NAME",
-                    "WELL": "WELL",
-                    "VALUE": "700",
-                    "ERROR": "0.1",
-                    "DATE": "2000-01-01",
-                    "PROPERTY": "PRESSURE",
-                    "NORTH": 1.0,
-                    "EAST": 1.0,
-                    "TVD": 0.5,
-                }
-            ],
+            [create_rft_observation_dict()],
         )
 
     config = ErtConfig.from_dict(config_dict)
