@@ -8,9 +8,9 @@ import networkx as nx
 import numpy as np
 import polars as pl
 import scipy as sp
-from graphite_maps.enif import EnIF  # type: ignore
-from graphite_maps.linear_regression import linear_boost_ic_regression  # type: ignore
-from graphite_maps.precision_estimation import (  # type: ignore
+from graphite_maps.enif import EnIF
+from graphite_maps.linear_regression import linear_boost_ic_regression
+from graphite_maps.precision_estimation import (
     fit_precision_cholesky_approximate,
 )
 from numpy import typing as npt
