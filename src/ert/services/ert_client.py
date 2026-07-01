@@ -203,6 +203,18 @@ class ErtClient:
             )
         )
 
+    def waterfall_data(
+        self, ensemble_id: str, parameter_key: str, nobservations: int = 10
+    ) -> pd.DataFrame:
+        return _response_to_parquet(
+            self._request(
+                "GET",
+                f"/ensembles/{ensemble_id}/waterfall/{_escape(parameter_key)}",
+                headers=_PARQUET,
+                params={"nobservations": nobservations},
+            )
+        )
+
     @_cached
     def experiment_observations(self, experiment_id: str) -> list[dict[str, Any]]:
         return list(self._get(f"/experiments/{experiment_id}/observations").json())
