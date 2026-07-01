@@ -36,6 +36,7 @@ from ert.gui.plotting.utils import PlotConfig
 from ert.namespace import Namespace
 from tests.ert.defaults_generator import (
     create_breakthrough_observation_dict,
+    create_rft_observation_dict,
     create_summary_observation_dict,
 )
 
@@ -309,7 +310,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
     assert list(observations["time"]) == [datetime.fromisoformat(time_map[restart])]
 
 
-def test_that_rft_config_is_created_from_observations():
+def test_that_rft_observation_dataframes_are_created():
     ert_config = ErtConfig.from_dict(
         {
             "ECLBASE": "ECLIPSE_CASE",
@@ -355,7 +356,70 @@ def test_that_rft_config_is_created_from_observations():
             }
         ),
     )
-    assert rft_config.data_to_read == {"well": {"2013-03-31": ["PRESSURE"]}}
+
+
+def test_that_rft_config_is_created_from_observations():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well2", date="2013-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well", date="2015-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="DEPTH"
+                    ),
+                ],
+            ),
+        }
+    )
+    assert "rft" in ert_config.ensemble_config.response_configs
+    rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
+    assert rft_config.data_to_read == {
+        "well": {"2013-03-31": ["PRESSURE", "DEPTH"], "2015-03-31": ["PRESSURE"]},
+        "well2": {"2013-03-31": ["PRESSURE"]},
+    }
+
+
+def test_that_rft_config_is_created_from_mix_of_observations_and_responses():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "RFT": [{"WELL": "well", "DATE": "2013-03-31", "PROPERTIES": "DEPTH"}],
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="PRESSURE"
+                    ),
+                ],
+            ),
+        }
+    )
+    rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
+    assert rft_config.data_to_read == {"well": {"2013-03-31": ["DEPTH", "PRESSURE"]}}
+
+
+def test_that_rft_config_requires_eclbase_to_be_created_from_observations():
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(),
+                ],
+            ),
+        }
+    )
+    assert "rft" not in ert_config.ensemble_config.response_configs
 
 
 @pytest.mark.usefixtures("use_tmpdir")
