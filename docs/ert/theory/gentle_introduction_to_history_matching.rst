@@ -520,6 +520,8 @@ That said, adaptive localization has some practical benefits.
 It is relatively easy to understand, and it can be enabled with minimal configuration.
 In practice, the only tunable input is the correlation threshold.
 
+.. _distance_based_localization:
+
 Distance based localization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
