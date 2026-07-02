@@ -7,9 +7,9 @@ Observations
 General overview
 ----------------
 
-When using ERT to condition on dynamic data, it is necessary to
+When using ert to condition on dynamic data, it is necessary to
 specify the data/observations to be used. For every piece of data
-ERT needs to know:
+ert needs to know:
 
  - The measured value of the data.
  - The uncertainty (standard deviation) of the measured data.
@@ -17,7 +17,7 @@ ERT needs to know:
  - How to simulate a response of the data given a parameterized forward model.
 
 This information is configured in an observation file. The name/path
-to this observation file is declared in the main ERT config file using the
+to this observation file is declared in the main ert config file using the
 :ref:`OBS_CONFIG <obs_config>` keyword.
 
 The observation file is a plain text file, and is in essence built around four
@@ -45,7 +45,7 @@ different classes of observations using the associated keywords:
 
 Please note that observations and datatypes are quite tightly linked together.
 Before reading this you should have a firm grasp of the dynamic data types
-as described in :ref:`Data types available in ERT <Data_types_available_in_ERT>`.
+as described in :ref:`Data types available in ert <Data_types_available_in_ERT>`.
 
 
 .. _summary_observation:
@@ -77,7 +77,7 @@ created as follows:
 This will create an observation of group oil production for the Brent
 group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
-label for the observation within ERT and must be unique.
+label for the observation within ert and must be unique.
 
 Date format YYYY-MM-DD (ISO 8601) is required. Other time formats, like
 DD/MM/YYYY or DD.MM.YYYY, are deprecated and their support will be removed in a
@@ -135,7 +135,7 @@ keyword is ABS.
 
 The default value for `ERROR_MIN` is 0.1.
 
-ERT will not load an observation if the total error associated with an observation is zero.
+Ert will not load an observation if the total error associated with an observation is zero.
 A zero error is incompatible with the logic used in the history matching
 process. Therefore, setting a minimum error is particularly important for
 observations that could happen to be zero. For example, if an observation is the
@@ -226,7 +226,7 @@ Where the provided csv file will contain one row for each observation.
 Required columns to create summary observations are: keyword, value,
 error, date.
 
-Without these columns, the configuration is invalid, and Ert will raise
+Without these columns, the configuration is invalid, and ert will raise
 an error.
 
 A csv file containing a single summary observation might look like:
@@ -402,7 +402,7 @@ Here we use INDEX_LIST to indicate that we are interested in element
    ========
 
 
-If ``INDEX_LIST`` not defined, Ert assumes that the observations point
+If ``INDEX_LIST`` not defined, ert assumes that the observations point
 to the first ``n`` ``GEN_DATA`` points:
 
 .. code-block:: none
@@ -458,8 +458,8 @@ While the observation configuration file could include this:
       OBS_FILE   = some_file.txt;
    };
 
-Before ERT starts we expect there to be a file called ``some_file.txt``  with the
-observed values and the uncertainty. After the forward model has completed, ERT
+Before ert starts we expect there to be a file called ``some_file.txt``  with the
+observed values and the uncertainty. After the forward model has completed, ert
 will load the responses from a file called ``rft_BH67``.
 
 If ``REPORT_STEP`` and ``RESTART`` are provided,
@@ -572,9 +572,63 @@ Using zones with RFT observations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When an RFT observation includes a ZONE identifier (either in the CSV file or specified directly),
-ERT will validate that the measurement location falls within the expected geological zone defined
+ert will validate that the measurement location falls within the expected geological zone defined
 in the :ref:`ZONEMAP <zonemap>`. This provides an additional quality check to ensure observations
 are correctly associated with reservoir zones.
 
 If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
 the expected zone, the observation will be deactivated with a warning during the simulation.
+
+The LOCALIZATION keyword - Configuring observations with location
+-----------------------------------------------------------------
+
+A prerequisite for using :ref:`distance based localization <distance_based_localization>`
+is to provide metadata regarding location for the observations.
+
+This can be configured for :ref:`summary observations <summary_observation>` and
+:ref:`breakthrough observations <breakthrough_observation>` by inserting a `LOCALIZATION`
+keyword into their declarations.
+
+The `LOCALIZATION` object has two required fields: `NORTH` and `EAST`. Additionally,
+`RADIUS` can be configured here, but will be defaulted to 3000m if absent.
+
+The `LOCALIZATION` object can be defined as follows:
+
+.. code-block:: none
+
+   LOCALIZATION {
+     EAST=70;
+     NORTH=80;
+     RADIUS=2500;
+   };
+
+And inserted into a summary observation like so:
+
+.. code-block:: none
+
+   SUMMARY_OBSERVATION WOPR_OP1_141 {
+     KEY   = WOPR;
+     VALUE = 1e6;
+     ERROR = 3e4;
+     DATE  = 2012-02-13;
+     LOCALIZATION {
+       EAST   = 70;
+       NORTH  = 80;
+       RADIUS = 2500;
+     };
+   };
+
+And similarily into a :ref:`breakthrough observation <breakthrough_observation>`
+
+The RFT observations already contains the keywords `NORTH` and `EAST` in its´ regular
+configuration. These observations are therefore already correctly configured for distance
+based localization.
+
+The radius for RFTs will be the default radius value of 3000m, but can be overwritten by
+providing a `LOCALIZATION` object containing just the `RADIUS` key, e.g.
+
+.. code-block::
+
+   LOCALIZATION {
+     RADIUS=2500;
+   };
