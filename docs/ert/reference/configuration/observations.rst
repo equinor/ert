@@ -204,10 +204,6 @@ keyword ERROR_MIN:
 This error mode is also relevant for observations that may be zero,
 for example water production rates.
 
-Note that the configuration parser does not treat carriage return
-different from space. Thus, the following statement is equivalent to
-the previous:
-
 .. _bulk_configuration_of_summary_observations:
 
 Bulk configuration of summary observations
