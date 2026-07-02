@@ -489,6 +489,62 @@ are correctly associated with reservoir zones.
 If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
 the expected zone, the observation will be deactivated with a warning during the simulation.
 
+The LOCALIZATION keyword - Configuring observations with location
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A prerequisite for using :ref:`distance based localization <distance_based_localization>`
+is to provide metadata regarding location for the observations.
+
+This can be configured for :ref:`summary observations <summary_observation>` and
+:ref:`breakthrough observations <breakthrough_observation>` by inserting a `LOCALIZATION`
+keyword into their declarations.
+
+The `LOCALIZATION` object has two required fields: `NORTH` and `EAST`. Additionally,
+`RADIUS` can be configured here, but will be defaulted to 3000m if absent.
+
+The `LOCALIZATION` object can be defined as follows:
+
+.. code-block:: none
+
+   LOCALIZATION {
+     EAST=70;
+     NORTH=80;
+     RADIUS=2500;
+   };
+
+And inserted into a summary observation like so:
+
+.. code-block:: none
+
+   SUMMARY_OBSERVATION WOPR_OP1_141 {
+     KEY   = WOPR;
+     VALUE = 1e6;
+     ERROR = 3e4;
+     DATE  = 2012-02-13;
+     LOCALIZATION {
+       EAST   = 70;
+       NORTH  = 80;
+       RADIUS = 2500;
+     };
+   };
+
+And similarily into a :ref:`breakthrough observation <breakthrough_observation>`
+
+The RFT observations already contains the keywords `NORTH` and `EAST` in its´ regular
+configuration. These observations are therefore already correctly configured for distance
+based localization.
+
+The radius  for RFTs will be the default radius value of 3000m, but can be overwritten by
+providing a `LOCALIZATION` object containing just the `RADIUS` key, e.g.
+
+.. code-block::
+
+   LOCALIZATION {
+     RADIUS=2500;
+   };
+
+
+
 .. _bulk_configuration_of_summary_observations:
 
 Bulk configuration of summary observations
