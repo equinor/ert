@@ -39,7 +39,6 @@ from ert.config.observation_quality_control import (
 from ert.config.rft_config import RFTConfig
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
-from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -1162,14 +1161,14 @@ class LocalEnsemble(BaseMode):
         """
         rft_observations = self.experiment.observations.get("rft")
         if rft_observations is None or rft_observations.is_empty():
-            raise StorageError("No RFT observations found in experiment")
+            raise ValueError("No RFT observations found in experiment")
 
         if "rft" not in self.experiment.response_configuration:
-            raise KeyError("No RFT response configuration found in experiment")
+            raise ValueError("No RFT response configuration found in experiment")
 
         realizations = self.get_realization_list_with_responses()
         if not realizations:
-            raise StorageError("No realizations with responses found")
+            raise ValueError("No realizations with responses found")
 
         # Build date-to-report_step mapping from summary responses if available
         date_to_report_step: dict[str, int] = {}
