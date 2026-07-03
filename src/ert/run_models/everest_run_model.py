@@ -23,7 +23,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import PrivateAttr, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
-from ropt.evaluator import EvaluatorContext, EvaluatorResult
+from ropt.evaluation import EvaluationBatchContext, EvaluationBatchResult
 from ropt.results import FunctionResults, Results
 from ropt.workflow import BasicOptimizer
 from typing_extensions import TypedDict
@@ -834,7 +834,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
-        optimizer_exit_code = optimizer.run(initial_guesses)
+        optimizer_exit_code = optimizer.run(initial_guesses).exit_code
 
         # Store some final results.
         self._update_ensemble_improvement_flags()
@@ -988,8 +988,10 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         return objectives, constraints
 
     def _forward_model_evaluator(
-        self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
-    ) -> EvaluatorResult:
+        self,
+        control_values: NDArray[np.float64],
+        evaluator_context: EvaluationBatchContext,
+    ) -> EvaluationBatchResult:
         logger.debug(f"Evaluating batch {self._batch_id}")
 
         # ----------------------------------------------------------------------
@@ -1133,7 +1135,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 else None
             )
 
-        evaluator_result = EvaluatorResult(
+        evaluator_result = EvaluationBatchResult(
             objectives=objectives,
             constraints=constraints,
             batch_id=self._batch_id,
