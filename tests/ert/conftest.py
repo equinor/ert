@@ -1,4 +1,5 @@
 import fileinput
+import io
 import logging
 import multiprocessing
 import os
@@ -9,11 +10,14 @@ import sys
 import warnings
 from argparse import ArgumentParser
 from importlib.resources import files
+from io import BytesIO, StringIO
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
 import polars as pl
 import pytest
+import resfo
 from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
 from lark import Token
@@ -575,3 +579,76 @@ def file_context_token():
         )
 
     return _file_context_token
+
+
+original_open = open
+original_io_open = io.open
+original_stat = os.stat
+original_pl_read_csv = pl.read_csv
+original_np_loadtxt = np.loadtxt
+
+
+@pytest.fixture
+def mocked_files(mocker):
+    mocked_files = {}
+
+    def _fresh_buffer(data):
+        if isinstance(data, bytes):
+            return BytesIO(data)
+        return StringIO(data)
+
+    def mock_open(*args, **kwargs):
+        path = args[0] if args else kwargs.get("file")
+        data = mocked_files.get(str(path))
+        if data is not None:
+            return _fresh_buffer(data)
+        return original_open(*args, **kwargs)
+
+    def mock_io_open(*args, **kwargs):
+        path = args[0] if args else kwargs.get("file")
+        data = mocked_files.get(str(path))
+        if data is not None:
+            return _fresh_buffer(data)
+        return original_io_open(*args, **kwargs)
+
+    def mock_stat(*args, **kwargs):
+        path = args[0] if args else kwargs.get("path")
+        if str(path) in mocked_files:
+            return os.stat_result([0x777, *([1] * 10)])
+        return original_stat(*args, **kwargs)
+
+    def mock_pl_read_csv(*args, **kwargs):
+        path = args[0] if args else kwargs.get("source")
+        data = mocked_files.get(str(path))
+        if data is not None:
+            new_kwargs = {**kwargs}
+            new_kwargs.pop("source", None)
+            return original_pl_read_csv(_fresh_buffer(data), *args[1:], **new_kwargs)
+        return original_pl_read_csv(*args, **kwargs)
+
+    def mock_np_loadtxt(*args, **kwargs):
+        path = args[0] if args else kwargs.get("fname")
+        data = mocked_files.get(str(path))
+        if data is not None:
+            new_kwargs = {**kwargs}
+            new_kwargs.pop("fname", None)
+            return original_np_loadtxt(_fresh_buffer(data), *args[1:], **new_kwargs)
+        return original_np_loadtxt(*args, **kwargs)
+
+    mocker.patch("builtins.open", mock_open)
+    mocker.patch("io.open", mock_io_open)
+    mocker.patch("os.stat", mock_stat)
+    mocker.patch("polars.read_csv", mock_pl_read_csv)
+    mocker.patch("numpy.loadtxt", mock_np_loadtxt)
+
+    return mocked_files
+
+
+@pytest.fixture
+def mock_resfo_file(mocked_files):
+    def inner(filename, contents):
+        buffer = BytesIO()
+        resfo.write(buffer, contents)
+        mocked_files[filename] = buffer.getvalue()
+
+    return inner
