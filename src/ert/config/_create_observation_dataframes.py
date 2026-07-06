@@ -19,12 +19,10 @@ from ._observations import (
 )
 from ._shapes import CircleShapeConfig, ShapeRegistry
 from .parsing import ErrorInfo, ObservationConfigError
-from .rft_config import RFTConfig
 
 
 def create_observation_dataframes(
     observations: Sequence[Observation],
-    rft_config: RFTConfig | None,
     shape_registry: ShapeRegistry | None = None,
 ) -> dict[str, pl.DataFrame]:
     if not observations:
@@ -51,19 +49,12 @@ def create_observation_dataframes(
                         )
                     )
                 case RFTObservation():
-                    if rft_config is None:
-                        raise TypeError(
-                            "create_observation_dataframes requires "
-                            "rft_config is not None when using RFTObservation"
-                        )
                     if shape_registry is None:
                         raise TypeError(
                             "create_observation_dataframes requires "
                             "shape_registry is not None when using RFTObservation"
                         )
-                    grouped["rft"].append(
-                        _handle_rft_observation(rft_config, obs, shape_registry)
-                    )
+                    grouped["rft"].append(_handle_rft_observation(obs, shape_registry))
                 case BreakthroughObservation():
                     grouped["breakthrough"].append(
                         _handle_breakthrough_observation(
@@ -194,7 +185,6 @@ def _rft_observation_schema() -> dict[str, Any]:
 
 
 def _handle_rft_observation(
-    rft_config: RFTConfig,
     rft_observation: RFTObservation,
     shape_registry: ShapeRegistry,
 ) -> pl.DataFrame:

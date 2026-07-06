@@ -602,10 +602,6 @@ def test_that_location_outside_of_the_grid_maps_to_none(mock_resfo_file, egrid):
 
 def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     provided_radius = 2400
-    rft_config = RFTConfig(
-        input_files=["BASE.RFT"],
-        data_to_read={"*": {"*": ["*"]}},
-    )
     shape_registry = ShapeRegistry()
     shape_id = shape_registry.register(
         CircleShapeConfig(
@@ -626,7 +622,7 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
         tvd=2000.0,
         shape_id=shape_id,
     )
-    df = _handle_rft_observation(rft_config, rft_observation, shape_registry)
+    df = _handle_rft_observation(rft_observation, shape_registry)
     assert "radius" in df.columns
     assert df["radius"].to_list() == [provided_radius]
     assert df["radius"].dtype == pl.Float32
