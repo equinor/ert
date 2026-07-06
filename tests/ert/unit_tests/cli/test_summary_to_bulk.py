@@ -7,10 +7,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.export_observations.bulk_config_exporter import BulkConfigExporter
-from ert.export_observations.export_observations import (
+from ert.observation_converters.convert_observations import (
     fetch_experiments,
     get_experiment_id,
+)
+from ert.observation_converters.summary_to_bulk_config import (
+    BulkConfigExporter,
 )
 
 

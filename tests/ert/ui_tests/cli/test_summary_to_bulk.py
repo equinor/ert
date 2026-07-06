@@ -7,7 +7,7 @@ from subprocess import CalledProcessError
 import pytest
 
 from ert.config import ErtConfig
-from ert.export_observations.export_observations import export_observations
+from ert.observation_converters import export_observations
 
 
 @pytest.fixture(name="use_feature_flag")

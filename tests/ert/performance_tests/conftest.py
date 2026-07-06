@@ -5,9 +5,10 @@ from argparse import ArgumentParser, Namespace
 import pytest
 from py import path
 
-from ert.__main__ import ert_parser, run_convert_observations
+from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
+from ert.observation_converters.history_to_summary import run_convert_observations
 
 from .performance_utils import make_poly_template
 
