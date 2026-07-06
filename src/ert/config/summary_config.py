@@ -11,12 +11,12 @@ from ert.substitutions import substitute_runpath_name
 from ._read_summary import read_summary
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
-from .response_config import ResponseConfig, _warn_about_missing_responses
+from .response_config import SimulationResponseConfig, _warn_about_missing_responses
 
 logger = logging.getLogger(__name__)
 
 
-class SummaryConfig(ResponseConfig):
+class SummaryConfig(SimulationResponseConfig):
     type: Literal["summary"] = "summary"
     has_finalized_keys: bool = False
 

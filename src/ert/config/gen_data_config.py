@@ -13,11 +13,11 @@ from ert.validation import rangestring_to_list
 from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .response_config import (
     InvalidResponseFile,
-    ResponseConfig,
+    SimulationResponseConfig,
 )
 
 
-class GenDataConfig(ResponseConfig):
+class GenDataConfig(SimulationResponseConfig):
     type: Literal["gen_data"] = "gen_data"
     report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True

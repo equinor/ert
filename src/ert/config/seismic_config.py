@@ -12,12 +12,12 @@ from .parsing import (
     ConfigDict,
     ConfigKeys,
 )
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, SimulationResponseConfig
 
 logger = logging.getLogger(__name__)
 
 
-class SeismicConfig(ResponseConfig):
+class SeismicConfig(SimulationResponseConfig):
     """Configuration for responses from https://github.com/equinor/fmu-sim2seis
 
     Reads files created by MAP_ATTRIBUTES forward model. Files should have columns

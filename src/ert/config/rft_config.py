@@ -33,7 +33,7 @@ from .parsing import (
 )
 from .response_config import (
     InvalidResponseFile,
-    ResponseConfig,
+    SimulationResponseConfig,
     _warn_about_missing_responses,
 )
 
@@ -79,7 +79,7 @@ def _get_zonemap(zonemap_path: Path) -> dict[int, list[str]]:
     return parse_zonemap(str(zonemap_path), zonemap_path.read_text(encoding="utf-8"))
 
 
-class RFTConfig(ResponseConfig):
+class RFTConfig(SimulationResponseConfig):
     """:term:`RFT` response from a :term:`reservoir simulator`.
 
     RFTConfig is the configuration of responses in the <RUNPATH>/<ECLBASE>.RFT

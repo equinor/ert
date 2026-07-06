@@ -382,7 +382,7 @@ class LocalEnsemble(BaseMode):
 
     @lru_cache  # noqa: B019
     def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
-        response_configs = self.experiment.response_configuration
+        response_configs = self.experiment.simulation_response_configuration
         existing_scalars = self._existing_scalars
 
         def _parameters_exist_for_realization(realization: int) -> bool:
@@ -917,7 +917,7 @@ class LocalEnsemble(BaseMode):
     def get_response_state(
         self, realization: int
     ) -> dict[str, RealizationStorageState]:
-        response_configs = self.experiment.response_configuration
+        response_configs = self.experiment.simulation_response_configuration
         path = self._realization_dir(realization)
         return {
             e: (
@@ -1839,7 +1839,7 @@ async def _write_responses_to_storage(
     ensemble: LocalEnsemble,
 ) -> LoadResult:
     errors = []
-    response_configs = ensemble.experiment.response_configuration.values()
+    response_configs = ensemble.experiment.simulation_response_configuration.values()
     for config in response_configs:
         try:  # noqa: PLW0717
             start_time = time.perf_counter()

@@ -55,7 +55,7 @@ from .response_config import (
     BaseResponseConfig,
     DerivedResponseConfig,
     InvalidResponseFile,
-    ResponseConfig,
+    SimulationResponseConfig,
 )
 from .rft_config import RFTConfig
 from .seismic_config import SeismicConfig
@@ -148,11 +148,11 @@ __all__ = [
     "QueueConfig",
     "QueueSystem",
     "RFTConfig",
-    "ResponseConfig",
     "SamplerConfig",
     "SeismicConfig",
     "ShapeConfig",
     "ShapeRegistry",
+    "SimulationResponseConfig",
     "SiteInstalledForwardModelStep",
     "SiteOrUserForwardModelStep",
     "SummaryConfig",

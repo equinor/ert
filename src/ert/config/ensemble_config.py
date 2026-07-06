@@ -12,17 +12,22 @@ from .everest_control import EverestControl
 from .field import Field as FieldConfig
 from .gen_kw_config import GenKwConfig
 from .known_derived_response_types import KnownDerivedResponseTypes
-from .known_response_types import KNOWN_ERT_RESPONSE_TYPES, KnownErtResponseTypes
+from .known_response_types import (
+    KNOWN_ERT_SIMULATION_RESPONSE_TYPES,
+    KnownErtSimulationResponseTypes,
+)
 from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
-from .response_config import ResponseConfig
+from .response_config import SimulationResponseConfig
 from .surface_config import SurfaceConfig
 
 logger = logging.getLogger(__name__)
 
 
 class EnsembleConfig(BaseModel):
-    response_configs: dict[str, KnownErtResponseTypes] = Field(default_factory=dict)
+    response_configs: dict[str, KnownErtSimulationResponseTypes] = Field(
+        default_factory=dict
+    )
     derived_response_configs: dict[str, KnownDerivedResponseTypes] = Field(
         default_factory=dict
     )
@@ -132,9 +137,9 @@ class EnsembleConfig(BaseModel):
             + [make_field(f) for f in field_list]
         )
         EnsembleConfig._check_for_duplicate_gen_kw_param_names(gen_kw_cfgs)
-        response_configs: list[KnownErtResponseTypes] = []
+        response_configs: list[KnownErtSimulationResponseTypes] = []
 
-        for config_cls in KNOWN_ERT_RESPONSE_TYPES:
+        for config_cls in KNOWN_ERT_SIMULATION_RESPONSE_TYPES:
             instance = config_cls.from_config_dict(config_dict)
 
             if instance is not None and instance.response_keys():
@@ -147,7 +152,7 @@ class EnsembleConfig(BaseModel):
             },
         )
 
-    def __getitem__(self, key: str) -> ParameterConfig | ResponseConfig:
+    def __getitem__(self, key: str) -> ParameterConfig | SimulationResponseConfig:
         if key in self.parameter_configs:
             return self.parameter_configs[key]
         if key in self.response_configs:
@@ -197,7 +202,7 @@ class EnsembleConfig(BaseModel):
         return list(self.parameter_configs.values())
 
     @property
-    def response_configuration(self) -> list[ResponseConfig]:
+    def response_configuration(self) -> list[SimulationResponseConfig]:
         return list(self.response_configs.values())
 
     @property

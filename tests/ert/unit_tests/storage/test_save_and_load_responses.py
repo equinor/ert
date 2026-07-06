@@ -38,7 +38,7 @@ def test_that_saving_response_updates_configs(tmp_path):
         )
 
         mapping_before = experiment.response_key_to_response_type
-        smry_config_before = experiment.response_configuration["summary"]
+        smry_config_before = experiment.simulation_response_configuration["summary"]
 
         assert not ensemble.experiment._has_finalized_response_keys("summary")
         ensemble.save_response("summary", summary_df, 0)
@@ -56,7 +56,7 @@ def test_that_saving_response_updates_configs(tmp_path):
         }
 
         mapping_after = experiment.response_key_to_response_type
-        smry_config_after = experiment.response_configuration["summary"]
+        smry_config_after = experiment.simulation_response_configuration["summary"]
 
         assert set(mapping_before) == set()
         assert set(smry_config_before.keys) == {"*", "FOPR"}

@@ -22,7 +22,7 @@ from ert.config import (
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
-    ResponseConfig,
+    SimulationResponseConfig,
     SummaryConfig,
     SurfaceConfig,
 )
@@ -177,7 +177,7 @@ class Experiment:
     uuid: UUID
     ensembles: dict[UUID, Ensemble] = field(default_factory=dict)
     parameters: list[ParameterConfig] = field(default_factory=list)
-    responses: list[ResponseConfig] = field(default_factory=list)
+    responses: list[SimulationResponseConfig] = field(default_factory=list)
     observations: dict[str, pl.DataFrame] = field(default_factory=dict)
 
 
@@ -269,7 +269,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def create_experiment(
         self,
         parameters: list[ParameterConfig],
-        responses: list[ResponseConfig],
+        responses: list[SimulationResponseConfig],
         obs,
     ):
         experiment_id = self.storage.create_experiment(
