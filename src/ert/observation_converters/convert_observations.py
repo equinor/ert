@@ -15,7 +15,7 @@ import httpx
 from httpx import AsyncClient
 
 from ert.cli.main import ErtCliError
-from ert.export_observations.bulk_config_exporter import BulkConfigExporter
+from ert.observation_converters.summary_to_bulk_config import BulkConfigExporter
 
 
 def escape(s: str) -> str:
