@@ -15,7 +15,6 @@ from .response_config import (
     InvalidResponseFile,
     ResponseConfig,
 )
-from .responses_index import responses_index
 
 
 class GenDataConfig(ResponseConfig):
@@ -214,6 +213,3 @@ class GenDataConfig(ResponseConfig):
     @property
     def match_key(self) -> list[str]:
         return ["report_step", "index"]
-
-
-responses_index.add_response_type(GenDataConfig)
