@@ -547,7 +547,7 @@ class LocalExperiment(BaseMode):
         for config in (
             self.response_configuration | self.derived_response_configuration
         ).values():
-            for key in config.keys if config.has_finalized_keys else []:
+            for key in config.response_keys() if config.are_keys_finalized() else []:
                 mapping[key] = config.type
 
         return mapping
@@ -577,7 +577,7 @@ class LocalExperiment(BaseMode):
                 "exist in current responses.json"
             )
 
-        return responses_configuration[response_type].has_finalized_keys
+        return responses_configuration[response_type].are_keys_finalized()
 
     def _update_response_keys(
         self, response_type: str, response_keys: list[str]
@@ -599,8 +599,7 @@ class LocalExperiment(BaseMode):
 
         config = responses_configuration[response_type]
 
-        config.keys = sorted(response_keys)
-        config.has_finalized_keys = True
+        config.finalize_keys(sorted(response_keys))
 
         response_index = next(
             i

@@ -43,6 +43,14 @@ class InvalidResponseFile(Exception):
 
 
 class BaseResponseConfig(BaseModel, extra="forbid"):
+    """Represents an abstract response configuration in the ERT config.
+
+    Some attributes are the same for all children classes, yet moving them to the base
+    class causes troubles with pydantic serialization. When fields order changes, it
+    changes fields serialization, breaking many tests. So instead getter and setter-like
+    abstract methods are used as of now.
+    """
+
     type: str
 
     @property
@@ -98,10 +106,29 @@ class BaseResponseConfig(BaseModel, extra="forbid"):
         return None
 
     @abstractmethod
+    def response_keys(self) -> list[str]:
+        """Identifiers for response datasets this config implicitly produces.
+
+        A response config may produce multiple independent datasets from a single
+        simulation run — for example, one per well, one per summary key, or one per
+        output file. Each such dataset is assigned a key. What constitutes a "dataset"
+        is a design decision: it defines the finest granularity at which responses can
+        be independently loaded or be matched against observations "dataset" with the
+        same key.
+        """
+
+    @abstractmethod
     def are_keys_finalized(self) -> bool:
         """
         True if keys are finalized, False otherwise (for example, keys were declared
         with wildcard and have not been resolved yet).
+        """
+
+    @abstractmethod
+    def finalize_keys(self, keys: list[str]) -> None:
+        """
+        Finalizes the keys for this response config. This is called when the keys are
+        resolved (for example, when wildcards are expanded).
         """
 
     @staticmethod
@@ -138,8 +165,15 @@ class ResponseConfig(BaseResponseConfig):
         for summary.
         """
 
+    def response_keys(self) -> list[str]:
+        return self.keys
+
     def are_keys_finalized(self) -> bool:
         return self.has_finalized_keys
+
+    def finalize_keys(self, keys: list[str]) -> None:
+        self.keys = keys
+        self.has_finalized_keys = True
 
 
 class DerivedResponseConfig(BaseResponseConfig):
@@ -150,5 +184,12 @@ class DerivedResponseConfig(BaseResponseConfig):
     def derive_from_storage(self, iter_: int, real: int, ensemble: Any) -> pl.DataFrame:
         """Derives response DataFrame from existing files in storage"""
 
+    def response_keys(self) -> list[str]:
+        return self.keys
+
     def are_keys_finalized(self) -> bool:
         return self.has_finalized_keys
+
+    def finalize_keys(self, keys: list[str]) -> None:
+        self.keys = keys
+        self.has_finalized_keys = True
