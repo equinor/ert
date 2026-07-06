@@ -29,7 +29,7 @@ from ert.config.parsing.observations_parser import (
     observations_parser,
 )
 from ert.namespace import Namespace
-from tests.ert.defaults_generator import _create_seismic_observation
+from tests.ert.defaults_generator import create_seismic_observation
 
 observation_contents = stlark.from_lark(observations_parser)
 
@@ -858,7 +858,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
         shape_registry=shape_registry,
     )
     assert obs == [
-        _create_seismic_observation(
+        create_seismic_observation(
             name="NAME",
             filepath=Path("obs.csv"),
             east=461231.5537527473,
@@ -866,7 +866,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
             value=-0.0003566695393886,
             error=0.005,
         ),
-        _create_seismic_observation(
+        create_seismic_observation(
             name="NAME",
             filepath=Path("obs.csv"),
             east=461156.9532936567,
@@ -1002,7 +1002,7 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
         shape_registry=shape_registry,
     )
     assert obs == [
-        _create_seismic_observation(
+        create_seismic_observation(
             name="obs",
             filepath=Path("obs.csv"),
             east=1.0,
@@ -1010,7 +1010,7 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             value=1.0,
             error=0.005,
         ),
-        _create_seismic_observation(
+        create_seismic_observation(
             name="obs",
             filepath=Path("obs.csv"),
             east=1.0,

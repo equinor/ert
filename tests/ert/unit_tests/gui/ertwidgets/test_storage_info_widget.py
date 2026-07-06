@@ -19,6 +19,13 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
     _EnsembleWidgetTabs,
 )
 from ert.run_models.event import FullSnapshotEvent, status_event_to_json
+from tests.ert.defaults_generator import (
+    create_breakthrough_observation_dict,
+    create_general_observation_dict,
+    create_rft_observation_dict,
+    create_seismic_observation_dict,
+    create_summary_observation_dict,
+)
 from tests.ert.utils import SnapshotBuilder
 
 
@@ -58,14 +65,9 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
             "OBS_CONFIG": (
                 "obs_config",
                 [
-                    {
-                        "type": ObservationType.SUMMARY,
-                        "name": "sumobs",
-                        "KEY": observation_key,
-                        "DATE": date.isoformat(),
-                        "VALUE": 1.0,
-                        "ERROR": 1.0,
-                    }
+                    create_summary_observation_dict(
+                        key=observation_key, date=date.isoformat()
+                    ),
                 ],
             ),
         }
@@ -107,14 +109,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
             "OBS_CONFIG": (
                 "obs_config",
                 [
-                    {
-                        "type": ObservationType.BREAKTHROUGH,
-                        "name": "BRT_OP1",
-                        "KEY": key,
-                        "ERROR": "3",
-                        "DATE": (date + timedelta(days=5)).isoformat(),
-                        "THRESHOLD": 0.4,
-                    }
+                    create_breakthrough_observation_dict(key=key, date=date),
                 ],
             ),
         }
@@ -507,7 +502,6 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
 def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
@@ -516,32 +510,8 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
             "OBS_CONFIG": (
                 "obs_config",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "RFT",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": date.isoformat(),
-                        "PROPERTY": "PRESSURE",
-                        "EAST": 10.0,
-                        "NORTH": 11.0,
-                        "TVD": 12.0,
-                        "ZONE": "zone",
-                    },
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "RFT_index_key_duplicate",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": date.isoformat(),
-                        "PROPERTY": "PRESSURE",
-                        "EAST": 10.0,
-                        "NORTH": 11.0,
-                        "TVD": 12.0,
-                        "ZONE": "zone",
-                    },
+                    create_rft_observation_dict(name="RFT"),
+                    create_rft_observation_dict(name="RFT_index_key_duplicate"),
                 ],
             ),
         }
@@ -568,128 +538,66 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
     [
         pytest.param(
             [
-                {
-                    "type": ObservationType.BREAKTHROUGH,
-                    "name": "BRT_OP1",
-                    "KEY": "WWCT:OP1",
-                    "ERROR": "3",
-                    "DATE": datetime(year=2000, month=1, day=1).isoformat(),  # noqa: DTZ001
-                    "THRESHOLD": 0.4,
-                },
-                {
-                    "type": ObservationType.BREAKTHROUGH,
-                    "name": "BRT_OP2",
-                    "KEY": "WWCT:OP1",
-                    "ERROR": "3",
-                    "DATE": datetime(year=2000, month=1, day=9).isoformat(),  # noqa: DTZ001
-                    "THRESHOLD": 0.7,
-                },
+                create_breakthrough_observation_dict(
+                    name="BRT_OP1",
+                    threshold=0.4,
+                    date=datetime(year=2000, month=1, day=1),  # noqa: DTZ001
+                ),
+                create_breakthrough_observation_dict(
+                    name="BRT_OP2",
+                    threshold=0.7,
+                    date=datetime(year=2000, month=1, day=9),  # noqa: DTZ001
+                ),
             ],
             ["0.4", "0.7"],
             id="breakthrough",
         ),
         pytest.param(
             [
-                {
-                    "type": ObservationType.RFT,
-                    "name": "RFT2",
-                    "WELL": "WELL",
-                    "VALUE": "700",
-                    "ERROR": "0.1",
-                    "DATE": "2000-01-01",
-                    "PROPERTY": "PRESSURE",
-                    "EAST": 11.0,
-                    "NORTH": 5.0,
-                    "TVD": 4.0,
-                    "ZONE": "zone",
-                },
-                {
-                    "type": ObservationType.RFT,
-                    "name": "RFT1",
-                    "WELL": "WELL",
-                    "VALUE": "700",
-                    "ERROR": "0.1",
-                    "DATE": "2000-01-01",
-                    "PROPERTY": "PRESSURE",
-                    "EAST": 5.0,
-                    "NORTH": 6.0,
-                    "TVD": 7.0,
-                    "ZONE": "zone",
-                },
+                create_rft_observation_dict(
+                    name="RFT2", east=11.0, north=5.0, tvd=4.0, zone="zone"
+                ),
+                create_rft_observation_dict(
+                    name="RFT1", east=5.0, north=6.0, tvd=7.0, zone="zone"
+                ),
             ],
             ["5.0, 6.0, 7.0, zone", "11.0, 5.0, 4.0, zone"],
             id="rft",
         ),
         pytest.param(
             [
-                {
-                    "type": ObservationType.RFT,
-                    "name": "RFT2",
-                    "WELL": "WELL",
-                    "VALUE": "700",
-                    "ERROR": "0.1",
-                    "DATE": "2000-01-01",
-                    "PROPERTY": "PRESSURE",
-                    "EAST": 700.0,
-                    "NORTH": 500.0,
-                    "TVD": 400.0,
-                },
-                {
-                    "type": ObservationType.RFT,
-                    "name": "RFT1",
-                    "WELL": "WELL",
-                    "VALUE": "700",
-                    "ERROR": "0.1",
-                    "DATE": "2000-01-01",
-                    "PROPERTY": "PRESSURE",
-                    "EAST": 5.0,
-                    "NORTH": 6.0,
-                    "TVD": 7.0,
-                },
+                create_rft_observation_dict(
+                    name="RFT2", east=700.0, north=500.0, tvd=400.0
+                ),
+                create_rft_observation_dict(name="RFT1", east=5.0, north=6.0, tvd=7.0),
             ],
             ["5.0, 6.0, 7.0, None", "700.0, 500.0, 400.0, None"],
             id="rft without zone",
         ),
         pytest.param(
             [
-                {
-                    "type": ObservationType.SUMMARY,
-                    "name": "FOPR_1",
-                    "KEY": "FOPR",
-                    "VALUE": "1",
-                    "ERROR": "1",
-                    "DATE": "2023-03-15",
-                },
-                {
-                    "type": ObservationType.SUMMARY,
-                    "name": "FOPR_2",
-                    "KEY": "FOPR",
-                    "VALUE": "1",
-                    "ERROR": "1",
-                    "DATE": "2024-11-07",
-                },
+                create_summary_observation_dict(name="FOPR_1", date="2023-03-15"),
+                create_summary_observation_dict(name="FOPR_2", date="2024-11-07"),
             ],
             ["2023-03-15", "2024-11-07"],
             id="summary",
         ),
         pytest.param(
             [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "GOBS1",
-                    "DATA": "GEN",
-                    "RESTART": "11",
-                    "INDEX_LIST": "60,400,1200,1600,1800",
-                    "OBS_FILE": "gen_obs_data.txt",
-                },
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "GOBS2",
-                    "DATA": "GEN",
-                    "RESTART": "100",
-                    "INDEX_LIST": "60,400,1200,1600,1800",
-                    "OBS_FILE": "gen_obs_data.txt",
-                },
+                create_general_observation_dict(
+                    name="GOBS1",
+                    data="GEN",
+                    restart=11,
+                    index_list="60,400,1200,1600,1800",
+                    obs_file="gen_obs_data.txt",
+                ),
+                create_general_observation_dict(
+                    name="GOBS2",
+                    data="GEN",
+                    restart=100,
+                    index_list="60,400,1200,1600,1800",
+                    obs_file="gen_obs_data.txt",
+                ),
             ],
             [
                 "11, 60",
@@ -707,16 +615,12 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
         ),
         pytest.param(
             [
-                {
-                    "type": ObservationType.SEISMIC,
-                    "name": "SEISMIC1",
-                    "CSV": "seismic--20250101_20240101.csv",
-                },
-                {
-                    "type": ObservationType.SEISMIC,
-                    "name": "SEISMIC2",
-                    "CSV": "seismic--20260101_20240101.csv",
-                },
+                create_seismic_observation_dict(
+                    name="SEISMIC1", csv="seismic--20250101_20240101.csv"
+                ),
+                create_seismic_observation_dict(
+                    name="SEISMIC2", csv="seismic--20260101_20240101.csv"
+                ),
             ],
             ["99.0, 200.0", "100.0, 200.0"],
             id="seismic",
