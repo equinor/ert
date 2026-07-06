@@ -82,7 +82,7 @@ def run_simulator(summary_values=SUMMARY_VALUES):
     mini_step_count = 10
 
     for mini_step in range(mini_step_count):
-        t_step = summary.addTStep(1, sim_days=mini_step_count + mini_step)
+        t_step = summary.add_t_step(1, sim_days=mini_step_count + mini_step)
         for key, value in summary_values.items():
             t_step[key] = value
 

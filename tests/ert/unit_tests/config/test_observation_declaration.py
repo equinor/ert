@@ -119,7 +119,7 @@ def test_that_make_observations_migrates_observations():
     summary.add_variable("FWPRH", unit="SM3/DAY")
 
     # first step: start_date (2010-03-31)
-    t0 = summary.addTStep(1, sim_days=0)
+    t0 = summary.add_t_step(1, sim_days=0)
     t0["FOPR"] = 1
     t0["FOPRH"] = 2
     t0["FWPR"] = 3
@@ -128,7 +128,7 @@ def test_that_make_observations_migrates_observations():
     # second step: 2015-06-13
     second_date = datetime(2015, 6, 13)  # noqa: DTZ001
     days_between = (second_date - start_date).days
-    t1 = summary.addTStep(1, sim_days=days_between)
+    t1 = summary.add_t_step(1, sim_days=days_between)
     t1["FOPR"] = 1
     t1["FOPRH"] = 2
     t1["FWPR"] = 3
