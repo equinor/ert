@@ -1358,10 +1358,15 @@ class ErtConfig(BaseModel):
         # of message length, the limit is set to 80% of
         # MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
         SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
+        sensitive_keys = ["OBS_CONFIG"]
+        content_dict_to_log = {
+            k: (v if k not in sensitive_keys else "<REDACTED>")
+            for k, v in content_dict.items()
+        }
         try:
-            config_dict_content = pprint.pformat(content_dict)
+            config_dict_content = pprint.pformat(content_dict_to_log)
         except Exception as err:
-            config_dict_content = str(content_dict)
+            config_dict_content = str(content_dict_to_log)
             logger.warning(
                 "Logging of config dict could not be formatted for "
                 f"enhanced readability. {err}"
