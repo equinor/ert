@@ -18,7 +18,6 @@ from pydantic import ValidationError
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent, DataSection
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
 from ert.config.response_config import InvalidResponseFile
-from ert.exceptions import StorageError
 from ert.storage import LocalExperiment, open_storage
 from ert.storage.blob_data import (
     BlobStorageData,
@@ -584,7 +583,7 @@ def test_that_get_rft_observations_and_responses_handles_multiple_realizations(
 def test_that_get_rft_observations_and_responses_raises_error_for_no_observations():
     with (
         _create_rft_ensemble(1, []) as ensemble,
-        pytest.raises(StorageError, match="No RFT observations found"),
+        pytest.raises(ValueError, match="No RFT observations found"),
     ):
         ensemble.get_rft_observations_and_responses()
 
