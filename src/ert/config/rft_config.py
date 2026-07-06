@@ -36,7 +36,6 @@ from .response_config import (
     ResponseConfig,
     _warn_about_missing_responses,
 )
-from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
 
@@ -732,6 +731,3 @@ class RFTConfig(ResponseConfig):
             )
 
         return None
-
-
-responses_index.add_response_type(RFTConfig)

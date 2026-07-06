@@ -12,7 +12,6 @@ from ._read_summary import read_summary
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
 from .response_config import ResponseConfig, _warn_about_missing_responses
-from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +90,3 @@ class SummaryConfig(ResponseConfig):
             return value.strftime("%Y-%m-%d")
 
         return str(value)
-
-
-responses_index.add_response_type(SummaryConfig)

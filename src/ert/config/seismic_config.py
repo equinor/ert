@@ -13,7 +13,6 @@ from .parsing import (
     ConfigKeys,
 )
 from .response_config import InvalidResponseFile, ResponseConfig
-from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +98,3 @@ class SeismicConfig(ResponseConfig):
             input_files=files,
             keys=[Path(f).stem for f in files],
         )
-
-
-responses_index.add_response_type(SeismicConfig)
