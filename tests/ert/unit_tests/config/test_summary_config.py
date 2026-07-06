@@ -83,7 +83,7 @@ def create_observations(config, obs_config):
 
     ert_config = ErtConfig.from_file("config.ert")
     return create_observation_dataframes(
-        ert_config.observation_declarations, None, ert_config.shape_registry
+        ert_config.observation_declarations, ert_config.shape_registry
     )
 
 
@@ -215,7 +215,7 @@ def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internal
     Path("observations/observations.txt").write_text(new_obs_content, encoding="utf-8")
     ert_config = ErtConfig.from_file("snake_oil.ert")
     summary = create_observation_dataframes(
-        ert_config.observation_declarations, None, ert_config.shape_registry
+        ert_config.observation_declarations, ert_config.shape_registry
     )["summary"]
     assert summary["east"].dtype == pl.Float32
     assert summary["north"].dtype == pl.Float32
