@@ -58,7 +58,7 @@ class ManageExperimentsPanel(QTabWidget):
         storage_widget = StorageWidget(
             self.notifier, self.ert_config, self.ensemble_size
         )
-        self._storage_info_widget = StorageInfoWidget()
+        self._storage_info_widget = StorageInfoWidget(self.ert_config)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(storage_widget)
