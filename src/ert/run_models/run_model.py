@@ -233,10 +233,14 @@ class RunModel(RunModelConfig, ABC):
             "run_paths",
             "substitutions",
         ]
+        sensitive_keys = [
+            "observations",
+            "shape_registry",
+        ]
         settings_dict = {
-            key: value
-            for key, value in self.__dict__.items()
-            if key not in keys_to_drop
+            k: (v if k not in sensitive_keys else "<REDACTED>")
+            for k, v in self.__dict__.items()
+            if k not in keys_to_drop
         }
 
         logger.info(f"Running '{self.name()}'\n\nSettings: {settings_dict}")
