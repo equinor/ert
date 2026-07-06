@@ -30,7 +30,7 @@ from ert.storage import (
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
 from ert.storage.mode import ModeError
 from tests.ert.defaults_generator import (
-    _create_summary_observation,
+    create_summary_observation,
 )
 from tests.ert.unit_tests.storage._storage_test_helpers import (
     RaisingWriteNamedTemporaryFile,
@@ -705,7 +705,7 @@ def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
 
         summary_config = SummaryConfig(input_files=["not_relevant"], keys=["*"])
 
-        summary_observation = _create_summary_observation(
+        summary_observation = create_summary_observation(
             name="Summary_OBS",
             key="FOPR",
             date=obs_date.isoformat(),

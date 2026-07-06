@@ -6,9 +6,9 @@ import pytest
 from ert.config._create_observation_dataframes import _handle_seismic_observation
 from ert.config._observations import SeismicObservation
 from ert.config.ert_config import ErtConfig
-from ert.config.parsing.observations_parser import ObservationType
 from ert.config.response_config import InvalidResponseFile
 from ert.config.seismic_config import SeismicConfig
+from tests.ert.defaults_generator import create_seismic_observation_dict
 
 
 def test_that_seismic_observation_response_key_matches_simulated_response_key(
@@ -43,11 +43,7 @@ def test_that_seismic_observation_response_key_matches_simulated_response_key(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.SEISMIC,
-                        "name": "OBS1",
-                        "CSV": obs_path,
-                    },
+                    create_seismic_observation_dict(csv=obs_path),
                 ],
             ),
         }
