@@ -195,7 +195,7 @@ class PlotApi:
                     response_config: KnownResponseTypes | KnownDerivedResponseTypes = (
                         response_config_adapter.validate_python(metadata)
                     )
-                    keys = response_config.keys
+                    keys = response_config.response_keys()
                     for key in keys:
                         has_obs = (
                             response_type in experiment["observations"]

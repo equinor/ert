@@ -445,7 +445,7 @@ class LocalEnsemble(BaseMode):
                 return _has_response(key)
 
             is_expecting_any_responses = any(
-                bool(config.keys) for config in response_configs.values()
+                bool(config.response_keys()) for config in response_configs.values()
             )
 
             if not is_expecting_any_responses:
@@ -454,7 +454,7 @@ class LocalEnsemble(BaseMode):
             non_empty_response_configs = [
                 response
                 for response, config in response_configs.items()
-                if bool(config.keys)
+                if bool(config.response_keys())
             ]
 
             return all(

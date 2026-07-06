@@ -34,7 +34,11 @@ class EnsembleConfig(BaseModel):
     def set_derived_fields(self) -> Self:
         self._check_for_duplicate_names(
             [p.name for p in self.parameter_configs.values()],
-            [key for config in self.response_configs.values() for key in config.keys],
+            [
+                key
+                for config in self.response_configs.values()
+                for key in config.response_keys()
+            ],
         )
 
         return self
@@ -133,7 +137,7 @@ class EnsembleConfig(BaseModel):
         for config_cls in KNOWN_ERT_RESPONSE_TYPES:
             instance = config_cls.from_config_dict(config_dict)
 
-            if instance is not None and instance.keys:
+            if instance is not None and instance.response_keys():
                 response_configs.append(instance)
 
         return cls(
@@ -149,7 +153,8 @@ class EnsembleConfig(BaseModel):
         if key in self.response_configs:
             return self.response_configs[key]
         if config := next(
-            (c for c in self.response_configs.values() if key in c.keys), None
+            (c for c in self.response_configs.values() if key in c.response_keys()),
+            None,
         ):
             # Only hit by blockfs migration
             # returns the same config for one call per
