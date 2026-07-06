@@ -14,7 +14,7 @@ from starlette.testclient import TestClient
 
 from ert.dark_storage import common
 from ert.dark_storage.app import app
-from tests.ert.unit_tests.storage.test_local_storage import StatefulStorageTest
+from tests.ert.unit_tests.storage.test_stateful_storage import StatefulStorageTest
 
 
 def escape(s):
