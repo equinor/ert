@@ -13,13 +13,23 @@ import pytest
 from pydantic import ConfigDict
 
 from _ert.events import EESnapshotUpdate
-from ert.config import ErtConfig, ModelConfig, QueueConfig, QueueSystem, ShapeRegistry
+from ert.config import (
+    ErtConfig,
+    ModelConfig,
+    ObservationType,
+    QueueConfig,
+    QueueSystem,
+    ShapeRegistry,
+)
+from ert.config.parsing import ObservationDict
 from ert.config.queue_config import LsfQueueOptions
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
 from ert.ensemble_evaluator.evaluator import ParallelismViolation
 from ert.ensemble_evaluator.event import FullSnapshotEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
+from ert.mode_definitions import TEST_RUN_MODE
 from ert.plugins import ErtRuntimePlugins
+from ert.run_models import create_model
 from ert.run_models.run_model import (
     RunModel,
     UserCancelled,
@@ -808,3 +818,48 @@ async def test_that_status_snapshot_write_failure_does_not_mask_evaluation_error
         await brm.run_ensemble_evaluator_async(AsyncMock(), ensemble, AsyncMock())
 
     assert "Failed to persist status snapshot" in caplog.text
+
+
+def test_that_ert_config_and_run_model_gets_serialized_observations_and_shape_registry_redacted(  # noqa: E501
+    caplog,
+):
+    caplog.set_level(logging.INFO)
+    summary_obs_dict = ObservationDict(
+        {
+            "type": ObservationType.SUMMARY,
+            "name": "FOPR_OBS",
+            "KEY": "FOPR",
+            "VALUE": "1.0",
+            "ERROR": "0.1",
+            "DATE": "2020-01-01",
+            "LOCALIZATION": {
+                "EAST": "100.0",
+                "NORTH": "200.0",
+                "RADIUS": "3000",
+            },
+        },
+        context=MagicMock(),
+    )
+    config_dict = {
+        "NUM_REALIZATIONS": 1,
+        "ECLBASE": "ECLIPSE_CASE",
+        "OBS_CONFIG": (
+            "obs_config",
+            [summary_obs_dict],
+        ),
+    }
+    ert_config = ErtConfig.from_dict(config_dict)
+
+    ert_config._log_config_dict(config_dict)
+    assert "'OBS_CONFIG': '<REDACTED>'" in caplog.text
+
+    args = MagicMock(
+        mode=TEST_RUN_MODE,
+        realizations="0",
+        experiment_name="foo",
+        current_ensemble="bar",
+    )
+    model = create_model(ert_config, args, MagicMock())
+    model.log_at_startup()
+    assert "'observations': '<REDACTED>'" in caplog.text
+    assert "'shape_registry': '<REDACTED>'" in caplog.text
