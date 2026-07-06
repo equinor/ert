@@ -949,6 +949,18 @@ class LocalEnsemble(BaseMode):
         ds_path = self._realization_dir(realization) / filename
         return pl.read_parquet(ds_path)
 
+    def add_rft_metadata_and_qc(
+        self, observations: pl.DataFrame, realization: int
+    ) -> pl.DataFrame:
+        observation_metadata_in_realization = self.load_observation_location_metadata(
+            realization
+        )
+        enriched_observations = RFTConfig.enrich_observations_with_metadata(
+            observations, observation_metadata_in_realization
+        )
+
+        return qc_rft_observations(enriched_observations)
+
     def get_observations_and_responses(
         self,
         selected_observations: Iterable[str],
@@ -1000,19 +1012,11 @@ class LocalEnsemble(BaseMode):
             # Load and join one realization at a time to reduce peak memory usage
             first_columns: pl.DataFrame | None = None
             realization_columns: list[pl.DataFrame] = []
+
             for real in reals:
                 observations = ensure_qc_error_column(observations_for_type)
                 if response_type == "rft":
-                    observation_metadata_in_realization = (
-                        self.load_observation_location_metadata(real)
-                    )
-                    enriched_observations = RFTConfig.enrich_observations_with_metadata(
-                        observations, observation_metadata_in_realization
-                    )
-
-                    observations = qc_rft_observations(
-                        enriched_observations,
-                    )
+                    observations = self.add_rft_metadata_and_qc(observations, real)
 
                 observed_cols = {
                     k: observations[k].unique()
