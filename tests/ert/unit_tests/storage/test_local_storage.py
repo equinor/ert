@@ -144,7 +144,7 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
     read_exp = reader.get_experiment_by_name("uniq")
     assert read_exp.id == exp.id
 
-    read_smry_config = read_exp.response_configuration["summary"]
+    read_smry_config = read_exp.simulation_response_configuration["summary"]
     assert read_smry_config.keys == ["*", "FOPR"]
     assert not read_smry_config.has_finalized_keys
 
@@ -164,7 +164,7 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
 
     reader.reload()
     read_exp = reader.get_experiment_by_name("uniq")
-    read_smry_config = read_exp.response_configuration["summary"]
+    read_smry_config = read_exp.simulation_response_configuration["summary"]
     assert read_smry_config.keys == ["FOPR", "FOPT", "WOPR"]
     assert read_smry_config.has_finalized_keys
 

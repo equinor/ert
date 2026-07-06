@@ -31,8 +31,8 @@ from ert.config import (
     KnownDerivedResponseTypes,
     KnownResponseTypes,
     ParameterConfig,
-    ResponseConfig,
     ShapeRegistry,
+    SimulationResponseConfig,
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
@@ -473,9 +473,9 @@ class LocalExperiment(BaseMode):
         return responses
 
     @property
-    def response_configuration(self) -> dict[str, ResponseConfig]:
+    def simulation_response_configuration(self) -> dict[str, SimulationResponseConfig]:
         return {
-            k: cast(ResponseConfig, v)
+            k: cast(SimulationResponseConfig, v)
             for k, v in self.base_response_configuration.items()
             if not v.is_derived()
         }

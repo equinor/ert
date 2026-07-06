@@ -546,7 +546,9 @@ async def test_that_writing_and_reading_empty_response_in_storage_results_in_emp
     empty_response = pl.DataFrame({"response_key": [], "time": [], "values": []})
     monkeypatch.setattr(SummaryConfig, "read_from_file", lambda *args: empty_response)
     monkeypatch.setattr(
-        LocalExperiment, "response_configuration", {"summary": SummaryConfig()}
+        LocalExperiment,
+        "simulation_response_configuration",
+        {"summary": SummaryConfig()},
     )
 
     with open_storage(tmp_path, mode="w") as storage:
@@ -564,7 +566,7 @@ async def test_that_writing_and_reading_empty_response_in_storage_results_in_emp
         # will never be read as the code exits earlier.
         monkeypatch.setattr(
             LocalExperiment,
-            "response_configuration",
+            "simulation_response_configuration",
             {"summary": SummaryConfig(keys=["FOPR"])},
         )
         monkeypatch.setattr(

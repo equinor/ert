@@ -7,10 +7,10 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, SimulationResponseConfig
 
 
-class EverestResponse(ResponseConfig):
+class EverestResponse(SimulationResponseConfig):
     """Base class for EVEREST response configurations."""
 
     has_finalized_keys: bool = True

@@ -36,8 +36,8 @@ from ert.config import (
     HookRuntime,
     KnownQueueOptionsAdapter,
     QueueConfig,
-    ResponseConfig,
     ShapeRegistry,
+    SimulationResponseConfig,
     SummaryConfig,
     WorkflowJob,
 )
@@ -270,7 +270,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             for ert_control in control.to_ert_parameter_config()
         ]
 
-        response_configs: list[ResponseConfig] = []
+        response_configs: list[SimulationResponseConfig] = []
 
         response_configs.append(everest_config.create_ert_objectives_config())
 
