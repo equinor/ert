@@ -14,7 +14,6 @@ from hypothesis import given
 from ert.config import SummaryConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.config.rft_config import RFTConfig
-from ert.exceptions import StorageError
 from ert.storage import open_storage
 from ert.storage.local_ensemble import (
     _write_responses_to_storage,
@@ -796,7 +795,7 @@ def test_that_get_rft_observations_and_responses_handles_multiple_realizations(
 def test_that_get_rft_observations_and_responses_raises_error_for_no_observations():
     with (
         _create_rft_ensemble(1, []) as ensemble,
-        pytest.raises(StorageError, match="No RFT observations found"),
+        pytest.raises(ValueError, match="No RFT observations found"),
     ):
         ensemble.get_rft_observations_and_responses()
 
