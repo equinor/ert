@@ -39,6 +39,15 @@ Added the possibility of selecting an update strategy per parameter type using
 `ANALYSIS_SET_VAR PARAMETERS <../reference/configuration/keywords.html#parameters>`_.
 
 
+Configurable ES-MDA weights
+###########################
+
+Added the possibility of defining default ES-MDA weights in the configuration file
+using `ANALYSIS_SET_VAR STD_ENKF WEIGHTS <../reference/configuration/keywords.html#weights>`_.
+The configured weights are used as defaults for both CLI and GUI runs, while explicit
+CLI or GUI overrides still take precedence.
+
+
 Option to approximate missing rft responses
 ###########################################
 
