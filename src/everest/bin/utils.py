@@ -13,10 +13,9 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar
 
-import colorama
 import yaml
-from colorama import Fore
 
+from _ert import ansi
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EnsembleSnapshot,
@@ -173,9 +172,9 @@ class JobProgress:
         default_factory=lambda: defaultdict(list)
     )
     STATUS_COLOR: ClassVar = {
-        JOB_RUNNING: Fore.BLUE,
-        JOB_SUCCESS: Fore.GREEN,
-        JOB_FAILURE: Fore.RED,
+        JOB_RUNNING: ansi.BLUE,
+        JOB_SUCCESS: ansi.GREEN,
+        JOB_FAILURE: ansi.RED,
     }
 
     def _status_string(self, max_widths: dict[str, int]) -> str:
@@ -183,8 +182,8 @@ class JobProgress:
         for state in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]:
             number_of_simulations = len(self.status[state])
             width = max_widths[state]
-            color = self.STATUS_COLOR[state] if number_of_simulations else Fore.BLACK
-            string.append(f"{color}{number_of_simulations:>{width}}{Fore.RESET}")
+            color = self.STATUS_COLOR[state] if number_of_simulations else ansi.BLACK
+            string.append(f"{color}{number_of_simulations:>{width}}{ansi.RESET}")
         return "/".join(string)
 
     def progress_str(self, max_widths: dict[str, int]) -> str:
@@ -194,7 +193,7 @@ class JobProgress:
             width = _get_max_width([simulations_list])
             if width > 0:
                 color = self.STATUS_COLOR[state]
-                msg += f" | {color}{state}: {simulations_list:<{width}}{Fore.RESET}"
+                msg += f" | {color}{state}: {simulations_list:<{width}}{ansi.RESET}"
 
         return self._status_string(max_widths) + msg
 
@@ -208,7 +207,6 @@ class _DetachedMonitor:
         self._clear_lines: int = 0
         self._batches_done = set[int]()
         self._last_reported_batch: int = -1
-        colorama.init(autoreset=True)
         self._snapshots: dict[int, EnsembleSnapshot] = {}
 
     def update(self, status: dict[str, Any]) -> None:
@@ -217,7 +215,7 @@ class _DetachedMonitor:
                 opt_status = status[OPT_PROGRESS_ID]
                 if opt_status:
                     msg = self._get_opt_progress_single_batch(opt_status)
-                    print(msg + "\n")
+                    ansi.ansi_print(msg + "\n")
                     self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 match status[SIM_PROGRESS_ID]:
@@ -234,7 +232,7 @@ class _DetachedMonitor:
                             self._snapshots[batch_number].merge_snapshot(snapshot)
                             header = self._make_header(
                                 f"Running forward models (Batch #{batch_number})",
-                                Fore.BLUE,
+                                ansi.BLUE,
                             )
                             summary = self._get_progress_summary(event.status_count)
                             job_states = self._get_job_states(
@@ -248,7 +246,7 @@ class _DetachedMonitor:
                             )
                             if batch == self._last_reported_batch:
                                 self._clear()
-                            print(msg)
+                            ansi.ansi_print(msg)
                             self._clear_lines = len(msg.split("\n"))
                             self._last_reported_batch = max(
                                 self._last_reported_batch, batch
@@ -325,16 +323,16 @@ class _DetachedMonitor:
     @staticmethod
     def _get_progress_summary(status: dict[str, int]) -> str:
         colors = [
-            Fore.BLACK,
-            Fore.BLACK,
-            Fore.BLUE if status.get("Running", 0) > 0 else Fore.BLACK,
-            Fore.GREEN if status.get("Finished", 0) > 0 else Fore.BLACK,
-            Fore.RED if status.get("Failed", 0) > 0 else Fore.BLACK,
+            ansi.BLACK,
+            ansi.BLACK,
+            ansi.BLUE if status.get("Running", 0) > 0 else ansi.BLACK,
+            ansi.GREEN if status.get("Finished", 0) > 0 else ansi.BLACK,
+            ansi.RED if status.get("Failed", 0) > 0 else ansi.BLACK,
         ]
         labels = ("Waiting", "Pending", "Running", "Finished", "Failed")
         values = [status.get(ls, 0) for ls in labels]
         return " | ".join(
-            f"{color}{key}: {value}{Fore.RESET}"
+            f"{color}{key}: {value}{ansi.RESET}"
             for color, key, value in zip(colors, labels, values, strict=False)
         )
 
@@ -359,19 +357,19 @@ class _DetachedMonitor:
             width = _get_max_width([item.name for item in jobs_status])
             for job in jobs_status:
                 print_lines.append(
-                    f"{job.name:>{width}}: {job.progress_str(max_widths)}{Fore.RESET}"
+                    f"{job.name:>{width}}: {job.progress_str(max_widths)}{ansi.RESET}"
                 )
                 if job.errors:
                     print_lines.extend(
                         [
-                            f"{Fore.RED}{job.name:>{width}}: Failed: {err}, "
-                            f"realizations: {_format_list(job.errors[err])}{Fore.RESET}"
+                            f"{ansi.RED}{job.name:>{width}}: Failed: {err}, "
+                            f"realizations: {_format_list(job.errors[err])}{ansi.RESET}"
                             for err in job.errors
                         ]
                     )
                 if forward_model_messages:
                     print_lines.extend(
-                        [f"{Fore.RED} {message}" for message in forward_model_messages]
+                        [f"{ansi.RED} {message}" for message in forward_model_messages]
                     )
         return cls._join_one_newline_indent(print_lines)
 
@@ -405,13 +403,15 @@ class _DetachedMonitor:
         return "\n\n".join(sequence)
 
     @classmethod
-    def _make_header(cls, msg: str, color: str = Fore.BLACK) -> str:
+    def _make_header(cls, msg: str, color: str = ansi.BLACK) -> str:
         header = msg.center(len(msg) + 2).center(cls.WIDTH, "=")
-        return f"{color}{header}{Fore.RESET}"
+        return f"{color}{header}{ansi.RESET}"
 
     def _clear(self) -> None:
+        if not sys.stdout.isatty():
+            return
         for _ in range(self._clear_lines):
-            print(colorama.Cursor.UP(), end=colorama.ansi.clear_line())
+            print(ansi.CURSOR_UP, end=ansi.CLEAR_LINE)
 
 
 def run_detached_monitor(

@@ -8,18 +8,19 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any
 
+from _ert import ansi
 from _ert.utils import file_safe_timestamp
 
 LOGGING_CONFIG = pathlib.Path(__file__).parent.resolve() / "logger.conf"
 STORAGE_LOG_CONFIG = pathlib.Path(__file__).parent.resolve() / "storage_log.conf"
 
 _FORMATS_ANSI = {
-    logging.FATAL: "\033[31m[FATAL]\033[0m {message}",
-    logging.ERROR: "\033[31m[ERROR]\033[0m {message}",
-    logging.WARNING: "\033[33m[ WARN]\033[0m {message}",
-    logging.INFO: "\033[34m[ INFO]\033[0m {message}",
-    logging.DEBUG: "\033[36m[DEBUG]\033[0m {message}",
-    logging.NOTSET: "\033[0m        {message}",
+    logging.FATAL: ansi.RED + "[FATAL]" + ansi.RESET + " {message}",
+    logging.ERROR: ansi.RED + "[ERROR]" + ansi.RESET + " {message}",
+    logging.WARNING: ansi.YELLOW + "[ WARN]" + ansi.RESET + " {message}",
+    logging.INFO: ansi.BLUE + "[ INFO]" + ansi.RESET + " {message}",
+    logging.DEBUG: ansi.CYAN + "[DEBUG]" + ansi.RESET + " {message}",
+    logging.NOTSET: ansi.RESET + "        {message}",
 }
 
 _FORMATS_NO_COLOR = {

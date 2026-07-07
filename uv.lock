@@ -980,7 +980,6 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "anyio" },
-    { name = "colorama" },
     { name = "cryptography" },
     { name = "decorator" },
     { name = "dnspython" },
@@ -1095,7 +1094,6 @@ types = [
 requires-dist = [
     { name = "aiohttp" },
     { name = "anyio" },
-    { name = "colorama" },
     { name = "cryptography" },
     { name = "decorator" },
     { name = "dnspython", specifier = ">=2" },
