@@ -11,12 +11,12 @@ import orjson
 import polars as pl
 import pytest
 
-from ert.__main__ import run_convert_observations
 from ert.analysis import (
     ErtAnalysisError,
     smoother_update,
 )
 from ert.config import ErtConfig, ObservationSettings
+from ert.observation_converters.history_to_summary import run_convert_observations
 from ert.plugins import get_site_plugins
 from ert.storage import RealizationStorageState, open_storage
 from ert.storage.local_storage import (

@@ -10,7 +10,6 @@ import pytest
 from hypothesis import given
 from resdata.summary import Summary
 
-from ert.__main__ import run_convert_observations
 from ert.config._observations import (
     DEFAULT_LOCALIZATION_RADIUS,
     BreakthroughObservation,
@@ -29,6 +28,7 @@ from ert.config.parsing.observations_parser import (
     observations_parser,
 )
 from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import run_convert_observations
 from tests.ert.defaults_generator import create_seismic_observation
 
 observation_contents = stlark.from_lark(observations_parser)

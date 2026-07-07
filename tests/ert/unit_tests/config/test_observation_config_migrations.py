@@ -15,11 +15,11 @@ from resfo_utilities.testing import (
     Unsmry,
 )
 
-from ert.__main__ import run_convert_observations
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
 from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import run_convert_observations
 
 
 def create_summary_smspec_unsmry(

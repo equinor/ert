@@ -1,38 +1,16 @@
 import shutil
-import subprocess
 from argparse import Namespace
 from pathlib import Path
-from subprocess import CalledProcessError
 
 import pytest
 
 from ert.config import ErtConfig
-from ert.observation_converters import export_observations
-
-
-@pytest.fixture(name="use_feature_flag")
-def use_feature_flag(monkeypatch):
-    monkeypatch.setenv("ERT_FEATURE_GATHER_OBS", "1")
+from ert.observation_converters.summary_to_bulk_config import (
+    convert_summary_to_bulk_config,
+)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage", "use_tmpdir")
-def test_that_cli_command_without_feature_flag_raises_called_process_error() -> None:
-    config_path = "test_data/snake_oil.ert"
-    storage_path = "test_data/storage/"
-    experiment_path = "snake_oil/ensemble/experiments/"
-    experiment = next(iter(Path(storage_path + experiment_path).iterdir()))
-
-    with pytest.raises(CalledProcessError) as e:
-        subprocess.run(
-            ["ert", "export_observations", config_path, experiment.name],
-            check=True,
-        )
-    assert e.value.returncode == 2
-
-
-@pytest.mark.usefixtures(
-    "copy_snake_oil_case_storage", "use_tmpdir", "use_feature_flag"
-)
 @pytest.mark.skip_mac_ci  # Ert api is too slow to start for mac tests
 def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
     """This tests that the produced stdout and csv file from the
@@ -42,17 +20,12 @@ def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
     stdout and moving the csv file into the observations folder.
     """
     config_path = "test_data/snake_oil.ert"
-    storage_path = "test_data/storage/"
-    experiment_path = "snake_oil/ensemble/experiments/"
     observation_path = "test_data/observations/observations.txt"
-    experiment = next(iter(Path(storage_path + experiment_path).iterdir()))
 
     args = Namespace(
         config=config_path,
-        experiment_id=experiment.name,
-        output_csv_file="summary_observations.csv",
     )
-    export_observations(args)
+    convert_summary_to_bulk_config(args)
     assert Path("summary_observations.csv").is_file()
     csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
     expected_csv_content = [

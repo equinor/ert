@@ -16,7 +16,6 @@ from pydantic import ValidationError
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
 
-from ert.__main__ import run_convert_observations
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ShapeRegistry
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import (
@@ -34,6 +33,7 @@ from ert.config.rft_config import RFTConfig
 from ert.gui.plotting.ert_plots.observations import _plotObservations
 from ert.gui.plotting.utils import PlotConfig
 from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import run_convert_observations
 from tests.ert.defaults_generator import (
     create_breakthrough_observation_dict,
     create_rft_observation_dict,

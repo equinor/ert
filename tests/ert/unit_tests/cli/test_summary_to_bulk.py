@@ -7,12 +7,10 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.observation_converters.convert_observations import (
-    fetch_experiments,
-    get_experiment_id,
-)
 from ert.observation_converters.summary_to_bulk_config import (
     BulkConfigExporter,
+    fetch_experiments,
+    get_experiment_id,
 )
 
 
@@ -82,7 +80,7 @@ def test_that_convert_summary_observations_extracts_localization_information(cap
 
     expected_print_with_localization = dedent("""\
     SUMMARY {
-      VALUES = summary_observation_values.csv;
+      VALUES = summary_observations.csv;
       WELL WELL_WITHOUT_RADIUS {
         LOCALIZATION {
           EAST=40;
@@ -179,19 +177,11 @@ def test_that_single_experiment_in_storage_is_automatically_selected_given_no_ex
     capsys,
 ):
     exp_id = "foo"
-    get_experiment_id([{"id": exp_id}], None)
+    get_experiment_id([{"id": exp_id}])
     assert (
         f"Gathering observations for sole experiment in storage: '{exp_id}'"
         in capsys.readouterr().out
     )
-
-
-def test_that_given_experiment_id_not_in_storage_raises_cli_error():
-    exp_id_arg = "bar"
-    with pytest.raises(
-        ErtCliError, match=rf"An experiment with id '{exp_id_arg}' does not exist."
-    ):
-        get_experiment_id([{"id": "foo", "name": "run_model"}], exp_id_arg)
 
 
 @pytest.mark.usefixtures("patched_csv_writer")
