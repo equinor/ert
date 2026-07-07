@@ -771,6 +771,13 @@ def create_list_of_forward_model_steps_to_run(
     return fm_steps
 
 
+def log_shape_registry(shape_registry: ShapeRegistry) -> None:
+    shape_count = Counter(
+        type(shape).__name__ for shape in shape_registry.shapes.values()
+    )
+    logger.info(f"Count of shapes in ShapeRegistry: {dict(shape_count)}")
+
+
 def log_observation_keys(
     observations: list[ObservationDict],
 ) -> None:
@@ -781,11 +788,13 @@ def log_observation_keys(
         for key in o
         if key not in {"name", "type"}
     )
-
-    logger.info(
-        f"Count of observation types:\n\t{dict(observation_type_counts)}\n"
-        f"Count of observation keywords:\n\t{dict(observation_keyword_counts)}"
+    observation_summary_keys = Counter(
+        o["KEY"].split(":")[0] for o in observations if "KEY" in o
     )
+
+    logger.info(f"Count of observation types: {dict(observation_type_counts)}")
+    logger.info(f"Count of observation keywords: {dict(observation_keyword_counts)}")
+    logger.info(f"Count of summary keywords: {dict(observation_summary_keys)}")
 
 
 RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
@@ -1092,6 +1101,7 @@ class ErtConfig(BaseModel):
                     obs_config_input,
                     shape_registry=shape_registry,
                 )
+                log_shape_registry(shape_registry)
                 if not obs_configs:
                     raise ObservationConfigError.with_context(
                         f"Empty observations file: {obs_config_file}",

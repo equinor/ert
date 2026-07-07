@@ -19,18 +19,22 @@ from xlsxwriter import Workbook
 
 from ert import ErtScript, ErtScriptWorkflow
 from ert.config import (
+    CircleShapeConfig,
     ConfigValidationError,
     ErtConfig,
     ESSettings,
     HookRuntime,
     QueueSystem,
     RFTConfig,
+    ShapeRegistry,
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config.ert_config import (
     RandomSeedGenerator,
     _split_string_into_sections,
     create_forward_model_json,
+    log_observation_keys,
+    log_shape_registry,
 )
 from ert.config.forward_model_step import (
     ForwardModelStepPlugin,
@@ -3182,3 +3186,44 @@ def test_that_gen_kw_defaults_to_none_with_update_false(change_to_tmpdir):
     ert_config = ErtConfig.from_file("config.ert")
     param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
     assert param.update_strategy is None
+
+
+def test_that_log_observation_keys_logs_count_of_summary_keys(caplog):
+    caplog.set_level(logging.INFO)
+    wopr_count = 5
+    bpr_count = 3
+    mock_type = MagicMock(value="summary")
+    observations = [
+        *[{"type": mock_type, "KEY": "WOPR:FOO"}] * wopr_count,
+        *[{"type": mock_type, "KEY": "BPR:1,1,1"}] * bpr_count,
+    ]
+    log_observation_keys(observations)
+    assert "Count of summary keywords:" in caplog.text
+    assert f"'WOPR': {wopr_count}" in caplog.text
+    assert f"'BPR': {bpr_count}" in caplog.text
+
+
+def test_that_log_observation_keys_doesnt_fail_given_misconfigured_summarykey():
+    well_summary_missing_well = "WOPR"
+    block_summary_missing_indices = "BPR"
+    observations = [
+        {"type": MagicMock(value="summary"), "KEY": well_summary_missing_well},
+        {"type": MagicMock(value="summary"), "KEY": block_summary_missing_indices},
+    ]
+    log_observation_keys(observations)
+
+
+def test_that_log_observation_keys_doesnt_fail_given_no_keys(caplog):
+    caplog.set_level(logging.INFO)
+    observations = [{"type": MagicMock(value="summary")}]
+    log_observation_keys(observations)
+    assert "Count of summary keywords: {}" in caplog.text
+
+
+def test_that_log_shape_registry_logs_count_of_shapes(caplog):
+    caplog.set_level(logging.INFO)
+    shape_registry = ShapeRegistry()
+    for i in range(10):
+        shape_registry.register(CircleShapeConfig(north=i, east=i, radius=i))
+    log_shape_registry(shape_registry)
+    assert "Count of shapes in ShapeRegistry: {'CircleShapeConfig': 10}" in caplog.text
