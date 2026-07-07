@@ -14,6 +14,7 @@ from pydantic import ConfigDict
 
 from _ert.events import EESnapshotUpdate
 from ert.config import (
+    CircleShapeConfig,
     ErtConfig,
     ModelConfig,
     ObservationType,
@@ -820,10 +821,7 @@ async def test_that_status_snapshot_write_failure_does_not_mask_evaluation_error
     assert "Failed to persist status snapshot" in caplog.text
 
 
-def test_that_ert_config_and_run_model_gets_serialized_observations_and_shape_registry_redacted(  # noqa: E501
-    caplog,
-):
-    caplog.set_level(logging.INFO)
+def _ert_config_dict():
     summary_obs_dict = ObservationDict(
         {
             "type": ObservationType.SUMMARY,
@@ -840,7 +838,7 @@ def test_that_ert_config_and_run_model_gets_serialized_observations_and_shape_re
         },
         context=MagicMock(),
     )
-    config_dict = {
+    return {
         "NUM_REALIZATIONS": 1,
         "ECLBASE": "ECLIPSE_CASE",
         "OBS_CONFIG": (
@@ -848,8 +846,14 @@ def test_that_ert_config_and_run_model_gets_serialized_observations_and_shape_re
             [summary_obs_dict],
         ),
     }
-    ert_config = ErtConfig.from_dict(config_dict)
 
+
+def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
+    caplog, use_tmpdir
+):
+    caplog.set_level(logging.INFO)
+    config_dict = _ert_config_dict()
+    ert_config = ErtConfig.from_dict(config_dict)
     ert_config._log_config_dict(config_dict)
     assert "'OBS_CONFIG': '<REDACTED>'" in caplog.text
 
@@ -863,3 +867,16 @@ def test_that_ert_config_and_run_model_gets_serialized_observations_and_shape_re
     model.log_at_startup()
     assert "'observations': '<REDACTED>'" in caplog.text
     assert "'shape_registry': '<REDACTED>'" in caplog.text
+
+
+def test_that_ert_config_logs_insensitive_information_about_observations_and_shapes(
+    caplog,
+):
+    caplog.set_level(logging.INFO)
+    config_dict = _ert_config_dict()
+    ErtConfig.from_dict(config_dict)
+    assert "Count of summary keywords: {'FOPR': 1}" in caplog.text
+    assert (
+        f"Count of shapes in ShapeRegistry: {{'{CircleShapeConfig.__name__}': 1}}"
+        in caplog.text
+    )
