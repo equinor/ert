@@ -25,7 +25,6 @@ dynamic = ["version"]
 dependencies = [
     "aiohttp",
     "anyio",
-    "colorama",
     "cryptography",
     "decorator",
     "dnspython >= 2",
