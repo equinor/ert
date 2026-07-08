@@ -25,7 +25,6 @@ def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
 @pytest.mark.slow
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
-    summary_obs.remove_inactive_observations()
     # Only one observation, we check the key_index is what we expect:
     assert (
         summary_obs.data.columns.get_level_values("key_index").to_numpy()[0]
@@ -36,7 +35,6 @@ def test_summary_obs(create_measured_data):
 @pytest.mark.slow
 def test_gen_obs(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1"])
-    df.remove_inactive_observations()
 
     assert all(
         df.data.columns.get_level_values("key_index").to_numpy()
@@ -47,7 +45,6 @@ def test_gen_obs(create_measured_data):
 @pytest.mark.slow
 def test_gen_obs_and_summary(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
-    df.remove_inactive_observations()
 
     assert df.data.columns.get_level_values(0).to_list() == sorted(
         [

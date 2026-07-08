@@ -52,33 +52,9 @@ class MeasuredData:
             )
         self._data = data
 
-    def remove_failed_realizations(self) -> None:
-        """Removes rows with no simulated data, leaving observations and
-        standard deviations as-is.
-        """
-        pre_index = self.data.index
-        post_index = list(self.data.dropna(axis=0, how="all").index)
-        drop_index = set(pre_index) - {*post_index, "STD", "OBS"}
-        self._set_data(self.data.drop(index=drop_index))
-
     def get_simulated_data(self) -> pd.DataFrame:
         """Dimension of data is (number of responses x number of realizations)."""
         return self.data[~self.data.index.isin(["OBS", "STD"])]
-
-    def remove_inactive_observations(self) -> None:
-        """Removes columns with one or more NaN or inf values."""
-        filtered_dataset = self.data.replace([np.inf, -np.inf], np.nan).dropna(
-            axis="columns", how="any"
-        )
-        if filtered_dataset.empty:
-            raise ValueError(
-                "This operation results in an empty dataset "
-                "(could be due to one or more failed realizations)"
-            )
-        self._set_data(filtered_dataset)
-
-    def is_empty(self) -> bool:
-        return bool(self.data.empty)
 
     @staticmethod
     def _get_data(
