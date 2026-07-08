@@ -1,8 +1,9 @@
 QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 10
 
-NUM_REALIZATIONS 25
+NUM_REALIZATIONS 10
+#GRID grid/CASE.EGRID
 
-QUEUE_OPTION LOCAL MAX_RUNNING 25
 
 ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.98
 
@@ -11,6 +12,7 @@ RANDOM_SEED 3593114179000630026631423308983283277868
 
 RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
 ENSPATH <STORAGE>/ensemble
+JOBNAME SNAKE_OIL_<IENS>
 ECLBASE SNAKE_OIL_FIELD
 SUMMARY *
 
@@ -25,21 +27,13 @@ FORWARD_MODEL SNAKE_OIL_NPV
 FORWARD_MODEL SNAKE_OIL_DIFF
 
 RUN_TEMPLATE templates/seed_template.txt seed.txt
-GEN_KW \
-    SNAKE_OIL_PARAM \
-    templates/snake_oil_template.txt \
-    snake_oil_params.txt \
-    parameters/snake_oil_parameters.txt
 
-GEN_DATA \
-    SNAKE_OIL_OPR_DIFF \
-    RESULT_FILE:snake_oil_opr_diff_%d.txt \
-    REPORT_STEPS:199
-GEN_DATA \
-    SNAKE_OIL_WPR_DIFF \
-    RESULT_FILE:snake_oil_wpr_diff_%d.txt \
-    REPORT_STEPS:199
-GEN_DATA \
-    SNAKE_OIL_GPR_DIFF \
-    RESULT_FILE:snake_oil_gpr_diff_%d.txt \
-    REPORT_STEPS:199
+GEN_KW SNAKE_OIL_PARAM_BPR templates/snake_oil_template.txt snake_oil_params.txt parameters/snake_oil_parameters_BPR.txt
+GEN_KW SNAKE_OIL_PARAM_OP1 templates/snake_oil_template.txt snake_oil_params.txt parameters/snake_oil_parameters_OP1.txt
+GEN_KW SNAKE_OIL_PARAM_OP2 templates/snake_oil_template.txt snake_oil_params.txt parameters/snake_oil_parameters_OP2.txt
+
+GEN_DATA SNAKE_OIL_OPR_DIFF RESULT_FILE:snake_oil_opr_diff_%d.txt REPORT_STEPS:199
+GEN_DATA SNAKE_OIL_WPR_DIFF RESULT_FILE:snake_oil_wpr_diff_%d.txt REPORT_STEPS:199
+GEN_DATA SNAKE_OIL_GPR_DIFF RESULT_FILE:snake_oil_gpr_diff_%d.txt REPORT_STEPS:199
+
+UPDATE_LOG_PATH log/update
