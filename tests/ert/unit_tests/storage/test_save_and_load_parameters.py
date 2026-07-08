@@ -283,32 +283,17 @@ def test_gen_kw_collector(snake_oil_default_storage, snapshot):
         # realization 60:
         _ = data.to_dict()[60]
 
-    data: pl.DataFrame = snake_oil_default_storage.load_scalars(
-        "SNAKE_OIL_PARAM",
-    )
-    data = data[
-        ["realization", "SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]
-    ]
-    snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector_2.csv")
-
-    with pytest.raises(KeyError):
-        _ = data.to_dict()["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
-
     realization_index = 3
     data: pl.DataFrame = snake_oil_default_storage.load_scalars(
-        "SNAKE_OIL_PARAM",
         realizations=[realization_index],
     )
-    data = data.select("realization", "SNAKE_OIL_PARAM:OP1_PERSISTENCE")
     snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
     with pytest.raises(IndexError):
         data: pl.DataFrame = snake_oil_default_storage.load_scalars(
-            "SNAKE_OIL_PARAM",
             realizations=[non_existing_realization_index],
         )
-    data = data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
 
 
 def test_that_multiple_save_parameters_numpy_calls_overwrite_previous_values(tmp_path):

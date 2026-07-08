@@ -102,13 +102,15 @@ def test_keyword_type_checks_missing_key(snake_oil_default_storage):
 
 @pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_data_fetching_missing_key(snake_oil_case):
+def test_that_load_scalars_returns_empty_dataframe_when_no_scalars_exist(
+    snake_oil_case,
+):
     with open_storage(snake_oil_case.ens_path, mode="w") as storage:
         experiment = storage.create_experiment()
         empty_case = experiment.create_ensemble(name="new_case", ensemble_size=25)
 
         data = [
-            empty_case.load_scalars("nokey", None),
+            empty_case.load_scalars(),
         ]
 
         for dataframe in data:
