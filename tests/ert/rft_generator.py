@@ -52,12 +52,16 @@ def pad_to(lst: list[int], target_len: int):
     )
 
 
-def create_egrid(nx, ny, nz, x_width, y_width, layer_height):
+def create_egrid(
+    nx, ny, nz, x_width, y_width, layer_height, x_offset=0.0, y_offset=0.0, z_offset=0.0
+):
     """EGrid file contents with nz layers, nx cells in the i direction and ny cells in
     the j direction.
 
     Each cell has width x_width in the i direction and y_width in the j direction and
     height layer_height in the z direction.
+
+    The first cell starts at (x_offset, y_offset, z_offset) which defaults to (0,0,0)
     """
 
     height = nz * layer_height
@@ -65,7 +69,14 @@ def create_egrid(nx, ny, nz, x_width, y_width, layer_height):
 
     coord = np.array(
         [
-            [i * x_width, j * y_width, 0, i * x_width, j * y_width, height]
+            [
+                i * x_width + x_offset,
+                j * y_width + y_offset,
+                z_offset,
+                i * x_width + x_offset,
+                j * y_width + y_offset,
+                height + z_offset,
+            ]
             for j in range(ny + 1)
             for i in range(nx + 1)
         ],
@@ -74,8 +85,8 @@ def create_egrid(nx, ny, nz, x_width, y_width, layer_height):
 
     zcoord = np.array(
         [
-            [z * layer_height] * (cells_per_layer * 4)
-            + [(z + 1) * layer_height] * (cells_per_layer * 4)
+            [z * layer_height + z_offset] * (cells_per_layer * 4)
+            + [(z + 1) * layer_height + z_offset] * (cells_per_layer * 4)
             for z in range(nz)
         ],
         dtype=">f4",
