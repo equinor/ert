@@ -13,7 +13,6 @@ from .config import (
     ErtScriptWorkflow,
     WorkflowConfigs,
 )
-from .data import MeasuredData
 from .workflow_runner import WorkflowRunner
 from .plugins import plugin
 from .scheduler import JobState
@@ -27,7 +26,6 @@ __all__ = [
     "ForwardModelStepValidationError",
     "ForwardModelStepWarning",
     "JobState",
-    "MeasuredData",
     "WorkflowConfigs",
     "WorkflowRunner",
     "plugin",
