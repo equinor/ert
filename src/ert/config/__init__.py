@@ -51,7 +51,12 @@ from .queue_config import (
     LocalQueueOptions,
     QueueConfig,
 )
-from .response_config import DerivedResponseConfig, InvalidResponseFile, ResponseConfig
+from .response_config import (
+    BaseResponseConfig,
+    DerivedResponseConfig,
+    InvalidResponseFile,
+    ResponseConfig,
+)
 from .rft_config import RFTConfig
 from .seismic_config import SeismicConfig
 from .summary_config import SummaryConfig
@@ -84,6 +89,7 @@ __all__ = [
     "AnalysisConfig",
     "AnalysisModule",
     "BaseErtScriptWorkflow",
+    "BaseResponseConfig",
     "BreakthroughConfig",
     "CircleShapeConfig",
     "ConfigValidationError",

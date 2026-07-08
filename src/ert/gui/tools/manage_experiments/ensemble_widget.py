@@ -376,9 +376,7 @@ class EnsembleWidget(QWidget):
             exp = self._ensemble.experiment
 
             for response_type, obs_ds_for_type in exp.observations.items():
-                configs = (
-                    exp.response_configuration | exp.derived_response_configuration
-                )
+                configs = exp.base_response_configuration
                 if response_type not in configs:
                     continue
                 response_config = configs[response_type]
