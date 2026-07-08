@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 import polars as pl
 import pytest
 
@@ -27,7 +28,7 @@ def test_summary_obs(create_measured_data):
     summary_obs.remove_inactive_observations()
     # Only one observation, we check the key_index is what we expect:
     assert (
-        summary_obs.data.columns.get_level_values("key_index").values[0]
+        summary_obs.data.columns.get_level_values("key_index").to_numpy()[0]
         == "2011-12-21 00:00:00.000"
     )
 
@@ -38,7 +39,7 @@ def test_gen_obs(create_measured_data):
     df.remove_inactive_observations()
 
     assert all(
-        df.data.columns.get_level_values("key_index").values
+        df.data.columns.get_level_values("key_index").to_numpy()
         == ["199, 400", "199, 800", "199, 1200", "199, 1800"]
     )
 
@@ -144,3 +145,19 @@ def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_stora
             ResponseError, match="No response loaded for observation type: summary"
         ):
             MeasuredData(ensemble, ["FOPR"])
+
+
+@pytest.mark.slow
+def test_that_set_data_raises_when_obs_and_std_are_missing(create_measured_data):
+    measured_data = create_measured_data(["WOPR_OP1_72"])
+    frame_without_obs_and_std = pd.DataFrame(
+        {"col": [1.0, 2.0]}, index=pd.Index(["realization_0", "realization_1"])
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"\{'OBS', 'STD'\}|\{'STD', 'OBS'\}"
+        r" should be present in DataFrame index,\s+"
+        r"missing: (\{'OBS', 'STD'\}|\{'STD', 'OBS'\})",
+    ):
+        measured_data._set_data(frame_without_obs_and_std)
