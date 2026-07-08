@@ -1133,7 +1133,7 @@ requires-dist = [
     { name = "requests" },
     { name = "resfo", specifier = ">=5.0.0" },
     { name = "resfo-utilities", specifier = ">=0.5.0" },
-    { name = "ropt", extras = ["pandas"], specifier = ">=0.28,<0.29" },
+    { name = "ropt", extras = ["pandas"], specifier = ">=0.28.1,<0.29" },
     { name = "ropt-dakota", specifier = ">=0.28,<0.29" },
     { name = "ruamel-yaml" },
     { name = "scipy", specifier = ">=1.10.1" },
@@ -4518,16 +4518,16 @@ wheels = [
 
 [[package]]
 name = "ropt"
-version = "0.28.0"
+version = "0.28.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "pydantic" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/77/c9b1b911f97fae33d61c957b74457437aed8c99217d411975cdca1e460ca/ropt-0.28.0.tar.gz", hash = "sha256:f11d48822a1ccd9811a3e96c01b87d3bb71ccb32e29e31d3cfcada95d6452035", size = 309855, upload-time = "2026-07-07T07:29:03.296Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/a7/be1e1c689fe74e0c0995eaa5edb6b5c709abfd705792ec280210d1d84a22/ropt-0.28.1.tar.gz", hash = "sha256:347ac3fab9a5e23cf00ee955f1c9acbefa6363757088caaa9acd4b1d02bb2e59", size = 304834, upload-time = "2026-07-08T15:33:50.163Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/f5/2422894c3e5d6e4680f4546a315ee19419bc484004a988899a6c089fefc9/ropt-0.28.0-py3-none-any.whl", hash = "sha256:127374e1761427db156b521009db61c1cf8c83414b8a1e48d2b58b367e9b1145", size = 168621, upload-time = "2026-07-07T07:29:01.926Z" },
+    { url = "https://files.pythonhosted.org/packages/30/73/48663a499e226cbb2863ad9ad2f79f7228d25de7e7c6663bbb728aa5d8a4/ropt-0.28.1-py3-none-any.whl", hash = "sha256:27e43dfad97f2942cc134941cee13c836dfc00ef5cfd2c713eb11b42ed7e90c3", size = 166221, upload-time = "2026-07-08T15:33:48.907Z" },
 ]
 
 [package.optional-dependencies]
