@@ -757,3 +757,47 @@ def test_that_run_status_tab_shows_placeholder_when_no_snapshot_exists(qtbot, st
 
     run_status_view = ensemble_widget._run_status_view
     assert run_status_view._stack.currentWidget() is run_status_view._placeholder
+
+def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
+    qtbot, storage
+):
+
+    date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
+    observation_key = "FOPR"
+    response_key = "FOPR"
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASE",
+            "SUMMARY": [response_key],
+            "OBS_CONFIG": (
+                "obs_config",
+                [
+                    create_summary_observation_dict(
+                        key=observation_key, date=date.isoformat()
+                    ),
+                ],
+            ),
+        }
+    )
+
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
+    ensemble.save_response(
+        "summary",
+        pl.DataFrame(
+            {
+                "response_key": [response_key],
+                "time": [pl.Series([date]).dt.cast_time_unit("ms")],
+                "values": [pl.Series([1.0], dtype=pl.Float32)],
+            }
+        ).explode("values", "time"),
+        0,
+    )
+
+    ensemble_widget = EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    qtbot.addWidget(ensemble_widget)
+    misfit_df = ensemble_widget.get_misfit_df()
+    assert isinstance(misfit_df, pl.DataFrame)
+    assert misfit_df.columns[0] == "Realization"
