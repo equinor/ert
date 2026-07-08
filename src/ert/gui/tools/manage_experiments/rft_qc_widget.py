@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 import numpy.typing as npt
 import polars as pl
+from matplotlib import __version__ as mpl_version
 from matplotlib.backend_bases import MouseEvent, PickEvent
 from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
-from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D, axis3d
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 from polars.exceptions import ColumnNotFoundError
 from PyQt6.QtCore import Qt
@@ -40,6 +41,36 @@ from ert.trace import trace, tracer
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
+
+
+def _install_mpl_3d_axis_regression_workaround() -> None:
+    """Workaround for a matplotlib 3.11.0 regression when inverting 3D axes.
+
+    See issue: https://github.com/matplotlib/matplotlib/issues/31989
+    Fix expected in matplotlib 3.11.1
+    """
+
+    if mpl_version != "3.11.0":
+        return
+
+    original_get_coord_info = axis3d.Axis._get_coord_info
+
+    def _get_coord_info(
+        self: axis3d.Axis,
+    ) -> tuple[
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.bool_],
+    ]:
+        mins, maxs, bounds_proj, highs = original_get_coord_info(self)
+        return np.minimum(mins, maxs), np.maximum(mins, maxs), bounds_proj, highs
+
+    axis3d.Axis._get_coord_info = _get_coord_info
+
+
+_install_mpl_3d_axis_regression_workaround()
+
 
 _FILTER_WIDTH = 200
 _DETAILS_WIDTH = 300
