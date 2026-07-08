@@ -834,7 +834,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
-        optimizer_exit_code = optimizer.run(initial_guesses).exit_code
+        optimizer_exit_code = optimizer.run(initial_guesses)
 
         # Store some final results.
         self._update_ensemble_improvement_flags()
