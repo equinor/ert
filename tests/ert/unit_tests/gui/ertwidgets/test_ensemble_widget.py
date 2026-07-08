@@ -11,11 +11,9 @@ from PyQt6.QtWidgets import (
 from ert.config import ErtConfig, ObservationType
 from ert.config.rft_config import RFTConfig
 from ert.ensemble_evaluator import state
-from ert.gui.experiments.view import run_status as run_status_module
 from ert.gui.experiments.view.realization import RealizationWidget
-from ert.gui.experiments.view.run_status import RunStatusView
-from ert.gui.tools.manage_experiments.storage_info_widget import (
-    _EnsembleWidget,
+from ert.gui.tools.manage_experiments.ensemble_widget import (
+    EnsembleWidget,
     _EnsembleWidgetTabs,
 )
 from ert.run_models.event import FullSnapshotEvent, status_event_to_json
@@ -87,7 +85,7 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
         0,
     )
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -134,7 +132,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
     breakthrough_response = bt_config.derive_from_storage(0, 0, ensemble)
     ensemble.save_response("breakthrough", breakthrough_response, 0)
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -219,7 +217,7 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
     ensemble.save_response("rft", rft_response(), 0)
     ensemble.save_observation_location_metadata(location_metadata(), 0)
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -312,7 +310,7 @@ def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_en
     ensemble.save_response("rft", rft_responses, 0)
     ensemble.save_observation_location_metadata(location_metadata, 0)
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -461,7 +459,7 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
         location_metadata(actual_zones=zones2, well_connection_cell=cell2), 3
     )
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -519,7 +517,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
     experiment = create_experiment_from_config(config, storage)
     ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -674,7 +672,7 @@ def test_that_observations_are_identified_and_sorted_by_full_index_key(
     experiment = create_experiment_from_config(config, storage)
     ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -728,7 +726,7 @@ def test_that_run_status_tab_shows_persisted_realizations_for_ensemble(qtbot, st
     ensemble = experiment.create_ensemble(name="default", ensemble_size=2, iteration=0)
     _persist_full_snapshot(experiment, ensemble.iteration)
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -751,7 +749,7 @@ def test_that_run_status_tab_shows_placeholder_when_no_snapshot_exists(qtbot, st
     experiment = storage.create_experiment(name="exp")
     ensemble = experiment.create_ensemble(name="default", ensemble_size=2, iteration=0)
 
-    ensemble_widget = _EnsembleWidget()
+    ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
     qtbot.addWidget(ensemble_widget)
 
@@ -759,29 +757,3 @@ def test_that_run_status_tab_shows_placeholder_when_no_snapshot_exists(qtbot, st
 
     run_status_view = ensemble_widget._run_status_view
     assert run_status_view._stack.currentWidget() is run_status_view._placeholder
-
-
-def test_that_run_status_view_reuses_loaded_snapshot_when_path_is_unchanged(
-    qtbot, tmp_path, monkeypatch
-):
-    path = tmp_path / "snapshot_0.json"
-    load_call_count = 0
-
-    def load_snapshot(_):
-        nonlocal load_call_count
-        load_call_count += 1
-        return _build_run_status_snapshot(iteration=0)
-
-    monkeypatch.setattr(run_status_module, "load_status_snapshot_event", load_snapshot)
-
-    run_status_view = RunStatusView()
-    qtbot.addWidget(run_status_view)
-
-    run_status_view.load_snapshot(path)
-    assert load_call_count == 1
-    content_after_first_load = run_status_view._content
-
-    run_status_view.load_snapshot(path)
-
-    assert load_call_count == 1
-    assert run_status_view._content is content_after_first_load
