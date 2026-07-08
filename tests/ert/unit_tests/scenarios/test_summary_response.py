@@ -14,7 +14,6 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.config import ErtConfig, ObservationSettings
-from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
@@ -278,9 +277,9 @@ def test_that_mismatched_responses_gives_nan_measured_data(prior_ensemble):
     ]
     create_responses(prior_ensemble, response_times)
 
-    measured_data = MeasuredData(prior_ensemble)
+    measured_data = prior_ensemble._load_measured_data()
 
-    fopr_1 = measured_data.data["FOPR_1"]
+    fopr_1 = measured_data["FOPR_1"]
     assert isinstance(fopr_1, pd.DataFrame)
     assert np.isclose(fopr_1.loc["OBS"].iloc[0], 0.9)
     assert np.isclose(fopr_1.loc["STD"].iloc[0], 0.05)
@@ -288,7 +287,7 @@ def test_that_mismatched_responses_gives_nan_measured_data(prior_ensemble):
     assert np.isclose(fopr_1.loc[1].iloc[0], 0.06409991532564163)
     assert pd.isna(fopr_1.loc[2].iloc[0])
 
-    fopr_2 = measured_data.data["FOPR_2"]
+    fopr_2 = measured_data["FOPR_2"]
     assert np.isclose(fopr_2.loc["OBS"].iloc[0], 1.1)
     assert np.isclose(fopr_2.loc["STD"].iloc[0], 0.05)
     assert pd.isna(fopr_2.loc[0].iloc[0])
