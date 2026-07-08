@@ -275,9 +275,9 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         snapshot.assert_match(data.write_csv(float_precision=12), "gen_kw_unsorted")
 
 
-def test_gen_kw_collector(snake_oil_default_storage, snapshot):
+def test_that_load_scalars_returns_correct_data(snake_oil_default_storage, snapshot):
     data: pl.DataFrame = snake_oil_default_storage.load_scalars()
-    snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector.csv")
+    snapshot.assert_match(data.write_csv(float_precision=6), "data.csv")
 
     with pytest.raises(KeyError):
         # realization 60:
@@ -287,7 +287,7 @@ def test_gen_kw_collector(snake_oil_default_storage, snapshot):
     data: pl.DataFrame = snake_oil_default_storage.load_scalars(
         realizations=[realization_index],
     )
-    snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector_3.csv")
+    snapshot.assert_match(data.write_csv(float_precision=6), "data_1.csv")
 
     non_existing_realization_index = 150
     with pytest.raises(IndexError):
