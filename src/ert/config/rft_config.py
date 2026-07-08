@@ -6,6 +6,7 @@ import logging
 import os
 import re
 from collections import defaultdict
+from copy import copy
 from dataclasses import InitVar, dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -294,14 +295,23 @@ class RFTConfig(ResponseConfig):
             (well, time)
             for well, time_dict in self.data_to_read.items()
             for time in time_dict
+            if well != "*"
         }
         well_time_keys_rft_data = {(well, time.isoformat()) for well, time in rft_data}
-        well_time_without_response: set[tuple[str, str]] = (
+
+        well_times_to_warn: set[tuple[str, str]] = (
             well_time_keys - well_time_keys_rft_data
         )
 
+        # Only warn about wells with wildcard times if well have
+        # no responses at any time.
+        wells_with_responses = {well for well, time in rft_data}
+        for well, time in copy(well_times_to_warn):
+            if time == "*" and well in wells_with_responses:
+                well_times_to_warn.remove((well, time))
+
         formatted_items = [
-            f"{well}: {time}" for well, time in sorted(well_time_without_response)
+            f"{well}: {time}" for well, time in sorted(well_times_to_warn)
         ]
         _warn_about_missing_responses(
             formatted_items, "well(s) at time(s)", rft_filename

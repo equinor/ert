@@ -1,4 +1,5 @@
 import re
+import warnings
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -1288,7 +1289,8 @@ def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_
     assert rft_config.approximate_missing_values is expected_setting
 
 
-def test_that_missing_response_for_rft_well_raises_warning(mock_resfo_file, egrid):
+@pytest.fixture(name="setup_mock_resfo_file")
+def setup_mock_resfo_file(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -1309,6 +1311,8 @@ def test_that_missing_response_for_rft_well_raises_warning(mock_resfo_file, egri
         egrid,
     )
 
+
+def test_that_missing_response_for_rft_well_raises_warning(setup_mock_resfo_file):
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={
@@ -1327,23 +1331,8 @@ def test_that_missing_response_for_rft_well_raises_warning(mock_resfo_file, egri
 
 
 def test_that_one_existing_and_one_missing_rft_response_warns_about_the_one_missing(
-    mock_resfo_file, egrid
+    setup_mock_resfo_file,
 ):
-    mock_resfo_file(
-        "/tmp/does_not_exist/BASE.RFT",
-        [
-            *cell_start(date=(1, 1, 2000), well_name="WELL"),
-            ("PRESSURE", float_arr([100.0, 200.0])),
-            ("SWAT    ", float_arr([0.1, 0.2])),
-            ("SGAS    ", float_arr([0.3, 0.4])),
-            ("DEPTH   ", float_arr([20.0, 30.0])),
-        ],
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/BASE.EGRID",
-        egrid,
-    )
-
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={
@@ -1362,21 +1351,7 @@ def test_that_one_existing_and_one_missing_rft_response_warns_about_the_one_miss
     assert any(all(m in str(w) for m in expected_warnings) for w in warnings)
 
 
-def test_that_many_missing_response_warnings_are_truncated(mock_resfo_file, egrid):
-    mock_resfo_file(
-        "/tmp/does_not_exist/BASE.RFT",
-        [
-            *cell_start(date=(1, 1, 2000), well_name="WELL"),
-            ("PRESSURE", float_arr([100.0, 200.0])),
-            ("SWAT    ", float_arr([0.1, 0.2])),
-            ("SGAS    ", float_arr([0.3, 0.4])),
-            ("DEPTH   ", float_arr([20.0, 30.0])),
-        ],
-    )
-    mock_resfo_file(
-        "/tmp/does_not_exist/BASE.EGRID",
-        egrid,
-    )
+def test_that_many_missing_response_warnings_are_truncated(setup_mock_resfo_file):
     num_missing_responses = 9
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
@@ -1400,3 +1375,50 @@ def test_that_many_missing_response_warnings_are_truncated(mock_resfo_file, egri
     match = re.search(r"and (\d+) other missing responses", last_line)
     excess_warnings = int(match.group(1))
     assert excess_warnings == num_missing_responses - _RESPONSE_WARNING_LIMIT
+
+
+def test_that_wildcard_wells_are_not_warned_about(setup_mock_resfo_file):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "*": {"2000-01-01": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
+            "error", PostExperimentWarning
+        )
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_wildcard_times_are_not_warned_about_given_any_well_response(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "WELL": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
+            "error", PostExperimentWarning
+        )
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_wildcard_times_are_warned_about_given_no_well_response(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "DIFFERENT_WELL": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    expected_warning = ["Could not find responses for well(s) at time(s)", "WELL: *"]
+    # Assert one warning contains all expected warnings
+    assert any(all(e_w in str(w) for e_w in expected_warning) for w in warnings)
