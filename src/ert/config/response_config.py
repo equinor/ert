@@ -131,6 +131,13 @@ class BaseResponseConfig(BaseModel, extra="forbid"):
         resolved (for example, when wildcards are expanded).
         """
 
+    @abstractmethod
+    def is_derived(self) -> bool:
+        """
+        Indicates whether response is derived from other data (not directly
+        produced by forward model).
+        """
+
     @staticmethod
     def _assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
         return assert_schema(df, schema)
@@ -175,6 +182,9 @@ class ResponseConfig(BaseResponseConfig):
         self.keys = keys
         self.has_finalized_keys = True
 
+    def is_derived(self) -> bool:
+        return False
+
 
 class DerivedResponseConfig(BaseResponseConfig):
     keys: list[str] = Field(default_factory=list)
@@ -193,3 +203,6 @@ class DerivedResponseConfig(BaseResponseConfig):
     def finalize_keys(self, keys: list[str]) -> None:
         self.keys = keys
         self.has_finalized_keys = True
+
+    def is_derived(self) -> bool:
+        return True

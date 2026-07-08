@@ -738,11 +738,7 @@ class LocalEnsemble(BaseMode):
         self, response_key: str, realizations: tuple[int, ...]
     ) -> pl.LazyFrame:
         select_key = False
-        if (
-            response_key
-            in self.experiment.response_configuration
-            | self.experiment.derived_response_configuration
-        ):
+        if response_key in self.experiment.base_response_configuration:
             response_type = response_key
         elif response_key not in self.experiment.response_key_to_response_type:
             raise ValueError(f"{response_key} is not a response")
@@ -978,10 +974,7 @@ class LocalEnsemble(BaseMode):
         for (
             response_type,
             response_cls,
-        ) in (
-            self.experiment.response_configuration
-            | self.experiment.derived_response_configuration
-        ).items():
+        ) in self.experiment.base_response_configuration.items():
             if response_type not in observations_by_type:
                 continue
 
@@ -1022,7 +1015,7 @@ class LocalEnsemble(BaseMode):
                 if (
                     response_type == "rft"
                     and cast(
-                        RFTConfig, self.experiment.response_configuration["rft"]
+                        RFTConfig, self.experiment.base_response_configuration["rft"]
                     ).approximate_missing_values
                 ):
                     responses = RFTConfig.approximate_missing_rft_responses(
@@ -1159,7 +1152,7 @@ class LocalEnsemble(BaseMode):
         if rft_observations is None or rft_observations.is_empty():
             raise ValueError("No RFT observations found in experiment")
 
-        if "rft" not in self.experiment.response_configuration:
+        if "rft" not in self.experiment.base_response_configuration:
             raise ValueError("No RFT response configuration found in experiment")
 
         realizations = self.get_realization_list_with_responses()
@@ -1168,7 +1161,7 @@ class LocalEnsemble(BaseMode):
 
         # Build date-to-report_step mapping from summary responses if available
         date_to_report_step: dict[str, int] = {}
-        if "summary" in self.experiment.response_configuration:
+        if "summary" in self.experiment.base_response_configuration:
             try:
                 summary_df = self.load_responses("summary", (realizations[0],))
                 times = summary_df["time"].unique().sort()
@@ -1227,7 +1220,7 @@ class LocalEnsemble(BaseMode):
                 observation_metadata_in_realization,
             )
             if cast(
-                RFTConfig, self.experiment.response_configuration["rft"]
+                RFTConfig, self.experiment.base_response_configuration["rft"]
             ).approximate_missing_values:
                 responses = RFTConfig.approximate_missing_rft_responses(
                     responses.lazy(), observations
@@ -1565,7 +1558,7 @@ class LocalEnsemble(BaseMode):
 
         if (
             not simulations
-            or "everest_constraints" not in self.experiment.response_configuration
+            or "everest_constraints" not in self.experiment.base_response_configuration
         ):
             return None
 
@@ -1681,7 +1674,7 @@ class LocalEnsemble(BaseMode):
 
         if (
             not simulations
-            or "everest_constraints" not in self.experiment.response_configuration
+            or "everest_constraints" not in self.experiment.base_response_configuration
         ):
             return None
 
@@ -1925,7 +1918,7 @@ def _write_observation_metadata(
     instead.
     """
 
-    rft_config = cast(RFTConfig, ensemble.experiment.response_configuration["rft"])
+    rft_config = cast(RFTConfig, ensemble.experiment.base_response_configuration["rft"])
     rft_observations = ensemble.experiment.observations.get("rft")
     if rft_observations is None or rft_observations.is_empty():
         return
