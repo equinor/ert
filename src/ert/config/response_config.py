@@ -42,7 +42,7 @@ class InvalidResponseFile(Exception):
     """
 
 
-class BaseResponseConfig(BaseModel, extra="forbid"):
+class ResponseConfig(BaseModel, extra="forbid"):
     """Represents an abstract response configuration in the ERT config.
 
     Some attributes are the same for all children classes, yet moving them to the base
@@ -143,7 +143,7 @@ class BaseResponseConfig(BaseModel, extra="forbid"):
         return assert_schema(df, schema)
 
 
-class SimulationResponseConfig(BaseResponseConfig):
+class SimulationResponseConfig(ResponseConfig):
     input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
@@ -186,7 +186,7 @@ class SimulationResponseConfig(BaseResponseConfig):
         return False
 
 
-class DerivedResponseConfig(BaseResponseConfig):
+class DerivedResponseConfig(ResponseConfig):
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
 

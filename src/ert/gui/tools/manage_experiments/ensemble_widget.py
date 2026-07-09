@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config.response_config import BaseResponseConfig
+from ert.config.response_config import ResponseConfig
 from ert.config.rft_config import RFTConfig
 from ert.gui.experiments.view.run_status import RunStatusView
 from ert.storage import Ensemble
@@ -52,7 +52,7 @@ class _ObservationTreeWidgetItem(QTreeWidgetItem):
         parent: QTreeWidgetItem,
         observation_key: str,
         observation_data: pl.DataFrame,
-        response_config: BaseResponseConfig,
+        response_config: ResponseConfig,
     ) -> None:
         assert len(observation_data) == 1
         self.observation_key = observation_key
@@ -376,7 +376,7 @@ class EnsembleWidget(QWidget):
             exp = self._ensemble.experiment
 
             for response_type, obs_ds_for_type in exp.observations.items():
-                configs = exp.base_response_configuration
+                configs = exp.response_configuration
                 if response_type not in configs:
                     continue
                 response_config = configs[response_type]

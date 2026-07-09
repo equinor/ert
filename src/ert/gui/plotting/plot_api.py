@@ -20,7 +20,7 @@ from resfo_utilities import history_key
 from ert.config import ParameterConfig
 from ert.config.known_derived_response_types import KnownDerivedResponseTypes
 from ert.config.known_response_types import KnownResponseTypes
-from ert.config.response_config import BaseResponseConfig
+from ert.config.response_config import ResponseConfig
 from ert.services import create_ertserver_client
 from ert.storage.local_experiment import _parameters_adapter as parameter_config_adapter
 from ert.storage.local_experiment import _responses_adapter as response_config_adapter
@@ -51,7 +51,7 @@ class PlotApiKeyDefinition(NamedTuple):
     metadata: dict[Any, Any]
     filter_on: dict[Any, Any] | None = None
     parameter: ParameterConfig | None = None
-    response: BaseResponseConfig | None = None
+    response: ResponseConfig | None = None
 
 
 class PlotApi:

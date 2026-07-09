@@ -52,9 +52,9 @@ from .queue_config import (
     QueueConfig,
 )
 from .response_config import (
-    BaseResponseConfig,
     DerivedResponseConfig,
     InvalidResponseFile,
+    ResponseConfig,
     SimulationResponseConfig,
 )
 from .rft_config import RFTConfig
@@ -89,7 +89,6 @@ __all__ = [
     "AnalysisConfig",
     "AnalysisModule",
     "BaseErtScriptWorkflow",
-    "BaseResponseConfig",
     "BreakthroughConfig",
     "CircleShapeConfig",
     "ConfigValidationError",
@@ -148,6 +147,7 @@ __all__ = [
     "QueueConfig",
     "QueueSystem",
     "RFTConfig",
+    "ResponseConfig",
     "SamplerConfig",
     "SeismicConfig",
     "ShapeConfig",
