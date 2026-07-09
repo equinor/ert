@@ -46,7 +46,7 @@ class WaterfallPlot:
                 ensemble, data = ens, df
                 break
 
-        if data.empty:
+        if data.empty or ensemble is None:
             ax = figure.add_subplot(111)
             ax.text(
                 0.5,
