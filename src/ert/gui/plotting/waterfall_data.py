@@ -62,29 +62,22 @@ def compute_waterfall_data(
         logger.info("K blob has no parameter_group_sizes metadata")
         return pl.DataFrame()
 
-    # Resolve parameter config name from the UI key
-    config_name = (
-        parameter_key.rsplit(":", maxsplit=1)[-1]
-        if ":" in parameter_key
-        else parameter_key
-    )
-
-    if config_name not in parameter_group_sizes:
-        logger.info("Parameter %r not found in parameter_group_sizes", config_name)
+    if parameter_key not in parameter_group_sizes:
+        logger.info("Parameter %r not found in parameter_group_sizes", parameter_key)
         return pl.DataFrame()
 
     # Compute row offset in K for this parameter
     row_offset = 0
     for name, size in parameter_group_sizes.items():
-        if name == config_name:
+        if name == parameter_key:
             break
         row_offset += size
 
-    param_size = parameter_group_sizes[config_name]
+    param_size = parameter_group_sizes[parameter_key]
     if param_size != 1:
         logger.info(
             "Parameter %r has size %d (not scalar), skipping waterfall",
-            config_name,
+            parameter_key,
             param_size,
         )
         return pl.DataFrame()
@@ -110,8 +103,6 @@ def compute_waterfall_data(
     # Get active realizations
     ens_mask = prior.get_realization_mask_with_responses()
     iens = np.flatnonzero(ens_mask)
-    if len(iens) == 0:
-        return pl.DataFrame()
 
     # Load observations and responses to compute innovation mean
     obs_keys = ensemble.experiment.observation_keys
@@ -146,8 +137,8 @@ def compute_waterfall_data(
         return pl.DataFrame()
 
     # Load prior and posterior parameter values for the scalar parameter.
-    prior_values = prior.load_parameters_numpy(config_name, iens)
-    posterior_values = ensemble.load_parameters_numpy(config_name, iens)
+    prior_values = prior.load_parameters_numpy(parameter_key, iens)
+    posterior_values = ensemble.load_parameters_numpy(parameter_key, iens)
 
     prior_flat = prior_values.flatten()
     posterior_flat = posterior_values.flatten()
