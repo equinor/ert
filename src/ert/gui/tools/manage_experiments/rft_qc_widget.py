@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -742,18 +743,36 @@ class RftPlot:
         self._canvas.draw_idle()
 
 
+@dataclass
+class CurrentRealization:
+    ensemble: Ensemble
+    number: int
+    runpath: str | None
+    rft_config: RFTConfig | None
+    loaded: bool
+
+    def __post_init__(self) -> None:
+        if self.runpath is not None and self.rft_config is not None:
+            self.rft_file_path = Path(
+                self.rft_config._rft_filepath(
+                    self.rft_config.expected_input_files[0],
+                    self.runpath,
+                    self.number,
+                    self.ensemble.iteration,
+                )
+            )
+        else:
+            self.rft_file_path = None
+
+
 class RftQcWidget(QWidget):
     def __init__(self, ert_config: ErtConfig | None = None) -> None:
         QWidget.__init__(self)
         self._runpaths: Runpaths | None = (
             Runpaths.from_config(ert_config) if ert_config else None
         )
-        self._current_rft_config: RFTConfig | None = None
-        self._current_rft_file_path: Path | None = None
-        self._current_ensemble: Ensemble | None = None
-        self._current_realization: int | None = None
-        self._current_runpath: str | None = None
-        self._current_realization_loaded: bool = False
+
+        self._current_realization: CurrentRealization | None = None
 
         self._observations: pl.DataFrame = pl.DataFrame(
             schema=self._required_obs_subschema()
@@ -831,37 +850,41 @@ class RftQcWidget(QWidget):
         self._load_rft_file_toggle.setEnabled(
             self._load_rft_file
             or (
-                self._current_rft_file_path is not None
-                and self._current_rft_file_path.exists()
+                self._current_realization is not None
+                and self._current_realization.rft_file_path is not None
+                and self._current_realization.rft_file_path.exists()
             )
         )
 
     def _set_current_realization(self, ensemble: Ensemble, realization: int) -> None:
-        self._current_ensemble = ensemble
-        self._current_realization = realization
-        self._current_runpath = self._get_runpath(ensemble, realization)
-        self._current_realization_loaded = False
-        self._current_rft_config = self._create_rft_config(ensemble)
-        self._current_rft_file_path = self._get_rft_file_path(
-            self._current_runpath, self._current_rft_config
+        self._current_realization = CurrentRealization(
+            ensemble=ensemble,
+            number=realization,
+            runpath=self._get_runpath(ensemble, realization),
+            rft_config=self._create_rft_config(ensemble),
+            loaded=False,
         )
+
         self._update_load_rft_file_toggle_enabled_state()
+        rft_file_path = self._current_realization.rft_file_path
         self._rft_file_label.setText(
-            str(self._current_rft_file_path)
-            if self._current_rft_file_path is not None
-            and self._current_rft_file_path.exists()
+            str(rft_file_path)
+            if rft_file_path is not None and rft_file_path.exists()
             else "<i>No RFT file found</i>"
         )
 
     @tracer.start_as_current_span(f"{__name__}.load_current_realization")
     def load_current_realization(self) -> None:
         if (
-            (not self._current_realization_loaded)
-            and self._current_ensemble is not None
-            and self._current_realization is not None
+            self._current_realization is not None
+            and not self._current_realization.loaded
         ):
-            self._load_realization(self._current_ensemble, self._current_realization)
-            self._current_realization_loaded = True
+            self._load_realization(
+                self._current_realization.ensemble,
+                self._current_realization.number,
+                self._current_realization.rft_config,
+            )
+            self._current_realization.loaded = True
 
     @tracer.start_as_current_span(f"{__name__}.update_realization")
     def update_realization(
@@ -885,14 +908,6 @@ class RftQcWidget(QWidget):
                 zonemap=rft_cfg.zonemap,
                 approximate_missing_values=rft_cfg.approximate_missing_values,
             )
-        return None
-
-    @staticmethod
-    def _get_rft_file_path(
-        runpath: str | None, rft_config: RFTConfig | None
-    ) -> Path | None:
-        if runpath is not None and rft_config is not None:
-            return Path(runpath) / rft_config.expected_input_files[0]
         return None
 
     @staticmethod
@@ -1004,7 +1019,9 @@ class RftQcWidget(QWidget):
         )
         return _ensure_well_connection_cell_center(observations)
 
-    def _load_realization(self, ensemble: Ensemble, realization: int) -> None:
+    def _load_realization(
+        self, ensemble: Ensemble, realization: int, rft_config: RFTConfig | None
+    ) -> None:
         self._clear_load_status()
         errors: list[str] = []
         try:
@@ -1017,8 +1034,8 @@ class RftQcWidget(QWidget):
             errors.append(f"Could not load observations: {err}")
         try:
             approximate_missing_values = (
-                self._current_rft_config.approximate_missing_values
-                if self._current_rft_config is not None
+                rft_config.approximate_missing_values
+                if rft_config is not None
                 else False
             )
             self._responses = self._get_responses(
@@ -1048,7 +1065,7 @@ class RftQcWidget(QWidget):
         if errors:
             self._show_load_status("<br>".join(errors))
         if self._load_rft_file:
-            self._load_file_rft()
+            self._load_file_rft(self._current_realization)
         self._filter_panel.populate_filters(self._dfs_for_filters())
         self._refresh_utm_availability()
         self._apply_filter_and_redraw(preserve_view=False)
@@ -1126,7 +1143,7 @@ class RftQcWidget(QWidget):
     def _on_toggle_file_rft(self, checked: bool) -> None:
         self._load_rft_file = checked
         if self._load_rft_file:
-            self._load_file_rft()
+            self._load_file_rft(self._current_realization)
         else:
             self._file_responses = pl.DataFrame(
                 schema=self._required_file_response_subschema()
@@ -1136,16 +1153,19 @@ class RftQcWidget(QWidget):
         self._refresh_utm_availability()
         self._apply_filter_and_redraw(preserve_view=False)
 
-    def _load_file_rft(self) -> None:
+    def _load_file_rft(self, current_realization: CurrentRealization | None) -> None:
         if (
-            self._current_rft_config is not None
-            and self._current_runpath is not None
-            and self._current_rft_file_path is not None
-            and self._current_rft_file_path.exists()
+            current_realization is not None
+            and current_realization.rft_config is not None
+            and current_realization.runpath is not None
         ):
             try:
                 rft_file_df = _ensure_well_connection_cell_center(
-                    self._current_rft_config.read_from_file(self._current_runpath, 0, 0)
+                    current_realization.rft_config.read_from_file(
+                        current_realization.runpath,
+                        current_realization.number,
+                        current_realization.ensemble.iteration,
+                    )
                 ).with_columns(
                     pl.col("well_connection_cell_center").arr.get(0).alias("east"),
                     pl.col("well_connection_cell_center").arr.get(1).alias("north"),

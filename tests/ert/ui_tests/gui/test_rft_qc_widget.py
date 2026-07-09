@@ -16,6 +16,7 @@ from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
 from ert.config.rft_config import RFTConfig
 from ert.gui.tools.manage_experiments.rft_qc_widget import (
+    CurrentRealization,
     FilterPanel,
     RftPlot,
     RftQcWidget,
@@ -437,15 +438,9 @@ def test_that_rft_qc_widget_loads_and_displays_observations_responses_and_file_r
         )
         ensemble.save_response(rft_config.type, rft_responses_df, realization)
         widget = RftQcWidget()
-        qtbot.addWidget(widget)
-        widget.update_realization(ensemble, realization)
+        widget._get_runpath = lambda ensemble, realization: BASE_PATH
 
-        # Set runpath be able to read rft file:
-        widget._current_runpath = BASE_PATH
-        widget._current_rft_file_path = widget._get_rft_file_path(
-            BASE_PATH, widget._current_rft_config
-        )
-        widget._update_load_rft_file_toggle_enabled_state()
+        widget.update_realization(ensemble, realization)
 
         expected_obs_df = expected_obs()
         assert_frame_equal(
@@ -559,6 +554,42 @@ def _mock_rft_ensemble(stored_observations, stored_location_metadata, stored_res
             else stored_responses
         )
     return ensemble
+
+
+@pytest.mark.parametrize(
+    "eclbase",
+    [
+        "file-<IENS>-<ITER>.DATA",
+        "file-<IENS>-<ITER>",
+    ],
+)
+def test_that_response_file_path_is_resolved(qtbot, use_tmpdir, eclbase):
+    ert_config = ErtConfig.from_dict(
+        {
+            "RUNPATH": "runpath/realization-<IENS>/iter-<ITER>",
+            "ECLBASE": eclbase,
+            "RFT": [
+                {
+                    "WELL": "*",
+                    "DATE": "*",
+                    "PROPERTIES": "*",
+                }
+            ],
+        }
+    )
+    ensemble = MagicMock()
+    ensemble.iteration = 0
+    ensemble.experiment.response_configuration = (
+        ert_config.ensemble_config.response_configs
+    )
+    widget = RftQcWidget(ert_config=ert_config)
+
+    widget.update_realization(ensemble, 1)
+
+    assert widget._current_realization is not None
+    assert widget._current_realization.rft_file_path == (
+        Path("runpath/realization-1/iter-0/file-1-0.RFT").resolve()
+    )
 
 
 def test_that_missing_response_file_shows_warning(qtbot):
@@ -693,10 +724,14 @@ def test_that_invalid_rft_file_reports_error_and_keeps_file_responses_empty(
     )
 
     widget = RftQcWidget()
-    qtbot.addWidget(widget)
-    widget._current_rft_config = rft_config
-    widget._current_runpath = str(tmp_path)
-    widget._current_rft_file_path = rft_file
+    widget._get_runpath = lambda ensemble, realization: tmp_path
+    widget._current_realization = CurrentRealization(
+        ensemble=MagicMock(),
+        number=0,
+        runpath=tmp_path,
+        rft_config=rft_config,
+        loaded=True,
+    )
 
     widget._on_toggle_file_rft(True)
 
@@ -708,13 +743,17 @@ def test_that_invalid_rft_file_reports_error_and_keeps_file_responses_empty(
 
 def test_that_missing_rft_file_keeps_load_toggle_disabled(qtbot):
     widget = RftQcWidget()
-    qtbot.addWidget(widget)
-    widget._current_rft_config = RFTConfig(
-        input_files=["BASE"],
-        data_to_read={"*": {"*": ["*"]}},
-        zonemap=None,
+    widget._current_realization = CurrentRealization(
+        ensemble=MagicMock(),
+        number=0,
+        runpath="/does/not/exist",
+        rft_config=RFTConfig(
+            input_files=["BASE"],
+            data_to_read={"*": {"*": ["*"]}},
+            zonemap=None,
+        ),
+        loaded=True,
     )
-    widget._current_rft_file_path = Path("/does/not/exist/BASE.RFT")
 
     widget._update_load_rft_file_toggle_enabled_state()
 
@@ -933,11 +972,14 @@ def _rft_qc_widget(qtbot, ensemble, file_response=None):
     qtbot.addWidget(widget)
     widget.update_realization(ensemble, 0)
     if file_response is not None:
-        widget._current_rft_config = MagicMock()
-        widget._current_rft_config.read_from_file.return_value = file_response
-        widget._current_runpath = "path/does/not/exist"
-        widget._current_rft_file_path = MagicMock()
-        widget._current_rft_file_path.exists.return_value = True
+        assert widget._current_realization is not None
+        rft_config = MagicMock()
+        rft_config.read_from_file.return_value = file_response
+        rft_file_path = MagicMock()
+        rft_file_path.exists.return_value = True
+        widget._current_realization.runpath = "dummy/path"
+        widget._current_realization.rft_config = rft_config
+        widget._current_realization.rft_file_path = rft_file_path
     return widget
 
 
