@@ -764,19 +764,16 @@ def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
 ):
 
     date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
-    observation_key = "FOPR"
-    response_key = "FOPR"
+    key = "FOPR"
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
             "ECLBASE": "BASE",
-            "SUMMARY": [response_key],
+            "SUMMARY": [key],
             "OBS_CONFIG": (
                 "obs_config",
                 [
-                    create_summary_observation_dict(
-                        key=observation_key, date=date.isoformat()
-                    ),
+                    create_summary_observation_dict(key=key, date=date.isoformat()),
                 ],
             ),
         }
@@ -788,7 +785,7 @@ def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
         "summary",
         pl.DataFrame(
             {
-                "response_key": [response_key],
+                "response_key": [key],
                 "time": [pl.Series([date]).dt.cast_time_unit("ms")],
                 "values": [pl.Series([1.0], dtype=pl.Float32)],
             }
@@ -798,7 +795,6 @@ def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
 
     ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
-    qtbot.addWidget(ensemble_widget)
     misfit_df = ensemble_widget.get_misfit_df()
     assert isinstance(misfit_df, pl.DataFrame)
     assert misfit_df.columns[0] == "Realization"
