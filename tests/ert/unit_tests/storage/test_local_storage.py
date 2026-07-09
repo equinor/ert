@@ -623,10 +623,8 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
                 "response_configuration": [
                     SummaryConfig(keys=["*"], input_files=["not_relevant"]).model_dump(
                         mode="json"
-                    )
-                ],
-                "derived_response_configuration": [
-                    breakthrough_config.model_dump(mode="json")
+                    ),
+                    breakthrough_config.model_dump(mode="json"),
                 ],
                 "observations": [
                     BreakthroughObservation(

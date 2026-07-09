@@ -32,11 +32,7 @@ def get_experiments(
             },
             responses={
                 response_type: config.model_dump()
-                for response_type, config in experiment.simulation_response_configuration.items()  # noqa: E501
-            },
-            derived_responses={
-                response_type: config.model_dump()
-                for response_type, config in experiment.derived_response_configuration.items()  # noqa: E501
+                for response_type, config in experiment.response_configuration.items()
             },
             observations=experiment.response_key_to_observation_key,
         )

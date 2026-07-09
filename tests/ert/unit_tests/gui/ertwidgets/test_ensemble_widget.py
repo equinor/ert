@@ -37,9 +37,6 @@ def create_experiment_from_config(config: ErtConfig, storage):
         experiment_config={
             "parameter_configuration": dump_all(ens_config.parameter_configuration),
             "response_configuration": dump_all(ens_config.response_configuration),
-            "derived_response_configuration": dump_all(
-                ens_config.derived_response_configuration
-            ),
             "observations": dump_all(config.observation_declarations),
             "ert_templates": config.ert_templates,
         },

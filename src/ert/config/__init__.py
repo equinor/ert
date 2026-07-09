@@ -31,7 +31,6 @@ from .forward_model_step import (
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig, PriorDict
-from .known_derived_response_types import KnownDerivedResponseTypes
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
 from .model_config import ModelConfig
@@ -121,7 +120,6 @@ __all__ = [
     "HookedWorkflowFixtures",
     "InvalidResponseFile",
     "InversionTypeES",
-    "KnownDerivedResponseTypes",
     "KnownQueueOptions",
     "KnownQueueOptionsAdapter",
     "KnownResponseTypes",
