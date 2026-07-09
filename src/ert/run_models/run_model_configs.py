@@ -19,7 +19,6 @@ from ert.config import (
     GenDataConfig,
     GenKwConfig,
     HookRuntime,
-    KnownDerivedResponseTypes,
     KnownResponseTypes,
     ModelConfig,
     Observation,
@@ -153,12 +152,6 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
             Field(discriminator="type"),
         ]
     ]
-    derived_response_configuration: list[
-        Annotated[
-            (KnownDerivedResponseTypes),
-            Field(discriminator="type"),
-        ]
-    ]
     ert_templates: list[tuple[str, str]]
     observations: list[Observation] | None = None
     shape_registry: ShapeRegistry | None = None
@@ -171,10 +164,6 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
             ],
             "response_configuration": [
                 resp.model_dump(mode="json") for resp in self.response_configuration
-            ],
-            "derived_response_configuration": [
-                resp.model_dump(mode="json")
-                for resp in self.derived_response_configuration
             ],
             "experiment_name": self.experiment_name,
         }
@@ -320,9 +309,6 @@ class ManualUpdateConfig(UpdateRunModelConfig):
             ),
             "response_configuration": prior_experiment_config.get(
                 "response_configuration", []
-            ),
-            "derived_response_configuration": prior_experiment_config.get(
-                "derived_response_configuration", []
             ),
             "observations": prior_experiment_config.get("observations", []),
             **self._common_fields(),

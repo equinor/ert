@@ -25,6 +25,7 @@ from ert.config._observations import (
     extract_localization_values,
     make_observations,
 )
+from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.parsing import ObservationDict, parse_observations
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
@@ -2084,9 +2085,9 @@ def test_that_breakthrough_observations_appends_to_breakthrough_config_responses
         observations=ert_config.observation_declarations,
         shape_registry=ert_config.shape_registry,
     )
-    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ]
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
     assert breakthrough_config.keys == [f"BREAKTHROUGH:{key}" for key in keys]
     assert breakthrough_config.thresholds == thresholds
     assert breakthrough_config.observed_dates == [
@@ -2122,9 +2123,9 @@ def test_that_breakthrough_responses_are_derived_from_summary():
         "values": [0.1, 0.2, 0.3],
     }
     ensemble_mock.load_responses.return_value = DataFrame(summary_values)
-    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ]
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
     response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
 
     assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
@@ -2159,9 +2160,9 @@ def test_that_unreachable_breakthrough_thresholds_has_none_response():
         "values": [0.1, 0.2, 0.3],
     }
     ensemble_mock.load_responses.return_value = DataFrame(summary_values)
-    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ]
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
     response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
 
     assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
@@ -2204,9 +2205,9 @@ def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_tur
         "values": [0.1, 0.2, 0.3],
     }
     ensemble_mock.load_responses.return_value = DataFrame(summary_values)
-    response_df = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ].derive_from_storage(0, 0, ensemble_mock)
+    response_df = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    ).derive_from_storage(0, 0, ensemble_mock)
 
     assert response_df["response_key"].to_list() == [
         f"BREAKTHROUGH:{key}" for key in keys

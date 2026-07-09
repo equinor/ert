@@ -18,8 +18,9 @@ from pandas.errors import ParserError
 from resfo_utilities import history_key
 
 from ert.config import ParameterConfig
-from ert.config.known_derived_response_types import KnownDerivedResponseTypes
-from ert.config.known_response_types import KnownResponseTypes
+from ert.config.known_response_types import (
+    KnownResponseTypes,
+)
 from ert.config.response_config import ResponseConfig
 from ert.services import create_ertserver_client
 from ert.storage.local_experiment import _parameters_adapter as parameter_config_adapter
@@ -189,10 +190,8 @@ class PlotApi:
                     key_defs[plot_key_def.key] = plot_key_def
 
             for experiment in http_response.json():
-                for response_type, metadata in (
-                    experiment["responses"] | experiment["derived_responses"]
-                ).items():
-                    response_config: KnownResponseTypes | KnownDerivedResponseTypes = (
+                for response_type, metadata in experiment["responses"].items():
+                    response_config: KnownResponseTypes = (
                         response_config_adapter.validate_python(metadata)
                     )
                     keys = response_config.response_keys()

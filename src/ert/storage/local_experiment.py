@@ -27,7 +27,6 @@ from ert.config import (
     EverestControl,
     EverestObjectivesConfig,
     GenKwConfig,
-    KnownDerivedResponseTypes,
     KnownResponseTypes,
     ParameterConfig,
     ResponseConfig,
@@ -107,7 +106,6 @@ class ExperimentConfig(TypedDict, total=False):
     design_matrix: dict[str, Any] | None
     parameter_configuration: list[dict[str, Any]]
     response_configuration: list[dict[str, Any]]
-    derived_response_configuration: list[dict[str, Any]]
     target_ensemble: str
     shape_registry: dict[str, Any]
 
@@ -150,7 +148,7 @@ class _Index(BaseModel, extra="forbid"):
 
 _responses_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        KnownResponseTypes | KnownDerivedResponseTypes,
+        KnownResponseTypes,
         Field(discriminator="type"),
     ]
 )
@@ -401,13 +399,6 @@ class LocalExperiment(BaseMode):
         responses_list = self.experiment_config.get("response_configuration", [])
         return {response["type"]: response for response in responses_list}
 
-    @property
-    def derived_response_info(self) -> dict[str, Any]:
-        responses_list = self.experiment_config.get(
-            "derived_response_configuration", []
-        )
-        return {response["type"]: response for response in responses_list}
-
     def get_surface(self, name: str) -> IrapSurface:
         """
         Retrieve a geological surface by name.
@@ -466,7 +457,7 @@ class LocalExperiment(BaseMode):
     ) -> dict[str, ResponseConfig]:
         responses = {}
 
-        for data in (self.response_info | self.derived_response_info).values():
+        for data in self.response_info.values():
             response_instance = _responses_adapter.validate_python(data)
             responses[response_instance.type] = response_instance
 

@@ -1287,14 +1287,12 @@ class ErtConfig(BaseModel):
 
         bt_obs = [o for o in observations if isinstance(o, BreakthroughObservation)]
 
-        if "breakthrough" not in ensemble_config.derived_response_configs and bt_obs:
-            ensemble_config.derived_response_configs["breakthrough"] = (
-                BreakthroughConfig(
-                    keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
-                    summary_keys=[o.key for o in bt_obs],
-                    thresholds=[o.threshold for o in bt_obs],
-                    observed_dates=[o.date for o in bt_obs],
-                )
+        if "breakthrough" not in ensemble_config.response_configs and bt_obs:
+            ensemble_config.response_configs["breakthrough"] = BreakthroughConfig(
+                keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
+                summary_keys=[o.key for o in bt_obs],
+                thresholds=[o.threshold for o in bt_obs],
+                observed_dates=[o.date for o in bt_obs],
             )
 
     @classmethod
