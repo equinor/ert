@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import pandas as pd
-
 from ert import ErtScript
 
 if TYPE_CHECKING:
@@ -33,9 +31,12 @@ class ExportMisfitDataJob(ErtScript):
             raise UserWarning("No responses loaded")
 
         misfit = ensemble.load_all_misfit_data()
-        if misfit.empty:
+        if misfit.is_empty():
             raise UserWarning("No responses loaded")
 
-        misfit.columns = pd.Index([val.split(":")[1] for val in misfit.columns])
-        misfit = misfit.drop("TOTAL", axis=1)
-        misfit.to_hdf(target_file, key="misfit", mode="w")
+        misfit = misfit.rename(
+            {column: column.removeprefix("MISFIT:") for column in misfit.columns}
+        ).drop("TOTAL")
+        misfit.to_pandas().set_index("Realization").to_hdf(
+            target_file, key="misfit", mode="w"
+        )

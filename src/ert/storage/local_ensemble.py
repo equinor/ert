@@ -1726,7 +1726,7 @@ class LocalEnsemble(BaseMode):
             self._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
-    def load_all_misfit_data(self) -> pd.DataFrame:
+    def load_all_misfit_data(self) -> pl.DataFrame:
         """Loads all misfit data for a given ensemble.
 
         Retrieves all active realizations from the ensemble, and for each
@@ -1755,26 +1755,47 @@ class LocalEnsemble(BaseMode):
         try:
             measured_data = self._load_measured_data()
         except (ResponseError, ObservationError):
-            return pd.DataFrame()
-        misfit = pd.DataFrame()
-        for name in measured_data.columns.unique(0):
-            df = (
-                (
-                    measured_data[name].loc["OBS"]
-                    - self.get_simulated_data(measured_data)[name]
-                )
-                / measured_data[name].loc["STD"]
-            ) ** 2
-            misfit[f"MISFIT:{name}"] = df.sum(axis=1)
-        misfit["MISFIT:TOTAL"] = misfit.sum(axis=1)
-        misfit.index.name = "Realization"
-        misfit.index = misfit.index.astype(int)
+            return pl.DataFrame()
 
-        return misfit
+        realization_columns = [
+            str(realization_column)
+            for realization_column in self.get_realization_list_with_responses()
+        ]
+
+        squared_difference = measured_data.select(
+            "observation_key",
+            *[
+                ((pl.col("OBS") - pl.col(realization_column)) / pl.col("STD"))
+                .pow(2)
+                .alias(realization_column)
+                for realization_column in realization_columns
+            ],
+        )
+
+        misfit_by_observation = squared_difference.group_by(
+            "observation_key", maintain_order=True
+        ).agg(
+            [
+                pl.col(realization_column).sum()
+                for realization_column in realization_columns
+            ]
+        )
+
+        observation_keys = misfit_by_observation["observation_key"].to_list()
+        misfit = misfit_by_observation.drop("observation_key").transpose(
+            include_header=True,
+            header_name="Realization",
+            column_names=[f"MISFIT:{key}" for key in observation_keys],
+        )
+
+        return misfit.with_columns(
+            pl.col("Realization").cast(pl.UInt32),
+            pl.sum_horizontal(pl.exclude("Realization")).alias("MISFIT:TOTAL"),
+        )
 
     def _load_measured_data(
         self, observed_response_keys: list[str] | None = None
-    ) -> pd.DataFrame:
+    ) -> pl.DataFrame:
         """Loads the measured data for the ensemble.
 
         Returns:
@@ -1790,21 +1811,21 @@ class LocalEnsemble(BaseMode):
             self._get_measured_data(observed_response_keys)
         )
 
-    def _validate_measured_data(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _validate_measured_data(self, data: pl.DataFrame) -> pl.DataFrame:
         expected_keys = {"OBS", "STD"}
-        if not isinstance(data, pd.DataFrame):
+        if not isinstance(data, pl.DataFrame):
             raise TypeError(
-                f"Invalid type: {type(data)}, should be type: {pd.DataFrame}"
+                f"Invalid type: {type(data)}, should be type: {pl.DataFrame}"
             )
-        if not expected_keys.issubset(data.index):
-            missing = expected_keys - set(data.index)
+        if not expected_keys.issubset(data.columns):
+            missing = expected_keys - set(data.columns)
             raise ValueError(
-                f"{expected_keys} should be present in DataFrame index, \
-                missing: {missing}"
+                f"{expected_keys} should be present in DataFrame columns, "
+                f"missing: {missing}"
             )
         return data
 
-    def _get_measured_data(self, observed_response_keys: list[str]) -> pd.DataFrame:
+    def _get_measured_data(self, observed_response_keys: list[str]) -> pl.DataFrame:
         """
         Adds simulated and observed data and returns a dataframe where ensemble
         members will have a data key, observed data will be named OBS and
@@ -1849,24 +1870,12 @@ class LocalEnsemble(BaseMode):
             .sort(by="observation_key")
         )
 
-        pddf = df.to_pandas()[
-            [
-                "observation_key",
-                "key_index",
-                "OBS",
-                "STD",
-                *df.columns[5:],
-            ]
-        ]
-
-        # Pandas differentiates vs int and str keys.
-        # Legacy-wise we use int keys for realizations
-        return (
-            pddf.rename(
-                columns={str(k): int(k) for k in active_realizations},
-            )
-            .set_index(["observation_key", "key_index"])
-            .transpose()
+        return df.select(
+            "observation_key",
+            "key_index",
+            "OBS",
+            "STD",
+            *df.columns[5:],
         )
 
     def get_simulated_data(self, data: pd.DataFrame) -> pd.DataFrame:

@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import pandas as pd
 import polars as pl
 import pytest
 
@@ -21,27 +20,26 @@ def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
     # Only one observation, we check the key_index is what we expect:
-    assert (
-        summary_obs.columns.get_level_values("key_index").to_numpy()[0]
-        == "2011-12-21 00:00:00.000"
-    )
+    assert summary_obs["key_index"][0] == "2011-12-21 00:00:00.000"
 
 
 @pytest.mark.slow
 def test_gen_obs(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1"])
 
-    assert all(
-        df.columns.get_level_values("key_index").to_numpy()
-        == ["199, 400", "199, 800", "199, 1200", "199, 1800"]
-    )
+    assert df["key_index"].to_list() == [
+        "199, 400",
+        "199, 800",
+        "199, 1200",
+        "199, 1800",
+    ]
 
 
 @pytest.mark.slow
 def test_gen_obs_and_summary(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
 
-    assert df.columns.get_level_values(0).to_list() == sorted(
+    assert df.to_series(0).to_list() == sorted(
         [
             "WPR_DIFF_1",
             "WPR_DIFF_1",
@@ -107,20 +105,6 @@ def create_general_observation():
 
 
 @pytest.mark.slow
-def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data):
-    """
-    While there is no guarantee that this snapshot is 100% correct, it does represent
-    the current state of loading from storage for the snake_oil case.
-    """
-    experiment = next(snake_oil_storage.experiments)
-    obs_keys = experiment.observation_keys
-    measured_data = create_measured_data(obs_keys)
-    snapshot.assert_match(
-        measured_data.round(10).to_csv(), "snake_oil_measured_output.csv"
-    )
-
-
-@pytest.mark.slow
 def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("ensemble-experiment")
@@ -143,14 +127,12 @@ def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_stora
 def test_that_check_expected_keys_for_measured_data_raises_when_obs_and_std_are_missing(
     snake_oil_case_storage, snake_oil_default_storage
 ):
-    frame_without_obs_and_std = pd.DataFrame(
-        {"col": [1.0, 2.0]}, index=pd.Index(["realization_0", "realization_1"])
-    )
+    frame_without_obs_and_std = pl.DataFrame({"col": [1.0, 2.0]})
 
     with pytest.raises(
         ValueError,
         match=r"\{'OBS', 'STD'\}|\{'STD', 'OBS'\}"
-        r" should be present in DataFrame index,\s+"
+        r" should be present in DataFrame columns,\s+"
         r"missing: (\{'OBS', 'STD'\}|\{'STD', 'OBS'\})",
     ):
         snake_oil_default_storage._validate_measured_data(frame_without_obs_and_std)

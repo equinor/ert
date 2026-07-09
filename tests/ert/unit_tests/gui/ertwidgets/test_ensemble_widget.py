@@ -758,6 +758,7 @@ def test_that_run_status_tab_shows_placeholder_when_no_snapshot_exists(qtbot, st
     run_status_view = ensemble_widget._run_status_view
     assert run_status_view._stack.currentWidget() is run_status_view._placeholder
 
+
 def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
     qtbot, storage
 ):

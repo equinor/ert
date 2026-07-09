@@ -467,11 +467,7 @@ class EnsembleWidget(QWidget):
     def get_misfit_df(self) -> DataFrame:
         assert self._ensemble is not None
         with capture_specific_warning(PerformanceWarning):
-            df = self._ensemble.load_all_misfit_data()
-        realization_column = pl.Series(df.index)
-        df = pl.from_pandas(df)
-        df.insert_column(0, realization_column)
-        return df
+            return self._ensemble.load_all_misfit_data()
 
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:
