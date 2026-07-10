@@ -7,16 +7,15 @@ from pathlib import Path
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
-from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
 
 def run_convert_observations(
-    args: Namespace, _: ErtRuntimePlugins | None = None
+    ert_config: str, _: ErtRuntimePlugins | None = None
 ) -> None:
-    changes = remove_refcase_and_time_map_dependence_from_obs_config(args.config)
+    changes = remove_refcase_and_time_map_dependence_from_obs_config(ert_config)
 
     if changes is None or changes.is_empty():
         logger.info("convert_observations did not make any changes")

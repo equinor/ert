@@ -34,7 +34,11 @@ from ert.mode_definitions import (
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
-from ert.observation_converters import export_observations, run_convert_observations
+from ert.observation_converters import (
+    SUPPORTED_FORMATS,
+    SupportedFormats,
+    convert_observations,
+)
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
 from ert.services import ErtServerController
 from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
@@ -489,70 +493,37 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     )
 
     # convert_observations_parser
+    help_text = (
+        "Convert observations to an observation format. "
+        "Must be provided with an ERT configuration file. "
+        "The default behaviour is to convert from history "
+        "observation format to summary, but this can be "
+        "configured using the --format flag to specify "
+        "which format to convert to."
+    )
     convert_obs_parser = subparsers.add_parser(
         "convert_observations",
-        help=(
-            "Convert HISTORY_OBSERVATION to SUMMARY_OBSERVATION and "
-            "remove REFCASE and TIME_MAP from ERT config."
-        ),
-        description=(
-            "Convert HISTORY_OBSERVATION to SUMMARY_OBSERVATION, "
-            "and embed REFCASE and TIME_MAP into observations"
-        ),
+        help=help_text,
+        description=help_text,
     )
-    convert_obs_parser.set_defaults(func=run_convert_observations)
+    convert_obs_parser.set_defaults(func=convert_observations)
     convert_obs_parser.add_argument(
         "config",
         type=valid_file,
         help="Path to ERT config file",
     )
+
+    convert_obs_parser.add_argument(
+        "--format",
+        dest="format",
+        required=False,
+        default=SupportedFormats.SUMMARY,
+        choices=SUPPORTED_FORMATS,
+        help="Format of observations to convert to.",
+    )
     convert_obs_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
-
-    # Experimental feature
-    if os.environ.get("ERT_FEATURE_GATHER_OBS"):
-        extract_obs_summary_keys_parser = subparsers.add_parser(
-            "export_observations",
-            description=(
-                "Identify all summary and breakthrough observations and output them "
-                "in a bulk config format. A CSV file containing the observation values "
-                "is written to disk while the bulk config is printed to terminal to be "
-                "copied into the observation configuration.\n"
-                "Given no experiment argument, will prompt for which experiment to "
-                "extract observations from if there are multiple to choose from in "
-                "storage.\n"
-                "This workflow will not overwrite any existing configuration files, so "
-                "the output will have to be manually integrated.\n"
-                "This command requires the path to an ert config file as first "
-                "argument and optionally an experiment ID as second argument. The name "
-                "of the produced CSV filename is defaulted to "
-                "'summary_observations.csv', but can be manually set using the keyword "
-                "argument:\n"
-                "--output-csv-file <filename>"
-            ),
-            help="This command requires the path to an ert config file as first "
-            "argument and optionally an experiment ID as second argument. The name "
-            "of the produced CSV filename is defaulted to 'summary_observations.csv', "
-            "but can be manually set using the keyword argument:\n"
-            "--output-csv-file <filename>",
-        )
-        extract_obs_summary_keys_parser.set_defaults(func=export_observations)
-        extract_obs_summary_keys_parser.add_argument(
-            "config", type=valid_file, help="Path to ERT config file"
-        )
-        extract_obs_summary_keys_parser.add_argument(
-            "experiment_id", nargs="?", type=str, default=None, help="Experiment ID"
-        )
-        extract_obs_summary_keys_parser.add_argument(
-            "--output-csv-file",
-            default="summary_observations.csv",
-            type=str,
-            help="Output CSV file name",
-        )
-        extract_obs_summary_keys_parser.add_argument(
-            "--verbose", action="store_true", help="Show verbose output.", default=False
-        )
 
     # Common arguments/defaults for all non-gui modes
     for cli_parser in [
