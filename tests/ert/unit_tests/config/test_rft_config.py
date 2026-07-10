@@ -1458,3 +1458,47 @@ def test_that_wildcard_wells_with_time_response_are_not_warned_about(
             "error", PostExperimentWarning
         )
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_wildcard_well_with_wildcard_time_without_any_response_is_warned_about(
+    mock_resfo_file, egrid
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "*": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    expected_warning = [
+        "Could not find responses for well(s) at time(s)",
+        "*: *",
+    ]
+    # Assert one warning contains all expected warnings
+    assert any(all(e_w in str(w) for e_w in expected_warning) for w in warnings)
+
+
+def test_that_wildcard_well_with_wildcard_time_with_any_response_is_not_warned_about(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "*": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
+            "error", PostExperimentWarning
+        )
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)

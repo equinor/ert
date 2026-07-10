@@ -310,6 +310,11 @@ class RFTConfig(ResponseConfig):
             if time == "*" and well in wells_with_responses:
                 well_times_to_warn.remove((well, time))
 
+        if (wildcard_well_time := ("*", "*")) in well_times and len(
+            well_times_with_response
+        ) > 0:
+            well_times_to_warn.remove(wildcard_well_time)
+
         formatted_items = [
             f"{well}: {time}" for well, time in sorted(well_times_to_warn)
         ]
