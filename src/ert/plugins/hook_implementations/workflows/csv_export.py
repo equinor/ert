@@ -100,7 +100,8 @@ class CSVExportJob(ErtScript):
                     ensemble_data = ensemble_data.join(design_matrix_data, how="outer")
 
             misfit_data = ensemble.load_all_misfit_data()
-            if not misfit_data.empty:
+            if not misfit_data.is_empty():
+                misfit_data = misfit_data.to_pandas().set_index("Realization")
                 ensemble_data = ensemble_data.join(misfit_data, how="outer")
             realizations = ensemble.get_realization_list_with_responses()
 

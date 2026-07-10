@@ -7,7 +7,6 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
 
-from ert.data import MeasuredData
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
@@ -101,7 +100,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot, mode):
     df_posterior: pl.DataFrame = ensemble_posterior.load_scalars()
 
     # Making sure measured data works with failed realizations
-    MeasuredData(experiment.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
+    experiment.get_ensemble_by_name("iter-0")._load_measured_data(["POLY_OBS"])
 
     cov_posterior = np.cov(df_posterior.to_numpy().T)
     cov_prior = np.cov(df_prior.to_numpy().T)

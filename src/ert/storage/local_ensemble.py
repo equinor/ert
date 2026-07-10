@@ -36,8 +36,6 @@ from ert.config.observation_quality_control import (
     qc_rft_observations,
 )
 from ert.config.rft_config import RFTConfig
-from ert.data import MeasuredData
-from ert.data._measured_data import ObservationError, ResponseError
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -73,6 +71,14 @@ class EverestRealizationInfo(TypedDict):
 
 SCALAR_FILENAME = "SCALAR"
 BLOB_DATA_DIR = "blobs"
+
+
+class ResponseError(Exception):
+    pass
+
+
+class ObservationError(Exception):
+    pass
 
 
 class BatchDataframes(TypedDict, total=False):
@@ -1713,7 +1719,7 @@ class LocalEnsemble(BaseMode):
             self._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
-    def load_all_misfit_data(self) -> pd.DataFrame:
+    def load_all_misfit_data(self) -> pl.DataFrame:
         """Loads all misfit data for a given ensemble.
 
         Retrieves all active realizations from the ensemble, and for each
@@ -1740,24 +1746,134 @@ class LocalEnsemble(BaseMode):
                 misfit for each realization.
         """
         try:
-            measured_data = MeasuredData(self)
+            measured_data = self._load_measured_data()
         except (ResponseError, ObservationError):
-            return pd.DataFrame()
-        misfit = pd.DataFrame()
-        for name in measured_data.data.columns.unique(0):
-            df = (
-                (
-                    measured_data.data[name].loc["OBS"]
-                    - measured_data.get_simulated_data()[name]
-                )
-                / measured_data.data[name].loc["STD"]
-            ) ** 2
-            misfit[f"MISFIT:{name}"] = df.sum(axis=1)
-        misfit["MISFIT:TOTAL"] = misfit.sum(axis=1)
-        misfit.index.name = "Realization"
-        misfit.index = misfit.index.astype(int)
+            return pl.DataFrame()
 
-        return misfit
+        realization_columns = [
+            str(realization_column)
+            for realization_column in self.get_realization_list_with_responses()
+        ]
+
+        squared_difference = measured_data.select(
+            "observation_key",
+            *[
+                ((pl.col("OBS") - pl.col(realization_column)) / pl.col("STD"))
+                .pow(2)
+                .alias(realization_column)
+                for realization_column in realization_columns
+            ],
+        )
+
+        misfit_by_observation = squared_difference.group_by(
+            "observation_key", maintain_order=True
+        ).agg(
+            [
+                pl.col(realization_column).sum()
+                for realization_column in realization_columns
+            ]
+        )
+
+        observation_keys = misfit_by_observation["observation_key"].to_list()
+        misfit = misfit_by_observation.drop("observation_key").transpose(
+            include_header=True,
+            header_name="Realization",
+            column_names=[f"MISFIT:{key}" for key in observation_keys],
+        )
+
+        return misfit.with_columns(
+            pl.col("Realization").cast(pl.UInt32),
+            pl.sum_horizontal(pl.exclude("Realization")).alias("MISFIT:TOTAL"),
+        )
+
+    def _load_measured_data(
+        self, observed_response_keys: list[str] | None = None
+    ) -> pl.DataFrame:
+        """Loads the measured data for the ensemble.
+
+        Returns:
+            DataFrame: A DataFrame containing the measured data for all
+                realizations in the ensemble. Each column corresponds to a key
+                in the measured data, and each row corresponds to a realization.
+        """
+        if observed_response_keys is None:
+            observed_response_keys = sorted(self.experiment.observation_keys)
+        if not observed_response_keys:
+            raise ObservationError("No observation keys provided")
+        return self._validate_measured_data(
+            self._get_measured_data(observed_response_keys)
+        )
+
+    def _validate_measured_data(self, data: pl.DataFrame) -> pl.DataFrame:
+        expected_keys = {"OBS", "STD"}
+        if not isinstance(data, pl.DataFrame):
+            raise TypeError(
+                f"Invalid type: {type(data)}, should be type: {pl.DataFrame}"
+            )
+        if not expected_keys.issubset(data.columns):
+            missing = expected_keys - set(data.columns)
+            raise ValueError(
+                f"{expected_keys} should be present in DataFrame columns, "
+                f"missing: {missing}"
+            )
+        return data
+
+    def _get_measured_data(self, observed_response_keys: list[str]) -> pl.DataFrame:
+        """
+        Adds simulated and observed data and returns a dataframe where ensemble
+        members will have a data key, observed data will be named OBS and
+        observed standard deviation will be named STD.
+        """
+        resp_key_to_resp_type = self.experiment.response_key_to_response_type
+        selected_response_types = {
+            response_type
+            for response_key, response_type in resp_key_to_resp_type.items()
+            if response_key in observed_response_keys
+        }
+
+        active_realizations = self.get_realization_list_with_responses()
+
+        # Check if responses exist for all selected response types
+        for response_type in selected_response_types:
+            df = self.load_responses(response_type, tuple(active_realizations))
+            if df.is_empty():
+                raise ResponseError(
+                    f"No response loaded for observation type: {response_type}"
+                )
+
+        df = (
+            self.get_observations_and_responses(
+                observed_response_keys, np.array(active_realizations)
+            )
+            .rename(
+                {
+                    "index": "key_index",
+                    "observations": "OBS",
+                    "std": "STD",
+                }
+            )
+            .select(
+                "key_index",
+                "response_key",
+                "observation_key",
+                "OBS",
+                "STD",
+                *map(str, active_realizations),
+            )
+            .sort(by="observation_key")
+        )
+
+        return df.select(
+            "observation_key",
+            "key_index",
+            "OBS",
+            "STD",
+            *df.columns[5:],
+        )
+
+    def get_simulated_data(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Dimension of data is (number of responses x number of realizations)."""
+        return data[~data.index.isin(["OBS", "STD"])]
 
 
 async def _read_parameters(

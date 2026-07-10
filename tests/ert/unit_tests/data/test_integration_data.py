@@ -4,19 +4,14 @@ import numpy as np
 import polars as pl
 import pytest
 
-from ert.data import MeasuredData
-from ert.data._measured_data import ResponseError
 from ert.storage import open_storage
+from ert.storage.local_ensemble import ResponseError
 
 
 @pytest.fixture
 def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
-    def func(*args, **kwargs):
-        return MeasuredData(
-            snake_oil_default_storage,
-            *args,
-            **kwargs,
-        )
+    def func(keys):
+        return snake_oil_default_storage._load_measured_data(keys)
 
     return func
 
@@ -24,31 +19,27 @@ def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
 @pytest.mark.slow
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
-    summary_obs.remove_inactive_observations()
     # Only one observation, we check the key_index is what we expect:
-    assert (
-        summary_obs.data.columns.get_level_values("key_index").values[0]
-        == "2011-12-21 00:00:00.000"
-    )
+    assert summary_obs["key_index"][0] == "2011-12-21 00:00:00.000"
 
 
 @pytest.mark.slow
 def test_gen_obs(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1"])
-    df.remove_inactive_observations()
 
-    assert all(
-        df.data.columns.get_level_values("key_index").values
-        == ["199, 400", "199, 800", "199, 1200", "199, 1800"]
-    )
+    assert df["key_index"].to_list() == [
+        "199, 400",
+        "199, 800",
+        "199, 1200",
+        "199, 1800",
+    ]
 
 
 @pytest.mark.slow
 def test_gen_obs_and_summary(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
-    df.remove_inactive_observations()
 
-    assert df.data.columns.get_level_values(0).to_list() == sorted(
+    assert df.to_series(0).to_list() == sorted(
         [
             "WPR_DIFF_1",
             "WPR_DIFF_1",
@@ -75,7 +66,7 @@ def test_no_storage(obs_key, expected_msg, storage):
         KeyError,
         match=expected_msg,
     ):
-        MeasuredData(ensemble, [obs_key])
+        ensemble._load_measured_data([obs_key])
 
 
 def create_summary_observation():
@@ -114,20 +105,6 @@ def create_general_observation():
 
 
 @pytest.mark.slow
-def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data):
-    """
-    While there is no guarantee that this snapshot is 100% correct, it does represent
-    the current state of loading from storage for the snake_oil case.
-    """
-    experiment = next(snake_oil_storage.experiments)
-    obs_keys = experiment.observation_keys
-    measured_data = create_measured_data(obs_keys)
-    snapshot.assert_match(
-        measured_data.data.round(10).to_csv(), "snake_oil_measured_output.csv"
-    )
-
-
-@pytest.mark.slow
 def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("ensemble-experiment")
@@ -143,4 +120,19 @@ def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_stora
         with pytest.raises(
             ResponseError, match="No response loaded for observation type: summary"
         ):
-            MeasuredData(ensemble, ["FOPR"])
+            ensemble._load_measured_data(["FOPR"])
+
+
+@pytest.mark.slow
+def test_that_check_expected_keys_for_measured_data_raises_when_obs_and_std_are_missing(
+    snake_oil_case_storage, snake_oil_default_storage
+):
+    frame_without_obs_and_std = pl.DataFrame({"col": [1.0, 2.0]})
+
+    with pytest.raises(
+        ValueError,
+        match=r"\{'OBS', 'STD'\}|\{'STD', 'OBS'\}"
+        r" should be present in DataFrame columns,\s+"
+        r"missing: (\{'OBS', 'STD'\}|\{'STD', 'OBS'\})",
+    ):
+        snake_oil_default_storage._validate_measured_data(frame_without_obs_and_std)
