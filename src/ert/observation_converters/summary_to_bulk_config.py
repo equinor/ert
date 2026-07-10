@@ -1,42 +1,45 @@
+import operator
+from collections import defaultdict
 from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from natsort import natsorted
 
 from ert.cli.main import ErtCliError
 from ert.config import (
+    ErtConfig,
+    Observation,
+    ShapeRegistry,
     SummaryKeyData,
     make_summary_key_data,
 )
+from ert.config._shapes import CircleShapeConfig
 
 INDENT2 = " " * 2
 INDENT4 = " " * 4
 INDENT6 = " " * 6
 
 
-def _get_first_loc_value(loc_key: str, obs: list[dict[str, Any]]) -> float | int | None:
-    for o in obs:
-        key_value = o.get(loc_key, [None])[0]
-        if key_value is not None:
-            return key_value
-    return None
-
-
-def _obs_to_localization_str(obs: list[Any]) -> str | None:
-    east = _get_first_loc_value("east", obs)
-    north = _get_first_loc_value("north", obs)
-    radius = _get_first_loc_value("radius", obs)
-    if east is None or north is None:
+def _shape_id_to_localization_str(
+    obs_dicts: list[dict[str, Any]], shape_registry: ShapeRegistry
+) -> str | None:
+    shape_id = next(
+        (o["shape_id"] for o in obs_dicts if o.get("shape_id") is not None), None
+    )
+    if shape_id is None:
+        return None
+    shape = shape_registry.get(shape_id)
+    if shape is None or not isinstance(shape, CircleShapeConfig):
         return None
     lines = [
         f"{INDENT4}LOCALIZATION {{",
-        f"{INDENT6}EAST={east};",
-        f"{INDENT6}NORTH={north};",
+        f"{INDENT6}EAST={shape.east:g};",
+        f"{INDENT6}NORTH={shape.north:g};",
     ]
-    if radius is not None:
-        lines.append(f"{INDENT6}RADIUS={radius};")
+    if shape.radius is not None:
+        lines.append(f"{INDENT6}RADIUS={shape.radius:g};")
     lines.append(f"{INDENT4}}};")
     return "\n".join(lines)
 
@@ -52,33 +55,47 @@ def _non_empty_fields(skds: list[SummaryKeyData]) -> list[str]:
 
 
 def _breakthrough_to_string(obs: dict[str, Any], key: str) -> str:
+    date = obs["date"]
+    if isinstance(date, datetime):
+        date = date.strftime("%Y-%m-%d")
     lines = [
         f"{INDENT4}BREAKTHROUGH {{",
-        f"{INDENT6}THRESHOLD={obs['values'][0]};",
-        f"{INDENT6}DATE={obs['x_axis'][0]};",
-        f"{INDENT6}ERROR={obs['errors'][0]};",
+        f"{INDENT6}THRESHOLD={obs['threshold']};",
+        f"{INDENT6}DATE={date};",
+        f"{INDENT6}ERROR={obs['error']};",
         f"{INDENT6}KEY={key};",
         f"{INDENT4}}};",
     ]
     return "\n".join(lines)
 
 
-class BulkConfigExporter:
+def _key_to_obs(
+    observations: list[Observation],
+    obs_type: Literal["summary_observation", "breakthrough"],
+) -> dict[str, Any]:
+    typed_obs = [obs for obs in observations if obs.type == obs_type]
+    key_to_obs = defaultdict(list)
+    for obs in typed_obs:
+        key_to_obs[obs.key].append(dict(obs))
+    return key_to_obs
+
+
+class BulkConfigConverter:
     def __init__(
         self,
-        summary_observations: dict[str, Any],
-        breakthrough_observations: dict[str, Any],
-        csv_file_name: str = "summary_observation_values.csv",
+        observations: list[Observation],
+        shape_registry: ShapeRegistry | None = None,
     ) -> None:
-        self.summary_observations = summary_observations
-        self.breakthrough_observations = breakthrough_observations
-        self.csv_file_name = csv_file_name
+        self.shape_registry = shape_registry or ShapeRegistry()
+        self.summary_observations = _key_to_obs(observations, "summary_observation")
+        self.breakthrough_observations = _key_to_obs(observations, "breakthrough")
+        self.csv_file_name = "summary_observations.csv"
 
         self.well_to_breakthrough = self._map_well_to_breakthrough()
         self.well_to_localization = self._map_localization_to_well()
 
         summary_keys = []
-        for key in summary_observations:
+        for key in self.summary_observations:
             summary_key = make_summary_key_data(key)
             summary_keys.append(summary_key)
 
@@ -88,9 +105,10 @@ class BulkConfigExporter:
         well_to_localization = {}
         for key in self.summary_observations | self.breakthrough_observations:
             summary_key = make_summary_key_data(key.removeprefix("BREAKTHROUGH:"))
-            loc_string = _obs_to_localization_str(
+            loc_string = _shape_id_to_localization_str(
                 self.summary_observations.get(key, [])
-                + self.breakthrough_observations.get(key, [])
+                + self.breakthrough_observations.get(key, []),
+                self.shape_registry,
             )
             if loc_string is not None and (well := summary_key.well) is not None:
                 well_to_localization[well] = loc_string
@@ -118,7 +136,7 @@ class BulkConfigExporter:
             fout.write("\n")
             # Sort observations chronologically before natsort
             for obs_list in self.summary_observations.values():
-                obs_list.sort(key=lambda obs: obs["x_axis"][0])
+                obs_list.sort(key=operator.itemgetter("date"))
             for key in natsorted(self.summary_observations.keys()):
                 skd = make_summary_key_data(key)
                 for observation in self.summary_observations[key]:
@@ -128,9 +146,9 @@ class BulkConfigExporter:
                             fout.write(", ")
                         else:
                             fout.write(f"{v}, ")
-                    date = datetime.fromisoformat(observation["x_axis"][0])
-                    fout.write(f"{observation['values'][0]:.3g}, ")
-                    fout.write(f"{observation['errors'][0]:.3g}, ")
+                    date = datetime.fromisoformat(observation["date"])
+                    fout.write(f"{observation['value']:.3g}, ")
+                    fout.write(f"{observation['error']:.3g}, ")
                     fout.write(f"{date.isoformat()}\n")
 
     def print_bulk_config(
@@ -176,3 +194,13 @@ class BulkConfigExporter:
             f"=================================\n"
             f"{bulk_config_str}"
         )
+
+
+def convert_summary_to_bulk_config(config: str) -> None:
+    ert_config = ErtConfig.from_file(config)
+    bulk_exporter = BulkConfigConverter(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )
+    bulk_exporter.write_csv()
+    bulk_exporter.print_bulk_config()

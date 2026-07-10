@@ -1,5 +1,7 @@
 import io
+import shutil
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
@@ -7,13 +9,82 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.observation_converters.convert_observations import (
-    fetch_experiments,
-    get_experiment_id,
-)
+from ert.config import ErtConfig, ShapeRegistry
+from ert.config._observations import BreakthroughObservation, SummaryObservation
+from ert.config._shapes import CircleShapeConfig
+from ert.observation_converters import convert_observations
 from ert.observation_converters.summary_to_bulk_config import (
-    BulkConfigExporter,
+    BulkConfigConverter,
 )
+
+
+@pytest.mark.usefixtures("snake_oil_case")
+def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
+    """This tests that the produced stdout and csv file from the
+    gather_summary_observations command is what we expect.
+    Finally, the test also creates a ErtConfig from the initial observation config
+    and compares it to the new one when replacing the summary observations with the
+    stdout and moving the csv file into the observations folder.
+    """
+    args = MagicMock(format="bulk", config="snake_oil.ert")
+    convert_observations(args)
+
+    assert Path("summary_observations.csv").is_file()
+    csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
+    expected_csv_content = [
+        "keyword, well, value, error, date",
+        "WOPR, OP1, 0.1, 0.05, 2010-03-31",
+        "WOPR, OP1, 0.7, 0.07, 2010-12-26",
+        "WOPR, OP1, 0.5, 0.05, 2011-12-21",
+        "WOPR, OP1, 0.3, 0.075, 2012-12-15",
+        "WOPR, OP1, 0.2, 0.035, 2013-12-10",
+        "WOPR, OP1, 0.015, 0.01, 2015-03-15",
+    ]
+
+    assert all(line in csv_content for line in expected_csv_content)
+
+    expected_stdout = "SUMMARY {\n  VALUES = summary_observations.csv;\n"
+    stdout = capsys.readouterr().out
+    assert expected_stdout in stdout
+
+    observation_path = "observations/observations.txt"
+    old_obs_config = Path(observation_path).read_text(encoding="utf-8")
+    old_obs_config_lines = old_obs_config.split("\n")
+    # Assumes General Observation at bottom of file
+    summary_stop_line = next(
+        i
+        for i, line in enumerate(old_obs_config_lines)
+        if "GENERAL_OBSERVATION" in line
+    )
+    non_bulk_observations = old_obs_config_lines[summary_stop_line:]
+
+    stdout_lines = stdout.split("\n")
+    bulk_start_line = next(
+        i for i, line in enumerate(stdout_lines) if "SUMMARY {" in line
+    )
+    extracted_bulk_lines = stdout_lines[bulk_start_line:]
+
+    new_obs_content = "\n".join([*extracted_bulk_lines, *non_bulk_observations])
+
+    old_ert_config = ErtConfig.from_file("snake_oil.ert")
+
+    Path(observation_path).write_text(new_obs_content, encoding="utf-8")
+    shutil.move("summary_observations.csv", "observations/summary_observations.csv")
+    new_ert_config = ErtConfig.from_file("snake_oil.ert")
+
+    assert len(new_ert_config.observation_declarations) == len(
+        old_ert_config.observation_declarations
+    )
+    # Loop through observations and assert that they are the same except name.
+    # This also checks that the ordering is the same.
+    for i in range(len(new_ert_config.observation_declarations)):
+        old_obs = old_ert_config.observation_declarations[i].__dict__
+        new_obs = new_ert_config.observation_declarations[i].__dict__
+        # Bulk summary config must utilize default naming for observations,
+        # so the names will differ between the observation declarations.
+        old_obs.pop("name")
+        new_obs.pop("name")
+        assert old_obs == new_obs
 
 
 @pytest.fixture(name="patched_csv_writer")
@@ -31,64 +102,57 @@ def patched_csv_writing(monkeypatch):
     return write_buffer
 
 
+def _make_summary_obs(
+    key: str = "WOPR",
+    well: str | None = "OP1",
+    date: str = "2010-01-27",
+    shape_id: int | None = None,
+) -> SummaryObservation:
+    key += f":{well}" if well else ""
+    return SummaryObservation(
+        name="foo",
+        key=f"{key}:{well}",
+        value=0.5,
+        error=0.02,
+        date=date,
+        shape_id=shape_id,
+    )
+
+
+def _make_breakthrough_obs(
+    well: str,
+    date: str = "2010-02-27",
+    shape_id: int | None = None,
+) -> BreakthroughObservation:
+    return BreakthroughObservation(
+        name=f"BREAKTHROUGH_WWCT_{well}",
+        key=f"WWCT:{well}",
+        date=datetime.fromisoformat(date),
+        error=0.02,
+        threshold=0.5,
+        shape_id=shape_id,
+    )
+
+
 @pytest.mark.usefixtures("patched_csv_writer")
 def test_that_convert_summary_observations_extracts_localization_information(capsys):
-    summary_obs = {
-        "WOPR:WELL_WITH_LOCALIZATION": [
-            {
-                "name": "WOPR_OP1_72",
-                "errors": [0.02],
-                "values": [0.5],
-                "east": [None],
-                "north": [None],
-                "radius": [None],
-                "x_axis": ["2010-01-27T00:00:00"],
-            },
-            {
-                "name": "WOPR_OP1_9",
-                "errors": [0.05],
-                "values": [0.1],
-                "east": [10],
-                "north": [20],
-                "radius": [2500],
-                "x_axis": ["2010-03-31T00:00:00"],
-            },
-        ],
-        "WSPC:WELL_WITHOUT_RADIUS": [
-            {
-                "name": "WSPC",
-                "errors": [0.04],
-                "values": [3],
-                "east": [40],
-                "north": [50],
-                "radius": [None],
-                "x_axis": ["2011-12-21T00:00:00"],
-            },
-        ],
-        "WSIR:WELL_WITHOUT_LOCALIZATION": [
-            {
-                "name": "WSIR",
-                "errors": [0.04],
-                "values": [3],
-                "x_axis": ["2011-12-21T00:00:00"],
-            },
-        ],
-    }
+    shape_registry = ShapeRegistry()
 
-    BulkConfigExporter(
-        summary_obs,
-        breakthrough_observations={},
+    shape_id_with_radius = shape_registry.register(
+        CircleShapeConfig(east=10, north=20, radius=2500)
+    )
+    obs_with_loc = _make_summary_obs(
+        well="WELL_WITH_LOCALIZATION", shape_id=shape_id_with_radius
+    )
+
+    BulkConfigConverter(
+        [obs_with_loc],
+        shape_registry,
     ).print_bulk_config()
 
     expected_print_with_localization = dedent("""\
     SUMMARY {
-      VALUES = summary_observation_values.csv;
-      WELL WELL_WITHOUT_RADIUS {
-        LOCALIZATION {
-          EAST=40;
-          NORTH=50;
-        };
-      };
+      VALUES = summary_observations.csv;
       WELL WELL_WITH_LOCALIZATION {
         LOCALIZATION {
           EAST=10;
@@ -101,110 +165,70 @@ def test_that_convert_summary_observations_extracts_localization_information(cap
     assert expected_print_with_localization in capsys.readouterr().out
 
 
-def _make_summary_obs(n: int, extra_entries=None):
-    if extra_entries is None:
-        extra_entries = {}
-    return {
-        f"WOPR:OP{n}": [
-            {
-                "name": f"WOPR_OP{n}",
-                "errors": [0.02],
-                "values": [0.5],
-                "x_axis": ["2010-01-27T00:00:00"],
-                **extra_entries,
-            },
-        ]
-    }
-
-
-def _make_brt_obs(number: int, extra_entries=None):
-    if extra_entries is None:
-        extra_entries = {}
-    return {
-        f"BREAKTHROUGH:WWCT:OP{number}": [
-            {
-                "name": "BREAKTHROUGH_WWCT_OP1",
-                "errors": [0.02],
-                "values": [0.5],
-                "x_axis": ["2010-02-27T00:00:00"],
-                **extra_entries,
-            }
-        ]
-    }
-
-
-def _make_localization(e=None, n=None, r=None):
-    return {"east": [e], "north": [n], "radius": [r]}
-
-
 @pytest.mark.usefixtures("patched_csv_writer")
 def test_that_convert_summary_observations_produces_natsorted_csv_rows(
     monkeypatch, patched_csv_writer
 ):
+    observations = [
+        _make_summary_obs("OP30"),
+        _make_summary_obs("OP4"),
+        _make_summary_obs("OP10"),
+        _make_summary_obs("OP2"),
+    ]
 
-    summary_obs = (
-        _make_summary_obs(30)
-        | _make_summary_obs(10)
-        | _make_summary_obs(4)
-        | _make_summary_obs(2)
-    )
-
-    BulkConfigExporter(
-        summary_observations=summary_obs,
-        breakthrough_observations={},
+    BulkConfigConverter(
+        observations=observations,
     ).write_csv()
 
     ordered_wells = ["OP2", "OP4", "OP10", "OP30"]
     csv_content = patched_csv_writer.getvalue()
-    csv_well_ordering = [
-        line.split(",")[1].strip() for line in csv_content.strip().split("\n")[1:]
-    ]
+    obs_rows = csv_content.strip().split("\n")[1:]
+    csv_well_ordering = [row.split(",")[0].strip() for row in obs_rows]
     assert csv_well_ordering == ordered_wells
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-async def test_that_no_experiments_in_storage_raises_ert_cli_error(monkeypatch):
-    class MockClient:
-        async def get(_):
-            return_mock = MagicMock()
-            return_mock.text = "{}"
-            return return_mock
-
-    with pytest.raises(ErtCliError, match=r"Could not fetch experiments from storage."):
-        await fetch_experiments(MockClient)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_single_experiment_in_storage_is_automatically_selected_given_no_experiment_arg(  # noqa: E501
-    capsys,
+@pytest.mark.usefixtures("patched_csv_writer")
+def test_that_convert_summary_observations_chronologically_sorts_within_well(
+    monkeypatch, patched_csv_writer
 ):
-    exp_id = "foo"
-    get_experiment_id([{"id": exp_id}], None)
-    assert (
-        f"Gathering observations for sole experiment in storage: '{exp_id}'"
-        in capsys.readouterr().out
-    )
+    observations = [
+        _make_summary_obs(well="OP1", date="2010-01-01"),
+        _make_summary_obs(well="OP2", date="2010-01-03"),
+        _make_summary_obs(well="OP1", date="2010-01-03"),
+        _make_summary_obs(well="OP2", date="2010-01-01"),
+        _make_summary_obs(well="OP1", date="2010-01-02"),
+        _make_summary_obs(well="OP2", date="2010-01-02"),
+    ]
 
+    BulkConfigConverter(
+        observations=observations,
+    ).write_csv()
 
-def test_that_given_experiment_id_not_in_storage_raises_cli_error():
-    exp_id_arg = "bar"
-    with pytest.raises(
-        ErtCliError, match=rf"An experiment with id '{exp_id_arg}' does not exist."
-    ):
-        get_experiment_id([{"id": "foo", "name": "run_model"}], exp_id_arg)
+    ordered_wells = ["OP1"] * 3 + ["OP2"] * 3
+    csv_content = patched_csv_writer.getvalue()
+    obs_rows = csv_content.strip().split("\n")[1:]
+    csv_well_ordering = [row.split(",")[1].strip() for row in obs_rows]
+    assert csv_well_ordering == ordered_wells
+
+    ordered_dates = ["2010-01-01", "2010-01-02", "2010-01-03"] * 2
+    csv_date_ordering = [row.split(",")[4].strip() for row in obs_rows]
+    csv_date_ordering = [d.split("T")[0] for d in csv_date_ordering]
+    assert ordered_dates == csv_date_ordering
 
 
 @pytest.mark.usefixtures("patched_csv_writer")
 def test_that_localization_can_be_gathered_from_breakthrough(capsys):
-    summary_obs = _make_summary_obs(1, _make_localization())
-    brt_obs = _make_brt_obs(
-        1,
-        _make_localization(10, 20, 2500),
+    shape_registry = ShapeRegistry()
+    shape_id = shape_registry.register(
+        CircleShapeConfig(east=10, north=20, radius=2500)
     )
 
-    BulkConfigExporter(
-        summary_obs,
-        brt_obs,
+    summary_obs = _make_summary_obs()
+    brt_obs = _make_breakthrough_obs("OP1", shape_id=shape_id)
+
+    BulkConfigConverter(
+        [summary_obs, brt_obs],
+        shape_registry,
     ).print_bulk_config()
 
     assert (
@@ -221,25 +245,55 @@ def test_that_localization_can_be_gathered_from_breakthrough(capsys):
 def test_that_multiple_breakthrough_observations_for_the_same_well_raises_cli_error(
     monkeypatch,
 ):
-    summary_obs = {}
-    brt_obs = _make_brt_obs(
-        1,
-    )
-    obs_name = next(name for name in brt_obs)
-    brt_obs[obs_name] *= 2
+    brt1 = _make_breakthrough_obs("OP1", date="2010-02-27")
+    brt2 = _make_breakthrough_obs("OP1", date="2010-03-27")
+
     with pytest.raises(
         ErtCliError,
         match=r"Can only have one breakthrough observation per well.\n"
         r"Found 2 breakthroughs for well 'OP1'.",
     ):
-        BulkConfigExporter(summary_obs, brt_obs)
+        BulkConfigConverter([brt1, brt2])
 
 
 @pytest.mark.usefixtures("patched_csv_writer")
 def test_that_the_correct_number_of_observations_are_mentioned_in_helper_text(capsys):
-    summary_obs = _make_summary_obs(1) | _make_summary_obs(2) | _make_summary_obs(3)
-    brt_obs = _make_brt_obs(4)
-    BulkConfigExporter(summary_obs, brt_obs).print_bulk_config()
-    assert (
-        f"{len(summary_obs) + len(brt_obs)} observations can be replaced"
-    ) in capsys.readouterr().out
+    observations = [
+        _make_summary_obs(well="OP1"),
+        _make_summary_obs(well="OP1"),
+        _make_summary_obs(well="OP2"),
+        _make_breakthrough_obs(well="OP2"),
+    ]
+    BulkConfigConverter(observations).print_bulk_config()
+    assert "4 observations can be replaced" in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("patched_csv_writer")
+def test_that_bpr_observation_populates_ijk_columns_while_others_are_left_empty(
+    patched_csv_writer,
+):
+    well_obs = _make_summary_obs()
+    bpr_obs = _make_summary_obs(
+        key="BPR:1,2,3",
+    )
+
+    BulkConfigConverter([well_obs, bpr_obs]).write_csv()
+
+    csv_content = patched_csv_writer.getvalue()
+    lines = csv_content.strip().split("\n")
+
+    header = lines[0]
+    expected_headers = ["keyword", "well", "i", "j", "k"]
+    assert all(h in header for h in expected_headers)
+
+    bpr_line = lines[1]
+    assert "BPR, , 1, 2, 3, 0.5, 0.02, 2010-01-27" in bpr_line
+
+    wopr_line = lines[2]
+    assert "WOPR, OP1, , , , 0.5, 0.02, 2010-01-27" in wopr_line
+
+
+def test_that_invalid_format_raises_cli_error():
+    args = MagicMock(format="Foo")
+    with pytest.raises(ErtCliError):
+        convert_observations(args)
