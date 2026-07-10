@@ -295,7 +295,6 @@ class RFTConfig(ResponseConfig):
             (well, time)
             for well, time_dict in self.data_to_read.items()
             for time in time_dict
-            if well != "*"
         }
         well_times_with_response = {(well, time.isoformat()) for well, time in rft_data}
 
@@ -303,8 +302,11 @@ class RFTConfig(ResponseConfig):
 
         # Only warn about wells with wildcard times if well have
         # no responses at any time.
-        wells_with_responses = {well for well, time in rft_data}
+        wells_with_responses = {well for well, time in well_times_with_response}
+        times_with_responses = {time for well, time in well_times_with_response}
         for well, time in copy(well_times_to_warn):
+            if well == "*" and time in times_with_responses:
+                well_times_to_warn.remove((well, time))
             if time == "*" and well in wells_with_responses:
                 well_times_to_warn.remove((well, time))
 
