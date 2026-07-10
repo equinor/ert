@@ -291,17 +291,15 @@ class RFTConfig(ResponseConfig):
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry],
         rft_filename: str,
     ) -> None:
-        well_time_keys = {
+        well_times = {
             (well, time)
             for well, time_dict in self.data_to_read.items()
             for time in time_dict
             if well != "*"
         }
-        well_time_keys_rft_data = {(well, time.isoformat()) for well, time in rft_data}
+        well_times_with_response = {(well, time.isoformat()) for well, time in rft_data}
 
-        well_times_to_warn: set[tuple[str, str]] = (
-            well_time_keys - well_time_keys_rft_data
-        )
+        well_times_to_warn: set[tuple[str, str]] = well_times - well_times_with_response
 
         # Only warn about wells with wildcard times if well have
         # no responses at any time.
