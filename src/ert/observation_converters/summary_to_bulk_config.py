@@ -1,12 +1,17 @@
+import operator
+from collections import defaultdict
 from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from natsort import natsorted
 
 from ert.cli.main import ErtCliError
 from ert.config import (
+    ErtConfig,
+    Observation,
+    ShapeRegistry,
     SummaryKeyData,
     make_summary_key_data,
 )
@@ -15,30 +20,9 @@ INDENT2 = " " * 2
 INDENT4 = " " * 4
 INDENT6 = " " * 6
 
-
-def _get_first_loc_value(loc_key: str, obs: list[dict[str, Any]]) -> float | int | None:
-    for o in obs:
-        key_value = o.get(loc_key, [None])[0]
-        if key_value is not None:
-            return key_value
-    return None
-
-
-def _obs_to_localization_str(obs: list[Any]) -> str | None:
-    east = _get_first_loc_value("east", obs)
-    north = _get_first_loc_value("north", obs)
-    radius = _get_first_loc_value("radius", obs)
-    if east is None or north is None:
-        return None
-    lines = [
-        f"{INDENT4}LOCALIZATION {{",
-        f"{INDENT6}EAST={east};",
-        f"{INDENT6}NORTH={north};",
-    ]
-    if radius is not None:
-        lines.append(f"{INDENT6}RADIUS={radius};")
-    lines.append(f"{INDENT4}}};")
-    return "\n".join(lines)
+ObsDict = dict[str, Any]
+ObservationsByKey = dict[str, list[ObsDict]]
+WellToFormattedString = dict[str, str]
 
 
 def _non_empty_fields(skds: list[SummaryKeyData]) -> list[str]:
@@ -51,54 +35,106 @@ def _non_empty_fields(skds: list[SummaryKeyData]) -> list[str]:
     ]
 
 
-def _breakthrough_to_string(obs: dict[str, Any], key: str) -> str:
+def _breakthrough_to_string(obs: ObsDict, key: str) -> str:
+    date = obs["date"]
+    if isinstance(date, datetime):
+        date = date.strftime("%Y-%m-%d")
     lines = [
         f"{INDENT4}BREAKTHROUGH {{",
-        f"{INDENT6}THRESHOLD={obs['values'][0]};",
-        f"{INDENT6}DATE={obs['x_axis'][0]};",
-        f"{INDENT6}ERROR={obs['errors'][0]};",
+        f"{INDENT6}THRESHOLD={obs['threshold']};",
+        f"{INDENT6}DATE={date};",
+        f"{INDENT6}ERROR={obs['error']};",
         f"{INDENT6}KEY={key};",
         f"{INDENT4}}};",
     ]
     return "\n".join(lines)
 
 
-class BulkConfigExporter:
+def _key_to_obs(
+    observations: list[Observation],
+    obs_type: Literal["summary_observation", "breakthrough"],
+) -> dict[str, list[ObsDict]]:
+    typed_obs = [obs for obs in observations if obs.type == obs_type]
+    key_to_obs = defaultdict(list)
+    for obs in typed_obs:
+        key_to_obs[obs.key].append(dict(obs))
+    return key_to_obs
+
+
+class BulkConfigConverter:
     def __init__(
         self,
-        summary_observations: dict[str, Any],
-        breakthrough_observations: dict[str, Any],
-        csv_file_name: str = "summary_observation_values.csv",
+        observations: list[Observation],
+        shape_registry: ShapeRegistry | None = None,
     ) -> None:
-        self.summary_observations = summary_observations
-        self.breakthrough_observations = breakthrough_observations
-        self.csv_file_name = csv_file_name
+        self.shape_registry = shape_registry
 
-        self.well_to_breakthrough = self._map_well_to_breakthrough()
-        self.well_to_localization = self._map_localization_to_well()
+        self.smry_obs: ObservationsByKey = _key_to_obs(
+            observations, "summary_observation"
+        )
+        self.brt_obs: ObservationsByKey = _key_to_obs(observations, "breakthrough")
+
+        self.csv_file_name = "summary_observations.csv"
+
+        self.breakthrough: WellToFormattedString = self._well_to_breakthrough_string()
+        self.localization: WellToFormattedString = self._well_to_localization_string()
 
         summary_keys = []
-        for key in summary_observations:
+        for key in self.smry_obs:
             summary_key = make_summary_key_data(key)
             summary_keys.append(summary_key)
 
         self.header_fields = _non_empty_fields(summary_keys)
 
-    def _map_localization_to_well(self) -> dict[str, Any]:
-        well_to_localization = {}
-        for key in self.summary_observations | self.breakthrough_observations:
-            summary_key = make_summary_key_data(key.removeprefix("BREAKTHROUGH:"))
-            loc_string = _obs_to_localization_str(
-                self.summary_observations.get(key, [])
-                + self.breakthrough_observations.get(key, [])
-            )
-            if loc_string is not None and (well := summary_key.well) is not None:
-                well_to_localization[well] = loc_string
-        return well_to_localization
+    def _shape_id_to_localization_str(self, key: str) -> str | None:
+        if self.shape_registry is None:
+            return None
 
-    def _map_well_to_breakthrough(self) -> dict[str, Any]:
+        smry_obs: list[Observation] = self.smry_obs.get(key, [])
+        brt_list: list[Observation] = self.brt_obs.get(key, [])
+        observation_list: list[Observation] = smry_obs + brt_list
+
+        # The first observation with a shape is used to decide the localization values
+        # for the key.
+        # This means that if other observations with the same key had a different shape,
+        # they will be overwritten to resolve the ambiguity - as there can only be
+        # one localization declaration per WELL.
+        shape_id = next(
+            (o["shape_id"] for o in observation_list if o.get("shape_id") is not None),
+            None,
+        )
+        if shape_id is None:
+            return None
+
+        shape = self.shape_registry.get(shape_id)
+        if shape is None:
+            return None
+
+        lines = [
+            f"{INDENT4}LOCALIZATION {{",
+            f"{INDENT6}EAST={shape.east};",
+            f"{INDENT6}NORTH={shape.north};",
+        ]
+        if shape.radius is not None:
+            lines.append(f"{INDENT6}RADIUS={shape.radius};")
+        lines.append(f"{INDENT4}}};")
+        return "\n".join(lines)
+
+    def _well_to_localization_string(self) -> WellToFormattedString:
+        well_to_loc_string = {}
+        for key in self.smry_obs | self.brt_obs:
+            key_ = key.removeprefix("BREAKTHROUGH:")
+            summary_key = make_summary_key_data(key_)
+            loc_string = self._shape_id_to_localization_str(key_)
+
+            if loc_string is not None and (well := summary_key.well) is not None:
+                well_to_loc_string[well] = loc_string
+
+        return well_to_loc_string
+
+    def _well_to_breakthrough_string(self) -> WellToFormattedString:
         well_to_breakthrough = {}
-        for brt_key, obs in self.breakthrough_observations.items():
+        for brt_key, obs in self.brt_obs.items():
             key = brt_key.removeprefix("BREAKTHROUGH:")
             summary_key = make_summary_key_data(key)
             if (well := summary_key.well) is not None:
@@ -117,20 +153,20 @@ class BulkConfigExporter:
             fout.write(", ".join([*self.header_fields, "value", "error", "date"]))
             fout.write("\n")
             # Sort observations chronologically before natsort
-            for obs_list in self.summary_observations.values():
-                obs_list.sort(key=lambda obs: obs["x_axis"][0])
-            for key in natsorted(self.summary_observations.keys()):
+            for obs_list in self.smry_obs.values():
+                obs_list.sort(key=operator.itemgetter("date"))
+            for key in natsorted(self.smry_obs.keys()):
                 skd = make_summary_key_data(key)
-                for observation in self.summary_observations[key]:
+                for observation in self.smry_obs[key]:
                     for f in self.header_fields:
                         v = getattr(skd, f)
                         if v is None:
                             fout.write(", ")
                         else:
                             fout.write(f"{v}, ")
-                    date = datetime.fromisoformat(observation["x_axis"][0])
-                    fout.write(f"{observation['values'][0]:.3g}, ")
-                    fout.write(f"{observation['errors'][0]:.3g}, ")
+                    date = datetime.fromisoformat(observation["date"])
+                    fout.write(f"{observation['value']:.3g}, ")
+                    fout.write(f"{observation['error']:.3g}, ")
                     fout.write(f"{date.isoformat()}\n")
 
     def print_bulk_config(
@@ -138,31 +174,28 @@ class BulkConfigExporter:
     ) -> None:
         obs_names = [
             obs_dict["name"]
-            for obs_list in self.summary_observations.values()
+            for obs_list in self.smry_obs.values()
             for obs_dict in obs_list
         ] + [
             obs_dict["name"]
-            for obs_list in self.breakthrough_observations.values()
+            for obs_list in self.brt_obs.values()
             for obs_dict in obs_list
         ]
         obs_names_str = INDENT4 + f"\n{INDENT4}".join(obs_names)
         bulk_config_list = ["SUMMARY {", f"{INDENT2}VALUES = {self.csv_file_name};"]
-        for well in sorted(
-            self.well_to_localization.keys() | self.well_to_breakthrough.keys()
-        ):
+        for well in sorted(self.localization.keys() | self.breakthrough.keys()):
             bulk_config_list.extend(
                 [
                     f"{INDENT2}WELL {well} {{",
-                    self.well_to_localization.get(well, ""),
-                    self.well_to_breakthrough.get(well, ""),
+                    self.localization.get(well, ""),
+                    self.breakthrough.get(well, ""),
                     f"{INDENT2}}};",
                 ]
             )
         bulk_config_list.append("};")
-        bulk_config_str = "\n".join(
-            filter(None, bulk_config_list)
-            # Filter out empty (falsy) strings
-        )
+        # Filter out empty strings
+        bulk_config_list = filter(None, bulk_config_list)
+        bulk_config_str = "\n".join(bulk_config_list)
         print(
             f"\n{len(obs_names)} observations can be replaced by: \n"
             f"{INDENT2}1.  Copying the file '{self.csv_file_name}' to the folder "
@@ -176,3 +209,13 @@ class BulkConfigExporter:
             f"=================================\n"
             f"{bulk_config_str}"
         )
+
+
+def convert_summary_to_bulk_config(config: str) -> None:
+    ert_config = ErtConfig.from_file(config)
+    bulk_exporter = BulkConfigConverter(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )
+    bulk_exporter.write_csv()
+    bulk_exporter.print_bulk_config()
