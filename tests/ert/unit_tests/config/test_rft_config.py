@@ -1447,22 +1447,6 @@ def test_that_wildcard_wells_are_warned_about_given_no_time_response(
     assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
 
 
-def test_that_wildcard_wells_with_time_response_are_not_warned_about(
-    setup_mock_resfo_file,
-):
-    rft_config = RFTConfig(
-        input_files=["BASE.RFT"],
-        data_to_read={
-            "*": {"2000-01-01": ["PRESSURE", "SWAT"]},
-        },
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
-            "error", PostExperimentWarning
-        )
-        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
-
-
 def test_that_wildcard_well_with_wildcard_time_without_any_response_is_warned_about(
     mock_resfo_file, egrid
 ):

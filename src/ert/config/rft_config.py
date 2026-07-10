@@ -300,8 +300,8 @@ class RFTConfig(ResponseConfig):
 
         well_times_to_warn: set[tuple[str, str]] = well_times - well_times_with_response
 
-        # Only warn about wells with wildcard times if well have
-        # no responses at any time.
+        # Given well / time wildcard, only warn if there are no responses for
+        # the corresponding well / time value
         wells_with_responses = {well for well, time in well_times_with_response}
         times_with_responses = {time for well, time in well_times_with_response}
         for well, time in copy(well_times_to_warn):
@@ -310,6 +310,7 @@ class RFTConfig(ResponseConfig):
             if time == "*" and well in wells_with_responses:
                 well_times_to_warn.remove((well, time))
 
+        # Only warn about wildcard well and time if there are no responses
         if (wildcard_well_time := ("*", "*")) in well_times and len(
             well_times_with_response
         ) > 0:
