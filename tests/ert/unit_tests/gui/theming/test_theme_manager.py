@@ -5,6 +5,7 @@ from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
 from ert.gui.theming import Theme, ThemeManager
+from ert.gui.theming import manager as manager_module
 from ert.gui.theming.theme import load_qss
 
 
@@ -33,6 +34,24 @@ def test_that_setting_the_same_theme_does_not_emit_signal(qtbot) -> None:
     manager.set_theme(same)
 
     assert received == []
+
+
+def test_that_setting_the_same_theme_does_not_reapply_stylesheet(qtbot) -> None:
+    manager = ThemeManager()
+    same = manager.current_theme
+
+    apply_calls: list[None] = []
+    original_apply = manager.apply
+
+    def counting_apply() -> None:
+        apply_calls.append(None)
+        original_apply()
+
+    manager.apply = counting_apply  # type: ignore[method-assign]
+
+    manager.set_theme(same)
+
+    assert apply_calls == []
 
 
 def test_that_apply_installs_the_current_themes_stylesheet_on_qapplication(
@@ -104,4 +123,14 @@ def test_that_os_scheme_change_updates_theme_when_following_system(
     manager._on_system_scheme_changed(Qt.ColorScheme.Dark)
 
     assert manager.current_theme == Theme.DARK
-    assert received[-1] == Theme.DARK
+    assert received == [Theme.DARK]
+
+
+def test_that_apply_is_a_noop_when_no_qapplication_exists(qtbot, monkeypatch) -> None:
+    manager = ThemeManager()
+
+    monkeypatch.setattr(
+        manager_module.QApplication, "instance", staticmethod(lambda: None)
+    )
+    # Must not raise even though there is no QApplication to install QSS on.
+    manager.apply()
