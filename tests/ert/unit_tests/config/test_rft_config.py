@@ -1325,7 +1325,7 @@ def test_that_missing_response_for_rft_well_raises_warning(setup_mock_resfo_file
 
     expected_warnings = [
         "Could not find responses for well(s) at time(s) in 'BASE.RFT':",
-        "NOT_A_WELL: 2000-01-01",
+        "well='NOT_A_WELL' : time='2000-01-01'",
     ]
     assert any(all(m in str(w) for m in expected_warnings) for w in warnings)
 
@@ -1346,7 +1346,7 @@ def test_that_one_existing_and_one_missing_rft_response_warns_about_the_one_miss
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     expected_warnings = [
         "Could not find responses for well(s) at time(s) in 'BASE.RFT':",
-        "WELL: 4000-01-01",
+        "well='WELL' : time='4000-01-01'",
     ]
     assert any(all(m in str(w) for m in expected_warnings) for w in warnings)
 
@@ -1419,9 +1419,12 @@ def test_that_wildcard_times_are_warned_about_given_no_well_response(
     with pytest.warns(PostExperimentWarning) as warnings:
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
-    expected_warning = ["Could not find responses for well(s) at time(s)", "WELL: *"]
+    expected_warnings = [
+        "Could not find responses for well(s) at time(s)",
+        "well='DIFFERENT_WELL' : time='*'",
+    ]
     # Assert one warning contains all expected warnings
-    assert any(all(e_w in str(w) for e_w in expected_warning) for w in warnings)
+    assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
 
 
 def test_that_wildcard_wells_are_warned_about_given_no_time_response(
@@ -1436,12 +1439,12 @@ def test_that_wildcard_wells_are_warned_about_given_no_time_response(
     with pytest.warns(PostExperimentWarning) as warnings:
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
-    expected_warning = [
+    expected_warnings = [
         "Could not find responses for well(s) at time(s)",
-        "*: 2010-10-10",
+        "well='*' : time='2010-10-10'",
     ]
     # Assert one warning contains all expected warnings
-    assert any(all(e_w in str(w) for e_w in expected_warning) for w in warnings)
+    assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
 
 
 def test_that_wildcard_wells_with_time_response_are_not_warned_about(
@@ -1480,12 +1483,12 @@ def test_that_wildcard_well_with_wildcard_time_without_any_response_is_warned_ab
     with pytest.warns(PostExperimentWarning) as warnings:
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
-    expected_warning = [
+    expected_warnings = [
         "Could not find responses for well(s) at time(s)",
-        "*: *",
+        "well='*' : time='*'",
     ]
     # Assert one warning contains all expected warnings
-    assert any(all(e_w in str(w) for e_w in expected_warning) for w in warnings)
+    assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
 
 
 def test_that_wildcard_well_with_wildcard_time_with_any_response_is_not_warned_about(

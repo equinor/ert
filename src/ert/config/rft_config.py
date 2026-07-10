@@ -316,7 +316,7 @@ class RFTConfig(ResponseConfig):
             well_times_to_warn.remove(wildcard_well_time)
 
         formatted_items = [
-            f"{well}: {time}" for well, time in sorted(well_times_to_warn)
+            f"{well=} : {time=}" for well, time in sorted(well_times_to_warn)
         ]
         _warn_about_missing_responses(
             formatted_items, "well(s) at time(s)", rft_filename
