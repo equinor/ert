@@ -16,7 +16,7 @@ class SupportedFormats(StrEnum):
 
 
 Conversion = tuple[SupportedFormats, SupportedFormats]
-ConverterFunction = Callable[[Namespace], None]
+ConverterFunction = Callable[[str], None]
 
 _SUPPORTED_CONVERSIONS: dict[SupportedFormats, ConverterFunction] = {
     SupportedFormats.BULK: convert_summary_to_bulk_config,
@@ -36,4 +36,4 @@ def convert_observations(args: Namespace, _site_plugins: Any | None = None) -> N
             f"{supported_formats}"
         )
 
-    converter_func(args)
+    converter_func(args.config)

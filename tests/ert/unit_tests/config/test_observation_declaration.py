@@ -27,7 +27,6 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
     observations_parser,
 )
-from ert.namespace import Namespace
 from ert.observation_converters.history_to_summary import run_convert_observations
 from tests.ert.defaults_generator import create_seismic_observation
 
@@ -148,7 +147,7 @@ def test_that_make_observations_migrates_observations():
     )
     Path("config.ert").write_text(config_content, encoding="utf8")
 
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
 
     # Re-parse the migrated obs_config and build the observation objects
     migrated_contents = Path("obs_config").read_text(encoding="utf8")
