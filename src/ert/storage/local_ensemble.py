@@ -682,14 +682,13 @@ class LocalEnsemble(BaseMode):
             self._storage._to_parquet_transaction(group_path, complete_df)
 
     def load_scalars(
-        self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
+        self, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
         gen_kws = [
             p
             for p in self.experiment.parameter_configuration.values()
             if p.cardinality
             == ParameterCardinality.multiple_configs_per_ensemble_dataset
-            and (group is None or p.group_name == group)
         ]
 
         if not gen_kws:
