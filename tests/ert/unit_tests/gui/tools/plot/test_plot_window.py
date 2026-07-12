@@ -298,6 +298,53 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     assert get_x_axis_scale() == "log", "Plot scale should still be log"
 
 
+def test_that_unavailable_history_and_observations_checkboxes_are_hidden(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    key_def = PlotApiKeyDefinition(
+        "summary",
+        index_type="TIME",
+        metadata={"data_origin": "SUMMARY"},
+        observations=False,
+        dimensionality=1,
+        response=MagicMock(type="summary"),
+    )
+    mock_plot_api.responses_api_key_defs = [key_def]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    history_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "History"
+    )
+    assert not history_checkbox.isVisible()
+
+    observations_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "Observations"
+    )
+    assert not observations_checkbox.isVisible()
+
+
 @pytest.mark.slow
 def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
     qtbot: QtBot, monkeypatch

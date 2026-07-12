@@ -29,7 +29,6 @@ from ert.gui.plotting.utils import PlotConfig, PlotConfigFactory, PlotConfigHist
 from ert.gui.plotting.widgets import CopyStyleToDialog
 from ert.gui.utils import is_everest_application
 
-from .default_customization_view import DefaultCustomizationView
 from .limits_customization_view import LimitsCustomizationView
 from .statistics_customization_view import StatisticsCustomizationView
 from .style_customization_view import StyleCustomizationView
@@ -62,9 +61,6 @@ class PlotCustomizer(QObject):
             "Customize", parent, key_defs, key=self._plot_config_key
         )
 
-        self._customization_dialog.add_tab(
-            "general", "General", DefaultCustomizationView()
-        )
         self._customization_dialog.add_tab("style", "Style", StyleCustomizationView())
         if not self._is_everest:
             self._customization_dialog.add_tab(
