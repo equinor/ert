@@ -67,3 +67,9 @@ class GeneralOptions:
     @property
     def observations_checkbox_state(self) -> bool:
         return self._toggle_observations.isChecked()
+
+    def set_history_visible(self, visible: bool) -> None:
+        self._toggle_history.setVisible(visible)
+
+    def set_observations_visible(self, visible: bool) -> None:
+        self._toggle_observations.setVisible(visible)

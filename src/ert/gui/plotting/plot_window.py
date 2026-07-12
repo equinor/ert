@@ -58,7 +58,11 @@ from .utils.plot_types import ObservationPlotLocations
 from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
-from .widgets.plot_controls import EverestControlsPlotOptions, MisfitsOptions
+from .widgets.plot_controls import (
+    EverestControlsPlotOptions,
+    GeneralOptions,
+    MisfitsOptions,
+)
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
@@ -324,12 +328,17 @@ class PlotWindow(QMainWindow):
                 self.updatePlot
             )
 
+            self._general_options = GeneralOptions(
+                self.updatePlot,
+                is_everest=self.is_everest,
+            )
             self._misfits_options = MisfitsOptions(self.updatePlot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
                 [
                     self._ensemble_group,
+                    self._general_options.get_widget(),
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
                     self._misfits_options.get_widget(),
@@ -549,6 +558,20 @@ class PlotWindow(QMainWindow):
             plot_config = PlotConfig.create_copy(
                 self._plot_customizer.get_plot_config()
             )
+            plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
+            plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
+            if not self.is_everest:
+                self._general_options.set_history_visible(
+                    is_history_key or history_data_available
+                )
+                self._general_options.set_observations_visible(key_def.observations)
+                plot_config.set_history_enabled(
+                    self._general_options.history_checkbox_state
+                )
+                plot_config.set_observations_enabled(
+                    self._general_options.observations_checkbox_state
+                )
+
             plot_context = PlotContext(
                 plot_config,
                 selected_ensembles,

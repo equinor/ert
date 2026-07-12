@@ -179,10 +179,10 @@ class PlotConfig:
     def legend_labels(self) -> list[str]:
         return self._legend_labels
 
-    def set_x_label(self, label: str) -> None:
+    def set_x_label(self, label: str | None) -> None:
         self._x_label = label
 
-    def set_y_label(self, label: str) -> None:
+    def set_y_label(self, label: str | None) -> None:
         self._y_label = label
 
     def set_observations_enabled(self, enabled: bool) -> None:
