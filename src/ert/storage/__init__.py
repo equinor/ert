@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from .local_ensemble import LocalEnsemble, load_realization_parameters_and_responses
+from .local_ensemble import (
+    LocalEnsemble,
+    load_realization_parameters_and_responses,
+)
 from .local_experiment import ExperimentState, ExperimentStatus, LocalExperiment
 from .local_storage import LocalStorage, local_storage_set_ert_config, open_storage
 from .mode import Mode, ModeLiteral

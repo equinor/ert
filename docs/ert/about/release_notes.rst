@@ -27,6 +27,152 @@
 Highlighted changes
 ===================
 
+Version 23.0
+------------
+
+
+
+Per-parameter-type update strategy
+##################################
+
+Added the possibility of selecting an update strategy per parameter type using
+`ANALYSIS_SET_VAR PARAMETERS <../reference/configuration/keywords.html#parameters>`_.
+
+
+Configurable ES-MDA weights
+###########################
+
+Added the possibility of defining default ES-MDA weights in the configuration file
+using `ANALYSIS_SET_VAR STD_ENKF WEIGHTS <../reference/configuration/keywords.html#weights>`_.
+The configured weights are used as defaults for both CLI and GUI runs, while explicit
+CLI or GUI overrides still take precedence.
+
+
+Option to approximate missing rft responses
+###########################################
+
+Added the keyword `APPROXIMATE_MISSING_RFT_VALUES <../reference/configuration/keywords.html#approximate-missing-rft-values>`_
+to interpolate/extrapolate RFT values for observation locations with missing simulator responses.
+
+Bulk configuration of summary observations
+##############################################
+
+Added the possibility of configuring summary observations in a more concise format,
+containing observation values in a csv files and metadata regarding wells in the
+observation config.
+
+Read more in the documentation for the
+:ref:`bulk config <bulk_configuration_of_summary_observations>`.
+
+Version 22.0
+------------
+
+Inline workflow jobs
+####################
+Added new keywords `HOOK_WORKFLOW_JOB <../reference/configuration/keywords.html#hook-workflow-job>`_ and
+`CREATE_WORKFLOW_FROM_JOB <../reference/configuration/keywords.html#create-workflow-from-job>`_ for
+inline configuration of workflow jobs.
+
+Option to export RFT data for visualization
+#########################################################
+
+Added the `EXPORT_RFT <../reference/workflows/added_workflow_jobs.html#EXPORT_RFT>`_ workflow job for exporting RFT data for visualization. See
+:ref:`Exporting RFT data for visualization <exporting_rft_data_for_visualization>` for more information.
+
+Version 22.0
+------------
+
+Default observation names
+#############################
+
+We've added the possibility of not giving names to the observations. Should a name be
+lacking, a default name will be derived from the observation values. The name will contain
+enough information to be unique from other observations.
+
+For example:
+
+.. code-block:: text
+
+     SUMMARY_OBSERVATION
+     {
+         VALUE   = 0.1;
+         ERROR   = 0.05;
+         DATE    = 2010-03-31;
+         KEY     = WOPR:OP1;
+     };
+
+     RFT_OBSERVATION {
+         WELL=PROD;
+         DATE=2015-02-01;
+         PROPERTY=PRESSURE;
+         VALUE=3800;
+         ERROR=10;
+         TVD=8400;
+         EAST=9500;
+         NORTH=9500;
+     };
+
+
+Would receive the default names of `WOPR:OP1:2010-03-31` and
+`PROD:2015-02-01:PRESSURE:9500.0:9500.0:8400.0` respectively.
+
+Version 20.0
+------------
+
+Breakthrough observation
+########################
+
+We’ve added a new observation type, namely the breakthrough observation. The breakthrough
+observation is used to condition the history matching on *when* a summary key in
+the simulation passes a certain threshold.
+
+It's similar to a summary observation, but the observed and uncertain property is the date
+instead of the value.
+
+.. image:: breakthrough.png
+
+The details regarding breakthrough observation can be read about in
+:ref:`breakthrough observation <breakthrough_observation>`.
+
+Version 19.0
+------------
+
+Deprecation of History Observations
+###################################
+
+History observations becomes deprecated as of this release.
+
+As history observations are a collection of summary observations, they are convertible.
+To ease the process of converting from history observations to summary observations, a
+command line tool was added in the release.
+
+By running:
+
+.. code-block:: text
+
+    ert convert_observations <config.ert>
+
+The tooling will attempt to rewrite the history observations in the observation config to
+summary observations. The changes are written to a copy of the observation config,
+appended with .updated in the filename.
+
+Example output from this tool:
+
+.. code-block:: text
+
+    > ert convert_observations config.ert
+    Making copy of obs config @ observations/observations.txt -> observations/observations.txt.updated
+    Applying change to obs config @ observations/observations.txt.updated...
+    History obs FOPR -> 200 summary observations
+
+Export misfit to csv option
+###########################
+
+Under Manage experiments, by selecting an ensemble, it is now possible to export the
+misfit data to a csv file.
+
+.. image:: misfit_export.png
+
 Version 18.0
 ------------
 

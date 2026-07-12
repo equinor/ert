@@ -11,6 +11,7 @@ from ert.ensemble_evaluator.snapshot import EnsembleSnapshotMetadata
 from ert.run_models.event import (
     AnalysisStatusEvent,
     AnalysisTimeEvent,
+    CorruptStatusSnapshotError,
     EndEvent,
     FullSnapshotEvent,
     RunModelDataEvent,
@@ -19,6 +20,7 @@ from ert.run_models.event import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
     SnapshotUpdateEvent,
+    load_status_snapshot_event,
     status_event_from_json,
     status_event_to_json,
 )
@@ -189,3 +191,57 @@ def test_status_event_serialization(event):
     json_res = status_event_to_json(event)
     round_trip_event = status_event_from_json(json_res)
     assert event == round_trip_event
+
+
+def _build_full_snapshot_event() -> FullSnapshotEvent:
+    return FullSnapshotEvent(
+        snapshot=SnapshotBuilder(metadata=METADATA)
+        .add_fm_step(
+            fm_step_id="0",
+            index="0",
+            name="fm_step_0",
+            status=state.FORWARD_MODEL_STATE_FINISHED,
+        )
+        .build(
+            real_ids=["0", "1"],
+            status=state.REALIZATION_STATE_FINISHED,
+        ),
+        iteration_label="Foo",
+        total_iterations=1,
+        progress=1.0,
+        realization_count=2,
+        status_count={"Finished": 2},
+        iteration=0,
+    )
+
+
+def test_that_persisted_snapshot_is_loaded_back_into_a_full_snapshot_event(tmp_path):
+    event = _build_full_snapshot_event()
+    path = tmp_path / "snapshot_0.json"
+    path.write_bytes(status_event_to_json(event).encode("utf-8"))
+
+    loaded = load_status_snapshot_event(path)
+
+    assert loaded == event
+
+
+def test_that_loading_a_missing_snapshot_returns_none(tmp_path):
+    assert load_status_snapshot_event(tmp_path / "does_not_exist.json") is None
+
+
+def test_that_loading_an_unparseable_snapshot_raises_corrupt_error(tmp_path):
+    path = tmp_path / "snapshot_0.json"
+    path.write_text("not valid json", encoding="utf-8")
+
+    with pytest.raises(CorruptStatusSnapshotError, match="Could not parse"):
+        load_status_snapshot_event(path)
+
+
+def test_that_loading_a_snapshot_of_the_wrong_event_type_raises_corrupt_error(tmp_path):
+    path = tmp_path / "snapshot_0.json"
+    path.write_text(
+        status_event_to_json(EndEvent(failed=False, msg="done")), encoding="utf-8"
+    )
+
+    with pytest.raises(CorruptStatusSnapshotError, match="FullSnapshotEvent"):
+        load_status_snapshot_event(path)

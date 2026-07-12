@@ -7,12 +7,13 @@ from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from .breakthrough_config import BreakthroughConfig
 from .everest_control import EverestControl
 from .field import Field as FieldConfig
 from .gen_kw_config import GenKwConfig
-from .known_derived_response_types import KnownDerivedResponseTypes
-from .known_response_types import KNOWN_ERT_RESPONSE_TYPES, KnownErtResponseTypes
+from .known_response_types import (
+    KNOWN_ERT_SIMULATION_RESPONSE_TYPES,
+    KnownErtResponseTypes,
+)
 from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from .response_config import ResponseConfig
@@ -23,9 +24,6 @@ logger = logging.getLogger(__name__)
 
 class EnsembleConfig(BaseModel):
     response_configs: dict[str, KnownErtResponseTypes] = Field(default_factory=dict)
-    derived_response_configs: dict[str, KnownDerivedResponseTypes] = Field(
-        default_factory=dict
-    )
     parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | EverestControl
     ] = Field(default_factory=dict)
@@ -34,7 +32,11 @@ class EnsembleConfig(BaseModel):
     def set_derived_fields(self) -> Self:
         self._check_for_duplicate_names(
             [p.name for p in self.parameter_configs.values()],
-            [key for config in self.response_configs.values() for key in config.keys],
+            [
+                key
+                for config in self.response_configs.values()
+                for key in config.response_keys()
+            ],
         )
 
         return self
@@ -130,10 +132,10 @@ class EnsembleConfig(BaseModel):
         EnsembleConfig._check_for_duplicate_gen_kw_param_names(gen_kw_cfgs)
         response_configs: list[KnownErtResponseTypes] = []
 
-        for config_cls in KNOWN_ERT_RESPONSE_TYPES:
+        for config_cls in KNOWN_ERT_SIMULATION_RESPONSE_TYPES:
             instance = config_cls.from_config_dict(config_dict)
 
-            if instance is not None and instance.keys:
+            if instance is not None and instance.response_keys():
                 response_configs.append(instance)
 
         return cls(
@@ -149,7 +151,8 @@ class EnsembleConfig(BaseModel):
         if key in self.response_configs:
             return self.response_configs[key]
         if config := next(
-            (c for c in self.response_configs.values() if key in c.keys), None
+            (c for c in self.response_configs.values() if key in c.response_keys()),
+            None,
         ):
             # Only hit by blockfs migration
             # returns the same config for one call per
@@ -194,7 +197,3 @@ class EnsembleConfig(BaseModel):
     @property
     def response_configuration(self) -> list[ResponseConfig]:
         return list(self.response_configs.values())
-
-    @property
-    def derived_response_configuration(self) -> list[BreakthroughConfig]:
-        return list(self.derived_response_configs.values())

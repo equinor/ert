@@ -1,10 +1,9 @@
-from typing import Any
+from typing import Any, override
 
 from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QCursor, QFocusEvent, QKeyEvent, QMovie, QResizeEvent
 from PyQt6.QtWidgets import QApplication, QLabel, QLineEdit, QStyle
-from typing_extensions import override
 
 
 class SearchBox(QLineEdit):
@@ -112,13 +111,12 @@ class SearchBox(QLineEdit):
     @override
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
         style = self.style()
-        if style is None:
-            raise RuntimeError("SearchBox style is unexpectedly None")
-        frame_width = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
-        self._pending_indicator.move(
-            self.rect().right() - frame_width - self._pending_indicator.width(),
-            int((self.height() - self._pending_indicator.height()) / 2),
-        )
+        if style:
+            frame_width = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
+            self._pending_indicator.move(
+                self.rect().right() - frame_width - self._pending_indicator.width(),
+                int((self.height() - self._pending_indicator.height()) / 2),
+            )
 
         QLineEdit.resizeEvent(self, a0)
 

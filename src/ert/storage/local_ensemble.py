@@ -6,7 +6,6 @@ import io
 import logging
 import os
 import time
-import uuid as _uuid
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -21,7 +20,7 @@ import pandas as pd
 import polars as pl
 import resfo
 import xarray as xr
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ert.config import (
@@ -39,7 +38,6 @@ from ert.config.observation_quality_control import (
 from ert.config.rft_config import RFTConfig
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
-from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -66,9 +64,6 @@ if TYPE_CHECKING:
     from .local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
-
-
-_blob_adapter: TypeAdapter[BlobStorageData] = TypeAdapter(BlobStorageData)
 
 
 class EverestRealizationInfo(TypedDict):
@@ -387,7 +382,7 @@ class LocalEnsemble(BaseMode):
 
     @lru_cache  # noqa: B019
     def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
-        response_configs = self.experiment.response_configuration
+        response_configs = self.experiment.simulation_response_configuration
         existing_scalars = self._existing_scalars
 
         def _parameters_exist_for_realization(realization: int) -> bool:
@@ -450,7 +445,7 @@ class LocalEnsemble(BaseMode):
                 return _has_response(key)
 
             is_expecting_any_responses = any(
-                bool(config.keys) for config in response_configs.values()
+                bool(config.response_keys()) for config in response_configs.values()
             )
 
             if not is_expecting_any_responses:
@@ -459,7 +454,7 @@ class LocalEnsemble(BaseMode):
             non_empty_response_configs = [
                 response
                 for response, config in response_configs.items()
-                if bool(config.keys)
+                if bool(config.response_keys())
             ]
 
             return all(
@@ -687,14 +682,13 @@ class LocalEnsemble(BaseMode):
             self._storage._to_parquet_transaction(group_path, complete_df)
 
     def load_scalars(
-        self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
+        self, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
         gen_kws = [
             p
             for p in self.experiment.parameter_configuration.values()
             if p.cardinality
             == ParameterCardinality.multiple_configs_per_ensemble_dataset
-            and (group is None or p.group_name == group)
         ]
 
         if not gen_kws:
@@ -743,11 +737,7 @@ class LocalEnsemble(BaseMode):
         self, response_key: str, realizations: tuple[int, ...]
     ) -> pl.LazyFrame:
         select_key = False
-        if (
-            response_key
-            in self.experiment.response_configuration
-            | self.experiment.derived_response_configuration
-        ):
+        if response_key in self.experiment.response_configuration:
             response_type = response_key
         elif response_key not in self.experiment.response_key_to_response_type:
             raise ValueError(f"{response_key} is not a response")
@@ -874,12 +864,6 @@ class LocalEnsemble(BaseMode):
                 f"must contain a 'values' variable"
             )
 
-        if len(data) == 0:
-            raise ValueError(
-                f"Responses {response_type} are empty. "
-                "Cannot proceed with saving to storage."
-            )
-
         if "realization" not in data.columns:
             data.insert_column(
                 0,
@@ -932,7 +916,7 @@ class LocalEnsemble(BaseMode):
     def get_response_state(
         self, realization: int
     ) -> dict[str, RealizationStorageState]:
-        response_configs = self.experiment.response_configuration
+        response_configs = self.experiment.simulation_response_configuration
         path = self._realization_dir(realization)
         return {
             e: (
@@ -972,6 +956,7 @@ class LocalEnsemble(BaseMode):
         - GenData: "0, 42" (report_step, index)
         - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
                 or "123.5, 456.7, 2500.0, None" when zone is missing
+        - Seismic "123.5, 456.7" (east, north)
         """
         known_observations = self.experiment.observation_keys
 
@@ -988,10 +973,7 @@ class LocalEnsemble(BaseMode):
         for (
             response_type,
             response_cls,
-        ) in (
-            self.experiment.response_configuration
-            | self.experiment.derived_response_configuration
-        ).items():
+        ) in self.experiment.response_configuration.items():
             if response_type not in observations_by_type:
                 continue
 
@@ -1167,14 +1149,14 @@ class LocalEnsemble(BaseMode):
         """
         rft_observations = self.experiment.observations.get("rft")
         if rft_observations is None or rft_observations.is_empty():
-            raise StorageError("No RFT observations found in experiment")
+            raise ValueError("No RFT observations found in experiment")
 
         if "rft" not in self.experiment.response_configuration:
-            raise KeyError("No RFT response configuration found in experiment")
+            raise ValueError("No RFT response configuration found in experiment")
 
         realizations = self.get_realization_list_with_responses()
         if not realizations:
-            raise StorageError("No realizations with responses found")
+            raise ValueError("No realizations with responses found")
 
         # Build date-to-report_step mapping from summary responses if available
         date_to_report_step: dict[str, int] = {}
@@ -1346,32 +1328,11 @@ class LocalEnsemble(BaseMode):
         blob_type: BlobType | None = None,
     ) -> list[BlobStorageData]:
         """List blob metadata, filtered by type."""
-        blob_dir = self._path / BLOB_DATA_DIR
-        if not blob_dir.exists():
-            return []
-        results = []
-        for json_path in blob_dir.glob("*.json"):
-            meta = _blob_adapter.validate_json(json_path.read_bytes())
-            if blob_type is None or meta.blob_info.blob_type == blob_type:
-                results.append(meta)
-        return results
+        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
 
-    def load_blob(
-        self,
-        uri: str,
-    ) -> bytes:
-        """Load blob bytes by URI"""
-        blob_dir = (self._path / BLOB_DATA_DIR).resolve()
-        blob_path = (blob_dir / uri).resolve()
-        try:
-            blob_path.relative_to(blob_dir)
-        except ValueError:
-            logger.warning("Blob URI %s resolves outside of blob directory", uri)
-            raise FileNotFoundError(uri) from None
-        if not blob_path.exists():
-            logger.warning("Blob file %s not found", uri)
-            raise FileNotFoundError(uri)
-        return blob_path.read_bytes()
+    def load_blob(self, uri: str) -> bytes:
+        """Load blob bytes by URI."""
+        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
 
     @require_write
     def save_blob(
@@ -1379,40 +1340,37 @@ class LocalEnsemble(BaseMode):
         blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent | AnalysisScalingEvent,
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
-        blob_dir.mkdir(parents=True, exist_ok=True)
-        blob_id = _uuid.uuid4().hex[:8]
-        uri = f"{blob_id}.blob"
-        blob_data: BlobStorageData
         if blob_event.event_type == "AnalysisMatrixEvent":
             file_type = (
                 "application/x-npz" if blob_event.sparse else "application/x-npy"
             )
-            blob_data = BlobStorageData(
-                uri=uri,
-                file_size=len(blob_event.matrix_bytes),
-                file_type=file_type,
+            BlobStorageData.save_blob(
                 name=blob_event.name,
+                data=blob_event.matrix_bytes,
                 blob_info=MatrixStorageData(
                     update_algorithm=blob_event.update_algorithm,
                     sparse=blob_event.sparse,
                     shape=blob_event.shape,
                     data_type=blob_event.data_type,
+                    parameter_group_sizes=blob_event.parameter_group_sizes,
                 ),
+                file_type=file_type,
+                storage=self._storage,
+                blob_dir=blob_dir,
             )
-            data = blob_event.matrix_bytes
         elif blob_event.event_type == "AnalysisScalingEvent":
-            blob_data = BlobStorageData(
-                uri=uri,
-                file_size=len(blob_event.scaling_bytes),
-                file_type="application/parquet",
+            BlobStorageData.save_blob(
                 name="scaling_factors",
+                data=blob_event.scaling_bytes,
                 blob_info=ScalingFactorsData(
                     update_algorithm=blob_event.update_algorithm,
                     num_observations=blob_event.num_observations,
                     num_groups=blob_event.num_groups,
                 ),
+                file_type="application/parquet",
+                storage=self._storage,
+                blob_dir=blob_dir,
             )
-            data = blob_event.scaling_bytes
         else:
             buf = io.BytesIO()
             pl.DataFrame(
@@ -1420,22 +1378,16 @@ class LocalEnsemble(BaseMode):
                 schema=blob_event.data.header,
                 orient="row",
             ).write_parquet(buf)
-            data = buf.getvalue()
-            blob_data = BlobStorageData(
-                uri=uri,
-                file_size=len(data),
-                file_type="application/parquet",
+            BlobStorageData.save_blob(
                 name="observation_report",
+                data=buf.getvalue(),
                 blob_info=ObservationReportData(
                     update_algorithm=blob_event.update_algorithm,
                 ),
+                file_type="application/parquet",
+                storage=self._storage,
+                blob_dir=blob_dir,
             )
-
-        self._storage._write_transaction(blob_dir / uri, data)
-        self._storage._write_transaction(
-            blob_dir / f"{uri}.json",
-            blob_data.model_dump_json(indent=2).encode("utf-8"),
-        )
 
     @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
@@ -1886,7 +1838,7 @@ async def _write_responses_to_storage(
     ensemble: LocalEnsemble,
 ) -> LoadResult:
     errors = []
-    response_configs = ensemble.experiment.response_configuration.values()
+    response_configs = ensemble.experiment.simulation_response_configuration.values()
     for config in response_configs:
         try:  # noqa: PLW0717
             start_time = time.perf_counter()

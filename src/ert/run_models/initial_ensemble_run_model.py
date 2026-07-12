@@ -1,7 +1,5 @@
 import numpy as np
-import polars as pl
 
-from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel
@@ -38,21 +36,3 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
             evaluator_server_config,
         )
         return ensemble_storage
-
-    def observation_dataframes(self) -> dict[str, pl.DataFrame]:
-        if self.observations is None:
-            return {}
-
-        rft_config = next(
-            (r for r in self.response_configuration if r.type == "rft"),
-            None,
-        )
-
-        shape_registry = self._storage.get_experiment_by_name(
-            self.experiment_name
-        ).shape_registry
-        return create_observation_dataframes(
-            observations=self.observations,
-            rft_config=rft_config,
-            shape_registry=shape_registry,
-        )

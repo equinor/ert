@@ -1,12 +1,12 @@
 import logging
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from typing import override
 
 import numpy as np
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
-from typing_extensions import override
 
 from ert.config import ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier

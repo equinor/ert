@@ -6,10 +6,11 @@ import logging
 import os
 import re
 from collections import defaultdict
+from copy import copy
 from dataclasses import InitVar, dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import IO, Any, Literal, TypeAlias
+from typing import IO, Any, Literal, override
 
 import numpy as np
 import numpy.typing as npt
@@ -21,7 +22,6 @@ from resfo_utilities import (
     InvalidRFTError,
     RFTReader,
 )
-from typing_extensions import override
 
 from ert.substitutions import substitute_runpath_name
 
@@ -32,26 +32,29 @@ from .parsing import (
     ConfigWarning,
     parse_zonemap,
 )
-from .response_config import InvalidResponseFile, ResponseConfig
-from .responses_index import responses_index
+from .response_config import (
+    InvalidResponseFile,
+    SimulationResponseConfig,
+    _warn_about_missing_responses,
+)
 
 logger = logging.getLogger(__name__)
 
 
 # A Point in UTM/TVD coordinates
-Point: TypeAlias = tuple[float, float, float]
+type Point = tuple[float, float, float]
 # Index to a cell in a grid
-GridIndex: TypeAlias = tuple[int, int, int]
-ZoneName: TypeAlias = str
-WellName: TypeAlias = str
-DateString: TypeAlias = str
-RFTProperty: TypeAlias = str
+type GridIndex = tuple[int, int, int]
+type ZoneName = str
+type WellName = str
+type DateString = str
+type RFTProperty = str
 
 
 @dataclass(frozen=True)
 class WellConnectionCell:
-    grid_index: GridIndex
-    cell_center: Point
+    grid_index: GridIndex | None
+    cell_center: Point | None
 
 
 # The egrid and zonemap are needed in both ``read_from_file`` and
@@ -77,7 +80,7 @@ def _get_zonemap(zonemap_path: Path) -> dict[int, list[str]]:
     return parse_zonemap(str(zonemap_path), zonemap_path.read_text(encoding="utf-8"))
 
 
-class RFTConfig(ResponseConfig):
+class RFTConfig(SimulationResponseConfig):
     """:term:`RFT` response from a :term:`reservoir simulator`.
 
     RFTConfig is the configuration of responses in the <RUNPATH>/<ECLBASE>.RFT
@@ -162,23 +165,16 @@ class RFTConfig(ResponseConfig):
             strict=True,
         ):
             if cell is None:
-                raise InvalidResponseFile(
-                    f"Did not find grid coordinate for location(s) {location}"
+                location_cell_map[location] = WellConnectionCell(
+                    None,
+                    None,
                 )
-            # cells returned by grid are 0-based, while zonemap
-            # and RFTEntry.connections are 1-based, so unifying
-            location_cell_map[location] = WellConnectionCell(
-                (cell[0] + 1, cell[1] + 1, cell[2] + 1),
-                grid.cell_corners(*cell).mean(axis=0),
-            )
+            else:
+                location_cell_map[location] = WellConnectionCell(
+                    (cell[0] + 1, cell[1] + 1, cell[2] + 1),
+                    tuple(grid.cell_corners(*cell).mean(axis=0)),
+                )
         return location_cell_map
-
-    @staticmethod
-    def _assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
-        if df.schema != schema:
-            msg = f"Expected schema {schema}, got {df.schema}."
-            raise AssertionError(msg)
-        return df
 
     @dataclass(frozen=True)
     class ValidRFTEntry:
@@ -289,6 +285,43 @@ class RFTConfig(ResponseConfig):
             "cell_zones": pl.List(pl.String),
         }
 
+    def _warn_about_missing_rft_responses(
+        self,
+        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry],
+        rft_filename: str,
+    ) -> None:
+        well_times = {
+            (well, time)
+            for well, time_dict in self.data_to_read.items()
+            for time in time_dict
+        }
+        well_times_with_response = {(well, time.isoformat()) for well, time in rft_data}
+
+        well_times_to_warn: set[tuple[str, str]] = well_times - well_times_with_response
+
+        # Given well / time wildcard, only warn if there are no responses for
+        # the corresponding well / time value
+        wells_with_responses = {well for well, time in well_times_with_response}
+        times_with_responses = {time for well, time in well_times_with_response}
+        for well, time in copy(well_times_to_warn):
+            if well == "*" and time in times_with_responses:
+                well_times_to_warn.remove((well, time))
+            if time == "*" and well in wells_with_responses:
+                well_times_to_warn.remove((well, time))
+
+        # Only warn about wildcard well and time if there are no responses
+        if (wildcard_well_time := ("*", "*")) in well_times and len(
+            well_times_with_response
+        ) > 0:
+            well_times_to_warn.remove(wildcard_well_time)
+
+        formatted_items = [
+            f"{well=} : {time=}" for well, time in sorted(well_times_to_warn)
+        ]
+        _warn_about_missing_responses(
+            formatted_items, "well(s) at time(s)", rft_filename
+        )
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT"""
         if not self.data_to_read:
@@ -297,6 +330,8 @@ class RFTConfig(ResponseConfig):
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
         rft_data = self._scan_rft(rft_filepath)
+
+        self._warn_about_missing_rft_responses(rft_data, Path(rft_filepath).name)
 
         if not rft_data:
             return pl.DataFrame(schema=self.response_schema())
@@ -415,15 +450,18 @@ class RFTConfig(ResponseConfig):
 
         location_cell_map = self._map_locations_to_cells(grid_filepath, locations)
 
+        def _get_zone_list(loc: Point) -> list[str]:
+            grid_index = location_cell_map[loc].grid_index
+            if grid_index is None:
+                return []
+            return zonemap.get(grid_index[-1], [])
+
         return pl.DataFrame(
             {
                 "east": [loc[0] for loc in locations],
                 "north": [loc[1] for loc in locations],
                 "tvd": [loc[2] for loc in locations],
-                "actual_zones": [
-                    zonemap.get(location_cell_map[loc].grid_index[-1], [])
-                    for loc in locations
-                ],
+                "actual_zones": [_get_zone_list(loc) for loc in locations],
                 "well_connection_cell": [
                     location_cell_map[loc].grid_index for loc in locations
                 ],
@@ -709,6 +747,3 @@ class RFTConfig(ResponseConfig):
             )
 
         return None
-
-
-responses_index.add_response_type(RFTConfig)

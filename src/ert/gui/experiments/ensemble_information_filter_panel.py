@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
-from typing_extensions import override
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (

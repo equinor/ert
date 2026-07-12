@@ -1,11 +1,10 @@
 from enum import IntEnum
-from typing import Any, Self, cast, overload
+from typing import Any, Self, cast, overload, override
 from uuid import UUID
 
 import humanize
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from typing_extensions import override
 
 from ert.storage import Ensemble, Experiment, Storage
 

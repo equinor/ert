@@ -12,9 +12,9 @@ from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig, ObservationType
 from ert.gui.main import _setup_main_window
+from ert.gui.plotting.plot_window import ENSEMBLE, STD_DEV, PlotWindow
+from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.tools.event_viewer import GUILogHandler
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_window import ENSEMBLE, STD_DEV, PlotWindow
 from ert.services import ErtServerController
 from ert.storage import open_storage
 
@@ -130,9 +130,6 @@ def setup_storage(config):
             experiment_config={
                 "parameter_configuration": dump_all(ens_config.parameter_configuration),
                 "response_configuration": dump_all(ens_config.response_configuration),
-                "derived_response_configuration": dump_all(
-                    ens_config.derived_response_configuration
-                ),
                 "observations": dump_all(config.observation_declarations),
                 "ert_templates": config.ert_templates,
             },

@@ -2,10 +2,9 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
-from ert.gui.tools.plot.plottery.plot_style import PlotStyle
-from ert.gui.tools.plot.plottery.plots import CrossEnsembleStatisticsPlot
+from ert.gui.plotting.ert_plots import CrossEnsembleStatisticsPlot
+from ert.gui.plotting.plot_api import EnsembleObject
+from ert.gui.plotting.utils import PlotConfig, PlotContext, PlotStyle
 
 STATISTIC_TYPES = ["mean", "p50", "min-max", "p10-p90", "std", "p33-p67"]
 LEGEND_ITEMS = ["Mean", "P50", "Min/Max", "P10-P90", "Std dev", "P33-P67"]

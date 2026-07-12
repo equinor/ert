@@ -19,18 +19,22 @@ from xlsxwriter import Workbook
 
 from ert import ErtScript, ErtScriptWorkflow
 from ert.config import (
+    CircleShapeConfig,
     ConfigValidationError,
     ErtConfig,
     ESSettings,
     HookRuntime,
     QueueSystem,
     RFTConfig,
+    ShapeRegistry,
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config.ert_config import (
     RandomSeedGenerator,
     _split_string_into_sections,
     create_forward_model_json,
+    log_observation_keys,
+    log_shape_registry,
 )
 from ert.config.forward_model_step import (
     ForwardModelStepPlugin,
@@ -48,6 +52,7 @@ from ert.config.parsing.context_values import (
 from ert.config.parsing.observations_parser import ObservationDict, ObservationType
 from ert.config.queue_config import LocalQueueOptions
 from ert.config.refcase import Refcase
+from ert.config.seismic_config import SeismicConfig
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
 from ert.shared import ert_share_path
 from ert.storage import LocalEnsemble, Storage
@@ -1508,17 +1513,11 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         )
 
     assert (
-        "Private arg '<VAR3>':'5' chosen over global '55' "
-        "in forward model step step_name"
+        "{'forward_model_step_name': 'step_name', 'key': {'<VAR3>': "
+        "{'private_arg': '5', 'global_arg': '55'}}}"
     ) in caplog.text
-    assert (
-        "Private arg '<VAR1>':'10' chosen over global '10' "
-        "in forward model step step_name"
-    ) not in caplog.text
-    assert (
-        "Private arg '<VAR2>':'20' chosen over global '20' "
-        "in forward model step step_name"
-    ) not in caplog.text
+    assert ("'<VAR1>': {'private_arg':") not in caplog.text
+    assert ("'<VAR2>': {'private_arg':") not in caplog.text
 
 
 def test_that_unresolved_forward_model_placeholders_are_logged_at_startup(caplog):
@@ -2775,6 +2774,30 @@ def test_that_rft_properties_can_be_given_with_spaces():
     }
 
 
+def test_that_seismics_are_parsed():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+
+        SEISMIC tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv
+        SEISMIC tables/horizon--amplitude_full_min_depth--20250101_20240101.csv
+        """,
+    )
+    seismic = config.ensemble_config.response_configs["seismic"]
+    assert isinstance(seismic, SeismicConfig)
+    assert seismic.type == "seismic"
+    assert seismic.name == "seismic"
+    assert seismic.response_type == "seismic"
+    assert seismic.input_files == [
+        "tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv",
+        "tables/horizon--amplitude_full_min_depth--20250101_20240101.csv",
+    ]
+    assert set(seismic.keys) == {
+        "horizon--amplitude_full_mean_depth--20250101_20240101",
+        "horizon--amplitude_full_min_depth--20250101_20240101",
+    }
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_history_observation_removal_error(caplog, monkeypatch):
     config_path = Path("config.ert")
@@ -2859,7 +2882,6 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
 
     breakthrough_observations = create_observation_dataframes(
         config.observation_declarations,
-        None,
         config.shape_registry,
     )["breakthrough"]
     assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
@@ -3187,3 +3209,44 @@ def test_that_gen_kw_defaults_to_none_with_update_false(change_to_tmpdir):
     ert_config = ErtConfig.from_file("config.ert")
     param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
     assert param.update_strategy is None
+
+
+def test_that_log_observation_keys_logs_count_of_summary_keys(caplog):
+    caplog.set_level(logging.INFO)
+    wopr_count = 5
+    bpr_count = 3
+    mock_type = MagicMock(value="summary")
+    observations = [
+        *[{"type": mock_type, "KEY": "WOPR:FOO"}] * wopr_count,
+        *[{"type": mock_type, "KEY": "BPR:1,1,1"}] * bpr_count,
+    ]
+    log_observation_keys(observations)
+    assert "Count of summary keywords:" in caplog.text
+    assert f"'WOPR': {wopr_count}" in caplog.text
+    assert f"'BPR': {bpr_count}" in caplog.text
+
+
+def test_that_log_observation_keys_doesnt_fail_given_misconfigured_summarykey():
+    well_summary_missing_well = "WOPR"
+    block_summary_missing_indices = "BPR"
+    observations = [
+        {"type": MagicMock(value="summary"), "KEY": well_summary_missing_well},
+        {"type": MagicMock(value="summary"), "KEY": block_summary_missing_indices},
+    ]
+    log_observation_keys(observations)
+
+
+def test_that_log_observation_keys_doesnt_fail_given_no_keys(caplog):
+    caplog.set_level(logging.INFO)
+    observations = [{"type": MagicMock(value="summary")}]
+    log_observation_keys(observations)
+    assert "Count of summary keywords: {}" in caplog.text
+
+
+def test_that_log_shape_registry_logs_count_of_shapes(caplog):
+    caplog.set_level(logging.INFO)
+    shape_registry = ShapeRegistry()
+    for i in range(10):
+        shape_registry.register(CircleShapeConfig(north=i, east=i, radius=i))
+    log_shape_registry(shape_registry)
+    assert "Count of shapes in ShapeRegistry: {'CircleShapeConfig': 10}" in caplog.text

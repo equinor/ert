@@ -54,6 +54,7 @@ def _configure_loggers(
                 log_dir / "everserver.log", logging_level
             ),
             "everest_log": make_handler_config(log_dir / "everest.log", logging_level),
+            "ropt_log": make_handler_config(log_dir / "ropt.log", logging_level),
             "forward_models_log": make_handler_config(
                 log_dir / "forward_models.log", logging_level
             ),
@@ -78,6 +79,11 @@ def _configure_loggers(
             },
             EVEREST: {
                 "handlers": ["everest_log"],
+                "level": logging_level,
+                "propagate": False,
+            },
+            "ropt": {
+                "handlers": ["ropt_log"],
                 "level": logging_level,
                 "propagate": False,
             },

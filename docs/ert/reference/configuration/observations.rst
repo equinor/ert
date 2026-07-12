@@ -208,6 +208,7 @@ Note that the configuration parser does not treat carriage return
 different from space. Thus, the following statement is equivalent to
 the previous:
 
+.. _bulk_configuration_of_summary_observations:
 
 Bulk configuration of summary observations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import io
 import json
 import logging
 import shutil
@@ -12,32 +13,40 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
+import numpy as np
+import numpy.typing as npt
 import polars as pl
+import scipy as sp
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 from typing_extensions import TypedDict
 
 from ert.config import (
+    DerivedResponseConfig,
     EverestConstraintsConfig,
     EverestControl,
     EverestObjectivesConfig,
     GenKwConfig,
-    KnownDerivedResponseTypes,
     KnownResponseTypes,
     ParameterConfig,
     ResponseConfig,
     ShapeRegistry,
+    SimulationResponseConfig,
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import Observation
 from ert.config.parsing.hook_runtime import HookRuntime
-from ert.config.response_config import DerivedResponseConfig
 
+from .blob_data import BlobStorageData, BlobType, RhoStorageData
 from .mode import BaseMode, Mode, require_write
 
+BLOB_DATA_DIR = "blobs"
+
 if TYPE_CHECKING:
+    from ert.analysis.event import AnalysisRhoMatrixEvent
+
     from .local_ensemble import LocalEnsemble
     from .local_storage import LocalStorage
 
@@ -97,7 +106,6 @@ class ExperimentConfig(TypedDict, total=False):
     design_matrix: dict[str, Any] | None
     parameter_configuration: list[dict[str, Any]]
     response_configuration: list[dict[str, Any]]
-    derived_response_configuration: list[dict[str, Any]]
     target_ensemble: str
     shape_registry: dict[str, Any]
 
@@ -111,7 +119,6 @@ class ExperimentConfig(TypedDict, total=False):
     # ESMDA
     restart_run: bool
     prior_ensemble_id: str | None
-    weights: str
 
     # Everest
     optimization_output_dir: str
@@ -141,7 +148,7 @@ class _Index(BaseModel, extra="forbid"):
 
 _responses_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        KnownResponseTypes | KnownDerivedResponseTypes,
+        KnownResponseTypes,
         Field(discriminator="type"),
     ]
 )
@@ -232,16 +239,6 @@ class LocalExperiment(BaseMode):
             output_path = path / "observations"
             output_path.mkdir(parents=True, exist_ok=True)
 
-            responses_list = experiment_config.get("response_configuration", [])
-            rft_config_json = next(
-                (r for r in responses_list if r.get("type") == "rft"), None
-            )
-            rft_config = (
-                _responses_adapter.validate_python(rft_config_json)
-                if rft_config_json is not None
-                else None
-            )
-
             obs_adapter = TypeAdapter(Observation)  # type: ignore
             obs_objs: list[Observation] = [
                 obs_adapter.validate_python(od) for od in observation_declarations
@@ -253,9 +250,7 @@ class LocalExperiment(BaseMode):
                 if shape_registry_data
                 else ShapeRegistry()
             )
-            datasets = create_observation_dataframes(
-                obs_objs, rft_config, shape_registry
-            )
+            datasets = create_observation_dataframes(obs_objs, shape_registry)
             for response_type, df in datasets.items():
                 storage._to_parquet_transaction(output_path / response_type, df)
 
@@ -334,7 +329,7 @@ class LocalExperiment(BaseMode):
     @property
     def relative_weights(self) -> str:
         assert self.experiment_config is not None
-        return self.experiment_config.get("weights", "")
+        return self.experiment_config.get("analysis_settings", {}).get("weights", "")
 
     @property
     def name(self) -> str:
@@ -404,13 +399,6 @@ class LocalExperiment(BaseMode):
         responses_list = self.experiment_config.get("response_configuration", [])
         return {response["type"]: response for response in responses_list}
 
-    @property
-    def derived_response_info(self) -> dict[str, Any]:
-        responses_list = self.experiment_config.get(
-            "derived_response_configuration", []
-        )
-        return {response["type"]: response for response in responses_list}
-
     def get_surface(self, name: str) -> IrapSurface:
         """
         Retrieve a geological surface by name.
@@ -476,16 +464,20 @@ class LocalExperiment(BaseMode):
         return responses
 
     @property
-    def derived_response_configuration(
-        self,
-    ) -> dict[str, DerivedResponseConfig]:
-        derived_responses = {}
+    def simulation_response_configuration(self) -> dict[str, SimulationResponseConfig]:
+        return {
+            k: cast(SimulationResponseConfig, v)
+            for k, v in self.response_configuration.items()
+            if not v.is_derived()
+        }
 
-        for data in self.derived_response_info.values():
-            response_instance = _responses_adapter.validate_python(data)
-            derived_responses[response_instance.type] = response_instance
-
-        return derived_responses
+    @property
+    def derived_response_configuration(self) -> dict[str, DerivedResponseConfig]:
+        return {
+            k: cast(DerivedResponseConfig, v)
+            for k, v in self.response_configuration.items()
+            if v.is_derived()
+        }
 
     @cached_property
     def update_parameters(self) -> list[str]:
@@ -518,22 +510,12 @@ class LocalExperiment(BaseMode):
         output_path = self.mount_point / "observations"
         output_path.mkdir(parents=True, exist_ok=True)
 
-        rft_cfg = None
-        try:
-            responses_list = self.experiment_config.get("response_configuration", [])
-            for r in responses_list:
-                if r.get("type") == "rft":
-                    rft_cfg = _responses_adapter.validate_python(r)
-                    break
-        except Exception:
-            rft_cfg = None
-
         obs_adapter = TypeAdapter(Observation)  # type: ignore
         obs_objs: list[Observation] = [
             obs_adapter.validate_python(od) for od in serialized_observations
         ]
 
-        datasets = create_observation_dataframes(obs_objs, rft_cfg, self.shape_registry)
+        datasets = create_observation_dataframes(obs_objs, self.shape_registry)
         for response_type, df in datasets.items():
             self._storage._to_parquet_transaction(output_path / response_type, df)
 
@@ -558,10 +540,8 @@ class LocalExperiment(BaseMode):
     @cached_property
     def response_key_to_response_type(self) -> dict[str, str]:
         mapping = {}
-        for config in (
-            self.response_configuration | self.derived_response_configuration
-        ).values():
-            for key in config.keys if config.has_finalized_keys else []:
+        for config in self.response_configuration.values():
+            for key in config.response_keys() if config.are_keys_finalized() else []:
                 mapping[key] = config.type
 
         return mapping
@@ -582,16 +562,14 @@ class LocalExperiment(BaseMode):
         return result
 
     def _has_finalized_response_keys(self, response_type: str) -> bool:
-        responses_configuration = (
-            self.response_configuration | self.derived_response_configuration
-        )
+        responses_configuration = self.response_configuration
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "
                 "exist in current responses.json"
             )
 
-        return responses_configuration[response_type].has_finalized_keys
+        return responses_configuration[response_type].are_keys_finalized()
 
     def _update_response_keys(
         self, response_type: str, response_keys: list[str]
@@ -602,9 +580,7 @@ class LocalExperiment(BaseMode):
         that the response config saved in this storage has keys corresponding
         to the actual received responses.
         """
-        responses_configuration = (
-            self.response_configuration | self.derived_response_configuration
-        )
+        responses_configuration = self.response_configuration
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "
@@ -613,8 +589,7 @@ class LocalExperiment(BaseMode):
 
         config = responses_configuration[response_type]
 
-        config.keys = sorted(response_keys)
-        config.has_finalized_keys = True
+        config.finalize_keys(sorted(response_keys))
 
         response_index = next(
             i
@@ -674,6 +649,70 @@ class LocalExperiment(BaseMode):
             for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
             if b.has_gradient_results
         ]
+
+    def load_blobs(
+        self,
+        blob_type: BlobType | None = None,
+    ) -> list[BlobStorageData]:
+        """List blob metadata stored at experiment level, filtered by type."""
+        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
+
+    def load_blob(self, uri: str) -> bytes:
+        """Load blob bytes by URI from the experiment-level blob directory."""
+        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
+
+    def load_rho_matrix(
+        self, param_name: str, observation_keys: list[str] | None = None
+    ) -> npt.NDArray[np.floating] | None:
+        """Load a cached rho matrix for the given parameter name.
+
+        When *observation_keys* is provided the stored blob's observation
+        keys must be a superset of the requested keys.  Some observations
+        may have been deactivated since the blob was created, so the blob
+        can legitimately contain *more* keys than the current active set.
+        However, if the current set contains keys absent from the blob the
+        matrix is invalid and ``None`` is returned so it is recomputed.
+        """
+        for blob in self.load_blobs(BlobType.RHO_MATRIX):
+            if (
+                isinstance(blob.blob_info, RhoStorageData)
+                and blob.blob_info.param_name == param_name
+            ):
+                if observation_keys is not None and not set(observation_keys).issubset(
+                    blob.blob_info.observation_keys
+                ):
+                    logger.info(
+                        "Cached rho matrix for %r is missing observation keys "
+                        "%s, skipping",
+                        param_name,
+                        sorted(
+                            set(observation_keys) - set(blob.blob_info.observation_keys)
+                        ),
+                    )
+                    return None
+                data = self.load_blob(blob.uri)
+                sparse_matrix = sp.sparse.load_npz(io.BytesIO(data))
+                return sparse_matrix.toarray()
+        return None
+
+    @require_write
+    def save_blob(self, event: AnalysisRhoMatrixEvent) -> None:
+        """Save the rho-matrix blob emitted during a distance-localization update."""
+        BlobStorageData.save_blob(
+            name=event.param_name,
+            data=event.matrix_bytes,
+            blob_info=RhoStorageData(
+                update_algorithm="distance",
+                sparse=True,
+                shape=event.shape,
+                data_type=event.data_type,
+                param_name=event.param_name,
+                observation_keys=event.observation_keys,
+            ),
+            file_type="application/x-npz",
+            storage=self._storage,
+            blob_dir=self._path / BLOB_DATA_DIR,
+        )
 
     def export_dataframes(
         self,
@@ -875,3 +914,15 @@ class LocalExperiment(BaseMode):
         combined_df, _, _ = self.export_dataframes()
         combined_df.write_csv(full_path)
         return full_path
+
+    def status_snapshot_path(self, iteration: int) -> Path:
+        return self._path / "status" / f"iteration-{iteration}.json"
+
+    def write_status_snapshot(self, iteration: int, data: bytes) -> None:
+        snapshot_path = self.status_snapshot_path(iteration)
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        self._storage._write_transaction(snapshot_path, data)
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        self._storage._write_transaction(snapshot_path, data)
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        self._storage._write_transaction(snapshot_path, data)

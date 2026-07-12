@@ -3,13 +3,17 @@ from __future__ import annotations
 import math
 import time
 from datetime import timedelta
+from typing import override
 
 import humanize
+from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QColor, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QDialog,
+    QDialogButtonBox,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
@@ -23,7 +27,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.analysis.event import DataSection
 from ert.analysis.snapshots import ObservationStatus
@@ -127,15 +130,27 @@ class ReportLogTable(UpdateLogTable):
             )
 
             missing_realizations = hidden_item.text()
-            reasoning = "Missing responses from active realizations:\n\n" + str(
-                missing_realizations
-            )
-            QMessageBox.information(
-                self,
-                "Observation deactivated",
-                reasoning,
-                QMessageBox.StandardButton.Ok,
-            )
+
+            dialog = QDialog(self)
+            dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            dialog.setWindowTitle("Observation deactivated")
+            dialog.resize(500, 500)
+            dialog.setSizeGripEnabled(True)
+
+            layout = QVBoxLayout(dialog)
+            layout.addWidget(QLabel("Missing responses from active realizations:"))
+
+            text_edit = QTextEdit()
+            text_edit.setReadOnly(True)
+            text_edit.setPlainText(missing_realizations)
+            text_edit.setViewportMargins(15, 0, 0, 0)
+            layout.addWidget(text_edit)
+
+            buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+            buttons.accepted.connect(dialog.accept)
+            layout.addWidget(buttons)
+
+            dialog.exec()
 
 
 class UpdateWidget(QWidget):

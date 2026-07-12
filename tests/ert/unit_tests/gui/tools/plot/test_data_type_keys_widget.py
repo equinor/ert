@@ -1,8 +1,8 @@
 import pytest
 from pytestqt.qtbot import QtBot
 
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.gui.plotting.plot_api import PlotApiKeyDefinition
+from ert.gui.plotting.widgets import DataTypeKeysWidget
 
 
 def create_key_def(key: str, data_origin: str = "summary") -> PlotApiKeyDefinition:

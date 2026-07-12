@@ -185,6 +185,7 @@
   "analysis_settings": {
     "enkf_truncation": 1.0,
     "inversion": "EXACT",
+    "weights": "4, 2, 1",
     "localization": false,
     "localization_correlation_threshold": 0.1,
     "distance_localization": false
@@ -273,7 +274,6 @@
       "has_finalized_keys": false
     }
   ],
-  "derived_response_configuration": [],
   "ert_templates": [],
   "observations": [
     {
@@ -599,6 +599,5 @@
   },
   "experiment_type": "Multiple Data Assimilation",
   "restart_run": false,
-  "prior_ensemble_id": null,
-  "weights": "4, 2, 1"
+  "prior_ensemble_id": null
 }

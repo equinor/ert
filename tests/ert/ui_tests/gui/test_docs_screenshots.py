@@ -16,8 +16,7 @@ from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
 from ert.gui.experiments.view import RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
+from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectionWidget
 from ert.run_models import EnsembleExperiment, EnsembleSmoother, RunModel
 from ert.services import ErtServerController
 from ert.storage import open_storage
@@ -65,6 +64,8 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/about/click-show-details.png",
     "docs/ert/about/v9_update_param.png",
     "docs/ert/about/version-8.0-suggestor.png",
+    "docs/ert/about/misfit_export.png",
+    "docs/ert/about/breakthrough.png",
     "docs/ert/img/logo.png",
     "docs/ert/reference/configuration/fig/errf_symmetric_uniform.png",
     "docs/ert/reference/configuration/fig/truncated_ok.png",

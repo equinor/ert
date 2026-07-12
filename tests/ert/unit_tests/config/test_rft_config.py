@@ -1,3 +1,5 @@
+import re
+import warnings
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
@@ -18,7 +20,10 @@ from ert.config import (
 from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
+from ert.config.response_config import _RESPONSE_WARNING_LIMIT
 from ert.config.rft_config import _get_zonemap, _read_egrid
+from ert.warnings import PostExperimentWarning
+from tests.ert.defaults_generator import create_rft_observation_dict
 from tests.ert.rft_generator import cell_start, create_egrid, float_arr
 
 
@@ -90,6 +95,9 @@ def test_that_match_key_dict_expr_fits_match_key():
     assert response2["response_dict"].to_list() == ["well_connection_cell=None"]
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:Could not find responses for well\(s\) at time\(s\)"
+)
 def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo_file):
     mock_resfo_file("/tmp/does_not_exist/BASE.RFT", [])
     rft_config = RFTConfig(
@@ -537,9 +545,7 @@ def test_that_connection_cells_are_processed_independently(mock_resfo_file):
     assert observation_metadata["actual_zones"].to_list() == [[]]
 
 
-def test_that_location_outside_of_the_grid_raises_invalid_response_file(
-    mock_resfo_file, egrid
-):
+def test_that_location_outside_of_the_grid_maps_to_none(mock_resfo_file, egrid):
     config = ErtConfig.from_dict(
         {
             "ECLBASE": "ECLBASE<IENS>",
@@ -548,7 +554,7 @@ def test_that_location_outside_of_the_grid_raises_invalid_response_file(
                 [
                     {
                         "type": ObservationType.RFT,
-                        "name": "NAME",
+                        "name": "Outside_grid",
                         "WELL": "WELL",
                         "VALUE": "700",
                         "ERROR": "0.1",
@@ -557,6 +563,18 @@ def test_that_location_outside_of_the_grid_raises_invalid_response_file(
                         "NORTH": 1000.0,
                         "EAST": 1000.0,
                         "TVD": 1500.0,
+                    },
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "Inside_grid",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1.0,
+                        "EAST": 1.0,
+                        "TVD": 1.5,
                     },
                 ],
             ),
@@ -570,16 +588,21 @@ def test_that_location_outside_of_the_grid_raises_invalid_response_file(
 
     rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
     observations = pl.DataFrame(config.observation_declarations)
-    with pytest.raises(InvalidResponseFile, match="Did not find grid coordinate"):
-        rft_config.obtain_location_metadata("/tmp/does_not_exist", 1, 1, observations)
+    observation_metadata = rft_config.obtain_location_metadata(
+        "/tmp/does_not_exist", 1, 1, observations
+    )
+    assert observation_metadata.row(0, named=True) == {
+        "east": 1000.0,
+        "north": 1000.0,
+        "tvd": 1500.0,
+        "actual_zones": [],
+        "well_connection_cell": None,
+        "well_connection_cell_center": None,
+    }
 
 
 def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     provided_radius = 2400
-    rft_config = RFTConfig(
-        input_files=["BASE.RFT"],
-        data_to_read={"*": {"*": ["*"]}},
-    )
     shape_registry = ShapeRegistry()
     shape_id = shape_registry.register(
         CircleShapeConfig(
@@ -600,7 +623,7 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
         tvd=2000.0,
         shape_id=shape_id,
     )
-    df = _handle_rft_observation(rft_config, rft_observation, shape_registry)
+    df = _handle_rft_observation(rft_observation, shape_registry)
     assert "radius" in df.columns
     assert df["radius"].to_list() == [provided_radius]
     assert df["radius"].dtype == pl.Float32
@@ -634,19 +657,7 @@ def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepe
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                        "ZONE": "zone2",
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -706,19 +717,7 @@ def test_that_substitutions_are_applied_to_zonemap_filename(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 0.5,
-                        "ZONE": "zone1",
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -755,18 +754,7 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    {
-                        "type": ObservationType.RFT,
-                        "name": "NAME",
-                        "WELL": "WELL",
-                        "VALUE": "700",
-                        "ERROR": "0.1",
-                        "DATE": "2000-01-01",
-                        "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 1.0,
-                    },
+                    create_rft_observation_dict(),
                 ],
             ),
         }
@@ -778,6 +766,9 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
         rft_config.obtain_location_metadata("/tmp/does_not_exist", 1, 1, observations)
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:Could not find responses for well\(s\) at time\(s\)"
+)
 def test_that_missing_egrid_without_locations_raises_invalid_response_file(
     mock_resfo_file,
 ):
@@ -885,6 +876,9 @@ def test_that_non_matching_wells_are_ignored_silently(mock_resfo_file, egrid):
     ]
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:Could not find responses for well\(s\) at time\(s\)"
+)
 def test_that_wildcard_well_with_specific_date_matches_all_wells(
     mock_resfo_file, egrid
 ):
@@ -1287,22 +1281,211 @@ def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_
     if rft_obs_config:
         config_dict["OBS_CONFIG"] = (
             "obsconf",
-            [
-                {
-                    "type": ObservationType.RFT,
-                    "name": "NAME",
-                    "WELL": "WELL",
-                    "VALUE": "700",
-                    "ERROR": "0.1",
-                    "DATE": "2000-01-01",
-                    "PROPERTY": "PRESSURE",
-                    "NORTH": 1.0,
-                    "EAST": 1.0,
-                    "TVD": 0.5,
-                }
-            ],
+            [create_rft_observation_dict()],
         )
 
     config = ErtConfig.from_dict(config_dict)
     rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
     assert rft_config.approximate_missing_values is expected_setting
+
+
+@pytest.fixture(name="setup_mock_resfo_file")
+def setup_mock_resfo_file(mock_resfo_file, egrid):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([100.0, 200.0])),
+            ("SWAT    ", float_arr([0.1, 0.2])),
+            ("SGAS    ", float_arr([0.3, 0.4])),
+            ("DEPTH   ", float_arr([20.0, 30.0])),
+            *cell_start(date=(1, 2, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([101.0, 201.0])),
+            ("SWAT    ", float_arr([0.01, 0.01])),
+            ("SGAS    ", float_arr([0.01, 0.01])),
+            ("DEPTH   ", float_arr([21.0, 31.0])),
+        ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
+    )
+
+
+def test_that_missing_response_for_rft_well_raises_warning(setup_mock_resfo_file):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "NOT_A_WELL": {"2000-01-01": ["PRESSURE", "SWAT"]},
+            "WELL": {"2000-01-01": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    expected_warnings = [
+        "Could not find responses for well(s) at time(s) in 'BASE.RFT':",
+        "well='NOT_A_WELL' : time='2000-01-01'",
+    ]
+    assert any(all(m in str(w) for m in expected_warnings) for w in warnings)
+
+
+def test_that_one_existing_and_one_missing_rft_response_warns_about_the_one_missing(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "WELL": {
+                "4000-01-01": ["PRESSURE", "SWAT"],
+                "2000-01-01": ["PRESSURE", "SWAT"],
+            },
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    expected_warnings = [
+        "Could not find responses for well(s) at time(s) in 'BASE.RFT':",
+        "well='WELL' : time='4000-01-01'",
+    ]
+    assert any(all(m in str(w) for m in expected_warnings) for w in warnings)
+
+
+def test_that_many_missing_response_warnings_are_truncated(setup_mock_resfo_file):
+    num_missing_responses = 9
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "WELL": {
+                f"400{n}-01-01": ["PRESSURE", "SWAT"]
+                for n in range(num_missing_responses)
+            }
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    warning_msg = next(
+        str(w.message) for w in warnings if "Could not find responses" in str(w.message)
+    )
+    warning_lines = warning_msg.splitlines()
+    warning_lines = warning_lines[1:]  # Discard first line
+    last_line = warning_lines.pop(-1)
+
+    assert len(warning_lines) == _RESPONSE_WARNING_LIMIT
+    match = re.search(r"and (\d+) other missing responses", last_line)
+    excess_warnings = int(match.group(1))
+    assert excess_warnings == num_missing_responses - _RESPONSE_WARNING_LIMIT
+
+
+def test_that_wildcard_wells_are_not_warned_about(setup_mock_resfo_file):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "*": {"2000-01-01": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
+            "error", PostExperimentWarning
+        )
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_wildcard_times_are_not_warned_about_given_any_well_response(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "WELL": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
+            "error", PostExperimentWarning
+        )
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_wildcard_times_are_warned_about_given_no_well_response(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "DIFFERENT_WELL": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    expected_warnings = [
+        "Could not find responses for well(s) at time(s)",
+        "well='DIFFERENT_WELL' : time='*'",
+    ]
+    # Assert one warning contains all expected warnings
+    assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
+
+
+def test_that_wildcard_wells_are_warned_about_given_no_time_response(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "*": {"2010-10-10": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    expected_warnings = [
+        "Could not find responses for well(s) at time(s)",
+        "well='*' : time='2010-10-10'",
+    ]
+    # Assert one warning contains all expected warnings
+    assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
+
+
+def test_that_wildcard_well_with_wildcard_time_without_any_response_is_warned_about(
+    mock_resfo_file, egrid
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "*": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with pytest.warns(PostExperimentWarning) as warnings:
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    expected_warnings = [
+        "Could not find responses for well(s) at time(s)",
+        "well='*' : time='*'",
+    ]
+    # Assert one warning contains all expected warnings
+    assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
+
+
+def test_that_wildcard_well_with_wildcard_time_with_any_response_is_not_warned_about(
+    setup_mock_resfo_file,
+):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={
+            "*": {"*": ["PRESSURE", "SWAT"]},
+        },
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
+            "error", PostExperimentWarning
+        )
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)

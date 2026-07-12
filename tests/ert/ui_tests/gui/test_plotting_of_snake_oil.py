@@ -6,11 +6,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox, QToolButton
 
 from ert.gui.main import GUILogHandler, _setup_main_window
-from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_ensemble_selection_widget import (
-    EnsembleSelectListWidget,
-)
-from ert.gui.tools.plot.plot_window import (
+from ert.gui.plotting.plot_window import (
     CROSS_ENSEMBLE_STATISTICS,
     DISTRIBUTION,
     ENSEMBLE,
@@ -20,6 +16,7 @@ from ert.gui.tools.plot.plot_window import (
     STD_DEV,
     PlotWindow,
 )
+from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectListWidget
 from ert.services import ErtServerController
 from ert.storage import open_storage
 

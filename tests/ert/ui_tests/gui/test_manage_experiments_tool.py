@@ -17,10 +17,12 @@ from PyQt6.QtWidgets import (
 from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
-from ert.gui.tools.manage_experiments.storage_info_widget import (
-    ExportDialog,
-    _EnsembleWidget,
+from ert.gui.tools.manage_experiments.ensemble_widget import (
+    EnsembleWidget,
     _EnsembleWidgetTabs,
+)
+from ert.gui.tools.manage_experiments.export_dialog import ExportDialog
+from ert.gui.tools.manage_experiments.storage_info_widget import (
     _ExperimentWidget,
     _RealizationWidget,
     _WidgetType,
@@ -216,7 +218,7 @@ def test_that_init_updates_the_info_tab(qtbot):
     storage_widget._tree_view.setCurrentIndex(model_index)
 
     # select the correct tab
-    ensemble_widget = tool.findChild(_EnsembleWidget)
+    ensemble_widget = tool.findChild(EnsembleWidget)
     ensemble_widget._currentTabChanged(1)
 
     assert "UNDEFINED" in html_edit.toPlainText()
@@ -309,7 +311,7 @@ def test_ensemble_view(
     )
 
     ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
-    assert isinstance(ensemble_widget, _EnsembleWidget)
+    assert isinstance(ensemble_widget, EnsembleWidget)
     assert ensemble_widget._name_label.text()
     assert ensemble_widget._uuid_label.text()
     assert not ensemble_widget._state_text_edit.toPlainText()
@@ -460,7 +462,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         )
 
         ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
-        assert isinstance(ensemble_widget, _EnsembleWidget)
+        assert isinstance(ensemble_widget, EnsembleWidget)
         assert ensemble_widget._name_label.text()
         assert ensemble_widget._uuid_label.text()
         assert not ensemble_widget._state_text_edit.toPlainText()
@@ -527,7 +529,7 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
     )
 
     ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
-    assert isinstance(ensemble_widget, _EnsembleWidget)
+    assert isinstance(ensemble_widget, EnsembleWidget)
     assert ensemble_widget._name_label.text()
     assert ensemble_widget._uuid_label.text()
     assert not ensemble_widget._state_text_edit.toPlainText()
@@ -679,7 +681,7 @@ def test_that_sub_tab_persists_when_switching_ensembles(qtbot):
     storage_widget._tree_view.setCurrentIndex(first_ensemble_index)
 
     ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
-    assert isinstance(ensemble_widget, _EnsembleWidget)
+    assert isinstance(ensemble_widget, EnsembleWidget)
 
     # Switch to STATE_TAB
     ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)

@@ -41,7 +41,6 @@ from ert.mode_definitions import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
-from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
 from ert.services import ErtServerController
 from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
 from ert.shared.status.utils import get_ert_memory_usage
@@ -126,27 +125,6 @@ def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None
         parent_pid=os.getpid(),
     ) as server:
         server.wait()
-
-
-def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
-    yellow = "\x1b[33m"
-    green = "\x1b[32m"
-    bold = "\x1b[1m"
-    reset = "\x1b[0m"
-
-    print(
-        f"""
-    ---------------------------------------------------------------
-
-    {yellow}{bold}Webviz-ERT is removed.
-
-    {green}{bold}Plotting capabilities provided by Webviz-ERT are now available
-    using the ERT plotter{reset}
-
-    ---------------------------------------------------------------
-    """
-    )
-    logger.info("Show Webviz-ert removal warning")
 
 
 def strip_error_message_and_raise_exception(validated: ValidationStatus) -> None:
@@ -527,7 +505,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     es_mda_parser.add_argument(
         "--weights",
         type=valid_weights,
-        default=MultipleDataAssimilationConfig.default_weights,
+        default=None,
         help="Example custom relative weights: '8,4,2,1'. This means multiple data "
         "assimilation ensemble smoother will half the weight applied to the "
         "observation errors from one iteration to the next across 4 iterations.",

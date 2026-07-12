@@ -21,6 +21,7 @@ class ObservationType(StrEnum):
     GENERAL = "GENERAL_OBSERVATION"
     RFT = "RFT_OBSERVATION"
     BREAKTHROUGH = "BREAKTHROUGH_OBSERVATION"
+    SEISMIC = "SEISMIC_OBSERVATION"
     BULK_SUMMARY = "SUMMARY"
 
 
@@ -105,7 +106,8 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
                 message = (
                     f"Unknown observation type '{unexpected_token}', "
                     f"expected either 'RFT_OBSERVATION', 'GENERAL_OBSERVATION', "
-                    f"'SUMMARY_OBSERVATION', 'SUMMARY' or 'HISTORY_OBSERVATION'."
+                    f"'SEISMIC_OBSERVATION', 'SUMMARY_OBSERVATION', 'SUMMARY' or "
+                    "'HISTORY_OBSERVATION'."
                 )
             case UnexpectedToken(token=unexpected_char, expected=allowed_chars), _:
                 unexpected_line = content.splitlines()[e.line - 1]
@@ -139,6 +141,7 @@ observations_parser = Lark(
       | "GENERAL_OBSERVATION"
       | "RFT_OBSERVATION"
       | "BREAKTHROUGH_OBSERVATION"
+      | "SEISMIC_OBSERVATION"
     type: TYPE
     BULK_TYPE: "SUMMARY"
     bulk_type: BULK_TYPE
@@ -196,9 +199,9 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
         non_segments = {k: v for k, v in object_.items() if not isinstance(k, tuple)}
         segments = [(k[1], v) for k, v in object_.items() if isinstance(k, tuple)]
         error_list = [
-            ErrorInfo(f"Unknown {unknown_key} in {observation_type!s}").set_context(
-                context_token
-            )
+            ErrorInfo(
+                f"Unknown key '{unknown_key}' in {observation_type!s}"
+            ).set_context(context_token)
             for unknown_key in ["type", "segments", "name"]
             if unknown_key in non_segments
         ]

@@ -9,7 +9,7 @@ runs:
   using: "composite"
   steps:
     - name: Install Ubuntu dependencies
-      if: inputs.os == 'ubuntu-latest'
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install libegl1

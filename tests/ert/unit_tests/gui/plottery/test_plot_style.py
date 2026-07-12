@@ -1,8 +1,8 @@
 import datetime
 import math
 
-from ert.gui.tools.plot.plottery import PlotConfig, PlotLimits, PlotStyle
-from ert.gui.tools.plot.plottery.plots.plot_tools import ConditionalAxisFormatter
+from ert.gui.plotting.utils import PlotConfig, PlotLimits, PlotStyle
+from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter
 
 
 def test_conditional_axis_formatter():

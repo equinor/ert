@@ -1,3 +1,5 @@
+from typing import override
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QKeyEvent
@@ -9,7 +11,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 
 class WorkflowDialog(QDialog):

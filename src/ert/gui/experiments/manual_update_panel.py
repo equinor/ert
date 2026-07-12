@@ -1,13 +1,12 @@
 import logging
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import cast
+from typing import cast, override
 
 import numpy as np
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
-from typing_extensions import override
 
 from ert.config import AnalysisConfig, ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier

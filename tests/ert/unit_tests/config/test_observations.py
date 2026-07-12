@@ -25,15 +25,21 @@ from ert.config._observations import (
     extract_localization_values,
     make_observations,
 )
+from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.parsing import ObservationDict, parse_observations
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
 )
 from ert.config.rft_config import RFTConfig
-from ert.gui.tools.plot.plottery import PlotConfig
-from ert.gui.tools.plot.plottery.plots.observations import _plotObservations
+from ert.gui.plotting.ert_plots.observations import _plotObservations
+from ert.gui.plotting.utils import PlotConfig
 from ert.namespace import Namespace
+from tests.ert.defaults_generator import (
+    create_breakthrough_observation_dict,
+    create_rft_observation_dict,
+    create_summary_observation_dict,
+)
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 
@@ -82,7 +88,7 @@ def run_simulator(summary_values=SUMMARY_VALUES):
     mini_step_count = 10
 
     for mini_step in range(mini_step_count):
-        t_step = summary.addTStep(1, sim_days=mini_step_count + mini_step)
+        t_step = summary.add_t_step(1, sim_days=mini_step_count + mini_step)
         for key, value in summary_values.items():
             t_step[key] = value
 
@@ -118,7 +124,7 @@ def make_refcase_observations(
 
     migrated_config = ErtConfig.from_file("config.ert")
     return create_observation_dataframes(
-        migrated_config.observation_declarations, None, migrated_config.shape_registry
+        migrated_config.observation_declarations, migrated_config.shape_registry
     )
 
 
@@ -156,22 +162,20 @@ def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
         pytest.param("02.01.2020", True),
         pytest.param("02.1.2020", True),
         pytest.param("02-01-2020", True),
+        pytest.param("2026-06-28T15:03:57-12:00", True),
         pytest.param("02/01/2020", False),
     ],
 )
-def test_date_parsing_in_observations(datestring, errors):
-    obs = [
-        (
-            {
-                "type": ObservationType.SUMMARY,
-                "name": "FOPR",
-                "KEY": "FOPR",
-                "VALUE": "1",
-                "ERROR": "1",
-                "DATE": datestring,
-            }
-        )
-    ]
+@pytest.mark.parametrize(
+    "observation_dict",
+    [
+        pytest.param(create_summary_observation_dict()),
+        pytest.param(create_breakthrough_observation_dict()),
+    ],
+)
+def test_date_parsing_in_observations(datestring, errors, observation_dict):
+    obs_dict = {**observation_dict, "DATE": datestring}
+    obs = [obs_dict]
     if errors:
         with pytest.raises(ValueError, match="Please use ISO date format"):
             make_observations("", obs, ShapeRegistry())
@@ -246,7 +250,6 @@ def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given
         migrated_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             migrated_config.observation_declarations,
-            None,
             migrated_config.shape_registry,
         )["summary"]
 
@@ -300,14 +303,14 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
 
     migrated_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
-        migrated_config.observation_declarations, None, migrated_config.shape_registry
+        migrated_config.observation_declarations, migrated_config.shape_registry
     )["summary"]
 
     # RESTART is a 1-based index; Python lists are 0-based.
     assert list(observations["time"]) == [datetime.fromisoformat(time_map[restart])]
 
 
-def test_that_rft_config_is_created_from_observations():
+def test_that_rft_observation_dataframes_are_created():
     ert_config = ErtConfig.from_dict(
         {
             "ECLBASE": "ECLIPSE_CASE",
@@ -330,9 +333,8 @@ def test_that_rft_config_is_created_from_observations():
             ),
         }
     )
-    rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
     observations = create_observation_dataframes(
-        ert_config.observation_declarations, rft_config, ert_config.shape_registry
+        ert_config.observation_declarations, ert_config.shape_registry
     )["rft"]
     assert_frame_equal(
         observations,
@@ -353,7 +355,70 @@ def test_that_rft_config_is_created_from_observations():
             }
         ),
     )
-    assert rft_config.data_to_read == {"well": {"2013-03-31": ["PRESSURE"]}}
+
+
+def test_that_rft_config_is_created_from_observations():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well2", date="2013-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well", date="2015-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="DEPTH"
+                    ),
+                ],
+            ),
+        }
+    )
+    assert "rft" in ert_config.ensemble_config.response_configs
+    rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
+    assert rft_config.data_to_read == {
+        "well": {"2013-03-31": ["PRESSURE", "DEPTH"], "2015-03-31": ["PRESSURE"]},
+        "well2": {"2013-03-31": ["PRESSURE"]},
+    }
+
+
+def test_that_rft_config_is_created_from_mix_of_observations_and_responses():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "RFT": [{"WELL": "well", "DATE": "2013-03-31", "PROPERTIES": "DEPTH"}],
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="PRESSURE"
+                    ),
+                ],
+            ),
+        }
+    )
+    rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
+    assert rft_config.data_to_read == {"well": {"2013-03-31": ["DEPTH", "PRESSURE"]}}
+
+
+def test_that_rft_config_requires_eclbase_to_be_created_from_observations():
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(),
+                ],
+            ),
+        }
+    )
+    assert "rft" not in ert_config.ensemble_config.response_configs
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -388,7 +453,7 @@ def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcas
 
     migrated = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
-        migrated.observation_declarations, None, migrated.shape_registry
+        migrated.observation_declarations, migrated.shape_registry
     )["summary"]
 
     assert list(observations["time"]) == [datetime.fromisoformat(date)]
@@ -422,7 +487,6 @@ def test_that_general_observations_can_use_restart_even_without_refcase_and_time
     )
     observations = create_observation_dataframes(
         observations=ert_config.observation_declarations,
-        rft_config=None,
         shape_registry=ert_config.shape_registry,
     )
 
@@ -461,7 +525,7 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
     run_convert_observations(Namespace(config="config.ert"))
     ert_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
-        ert_config.observation_declarations, None, ert_config.shape_registry
+        ert_config.observation_declarations, ert_config.shape_registry
     )
     assert observations["gen_data"].to_dicts()[0]["report_step"] == restart
 
@@ -530,7 +594,7 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
         run_convert_observations(Namespace(config="config.ert"))
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ert_config.observation_declarations, None, ert_config.shape_registry
+            ert_config.observation_declarations, ert_config.shape_registry
         )
         assert observations["gen_data"].to_dicts()[0]["report_step"] == restart
 
@@ -712,7 +776,7 @@ def test_that_error_types_are_not_allowed_in_general_observations(error_type):
         encoding="utf-8",
     )
 
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_*"):
+    with pytest.raises(ConfigValidationError, match=r"Unknown key 'ERROR_(MODE|MIN)'"):
         run_convert_observations(Namespace(config="config.ert"))
 
 
@@ -780,7 +844,6 @@ def test_that_indices_from_file_and_list_are_read(
 
         observations = create_observation_dataframes(
             observations=obs,
-            rft_config=None,
             shape_registry=None,
         )
         assert list(observations["gen_data"]["index"]) == [0, 2, 4, 6, 8]
@@ -1260,7 +1323,7 @@ def test_that_history_observations_values_are_fetched_from_refcase(
         run_convert_observations(Namespace(config="config.ert"))
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ert_config.observation_declarations, None, ert_config.shape_registry
+            ert_config.observation_declarations, ert_config.shape_registry
         )["summary"]
 
         steps = len(unsmry.steps)
@@ -1458,7 +1521,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         run_convert_observations(Namespace(config="config.ert"))
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ert_config.observation_declarations, None, ert_config.shape_registry
+            ert_config.observation_declarations, ert_config.shape_registry
         )["summary"]
 
         assert list(observations["response_key"]) == ["FGPR", "FOPR", "FWPR"]
@@ -1502,7 +1565,7 @@ def test_that_segment_defaults_are_applied(tmpdir):
         run_convert_observations(Namespace(config="config.ert"))
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ert_config.observation_declarations, None, ert_config.shape_registry
+            ert_config.observation_declarations, ert_config.shape_registry
         )["summary"]
 
         # default error_min is 0.1
@@ -1529,7 +1592,6 @@ def test_that_summary_default_error_min_is_applied():
     )
     observations = create_observation_dataframes(
         obs,
-        rft_config=None,
         shape_registry=None,
     )
 
@@ -1542,14 +1604,14 @@ def test_that_summary_default_error_min_is_applied():
     [
         ("ERROR", "-1", 'Failed to validate "-1"'),
         ("ERROR_MIN", "-1", 'Failed to validate "-1"'),
-        ("START", "1.1", "Could not convert 1.1 to int"),
-        ("STOP", "1.1", "Could not convert 1.1 to int"),
+        ("START", "1.1", 'Could not convert "1.1" to int'),
+        ("STOP", "1.1", 'Could not convert "1.1" to int'),
         ("START", "1", 'Missing item "STOP"'),
         ("STOP", "1", 'Missing item "START"'),
-        ("SMERROR", "0.02", "Unknown SMERROR"),
-        ("name", "0.02", "Unknown name"),
-        ("type", "0.02", "Unknown type"),
-        ("segments", "0.02", "Unknown segments"),
+        ("SMERROR", "0.02", "Unknown key 'SMERROR'"),
+        ("name", "0.02", "Unknown key 'name'"),
+        ("type", "0.02", "Unknown key 'type'"),
+        ("segments", "0.02", "Unknown key 'segments'"),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1905,10 +1967,10 @@ def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key)
             ),
             encoding="utf-8",
         )
-        with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
+        with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
             run_convert_observations(Namespace(config="config.ert"))
     else:
-        with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
+        with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
             ert_config_from_parser(
                 f"{observation_type} FOPR {{{unknown_key}=0.1;DATA=key;}};"
             )
@@ -1969,7 +2031,6 @@ def test_that_general_observations_are_instantiated_with_localization_attributes
     ert_config = ert_config_from_parser(obs_config_contents)
     gen_obs = create_observation_dataframes(
         observations=ert_config.observation_declarations,
-        rft_config=None,
         shape_registry=ert_config.shape_registry,
     )["gen_data"]
     for loc_kw in ["east", "north", "radius"]:
@@ -1997,7 +2058,6 @@ def test_that_breakthrough_observations_df_have_obs_value_zero():
     ert_config = ert_config_from_parser(obs_config_contents)
     brt_obs = create_observation_dataframes(
         observations=ert_config.observation_declarations,
-        rft_config=None,
         shape_registry=ert_config.shape_registry,
     )["breakthrough"]
     assert brt_obs["observations"].to_list() == [0]
@@ -2023,12 +2083,11 @@ def test_that_breakthrough_observations_appends_to_breakthrough_config_responses
     ert_config = ert_config_from_parser(obs_config_contents)
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
-        rft_config=None,
         shape_registry=ert_config.shape_registry,
     )
-    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ]
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
     assert breakthrough_config.keys == [f"BREAKTHROUGH:{key}" for key in keys]
     assert breakthrough_config.thresholds == thresholds
     assert breakthrough_config.observed_dates == [
@@ -2050,7 +2109,6 @@ def test_that_breakthrough_responses_are_derived_from_summary():
     ert_config = ert_config_from_parser(obs_config_contents)
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
-        rft_config=None,
         shape_registry=ert_config.shape_registry,
     )
 
@@ -2065,9 +2123,9 @@ def test_that_breakthrough_responses_are_derived_from_summary():
         "values": [0.1, 0.2, 0.3],
     }
     ensemble_mock.load_responses.return_value = DataFrame(summary_values)
-    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ]
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
     response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
 
     assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
@@ -2089,7 +2147,6 @@ def test_that_unreachable_breakthrough_thresholds_has_none_response():
     ert_config = ert_config_from_parser(obs_config_contents)
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
-        rft_config=None,
         shape_registry=ert_config.shape_registry,
     )
 
@@ -2103,9 +2160,9 @@ def test_that_unreachable_breakthrough_thresholds_has_none_response():
         "values": [0.1, 0.2, 0.3],
     }
     ensemble_mock.load_responses.return_value = DataFrame(summary_values)
-    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ]
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
     response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
 
     assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
@@ -2134,7 +2191,6 @@ def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_tur
     ert_config = ert_config_from_parser(obs_config_contents)
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
-        rft_config=None,
         shape_registry=ert_config.shape_registry,
     )
 
@@ -2149,9 +2205,9 @@ def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_tur
         "values": [0.1, 0.2, 0.3],
     }
     ensemble_mock.load_responses.return_value = DataFrame(summary_values)
-    response_df = ert_config.ensemble_config.derived_response_configs[
-        "breakthrough"
-    ].derive_from_storage(0, 0, ensemble_mock)
+    response_df = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    ).derive_from_storage(0, 0, ensemble_mock)
 
     assert response_df["response_key"].to_list() == [
         f"BREAKTHROUGH:{key}" for key in keys
@@ -2192,8 +2248,8 @@ def test_that_extract_localization_values_raises_error_given_non_float():
         values = {key: "Not a float"}
         with pytest.raises(
             ObservationConfigError,
-            match=r"Could not convert Not a float to float. "
-            r'Failed to validate "Not a float"',
+            match=rf'Could not convert "Not a float" to float for key "{key}". '
+            rf'Failed to validate "Not a float"',
         ):
             extract_localization_values(values)
 
@@ -2345,3 +2401,65 @@ def test_that_providing_no_name_or_object_to_obs_raises_config_error(obs_content
     expected_error = r'Missing item "(.+)" in ' + obs_content.replace(";", "")
     with pytest.raises(ConfigValidationError, match=expected_error):
         ert_config_from_parser(obs_content)
+
+
+def test_that_seismic_observation_dataframes_are_created(
+    mocked_files, file_context_token
+):
+    content1 = dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        100.25,200.25,1.1,0.005,1.0
+        100.55,200.65,1.2,0.005,1.0
+        """
+    )
+    content2 = dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        100.85,200.95,1.3,0.005,1.0
+        """
+    )
+    mocked_files["obs1.csv"] = content1
+    mocked_files["obs2.csv"] = content2
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": "NAME1",
+                            "CSV": "obs1.csv",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": None,
+                            "CSV": "obs2.csv",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                ],
+            ),
+        }
+    )
+    observations = create_observation_dataframes(
+        ert_config.observation_declarations, ert_config.shape_registry
+    )["seismic"]
+    assert_frame_equal(
+        observations,
+        pl.DataFrame(
+            {
+                "response_key": ["obs1", "obs1", "obs2"],
+                "observation_key": ["NAME1", "NAME1", "obs2"],
+                "observations": pl.Series([1.1, 1.2, 1.3], dtype=pl.Float32),
+                "std": pl.Series([0.005, 0.005, 0.005], dtype=pl.Float32),
+                "east": pl.Series([100.25, 100.55, 100.85], dtype=pl.Float32),
+                "north": pl.Series([200.25, 200.65, 200.95], dtype=pl.Float32),
+                "radius": pl.Series([None, None, None], dtype=pl.Float32),
+            }
+        ),
+    )

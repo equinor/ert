@@ -1,4 +1,4 @@
-from typing import Any, overload
+from typing import Any, overload, override
 
 from PyQt6.QtCore import (
     QAbstractItemModel,
@@ -8,7 +8,6 @@ from PyQt6.QtCore import (
     Qt,
 )
 from PyQt6.QtCore import pyqtSlot as Slot
-from typing_extensions import override
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.model.snapshot import (

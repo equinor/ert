@@ -51,3 +51,5 @@ pyrightconfig.json
 
 everest_docs/
 ert_docs/
+
+.tmp

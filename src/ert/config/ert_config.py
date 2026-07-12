@@ -17,7 +17,6 @@ from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
-from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -205,13 +204,22 @@ def create_forward_model_json(
     def handle_default(fm_step: ForwardModelStep, arg: str) -> str:
         return fm_step.default_mapping.get(arg, arg)
 
+    fm_steps_with_overwritten_globals: list[dict[str, Any]] = []
     for fm_step in forward_model_steps:
-        for key, val in fm_step.private_args.items():
-            if key in context and key != val and context[key] != val:
-                logger.info(
-                    f"Private arg '{key}':'{val}' chosen over"
-                    f" global '{context[key]}' in forward model step {fm_step.name}"
-                )
+        overwritten_keys = {
+            key: {"private_arg": val, "global_arg": context[key]}
+            for key, val in fm_step.private_args.items()
+            if key in context and key != val and context[key] != val
+        }
+        if overwritten_keys:
+            fm_steps_with_overwritten_globals.append(
+                {"forward_model_step_name": fm_step.name, "key": overwritten_keys}
+            )
+    if fm_steps_with_overwritten_globals:
+        logger.info(
+            "Private args chosen over global args for the following "
+            f"forward model steps and variables: {fm_steps_with_overwritten_globals}"
+        )
     config_file_path = Path(user_config_file) if user_config_file is not None else None
     config_path = str(config_file_path.parent) if config_file_path else ""
     config_file = str(config_file_path.name) if config_file_path else ""
@@ -763,6 +771,13 @@ def create_list_of_forward_model_steps_to_run(
     return fm_steps
 
 
+def log_shape_registry(shape_registry: ShapeRegistry) -> None:
+    shape_count = Counter(
+        type(shape).__name__ for shape in shape_registry.shapes.values()
+    )
+    logger.info(f"Count of shapes in ShapeRegistry: {dict(shape_count)}")
+
+
 def log_observation_keys(
     observations: list[ObservationDict],
 ) -> None:
@@ -773,11 +788,13 @@ def log_observation_keys(
         for key in o
         if key not in {"name", "type"}
     )
-
-    logger.info(
-        f"Count of observation types:\n\t{dict(observation_type_counts)}\n"
-        f"Count of observation keywords:\n\t{dict(observation_keyword_counts)}"
+    observation_summary_keys = Counter(
+        o["KEY"].split(":")[0] for o in observations if "KEY" in o
     )
+
+    logger.info(f"Count of observation types: {dict(observation_type_counts)}")
+    logger.info(f"Count of observation keywords: {dict(observation_keyword_counts)}")
+    logger.info(f"Count of summary keywords: {dict(observation_summary_keys)}")
 
 
 RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
@@ -1084,6 +1101,7 @@ class ErtConfig(BaseModel):
                     obs_config_input,
                     shape_registry=shape_registry,
                 )
+                log_shape_registry(shape_registry)
                 if not obs_configs:
                     raise ObservationConfigError.with_context(
                         f"Empty observations file: {obs_config_file}",
@@ -1198,7 +1216,7 @@ class ErtConfig(BaseModel):
         zonemap = config_dict.get(ConfigKeys.ZONEMAP)
         if zonemap:
             zonemap = substituter.substitute(zonemap)
-        try:  # noqa: PLW0717
+        try:
             cls_config = cls(
                 substitutions=substitutions,
                 ensemble_config=ensemble_config,
@@ -1223,51 +1241,8 @@ class ErtConfig(BaseModel):
                 shape_registry=shape_registry,
             )
 
-            # The observations are created here because create_observation_dataframes
-            # will perform additional validation which needs the context in
-            # obs_configs which is stripped by pydantic
-            has_rft_observations = any(
-                isinstance(o, RFTObservation) for o in obs_configs
-            )
-            if (
-                has_rft_observations
-                and "rft" not in ensemble_config.response_configs
-                and summary_file_base_name
-            ):
-                ensemble_config.response_configs["rft"] = RFTConfig(
-                    input_files=[summary_file_base_name],
-                    data_to_read={},
-                    zonemap=cls_config.zonemap,
-                    approximate_missing_values=config_dict.get(
-                        ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
-                    ),
-                )
-
-            bt_obs = [o for o in obs_configs if isinstance(o, BreakthroughObservation)]
-
-            if (
-                bt_obs
-                and "breakthrough" not in ensemble_config.derived_response_configs
-            ):
-                ensemble_config.derived_response_configs["breakthrough"] = (
-                    BreakthroughConfig(
-                        keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
-                        summary_keys=[o.key for o in bt_obs],
-                        thresholds=[o.threshold for o in bt_obs],
-                        observed_dates=[o.date for o in bt_obs],
-                    )
-                )
-
-            # PS:
-            # This mutates the rft config and is necessary for the moment
-            # Consider changing this pattern
-            _ = create_observation_dataframes(
-                observations=obs_configs,
-                rft_config=cast(
-                    RFTConfig | None, ensemble_config.response_configs.get("rft")
-                ),
-                shape_registry=shape_registry,
-            )
+            cls_config.derive_rft_response_input_from_observations(config_dict)
+            cls_config.derive_breakthrough_response_input_from_observations()
 
             cls_config.random_seed_generator.user_defined_seed = config_dict.get(
                 ConfigKeys.RANDOM_SEED
@@ -1276,6 +1251,59 @@ class ErtConfig(BaseModel):
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
         return cls_config
+
+    def derive_rft_response_input_from_observations(
+        self, config_dict: ConfigDict
+    ) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        rft_observations = [o for o in observations if isinstance(o, RFTObservation)]
+        if not rft_observations:
+            return
+
+        summary_file_base_name = self.runpath_config.summary_file_base_name
+        if "rft" not in ensemble_config.response_configs and summary_file_base_name:
+            ensemble_config.response_configs["rft"] = RFTConfig(
+                input_files=[summary_file_base_name],
+                data_to_read={},
+                zonemap=self.zonemap,
+                approximate_missing_values=config_dict.get(
+                    ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
+                ),
+            )
+
+        if "rft" not in ensemble_config.response_configs:
+            return
+
+        rft_config = cast(RFTConfig, ensemble_config.response_configs.get("rft"))
+        data_to_read = rft_config.data_to_read
+
+        for rft_observation in rft_observations:
+            if rft_observation.well not in data_to_read:
+                data_to_read[rft_observation.well] = {}
+
+            well_dict = data_to_read[rft_observation.well]
+            if rft_observation.date not in well_dict:
+                well_dict[rft_observation.date] = []
+
+            property_list = well_dict[rft_observation.date]
+            if rft_observation.property not in property_list:
+                property_list.append(rft_observation.property)
+
+    def derive_breakthrough_response_input_from_observations(self) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        bt_obs = [o for o in observations if isinstance(o, BreakthroughObservation)]
+
+        if "breakthrough" not in ensemble_config.response_configs and bt_obs:
+            ensemble_config.response_configs["breakthrough"] = BreakthroughConfig(
+                keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
+                summary_keys=[o.key for o in bt_obs],
+                thresholds=[o.threshold for o in bt_obs],
+                observed_dates=[o.date for o in bt_obs],
+            )
 
     @classmethod
     def _create_list_of_forward_model_steps_to_run(
@@ -1340,10 +1368,15 @@ class ErtConfig(BaseModel):
         # of message length, the limit is set to 80% of
         # MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
         SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
+        sensitive_keys = ["OBS_CONFIG"]
+        content_dict_to_log = {
+            k: (v if k not in sensitive_keys else "<REDACTED>")
+            for k, v in content_dict.items()
+        }
         try:
-            config_dict_content = pprint.pformat(content_dict)
+            config_dict_content = pprint.pformat(content_dict_to_log)
         except Exception as err:
-            config_dict_content = str(content_dict)
+            config_dict_content = str(content_dict_to_log)
             logger.warning(
                 "Logging of config dict could not be formatted for "
                 f"enhanced readability. {err}"

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import inspect
 import logging
 import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self, assert_never, get_args, get_type_hints
+from typing import Annotated, Any, Literal, Self, assert_never, get_type_hints
 
 import numpy as np
 import pandas as pd
@@ -54,7 +53,7 @@ class _SummaryValues(BaseObservation):
 
 def _parse_date(date_str: str) -> datetime:
     try:
-        return datetime.fromisoformat(date_str)
+        date = datetime.fromisoformat(date_str)
     except ValueError:
         try:
             date = datetime.strptime(date_str, "%d/%m/%Y")  # noqa: DTZ007
@@ -69,7 +68,13 @@ def _parse_date(date_str: str) -> datetime:
                 " Please use ISO date format YYYY-MM-DD",
                 date_str,
             )
-            return date
+    if date.tzinfo is not None:
+        raise ObservationConfigError.with_context(
+            f"Date {date_str!r} must not include a timezone offset. "
+            "Please use ISO date format YYYY-MM-DD.",
+            date_str,
+        )
+    return date
 
 
 def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
@@ -85,6 +90,33 @@ def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
         .otherwise(pl.col(col).str.strip_chars())
         .alias(col)
         for col in string_cols
+    )
+
+
+def _make_summary_key(
+    keyword: str,
+    number: str | None = None,
+    well: str | None = None,
+    nx: str | None = None,
+    ny: str | None = None,
+    lgr_name: str | None = None,
+    i: str | None = None,
+    j: str | None = None,
+    k: str | None = None,
+) -> str:
+    def _int_or_none(s: str | None) -> int | None:
+        return int(s) if s is not None else None
+
+    return make_summary_key(
+        keyword=keyword,
+        number=_int_or_none(number),
+        name=well,
+        nx=_int_or_none(nx),
+        ny=_int_or_none(ny),
+        lgr_name=lgr_name,
+        li=_int_or_none(i),
+        lj=_int_or_none(j),
+        lk=_int_or_none(k),
     )
 
 
@@ -213,12 +245,6 @@ class SummaryObservation(_SummaryValues):
 
         required_csv_columns = ["keyword", "value", "error", "date"]
 
-        make_summary_key_optional_args = [
-            name
-            for name, param in inspect.signature(make_summary_key).parameters.items()
-            if param.default is not inspect.Parameter.empty
-        ]
-
         csv_file = observation_dict.get("VALUES")
         if csv_file is None:
             raise _missing_value_error(context, "VALUES")
@@ -235,9 +261,10 @@ class SummaryObservation(_SummaryValues):
             ) from err
         csv_df = strip_dataframe_whitespaces(csv_df)
 
-        # Rename 'well' column to 'name' to match make_summary_key parameter names
-        if "well" in csv_df.columns:
-            csv_df = csv_df.rename({"well": "name"})
+        make_summary_key_optional_args = set(get_type_hints(_make_summary_key)) - {
+            "keyword",  # keyword is not optional
+            "return",  # return is not a parameter
+        }
 
         for col in csv_df.columns:
             if col not in {
@@ -313,18 +340,13 @@ class SummaryObservation(_SummaryValues):
         for i, row in enumerate(csv_df.iter_rows(named=True)):
             kw = validate_nonempty_string(row["keyword"], "keyword", context)
 
-            arg_type_hints = get_type_hints(make_summary_key)
             optional_kw_args = {
-                kw_arg: validate_int(val, kw)
-                if (val := row.get(kw_arg)) is not None
-                and int in get_args(arg_type_hints.get(kw_arg))
-                else val
-                for kw_arg in make_summary_key_optional_args
+                kw_arg: row.get(kw_arg) for kw_arg in make_summary_key_optional_args
             }
             try:
-                summary_key = make_summary_key(
+                summary_key = _make_summary_key(
                     keyword=kw,
-                    **optional_kw_args,  # type: ignore[arg-type]
+                    **optional_kw_args,
                 )
             except InvalidSummaryKeyError as e:
                 raise _ill_configured_summary_key(kw, csv_file, i + 1, e) from e
@@ -336,7 +358,7 @@ class SummaryObservation(_SummaryValues):
             date = row["date"]
             standardized_date = _parse_date(date).isoformat()
 
-            loc_values = well_localization.get(row.get("name"), {})
+            loc_values = well_localization.get(row.get("well"), {})
             shape_id = cls.get_shape_id(
                 loc_values.get("east"),
                 loc_values.get("north"),
@@ -916,6 +938,9 @@ class BreakthroughObservation(BaseObservation):
         if threshold is None:
             raise _missing_value_error(obs_dict.context, "THRESHOLD")
 
+        assert date is not None
+        parsed_date = _parse_date(date)
+
         # Register shape if localization is present
         shape_id = None
         if east is not None and north is not None:
@@ -937,7 +962,7 @@ class BreakthroughObservation(BaseObservation):
             cls(
                 name=name,
                 key=summary_key,
-                date=date,
+                date=parsed_date,
                 error=error,
                 threshold=threshold,
                 shape_id=shape_id,
@@ -950,12 +975,134 @@ class BreakthroughObservation(BaseObservation):
         return None
 
 
+class SeismicObservation(BaseObservation):
+    type: Literal["seismic_observation"] = "seismic_observation"
+    name: str
+    filepath: Path
+    east: float
+    north: float
+    value: float
+    error: float
+
+    @classmethod
+    def from_csv(
+        cls,
+        directory: str,
+        name: str,
+        filepath: str | Path,
+    ) -> list[Self]:
+        """Create seismic observations from a CSV file.
+
+        Args:
+            directory: Directory where observation config is located.
+            name: Name of the observation
+            filepath: Path to the CSV file containing seismic observations.
+              Relative to the directory.
+        """
+        filepath = Path(directory) / filepath
+        if not filepath.exists():
+            raise ObservationConfigError.with_context(
+                f"The CSV file ({filepath}) does not exist or is not accessible.",
+                filepath,
+            )
+        csv_file = pd.read_csv(
+            filepath,
+            encoding="utf-8",
+            on_bad_lines="error",
+        )
+
+        required_columns = {
+            "X_UTME",
+            "Y_UTMN",
+            "OBS",
+            "OBS_ERROR",
+        }
+        missing_required_columns = required_columns - set(csv_file.keys())
+        if missing_required_columns:
+            raise ObservationConfigError.with_context(
+                f"The seismic observations file {filepath} "
+                "is missing required column(s) "
+                f"{', '.join(sorted(missing_required_columns))}.",
+                filepath,
+            )
+
+        if not name:
+            name = filepath.stem
+
+        seismic_observations = []
+        seen_coordinates: set[tuple[np.float32, np.float32]] = set()
+        for row in csv_file.itertuples():
+            seismic_observation = cls(
+                name=name,
+                filepath=filepath,
+                east=validate_float(str(row.X_UTME), "X_UTME"),
+                north=validate_float(str(row.Y_UTMN), "Y_UTMN"),
+                value=validate_float(str(row.OBS), "OBS"),
+                error=validate_float(str(row.OBS_ERROR), "OBS_ERROR"),
+            )
+            coordinates = (
+                np.float32(seismic_observation.east),
+                np.float32(seismic_observation.north),
+            )
+            if coordinates in seen_coordinates:
+                original_coordinates = (row.X_UTME, row.Y_UTMN)
+                raise ObservationConfigError.with_context(
+                    f"Seismic observation coordinates {original_coordinates} "
+                    "were not unique (after rounding from f64 to f32).",
+                    filepath,
+                )
+            seen_coordinates.add(coordinates)
+            seismic_observations.append(seismic_observation)
+
+        return seismic_observations
+
+    @classmethod
+    def from_obs_dict(
+        cls,
+        directory: str,
+        observation_dict: ObservationDict,
+        shape_registry: ShapeRegistry,
+    ) -> list[Self]:
+        """Create seismic observations from an observation dictionary.
+
+        Args:
+            directory: Directory where observation config is located.
+            observation_dict: Dictionary containing the observation configuration.
+            shape_registry: ShapeRegistry for storing geometry.
+        """
+        name = ""
+        csv_filename: str | None = None
+        for key, value in observation_dict.items():
+            match key:
+                case "type":
+                    pass
+                case "name":
+                    name = value
+                case "CSV":
+                    csv_filename = value
+                case _:
+                    raise _unknown_key_error(str(key), observation_dict.context)
+
+        if csv_filename is None:
+            raise _missing_value_error(observation_dict.context, "CSV")
+
+        return cls.from_csv(
+            directory,
+            name,
+            csv_filename,
+        )
+
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        return None
+
+
 Observation = Annotated[
     (
         SummaryObservation
         | GeneralObservation
         | RFTObservation
         | BreakthroughObservation
+        | SeismicObservation
     ),
     Field(discriminator="type"),
 ]
@@ -965,6 +1112,7 @@ _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.GENERAL: GeneralObservation,
     ObservationType.RFT: RFTObservation,
     ObservationType.BREAKTHROUGH: BreakthroughObservation,
+    ObservationType.SEISMIC: SeismicObservation,
     ObservationType.BULK_SUMMARY: SummaryObservation,
 }
 
@@ -1172,15 +1320,18 @@ def _resolve_path(directory: str, filename: str) -> str:
     return str(filepath)
 
 
-def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConfigError:
+def _conversion_error(key: str, value: Any, type_name: str) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f'Could not convert {value} to {type_name}. Failed to validate "{value}"',
-        token,
+        f'Could not convert "{value}" to {type_name} for key "{key}". '
+        f'Failed to validate "{value}"',
+        key,
     )
 
 
 def _unknown_key_error(key: str, context: FileContextToken) -> ObservationConfigError:
-    raise ObservationConfigError.with_context(f"Unknown {key} in {context!s}", context)
+    raise ObservationConfigError.with_context(
+        f"Unknown key '{key}' in {context!s}", context
+    )
 
 
 def _unknown_observation_type_error(obs: ObservationDict) -> ObservationConfigError:

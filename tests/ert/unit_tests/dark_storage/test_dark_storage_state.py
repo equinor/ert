@@ -14,13 +14,14 @@ from starlette.testclient import TestClient
 
 from ert.dark_storage import common
 from ert.dark_storage.app import app
-from tests.ert.unit_tests.storage.test_local_storage import StatefulStorageTest
+from tests.ert.unit_tests.storage.test_stateful_storage import StatefulStorageTest
 
 
 def escape(s):
     return quote(quote(quote(s, safe="")))
 
 
+@pytest.mark.filterwarnings(r"ignore:Could not find responses for key\(s\)")
 class DarkStorageStateTest(StatefulStorageTest):
     def __init__(self) -> None:
         super().__init__()
@@ -80,15 +81,15 @@ class DarkStorageStateTest(StatefulStorageTest):
     @rule(model_ensemble=StatefulStorageTest.ensembles, data=st.data())
     def get_response_csv_through_client(self, model_ensemble, data):
         assume(model_ensemble.response_values)
-        response_name, response_key = data.draw(
-            st.sampled_from(
-                [
-                    (response_name, response_key)
-                    for response_name, r in model_ensemble.response_values.items()
-                    for response_key in r["response_key"]
-                ]
-            )
-        )
+
+        response_sample_space = [
+            (response_name, response_key)
+            for response_name, r in model_ensemble.response_values.items()
+            for response_key in r["response_key"]
+        ]
+        if not response_sample_space:
+            return
+        response_name, response_key = data.draw(st.sampled_from(response_sample_space))
         df = pd.read_parquet(
             io.BytesIO(
                 self.client.get(

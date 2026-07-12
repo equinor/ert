@@ -12,6 +12,7 @@ from everest.bin.everest_script import everest_entry
 from everest.bin.everlint_script import lint_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
+from everest.bin.visualization_script import visualization_entry
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
@@ -82,15 +83,7 @@ class EverestMain:
         config_branch_entry(args)
 
     def results(self, args: list[str]) -> None:
-        """Start the everest plotter
-
-        The visualization module is imported lazily to avoid requiring
-        optional GUI dependencies for CLI commands that do not use it.
-        """
-        from everest.bin.visualization_script import (  # noqa: PLC0415
-            visualization_entry,
-        )
-
+        """Start the everest plotter"""
         visualization_entry(args)
 
 

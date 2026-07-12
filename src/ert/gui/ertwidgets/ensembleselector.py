@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QComboBox
 
 from ert.config import ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.utils import truncate_dropdown_item
 from ert.storage import RealizationStorageState
 
 from .suggestor import Suggestor
@@ -90,7 +91,8 @@ class EnsembleSelector(QComboBox):
         try:
             for ensemble in ensemble_list:
                 self.addItem(
-                    f"{ensemble.experiment.name} : {ensemble.name}",
+                    f"{truncate_dropdown_item(ensemble.experiment.name)}"
+                    f" : {ensemble.name}",
                     userData=str(ensemble.id),
                 )
             if ensemble_list:

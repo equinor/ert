@@ -19,7 +19,6 @@ from ert.config import (
     GenDataConfig,
     GenKwConfig,
     HookRuntime,
-    KnownDerivedResponseTypes,
     KnownResponseTypes,
     ModelConfig,
     Observation,
@@ -31,6 +30,7 @@ from ert.config import (
     Workflow,
 )
 from ert.config import Field as FieldConfig
+from ert.config.analysis_config import parse_es_mda_weights
 from ert.config.forward_model_step import (
     SiteOrUserForwardModelStep,
     UserInstalledForwardModelStep,
@@ -152,12 +152,6 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
             Field(discriminator="type"),
         ]
     ]
-    derived_response_configuration: list[
-        Annotated[
-            (KnownDerivedResponseTypes),
-            Field(discriminator="type"),
-        ]
-    ]
     ert_templates: list[tuple[str, str]]
     observations: list[Observation] | None = None
     shape_registry: ShapeRegistry | None = None
@@ -170,10 +164,6 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
             ],
             "response_configuration": [
                 resp.model_dump(mode="json") for resp in self.response_configuration
-            ],
-            "derived_response_configuration": [
-                resp.model_dump(mode="json")
-                for resp in self.derived_response_configuration
             ],
             "experiment_name": self.experiment_name,
         }
@@ -320,9 +310,6 @@ class ManualUpdateConfig(UpdateRunModelConfig):
             "response_configuration": prior_experiment_config.get(
                 "response_configuration", []
             ),
-            "derived_response_configuration": prior_experiment_config.get(
-                "derived_response_configuration", []
-            ),
             "observations": prior_experiment_config.get("observations", []),
             **self._common_fields(),
             "experiment_type": ExperimentType.MANUAL_UPDATE,
@@ -333,10 +320,17 @@ class MultipleDataAssimilationConfig(
     InitialEnsembleRunModelConfig, UpdateRunModelConfig
 ):
     experiment_type: ExperimentType = ExperimentType.ES_MDA
-    default_weights: ClassVar[str] = "4, 2, 1"
     restart_run: bool
     prior_ensemble_id: str | None
-    weights: str
+    arg_weights: str | None = Field(default=None, exclude=True)
+
+    @model_validator(mode="after")
+    def _update_weights(self) -> Self:
+        if self.arg_weights is not None and parse_es_mda_weights(
+            self.arg_weights
+        ) != parse_es_mda_weights(self.analysis_settings.weights):
+            self.analysis_settings.weights = self.arg_weights
+        return self
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
@@ -345,7 +339,6 @@ class MultipleDataAssimilationConfig(
             **self._common_fields(),
             "restart_run": self.restart_run,
             "prior_ensemble_id": self.prior_ensemble_id,
-            "weights": self.weights,
             "experiment_type": ExperimentType.ES_MDA,
         }
 

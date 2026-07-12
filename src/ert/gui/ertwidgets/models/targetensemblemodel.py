@@ -1,6 +1,4 @@
-from typing import Any
-
-from typing_extensions import override
+from typing import Any, override
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier

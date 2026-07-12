@@ -1,13 +1,11 @@
+name: Screenshot tests
+
 on:
-  workflow_call:
-    inputs:
-      os:
-        type: string
-      python-version:
-        type: string
+  workflow_dispatch:
+  pull_request:
 
 permissions:
-   contents: read
+  contents: read
 
 env:
   UV_FROZEN: true
@@ -15,57 +13,55 @@ env:
 jobs:
   test-screenshots:
     name: Run screenshot tests
-    timeout-minutes: 20
-    runs-on: ${{ inputs.os }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
     - uses: ./.github/actions/install_dependencies_qt
       with:
-        os: ${{ inputs.os }}
+        os: ubuntu-latest
 
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       id: setup_python
       with:
-        python-version: ${{ inputs.python-version }}
+        python-version: '3.14'
 
     - name: Install uv
       uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
       with:
         enable-cache: true
         prune-cache: false
-        python-version: ${{ inputs.python-version }}
+        python-version: '3.14'
 
     - name: Install ert
-      run: |
-        uv sync --group dev
+      run: uv sync --group dev
+
+    - name: Fetch screenshot baselines from ert-testdata
+      run: uv run just fetch-screenshot-baselines
 
     - name: Run screenshot tests
-      run: |
-        uv run just screenshot-comparison-test
-
-    - name: Pack updated screenshot in case of failure
-      if: ${{ failure() }}
-      run: |
-        uv run just pack-updated-screenshots
-
-    - name: Upload updated screenshot images from failed image comparison test
-      id: upload-screenshot-images
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      id: screenshot-tests
+      run: uv run just screenshot-comparison-test
       continue-on-error: true
-      with:
-        name: updated-screenshots-${{ github.run_number }}-${{ github.run_id }}-${{ inputs.python-version }}
-        path: updated-screenshots
 
-    - name: User instructions for fetching updated screenshots
-      if: ${{ failure() && steps.upload-screenshot-images.outputs.artifact-id != '' }}
+    - name: Pack updated screenshots
+      if: steps.screenshot-tests.outcome == 'failure'
+      run: uv run just pack-updated-screenshots
+
+    - name: Prepare artifact
+      if: always()
       run: |
-        echo " * Ensure gh command line utility is installed"
-        echo " * Do 'gh auth login' if you are not authenticated yet"
-        echo "$ rm -rf .tmp; gh run download ${{ github.run_id }} -D .tmp -n updated-screenshots-${{ github.run_number }}-${{ github.run_id }}-${{ inputs.python-version }}; cp -a .tmp/* ."
-        echo " * Then review your local changes and commit+squash them."
-        echo ""
-        echo "(This steps exits with a failure code in order to have its output highlighted in Github actions web interface)"
-        exit 1
+        mkdir -p artifact
+        echo '{"pr_number": ${{ github.event.number || 0 }}, "outcome": "${{ steps.screenshot-tests.outcome }}"}' > artifact/metadata.json
+        if [ -d updated-screenshots ]; then
+          cp -r updated-screenshots artifact/
+        fi
+
+    - name: Upload artifact
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: screenshot-results
+        path: artifact/

@@ -1,8 +1,7 @@
 import pytest
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.gui.tools.plot.plottery.plot_config import PlotConfig
-from ert.gui.tools.plot.plottery.plot_context import PlotContext
+from ert.gui.plotting.plot_api import EnsembleObject
+from ert.gui.plotting.utils import PlotConfig, PlotContext
 
 
 @pytest.fixture

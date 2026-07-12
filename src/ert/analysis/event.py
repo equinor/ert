@@ -92,6 +92,7 @@ class AnalysisMatrixEvent(AnalysisEvent):
     shape: tuple[int, int]
     data_type: str
     update_algorithm: str
+    parameter_group_sizes: dict[str, int] = Field(default_factory=dict)
     matrix_bytes: bytes = Field(exclude=True)
 
 
@@ -101,3 +102,12 @@ class AnalysisScalingEvent(AnalysisEvent):
     scaling_bytes: bytes = Field(exclude=True)
     num_observations: int
     num_groups: int
+
+
+class AnalysisRhoMatrixEvent(AnalysisEvent):
+    event_type: Literal["AnalysisRhoMatrixEvent"] = "AnalysisRhoMatrixEvent"
+    param_name: str
+    observation_keys: list[str]
+    shape: tuple[int, int]
+    data_type: str
+    matrix_bytes: bytes = Field(exclude=True)

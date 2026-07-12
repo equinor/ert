@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
-from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
-from ert.gui.tools.plot.plottery.plot_context import PlotType
-from ert.gui.tools.plot.plottery.plots import EverestControlsPlot
+from ert.gui.plotting.everest_plots import EverestControlsPlot
+from ert.gui.plotting.utils.plot_context import PlotType
+from tests.everest.unit_tests.plots.utils import create_everest_figure, move_cursor
 
 
 @pytest.fixture
@@ -294,6 +294,50 @@ def test_that_hover_annotation_displays_control_name_for_by_batch_plot(
     # First annotation is the right hand side label for the line
     assert len(annotations) == 2
     assert hover_annotation.get_text() == "ctrl_a"
+    assert hover_annotation.get_visible()
+
+    move_cursor(
+        axes=axes,
+        x=0,
+        y=0,
+    )
+
+    assert not hover_annotation.get_visible()
+
+
+def test_that_hover_annotation_displays_batch_id_for_by_control_plot(
+    generic_plot_context, everest_ensemble, controls_data
+):
+    generic_plot_context.by_batch = False
+    plot = EverestControlsPlot()
+    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
+    figure = create_everest_figure(
+        plot, controls_data, generic_plot_context, everest_ensemble
+    )
+
+    axes = figure.get_axes()[0]
+
+    move_cursor(
+        axes=axes,
+        x=0.0,
+        y=1.0,
+    )
+
+    annotations = [text for text in axes.texts if "batch" in text.get_text()]
+
+    assert len(annotations) == 1
+
+    hover_annotation = annotations[0]
+    assert hover_annotation.get_text() == "initial batch"
+    assert hover_annotation.get_visible()
+
+    move_cursor(
+        axes=axes,
+        x=0,
+        y=1.5,
+    )
+
+    assert hover_annotation.get_text() == "batch_1"
     assert hover_annotation.get_visible()
 
     move_cursor(

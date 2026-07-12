@@ -634,6 +634,7 @@ By default, RUNPATH is set to "simulations/realization-<IENS>/iter-<ITER>".
 
 Deprecated syntax still allow use of two `%d` specifiers. Use of more than two `%d` specifiers,
 using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.
+The RUNPATH cannot contain whitespace.
 
 *Example:*
 
@@ -1722,6 +1723,39 @@ proportional to the identity matrix.
 * Evensen, G. (2007). "Data Assimilation, the Ensemble Kalman Filter", Springer.
 * Mardia, K. V., Kent, J. T. and Bibby, J. M. (1979). "Multivariate Analysis", Academic Press.
 * Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
+
+
+
+.. _es_mda_weights:
+
+WEIGHTS
+^^^^^^^
+
+Sets the relative weights used by the ES-MDA (Ensemble Smoother with Multiple
+Data Assimilation) algorithm. ES-MDA performs one update step per weight, and
+the number of weights therefore determines the number of assimilation
+iterations. This is valid for the ``STD_ENKF`` module only.
+
+The weights are relative: they are internally scaled so that the sum of their
+reciprocals equals 1.0, i.e: sum(1.0 / x for x in weights) == 1.0.
+The default weights are ``4, 2, 1``.
+
+The value is a comma-separated list of positive numbers. Zero or negative
+weights are not allowed.
+
+::
+
+    ANALYSIS_SET_VAR STD_ENKF WEIGHTS 8, 4, 2, 1
+
+This configures ES-MDA to run with four assimilation iterations using the
+given relative weights.
+
+.. note::
+
+    Weights set here are used as the default in the ES-MDA experiment panel in
+    the GUI. The value can still be overridden interactively before starting a
+    run; if the GUI value differs from the configured weights, a warning is
+    shown and the GUI value is used for that run.
 
 
 

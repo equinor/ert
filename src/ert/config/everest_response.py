@@ -7,11 +7,10 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict
-from .response_config import InvalidResponseFile, ResponseConfig
-from .responses_index import responses_index
+from .response_config import InvalidResponseFile, SimulationResponseConfig
 
 
-class EverestResponse(ResponseConfig):
+class EverestResponse(SimulationResponseConfig):
     """Base class for EVEREST response configurations."""
 
     has_finalized_keys: bool = True
@@ -81,13 +80,7 @@ class EverestConstraintsConfig(EverestResponse):
     lower_bounds: list[float | None]
 
 
-responses_index.add_response_type(EverestConstraintsConfig)
-
-
 class EverestObjectivesConfig(EverestResponse):
     type: Literal["everest_objectives"] = "everest_objectives"
     weights: list[float]
     objective_types: list[Literal["mean", "stddev"]]
-
-
-responses_index.add_response_type(EverestObjectivesConfig)

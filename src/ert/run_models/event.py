@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -19,6 +20,8 @@ from ert.ensemble_evaluator.event import (
     StartEvent,
     WarningEvent,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RunModelEvent(BaseModel):
@@ -143,3 +146,28 @@ def status_event_from_json(raw_msg: str | bytes) -> StatusEvents:
 
 def status_event_to_json(event: StatusEvents) -> str:
     return event.model_dump_json()
+
+
+class CorruptStatusSnapshotError(Exception):
+    """Raised when a persisted status snapshot exists but cannot be loaded."""
+
+
+def load_status_snapshot_event(path: Path) -> FullSnapshotEvent | None:
+    if not path.is_file():
+        return None
+    try:
+        event = status_event_from_json(path.read_bytes())
+    except OSError as e:
+        raise CorruptStatusSnapshotError(
+            f"Could not read status snapshot from {path}"
+        ) from e
+    except ValueError as e:
+        raise CorruptStatusSnapshotError(
+            f"Could not parse status snapshot from {path}"
+        ) from e
+    if not isinstance(event, FullSnapshotEvent):
+        raise CorruptStatusSnapshotError(
+            f"Expected status snapshot at {path} to be a FullSnapshotEvent, "
+            f"got {event.event_type}"
+        )
+    return event

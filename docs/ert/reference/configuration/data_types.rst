@@ -519,6 +519,8 @@ For loading multiple RFT observations from a CSV file, see the
 :ref:`RFT_OBSERVATION <rft_observation>` documentation.
 
 
+.. _exporting_rft_data_for_visualization:
+
 Exporting RFT data for visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

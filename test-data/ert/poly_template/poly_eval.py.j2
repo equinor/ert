@@ -72,10 +72,10 @@ def make_summary(count, x_size, coeffs, update_steps):
             "summary/POLY_SUMMARY", datetime.datetime(2010, 1, 1), 10, 10, 10
         )
         for s in range(count):
-            ecl_sum.addVariable(f"PSUM{s}")
+            ecl_sum.add_variable(f"PSUM{s}")
 
         for x in range(x_size * update_steps):
-            t_step = ecl_sum.addTStep(x // update_steps + 1, sim_days=x + 1)
+            t_step = ecl_sum.add_t_step(x // update_steps + 1, sim_days=x + 1)
             for s in range(count):
                 t_step[f"PSUM{s}"] = _evaluate(coeffs[s % len(coeffs)], x)
 

@@ -2,11 +2,12 @@ import logging
 from collections import Counter
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Response
 
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.storage import Storage
+from ert.storage.blob_data import BlobStorageData
 
 router = APIRouter(tags=["ensemble"])
 logger = logging.getLogger(__name__)
@@ -38,4 +39,32 @@ def get_ensemble(
         realization_storage_states=Counter(
             state for states in ensemble.get_ensemble_state() for state in states
         ),
+    )
+
+
+@router.get("/ensembles/{ensemble_id}/blobs")
+def get_blobs(
+    *,
+    storage: Storage = DEFAULT_STORAGE,
+    ensemble_id: UUID,
+) -> list[BlobStorageData]:
+    with reraise_as_http_errors(logger):
+        ensemble = storage.get_ensemble(ensemble_id)
+        return ensemble.load_blobs()
+
+
+@router.get("/ensembles/{ensemble_id}/blobs/{uri}")
+def get_blob(
+    *,
+    storage: Storage = DEFAULT_STORAGE,
+    ensemble_id: UUID,
+    uri: str,
+) -> Response:
+    with reraise_as_http_errors(logger):
+        ensemble = storage.get_ensemble(ensemble_id)
+        blob = ensemble.load_blob(uri)
+
+    return Response(
+        content=blob,
+        media_type="application/octet-stream",
     )

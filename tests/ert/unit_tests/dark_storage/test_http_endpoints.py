@@ -1,3 +1,4 @@
+import datetime
 import io
 import json
 import re
@@ -7,10 +8,20 @@ import pytest
 from requests import Response
 from starlette.testclient import TestClient
 
+from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent, DataSection
 from ert.config._observations import SummaryObservation
 from ert.config._shapes import CircleShapeConfig, ShapeRegistry
+from ert.config.rft_config import RFTConfig
 from ert.dark_storage.common import get_storage_api_version
+from ert.dark_storage.endpoints.observations import _get_observations
 from ert.storage import open_storage
+from tests.ert.defaults_generator import (
+    create_breakthrough_observation,
+    create_general_observation,
+    create_rft_observation,
+    create_seismic_observation,
+    create_summary_observation,
+)
 
 
 @pytest.mark.slow
@@ -301,6 +312,73 @@ def test_that_experiment_observations_endpoint_returns_localization(
     assert observations_by_name["OBSERVATION_2"]["radius"] == [20.0]
 
 
+def test_blob_endpoint_includes_matrix_parameter_group_sizes(
+    tmp_path, monkeypatch, dark_storage_app
+):
+    storage_path = tmp_path / "storage"
+
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="test-ensemble"
+        )
+        ensemble.save_blob(
+            AnalysisMatrixEvent(
+                name="K",
+                sparse=False,
+                shape=(2, 2),
+                data_type="float64",
+                update_algorithm="enif",
+                parameter_group_sizes={"PORO": 8, "PERM": 3},
+                matrix_bytes=b"matrix",
+            )
+        )
+        ensemble_id = ensemble.id
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+
+    with TestClient(dark_storage_app) as client:
+        resp = client.get(f"/ensembles/{ensemble_id}/blobs")
+
+    assert resp.status_code == 200
+
+    [blob] = resp.json()
+    assert blob["name"] == "K"
+    assert blob["blob_info"]["parameter_group_sizes"] == {
+        "PORO": 8,
+        "PERM": 3,
+    }
+
+
+def test_that_blob_endpoint_returns_blob_bytes(tmp_path, monkeypatch, dark_storage_app):
+    storage_path = tmp_path / "storage"
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="test-ensemble"
+        )
+        ensemble.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(
+                    header=["observation_key", "status", "value"],
+                    data=[("OBS", "Active", 1.5)],
+                ),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+        blob = ensemble.load_blobs()[0]
+        blob_bytes = ensemble.load_blob(blob.uri)
+        ensemble_id = ensemble.id
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+    with TestClient(dark_storage_app) as client:
+        resp: Response = client.get(f"/ensembles/{ensemble_id}/blobs/{blob.uri}")
+
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/octet-stream"
+    assert resp.content == blob_bytes
+
+
 @pytest.mark.slow
 def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
@@ -346,3 +424,67 @@ def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
     assert all(dataframe.index.to_numpy() == [1, 2, 4])
     assert dataframe.index.name == "Realization"
     assert dataframe.shape == (3, 1)
+
+
+def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
+    rft_config = RFTConfig(input_files=["DUMMY"])
+    storage_path = tmp_path / "storage"
+    observations = [
+        *[
+            create_summary_observation(name="SUMMARY_OBSERVATION", date=date)
+            for date in ["2010-11-01", "2010-07-01", "2010-12-01"]
+        ],
+        *[
+            create_general_observation(name="GENERAL_OBSERVATION", index=index)
+            for index in [11, 7, 12]
+        ],
+        *[
+            create_breakthrough_observation(
+                name="BREAKTHROUGH_OBSERVATION",
+                date=datetime.datetime(2010, month, 1),  # noqa: DTZ001
+            )
+            for month in [11, 7, 12]
+        ],
+        *[
+            create_rft_observation(name="RFT_OBSERVATION", tvd=tvd)
+            for tvd in [11.0, 7.0, 12.0]
+        ],
+        *[
+            create_seismic_observation(
+                name="SEISMIC_OBSERVATION",
+                east=east,
+                north=north,
+            )
+            for east, north in [
+                (15.0, 25.0),
+                (15.0 + 3, 25.0 + 4),
+                (15.0 + 3 + 5, 25.0 + 4 + 12),
+            ]
+        ],
+    ]
+
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            name="test-experiment",
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [obs.model_dump(mode="json") for obs in observations],
+            },
+        )
+        experiment.create_ensemble(name="prior", ensemble_size=1)
+
+    obs_with_x_axis = _get_observations(experiment)
+    for observation in obs_with_x_axis:
+        match observation["name"]:
+            case "SUMMARY_OBSERVATION" | "BREAKTHROUGH_OBSERVATION":
+                assert observation["x_axis"] == [
+                    "2010-07-01T00:00:00.000",
+                    "2010-11-01T00:00:00.000",
+                    "2010-12-01T00:00:00.000",
+                ]
+            case "GENERAL_OBSERVATION":
+                assert observation["x_axis"] == ["7", "11", "12"]
+            case "RFT_OBSERVATION":
+                assert observation["x_axis"] == ["7.0", "11.0", "12.0"]
+            case "SEISMIC_OBSERVATION":
+                assert observation["x_axis"] == ["0.0", "5.0", "18.0"]

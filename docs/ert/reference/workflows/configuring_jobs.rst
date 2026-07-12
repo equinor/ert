@@ -39,7 +39,6 @@ executable:
 
 ::
 
-    INTERNAL   FALSE                    -- Optional - Set to FALSE by default.
     EXECUTABLE path/to/program          -- Path to a program/script which will be invoked by the job.
 
 

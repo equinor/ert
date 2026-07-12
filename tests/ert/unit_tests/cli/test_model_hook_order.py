@@ -74,7 +74,6 @@ def patch_run_model(monkeypatch):
         (
             MultipleDataAssimilation,
             {
-                "weights": "1",
                 "target_ensemble": "ens%d",
                 "restart_run": False,
                 "prior_ensemble_id": "N/A",
@@ -126,13 +125,12 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         **extra_args,
         storage_path="some_storage",
         queue_config=QueueConfig(),
-        analysis_settings=ESSettings(),
+        analysis_settings=ESSettings(weights="1"),
         update_settings=ObservationSettings(),
         runpath_file=MagicMock(spec=Path),
         design_matrix=None,
         parameter_configuration=[],
         response_configuration=[],
-        derived_response_configuration=[],
         ert_templates=MagicMock(),
         user_config_file=MagicMock(spec=Path),
         env_vars=MagicMock(spec=dict),

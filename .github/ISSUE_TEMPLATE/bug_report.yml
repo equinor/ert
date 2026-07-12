@@ -1,4 +1,4 @@
-name: 🐛 Bug Report
+name: 🐛 Bug report
 description: File a bug report to help us improve
 labels: [bug]
 body:
@@ -23,8 +23,7 @@ body:
     id: reproduce
     attributes:
       label: Steps to reproduce
-      description: Detailed desription of how to reproduce the failure.
-      render: console
+      description: Detailed description of how to reproduce the failure.
     validations:
       required: false
 
@@ -35,9 +34,9 @@ body:
       description: |
         Please check of the environments where this behavior has been observed.
       options:
-        - label: Python 3.11
-        - label: Python 3.12
-        - label: macOS
+        - label: Equinor Komodo (specify version)
+        - label: Python virtualenv (specify Python version)
+        - label: MacOS
         - label: RHEL8
         - label: RHEL9
         - label: Local queue

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QLineEdit
-from typing_extensions import override
 
 from ert.gui.detect_mode import is_dark_mode
 

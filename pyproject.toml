@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "ert"
 authors = [{ name = "Equinor ASA", email = "fg_sib-scout@equinor.com" }]
 description = "Ensemble based Reservoir Tool (ERT)"
-requires-python = ">=3.11, <3.15"
+requires-python = ">=3.12, <3.15"
 readme = "README.md"
 license = "GPL-3.0-only"
 classifiers = [
@@ -15,7 +15,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -26,7 +25,6 @@ dynamic = ["version"]
 dependencies = [
     "aiohttp",
     "anyio",
-    "colorama",
     "cryptography",
     "decorator",
     "dnspython >= 2",
@@ -64,8 +62,8 @@ dependencies = [
     "pyzmq",
     "requests",
     "resfo>=5.0.0",
-    "ropt-dakota>=0.27,<0.28",
-    "ropt[pandas]>=0.27.1,<0.28",
+    "ropt-dakota>=0.28,<0.29",
+    "ropt[pandas]>=0.28.1,<0.29",
     "ruamel.yaml",
     "scipy >= 1.10.1",
     "seaborn",
@@ -193,6 +191,10 @@ timeout = 360
 session_timeout = 2400
 timeout_func_only = true # Do not apply timeout to fixtures which can be slow but cached
 
+filterwarnings = [ # Ignore warnings cluttering stdout generated on MacOS due to matplotlib
+    "ignore:Matplotlib is currently using agg:UserWarning"
+]
+
 [tool.setuptools_scm]
 version_file = "src/ert/shared/version.py"
 # Fallback needed due to https://github.com/dependabot/dependabot-core/issues/12340
@@ -226,6 +228,7 @@ select = [
     "G",     # logging-format
     "I",     # isort
     "ICN",   # flake8-import-conventions
+    "INP",
     "INT",
     "ISC",
     "LOG",   # logging
@@ -318,7 +321,7 @@ include = ["src"]
 exclude = ["tests"]
 reportMissingImports = "error"
 typeCheckingMode = "standard"
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 
 [tool.pyright.defineConstant]
 PYSIDE6 = false
@@ -331,10 +334,14 @@ fork-strategy = "requires-python"
 exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
-aiohttp = false # Needed until 15.06 for sequrity update
+carolina = false  # Developed by Equinor
 iterative_ensemble_smoother = false # Developed by Equinor
+jupyterlab = false # needed until 01.07
+jupyter-server = false # needed until 01.07
 graphite-maps = false # Developed by Equinor
+msgpack = false # needed until 01.07
 oil_reservoir_synthesizer = false # Developed by Equinor
+pytest = false # needed until 29.06
 resdata = false # Developed by Equinor
 resfo = false # Developed by Equinor
 resfo-utilities = false # Developed by Equinor

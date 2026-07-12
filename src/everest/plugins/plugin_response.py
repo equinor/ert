@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 from decorator import decorator
 
@@ -12,10 +12,10 @@ class PluginMetadata:
     function_name: str
 
 
-class PluginResponse(Generic[T]):
-    def __init__(self, data: T, plugin_metadata: PluginMetadata) -> None:
-        self.data = data
-        self.plugin_metadata = plugin_metadata
+@dataclass
+class PluginResponse[T]:
+    data: T
+    plugin_metadata: PluginMetadata
 
 
 @decorator

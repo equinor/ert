@@ -320,7 +320,7 @@ def test_that_summary_bulk_config_resolves_csv_in_subdirectory_from_main_config(
 
     ert_conf = ErtConfig.from_file("config.ert")
     obs = create_observation_dataframes(
-        ert_conf.observation_declarations, None, ert_conf.shape_registry
+        ert_conf.observation_declarations, ert_conf.shape_registry
     )
     assert len(obs["summary"]) == 3
     assert len(obs["breakthrough"]) == 1
@@ -469,9 +469,7 @@ def test_that_fully_populated_csv_does_not_crash_given_arbitrary_keyword(keyword
         WELL OP1 {};
     };
     """
-    csv_columns = (
-        "well, keyword, value, error, date, number, nx, ny, lgr_name, li, lj, lk"
-    )
+    csv_columns = "well, keyword, value, error, date, number, nx, ny, lgr_name, i, j, k"
     csv_row = f"OP1, {keyword}, 1e6, 1.0, 2012-02-01, 10, 1, 1, foo, 1, 1, 1"
     csv_content_ = f"{csv_columns}\n{csv_row}"
 

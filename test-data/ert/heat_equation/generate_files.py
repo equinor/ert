@@ -20,6 +20,7 @@ from definition import (
     room_temperature,
     u_init,
 )
+
 from heat_equation import heat_equation, sample_prior_conductivity
 
 # Some seeds produce priors that yield poor results.

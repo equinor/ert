@@ -1,7 +1,6 @@
 import argparse
 import logging
 import sys
-import warnings
 from functools import partial
 from importlib.resources import files
 from pathlib import Path
@@ -12,7 +11,7 @@ from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
-from ert.gui.tools.plot.plot_window import PlotWindow
+from ert.gui.plotting.plot_window import PlotWindow
 from ert.services import ErtServerController
 from ert.storage import LocalStorage
 from everest.bin.utils import setup_logging
@@ -32,11 +31,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
         "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
         help="The path to the everest configuration file.",
-    )
-    arg_parser.add_argument(
-        "--ert_plotter",
-        action="store_true",
-        help="No-op option, ert_plotter is already default.",
     )
     return arg_parser
 
@@ -81,13 +75,6 @@ def visualization_entry(args: list[str] | None = None) -> None:
             )
             return
 
-        if options.ert_plotter:
-            warnings.warn(
-                "You can stop using the option --ert_plotter as it "
-                "is the only alternative",
-                UserWarning,
-                stacklevel=2,
-            )
         with ErtServerController.init_service(
             timeout=240,
             project=Path(ever_config.storage_dir),

@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.11', '3.12', '3.13', '3.14' ]
+        python-version: [ '3.12', '3.13', '3.14' ]
 
     uses: ./.github/workflows/build-wheels.yml
     with:
@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests', 'fuzz' ]
-        python-version: [ '3.11', '3.12', '3.13', '3.14' ]
+        python-version: [ '3.12', '3.13', '3.14' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_ert.yml
     with:
@@ -66,12 +66,9 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'test', 'doc' ]
-        python-version: [ '3.11', '3.12', '3.13', '3.14' ]
+        python-version: ['3.12', '3.13', '3.14' ]
         os: [ ubuntu-latest ]
         exclude:
-        - os: 'ubuntu-latest'
-          test-type: 'doc'
-          python-version: '3.11'
         - os: 'ubuntu-latest'
           test-type: 'doc'
           python-version: '3.12'
@@ -83,19 +80,6 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
-    secrets: inherit
-
-  test-screenshots:
-    needs: [run-pre-commit, check-typing]
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.14' ]
-        os: [ ubuntu-latest ]
-    uses: ./.github/workflows/test_screenshots.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
     secrets: inherit
 
   test-slurm:
@@ -131,7 +115,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'test' ]
-        os: [ 'macos-latest' ]
+        os: [ 'macos-26' ]
         python-version: [ '3.14' ]
 
     uses: ./.github/workflows/test_everest.yml
@@ -149,7 +133,7 @@ jobs:
       matrix:
         test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.14' ]
-        os: [ 'macos-latest']
+        os: [ 'macos-26']
 
     uses: ./.github/workflows/test_ert.yml
     with:
@@ -169,7 +153,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         fetch-depth: 0
         filter: tree:0
@@ -182,7 +166,7 @@ jobs:
       run: |
         sudo apt install pandoc
 
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       id: setup_python
       with:
         python-version: ${{ matrix.python-version }}

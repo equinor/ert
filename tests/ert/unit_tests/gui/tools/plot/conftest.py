@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from ert.gui.tools.plot import plot_api
-from ert.gui.tools.plot.plot_api import PlotApi
+from ert.gui.plotting import plot_api
+from ert.gui.plotting.plot_api import PlotApi
 
 
 class MockResponse:

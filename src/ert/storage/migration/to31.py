@@ -1,63 +1,112 @@
 from __future__ import annotations
 
-import io
 import json
-import uuid
+import logging
 from pathlib import Path
 
-import polars as pl
+logger = logging.getLogger(__name__)
 
-info = "Migrate observation_scaling_factors.parquet to blob storage"
+info = "Strip fields not in the observation models from experiment observations"
+
+_ALLOWED_OBSERVATION_KEYS: dict[str, frozenset[str]] = {
+    "summary_observation": frozenset(
+        {
+            "type",
+            "name",
+            "value",
+            "error",
+            "key",
+            "date",
+            "shape_id",
+            "error_mode",
+            "error_min",
+        }
+    ),
+    "general_observation": frozenset(
+        {
+            "type",
+            "name",
+            "data",
+            "value",
+            "error",
+            "restart",
+            "index",
+            "shape_id",
+        }
+    ),
+    "rft_observation": frozenset(
+        {
+            "type",
+            "name",
+            "well",
+            "date",
+            "property",
+            "value",
+            "error",
+            "east",
+            "north",
+            "tvd",
+            "md",
+            "shape_id",
+            "zone",
+        }
+    ),
+    "breakthrough": frozenset(
+        {
+            "type",
+            "name",
+            "key",
+            "date",
+            "error",
+            "threshold",
+            "shape_id",
+        }
+    ),
+}
 
 
-def _migrate_scaling_factors(path: Path) -> None:
-    ensembles_dir = path / "ensembles"
-    if not ensembles_dir.exists():
+def _strip_unknown_fields(path: Path) -> None:
+    experiments_dir = path / "experiments"
+    if not experiments_dir.exists():
         return
 
-    for ens_dir in ensembles_dir.iterdir():
-        if not ens_dir.is_dir():
+    for exp_dir in experiments_dir.iterdir():
+        if not exp_dir.is_dir():
             continue
 
-        old_file = ens_dir / "observation_scaling_factors.parquet"
-        if not old_file.exists():
+        index_file = exp_dir / "index.json"
+        if not index_file.exists():
             continue
 
-        try:
-            df = pl.read_parquet(old_file)
-        except Exception:
+        index_data = json.loads(index_file.read_text(encoding="utf-8"))
+        experiment_data = index_data.get("experiment", {})
+        observations = experiment_data.get("observations")
+        if not observations:
             continue
 
-        blob_dir = ens_dir / "blobs"
-        blob_dir.mkdir(parents=True, exist_ok=True)
+        stripped_keys: set[str] = set()
+        for observation in observations:
+            allowed_keys = _ALLOWED_OBSERVATION_KEYS.get(observation.get("type"))
+            if allowed_keys is None:
+                logger.warning(
+                    "Cannot migrate observation with unknown type "
+                    f"{observation.get('type')} in {index_file}"
+                )
+                continue
 
-        blob_id = uuid.uuid4().hex[:8]
-        blob_file = blob_dir / f"{blob_id}.blob"
-        blob_meta_file = blob_dir / f"{blob_id}.blob.json"
+            unknown_keys = [key for key in observation if key not in allowed_keys]
+            for key in unknown_keys:
+                observation.pop(key)
+            stripped_keys.update(unknown_keys)
 
-        buf = io.BytesIO()
-        df.write_parquet(buf)
-        blob_bytes = buf.getvalue()
-
-        num_groups = df["input_group"].n_unique() if "input_group" in df.columns else 1
-
-        blob_meta = {
-            "uri": f"{blob_id}.blob",
-            "file_size": len(blob_bytes),
-            "file_type": "application/parquet",
-            "name": "scaling_factors",
-            "blob_info": {
-                "blob_type": "scaling_factors",
-                "update_algorithm": "ensemble_smoother",
-                "num_observations": len(df),
-                "num_groups": num_groups,
-            },
-        }
-
-        blob_file.write_bytes(blob_bytes)
-        blob_meta_file.write_text(json.dumps(blob_meta, indent=2), encoding="utf-8")
-        old_file.unlink()
+        if stripped_keys:
+            logger.info(
+                "Stripped fields not in the observation models from %s: %s",
+                index_file,
+                ", ".join(sorted(stripped_keys)),
+            )
+            index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
 
 
 def migrate(path: Path) -> None:
-    _migrate_scaling_factors(path)
+    _strip_unknown_fields(path)

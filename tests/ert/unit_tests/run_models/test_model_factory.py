@@ -190,7 +190,9 @@ def test_setup_ensemble_smoother(tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
-def test_setup_multiple_data_assimilation(tmp_path):
+def test_that_setup_multiple_data_assimilation_uses_the_arguments_from_the_cli(
+    tmp_path,
+):
     model = model_factory._setup_multiple_data_assimilation(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
@@ -206,7 +208,7 @@ def test_setup_multiple_data_assimilation(tmp_path):
         queue.SimpleQueue(),
     )
     assert isinstance(model, MultipleDataAssimilation)
-    assert model.weights == "6,4,2"
+    assert model.analysis_settings.weights == "6,4,2"
     assert model._parsed_weights == MultipleDataAssimilation.parse_weights("6,4,2")
     assert (
         model.active_realizations
@@ -215,6 +217,33 @@ def test_setup_multiple_data_assimilation(tmp_path):
     assert model.target_ensemble == "test_case_%d"
     assert model.prior_ensemble_id == "b272fe09-83ac-4744-b667-9a0a5415420b"
     assert model.restart_run is False
+
+
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
+def test_that_setup_multiple_data_assimilation_uses_config_weights_when_cli_omits_them(
+    tmp_path,
+):
+    model = model_factory._setup_multiple_data_assimilation(
+        ErtConfig.from_file_contents(
+            f"""
+            NUM_REALIZATIONS 100
+            ENSPATH {tmp_path}
+            ANALYSIS_SET_VAR STD_ENKF WEIGHTS 8, 4, 2, 1
+            """
+        ),
+        Namespace(
+            realizations="0-4,8",
+            target_ensemble="test_case_%d",
+            weights=None,
+            restart_run=False,
+            prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
+            experiment_name="My-experiment",
+            starting_iteration=0,
+        ),
+        ObservationSettings(),
+        queue.SimpleQueue(),
+    )
+    assert model.analysis_settings.weights == "8, 4, 2, 1"
 
 
 @pytest.mark.parametrize(

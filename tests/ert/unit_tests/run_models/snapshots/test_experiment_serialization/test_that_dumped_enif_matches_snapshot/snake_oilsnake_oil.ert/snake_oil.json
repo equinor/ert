@@ -149,6 +149,7 @@
   "analysis_settings": {
     "enkf_truncation": 0.98,
     "inversion": "EXACT",
+    "weights": "4, 2, 1",
     "localization": false,
     "localization_correlation_threshold": null,
     "distance_localization": false
@@ -342,7 +343,6 @@
       ]
     }
   ],
-  "derived_response_configuration": [],
   "ert_templates": [
     [
       "test-data/ert/snake_oil.snake_oil.ert/templates/seed_template.txt",

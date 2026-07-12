@@ -5,7 +5,7 @@ import logging
 import webbrowser
 from collections import defaultdict
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCursor
@@ -19,7 +19,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import override
 
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertwidgets import CopyButton
