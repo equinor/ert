@@ -555,6 +555,15 @@ class PlotWindow(QMainWindow):
             else:
                 plot_widget.showLayerWidget.emit(False)
 
+            is_history_key = str(key).endswith("H") or "H:" in str(key)
+            history_data_available = False
+
+            if not is_history_key:
+                try:
+                    history_data_available = self._api.has_history_data(key)
+                except BaseException as e:
+                    handle_exception(e)
+
             plot_config = PlotConfig.create_copy(
                 self._plot_customizer.get_plot_config()
             )
@@ -567,9 +576,11 @@ class PlotWindow(QMainWindow):
                 self._general_options.set_observations_visible(key_def.observations)
                 plot_config.set_history_enabled(
                     self._general_options.history_checkbox_state
+                    and (is_history_key or history_data_available)
                 )
                 plot_config.set_observations_enabled(
                     self._general_options.observations_checkbox_state
+                    and key_def.observations
                 )
 
             plot_context = PlotContext(
@@ -586,23 +597,35 @@ class PlotWindow(QMainWindow):
             plot_context.scatter_plot = self._misfits_options.scatter_checkbox_state
             plot_context.box_plot = self._misfits_options.box_checkbox_state
             plot_context.mean = self._misfits_options.mean_checkbox_state
+            log_scale_available = log_scale_valid_values and selected_tab in {
+                HISTOGRAM,
+                DISTRIBUTION,
+                GAUSSIAN_KDE,
+            }
+
+            self._general_options.set_log_visible(log_scale_available)
+
+            plot_context.log_scale = (
+                self._general_options.log_checkbox_state and log_scale_available
+            )
+
             plot_context.outliers = self._misfits_options.outliers_checkbox_state
 
             # Check if key is a history key.
-            # If it is it already has the data it needs
-            if str(key).endswith("H") or "H:" in str(key):
+            # If it is, it already has the data it needs.
+            if is_history_key:
                 plot_context.history_data = DataFrame()
-            else:
+            elif history_data_available:
                 try:
-                    if self._api.has_history_data(key):
-                        plot_context.history_data = self._api.history_data(
-                            key,
-                            [e.id for e in plot_context.ensembles()],
-                        )
-
+                    plot_context.history_data = self._api.history_data(
+                        key,
+                        [e.id for e in plot_context.ensembles()],
+                    )
                 except BaseException as e:
                     handle_exception(e)
                     plot_context.history_data = None
+            else:
+                plot_context.history_data = None
 
             if key_def.response is not None and key_def.response.type == "rft":
                 plot_context.setXLabel(key.split(":")[-1])
@@ -673,7 +696,6 @@ class PlotWindow(QMainWindow):
         plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
         plot_widget.layerIndexChanged.connect(self.layerIndexChanged)
-        plot_widget.plotUpdateRequested.connect(self.updatePlot)
 
         index = self._central_tab.addTab(plot_widget, name)
         self._plot_widgets.append(plot_widget)

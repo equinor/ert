@@ -11,21 +11,17 @@ from matplotlib.backends.backend_qt5agg import (  # type: ignore
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QStringListModel, Qt, pyqtBoundSignal
+from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QComboBox,
-    QHBoxLayout,
     QVBoxLayout,
     QWidget,
     QWidgetAction,
 )
 
-from ert.config.distribution import ConstSettings
-from ert.config.gen_kw_config import GenKwConfig
 from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_types import ObservationPlotLocations
@@ -121,7 +117,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
 class PlotWidget(QWidget):
     customizationTriggered = Signal()
-    _plotUpdateRequested = Signal()
     layerIndexChanged = Signal(int)
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
@@ -153,20 +148,6 @@ class PlotWidget(QWidget):
         self.resetLayerWidget.connect(self._toolbar.resetLayerWidget)
         self.showLayerWidget.connect(self._toolbar.showLayerWidget)
 
-        self._log_checkbox = QCheckBox("Log scale", self)
-        self._log_checkbox.setObjectName("log_scale_checkbox")
-        self._log_checkbox.setCheckable(True)
-        # only for histogram plot see _sync_log_checkbox
-        self._log_checkbox.setVisible(False)
-        self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
-        self._log_checkbox.clicked.connect(self.logLogScaleButtonUsage)
-        self._log_checkbox.toggled.connect(self._plotUpdateRequested)
-
-        checkbox_row = QHBoxLayout()
-        checkbox_row.addWidget(self._log_checkbox)
-        checkbox_row.setContentsMargins(16, 8, 16, 8)
-        checkbox_row.addStretch()
-        vbox.addLayout(checkbox_row)
         vbox.addWidget(self._toolbar)
         vbox.addSpacing(8)
         self.setLayout(vbox)
@@ -174,41 +155,12 @@ class PlotWidget(QWidget):
         self._log_scale_valid_values = True
         self.resetPlot()
 
-    @property
-    def plotUpdateRequested(self) -> pyqtBoundSignal:
-        return self._plotUpdateRequested
-
     def resetPlot(self) -> None:
         self._figure.clear()
-
-    def _sync_log_checkbox(self, key_def: PlotApiKeyDefinition | None = None) -> None:
-        if (
-            type(self._plotter).__name__
-            in {
-                "HistogramPlot",
-                "DistributionPlot",
-                "GaussianKDEPlot",
-            }
-            and self._log_scale_valid_values
-        ):
-            if key_def is not None:
-                a = key_def.parameter
-                if isinstance(a, GenKwConfig) and isinstance(
-                    a.distribution, ConstSettings
-                ):
-                    self._log_checkbox.setVisible(False)
-                    return
-            self._log_checkbox.setVisible(True)
-        else:
-            self._log_checkbox.setVisible(False)
 
     @property
     def name(self) -> str:
         return self._name
-
-    def logLogScaleButtonUsage(self) -> None:
-        logger.info(f"Plotwidget utility used: 'Log scale button' in tab '{self.name}'")
-        self._log_checkbox.clicked.disconnect()  # Log only once
 
     def updatePlot(
         self,
@@ -221,12 +173,6 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
-            self._sync_log_checkbox(key_def)
-            plot_context.log_scale = (
-                self._log_checkbox.isVisible()
-                and self._log_checkbox.isChecked()
-                and self._log_scale_valid_values
-            )
             self._plotter.plot(
                 self._figure,
                 plot_context,

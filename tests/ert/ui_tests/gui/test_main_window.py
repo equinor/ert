@@ -374,8 +374,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
             qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
 
         def get_log_checkbox():
-            w = plot_window._central_tab.currentWidget()
-            return w.findChild(QCheckBox, "log_scale_checkbox")
+            return plot_window.findChild(QCheckBox, "log_scale_checkbox")
 
         # make sure plotter remembers plot types selected previously
         response_index = 0  # responses are at the start, thus POLY_RES@0 is at index0
@@ -389,7 +388,8 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
         # no log scale checkbox yet
         cb = get_log_checkbox()
-        assert not cb.isVisibleTo(plot_window._central_tab.currentWidget())
+        assert cb is not None
+        assert not cb.isVisible()
 
         click_plotter_item(gen_kw_index)
         assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
@@ -406,15 +406,11 @@ def test_that_the_plot_window_contains_the_expected_elements(
         click_plotter_item(gen_kw_index)
         assert plot_window._central_tab.currentIndex() == gen_kw_alternate_index
 
-        # wait until the checkbox exists
-        qtbot.waitUntil(lambda: get_log_checkbox() is not None, timeout=2000)
         cb = get_log_checkbox()
-
-        # wait until it becomes visible
-        qtbot.waitUntil(
-            lambda: cb.isVisibleTo(plot_window._central_tab.currentWidget()) is True,
-            timeout=2000,
-        )
+        assert cb is not None
+        # COEFFS distributions start at 0 (UNIFORM 0 N) and esmda posterior
+        # values can go negative, so log scale is correctly suppressed here.
+        assert not cb.isVisible()
 
         # finally click all items
         for i in range(model.rowCount()):

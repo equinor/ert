@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 
 from PyQt6.QtWidgets import (
@@ -7,6 +8,8 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
+
+logger = logging.getLogger(__name__)
 
 
 class GeneralOptions:
@@ -32,9 +35,24 @@ class GeneralOptions:
         self._toggle_observations.setChecked(True)
         self._toggle_observations.stateChanged.connect(refresh_plot)
 
+        self._toggle_log_scale = QCheckBox("Log scale")
+        self._toggle_log_scale.setObjectName("log_scale_checkbox")
+        self._toggle_log_scale.setChecked(False)
+        self._toggle_log_scale.setVisible(False)
+
+        self._toggle_log_scale.setToolTip("Toggle data domain to log scale and back")
+
+        def log_log_scale_usage(_checked: bool) -> None:
+            logger.info("Plot sidebar option used: 'Log scale'")
+            self._toggle_log_scale.clicked.disconnect(log_log_scale_usage)
+
+        self._toggle_log_scale.clicked.connect(log_log_scale_usage)
+        self._toggle_log_scale.stateChanged.connect(refresh_plot)
+
         widgets: list[QWidget] = [
             self._toggle_legend,
             self._toggle_grid,
+            self._toggle_log_scale,
         ]
         if not is_everest:
             widgets.extend(
@@ -68,8 +86,18 @@ class GeneralOptions:
     def observations_checkbox_state(self) -> bool:
         return self._toggle_observations.isChecked()
 
+    @property
+    def log_checkbox_state(self) -> bool:
+        return self._toggle_log_scale.isChecked()
+
+    def set_log_visible(self, visible: bool) -> None:
+        self._toggle_log_scale.setVisible(visible)
+
     def set_history_visible(self, visible: bool) -> None:
         self._toggle_history.setVisible(visible)
 
     def set_observations_visible(self, visible: bool) -> None:
         self._toggle_observations.setVisible(visible)
+
+    def is_log_visible(self) -> bool:
+        return self._toggle_log_scale.isVisible()
