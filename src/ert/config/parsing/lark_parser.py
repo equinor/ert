@@ -470,16 +470,21 @@ def _unexpected_token_message(
     unexpected_token: Token,
     allowed: set[str],
 ) -> str:
-    if "EQUAL" in allowed:
-        line = content.splitlines()[error.line - 1].strip()
-        if _is_design2params_forward_model_line(line):
-            return (
-                "DESIGN2PARAMS forward model arguments must be named, not "
-                "positional. Use "
-                "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=dm.xlsx, "
-                "<designsheet>=DesignSheet, <defaultssheet>=DefaultValues)"
-            )
-    return f"Did not expect token: {unexpected_token}. Expected one of {allowed}"
+    default_message = (
+        f"Did not expect token: {unexpected_token}. Expected one of {allowed}"
+    )
+    if "EQUAL" not in allowed:
+        return default_message
+
+    line = content.splitlines()[error.line - 1].strip()
+    if not _is_design2params_forward_model_line(line):
+        return default_message
+
+    return (
+        "DESIGN2PARAMS forward model arguments must be named, not positional. Use "
+        "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=dm.xlsx, "
+        "<designsheet>=DesignSheet, <defaultssheet>=DefaultValues)"
+    )
 
 
 def _is_design2params_forward_model_line(line: str) -> bool:
