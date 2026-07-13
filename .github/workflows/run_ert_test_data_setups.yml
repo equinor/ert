@@ -64,6 +64,6 @@ jobs:
 
     - name: Test snake_oil_field
       run: |
-        pushd test-data/ert/snake_oil_field
+        pushd test-data/ert/snake_oil
         uv run ert test_run snake_oil.ert
         popd
