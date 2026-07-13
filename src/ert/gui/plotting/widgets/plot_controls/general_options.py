@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 
 class GeneralPlotOptions:
     def __init__(
-        self, connection_point: Callable[..., object], *, is_everest: bool
+        self,
+        connection_point: Callable[..., object],
+        *,
+        is_everest: bool,
     ) -> None:
 
         (

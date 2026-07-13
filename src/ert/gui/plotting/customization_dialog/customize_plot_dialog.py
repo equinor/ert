@@ -106,8 +106,11 @@ class PlotCustomizer(QObject):
             for customization_view in self._customization_dialog:
                 customization_view.apply_customization(plot_config)
 
-        history.apply_changes(plot_config)
+        self.update_plot_config(plot_config)
 
+    def update_plot_config(self, plot_config: PlotConfig) -> None:
+        history = self._get_plot_config_history()
+        history.apply_changes(plot_config)
         self._emit_changed_signal()
 
     def _revert_customization(

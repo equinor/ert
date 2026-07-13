@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Protocol, override
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from matplotlib.backend_bases import PickEvent
 from matplotlib.backends.backend_qt5agg import (  # type: ignore
     FigureCanvas,
     NavigationToolbar2QT,
@@ -117,6 +118,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
 class PlotWidget(QWidget):
     customizationTriggered = Signal()
+    axisLabelEditRequested = Signal(str)
     layerIndexChanged = Signal(int)
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
@@ -135,6 +137,7 @@ class PlotWidget(QWidget):
         self._figure = Figure()
         self._figure.set_layout_engine("tight")
         self._canvas = FigureCanvas(self._figure)
+        self._canvas.mpl_connect("pick_event", self._on_canvas_pick)
         self._canvas.setParent(self)
         self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._canvas.setFocus()
@@ -182,6 +185,7 @@ class PlotWidget(QWidget):
                 obs_loc,
                 key_def,
             )
+            self._enable_axis_label_picking()
             self._canvas.draw()
         except Exception as e:
             logger.exception(e)
@@ -196,3 +200,18 @@ class PlotWidget(QWidget):
                 "An error occurred during plotting. "
                 "This stack trace is helpful for diagnosing the problem."
             )
+
+    def _enable_axis_label_picking(self) -> None:
+        for axes in self._figure.axes:
+            axes.xaxis.label.set_picker(True)
+            axes.yaxis.label.set_picker(True)
+
+    def _on_canvas_pick(self, event: PickEvent) -> None:
+        for axes in self._figure.axes:
+            if event.artist is axes.xaxis.label:
+                self.axisLabelEditRequested.emit("x")
+                return
+
+            if event.artist is axes.yaxis.label:
+                self.axisLabelEditRequested.emit("y")
+                return
