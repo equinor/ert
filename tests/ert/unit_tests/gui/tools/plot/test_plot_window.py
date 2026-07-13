@@ -18,6 +18,7 @@ from ert.gui.plotting.plot_window import (
     DISTRIBUTION,
     GAUSSIAN_KDE,
     HISTOGRAM,
+    STATISTICS,
     PlotWindow,
     create_error_dialog,
     make_seismic_y_label,
@@ -301,7 +302,136 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     assert get_x_axis_scale() == "log", "Plot scale should still be log"
 
 
-def test_that_unavailable_history_and_observations_checkboxes_are_hidden(
+@pytest.mark.parametrize(
+    ("key", "history_data_available", "observations_available"),
+    [
+        pytest.param("summary", False, False, id="neither-available"),
+        pytest.param("summary", True, False, id="history-available"),
+        pytest.param("summary", False, True, id="observations-available"),
+        pytest.param("summary", True, True, id="both-available"),
+        pytest.param("summaryH", False, False, id="history-key"),
+        pytest.param("summaryH", False, True, id="history-key-with-observations"),
+        pytest.param("WOPRH:OP1", False, False, id="well-history-key"),
+    ],
+)
+def test_that_history_and_observations_checkboxes_match_data_availability(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+    history_data_available: bool,
+    observations_available: bool,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    key_def = PlotApiKeyDefinition(
+        key,
+        index_type="TIME",
+        metadata={"data_origin": "SUMMARY"},
+        observations=observations_available,
+        dimensionality=1,
+        response=MagicMock(type="summary"),
+    )
+    mock_plot_api.responses_api_key_defs = [key_def]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = history_data_available
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    history_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "History"
+    )
+    is_history_key = key.endswith("H") or "H:" in key
+    assert history_checkbox.isVisible() is history_data_available
+    if is_history_key:
+        mock_plot_api.has_history_data.assert_not_called()
+
+    observations_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "Observations"
+    )
+    assert observations_checkbox.isVisible() is observations_available
+
+
+def test_that_history_checkbox_visibility_updates_when_switching_keys(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    key_defs = [
+        PlotApiKeyDefinition(
+            "summary",
+            index_type="TIME",
+            metadata={"data_origin": "SUMMARY"},
+            observations=False,
+            dimensionality=1,
+            response=MagicMock(type="summary"),
+        ),
+        PlotApiKeyDefinition(
+            "summaryH",
+            index_type="TIME",
+            metadata={"data_origin": "SUMMARY"},
+            observations=False,
+            dimensionality=1,
+            response=MagicMock(type="summary"),
+        ),
+    ]
+    mock_plot_api.responses_api_key_defs = key_defs
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = True
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    history_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "History"
+    )
+    data_type_keys_widget = plot_window._data_type_keys_widget.data_type_keys_widget
+    filter_model = plot_window._data_type_keys_widget.filter_model
+
+    assert history_checkbox.isVisible()
+
+    mock_plot_api.has_history_data.reset_mock()
+    data_type_keys_widget.setCurrentIndex(filter_model.index(1, 0))
+    qtbot.waitUntil(lambda: not history_checkbox.isVisible(), timeout=5000)
+    mock_plot_api.has_history_data.assert_not_called()
+
+    data_type_keys_widget.setCurrentIndex(filter_model.index(0, 0))
+    qtbot.waitUntil(history_checkbox.isVisible, timeout=5000)
+    mock_plot_api.has_history_data.assert_called_once_with("summary")
+
+
+def test_that_general_option_checkboxes_change_rendered_plot(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     mock_plot_api_cls = MagicMock(spec=PlotApi)
@@ -321,31 +451,106 @@ def test_that_unavailable_history_and_observations_checkboxes_are_hidden(
         index_type="TIME",
         metadata={"data_origin": "SUMMARY"},
         observations=False,
-        dimensionality=1,
+        dimensionality=2,
         response=MagicMock(type="summary"),
+    )
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
     )
     mock_plot_api.responses_api_key_defs = [key_def]
     mock_plot_api.parameters_api_key_defs = []
-    mock_plot_api.has_history_data.return_value = False
-    mock_plot_api.get_all_ensembles.return_value = []
+    mock_plot_api.data_for_response.return_value = pd.DataFrame(
+        {
+            pd.Timestamp("2023-01-01"): [1.0, 2.0],
+            pd.Timestamp("2023-01-02"): [2.0, 3.0],
+        },
+        index=pd.Index([0, 1], name="Realization"),
+    )
+    mock_plot_api.has_history_data.return_value = True
+    mock_plot_api.history_data.return_value = pd.DataFrame(
+        {"history": [1.5, 2.5]},
+        index=pd.to_datetime(["2023-01-01", "2023-01-02"]),
+    )
+    mock_plot_api.get_all_ensembles.return_value = [ensemble]
 
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
 
+    statistics_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.tabText(index) == STATISTICS
+    )
+    plot_window._central_tab.setCurrentIndex(statistics_index)
+    plot_widget = cast(PlotWidget, plot_window._central_tab.currentWidget())
+    qtbot.waitUntil(lambda: len(plot_widget._figure.axes) == 1, timeout=5000)
+
+    def current_axes():
+        return plot_widget._figure.axes[0]
+
+    def current_legend_labels() -> set[str]:
+        legend = current_axes().get_legend()
+        return (
+            set()
+            if legend is None
+            else {text.get_text() for text in legend.get_texts()}
+        )
+
+    legend_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "Legend"
+    )
+    grid_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "Grid"
+    )
     history_checkbox = next(
         checkbox
         for checkbox in plot_window.findChildren(QCheckBox)
         if checkbox.text() == "History"
     )
-    assert not history_checkbox.isVisible()
+    assert current_axes().get_legend() is not None
+    assert "History" in current_legend_labels()
+    assert any(gridline.get_visible() for gridline in current_axes().get_xgridlines())
 
-    observations_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "Observations"
+    history_checkbox.setChecked(False)
+    legend_checkbox.setChecked(False)
+    grid_checkbox.setChecked(False)
+    qtbot.waitUntil(
+        lambda: "History" not in current_legend_labels(),
+        timeout=5000,
     )
-    assert not observations_checkbox.isVisible()
+    qtbot.waitUntil(lambda: current_axes().get_legend() is None, timeout=5000)
+    qtbot.waitUntil(
+        lambda: (
+            not any(
+                gridline.get_visible() for gridline in current_axes().get_xgridlines()
+            )
+        ),
+        timeout=5000,
+    )
+
+    history_checkbox.setChecked(True)
+    legend_checkbox.setChecked(True)
+    grid_checkbox.setChecked(True)
+    qtbot.waitUntil(
+        lambda: "History" in current_legend_labels(),
+        timeout=5000,
+    )
+    qtbot.waitUntil(lambda: current_axes().get_legend() is not None, timeout=5000)
+    qtbot.waitUntil(
+        lambda: any(
+            gridline.get_visible() for gridline in current_axes().get_xgridlines()
+        ),
+        timeout=5000,
+    )
 
 
 def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
@@ -475,9 +680,7 @@ def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
 
     mock_plot_api.responses_api_key_defs = []
     mock_plot_api.parameters_api_key_defs = [key_def]
-    mock_plot_api.data_for_parameter.return_value = pd.DataFrame(
-        {0: [-0.1, -0.5, -0.9]}
-    )
+    mock_plot_api.data_for_parameter.return_value = pd.DataFrame({0: values})
     mock_plot_api.has_history_data.return_value = False
     mock_plot_api.get_all_ensembles.return_value = [
         EnsembleObject(

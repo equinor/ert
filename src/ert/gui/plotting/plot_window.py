@@ -570,13 +570,13 @@ class PlotWindow(QMainWindow):
             plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
             plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
             if not self.is_everest:
-                self._general_options.set_history_visible(
-                    is_history_key or history_data_available
+                self._general_options.set_history_visible(history_data_available)
+                self._general_options.set_observations_visible(
+                    key_def.observations and selected_tab != MISFITS
                 )
-                self._general_options.set_observations_visible(key_def.observations)
                 plot_config.set_history_enabled(
                     self._general_options.history_checkbox_state
-                    and (is_history_key or history_data_available)
+                    and history_data_available
                 )
                 plot_config.set_observations_enabled(
                     self._general_options.observations_checkbox_state
