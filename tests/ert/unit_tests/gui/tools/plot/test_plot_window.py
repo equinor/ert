@@ -15,6 +15,9 @@ from ert.gui.plotting.ert_plots.gaussian_kde import plotGaussianKDE
 from ert.gui.plotting.models import DataTypeSeparator
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.plotting.plot_window import (
+    DISTRIBUTION,
+    GAUSSIAN_KDE,
+    HISTOGRAM,
     PlotWindow,
     create_error_dialog,
     make_seismic_y_label,
@@ -194,9 +197,10 @@ def test_warning_is_visible_on_incompatible_plot_api_version(
 def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_checkbox(
     qtbot: QtBot, monkeypatch
 ):
-    """This test verifies that the log scale checkbox is hidden when plotting a gen_kw
-    with negative values. It also makes sure that the plotter remembers if log scale
-    was used, and re-applies it when switching back.
+    """Verify sidebar log-scale checkbox behavior for GEN_KW values.
+
+    The checkbox is hidden for keys with negative values, and its checked state
+    is preserved when switching back to a key that supports log scale.
     """
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
@@ -262,7 +266,8 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     plot_widget = plot_window._central_tab.currentWidget()
     assert plot_widget is not None
 
-    log_checkbox = plot_widget.findChild(QCheckBox, name="log_scale_checkbox")
+    log_checkbox = plot_window.findChild(QCheckBox, name="log_scale_checkbox")
+    assert log_checkbox is not None
     assert log_checkbox.isVisible()
     assert not log_checkbox.isChecked()
 
@@ -275,8 +280,7 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
 
     assert get_x_axis_scale() == "linear"
 
-    qtbot.mouseClick(log_checkbox, Qt.MouseButton.LeftButton)
-    # Default selection is the first key (gen_kw_a), which has only positive values.
+    log_checkbox.setChecked(True)
     qtbot.waitUntil(lambda: get_x_axis_scale() == "log", timeout=5000)
     assert log_checkbox.isChecked()
 
@@ -342,6 +346,166 @@ def test_that_unavailable_history_and_observations_checkboxes_are_hidden(
         if checkbox.text() == "Observations"
     )
     assert not observations_checkbox.isVisible()
+
+
+def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.PlotApi",
+        mock_plot_api_cls,
+    )
+
+    key_def = PlotApiKeyDefinition(
+        "gen_kw",
+        index_type=None,
+        metadata={"data_origin": "GEN_KW"},
+        observations=False,
+        dimensionality=1,
+        parameter=GenKwConfig(
+            name="gen_kw",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        ),
+    )
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = [key_def]
+    mock_plot_api.data_for_parameter.return_value = pd.DataFrame({0: [0.1, 0.5, 0.9]})
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    tab_index_by_name = {
+        plot_window._central_tab.tabText(index): index
+        for index in range(plot_window._central_tab.count())
+    }
+
+    histogram_index = tab_index_by_name[HISTOGRAM]
+    assert plot_window._central_tab.isTabEnabled(histogram_index)
+
+    log_scale_tabs = {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE}
+    non_log_scale_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.isTabEnabled(index)
+        and plot_window._central_tab.tabText(index) not in log_scale_tabs
+    )
+
+    log_checkbox = plot_window.findChild(
+        QCheckBox,
+        name="log_scale_checkbox",
+    )
+    assert log_checkbox is not None
+
+    plot_window._central_tab.setCurrentIndex(histogram_index)
+    qtbot.waitUntil(log_checkbox.isVisible, timeout=5000)
+
+    log_checkbox.setChecked(True)
+    assert log_checkbox.isChecked()
+
+    plot_window._central_tab.setCurrentIndex(non_log_scale_index)
+    qtbot.waitUntil(lambda: not log_checkbox.isVisible(), timeout=5000)
+
+    plot_window._central_tab.setCurrentIndex(histogram_index)
+    qtbot.waitUntil(log_checkbox.isVisible, timeout=5000)
+
+    assert log_checkbox.isChecked()
+
+
+@pytest.mark.parametrize("tab_name", [HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE])
+@pytest.mark.parametrize(
+    ("values", "expected_visible"),
+    [
+        pytest.param([-0.1, -0.5, -0.9], False, id="negative-values"),
+        pytest.param([0.1, 0.1, 0.1], False, id="constant-values"),
+        pytest.param([0.1, 0.5, 0.9], True, id="positive-values"),
+    ],
+)
+def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    tab_name: str,
+    values: list[float],
+    expected_visible: bool,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    key_def = PlotApiKeyDefinition(
+        "gen_kw",
+        index_type=None,
+        metadata={"data_origin": "GEN_KW"},
+        observations=False,
+        dimensionality=1,
+        parameter=GenKwConfig(
+            name="gen_kw",
+            distribution={"name": "uniform", "min": 0.0, "max": 1.0},
+        ),
+    )
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = [key_def]
+    mock_plot_api.data_for_parameter.return_value = pd.DataFrame(
+        {0: [-0.1, -0.5, -0.9]}
+    )
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    tab_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.tabText(index) == tab_name
+    )
+    plot_window._central_tab.setCurrentIndex(tab_index)
+
+    log_checkbox = plot_window.findChild(QCheckBox, name="log_scale_checkbox")
+    assert log_checkbox is not None
+    qtbot.waitUntil(
+        lambda: log_checkbox.isVisible() is expected_visible,
+        timeout=5000,
+    )
 
 
 @pytest.mark.slow
