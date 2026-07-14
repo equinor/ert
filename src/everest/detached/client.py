@@ -216,11 +216,18 @@ def get_opt_status_from_batch_result_event(
 
     assert event.batch is not None
 
+    if event.result_type == "FunctionResult":
+        return {
+            "batch": event.batch,
+            "controls": event.results["controls"],
+            "objective_value": event.results["total_objective_value"],
+            "expected_objectives": event.results["objectives"],
+            "failures": event.failures,
+        }
+
     return {
         "batch": event.batch,
-        "controls": event.results["controls"],
-        "objective_value": event.results["total_objective_value"],
-        "expected_objectives": event.results["objectives"],
+        "failures": event.failures,
     }
 
 
@@ -253,14 +260,13 @@ def start_monitor(
                     message = websocket.recv(timeout=1.0)
                     event = status_event_from_json(message)
                     if isinstance(event, EverestBatchResultEvent):
-                        if event.result_type == "FunctionResult":
-                            callback(
-                                {
-                                    OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(  # noqa: E501
-                                        event
-                                    )
-                                }
-                            )
+                        callback(
+                            {
+                                OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
+                                    event
+                                )
+                            }
+                        )
                     else:
                         callback({SIM_PROGRESS_ID: event})
                 except TimeoutError:
