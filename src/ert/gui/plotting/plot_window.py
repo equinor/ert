@@ -68,6 +68,7 @@ from .widgets.plot_controls import (
     EverestControlsPlotOptions,
     GeneralPlotOptions,
     StatisticsOptions,
+    DistributionOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
@@ -309,6 +310,7 @@ class PlotWindow(QMainWindow):
             self._general_options.titleEditRequested.connect(self._edit_title)
             self._boxplot_options = BoxplotOptions(self.update_plot)
             self._statistics_options = StatisticsOptions(self.update_plot)
+            self._distribution_options = DistributionOptions(self.update_plot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
@@ -319,6 +321,7 @@ class PlotWindow(QMainWindow):
                     self._everest_controls_group,
                     self._boxplot_options.get_widget(),
                     self._statistics_options.get_widget(),
+                    self._distribution_options.get_widget(),
                 ]
             )
             right_layout.addStretch(1)
@@ -329,6 +332,7 @@ class PlotWindow(QMainWindow):
             self._everest_controls_plot_options.get_widget().setVisible(False)
             self._boxplot_options.get_widget().setVisible(False)
             self._statistics_options.get_widget().setVisible(False)
+            self._distribution_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
             self.setCentralWidget(self._central_tab)
@@ -596,6 +600,7 @@ class PlotWindow(QMainWindow):
             )
             self._boxplot_options.update_plot_context(plot_context)
             self._everest_controls_plot_options.update_plot_context(plot_context)
+            self._distribution_options.update_plot_context(plot_context)
 
             # Check if key is a history key.
             # If it is, it already has the data it needs.
