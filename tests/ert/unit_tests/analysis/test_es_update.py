@@ -129,26 +129,26 @@ def test_update_report(
     [
         (
             ObservationSettings(outlier_settings=OutlierSettings(alpha=0.1)),
-            7,
+            9,
             0,
             0,
-            3,
+            1,
         ),
         (
             ObservationSettings(outlier_settings=OutlierSettings(std_cutoff=0.1)),
             0,
-            5,
+            6,
             0,
-            5,
+            4,
         ),
         (
             ObservationSettings(
-                outlier_settings=OutlierSettings(alpha=0.1, std_cutoff=0.1)
+                outlier_settings=OutlierSettings(alpha=0.7, std_cutoff=0.1)
             ),
-            4,
-            5,
+            2,
+            6,
             0,
-            1,
+            2,
         ),
     ],
 )
@@ -343,16 +343,16 @@ def test_that_posterior_gen_kw_values_match_expected_on_snake_oil(
     they are just documenting the current behavior.
     """
     expected_gen_kw = [
-        0.3583003662668918,
-        -0.6963036481068505,
-        0.1692532536735615,
-        -0.25879474869247987,
-        0.4112094301295359,
-        0.1706147980215084,
-        -1.2846974848162178,
-        -0.8177209642885211,
-        -0.8612315289128175,
-        0.8531729483526392,
+        1.070891415038797,
+        -0.6939789953658908,
+        0.48987403793464784,
+        -0.08438966696307404,
+        -0.1932598789932638,
+        0.5055441000935761,
+        -0.33051483699153983,
+        1.3601051184703006,
+        0.22172006473775288,
+        0.5768112245743706,
     ]
     ert_config = snake_oil_case_storage
 
@@ -384,12 +384,24 @@ def test_that_posterior_gen_kw_values_match_expected_on_snake_oil(
         strategy_map=strategy_map,
     )
 
+    param_groups = ["SNAKE_OIL_PARAM_BPR", "SNAKE_OIL_PARAM_OP1", "SNAKE_OIL_PARAM_OP2"]
+
     sim_gen_kw = list(
-        prior_ens.load_parameters_numpy("SNAKE_OIL_PARAM", np.array([0])).flatten()
+        np.concatenate(
+            [
+                prior_ens.load_parameters_numpy(group, np.array([0])).flatten()
+                for group in param_groups
+            ]
+        )
     )
 
     target_gen_kw = list(
-        posterior_ens.load_parameters_numpy("SNAKE_OIL_PARAM", np.array([0])).flatten()
+        np.concatenate(
+            [
+                posterior_ens.load_parameters_numpy(group, np.array([0])).flatten()
+                for group in param_groups
+            ]
+        )
     )
 
     # Check that prior is not equal to posterior after updationg
