@@ -723,11 +723,15 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
             failures = defaultdict(list)
             if ens.everest_realization_info is not None:
-                for r in ens.everest_realization_info:
-                    if ens.has_failure(r):
-                        m = ens.everest_realization_info[r]["model_realization"]
-                        p = ens.everest_realization_info[r]["perturbation"]
-                        failures[m].append(p)
+                for realization in ens.everest_realization_info:
+                    if ens.has_failure(realization):
+                        model_realization = ens.everest_realization_info[realization][
+                            "model_realization"
+                        ]
+                        perturbation = ens.everest_realization_info[realization][
+                            "perturbation"
+                        ]
+                        failures[model_realization].append(perturbation)
 
             self.send_event(
                 EverestBatchResultEvent(
