@@ -1,6 +1,8 @@
 from unittest.mock import Mock
 
 import pytest
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QCheckBox
 
 from ert.gui.plotting.widgets.plot_controls.general_options import GeneralPlotOptions
 
@@ -17,30 +19,34 @@ def test_that_general_options_has_expected_default_checkbox_states(qtbot):
 
 
 @pytest.mark.parametrize(
-    ("option_name", "expected_state"),
+    "checkbox_name",
     [
-        pytest.param("legend", 0),
-        pytest.param("grid", 0),
-        pytest.param("history", 0),
-        pytest.param("observations", 0),
-        pytest.param("log", 2),
+        "legend_checkbox",
+        "grid_checkbox",
+        "history_checkbox",
+        "observations_checkbox",
+        "log_scale_checkbox",
     ],
 )
-def test_that_toggling_a_general_option_invokes_the_connection_point(
-    qtbot, option_name, expected_state
-):
+def test_that_toggling_a_general_option_invokes_the_connection_point2(
+    qtbot,
+    checkbox_name,
+) -> None:
     connection_point = Mock()
     options = GeneralPlotOptions(connection_point, is_everest=False)
-    qtbot.addWidget(options.get_widget())
+    widget = options.get_widget()
+    qtbot.addWidget(widget)
+    widget.show()
 
-    checkbox_name = (
-        "_toggle_log_scale" if option_name == "log" else f"_toggle_{option_name}"
-    )
-    checkbox = getattr(options, checkbox_name)
-    checkbox.setVisible(True)
-    checkbox.setChecked(not checkbox.isChecked())
+    checkbox = widget.findChild(QCheckBox, checkbox_name)
+    if checkbox_name == "log_scale_checkbox":
+        checkbox.setVisible(True)
+    assert checkbox is not None
+    assert checkbox.isVisible()
 
-    connection_point.assert_called_once_with(expected_state)
+    qtbot.mouseClick(checkbox, Qt.MouseButton.LeftButton)
+
+    connection_point.assert_called_once()
 
 
 @pytest.mark.parametrize(

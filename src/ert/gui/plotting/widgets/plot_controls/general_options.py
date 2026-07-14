@@ -16,22 +16,22 @@ class GeneralPlotOptions:
     def __init__(
         self, connection_point: Callable[..., object], *, is_everest: bool
     ) -> None:
-        self._toggle_legend = QCheckBox("Legend")
+        self._toggle_legend = QCheckBox("Show Legend")
         self._toggle_legend.setObjectName("legend_checkbox")
         self._toggle_legend.setChecked(True)
         self._toggle_legend.stateChanged.connect(connection_point)
 
-        self._toggle_grid = QCheckBox("Grid")
+        self._toggle_grid = QCheckBox("Show Grid")
         self._toggle_grid.setObjectName("grid_checkbox")
         self._toggle_grid.setChecked(True)
         self._toggle_grid.stateChanged.connect(connection_point)
 
-        self._toggle_history = QCheckBox("History")
+        self._toggle_history = QCheckBox("Show History")
         self._toggle_history.setObjectName("history_checkbox")
         self._toggle_history.setChecked(True)
         self._toggle_history.stateChanged.connect(connection_point)
 
-        self._toggle_observations = QCheckBox("Observations")
+        self._toggle_observations = QCheckBox("Show Observations")
         self._toggle_observations.setObjectName("observations_checkbox")
         self._toggle_observations.setChecked(True)
         self._toggle_observations.stateChanged.connect(connection_point)
@@ -67,6 +67,7 @@ class GeneralPlotOptions:
             "General options",
             create_group_layout(widgets),
         )
+        self._general_options.setObjectName("general_options")
 
     def get_widget(self) -> QGroupBox:
         return self._general_options
