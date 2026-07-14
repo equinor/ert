@@ -62,6 +62,12 @@ class PlotContext:
         self._box_plot: bool = True
         self._mean: bool = True
 
+        # Distribution plot
+        self._histogram: bool = True
+        self._rug_plot: bool = True
+        self._gkde_plot: bool = True
+        self._by_density: bool = True
+
         self._plot_type: PlotType | None = None
 
     @property
@@ -187,3 +193,35 @@ class PlotContext:
     @mean.setter
     def mean(self, value: bool) -> None:
         self._mean = value
+
+    @property
+    def gkde_plot(self) -> bool:
+        return self._gkde_plot
+
+    @gkde_plot.setter
+    def gkde_plot(self, value: bool) -> None:
+        self._gkde_plot = value
+
+    @property
+    def by_density(self) -> bool:
+        return self._by_density
+
+    @by_density.setter
+    def by_density(self, value: bool) -> None:
+        self._by_density = value
+
+    @property
+    def rug_plot(self) -> bool:
+        return self._rug_plot
+
+    @rug_plot.setter
+    def rug_plot(self, value: bool) -> None:
+        self._rug_plot = value
+
+    @property
+    def histogram(self) -> bool:
+        return self._histogram
+
+    @histogram.setter
+    def histogram(self, value: bool) -> None:
+        self._histogram = value
