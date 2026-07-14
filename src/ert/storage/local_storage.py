@@ -37,6 +37,29 @@ _LOCAL_STORAGE_VERSION = 36
 def open_storage(
     path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
 ) -> ert.storage.Storage:
+    """
+    Opens the local storage at the given path.
+
+    Parameters
+    ----------
+    path : {str, path-like}
+        The file system path to the storage.
+    mode : {ModeLiteral, Mode}
+        The access mode for the storage ("r" for read, "w" for write).
+        Defaults to read.
+
+    Returns
+    -------
+    storage : Storage
+        The opened storage.
+
+    Raises
+    ------
+    ErtStoragePermissionError
+        If the storage cannot be accessed due to insufficient permissions.
+    ErtStorageException
+        If the storage cannot be opened for any other reason.
+    """
     _ = LocalStorage.check_migration_needed(Path(path))
 
     try:
@@ -97,6 +120,16 @@ class LocalStorage(BaseMode):
             The access mode for the storage (read/write).
         stage_for_migration : bool
             Whether to avoid reloading storage to allow migration
+
+        Raises
+        ------
+        TimeoutError
+            If the storage lock cannot be acquired in write mode.
+        ValueError
+            If no index.json is found but other storage components exist.
+        RuntimeError
+            If the storage is opened in read-only mode but its version is too
+            old and requires migration.
         """
 
         self.path = Path(path).absolute()
@@ -139,6 +172,25 @@ class LocalStorage(BaseMode):
 
     @staticmethod
     def check_migration_needed(storage_dir: Path) -> bool:
+        """
+        Checks whether the storage at the given path needs to be migrated.
+
+        Parameters
+        ----------
+        storage_dir : Path
+            The file system path to the storage.
+
+        Returns
+        -------
+        migration_needed : bool
+            True if the storage version is older than the current version and
+            must be migrated, False otherwise.
+
+        Raises
+        ------
+        ErtStorageException
+            If the storage version is newer than the current version.
+        """
         try:
             version = _storage_version(storage_dir)
         except FileNotFoundError:
@@ -155,6 +207,21 @@ class LocalStorage(BaseMode):
 
     @staticmethod
     def perform_migration(path: Path) -> None:
+        """
+        Migrates the storage at the given path to the current version.
+
+        Does nothing if the storage is already up-to-date.
+
+        Parameters
+        ----------
+        path : Path
+            The file system path to the storage.
+
+        Raises
+        ------
+        ErtStorageException
+            If the storage version is newer than the current version.
+        """
         if LocalStorage.check_migration_needed(path):
             with LocalStorage(path, Mode("w"), stage_for_migration=True) as storage:
                 storage._migrate(storage.version)
@@ -189,6 +256,11 @@ class LocalStorage(BaseMode):
         -------
         local_experiment : LocalExperiment
             The experiment associated with the given UUID.
+
+        Raises
+        ------
+        KeyError
+            If no experiment with the given UUID is found.
         """
 
         return self._experiments[uuid]
@@ -196,14 +268,17 @@ class LocalStorage(BaseMode):
     def get_experiment_by_name(self, name: str) -> LocalExperiment:
         """
         Retrieves an experiment by name.
+
         Parameters
         ----------
         name : str
             The name of the experiment to retrieve.
+
         Returns
         -------
         local_experiment : LocalExperiment
             The experiment associated with the given name.
+
         Raises
         ------
         KeyError
@@ -220,12 +295,20 @@ class LocalStorage(BaseMode):
 
         Parameters
         ----------
-        uuid : UUID
+        uuid : {UUID, str}
             The UUID of the ensemble to retrieve.
 
         Returns
+        -------
         local_ensemble : LocalEnsemble
             The ensemble associated with the given UUID.
+
+        Raises
+        ------
+        ValueError
+            If uuid is a string that is not a valid UUID.
+        KeyError
+            If no ensemble with the given UUID is found.
         """
         if isinstance(uuid, str):
             uuid = UUID(uuid)
@@ -309,6 +392,15 @@ class LocalStorage(BaseMode):
 
     @require_write
     def _acquire_lock(self) -> None:
+        """
+        Acquires the exclusive file lock for the storage.
+
+        Raises
+        ------
+        TimeoutError
+            If the lock cannot be acquired within ``LOCK_TIMEOUT`` seconds,
+            typically because another ERT process is using the same ENSPATH.
+        """
         self._lock = FileLock(self.path / "storage.lock")
         try:
             self._lock.acquire(timeout=self.LOCK_TIMEOUT)
@@ -349,23 +441,23 @@ class LocalStorage(BaseMode):
 
         Parameters
         ----------
-        parameters : list of ParameterConfig, optional
-            The parameters for the experiment.
-        responses : list of ResponseConfig, optional
-            The responses for the experiment.
-        observations : dict of str to observation datasets, optional
-            The observations for the experiment.
-        simulation_arguments : SimulationArguments, optional
-            The simulation arguments for the experiment.
+        experiment_config : ExperimentConfig, optional
+            The configuration for the experiment, holding parameters,
+            responses, observations and other experiment settings. An empty
+            configuration is used if none is provided.
         name : str, optional
-            The name of the experiment.
-        templates : list of tuple[str, str], optional
-            Run templates for the experiment. Defaults to None.
+            The name of the experiment. If None, the current date in ISO
+            format (YYYY-MM-DD) is used.
 
         Returns
         -------
         local_experiment : LocalExperiment
             The newly created experiment.
+
+        Raises
+        ------
+        FileExistsError
+            If an experiment directory with the generated id already exists.
         """
         if experiment_config is None:
             experiment_config = ExperimentConfig()
@@ -398,9 +490,6 @@ class LocalStorage(BaseMode):
         """
         Creates a new ensemble in the storage.
 
-        Raises a ValueError if the ensemble size is larger than the prior
-        ensemble.
-
         Parameters
         ----------
         experiment : {LocalExperiment, UUID}
@@ -418,6 +507,13 @@ class LocalStorage(BaseMode):
         -------
         local_ensemble : LocalEnsemble
             The newly created ensemble.
+
+        Raises
+        ------
+        ValueError
+            If the ensemble size is larger than the prior ensemble.
+        FileExistsError
+            If an ensemble directory with the generated id already exists.
         """
 
         experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
@@ -694,6 +790,27 @@ class LocalStorage(BaseMode):
 
 
 def _storage_version(path: Path) -> int:
+    """
+    Determines the storage version at the given path.
+
+    Parameters
+    ----------
+    path : Path
+        The file system path to the storage.
+
+    Returns
+    -------
+    version : int
+        The storage version. Returns the current version if the path does not
+        exist, and 0 if the path holds legacy block storage.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the path exists but contains neither an index.json nor block storage.
+    NotImplementedError
+        If the index.json does not contain a version key.
+    """
     if not path.exists():
         return _LOCAL_STORAGE_VERSION
     if not (path / "index.json").exists():
@@ -736,13 +853,15 @@ def local_storage_get_ert_config() -> ErtConfig:
     This function should be called after `local_storage_set_ert_config` has
     been used to set the ErtConfig instance.
 
-    Raises an AssertionError uf the ErtConfig has not been set before calling
-    this function.
-
     Returns
     -------
     ert_config : ErtConfig
         The ErtConfig instance.
+
+    Raises
+    ------
+    AssertionError
+        If the ErtConfig has not been set before calling this function.
     """
 
     assert _migration_ert_config is not None, (
