@@ -32,7 +32,6 @@ from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.gui.plotting.ert_plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
-    GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
     StatisticsPlot,
@@ -59,6 +58,7 @@ from .utils.qt_creator import create_group_box, create_group_layout, create_side
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
+    DistributionOptions,
     EverestControlsPlotOptions,
     GeneralPlotOptions,
     MisfitsOptions,
@@ -68,7 +68,6 @@ from .widgets.plot_widget import Plotter, PlotWidget
 
 CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
 DISTRIBUTION = "Distribution"
-GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
@@ -240,7 +239,6 @@ class PlotWindow(QMainWindow):
                 self.addPlotWidget(STATISTICS, StatisticsPlot())
                 self.addPlotWidget(MISFITS, MisfitsPlot())
                 self.addPlotWidget(HISTOGRAM, HistogramPlot())
-                self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
                 self.addPlotWidget(DISTRIBUTION, DistributionPlot())
                 self.addPlotWidget(
                     CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot()
@@ -334,6 +332,8 @@ class PlotWindow(QMainWindow):
             )
             self._misfits_options = MisfitsOptions(self.updatePlot)
 
+            self._distribution_options = DistributionOptions(self.updatePlot)
+
             right_container = QWidget()
             right_layout = create_group_layout(
                 [
@@ -342,6 +342,7 @@ class PlotWindow(QMainWindow):
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
                     self._misfits_options.get_widget(),
+                    self._distribution_options.get_widget(),
                 ]
             )
             right_container.setLayout(right_layout)
@@ -349,6 +350,7 @@ class PlotWindow(QMainWindow):
             self._everest_controls_group.setVisible(False)
             self._everest_controls_plot_options.get_widget().setVisible(False)
             self._misfits_options.get_widget().setVisible(False)
+            self._distribution_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
             splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -416,6 +418,10 @@ class PlotWindow(QMainWindow):
 
         self._misfits_options.get_widget().setVisible(plot_widget.name == MISFITS)
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
+
+        self._distribution_options.get_widget().setVisible(
+            plot_widget.name == DISTRIBUTION
+        )
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
@@ -601,7 +607,6 @@ class PlotWindow(QMainWindow):
             log_scale_available = log_scale_valid_values and selected_tab in {
                 HISTOGRAM,
                 DISTRIBUTION,
-                GAUSSIAN_KDE,
             }
 
             self._general_options.set_log_visible(log_scale_available)
@@ -612,6 +617,10 @@ class PlotWindow(QMainWindow):
 
             plot_context.outliers = self._misfits_options.outliers_checkbox_state
 
+            plot_context.histogram = self._distribution_options.histogram_checkbox_state
+            plot_context.rug_plot = self._distribution_options.rug_checkbox_state
+            plot_context.gkde_plot = self._distribution_options.gkde_checkbox_state
+            plot_context.by_density = self._distribution_options.histogram_by_density
             # Check if key is a history key.
             # If it is, it already has the data it needs.
             if is_history_key:
@@ -673,14 +682,11 @@ class PlotWindow(QMainWindow):
         if plot_widget.name in {ENSEMBLE, STATISTICS}:
             x_axis_type = preferred_x_axis_format
             y_axis_type = PlotContext.VALUE_AXIS
-        elif plot_widget.name in {DISTRIBUTION, CROSS_ENSEMBLE_STATISTICS}:
+        elif plot_widget.name == CROSS_ENSEMBLE_STATISTICS:
             y_axis_type = PlotContext.VALUE_AXIS
         elif plot_widget.name == HISTOGRAM:
             x_axis_type = PlotContext.VALUE_AXIS
             y_axis_type = PlotContext.COUNT_AXIS
-        elif plot_widget.name == GAUSSIAN_KDE:
-            x_axis_type = PlotContext.VALUE_AXIS
-            y_axis_type = PlotContext.DENSITY_AXIS
 
         self._plot_customizer.set_axis_types(x_axis_type, y_axis_type)
 

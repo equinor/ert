@@ -40,8 +40,11 @@ def test_that_setting_distribution_option_state_updates_underlying_checkbox(qtbo
     assert options.histogram_by_density is False
 
 
-def test_that_selecting_and_unselecting_all_options_updates(qtbot):
-    options = DistributionOptions(Mock())
+def test_that_unchecking_each_checkbox_unchecks_it_and_invokes_connection_point(
+    qtbot,
+):
+    connection_point = Mock()
+    options = DistributionOptions(connection_point)
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
@@ -49,6 +52,7 @@ def test_that_selecting_and_unselecting_all_options_updates(qtbot):
     for checkbox_name in ["histogram_checkbox", "gkde_checkbox", "rug_checkbox"]:
         find_and_click_checkbox(widget, checkbox_name, qtbot, QCheckBox)
         assert widget.findChild(QCheckBox, checkbox_name).isChecked() is False
+        connection_point.assert_called()
 
 
 def test_that_toggling_a_distribution_checkbox_invokes_the_connection_point(qtbot):
