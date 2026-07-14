@@ -18,14 +18,6 @@ class Theme(Enum):
 
 
 def load_qss(theme: Theme) -> str:
-    """Read the QSS file that corresponds to ``theme``.
-
-    Files are located via :mod:`importlib.resources` under the ``ert.gui``
-    package, so they are resolved correctly whether ERT is imported from a
-    source checkout or an installed wheel.  Missing files raise
-    ``FileNotFoundError`` — callers should treat this as a programming
-    error, not a runtime condition.
-    """
     resource = files("ert.gui").joinpath(f"{_THEMES_SUBPATH}/{theme.value}.qss")
     if not resource.is_file():
         raise FileNotFoundError(

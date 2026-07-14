@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
@@ -8,7 +9,12 @@ from PyQt6.QtWidgets import QApplication
 
 from .theme import Theme, load_qss
 
+logger = logging.getLogger(__name__)
+
 _STYLE_HINTS_MISSING = "styleHints() unavailable; is a QGuiApplication running?"
+_QAPPLICATION_MISSING = (
+    "QApplication instance not found; construct a QApplication before applying a theme."
+)
 
 _DARK_BASE_VALUE_THRESHOLD = 70
 """HSV ``value`` cutoff (0-255) below which the palette's base colour is
@@ -60,31 +66,15 @@ def _palette_fallback() -> Theme:
 
 
 class ThemeManager(QObject):
-    """Central owner of the active :class:`Theme` for the ERT GUI.
-
-    Responsibilities:
-
-    * Determine the initial theme from the OS colour scheme.
-    * Load the matching QSS file and apply it to the running
-      :class:`~PyQt6.QtWidgets.QApplication`.
-    * Emit :attr:`theme_changed` whenever the active theme flips, so widgets
-      that hold theme-dependent state can react.
-    * Follow the OS colour scheme automatically until the caller pins a
-      specific theme via :meth:`set_theme`.
-
-    A :class:`~PyQt6.QtWidgets.QApplication` must already exist when the
-    manager is constructed.
-    """
-
     theme_changed = pyqtSignal(Theme)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
-        self._follow_system: bool = True
+        self._follows_system_theme: bool = True
         self._current_theme: Theme = detect_system_theme()
         hints = _require_style_hints()
         hints.colorSchemeChanged.connect(self._on_system_scheme_changed)
-        self.apply()
+        self.apply_stylesheet_from_qss()
 
     @property
     def current_theme(self) -> Theme:
@@ -92,32 +82,39 @@ class ThemeManager(QObject):
 
     @property
     def follows_system(self) -> bool:
-        return self._follow_system
+        return self._follows_system_theme
 
     def set_theme(self, theme: Theme) -> None:
         """Pin the manager to ``theme`` and stop following the OS scheme."""
-        self._follow_system = False
+        self._follows_system_theme = False
         self._set_theme_internal(theme)
 
     def follow_system(self) -> None:
         """Resume following the OS colour scheme; re-syncs immediately."""
-        self._follow_system = True
+        self._follows_system_theme = True
         self._set_theme_internal(detect_system_theme())
 
-    def apply(self) -> None:
-        """Load and install the QSS for the currently active theme."""
+    def apply_stylesheet_from_qss(self) -> None:
         app = cast(QApplication | None, QApplication.instance())
         if app is None:
+            raise RuntimeError(_QAPPLICATION_MISSING)
+        try:
+            stylesheet = load_qss(self._current_theme)
+        except (OSError, UnicodeDecodeError):
+            logger.exception(
+                "Failed to load QSS for theme '%s'; keeping previous styling.",
+                self._current_theme.value,
+            )
             return
-        app.setStyleSheet(load_qss(self._current_theme))
+        app.setStyleSheet(stylesheet)
 
     def _on_system_scheme_changed(self, _scheme: Qt.ColorScheme) -> None:
-        if self._follow_system:
+        if self._follows_system_theme:
             self._set_theme_internal(detect_system_theme())
 
     def _set_theme_internal(self, theme: Theme) -> None:
         if theme == self._current_theme:
             return
         self._current_theme = theme
-        self.apply()
+        self.apply_stylesheet_from_qss()
         self.theme_changed.emit(theme)
