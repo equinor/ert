@@ -12,7 +12,7 @@ from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_lay
 logger = logging.getLogger(__name__)
 
 
-class GeneralOptions:
+class GeneralPlotOptions:
     def __init__(
         self, connection_point: Callable[..., object], *, is_everest: bool
     ) -> None:

@@ -60,7 +60,7 @@ from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
     EverestControlsPlotOptions,
-    GeneralOptions,
+    GeneralPlotOptions,
     MisfitsOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
@@ -328,7 +328,7 @@ class PlotWindow(QMainWindow):
                 self.updatePlot
             )
 
-            self._general_options = GeneralOptions(
+            self._general_options = GeneralPlotOptions(
                 self.updatePlot,
                 is_everest=self.is_everest,
             )

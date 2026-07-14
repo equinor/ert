@@ -2,11 +2,11 @@ from unittest.mock import Mock
 
 import pytest
 
-from ert.gui.plotting.widgets.plot_controls.general_options import GeneralOptions
+from ert.gui.plotting.widgets.plot_controls.general_options import GeneralPlotOptions
 
 
 def test_that_general_options_has_expected_default_checkbox_states(qtbot):
-    options = GeneralOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock(), is_everest=False)
     qtbot.addWidget(options.get_widget())
 
     assert options.legend_checkbox_state is True
@@ -30,7 +30,7 @@ def test_that_toggling_a_general_option_invokes_the_connection_point(
     qtbot, option_name, expected_state
 ):
     connection_point = Mock()
-    options = GeneralOptions(connection_point, is_everest=False)
+    options = GeneralPlotOptions(connection_point, is_everest=False)
     qtbot.addWidget(options.get_widget())
 
     checkbox_name = (
@@ -57,10 +57,9 @@ def test_that_history_and_observations_visibility_can_be_set(
     history_visible,
     observations_visible,
 ):
-    options = GeneralOptions(Mock(), is_everest=False)
-    widget = options.get_widget()
-    qtbot.addWidget(widget)
-    widget.show()
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    qtbot.addWidget(options.get_widget())
+    options.get_widget().show()
 
     options.set_history_visible(history_visible)
     options.set_observations_visible(observations_visible)
@@ -70,7 +69,7 @@ def test_that_history_and_observations_visibility_can_be_set(
 
 
 def test_that_everest_general_options_omit_history_and_observations(qtbot):
-    options = GeneralOptions(Mock(), is_everest=True)
+    options = GeneralPlotOptions(Mock(), is_everest=True)
     qtbot.addWidget(options.get_widget())
 
     assert not options._toggle_history.isVisible()
