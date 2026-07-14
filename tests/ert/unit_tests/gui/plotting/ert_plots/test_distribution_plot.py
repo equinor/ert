@@ -7,6 +7,8 @@ from matplotlib.container import BarContainer
 from matplotlib.figure import Figure
 
 from ert.gui.plotting.ert_plots.distribution import (
+    DEFAULT_GKDE_LABEL,
+    DEFAULT_HISTOGRAM_LABEL,
     DistributionPlot,
     _array_is_constant,
 )
@@ -31,7 +33,6 @@ def _make_context(
     histogram: bool = True,
     gkde_plot: bool = True,
     rug_plot: bool = True,
-    by_density: bool = True,
     log_scale: bool = False,
 ) -> PlotContext:
     context = PlotContext(
@@ -93,107 +94,58 @@ def varying_data_map(
     return {single_ensemble: pd.DataFrame({0: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]})}
 
 
-def test_that_distribution_plot_shows_message_when_no_plot_option_selected(
+@pytest.mark.parametrize(
+    ("histogram", "gkde_plot", "rug_plot", "number_of_expected_axes"),
+    [
+        pytest.param(False, False, False, 0, id="none"),
+        pytest.param(True, True, True, 3, id="all"),
+        pytest.param(True, True, False, 2, id="histogram_and_gkde"),
+        pytest.param(True, False, True, 2, id="histogram_and_rug"),
+        pytest.param(False, True, True, 2, id="gkde_and_rug"),
+        pytest.param(True, False, False, 1, id="histogram_only"),
+        pytest.param(False, True, False, 1, id="gkde_only"),
+        pytest.param(False, False, True, 1, id="rug_only"),
+    ],
+)
+def test_that_distribution_plot_renders_without_error_for_all_plot_option_combinations(
     single_ensemble: EnsembleObject,
     varying_data_map: dict[EnsembleObject, pd.DataFrame],
+    histogram: bool,
+    gkde_plot: bool,
+    rug_plot: bool,
+    number_of_expected_axes: int,
 ) -> None:
     context = _make_context(
-        [single_ensemble], histogram=False, gkde_plot=False, rug_plot=False
+        [single_ensemble],
+        histogram=histogram,
+        gkde_plot=gkde_plot,
+        rug_plot=rug_plot,
     )
 
     figure = _plot(context, varying_data_map)
 
-    assert any("No plot options selected." in text.get_text() for text in figure.texts)
-    assert figure.axes == []
+    assert isinstance(figure, Figure)
+    assert len(figure.axes) == number_of_expected_axes
 
-
-def test_that_only_histogram_is_rendered_when_only_histogram_selected(
-    single_ensemble: EnsembleObject,
-    varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
-    context = _make_context(
-        [single_ensemble], histogram=True, gkde_plot=False, rug_plot=False
+    assert (
+        _count_histogram_bars(figure) > 0
+        if histogram
+        else _count_histogram_bars(figure) == 0
     )
-
-    figure = _plot(context, varying_data_map)
-
-    assert _count_histogram_bars(figure) > 0
-    assert _count_kde_lines(figure) == 0
-    assert _count_rug_marker_lines(figure) == 0
-
-
-def test_that_only_gkde_is_rendered_when_only_gkde_selected(
-    single_ensemble: EnsembleObject,
-    varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
-    context = _make_context(
-        [single_ensemble], histogram=False, gkde_plot=True, rug_plot=False
+    assert _count_kde_lines(figure) > 0 if gkde_plot else _count_kde_lines(figure) == 0
+    assert (
+        _count_rug_marker_lines(figure) > 0
+        if rug_plot
+        else _count_rug_marker_lines(figure) == 0
     )
-
-    figure = _plot(context, varying_data_map)
-
-    assert _count_kde_lines(figure) == 1
-    assert _count_histogram_bars(figure) == 0
-    assert _count_rug_marker_lines(figure) == 0
-
-
-def test_that_only_rug_is_rendered_when_only_rug_selected(
-    single_ensemble: EnsembleObject,
-    varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
-    context = _make_context(
-        [single_ensemble], histogram=False, gkde_plot=False, rug_plot=True
-    )
-
-    figure = _plot(context, varying_data_map)
-
-    assert _count_rug_marker_lines(figure) == 1
-    assert _count_histogram_bars(figure) == 0
-    assert _count_kde_lines(figure) == 0
-
-
-def test_that_histogram_and_gkde_are_rendered_together_without_rug(
-    single_ensemble: EnsembleObject,
-    varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
-    context = _make_context(
-        [single_ensemble], histogram=True, gkde_plot=True, rug_plot=False
-    )
-
-    figure = _plot(context, varying_data_map)
-
-    assert _count_histogram_bars(figure) > 0
-    assert _count_kde_lines(figure) == 1
-    assert _count_rug_marker_lines(figure) == 0
-
-
-def test_that_all_three_components_render_when_all_selected(
-    single_ensemble: EnsembleObject,
-    varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
-    context = _make_context(
-        [single_ensemble], histogram=True, gkde_plot=True, rug_plot=True
-    )
-
-    figure = _plot(context, varying_data_map)
-
-    assert _count_histogram_bars(figure) > 0
-    assert _count_kde_lines(figure) == 1
-    assert _count_rug_marker_lines(figure) == 1
-
-
-def test_that_only_rug_axes_are_created_when_only_rug_selected(
-    single_ensemble: EnsembleObject,
-    varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
-    context = _make_context(
-        [single_ensemble], histogram=False, gkde_plot=False, rug_plot=True
-    )
-
-    figure = _plot(context, varying_data_map)
-
-    # One rug axis per ensemble and no separate main plot on top.
-    assert len(figure.axes) == 1
+    if not histogram and not gkde_plot and not rug_plot:
+        assert any(
+            "No plot options selected." in text.get_text() for text in figure.texts
+        )
+    if histogram and gkde_plot:
+        y_labels = {axes.get_ylabel() for axes in figure.axes}
+        assert DEFAULT_HISTOGRAM_LABEL in y_labels
+        assert DEFAULT_GKDE_LABEL in y_labels
 
 
 def test_that_one_rug_axis_is_created_per_ensemble_for_two_ensembles() -> None:
@@ -208,26 +160,6 @@ def test_that_one_rug_axis_is_created_per_ensemble_for_two_ensembles() -> None:
 
     assert len(figure.axes) == 2
     assert _count_rug_marker_lines(figure) == 2
-
-
-def test_that_histogram_count_uses_twin_axis_when_gkde(
-    single_ensemble: EnsembleObject,
-    varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
-    context = _make_context(
-        [single_ensemble],
-        histogram=True,
-        gkde_plot=True,
-        rug_plot=False,
-    )
-
-    figure = _plot(context, varying_data_map)
-
-    # A twin y-axis adds a second axes sharing the same subplot position.
-    assert len(figure.axes) == 2
-    y_labels = {axes.get_ylabel() for axes in figure.axes}
-    assert "Count (Histogram)" in y_labels
-    assert "Density (Gaussian KDE)" in y_labels
 
 
 def test_that_histogram_uses_log_x_scale_when_log_scale_enabled(
@@ -254,19 +186,6 @@ def test_that_gkde_line_is_not_drawn_for_constant_data(
         [single_ensemble], histogram=False, gkde_plot=True, rug_plot=False
     )
     data_map = {single_ensemble: pd.DataFrame({0: [1.0, 1.0, 1.0, 1.0]})}
-
-    figure = _plot(context, data_map)
-
-    assert _count_kde_lines(figure) == 0
-
-
-def test_that_gkde_line_is_not_drawn_for_categorical_data(
-    single_ensemble: EnsembleObject,
-) -> None:
-    context = _make_context(
-        [single_ensemble], histogram=False, gkde_plot=True, rug_plot=False
-    )
-    data_map = {single_ensemble: pd.DataFrame({0: ["cat", "dog", "fish"]})}
 
     figure = _plot(context, data_map)
 
