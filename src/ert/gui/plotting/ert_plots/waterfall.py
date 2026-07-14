@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
+from ert.gui.plotting.utils import PlotTools
+from ert.gui.plotting.utils.plot_context import PlotType
 from ert.gui.utils import truncate_experiment_name
 
 if TYPE_CHECKING:
@@ -173,19 +175,25 @@ def _plot_waterfall(
 
     ax.set_xticks(x)
     ax.set_xticklabels(names, rotation=45, ha="right", fontsize=8)
-    ax.set_ylabel("Mean parameter value (standardized)", fontsize=10)
     ax.axhline(0, color="black", linewidth=0.5)
-    ax.grid(axis="y", alpha=0.3)
 
     key = plot_context.key()
     experiment_name = truncate_experiment_name(ensemble.experiment_name)
     n_contrib = int(contrib_mask.sum())
-    ax.set_title(
-        f"Expected update for {key}\n"
-        f"by top {n_contrib} observation contributions"
-        f"\n({experiment_name} : {ensemble.name})",
-        fontsize=12,
-        fontweight="bold",
-    )
 
-    figure.tight_layout()
+    config = plot_context.plotConfig()
+    if config.is_unnamed():
+        config.set_title(
+            f"Expected update for {key}\n"
+            f"by top {n_contrib} observation contributions"
+            f"\n({experiment_name} : {ensemble.name})"
+        )
+
+    plot_context.plot_type = PlotType.BAR
+    PlotTools.finalizePlot(
+        plot_context,
+        figure,
+        ax,
+        default_x_label="",
+        default_y_label="Mean parameter value (standardized)",
+    )

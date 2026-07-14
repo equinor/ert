@@ -410,6 +410,15 @@ class PlotWindow(QMainWindow):
 
         self._misfits_options.get_widget().setVisible(plot_widget.name == MISFITS)
 
+        if plot_widget.name == WATERFALL:
+            self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
+        elif not self.is_everest:
+            self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+
+        if not self.is_everest:
+            max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
+            self._ensemble_group.setTitle(f"Select up to {max_selected} ensembles")
+
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
         is_objective_plot = plot_widget.name in {
@@ -467,7 +476,9 @@ class PlotWindow(QMainWindow):
                 try:  # noqa: PLW0717
                     data = None
                     if is_waterfall_plot and key_def.parameter is not None:
-                        data = self._api.data_for_waterfall(ensemble.id, key)
+                        data = self._api.data_for_waterfall(
+                            ensemble.id, key_def.parameter.name
+                        )
                     elif is_gradient_plot:
                         data = self._api.data_for_gradient(ensemble.id, key)
                     elif (
@@ -676,6 +687,7 @@ class PlotWindow(QMainWindow):
             "everest_constraints",
             "everest_batch_objectives",
         }
+        plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
         if self.is_everest:
             if key_def.response is not None and key_def.response.type in {
                 "summary",
