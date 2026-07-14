@@ -1,4 +1,4 @@
--- This can't currently be run as there are no .irap files in `snake_oil_field`.
+-- This can't currently be run as there are no .irap files in `snake_oil`.
 -- The file is used in tests.
 
 QUEUE_SYSTEM LOCAL

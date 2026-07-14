@@ -93,7 +93,7 @@ def mocked_files(mocker):
 
 @pytest.fixture
 def snake_oil_field_example(setup_case):
-    return setup_case("snake_oil_field", "snake_oil_field.ert")
+    return setup_case("snake_oil", "snake_oil_field.ert")
 
 
 @pytest.fixture
