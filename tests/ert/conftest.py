@@ -381,7 +381,7 @@ def _run_snake_oil(source_root: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.chdir("test_data")
     with fileinput.input("snake_oil.ert", inplace=True) as fin:
         for line in fin:
-            if "NUM_REALIZATIONS 10" in line:
+            if "NUM_REALIZATIONS 25" in line:
                 print("NUM_REALIZATIONS 5", end="")
             else:
                 print(line, end="")
