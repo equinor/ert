@@ -23,7 +23,7 @@ from ert.ensemble_evaluator import (
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.event import EndEvent
-from ert.logging.utils import LOGGING_CONFIG
+from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import create_ertserver_client
 from ert.storage import (
@@ -71,7 +71,10 @@ def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
             for handler_name, handler_config in config_dict["handlers"].items():
                 if handler_name == "file":
                     handler_config["filename"] = "everest-log.txt"
-                if "ert.logging.TimestampedFileHandler" in handler_config.values():
+                if (
+                    "ert.logging.utils.TimestampedFileHandler"
+                    in handler_config.values()
+                ):
                     handler_config["config_filename"] = ""
                     if isinstance(options.config, EverestConfig):
                         handler_config["config_filename"] = (

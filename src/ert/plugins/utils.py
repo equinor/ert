@@ -1,11 +1,9 @@
-
 from collections.abc import Callable
 from functools import wraps
 from typing import Any, ParamSpec
 
-from .plugin_response import PluginMetadata, PluginResponse
 from .plugin_manager import hook_implementation
-
+from .plugin_response import PluginMetadata, PluginResponse
 
 P = ParamSpec("P")
 

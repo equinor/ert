@@ -30,7 +30,7 @@ from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
 from ert.export_observations import export_observations
-from ert.logging.utils import LOGGING_CONFIG
+from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -711,7 +711,7 @@ def main() -> None:
     for handler_name, handler_config in config_dict["handlers"].items():
         if handler_name == "file":
             handler_config["filename"] = "ert-log.txt"
-        if "ert.logging.TimestampedFileHandler" in handler_config.values():
+        if "ert.logging.utils.TimestampedFileHandler" in handler_config.values():
             handler_config["config_filename"] = args.config
     try:
         logging.config.dictConfig(config_dict)
