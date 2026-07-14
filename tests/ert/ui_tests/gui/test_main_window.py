@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
+    QGroupBox,
     QLabel,
     QMenuBar,
     QMessageBox,
@@ -312,6 +313,15 @@ def test_that_the_plot_window_contains_the_expected_elements(
         case_selection = get_child(
             plot_window, EnsembleSelectListWidget, "ensemble_selector"
         )
+        general_options = get_child(plot_window, QGroupBox, "general_options")
+        for checkbox_name in (
+            "legend_checkbox",
+            "grid_checkbox",
+            "history_checkbox",
+            "observations_checkbox",
+            "log_scale_checkbox",
+        ):
+            assert get_child(general_options, QCheckBox, checkbox_name)
 
         # Assert that the Case selection widget contains the expected ensembles
         ensemble_names = [

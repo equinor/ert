@@ -350,25 +350,21 @@ def test_that_history_and_observations_checkboxes_match_data_availability(
     qtbot.addWidget(plot_window)
     plot_window.show()
 
-    history_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "History"
-    )
+    history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
+    assert history_checkbox is not None
     is_history_key = key.endswith("H") or "H:" in key
     assert history_checkbox.isVisible() is history_data_available
     if is_history_key:
         mock_plot_api.has_history_data.assert_not_called()
 
-    observations_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "Observations"
+    observations_checkbox = plot_window.findChild(
+        QCheckBox, name="observations_checkbox"
     )
+    assert observations_checkbox is not None
     assert observations_checkbox.isVisible() is observations_available
 
 
-def test_that_history_checkbox_visibility_updates_when_switching_keys(
+def test_that_history_and_observations_checkbox_state_update_when_switching_keys(
     qtbot: QtBot,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -389,7 +385,7 @@ def test_that_history_checkbox_visibility_updates_when_switching_keys(
             "summary",
             index_type="TIME",
             metadata={"data_origin": "SUMMARY"},
-            observations=False,
+            observations=True,
             dimensionality=1,
             response=MagicMock(type="summary"),
         ),
@@ -411,24 +407,33 @@ def test_that_history_checkbox_visibility_updates_when_switching_keys(
     qtbot.addWidget(plot_window)
     plot_window.show()
 
-    history_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "History"
+    history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
+    observations_checkbox = plot_window.findChild(
+        QCheckBox, name="observations_checkbox"
     )
+    assert history_checkbox is not None
+    assert observations_checkbox is not None
     data_type_keys_widget = plot_window._data_type_keys_widget.data_type_keys_widget
     filter_model = plot_window._data_type_keys_widget.filter_model
 
     assert history_checkbox.isVisible()
+    assert observations_checkbox.isVisible()
+
+    history_checkbox.setChecked(False)
+    observations_checkbox.setChecked(False)
 
     mock_plot_api.has_history_data.reset_mock()
     data_type_keys_widget.setCurrentIndex(filter_model.index(1, 0))
     qtbot.waitUntil(lambda: not history_checkbox.isVisible(), timeout=5000)
+    qtbot.waitUntil(lambda: not observations_checkbox.isVisible(), timeout=5000)
     mock_plot_api.has_history_data.assert_not_called()
 
     data_type_keys_widget.setCurrentIndex(filter_model.index(0, 0))
     qtbot.waitUntil(history_checkbox.isVisible, timeout=5000)
+    qtbot.waitUntil(observations_checkbox.isVisible, timeout=5000)
     mock_plot_api.has_history_data.assert_called_once_with("summary")
+    assert not history_checkbox.isChecked()
+    assert not observations_checkbox.isChecked()
 
 
 def test_that_general_option_checkboxes_change_rendered_plot(
@@ -515,34 +520,28 @@ def test_that_general_option_checkboxes_change_rendered_plot(
             else {text.get_text() for text in legend.get_texts()}
         )
 
-    legend_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "Legend"
+    legend_checkbox = plot_window.findChild(QCheckBox, name="legend_checkbox")
+    grid_checkbox = plot_window.findChild(QCheckBox, name="grid_checkbox")
+    history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
+    observations_checkbox = plot_window.findChild(
+        QCheckBox, name="observations_checkbox"
     )
-    grid_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "Grid"
-    )
-    history_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "History"
-    )
-    observations_checkbox = next(
-        checkbox
-        for checkbox in plot_window.findChildren(QCheckBox)
-        if checkbox.text() == "Observations"
-    )
+    assert legend_checkbox is not None
+    assert grid_checkbox is not None
+    assert history_checkbox is not None
+    assert observations_checkbox is not None
+    assert history_checkbox.isVisible()
     assert current_axes().get_legend() is not None
     assert "History" in current_legend_labels()
     assert any(gridline.get_visible() for gridline in current_axes().get_xgridlines())
 
-    history_checkbox.setChecked(False)
-    observations_checkbox.setChecked(False)
-    legend_checkbox.setChecked(False)
-    grid_checkbox.setChecked(False)
+    for checkbox in (
+        history_checkbox,
+        observations_checkbox,
+        legend_checkbox,
+        grid_checkbox,
+    ):
+        checkbox.setChecked(False)
     qtbot.waitUntil(
         lambda: "History" not in current_legend_labels(),
         timeout=5000,
@@ -558,10 +557,13 @@ def test_that_general_option_checkboxes_change_rendered_plot(
         timeout=5000,
     )
 
-    history_checkbox.setChecked(True)
-    observations_checkbox.setChecked(True)
-    legend_checkbox.setChecked(True)
-    grid_checkbox.setChecked(True)
+    for checkbox in (
+        history_checkbox,
+        observations_checkbox,
+        legend_checkbox,
+        grid_checkbox,
+    ):
+        checkbox.setChecked(True)
     qtbot.waitUntil(
         lambda: "History" in current_legend_labels(),
         timeout=5000,
