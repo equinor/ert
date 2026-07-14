@@ -133,7 +133,7 @@ class PlotWidget(QWidget):
         self._name = name
         self._plotter = plotter
         self._figure = Figure()
-        self._figure.set_layout_engine("tight")
+        self._figure.set_layout_engine("constrained")
         self._canvas = FigureCanvas(self._figure)
         self._canvas.setParent(self)
         self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -156,6 +156,11 @@ class PlotWidget(QWidget):
         self.resetPlot()
 
     def resetPlot(self) -> None:
+        # Some figures contain twinaxes
+        # Resetting the xscale to linear for all axes
+        # to avoid log scale issues when re-plotting after a log scale plot
+        for ax in self._figure.axes:
+            ax.set_xscale("linear")
         self._figure.clear()
 
     @property
