@@ -177,7 +177,7 @@ def snapshot_update_event_with_fm_message():
 
 
 @pytest.mark.slow
-def test_failed_jobs_monitor(
+def test_that_the_monitor_shows_failed_jobs(
     monkeypatch, full_snapshot_event, snapshot_update_failure_event, capsys
 ):
     server_mock = MagicMock()
@@ -211,7 +211,9 @@ def test_failed_jobs_monitor(
 
 
 @pytest.mark.slow
-def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys):
+def test_that_the_monitor_shows_running_jobs(
+    monkeypatch, full_snapshot_event, snapshot_update_event, capsys
+):
     server_mock = MagicMock()
     connection_mock = MagicMock(spec=ClientConnection)
     connection_mock.recv.side_effect = [
@@ -243,7 +245,7 @@ def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys
 
 
 @pytest.mark.slow
-def test_forward_model_message_reaches_the_cli(
+def test_that_a_forward_model_message_reaches_the_cli(
     monkeypatch, full_snapshot_event, snapshot_update_event_with_fm_message, capsys
 ):
     server_mock = MagicMock()
@@ -256,10 +258,11 @@ def test_forward_model_message_reaches_the_cli(
     server_mock.return_value.__enter__.return_value = connection_mock
     monkeypatch.setattr(everest.detached.client, "connect", server_mock)
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
-    partial(everest.detached.start_monitor, polling_interval=0.1)
-    run_detached_monitor(
-        ("some/url", "cert", ("username", "password")), run_id="test-run-id"
-    )
+    patched = partial(everest.detached.start_monitor, polling_interval=0.1)
+    with patch("everest.bin.utils.start_monitor", patched):
+        run_detached_monitor(
+            ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+        )
     captured = capsys.readouterr()
 
     expected = [
@@ -282,7 +285,7 @@ def test_forward_model_message_reaches_the_cli(
 
 
 @pytest.mark.slow
-def test_failed_everest_batch_result_event(
+def test_that_a_failed_everest_batch_result_event_is_shown(
     monkeypatch, everest_batch_result_event, capsys
 ):
     server_mock = MagicMock()
@@ -294,10 +297,11 @@ def test_failed_everest_batch_result_event(
     server_mock.return_value.__enter__.return_value = connection_mock
     monkeypatch.setattr(everest.detached.client, "connect", server_mock)
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
-    partial(everest.detached.start_monitor, polling_interval=0.1)
-    run_detached_monitor(
-        ("some/url", "cert", ("username", "password")), run_id="test-run-id"
-    )
+    patched = partial(everest.detached.start_monitor, polling_interval=0.1)
+    with patch("everest.bin.utils.start_monitor", patched):
+        run_detached_monitor(
+            ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+        )
     captured = capsys.readouterr()
     expected = [
         "============= Optimization progress (Batch #0) =============\n",
