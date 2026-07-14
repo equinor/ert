@@ -17,18 +17,17 @@ def test_that_general_options_has_expected_default_checkbox_states(qtbot):
 
 
 @pytest.mark.parametrize(
-    "option_name",
+    ("option_name", "expected_state"),
     [
-        pytest.param("legend"),
-        pytest.param("grid"),
-        pytest.param("history"),
-        pytest.param("observations"),
-        pytest.param("log"),
+        pytest.param("legend", 0),
+        pytest.param("grid", 0),
+        pytest.param("history", 0),
+        pytest.param("observations", 0),
+        pytest.param("log", 2),
     ],
 )
 def test_that_toggling_a_general_option_invokes_the_connection_point(
-    qtbot,
-    option_name,
+    qtbot, option_name, expected_state
 ):
     connection_point = Mock()
     options = GeneralOptions(connection_point, is_everest=False)
@@ -41,7 +40,7 @@ def test_that_toggling_a_general_option_invokes_the_connection_point(
     checkbox.setVisible(True)
     checkbox.setChecked(not checkbox.isChecked())
 
-    connection_point.assert_called_once_with()
+    connection_point.assert_called_once_with(expected_state)
 
 
 @pytest.mark.parametrize(
