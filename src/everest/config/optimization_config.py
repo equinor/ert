@@ -195,7 +195,8 @@ class OptimizationConfig(BaseModel, extra="forbid"):
                succeeds if this is at least equal to `min_realizations_success`.
 
             Note: The value of `min_pert_success` is internally adjusted to be
-            capped by `perturbation_num`.
+            capped by `perturbation_num`. If it is not provided, it is set equal
+            to `perturbation_num`.
             """
         ),
     )
@@ -227,16 +228,19 @@ class OptimizationConfig(BaseModel, extra="forbid"):
             report an error.
 
             Note: The value of `min_realizations_success` is internally adjusted
-            to be capped by the number of realizations. It is possible to set
-            the minimum number of successful realizations equal to zero. Some
-            optimization algorithms are able to handle this and will proceed
-            even if all realizations failed. Most algorithms are not capable of
-            this and will internally adjust the value to be equal to one.
+            to be capped by the number of realizations. If it is not provided,
+            it is set equal to the number of realizations.
+
+            It is possible to set the minimum number of successful realizations
+            equal to zero. Some optimization algorithms are able to handle this
+            and will proceed even if all realizations failed. Most algorithms
+            are not capable of this and will internally adjust the value to be
+            equal to one.
             """
         ),
     )
-    perturbation_num: int | None = Field(
-        default=None,
+    perturbation_num: int = Field(
+        default=5,
         gt=0,
         description=dedent(
             """
@@ -372,6 +376,15 @@ class OptimizationConfig(BaseModel, extra="forbid"):
         self.backend = None
         self.algorithm = algorithm
 
+        return self
+
+    @model_validator(mode="after")
+    def validate_min_pert_success(self) -> Self:
+        if (
+            self.min_pert_success is None
+            or self.min_pert_success > self.perturbation_num
+        ):
+            self.min_pert_success = self.perturbation_num
         return self
 
     @property

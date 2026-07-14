@@ -897,6 +897,16 @@ to read summary data from forward model, do:
         check_for_duplicate_names([w.name for w in wells], "well", "name")
         return wells
 
+    @model_validator(mode="after")
+    def validate_min_realizations_success(self) -> Self:
+        realization_num = len(self.model.realizations)
+        if (
+            self.optimization.min_realizations_success is None
+            or self.optimization.min_realizations_success > realization_num
+        ):
+            self.optimization.min_realizations_success = realization_num
+        return self
+
     @field_validator("output_constraints")
     @no_type_check
     @classmethod
