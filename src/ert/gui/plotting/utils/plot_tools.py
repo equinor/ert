@@ -95,19 +95,23 @@ class PlotTools:
 
         PlotTools._setup_labels(plot_context, default_x_label, default_y_label)
 
-        plot_config = plot_context.plotConfig()
-        axes.set_xlabel(plot_config.x_label())  # type: ignore
-        axes.set_ylabel(plot_config.y_label())  # type: ignore
+        PlotTools.set_labels_for_axes_from_context(axes, plot_context)
+
         axes.set_xlim(auto=False)
         axes.set_ylim(auto=False)
 
-        axes.set_title(plot_config.title())
+        PlotTools.set_title(axes, plot_context)
 
         if plot_context.is_date_support_active():
             figure.autofmt_xdate()
 
-        for spine in ("right", "left", "top"):
-            axes.spines[spine].set_visible(False)
+        PlotTools.remove_spines(axes, ["right", "left", "top"])
+
+    @staticmethod
+    def set_title(axes: Axes, plot_context: PlotContext) -> None:
+        title = plot_context.plotConfig().title()
+        if title is not None:
+            axes.set_title(title)
 
     @staticmethod
     def _setup_labels(
@@ -180,3 +184,16 @@ class PlotTools:
             "motion_notify_event",
             _handle_event,
         )
+
+    @staticmethod
+    def set_labels_for_axes_from_context(axes: Axes, plot_context: PlotContext) -> None:
+        config = plot_context.plotConfig()
+        if (x_label := config.x_label()) is not None:
+            axes.set_xlabel(x_label)
+        if (y_label := config.y_label()) is not None:
+            axes.set_ylabel(y_label)
+
+    @staticmethod
+    def remove_spines(axes: Axes, spines_to_remove: list[str]) -> None:
+        for spine in spines_to_remove:
+            axes.spines[spine].set_visible(False)
