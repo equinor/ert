@@ -446,11 +446,24 @@ def test_that_general_option_checkboxes_change_rendered_plot(
     )
     monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
+    observations_enabled_states: list[bool] = []
+    original_set_observations_enabled = PlotConfig.set_observations_enabled
+
+    def record_observations_enabled(plot_config: PlotConfig, enabled: bool) -> None:
+        observations_enabled_states.append(enabled)
+        original_set_observations_enabled(plot_config, enabled)
+
+    monkeypatch.setattr(
+        PlotConfig,
+        "set_observations_enabled",
+        record_observations_enabled,
+    )
+
     key_def = PlotApiKeyDefinition(
         "summary",
         index_type="TIME",
         metadata={"data_origin": "SUMMARY"},
-        observations=False,
+        observations=True,
         dimensionality=2,
         response=MagicMock(type="summary"),
     )
@@ -475,6 +488,7 @@ def test_that_general_option_checkboxes_change_rendered_plot(
         {"history": [1.5, 2.5]},
         index=pd.to_datetime(["2023-01-01", "2023-01-02"]),
     )
+    mock_plot_api.observations_for_key.return_value = pd.DataFrame()
     mock_plot_api.get_all_ensembles.return_value = [ensemble]
 
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
@@ -516,17 +530,24 @@ def test_that_general_option_checkboxes_change_rendered_plot(
         for checkbox in plot_window.findChildren(QCheckBox)
         if checkbox.text() == "History"
     )
+    observations_checkbox = next(
+        checkbox
+        for checkbox in plot_window.findChildren(QCheckBox)
+        if checkbox.text() == "Observations"
+    )
     assert current_axes().get_legend() is not None
     assert "History" in current_legend_labels()
     assert any(gridline.get_visible() for gridline in current_axes().get_xgridlines())
 
     history_checkbox.setChecked(False)
+    observations_checkbox.setChecked(False)
     legend_checkbox.setChecked(False)
     grid_checkbox.setChecked(False)
     qtbot.waitUntil(
         lambda: "History" not in current_legend_labels(),
         timeout=5000,
     )
+    qtbot.waitUntil(lambda: observations_enabled_states[-1] is False, timeout=5000)
     qtbot.waitUntil(lambda: current_axes().get_legend() is None, timeout=5000)
     qtbot.waitUntil(
         lambda: (
@@ -538,6 +559,7 @@ def test_that_general_option_checkboxes_change_rendered_plot(
     )
 
     history_checkbox.setChecked(True)
+    observations_checkbox.setChecked(True)
     legend_checkbox.setChecked(True)
     grid_checkbox.setChecked(True)
     qtbot.waitUntil(
@@ -551,6 +573,19 @@ def test_that_general_option_checkboxes_change_rendered_plot(
         ),
         timeout=5000,
     )
+    qtbot.waitUntil(lambda: observations_enabled_states[-1] is True, timeout=5000)
+
+    general_options = plot_window._general_options.get_widget()
+    std_dev_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.tabText(index) == "Std dev"
+    )
+    plot_window._central_tab.setCurrentIndex(std_dev_index)
+    qtbot.waitUntil(lambda: not general_options.isVisible(), timeout=5000)
+
+    plot_window._central_tab.setCurrentIndex(statistics_index)
+    qtbot.waitUntil(general_options.isVisible, timeout=5000)
 
 
 def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(

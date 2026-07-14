@@ -415,6 +415,7 @@ class PlotWindow(QMainWindow):
             key = key.replace("BREAKTHROUGH:", "")
 
         self._misfits_options.get_widget().setVisible(plot_widget.name == MISFITS)
+        self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
