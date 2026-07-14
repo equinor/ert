@@ -23,7 +23,7 @@ from ert.ensemble_evaluator import (
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.event import EndEvent
-from ert.logging import LOGGING_CONFIG
+from ert.logging.utils import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import create_ertserver_client
 from ert.storage import (

@@ -28,7 +28,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from uvicorn.supervisors import ChangeReload
 
-from ert.logging import STORAGE_LOG_CONFIG
+from ert.logging.utils import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
 from ert.services import ErtServerExit
 from ert.shared import __file__ as ert_shared_path
