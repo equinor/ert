@@ -65,10 +65,10 @@ from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
     BoxplotOptions,
+    DistributionOptions,
     EverestControlsPlotOptions,
     GeneralPlotOptions,
     StatisticsOptions,
-    DistributionOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
@@ -422,6 +422,9 @@ class PlotWindow(QMainWindow):
         )
         self._statistics_options.get_widget().setVisible(plot_widget.name == STATISTICS)
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
+        self._distribution_options.get_widget().setVisible(
+            plot_widget.name == DISTRIBUTION
+        )
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT

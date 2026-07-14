@@ -3,7 +3,6 @@ from collections.abc import Callable
 from ert.gui.plotting.ert_plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
-    GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
     StatisticsPlot,
@@ -37,7 +36,6 @@ ERT_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     STATISTICS: StatisticsPlot,
     MISFITS: MisfitsPlot,
     HISTOGRAM: HistogramPlot,
-    GAUSSIAN_KDE: GaussianKDEPlot,
     DISTRIBUTION: DistributionPlot,
     CROSS_ENSEMBLE_STATISTICS: CrossEnsembleStatisticsPlot,
     STD_DEV: StdDevPlot,
