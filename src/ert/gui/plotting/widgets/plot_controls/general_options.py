@@ -16,24 +16,39 @@ class GeneralPlotOptions:
     def __init__(
         self, connection_point: Callable[..., object], *, is_everest: bool
     ) -> None:
+        def log_option_usage(checkbox: QCheckBox, option_name: str) -> None:
+            def log_usage(_checked: bool) -> None:
+                logger.info("Plot sidebar option used: '%s'", option_name)
+                checkbox.clicked.disconnect(log_usage)
+
+            checkbox.clicked.connect(log_usage)
+
         self._toggle_legend = QCheckBox("Show Legend")
         self._toggle_legend.setObjectName("legend_checkbox")
         self._toggle_legend.setChecked(True)
+        self._toggle_legend.setToolTip("Show or hide the legend")
+        log_option_usage(self._toggle_legend, "Legend")
         self._toggle_legend.stateChanged.connect(connection_point)
 
         self._toggle_grid = QCheckBox("Show Grid")
         self._toggle_grid.setObjectName("grid_checkbox")
         self._toggle_grid.setChecked(True)
+        self._toggle_grid.setToolTip("Show or hide the grid")
+        log_option_usage(self._toggle_grid, "Grid")
         self._toggle_grid.stateChanged.connect(connection_point)
 
         self._toggle_history = QCheckBox("Show History")
         self._toggle_history.setObjectName("history_checkbox")
         self._toggle_history.setChecked(True)
+        self._toggle_history.setToolTip("Show or hide history data")
+        log_option_usage(self._toggle_history, "History")
         self._toggle_history.stateChanged.connect(connection_point)
 
         self._toggle_observations = QCheckBox("Show Observations")
         self._toggle_observations.setObjectName("observations_checkbox")
         self._toggle_observations.setChecked(True)
+        self._toggle_observations.setToolTip("Show or hide observations")
+        log_option_usage(self._toggle_observations, "Observations")
         self._toggle_observations.stateChanged.connect(connection_point)
 
         self._toggle_log_scale = QCheckBox("Log scale")
@@ -42,12 +57,7 @@ class GeneralPlotOptions:
         self._toggle_log_scale.setVisible(False)
 
         self._toggle_log_scale.setToolTip("Toggle data domain to log scale and back")
-
-        def log_log_scale_usage(_checked: bool) -> None:
-            logger.info("Plot sidebar option used: 'Log scale'")
-            self._toggle_log_scale.clicked.disconnect(log_log_scale_usage)
-
-        self._toggle_log_scale.clicked.connect(log_log_scale_usage)
+        log_option_usage(self._toggle_log_scale, "Log scale")
         self._toggle_log_scale.stateChanged.connect(connection_point)
 
         widgets: list[QWidget] = [
