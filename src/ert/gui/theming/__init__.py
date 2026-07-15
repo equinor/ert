@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from .manager import ThemeManager
-from .theme import Theme
+from .manager import ColorSchemeManager
+from .theme import ColorScheme
 
 __all__ = [
-    "Theme",
-    "ThemeManager",
+    "ColorScheme",
+    "ColorSchemeManager",
 ]
