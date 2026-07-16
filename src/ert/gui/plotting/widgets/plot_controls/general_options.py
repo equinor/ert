@@ -1,13 +1,11 @@
 import logging
 from collections.abc import Callable
 
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QGroupBox,
-    QWidget,
-)
+from PyQt6.QtWidgets import QCheckBox, QGroupBox, QLabel, QWidget
 
 from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
+
+from .plot_color_palette_selector import PlotColorPaletteSelector
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +70,9 @@ class GeneralPlotOptions:
                     self._toggle_observations,
                 ]
             )
-
+        widgets.append(QLabel("Selected color palette:"))
+        self._color_cycle_selector = PlotColorPaletteSelector(connection_point)
+        widgets.append(self._color_cycle_selector)
         self._general_options = create_group_box(
             "General options",
             create_group_layout(widgets),
@@ -113,3 +113,6 @@ class GeneralPlotOptions:
 
     def is_log_visible(self) -> bool:
         return self._toggle_log_scale.isVisible()
+
+    def get_color_cycle(self) -> list[tuple[str, float]]:
+        return self._color_cycle_selector.get_color_cycle()

@@ -4,6 +4,7 @@ import itertools
 from copy import copy
 from typing import Any
 
+from .plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .plot_limits import PlotLimits
 from .plot_style import PlotStyle
 
@@ -21,19 +22,7 @@ class PlotConfig:
         if self._plot_settings is None:
             self._plot_settings = {"SHOW_HISTORY": True}
 
-        okabe_ito_hex = [
-            "#E69F00",  # Orange
-            "#56B4E9",  # Sky Blue
-            "#009E73",  # Bluish Green
-            "#F0E442",  # Yellow
-            "#0072B2",  # Blue
-            "#D55E00",  # Vermillion
-            "#CC79A7",  # Reddish Purple
-            "#000000",  # Black
-        ]
-
-        alpha_value = 1.0
-        self.set_line_color_cycle([(colour, alpha_value) for colour in okabe_ito_hex])
+        self.set_line_color_cycle(TABLEAU_10_COLOR_CYCLE)
 
         self._legend_items: list[Any] = []
         self._legend_labels: list[str] = []
