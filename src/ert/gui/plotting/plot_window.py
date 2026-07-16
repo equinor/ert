@@ -329,7 +329,7 @@ class PlotWindow(QMainWindow):
             )
 
             self._general_options = GeneralPlotOptions(
-                self.updatePlot,
+                connection_point=self.updatePlot,
                 is_everest=self.is_everest,
             )
             self._misfits_options = MisfitsOptions(self.updatePlot)
@@ -570,6 +570,7 @@ class PlotWindow(QMainWindow):
             )
             plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
             plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
+            plot_config.set_line_color_cycle(self._general_options.get_color_cycle())
             if not self.is_everest:
                 self._general_options.set_history_visible(history_data_available)
                 self._general_options.set_observations_visible(

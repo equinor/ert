@@ -4,6 +4,7 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox
 
+from ert.gui.plotting.utils.plot_color_palettes import PALETTES_WITH_DESCRIPTIONS
 from ert.gui.plotting.widgets.plot_controls.general_options import GeneralPlotOptions
 
 
@@ -80,3 +81,24 @@ def test_that_everest_general_options_omit_history_and_observations(qtbot):
 
     assert not options._toggle_history.isVisible()
     assert not options._toggle_observations.isVisible()
+
+
+def test_that_palette_selector_returns_the_correct_color_cycle(qtbot):
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    qtbot.addWidget(options.get_widget())
+
+    selector = options._color_cycle_selector
+    assert (
+        selector.get_color_cycle()
+        == PALETTES_WITH_DESCRIPTIONS[selector.currentText()][0]
+    )
+
+
+def test_that_palette_selector_child_can_be_found(qtbot):
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    qtbot.addWidget(options.get_widget())
+
+    selector = options.get_widget().findChild(
+        type(options._color_cycle_selector), "plot_color_palette_selector"
+    )
+    assert selector is not None
