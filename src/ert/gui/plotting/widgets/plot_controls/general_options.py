@@ -1,10 +1,14 @@
 import logging
 from collections.abc import Callable
 
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
+    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -17,13 +21,16 @@ from .plot_color_palette_selector import PlotColorPaletteSelector
 logger = logging.getLogger(__name__)
 
 
-class GeneralPlotOptions:
+class GeneralPlotOptions(QObject):
+    axisLabelEditRequested = Signal(str)
+
     def __init__(
         self,
         connection_point: Callable[..., object],
         *,
         is_everest: bool,
     ) -> None:
+        super().__init__()
 
         (
             self._toggle_legend,
@@ -44,6 +51,24 @@ class GeneralPlotOptions:
             ]
         ]
 
+        self._change_x_label = QPushButton("Edit x-label")
+        self._change_x_label.setObjectName("change_x_label_button")
+        self._change_x_label.clicked.connect(
+            lambda: self.axisLabelEditRequested.emit("x")
+        )
+
+        self._change_y_label = QPushButton("Edit y-label")
+        self._change_y_label.setObjectName("change_y_label_button")
+        self._change_y_label.clicked.connect(
+            lambda: self.axisLabelEditRequested.emit("y")
+        )
+
+        axis_label_buttons = QWidget()
+        axis_label_layout = QHBoxLayout(axis_label_buttons)
+        axis_label_layout.setContentsMargins(0, 0, 0, 0)
+        axis_label_layout.addWidget(self._change_x_label)
+        axis_label_layout.addWidget(self._change_y_label)
+
         widgets: list[QWidget] = [
             self._toggle_legend,
             self._toggle_grid,
@@ -62,7 +87,6 @@ class GeneralPlotOptions:
                     self._observations_color_edit,
                 ]
             )
-
         palette_container = QWidget()
         palette_layout = QVBoxLayout(palette_container)
         palette_layout.setContentsMargins(0, 0, 0, 0)
@@ -72,6 +96,11 @@ class GeneralPlotOptions:
         palette_layout.addWidget(self._color_cycle_selector)
         palette_layout.addWidget(self._color_cycle_selector.get_custom_palette_button())
         widgets.append(palette_container)
+        widgets.extend(
+            [
+                axis_label_buttons,
+            ]
+        )
 
         self._general_options = create_group_box(
             "General options",

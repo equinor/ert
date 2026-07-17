@@ -2,7 +2,7 @@ import logging
 from unittest.mock import Mock
 
 import pytest
-from PyQt6.QtWidgets import QCheckBox
+from PyQt6.QtWidgets import QCheckBox, QPushButton
 
 from ert.gui.plotting.utils.plot_color_palettes import PALETTES_WITH_DESCRIPTIONS
 from ert.gui.plotting.widgets.plot_controls.general_options import GeneralPlotOptions
@@ -85,6 +85,32 @@ def test_that_toggling_a_general_option_logs_sidebar_usage_once(
 
         checkbox.click()
         assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+
+@pytest.mark.parametrize(
+    ("button_name", "axis"),
+    [
+        ("change_x_label_button", "x"),
+        ("change_y_label_button", "y"),
+    ],
+)
+def test_that_axis_label_button_requests_edit_for_its_axis(
+    qtbot,
+    button_name,
+    axis,
+) -> None:
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    widget = options.get_widget()
+    qtbot.addWidget(widget)
+    widget.show()
+    button = widget.findChild(QPushButton, button_name)
+    assert button is not None
+
+    requested_axis = Mock()
+    options.axisLabelEditRequested.connect(requested_axis)
+    button.click()
+
+    requested_axis.assert_called_once_with(axis)
 
 
 @pytest.mark.parametrize(

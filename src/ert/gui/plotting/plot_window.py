@@ -334,6 +334,7 @@ class PlotWindow(QMainWindow):
                 connection_point=self.updatePlot,
                 is_everest=self.is_everest,
             )
+            self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
             self._misfits_options = MisfitsOptions(self.updatePlot)
 
             right_container = QWidget()
