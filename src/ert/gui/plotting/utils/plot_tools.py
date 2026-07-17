@@ -70,7 +70,7 @@ class ConditionalAxisFormatter(mticker.Formatter):
 
 class PlotTools:
     @staticmethod
-    def showGrid(axes: Axes, plot_context: PlotContext) -> None:
+    def show_grid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.is_grid_enabled():
             if plot_context.plot_type in {PlotType.BAR, PlotType.BOX}:
@@ -79,13 +79,13 @@ class PlotTools:
                 axes.grid(visible=True, color="black", alpha=0.4)
 
     @staticmethod
-    def showLegend(axes: Axes, plot_context: PlotContext) -> None:
+    def show_legend(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.is_legend_enabled() and len(config.legend_items()) > 0:
             axes.legend(config.legend_items(), config.legend_labels(), numpoints=1)
 
     @staticmethod
-    def _getXAxisLimits(
+    def _get_x_axis_limits(
         plot_context: PlotContext,
     ) -> (
         tuple[int | None, int | None]
@@ -110,7 +110,7 @@ class PlotTools:
         return None  # No limits set
 
     @staticmethod
-    def _getYAxisLimits(
+    def _get_y_axis_limits(
         plot_context: PlotContext,
     ) -> (
         tuple[int | None, int | None]
@@ -142,30 +142,33 @@ class PlotTools:
         default_x_label: str = "Unnamed",
         default_y_label: str = "Unnamed",
     ) -> None:
-        PlotTools.showLegend(axes, plot_context)
-        PlotTools.showGrid(axes, plot_context)
+        PlotTools.show_legend(axes, plot_context)
+        PlotTools.show_grid(axes, plot_context)
 
         PlotTools.__setupLabels(plot_context, default_x_label, default_y_label)
 
-        plot_config = plot_context.plotConfig()
-        axes.set_xlabel(plot_config.x_label())  # type: ignore
-        axes.set_ylabel(plot_config.y_label())  # type: ignore
+        PlotTools.set_labels_for_axes_from_context(axes, plot_context)
 
-        x_axis_limits = PlotTools._getXAxisLimits(plot_context)
+        x_axis_limits = PlotTools._get_x_axis_limits(plot_context)
         if x_axis_limits is not None:
             axes.set_xlim(*x_axis_limits)
 
-        y_axis_limits = PlotTools._getYAxisLimits(plot_context)
+        y_axis_limits = PlotTools._get_y_axis_limits(plot_context)
         if y_axis_limits is not None:
             axes.set_ylim(*y_axis_limits)
 
-        axes.set_title(plot_config.title())
+        PlotTools.set_title(axes, plot_context)
 
         if plot_context.is_date_support_active():
             figure.autofmt_xdate()
 
-        for spine in ("right", "left", "top"):
-            axes.spines[spine].set_visible(False)
+        PlotTools.remove_spines(axes, ["right", "left", "top"])
+
+    @staticmethod
+    def set_title(axes: Axes, plot_context: PlotContext) -> None:
+        title = plot_context.plotConfig().title()
+        if title is not None:
+            axes.set_title(title)
 
     @staticmethod
     def __setupLabels(
@@ -238,3 +241,16 @@ class PlotTools:
             "motion_notify_event",
             _handle_event,
         )
+
+    @staticmethod
+    def set_labels_for_axes_from_context(axes: Axes, plot_context: PlotContext) -> None:
+        config = plot_context.plotConfig()
+        if (x_label := config.x_label()) is not None:
+            axes.set_xlabel(x_label)
+        if (y_label := config.y_label()) is not None:
+            axes.set_ylabel(y_label)
+
+    @staticmethod
+    def remove_spines(axes: Axes, spines_to_remove: list[str]) -> None:
+        for spine in spines_to_remove:
+            axes.spines[spine].set_visible(False)
