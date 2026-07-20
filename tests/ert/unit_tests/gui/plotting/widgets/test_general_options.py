@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import Mock
 
 import pytest
@@ -47,6 +48,43 @@ def test_that_toggling_a_general_option_invokes_the_connection_point(
     checkbox.click()
 
     connection_point.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("checkbox_name", "option_name"),
+    [
+        ("legend_checkbox", "Legend"),
+        ("grid_checkbox", "Grid"),
+        ("history_checkbox", "History"),
+        ("observations_checkbox", "Observations"),
+        ("log_scale_checkbox", "Log scale"),
+    ],
+)
+def test_that_toggling_a_general_option_logs_sidebar_usage_once(
+    qtbot,
+    caplog,
+    checkbox_name,
+    option_name,
+) -> None:
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    widget = options.get_widget()
+    qtbot.addWidget(widget)
+    widget.show()
+
+    checkbox = widget.findChild(QCheckBox, checkbox_name)
+    if checkbox_name == "log_scale_checkbox":
+        checkbox.setVisible(True)
+    assert checkbox is not None
+    assert checkbox.isVisible()
+
+    expected_message = f"Plot sidebar option used: '{option_name}'"
+
+    with caplog.at_level(logging.INFO):
+        checkbox.click()
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+        checkbox.click()
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
 
 
 @pytest.mark.parametrize(
