@@ -1,10 +1,17 @@
 import logging
 from collections.abc import Callable
 
-from PyQt6.QtWidgets import QCheckBox, QGroupBox, QLabel, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QGroupBox,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
 from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
 
+from .observation_color import ObservationColorEdit
 from .plot_color_palette_selector import PlotColorPaletteSelector
 
 logger = logging.getLogger(__name__)
@@ -64,10 +71,15 @@ class GeneralPlotOptions:
             self._toggle_log_scale,
         ]
         if not is_everest:
+            self._observations_color_edit = ObservationColorEdit(
+                connection_point=connection_point,
+                observation_checkbox=self._toggle_observations,
+            )
             widgets.extend(
                 [
                     self._toggle_history,
                     self._toggle_observations,
+                    self._observations_color_edit,
                 ]
             )
 
@@ -118,9 +130,15 @@ class GeneralPlotOptions:
 
     def set_observations_visible(self, visible: bool) -> None:
         self._toggle_observations.setVisible(visible)
+        self._observations_color_edit.setVisible(
+            visible and self._toggle_observations.isChecked()
+        )
 
     def is_log_visible(self) -> bool:
         return self._toggle_log_scale.isVisible()
 
     def get_color_cycle(self) -> list[tuple[str, float]]:
         return self._color_cycle_selector.get_color_cycle()
+
+    def get_observations_color(self) -> tuple[str, float]:
+        return self._observations_color_edit.get_observations_color()
