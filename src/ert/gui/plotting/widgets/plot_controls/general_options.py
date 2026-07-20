@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Callable
 
-from PyQt6.QtWidgets import QCheckBox, QGroupBox, QLabel, QWidget
+from PyQt6.QtWidgets import QCheckBox, QGroupBox, QLabel, QVBoxLayout, QWidget
 
 from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
 
@@ -70,9 +70,17 @@ class GeneralPlotOptions:
                     self._toggle_observations,
                 ]
             )
-        widgets.append(QLabel("Selected color palette:"))
+
+        palette_container = QWidget()
+        palette_layout = QVBoxLayout(palette_container)
+        palette_layout.setContentsMargins(0, 0, 0, 0)
+        palette_layout.setSpacing(2)
+        palette_layout.addWidget(QLabel("Selected color palette:"))
         self._color_cycle_selector = PlotColorPaletteSelector(connection_point)
-        widgets.append(self._color_cycle_selector)
+        palette_layout.addWidget(self._color_cycle_selector)
+        palette_layout.addWidget(self._color_cycle_selector.get_custom_palette_button())
+        widgets.append(palette_container)
+
         self._general_options = create_group_box(
             "General options",
             create_group_layout(widgets),

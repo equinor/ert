@@ -3,6 +3,8 @@ from matplotlib.colors import TABLEAU_COLORS, to_hex
 
 ALPHA_VALUE = 1.0
 
+MINIMUM_COLOR_CYCLE_LENGTH = 5
+
 TABLEAU_10_COLOR_CYCLE = [
     (to_hex(color), ALPHA_VALUE) for color in TABLEAU_COLORS.values()
 ]
