@@ -571,6 +571,7 @@ class PlotWindow(QMainWindow):
             plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
             plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
             plot_config.set_line_color_cycle(self._general_options.get_color_cycle())
+
             if not self.is_everest:
                 self._general_options.set_history_visible(history_data_available)
                 self._general_options.set_observations_visible(
@@ -583,6 +584,9 @@ class PlotWindow(QMainWindow):
                 plot_config.set_observations_enabled(
                     self._general_options.observations_checkbox_state
                     and key_def.observations
+                )
+                plot_config.set_observations_color(
+                    self._general_options.get_observations_color()
                 )
 
             plot_context = PlotContext(
