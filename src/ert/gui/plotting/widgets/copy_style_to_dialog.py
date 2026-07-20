@@ -11,11 +11,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import CheckList
+from ert.gui.ertwidgets import CheckList, SelectableListModel
 from ert.gui.icon_utils import load_icon
 
 from .filter_popup import FilterPopup
-from .filterable_kw_list_model import FilterableKwListModel
 
 if TYPE_CHECKING:
     from ert.gui.plotting.plot_api import PlotApiKeyDefinition
@@ -35,6 +34,9 @@ class CopyStyleToDialog(QDialog):
         self.setWindowTitle(f"Copy the style of {current_key} to other keys")
         self.activateWindow()
 
+        self._key_defs = key_defs
+        self._active_filters: dict[str, bool] = {}
+
         layout = QFormLayout(self)
 
         self._filter_popup = FilterPopup(self, key_defs)
@@ -44,7 +46,7 @@ class CopyStyleToDialog(QDialog):
         filter_popup_button.setIcon(load_icon("filter_list.svg"))
         filter_popup_button.clicked.connect(self._filter_popup.show)
 
-        self._list_model = FilterableKwListModel(key_defs)
+        self._list_model = SelectableListModel([k.key for k in key_defs])
         self._list_model.unselectAll()
 
         self._cl = CheckList(self._list_model, custom_filter_button=filter_popup_button)
@@ -69,7 +71,11 @@ class CopyStyleToDialog(QDialog):
     def getSelectedKeys(self) -> list[str]:
         return self._list_model.getSelectedItems()
 
-    def filterSettingsChanged(self, item: dict[str, bool]) -> None:
-        for value, visible in item.items():
-            self._list_model.setFilterOnMetadata("data_origin", value, visible)
-        self._cl.modelChanged()
+    def filterSettingsChanged(self, filter_settings: dict[str, bool]) -> None:
+        self._active_filters = filter_settings
+        filtered = [
+            k.key
+            for k in self._key_defs
+            if filter_settings.get(k.metadata.get("data_origin", ""), True)
+        ]
+        self._list_model.setItems(filtered)
