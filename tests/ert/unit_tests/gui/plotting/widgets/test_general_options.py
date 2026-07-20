@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 
 import pytest
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox
 
 from ert.gui.plotting.utils.plot_color_palettes import PALETTES_WITH_DESCRIPTIONS
@@ -29,7 +28,7 @@ def test_that_general_options_has_expected_default_checkbox_states(qtbot):
         "log_scale_checkbox",
     ],
 )
-def test_that_toggling_a_general_option_invokes_the_connection_point2(
+def test_that_toggling_a_general_option_invokes_the_connection_point(
     qtbot,
     checkbox_name,
 ) -> None:
@@ -45,7 +44,7 @@ def test_that_toggling_a_general_option_invokes_the_connection_point2(
     assert checkbox is not None
     assert checkbox.isVisible()
 
-    qtbot.mouseClick(checkbox, Qt.MouseButton.LeftButton)
+    checkbox.click()
 
     connection_point.assert_called_once()
 
