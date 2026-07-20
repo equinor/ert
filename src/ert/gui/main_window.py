@@ -3,21 +3,18 @@ from __future__ import annotations
 import functools
 import logging
 import webbrowser
+from collections.abc import Callable
 from pathlib import Path
 from typing import override
 
-from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
+from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtWidgets import (
-    QButtonGroup,
     QFrame,
     QHBoxLayout,
     QMainWindow,
-    QMenu,
-    QToolButton,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -34,53 +31,25 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtRuntimePlugins
 from ert.trace import get_trace_id
 
-from .detect_mode import is_dark_mode
 from .experiments import ExperimentPanel, RunDialog
-from .icon_utils import load_icon
-
-logger = logging.getLogger(__name__)
-BUTTON_STYLE_SHEET: str = """
-    QToolButton {
-        border-radius: 10px;
-        background-color: rgba(255, 255, 255, 0);
-        padding-top: 5px;
-        padding-bottom: 10px;
-    }
-    QToolButton::menu-indicator {
-        right: 10px; bottom: 5px;
-    }
-"""
-
-BUTTON_STYLE_SHEET_LIGHT: str = (
-    BUTTON_STYLE_SHEET
-    + """
-    QToolButton:hover {background-color: rgba(50, 50, 50, 50);}
-    QToolButton:checked {background-color: rgba(50, 50, 50, 120);}
-    """
+from .sidebar import (
+    CREATE_PLOT,
+    EXPERIMENT_STATUS,
+    MANAGE_EXPERIMENTS,
+    START_EXPERIMENT,
+    Sidebar,
 )
 
-BUTTON_STYLE_SHEET_DARK: str = (
-    BUTTON_STYLE_SHEET
-    + """
-    QToolButton:hover {background-color: rgba(20, 20, 20, 90);}
-    QToolButton:checked {background-color: rgba(20, 20, 20, 150);}
-    """
+logger = logging.getLogger(__name__)
+
+NAVIGATION_PAGE_NAMES: frozenset[str] = frozenset(
+    {START_EXPERIMENT, CREATE_PLOT, MANAGE_EXPERIMENTS, EXPERIMENT_STATUS}
 )
 
 
 def _clicked_help_link(menu_label: str, link: str) -> None:
     logger.info(f"Gui utility: {menu_label} help link was used from main window")
     webbrowser.open(link)
-
-
-class SidebarToolButton(QToolButton):
-    right_clicked = Signal()
-
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
-        if event:
-            if event.button() == Qt.MouseButton.RightButton:
-                self.right_clicked.emit()
-            super().mousePressEvent(event)
 
 
 class ErtMainWindow(QMainWindow):
@@ -109,39 +78,26 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.setContentsMargins(0, 0, 0, 0)
         self.central_layout.setSpacing(0)
         self.central_widget.setLayout(self.central_layout)
-        self.side_frame = QFrame(self)
-        self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
 
-        if is_dark_mode():
-            self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
-            logger.info("Running Ert with dark mode")
-        else:
-            self.side_frame.setStyleSheet("background-color: lightgray;")
-            logger.info("Running Ert with light mode")
-
-        self.vbox_layout = QVBoxLayout(self.side_frame)
-        self.side_frame.setLayout(self.vbox_layout)
+        self.sidebar = Sidebar(self)
+        self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.sidebar)
+        self.sidebar.page_requested.connect(self.select_central_widget)
+        self.sidebar.external_plot_requested.connect(self.right_clicked)
+        self.sidebar.status_entry_selected.connect(self.select_central_widget)
 
         self.central_panels_map: dict[str, QWidget] = {}
         self._experiment_panel: ExperimentPanel | None = None
         self._plot_window: PlotWindow | None = None
-        self._manage_experiments_panel: ManageExperimentsPanel | None = None
-        self.experiment_button = self._add_sidebar_button(
-            "Start experiment", load_icon("library_add.svg")
-        )
-        plot_button = self._add_sidebar_button("Create plot", load_icon("timeline.svg"))
-        plot_button.setToolTip("Right click to open external window")
-        self._add_sidebar_button("Manage experiments", load_icon("build_wrench.svg"))
-        self.results_button = self._add_sidebar_button(
-            "Experiment status", load_icon("in_progress.svg")
-        )
-        self.results_button.setEnabled(False)
-        self.experiment_button.click()
-        self.run_dialog_counter = 0
-
-        self.vbox_layout.addStretch()
-        self.central_layout.addWidget(self.side_frame)
+        self._panel_factories: dict[str, Callable[[], QWidget]] = {
+            MANAGE_EXPERIMENTS: self._build_manage_experiments_panel,
+            CREATE_PLOT: self._build_plot_window,
+        }
+        # Panels that must be rebuilt on every selection so they pick up newly
+        # created ensembles/experiments instead of showing stale data.
+        self._rebuild_on_select: frozenset[str] = frozenset({CREATE_PLOT})
+        self.sidebar.set_status_enabled(False)
+        self.sidebar.set_current(START_EXPERIMENT)
 
         self.central_widget.setMinimumWidth(1500)
         self.central_widget.setMinimumHeight(800)
@@ -151,68 +107,60 @@ class ErtMainWindow(QMainWindow):
         self.__add_help_menu()
 
     def right_clicked(self) -> None:
-        actor = self.sender()
-        if actor and actor.property("index") == "Create plot":
-            pw = PlotWindow(
-                self.config_file, Path(self.ert_config.ens_path).absolute(), None
-            )
-            pw.show()
-            self._external_plot_windows.append(pw)
+        pw = PlotWindow(
+            self.config_file, Path(self.ert_config.ens_path).absolute(), None
+        )
+        pw.show()
+        self._external_plot_windows.append(pw)
 
     def get_external_plot_windows(self) -> list[PlotWindow]:
         return self._external_plot_windows
 
-    def select_central_widget(self) -> None:
-        actor = self.sender()
-        if actor:
-            index_name = actor.property("index")
+    def _build_manage_experiments_panel(self) -> QWidget:
+        return ManageExperimentsPanel(
+            self.ert_config,
+            self.notifier,
+            self.ert_config.ensemble_size,
+        )
 
-            for widget in self.central_panels_map.values():
-                widget.setVisible(False)
+    def _build_plot_window(self) -> QWidget:
+        if self._plot_window:
+            self._plot_window.close()
+        self._plot_window = PlotWindow(
+            self.config_file, Path(self.ert_config.ens_path).absolute(), self
+        )
+        return self._plot_window
 
-            if (
-                index_name == "Manage experiments"
-                and not self._manage_experiments_panel
-            ):
-                self._manage_experiments_panel = ManageExperimentsPanel(
-                    self.ert_config,
-                    self.notifier,
-                    self.ert_config.ensemble_size,
-                )
+    def _ensure_panel(self, name: str) -> None:
+        factory = self._panel_factories.get(name)
+        if factory is None:
+            return
+        if name in self.central_panels_map and name not in self._rebuild_on_select:
+            return
+        panel = factory()
+        self.central_panels_map[name] = panel
+        self.central_layout.addWidget(panel)
 
-                self.central_panels_map["Manage experiments"] = (
-                    self._manage_experiments_panel
-                )
-                self.central_layout.addWidget(self._manage_experiments_panel)
+    def _first_run_dialog_name(self) -> str | None:
+        for name, widget in self.central_panels_map.items():
+            if isinstance(widget, RunDialog):
+                return name
+        return None
 
-            if index_name == "Create plot":
-                if self._plot_window:
-                    self._plot_window.close()
-                self._plot_window = PlotWindow(
-                    self.config_file, Path(self.ert_config.ens_path).absolute(), self
-                )
-                self.central_layout.addWidget(self._plot_window)
-                self.central_panels_map["Create plot"] = self._plot_window
+    def _show_only(self, name: str) -> None:
+        for panel_name, widget in self.central_panels_map.items():
+            widget.setVisible(panel_name == name)
 
-            if index_name == "Experiment status":
-                # select the only available experiments
-                for k, v in self.central_panels_map.items():
-                    if isinstance(v, RunDialog):
-                        index_name = k
-                        break
+    def select_central_widget(self, index_name: str) -> None:
+        self._ensure_panel(index_name)
 
-            for i, widget in self.central_panels_map.items():
-                widget.setVisible(i == index_name)
+        if index_name == EXPERIMENT_STATUS:
+            index_name = self._first_run_dialog_name() or index_name
 
-            if index_name not in [
-                button.text().replace("\n", " ")
-                for button in self.button_group.buttons()
-            ]:
-                self.results_button.setChecked(True)
+        self._show_only(index_name)
 
-    @Slot()
-    def onMenuAboutToHide(self) -> None:
-        QCoreApplication.sendEvent(self.results_button, QEvent(QEvent.Type.Leave))
+        if index_name not in NAVIGATION_PAGE_NAMES:
+            self.sidebar.set_current(EXPERIMENT_STATUS)
 
     @Slot(RunDialog)
     def slot_add_widget(self, run_dialog: RunDialog) -> None:
@@ -222,47 +170,10 @@ class ErtMainWindow(QMainWindow):
         run_dialog.setParent(self)
         experiment_name = run_dialog.property("experiment_name")
         self.central_panels_map[experiment_name] = run_dialog
-        self.run_dialog_counter += 1
         self.central_layout.addWidget(run_dialog)
 
-        def mark_action_bold(menu: QMenu, action_to_mark: QAction) -> None:
-            for action in menu.actions():
-                font = action.font()
-                font.setBold(action is action_to_mark)
-                action.setFont(font)
-
-        def add_results_menu_item(experiment_name: str) -> None:
-            menu = self.results_button.menu()
-            if menu:
-                action_list = menu.actions()
-                act = QAction(text=experiment_name, parent=menu)
-                act.setProperty("index", experiment_name)
-                act.triggered.connect(self.select_central_widget)
-                act.triggered.connect(lambda _: mark_action_bold(menu, act))
-
-                if action_list:
-                    menu.insertAction(action_list[0], act)
-                else:
-                    menu.addAction(act)
-                mark_action_bold(menu, menu.actions()[0])
-
-        if self.run_dialog_counter == 2:
-            # swap from button to menu selection
-            self.results_button.clicked.disconnect(self.select_central_widget)
-            menu = QMenu(None)
-            self.results_button.setMenu(menu)
-            self.results_button.setPopupMode(
-                QToolButton.ToolButtonPopupMode.InstantPopup
-            )
-            menu.aboutToHide.connect(self.onMenuAboutToHide)
-
-            for prev_date_time, widget in self.central_panels_map.items():
-                if isinstance(widget, RunDialog):
-                    add_results_menu_item(prev_date_time)
-        elif self.run_dialog_counter > 2:
-            add_results_menu_item(experiment_name)
-
-        self.results_button.setEnabled(True)
+        self.sidebar.add_status_entry(experiment_name)
+        self.sidebar.set_status_enabled(True)
 
     def post_init(self) -> None:
         experiment_panel = ExperimentPanel(
@@ -271,11 +182,11 @@ class ErtMainWindow(QMainWindow):
             self.config_file,
         )
         experiment_panel.experiment_started.connect(
-            lambda _: self.results_button.setChecked(True)
+            lambda _: self.sidebar.set_current(EXPERIMENT_STATUS)
         )
         self.central_layout.addWidget(experiment_panel)
         self._experiment_panel = experiment_panel
-        self.central_panels_map["Start experiment"] = self._experiment_panel
+        self.central_panels_map[START_EXPERIMENT] = self._experiment_panel
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 
@@ -296,34 +207,6 @@ class ErtMainWindow(QMainWindow):
                 menubar.insertMenu(
                     self.help_menu.menuAction(), self.plugins_tool.get_menu()
                 )
-
-    def _add_sidebar_button(self, name: str, icon: QIcon) -> SidebarToolButton:
-        button = SidebarToolButton(self.side_frame)
-        button.setCheckable(True)
-        button.setFixedSize(85, 95)
-        button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-
-        button.setStyleSheet(
-            BUTTON_STYLE_SHEET_DARK
-        ) if is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
-
-        pad = 45
-        icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
-        button.setIconSize(icon_size)
-        button.setIcon(icon)
-        button.setToolTip(name)
-        objname = name.replace(" ", "_")
-        button_text = name.replace(" ", "\n")
-        button.setObjectName(f"button_{objname}")
-        button.setText(button_text)
-        button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        self.vbox_layout.addWidget(button)
-
-        button.clicked.connect(self.select_central_widget)
-        button.right_clicked.connect(self.right_clicked)
-        button.setProperty("index", name)
-        self.button_group.addButton(button)
-        return button
 
     def __add_help_menu(self) -> None:
         menuBar = self.menuBar()

@@ -39,7 +39,6 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariab
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
-from ert.gui.main_window import SidebarToolButton
 from ert.gui.plotting.plot_window import (
     GEN_KW_DEFAULT,
     RESPONSE_DEFAULT,
@@ -827,14 +826,14 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     def find_and_click_button(
         button_name: str, *, should_click: bool, expected_enabled_state: bool
     ):
-        button = gui.findChild(SidebarToolButton, button_name)
+        button = gui.findChild(QToolButton, button_name)
         assert button
         assert button.isEnabled() == expected_enabled_state
         if should_click:
             qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
     def find_and_check_selected(button_name: str, *, expected_selected_state: bool):
-        button = gui.findChild(SidebarToolButton, button_name)
+        button = gui.findChild(QToolButton, button_name)
         assert button
         assert button.isChecked() == expected_selected_state
 
@@ -875,9 +874,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     qtbot.wait_until(lambda: not run_dialog.isHidden(), timeout=5000)
 
     # verify no drop menu
-    button_simulation_status = gui.findChild(
-        SidebarToolButton, "button_Experiment_status"
-    )
+    button_simulation_status = gui.findChild(QToolButton, "button_Experiment_status")
     assert button_simulation_status.menu() is None
 
     find_and_click_button(
@@ -944,7 +941,7 @@ def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
 
     def retrieve_existing_menu_actions(expected_actions_number):
         simulation_status_menu = gui.findChild(
-            SidebarToolButton, "button_Experiment_status"
+            QToolButton, "button_Experiment_status"
         ).menu()
         assert len(simulation_status_menu.actions()) == expected_actions_number
         for action in simulation_status_menu.actions():
