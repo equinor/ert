@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Literal, Self
+from typing import Literal, Self, cast
 
 from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
@@ -48,7 +48,7 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
             """
         ),
     )
-    random_seed: PositiveInt = Field(
+    random_seed: PositiveInt | None = Field(
         default=None,
         description=dedent(
             """
@@ -58,7 +58,7 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
             used to generate perturbed controls for gradient estimation.
             """
         ),
-    )  # type: ignore
+    )
 
     @field_validator("output_folder", mode="before")
     @classmethod
@@ -71,5 +71,5 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
     @model_validator(mode="after")
     def validate_random_seed(self) -> Self:
         if self.random_seed is None:
-            self.random_seed = SeedSequence().entropy
+            self.random_seed = cast(PositiveInt, SeedSequence().entropy)
         return self

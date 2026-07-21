@@ -311,7 +311,6 @@ class OptimizationConfig(BaseModel, extra="forbid"):
         ),
     )
 
-    _optimization_plugin: str
 
     @model_validator(mode="after")
     def validate_backend_and_algorithm(self) -> Self:

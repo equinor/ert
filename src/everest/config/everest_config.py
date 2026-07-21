@@ -577,8 +577,10 @@ class EverestConfig(BaseModelWithContextSupport):
         installed_jobs_name = [job.name for job in install_jobs]
         if info.context:  # Add plugin jobs
             installed_jobs_name += info.context.installed_forward_model_steps.keys()
+            print("We have context, Installed jobs: ", installed_jobs_name)
 
         errors = []
+        print("Forward model jobs: ", forward_model_jobs)
         for fm_job in forward_model_jobs:
             job_name = fm_job.job.split()[0]
             if job_name not in installed_jobs_name:
@@ -795,10 +797,12 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_models(self) -> Self:
-        install_data = self.install_data
+    def validate_forward_models(self, info: ValidationInfo) -> Self:
+        if not info.context:
+            return self
 
-        with InstallDataContext(install_data, self.config_path) as context:
+        with InstallDataContext(self.install_data, self.config_path) as context:
+            print("Validating forward model configs with install data context")
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
             validate_forward_model_configs(
@@ -1069,7 +1073,7 @@ to read summary data from forward model, do:
     @classmethod
     def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
         with use_runtime_plugins(get_site_plugins()):
-            return cls(**config_dict)
+            return cls(**config_dict) # type: ignore
 
     @staticmethod
     def load_file_with_argparser(
