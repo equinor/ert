@@ -24,6 +24,7 @@ from xlsxwriter import Workbook
 import _ert.forward_model_runner.fm_dispatch
 from _ert.threading import set_signal_handler
 from ert.__main__ import ert_parser
+from ert.base_model_context import use_runtime_plugins
 from ert.cli.main import run_cli
 from ert.config import ConfigWarning, ErtConfig
 from ert.config.parsing.file_context_token import FileContextToken
@@ -34,6 +35,7 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
 )
+from ert.plugins import get_site_plugins
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
@@ -157,17 +159,17 @@ def symlinked_snake_oil_case_storage(symlink_snake_oil_case_storage):
 
 @pytest.fixture
 def symlinked_heat_equation_storage_es(symlink_heat_equation_storage_es):
-    return ErtConfig.from_file("config.ert")
+    return _load_config_with_site_plugins("config.ert")
 
 
 @pytest.fixture
 def symlinked_heat_equation_storage_esmda(symlink_heat_equation_storage_esmda):
-    return ErtConfig.from_file("config.ert")
+    return _load_config_with_site_plugins("config.ert")
 
 
 @pytest.fixture
 def symlinked_heat_equation_storage_enif(symlink_heat_equation_storage_enif):
-    return ErtConfig.from_file("config.ert")
+    return _load_config_with_site_plugins("config.ert")
 
 
 @pytest.fixture
@@ -179,6 +181,17 @@ def snake_oil_case(setup_case):
 def minimum_case(use_tmpdir):
     Path("minimum_config").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     return ErtConfig.from_file("minimum_config")
+
+
+def _load_config_with_site_plugins(config_file):
+    site_plugins = get_site_plugins()
+    with use_runtime_plugins(site_plugins):
+        return ErtConfig.with_plugins(site_plugins).from_file(config_file)
+
+
+@pytest.fixture
+def load_config_with_site_plugins():
+    return _load_config_with_site_plugins
 
 
 @pytest.fixture(name="copy_case")

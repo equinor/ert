@@ -18,10 +18,18 @@ from definition import (
     obs_coordinates,
     obs_times,
     room_temperature,
+    summary_names,
     u_init,
 )
 
 from heat_equation import heat_equation, sample_prior_conductivity
+from resfo_utilities.testing import (
+    Date,
+    Simulator,
+    Smspec,
+    SmspecIntehead,
+    UnitSystem,
+)
 
 # Some seeds produce priors that yield poor results.
 # Worth playing around with.
@@ -32,6 +40,29 @@ def create_egrid_file():
     # create_box_grid defaults to flip=1, i.e., left-handed (origin at lower left)
     grid = xtgeo.create_box_grid(dimension=(nx, nx, 1))
     grid.to_file("CASE.EGRID", "egrid")
+
+
+def create_smspec_file():
+    smspec = Smspec(
+        nx=nx,
+        ny=nx,
+        nz=1,
+        restarted_from_step=0,
+        num_keywords=1 + len(summary_names),
+        restart="        ",
+        keywords=["TIME    ", *summary_names],
+        well_names=[":+:+:+:+", *([":+:+:+:+"] * len(summary_names))],
+        region_numbers=[-32676, *([0] * len(summary_names))],
+        units=["HOURS   ", *(["SM3"] * len(summary_names))],
+        start_date=Date.from_datetime(
+            datetime.datetime.combine(START_DATE, datetime.time())
+        ),
+        intehead=SmspecIntehead(
+            unit=UnitSystem.METRIC,
+            simulator=Simulator.ECLIPSE_100,
+        ),
+    )
+    smspec.to_file("HEAT.SMSPEC")
 
 
 def make_observations(
@@ -141,6 +172,7 @@ def create_summary_observations(df_obs: pd.DataFrame):
 
 if __name__ == "__main__":
     create_egrid_file()
+    create_smspec_file()
 
     cond_truth = sample_prior_conductivity(
         ensemble_size=1, nx=nx, rng=rng, corr_length=0.8
