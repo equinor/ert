@@ -1,9 +1,13 @@
+import logging
 from collections.abc import Callable
 
 from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QWidget
 
 from ert.gui.plotting.customization_dialog.color_chooser import ColorBox
+from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.plot_config import PlotConfig
+
+logger = logging.getLogger(__name__)
 
 
 class ObservationColorEdit(QWidget):
@@ -18,6 +22,9 @@ class ObservationColorEdit(QWidget):
         self._observations_color_box.color = PlotConfig().observations_color()
         self._observations_color_box.colorChanged.connect(
             lambda _color: connection_point()
+        )
+        log_plot_option_usage_once(
+            self._observations_color_box.colorChanged, logger, "Observation color"
         )
 
         layout = QHBoxLayout(self)

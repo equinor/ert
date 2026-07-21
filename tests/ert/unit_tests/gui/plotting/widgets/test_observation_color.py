@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import Mock
 
 import pytest
@@ -66,3 +67,16 @@ def test_that_initial_visibility_mirrors_checkbox_state(qtbot, checked):
     edit, _, _ = _make_edit(qtbot, checked=checked)
 
     assert edit.isVisibleTo(edit.parentWidget()) is checked
+
+
+def test_that_changing_observation_color_logs_sidebar_usage_once(qtbot, caplog):
+    edit, _, _ = _make_edit(qtbot)
+
+    expected_message = "Plot sidebar option used: 'Observation color'"
+
+    with caplog.at_level(logging.INFO):
+        edit._observations_color_box.colorChanged.emit(QColor("#00ff00"))
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+        edit._observations_color_box.colorChanged.emit(QColor("#0000ff"))
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1

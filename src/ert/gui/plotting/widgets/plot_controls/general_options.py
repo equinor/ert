@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
 
 from .observation_color import ObservationColorEdit
@@ -121,14 +122,6 @@ class GeneralPlotOptions:
         return self._observations_color_edit.get_observations_color()
 
 
-def log_option_usage(checkbox: QCheckBox, option_name: str) -> None:
-    def log_usage(_checked: bool) -> None:
-        logger.info("Plot sidebar option used: '%s'", option_name)
-        checkbox.clicked.disconnect(log_usage)
-
-    checkbox.clicked.connect(log_usage)
-
-
 def create_checkbox_with_tooltip(
     name: str,
     tooltip: str,
@@ -141,5 +134,5 @@ def create_checkbox_with_tooltip(
     checkbox.setToolTip(tooltip)
     checkbox.setChecked(initial_checked)
     checkbox.stateChanged.connect(connection_point)
-    log_option_usage(checkbox, name)
+    log_plot_option_usage_once(checkbox.clicked, logger, name)
     return checkbox
