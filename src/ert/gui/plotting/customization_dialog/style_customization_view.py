@@ -9,34 +9,13 @@ if TYPE_CHECKING:
     from ert.gui.plotting.utils import PlotConfig
 
 
-def _label_msg(label: str) -> str:
-    return (
-        f"Set to empty to use the default {label}.\n"
-        "It is also possible to use LaTeX. "
-        "Enclose expression with $...$ for example: \n"
-        "$\\alpha > \\beta$\n"
-        "$r^3$\n"
-        "$\\frac{1}{x}$\n"
-        "$\\sqrt{2}$"
-    )
-
-
 class StyleCustomizationView(CustomizationView):
-    title = WidgetProperty()
     default_style = WidgetProperty()
     history_style = WidgetProperty()
     observations_style = WidgetProperty()
 
     def __init__(self) -> None:
         CustomizationView.__init__(self)
-
-        self.add_line_edit(
-            "title",
-            "Title",
-            f"The title of the plot. {_label_msg('title')}",
-            placeholder="Title",
-        )
-        self.add_spacing()
 
         layout = QHBoxLayout()
 
@@ -61,17 +40,12 @@ class StyleCustomizationView(CustomizationView):
 
     @override
     def apply_customization(self, plot_config: "PlotConfig") -> None:
-        plot_config.set_title(self.title)
         plot_config.set_default_style(self.default_style)
         plot_config.set_history_style(self.history_style)
         plot_config.set_observations_style(self.observations_style)
 
     @override
     def revert_customization(self, plot_config: "PlotConfig") -> None:
-        if not plot_config.is_unnamed():
-            self.title = plot_config.title()
-        else:
-            self.title = ""
         self.default_style = plot_config.default_style()
         self.history_style = plot_config.history_style()
         self.observations_style = plot_config.observations_style()
