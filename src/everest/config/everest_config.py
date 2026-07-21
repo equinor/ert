@@ -1,8 +1,11 @@
 import logging
 import os
 from argparse import ArgumentParser
+from collections.abc import Callable
 from copy import copy
 from enum import StrEnum
+from functools import wraps
+from inspect import signature
 from itertools import chain
 from pathlib import Path
 from sys import float_info
@@ -10,6 +13,7 @@ from textwrap import dedent
 from typing import (
     Annotated,
     Any,
+    Concatenate,
     Optional,
     Self,
     TextIO,
@@ -43,6 +47,7 @@ from ert.plugins import get_site_plugins
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
 from everest.config.validation_utils import (
+    Context,
     InstallDataContext,
     check_for_duplicate_names,
     check_path_exists,
@@ -100,6 +105,58 @@ def _error_loc(error: ErrorDetails) -> str:
     return " -> ".join(
         str(e) for e in error["loc"] if e is not None and e != "__root__"
     )
+
+
+def server_validation[T, **P](
+    f: Callable[Concatenate[T, P], T],
+) -> Callable[Concatenate[T, P], T]:
+    """
+    Decorator to ensure that a validation function
+    is only run in a server context.
+    Requires `ValidationInfo` to be passed as an argument.
+    """
+    sig = signature(f)
+
+    @wraps(f)
+    def wrapper(self: T, /, *args: P.args, **kwargs: P.kwargs) -> T:
+        bound = sig.bind(self, *args, **kwargs)
+        info = bound.arguments.get("info")
+        if (
+            not info
+            or not hasattr(info.context, "type")
+            or info.context.type != Context.SERVER
+        ):
+            return self
+
+        return f(self, *args, **kwargs)
+
+    return wrapper
+
+
+def server_validation[T, **P](
+    f: Callable[Concatenate[T, P], T],
+) -> Callable[Concatenate[T, P], T]:
+    """
+    Decorator to ensure that a validation function
+    is only run in a server context.
+    Requires `ValidationInfo` to be passed as an argument.
+    """
+    sig = signature(f)
+
+    @wraps(f)
+    def wrapper(self: T, /, *args: P.args, **kwargs: P.kwargs) -> T:
+        bound = sig.bind(self, *args, **kwargs)
+        info = bound.arguments.get("info")
+        if (
+            not info
+            or not hasattr(info.context, "type")
+            or info.context.type != Context.SERVER
+        ):
+            return self
+
+        return f(self, *args, **kwargs)
+
+    return wrapper
 
 
 def _format_errors(validation_error: EverestValidationError) -> str:
@@ -569,6 +626,7 @@ class EverestConfig(BaseModelWithContextSupport):
         return [format_fm(fm) for fm in forward_model_steps]
 
     @model_validator(mode="after")
+    @server_validation
     def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
@@ -795,10 +853,12 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_models(self) -> Self:
-        install_data = self.install_data
+    @server_validation
+    def validate_forward_models(self, info: ValidationInfo) -> Self:
+        if not info.context:
+            return self
 
-        with InstallDataContext(install_data, self.config_path) as context:
+        with InstallDataContext(self.install_data, self.config_path) as context:
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
             validate_forward_model_configs(
@@ -1067,8 +1127,10 @@ to read summary data from forward model, do:
             raise _convert_to_everest_validation_error(error, config_path) from error
 
     @classmethod
-    def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
-        with use_runtime_plugins(get_site_plugins()):
+    def with_plugins(
+        cls, config_dict: dict[str, Any] | ConfigDict, ctx: Context = Context.CLIENT
+    ) -> Self:
+        with use_runtime_plugins(get_site_plugins(ctx=ctx)):
             return cls(**config_dict)
 
     @staticmethod

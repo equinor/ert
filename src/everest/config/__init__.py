@@ -19,11 +19,13 @@ from .optimization_config import OptimizationConfig
 from .output_constraint_config import OutputConstraintConfig
 from .server_config import ServerConfig
 from .simulator_config import SimulatorConfig
+from .validation_utils import Context
 from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
 
 __all__ = [
     "CVaRConfig",
+    "Context",
     "ControlConfig",
     "ControlVariableConfig",
     "ControlVariableGuessListConfig",

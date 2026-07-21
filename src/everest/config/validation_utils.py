@@ -4,6 +4,7 @@ import tempfile
 import types
 from collections import Counter
 from collections.abc import Sequence
+from enum import StrEnum, auto
 from pathlib import Path
 from typing import Any, Self
 
@@ -41,6 +42,11 @@ _RESERVED_WORDS = [
 ]
 
 _OVERWRITE_MESSAGE = "Are you overwriting other parts of install_data?"
+
+
+class Context(StrEnum):
+    SERVER = auto()
+    CLIENT = auto()
 
 
 class InstallDataContext:

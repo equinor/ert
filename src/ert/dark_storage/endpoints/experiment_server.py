@@ -37,6 +37,7 @@ from ert.plugins import get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest.config import EverestConfig
+from everest.config.validation_utils import Context
 from everest.detached.everserver import (
     ExperimentState,
     ExperimentStatus,
@@ -203,7 +204,9 @@ async def start_experiment(
     # of everserver. Therefore we suppress them here:
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=ConfigWarning)
-        config = EverestConfig.with_plugins(request_data)
+        config = EverestConfig.with_plugins(request_data, Context.SERVER)
+    print("Server Shutting down!")
+    return JSONResponse({"run_id": run_id})
     runner = ExperimentRunner(config, run_id)
     try:
         background_tasks.add_task(runner.run)
