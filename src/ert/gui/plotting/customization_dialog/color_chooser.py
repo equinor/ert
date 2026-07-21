@@ -35,9 +35,11 @@ class ColorBox(QFrame):
         color_dialog = QColorDialog(self._color, self)
         color_dialog.setWindowTitle("Select color")
         color_dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog)
         color_dialog.accepted.connect(
             lambda: self.colorChanged.emit(color_dialog.selectedColor())
         )
+        color_dialog.setModal(True)
         color_dialog.open()
 
     @property
