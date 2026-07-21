@@ -63,16 +63,32 @@ class ErtMainWindow(QMainWindow):
         log_handler: GUILogHandler | None = None,
     ) -> None:
         QMainWindow.__init__(self)
+        self._init_state(config_file, ert_config, runtime_plugins, log_handler)
+        self._init_central_widget()
+        self._init_sidebar()
+        self._init_panels()
+        self.__add_tools_menu()
+        self.__add_help_menu()
+
+    def _init_state(
+        self,
+        config_file: str,
+        ert_config: ErtConfig,
+        runtime_plugins: ErtRuntimePlugins | None,
+        log_handler: GUILogHandler | None,
+    ) -> None:
         self.notifier = ErtNotifier()
         self.plugins_tool: PluginsTool | None = None
         self.ert_config = ert_config
         self.config_file = config_file
         self.log_handler = log_handler
+        self.runtime_plugins = runtime_plugins
 
         self.setWindowTitle(
             f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
-        self.runtime_plugins = runtime_plugins
+
+    def _init_central_widget(self) -> None:
         self.central_widget = QFrame(self)
         self.central_layout = QHBoxLayout(self.central_widget)
         self.central_layout.setContentsMargins(0, 0, 0, 0)
@@ -80,12 +96,20 @@ class ErtMainWindow(QMainWindow):
         self.central_widget.setLayout(self.central_layout)
         self._external_plot_windows: list[PlotWindow] = []
 
+        self.central_widget.setMinimumWidth(1500)
+        self.central_widget.setMinimumHeight(800)
+        self.setCentralWidget(self.central_widget)
+
+    def _init_sidebar(self) -> None:
         self.sidebar = Sidebar(self)
         self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.sidebar)
         self.sidebar.page_requested.connect(self.select_central_widget)
         self.sidebar.external_plot_requested.connect(self.right_clicked)
         self.sidebar.status_entry_selected.connect(self.select_central_widget)
+        self.sidebar.set_status_enabled(False)
+        self.sidebar.set_current(START_EXPERIMENT)
 
+    def _init_panels(self) -> None:
         self.central_panels_map: dict[str, QWidget] = {}
         self._experiment_panel: ExperimentPanel | None = None
         self._plot_window: PlotWindow | None = None
@@ -96,15 +120,6 @@ class ErtMainWindow(QMainWindow):
         # Panels that must be rebuilt on every selection so they pick up newly
         # created ensembles/experiments instead of showing stale data.
         self._rebuild_on_select: frozenset[str] = frozenset({CREATE_PLOT})
-        self.sidebar.set_status_enabled(False)
-        self.sidebar.set_current(START_EXPERIMENT)
-
-        self.central_widget.setMinimumWidth(1500)
-        self.central_widget.setMinimumHeight(800)
-        self.setCentralWidget(self.central_widget)
-
-        self.__add_tools_menu()
-        self.__add_help_menu()
 
     def right_clicked(self) -> None:
         pw = PlotWindow(
