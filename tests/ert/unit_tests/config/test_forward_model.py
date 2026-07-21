@@ -5,12 +5,13 @@ import stat
 from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from hypothesis import given, settings
 from pydantic import TypeAdapter
 
+import ert.plugins
 from ert.__main__ import ert_parser
 from ert.base_model_context import use_runtime_plugins
 from ert.cli.main import ErtCliError, run_cli
@@ -781,11 +782,16 @@ def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
         parser,
         [TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert")],
     )
-    runtime_plugins = ErtRuntimePlugins(
-        installed_forward_model_steps={"WILL_FAIL_VALIDATION": FM()}
+
+    plugins_mock = MagicMock(
+        return_value=ErtRuntimePlugins(
+            installed_forward_model_steps={"WILL_FAIL_VALIDATION": FM()}
+        )
     )
+    monkeypatch.setattr(ert.cli.main, "get_site_plugins", plugins_mock)
+
     with pytest.raises(ErtCliError) as exc_info:
-        run_cli(args, runtime_plugins)
+        run_cli(args)
     assert (
         "Validation failed for forward model step WILL_FAIL_VALIDATION: No go"
         in str(exc_info.value)
@@ -829,10 +835,15 @@ def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_
         parser,
         [TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert")],
     )
-    runtime_plugins = ErtRuntimePlugins(
-        installed_forward_model_steps={"A_POPULAR_STEP_NAME": FM()}
+    plugins_mock = MagicMock(
+        return_value=ErtRuntimePlugins(
+            installed_forward_model_steps={"A_POPULAR_STEP_NAME": FM()}
+        )
     )
-    run_cli(args, runtime_plugins)
+    monkeypatch.setattr(ert.cli.main, "get_site_plugins", plugins_mock)
+
+    run_cli(args)
+    plugins_mock.assert_called()
 
 
 def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):

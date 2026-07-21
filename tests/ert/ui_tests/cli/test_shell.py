@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .run_cli import run_cli_with_pm
+from .run_cli import run_cli
 
 
 def test_shell_scripts_integration(tmpdir):
@@ -33,7 +33,7 @@ FORWARD_MODEL MOVE_DIRECTORY(<FROM>=mydir3, <TO>=mydir4/mydir3)
 
         Path("file.txt").write_text("something", encoding="utf-8")
 
-        run_cli_with_pm(["test_run", "--disable-monitoring", ert_config_fname])
+        run_cli("test_run", "--disable-monitoring", ert_config_fname)
 
         assert (
             Path("realization-0/iter-0/moved.txt").read_text(encoding="utf-8")
