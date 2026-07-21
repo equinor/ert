@@ -35,6 +35,15 @@ class GeneralPlotOptions(QObject):
     ) -> None:
         super().__init__()
 
+        def create_edit_button(
+            name: str,
+            callback: Callable[[], None],
+        ) -> QPushButton:
+            button = QPushButton(f"Edit {name}")
+            button.setObjectName(f"change_{name.replace('-', '_')}_button")
+            button.clicked.connect(callback)
+            return button
+
         (
             self._toggle_legend,
             self._toggle_grid,
@@ -43,7 +52,10 @@ class GeneralPlotOptions(QObject):
             self._toggle_log_scale,
         ) = [
             create_checkbox_with_tooltip(
-                name, tooltip, connection_point, initial_checked=checked
+                name,
+                tooltip,
+                connection_point,
+                initial_checked=checked,
             )
             for name, tooltip, checked in [
                 ("Legend", "Show or hide the legend", True),
@@ -54,28 +66,16 @@ class GeneralPlotOptions(QObject):
             ]
         ]
 
-        self._change_x_label = QPushButton("Edit x-label")
-        self._change_x_label.setObjectName("change_x_label_button")
-        self._change_x_label.clicked.connect(
-            lambda: self.axisLabelEditRequested.emit("x")
-        )
+        edit_buttons = QWidget()
+        edit_buttons_layout = QHBoxLayout(edit_buttons)
+        edit_buttons_layout.setContentsMargins(0, 0, 0, 0)
 
-        self._change_y_label = QPushButton("Edit y-label")
-        self._change_y_label.setObjectName("change_y_label_button")
-        self._change_y_label.clicked.connect(
-            lambda: self.axisLabelEditRequested.emit("y")
-        )
-
-        self._change_title = QPushButton("Edit title")
-        self._change_title.setObjectName("change_title_button")
-        self._change_title.clicked.connect(self.titleEditRequested.emit)
-
-        axis_label_buttons = QWidget()
-        axis_label_layout = QHBoxLayout(axis_label_buttons)
-        axis_label_layout.setContentsMargins(0, 0, 0, 0)
-        axis_label_layout.addWidget(self._change_x_label)
-        axis_label_layout.addWidget(self._change_y_label)
-        axis_label_layout.addWidget(self._change_title)
+        for name, callback in (
+            ("x-label", lambda: self.axisLabelEditRequested.emit("x")),
+            ("y-label", lambda: self.axisLabelEditRequested.emit("y")),
+            ("title", self.titleEditRequested.emit),
+        ):
+            edit_buttons_layout.addWidget(create_edit_button(name, callback))
 
         widgets: list[QWidget] = [
             self._toggle_legend,
@@ -95,20 +95,18 @@ class GeneralPlotOptions(QObject):
                     self._observations_color_edit,
                 ]
             )
+
         palette_container = QWidget()
         palette_layout = QVBoxLayout(palette_container)
         palette_layout.setContentsMargins(0, 0, 0, 0)
         palette_layout.setSpacing(2)
         palette_layout.addWidget(QLabel("Selected color palette:"))
+
         self._color_cycle_selector = PlotColorPaletteSelector(connection_point)
         palette_layout.addWidget(self._color_cycle_selector)
         palette_layout.addWidget(self._color_cycle_selector.get_custom_palette_button())
-        widgets.append(palette_container)
-        widgets.extend(
-            [
-                axis_label_buttons,
-            ]
-        )
+
+        widgets.extend([palette_container, edit_buttons])
 
         self._general_options = create_group_box(
             "General options",
