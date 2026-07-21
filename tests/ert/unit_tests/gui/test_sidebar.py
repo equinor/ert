@@ -4,7 +4,9 @@ from PyQt6.QtWidgets import QToolButton
 from pytestqt.qtbot import QtBot
 
 from ert.gui.sidebar import (
+    COLLAPSE_SIDEBAR,
     CREATE_PLOT,
+    EXPAND_SIDEBAR,
     EXPERIMENT_STATUS,
     MANAGE_EXPERIMENTS,
     NAVIGATION_ENTRIES,
@@ -14,6 +16,12 @@ from ert.gui.sidebar import (
 )
 
 ALL_ENTRIES = [START_EXPERIMENT, CREATE_PLOT, MANAGE_EXPERIMENTS, EXPERIMENT_STATUS]
+
+
+def _collapse_button(sidebar: Sidebar) -> QToolButton:
+    button = sidebar.findChild(QToolButton, "button_collapse_sidebar")
+    assert isinstance(button, QToolButton)
+    return button
 
 
 def _button(sidebar: Sidebar, name: str) -> QToolButton:
@@ -135,3 +143,68 @@ def test_that_create_plot_button_has_the_right_click_tooltip(qtbot: QtBot):
     assert (
         _button(sidebar, CREATE_PLOT).toolTip() == "Right click to open external window"
     )
+
+
+def test_that_collapse_button_is_the_first_toolbar_widget(qtbot: QtBot):
+    sidebar = Sidebar()
+    qtbot.addWidget(sidebar)
+
+    first_action = sidebar.actions()[0]
+    first_button = sidebar.widgetForAction(first_action)
+
+    assert first_button is _collapse_button(sidebar)
+
+
+def test_that_sidebar_starts_expanded_with_text_under_icons(qtbot: QtBot):
+    sidebar = Sidebar()
+    qtbot.addWidget(sidebar)
+
+    assert sidebar.collapsed is False
+    assert sidebar.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+
+
+def test_that_clicking_collapse_button_switches_to_icon_only_mode(qtbot: QtBot):
+    sidebar = Sidebar()
+    qtbot.addWidget(sidebar)
+
+    with qtbot.wait_signal(sidebar.collapsed_changed) as blocker:
+        qtbot.mouseClick(_collapse_button(sidebar), Qt.MouseButton.LeftButton)
+
+    assert blocker.args == [True]
+    assert sidebar.collapsed is True
+    assert sidebar.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonIconOnly
+
+
+def test_that_clicking_collapse_button_twice_restores_text_under_icons(qtbot: QtBot):
+    sidebar = Sidebar()
+    qtbot.addWidget(sidebar)
+
+    qtbot.mouseClick(_collapse_button(sidebar), Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(_collapse_button(sidebar), Qt.MouseButton.LeftButton)
+
+    assert sidebar.collapsed is False
+    assert sidebar.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+
+
+def test_that_collapse_button_is_not_part_of_the_navigation_action_group(qtbot: QtBot):
+    sidebar = Sidebar()
+    qtbot.addWidget(sidebar)
+
+    collapse_action = sidebar.widgetForAction(sidebar.actions()[0]).defaultAction()
+
+    assert collapse_action.actionGroup() is None
+    assert collapse_action.isCheckable() is False
+
+
+def test_that_collapse_button_tooltip_reflects_next_toggle_action(qtbot: QtBot):
+    sidebar = Sidebar()
+    qtbot.addWidget(sidebar)
+
+    button = _collapse_button(sidebar)
+    assert button.toolTip() == COLLAPSE_SIDEBAR
+
+    sidebar.set_collapsed(True)
+    assert button.toolTip() == EXPAND_SIDEBAR
+
+    sidebar.set_collapsed(False)
+    assert button.toolTip() == COLLAPSE_SIDEBAR

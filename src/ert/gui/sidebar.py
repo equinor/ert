@@ -13,6 +13,8 @@ START_EXPERIMENT = "Start experiment"
 CREATE_PLOT = "Create plot"
 MANAGE_EXPERIMENTS = "Manage experiments"
 EXPERIMENT_STATUS = "Experiment status"
+COLLAPSE_SIDEBAR = "Collapse sidebar"
+EXPAND_SIDEBAR = "Expand sidebar"
 
 NAVIGATION_ENTRIES: tuple[tuple[str, str], ...] = (
     (START_EXPERIMENT, "library_add.svg"),
@@ -36,6 +38,7 @@ class Sidebar(QToolBar):
     page_requested = Signal(str)
     external_plot_requested = Signal()
     status_entry_selected = Signal(str)
+    collapsed_changed = Signal(bool)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -46,8 +49,11 @@ class Sidebar(QToolBar):
         self._plot_button: QToolButton | None = None
         self._status_button: QToolButton | None = None
         self._status_entries: list[str] = []
+        self._collapse_action: QAction | None = None
+        self._collapsed = False
 
         self._configure_toolbar()
+        self._build_collapse_button()
         self._build_navigation_entries()
         self._enable_external_plot_trigger()
         self._capture_status_button()
@@ -57,6 +63,17 @@ class Sidebar(QToolBar):
         self.setOrientation(Qt.Orientation.Vertical)
         self.setMovable(False)
         self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
+    def _build_collapse_button(self) -> None:
+        action = QAction(load_icon("reorder.svg"), COLLAPSE_SIDEBAR, self)
+        action.setToolTip(COLLAPSE_SIDEBAR)
+        action.triggered.connect(lambda _=False: self._toggle_collapsed())
+        self.addAction(action)
+        self._collapse_action = action
+        button = self.widgetForAction(action)
+        if isinstance(button, QToolButton):
+            button.setObjectName("button_collapse_sidebar")
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
 
     def _build_navigation_entries(self) -> None:
         for name, icon_file in NAVIGATION_ENTRIES:
@@ -113,6 +130,26 @@ class Sidebar(QToolBar):
     def button_for(self, name: str) -> QToolButton | None:
         button = self.widgetForAction(self._actions[name])
         return button if isinstance(button, QToolButton) else None
+
+    @property
+    def collapsed(self) -> bool:
+        return self._collapsed
+
+    def set_collapsed(self, collapsed: bool) -> None:
+        self._collapsed = collapsed
+        self.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonIconOnly
+            if collapsed
+            else Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
+        if self._collapse_action is not None:
+            label = EXPAND_SIDEBAR if collapsed else COLLAPSE_SIDEBAR
+            self._collapse_action.setText(label)
+            self._collapse_action.setToolTip(label)
+        self.collapsed_changed.emit(collapsed)
+
+    def _toggle_collapsed(self) -> None:
+        self.set_collapsed(not self._collapsed)
 
     def add_status_entry(self, name: str) -> None:
         """Register a finished run under the experiment-status button.
