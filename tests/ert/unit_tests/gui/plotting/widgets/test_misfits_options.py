@@ -1,4 +1,7 @@
+import logging
 from unittest.mock import Mock
+
+import pytest
 
 from ert.gui.plotting.widgets.plot_controls.misfits_options import MisfitsOptions
 
@@ -36,3 +39,29 @@ def test_that_toggling_a_misfits_checkbox_invokes_the_connection_point(qtbot):
     options.scatter_checkbox_state = not options.scatter_checkbox_state
 
     connection_point.assert_called()
+
+
+@pytest.mark.parametrize(
+    ("checkbox_attribute", "option_name"),
+    [
+        ("_toggle_mean", "Show mean"),
+        ("_toggle_outliers", "Show outliers"),
+        ("_toggle_scatter_plot", "Show scatter"),
+        ("_toggle_box", "Show box plot"),
+    ],
+)
+def test_that_toggling_a_misfits_option_logs_sidebar_usage_once(
+    qtbot, caplog, checkbox_attribute, option_name
+):
+    options = MisfitsOptions(Mock())
+    qtbot.addWidget(options.get_widget())
+
+    checkbox = getattr(options, checkbox_attribute)
+    expected_message = f"Plot sidebar option used: '{option_name}'"
+
+    with caplog.at_level(logging.INFO):
+        checkbox.toggle()
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+        checkbox.toggle()
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1

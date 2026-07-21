@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 
 from PyQt6.QtWidgets import (
@@ -5,7 +6,10 @@ from PyQt6.QtWidgets import (
     QGroupBox,
 )
 
+from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
+
+logger = logging.getLogger(__name__)
 
 
 class MisfitsOptions:
@@ -34,6 +38,16 @@ class MisfitsOptions:
                     self._toggle_outliers,
                 ]
             ),
+        )
+        log_plot_option_usage_once(self._toggle_mean.stateChanged, logger, "Show mean")
+        log_plot_option_usage_once(
+            self._toggle_outliers.stateChanged, logger, "Show outliers"
+        )
+        log_plot_option_usage_once(
+            self._toggle_scatter_plot.stateChanged, logger, "Show scatter"
+        )
+        log_plot_option_usage_once(
+            self._toggle_box.stateChanged, logger, "Show box plot"
         )
 
     @property

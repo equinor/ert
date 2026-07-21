@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import Mock
 
 import pytest
@@ -147,3 +148,41 @@ def test_that_cancelling_the_palette_dialog_does_not_register_a_custom_entry(
 
     assert selector.findText(custom_name, Qt.MatchFlag.MatchFixedString) == -1
     connection_point.assert_not_called()
+
+
+def test_that_changing_palette_selection_logs_sidebar_usage_once(qtbot, caplog):
+    selector = PlotColorPaletteSelector(Mock())
+    qtbot.addWidget(selector)
+
+    expected_message = "Plot sidebar option used: 'Color palette'"
+
+    with caplog.at_level(logging.INFO):
+        selector.activated.emit(1)
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+        selector.activated.emit(2)
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+
+def test_that_clicking_create_custom_palette_button_logs_sidebar_usage_once(
+    qtbot, monkeypatch, caplog, cleanup_custom_palette
+):
+    selector = PlotColorPaletteSelector(Mock())
+    qtbot.addWidget(selector)
+
+    fake_dialog = Mock()
+    fake_dialog.exec.return_value = False
+    monkeypatch.setattr(
+        plot_color_palette_selector,
+        "CustomPaletteDialog",
+        Mock(return_value=fake_dialog),
+    )
+
+    expected_message = "Plot sidebar option used: 'Create custom palette'"
+
+    with caplog.at_level(logging.INFO):
+        selector.custom_palette_button.click()
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+        selector.custom_palette_button.click()
+        assert [r.getMessage() for r in caplog.records].count(expected_message) == 1

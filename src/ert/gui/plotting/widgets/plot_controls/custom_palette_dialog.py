@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 
 from PyQt6.QtWidgets import (
@@ -10,7 +11,10 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.plotting.customization_dialog.color_chooser import ColorBox
+from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.plot_color_palettes import MINIMUM_COLOR_CYCLE_LENGTH
+
+logger = logging.getLogger(__name__)
 
 
 class CustomPaletteDialog(QDialog):
@@ -45,6 +49,7 @@ class CustomPaletteDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        log_plot_option_usage_once(self.accepted, logger, "Custom palette colors")
 
     def get_color_cycle(self) -> list[tuple[str, float]]:
         return [(box.color.name(), box.color.alphaF()) for box in self._color_boxes]
