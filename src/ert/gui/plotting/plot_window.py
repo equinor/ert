@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QMainWindow,
     QSplitter,
@@ -730,16 +729,12 @@ class PlotWindow(QMainWindow):
                     if axis == "x"
                     else axis_object.get_ylabel()
                 )
-        dialog = QInputDialog(self)
-        dialog.setWindowTitle(title)
-        dialog.setLabelText(prompt)
-        dialog.setTextValue(current_label or "")
-        size_hint = dialog.sizeHint()
-        title_width = dialog.fontMetrics().horizontalAdvance(title)
-        dialog.resize(max(size_hint.width(), title_width + 175), size_hint.height())
-        if dialog.exec() != QDialog.DialogCode.Accepted:
+        new_label_text, accepted = self._general_options.get_text_input(
+            title, prompt, current_label
+        )
+        if not accepted:
             return
-        new_label = dialog.textValue() or None
+        new_label: str | None = new_label_text or None
         if axis == "x":
             plot_config.set_x_label(new_label)
         else:
@@ -748,17 +743,14 @@ class PlotWindow(QMainWindow):
 
     def _edit_title(self) -> None:
         title = "Edit title"
-        dialog = QInputDialog(self)
-        dialog.setWindowTitle(title)
-        dialog.setLabelText("New title:")
         plot_config = self._plot_customizer.get_plot_config()
-        dialog.setTextValue(plot_config.title())
-        size_hint = dialog.sizeHint()
-        title_width = dialog.fontMetrics().horizontalAdvance(title)
-        dialog.resize(max(size_hint.width(), title_width + 175), size_hint.height())
-        if dialog.exec() != QDialog.DialogCode.Accepted:
+        new_title, accepted = self._general_options.get_text_input(
+            title,
+            "New title:",
+            plot_config.title(),
+        )
+        if not accepted:
             return
-        new_title = dialog.textValue()
         if new_title:
             plot_config.set_title(new_title)
         else:

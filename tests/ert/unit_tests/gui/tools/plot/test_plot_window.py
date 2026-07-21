@@ -985,7 +985,7 @@ def test_that_sidebar_axis_label_edit_uses_configured_label(
     dialog.font.return_value = QApplication.font()
     dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
     monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.QInputDialog",
+        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
         MagicMock(return_value=dialog),
     )
 
@@ -1037,7 +1037,7 @@ def test_that_sidebar_axis_label_edit_uses_visible_label_without_override(
     dialog.font.return_value = QApplication.font()
     dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
     monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.QInputDialog",
+        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
         MagicMock(return_value=dialog),
     )
 
@@ -1093,7 +1093,7 @@ def test_that_accepting_axis_label_edit_updates_persistent_config(
     dialog.font.return_value = QApplication.font()
     dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
     monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.QInputDialog",
+        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
         MagicMock(return_value=dialog),
     )
 
@@ -1142,7 +1142,7 @@ def test_that_cancelling_axis_label_edit_keeps_existing_label(
     dialog.font.return_value = QApplication.font()
     dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
     monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.QInputDialog",
+        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
         MagicMock(return_value=dialog),
     )
 
@@ -1179,7 +1179,7 @@ def _create_plot_window_for_title_edit(
     )
     monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
     monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.QInputDialog",
+        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
         MagicMock(return_value=dialog),
     )
 
@@ -1353,7 +1353,7 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
     dialog.font.return_value = QApplication.font()
     dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
     monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.QInputDialog",
+        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
         MagicMock(return_value=dialog),
     )
 
