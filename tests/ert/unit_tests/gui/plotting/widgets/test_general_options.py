@@ -113,6 +113,21 @@ def test_that_axis_label_button_requests_edit_for_its_axis(
     requested_axis.assert_called_once_with(axis)
 
 
+def test_that_title_button_requests_title_edit(qtbot) -> None:
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    widget = options.get_widget()
+    qtbot.addWidget(widget)
+    widget.show()
+    button = widget.findChild(QPushButton, "change_title_button")
+    assert button is not None
+
+    title_edit_requested = Mock()
+    options.titleEditRequested.connect(title_edit_requested)
+    button.click()
+
+    title_edit_requested.assert_called_once_with()
+
+
 @pytest.mark.parametrize(
     ("history_visible", "observations_visible"),
     [

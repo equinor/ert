@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class GeneralPlotOptions(QObject):
     axisLabelEditRequested = Signal(str)
+    titleEditRequested = Signal()
 
     def __init__(
         self,
@@ -64,11 +65,16 @@ class GeneralPlotOptions(QObject):
             lambda: self.axisLabelEditRequested.emit("y")
         )
 
+        self._change_title = QPushButton("Edit title")
+        self._change_title.setObjectName("change_title_button")
+        self._change_title.clicked.connect(self.titleEditRequested.emit)
+
         axis_label_buttons = QWidget()
         axis_label_layout = QHBoxLayout(axis_label_buttons)
         axis_label_layout.setContentsMargins(0, 0, 0, 0)
         axis_label_layout.addWidget(self._change_x_label)
         axis_label_layout.addWidget(self._change_y_label)
+        axis_label_layout.addWidget(self._change_title)
 
         widgets: list[QWidget] = [
             self._toggle_legend,
