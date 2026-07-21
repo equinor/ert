@@ -5,8 +5,10 @@ from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QDialog,
     QGroupBox,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -116,6 +118,25 @@ class GeneralPlotOptions(QObject):
 
     def get_widget(self) -> QGroupBox:
         return self._general_options
+
+    def get_text_input(
+        self,
+        title: str,
+        prompt: str,
+        current_text: str | None,
+    ) -> tuple[str, bool]:
+        dialog = QInputDialog(self._general_options)
+        dialog.setWindowTitle(title)
+        dialog.setLabelText(prompt)
+        dialog.setTextValue(current_text or "")
+        size_hint = dialog.sizeHint()
+        title_width = dialog.fontMetrics().horizontalAdvance(title)
+        dialog.resize(
+            max(size_hint.width(), title_width + 175),
+            size_hint.height(),
+        )
+        accepted = dialog.exec() == QDialog.DialogCode.Accepted
+        return dialog.textValue() or "", accepted
 
     @property
     def legend_checkbox_state(self) -> bool:
