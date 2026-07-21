@@ -119,6 +119,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 class PlotWidget(QWidget):
     customizationTriggered = Signal()
     axisLabelEditRequested = Signal(str)
+    titleEditRequested = Signal()
     layerIndexChanged = Signal(int)
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
@@ -185,7 +186,7 @@ class PlotWidget(QWidget):
                 obs_loc,
                 key_def,
             )
-            self._enable_axis_label_picking()
+            self._enable_text_picking()
             self._canvas.draw()
         except Exception as e:
             logger.exception(e)
@@ -201,10 +202,11 @@ class PlotWidget(QWidget):
                 "This stack trace is helpful for diagnosing the problem."
             )
 
-    def _enable_axis_label_picking(self) -> None:
+    def _enable_text_picking(self) -> None:
         for axes in self._figure.axes:
             axes.xaxis.label.set_picker(True)
             axes.yaxis.label.set_picker(True)
+            axes.title.set_picker(True)
 
     def _on_canvas_pick(self, event: PickEvent) -> None:
         for axes in self._figure.axes:
@@ -214,4 +216,8 @@ class PlotWidget(QWidget):
 
             if event.artist is axes.yaxis.label:
                 self.axisLabelEditRequested.emit("y")
+                return
+
+            if event.artist is axes.title:
+                self.titleEditRequested.emit()
                 return

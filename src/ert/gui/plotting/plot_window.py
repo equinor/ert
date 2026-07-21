@@ -177,7 +177,6 @@ class PlotWindow(QMainWindow):
         self.setMinimumHeight(650)
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
-        self._axis_labels: dict[str, str | None] = {"x": None, "y": None}
         self._preferred_ensemble_x_axis_format = PlotContext.INDEX_AXIS
         self._api = PlotApi(ens_path)
 
@@ -335,6 +334,7 @@ class PlotWindow(QMainWindow):
                 is_everest=self.is_everest,
             )
             self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
+            self._general_options.titleEditRequested.connect(self._edit_title)
             self._misfits_options = MisfitsOptions(self.updatePlot)
 
             right_container = QWidget()
@@ -571,8 +571,6 @@ class PlotWindow(QMainWindow):
             plot_config = PlotConfig.create_copy(
                 self._plot_customizer.get_plot_config()
             )
-            plot_config.set_x_label(self._axis_labels["x"])
-            plot_config.set_y_label(self._axis_labels["y"])
             plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
             plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
             plot_config.set_line_color_cycle(self._general_options.get_color_cycle())
@@ -707,6 +705,7 @@ class PlotWindow(QMainWindow):
         plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
         plot_widget.axisLabelEditRequested.connect(self._edit_axis_label)
+        plot_widget.titleEditRequested.connect(self._edit_title)
         plot_widget.layerIndexChanged.connect(self.layerIndexChanged)
 
         index = self._central_tab.addTab(plot_widget, name)
@@ -722,10 +721,19 @@ class PlotWindow(QMainWindow):
         prompt = f"New {label_name}:"
         plot_config = self._plot_customizer.get_plot_config()
         current_label = plot_config.x_label() if axis == "x" else plot_config.y_label()
+        if current_label is None:
+            current_widget = self._central_tab.currentWidget()
+            if isinstance(current_widget, PlotWidget) and current_widget._figure.axes:
+                axis_object = current_widget._figure.axes[0]
+                current_label = (
+                    axis_object.get_xlabel()
+                    if axis == "x"
+                    else axis_object.get_ylabel()
+                )
         dialog = QInputDialog(self)
         dialog.setWindowTitle(title)
         dialog.setLabelText(prompt)
-        dialog.setTextValue(current_label)
+        dialog.setTextValue(current_label or "")
         size_hint = dialog.sizeHint()
         title_width = dialog.fontMetrics().horizontalAdvance(title)
         dialog.resize(max(size_hint.width(), title_width + 175), size_hint.height())
@@ -736,6 +744,28 @@ class PlotWindow(QMainWindow):
             plot_config.set_x_label(new_label)
         else:
             plot_config.set_y_label(new_label)
+        self._plot_customizer.update_plot_config(plot_config)
+
+    def _edit_title(self) -> None:
+        title = "Edit title"
+        dialog = QInputDialog(self)
+        dialog.setWindowTitle(title)
+        dialog.setLabelText("New title:")
+        plot_config = self._plot_customizer.get_plot_config()
+        dialog.setTextValue(plot_config.title())
+        size_hint = dialog.sizeHint()
+        title_width = dialog.fontMetrics().horizontalAdvance(title)
+        dialog.resize(max(size_hint.width(), title_width + 175), size_hint.height())
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        new_title = dialog.textValue()
+        if new_title:
+            plot_config.set_title(new_title)
+        else:
+            key_def = self.getSelectedKey()
+            if key_def is None:
+                return
+            plot_config.set_title(key_def.key)
         self._plot_customizer.update_plot_config(plot_config)
 
     @showWaitCursorWhileWaiting
