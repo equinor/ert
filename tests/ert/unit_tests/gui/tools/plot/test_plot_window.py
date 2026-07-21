@@ -5,9 +5,8 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QFontMetrics
-from PyQt6.QtWidgets import QApplication, QCheckBox, QDialog, QLabel, QPushButton
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QCheckBox, QLabel, QPushButton
 from pytestqt.qtbot import QtBot
 
 from ert.config.distribution import RawSettings
@@ -948,220 +947,9 @@ def test_that_clicking_title_emits_edit_request(qtbot: QtBot) -> None:
     received.assert_called_once_with()
 
 
-@pytest.mark.parametrize(
-    ("axis", "configured_label"),
-    [
-        pytest.param("x", None, id="default-x-label"),
-        pytest.param("y", None, id="default-y-label"),
-        pytest.param("x", "Configured x", id="configured-x-label"),
-        pytest.param("y", "Configured y", id="configured-y-label"),
-    ],
-)
-def test_that_sidebar_axis_label_edit_uses_configured_label(
+def _create_plot_window_for_text_edit(
     qtbot: QtBot,
     monkeypatch: pytest.MonkeyPatch,
-    axis: str,
-    configured_label: str | None,
-) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    mock_plot_api.responses_api_key_defs = []
-    mock_plot_api.parameters_api_key_defs = []
-    mock_plot_api.get_all_ensembles.return_value = []
-
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
-    dialog = MagicMock()
-    dialog.exec.return_value = QDialog.DialogCode.Rejected
-    dialog.sizeHint.return_value = QSize(100, 100)
-    dialog.font.return_value = QApplication.font()
-    dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
-    monkeypatch.setattr(
-        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
-        MagicMock(return_value=dialog),
-    )
-
-    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
-    qtbot.addWidget(plot_window)
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    if axis == "x":
-        plot_config.set_x_label(configured_label)
-    else:
-        plot_config.set_y_label(configured_label)
-    plot_window._plot_customizer.update_plot_config(plot_config)
-
-    plot_window._edit_axis_label(axis)
-
-    dialog.setTextValue.assert_called_once_with(configured_label or "")
-
-
-@pytest.mark.parametrize(
-    ("axis", "visible_label"),
-    [
-        pytest.param("x", "Visible x label", id="x-axis"),
-        pytest.param("y", "Visible y label", id="y-axis"),
-    ],
-)
-def test_that_sidebar_axis_label_edit_uses_visible_label_without_override(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-    axis: str,
-    visible_label: str,
-) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    mock_plot_api.responses_api_key_defs = []
-    mock_plot_api.parameters_api_key_defs = []
-    mock_plot_api.get_all_ensembles.return_value = []
-
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
-    dialog = MagicMock()
-    dialog.exec.return_value = QDialog.DialogCode.Rejected
-    dialog.sizeHint.return_value = QSize(100, 100)
-    dialog.font.return_value = QApplication.font()
-    dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
-    monkeypatch.setattr(
-        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
-        MagicMock(return_value=dialog),
-    )
-
-    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
-    qtbot.addWidget(plot_window)
-    current_widget = plot_window._central_tab.currentWidget()
-    assert isinstance(current_widget, PlotWidget)
-    axis_object = current_widget._figure.add_subplot(111)
-    if axis == "x":
-        axis_object.set_xlabel(visible_label)
-    else:
-        axis_object.set_ylabel(visible_label)
-
-    plot_window._edit_axis_label(axis)
-
-    dialog.setTextValue.assert_called_once_with(visible_label)
-
-
-@pytest.mark.parametrize(
-    ("axis", "current_label", "new_label"),
-    [
-        pytest.param("x", "Old x", "New x", id="x-axis"),
-        pytest.param("y", "Old y", "New y", id="y-axis"),
-    ],
-)
-def test_that_accepting_axis_label_edit_updates_persistent_config(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-    axis: str,
-    current_label: str,
-    new_label: str,
-) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    mock_plot_api.responses_api_key_defs = []
-    mock_plot_api.parameters_api_key_defs = []
-    mock_plot_api.get_all_ensembles.return_value = []
-
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
-    dialog = MagicMock()
-    dialog.exec.return_value = QDialog.DialogCode.Accepted
-    dialog.textValue.return_value = new_label
-    dialog.sizeHint.return_value = QSize(100, 100)
-    dialog.font.return_value = QApplication.font()
-    dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
-    monkeypatch.setattr(
-        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
-        MagicMock(return_value=dialog),
-    )
-
-    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
-    qtbot.addWidget(plot_window)
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    if axis == "x":
-        plot_config.set_x_label(current_label)
-    else:
-        plot_config.set_y_label(current_label)
-    plot_window._plot_customizer.update_plot_config(plot_config)
-
-    plot_window._edit_axis_label(axis)
-
-    persisted_config = plot_window._plot_customizer.get_plot_config()
-    assert (
-        persisted_config.x_label() if axis == "x" else persisted_config.y_label()
-    ) == new_label
-    dialog.setTextValue.assert_called_once_with(current_label)
-
-
-def test_that_cancelling_axis_label_edit_keeps_existing_label(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    mock_plot_api.responses_api_key_defs = []
-    mock_plot_api.parameters_api_key_defs = []
-    mock_plot_api.get_all_ensembles.return_value = []
-
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
-    dialog = MagicMock()
-    dialog.exec.return_value = QDialog.DialogCode.Rejected
-    dialog.textValue.return_value = "Changed despite cancellation"
-    dialog.sizeHint.return_value = QSize(100, 100)
-    dialog.font.return_value = QApplication.font()
-    dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
-    monkeypatch.setattr(
-        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
-        MagicMock(return_value=dialog),
-    )
-
-    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
-    qtbot.addWidget(plot_window)
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    plot_config.set_x_label("Existing label")
-    plot_window._plot_customizer.update_plot_config(plot_config)
-
-    plot_window._edit_axis_label("x")
-
-    assert plot_window._plot_customizer.get_plot_config().x_label() == "Existing label"
-    dialog.setTextValue.assert_called_once_with("Existing label")
-
-
-def _create_plot_window_for_title_edit(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-    dialog: MagicMock,
 ) -> PlotWindow:
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
@@ -1178,13 +966,133 @@ def _create_plot_window_for_title_edit(
         lambda: storage_version,
     )
     monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-    monkeypatch.setattr(
-        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
-        MagicMock(return_value=dialog),
-    )
-
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
+    return plot_window
+
+
+@pytest.mark.parametrize(
+    ("axis", "configured_label", "visible_label", "expected_label"),
+    [
+        pytest.param(
+            "x",
+            "Configured x",
+            "Visible x label",
+            "Configured x",
+            id="configured-x-label",
+        ),
+        pytest.param(
+            "y",
+            "Configured y",
+            "Visible y label",
+            "Configured y",
+            id="configured-y-label",
+        ),
+        pytest.param(
+            "x",
+            None,
+            "Visible x label",
+            "Visible x label",
+            id="visible-x-label",
+        ),
+        pytest.param(
+            "y",
+            None,
+            "Visible y label",
+            "Visible y label",
+            id="visible-y-label",
+        ),
+    ],
+)
+def test_that_sidebar_axis_label_edit_uses_configured_or_visible_label(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    axis: str,
+    configured_label: str | None,
+    visible_label: str | None,
+    expected_label: str,
+) -> None:
+    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    get_text_input = MagicMock(return_value=("", False))
+    plot_window._general_options.get_text_input = get_text_input
+    plot_config = plot_window._plot_customizer.get_plot_config()
+    if axis == "x":
+        plot_config.set_x_label(configured_label)
+    else:
+        plot_config.set_y_label(configured_label)
+    plot_window._plot_customizer.update_plot_config(plot_config)
+    current_widget = plot_window._central_tab.currentWidget()
+    assert isinstance(current_widget, PlotWidget)
+    if visible_label is not None:
+        axis_object = current_widget._figure.add_subplot(111)
+        if axis == "x":
+            axis_object.set_xlabel(visible_label)
+        else:
+            axis_object.set_ylabel(visible_label)
+
+    plot_window._edit_axis_label(axis)
+
+    get_text_input.assert_called_once_with(
+        f"Edit {axis}-label", f"New {axis}-label:", expected_label
+    )
+
+
+@pytest.mark.parametrize(
+    ("axis", "current_label", "new_label", "accepted"),
+    [
+        pytest.param("x", "Old x", "New x", True, id="x-axis-accepted"),
+        pytest.param("y", "Old y", "New y", True, id="y-axis-accepted"),
+        pytest.param(
+            "x",
+            "Existing label",
+            "Changed despite cancellation",
+            False,
+            id="x-axis-cancelled",
+        ),
+        pytest.param(
+            "x",
+            "Existing label",
+            "",
+            True,
+            id="x-axis-cleared",
+        ),
+    ],
+)
+def test_that_axis_label_edit_updates_or_preserves_persistent_config(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    axis: str,
+    current_label: str,
+    new_label: str,
+    accepted: bool,
+) -> None:
+    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    get_text_input = MagicMock(return_value=(new_label, accepted))
+    plot_window._general_options.get_text_input = get_text_input
+    plot_config = plot_window._plot_customizer.get_plot_config()
+    if axis == "x":
+        plot_config.set_x_label(current_label)
+    else:
+        plot_config.set_y_label(current_label)
+    plot_window._plot_customizer.update_plot_config(plot_config)
+
+    plot_window._edit_axis_label(axis)
+
+    expected_label = (new_label or None) if accepted else current_label
+    persisted_config = plot_window._plot_customizer.get_plot_config()
+    assert (
+        persisted_config.x_label() if axis == "x" else persisted_config.y_label()
+    ) == expected_label
+    get_text_input.assert_called_once_with(
+        f"Edit {axis}-label", f"New {axis}-label:", current_label
+    )
+
+
+def _create_plot_window_for_title_edit(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> PlotWindow:
+    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
     plot_window.getSelectedKey = MagicMock(
         return_value=MagicMock(key="some_key", dimensionality=1, metadata={})
     )
@@ -1192,26 +1100,28 @@ def _create_plot_window_for_title_edit(
 
 
 @pytest.mark.parametrize(
-    ("dialog_value", "expected_title"),
+    ("dialog_value", "expected_title", "accepted"),
     [
-        pytest.param("New title", "New title", id="custom-title"),
-        pytest.param("", "some_key", id="empty-title-restores-key-title"),
+        pytest.param("New title", "New title", True, id="custom-title"),
+        pytest.param("", "some_key", True, id="empty-title-restores-key-title"),
+        pytest.param(
+            "Changed despite cancellation",
+            "Existing title",
+            False,
+            id="cancelled-title",
+        ),
     ],
 )
-def test_that_accepting_title_edit_updates_persistent_config(
+def test_that_title_edit_updates_or_preserves_persistent_config(
     qtbot: QtBot,
     monkeypatch: pytest.MonkeyPatch,
     dialog_value: str,
     expected_title: str,
+    accepted: bool,
 ) -> None:
-    dialog = MagicMock()
-    dialog.exec.return_value = QDialog.DialogCode.Accepted
-    dialog.textValue.return_value = dialog_value
-    dialog.sizeHint.return_value = QSize(100, 100)
-    dialog.font.return_value = QApplication.font()
-    dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
-
-    plot_window = _create_plot_window_for_title_edit(qtbot, monkeypatch, dialog)
+    plot_window = _create_plot_window_for_title_edit(qtbot, monkeypatch)
+    get_text_input = MagicMock(return_value=(dialog_value, accepted))
+    plot_window._general_options.get_text_input = get_text_input
     plot_window.updatePlot = MagicMock()
     plot_window._plot_customizer._emit_changed_signal = MagicMock()
     plot_config = plot_window._plot_customizer.get_plot_config()
@@ -1222,83 +1132,7 @@ def test_that_accepting_title_edit_updates_persistent_config(
 
     persisted_config = plot_window._plot_customizer.get_plot_config()
     assert persisted_config.title() == expected_title
-    dialog.setTextValue.assert_called_once_with("Existing title")
-
-
-def test_that_cancelling_title_edit_preserves_active_key_title(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    dialog = MagicMock()
-    dialog.exec.return_value = QDialog.DialogCode.Rejected
-    dialog.sizeHint.return_value = QSize(100, 100)
-    dialog.font.return_value = QApplication.font()
-    dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
-
-    plot_window = _create_plot_window_for_title_edit(qtbot, monkeypatch, dialog)
-    plot_window.updatePlot = MagicMock()
-    plot_window._plot_customizer._emit_changed_signal = MagicMock()
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    plot_config.set_title("Existing title")
-    plot_window._plot_customizer.update_plot_config(plot_config)
-
-    plot_window._edit_title()
-
-    assert plot_window._plot_customizer.get_plot_config().title() == "Existing title"
-    dialog.setTextValue.assert_called_once_with("Existing title")
-
-
-@pytest.mark.slow
-def test_that_missing_title_override_preserves_key_title(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    mock_plot_api.responses_api_key_defs = []
-    mock_plot_api.parameters_api_key_defs = [
-        PlotApiKeyDefinition(
-            "some_key",
-            index_type=None,
-            metadata={"data_origin": "GEN_KW"},
-            observations=False,
-            dimensionality=1,
-            parameter=GenKwConfig(
-                name="some_key",
-                distribution=RawSettings(),
-                group="DESIGN_MATRIX",
-                input_source=DataSource.DESIGN_MATRIX,
-            ),
-        )
-    ]
-    mock_plot_api.get_all_ensembles.return_value = [
-        EnsembleObject(
-            "ensemble",
-            "ensemble",
-            False,
-            "experiment",
-            "2026-01-01T00:00:00",
-        )
-    ]
-    mock_plot_api.data_for_parameter.return_value = pd.DataFrame({0: [1.0, 2.0, 3.0]})
-    mock_plot_api.has_history_data.return_value = False
-
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
-    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
-    qtbot.addWidget(plot_window)
-    plot_window.updatePlot()
-
-    plot_widget = plot_window._central_tab.currentWidget()
-    assert plot_widget._figure.axes[0].get_title() == "some_key"
+    get_text_input.assert_called_once_with("Edit title", "New title:", "Existing title")
 
 
 @pytest.mark.slow
@@ -1346,19 +1180,9 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
     )
     monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
-    dialog = MagicMock()
-    dialog.exec.return_value = QDialog.DialogCode.Accepted
-    dialog.textValue.return_value = ""
-    dialog.sizeHint.return_value = QSize(100, 100)
-    dialog.font.return_value = QApplication.font()
-    dialog.fontMetrics.return_value = QFontMetrics(QApplication.font())
-    monkeypatch.setattr(
-        "ert.gui.plotting.widgets.plot_controls.general_options.QInputDialog",
-        MagicMock(return_value=dialog),
-    )
-
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
+    plot_window._general_options.get_text_input = MagicMock(return_value=("", True))
     plot_window.updatePlot()
 
     plot_config = plot_window._plot_customizer.get_plot_config()
