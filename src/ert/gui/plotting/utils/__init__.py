@@ -11,7 +11,6 @@ from .plot_config import PlotConfig
 from .plot_config_factory import PlotConfigFactory
 from .plot_config_history import PlotConfigHistory
 from .plot_context import PlotContext
-from .plot_limits import PlotLimits
 from .plot_style import PlotStyle
 from .plot_tools import ConditionalAxisFormatter, PlotTools
 from .plot_types import ObservationPlotLocations
@@ -31,7 +30,6 @@ __all__ = [
     "PlotConfigFactory",
     "PlotConfigHistory",
     "PlotContext",
-    "PlotLimits",
     "PlotStyle",
     "PlotTools",
     "ScatterTooltipManager",

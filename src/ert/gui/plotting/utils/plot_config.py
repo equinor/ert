@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import itertools
-from copy import copy
 from typing import Any
 
 from .plot_color_palettes import TABLEAU_10_COLOR_CYCLE
-from .plot_limits import PlotLimits
 from .plot_style import PlotStyle
 
 
@@ -29,8 +27,6 @@ class PlotConfig:
 
         self._x_label = x_label
         self._y_label = y_label
-
-        self._limits = PlotLimits()
 
         self._default_style = PlotStyle(
             name="Default", color=None, marker="", alpha=0.8
@@ -245,14 +241,6 @@ class PlotConfig:
         self._default_style.width = style.width
         self._default_style.size = style.size
 
-    @property
-    def limits(self) -> PlotLimits:
-        return copy(self._limits)
-
-    @limits.setter
-    def limits(self, value: PlotLimits) -> None:
-        self._limits = copy(value)
-
     def copy_config_from(self, other: PlotConfig) -> None:
         self._default_style.copy_style_from(
             other._default_style, copy_enabled_state=True
@@ -303,8 +291,6 @@ class PlotConfig:
 
         self._x_label = other._x_label
         self._y_label = other._y_label
-
-        self._limits = copy(other._limits)
 
         if other._title is not None:
             self._title = other._title

@@ -1,7 +1,6 @@
-import datetime
 import math
 
-from ert.gui.plotting.utils import PlotConfig, PlotLimits, PlotStyle
+from ert.gui.plotting.utils import PlotConfig, PlotStyle
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter
 
 
@@ -118,16 +117,6 @@ def test_plot_style_copy_style():
 def test_plot_config():
     plot_config = PlotConfig(title="Golden Sample", x_label="x", y_label="y")
 
-    limits = PlotLimits()
-    limits.count_limits = 1, 2
-    limits.density_limits = 5, 6
-    limits.date_limits = datetime.date(2005, 2, 5), datetime.date(2006, 2, 6)
-    limits.index_limits = 7, 8
-    limits.value_limits = 9.0, 10.0
-
-    plot_config.limits = limits
-    assert plot_config.limits == limits
-
     plot_config.set_distribution_line_enabled(True)
     plot_config.set_legend_enabled(False)
     plot_config.set_grid_enabled(False)
@@ -183,8 +172,6 @@ def test_plot_config():
     ) == copy_of_plot_config.get_statistics_style("std")
 
     assert plot_config.title() == copy_of_plot_config.title()
-
-    assert plot_config.limits == copy_of_plot_config.limits
 
     plot_config.current_color()  # cycle state will not be copied
     plot_config.next_color()
