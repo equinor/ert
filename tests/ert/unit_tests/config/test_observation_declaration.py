@@ -879,7 +879,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
 def test_that_non_existent_seismic_observation_file_raises_error(file_context_token):
     with pytest.raises(ObservationConfigError) as err:
         make_observations(
-            "",
+            "dir",
             [
                 ObservationDict(
                     {
@@ -893,9 +893,8 @@ def test_that_non_existent_seismic_observation_file_raises_error(file_context_to
             shape_registry=ShapeRegistry(),
         )
 
-    assert (
-        "The CSV file (seismic_observations.csv) does not exist or is not accessible."
-        in str(err.value)
+    assert "/dir/seismic_observations.csv) does not exist or is not accessible." in str(
+        err.value
     )
 
 
