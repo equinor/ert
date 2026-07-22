@@ -2,34 +2,40 @@ import logging
 from collections.abc import Callable
 
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QGroupBox,
 )
 
-from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
-from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
+from ert.gui.plotting.utils.qt_creator import (
+    create_checkbox_with_tooltip,
+    create_group_box,
+    create_group_layout,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class MisfitsOptions:
+class BoxplotOptions:
     def __init__(self, connection_point: Callable[..., object]) -> None:
 
-        self._toggle_mean = QCheckBox("Show mean")
-        self._toggle_mean.setChecked(True)
-        self._toggle_mean.stateChanged.connect(connection_point)
-        self._toggle_outliers = QCheckBox("Show outliers")
-        self._toggle_outliers.setChecked(True)
-        self._toggle_outliers.stateChanged.connect(connection_point)
-        self._toggle_scatter_plot = QCheckBox("Show scatter")
-        self._toggle_scatter_plot.setChecked(False)
-        self._toggle_scatter_plot.stateChanged.connect(connection_point)
-        self._toggle_box = QCheckBox("Show box plot")
-        self._toggle_box.setChecked(True)
-        self._toggle_box.stateChanged.connect(connection_point)
+        (
+            self._toggle_mean,
+            self._toggle_outliers,
+            self._toggle_scatter_plot,
+            self._toggle_box,
+        ) = [
+            create_checkbox_with_tooltip(
+                name, tooltip, connection_point, initial_checked=checked, logger=logger
+            )
+            for name, tooltip, checked in [
+                ("Mean", "Show or hide the mean", True),
+                ("Outliers", "Show or hide outliers", True),
+                ("Scatter points", "Show or hide scatter points", False),
+                ("Boxplot", "Show or hide the boxplot", True),
+            ]
+        ]
 
-        self._misfit_options = create_group_box(
-            "Misfit options",
+        self._boxplot_options = create_group_box(
+            "Boxplot options",
             create_group_layout(
                 [
                     self._toggle_scatter_plot,
@@ -38,16 +44,6 @@ class MisfitsOptions:
                     self._toggle_outliers,
                 ]
             ),
-        )
-        log_plot_option_usage_once(self._toggle_mean.stateChanged, logger, "Show mean")
-        log_plot_option_usage_once(
-            self._toggle_outliers.stateChanged, logger, "Show outliers"
-        )
-        log_plot_option_usage_once(
-            self._toggle_scatter_plot.stateChanged, logger, "Show scatter"
-        )
-        log_plot_option_usage_once(
-            self._toggle_box.stateChanged, logger, "Show box plot"
         )
 
     @property
@@ -83,4 +79,4 @@ class MisfitsOptions:
         self._toggle_box.setChecked(value)
 
     def get_widget(self) -> QGroupBox:
-        return self._misfit_options
+        return self._boxplot_options

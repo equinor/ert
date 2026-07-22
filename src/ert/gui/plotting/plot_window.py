@@ -59,9 +59,9 @@ from .utils.qt_creator import create_group_box, create_group_layout, create_side
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
+    BoxplotOptions,
     EverestControlsPlotOptions,
     GeneralPlotOptions,
-    MisfitsOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
@@ -334,7 +334,7 @@ class PlotWindow(QMainWindow):
             )
             self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
             self._general_options.titleEditRequested.connect(self._edit_title)
-            self._misfits_options = MisfitsOptions(self.updatePlot)
+            self._boxplot_options = BoxplotOptions(self.updatePlot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
@@ -343,14 +343,14 @@ class PlotWindow(QMainWindow):
                     self._general_options.get_widget(),
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
-                    self._misfits_options.get_widget(),
+                    self._boxplot_options.get_widget(),
                 ]
             )
             right_container.setLayout(right_layout)
 
             self._everest_controls_group.setVisible(False)
             self._everest_controls_plot_options.get_widget().setVisible(False)
-            self._misfits_options.get_widget().setVisible(False)
+            self._boxplot_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
             splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -416,7 +416,7 @@ class PlotWindow(QMainWindow):
         ):
             key = key.replace("BREAKTHROUGH:", "")
 
-        self._misfits_options.get_widget().setVisible(plot_widget.name == MISFITS)
+        self._boxplot_options.get_widget().setVisible(plot_widget.name == MISFITS)
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
@@ -602,9 +602,9 @@ class PlotWindow(QMainWindow):
                 self._everest_controls_plot_options.is_batches_selected()
             )
 
-            plot_context.scatter_plot = self._misfits_options.scatter_checkbox_state
-            plot_context.box_plot = self._misfits_options.box_checkbox_state
-            plot_context.mean = self._misfits_options.mean_checkbox_state
+            plot_context.scatter_plot = self._boxplot_options.scatter_checkbox_state
+            plot_context.box_plot = self._boxplot_options.box_checkbox_state
+            plot_context.mean = self._boxplot_options.mean_checkbox_state
             log_scale_available = log_scale_valid_values and selected_tab in {
                 HISTOGRAM,
                 DISTRIBUTION,
@@ -617,7 +617,7 @@ class PlotWindow(QMainWindow):
                 self._general_options.log_checkbox_state and log_scale_available
             )
 
-            plot_context.outliers = self._misfits_options.outliers_checkbox_state
+            plot_context.outliers = self._boxplot_options.outliers_checkbox_state
 
             # Check if key is a history key.
             # If it is, it already has the data it needs.

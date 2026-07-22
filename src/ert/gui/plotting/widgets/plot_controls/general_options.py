@@ -4,7 +4,6 @@ from collections.abc import Callable
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QDialog,
     QGroupBox,
     QHBoxLayout,
@@ -15,8 +14,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
-from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
+from ert.gui.plotting.utils.qt_creator import (
+    create_checkbox_with_tooltip,
+    create_group_box,
+    create_group_layout,
+)
 
 from .observation_color import ObservationColorEdit
 from .plot_color_palette_selector import PlotColorPaletteSelector
@@ -53,10 +55,7 @@ class GeneralPlotOptions(QObject):
             self._toggle_log_scale,
         ) = [
             create_checkbox_with_tooltip(
-                name,
-                tooltip,
-                connection_point,
-                initial_checked=checked,
+                name, tooltip, connection_point, initial_checked=checked, logger=logger
             )
             for name, tooltip, checked in [
                 ("Legend", "Show or hide the legend", True),
@@ -177,19 +176,3 @@ class GeneralPlotOptions(QObject):
 
     def get_observations_color(self) -> tuple[str, float]:
         return self._observations_color_edit.get_observations_color()
-
-
-def create_checkbox_with_tooltip(
-    name: str,
-    tooltip: str,
-    connection_point: Callable[..., object],
-    *,
-    initial_checked: bool = True,
-) -> QCheckBox:
-    checkbox = QCheckBox(name)
-    checkbox.setObjectName(f"{name.lower().replace(' ', '_')}_checkbox")
-    checkbox.setToolTip(tooltip)
-    checkbox.setChecked(initial_checked)
-    checkbox.stateChanged.connect(connection_point)
-    log_plot_option_usage_once(checkbox.clicked, logger, name)
-    return checkbox

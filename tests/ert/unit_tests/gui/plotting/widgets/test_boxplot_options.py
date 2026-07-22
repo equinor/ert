@@ -3,11 +3,11 @@ from unittest.mock import Mock
 
 import pytest
 
-from ert.gui.plotting.widgets.plot_controls.misfits_options import MisfitsOptions
+from ert.gui.plotting.widgets.plot_controls.boxplot_options import BoxplotOptions
 
 
-def test_that_misfits_options_has_expected_default_checkbox_states(qtbot):
-    options = MisfitsOptions(Mock())
+def test_that_boxplot_options_has_expected_default_checkbox_states(qtbot):
+    options = BoxplotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
     assert options.mean_checkbox_state is True
@@ -16,8 +16,8 @@ def test_that_misfits_options_has_expected_default_checkbox_states(qtbot):
     assert options.scatter_checkbox_state is False
 
 
-def test_that_setting_misfits_option_state_updates_underlying_checkbox(qtbot):
-    options = MisfitsOptions(Mock())
+def test_that_setting_boxplot_option_state_updates_underlying_checkbox(qtbot):
+    options = BoxplotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
     options.scatter_checkbox_state = True
@@ -31,9 +31,9 @@ def test_that_setting_misfits_option_state_updates_underlying_checkbox(qtbot):
     assert options.box_checkbox_state is False
 
 
-def test_that_toggling_a_misfits_checkbox_invokes_the_connection_point(qtbot):
+def test_that_toggling_a_boxplot_checkbox_invokes_the_connection_point(qtbot):
     connection_point = Mock()
-    options = MisfitsOptions(connection_point)
+    options = BoxplotOptions(connection_point)
     qtbot.addWidget(options.get_widget())
 
     options.scatter_checkbox_state = not options.scatter_checkbox_state
@@ -44,24 +44,24 @@ def test_that_toggling_a_misfits_checkbox_invokes_the_connection_point(qtbot):
 @pytest.mark.parametrize(
     ("checkbox_attribute", "option_name"),
     [
-        ("_toggle_mean", "Show mean"),
-        ("_toggle_outliers", "Show outliers"),
-        ("_toggle_scatter_plot", "Show scatter"),
-        ("_toggle_box", "Show box plot"),
+        ("_toggle_mean", "Mean"),
+        ("_toggle_outliers", "Outliers"),
+        ("_toggle_scatter_plot", "Scatter points"),
+        ("_toggle_box", "Boxplot"),
     ],
 )
-def test_that_toggling_a_misfits_option_logs_sidebar_usage_once(
+def test_that_toggling_a_boxplot_option_logs_sidebar_usage_once(
     qtbot, caplog, checkbox_attribute, option_name
 ):
-    options = MisfitsOptions(Mock())
+    options = BoxplotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
     checkbox = getattr(options, checkbox_attribute)
     expected_message = f"Plot sidebar option used: '{option_name}'"
 
     with caplog.at_level(logging.INFO):
-        checkbox.toggle()
+        checkbox.click()
         assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
 
-        checkbox.toggle()
+        checkbox.click()
         assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
