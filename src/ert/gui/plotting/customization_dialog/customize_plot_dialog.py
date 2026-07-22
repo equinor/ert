@@ -29,7 +29,6 @@ from ert.gui.plotting.utils import PlotConfig, PlotConfigFactory, PlotConfigHist
 from ert.gui.plotting.widgets import CopyStyleToDialog
 from ert.gui.utils import is_everest_application
 
-from .limits_customization_view import LimitsCustomizationView
 from .statistics_customization_view import StatisticsCustomizationView
 from .style_customization_view import StyleCustomizationView
 
@@ -65,10 +64,6 @@ class PlotCustomizer(QObject):
         if not self._is_everest:
             self._customization_dialog.add_tab(
                 "statistics", "Statistics", StatisticsCustomizationView()
-            )
-            self._customize_limits = LimitsCustomizationView()
-            self._customization_dialog.add_tab(
-                "limits", "Limits", self._customize_limits
             )
 
         self._customization_dialog.applySettings.connect(self.apply_customization)
@@ -189,10 +184,6 @@ class PlotCustomizer(QObject):
 
     def get_plot_config(self) -> PlotConfig:
         return self._get_plot_config_history().get_plot_config()
-
-    def set_axis_types(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
-        if not self._is_everest:
-            self._customize_limits.set_axis_types(x_axis_type, y_axis_type)
 
 
 class CustomizePlotDialog(QDialog):

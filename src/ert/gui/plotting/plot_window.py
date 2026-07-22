@@ -662,8 +662,6 @@ class PlotWindow(QMainWindow):
                     self._preferred_ensemble_x_axis_format = PlotContext.DATE_AXIS
                     break
 
-            self._updateCustomizer(plot_widget, self._preferred_ensemble_x_axis_format)
-
             plot_widget.updatePlot(
                 plot_context,
                 ensemble_to_data_map,
@@ -672,26 +670,6 @@ class PlotWindow(QMainWindow):
                 obs_loc,
                 key_def,
             )
-
-    def _updateCustomizer(
-        self, plot_widget: PlotWidget, preferred_x_axis_format: str
-    ) -> None:
-        x_axis_type = PlotContext.UNKNOWN_AXIS
-        y_axis_type = PlotContext.UNKNOWN_AXIS
-
-        if plot_widget.name in {ENSEMBLE, STATISTICS}:
-            x_axis_type = preferred_x_axis_format
-            y_axis_type = PlotContext.VALUE_AXIS
-        elif plot_widget.name in {DISTRIBUTION, CROSS_ENSEMBLE_STATISTICS}:
-            y_axis_type = PlotContext.VALUE_AXIS
-        elif plot_widget.name == HISTOGRAM:
-            x_axis_type = PlotContext.VALUE_AXIS
-            y_axis_type = PlotContext.COUNT_AXIS
-        elif plot_widget.name == GAUSSIAN_KDE:
-            x_axis_type = PlotContext.VALUE_AXIS
-            y_axis_type = PlotContext.DENSITY_AXIS
-
-        self._plot_customizer.set_axis_types(x_axis_type, y_axis_type)
 
     def getSelectedKey(self) -> PlotApiKeyDefinition | None:
         return self._data_type_keys_widget.getSelectedItem()
