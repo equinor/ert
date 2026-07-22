@@ -13,6 +13,7 @@ from ert.config import (
     SummaryKeyData,
     make_summary_key_data,
 )
+from ert.config._shapes import CircleShapeConfig
 
 INDENT2 = " " * 2
 INDENT4 = " " * 4
@@ -110,6 +111,8 @@ class BulkConfigConverter:
 
         shape = self.shape_registry.get(shape_id)
         if shape is None:
+            return None
+        if not isinstance(shape, CircleShapeConfig):
             return None
 
         lines = [
