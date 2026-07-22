@@ -40,7 +40,10 @@ class CrossEnsembleStatisticsPlot:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
         plot_context.plot_type = PlotType.BOX
-
+        outlier = plot_context.outliers
+        scatter = plot_context.scatter_plot
+        box = plot_context.box_plot
+        mean = plot_context.mean
         plot_context.deactivate_date_support()
 
         plot_context.y_axis = plot_context.VALUE_AXIS
@@ -57,121 +60,142 @@ class CrossEnsembleStatisticsPlot:
             config.set_current_color(color_index)
             ensemble_indexes.append(ensemble_index)
             color = config.current_color()
-            if not data.empty:
-                numeric_data = _assert_numeric(data)
-                if numeric_data is not None:
-                    axes.boxplot(
-                        numeric_data,
-                        positions=[ensemble_index],
-                        widths=box_width,
-                        whis=(
-                            LOWER_PERCENTILE_FOR_WHISKERS,
-                            UPPER_PERCENTILE_FOR_WHISKERS,
-                        ),
-                        patch_artist=True,
-                        showfliers=True,
-                        boxprops={
-                            "facecolor": color,
-                            "alpha": 0.8,
-                            "edgecolor": color,
-                            "linewidth": 0.7,
-                        },
-                        whiskerprops={
-                            "color": color,
-                            "alpha": 1,
-                            "linewidth": 1,
-                            "linestyle": "--",
-                        },
-                        capprops={
-                            "color": color,
-                            "alpha": 1,
-                            "linewidth": 2,
-                            "linestyle": "--",
-                        },
-                        medianprops={"color": "black", "linewidth": 1, "alpha": 1},
-                        flierprops={
-                            "marker": "o",
-                            "alpha": 1,
-                            "markeredgewidth": 0.3 + (0.4 * (1 - box_width)),
-                            "markeredgecolor": color,
-                            "markerfacecolor": "none",
-                        },
-                    )
-                    rng = np.random.default_rng(42)
-                    jitter = box_width * 0.5
+            if data.empty:
+                continue
+            numeric_data = _assert_numeric(data)
+            if numeric_data is None:
+                continue
+            if box:
+                axes.boxplot(
+                    numeric_data,
+                    positions=[ensemble_index],
+                    widths=box_width,
+                    whis=(
+                        LOWER_PERCENTILE_FOR_WHISKERS,
+                        UPPER_PERCENTILE_FOR_WHISKERS,
+                    ),
+                    patch_artist=True,
+                    showfliers=outlier,
+                    boxprops={
+                        "facecolor": color,
+                        "alpha": 0.8,
+                        "edgecolor": color,
+                        "linewidth": 0.7,
+                    },
+                    whiskerprops={
+                        "color": color,
+                        "alpha": 1,
+                        "linewidth": 1,
+                        "linestyle": "--",
+                    },
+                    capprops={
+                        "color": color,
+                        "alpha": 1,
+                        "linewidth": 2,
+                        "linestyle": "--",
+                    },
+                    medianprops={"color": "black", "linewidth": 1, "alpha": 1},
+                    flierprops={
+                        "marker": "o",
+                        "alpha": 1,
+                        "markeredgewidth": 0.3 + (0.4 * (1 - box_width)),
+                        "markeredgecolor": color,
+                        "markerfacecolor": "none",
+                    },
+                )
+            if scatter:
+                rng = np.random.default_rng(42)
+                jitter = box_width * 0.5
 
-                    x_points: list[np.ndarray] = []
-                    x_points.append(
-                        ensemble_index
-                        + rng.uniform(-jitter / 2, jitter / 2, size=len(numeric_data))
-                    )
+                x_points: list[np.ndarray] = []
+                x_points.append(
+                    ensemble_index
+                    + rng.uniform(-jitter / 2, jitter / 2, size=len(numeric_data))
+                )
 
-                    x_all = np.concatenate(x_points)
+                x_all = np.concatenate(x_points)
 
-                    axes.scatter(
-                        x_all,
-                        numeric_data,
-                        color=color,
-                        alpha=0.35,
-                        linewidths=0,
-                        zorder=2,  # above bands/boxes
-                    )
-                    axes.plot(
-                        ensemble_index,
-                        np.nanmean(numeric_data),
-                        "D",
-                        markersize=4,
-                        color="black",
-                        zorder=3,  # Above boxes and scatter
-                    )
+                axes.scatter(
+                    x_all,
+                    numeric_data,
+                    color=color,
+                    alpha=0.35,
+                    linewidths=0,
+                    zorder=2,  # above bands/boxes
+                )
+            if mean:
+                axes.plot(
+                    ensemble_index,
+                    np.nanmean(numeric_data),
+                    "D",
+                    markersize=4,
+                    color="black",
+                    zorder=3,  # Above boxes and scatter
+                )
 
-                    config.add_legend_item(
-                        ensemble_list[ensemble_index].name,
-                        Line2D(
-                            [],
-                            [],
-                            marker="s",
-                            linestyle="None",
-                            color=color,
-                            label=ensemble_list[ensemble_index].name,
-                        ),
-                    )
+            config.add_legend_item(
+                ensemble_list[ensemble_index].name,
+                Line2D(
+                    [],
+                    [],
+                    marker="s",
+                    linestyle="None",
+                    color=color,
+                    label=ensemble_list[ensemble_index].name,
+                ),
+            )
+        if box:
+            config.add_legend_item(
+                "Median", Line2D([0], [0], color="black", linewidth=0.9, alpha=1)
+            )
+            config.add_legend_item(
+                (
+                    f"Whiskers ({LOWER_PERCENTILE_FOR_WHISKERS}-"
+                    f"{UPPER_PERCENTILE_FOR_WHISKERS} %)"
+                ),
+                Line2D([0], [0], color="black", linewidth=2, linestyle="--", alpha=1),
+            )
+            if outlier:
+                config.add_legend_item(
+                    "Outliers",
+                    Line2D(
+                        [0],
+                        [0],
+                        marker="o",
+                        color="none",
+                        markeredgecolor="black",
+                        markerfacecolor="none",
+                        markersize=6,
+                        alpha=1,
+                    ),
+                )
+        if scatter:
+            config.add_legend_item(
+                "Scatter points",
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="black",
+                    markeredgecolor="None",
+                    linestyle="None",
+                    alpha=0.35,
+                ),
+            )
+        if mean:
+            config.add_legend_item(
+                "Mean",
+                Line2D(
+                    [0],
+                    [0],
+                    marker="D",
+                    color="black",
+                    markersize=4,
+                    linestyle="None",
+                    alpha=1,
+                ),
+            )
 
-        config.add_legend_item(
-            "Median", Line2D([0], [0], color="black", linewidth=0.9, alpha=1)
-        )
-        config.add_legend_item(
-            (
-                f"Whiskers ({LOWER_PERCENTILE_FOR_WHISKERS}-"
-                f"{UPPER_PERCENTILE_FOR_WHISKERS} %)"
-            ),
-            Line2D([0], [0], color="black", linewidth=2, linestyle="--", alpha=1),
-        )
-        config.add_legend_item(
-            "Mean",
-            Line2D(
-                [0],
-                [0],
-                marker="D",
-                color="black",
-                markersize=4,
-                linestyle="None",
-                alpha=1,
-            ),
-        )
-        config.add_legend_item(
-            "Outliers",
-            Line2D(
-                [0],
-                [0],
-                marker="o",
-                color="none",
-                markeredgecolor="black",
-                markerfacecolor="none",
-                markersize=6,
-                alpha=1,
-            ),
-        )
         axes.set_xticks([-1, *ensemble_indexes, len(ensemble_indexes)])
 
         rotation = 0
