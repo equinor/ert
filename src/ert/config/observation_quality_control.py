@@ -1,5 +1,8 @@
+from typing import Any
+
 import polars as pl
 
+from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
 from ert.config.rft_config import RFTConfig
 
 
@@ -76,3 +79,38 @@ def qc_rft_observations(
     qc_df = ensure_qc_error_column(observations_with_metadata)
     qc_df = _qc_observation_zone_matches_simulated_zones(qc_df)
     return _qc_observation_location_is_in_the_grid(qc_df)
+
+
+def _qc_observation_location_is_inside_boundary(
+    df: pl.DataFrame, shape_registry: ShapeRegistry
+) -> pl.DataFrame:
+    """Remove observations that are outside the limiting observation boundary.
+
+    Some observations do not belong to the provided polygon boundary. This is not
+    considered an error, they are just silently removed.
+    """
+
+    def is_inside_boundary(row: dict[str, Any]) -> bool:
+        boundary_id = row["boundary_id"]
+        if boundary_id is None:
+            return True
+        boundary = shape_registry.get(boundary_id)
+        assert boundary is not None, (
+            f"Boundary with ID {boundary_id} not found in shape registry."
+        )
+        assert isinstance(boundary, PolygonShapeConfig)
+        return boundary.contains(row["east"], row["north"])
+
+    return df.filter(
+        pl.struct(["boundary_id", "east", "north"]).map_elements(
+            is_inside_boundary, return_dtype=pl.Boolean
+        )
+    )
+
+
+def qc_seismic_observations(
+    observations: pl.DataFrame,
+    shape_registry: ShapeRegistry,
+) -> pl.DataFrame:
+    """Perform quality control checks on seismic observations."""
+    return _qc_observation_location_is_inside_boundary(observations, shape_registry)
