@@ -78,6 +78,7 @@ dependencies = [
     "xtgeo >= 3.3.0",
     "resfo-utilities>=0.5.0",
     "natsort>=8.4.0",
+    "shapely>=2.1.2",
 ]
 
 [project.scripts]
@@ -140,6 +141,7 @@ types = [
     "types-setuptools",
     "types-tabulate",
     "types-networkx",
+    "types-shapely",
 ]
 
 [tool.setuptools]

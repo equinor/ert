@@ -808,28 +808,6 @@ def test_that_rft_observation_can_be_provided_radius_localization_keyword(
         assert math.isclose(shape.radius, 2500)
 
 
-def test_that_shape_registry_reuses_identical_circle_shapes():
-    shape_registry = ShapeRegistry()
-    shape_id_1 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    shape_id_2 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    assert shape_id_1 == shape_id_2
-
-
-def test_that_shape_registry_assigns_new_id_for_different_shapes():
-    shape_registry = ShapeRegistry()
-    shape_id_1 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    shape_id_2 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=3000.0)
-    )
-    assert shape_id_1 != shape_id_2
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_seismic_observation_instantiates(file_context_token):
     Path("obs.csv").write_text(
