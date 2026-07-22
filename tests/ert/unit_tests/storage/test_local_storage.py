@@ -5,6 +5,7 @@ import shutil
 import stat
 from datetime import datetime, timedelta
 from pathlib import Path
+from textwrap import dedent
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import hypothesis.strategies as st
@@ -20,6 +21,8 @@ from ert.config import (
 from ert.config._observations import (
     BreakthroughObservation,
 )
+from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
+from ert.config.seismic_config import SeismicConfig
 from ert.dark_storage.common import ErtStoragePermissionError
 from ert.storage import (
     ErtStorageException,
@@ -30,6 +33,7 @@ from ert.storage import (
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
 from ert.storage.mode import ModeError
 from tests.ert.defaults_generator import (
+    create_seismic_observation,
     create_summary_observation,
 )
 from tests.ert.unit_tests.storage._storage_test_helpers import (
@@ -744,3 +748,81 @@ def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
         np.testing.assert_equal(obs_and_responses["1"].to_list(), [None])
         assert obs_and_responses["qc_error_0"].to_list() == [msg]
         assert obs_and_responses["qc_error_1"].to_list() == [msg]
+
+
+def test_that_get_observations_and_responses_bounds_seismic_observations(
+    tmp_path, mocked_files
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        seismic_config = SeismicConfig()
+
+        mocked_files["polygon.pol"] = dedent(
+            """
+            0.000000 0.000000 0.000000
+            0.000000 1.000000 0.000000
+            1.000000 1.000000 0.000000
+            1.000000 0.000000 0.000000
+            999.000000 999.000000 999.000000
+            """
+        )
+        boundary = PolygonShapeConfig.from_file("polygon.pol")
+        shape_registry = ShapeRegistry()
+        boundary_id = shape_registry.register(boundary)
+
+        seismic_observation1 = create_seismic_observation(
+            name="seismic_observation_inside",
+            filepath=Path("obs.csv"),
+            east=0.5,
+            north=0.5,
+            boundary_id=boundary_id,
+        )
+
+        seismic_observation2 = create_seismic_observation(
+            name="seismic_observation_outside",
+            filepath=Path("obs.csv"),
+            east=1.5,
+            north=1.5,
+            boundary_id=boundary_id,
+        )
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [seismic_config.model_dump(mode="json")],
+                "observations": [
+                    seismic_observation1.model_dump(mode="json"),
+                    seismic_observation2.model_dump(mode="json"),
+                ],
+                "shape_registry": shape_registry.model_dump(mode="json"),
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        response_dataframe = pl.DataFrame(
+            {
+                "response_key": ["obs", "obs"],
+                "east": [np.float32(0.5), np.float32(1.5)],
+                "north": [np.float32(0.5), np.float32(1.5)],
+                "values": [np.float32(1), np.float32(2)],
+            }
+        )
+        seismic_config._assert_schema(
+            response_dataframe, seismic_config.response_schema()
+        )
+        ensemble.save_response("seismic", response_dataframe, 0)
+
+        iens_active_index = np.array([0])
+        active_observations = [
+            "seismic_observation_inside",
+            "seismic_observation_outside",
+        ]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["observation_key"].to_list() == [
+            "seismic_observation_inside",
+        ]

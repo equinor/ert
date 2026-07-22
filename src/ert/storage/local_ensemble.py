@@ -34,6 +34,7 @@ from ert.config.observation_quality_control import (
     append_to_qc_error,
     ensure_qc_error_column,
     qc_rft_observations,
+    qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
 from ert.data import MeasuredData
@@ -982,6 +983,10 @@ class LocalEnsemble(BaseMode):
                 .filter(pl.col("observation_key").is_in(list(selected_observations)))
                 .with_columns([pl.col("response_key").cast(pl.Categorical)])
             )
+            if response_type == "seismic":
+                observations_for_type = qc_seismic_observations(
+                    observations_for_type, self.experiment.shape_registry
+                )
 
             reals = np.sort(iens_active_index).tolist()
 
