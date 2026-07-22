@@ -5,8 +5,11 @@ from typing import TYPE_CHECKING, Literal, cast
 import numpy as np
 import pandas as pd
 import polars as pl
-from matplotlib.lines import Line2D
 
+from ert.gui.plotting.shared_plots.generic_boxplot_with_scatter import (
+    generate_legend_items,
+    generate_plots,
+)
 from ert.gui.plotting.utils import PlotTools
 from ert.gui.plotting.utils.plot_context import PlotType
 
@@ -178,15 +181,9 @@ class MisfitsPlot:
 
         all_unique_indexes = all_misfits["key_index"].unique().sort().to_list()
         plot_context.plot_type = PlotType.BOX
-        config = plot_context.plotConfig()
-        outlier = plot_context.outliers
-        scatter = plot_context.scatter_plot
-        box = plot_context.box_plot
-        mean = plot_context.mean
 
         index_to_pos = {idx: i for i, idx in enumerate(all_unique_indexes)}
 
-        many_boxes_factor = min(1, len(all_unique_indexes) / 50)
         sorted_ensemble_keys = sorted(data_with_misfits.keys())
         color_map = self._map_ensembles_to_colours(
             sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
@@ -208,6 +205,8 @@ class MisfitsPlot:
 
         for ens_idx, ens_key in enumerate(sorted_ensemble_keys):
             color = color_map.get(ens_key)
+            if color is None:
+                continue
 
             df = data_with_misfits[ens_key]
             if df.is_empty():
@@ -227,138 +226,23 @@ class MisfitsPlot:
                 s.to_numpy() if s.len() > 0 else np.array([np.nan])
                 for s in grouped_misfits["misfit"]
             ]
-            if box:
-                axes.boxplot(
-                    data_for_boxes,
-                    positions=positions,
-                    widths=box_width,
-                    whis=(LOWER_PERCENTILE_FOR_WHISKERS, UPPER_PERCENTILE_FOR_WHISKERS),
-                    showfliers=outlier,
-                    manage_ticks=False,
-                    patch_artist=True,
-                    boxprops={
-                        "facecolor": color,
-                        "alpha": 0.8,
-                        "edgecolor": color,
-                        "linewidth": 0.7,
-                    },
-                    whiskerprops={
-                        "color": color,
-                        "alpha": 1,
-                        "linewidth": 0.8,
-                        "linestyle": "--",
-                    },
-                    capprops={"color": color, "alpha": 1, "linewidth": 0.8},
-                    medianprops={"color": "black", "linewidth": 0.8, "alpha": 1},
-                    flierprops={
-                        "marker": "o",
-                        "alpha": 1,
-                        "markeredgewidth": 0.3 + (0.4 * (1 - many_boxes_factor)),
-                        "markeredgecolor": color,
-                        "markerfacecolor": "none",
-                    },
-                )
-
-            if mean:
-                means = np.array(
-                    [np.nanmean(arr) for arr in data_for_boxes], dtype=float
-                )
-                axes.plot(
-                    positions,
-                    means,
-                    "D",
-                    markersize=4,
-                    color="black",
-                    zorder=3,  # Above boxes and scatter
-                )
-
-            if scatter:
-                rng = np.random.default_rng(42)
-                jitter = box_width * 0.5
-
-                x_points: list[np.ndarray] = []
-                y_points: list[np.ndarray] = []
-                for position, box_data in zip(positions, data_for_boxes, strict=True):
-                    x_points.append(
-                        position
-                        + rng.uniform(-jitter / 2, jitter / 2, size=len(box_data))
-                    )
-                    y_points.append(box_data)
-
-                x_all = np.concatenate(x_points)
-                y_all = np.concatenate(y_points)
-
-                axes.scatter(
-                    x_all,
-                    y_all,
-                    color=color,
-                    alpha=0.35,
-                    linewidths=0,
-                    zorder=2,  # above bands/boxes
-                )
-
-            config.add_legend_item(
-                ens_key[0],
-                Line2D(
-                    [],
-                    [],
-                    marker="s",
-                    linestyle="None",
-                    color=color,
-                    label=ens_key[0],
-                ),
+            generate_plots(
+                plot_context,
+                axes,
+                data_for_boxes,
+                positions,
+                box_width,
+                color,
+                LOWER_PERCENTILE_FOR_WHISKERS,
+                UPPER_PERCENTILE_FOR_WHISKERS,
+                legend_label=ens_key[0],
             )
 
-        if scatter:
-            config.add_legend_item(
-                "Scatter points",
-                Line2D(
-                    [0],
-                    [0],
-                    marker="o",
-                    color="black",
-                    markeredgecolor="None",
-                    linestyle="None",
-                    alpha=0.35,
-                ),
-            )
-
-        if box:
-            config.add_legend_item(
-                "Median", Line2D([0], [0], color="black", linewidth=0.6, alpha=1)
-            )
-            config.add_legend_item(
-                "Whiskers (5-95%)",
-                Line2D([0], [0], color="black", linewidth=0.7, linestyle="--", alpha=1),
-            )
-
-        if mean:
-            config.add_legend_item(
-                "Mean",
-                Line2D(
-                    [0],
-                    [0],
-                    marker="D",
-                    color="black",
-                    markersize=4,
-                    linestyle="None",
-                    alpha=1,
-                ),
-            )
-        if outlier and box:
-            config.add_legend_item(
-                "Outliers",
-                Line2D(
-                    [0],
-                    [0],
-                    marker="o",
-                    color="none",
-                    markeredgecolor="black",
-                    markerfacecolor="none",
-                    markersize=6,
-                    alpha=1,
-                ),
-            )
+        generate_legend_items(
+            plot_context,
+            LOWER_PERCENTILE_FOR_WHISKERS,
+            UPPER_PERCENTILE_FOR_WHISKERS,
+        )
 
         axes.set_xlim(-0.5, len(all_unique_indexes) - 0.5)
         if summary_or_breakthrough:

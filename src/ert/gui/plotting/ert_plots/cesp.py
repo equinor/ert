@@ -5,10 +5,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from matplotlib.lines import Line2D
 from natsort import natsorted
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
+from ert.gui.plotting.shared_plots.generic_boxplot_with_scatter import (
+    generate_legend_items,
+    generate_plots,
+)
 from ert.gui.plotting.utils import ConditionalAxisFormatter, PlotTools
 from ert.gui.plotting.utils.plot_context import PlotType
 from ert.gui.utils import truncate_experiment_name, truncate_string
@@ -42,10 +45,6 @@ class CrossEnsembleStatisticsPlot:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
         plot_context.plot_type = PlotType.BOX
-        outlier = plot_context.outliers
-        scatter = plot_context.scatter_plot
-        box = plot_context.box_plot
-        mean = plot_context.mean
         plot_context.deactivate_date_support()
 
         plot_context.y_axis = plot_context.VALUE_AXIS
@@ -93,141 +92,29 @@ class CrossEnsembleStatisticsPlot:
             numeric_data = _assert_numeric(data)
             if numeric_data is None:
                 continue
-            if box:
-                axes.boxplot(
-                    numeric_data,
-                    positions=[ensemble_index],
-                    widths=box_width,
-                    whis=(
-                        LOWER_PERCENTILE_FOR_WHISKERS,
-                        UPPER_PERCENTILE_FOR_WHISKERS,
-                    ),
-                    patch_artist=True,
-                    showfliers=outlier,
-                    boxprops={
-                        "facecolor": color,
-                        "alpha": 0.8,
-                        "edgecolor": color,
-                        "linewidth": 0.7,
-                    },
-                    whiskerprops={
-                        "color": color,
-                        "alpha": 1,
-                        "linewidth": 1,
-                        "linestyle": "--",
-                    },
-                    capprops={
-                        "color": color,
-                        "alpha": 1,
-                        "linewidth": 2,
-                        "linestyle": "--",
-                    },
-                    medianprops={"color": "black", "linewidth": 1, "alpha": 1},
-                    flierprops={
-                        "marker": "o",
-                        "alpha": 1,
-                        "markeredgewidth": 0.3 + (0.4 * (1 - box_width)),
-                        "markeredgecolor": color,
-                        "markerfacecolor": "none",
-                    },
-                )
-            if scatter:
-                rng = np.random.default_rng(42)
-                jitter = box_width * 0.5
-
-                x_points: list[np.ndarray] = []
-                x_points.append(
-                    ensemble_index
-                    + rng.uniform(-jitter / 2, jitter / 2, size=len(numeric_data))
-                )
-
-                x_all = np.concatenate(x_points)
-
-                axes.scatter(
-                    x_all,
-                    numeric_data,
-                    color=color,
-                    alpha=0.35,
-                    linewidths=0,
-                    zorder=2,  # above bands/boxes
-                )
-            if mean:
-                axes.plot(
-                    ensemble_index,
-                    np.nanmean(numeric_data),
-                    "D",
-                    markersize=4,
-                    color="black",
-                    zorder=3,  # Above boxes and scatter
-                )
-
-            legend_label = (
-                (f"{truncate_string(ensemble.experiment_name, 20)} : {ensemble.name}")
-                if multiple_experiments
-                else ensemble.name
-            )
-            config.add_legend_item(
-                legend_label,
-                Line2D(
-                    [],
-                    [],
-                    marker="s",
-                    linestyle="None",
-                    color=color,
-                    label=legend_label,
+            generate_plots(
+                plot_context,
+                axes,
+                [numeric_data.to_numpy()],
+                [ensemble_index],
+                box_width,
+                color,
+                LOWER_PERCENTILE_FOR_WHISKERS,
+                UPPER_PERCENTILE_FOR_WHISKERS,
+                legend_label=(
+                    (
+                        f"{truncate_string(ensemble.experiment_name, 20)}"
+                        f" : {ensemble.name}"
+                    )
+                    if multiple_experiments
+                    else ensemble.name
                 ),
             )
-        if box:
-            config.add_legend_item(
-                "Median", Line2D([0], [0], color="black", linewidth=0.9, alpha=1)
-            )
-            config.add_legend_item(
-                (
-                    f"Whiskers ({LOWER_PERCENTILE_FOR_WHISKERS}-"
-                    f"{UPPER_PERCENTILE_FOR_WHISKERS} %)"
-                ),
-                Line2D([0], [0], color="black", linewidth=2, linestyle="--", alpha=1),
-            )
-            if outlier:
-                config.add_legend_item(
-                    "Outliers",
-                    Line2D(
-                        [0],
-                        [0],
-                        marker="o",
-                        color="none",
-                        markeredgecolor="black",
-                        markerfacecolor="none",
-                        markersize=6,
-                        alpha=1,
-                    ),
-                )
-        if scatter:
-            config.add_legend_item(
-                "Scatter points",
-                Line2D(
-                    [0],
-                    [0],
-                    marker="o",
-                    color="black",
-                    markeredgecolor="None",
-                    linestyle="None",
-                    alpha=0.35,
-                ),
-            )
-        if mean:
-            config.add_legend_item(
-                "Mean",
-                Line2D(
-                    [0],
-                    [0],
-                    marker="D",
-                    color="black",
-                    markersize=4,
-                    linestyle="None",
-                    alpha=1,
-                ),
-            )
+        generate_legend_items(
+            plot_context,
+            LOWER_PERCENTILE_FOR_WHISKERS,
+            UPPER_PERCENTILE_FOR_WHISKERS,
+        )
 
         axes.set_xticks([-1, *range(len(entries)), len(entries)])
 
