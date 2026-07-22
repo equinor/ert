@@ -1,0 +1,75 @@
+/* Stylesheet template for the ERT GUI.
+ *
+ * Author styling HERE using named variables (each written with a leading
+ * "at" sign, e.g. the primary colour) instead of raw hex codes. The
+ * variables are defined (per colour scheme) in ert/gui/theming/tokens.py.
+ * Run the compiler to turn this template into the light.qss / dark.qss files
+ * that Qt actually loads:
+ *
+ *   uv run python -m ert.gui.theming.generate_qss
+ *
+ * Qt's stylesheet engine cannot resolve variables at runtime, so the compile
+ * step bakes each variable into its scheme-specific value.
+ */
+
+QWidget {
+    background-color: @background-primary;
+    color: @text-primary;
+}
+
+QToolBar#sidebar {
+    background-color: @sidebar-bg;
+    border: none;
+}
+
+QToolBar#sidebar #sidebar_title {
+    color: @nav-text;
+    font-size: @font-title;
+    font-weight: bold;
+    padding: 8px 12px;
+}
+
+QToolBar#sidebar #sidebar_nav_group {
+    background-color: @sidebar-bg;
+    border: none;
+    margin: 4px;
+}
+
+QToolBar#sidebar QToolButton {
+    background-color: @nav-bg;
+    color: @nav-text;
+    border: none;
+    border-left: 3px solid transparent;
+    padding: 8px 12px;
+    font-size: @font-nav-label;
+}
+
+QToolBar#sidebar QToolButton:focus {
+    background-color: @nav-focus-bg;
+    color: @nav-focus-text;
+}
+
+QToolBar#sidebar QToolButton:hover {
+    background-color: @nav-hover-bg;
+    color: @nav-hover-text;
+}
+
+QToolBar#sidebar QToolButton:checked {
+    background-color: @nav-active-bg;
+    color: @nav-active-text;
+    border-left: 3px solid @nav-active-border;
+}
+
+QToolBar#sidebar QToolButton:pressed {
+    background-color: @nav-pressed-bg;
+    color: @nav-pressed-text;
+}
+
+QToolBar#sidebar QToolButton:disabled {
+    background-color: @nav-disabled-bg;
+    color: @nav-disabled-text;
+}
+
+QMenu#sidebar_status_menu::item {
+    font-size: @font-menu-item;
+}

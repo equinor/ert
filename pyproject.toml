@@ -149,6 +149,8 @@ platforms = ["all"]
 [tool.setuptools.package-data]
 ert = [
     "gui/resources/**/*",
+    "gui/theming/*.qss.in",
+    "gui/theming/eds/*.json",
     "resources/**/*",
     "logging/logger.conf",
     "logging/storage_log.conf",
