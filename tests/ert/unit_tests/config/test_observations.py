@@ -2459,7 +2459,7 @@ def test_that_seismic_observation_dataframes_are_created(
                 "std": pl.Series([0.005, 0.005, 0.005], dtype=pl.Float32),
                 "east": pl.Series([100.25, 100.55, 100.85], dtype=pl.Float32),
                 "north": pl.Series([200.25, 200.65, 200.95], dtype=pl.Float32),
-                "radius": pl.Series([None, None, None], dtype=pl.Float32),
+                "radius": pl.Series([3000.0, 3000.0, 3000.0], dtype=pl.Float32),
             }
         ),
     )

@@ -865,6 +865,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
             north=5933187.729869121,
             value=-0.0003566695393886,
             error=0.005,
+            shape_id=0,
         ),
         create_seismic_observation(
             name="NAME",
@@ -873,6 +874,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
             north=5933317.28138355,
             value=-0.0005293887515127,
             error=0.005,
+            shape_id=1,
         ),
     ]
 
@@ -1008,6 +1010,7 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             north=1.0,
             value=1.0,
             error=0.005,
+            shape_id=0,
         ),
         create_seismic_observation(
             name="obs",
@@ -1016,6 +1019,7 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             north=2.0,
             value=1.0,
             error=0.005,
+            shape_id=1,
         ),
     ]
 
