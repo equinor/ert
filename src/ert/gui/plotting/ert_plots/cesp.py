@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+from itertools import groupby
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
+from natsort import natsorted
 
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils import ConditionalAxisFormatter, PlotTools
 from ert.gui.plotting.utils.plot_context import PlotType
-from ert.gui.utils import truncate_experiment_name
+from ert.gui.utils import truncate_experiment_name, truncate_string
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -48,17 +50,43 @@ class CrossEnsembleStatisticsPlot:
 
         plot_context.y_axis = plot_context.VALUE_AXIS
 
-        ensemble_list = plot_context.ensembles()
-        ensemble_indexes = []
-        n_ens = len(ensemble_list)
-        box_width = 0.8 / n_ens
-        for (ensemble_index, data), color_index in zip(
-            enumerate(ensemble_to_data_map.values()),
-            plot_context.ensembles_color_indexes(),
-            strict=False,
-        ):
+        entries = natsorted(
+            (
+                (ensemble, color_index, ensemble_to_data_map[ensemble])
+                for ensemble, color_index in zip(
+                    plot_context.ensembles(),
+                    plot_context.ensembles_color_indexes(),
+                    strict=False,
+                )
+            ),
+            key=lambda entry: (entry[0].experiment_name, entry[0].name),
+        )
+        grouped_experiments = [
+            (experiment_name, list(group))
+            for experiment_name, group in groupby(
+                entries, key=lambda entry: entry[0].experiment_name
+            )
+        ]
+        multiple_experiments = len(grouped_experiments) > 1
+        if multiple_experiments:
+            group_start = 0
+            for group_index, (_, group) in enumerate(grouped_experiments):
+                group_size = len(group)
+                group_end = group_start + group_size
+
+                if group_index % 2 == 1:
+                    axes.axvspan(
+                        group_start - 0.5,
+                        group_end - 0.5,
+                        color="grey",
+                        alpha=0.07,
+                        zorder=0,
+                    )
+
+                group_start = group_end
+        box_width = 0.8
+        for ensemble_index, (ensemble, color_index, data) in enumerate(entries):
             config.set_current_color(color_index)
-            ensemble_indexes.append(ensemble_index)
             color = config.current_color()
             if data.empty:
                 continue
@@ -133,15 +161,20 @@ class CrossEnsembleStatisticsPlot:
                     zorder=3,  # Above boxes and scatter
                 )
 
+            legend_label = (
+                (f"{truncate_string(ensemble.experiment_name, 20)} : {ensemble.name}")
+                if multiple_experiments
+                else ensemble.name
+            )
             config.add_legend_item(
-                ensemble_list[ensemble_index].name,
+                legend_label,
                 Line2D(
                     [],
                     [],
                     marker="s",
                     linestyle="None",
                     color=color,
-                    label=ensemble_list[ensemble_index].name,
+                    label=legend_label,
                 ),
             )
         if box:
@@ -196,10 +229,10 @@ class CrossEnsembleStatisticsPlot:
                 ),
             )
 
-        axes.set_xticks([-1, *ensemble_indexes, len(ensemble_indexes)])
+        axes.set_xticks([-1, *range(len(entries)), len(entries)])
 
         rotation = 0
-        if len(ensemble_list) > 3:
+        if len(entries) > 3:
             rotation = 30
 
         axes.set_xticklabels(
@@ -209,7 +242,7 @@ class CrossEnsembleStatisticsPlot:
                     f"{truncate_experiment_name(ensemble.experiment_name)}"
                     f" : {ensemble.name}"
                 )
-                for ensemble in ensemble_list
+                for ensemble, _, _ in entries
             ]
             + [""],
             rotation=rotation,
