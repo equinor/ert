@@ -1,8 +1,13 @@
 import polars as pl
 import pytest
 
-from ert.config.observation_quality_control import qc_rft_observations
+from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
+from ert.config.observation_quality_control import (
+    qc_rft_observations,
+    qc_seismic_observations,
+)
 from ert.config.rft_config import RFTConfig
+from tests.ert.defaults_generator import create_seismic_observation
 
 
 def get_rft_observation(
@@ -166,3 +171,44 @@ def test_that_observation_without_zones_are_not_disabled_by_zone_check():
         None,
         "expected zone 'zone2' did not match any of the simulated zones: zone1",
     ]
+
+
+def test_that_observations_within_boundary_stay_while_outside_are_removed():
+    boundary = PolygonShapeConfig(
+        vertices=[
+            (0.0, 0.0),
+            (0.0, 1.0),
+            (1.0, 1.0),
+            (1.0, 0.0),
+            (0.0, 0.0),
+        ]
+    )
+    shape_registry = ShapeRegistry()
+    boundary_id = shape_registry.register(boundary)
+
+    observations = pl.DataFrame(
+        [
+            create_seismic_observation(
+                east=0.5,
+                north=0.5,
+                boundary_id=boundary_id,
+            ),
+            create_seismic_observation(
+                east=1,
+                north=1,
+                boundary_id=boundary_id,
+            ),
+            create_seismic_observation(
+                east=1.5,
+                north=1.5,
+                boundary_id=boundary_id,
+            ),
+            create_seismic_observation(
+                east=2.5,
+                north=2.5,
+            ),
+        ]
+    )
+
+    qc = qc_seismic_observations(observations, shape_registry)
+    assert qc["east"].to_list() == [0.5, 2.5]

@@ -8,6 +8,7 @@ SEISMIC_OBSERVATION OBS_MEAN_2026{
 
 SEISMIC_OBSERVATION OBS_MIN_2025{
    CSV=share/preprocessed/tables/horizon--amplitude_full_min_depth--20250101_20240101.csv;
+   BOUNDARY=boundary.pol;
 };
 
 SEISMIC_OBSERVATION OBS_MIN_2026{

@@ -24,7 +24,7 @@ from resfo_utilities import InvalidSummaryKeyError, make_summary_key
 
 from ert.validation import rangestring_to_list
 
-from ._shapes import CircleShapeConfig, ShapeConfig, ShapeRegistry
+from ._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeConfig, ShapeRegistry
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
@@ -1000,6 +1000,7 @@ class SeismicObservation(BaseObservation):
     north: float
     value: float
     error: float
+    boundary_id: int | None = None
 
     @staticmethod
     def _load_observations(filepath: Path) -> pd.DataFrame:
@@ -1035,6 +1036,10 @@ class SeismicObservation(BaseObservation):
     ) -> list[Self]:
         """Create seismic observations from an observation dictionary.
 
+        File containing seismic observations (CSV) and file containing the polygon
+        limiting observations used in the match step (BOUNDARY) are specified relative
+        to the directory of the observation config.
+
         Args:
             directory: Directory where observation config is located.
             observation_dict: Dictionary containing the observation configuration.
@@ -1042,6 +1047,7 @@ class SeismicObservation(BaseObservation):
         """
         name = ""
         filepath: str | Path | None = None
+        boundary_filepath: str | Path | None = None
         for key, value in observation_dict.items():
             match key:
                 case "type":
@@ -1050,6 +1056,8 @@ class SeismicObservation(BaseObservation):
                     name = value
                 case "CSV":
                     filepath = value
+                case "BOUNDARY":
+                    boundary_filepath = value
                 case _:
                     raise _unknown_key_error(str(key), observation_dict.context)
 
@@ -1068,6 +1076,18 @@ class SeismicObservation(BaseObservation):
             name = filepath.stem
 
         df = cls._load_observations(filepath)
+
+        boundary_id = None
+        if boundary_filepath is not None:
+            boundary_filepath = Path(directory) / boundary_filepath
+            if not boundary_filepath.exists():
+                raise ObservationConfigError.with_context(
+                    f"The boundary file ({boundary_filepath.absolute()}) "
+                    "does not exist or is not accessible.",
+                    boundary_filepath,
+                )
+            boundary = PolygonShapeConfig.from_file(str(boundary_filepath))
+            boundary_id = shape_registry.register(boundary)
 
         seismic_observations = []
         seen_coordinates: set[tuple[np.float32, np.float32]] = set()
@@ -1111,6 +1131,7 @@ class SeismicObservation(BaseObservation):
                 value=value,
                 error=error,
                 shape_id=shape_id,
+                boundary_id=boundary_id,
             )
             seismic_observations.append(seismic_observation)
 
