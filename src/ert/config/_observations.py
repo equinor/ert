@@ -6,12 +6,20 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self, assert_never, get_type_hints
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Literal,
+    Self,
+    assert_never,
+    get_type_hints,
+)
 
 import numpy as np
 import pandas as pd
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 from resfo_utilities import InvalidSummaryKeyError, make_summary_key
 
 from ert.validation import rangestring_to_list
@@ -25,6 +33,9 @@ from .parsing import (
     ObservationType,
 )
 from .parsing.file_context_token import FileContextToken
+
+if TYPE_CHECKING:
+    from pydantic import SerializerFunctionWrapHandler
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +51,26 @@ class ErrorModes(StrEnum):
 class BaseObservation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    shape_id: int | None = None
+
+    @model_serializer(mode="wrap")
+    def _serialize_with_order(
+        self, handler: SerializerFunctionWrapHandler
+    ) -> dict[str, Any]:
+        data = handler(self)
+
+        # with default serialization shape_id would have become the first written key,
+        # but it is not that interesting to be on top
+        shape_id = data.pop("shape_id", None)
+        data["shape_id"] = shape_id
+
+        return data
+
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        if self.shape_id is not None:
+            return shape_registry.get(self.shape_id)
+        return None
+
 
 class _SummaryValues(BaseObservation):
     type: Literal["summary_observation"] = "summary_observation"
@@ -48,7 +79,6 @@ class _SummaryValues(BaseObservation):
     error: float
     key: str  #: The :term:`summary key` in the summary response
     date: str
-    shape_id: int | None = None
 
 
 def _parse_date(date_str: str) -> datetime:
@@ -400,11 +430,6 @@ class SummaryObservation(_SummaryValues):
             )
         return shape_id
 
-    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
-        if self.shape_id is not None:
-            return shape_registry.get(self.shape_id)
-        return None
-
     @classmethod
     def default_name(cls, summary_key: str, date: str) -> str:
         return f"{summary_key}:{date}"
@@ -418,7 +443,6 @@ class _GeneralObservation(BaseObservation):
     error: float
     restart: int
     index: int
-    shape_id: int | None = None
 
 
 class GeneralObservation(_GeneralObservation):
@@ -618,7 +642,6 @@ class RFTObservation(BaseObservation):
     north: float
     tvd: float
     md: float | None = None
-    shape_id: int | None = None
     zone: str | None = None
 
     @classmethod
@@ -882,11 +905,6 @@ class RFTObservation(BaseObservation):
 
         return [obs_instance]
 
-    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
-        if self.shape_id is not None:
-            return shape_registry.get(self.shape_id)
-        return None
-
 
 class BreakthroughObservation(BaseObservation):
     type: Literal["breakthrough"] = "breakthrough"
@@ -895,7 +913,6 @@ class BreakthroughObservation(BaseObservation):
     date: datetime
     error: float
     threshold: float
-    shape_id: int | None = None
 
     @classmethod
     def from_obs_dict(
@@ -1060,6 +1077,20 @@ class SeismicObservation(BaseObservation):
             value = validate_float(str(row.OBS), "OBS")
             error = validate_float(str(row.OBS_ERROR), "OBS_ERROR")
 
+            # Currently supports only default localization radius as behavior of
+            # LOCALIZATION keyword is undefined. All shapes are being registered
+            # separately, even though it might make sense to introduce one relative
+            # shape for all observations which know their east/north and have a common
+            # radius
+            radius = DEFAULT_LOCALIZATION_RADIUS
+            shape_id = shape_registry.register(
+                CircleShapeConfig(
+                    east=east,
+                    north=north,
+                    radius=radius,
+                )
+            )
+
             coordinates = (
                 np.float32(east),
                 np.float32(north),
@@ -1079,13 +1110,11 @@ class SeismicObservation(BaseObservation):
                 north=north,
                 value=value,
                 error=error,
+                shape_id=shape_id,
             )
             seismic_observations.append(seismic_observation)
 
         return seismic_observations
-
-    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
-        return None
 
 
 Observation = Annotated[
