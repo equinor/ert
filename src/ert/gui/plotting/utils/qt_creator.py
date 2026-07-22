@@ -1,10 +1,16 @@
+from collections.abc import Callable
+from logging import Logger
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QGroupBox,
     QLabel,
     QVBoxLayout,
     QWidget,
 )
+
+from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 
 
 def create_side_panel(title: str, widget: QWidget) -> QWidget:
@@ -34,3 +40,20 @@ def create_group_box(title: str, layout: QVBoxLayout) -> QGroupBox:
     group_box.setStyleSheet("QGroupBox { font-style: italic; }")
     group_box.setLayout(layout)
     return group_box
+
+
+def create_checkbox_with_tooltip(
+    name: str,
+    tooltip: str,
+    connection_point: Callable[..., object],
+    *,
+    initial_checked: bool = True,
+    logger: Logger,
+) -> QCheckBox:
+    checkbox = QCheckBox(name)
+    checkbox.setObjectName(f"{name.lower().replace(' ', '_')}_checkbox")
+    checkbox.setToolTip(tooltip)
+    checkbox.setChecked(initial_checked)
+    checkbox.stateChanged.connect(connection_point)
+    log_plot_option_usage_once(checkbox.clicked, logger, name)
+    return checkbox
