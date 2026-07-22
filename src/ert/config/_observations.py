@@ -1116,8 +1116,6 @@ _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.BULK_SUMMARY: SummaryObservation,
 }
 
-LOCALIZATION_KEYS = Literal["east", "north", "radius"]
-
 
 def make_observations(
     directory: str,

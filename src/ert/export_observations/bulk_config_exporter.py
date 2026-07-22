@@ -1,7 +1,7 @@
 from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, TypeAlias
 
 from natsort import natsorted
 
@@ -15,27 +15,21 @@ INDENT2 = " " * 2
 INDENT4 = " " * 4
 INDENT6 = " " * 6
 
-
-def _get_first_loc_value(loc_key: str, obs: list[dict[str, Any]]) -> float | int | None:
-    for o in obs:
-        key_value = o.get(loc_key, [None])[0]
-        if key_value is not None:
-            return key_value
-    return None
+LocalizationKeys = Literal["east", "north", "radius"]
+LocalizationDict: TypeAlias = dict[LocalizationKeys, float | None]
 
 
-def _obs_to_localization_str(obs: list[Any]) -> str | None:
-    east = _get_first_loc_value("east", obs)
-    north = _get_first_loc_value("north", obs)
-    radius = _get_first_loc_value("radius", obs)
-    if east is None or north is None:
-        return None
+def _localization_to_string(
+    localization: LocalizationDict,
+) -> str:
+    if not localization:
+        return ""
     lines = [
         f"{INDENT4}LOCALIZATION {{",
-        f"{INDENT6}EAST={east};",
-        f"{INDENT6}NORTH={north};",
+        f"{INDENT6}EAST={localization['east']};",
+        f"{INDENT6}NORTH={localization['north']};",
     ]
-    if radius is not None:
+    if (radius := localization["radius"]) is not None:
         lines.append(f"{INDENT6}RADIUS={radius};")
     lines.append(f"{INDENT4}}};")
     return "\n".join(lines)
@@ -68,14 +62,15 @@ class BulkConfigExporter:
         self,
         summary_observations: dict[str, Any],
         breakthrough_observations: dict[str, Any],
+        well_localization: dict[str, LocalizationDict],
         csv_file_name: str = "summary_observation_values.csv",
     ) -> None:
         self.summary_observations = summary_observations
         self.breakthrough_observations = breakthrough_observations
         self.csv_file_name = csv_file_name
+        self.well_to_localization = well_localization
 
         self.well_to_breakthrough = self._map_well_to_breakthrough()
-        self.well_to_localization = self._map_localization_to_well()
 
         summary_keys = []
         for key in summary_observations:
@@ -83,18 +78,6 @@ class BulkConfigExporter:
             summary_keys.append(summary_key)
 
         self.header_fields = _non_empty_fields(summary_keys)
-
-    def _map_localization_to_well(self) -> dict[str, Any]:
-        well_to_localization = {}
-        for key in self.summary_observations | self.breakthrough_observations:
-            summary_key = make_summary_key_data(key.removeprefix("BREAKTHROUGH:"))
-            loc_string = _obs_to_localization_str(
-                self.summary_observations.get(key, [])
-                + self.breakthrough_observations.get(key, [])
-            )
-            if loc_string is not None and (well := summary_key.well) is not None:
-                well_to_localization[well] = loc_string
-        return well_to_localization
 
     def _map_well_to_breakthrough(self) -> dict[str, Any]:
         well_to_breakthrough = {}
@@ -153,7 +136,7 @@ class BulkConfigExporter:
             bulk_config_list.extend(
                 [
                     f"{INDENT2}WELL {well} {{",
-                    self.well_to_localization.get(well, ""),
+                    _localization_to_string(self.well_to_localization.get(well, {})),
                     self.well_to_breakthrough.get(well, ""),
                     f"{INDENT2}}};",
                 ]
