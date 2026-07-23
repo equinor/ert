@@ -59,7 +59,7 @@ def ensemble_to_data_map(request, plot_context):
     return dict.fromkeys(plot_context.ensembles(), request.param)
 
 
-@pytest.mark.mpl_image_compare(tolerance=10)
+@pytest.mark.mpl_image_compare(tolerance=10, style="default")
 def test_histogram(plot_context: PlotContext, ensemble_to_data_map):
     figure = Figure()
     HistogramPlot().plot(
