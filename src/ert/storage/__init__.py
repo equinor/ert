@@ -5,7 +5,13 @@ from .local_ensemble import (
     load_realization_parameters_and_responses,
 )
 from .local_experiment import ExperimentState, ExperimentStatus, LocalExperiment
-from .local_storage import LocalStorage, local_storage_set_ert_config, open_storage
+from .local_storage import (
+    ErtStorageException,
+    ErtStoragePermissionError,
+    LocalStorage,
+    local_storage_set_ert_config,
+    open_storage,
+)
 from .mode import Mode, ModeLiteral
 from .realization_storage_state import RealizationStorageState
 
@@ -28,16 +34,10 @@ EnsembleReader = LocalEnsemble
 EnsembleAccessor = LocalEnsemble
 
 
-class ErtStorageException(Exception):
-    pass
-
-
-class ErtStoragePermissionError(ErtStorageException):
-    pass
-
-
 __all__ = [
     "Ensemble",
+    "ErtStorageException",
+    "ErtStoragePermissionError",
     "Experiment",
     "ExperimentState",
     "ExperimentStatus",

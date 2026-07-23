@@ -34,6 +34,14 @@ logger = logging.getLogger(__name__)
 _LOCAL_STORAGE_VERSION = 36
 
 
+class ErtStorageException(Exception):
+    pass
+
+
+class ErtStoragePermissionError(ErtStorageException):
+    pass
+
+
 def open_storage(
     path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
 ) -> ert.storage.Storage:
@@ -65,12 +73,12 @@ def open_storage(
     try:
         return LocalStorage(Path(path), Mode(mode))
     except PermissionError as err:
-        raise ert.storage.ErtStoragePermissionError(
+        raise ErtStoragePermissionError(
             "Permission error when accessing storage at: "
             f"{path} with mode: '{mode}'. Error: {err}"
         ) from err
     except Exception as err:
-        raise ert.storage.ErtStorageException(
+        raise ErtStorageException(
             f"Failed to open storage: {path} with error: {err}"
         ) from err
 
@@ -197,7 +205,7 @@ class LocalStorage(BaseMode):
             version = _LOCAL_STORAGE_VERSION
 
         if version > _LOCAL_STORAGE_VERSION:
-            raise ert.storage.ErtStorageException(
+            raise ErtStorageException(
                 f"Cannot open storage '{storage_dir.absolute()}': Storage version "
                 f"{version} is newer than the current version {_LOCAL_STORAGE_VERSION}"
                 f", upgrade ert to continue, or run with a different ENSPATH"
