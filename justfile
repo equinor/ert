@@ -92,7 +92,7 @@ build-ert-docs: fetch-screenshot-baselines
 build-docs: build-ert-docs build-everest-docs
 
 check-types:
-    mypy src
+    mypy src tests/ert/unit_tests/forward_model_runner/
 
 test-all:
     parallel -j4 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just everest-tests'

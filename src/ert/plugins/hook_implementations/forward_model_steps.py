@@ -366,7 +366,10 @@ class Flow(ForwardModelStepPlugin):
         available_versions = _available_flow_versions(
             env_vars=fm_json["environment"] or {}
         )
-        version = fm_json["argList"][fm_json["argList"].index("--version") + 1]
+        arg_list = fm_json.get("argList")
+        if arg_list is None:
+            arg_list = []
+        version = arg_list[arg_list.index("--version") + 1]
         if version not in available_versions:
             raise ForwardModelStepValidationError(
                 f"Unavailable Flow version {version}. "

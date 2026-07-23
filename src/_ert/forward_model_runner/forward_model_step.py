@@ -112,11 +112,13 @@ def killed_by_oom(pids: Iterable[int]) -> bool:
 
 
 class ForwardModelStep:
-    MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
-    TARGET_FILE_POLL_PERIOD = 5  # Seconds to wait for target file after step completion
+    MEMORY_POLL_PERIOD = 5.0  # Seconds between memory polls
+    TARGET_FILE_POLL_PERIOD = (
+        5.0  # Seconds to wait for target file after step completion
+    )
 
     def __init__(
-        self, step_data: ForwardModelStepJSON, index: int, sleep_interval: int = 1
+        self, step_data: ForwardModelStepJSON, index: int, sleep_interval: float = 1.0
     ) -> None:
         self.sleep_interval = sleep_interval
         self.step_data = step_data
@@ -389,7 +391,10 @@ class ForwardModelStep:
         return errors
 
     def _check_target_file_is_written(
-        self, target_file: str, existing_target_file_mtime: int | None, timeout: int = 5
+        self,
+        target_file: str,
+        existing_target_file_mtime: int | None,
+        timeout: float = 5.0,
     ) -> str | None:
         """
         Check whether or not a target_file eventually appear. Returns None in
