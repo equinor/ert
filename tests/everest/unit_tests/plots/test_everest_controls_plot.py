@@ -347,3 +347,14 @@ def test_that_hover_annotation_displays_batch_id_for_by_control_plot(
     )
 
     assert not hover_annotation.get_visible()
+
+
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
+def test_that_controls_plot_matches_baseline(
+    everest_ensemble, controls_data, generic_plot_context
+):
+    plot = EverestControlsPlot()
+    plot.set_selected_controls(["ctrl_a", "ctrl_b"])
+    return create_everest_figure(
+        plot, controls_data, generic_plot_context, everest_ensemble
+    )
