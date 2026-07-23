@@ -47,6 +47,7 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
     EverEndpoints,
 )
+from everest.config.validation_utils import Context
 
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
 
@@ -203,7 +204,9 @@ async def start_experiment(
     # of everserver. Therefore we suppress them here:
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=ConfigWarning)
-        config = EverestConfig.with_plugins(request_data)
+        config = EverestConfig.with_plugins(request_data, Context.SERVER)
+    print("Server Shutting down!")
+    return JSONResponse({"run_id": run_id})
     runner = ExperimentRunner(config, run_id)
     try:
         background_tasks.add_task(runner.run)

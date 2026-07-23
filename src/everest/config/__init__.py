@@ -21,6 +21,7 @@ from .server_config import ServerConfig
 from .simulator_config import SimulatorConfig
 from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
+from .validation_utils import Context
 
 __all__ = [
     "CVaRConfig",
@@ -44,4 +45,5 @@ __all__ = [
     "SimulatorConfig",
     "WellConfig",
     "WorkflowConfig",
+    "Context"
 ]

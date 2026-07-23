@@ -1,3 +1,4 @@
+from functools import wraps
 import logging
 import os
 from argparse import ArgumentParser
@@ -49,6 +50,7 @@ from everest.config.validation_utils import (
     check_writeable_path,
     unique_items,
     validate_forward_model_configs,
+    Context,
 )
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.strings import (
@@ -94,12 +96,28 @@ class EverestValidationError(ValueError):
 
     def __str__(self) -> str:
         return f"{self._errors!s}"
-
+    ...
 
 def _error_loc(error: ErrorDetails) -> str:
     return " -> ".join(
         str(e) for e in error["loc"] if e is not None and e != "__root__"
     )
+
+def server_validation(f):
+    """
+    Decorator to ensure that a validation function is only run in a server context.
+    """
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        if len(args) > 0 and hasattr(args[0], "context"):
+            context = args[0].context
+            if hasattr(context, "type") and context.type == Context.SERVER:
+                print(f"Running server validation: {f.__name__} with context: {context.type}")
+                print(context)
+                return f(self, *args, **kwargs)
+        print(f"Skipping server validation: {f.__name__}")
+        return self
+    return wrapper
 
 
 def _format_errors(validation_error: EverestValidationError) -> str:
@@ -569,6 +587,7 @@ class EverestConfig(BaseModelWithContextSupport):
         return [format_fm(fm) for fm in forward_model_steps]
 
     @model_validator(mode="after")
+    @server_validation
     def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
@@ -577,10 +596,8 @@ class EverestConfig(BaseModelWithContextSupport):
         installed_jobs_name = [job.name for job in install_jobs]
         if info.context:  # Add plugin jobs
             installed_jobs_name += info.context.installed_forward_model_steps.keys()
-            print("We have context, Installed jobs: ", installed_jobs_name)
 
         errors = []
-        print("Forward model jobs: ", forward_model_jobs)
         for fm_job in forward_model_jobs:
             job_name = fm_job.job.split()[0]
             if job_name not in installed_jobs_name:
@@ -797,6 +814,7 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
+    @server_validation
     def validate_forward_models(self, info: ValidationInfo) -> Self:
         if not info.context:
             return self
@@ -1071,9 +1089,10 @@ to read summary data from forward model, do:
             raise _convert_to_everest_validation_error(error, config_path) from error
 
     @classmethod
-    def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
-        with use_runtime_plugins(get_site_plugins()):
-            return cls(**config_dict) # type: ignore
+    def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict, ctx: Context = Context.CLIENT) -> Self:
+        with use_runtime_plugins(get_site_plugins(ctx=ctx)):
+            print(f"Loading config with context: {ctx}")
+            return cls(**config_dict)  # type: ignore
 
     @staticmethod
     def load_file_with_argparser(

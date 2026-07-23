@@ -1,3 +1,4 @@
+from enum import StrEnum, auto
 import errno
 import os
 import tempfile
@@ -41,6 +42,11 @@ _RESERVED_WORDS = [
 ]
 
 _OVERWRITE_MESSAGE = "Are you overwriting other parts of install_data?"
+
+
+class Context(StrEnum):
+    SERVER = auto()
+    CLIENT = auto()
 
 
 class InstallDataContext:
