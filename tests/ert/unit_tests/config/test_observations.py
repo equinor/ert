@@ -16,7 +16,6 @@ from pydantic import ValidationError
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
 
-from ert.__main__ import run_convert_observations
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ShapeRegistry
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import (
@@ -34,7 +33,7 @@ from ert.config.parsing.observations_parser import (
 from ert.config.rft_config import RFTConfig
 from ert.gui.plotting.ert_plots.observations import _plotObservations
 from ert.gui.plotting.utils import PlotConfig
-from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import run_convert_observations
 from tests.ert.defaults_generator import (
     create_breakthrough_observation_dict,
     create_rft_observation_dict,
@@ -120,7 +119,7 @@ def make_refcase_observations(
         + extra_config
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
 
     migrated_config = ErtConfig.from_file("config.ert")
     return create_observation_dataframes(
@@ -245,7 +244,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given
         config_file = tmp_dir / "config.ert"
         config_file.write_text(config_content)
 
-        run_convert_observations(Namespace(config=str(config_file)))
+        run_convert_observations(str(config_file))
 
         migrated_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
@@ -299,7 +298,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
     config_file = Path("config.ert")
     config_file.write_text(config_content, encoding="utf-8")
 
-    run_convert_observations(Namespace(config=str(config_file)))
+    run_convert_observations(str(config_file))
 
     migrated_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
@@ -449,7 +448,7 @@ def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcas
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
 
     migrated = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
@@ -522,7 +521,7 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
     ert_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
         ert_config.observation_declarations, ert_config.shape_registry
@@ -591,7 +590,7 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
             """
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -672,7 +671,7 @@ def test_that_absolute_error_must_be_greater_than_zero_in_history_observations()
     with pytest.raises(
         ConfigValidationError, match=r"must be given a strictly positive value"
     ):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -777,7 +776,7 @@ def test_that_error_types_are_not_allowed_in_general_observations(error_type):
     )
 
     with pytest.raises(ConfigValidationError, match=r"Unknown key 'ERROR_(MODE|MIN)'"):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 def test_that_empty_observations_file_causes_exception():
@@ -805,7 +804,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         ConfigValidationError,
         match="REFCASE is required for HISTORY_OBSERVATION",
     ):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -877,7 +876,7 @@ def test_that_invalid_time_map_file_raises_config_validation_error():
     )
 
     with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 def test_that_non_existent_obs_file_is_invalid(file_context_token):
@@ -929,7 +928,7 @@ def test_that_non_existent_time_map_file_is_invalid():
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
     with pytest.raises(ObservationConfigError, match="TIME_MAP"):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1213,7 +1212,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
         Path("config.ert").write_text("\n".join(config_lines), encoding="utf-8")
 
         with expectation:
-            run_convert_observations(Namespace(config="config.ert"))
+            run_convert_observations("config.ert")
             ErtConfig.from_file("config.ert")
 
 
@@ -1282,7 +1281,7 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
         with pytest.warns(ConfigWarning, match=message):
-            run_convert_observations(Namespace(config="config.ert"))
+            run_convert_observations("config.ert")
 
 
 @given(
@@ -1320,7 +1319,7 @@ def test_that_history_observations_values_are_fetched_from_refcase(
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -1518,7 +1517,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -1562,7 +1561,7 @@ def test_that_segment_defaults_are_applied(tmpdir):
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -1639,7 +1638,7 @@ def test_that_properties_are_valid_in_a_segment(segment_property, value, error_m
         encoding="utf-8",
     )
     with pytest.raises(ConfigValidationError, match=error_msg):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -1675,7 +1674,7 @@ def test_that_restart_cannot_be_non_positive_in_summary_observation(
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
     with pytest.raises(ConfigValidationError, match=error_msg):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 def test_that_value_must_be_set_in_summary_observation():
@@ -1728,7 +1727,7 @@ def test_that_error_variants_must_be_a_positive_number_in_history_observation(
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1754,7 +1753,7 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_history_observation():
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1821,7 +1820,7 @@ def test_that_property_must_be_a_positive_number_in_general_observation(
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1853,7 +1852,7 @@ def test_that_date_must_be_a_date_in_general_observation():
         encoding="utf-8",
     )
     with pytest.raises(ConfigValidationError, match="Please use ISO date format"):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 def test_that_value_must_be_a_number_in_general_observation():
@@ -1908,7 +1907,7 @@ def test_that_property_must_be_a_positive_number_in_summary_observation(
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        run_convert_observations("config.ert")
 
 
 def test_that_date_must_be_a_date_in_summary_observation():
@@ -1968,7 +1967,7 @@ def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key)
             encoding="utf-8",
         )
         with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
-            run_convert_observations(Namespace(config="config.ert"))
+            run_convert_observations("config.ert")
     else:
         with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
             ert_config_from_parser(

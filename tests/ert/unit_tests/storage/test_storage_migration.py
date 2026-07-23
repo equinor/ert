@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import shutil
-from argparse import Namespace
 from pathlib import Path
 
 import numpy as np
@@ -11,12 +10,12 @@ import orjson
 import polars as pl
 import pytest
 
-from ert.__main__ import run_convert_observations
 from ert.analysis import (
     ErtAnalysisError,
     smoother_update,
 )
 from ert.config import ErtConfig, ObservationSettings
+from ert.observation_converters.history_to_summary import run_convert_observations
 from ert.plugins import get_site_plugins
 from ert.storage import RealizationStorageState, open_storage
 from ert.storage.local_storage import (
@@ -127,7 +126,7 @@ def test_that_storage_matches(
     )
     monkeypatch.chdir(tmp_path / "all_data_types")
     site_plugins = get_site_plugins()
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
     ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
@@ -250,7 +249,7 @@ def test_that_storage_works_with_missing_parameters_and_responses(
 
     monkeypatch.chdir(tmp_path / "all_data_types")
     site_plugins = get_site_plugins()
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
     ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
@@ -342,7 +341,7 @@ def test_that_manual_update_from_migrated_storage_works(
     )
     monkeypatch.chdir(tmp_path / "all_data_types")
     site_plugins = get_site_plugins()
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
     ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
@@ -472,7 +471,7 @@ def test_migrate_storage_with_no_responses(
 
     monkeypatch.chdir(tmp_path / "all_data_types")
     site_plugins = get_site_plugins()
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
     ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
@@ -561,7 +560,7 @@ def test_that_storages_with_failed_realizations_are_migrated_without_errors(
     for i, failure_json, _ in failures:
         (realization_dirs[i] / "error.json").write_text(json.dumps(failure_json))
 
-    run_convert_observations(Namespace(config="config.ert"))
+    run_convert_observations("config.ert")
     ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
