@@ -14,7 +14,6 @@ import py
 import pytest
 import xtgeo
 
-from ert.__main__ import run_convert_observations
 from ert.analysis import (
     enif_update,
     smoother_update,
@@ -22,7 +21,7 @@ from ert.analysis import (
 from ert.config import ErtConfig, ObservationSettings
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
-from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import run_convert_observations
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 from tests.ert.performance_tests.performance_utils import make_poly_example
@@ -50,7 +49,7 @@ def poly_template(monkeypatch):
         update_steps=1,
     )
     monkeypatch.chdir(folder)
-    run_convert_observations(Namespace(config=str(folder / "poly.ert")))
+    run_convert_observations(str(folder / "poly.ert"))
     return folder
 
 
