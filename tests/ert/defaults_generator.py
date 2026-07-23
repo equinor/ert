@@ -185,6 +185,8 @@ def create_seismic_observation(
     north: float = 1.0,
     value: float = 1.0,
     error: float = 0.005,
+    shape_id: int | None = None,
+    boundary_id: int | None = None,
 ) -> SeismicObservation:
     return SeismicObservation(
         name=name,
@@ -193,6 +195,8 @@ def create_seismic_observation(
         north=north,
         value=value,
         error=error,
+        shape_id=shape_id,
+        boundary_id=boundary_id,
     )
 
 

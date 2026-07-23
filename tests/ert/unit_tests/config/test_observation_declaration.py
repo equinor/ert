@@ -19,7 +19,7 @@ from ert.config._observations import (
     SummaryObservation,
     make_observations,
 )
-from ert.config._shapes import CircleShapeConfig, ShapeRegistry
+from ert.config._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeRegistry
 from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
@@ -808,28 +808,6 @@ def test_that_rft_observation_can_be_provided_radius_localization_keyword(
         assert math.isclose(shape.radius, 2500)
 
 
-def test_that_shape_registry_reuses_identical_circle_shapes():
-    shape_registry = ShapeRegistry()
-    shape_id_1 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    shape_id_2 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    assert shape_id_1 == shape_id_2
-
-
-def test_that_shape_registry_assigns_new_id_for_different_shapes():
-    shape_registry = ShapeRegistry()
-    shape_id_1 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    shape_id_2 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=3000.0)
-    )
-    assert shape_id_1 != shape_id_2
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_seismic_observation_instantiates(file_context_token):
     Path("obs.csv").write_text(
@@ -865,6 +843,8 @@ def test_that_seismic_observation_instantiates(file_context_token):
             north=5933187.729869121,
             value=-0.0003566695393886,
             error=0.005,
+            shape_id=0,
+            boundary_id=None,
         ),
         create_seismic_observation(
             name="NAME",
@@ -873,6 +853,8 @@ def test_that_seismic_observation_instantiates(file_context_token):
             north=5933317.28138355,
             value=-0.0005293887515127,
             error=0.005,
+            shape_id=1,
+            boundary_id=None,
         ),
     ]
 
@@ -880,7 +862,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
 def test_that_non_existent_seismic_observation_file_raises_error(file_context_token):
     with pytest.raises(ObservationConfigError) as err:
         make_observations(
-            "",
+            "dir",
             [
                 ObservationDict(
                     {
@@ -894,9 +876,8 @@ def test_that_non_existent_seismic_observation_file_raises_error(file_context_to
             shape_registry=ShapeRegistry(),
         )
 
-    assert (
-        "The CSV file (seismic_observations.csv) does not exist or is not accessible."
-        in str(err.value)
+    assert "/dir/seismic_observations.csv) does not exist or is not accessible." in str(
+        err.value
     )
 
 
@@ -1009,6 +990,8 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             north=1.0,
             value=1.0,
             error=0.005,
+            shape_id=0,
+            boundary_id=None,
         ),
         create_seismic_observation(
             name="obs",
@@ -1017,6 +1000,8 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             north=2.0,
             value=1.0,
             error=0.005,
+            shape_id=1,
+            boundary_id=None,
         ),
     ]
 
@@ -1101,4 +1086,109 @@ def test_that_duplicate_location_in_seismic_observation_raises(
     assert (
         f"Seismic observation coordinates ({east[1]}, {north[1]}) "
         "were not unique (after rounding from f64 to f32)." in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_reads_boundary_file(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            1.0,1.0,1.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    Path("boundary.pol").write_text(
+        dedent(
+            """
+            0.000000 0.000000 0.000000
+            0.000000 1.000000 0.000000
+            1.000000 1.000000 0.000000
+            1.000000 0.000000 0.000000
+            999.000000 999.000000 999.000000
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "NAME",
+                    "CSV": "obs.csv",
+                    "BOUNDARY": "boundary.pol",
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        create_seismic_observation(
+            name="NAME",
+            filepath=Path("obs.csv"),
+            east=1.0,
+            north=1.0,
+            value=1.0,
+            error=0.005,
+            shape_id=1,
+            boundary_id=0,
+        )
+    ]
+    boundary = shape_registry.get(0)
+    assert isinstance(boundary, PolygonShapeConfig)
+    expected = [
+        (0.0, 0.0),
+        (0.0, 1.0),
+        (1.0, 1.0),
+        (1.0, 0.0),
+        (0.0, 0.0),
+    ]
+    assert boundary.vertices == expected
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_boundary_seismic_observation_file_raises_error(
+    file_context_token,
+):
+    os.makedirs("directory/right/path", exist_ok=True)
+    os.makedirs("directory/wrong/path", exist_ok=True)
+    Path("directory/obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            1.0,1.0,1.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    Path("directory/right/path/bound.pol").write_text(
+        "Unexpected file location",
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "directory",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "CSV": "obs.csv",
+                        "BOUNDARY": "wrong/path/bound.pol",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "/directory/wrong/path/bound.pol) does not exist or is not accessible."
+        in str(err.value)
     )

@@ -66,6 +66,7 @@ def create_observation_dataframes(
                     grouped["seismic"].append(
                         _handle_seismic_observation(
                             obs,
+                            shape_registry,
                         )
                     )
                 case default:
@@ -258,11 +259,14 @@ def _handle_breakthrough_observation(
 
 
 def _seismic_observation_schema() -> dict[str, Any]:
-    return _base_observation_schema()
+    return _base_observation_schema() | {
+        "boundary_id": pl.UInt16,
+    }
 
 
 def _handle_seismic_observation(
     seismic_observation: SeismicObservation,
+    shape_registry: ShapeRegistry | None = None,
 ) -> pl.DataFrame:
     response_key = seismic_observation.filepath.stem
     obs_key = seismic_observation.name
@@ -271,6 +275,11 @@ def _handle_seismic_observation(
     east = seismic_observation.east
     north = seismic_observation.north
     radius = None
+    if shape_registry is not None:
+        shape = seismic_observation.shape(shape_registry)
+        if shape is not None and isinstance(shape, CircleShapeConfig):
+            radius = shape.radius
+    boundary_id = seismic_observation.boundary_id
 
     return pl.DataFrame(
         {
@@ -281,5 +290,6 @@ def _handle_seismic_observation(
             "east": pl.Series([east], dtype=pl.Float32),
             "north": pl.Series([north], dtype=pl.Float32),
             "radius": pl.Series([radius], dtype=pl.Float32),
+            "boundary_id": pl.Series([boundary_id], dtype=pl.UInt16),
         }
     ).pipe(assert_schema, _seismic_observation_schema(), check_column_order=False)
