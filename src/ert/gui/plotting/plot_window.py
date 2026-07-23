@@ -37,6 +37,7 @@ from ert.gui.plotting.ert_plots import (
     MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
+    WaterfallPlot,
 )
 from ert.gui.plotting.everest_plots import (
     EverestBatchObjectiveFunctionPlot,
@@ -74,6 +75,7 @@ HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std dev"
 MISFITS = "Misfits"
+WATERFALL = "Waterfall"
 EVEREST_CONTROLS_PLOT = "Controls"
 EVEREST_GRADIENTS_PLOT = "Gradient"
 EVEREST_OBJECTIVE_FUNCTION_PLOT = "Objective function"
@@ -246,6 +248,7 @@ class PlotWindow(QMainWindow):
                     CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot()
                 )
                 self.addPlotWidget(STD_DEV, StdDevPlot())
+                self.addPlotWidget(WATERFALL, WaterfallPlot())
             else:
                 self.addPlotWidget(ENSEMBLE, EnsemblePlot())
                 self.addPlotWidget(
@@ -421,6 +424,15 @@ class PlotWindow(QMainWindow):
         )
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
 
+        if plot_widget.name == WATERFALL:
+            self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
+        elif not self.is_everest:
+            self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+
+        if not self.is_everest:
+            max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
+            self._ensemble_group.setTitle(f"Select up to {max_selected} ensembles")
+
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
         is_objective_plot = plot_widget.name in {
@@ -470,12 +482,18 @@ class PlotWindow(QMainWindow):
                 if isinstance(plot_widget._plotter, SelectableControlsPlotter):
                     plot_widget._plotter.set_selected_controls(selected_controls)
 
+            is_waterfall_plot = plot_widget.name == WATERFALL
+
             def fetch_data(
                 ensemble: EnsembleObject,
             ) -> tuple[EnsembleObject, pd.DataFrame | BaseException | None]:
                 try:  # noqa: PLW0717
                     data = None
-                    if is_gradient_plot:
+                    if is_waterfall_plot and key_def.parameter is not None:
+                        data = self._api.data_for_waterfall(
+                            ensemble.id, key_def.parameter.name
+                        )
+                    elif is_gradient_plot:
                         data = self._api.data_for_gradient(ensemble.id, key)
                     elif (
                         key_def.response is not None
@@ -753,6 +771,7 @@ class PlotWindow(QMainWindow):
             "everest_constraints",
             "everest_batch_objectives",
         }
+        plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
         if self.is_everest:
             if key_def.response is not None and key_def.response.type in {
                 "summary",
@@ -793,7 +812,25 @@ class PlotWindow(QMainWindow):
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
+            and widget.name != WATERFALL
         ]
+
+        # Waterfall tab is only available for scalar parameters when at
+        # least one selected ensemble carries Kalman-gain blob data.
+        if (
+            not self.is_everest
+            and key_def.dimensionality == 1
+            and key_def.parameter is not None
+            and key_def.metadata.get("data_origin") == "gen_kw"
+        ):
+            selected = self._ensemble_selection_widget.get_selected_ensembles()
+            if any(self._api.has_kalman_gain(e.id) for e in selected):
+                waterfall_widget = next(
+                    (w for w in self._plot_widgets if w.name == WATERFALL),
+                    None,
+                )
+                if waterfall_widget is not None:
+                    available_widgets.append(waterfall_widget)
 
         def everest_data_origin_check(origin: list[str]) -> bool:
             return key_def.metadata.get("data_origin") in origin
