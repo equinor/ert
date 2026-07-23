@@ -148,3 +148,15 @@ def test_that_on_hover_labels_are_correct(generic_plot_context, everest_ensemble
     )
 
     assert not hover_annotation.get_visible()
+
+
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
+def test_that_objective_function_plot_matches_baseline(
+    generic_plot_context, everest_ensemble
+):
+    return create_everest_figure(
+        EverestObjectiveFunctionPlot(),
+        realization_data(),
+        generic_plot_context,
+        everest_ensemble,
+    )
