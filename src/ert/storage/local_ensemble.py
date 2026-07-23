@@ -43,6 +43,7 @@ from ert.substitutions import substitute_runpath_name
 from .blob_data import (
     BlobStorageData,
     BlobType,
+    EverestBatchData,
     MatrixStorageData,
     ObservationReportData,
     ScalingFactorsData,
@@ -1391,13 +1392,31 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
+        blob_dir = self._path / BLOB_DATA_DIR
         for df_name, df in dataframes.items():
-            if isinstance(df, pl.DataFrame):
-                df.write_parquet(self._path / f"{df_name}.parquet")
+            if not isinstance(df, pl.DataFrame):
+                continue
+            buf = io.BytesIO()
+            df.write_parquet(buf)
+            data = buf.getvalue()
+            BlobStorageData.save_blob(
+                name=df_name,
+                data=data,
+                blob_info=EverestBatchData(dataframe_name=df_name),
+                file_type="application/parquet",
+                storage=self._storage,
+                blob_dir=blob_dir,
+            )
 
     @property
     def has_function_results(self) -> bool:
-        return (self._path / "batch_objectives.parquet").exists()
+        for meta in self.load_blobs(BlobType.EVEREST_BATCH_DATA):
+            if (
+                isinstance(meta.blob_info, EverestBatchData)
+                and meta.blob_info.dataframe_name == "batch_objectives"
+            ):
+                return meta.file_size > 0
+        return False
 
     @property
     def has_gradient_results(self) -> bool:
@@ -1408,10 +1427,13 @@ class LocalEnsemble(BaseMode):
             info["perturbation"] != -1 for _, info in self.simulations_with_responses
         )
 
-    @staticmethod
-    def _read_df_if_exists(path: Path) -> pl.DataFrame | None:
-        if path.exists():
-            return pl.read_parquet(path)
+    def _read_batch_dataframe(self, dataframe_name: str) -> pl.DataFrame | None:
+        for meta in self.load_blobs(BlobType.EVEREST_BATCH_DATA):
+            if (
+                isinstance(meta.blob_info, EverestBatchData)
+                and meta.blob_info.dataframe_name == dataframe_name
+            ):
+                return pl.read_parquet(io.BytesIO(self.load_blob(meta.uri)))
         return None
 
     @property
@@ -1508,7 +1530,7 @@ class LocalEnsemble(BaseMode):
 
     @property
     def batch_objectives(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "batch_objectives.parquet")
+        return self._read_batch_dataframe("batch_objectives")
 
     @property
     def realization_objectives(self) -> pl.DataFrame | None:
@@ -1545,7 +1567,7 @@ class LocalEnsemble(BaseMode):
 
     @property
     def batch_constraints(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "batch_constraints.parquet")
+        return self._read_batch_dataframe("batch_constraints")
 
     @property
     def realization_constraints(self) -> pl.DataFrame | None:
@@ -1585,25 +1607,19 @@ class LocalEnsemble(BaseMode):
 
     @property
     def batch_bound_constraint_violations(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._path / "batch_bound_constraint_violations.parquet"
-        )
+        return self._read_batch_dataframe("batch_bound_constraint_violations")
 
     @property
     def batch_input_constraint_violations(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._path / "batch_input_constraint_violations.parquet"
-        )
+        return self._read_batch_dataframe("batch_input_constraint_violations")
 
     @property
     def batch_output_constraint_violations(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._path / "batch_output_constraint_violations.parquet"
-        )
+        return self._read_batch_dataframe("batch_output_constraint_violations")
 
     @property
     def batch_objective_gradient(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "batch_objective_gradient.parquet")
+        return self._read_batch_dataframe("batch_objective_gradient")
 
     @property
     def simulations(self) -> list[tuple[int, EverestRealizationInfo]]:
@@ -1661,7 +1677,7 @@ class LocalEnsemble(BaseMode):
 
     @property
     def batch_constraint_gradient(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "batch_constraint_gradient.parquet")
+        return self._read_batch_dataframe("batch_constraint_gradient")
 
     @property
     def perturbation_constraints(self) -> pl.DataFrame | None:
