@@ -352,10 +352,11 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
     environment_variables: Mapping[str, str] = Field(default_factory=dict)
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
+    type: str = Field(default="client")
 
 
 def get_site_plugins(
-    plugin_manager: ErtPluginManager | None = None,
+    plugin_manager: ErtPluginManager | None = None, ctx: str = "client"
 ) -> ErtRuntimePlugins:
     if plugin_manager is None:
         plugin_manager = ErtPluginManager()
@@ -400,6 +401,7 @@ def get_site_plugins(
         ),
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
+        type=ctx,
     )
 
 
