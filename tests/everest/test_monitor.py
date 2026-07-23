@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import string
 from collections import defaultdict
 from datetime import UTC, datetime
@@ -18,6 +20,7 @@ from ert.ensemble_evaluator import (
 )
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshotMetadata
 from ert.resources import all_shell_script_fm_steps
+from ert.run_models.event import EverestBatchResultEvent
 from everest.bin.utils import run_detached_monitor
 from tests.ert.utils import SnapshotBuilder
 
@@ -27,6 +30,13 @@ METADATA = EnsembleSnapshotMetadata(
     sorted_real_ids=[],
     sorted_fm_step_ids=defaultdict(list),
 )
+
+
+@pytest.fixture(autouse=True)
+def fixed_terminal_width(monkeypatch):
+    monkeypatch.setattr(
+        shutil, "get_terminal_size", lambda *args, **kwargs: os.terminal_size((60, 24))
+    )
 
 
 @pytest.fixture
@@ -103,6 +113,18 @@ def snapshot_update_event():
 
 
 @pytest.fixture
+def everest_batch_result_event():
+    event = EverestBatchResultEvent(
+        batch=0,
+        everest_event="OPTIMIZATION_RESULT",
+        result_type="GradientResult",
+        results={"dummy": "ignored"},
+        failures={0: [-1], 1: [0, 1, 2]},
+    )
+    return json.dumps(jsonable_encoder(event))
+
+
+@pytest.fixture
 def snapshot_update_failure_event():
     event = SnapshotUpdateEvent(
         snapshot=SnapshotBuilder(metadata=METADATA)
@@ -155,7 +177,7 @@ def snapshot_update_event_with_fm_message():
 
 
 @pytest.mark.slow
-def test_failed_jobs_monitor(
+def test_that_the_monitor_shows_failed_jobs(
     monkeypatch, full_snapshot_event, snapshot_update_failure_event, capsys
 ):
     server_mock = MagicMock()
@@ -174,12 +196,11 @@ def test_failed_jobs_monitor(
     )
     captured = capsys.readouterr()
     expected = [
-        "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
+        "============ Running forward models (Batch #0) =============\n",
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 0 | Failed: 1\n",
         (
-            "  fm_step_0: 1/0/1 | Failed: 1"
-            "  fm_step_0: Failed: "
-            "The run is cancelled due to reaching MAX_RUNTIME, realizations: 1\n"
+            "  fm_step_0: 1/0/1"
+            "  fm_step_0: The run is cancelled due to reaching MAX_RUNTIME\n"
         ),
     ]
     # Ignore whitespace
@@ -190,7 +211,9 @@ def test_failed_jobs_monitor(
 
 
 @pytest.mark.slow
-def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys):
+def test_that_the_monitor_shows_running_jobs(
+    monkeypatch, full_snapshot_event, snapshot_update_event, capsys
+):
     server_mock = MagicMock()
     connection_mock = MagicMock(spec=ClientConnection)
     connection_mock.recv.side_effect = [
@@ -210,9 +233,9 @@ def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys
         )
     captured = capsys.readouterr()
     expected = [
-        "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
+        "============ Running forward models (Batch #0) =============\n",
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 1 | Failed: 0\n",
-        "  fm_step_0: 1/1/0 | Finished: 1\n",
+        "  fm_step_0: 1/1/0\n",
     ]
     expected.extend([f"{name}: 2/0/0" for name in all_shell_script_fm_steps])
     # Ignore whitespace
@@ -222,7 +245,7 @@ def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys
 
 
 @pytest.mark.slow
-def test_forward_model_message_reaches_the_cli(
+def test_that_a_forward_model_message_reaches_the_cli(
     monkeypatch, full_snapshot_event, snapshot_update_event_with_fm_message, capsys
 ):
     server_mock = MagicMock()
@@ -235,16 +258,17 @@ def test_forward_model_message_reaches_the_cli(
     server_mock.return_value.__enter__.return_value = connection_mock
     monkeypatch.setattr(everest.detached.client, "connect", server_mock)
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
-    partial(everest.detached.start_monitor, polling_interval=0.1)
-    run_detached_monitor(
-        ("some/url", "cert", ("username", "password")), run_id="test-run-id"
-    )
+    patched = partial(everest.detached.start_monitor, polling_interval=0.1)
+    with patch("everest.bin.utils.start_monitor", patched):
+        run_detached_monitor(
+            ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+        )
     captured = capsys.readouterr()
 
     expected = [
-        "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
+        "============ Running forward models (Batch #0) =============\n",
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 1 | Failed: 0\n",
-        "  fm_step_0: 1/1/0 | Finished: 1\n",
+        "  fm_step_0: 1/1/0\n",
     ]
     expected.append("Something went wrong!\n")
     expected.extend(
@@ -258,3 +282,34 @@ def test_forward_model_message_reaches_the_cli(
     assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(
         expected
     ).translate({ord(c): None for c in string.whitespace})
+
+
+@pytest.mark.slow
+def test_that_a_failed_everest_batch_result_event_is_shown(
+    monkeypatch, everest_batch_result_event, capsys
+):
+    server_mock = MagicMock()
+    connection_mock = MagicMock(spec=ClientConnection)
+    connection_mock.recv.side_effect = [
+        everest_batch_result_event,
+        json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
+    ]
+    server_mock.return_value.__enter__.return_value = connection_mock
+    monkeypatch.setattr(everest.detached.client, "connect", server_mock)
+    monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
+    patched = partial(everest.detached.start_monitor, polling_interval=0.1)
+    with patch("everest.bin.utils.start_monitor", patched):
+        run_detached_monitor(
+            ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+        )
+    captured = capsys.readouterr()
+    expected = [
+        "============= Optimization progress (Batch #0) =============\n",
+        "  Failed function evaluation for realization: 0\n",
+        "  Failed perturbations for realization 1: 0-2\n",
+    ]
+    # Ignore whitespace
+    output = captured.out.translate({ord(c): None for c in string.whitespace})
+    assert output.startswith(
+        "".join(expected).translate({ord(c): None for c in string.whitespace})
+    )

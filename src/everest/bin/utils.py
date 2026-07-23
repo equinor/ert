@@ -2,13 +2,13 @@ import argparse
 import json
 import logging.config
 import os
+import shutil
 import sys
 import traceback
 from collections import defaultdict
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from itertools import groupby
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar
@@ -40,6 +40,7 @@ from everest.detached import (
     wait_for_server_to_stop,
 )
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
+from everest.util import format_list
 
 JOB_SUCCESS = "Finished"
 JOB_RUNNING = "Running"
@@ -97,7 +98,8 @@ def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
 
 
 def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) -> None:
-    print("\n" + "=" * 80)
+    width = min(shutil.get_terminal_size(fallback=(78, 24)).columns, 100)
+    print("\n" + "=" * width)
     if options.config.server_queue_system == QueueSystem.LOCAL:
         print(
             f"KeyboardInterrupt (ID: {signum}) has been caught. \n"
@@ -128,7 +130,7 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
             "To kill the running optimization use command:\n"
             f"  `everest kill {config_file}`"
         )
-    print("=" * 80)
+    print("=" * width)
     sys.tracebacklimit = 0
     sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
     sys.stderr = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
@@ -137,25 +139,6 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
 
 def _get_max_width(sequence: list[Any]) -> int:
     return max(len(item) for item in sequence)
-
-
-def _format_list(values: Sequence[int]) -> str:
-    """Formats a sequence of integers into a comma separated string of ranges.
-
-    For instance: {1, 3, 4, 5, 7, 8, 10} -> "1, 3-5, 7-8, 10"
-    """
-    grouped = (
-        tuple(y for _, y in x)
-        for _, x in groupby(enumerate(sorted(values)), lambda x: x[0] - x[1])
-    )
-    return ", ".join(
-        (
-            "-".join([str(sub_group[0]), str(sub_group[-1])])
-            if len(sub_group) > 1
-            else str(sub_group[0])
-        )
-        for sub_group in grouped
-    )
 
 
 @dataclass
@@ -177,7 +160,7 @@ class JobProgress:
         JOB_FAILURE: ansi.RED,
     }
 
-    def _status_string(self, max_widths: dict[str, int]) -> str:
+    def progress_str(self, max_widths: dict[str, int]) -> str:
         string = []
         for state in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]:
             number_of_simulations = len(self.status[state])
@@ -186,28 +169,17 @@ class JobProgress:
             string.append(f"{color}{number_of_simulations:>{width}}{ansi.RESET}")
         return "/".join(string)
 
-    def progress_str(self, max_widths: dict[str, int]) -> str:
-        msg = ""
-        for state in [JOB_SUCCESS, JOB_FAILURE]:
-            simulations_list = _format_list(self.status[state])
-            width = _get_max_width([simulations_list])
-            if width > 0:
-                color = self.STATUS_COLOR[state]
-                msg += f" | {color}{state}: {simulations_list:<{width}}{ansi.RESET}"
-
-        return self._status_string(max_widths) + msg
-
 
 class _DetachedMonitor:
-    WIDTH = 78
     INDENT = 2
     FLOAT_FMT = ".5g"
 
     def __init__(self) -> None:
         self._clear_lines: int = 0
-        self._batches_done = set[int]()
         self._last_reported_batch: int = -1
+        self._last_reported_opt_progress: int = -1
         self._snapshots: dict[int, EnsembleSnapshot] = {}
+        self._width = min(shutil.get_terminal_size(fallback=(78, 24)).columns, 100)
 
     def update(self, status: dict[str, Any]) -> None:
         try:  # noqa: PLW0717
@@ -215,8 +187,9 @@ class _DetachedMonitor:
                 opt_status = status[OPT_PROGRESS_ID]
                 if opt_status:
                     msg = self._get_opt_progress_single_batch(opt_status)
-                    ansi.ansi_print(msg + "\n")
-                    self._clear_lines = 0
+                    if msg:
+                        ansi.ansi_print(msg + "\n")
+                        self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 match status[SIM_PROGRESS_ID]:
                     case EndEvent(msg=msg):
@@ -254,19 +227,6 @@ class _DetachedMonitor:
         except Exception:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 
-    def get_opt_progress(self, context_status: dict[str, Any]) -> tuple[str, int]:
-        cli_monitor_data = context_status["cli_monitor_data"]
-        messages = []
-        first_batch = -1
-        for idx, batch in enumerate(cli_monitor_data["batches"]):
-            if batch not in self._batches_done:
-                if first_batch < 0:
-                    first_batch = batch
-                self._batches_done.add(batch)
-                msg = self._get_opt_progress_batch(cli_monitor_data, batch, idx)
-                messages.append(msg)
-        return self._join_two_newlines(messages), first_batch
-
     def _get_opt_progress_batch(
         self, cli_monitor_data: dict[str, Any], batch: int, idx: int
     ) -> str:
@@ -296,29 +256,58 @@ class _DetachedMonitor:
 
     def _get_opt_progress_single_batch(self, cli_monitor_data: dict[str, Any]) -> str:
         batch: int = cli_monitor_data.get("batch", 0)
-        header = self._make_header(f"Optimization progress (Batch #{batch})")
-        width = _get_max_width(cli_monitor_data["controls"].keys())
-        controls = self._join_one_newline_indent(
-            [
-                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
-                for name, value in cli_monitor_data["controls"].items()
-            ]
-        )
-        expected_objectives = cli_monitor_data["expected_objectives"]
-        width = _get_max_width(expected_objectives.keys())
-        objectives = self._join_one_newline_indent(
-            [
-                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
-                for name, value in expected_objectives.items()
-            ]
-        )
-        objective_value = cli_monitor_data["objective_value"]
-        total_objective = (
-            f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
-        )
-        return self._join_two_newlines_indent(
-            (header, controls, objectives, total_objective)
-        )
+        if batch == self._last_reported_opt_progress:
+            return ""
+
+        lines = [self._make_header(f"Optimization progress (Batch #{batch})")]
+
+        if cli_monitor_data.get("result_type") == "FunctionResult":
+            if controls := cli_monitor_data.get("controls"):
+                width = _get_max_width(controls.keys())
+                lines.append(
+                    self._join_one_newline_indent(
+                        [
+                            f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                            for name, value in controls.items()
+                        ]
+                    )
+                )
+            if expected_objectives := cli_monitor_data.get("expected_objectives"):
+                width = _get_max_width(expected_objectives.keys())
+                lines.append(
+                    self._join_one_newline_indent(
+                        [
+                            f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                            for name, value in expected_objectives.items()
+                        ]
+                    )
+                )
+            if objective_value := cli_monitor_data.get("objective_value"):
+                lines.append(
+                    f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
+                )
+
+        if failures := cli_monitor_data.get("failures", {}):
+            failed_lines = []
+            if failed_functions := [r for r, p in failures.items() if -1 in p]:
+                s = "s" if len(failed_functions) > 1 else ""
+                failed_lines.append(
+                    f"{ansi.RED}Failed function evaluation{s} for realization{s}: "
+                    f"{format_list(failed_functions)}{ansi.RESET}"
+                )
+            for k, v in failures.items():
+                if p := [item for item in v if item >= 0]:
+                    s = "s" if len(p) > 1 else ""
+                    failed_lines.append(
+                        f"{ansi.RED}Failed perturbation{s} for realization {k}: "
+                        f"{format_list(p)}{ansi.RESET}"
+                    )
+            if failed_lines:
+                lines.append(self._join_one_newline_indent(failed_lines))
+
+        self._last_reported_opt_progress = batch
+
+        return self._join_two_newlines_indent(lines)
 
     @staticmethod
     def _get_progress_summary(status: dict[str, int]) -> str:
@@ -362,8 +351,7 @@ class _DetachedMonitor:
                 if job.errors:
                     print_lines.extend(
                         [
-                            f"{ansi.RED}{job.name:>{width}}: Failed: {err}, "
-                            f"realizations: {_format_list(job.errors[err])}{ansi.RESET}"
+                            f"{ansi.RED}{job.name:>{width}}: {err}{ansi.RESET}"
                             for err in job.errors
                         ]
                     )
@@ -402,9 +390,8 @@ class _DetachedMonitor:
     def _join_two_newlines(cls, sequence: Sequence[str]) -> str:
         return "\n\n".join(sequence)
 
-    @classmethod
-    def _make_header(cls, msg: str, color: str = ansi.BLACK) -> str:
-        header = msg.center(len(msg) + 2).center(cls.WIDTH, "=")
+    def _make_header(self, msg: str, color: str = ansi.BLACK) -> str:
+        header = msg.center(len(msg) + 2).center(self._width, "=")
         return f"{color}{header}{ansi.RESET}"
 
     def _clear(self) -> None:

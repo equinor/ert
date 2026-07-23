@@ -626,23 +626,25 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             target_ensemble.save_batch_dataframes(dataframes=batch_dict)
             target_ensemble.update_improvement_flag(is_improvement=False)
 
-        for r in results:
+        for result in results:
             batches = (
                 self._experiment.ensembles_with_function_results
-                if isinstance(r, FunctionResults)
+                if isinstance(result, FunctionResults)
                 else self._experiment.ensembles_with_gradient_results
             )
-            ens = next((ens for ens in batches if ens.iteration == r.batch_id), None)
+            ens = next(
+                (ens for ens in batches if ens.iteration == result.batch_id), None
+            )
             if ens is None:
                 continue
 
             results_dict: dict[str, Any] | None = None
-            if isinstance(r, FunctionResults):
+            if isinstance(result, FunctionResults):
                 results_dict = {}
                 if ens.realization_controls is not None:
                     results_dict |= {
                         "controls": ens.realization_controls.drop(
-                            "realization", "simulation_id"
+                            "batch_id", "realization", "simulation_id"
                         ).to_dicts()[0],
                     }
 
@@ -719,14 +721,29 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                         "perturbation_constraints": perturbation_gradient_dicts
                     }
 
+            failures = defaultdict(list)
+            if ens.everest_realization_info is not None:
+                for realization in ens.everest_realization_info:
+                    if ens.has_failure(realization):
+                        model_realization = ens.everest_realization_info[realization][
+                            "model_realization"
+                        ]
+                        perturbation = ens.everest_realization_info[realization][
+                            "perturbation"
+                        ]
+                        failures[model_realization].append(perturbation)
+
             self.send_event(
                 EverestBatchResultEvent(
-                    batch=r.batch_id,
+                    batch=result.batch_id,
                     everest_event="OPTIMIZATION_RESULT",
-                    result_type="FunctionResult"
-                    if isinstance(r, FunctionResults)
-                    else "GradientResult",
+                    result_type=(
+                        "FunctionResult"
+                        if isinstance(result, FunctionResults)
+                        else "GradientResult"
+                    ),
                     results=results_dict,
+                    failures={k: v for k, v in failures.items() if v} or None,
                 )
             )
 
