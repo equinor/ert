@@ -319,6 +319,7 @@ def _setup_manual_update(
         ert_templates=config.ert_templates,
         observations=config.observation_declarations,
         shape_registry=config.shape_registry,
+        experiment_name=args.experiment_name,
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -358,6 +359,7 @@ def _setup_manual_update_enif(
         log_path=config.analysis_config.log_path,
         observations=config.observation_declarations,
         shape_registry=config.shape_registry,
+        experiment_name=args.experiment_name,
     )
 
 

@@ -296,6 +296,7 @@ class ManualUpdateConfig(UpdateRunModelConfig):
     experiment_type: ExperimentType = ExperimentType.MANUAL_UPDATE
     ensemble_id: str
     ert_templates: list[tuple[str, str]]
+    experiment_name: str
 
     def to_experiment_config(
         self, *, prior_experiment_config: ExperimentConfig
@@ -313,6 +314,7 @@ class ManualUpdateConfig(UpdateRunModelConfig):
             "observations": prior_experiment_config.get("observations", []),
             **self._common_fields(),
             "experiment_type": ExperimentType.MANUAL_UPDATE,
+            "experiment_name": self.experiment_name,
         }
 
 
