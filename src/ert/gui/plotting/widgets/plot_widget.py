@@ -6,18 +6,21 @@ from typing import TYPE_CHECKING, Protocol, override
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from matplotlib.backend_bases import PickEvent
+from matplotlib.backend_bases import Event, MouseEvent, PickEvent
 from matplotlib.backends.backend_qt5agg import (  # type: ignore
     FigureCanvas,
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
+from matplotlib.font_manager import FontProperties
+from matplotlib.text import Text
 from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QCursor
 from PyQt6.QtWidgets import (
     QComboBox,
+    QToolTip,
     QVBoxLayout,
     QWidget,
     QWidgetAction,
@@ -139,9 +142,13 @@ class PlotWidget(QWidget):
         self._figure.set_layout_engine("tight")
         self._canvas = FigureCanvas(self._figure)
         self._canvas.mpl_connect("pick_event", self._on_canvas_pick)
+        self._canvas.mpl_connect("motion_notify_event", self._on_canvas_motion)
+        self._canvas.mpl_connect("figure_leave_event", self._on_canvas_leave)
         self._canvas.setParent(self)
         self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._canvas.setFocus()
+        self._hovered_text_artist: Text | None = None
+        self._hovered_font_properties: FontProperties | None = None
 
         vbox = QVBoxLayout()
         vbox.addWidget(self._canvas)
@@ -203,10 +210,58 @@ class PlotWidget(QWidget):
             )
 
     def _enable_text_picking(self) -> None:
-        for axes in self._figure.axes:
-            axes.xaxis.label.set_picker(True)
-            axes.yaxis.label.set_picker(True)
-            axes.title.set_picker(True)
+        self._hovered_text_artist = None
+        self._hovered_font_properties = None
+        QToolTip.hideText()
+
+        for text_artist in self._editable_text_artists():
+            text_artist.set_picker(True)
+
+    def _editable_text_artists(self) -> list[Text]:
+        return [
+            text_artist
+            for axes in self._figure.axes
+            for text_artist in (axes.xaxis.label, axes.yaxis.label, axes.title)
+        ]
+
+    def _clear_hovered_text_artist(self) -> None:
+        if (
+            self._hovered_text_artist is not None
+            and self._hovered_font_properties is not None
+        ):
+            self._hovered_text_artist.set_fontproperties(self._hovered_font_properties)
+
+        self._hovered_text_artist = None
+        self._hovered_font_properties = None
+        QToolTip.hideText()
+
+    def _on_canvas_motion(self, event: MouseEvent) -> None:
+        hovered_text_artist = next(
+            (
+                text_artist
+                for text_artist in self._editable_text_artists()
+                if text_artist.contains(event)[0]
+            ),
+            None,
+        )
+        if hovered_text_artist is self._hovered_text_artist:
+            return
+
+        self._clear_hovered_text_artist()
+        if hovered_text_artist is None:
+            self._canvas.draw_idle()
+            return
+
+        self._hovered_text_artist = hovered_text_artist
+        self._hovered_font_properties = hovered_text_artist.get_fontproperties().copy()
+        hovered_text_artist.set_fontweight("bold")
+        QToolTip.showText(QCursor.pos(), "Click to edit", self._canvas)
+
+        self._canvas.draw_idle()
+
+    def _on_canvas_leave(self, _: Event) -> None:
+        self._clear_hovered_text_artist()
+        self._canvas.draw_idle()
 
     def _on_canvas_pick(self, event: PickEvent) -> None:
         for axes in self._figure.axes:
