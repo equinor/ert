@@ -139,7 +139,7 @@ class PlotWidget(QWidget):
         self._name = name
         self._plotter = plotter
         self._figure = Figure()
-        self._figure.set_layout_engine("tight")
+        self._figure.set_layout_engine("constrained")
         self._canvas = FigureCanvas(self._figure)
         self._canvas.mpl_connect("pick_event", self._on_canvas_pick)
         self._canvas.mpl_connect("motion_notify_event", self._on_canvas_motion)
