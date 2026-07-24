@@ -395,7 +395,7 @@ class PlotWindow(QMainWindow):
         logger.info(msg)
 
     @Slot(int)
-    def layerIndexChanged(self, index: int | None) -> None:
+    def layer_index_changed(self, index: int | None) -> None:
         self.update_plot(index)
 
     def update_plot(self, layer: int | None = None) -> None:
@@ -685,7 +685,7 @@ class PlotWindow(QMainWindow):
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
         plot_widget.axisLabelEditRequested.connect(self._edit_axis_label)
         plot_widget.titleEditRequested.connect(self._edit_title)
-        plot_widget.layerIndexChanged.connect(self.layerIndexChanged)
+        plot_widget.layer_index_changed.connect(self.layer_index_changed)
 
         index = self._central_tab.addTab(plot_widget, name)
         self._plot_widgets.append(plot_widget)
