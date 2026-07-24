@@ -108,7 +108,7 @@ class EverestControlsPlot:
             labels=scatter_labels,
         )
 
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,
@@ -179,7 +179,7 @@ class EverestControlsPlot:
             hover_color=config.next_color()[0],
         )
         config.set_title("Control values by batch")
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

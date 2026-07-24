@@ -135,7 +135,7 @@ class CrossEnsembleStatisticsPlot:
             rotation=rotation,
         )
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

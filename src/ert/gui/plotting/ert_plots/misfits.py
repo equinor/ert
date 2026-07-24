@@ -263,7 +263,7 @@ class MisfitsPlot:
             else f"{plot_context.plotConfig().title()} (Signed Chi-squared)"
         )
 
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

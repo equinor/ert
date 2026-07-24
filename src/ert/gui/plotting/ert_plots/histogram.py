@@ -148,7 +148,7 @@ def plotHistogram(
                 )
                 if index != 0:
                     plot_context.plotConfig().set_title("")
-                PlotTools.finalizePlot(
+                PlotTools.finalize_plot(
                     plot_context,
                     figure,
                     axes[ensemble.name],
