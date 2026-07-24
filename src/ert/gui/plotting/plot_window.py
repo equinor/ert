@@ -259,7 +259,7 @@ class PlotWindow(QMainWindow):
                 self.addPlotWidget(EVEREST_CONTROLS_PLOT, EverestControlsPlot())
                 self.addPlotWidget(EVEREST_GRADIENTS_PLOT, EverestGradientsPlot())
 
-            self._central_tab.currentChanged.connect(self.currentTabChanged)
+            self._central_tab.currentChanged.connect(self.current_tab_changed)
             self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
             self._prev_tab_widget_index = -1
@@ -385,7 +385,7 @@ class PlotWindow(QMainWindow):
         return self._api.api_version
 
     @Slot(int)
-    def currentTabChanged(self, index: int) -> None:
+    def current_tab_changed(self, index: int) -> None:
         self._current_tab_index = index
         self.updatePlot()
         self.logPlotTabUsage(self._central_tab.tabText(index))
@@ -827,7 +827,7 @@ class PlotWindow(QMainWindow):
         everest_available_widget_selection(everest_plot_and_origin)
 
         # Enabling/disabling tab triggers the
-        # currentTabChanged event which also triggers
+        # current_tab_changed event which also triggers
         # the updatePlot, which is slow and redundant.
         # Therefore, we disable this signal because this
         # part is only supposed to set which tabs are
@@ -854,7 +854,7 @@ class PlotWindow(QMainWindow):
             current_widget = available_widgets[0]
 
         self._central_tab.setCurrentWidget(current_widget)
-        self._central_tab.currentChanged.connect(self.currentTabChanged)
+        self._central_tab.currentChanged.connect(self.current_tab_changed)
         self._prev_tab_widget_index = self._central_tab.currentIndex()
         self._prev_key_dimensionality = key_def.dimensionality
         self._prev_key = key_def.key
