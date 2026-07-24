@@ -56,7 +56,7 @@ class Plotter(Protocol):
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
     customizationTriggered = Signal()
-    layerIndexChanged = Signal(int)
+    layer_index_changed = Signal(int)
 
     def __init__(
         self,
@@ -78,7 +78,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         layer_combobox = QComboBox()
         self._model = QStringListModel()
         layer_combobox.setModel(self._model)
-        layer_combobox.currentIndexChanged.connect(self.layerIndexChanged)
+        layer_combobox.currentIndexChanged.connect(self.layer_index_changed)
 
         for action in self.actions():
             if str(action.text()).lower() == "subplots":
@@ -123,7 +123,7 @@ class PlotWidget(QWidget):
     customizationTriggered = Signal()
     axisLabelEditRequested = Signal(str)
     titleEditRequested = Signal()
-    layerIndexChanged = Signal(int)
+    layer_index_changed = Signal(int)
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
     showLayerWidget = Signal(bool)
@@ -154,7 +154,7 @@ class PlotWidget(QWidget):
         vbox.addWidget(self._canvas)
         self._toolbar = CustomNavigationToolbar(self._canvas, self)
         self._toolbar.customizationTriggered.connect(self.customizationTriggered)
-        self._toolbar.layerIndexChanged.connect(self.layerIndexChanged)
+        self._toolbar.layer_index_changed.connect(self.layer_index_changed)
         self.updateLayerWidget.connect(self._toolbar.updateLayerWidget)
         self.resetLayerWidget.connect(self._toolbar.resetLayerWidget)
         self.showLayerWidget.connect(self._toolbar.showLayerWidget)
