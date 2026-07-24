@@ -22,6 +22,7 @@ from ert.config import (
     capture_validation,
 )
 from ert.gui.main_window import ErtMainWindow
+from ert.gui.theming import ColorSchemeManager
 from ert.gui.tools.event_viewer import (
     GUILogHandler,
     add_gui_log_handler,
@@ -116,6 +117,7 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
 
     app = QApplication(["ert"])  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
+    ColorSchemeManager(app)
 
     with add_gui_log_handler() as log_handler:
         window, ens_path = _start_initial_gui_window(args, log_handler, plugins)

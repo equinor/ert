@@ -1,0 +1,152 @@
+/* Stylesheet template for the ERT GUI.
+ *
+ * Author styling HERE. Colours are written as EDS *semantic* token names with a
+ * leading "at" sign (e.g. @bg-neutral-canvas, @text-warning-subtle); the token
+ * set lives in ert/gui/theming/eds/{light,dark}.json. There is no
+ * compile step: ert.gui.theming.theme.load_qss reads this template and
+ * substitutes each @token with its hex value for the active colour scheme at
+ * runtime, because Qt's stylesheet engine cannot resolve variables itself.
+ *
+ * Non-colour values (font sizes, spacing, radii) are written as plain literals.
+ */
+
+QWidget {
+    background-color: @bg-neutral-canvas;
+    color: @text-neutral-strong;
+}
+
+QToolBar#sidebar {
+    background-color: @bg-neutral-surface;
+    border: none;
+    spacing: 0px;
+}
+
+QToolBar#sidebar #sidebar_header {
+    background-color: @bg-neutral-surface;
+    border: none;
+}
+
+QToolBar#sidebar #sidebar_title {
+    background-color: transparent;
+    color: @text-neutral-strong;
+    font-size: 42px;
+    font-weight: bold;
+    padding: 0px 4px;
+}
+
+QToolBar#sidebar #button_collapse_sidebar {
+    background-color: transparent;
+    border: none;
+    padding: 4px;
+}
+
+QToolBar#sidebar #button_collapse_sidebar:hover {
+    background-color: @bg-neutral-fill-muted-hover;
+    border-radius: 4px;
+}
+
+QToolBar#sidebar #button_collapse_sidebar:pressed {
+    background-color: @bg-neutral-fill-muted-active;
+    border-radius: 4px;
+}
+
+QToolBar#sidebar #button_collapse_sidebar:focus {
+    background-color: transparent;
+    border: 2px solid @border-accent-strong;
+    border-radius: 4px;
+}
+
+QToolBar#sidebar #sidebar_nav_group {
+    background-color: @bg-neutral-surface;
+    border: none;
+    margin: 0px;
+}
+
+/* Outer container wrapping each navigation button. Its background tracks the
+ * inner button's visual state: default and hover resolve through QSS, while the
+ * active (selected) state is driven from Python via the "checked" property
+ * because Qt cannot style a parent from a child's :checked pseudo-state. */
+QToolBar#sidebar #sidebar_nav_item {
+    background-color: @bg-accent-surface;
+}
+
+QToolBar#sidebar #sidebar_nav_item:hover {
+    background-color: @bg-neutral-fill-muted-hover;
+}
+
+/* Selected state of the outer container. Qt cannot style a parent from a
+ * child's :checked pseudo-state, so the "checked" property is driven from
+ * Python (see Sidebar._set_container_checked) and these rules paint the active
+ * container background to match the inner button's :checked colour. */
+QToolBar#sidebar #sidebar_nav_item[checked="true"] {
+    background-color: @text-success-subtle-on-emphasis;
+}
+
+QToolBar#sidebar #sidebar_nav_item[checked="true"]:hover {
+    background-color: @bg-neutral-fill-muted-hover;
+}
+
+/* A disabled entry must not react to hover. The container itself is never
+ * disabled (only the inner button is), so its :hover would otherwise still
+ * fire. The nav_disabled property is driven from Python (see
+ * Sidebar._sync_container_disabled) and this rule, declared after :hover and
+ * more specific, holds the background static. */
+QToolBar#sidebar #sidebar_nav_item[nav_disabled="true"],
+QToolBar#sidebar #sidebar_nav_item[nav_disabled="true"]:hover {
+    background-color: @bg-accent-surface;
+}
+
+
+/* Inner navigation button. */
+QToolBar#sidebar #sidebar_nav_group QToolButton {
+    background-color: @bg-accent-surface;
+    color: @text-accent-strong;
+    border: 2px dotted @border-accent-strong;
+    padding: 6px 12px;
+    font-size: 14px;
+    min-height: 25px;
+    max-height: 25px;
+    text-align: left;
+}
+
+QToolBar#sidebar #sidebar_nav_group QToolButton:hover {
+    background-color: @bg-neutral-fill-muted-hover;
+    border: none;
+}
+
+QToolBar#sidebar #sidebar_nav_group QToolButton:focus {
+    border: 3px solid @border-accent-subtle;
+}
+
+
+
+QToolBar#sidebar #sidebar_nav_group QToolButton:disabled {
+    color: @text-disabled;
+    border: 2px dotted @border-disabled;
+}
+
+QMenu#sidebar_status_menu::item {
+    font-size: 12px;
+}
+
+QToolBar#sidebar #sidebar_nav_group QToolButton:checked {
+    color: @bg-accent-fill-emphasis-active;
+    background-color: @text-success-subtle-on-emphasis;
+    border: none;
+}
+
+/* Hover must win over the checked state. Qt resolves equal-specificity
+ * selectors by source order, so these rules (declared after :checked) recolor
+ * an active button while it is hovered. The [hovered="true"] rule is driven
+ * from Python (see Sidebar._set_button_hovered) so that hovering the 4px gap
+ * of the outer container also highlights the inner button, which Qt's own
+ * :hover would miss because the pointer is not over the button itself. */
+QToolBar#sidebar #sidebar_nav_group QToolButton:checked:hover {
+    background-color: @bg-neutral-fill-muted-hover;
+    border: none;
+}
+
+QToolBar#sidebar #sidebar_nav_group QToolButton[hovered="true"] {
+    background-color: @bg-neutral-fill-muted-hover;
+    border: none;
+}

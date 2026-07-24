@@ -37,10 +37,10 @@ def test_that_dark_and_light_qss_differ() -> None:
     assert load_qss(ColorScheme.DARK) != load_qss(ColorScheme.LIGHT)
 
 
-def test_that_load_qss_raises_file_not_found_when_theme_file_is_missing(
+def test_that_load_qss_raises_file_not_found_when_template_is_missing(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(theme_module, "files", lambda _pkg: _MissingPackage())
 
-    with pytest.raises(FileNotFoundError, match="dark"):
+    with pytest.raises(FileNotFoundError, match="template not found"):
         load_qss(ColorScheme.DARK)
