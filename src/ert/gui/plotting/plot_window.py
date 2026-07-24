@@ -682,7 +682,7 @@ class PlotWindow(QMainWindow):
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
-        plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
+        plot_widget.customizationTriggered.connect(self.toggle_customize_dialog)
         plot_widget.axisLabelEditRequested.connect(self._edit_axis_label)
         plot_widget.titleEditRequested.connect(self._edit_title)
         plot_widget.layer_index_changed.connect(self.layer_index_changed)
@@ -861,7 +861,7 @@ class PlotWindow(QMainWindow):
         self._prev_key_origin = key_def.metadata.get("data_origin")
         self.update_plot()
 
-    def toggleCustomizeDialog(self) -> None:
+    def toggle_customize_dialog(self) -> None:
         self._plot_customizer.toggle_customization_dialog()
 
 
