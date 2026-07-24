@@ -117,10 +117,14 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
 
     app = QApplication(["ert"])  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
-    ColorSchemeManager(app)
+    color_scheme_manager = ColorSchemeManager(app)
 
     with add_gui_log_handler() as log_handler:
         window, ens_path = _start_initial_gui_window(args, log_handler, plugins)
+
+        sidebar = getattr(window, "sidebar", None)
+        if sidebar is not None:
+            color_scheme_manager.color_scheme_changed.connect(sidebar.retint_all)
 
         def show_window() -> int:
             window.show()

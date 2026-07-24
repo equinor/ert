@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import stat
+import sys
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, Mock, patch
@@ -12,6 +13,7 @@ import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -27,6 +29,7 @@ from PyQt6.QtWidgets import (
 from xtgeo import RegularSurface
 
 import ert.gui
+import ert.gui.main as gui_main
 from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import (
@@ -39,12 +42,18 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariab
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
-from ert.gui.main_window import SidebarToolButton
 from ert.gui.plotting.plot_window import (
     PlotApi,
     PlotWindow,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectListWidget
+from ert.gui.sidebar import (
+    CREATE_PLOT,
+    EXPERIMENT_STATUS,
+    MANAGE_EXPERIMENTS,
+    Sidebar,
+)
+from ert.gui.theming.theme import ColorScheme
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -825,14 +834,14 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     def find_and_click_button(
         button_name: str, *, should_click: bool, expected_enabled_state: bool
     ):
-        button = gui.findChild(SidebarToolButton, button_name)
+        button = gui.findChild(QToolButton, button_name)
         assert button
         assert button.isEnabled() == expected_enabled_state
         if should_click:
             qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
     def find_and_check_selected(button_name: str, *, expected_selected_state: bool):
-        button = gui.findChild(SidebarToolButton, button_name)
+        button = gui.findChild(QToolButton, button_name)
         assert button
         assert button.isChecked() == expected_selected_state
 
@@ -873,9 +882,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     qtbot.wait_until(lambda: not run_dialog.isHidden(), timeout=5000)
 
     # verify no drop menu
-    button_simulation_status = gui.findChild(
-        SidebarToolButton, "button_Experiment_status"
-    )
+    button_simulation_status = gui.findChild(QToolButton, "button_Experiment_status")
     assert button_simulation_status.menu() is None
 
     find_and_click_button(
@@ -942,7 +949,7 @@ def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
 
     def retrieve_existing_menu_actions(expected_actions_number):
         simulation_status_menu = gui.findChild(
-            SidebarToolButton, "button_Experiment_status"
+            QToolButton, "button_Experiment_status"
         ).menu()
         assert len(simulation_status_menu.actions()) == expected_actions_number
         for action in simulation_status_menu.actions():
@@ -1148,3 +1155,125 @@ def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_des
         assert "Realizations: 1" in caplog.text
         assert "Parameters: 3" in caplog.text
         assert "Observations: 5" in caplog.text
+
+
+def test_that_selecting_experiment_status_without_a_run_dialog_creates_no_panel(
+    opened_main_window_poly, qtbot
+):
+    gui = opened_main_window_poly
+
+    assert gui._first_run_dialog_name() is None
+
+    gui.select_central_widget(EXPERIMENT_STATUS)
+
+    assert EXPERIMENT_STATUS not in gui.central_panels_map
+
+
+def test_that_selecting_experiment_status_without_a_run_dialog_keeps_current_page(
+    opened_main_window_poly, qtbot
+):
+    gui = opened_main_window_poly
+
+    gui.select_central_widget(MANAGE_EXPERIMENTS)
+    visible_before = gui.central_panels_map[MANAGE_EXPERIMENTS]
+    assert not visible_before.isHidden()
+
+    assert gui._first_run_dialog_name() is None
+    gui.select_central_widget(EXPERIMENT_STATUS)
+
+    assert not visible_before.isHidden()
+    assert any(not widget.isHidden() for widget in gui.central_panels_map.values())
+
+
+def test_that_rebuilding_the_create_plot_page_closes_the_previous_plot_window(
+    opened_main_window_poly, qtbot, monkeypatch
+):
+    gui = opened_main_window_poly
+
+    class _DummyPlotWindow(QWidget):
+        def __init__(self, *_args) -> None:
+            super().__init__()
+            self.closed = False
+
+        def close(self) -> bool:
+            self.closed = True
+            return super().close()
+
+    monkeypatch.setattr("ert.gui.main_window.PlotWindow", _DummyPlotWindow)
+
+    first = gui._build_plot_window()
+    second = gui._build_plot_window()
+
+    assert first is not second
+    assert first.closed is True
+
+
+def test_that_reselecting_create_plot_does_not_accumulate_plot_windows_in_layout(
+    opened_main_window_poly, qtbot, monkeypatch
+):
+    gui = opened_main_window_poly
+
+    class _DummyPlotWindow(QWidget):
+        def __init__(self, *_args) -> None:
+            super().__init__()
+
+    monkeypatch.setattr("ert.gui.main_window.PlotWindow", _DummyPlotWindow)
+
+    gui.select_central_widget(CREATE_PLOT)
+    first = gui.central_panels_map[CREATE_PLOT]
+    gui.select_central_widget(CREATE_PLOT)
+
+    layout = gui.central_layout
+    widgets_in_layout = [layout.itemAt(i).widget() for i in range(layout.count())]
+    assert first not in widgets_in_layout
+    assert widgets_in_layout.count(gui.central_panels_map[CREATE_PLOT]) == 1
+
+
+def test_that_reselecting_manage_experiments_reuses_the_existing_panel(
+    opened_main_window_poly, qtbot
+):
+    gui = opened_main_window_poly
+
+    gui.select_central_widget(MANAGE_EXPERIMENTS)
+    first_panel = gui.central_panels_map[MANAGE_EXPERIMENTS]
+
+    gui.select_central_widget(MANAGE_EXPERIMENTS)
+
+    assert gui.central_panels_map[MANAGE_EXPERIMENTS] is first_panel
+
+
+def test_that_run_gui_wires_color_scheme_changes_to_the_sidebar(qtbot, monkeypatch):
+    app = QApplication.instance()
+    monkeypatch.setattr(gui_main, "QApplication", lambda _argv: app)
+    monkeypatch.setattr(type(app), "exec", lambda _self: 0)
+
+    window = QWidget()
+    qtbot.addWidget(window)
+    sidebar = Sidebar()
+    qtbot.addWidget(sidebar)
+    window.sidebar = sidebar
+    retint = MagicMock()
+    monkeypatch.setattr(sidebar, "retint_all", retint)
+
+    managers: list = []
+    real_manager = gui_main.ColorSchemeManager
+
+    def _capturing_manager(parent):
+        manager = real_manager(parent)
+        managers.append(manager)
+        return manager
+
+    monkeypatch.setattr(gui_main, "ColorSchemeManager", _capturing_manager)
+    monkeypatch.setattr(
+        gui_main, "_start_initial_gui_window", lambda *_a, **_k: (window, None)
+    )
+
+    original_excepthook = sys.excepthook
+    try:
+        result = gui_main.run_gui(Mock())
+    finally:
+        sys.excepthook = original_excepthook
+
+    assert result == 0
+    managers[0].color_scheme_changed.emit(ColorScheme.DARK)
+    retint.assert_called_once_with(ColorScheme.DARK)
