@@ -198,7 +198,7 @@ class EnsembleWidget(QWidget):
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.RUN_STATUS_TAB, self._run_status_view, "Run status"
         )
-        self._tab_widget.currentChanged.connect(self._currentTabChanged)
+        self._tab_widget.currentChanged.connect(self._current_tab_changed)
 
         layout = QVBoxLayout()
         layout.addWidget(self._tab_widget)
@@ -353,7 +353,7 @@ class EnsembleWidget(QWidget):
 
         self._canvas.draw()
 
-    def _currentTabChanged(self, index: int) -> None:
+    def _current_tab_changed(self, index: int) -> None:
         if index == _EnsembleWidgetTabs.STATE_TAB:
             self._state_text_edit.clear()
             html = "<table>"
@@ -481,7 +481,7 @@ class EnsembleWidget(QWidget):
 
         current_index = self._tab_widget.currentIndex()
         if current_index > 0:
-            self._currentTabChanged(current_index)
+            self._current_tab_changed(current_index)
         else:
             self._tab_widget.setCurrentIndex(0)
 
