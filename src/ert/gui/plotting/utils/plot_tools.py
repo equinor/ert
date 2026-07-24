@@ -68,7 +68,7 @@ class ConditionalAxisFormatter(mticker.Formatter):
 
 class PlotTools:
     @staticmethod
-    def showGrid(axes: Axes, plot_context: PlotContext) -> None:
+    def show_grid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.is_grid_enabled():
             if plot_context.plot_type in {PlotType.BAR, PlotType.BOX}:
@@ -77,23 +77,23 @@ class PlotTools:
                 axes.grid(visible=True, color="black", alpha=0.4)
 
     @staticmethod
-    def showLegend(axes: Axes, plot_context: PlotContext) -> None:
+    def show_legend(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.is_legend_enabled() and len(config.legend_items()) > 0:
             axes.legend(config.legend_items(), config.legend_labels(), numpoints=1)
 
     @staticmethod
-    def finalizePlot(
+    def finalize_plot(
         plot_context: PlotContext,
         figure: Figure,
         axes: Axes,
         default_x_label: str = "Unnamed",
         default_y_label: str = "Unnamed",
     ) -> None:
-        PlotTools.showLegend(axes, plot_context)
-        PlotTools.showGrid(axes, plot_context)
+        PlotTools.show_legend(axes, plot_context)
+        PlotTools.show_grid(axes, plot_context)
 
-        PlotTools.__setupLabels(plot_context, default_x_label, default_y_label)
+        PlotTools._setup_labels(plot_context, default_x_label, default_y_label)
 
         plot_config = plot_context.plotConfig()
         axes.set_xlabel(plot_config.x_label())  # type: ignore
@@ -110,7 +110,7 @@ class PlotTools:
             axes.spines[spine].set_visible(False)
 
     @staticmethod
-    def __setupLabels(
+    def _setup_labels(
         plot_context: PlotContext, default_x_label: str, default_y_label: str
     ) -> None:
         config = plot_context.plotConfig()

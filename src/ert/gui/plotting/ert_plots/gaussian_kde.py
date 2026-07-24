@@ -75,7 +75,7 @@ def plotGaussianKDE(
     if plot_context.log_scale:
         axes.set_xscale("log")
 
-    PlotTools.finalizePlot(
+    PlotTools.finalize_plot(
         plot_context, figure, axes, default_x_label="Value", default_y_label="Density"
     )
 

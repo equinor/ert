@@ -87,7 +87,7 @@ def plotDistribution(
     if plot_context.log_scale:
         axes.set_yscale("log")
 
-    PlotTools.finalizePlot(
+    PlotTools.finalize_plot(
         plot_context, figure, axes, default_x_label="Ensemble", default_y_label="Value"
     )
 

@@ -148,7 +148,7 @@ class EverestBatchObjectiveFunctionPlot:
                 labels=scatter_labels,
             )
 
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,
