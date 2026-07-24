@@ -260,7 +260,7 @@ class PlotWindow(QMainWindow):
                 self.addPlotWidget(EVEREST_GRADIENTS_PLOT, EverestGradientsPlot())
 
             self._central_tab.currentChanged.connect(self.current_tab_changed)
-            self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
+            self.log_plot_tab_usage(self._central_tab.tabText(0), default=True)
 
             self._prev_tab_widget_index = -1
             self._current_tab_index = -1
@@ -388,9 +388,9 @@ class PlotWindow(QMainWindow):
     def current_tab_changed(self, index: int) -> None:
         self._current_tab_index = index
         self.update_plot()
-        self.logPlotTabUsage(self._central_tab.tabText(index))
+        self.log_plot_tab_usage(self._central_tab.tabText(index))
 
-    def logPlotTabUsage(self, tab_name: str, *, default: bool = False) -> None:
+    def log_plot_tab_usage(self, tab_name: str, *, default: bool = False) -> None:
         msg = f"Plotwindow tab used: {tab_name}" + (" (default tab)" if default else "")
         logger.info(msg)
 
