@@ -128,7 +128,7 @@ def plot_figure(
 # The tolerance is chosen by guess, in one bug we observed a
 # where locations of observations in the standard deviation plot
 # were off, we needed a tolerance of 5 to get tests to fail.
-@pytest.mark.mpl_image_compare(tolerance=5.0)
+@pytest.mark.mpl_image_compare(tolerance=5.0, style="default")
 @pytest.mark.skip_mac_ci  # test is slow
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_that_plot_images_are_unchanged(plot_figure):

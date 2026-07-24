@@ -163,7 +163,7 @@ def create_breakthrough_figure(plot_tab_name: str):
 plot_figure = create_breakthrough_figure(ENSEMBLE)
 
 
-@pytest.mark.mpl_image_compare(tolerance=10.0)
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
 @pytest.mark.skip_mac_ci
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_breakthrough_ensemble_visualization_images_are_unchanged(plot_figure):
