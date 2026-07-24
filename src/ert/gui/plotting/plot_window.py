@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
@@ -29,23 +30,23 @@ from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
-from ert.gui.plotting.ert_plots import (
-    CrossEnsembleStatisticsPlot,
-    DistributionPlot,
-    GaussianKDEPlot,
-    HistogramPlot,
-    MisfitsPlot,
-    StatisticsPlot,
-    StdDevPlot,
+from ert.gui.plotting.utils.plot_maps import (
+    CROSS_ENSEMBLE_STATISTICS,
+    DISTRIBUTION,
+    ENSEMBLE,
+    ERT_PLOT_MAP,
+    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+    EVEREST_CONSTRAINT_PLOT,
+    EVEREST_CONTROLS_PLOT,
+    EVEREST_GRADIENTS_PLOT,
+    EVEREST_OBJECTIVE_FUNCTION_PLOT,
+    EVEREST_PLOT_MAP,
+    GAUSSIAN_KDE,
+    HISTOGRAM,
+    MISFITS,
+    SHARED_PLOT_MAP,
+    STD_DEV,
 )
-from ert.gui.plotting.everest_plots import (
-    EverestBatchObjectiveFunctionPlot,
-    EverestConstraintsPlot,
-    EverestControlsPlot,
-    EverestGradientsPlot,
-    EverestObjectiveFunctionPlot,
-)
-from ert.gui.plotting.shared_plots.ensemble import EnsemblePlot
 from ert.gui.utils import is_everest_application
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -65,20 +66,6 @@ from .widgets.plot_controls import (
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
-
-CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
-DISTRIBUTION = "Distribution"
-GAUSSIAN_KDE = "Gaussian KDE"
-ENSEMBLE = "Ensemble"
-HISTOGRAM = "Histogram"
-STATISTICS = "Statistics"
-STD_DEV = "Std dev"
-MISFITS = "Misfits"
-EVEREST_CONTROLS_PLOT = "Controls"
-EVEREST_GRADIENTS_PLOT = "Gradient"
-EVEREST_OBJECTIVE_FUNCTION_PLOT = "Objective function"
-EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT = "Total objective value"
-EVEREST_CONSTRAINT_PLOT = "Constraints"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
@@ -235,29 +222,11 @@ class PlotWindow(QMainWindow):
 
             self.is_everest = is_everest_application()
 
+            self.add_plot_widgets_from_plot_map(SHARED_PLOT_MAP)
             if not self.is_everest:
-                self.addPlotWidget(ENSEMBLE, EnsemblePlot())
-                self.addPlotWidget(STATISTICS, StatisticsPlot())
-                self.addPlotWidget(MISFITS, MisfitsPlot())
-                self.addPlotWidget(HISTOGRAM, HistogramPlot())
-                self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
-                self.addPlotWidget(DISTRIBUTION, DistributionPlot())
-                self.addPlotWidget(
-                    CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot()
-                )
-                self.addPlotWidget(STD_DEV, StdDevPlot())
+                self.add_plot_widgets_from_plot_map(ERT_PLOT_MAP)
             else:
-                self.addPlotWidget(ENSEMBLE, EnsemblePlot())
-                self.addPlotWidget(
-                    EVEREST_OBJECTIVE_FUNCTION_PLOT, EverestObjectiveFunctionPlot()
-                )
-                self.addPlotWidget(
-                    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
-                    EverestBatchObjectiveFunctionPlot(),
-                )
-                self.addPlotWidget(EVEREST_CONSTRAINT_PLOT, EverestConstraintsPlot())
-                self.addPlotWidget(EVEREST_CONTROLS_PLOT, EverestControlsPlot())
-                self.addPlotWidget(EVEREST_GRADIENTS_PLOT, EverestGradientsPlot())
+                self.add_plot_widgets_from_plot_map(EVEREST_PLOT_MAP)
 
             self._central_tab.currentChanged.connect(self.current_tab_changed)
             self.log_plot_tab_usage(self._central_tab.tabText(0), default=True)
@@ -674,7 +643,7 @@ class PlotWindow(QMainWindow):
     def getSelectedKey(self) -> PlotApiKeyDefinition | None:
         return self._data_type_keys_widget.getSelectedItem()
 
-    def addPlotWidget(
+    def add_plot_widget(
         self,
         name: str,
         plotter: Plotter,
@@ -863,6 +832,12 @@ class PlotWindow(QMainWindow):
 
     def toggle_customize_dialog(self) -> None:
         self._plot_customizer.toggle_customization_dialog()
+
+    def add_plot_widgets_from_plot_map(
+        self, plot_map: dict[str, Callable[[], Plotter]]
+    ) -> None:
+        for name, plotter_factory in plot_map.items():
+            self.add_plot_widget(name, plotter_factory())
 
 
 def make_seismic_y_label(s: str) -> str:
