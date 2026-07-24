@@ -6,9 +6,6 @@ from ert.gui.plotting.customization_dialog.customize_plot_dialog import (
 from ert.gui.plotting.customization_dialog.statistics_customization_view import (
     StatisticsCustomizationView,
 )
-from ert.gui.plotting.customization_dialog.style_customization_view import (
-    StyleCustomizationView,
-)
 
 
 def test_that_first_tab_is_not_logged_when_opening_customize_plot_dialog(qtbot, caplog):
@@ -18,16 +15,16 @@ def test_that_first_tab_is_not_logged_when_opening_customize_plot_dialog(qtbot, 
     )
 
     plot = CustomizePlotDialog(title="Test Plot", parent=None, key_defs=[])
-    plot.add_tab("style", "Style", StyleCustomizationView())
-    plot.add_tab("statistics", "Statistics", StatisticsCustomizationView())
+    plot.add_tab("first", "First", StatisticsCustomizationView())
+    plot.add_tab("second", "Second", StatisticsCustomizationView())
     qtbot.addWidget(plot)
 
     plot.show()
-    assert "Customization dialog action: Style" not in caplog.text
+    assert "Customization dialog action: First" not in caplog.text
 
     plot._tabs.setCurrentIndex(1)
-    assert "Customization dialog action: Statistics" in caplog.text
+    assert "Customization dialog action: Second" in caplog.text
 
     plot._tabs.setCurrentIndex(0)
-    assert "Customization dialog action: Style" in caplog.text
+    assert "Customization dialog action: First" in caplog.text
     assert len(caplog.records) == 2

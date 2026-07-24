@@ -55,13 +55,18 @@ from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from .utils import PlotConfig, PlotContext
 from .utils.observation_locations import transform_observation_locations
 from .utils.plot_types import ObservationPlotLocations
-from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
+from .utils.qt_creator import (
+    create_group_box,
+    create_group_layout,
+    create_side_panel,
+)
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
     BoxplotOptions,
     EverestControlsPlotOptions,
     GeneralPlotOptions,
+    StyleOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
@@ -334,6 +339,7 @@ class PlotWindow(QMainWindow):
             )
             self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
             self._general_options.titleEditRequested.connect(self._edit_title)
+            self._style_options = StyleOptions(self.update_plot)
             self._boxplot_options = BoxplotOptions(self.update_plot)
 
             right_container = QWidget()
@@ -341,6 +347,7 @@ class PlotWindow(QMainWindow):
                 [
                     self._ensemble_group,
                     self._general_options.get_widget(),
+                    self._style_options.get_widget(),
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
                     self._boxplot_options.get_widget(),
@@ -420,6 +427,7 @@ class PlotWindow(QMainWindow):
             plot_widget.name in {MISFITS, CROSS_ENSEMBLE_STATISTICS}
         )
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
+        self._style_options.get_widget().setVisible(plot_widget.name == ENSEMBLE)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
@@ -576,11 +584,24 @@ class PlotWindow(QMainWindow):
             plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
             plot_config.set_line_color_cycle(self._general_options.get_color_cycle())
 
+            if selected_tab == ENSEMBLE:
+                plot_config.set_default_style(self._style_options.get_default_style())
+
             if not self.is_everest:
                 self._general_options.set_history_visible(history_data_available)
-                self._general_options.set_observations_visible(
+                self._style_options.set_history_available(history_data_available)
+                observations_available = (
                     key_def.observations and selected_tab != MISFITS
                 )
+                self._general_options.set_observations_visible(observations_available)
+                self._style_options.set_observations_available(observations_available)
+                if selected_tab == ENSEMBLE:
+                    plot_config.set_history_style(
+                        self._style_options.get_history_style()
+                    )
+                    plot_config.set_observations_style(
+                        self._style_options.get_observations_style()
+                    )
                 plot_config.set_history_enabled(
                     self._general_options.history_checkbox_state
                     and history_data_available

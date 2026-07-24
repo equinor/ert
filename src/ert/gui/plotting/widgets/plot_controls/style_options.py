@@ -86,7 +86,7 @@ class StyleOptions(QWidget):
         self._style_edits["history"].setVisible(False)
         self._style_edits["observations"].setVisible(False)
 
-        self._individual_style_options = QGroupBox("Individual styles")
+        self._individual_style_options = QGroupBox()
         self._individual_style_options.setObjectName("individual_style_options")
         individual_layout = QVBoxLayout(self._individual_style_options)
         individual_layout.setContentsMargins(0, 0, 0, 0)
