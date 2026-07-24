@@ -259,7 +259,10 @@ class MisfitsPlot:
         index_string = "timestep" if summary_or_breakthrough else "index"
         plot_context.plotConfig().set_title(
             f"{plot_context.key()} (Signed Chi-squared misfits per {index_string})"
+            if plot_context.plotConfig().is_unnamed()
+            else f"{plot_context.plotConfig().title()} (Signed Chi-squared)"
         )
+
         PlotTools.finalizePlot(
             plot_context,
             figure,
