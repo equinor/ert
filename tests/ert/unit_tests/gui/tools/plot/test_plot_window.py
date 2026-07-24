@@ -17,15 +17,17 @@ from ert.gui.plotting.ert_plots.histogram import HistogramPlot
 from ert.gui.plotting.models import DataTypeSeparator
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.plotting.plot_window import (
-    DISTRIBUTION,
-    GAUSSIAN_KDE,
-    HISTOGRAM,
-    STATISTICS,
     PlotWindow,
     create_error_dialog,
     make_seismic_y_label,
 )
 from ert.gui.plotting.utils import PlotConfig, PlotContext
+from ert.gui.plotting.utils.plot_maps import (
+    DISTRIBUTION,
+    GAUSSIAN_KDE,
+    HISTOGRAM,
+    STATISTICS,
+)
 from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.plotting.widgets.plot_widget import PlotWidget
 from ert.services import ErtServerController
