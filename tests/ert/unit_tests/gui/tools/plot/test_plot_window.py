@@ -815,7 +815,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
     plot_window.show()
 
     # This is the call that previously crashed with TypeError.
-    plot_window.updatePlot()
+    plot_window.update_plot()
 
 
 def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():
@@ -884,7 +884,7 @@ def test_that_clicking_axis_label_emits_edit_request(
     received: list[str] = []
     plot_widget.axisLabelEditRequested.connect(received.append)
 
-    plot_widget.updatePlot(
+    plot_widget.update_plot(
         plot_context,
         {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})},
         pd.DataFrame(),
@@ -932,7 +932,7 @@ def test_that_clicking_title_emits_edit_request(qtbot: QtBot) -> None:
     received = MagicMock()
     plot_widget.titleEditRequested.connect(received)
 
-    plot_widget.updatePlot(
+    plot_widget.update_plot(
         plot_context,
         {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})},
         pd.DataFrame(),
@@ -977,7 +977,7 @@ def test_that_hovering_editable_text_shows_it_as_clickable(
     plotter.plot.side_effect = _plot_with_editable_text
     plot_widget = PlotWidget("Any", plotter)
     qtbot.addWidget(plot_widget)
-    plot_widget.updatePlot(
+    plot_widget.update_plot(
         PlotContext(
             PlotConfig(),
             ensembles=[],
@@ -1187,7 +1187,7 @@ def test_that_title_edit_updates_or_preserves_persistent_config(
     plot_window = _create_plot_window_for_title_edit(qtbot, monkeypatch)
     get_text_input = MagicMock(return_value=(dialog_value, accepted))
     plot_window._general_options.get_text_input = get_text_input
-    plot_window.updatePlot = MagicMock()
+    plot_window.update_plot = MagicMock()
     plot_window._plot_customizer._emit_changed_signal = MagicMock()
     plot_config = plot_window._plot_customizer.get_plot_config()
     plot_config.set_title("Existing title")
@@ -1248,7 +1248,7 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window._general_options.get_text_input = MagicMock(return_value=("", True))
-    plot_window.updatePlot()
+    plot_window.update_plot()
 
     plot_config = plot_window._plot_customizer.get_plot_config()
     plot_config.set_title("Custom title")
@@ -1287,7 +1287,7 @@ def test_that_resetting_axis_label_restores_histogram_default_label(
 
     ensemble_data = {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})}
 
-    plot_widget.updatePlot(
+    plot_widget.update_plot(
         plot_context,
         ensemble_data,
         pd.DataFrame(),
@@ -1299,7 +1299,7 @@ def test_that_resetting_axis_label_restores_histogram_default_label(
 
     plot_config.set_x_label(None)
 
-    plot_widget.updatePlot(
+    plot_widget.update_plot(
         plot_context,
         ensemble_data,
         pd.DataFrame(),

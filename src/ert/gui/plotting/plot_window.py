@@ -312,7 +312,7 @@ class PlotWindow(QMainWindow):
                 self._everest_parameters
             )
             self._everest_control_selection_widget.controlSelectionChanged.connect(
-                self.updatePlot
+                self.update_plot
             )
 
             self._everest_controls_group = create_group_box(
@@ -325,16 +325,16 @@ class PlotWindow(QMainWindow):
             )
 
             self._everest_controls_plot_options = EverestControlsPlotOptions(
-                self.updatePlot
+                self.update_plot
             )
 
             self._general_options = GeneralPlotOptions(
-                connection_point=self.updatePlot,
+                connection_point=self.update_plot,
                 is_everest=self.is_everest,
             )
             self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
             self._general_options.titleEditRequested.connect(self._edit_title)
-            self._boxplot_options = BoxplotOptions(self.updatePlot)
+            self._boxplot_options = BoxplotOptions(self.update_plot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
@@ -387,7 +387,7 @@ class PlotWindow(QMainWindow):
     @Slot(int)
     def current_tab_changed(self, index: int) -> None:
         self._current_tab_index = index
-        self.updatePlot()
+        self.update_plot()
         self.logPlotTabUsage(self._central_tab.tabText(index))
 
     def logPlotTabUsage(self, tab_name: str, *, default: bool = False) -> None:
@@ -396,9 +396,9 @@ class PlotWindow(QMainWindow):
 
     @Slot(int)
     def layerIndexChanged(self, index: int | None) -> None:
-        self.updatePlot(index)
+        self.update_plot(index)
 
-    def updatePlot(self, layer: int | None = None) -> None:
+    def update_plot(self, layer: int | None = None) -> None:
         key_def = self.getSelectedKey()
         if key_def is None:
             self._show_no_data_message()
@@ -662,7 +662,7 @@ class PlotWindow(QMainWindow):
                     self._preferred_ensemble_x_axis_format = PlotContext.DATE_AXIS
                     break
 
-            plot_widget.updatePlot(
+            plot_widget.update_plot(
                 plot_context,
                 ensemble_to_data_map,
                 observations,
@@ -828,7 +828,7 @@ class PlotWindow(QMainWindow):
 
         # Enabling/disabling tab triggers the
         # current_tab_changed event which also triggers
-        # the updatePlot, which is slow and redundant.
+        # the update_plot, which is slow and redundant.
         # Therefore, we disable this signal because this
         # part is only supposed to set which tabs are
         # enabled according to the available widgets.
@@ -859,7 +859,7 @@ class PlotWindow(QMainWindow):
         self._prev_key_dimensionality = key_def.dimensionality
         self._prev_key = key_def.key
         self._prev_key_origin = key_def.metadata.get("data_origin")
-        self.updatePlot()
+        self.update_plot()
 
     def toggleCustomizeDialog(self) -> None:
         self._plot_customizer.toggle_customization_dialog()

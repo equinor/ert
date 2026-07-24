@@ -301,7 +301,7 @@ def test_plot_api_big_summary_memory_usage(
         all_ensembles = [e.id for e in api.get_all_ensembles()]
         assert set(keys_df.to_list()) == set(response_keys)
 
-        # call updatePlot()
+        # call update_plot()
         ensemble_to_data_map: dict[str, pd.DataFrame] = {}
         sample_key = keys_df.sample(1).item()
         for ensemble in all_ensembles:

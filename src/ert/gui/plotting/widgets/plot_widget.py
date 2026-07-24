@@ -173,7 +173,7 @@ class PlotWidget(QWidget):
     def name(self) -> str:
         return self._name
 
-    def updatePlot(
+    def update_plot(
         self,
         plot_context: "PlotContext",
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
