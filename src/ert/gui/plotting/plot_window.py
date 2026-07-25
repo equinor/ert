@@ -66,6 +66,7 @@ from .widgets.plot_controls import (
     BoxplotOptions,
     EverestControlsPlotOptions,
     GeneralPlotOptions,
+    StatisticsOptions,
     StyleOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
@@ -340,6 +341,7 @@ class PlotWindow(QMainWindow):
             self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
             self._general_options.titleEditRequested.connect(self._edit_title)
             self._style_options = StyleOptions(self.update_plot)
+            self._statistics_options = StatisticsOptions(self.update_plot)
             self._boxplot_options = BoxplotOptions(self.update_plot)
 
             right_container = QWidget()
@@ -348,6 +350,7 @@ class PlotWindow(QMainWindow):
                     self._ensemble_group,
                     self._general_options.get_widget(),
                     self._style_options.get_widget(),
+                    self._statistics_options.get_widget(),
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
                     self._boxplot_options.get_widget(),
@@ -592,6 +595,7 @@ class PlotWindow(QMainWindow):
             plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
             plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
             plot_config.set_line_color_cycle(self._general_options.get_color_cycle())
+            self._statistics_options.apply_to_plot_config(plot_config)
 
             if selected_tab == ENSEMBLE:
                 plot_config.set_default_style(self._style_options.get_default_style())

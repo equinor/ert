@@ -27,9 +27,6 @@ from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import PlotApiKeyDefinition
 from ert.gui.plotting.utils import PlotConfig, PlotConfigFactory, PlotConfigHistory
 from ert.gui.plotting.widgets import CopyStyleToDialog
-from ert.gui.utils import is_everest_application
-
-from .statistics_customization_view import StatisticsCustomizationView
 
 if TYPE_CHECKING:
     from .customization_view import CustomizationView
@@ -46,7 +43,6 @@ class PlotCustomizer(QObject):
         self, parent: QWidget | None, key_defs: list[PlotApiKeyDefinition]
     ) -> None:
         super().__init__()
-        self._is_everest = is_everest_application()
         self._plot_config_key = None
         self._previous_key = None
         self._plot_configs: dict[str | None, PlotConfigHistory] = {
@@ -58,11 +54,6 @@ class PlotCustomizer(QObject):
         self._customization_dialog = CustomizePlotDialog(
             "Customize", parent, key_defs, key=self._plot_config_key
         )
-
-        if not self._is_everest:
-            self._customization_dialog.add_tab(
-                "statistics", "Statistics", StatisticsCustomizationView()
-            )
 
         self._customization_dialog.applySettings.connect(self.apply_customization)
         self._customization_dialog.undoSettings.connect(self.undo_customization)
