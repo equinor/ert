@@ -17,7 +17,7 @@ from matplotlib.text import Text
 from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCursor
+from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QComboBox,
     QToolTip,
@@ -26,7 +26,6 @@ from PyQt6.QtWidgets import (
     QWidgetAction,
 )
 
-from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_types import ObservationPlotLocations
 
@@ -67,14 +66,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     ) -> None:
         super().__init__(canvas, parent, coordinates)  # type: ignore
 
-        gear = load_icon("edit.svg")
-        customize_action = QAction(gear, "Customize", self)
-        customize_action.setToolTip("Customize plot settings")
-        customize_action.triggered.connect(self.customizationTriggered)
-        customize_action.triggered.connect(
-            lambda: self.logToolbarUsage(customize_action.text())
-        )
-
         layer_combobox = QComboBox()
         self._model = QStringListModel()
         layer_combobox.setModel(self._model)
@@ -82,10 +73,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
         for action in self.actions():
             if str(action.text()).lower() == "subplots":
-                self.removeAction(action)
-
-            if str(action.text()).lower() == "customize":
-                self.insertAction(action, customize_action)
                 self.removeAction(action)
 
             # insert the layer widget before the coordinates widget
