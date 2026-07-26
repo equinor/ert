@@ -1,6 +1,9 @@
 from collections.abc import Iterator
 from typing import override
 
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
@@ -22,6 +25,8 @@ STYLE_DASH_DOTTED = ("Dash dotted", "-.")
 STYLESET_DEFAULT = "default"
 STYLESET_AREA = "area"
 STYLESET_TOGGLE = "toggle_only"
+
+COMPACT_FONT_SIZE_INCREASE = 2.0
 
 STYLES = {
     STYLESET_DEFAULT: [
@@ -54,7 +59,6 @@ MARKER_PENTAGON = ("Pentagon", "p")
 MARKER_SQUARE = ("Square", "s")
 MARKER_HLINE = ("H Line", "_")
 MARKER_VLINE = ("V Line", "|")
-MARKER_OCTAGON = ("Octagon", "8")
 MARKER_HEXAGON1 = ("Hexagon 1", "h")
 MARKER_HEXAGON2 = ("Hexagon 2", "H")
 
@@ -68,14 +72,31 @@ MARKERS: list[tuple[str, str | None]] = [
     MARKER_PLUS,
     MARKER_PENTAGON,
     MARKER_SQUARE,
-    MARKER_OCTAGON,
     MARKER_HEXAGON1,
     MARKER_HEXAGON2,
 ]
 
+COMPACT_MARKER_SYMBOLS: dict[str | None, str] = {
+    None: "Off",
+    "x": "x",
+    "o": "○",
+    ".": "•",
+    "*": "★",
+    "D": "◇",
+    "+": "+",
+    "p": "⬠",
+    "s": "□",
+    "h": "⬡",
+    "H": "⬢",
+}
+
 
 class StyleChooser(QWidget):
-    def __init__(self, line_style_set: str = STYLESET_DEFAULT) -> None:
+    styleChanged = Signal()
+
+    def __init__(
+        self, line_style_set: str = STYLESET_DEFAULT, *, compact: bool = False
+    ) -> None:
         QWidget.__init__(self)
         self._style = PlotStyle("StyleChooser internal style")
 
@@ -85,9 +106,6 @@ class StyleChooser(QWidget):
             else STYLES[line_style_set]
         )
 
-        self.setMinimumWidth(140)
-        self.setMaximumHeight(25)
-
         layout = QHBoxLayout()
 
         layout.setContentsMargins(0, 0, 0, 0)
@@ -95,13 +113,47 @@ class StyleChooser(QWidget):
 
         self.line_chooser = QComboBox()
         self.line_chooser.setToolTip("Select line style.")
-        for style in self._styles:
-            self.line_chooser.addItem(*style)
+        compact_font = QFont(self.line_chooser.font())
+        compact_font.setBold(True)
+        compact_font.setPointSizeF(
+            compact_font.pointSizeF() + COMPACT_FONT_SIZE_INCREASE
+        )
+        for full_name, line_style in self._styles:
+            display_name = (
+                (".." if line_style == ":" else line_style or "Off")
+                if compact
+                else full_name
+            )
+            self.line_chooser.addItem(display_name, line_style)
+
+            if compact:
+                line_index = self.line_chooser.count() - 1
+                self.line_chooser.setItemData(
+                    line_index, full_name, Qt.ItemDataRole.ToolTipRole
+                )
+                self.line_chooser.setItemData(
+                    line_index, full_name, Qt.ItemDataRole.AccessibleTextRole
+                )
+                if line_style is not None:
+                    self.line_chooser.setItemData(
+                        line_index,
+                        compact_font,
+                        Qt.ItemDataRole.FontRole,
+                    )
 
         self.marker_chooser = QComboBox()
         self.marker_chooser.setToolTip("Select marker style.")
-        for marker in MARKERS:
-            self.marker_chooser.addItem(*marker)
+        for full_name, marker in MARKERS:
+            display_name = COMPACT_MARKER_SYMBOLS[marker] if compact else full_name
+            self.marker_chooser.addItem(display_name, marker)
+            if compact:
+                marker_index = self.marker_chooser.count() - 1
+                self.marker_chooser.setItemData(
+                    marker_index, full_name, Qt.ItemDataRole.ToolTipRole
+                )
+                self.marker_chooser.setItemData(
+                    marker_index, full_name, Qt.ItemDataRole.AccessibleTextRole
+                )
 
         self.thickness_spinner = QDoubleSpinBox()
         self.thickness_spinner.setToolTip("Line thickness")
@@ -114,14 +166,25 @@ class StyleChooser(QWidget):
         self.size_spinner.setMinimum(0.1)
         self.size_spinner.setDecimals(1)
         self.size_spinner.setSingleStep(0.1)
+        if compact:
+            self.line_chooser.setFixedWidth(48)
+            self.marker_chooser.setFixedWidth(48)
+            self.thickness_spinner.setFixedWidth(55)
+            self.size_spinner.setFixedWidth(55)
+        else:
+            # The text content of the spinner varies, but should not push the
+            # full-size chooser out of its dialog boundaries.
+            self.line_chooser.setMinimumWidth(110)
+            self.setMinimumWidth(140)
+            self.setMaximumHeight(25)
 
-        # the text content of the spinner varies, but shouldn't push the control
-        # out of boundaries
-        self.line_chooser.setMinimumWidth(110)
-        layout.addWidget(self.line_chooser)
-        layout.addWidget(self.thickness_spinner)
-        layout.addWidget(self.marker_chooser)
-        layout.addWidget(self.size_spinner)
+        for control in (
+            self.line_chooser,
+            self.thickness_spinner,
+            self.marker_chooser,
+            self.size_spinner,
+        ):
+            layout.addWidget(control)
 
         self.setLayout(layout)
 
@@ -169,12 +232,10 @@ class StyleChooser(QWidget):
         self.size_spinner.setValue(size)
 
     def _update_style(self) -> None:
-        self.marker_chooser.setEnabled(self.line_chooser.currentText() != "Area")
+        line_style = self.line_chooser.currentData()
+        marker_style = self.marker_chooser.currentData()
 
-        line_style: str = self.line_chooser.itemData(self.line_chooser.currentIndex())
-        marker_style: str = self.marker_chooser.itemData(
-            self.marker_chooser.currentIndex()
-        )
+        self.marker_chooser.setEnabled(line_style != STYLE_AREA[1])
         thickness = float(self.thickness_spinner.value())
         size = float(self.size_spinner.value())
 
@@ -182,6 +243,7 @@ class StyleChooser(QWidget):
         self._style.marker = marker_style
         self._style.width = thickness
         self._style.size = size
+        self.styleChanged.emit()
 
     @override
     def setStyle(self, style: PlotStyle) -> None:  # type: ignore
