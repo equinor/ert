@@ -428,6 +428,15 @@ class PlotWindow(QMainWindow):
         )
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
         self._style_options.get_widget().setVisible(plot_widget.name == ENSEMBLE)
+        statistics_tab_selected = plot_widget.name == STATISTICS
+        distribution_tab_selected = plot_widget.name == DISTRIBUTION
+        self._statistics_options.get_widget().setVisible(
+            statistics_tab_selected or distribution_tab_selected
+        )
+        self._statistics_options.set_options_available(
+            statistics=statistics_tab_selected,
+            distribution_lines=distribution_tab_selected,
+        )
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
