@@ -112,7 +112,7 @@ def _addStatisticsLegend(
 ) -> None:
     style = plot_config.get_statistics_style(style_name)
     if style.is_visible():
-        if style.line_style == "#":
+        if style.line_style == "area":
             rectangle = Rectangle(
                 (0, 0), 1, 1, color="black", alpha=style.alpha * alpha_multiplier
             )  # creates rectangle patch for legend use.
@@ -231,7 +231,7 @@ def _plotPercentile(
             return (y, x)
         return (x, y)
 
-    if line_style == "#":
+    if line_style == "area":
         if inverted:
             axes.fill_betweenx(
                 index_values,

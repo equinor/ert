@@ -88,7 +88,11 @@ def test_that_compact_area_style_disables_marker_selection(qtbot):
     chooser = StyleChooser(line_style_set=STYLESET_AREA, compact=True)
     qtbot.addWidget(chooser)
 
-    chooser.line_chooser.setCurrentIndex(chooser.line_chooser.findData("#"))
+    area_index = chooser.line_chooser.findData("area")
+    assert chooser.line_chooser.itemText(area_index) == "Area"
+    assert chooser.line_chooser.itemData(area_index, Qt.ItemDataRole.FontRole) is None
+
+    chooser.line_chooser.setCurrentIndex(area_index)
     assert not chooser.marker_chooser.isEnabled()
 
     chooser.line_chooser.setCurrentIndex(chooser.line_chooser.findData("-"))

@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 from ert.gui.plotting.utils import PlotStyle
 
 STYLE_OFF = ("Off", None)
-STYLE_AREA = ("Area", "#")
+STYLE_AREA = ("Area", "area")
 STYLE_SOLID = ("Solid", "-")
 STYLE_DASHED = ("Dashed", "--")
 STYLE_DOTTED = ("Dotted", ":")
@@ -27,6 +27,12 @@ STYLESET_AREA = "area"
 STYLESET_TOGGLE = "toggle_only"
 
 COMPACT_FONT_SIZE_INCREASE = 2.0
+
+COMPACT_LINE_SYMBOLS: dict[str | None, str] = {
+    None: "Off",
+    "area": "Area",
+    ":": "..",
+}
 
 STYLES = {
     STYLESET_DEFAULT: [
@@ -120,10 +126,11 @@ class StyleChooser(QWidget):
         )
         for full_name, line_style in self._styles:
             display_name = (
-                (".." if line_style == ":" else line_style or "Off")
+                COMPACT_LINE_SYMBOLS.get(line_style, line_style)
                 if compact
                 else full_name
             )
+            assert display_name is not None
             self.line_chooser.addItem(display_name, line_style)
 
             if compact:
@@ -134,7 +141,7 @@ class StyleChooser(QWidget):
                 self.line_chooser.setItemData(
                     line_index, full_name, Qt.ItemDataRole.AccessibleTextRole
                 )
-                if line_style is not None:
+                if line_style not in {None, STYLE_AREA[1]}:
                     self.line_chooser.setItemData(
                         line_index,
                         compact_font,
@@ -167,7 +174,7 @@ class StyleChooser(QWidget):
         self.size_spinner.setDecimals(1)
         self.size_spinner.setSingleStep(0.1)
         if compact:
-            self.line_chooser.setFixedWidth(48)
+            self.line_chooser.setFixedWidth(56)
             self.marker_chooser.setFixedWidth(48)
             self.thickness_spinner.setFixedWidth(55)
             self.size_spinner.setFixedWidth(55)
