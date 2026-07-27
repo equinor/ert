@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 
 from PyQt6.QtCore import Qt
@@ -16,8 +17,11 @@ from ert.gui.plotting.customization_dialog.style_chooser import (
     STYLESET_TOGGLE,
 )
 from ert.gui.plotting.utils import PlotConfig, PlotStyle
+from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 
 from .style_edit import STYLE_NAME_WIDTH, _StyleEdit
+
+logger = logging.getLogger(__name__)
 
 
 class StyleOptions(QWidget):
@@ -39,6 +43,7 @@ class StyleOptions(QWidget):
         self._toggle.setAutoRaise(True)
         self._toggle.setToolTip("Show style options")
         self._toggle.toggled.connect(self._set_content_visible)
+        log_plot_option_usage_once(self._toggle.clicked, logger, "Expand style options")
 
         header = QWidget()
         header_layout = QHBoxLayout(header)
@@ -119,6 +124,7 @@ class StyleOptions(QWidget):
         self._reset_button.setObjectName("reset_individual_styles_button")
         self._reset_button.setToolTip("Reset default, history, and observation styles")
         self._reset_button.clicked.connect(self._reset_styles)
+        log_plot_option_usage_once(self._reset_button.clicked, logger, "Reset styles")
 
         reset_layout = QHBoxLayout()
         reset_layout.setContentsMargins(0, 0, 0, 0)

@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 
 from PyQt6.QtCore import QSignalBlocker
@@ -5,8 +6,10 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from ert.gui.plotting.customization_dialog.style_chooser import StyleChooser
 from ert.gui.plotting.utils import PlotStyle
+from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 
 STYLE_NAME_WIDTH = 52
+logger = logging.getLogger(__name__)
 
 
 class _StyleEdit(QWidget):
@@ -41,6 +44,16 @@ class _StyleEdit(QWidget):
         self._style_chooser = StyleChooser(line_style_set=line_style_set, compact=True)
         self._style_chooser.setStyle(self._style)
         self._style_chooser.styleChanged.connect(self._update_style)
+        for signal, option in (
+            (self._style_chooser.line_chooser.currentIndexChanged, "line style"),
+            (self._style_chooser.thickness_spinner.valueChanged, "line width"),
+            (self._style_chooser.marker_chooser.currentIndexChanged, "marker style"),
+            (self._style_chooser.size_spinner.valueChanged, "marker size"),
+        ):
+            telemetry_style_name = title.removesuffix(" style")
+            log_plot_option_usage_once(
+                signal, logger, f"{telemetry_style_name} {option}"
+            )
         layout.addWidget(self._style_chooser)
 
     def _update_style(self) -> None:

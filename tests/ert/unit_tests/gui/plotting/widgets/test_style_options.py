@@ -1,5 +1,7 @@
+import logging
 from unittest.mock import Mock
 
+import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel
 
@@ -36,6 +38,68 @@ def test_that_changing_a_style_chooser_invokes_the_update_callback(qtbot):
 
     assert options.get_default_style().marker == "x"
     connection_point.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("style_name", "control_name", "option_name"),
+    [
+        (style_name, control_name, f"{display_name} {option}")
+        for style_name, display_name in (
+            ("default", "Default"),
+            ("history", "History"),
+            ("observations", "Observations"),
+        )
+        for control_name, option in (
+            ("line_chooser", "line style"),
+            ("thickness_spinner", "line width"),
+            ("marker_chooser", "marker style"),
+            ("size_spinner", "marker size"),
+        )
+    ],
+)
+def test_that_changing_each_style_control_logs_sidebar_usage_once(
+    qtbot, caplog, style_name, control_name, option_name
+):
+    options = StyleOptions(Mock())
+    qtbot.addWidget(options)
+    control = getattr(options._style_edits[style_name]._style_chooser, control_name)
+    expected_message = f"Plot sidebar option used: '{option_name}'"
+
+    with caplog.at_level(logging.INFO):
+        if control_name.endswith("chooser"):
+            control.setCurrentIndex((control.currentIndex() + 1) % control.count())
+            control.setCurrentIndex((control.currentIndex() + 1) % control.count())
+        else:
+            control.setValue(control.value() + control.singleStep())
+            control.setValue(control.value() + control.singleStep())
+
+    assert [record.getMessage() for record in caplog.records].count(
+        expected_message
+    ) == 1
+
+
+@pytest.mark.parametrize(
+    ("button_name", "option_name"),
+    [
+        ("_toggle", "Expand style options"),
+        ("_reset_button", "Reset styles"),
+    ],
+)
+def test_that_style_option_buttons_log_sidebar_usage_once(
+    qtbot, caplog, button_name, option_name
+):
+    options = StyleOptions(Mock())
+    qtbot.addWidget(options)
+    button = getattr(options, button_name)
+    expected_message = f"Plot sidebar option used: '{option_name}'"
+
+    with caplog.at_level(logging.INFO):
+        button.click()
+        button.click()
+
+    assert [record.getMessage() for record in caplog.records].count(
+        expected_message
+    ) == 1
 
 
 def test_that_compact_style_chooser_uses_symbols_without_changing_full_labels(qtbot):
