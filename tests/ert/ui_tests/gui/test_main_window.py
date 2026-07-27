@@ -41,8 +41,6 @@ from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
 from ert.gui.plotting.plot_window import (
-    GEN_KW_DEFAULT,
-    RESPONSE_DEFAULT,
     PlotApi,
     PlotWindow,
 )
@@ -394,7 +392,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
         # check default selections
         click_plotter_item(response_index)
-        assert plot_window._central_tab.currentIndex() == RESPONSE_DEFAULT
+        assert plot_window._central_tab.currentIndex() == tab_index_by_text("Ensemble")
 
         # no log scale checkbox yet
         cb = get_log_checkbox()
@@ -402,7 +400,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
         assert not cb.isVisible()
 
         click_plotter_item(gen_kw_index)
-        assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
+        assert plot_window._central_tab.currentIndex() == tab_index_by_text("Histogram")
 
         # alter selections
         click_plotter_item(response_index)
