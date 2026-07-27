@@ -18,6 +18,12 @@ from PyQt6.QtWidgets import (
 )
 
 from .icon_utils import load_icon
+from .theming import (
+    SPACE_NONE,
+    SPACE_SM,
+    SPACE_XS,
+    apply_layout,
+)
 from .theming.manager import detect_system_color_scheme
 from .theming.theme import ColorScheme, resolve_color
 
@@ -58,10 +64,12 @@ STATUS_MENU_OBJECT_NAME = "sidebar_status_menu"
 
 # Layout insets: kept identical across collapse states so labels and icons share
 # the same padding; only the width, spacing, and button style change on collapse.
-_HEADER_MARGINS = (8, 8, 8, 4)
-_HEADER_SPACING_EXPANDED = 4
-_HEADER_SPACING_COLLAPSED = 0
-_NAV_MARGINS = (8, 4, 8, 8)
+_HEADER_MARGINS = (SPACE_SM, SPACE_SM, SPACE_SM, SPACE_XS)
+_HEADER_SPACING_EXPANDED = SPACE_XS
+_HEADER_SPACING_COLLAPSED = SPACE_NONE
+_NAV_MARGINS = (SPACE_SM, SPACE_XS, SPACE_SM, SPACE_SM)
+# Off-scale by design: 30px keeps the nav entries visually separated more than
+# the largest spacing token; revisit if the spacing scale gains a matching step.
 _NAV_SPACING = 30
 
 NAVIGATION_ENTRIES: tuple[tuple[str, str], ...] = (
@@ -145,8 +153,7 @@ class Sidebar(QToolBar):
         header = QWidget(self)
         header.setObjectName(HEADER_OBJECT_NAME)
         layout = QHBoxLayout(header)
-        layout.setContentsMargins(*_HEADER_MARGINS)
-        layout.setSpacing(_HEADER_SPACING_EXPANDED)
+        apply_layout(layout, margins=_HEADER_MARGINS, spacing=_HEADER_SPACING_EXPANDED)
 
         action = QAction(
             load_icon(
@@ -204,8 +211,7 @@ class Sidebar(QToolBar):
         container = QFrame(self)
         container.setObjectName(NAV_GROUP_OBJECT_NAME)
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(*_NAV_MARGINS)
-        layout.setSpacing(_NAV_SPACING)
+        apply_layout(layout, margins=_NAV_MARGINS, spacing=_NAV_SPACING)
         for name, icon_file in NAVIGATION_ENTRIES:
             self._nav_icon_files[name] = icon_file
             button = self._create_nav_button(name, load_icon(icon_file))
@@ -237,8 +243,7 @@ class Sidebar(QToolBar):
         container.setProperty("checked", "false")
         container.installEventFilter(self)
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(0)
+        apply_layout(layout, margins=SPACE_XS, spacing=SPACE_NONE)
         layout.addWidget(button)
         return container
 
