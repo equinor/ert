@@ -3,9 +3,9 @@ from collections.abc import Callable
 
 from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QWidget
 
-from ert.gui.plotting.customization_dialog.color_chooser import ColorBox
 from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.plot_config import PlotConfig
+from ert.gui.plotting.widgets.plot_controls.color_chooser import ColorBox
 
 logger = logging.getLogger(__name__)
 

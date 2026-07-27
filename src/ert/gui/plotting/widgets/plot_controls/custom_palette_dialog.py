@@ -10,9 +10,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.plotting.customization_dialog.color_chooser import ColorBox
 from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.plot_color_palettes import MINIMUM_COLOR_CYCLE_LENGTH
+from ert.gui.plotting.widgets.plot_controls.color_chooser import ColorBox
 
 logger = logging.getLogger(__name__)
 
