@@ -47,7 +47,7 @@ class Plotter(Protocol):
         figure: Figure,
         plot_context: "PlotContext",
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
-        observations: pd.DataFrame,
+        observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,

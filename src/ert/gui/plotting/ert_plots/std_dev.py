@@ -28,7 +28,7 @@ class StdDevPlot:
         plot_context: PlotContext,
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_data: dict[str, npt.NDArray[np.float32]],
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
@@ -49,7 +49,7 @@ class StdDevPlot:
             for i, ensemble in enumerate(reversed(ensembles), start=1):
                 ax_heat = figure.add_subplot(gridspec[0, i - 1])
                 ax_box = figure.add_subplot(gridspec[1, i - 1])
-                data = std_dev_data[ensemble.id]
+                data = std_dev_images[ensemble.id]
                 if data.size == 0:
                     ax_heat.set_axis_off()
                     ax_box.set_axis_off()
