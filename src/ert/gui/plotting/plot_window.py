@@ -67,10 +67,6 @@ from .widgets.plot_controls import (
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
-RESPONSE_DEFAULT = 0
-GEN_KW_DEFAULT = 3
-STD_DEV_DEFAULT = 7
-
 EVEREST_UPPER_BATCH_LIMIT = 20
 
 logger = logging.getLogger(__name__)
@@ -232,23 +228,20 @@ class PlotWindow(QMainWindow):
             self._central_tab.currentChanged.connect(self.current_tab_changed)
             self.log_plot_tab_usage(self._central_tab.tabText(0), default=True)
 
-            self._prev_tab_widget_index = -1
-            self._current_tab_index = -1
             self._prev_key_dimensionality = -1
             self._prev_key: str | None = None
             self._prev_key_origin: str | None = None
-            self._prev_tab_widget_index_map: dict[int, int] = {}
             if self.is_everest:
-                self._prev_tab_widget_index_map = {
-                    1: 0,
-                    2: 1,
-                    3: 0,  # Fallback
+                self._default_tab_for_dimensionality = {
+                    1: self._widget_by_name(ENSEMBLE),
+                    2: self._widget_by_name(EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT),
+                    3: self._widget_by_name(ENSEMBLE),  # Fallback
                 }
             else:
-                self._prev_tab_widget_index_map = {
-                    2: RESPONSE_DEFAULT,
-                    1: GEN_KW_DEFAULT,
-                    3: STD_DEV_DEFAULT,
+                self._default_tab_for_dimensionality = {
+                    1: self._widget_by_name(HISTOGRAM),
+                    2: self._widget_by_name(ENSEMBLE),
+                    3: self._widget_by_name(STD_DEV),
                 }
 
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -356,7 +349,6 @@ class PlotWindow(QMainWindow):
 
     @Slot(int)
     def current_tab_changed(self, index: int) -> None:
-        self._current_tab_index = index
         self.update_plot()
         self.log_plot_tab_usage(self._central_tab.tabText(index))
 
@@ -665,6 +657,15 @@ class PlotWindow(QMainWindow):
         self._plot_widgets.append(plot_widget)
         self._central_tab.setTabEnabled(index, enabled)
 
+    def _find_widget_by_name(self, name: str) -> PlotWidget | None:
+        return next((w for w in self._plot_widgets if w.name == name), None)
+
+    def _widget_by_name(self, name: str) -> PlotWidget:
+        widget = self._find_widget_by_name(name)
+        if widget is None:
+            raise ValueError(f"No plot tab named '{name}'")
+        return widget
+
     def _edit_axis_label(self, axis: str) -> None:
         label_names = {"x": "x-label", "y": "y-label"}
         if axis not in label_names:
@@ -772,12 +773,6 @@ class PlotWindow(QMainWindow):
         def everest_data_origin_check(origin: list[str]) -> bool:
             return key_def.metadata.get("data_origin") in origin
 
-        def everest_widget_locator(widget_name: str) -> PlotWidget | None:
-            return next(
-                (w for w in self._plot_widgets if w.name == widget_name),
-                None,
-            )
-
         everest_plot_and_origin = [
             (EVEREST_OBJECTIVE_FUNCTION_PLOT, ["everest_objectives"]),
             (EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT, ["everest_batch_objectives"]),
@@ -790,15 +785,17 @@ class PlotWindow(QMainWindow):
             widget_tuple_list: list[tuple[str, list[str]]],
         ) -> None:
             for widget_name, origin in widget_tuple_list:
-                widget = everest_widget_locator(widget_name)
-                if widget:
-                    if everest_data_origin_check(origin):
-                        if widget not in available_widgets:
-                            available_widgets.append(widget)
-                    elif widget in available_widgets:
-                        available_widgets.remove(widget)
+                widget = self._widget_by_name(widget_name)
+                if everest_data_origin_check(origin):
+                    if widget not in available_widgets:
+                        available_widgets.append(widget)
+                elif widget in available_widgets:
+                    available_widgets.remove(widget)
 
-        everest_available_widget_selection(everest_plot_and_origin)
+        if self.is_everest:
+            everest_available_widget_selection(everest_plot_and_origin)
+
+        previous_widget = self._central_tab.currentWidget()
 
         # Enabling/disabling tab triggers the
         # current_tab_changed event which also triggers
@@ -814,22 +811,19 @@ class PlotWindow(QMainWindow):
         current_widget = self._central_tab.currentWidget()
 
         if 0 < self._prev_key_dimensionality != key_def.dimensionality:
-            if self._current_tab_index == -1:
-                self._current_tab_index = self._prev_tab_widget_index
-            self._prev_tab_widget_index_map[self._prev_key_dimensionality] = (
-                self._current_tab_index
-            )
-            current_widget = self._central_tab.widget(
-                self._prev_tab_widget_index_map[key_def.dimensionality]
-            )
-            self._current_tab_index = -1
+            if isinstance(previous_widget, PlotWidget):
+                self._default_tab_for_dimensionality[self._prev_key_dimensionality] = (
+                    previous_widget
+                )
+            current_widget = self._default_tab_for_dimensionality[
+                key_def.dimensionality
+            ]
 
         if current_widget not in available_widgets and available_widgets:
             current_widget = available_widgets[0]
 
         self._central_tab.setCurrentWidget(current_widget)
         self._central_tab.currentChanged.connect(self.current_tab_changed)
-        self._prev_tab_widget_index = self._central_tab.currentIndex()
         self._prev_key_dimensionality = key_def.dimensionality
         self._prev_key = key_def.key
         self._prev_key_origin = key_def.metadata.get("data_origin")

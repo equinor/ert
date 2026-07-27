@@ -24,6 +24,8 @@ from ert.gui.plotting.plot_window import (
 from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.utils.plot_maps import (
     DISTRIBUTION,
+    ENSEMBLE,
+    ERT_PLOT_MAP,
     GAUSSIAN_KDE,
     HISTOGRAM,
     STATISTICS,
@@ -681,6 +683,104 @@ def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
     qtbot.waitUntil(log_checkbox.isVisible, timeout=5000)
 
     assert log_checkbox.isChecked()
+
+
+def _plot_window_with_response_and_gen_kw_keys(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> PlotWindow:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    mock_plot_api.responses_api_key_defs = [
+        PlotApiKeyDefinition(
+            "POLY_RES",
+            index_type="VALUE",
+            metadata={"data_origin": "gen_data"},
+            observations=False,
+            dimensionality=2,
+            response=MagicMock(type="gen_data"),
+        )
+    ]
+    mock_plot_api.parameters_api_key_defs = [
+        PlotApiKeyDefinition(
+            "gen_kw",
+            index_type=None,
+            metadata={"data_origin": "GEN_KW"},
+            observations=False,
+            dimensionality=1,
+            parameter=GenKwConfig(
+                name="gen_kw",
+                distribution={"name": "uniform", "min": 0, "max": 1},
+            ),
+        )
+    ]
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    return plot_window
+
+
+def _select_data_type_key(plot_window: PlotWindow, key: str) -> None:
+    filter_model = plot_window._data_type_keys_widget.filter_model
+    for row in range(filter_model.rowCount()):
+        index = filter_model.index(row, 0)
+        if str(filter_model.data(index)) == key:
+            plot_window._data_type_keys_widget.data_type_keys_widget.setCurrentIndex(
+                index
+            )
+            return
+    raise AssertionError(f"Data type key '{key}' not found")
+
+
+def _current_tab_name(plot_window: PlotWindow) -> str:
+    return plot_window._central_tab.tabText(plot_window._central_tab.currentIndex())
+
+
+def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Reversing the plot map changes every tab position, so a default tab
+    # resolved by position would land on the wrong plot type.
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.ERT_PLOT_MAP",
+        dict(reversed(list(ERT_PLOT_MAP.items()))),
+    )
+
+    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, monkeypatch)
+
+    _select_data_type_key(plot_window, "POLY_RES")
+    _select_data_type_key(plot_window, "gen_kw")
+    assert _current_tab_name(plot_window) == HISTOGRAM
+
+    _select_data_type_key(plot_window, "POLY_RES")
+    assert _current_tab_name(plot_window) == ENSEMBLE
+
+
+def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_it(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, monkeypatch)
+
+    _select_data_type_key(plot_window, "gen_kw")
+    plot_window._central_tab.setCurrentWidget(
+        plot_window._find_widget_by_name(GAUSSIAN_KDE)
+    )
+
+    _select_data_type_key(plot_window, "POLY_RES")
+    _select_data_type_key(plot_window, "gen_kw")
+    assert _current_tab_name(plot_window) == GAUSSIAN_KDE
 
 
 @pytest.mark.parametrize("tab_name", [HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE])
