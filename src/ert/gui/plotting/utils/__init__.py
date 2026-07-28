@@ -9,7 +9,6 @@ register_matplotlib_converters()
 
 from .plot_config import PlotConfig
 from .plot_config_factory import PlotConfigFactory
-from .plot_config_history import PlotConfigHistory
 from .plot_context import PlotContext
 from .plot_style import PlotStyle
 from .plot_tools import ConditionalAxisFormatter, PlotTools
@@ -28,7 +27,6 @@ __all__ = [
     "ObservationPlotLocations",
     "PlotConfig",
     "PlotConfigFactory",
-    "PlotConfigHistory",
     "PlotContext",
     "PlotStyle",
     "PlotTools",
