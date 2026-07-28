@@ -67,7 +67,6 @@ class ExperimentRunnerState:
 
 
 _runs: dict[str, ExperimentRunnerState] = {}
-security = HTTPBasic()
 
 
 def _get_run(run_id: str) -> ExperimentRunnerState:
@@ -143,7 +142,15 @@ def _check_authentication(auth_header: str | None) -> None:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
 
-def _check_user(credentials: HTTPBasicCredentials) -> None:
+def verify_auth(
+    request: Request,
+    credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())],
+) -> None:
+    logging.getLogger(EXPERIMENT_SERVER).debug(
+        f"{request.scope['path']} entered from "
+        f"{request.client.host if request.client else 'unknown host'} "
+        f"with HTTP {request.method}"
+    )
     if credentials.password != os.environ["ERT_STORAGE_TOKEN"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -152,51 +159,28 @@ def _check_user(credentials: HTTPBasicCredentials) -> None:
         )
 
 
-def _log(request: Request) -> None:
-    logging.getLogger(EXPERIMENT_SERVER).debug(
-        f"{request.scope['path']} entered from "
-        f"{request.client.host if request.client else 'unknown host'} "
-        f"with HTTP {request.method}"
-    )
+authenticated = [Depends(verify_auth)]
 
 
-@router.get("/")
-def get_status(
-    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)]
-) -> PlainTextResponse:
-    _log(request)
-    _check_user(credentials)
+@router.get("/", dependencies=authenticated)
+def get_status() -> PlainTextResponse:
     return PlainTextResponse("EVEREST is running")
 
 
-@router.get(f"/{EverEndpoints.status}/{{run_id}}")
+@router.get(f"/{EverEndpoints.status}/{{run_id}}", dependencies=authenticated)
 def experiment_status(
-    request: Request,
     run: Annotated[ExperimentRunnerState, Depends(_get_run)],
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ) -> ExperimentStatus:
-    _log(request)
-    _check_user(credentials)
     return run.status
 
 
-@router.get("/runs")
-def runs(
-    request: Request,
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
-) -> JSONResponse:
-    _log(request)
-    _check_user(credentials)
+@router.get("/runs", dependencies=authenticated)
+def runs() -> JSONResponse:
     return JSONResponse({"run_ids": list(_runs.keys())})
 
 
-@router.post("/" + EverEndpoints.stop)
-def stop(
-    request: Request,
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
-) -> Response:
-    _log(request)
-    _check_user(credentials)
+@router.post("/" + EverEndpoints.stop, dependencies=authenticated)
+def stop() -> Response:
     if not _runs:
         os.kill(os.getpid(), signal.SIGTERM)
     for run in _runs.values():
@@ -206,14 +190,11 @@ def stop(
     return Response("Raise STOP flag succeeded. EVEREST initiates shutdown..", 200)
 
 
-@router.post("/" + EverEndpoints.start_experiment)
+@router.post("/" + EverEndpoints.start_experiment, dependencies=authenticated)
 async def start_experiment(
     request: Request,
     background_tasks: BackgroundTasks,
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ) -> JSONResponse:
-    _log(request)
-    _check_user(credentials)
     run_id = str(uuid.uuid4())
     run_state = ExperimentRunnerState()
     _runs[run_id] = run_state
@@ -246,14 +227,10 @@ async def start_experiment(
         )
 
 
-@router.get(f"/{EverEndpoints.config_path}/{{run_id}}")
+@router.get(f"/{EverEndpoints.config_path}/{{run_id}}", dependencies=authenticated)
 async def config_path(
-    request: Request,
     run: Annotated[ExperimentRunnerState, Depends(_get_run)],
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ) -> JSONResponse:
-    _log(request)
-    _check_user(credentials)
     if run.status.status == ExperimentState.pending:
         return JSONResponse("No experiment started", status_code=404)
 
@@ -267,14 +244,10 @@ async def config_path(
     )
 
 
-@router.get(f"/{EverEndpoints.start_time}/{{run_id}}")
+@router.get(f"/{EverEndpoints.start_time}/{{run_id}}", dependencies=authenticated)
 async def start_time(
-    request: Request,
     run: Annotated[ExperimentRunnerState, Depends(_get_run)],
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ) -> Response:
-    _log(request)
-    _check_user(credentials)
     if run.status.status == ExperimentState.pending:
         return Response("No experiment started", status_code=404)
 
