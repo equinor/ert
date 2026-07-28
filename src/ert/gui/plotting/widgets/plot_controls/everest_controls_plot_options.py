@@ -3,12 +3,14 @@ from collections.abc import Callable
 
 from PyQt6.QtWidgets import (
     QButtonGroup,
-    QGroupBox,
     QRadioButton,
 )
 
 from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
-from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
+from ert.gui.plotting.utils.qt_creator import (
+    create_group_layout,
+)
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ class EverestControlsPlotOptions:
             logger,
             "X-axis display option",
         )
-        self._display_over_group = create_group_box(
+        self._display_over_group = CollapsibleSection(
             "X-axis:",
             create_group_layout(
                 [
@@ -40,7 +42,7 @@ class EverestControlsPlotOptions:
             ),
         )
 
-    def get_widget(self) -> QGroupBox:
+    def get_widget(self) -> CollapsibleSection:
         return self._display_over_group
 
     def is_batches_selected(self) -> bool:

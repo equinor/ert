@@ -1,15 +1,11 @@
 import logging
 from collections.abc import Callable
 
-from PyQt6.QtWidgets import (
-    QGroupBox,
-)
-
 from ert.gui.plotting.utils.qt_creator import (
     create_checkbox_with_tooltip,
-    create_group_box,
     create_group_layout,
 )
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +30,7 @@ class BoxplotOptions:
             ]
         ]
 
-        self._boxplot_options = create_group_box(
+        self._boxplot_options = CollapsibleSection(
             "Boxplot options",
             create_group_layout(
                 [
@@ -78,5 +74,5 @@ class BoxplotOptions:
     def box_checkbox_state(self, value: bool) -> None:
         self._toggle_box.setChecked(value)
 
-    def get_widget(self) -> QGroupBox:
+    def get_widget(self) -> CollapsibleSection:
         return self._boxplot_options

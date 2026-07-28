@@ -5,7 +5,6 @@ from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
     QDialog,
-    QGroupBox,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -16,9 +15,9 @@ from PyQt6.QtWidgets import (
 
 from ert.gui.plotting.utils.qt_creator import (
     create_checkbox_with_tooltip,
-    create_group_box,
     create_group_layout,
 )
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 
 from .observation_color import ObservationColorEdit
 from .plot_color_palette_selector import PlotColorPaletteSelector
@@ -108,13 +107,13 @@ class GeneralPlotOptions(QObject):
 
         widgets.extend([palette_container, edit_buttons])
 
-        self._general_options = create_group_box(
+        self._general_options = CollapsibleSection(
             "General options",
             create_group_layout(widgets),
         )
         self._general_options.setObjectName("general_options")
 
-    def get_widget(self) -> QGroupBox:
+    def get_widget(self) -> CollapsibleSection:
         return self._general_options
 
     def get_text_input(

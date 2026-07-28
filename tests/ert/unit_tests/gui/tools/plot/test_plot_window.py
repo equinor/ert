@@ -7,7 +7,14 @@ import pytest
 from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QCheckBox, QLabel, QPushButton, QToolTip
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QLabel,
+    QPushButton,
+    QToolButton,
+    QToolTip,
+)
 from pytestqt.qtbot import QtBot
 
 from ert.config.breakthrough_config import BreakthroughConfig
@@ -32,6 +39,7 @@ from ert.gui.plotting.utils.plot_maps import (
     STATISTICS,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 from ert.gui.plotting.widgets.plot_widget import PlotWidget
 from ert.services import ErtServerController
 
@@ -272,6 +280,8 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
 
     plot_widget = plot_window._central_tab.currentWidget()
     assert plot_widget is not None
@@ -358,7 +368,8 @@ def test_that_history_and_observations_checkboxes_match_data_availability(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
-
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
     history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
     assert history_checkbox is not None
     is_history_key = key.endswith("H") or "H:" in key
@@ -415,7 +426,8 @@ def test_that_history_and_observations_checkbox_state_update_when_switching_keys
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
-
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
     history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
     observations_checkbox = plot_window.findChild(
         QCheckBox, name="observations_checkbox"
@@ -508,6 +520,8 @@ def test_that_general_option_checkboxes_change_rendered_plot(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
 
     statistics_index = next(
         index
@@ -648,6 +662,8 @@ def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
 
     tab_index_by_name = {
         plot_window._central_tab.tabText(index): index
@@ -841,6 +857,8 @@ def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
 
     tab_index = next(
         index
@@ -1144,6 +1162,12 @@ def _create_plot_window_for_text_edit(
         return_value=MagicMock(key="some_key", dimensionality=1, metadata={})
     )
     return plot_window
+
+
+def _expand(section: CollapsibleSection) -> None:
+    button = section.findChild(QToolButton)
+    assert button is not None
+    button.setChecked(True)
 
 
 @pytest.mark.parametrize(

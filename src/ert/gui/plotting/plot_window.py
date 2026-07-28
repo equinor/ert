@@ -57,7 +57,11 @@ from .utils import PlotConfig, PlotContext
 from .utils.observation_locations import transform_observation_locations
 from .utils.plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .utils.plot_types import ObservationPlotLocations
-from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
+from .utils.qt_creator import (
+    create_group_layout,
+    create_side_panel,
+)
+from .widgets.collapsible_section import CollapsibleSection
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
@@ -281,13 +285,16 @@ class PlotWindow(QMainWindow):
                 self.update_plot
             )
 
-            self._everest_controls_group = create_group_box(
-                "Select control(s)",
+            self._everest_controls_group = CollapsibleSection(
+                "Select control(s):",
                 create_group_layout([self._everest_control_selection_widget]),
+                expanded=True,
             )
-            self._ensemble_group = create_group_box(
+
+            self._ensemble_group = CollapsibleSection(
                 "Select ensemble(s)",
                 create_group_layout([self._ensemble_selection_widget]),
+                expanded=True,
             )
 
             self._everest_controls_plot_options = EverestControlsPlotOptions(
@@ -314,6 +321,7 @@ class PlotWindow(QMainWindow):
                     self._statistics_options.get_widget(),
                 ]
             )
+            right_layout.addStretch(1)
             right_container.setLayout(right_layout)
 
             self._everest_controls_group.setVisible(False)
@@ -760,7 +768,7 @@ class PlotWindow(QMainWindow):
 
         max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
         str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
-        self._ensemble_group.setTitle(
+        self._ensemble_group.set_title(
             f"Select{str_num_of_ens} batches"
             if self.is_everest
             else f"Select up to {max_selected} ensembles"
