@@ -15,11 +15,10 @@ from resfo_utilities.testing import (
     Unsmry,
 )
 
-from ert.__main__ import run_convert_observations
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
-from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import run_convert_observations
 
 
 def create_summary_smspec_unsmry(
@@ -205,7 +204,7 @@ def test_that_general_observations_with_date_use_restart_from_time_map():
     Path("config.ert").write_text(
         config_path.read_text(encoding="utf-8"), encoding="utf-8"
     )
-    run_convert_observations(Namespace(config=str(config_path)))
+    run_convert_observations(str(config_path))
     assert (
         Path("observations.txt").read_text(encoding="utf-8")
         == """GENERAL_OBSERVATION GEN_OBS {
@@ -280,7 +279,7 @@ def test_that_summary_observations_with_restart_use_date_from_refcase():
     Path("config.ert").write_text(
         config_path.read_text(encoding="utf-8"), encoding="utf-8"
     )
-    run_convert_observations(Namespace(config=str(config_path)))
+    run_convert_observations(str(config_path))
     assert (
         Path("observations.txt").read_text(encoding="utf-8")
         == """SUMMARY_OBSERVATION FOPR_OBS {
