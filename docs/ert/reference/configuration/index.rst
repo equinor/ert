@@ -17,7 +17,7 @@ provides convenient syntax and structure for dealing with almost any scenario.
 This chapter sets out everything you need to know to configure ERT.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    syntax
    data_types
