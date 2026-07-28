@@ -3,6 +3,7 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
+from inspect import signature
 from pathlib import Path
 from typing import Any, ParamSpec, TypeVar
 
@@ -70,3 +71,36 @@ def assert_schema(
             msg = f"Expected schema {schema}, got {df.schema}."
             raise AssertionError(msg)
     return df
+
+
+def process_arg(
+    key: str,
+    process: Callable[[Any], Any],
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """
+    Returns a decorator that processes a function argument before calling it.
+    Useful in combination with caching,
+    where you want to normalize an argument before hashing.
+
+    Args:
+        key (str): Name of the argument to process.
+        process (Callable[[Any], Any]): Function to process the argument value.
+    """
+
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        sig = signature(func)
+
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            bound = sig.bind(*args, **kwargs)
+            value = bound.arguments.get(key)
+            bound.arguments[key] = process(value)
+            return func(*bound.args, **bound.kwargs)
+
+        for cache_attr in ("cache_info", "cache_clear", "cache_parameters"):
+            if (member := getattr(func, cache_attr, None)) is not None:
+                setattr(wrapper, cache_attr, member)
+
+        return wrapper
+
+    return decorator

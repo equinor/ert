@@ -365,8 +365,10 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
         # Cycle through all ensembles and get all responses
         for key_info in key_infos_params:
             for ensemble in all_ensembles:
-                api.data_for_parameter(
-                    ensemble_id=ensemble.id, parameter_key=key_info.parameter.name
+                PlotApi.data_for_parameter(
+                    ensemble_id=ensemble.id,
+                    parameter_key=key_info.parameter.name,
+                    ens_path=api.ens_path,
                 )
 
         for key_info in key_infos_responses:

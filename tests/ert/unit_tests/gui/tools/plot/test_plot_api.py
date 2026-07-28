@@ -124,7 +124,9 @@ def test_case_structure(api):
 def test_can_load_data_and_observations(api):
     responses = [("BPR:1,3,8", False), ("FOPR", True)]
     ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
-    data = api.data_for_parameter(ensemble.id, "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE")
+    data = PlotApi.data_for_parameter(
+        ensemble.id, "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE", api.ens_path
+    )
     assert not data.empty
 
     for key, has_observations in responses:
@@ -208,7 +210,7 @@ def api_and_storage(monkeypatch, tmp_path):
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
         api = PlotApi(ens_path)
-        yield api, storage
+        yield api, storage, ens_path
     if common._storage is not None:
         common._storage.close()
     common._storage = None
@@ -216,7 +218,7 @@ def api_and_storage(monkeypatch, tmp_path):
 
 
 def test_plot_api_handles_urlescape(api_and_storage):
-    api, storage = api_and_storage
+    api, storage, _ = api_and_storage
     key = "WBHP:46/3-7S"
     date = datetime(year=2024, month=10, day=4)  # noqa: DTZ001
 
@@ -275,7 +277,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
 
 
 def test_plot_api_handles_empty_gen_kw(api_and_storage):
-    api, storage = api_and_storage
+    _, storage, ens_path = api_and_storage
     key = "gen_kw"
     name = "<poro>"
     experiment = storage.create_experiment(
@@ -294,7 +296,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
         }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-    assert api.data_for_parameter(str(ensemble.id), key).empty
+    assert PlotApi.data_for_parameter(str(ensemble.id), key, ens_path).empty
     ensemble.save_parameters(
         dataset=pl.DataFrame(
             {
@@ -303,16 +305,18 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
             }
         ),
     )
-    assert api.data_for_parameter(str(ensemble.id), name).to_csv() == dedent(
-        """\
+    assert PlotApi.data_for_parameter(str(ensemble.id), name, ens_path).to_csv() == (
+        dedent(
+            """\
         Realization,0
         1,0.1
         """
+        )
     )
 
 
 def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
-    api, storage = api_and_storage
+    _, storage, ens_path = api_and_storage
     experiment = storage.create_experiment(
         experiment_config={
             "parameter_configuration": [
@@ -328,12 +332,14 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
         }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-    assert api.data_for_parameter(str(ensemble.id), "gen_kw").empty
-    assert api.data_for_parameter(str(ensemble.id), "gen_kw:does_not_exist").empty
+    assert PlotApi.data_for_parameter(str(ensemble.id), "gen_kw", ens_path).empty
+    assert PlotApi.data_for_parameter(
+        str(ensemble.id), "gen_kw:does_not_exist", ens_path
+    ).empty
 
 
 def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
-    api, storage = api_and_storage
+    _, storage, ens_path = api_and_storage
     experiment = storage.create_experiment(
         experiment_config={
             "parameter_configuration": [
@@ -358,12 +364,12 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
             }
         ),
     )
-    test = api.data_for_parameter(str(ensemble.id), "subgroup:1:2:2")
+    test = PlotApi.data_for_parameter(str(ensemble.id), "subgroup:1:2:2", ens_path)
     assert test.to_numpy() == np.array([[10]])
 
 
 def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
-    api, storage = api_and_storage
+    api, storage, _ = api_and_storage
 
     experiment = storage.create_experiment(
         experiment_config={
@@ -412,7 +418,7 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
 
 
 def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage):
-    api, storage = api_and_storage
+    api, storage, _ = api_and_storage
     experiment = storage.create_experiment(
         experiment_config={
             "parameter_configuration": [],
@@ -433,7 +439,7 @@ def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage
 def test_that_data_for_response_is_empty_for_ensembles_without_responses(
     api_and_storage,
 ):
-    api, storage = api_and_storage
+    api, storage, _ = api_and_storage
 
     experiment = storage.create_experiment(
         name=None,
@@ -463,7 +469,7 @@ def test_that_data_for_response_is_empty_for_ensembles_without_responses(
 def test_that_response_key_has_observation_when_only_one_experiment_has_observations(
     api_and_storage,
 ):
-    api, storage = api_and_storage
+    api, storage, _ = api_and_storage
 
     date = datetime(year=2024, month=10, day=4)  # noqa: DTZ001
     experiment_with_observation = storage.create_experiment(
@@ -549,7 +555,7 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
 def test_that_response_keys_do_not_match_keys_that_are_substrings(
     api_and_storage, well_name
 ):
-    api, storage = api_and_storage
+    api, storage, _ = api_and_storage
     key = f"WBHP:{well_name}"
     date = datetime(year=2024, month=10, day=4)  # noqa: DTZ001
 
@@ -657,7 +663,7 @@ def _create_gradient_only_ensemble(storage):
 def test_that_data_for_response_returns_empty_for_gradient_only_ensemble(
     api_and_storage,
 ):
-    api, storage = api_and_storage
+    api, storage, _ = api_and_storage
     ensemble, objective_key = _create_gradient_only_ensemble(storage)
 
     # Gradient-only ensembles have no function evaluation results
@@ -671,11 +677,51 @@ def test_that_data_for_response_returns_empty_for_gradient_only_ensemble(
 def test_that_data_for_gradient_returns_empty_when_no_gradient_parquet_saved(
     api_and_storage,
 ):
-    api, storage = api_and_storage
+    _, storage, ens_path = api_and_storage
     ensemble, objective_key = _create_gradient_only_ensemble(storage)
 
     # No batch_objective_gradient.parquet was saved, so the gradient
     # endpoint returns an empty DataFrame. PlotApi must not crash.
-    result = api.data_for_gradient(str(ensemble.id), objective_key)
+    result = PlotApi.data_for_gradient(str(ensemble.id), objective_key, ens_path)
     assert isinstance(result, pd.DataFrame)
     assert result.empty
+
+
+def test_that_data_for_gradient_is_fetched_once_for_repeated_calls(api_and_storage):
+    _, storage, ens_path = api_and_storage
+    ensemble, objective_key = _create_gradient_only_ensemble(storage)
+
+    PlotApi.data_for_gradient.cache_clear()  # type: ignore
+
+    for i in range(5):
+        # The addition of @<some string> should result in the same cache key
+        # if the prefix is the same.
+        key = objective_key + "@filler" if i % 2 == 0 else objective_key
+        _ = PlotApi.data_for_gradient(str(ensemble.id), key, ens_path)
+
+    # hits, misses, maxsize, currsize
+    expected_cache_info = (4, 1, 256, 1)
+
+    assert (
+        PlotApi.data_for_gradient.cache_info() == expected_cache_info  # type: ignore
+    )
+
+
+def test_that_data_for_controls_and_parameters_is_fetched_once_for_repeated_calls(api):
+
+    PlotApi.data_for_controls.cache_clear()
+    PlotApi.data_for_parameter.cache_clear()
+
+    ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
+
+    for _ in range(5):
+        _ = PlotApi.data_for_controls(
+            ensemble.id, ("SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",), api.ens_path
+        )
+
+    # hits, misses, maxsize, currsize
+    expected_cache_info_controls = (4, 1, 128, 1)
+    expected_cache_info_parameters = (0, 1, 256, 1)
+
+    assert PlotApi.data_for_controls.cache_info() == expected_cache_info_controls
+    assert PlotApi.data_for_parameter.cache_info() == expected_cache_info_parameters
