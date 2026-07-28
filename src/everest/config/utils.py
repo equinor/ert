@@ -1,5 +1,3 @@
-from enum import Enum, auto
-
 from ert.config import EverestControl, SamplerConfig
 
 

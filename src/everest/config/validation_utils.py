@@ -1,10 +1,10 @@
-from enum import StrEnum, auto
 import errno
 import os
 import tempfile
 import types
 from collections import Counter
 from collections.abc import Sequence
+from enum import StrEnum, auto
 from pathlib import Path
 from typing import Any, Self
 
