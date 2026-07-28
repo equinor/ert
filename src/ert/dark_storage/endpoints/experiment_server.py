@@ -37,6 +37,7 @@ from ert.plugins import get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest.config import EverestConfig
+from everest.config.validation_utils import Context
 from everest.detached.everserver import (
     ExperimentState,
     ExperimentStatus,
@@ -47,7 +48,6 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
     EverEndpoints,
 )
-from everest.config.validation_utils import Context
 
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
 
