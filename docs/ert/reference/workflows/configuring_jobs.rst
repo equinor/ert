@@ -1,3 +1,5 @@
+.. _configuring_workflow_jobs_chapter:
+
 Configuring workflow jobs
 =========================
 
@@ -44,6 +46,12 @@ executable:
 
 NB: note that relative paths are resolved from the location of the job
 configuration file, not the configuration file provided to ert.
+
+NB: be aware that workflow jobs are not run from inside of the single realization
+directory, but from the experiment as a whole. Thus not all :ref:`magic strings
+<magic_strings>` concepts can be used in workflow jobs. For example, instead of relying
+on :ref:`experiment variables <ms_exp_variables>` one might need to :ref:`locate
+realizations <runpath-file-workflows>` differently.
 
 Stop workflow execution upon job failure
 ----------------------------------------
