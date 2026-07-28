@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from logging import Logger
 
@@ -7,6 +9,7 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -23,6 +26,7 @@ def create_side_panel(title: str, widget: QWidget) -> QWidget:
     title_label = QLabel(title)
     title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     title_label.setStyleSheet("padding-bottom: 7px;")
+    title_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
 
     layout.addWidget(title_label)
     layout.addWidget(widget)

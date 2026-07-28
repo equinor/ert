@@ -2,9 +2,10 @@ import logging
 from unittest.mock import Mock
 
 import pytest
-from PyQt6.QtWidgets import QCheckBox, QPushButton
+from PyQt6.QtWidgets import QCheckBox, QPushButton, QToolButton
 
 from ert.gui.plotting.utils.plot_color_palettes import PALETTES_WITH_DESCRIPTIONS
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 from ert.gui.plotting.widgets.plot_controls.general_options import GeneralPlotOptions
 
 
@@ -17,6 +18,12 @@ def test_that_general_options_has_expected_default_checkbox_states(qtbot):
     assert options.history_checkbox_state is True
     assert options.observations_checkbox_state is True
     assert options.log_checkbox_state is False
+
+
+def _expand(section: CollapsibleSection) -> None:
+    button = section.findChild(QToolButton)
+    assert button is not None
+    button.setChecked(True)
 
 
 @pytest.mark.parametrize(
@@ -38,6 +45,7 @@ def test_that_toggling_a_general_option_invokes_the_connection_point(
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
+    _expand(widget)
 
     checkbox = widget.findChild(QCheckBox, checkbox_name)
     if checkbox_name == "log_scale_checkbox":
@@ -70,10 +78,11 @@ def test_that_toggling_a_general_option_logs_sidebar_usage_once(
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
+    _expand(widget)
 
     checkbox = widget.findChild(QCheckBox, checkbox_name)
     if checkbox_name == "log_scale_checkbox":
-        checkbox.setVisible(True)
+        options.set_log_visible(True)
     assert checkbox is not None
     assert checkbox.isVisible()
 
@@ -103,6 +112,7 @@ def test_that_axis_label_button_requests_edit_for_its_axis(
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
+    _expand(widget)
     button = widget.findChild(QPushButton, button_name)
     assert button is not None
 
@@ -118,6 +128,7 @@ def test_that_title_button_requests_title_edit(qtbot) -> None:
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
+    _expand(widget)
     button = widget.findChild(QPushButton, "change_title_button")
     assert button is not None
 
@@ -145,6 +156,7 @@ def test_that_history_and_observations_visibility_can_be_set(
     options = GeneralPlotOptions(Mock(), is_everest=False)
     qtbot.addWidget(options.get_widget())
     options.get_widget().show()
+    _expand(options.get_widget())
 
     options.set_history_visible(history_visible)
     options.set_observations_visible(observations_visible)
@@ -156,7 +168,7 @@ def test_that_history_and_observations_visibility_can_be_set(
 def test_that_everest_general_options_omit_history_and_observations(qtbot):
     options = GeneralPlotOptions(Mock(), is_everest=True)
     qtbot.addWidget(options.get_widget())
-
+    _expand(options.get_widget())
     assert not options._toggle_history.isVisible()
     assert not options._toggle_observations.isVisible()
 

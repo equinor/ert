@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
-    QGroupBox,
     QLabel,
     QMenuBar,
     QMessageBox,
@@ -45,6 +44,7 @@ from ert.gui.plotting.plot_window import (
     PlotWindow,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectListWidget
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -311,7 +311,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
         case_selection = get_child(
             plot_window, EnsembleSelectListWidget, "ensemble_selector"
         )
-        general_options = get_child(plot_window, QGroupBox, "general_options")
+        general_options = get_child(plot_window, CollapsibleSection, "general_options")
         for checkbox_name in (
             "legend_checkbox",
             "grid_checkbox",

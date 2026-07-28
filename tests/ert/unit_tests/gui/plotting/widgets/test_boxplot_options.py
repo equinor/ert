@@ -65,3 +65,10 @@ def test_that_toggling_a_boxplot_option_logs_sidebar_usage_once(
 
         checkbox.click()
         assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
+
+
+def test_that_boxplot_options_defaults_to_collapsed_state(qtbot):
+    options = BoxplotOptions(Mock())
+    qtbot.addWidget(options.get_widget())
+
+    assert not options.get_widget()._toggle_button.isChecked()
