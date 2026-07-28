@@ -1,7 +1,8 @@
 .. _ert_kw_full_doc:
 
+################
 List of keywords
-================
+################
 
 For your convenience, the description of the keywords in the ERT configuration file
 are divided into the following groups:
@@ -18,7 +19,7 @@ are divided into the following groups:
 
 
 Table of keywords
------------------
+=================
 
 ======================================================================   ======================================  ==============================  ==============================================================================================================================================
 Keyword name                                                             Required                                Default value                   Purpose
