@@ -41,6 +41,9 @@ internally in ERT, but you can optionally supply a second extra argument
 which will be used as the name for the workflow.  Alternatively,
 you can load a workflow interactively.
 
+Loaded workflow can be executed manually (Tools -> Run Workflow) or hooked in for
+automatic run.
+
 .. _automatically-run-workflows:
 
 Automatically run workflows
@@ -48,8 +51,7 @@ Automatically run workflows
 
 With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
 'hooks'; meaning workflows which will be run automatically at certain
-points during ERTs execution. Currently there are five points in ERTs
-flow of execution where you can hook in a workflow:
+points during ERTs execution. Currently you can hook into a workflow at these points:
 
 - Before the experiment starts using :code:`PRE_EXPERIMENT`
 - before the simulations (all forward models for a realization) start using :code:`PRE_SIMULATION`,
@@ -85,6 +87,11 @@ run.
 Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW`
 keyword.
+
+Workflow logs with output from job execution can be found in the terminal where ERT was
+started.
+
+.. _runpath-file-workflows:
 
 Locating the realisations: <RUNPATH_FILE>
 -----------------------------------------

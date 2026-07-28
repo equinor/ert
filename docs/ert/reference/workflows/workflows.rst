@@ -1,3 +1,6 @@
+Workflow job types
+##################
+
 External workflow jobs
 ======================
 
