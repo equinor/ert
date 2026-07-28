@@ -56,6 +56,32 @@ def _perform_migration_with_spinner(path: Path) -> None:
         progress.close()
 
 
+def apply_application_theme(app: QApplication) -> ColorSchemeManager:
+    """Install the style and colour scheme that every ERT window is designed for.
+
+    Native styles (macos, gtk3, Breeze, ...) paint widgets themselves and only
+    partially honour QSS, so the GUI would look different per platform. Fusion
+    ships with Qt everywhere and makes theme.qss.in the single source of truth.
+
+    Args:
+        app: The application to style.
+
+    Returns:
+        The manager keeping the stylesheet in sync with the OS colour scheme.
+    """
+    app.setStyle("Fusion")
+    return ColorSchemeManager(app)
+
+
+def follow_color_scheme_changes(
+    color_scheme_manager: ColorSchemeManager, window: QWidget
+) -> None:
+    """Retint the window's sidebar, if it has one, on colour scheme changes."""
+    sidebar = getattr(window, "sidebar", None)
+    if sidebar is not None:
+        color_scheme_manager.color_scheme_changed.connect(sidebar.retint_all)
+
+
 @tracer.start_as_current_span("ert.application.gui")
 def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
     span = trace.get_current_span()
@@ -116,15 +142,13 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
     sys.excepthook = custom_exception_hook
 
     app = QApplication(["ert"])  # Early so that QT is initialized before other imports
+    color_scheme_manager = apply_application_theme(app)
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
-    color_scheme_manager = ColorSchemeManager(app)
 
     with add_gui_log_handler() as log_handler:
         window, ens_path = _start_initial_gui_window(args, log_handler, plugins)
 
-        sidebar = getattr(window, "sidebar", None)
-        if sidebar is not None:
-            color_scheme_manager.color_scheme_changed.connect(sidebar.retint_all)
+        follow_color_scheme_changes(color_scheme_manager, window)
 
         def show_window() -> int:
             window.show()

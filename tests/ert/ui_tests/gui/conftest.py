@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 from textwrap import dedent
+from typing import cast
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -27,7 +28,14 @@ from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog, CreateExperimentDialog, EnsembleSelector
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.view import RealizationWidget
-from ert.gui.main import ErtMainWindow, _setup_main_window, add_gui_log_handler
+from ert.gui.main import (
+    ErtMainWindow,
+    _setup_main_window,
+    add_gui_log_handler,
+    apply_application_theme,
+    follow_color_scheme_changes,
+)
+from ert.gui.theming import ColorSchemeManager
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -45,6 +53,11 @@ def setup_svg_search_path():
     QDir.addSearchPath(
         "img", str(files("ert.gui").joinpath("../../ert/gui/resources/gui/img"))
     )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _themed_application(qapp) -> ColorSchemeManager:
+    return apply_application_theme(qapp)
 
 
 @contextmanager
@@ -102,6 +115,11 @@ def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]
             add_gui_log_handler() as log_handler,
         ):
             gui = _setup_main_window(config, args_mock, log_handler, config.ens_path)
+            color_scheme_manager = cast(
+                QApplication, QApplication.instance()
+            ).findChild(ColorSchemeManager)
+            if color_scheme_manager is not None:
+                follow_color_scheme_changes(color_scheme_manager, gui)
             try:
                 yield gui, config.ens_path, config
             finally:

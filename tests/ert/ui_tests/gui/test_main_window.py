@@ -53,7 +53,8 @@ from ert.gui.sidebar import (
     MANAGE_EXPERIMENTS,
     Sidebar,
 )
-from ert.gui.theming.theme import ColorScheme
+from ert.gui.theming.manager import detect_system_color_scheme
+from ert.gui.theming.theme import ColorScheme, load_qss
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -1277,3 +1278,16 @@ def test_that_run_gui_wires_color_scheme_changes_to_the_sidebar(qtbot, monkeypat
     assert result == 0
     managers[0].color_scheme_changed.emit(ColorScheme.DARK)
     retint.assert_called_once_with(ColorScheme.DARK)
+
+
+def test_that_gui_tests_render_with_the_fusion_style_and_the_theme_qss(qapp):
+    stylesheet = qapp.styleSheet()
+    assert stylesheet == load_qss(detect_system_color_scheme())
+
+    # A stylesheet wraps the style in QStyleSheetStyle, which reports an empty
+    # name, so it has to be cleared to read back the installed base style.
+    qapp.setStyleSheet("")
+    try:
+        assert qapp.style().name() == "fusion"
+    finally:
+        qapp.setStyleSheet(stylesheet)
