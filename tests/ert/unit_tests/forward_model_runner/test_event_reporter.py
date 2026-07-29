@@ -22,7 +22,7 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from _ert.forward_model_runner.reporting.statemachine import TransitionError
-from tests.ert.unit_tests.forward_model_runner import (
+from tests.ert.unit_tests.forward_model_runner.utils import (
     create_stub_forward_model_step_json,
 )
 from tests.ert.utils import MockZMQServer

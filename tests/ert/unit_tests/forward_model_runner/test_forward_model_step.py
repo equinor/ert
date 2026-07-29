@@ -19,7 +19,7 @@ from _ert.forward_model_runner.forward_model_step import (
     _get_processtree_data,
 )
 from _ert.forward_model_runner.reporting.message import Exited, Running, Start
-from tests.ert.unit_tests.forward_model_runner import (
+from tests.ert.unit_tests.forward_model_runner.utils import (
     create_stub_forward_model_step_json,
 )
 

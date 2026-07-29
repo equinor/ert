@@ -17,7 +17,7 @@ from ert.config.ert_config import (
     forward_model_step_from_config_contents,
 )
 from ert.config.forward_model_step import ForwardModelStepJSON
-from tests.ert.unit_tests.forward_model_runner import (
+from tests.ert.unit_tests.forward_model_runner.utils import (
     create_stub_forward_model_step_json,
 )
 

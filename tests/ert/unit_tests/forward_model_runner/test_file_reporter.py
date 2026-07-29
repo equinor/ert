@@ -13,7 +13,7 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from ert.constant_filenames import ERROR_file, LOG_file, STATUS_file, STATUS_json
-from tests.ert.unit_tests.forward_model_runner import (
+from tests.ert.unit_tests.forward_model_runner.utils import (
     create_stub_forward_model_step_json,
 )
 
