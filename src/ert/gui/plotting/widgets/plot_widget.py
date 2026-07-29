@@ -17,7 +17,7 @@ from matplotlib.text import Text
 from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCursor
+from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QComboBox,
     QToolTip,
@@ -26,7 +26,6 @@ from PyQt6.QtWidgets import (
     QWidgetAction,
 )
 
-from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_types import ObservationPlotLocations
 
@@ -55,7 +54,6 @@ class Plotter(Protocol):
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
-    customizationTriggered = Signal()
     layer_index_changed = Signal(int)
 
     def __init__(
@@ -67,25 +65,13 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     ) -> None:
         super().__init__(canvas, parent, coordinates)  # type: ignore
 
-        gear = load_icon("edit.svg")
-        customize_action = QAction(gear, "Customize", self)
-        customize_action.setToolTip("Customize plot settings")
-        customize_action.triggered.connect(self.customizationTriggered)
-        customize_action.triggered.connect(
-            lambda: self.logToolbarUsage(customize_action.text())
-        )
-
         layer_combobox = QComboBox()
         self._model = QStringListModel()
         layer_combobox.setModel(self._model)
         layer_combobox.currentIndexChanged.connect(self.layer_index_changed)
 
         for action in self.actions():
-            if str(action.text()).lower() == "subplots":
-                self.removeAction(action)
-
-            if str(action.text()).lower() == "customize":
-                self.insertAction(action, customize_action)
+            if str(action.text()).lower() in {"subplots", "customize"}:
                 self.removeAction(action)
 
             # insert the layer widget before the coordinates widget
@@ -120,7 +106,6 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
 
 class PlotWidget(QWidget):
-    customizationTriggered = Signal()
     axisLabelEditRequested = Signal(str)
     titleEditRequested = Signal()
     layer_index_changed = Signal(int)
@@ -153,7 +138,6 @@ class PlotWidget(QWidget):
         vbox = QVBoxLayout()
         vbox.addWidget(self._canvas)
         self._toolbar = CustomNavigationToolbar(self._canvas, self)
-        self._toolbar.customizationTriggered.connect(self.customizationTriggered)
         self._toolbar.layer_index_changed.connect(self.layer_index_changed)
         self.updateLayerWidget.connect(self._toolbar.updateLayerWidget)
         self.resetLayerWidget.connect(self._toolbar.resetLayerWidget)
