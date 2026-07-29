@@ -66,7 +66,7 @@ class StatisticsOptions:
             ),
         )
 
-    def apply_to(self, plot_config: PlotConfig) -> None:
+    def update_plot_context(self, plot_config: PlotConfig) -> None:
         plot_config.set_standard_deviation_factor(self._std_dev_factor.value())
         plot_config.set_statistics_options(
             self._enabled_statistics(),

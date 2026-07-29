@@ -552,30 +552,10 @@ class PlotWindow(QMainWindow):
 
             plot_config = PlotConfig(title=key_def.key)
             if selected_tab == STATISTICS:
-                self._statistics_options.apply_to(plot_config)
+                self._statistics_options.update_plot_context(plot_config)
             plot_config.set_title(self._titles.get(key_def.key, key_def.key))
             plot_config.set_x_label(self._x_labels.get(key_def.key))
             plot_config.set_y_label(self._y_labels.get(key_def.key))
-            plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
-            plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
-            plot_config.set_line_color_cycle(self._general_options.get_color_cycle())
-
-            if not self.is_everest:
-                self._general_options.set_history_visible(history_data_available)
-                self._general_options.set_observations_visible(
-                    key_def.observations and selected_tab != MISFITS
-                )
-                plot_config.set_history_enabled(
-                    self._general_options.history_checkbox_state
-                    and history_data_available
-                )
-                plot_config.set_observations_enabled(
-                    self._general_options.observations_checkbox_state
-                    and key_def.observations
-                )
-                plot_config.set_observations_color(
-                    self._general_options.get_observations_color()
-                )
 
             plot_context = PlotContext(
                 plot_config,
@@ -584,26 +564,17 @@ class PlotWindow(QMainWindow):
                 key,
                 layer,
             )
-            plot_context.by_batch = (
-                self._everest_controls_plot_options.is_batches_selected()
+
+            self._general_options.update_plot_context(
+                plot_context,
+                history_data_available=history_data_available,
+                has_observations=key_def.observations,
+                show_observations=key_def.observations and selected_tab != MISFITS,
+                log_scale_available=log_scale_valid_values
+                and selected_tab in {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE},
             )
-
-            plot_context.scatter_plot = self._boxplot_options.scatter_checkbox_state
-            plot_context.box_plot = self._boxplot_options.box_checkbox_state
-            plot_context.mean = self._boxplot_options.mean_checkbox_state
-            log_scale_available = log_scale_valid_values and selected_tab in {
-                HISTOGRAM,
-                DISTRIBUTION,
-                GAUSSIAN_KDE,
-            }
-
-            self._general_options.set_log_visible(log_scale_available)
-
-            plot_context.log_scale = (
-                self._general_options.log_checkbox_state and log_scale_available
-            )
-
-            plot_context.outliers = self._boxplot_options.outliers_checkbox_state
+            self._boxplot_options.update_plot_context(plot_context)
+            self._everest_controls_plot_options.update_plot_context(plot_context)
 
             # Check if key is a history key.
             # If it is, it already has the data it needs.

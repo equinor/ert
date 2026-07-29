@@ -3,7 +3,23 @@ from unittest.mock import Mock
 
 import pytest
 
+from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.widgets.plot_controls.boxplot_options import BoxplotOptions
+
+
+def test_that_boxplot_checkbox_states_are_written_to_the_plot_context(qtbot):
+    options = BoxplotOptions(Mock())
+    qtbot.addWidget(options.get_widget())
+    options.scatter_checkbox_state = True
+    options.box_checkbox_state = False
+    plot_context = PlotContext(PlotConfig(), [], [], "some_key")
+
+    options.update_plot_context(plot_context)
+
+    assert plot_context.scatter_plot is True
+    assert plot_context.box_plot is False
+    assert plot_context.mean is True
+    assert plot_context.outliers is True
 
 
 def test_that_boxplot_options_has_expected_default_checkbox_states(qtbot):

@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Callable
 
+from ert.gui.plotting.utils import PlotContext
 from ert.gui.plotting.utils.qt_creator import (
     create_checkbox_with_tooltip,
     create_group_layout,
@@ -73,6 +74,12 @@ class BoxplotOptions:
     @box_checkbox_state.setter
     def box_checkbox_state(self, value: bool) -> None:
         self._toggle_box.setChecked(value)
+
+    def update_plot_context(self, plot_context: PlotContext) -> None:
+        plot_context.scatter_plot = self.scatter_checkbox_state
+        plot_context.box_plot = self.box_checkbox_state
+        plot_context.mean = self.mean_checkbox_state
+        plot_context.outliers = self.outliers_checkbox_state
 
     def get_widget(self) -> CollapsibleSection:
         return self._boxplot_options
