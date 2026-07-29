@@ -172,3 +172,45 @@ def test_that_panel_does_not_crash_when_no_realization_has_parameters(
     assert realization_selector is not None
     assert not realization_selector.text()
     assert not panel.isConfigurationValid()
+
+
+def test_that_empty_experiment_name_field_defaults_to_manual_update(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "mock_ensemble0",
+        "mock_experiment0",
+        [REALIZATION_FINISHED_SUCCESSFULLY, REALIZATION_FINISHED_SUCCESSFULLY],
+    )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        run_path="",
+        notifier=notifier,
+    )
+    qtbot.addWidget(panel)
+
+    assert panel.get_experiment_arguments().experiment_name == "Manual update"
+
+
+def test_that_experiment_name_field_is_used_in_experiment_arguments(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "mock_ensemble0",
+        "mock_experiment0",
+        [REALIZATION_FINISHED_SUCCESSFULLY, REALIZATION_FINISHED_SUCCESSFULLY],
+    )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        run_path="",
+        notifier=notifier,
+    )
+    qtbot.addWidget(panel)
+
+    panel._experiment_name_field.setText("my custom experiment")
+
+    assert panel.get_experiment_arguments().experiment_name == "my custom experiment"

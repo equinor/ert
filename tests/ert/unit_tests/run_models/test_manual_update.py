@@ -56,6 +56,7 @@ def test_that_manual_update_from_ensemble_experiment_supports_all_update_modes(
             mode=mode,
             ensemble_id=ensemble_id_to_update,
             target_ensemble="updated_ens%d",
+            experiment_name="my manual update",
         ),
         status_queue=queue.SimpleQueue(),
     )
@@ -66,8 +67,6 @@ def test_that_manual_update_from_ensemble_experiment_supports_all_update_modes(
     manual_update_model.start_simulations_thread(evaluator_server_config)
 
     with open_storage(manual_update_model.storage_path, mode="r") as storage:
-        manual_update_exp = next(
-            e for e in storage.experiments if e.name.startswith("Manual update")
-        )
+        manual_update_exp = storage.get_experiment_by_name("my manual update")
         posterior_ens = manual_update_exp.get_ensemble_by_name("updated_ens1")
         assert posterior_ens is not None

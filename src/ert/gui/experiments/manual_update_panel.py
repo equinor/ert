@@ -18,6 +18,7 @@ from ert.gui.ertwidgets import (
     StringBox,
     Suggestor,
     TargetEnsembleModel,
+    TextModel,
 )
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
@@ -35,6 +36,7 @@ class Arguments:
     ensemble_id: str
     target_ensemble: str
     ensemble_size: int
+    experiment_name: str
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -104,6 +106,14 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        self._experiment_name_field = StringBox(
+            TextModel(""),
+            placeholder_text="Manual update",
+        )
+
+        self._experiment_name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._experiment_name_field)
+
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
@@ -144,6 +154,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             realizations=self._active_realizations_field.text(),
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
+            experiment_name=self._experiment_name_field.get_text,
         )
 
     def _realizations_from_fs(self) -> None:
