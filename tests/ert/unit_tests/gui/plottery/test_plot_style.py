@@ -203,3 +203,41 @@ def test_plot_config():
     assert plot_config.get_statistics_style(
         "std"
     ) != copy_of_plot_config.get_statistics_style("std")
+
+
+def test_that_two_dimensional_keys_draw_mean_and_p10_p90_as_lines():
+    plot_config = PlotConfig()
+    plot_config.set_statistics_styles_for_dimensionality(1)
+
+    plot_config.set_statistics_styles_for_dimensionality(2)
+
+    mean_style = plot_config.get_statistics_style("mean")
+    assert mean_style.line_style == "-"
+    assert not mean_style.marker
+
+    p10p90_style = plot_config.get_statistics_style("p10-p90")
+    assert p10p90_style.line_style == "--"
+    assert not p10p90_style.marker
+
+    std_style = plot_config.get_statistics_style("std")
+    assert not std_style.line_style
+    assert not std_style.marker
+
+
+def test_that_one_dimensional_keys_draw_mean_and_std_with_markers():
+    plot_config = PlotConfig()
+    plot_config.set_statistics_styles_for_dimensionality(2)
+
+    plot_config.set_statistics_styles_for_dimensionality(1)
+
+    mean_style = plot_config.get_statistics_style("mean")
+    assert mean_style.line_style == "-"
+    assert mean_style.marker == "o"
+
+    std_style = plot_config.get_statistics_style("std")
+    assert std_style.line_style == "--"
+    assert std_style.marker == "D"
+
+    p10p90_style = plot_config.get_statistics_style("p10-p90")
+    assert not p10p90_style.line_style
+    assert not p10p90_style.marker

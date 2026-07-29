@@ -8,7 +8,6 @@ from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
 from .plot_config import PlotConfig
-from .plot_config_factory import PlotConfigFactory
 from .plot_context import PlotContext
 from .plot_style import PlotStyle
 from .plot_tools import ConditionalAxisFormatter, PlotTools
@@ -26,7 +25,6 @@ __all__ = [
     "LineTooltipManager",
     "ObservationPlotLocations",
     "PlotConfig",
-    "PlotConfigFactory",
     "PlotContext",
     "PlotStyle",
     "PlotTools",
