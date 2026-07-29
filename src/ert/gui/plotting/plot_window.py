@@ -51,10 +51,10 @@ from ert.gui.utils import is_everest_application
 from ert.services import ServerBootFail
 from ert.utils import log_duration
 
-from .customization_dialog import PlotCustomizer
 from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
-from .utils import PlotConfig, PlotContext
+from .utils import PlotConfigFactory, PlotContext
 from .utils.observation_locations import transform_observation_locations
+from .utils.plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .utils.plot_types import ObservationPlotLocations
 from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
@@ -202,8 +202,9 @@ class PlotWindow(QMainWindow):
                 self._key_definitions = []
             QApplication.restoreOverrideCursor()
 
-            self._plot_customizer = PlotCustomizer(self, self._key_definitions)
-            self._plot_customizer.settingsChanged.connect(self.keySelected)
+            self._titles: dict[str, str] = {}
+            self._x_labels: dict[str, str | None] = {}
+            self._y_labels: dict[str, str | None] = {}
             self._central_tab = QTabWidget()
 
             central_widget = QWidget()
@@ -259,7 +260,7 @@ class PlotWindow(QMainWindow):
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
-                self._plot_customizer.get_plot_config().get_number_of_colors(),
+                len(TABLEAU_10_COLOR_CYCLE),
             )
 
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
@@ -535,9 +536,10 @@ class PlotWindow(QMainWindow):
                 except BaseException as e:
                     handle_exception(e)
 
-            plot_config = PlotConfig.create_copy(
-                self._plot_customizer.get_plot_config()
-            )
+            plot_config = PlotConfigFactory.create_plot_config_for_key(key_def)
+            plot_config.set_title(self._titles.get(key_def.key, key_def.key))
+            plot_config.set_x_label(self._x_labels.get(key_def.key))
+            plot_config.set_y_label(self._y_labels.get(key_def.key))
             plot_config.set_legend_enabled(self._general_options.legend_checkbox_state)
             plot_config.set_grid_enabled(self._general_options.grid_checkbox_state)
             plot_config.set_line_color_cycle(self._general_options.get_color_cycle())
@@ -648,7 +650,6 @@ class PlotWindow(QMainWindow):
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
-        plot_widget.customizationTriggered.connect(self.toggle_customize_dialog)
         plot_widget.axisLabelEditRequested.connect(self._edit_axis_label)
         plot_widget.titleEditRequested.connect(self._edit_title)
         plot_widget.layer_index_changed.connect(self.layer_index_changed)
@@ -670,11 +671,14 @@ class PlotWindow(QMainWindow):
         label_names = {"x": "x-label", "y": "y-label"}
         if axis not in label_names:
             raise ValueError(f"Unknown axis '{axis}'. Expected 'x' or 'y'.")
+        key_def = self.getSelectedKey()
+        if key_def is None:
+            return
         label_name = label_names[axis]
         title = f"Edit {label_name}"
         prompt = f"New {label_name}:"
-        plot_config = self._plot_customizer.get_plot_config()
-        current_label = plot_config.x_label() if axis == "x" else plot_config.y_label()
+        labels = self._x_labels if axis == "x" else self._y_labels
+        current_label = labels.get(key_def.key)
         if current_label is None:
             current_widget = self._central_tab.currentWidget()
             if isinstance(current_widget, PlotWidget) and current_widget._figure.axes:
@@ -690,30 +694,23 @@ class PlotWindow(QMainWindow):
         if not accepted:
             return
         new_label: str | None = new_label_text or None
-        if axis == "x":
-            plot_config.set_x_label(new_label)
-        else:
-            plot_config.set_y_label(new_label)
-        self._plot_customizer.update_plot_config(plot_config)
+        labels[key_def.key] = new_label
+        self.update_plot()
 
     def _edit_title(self) -> None:
+        key_def = self.getSelectedKey()
+        if key_def is None:
+            return
         title = "Edit title"
-        plot_config = self._plot_customizer.get_plot_config()
         new_title, accepted = self._general_options.get_text_input(
             title,
             "New title:",
-            plot_config.title(),
+            self._titles.get(key_def.key, key_def.key),
         )
         if not accepted:
             return
-        if new_title:
-            plot_config.set_title(new_title)
-        else:
-            key_def = self.getSelectedKey()
-            if key_def is None:
-                return
-            plot_config.set_title(key_def.key)
-        self._plot_customizer.update_plot_config(plot_config)
+        self._titles[key_def.key] = new_title or key_def.key
+        self.update_plot()
 
     @showWaitCursorWhileWaiting
     def keySelected(self) -> None:
@@ -721,7 +718,6 @@ class PlotWindow(QMainWindow):
         if key_def is None:
             self._show_no_data_message()
             return
-        self._plot_customizer.switch_plot_config_history(key_def)
 
         is_everest_specific_widget = key_def.metadata.get("data_origin") in {
             "everest_objectives",
@@ -828,9 +824,6 @@ class PlotWindow(QMainWindow):
         self._prev_key = key_def.key
         self._prev_key_origin = key_def.metadata.get("data_origin")
         self.update_plot()
-
-    def toggle_customize_dialog(self) -> None:
-        self._plot_customizer.toggle_customization_dialog()
 
     def add_plot_widgets_from_plot_map(
         self, plot_map: dict[str, Callable[[], Plotter]]
