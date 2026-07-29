@@ -45,6 +45,7 @@ from ert.gui.plotting.utils.plot_maps import (
     HISTOGRAM,
     MISFITS,
     SHARED_PLOT_MAP,
+    STATISTICS,
     STD_DEV,
 )
 from ert.gui.utils import is_everest_application
@@ -52,7 +53,7 @@ from ert.services import ServerBootFail
 from ert.utils import log_duration
 
 from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
-from .utils import PlotConfigFactory, PlotContext
+from .utils import PlotConfig, PlotContext
 from .utils.observation_locations import transform_observation_locations
 from .utils.plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .utils.plot_types import ObservationPlotLocations
@@ -536,7 +537,11 @@ class PlotWindow(QMainWindow):
                 except BaseException as e:
                     handle_exception(e)
 
-            plot_config = PlotConfigFactory.create_plot_config_for_key(key_def)
+            plot_config = PlotConfig(title=key_def.key)
+            if selected_tab == STATISTICS:
+                plot_config.set_statistics_styles_for_dimensionality(
+                    key_def.dimensionality
+                )
             plot_config.set_title(self._titles.get(key_def.key, key_def.key))
             plot_config.set_x_label(self._x_labels.get(key_def.key))
             plot_config.set_y_label(self._y_labels.get(key_def.key))

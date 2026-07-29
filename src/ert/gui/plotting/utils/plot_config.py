@@ -76,6 +76,27 @@ class PlotConfig:
         self.flip_response_axis = False
         self.flip_observation_axis = False
 
+    def set_statistics_styles_for_dimensionality(self, dimensionality: int) -> None:
+        mean_style = self._statistics_style["mean"]
+        p10p90_style = self._statistics_style["p10-p90"]
+        std_style = self._statistics_style["std"]
+
+        mean_style.line_style = ""
+        mean_style.marker = ""
+        p10p90_style.line_style = ""
+        p10p90_style.marker = ""
+        std_style.line_style = ""
+        std_style.marker = ""
+
+        if dimensionality == 2:
+            mean_style.line_style = "-"
+            p10p90_style.line_style = "--"
+        elif dimensionality == 1:
+            mean_style.line_style = "-"
+            mean_style.marker = "o"
+            std_style.line_style = "--"
+            std_style.marker = "D"
+
     def get_number_of_colors(self) -> int:
         return len(self._line_color_cycle_colors)
 
