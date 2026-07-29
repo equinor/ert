@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.plotting.utils import PlotContext
 from ert.gui.plotting.utils.qt_creator import (
     create_checkbox_with_tooltip,
     create_group_layout,
@@ -36,6 +37,8 @@ class GeneralPlotOptions(QObject):
         is_everest: bool,
     ) -> None:
         super().__init__()
+
+        self._is_everest = is_everest
 
         def create_edit_button(
             name: str,
@@ -155,20 +158,38 @@ class GeneralPlotOptions(QObject):
     def log_checkbox_state(self) -> bool:
         return self._toggle_log_scale.isChecked()
 
-    def set_log_visible(self, visible: bool) -> None:
-        self._toggle_log_scale.setVisible(visible)
+    def update_plot_context(
+        self,
+        plot_context: PlotContext,
+        *,
+        history_data_available: bool,
+        has_observations: bool,
+        show_observations: bool,
+        log_scale_available: bool,
+    ) -> None:
+        plot_config = plot_context.plotConfig()
+        plot_config.set_legend_enabled(self.legend_checkbox_state)
+        plot_config.set_grid_enabled(self.grid_checkbox_state)
+        plot_config.set_line_color_cycle(self.get_color_cycle())
 
-    def set_history_visible(self, visible: bool) -> None:
-        self._toggle_history.setVisible(visible)
+        self._toggle_log_scale.setVisible(log_scale_available)
+        plot_context.log_scale = self.log_checkbox_state and log_scale_available
 
-    def set_observations_visible(self, visible: bool) -> None:
-        self._toggle_observations.setVisible(visible)
+        if self._is_everest:
+            return
+
+        self._toggle_history.setVisible(history_data_available)
+        self._toggle_observations.setVisible(show_observations)
         self._observations_color_edit.setVisible(
-            visible and self._toggle_observations.isChecked()
+            show_observations and self.observations_checkbox_state
         )
-
-    def is_log_visible(self) -> bool:
-        return self._toggle_log_scale.isVisible()
+        plot_config.set_history_enabled(
+            self.history_checkbox_state and history_data_available
+        )
+        plot_config.set_observations_enabled(
+            self.observations_checkbox_state and has_observations
+        )
+        plot_config.set_observations_color(self.get_observations_color())
 
     def get_color_cycle(self) -> list[tuple[str, float]]:
         return self._color_cycle_selector.get_color_cycle()

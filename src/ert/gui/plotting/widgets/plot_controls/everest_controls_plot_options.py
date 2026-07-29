@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QRadioButton,
 )
 
+from ert.gui.plotting.utils import PlotContext
 from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.qt_creator import (
     create_group_layout,
@@ -44,6 +45,9 @@ class EverestControlsPlotOptions:
 
     def get_widget(self) -> CollapsibleSection:
         return self._display_over_group
+
+    def update_plot_context(self, plot_context: PlotContext) -> None:
+        plot_context.by_batch = self.is_batches_selected()
 
     def is_batches_selected(self) -> bool:
         return self._display_over_batches_radio.isChecked()

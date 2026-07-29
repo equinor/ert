@@ -25,7 +25,7 @@ def test_that_unchecked_statistics_are_hidden_in_the_plot_config(qtbot):
     qtbot.addWidget(options.get_widget())
     plot_config = PlotConfig()
 
-    options.apply_to(plot_config)
+    options.update_plot_context(plot_config)
 
     for statistic in STATISTICS:
         style = plot_config.get_statistics_style(statistic)
@@ -40,12 +40,12 @@ def test_that_enabling_area_switches_band_statistics_to_a_filled_style(qtbot):
     qtbot.addWidget(options.get_widget())
 
     line_config = PlotConfig()
-    options.apply_to(line_config)
+    options.update_plot_context(line_config)
     assert line_config.get_statistics_style("p10-p90").line_style == "--"
 
     options._area_toggle.setChecked(True)
     area_config = PlotConfig()
-    options.apply_to(area_config)
+    options.update_plot_context(area_config)
     assert area_config.get_statistics_style("p10-p90").line_style == "#"
 
 
@@ -55,7 +55,7 @@ def test_that_the_std_dev_multiplier_is_applied_to_the_plot_config(qtbot):
     options._std_dev_factor.setValue(3)
     plot_config = PlotConfig()
 
-    options.apply_to(plot_config)
+    options.update_plot_context(plot_config)
 
     assert plot_config.get_standard_deviation_factor() == 3
 
@@ -76,6 +76,6 @@ def test_that_applying_options_does_not_invoke_the_connection_point(qtbot):
     qtbot.addWidget(options.get_widget())
     connection_point.reset_mock()
 
-    options.apply_to(PlotConfig())
+    options.update_plot_context(PlotConfig())
 
     connection_point.assert_not_called()

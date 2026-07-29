@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 from PyQt6.QtWidgets import QRadioButton, QToolButton
 
+from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.widgets.plot_controls.everest_controls_plot_options import (
     EverestControlsPlotOptions,
 )
@@ -15,6 +16,17 @@ def test_that_everest_controls_plot_options_initializes_with_expected_default_st
     qtbot.addWidget(options.get_widget())
 
     assert options.is_batches_selected() is True
+
+
+def test_that_the_selected_x_axis_is_written_to_the_plot_context(qtbot):
+    options = EverestControlsPlotOptions(Mock())
+    qtbot.addWidget(options.get_widget())
+    options._display_over_controls_radio.setChecked(True)
+    plot_context = PlotContext(PlotConfig(), [], [], "some_key")
+
+    options.update_plot_context(plot_context)
+
+    assert plot_context.by_batch is False
 
 
 def test_that_toggling_everest_controls_plot_options_invokes_the_connection_point(

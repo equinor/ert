@@ -4,9 +4,32 @@ from unittest.mock import Mock
 import pytest
 from PyQt6.QtWidgets import QCheckBox, QPushButton, QToolButton
 
+from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.utils.plot_color_palettes import PALETTES_WITH_DESCRIPTIONS
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 from ert.gui.plotting.widgets.plot_controls.general_options import GeneralPlotOptions
+
+
+def _create_plot_context() -> PlotContext:
+    return PlotContext(PlotConfig(), [], [], "some_key")
+
+
+def _apply_options_to_plot_context(
+    options: GeneralPlotOptions,
+    plot_context: PlotContext,
+    *,
+    history_data_available: bool = False,
+    has_observations: bool = False,
+    show_observations: bool = False,
+    log_scale_available: bool = False,
+) -> None:
+    options.update_plot_context(
+        plot_context,
+        history_data_available=history_data_available,
+        has_observations=has_observations,
+        show_observations=show_observations,
+        log_scale_available=log_scale_available,
+    )
 
 
 def test_that_general_options_has_expected_default_checkbox_states(qtbot):
@@ -82,7 +105,7 @@ def test_that_toggling_a_general_option_logs_sidebar_usage_once(
 
     checkbox = widget.findChild(QCheckBox, checkbox_name)
     if checkbox_name == "log_scale_checkbox":
-        options.set_log_visible(True)
+        checkbox.setVisible(True)
     assert checkbox is not None
     assert checkbox.isVisible()
 
@@ -158,8 +181,13 @@ def test_that_history_and_observations_visibility_can_be_set(
     options.get_widget().show()
     _expand(options.get_widget())
 
-    options.set_history_visible(history_visible)
-    options.set_observations_visible(observations_visible)
+    _apply_options_to_plot_context(
+        options,
+        _create_plot_context(),
+        history_data_available=history_visible,
+        has_observations=observations_visible,
+        show_observations=observations_visible,
+    )
 
     assert options._toggle_history.isVisible() is history_visible
     assert options._toggle_observations.isVisible() is observations_visible
@@ -171,6 +199,83 @@ def test_that_everest_general_options_omit_history_and_observations(qtbot):
     _expand(options.get_widget())
     assert not options._toggle_history.isVisible()
     assert not options._toggle_observations.isVisible()
+
+
+def test_that_legend_grid_and_color_cycle_are_written_to_the_plot_config(qtbot):
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    qtbot.addWidget(options.get_widget())
+    options._toggle_grid.setChecked(False)
+    plot_context = _create_plot_context()
+
+    _apply_options_to_plot_context(options, plot_context)
+
+    plot_config = plot_context.plotConfig()
+    assert plot_config.is_legend_enabled()
+    assert not plot_config.is_grid_enabled()
+    assert plot_config.line_color_cycle() == options.get_color_cycle()
+
+
+@pytest.mark.parametrize(
+    ("log_scale_available", "expected_log_scale"),
+    [
+        pytest.param(True, True, id="tab-supports-log-scale"),
+        pytest.param(False, False, id="tab-does-not-support-log-scale"),
+    ],
+)
+def test_that_log_scale_is_applied_only_when_the_current_tab_supports_it(
+    qtbot, log_scale_available, expected_log_scale
+):
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    qtbot.addWidget(options.get_widget())
+    options._toggle_log_scale.setChecked(True)
+    plot_context = _create_plot_context()
+
+    _apply_options_to_plot_context(
+        options, plot_context, log_scale_available=log_scale_available
+    )
+
+    assert plot_context.log_scale is expected_log_scale
+
+
+def test_that_history_and_observations_stay_disabled_when_the_key_has_neither(qtbot):
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    qtbot.addWidget(options.get_widget())
+    plot_context = _create_plot_context()
+
+    _apply_options_to_plot_context(options, plot_context)
+
+    assert not plot_context.plotConfig().is_history_enabled()
+    assert not plot_context.plotConfig().is_observations_enabled()
+
+
+def test_that_observations_stay_enabled_while_their_toggle_is_hidden(qtbot):
+    options = GeneralPlotOptions(Mock(), is_everest=False)
+    qtbot.addWidget(options.get_widget())
+    options.get_widget().show()
+    plot_context = _create_plot_context()
+
+    _apply_options_to_plot_context(
+        options, plot_context, has_observations=True, show_observations=False
+    )
+
+    assert not options._toggle_observations.isVisible()
+    assert plot_context.plotConfig().is_observations_enabled()
+
+
+def test_that_everest_general_options_leave_history_and_observations_untouched(qtbot):
+    options = GeneralPlotOptions(Mock(), is_everest=True)
+    qtbot.addWidget(options.get_widget())
+    plot_context = _create_plot_context()
+    expected_observations_enabled = plot_context.plotConfig().is_observations_enabled()
+
+    _apply_options_to_plot_context(
+        options, plot_context, has_observations=True, show_observations=True
+    )
+
+    assert (
+        plot_context.plotConfig().is_observations_enabled()
+        is expected_observations_enabled
+    )
 
 
 def test_that_palette_selector_returns_the_correct_color_cycle(qtbot):
