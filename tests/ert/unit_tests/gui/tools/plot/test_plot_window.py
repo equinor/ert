@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QCheckBox, QLabel, QPushButton, QToolTip
 from pytestqt.qtbot import QtBot
 
+from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
 from ert.gui.plotting.ert_plots.gaussian_kde import plotGaussianKDE
@@ -1039,6 +1040,9 @@ def _create_plot_window_for_text_edit(
     monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
+    plot_window.getSelectedKey = MagicMock(
+        return_value=MagicMock(key="some_key", dimensionality=1, metadata={})
+    )
     return plot_window
 
 
@@ -1086,12 +1090,8 @@ def test_that_sidebar_axis_label_edit_uses_configured_or_visible_label(
     plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
     get_text_input = MagicMock(return_value=("", False))
     plot_window._general_options.get_text_input = get_text_input
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    if axis == "x":
-        plot_config.set_x_label(configured_label)
-    else:
-        plot_config.set_y_label(configured_label)
-    plot_window._plot_customizer.update_plot_config(plot_config)
+    labels = plot_window._x_labels if axis == "x" else plot_window._y_labels
+    labels["some_key"] = configured_label
     current_widget = plot_window._central_tab.currentWidget()
     assert isinstance(current_widget, PlotWidget)
     if visible_label is not None:
@@ -1140,34 +1140,17 @@ def test_that_axis_label_edit_updates_or_preserves_persistent_config(
     plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
     get_text_input = MagicMock(return_value=(new_label, accepted))
     plot_window._general_options.get_text_input = get_text_input
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    if axis == "x":
-        plot_config.set_x_label(current_label)
-    else:
-        plot_config.set_y_label(current_label)
-    plot_window._plot_customizer.update_plot_config(plot_config)
+    plot_window.update_plot = MagicMock()
+    labels = plot_window._x_labels if axis == "x" else plot_window._y_labels
+    labels["some_key"] = current_label
 
     plot_window._edit_axis_label(axis)
 
     expected_label = (new_label or None) if accepted else current_label
-    persisted_config = plot_window._plot_customizer.get_plot_config()
-    assert (
-        persisted_config.x_label() if axis == "x" else persisted_config.y_label()
-    ) == expected_label
+    assert labels["some_key"] == expected_label
     get_text_input.assert_called_once_with(
         f"Edit {axis}-label", f"New {axis}-label:", current_label
     )
-
-
-def _create_plot_window_for_title_edit(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> PlotWindow:
-    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
-    plot_window.getSelectedKey = MagicMock(
-        return_value=MagicMock(key="some_key", dimensionality=1, metadata={})
-    )
-    return plot_window
 
 
 @pytest.mark.parametrize(
@@ -1190,19 +1173,15 @@ def test_that_title_edit_updates_or_preserves_persistent_config(
     expected_title: str,
     accepted: bool,
 ) -> None:
-    plot_window = _create_plot_window_for_title_edit(qtbot, monkeypatch)
+    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
     get_text_input = MagicMock(return_value=(dialog_value, accepted))
     plot_window._general_options.get_text_input = get_text_input
     plot_window.update_plot = MagicMock()
-    plot_window._plot_customizer._emit_changed_signal = MagicMock()
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    plot_config.set_title("Existing title")
-    plot_window._plot_customizer.update_plot_config(plot_config)
+    plot_window._titles["some_key"] = "Existing title"
 
     plot_window._edit_title()
 
-    persisted_config = plot_window._plot_customizer.get_plot_config()
-    assert persisted_config.title() == expected_title
+    assert plot_window._titles["some_key"] == expected_title
     get_text_input.assert_called_once_with("Edit title", "New title:", "Existing title")
 
 
@@ -1258,13 +1237,59 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
     plot_window._general_options.get_text_input = MagicMock(return_value=("", True))
     plot_window.update_plot()
 
-    plot_config = plot_window._plot_customizer.get_plot_config()
-    plot_config.set_title("Custom title")
-    plot_window._plot_customizer.update_plot_config(plot_config)
+    plot_window._titles["some_key"] = "Custom title"
     plot_window._edit_title()
 
     plot_widget = plot_window._central_tab.currentWidget()
     assert plot_widget._figure.axes[0].get_title() == "some_key"
+
+
+@pytest.mark.slow
+def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.responses_api_key_defs = [
+        PlotApiKeyDefinition(
+            "BREAKTHROUGH:WWCT:OP1",
+            index_type=None,
+            metadata={"data_origin": "summary"},
+            observations=False,
+            dimensionality=2,
+            response=BreakthroughConfig(),
+        )
+    ]
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+    mock_plot_api.data_for_response.return_value = pd.DataFrame({0: [1.0, 2.0, 3.0]})
+    mock_plot_api.has_history_data.return_value = False
+
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.update_plot()
+
+    plot_widget = cast(PlotWidget, plot_window._central_tab.currentWidget())
+    assert plot_widget._figure.axes[0].get_title() == "BREAKTHROUGH:WWCT:OP1"
 
 
 def test_that_resetting_axis_label_restores_histogram_default_label(
