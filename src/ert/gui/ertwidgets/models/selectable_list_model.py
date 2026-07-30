@@ -40,9 +40,5 @@ class SelectableListModel(QObject):
     def getSelectedItems(self) -> list[str]:
         return [item for item in self.getList() if self.isValueSelected(item)]
 
-    def setItems(self, items: list[str]) -> None:
-        self._items = items
-        self.modelChanged.emit()
-
     def _setSelectState(self, key: str, state: bool) -> None:
         self._selection[key] = state
