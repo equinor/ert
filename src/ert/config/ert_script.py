@@ -46,6 +46,14 @@ class _TeeStream(io.TextIOBase):
         return self._captured.getvalue()
 
 
+class ExternalScriptError(RuntimeError):
+    """Raised when an external workflow job exits with a non-zero exit code.
+
+    Reported without a stack trace, since the trace would only show the ert
+    internals that started the job, and not what went wrong inside it.
+    """
+
+
 class ErtScript:
     """
     ErtScript is the abstract baseclass for workflow jobs and
@@ -168,6 +176,10 @@ class ErtScript:
                 f"User warning in workflow script {self.__class__.__name__}: {uw}"
             )
             return uw.args[0]
+        except ExternalScriptError as e:
+            self.output_stack_trace(error=str(e))
+            logger.error(f"Workflow job failed: {e!s}")
+            return None
         except BaseException as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
             self.output_stack_trace(f"{e!s}\n{full_trace}")

@@ -96,6 +96,23 @@ def test_that_stdout_printed_before_an_external_job_fails_is_captured():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_failing_external_job_reports_its_exit_code_without_an_ert_stack_trace():
+    WorkflowCommon.createExternalDumpJob()
+
+    job = workflow_job_from_file(
+        name="DUMP", config_file="dump_failing_job", origin="user"
+    )
+
+    runner = WorkflowJobRunner(job)
+    runner.run([])
+
+    stderr = runner.stderrdata()
+    assert stderr.endswith("dump_failing.py failed with exit code 1")
+    assert "ert_script.py" not in stderr
+    assert "external_ert_script.py" not in stderr
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_run_internal_script():
     WorkflowCommon.createErtScriptsJob()

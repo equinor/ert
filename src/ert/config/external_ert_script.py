@@ -5,7 +5,7 @@ import sys
 from subprocess import PIPE, Popen
 from typing import Any
 
-from .ert_script import ErtScript
+from .ert_script import ErtScript, ExternalScriptError
 
 
 class ExternalErtScript(ErtScript):
@@ -31,7 +31,7 @@ class ExternalErtScript(ErtScript):
         sys.stderr.write(codecs.decode(stderrdata, "utf8", "replace"))
 
         if self.__job.returncode != 0:
-            raise RuntimeError(
+            raise ExternalScriptError(
                 f"{self.__executable} failed with exit code {self.__job.returncode}"
             )
 
