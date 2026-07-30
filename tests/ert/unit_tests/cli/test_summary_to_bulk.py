@@ -113,7 +113,7 @@ def _make_summary_obs(
     key += f":{well}" if well else ""
     return SummaryObservation(
         name="foo",
-        key=f"{key}:{well}",
+        key=key,
         value=0.5,
         error=0.02,
         date=date,

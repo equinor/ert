@@ -11,11 +11,13 @@ from .history_to_summary import convert_history_to_summary
 from .summary_to_bulk import (
     convert_summary_to_bulk,
 )
+from .summary_to_yaml import convert_summary_to_yaml
 
 
 class SupportedFormat(StrEnum):
     SUMMARY = "summary"
     BULK = "bulk"
+    YAML = "yaml"
 
 
 ConverterFunction = Callable[[str, ErtRuntimePlugins], None]
@@ -23,6 +25,7 @@ ConverterFunction = Callable[[str, ErtRuntimePlugins], None]
 _SUPPORTED_CONVERSIONS: dict[SupportedFormat, ConverterFunction] = {
     SupportedFormat.BULK: convert_summary_to_bulk,
     SupportedFormat.SUMMARY: convert_history_to_summary,
+    SupportedFormat.YAML: convert_summary_to_yaml,
 }
 
 
