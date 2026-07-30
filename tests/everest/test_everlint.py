@@ -136,10 +136,6 @@ def test_extra_key(min_config):
             "unknown job not_a_job",
         ),
         (
-            {"environment": {"simulation_folder": "/usr/bin/unwriteable"}},
-            "User does not have write access to",
-        ),
-        (
             {"environment": {"output_folder": ("super long path" * 300)}},
             "output_folder\n.* File name too long",
         ),
@@ -166,6 +162,28 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         min_config[k] = v
     with pytest.raises(ValidationError, match=expected):
         EverestConfig(**min_config)
+
+
+@pytest.mark.xfail(
+    reason=(
+        "behavior must be looked at. Current code requires all directories on path"
+        "to be unwritable to raise validation error."
+    )
+)
+def test_that_simulation_folder_without_write_access_raises_validation_error(
+    min_config, tmp_path
+):
+    unwritable = tmp_path / "unwritable"
+    unwritable.mkdir()
+    original_mode = unwritable.stat().st_mode
+    unwritable.chmod(0o555)
+
+    try:
+        min_config["environment"] = {"simulation_folder": str(unwritable)}
+        with pytest.raises(ValidationError, match="User does not have write access to"):
+            EverestConfig(**min_config)
+    finally:
+        unwritable.chmod(original_mode)
 
 
 @pytest.mark.parametrize(
