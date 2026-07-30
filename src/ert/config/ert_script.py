@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import inspect
+import io
 import logging
 import sys
 import traceback
 from abc import abstractmethod
 from types import MappingProxyType, ModuleType
-from typing import Any
+from typing import Any, TextIO
 
 from .workflow_fixtures import (
     WorkflowFixtures,
@@ -15,6 +17,33 @@ from .workflow_fixtures import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class _TeeStream(io.TextIOBase):
+    """Text stream that both records what is written and passes it on.
+
+    Used to capture the output of a workflow job without hiding it from the
+    terminal it was started from.
+    """
+
+    def __init__(self, stream: TextIO | None) -> None:
+        super().__init__()
+        self._stream = stream
+        self._captured = io.StringIO()
+
+    def write(self, s: str, /) -> int:
+        self._captured.write(s)
+        if self._stream is not None:
+            return self._stream.write(s)
+        return len(s)
+
+    def flush(self) -> None:
+        if self._stream is not None:
+            self._stream.flush()
+
+    @property
+    def captured(self) -> str:
+        return self._captured.getvalue()
 
 
 class ErtScript:
@@ -113,7 +142,7 @@ class ErtScript:
                         f"Mixture of fixtures and positional arguments, err: {e}"
                     )
 
-            return self.run(*arguments)
+            return self._run_capturing_output(arguments)
         except AttributeError as e:
             error_msg = str(e)
             if not hasattr(self, "run"):
@@ -150,6 +179,19 @@ class ErtScript:
         finally:
             self.cleanup()
 
+    def _run_capturing_output(self, arguments: list[Any]) -> Any:
+        stdout = _TeeStream(sys.stdout)
+        stderr = _TeeStream(sys.stderr)
+        try:
+            with (
+                contextlib.redirect_stdout(stdout),
+                contextlib.redirect_stderr(stderr),
+            ):
+                return self.run(*arguments)
+        finally:
+            self._stdoutdata = self.stdoutdata + stdout.captured
+            self._stderrdata = self.stderrdata + stderr.captured
+
     # Need to have unique modules in case of identical object naming in scripts
     __module_count = 0
 
@@ -179,7 +221,7 @@ class ErtScript:
             f"error while running:\n{str(stack_trace).strip()}\n"
         )
 
-        self._stderrdata = error
+        self._stderrdata = self.stderrdata + error
         self.__failed = True
 
     @staticmethod

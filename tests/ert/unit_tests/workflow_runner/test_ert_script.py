@@ -80,3 +80,55 @@ def test_that_exits_in_ert_script_is_trapped():
     failing = FailingScript()
     failing.initializeAndRun([], [])
     assert failing.hasFailed()
+
+
+def test_that_stdout_and_stderr_printed_by_an_ert_script_are_captured():
+    class PrintingScript(ErtScript):
+        def run(self):
+            print("to stdout")
+            print("to stderr", file=sys.stderr)
+
+    script = PrintingScript()
+    script.initializeAndRun([], [])
+
+    assert script.stdoutdata == "to stdout\n"
+    assert script.stderrdata == "to stderr\n"
+
+
+def test_that_output_printed_before_an_ert_script_raises_is_captured():
+    class PrintingAndFailingScript(ErtScript):
+        def run(self):
+            print("printed before failing")
+            raise ValueError("boom")
+
+    script = PrintingAndFailingScript()
+    script.initializeAndRun([], [])
+
+    assert script.hasFailed()
+    assert script.stdoutdata == "printed before failing\n"
+
+
+def test_that_the_stack_trace_of_a_failing_script_is_appended_to_captured_stderr():
+    class PrintingAndFailingScript(ErtScript):
+        def run(self):
+            print("printed to stderr", file=sys.stderr)
+            raise ValueError("boom")
+
+    script = PrintingAndFailingScript()
+    script.initializeAndRun([], [])
+
+    assert script.stderrdata.startswith("printed to stderr\n")
+    assert "ValueError: boom" in script.stderrdata
+
+
+def test_that_output_captured_from_an_ert_script_is_still_written_to_stdout(capsys):
+    class PrintingScript(ErtScript):
+        def run(self):
+            print("to stdout")
+            print("to stderr", file=sys.stderr)
+
+    PrintingScript().initializeAndRun([], [])
+
+    captured = capsys.readouterr()
+    assert captured.out == "to stdout\n"
+    assert captured.err == "to stderr\n"

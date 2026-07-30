@@ -82,6 +82,20 @@ def test_error_handling_external_job():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_stdout_printed_before_an_external_job_fails_is_captured():
+    WorkflowCommon.createExternalDumpJob()
+
+    job = workflow_job_from_file(
+        name="DUMP", config_file="dump_failing_job", origin="user"
+    )
+
+    runner = WorkflowJobRunner(job)
+    runner.run([])
+
+    assert runner.stdoutdata() == "Hello Failing\n"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_run_internal_script():
     WorkflowCommon.createErtScriptsJob()

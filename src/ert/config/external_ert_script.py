@@ -25,13 +25,15 @@ class ExternalErtScript(ErtScript):
         # The job will complete before stdout and stderr is returned
         stdoutdata, stderrdata = self.__job.communicate()
 
-        self._stdoutdata = codecs.decode(stdoutdata, "utf8", "replace")
-        self._stderrdata = codecs.decode(stderrdata, "utf8", "replace")
-
-        sys.stdout.write(self._stdoutdata)
+        # Written to the current stdout/stderr, which ErtScript captures into
+        # self.stdoutdata/self.stderrdata while the script is running.
+        sys.stdout.write(codecs.decode(stdoutdata, "utf8", "replace"))
+        sys.stderr.write(codecs.decode(stderrdata, "utf8", "replace"))
 
         if self.__job.returncode != 0:
-            raise RuntimeError(self._stderrdata)
+            raise RuntimeError(
+                f"{self.__executable} failed with exit code {self.__job.returncode}"
+            )
 
     def cancel(self) -> Any:
         super().cancel()
