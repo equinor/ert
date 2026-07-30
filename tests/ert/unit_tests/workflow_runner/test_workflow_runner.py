@@ -192,6 +192,27 @@ def test_workflow_run():
     assert Path("dump2").read_text(encoding="utf-8") == "dump_text_2"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_results_contain_one_entry_per_job_invocation():
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    runner = WorkflowRunner(workflow, fixtures={})
+    runner.run_blocking()
+
+    results = runner.jobResults()
+    assert [(result.name, result.index, result.arguments) for result in results] == [
+        ("DUMP", 0, ["dump1", "dump_text_1"]),
+        ("DUMP", 1, ["dump2", "dump_text_2"]),
+    ]
+    assert [result.stdout for result in results] == ["Hello World\n", "Hello World\n"]
+    assert not any(result.failed for result in results)
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")

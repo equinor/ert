@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import types
 from concurrent import futures
 from concurrent.futures import Future
+from dataclasses import dataclass, field
 from typing import Any, Self
 
 from ert import ErtScript
@@ -15,6 +17,21 @@ from ert.config import (
     WorkflowFixtures,
     WorkflowJob,
 )
+
+
+@dataclass
+class WorkflowJobResult:
+    """The outcome of a single invocation of a workflow job."""
+
+    name: str
+    index: int
+    arguments: list[str]
+    stdout: str
+    stderr: str
+    failed: bool
+    timestamp: datetime.datetime = field(
+        default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
+    )
 
 
 class WorkflowJobRunner:
@@ -119,6 +136,7 @@ class WorkflowRunner:
         self.__cancelled = False
         self.__current_job: WorkflowJobRunner | None = None
         self.__status: dict[str, dict[str, Any]] = {}
+        self.__job_results: list[WorkflowJobResult] = []
 
     def __enter__(self) -> Self:
         self.run()
@@ -144,9 +162,10 @@ class WorkflowRunner:
 
         # Reset status
         self.__status = {}
+        self.__job_results = []
         self.__running = True
 
-        for job, args in self.__workflow:
+        for index, (job, args) in enumerate(self.__workflow):
             jobrunner = WorkflowJobRunner(job)
             self.__current_job = jobrunner
             if not self.__cancelled:
@@ -157,6 +176,16 @@ class WorkflowRunner:
                     "stderr": jobrunner.stderrdata(),
                     "completed": not jobrunner.hasFailed(),
                 }
+                self.__job_results.append(
+                    WorkflowJobResult(
+                        name=jobrunner.name,
+                        index=index,
+                        arguments=[str(arg) for arg in args],
+                        stdout=jobrunner.stdoutdata(),
+                        stderr=jobrunner.stderrdata(),
+                        failed=jobrunner.hasFailed(),
+                    )
+                )
 
                 info = {
                     "class": "WORKFLOW_JOB",
@@ -223,3 +252,11 @@ class WorkflowRunner:
 
     def workflowReport(self) -> dict[str, dict[str, Any]]:
         return self.__status
+
+    def jobResults(self) -> list[WorkflowJobResult]:
+        """One entry per job invocation, in the order the jobs were run.
+
+        Unlike workflowReport(), which is keyed by job name, this keeps the
+        output of every invocation when the same job is run more than once.
+        """
+        return self.__job_results
