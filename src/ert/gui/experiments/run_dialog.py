@@ -67,6 +67,7 @@ from ert.run_models.event import (
     FinishedTotalRunPathCreationEvent,
     RunModelDataEvent,
     RunModelErrorEvent,
+    RunModelWorkflowLogEvent,
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
@@ -622,6 +623,8 @@ class RunDialog(QFrame):
             case RunModelErrorEvent():
                 self._get_update_widget(event.iteration).error(event)
                 event.write_as_csv(self.output_path)
+            case RunModelWorkflowLogEvent():
+                event.write_as_log(self.output_path)
             case EverestBatchResultEvent():
                 batch_types = self._batch_result_types[event.batch]
                 batch_types.add(event.result_type)

@@ -28,6 +28,7 @@ from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
     RunModelUpdateEndEvent,
+    RunModelWorkflowLogEvent,
     StatusEvents,
 )
 
@@ -98,6 +99,8 @@ class Monitor:
                     | RunModelErrorEvent() as event
                 ):
                     event.write_as_csv(output_path)
+                case RunModelWorkflowLogEvent() as event:
+                    event.write_as_log(output_path)
                 case EnsembleEvaluationWarning(warning_message=msg):
                     print(
                         self._colorize(msg, color=COLOR_WARNING),

@@ -1,4 +1,6 @@
+import datetime
 import tempfile
+import uuid
 from pathlib import Path
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
@@ -49,6 +51,7 @@ from ert.run_models import (
 )
 from ert.run_models.event import (
     FinishedTotalRunPathCreationEvent,
+    RunModelWorkflowLogEvent,
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
@@ -1117,6 +1120,38 @@ def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=10000)
     assert run_dialog is not None
+
+
+def test_that_a_workflow_log_event_is_written_to_the_output_path(
+    qtbot: QtBot, tmp_path
+) -> None:
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+    run_id = uuid.uuid4()
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock(), output_path=tmp_path)
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    queue.put(
+        RunModelWorkflowLogEvent(
+            run_id=run_id,
+            hook="PRE_SIMULATION",
+            workflow_name="my_workflow",
+            job_name="MY_JOB",
+            job_index=0,
+            arguments=[],
+            stdout="hello from the workflow\n",
+            stderr="",
+            failed=False,
+            timestamp=datetime.datetime.now(tz=datetime.UTC),
+        )
+    )
+
+    log_file = tmp_path / str(run_id) / "workflows.log"
+    qtbot.waitUntil(log_file.is_file, timeout=2000)
+    assert "hello from the workflow" in log_file.read_text(encoding="utf-8")
 
 
 def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) -> None:

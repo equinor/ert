@@ -1923,6 +1923,21 @@ UPDATE_LOG_PATH
 
 A summary of the data used for updates are stored in this directory.
 
+The output of the workflows that are run as part of an experiment is also
+stored here, in ``<UPDATE_LOG_PATH>/<run_id>/workflows.log``, where ``run_id``
+is unique for each run of an experiment. The file contains one entry per
+workflow job, holding whatever the job wrote to stdout and stderr::
+
+    === 2026-07-30T10:19:33+00:00 PRE_SIMULATION workflow=my_workflow job=MY_JOB#0 status=success
+    --- arguments ---
+    first_argument second_argument
+    --- stdout ---
+    Hello from the workflow
+
+Only workflows hooked into an experiment with :ref:`HOOK_WORKFLOW
+<hook_workflow>` are logged this way. Workflows started with ``ert workflow``
+or from the *Run workflow* tool in the GUI are not.
+
 .. _keywords_related_to_running_the_forward_model:
 
 Keywords related to running the forward model
