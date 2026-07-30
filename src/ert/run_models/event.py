@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -92,6 +93,49 @@ class RunModelErrorEvent(RunModelEvent):
             self.data.to_csv("Report", output_path / str(self.run_id))
 
 
+class RunModelWorkflowLogEvent(BaseModel, extra="forbid"):
+    """The output of a single workflow job invocation."""
+
+    event_type: Literal["RunModelWorkflowLogEvent"] = "RunModelWorkflowLogEvent"
+    run_id: UUID
+    hook: str
+    workflow_name: str
+    job_name: str
+    job_index: int
+    arguments: list[str]
+    stdout: str
+    stderr: str
+    failed: bool
+    timestamp: datetime
+    iteration: int | None = None
+
+    def _as_log_entry(self) -> str:
+        status = "failed" if self.failed else "success"
+        header = (
+            f"=== {self.timestamp.isoformat(timespec='seconds')} {self.hook} "
+            f"workflow={self.workflow_name} job={self.job_name}#{self.job_index} "
+            f"status={status}"
+        )
+        if self.iteration is not None:
+            header += f" iteration={self.iteration}"
+        sections = [header]
+        if self.arguments:
+            sections.append(f"--- arguments ---\n{' '.join(self.arguments)}")
+        if self.stdout:
+            sections.append(f"--- stdout ---\n{self.stdout.rstrip('\n')}")
+        if self.stderr:
+            sections.append(f"--- stderr ---\n{self.stderr.rstrip('\n')}")
+        return "\n".join(sections) + "\n\n"
+
+    def write_as_log(self, output_path: Path | None) -> None:
+        if output_path is None:
+            return
+        log_file = output_path / str(self.run_id) / "workflows.log"
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        with log_file.open("a", encoding="utf-8") as fout:
+            fout.write(self._as_log_entry())
+
+
 class RunPathCreationEvent(BaseModel, extra="forbid"):
     pass
 
@@ -125,6 +169,7 @@ StatusEvents = (
     | RunModelTimeEvent
     | RunModelUpdateBeginEvent
     | RunModelUpdateEndEvent
+    | RunModelWorkflowLogEvent
     | SnapshotUpdateEvent
     | StartEvent
     | WarningEvent
