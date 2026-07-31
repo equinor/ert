@@ -833,7 +833,6 @@ to read summary data from forward model, do:
             return self
 
         with InstallDataContext(self.install_data, self.config_path) as context:
-            print("Validating forward model configs with install data context")
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
             validate_forward_model_configs(
@@ -1106,7 +1105,6 @@ to read summary data from forward model, do:
         cls, config_dict: dict[str, Any] | ConfigDict, ctx: Context = Context.CLIENT
     ) -> Self:
         with use_runtime_plugins(get_site_plugins(ctx=ctx)):
-            print(f"Loading config with context: {ctx}")
             return cls(**config_dict)
 
     @staticmethod
