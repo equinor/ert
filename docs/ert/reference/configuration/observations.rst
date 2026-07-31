@@ -204,100 +204,6 @@ keyword ERROR_MIN:
 This error mode is also relevant for observations that may be zero,
 for example water production rates.
 
-Note that the configuration parser does not treat carriage return
-different from space. Thus, the following statement is equivalent to
-the previous:
-
-.. _bulk_configuration_of_summary_observations:
-
-Bulk configuration of summary observations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Summary observations can also be created in bulk by the "SUMMARY"
-keyword. This will generate multiple summary observations from the
-same declaration, but requires a csv-file containing the attribute
-values for each summary observation.
-
-A minimal configuration for the "SUMMARY" keyword looks like:
-
-.. code-block:: none
-
- SUMMARY {
-    VALUES = some_file.csv;
- };
-
-Where the provided csv file will contain one row for each observation.
-Required columns to create summary observations are: keyword, value,
-error, date.
-
-Without these columns, the configuration is invalid, and Ert will raise
-an error.
-
-A csv file containing a single summary observation might look like:
-
-.. code-block:: none
-
- keyword, value, error, date
- FOPR, 1e6, 1e3, 2012-12-02
-
-
-It is also possible to provide optional columns: well, number, nx, ny,
-lgr_name, li, lj, lk - which may be required by certain keywords.
-
-The SUMMARY configuration can also configure WELLs. The WELL keyword
-inside a SUMMARY configuration is used to configure metadata about
-a well.
-
-The WELL keyword can contain two types of configuration: LOCALIZATION and
-BREAKTHROUGH.
-
-LOCALIZATION contains two required fields: NORTH and EAST, and optionally
-RADIUS. These localization attributes will be applied to all observations
-sharing the same well name as the WELL configuration.
-
-BREAKTHROUGH allows the user to define a BREAKTHROUGH observation for
-the given well. BREAKTHROUGH is configured like a regular
-BREAKTHROUGH_OBSERVATION - which requires the fields KEY, THRESHOLD, DATE
-and ERROR. BREAKTHROUGH will also inherit the LOCALIZATION values should
-they be defined for the well. Only one occurrence of BREAKTHROUGH can
-be configured per WELL.
-
-A SUMMARY configuration containing all of these elements may look like:
-
-.. code-block:: none
-
- SUMMARY {
-    VALUES = some_file.csv;
-    WELL OP1 {
-        LOCALIZATION {
-            EAST   = 32.132;
-            NORTH  = 45.139;
-            RADIUS = 2500;
-        };
-        BREAKTHROUGH {
-            KEY       = WWCT;
-            THRESHOLD = 0.2;
-            DATE      = 2012-05-01;
-            ERROR     = 3;
-        };
-    };
-    WELL OP2 {
-        LOCALIZATION {
-            EAST   = 35.734;
-            NORTH  = 42.981;
-            RADIUS = 3000;
-        };
-    };
- };
-
-.. code-block:: none
-
- well,keyword, value, error, date, nx, ny, number
- OP1, WOPR, 1e5, 1e3, 2012-01-03, , ,
- OP1, BPR, 100, 7.5, 2012-01-07, 1, 2, 5
- OP2, WOPR, 7e5, 1.2e3, 2012-02-05, , ,
- ,FOPR, 1e6, 1e3, 2012-12-02, , ,
-
 .. _breakthrough_observation:
 
 BREAKTHROUGH_OBSERVATION keyword
@@ -582,3 +488,149 @@ are correctly associated with reservoir zones.
 
 If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
 the expected zone, the observation will be deactivated with a warning during the simulation.
+
+The LOCALIZATION keyword - Configuring observations with location
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A prerequisite for using :ref:`distance based localization <distance_based_localization>`
+is to provide metadata regarding location for the observations.
+
+This can be configured for :ref:`summary observations <summary_observation>` and
+:ref:`breakthrough observations <breakthrough_observation>` by inserting a `LOCALIZATION`
+keyword into their declarations.
+
+The `LOCALIZATION` object has two required fields: `NORTH` and `EAST`. Additionally,
+`RADIUS` can be configured here, but will be defaulted to 3000m if absent.
+
+The `LOCALIZATION` object can be defined as follows:
+
+.. code-block:: none
+
+   LOCALIZATION {
+     EAST=70;
+     NORTH=80;
+     RADIUS=2500;
+   };
+
+And inserted into a summary observation like so:
+
+.. code-block:: none
+
+   SUMMARY_OBSERVATION WOPR_OP1_141 {
+     KEY   = WOPR;
+     VALUE = 1e6;
+     ERROR = 3e4;
+     DATE  = 2012-02-13;
+     LOCALIZATION {
+       EAST   = 70;
+       NORTH  = 80;
+       RADIUS = 2500;
+     };
+   };
+
+And similarily into a :ref:`breakthrough observation <breakthrough_observation>`
+
+The RFT observations already contains the keywords `NORTH` and `EAST` in its´ regular
+configuration. These observations are therefore already correctly configured for distance
+based localization.
+
+The radius  for RFTs will be the default radius value of 3000m, but can be overwritten by
+providing a `LOCALIZATION` object containing just the `RADIUS` key, e.g.
+
+.. code-block::
+
+   LOCALIZATION {
+     RADIUS=2500;
+   };
+
+
+
+.. _bulk_configuration_of_summary_observations:
+
+Bulk configuration of summary observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Summary observations can also be created in bulk by the "SUMMARY"
+keyword. This will generate multiple summary observations from the
+same declaration, but requires a csv-file containing the attribute
+values for each summary observation.
+
+A minimal configuration for the "SUMMARY" keyword looks like:
+
+.. code-block:: none
+
+ SUMMARY {
+    VALUES = some_file.csv;
+ };
+
+Where the provided csv file will contain one row for each observation.
+Required columns to create summary observations are: keyword, value,
+error, date.
+
+Without these columns, the configuration is invalid, and Ert will raise
+an error.
+
+A csv file containing a single summary observation might look like:
+
+.. code-block:: none
+
+ keyword, value, error, date
+ FOPR, 1e6, 1e3, 2012-12-02
+
+
+It is also possible to provide optional columns: well, number, nx, ny,
+lgr_name, li, lj, lk - which may be required by certain keywords.
+
+The SUMMARY configuration can also configure WELLs. The WELL keyword
+inside a SUMMARY configuration is used to configure metadata about
+a well.
+
+The WELL keyword can contain two types of configuration: LOCALIZATION and
+BREAKTHROUGH.
+
+LOCALIZATION contains two required fields: NORTH and EAST, and optionally
+RADIUS. These localization attributes will be applied to all observations
+sharing the same well name as the WELL configuration.
+
+BREAKTHROUGH allows the user to define a BREAKTHROUGH observation for
+the given well. BREAKTHROUGH is configured like a regular
+BREAKTHROUGH_OBSERVATION - which requires the fields KEY, THRESHOLD, DATE
+and ERROR. BREAKTHROUGH will also inherit the LOCALIZATION values should
+they be defined for the well. Only one occurrence of BREAKTHROUGH can
+be configured per WELL.
+
+A SUMMARY configuration containing all of these elements may look like:
+
+.. code-block:: none
+
+ SUMMARY {
+    VALUES = some_file.csv;
+    WELL OP1 {
+        LOCALIZATION {
+            EAST   = 32.132;
+            NORTH  = 45.139;
+            RADIUS = 2500;
+        };
+        BREAKTHROUGH {
+            KEY       = WWCT;
+            THRESHOLD = 0.2;
+            DATE      = 2012-05-01;
+            ERROR     = 3;
+        };
+    };
+    WELL OP2 {
+        LOCALIZATION {
+            EAST   = 35.734;
+            NORTH  = 42.981;
+            RADIUS = 3000;
+        };
+    };
+ };
+
+.. code-block:: none
+
+ well,keyword, value, error, date, nx, ny, number
+ OP1, WOPR, 1e5, 1e3, 2012-01-03, , ,
+ OP1, BPR, 100, 7.5, 2012-01-07, 1, 2, 5
+ OP2, WOPR, 7e5, 1.2e3, 2012-02-05, , ,
+ ,FOPR, 1e6, 1e3, 2012-12-02, , ,
