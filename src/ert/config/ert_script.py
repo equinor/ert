@@ -6,10 +6,12 @@ import inspect
 import io
 import logging
 import sys
+import threading
 import traceback
 from abc import abstractmethod
+from collections.abc import Iterable, Iterator
 from types import MappingProxyType, ModuleType
-from typing import Any, TextIO
+from typing import Any, TextIO, override
 
 from .workflow_fixtures import (
     WorkflowFixtures,
@@ -19,31 +21,142 @@ from .workflow_fixtures import (
 logger = logging.getLogger(__name__)
 
 
-class _TeeStream(io.TextIOBase):
-    """Text stream that both records what is written and passes it on.
+class _CaptureProxy(io.TextIOBase):
+    """Stands in for ``sys.stdout``/``sys.stderr`` while workflow jobs run.
 
-    Used to capture the output of a workflow job without hiding it from the
-    terminal it was started from.
+    Everything written is passed on to the stream it replaced, so output still
+    reaches the terminal. Writes are recorded only when the writing thread has
+    an active capture, which keeps output produced by unrelated threads out of
+    the workflow log. Every other part of the stream interface is delegated to
+    the wrapped stream, so that jobs asking for a file descriptor, an encoding
+    or a binary buffer see the stream they would have seen without capturing.
     """
 
     def __init__(self, stream: TextIO | None) -> None:
         super().__init__()
-        self._stream = stream
-        self._captured = io.StringIO()
-
-    def write(self, s: str, /) -> int:
-        self._captured.write(s)
-        if self._stream is not None:
-            return self._stream.write(s)
-        return len(s)
-
-    def flush(self) -> None:
-        if self._stream is not None:
-            self._stream.flush()
+        self.wrapped = stream
+        self._local = threading.local()
+        self._users = 0
 
     @property
-    def captured(self) -> str:
-        return self._captured.getvalue()
+    def _buffers(self) -> list[io.StringIO]:
+        buffers: list[io.StringIO] | None = getattr(self._local, "buffers", None)
+        if buffers is None:
+            buffers = []
+            self._local.buffers = buffers
+        return buffers
+
+    @contextlib.contextmanager
+    def capture(self) -> Iterator[io.StringIO]:
+        """Record what the calling thread writes for the duration of the block."""
+        buffer = io.StringIO()
+        buffers = self._buffers
+        buffers.append(buffer)
+        try:
+            yield buffer
+        finally:
+            buffers.remove(buffer)
+
+    @override
+    def write(self, s: str, /) -> int:
+        for buffer in self._buffers:
+            buffer.write(s)
+        if self.wrapped is None:
+            return len(s)
+        return self.wrapped.write(s)
+
+    @override
+    def writelines(self, lines: Iterable[str], /) -> None:  # type: ignore[override]
+        for line in lines:
+            self.write(line)
+
+    @override
+    def flush(self) -> None:
+        if self.wrapped is not None:
+            self.wrapped.flush()
+
+    @override
+    def close(self) -> None:
+        """Closing is ignored, as the wrapped stream outlives the capture."""
+
+    @override
+    def fileno(self) -> int:
+        if self.wrapped is None:
+            raise io.UnsupportedOperation("fileno")
+        return self.wrapped.fileno()
+
+    @override
+    def isatty(self) -> bool:
+        return self.wrapped is not None and self.wrapped.isatty()
+
+    @override
+    def writable(self) -> bool:
+        return True
+
+    @override
+    def readable(self) -> bool:
+        return False
+
+    @override
+    def seekable(self) -> bool:
+        return False
+
+    # The stream attributes below are read-only at runtime, so they can only be
+    # delegated with a property, which typeshed declares as writable.
+    @property
+    @override
+    def encoding(self) -> str:  # type: ignore[override]
+        return getattr(self.wrapped, "encoding", "utf-8")
+
+    @property
+    @override
+    def errors(self) -> str | None:  # type: ignore[override]
+        return getattr(self.wrapped, "errors", None)
+
+    @property
+    @override
+    def newlines(self) -> Any:  # type: ignore[override]
+        return getattr(self.wrapped, "newlines", None)
+
+    @property
+    def buffer(self) -> Any:
+        return self.wrapped.buffer  # type: ignore[union-attr]
+
+    @property
+    def name(self) -> Any:
+        return getattr(self.wrapped, "name", None)
+
+    @property
+    def line_buffering(self) -> bool:
+        return getattr(self.wrapped, "line_buffering", False)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.__dict__["wrapped"], name)
+
+
+_capture_lock = threading.Lock()
+
+
+@contextlib.contextmanager
+def _capturing(stream_name: str) -> Iterator[io.StringIO]:
+    """Record what the calling thread writes to ``sys.<stream_name>``.
+
+    A single proxy is shared by all concurrent captures, and the original
+    stream is put back once the last capture is done.
+    """
+    with _capture_lock:
+        stream = getattr(sys, stream_name)
+        proxy = stream if isinstance(stream, _CaptureProxy) else _CaptureProxy(stream)
+        proxy._users += 1
+        setattr(sys, stream_name, proxy)
+    try:
+        with proxy.capture() as buffer:
+            yield buffer
+    finally:
+        with _capture_lock:
+            proxy._users -= 1
+            if proxy._users == 0 and getattr(sys, stream_name) is proxy:
+                setattr(sys, stream_name, proxy.wrapped)
 
 
 class ExternalScriptError(RuntimeError):
@@ -192,17 +305,12 @@ class ErtScript:
             self.cleanup()
 
     def _run_capturing_output(self, arguments: list[Any]) -> Any:
-        stdout = _TeeStream(sys.stdout)
-        stderr = _TeeStream(sys.stderr)
-        try:
-            with (
-                contextlib.redirect_stdout(stdout),
-                contextlib.redirect_stderr(stderr),
-            ):
+        with _capturing("stdout") as stdout, _capturing("stderr") as stderr:
+            try:
                 return self.run(*arguments)
-        finally:
-            self._stdoutdata = self.stdoutdata + stdout.captured
-            self._stderrdata = self.stderrdata + stderr.captured
+            finally:
+                self._stdoutdata = self.stdoutdata + stdout.getvalue()
+                self._stderrdata = self.stderrdata + stderr.getvalue()
 
     # Need to have unique modules in case of identical object naming in scripts
     __module_count = 0

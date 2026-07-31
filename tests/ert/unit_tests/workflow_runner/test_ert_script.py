@@ -1,4 +1,5 @@
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -132,3 +133,91 @@ def test_that_output_captured_from_an_ert_script_is_still_written_to_stdout(caps
     captured = capsys.readouterr()
     assert captured.out == "to stdout\n"
     assert captured.err == "to stderr\n"
+
+
+def test_that_output_written_by_another_thread_is_left_out_of_the_capture():
+    job_may_finish = threading.Event()
+    other_thread_has_printed = threading.Event()
+
+    class SlowScript(ErtScript):
+        def run(self):
+            print("from the job")
+            other_thread_has_printed.wait(timeout=10)
+            job_may_finish.wait(timeout=10)
+
+    def print_from_another_thread():
+        print("from an unrelated thread")
+        other_thread_has_printed.set()
+
+    script = SlowScript()
+    job = threading.Thread(target=script.initializeAndRun, args=([], []))
+    job.start()
+    other_thread = threading.Thread(target=print_from_another_thread)
+    other_thread.start()
+    other_thread.join(timeout=10)
+    job_may_finish.set()
+    job.join(timeout=10)
+
+    assert "from the job" in script.stdoutdata
+    assert "from an unrelated thread" not in script.stdoutdata
+
+
+def test_that_concurrent_scripts_only_capture_their_own_output():
+    both_are_running = threading.Barrier(2, timeout=10)
+
+    class PrintingScript(ErtScript):
+        def run(self, message):
+            both_are_running.wait()
+            print(message)
+            both_are_running.wait()
+
+    first, second = PrintingScript(), PrintingScript()
+    threads = [
+        threading.Thread(target=script.initializeAndRun, args=([str], [message]))
+        for script, message in ((first, "first"), (second, "second"))
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=10)
+
+    assert first.stdoutdata.strip() == "first"
+    assert second.stdoutdata.strip() == "second"
+
+
+def test_that_the_original_streams_are_restored_after_capturing():
+    class PrintingScript(ErtScript):
+        def run(self):
+            print("hello")
+
+    stdout, stderr = sys.stdout, sys.stderr
+    PrintingScript().initializeAndRun([], [])
+
+    assert sys.stdout is stdout
+    assert sys.stderr is stderr
+
+
+@pytest.mark.parametrize(
+    "attribute", ["fileno", "isatty", "encoding", "errors", "buffer", "line_buffering"]
+)
+def test_that_the_captured_stdout_exposes_the_same_attributes_as_the_real_one(
+    attribute,
+):
+    def look_up(stream):
+        """The attribute value, or the error raised, so both can be compared."""
+        try:
+            value = getattr(stream, attribute)
+            return value() if callable(value) else value
+        except Exception as e:
+            return type(e)
+
+    seen = {}
+
+    class InspectingScript(ErtScript):
+        def run(self):
+            seen["value"] = look_up(sys.stdout)
+
+    expected = look_up(sys.stdout)
+    InspectingScript().initializeAndRun([], [])
+
+    assert seen["value"] == expected
