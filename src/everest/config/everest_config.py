@@ -1,9 +1,11 @@
 import logging
 import os
 from argparse import ArgumentParser
+from collections.abc import Callable
 from copy import copy
 from enum import StrEnum
 from functools import wraps
+from inspect import signature
 from itertools import chain
 from pathlib import Path
 from sys import float_info
@@ -11,6 +13,7 @@ from textwrap import dedent
 from typing import (
     Annotated,
     Any,
+    Concatenate,
     Optional,
     Self,
     TextIO,
@@ -104,22 +107,28 @@ def _error_loc(error: ErrorDetails) -> str:
     )
 
 
-def server_validation(f):
+def server_validation[T, **P](
+    f: Callable[Concatenate[T, P], T],
+) -> Callable[Concatenate[T, P], T]:
     """
     Decorator to ensure that a validation function
     is only run in a server context.
+    Requires `ValidationInfo` to be passed as an argument.
     """
+    sig = signature(f)
 
     @wraps(f)
-    def wrapper(self, *args, **kwargs):
-        if len(args) > 0 and hasattr(args[0], "context"):
-            context = args[0].context
-            if hasattr(context, "type") and context.type == Context.SERVER:
-                print(f"Server validation: {f.__name__} with context: {context.type}")
-                print(context)
-                return f(self, *args, **kwargs)
-        print(f"Skipping server validation: {f.__name__}")
-        return self
+    def wrapper(self: T, *args: P.args, **kwargs: P.kwargs) -> T:
+        bound = sig.bind(self, *args, **kwargs)
+        info = bound.arguments.get("info")
+        if (
+            not info
+            or not hasattr(info.context, "type")
+            or info.context.type != Context.SERVER
+        ):
+            return self
+
+        return f(self, *args, **kwargs)
 
     return wrapper
 
