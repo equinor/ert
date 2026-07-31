@@ -302,6 +302,7 @@ class PlotWindow(QMainWindow):
             self._boxplot_options = BoxplotOptions(self.update_plot)
 
             right_container = QWidget()
+            assert right_container is not None
             right_layout = create_group_layout(
                 [
                     self._ensemble_group,
