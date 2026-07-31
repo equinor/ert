@@ -118,7 +118,7 @@ def server_validation[T, **P](
     sig = signature(f)
 
     @wraps(f)
-    def wrapper(self: T, *args: P.args, **kwargs: P.kwargs) -> T:
+    def wrapper(self: T, /, *args: P.args, **kwargs: P.kwargs) -> T:
         bound = sig.bind(self, *args, **kwargs)
         info = bound.arguments.get("info")
         if (
@@ -1107,7 +1107,7 @@ to read summary data from forward model, do:
     ) -> Self:
         with use_runtime_plugins(get_site_plugins(ctx=ctx)):
             print(f"Loading config with context: {ctx}")
-            return cls(**config_dict)  # type: ignore
+            return cls(**config_dict)
 
     @staticmethod
     def load_file_with_argparser(
