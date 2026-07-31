@@ -32,10 +32,11 @@ class ColorBox(QFrame):
 
     @Slot()
     def show_color_dialog(self) -> None:
-        color_dialog = QColorDialog(self._color, self)
+        color_dialog = QColorDialog(self)
         color_dialog.setWindowTitle("Select color")
         color_dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel)
         color_dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog)
+        color_dialog.setCurrentColor(self._color)
         color_dialog.accepted.connect(
             lambda: self.colorChanged.emit(color_dialog.selectedColor())
         )
