@@ -306,9 +306,8 @@ def check_writeable_path(path_source: str, config_path: Path) -> None:
     path = as_abs_path(path_source, str(config_path.parent))
     while True:
         if os.path.isdir(path):
-            if os.access(path, os.W_OK | os.X_OK):
-                break
-        elif Path(path).is_file():
+            break
+        if Path(path).is_file():
             raise ValueError(f"{path} is a file, cannot create folders inside it")
         parent = os.path.dirname(path)
         if parent == path:  # ie, if path is root
