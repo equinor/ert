@@ -35,6 +35,16 @@ jobs:
         echo "pr_number=$(jq -r '.pr_number' artifact/metadata.json)" >> "$GITHUB_OUTPUT"
         echo "outcome=$(jq -r '.outcome' artifact/metadata.json)" >> "$GITHUB_OUTPUT"
 
+    - name: Get ert PR title
+      if: steps.metadata.outputs.outcome == 'failure' && steps.metadata.outputs.pr_number != '0'
+      id: ert-pr-title
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+      run: |
+        ERT_PR_TITLE=$(gh pr view "${PR_NUMBER}" --repo equinor/ert --json title --jq '.title')
+        echo "ert_pr_title=${ERT_PR_TITLE}" >> "$GITHUB_OUTPUT"
+
     - name: Checkout ert-testdata
       if: steps.metadata.outputs.outcome == 'failure'
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -53,6 +63,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
         PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+        ERT_PR_TITLE: ${{ steps.ert-pr-title.outputs.ert_pr_title }}
       run: |
         BRANCH="update-screenshots-ert-pr-${PR_NUMBER}"
         cd ert-testdata
@@ -74,7 +85,7 @@ jobs:
             --repo equinor/ert-testdata \
             --base main \
             --head "$BRANCH" \
-            --title "Update screenshots for equinor/ert#${PR_NUMBER}" \
+            --title "Update screenshots for ${ERT_PR_TITLE} (equinor/ert#${PR_NUMBER})" \
             --body "Automatically updated screenshot baselines triggered by https://github.com/equinor/ert/pull/${PR_NUMBER}")
           if [ "${PR_NUMBER}" != "0" ]; then
             gh pr comment "${PR_NUMBER}" \
