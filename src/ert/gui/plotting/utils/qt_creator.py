@@ -5,7 +5,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -57,3 +59,33 @@ def create_checkbox_with_tooltip(
     checkbox.stateChanged.connect(connection_point)
     log_plot_option_usage_once(checkbox.clicked, logger, name)
     return checkbox
+
+
+def create_spinbox_with_tooltip(
+    name: str,
+    tooltip: str,
+    connection_point: Callable[..., object],
+    *,
+    minimum: int,
+    maximum: int,
+    initial_value: int,
+    logger: Logger,
+) -> QSpinBox:
+    spinbox = QSpinBox()
+    spinbox.setObjectName(f"{name.lower().replace(' ', '_')}_spinbox")
+    spinbox.setToolTip(tooltip)
+    spinbox.setRange(minimum, maximum)
+    spinbox.setValue(initial_value)
+    spinbox.valueChanged.connect(connection_point)
+    log_plot_option_usage_once(spinbox.valueChanged, logger, name)
+    return spinbox
+
+
+def create_labeled_row(label: str, widget: QWidget) -> QWidget:
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.addWidget(QLabel(label))
+    layout.addWidget(widget)
+    layout.addStretch()
+    return row

@@ -58,13 +58,13 @@ from .utils.observation_locations import transform_observation_locations
 from .utils.plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .utils.plot_types import ObservationPlotLocations
 from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
-from .utils.statistics_style import DEFAULT_ENABLED_STATISTICS
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
     BoxplotOptions,
     EverestControlsPlotOptions,
     GeneralPlotOptions,
+    StatisticsOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
@@ -301,6 +301,7 @@ class PlotWindow(QMainWindow):
             self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
             self._general_options.titleEditRequested.connect(self._edit_title)
             self._boxplot_options = BoxplotOptions(self.update_plot)
+            self._statistics_options = StatisticsOptions(self.update_plot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
@@ -310,6 +311,7 @@ class PlotWindow(QMainWindow):
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
                     self._boxplot_options.get_widget(),
+                    self._statistics_options.get_widget(),
                 ]
             )
             right_container.setLayout(right_layout)
@@ -317,6 +319,7 @@ class PlotWindow(QMainWindow):
             self._everest_controls_group.setVisible(False)
             self._everest_controls_plot_options.get_widget().setVisible(False)
             self._boxplot_options.get_widget().setVisible(False)
+            self._statistics_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
             splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -384,6 +387,7 @@ class PlotWindow(QMainWindow):
         self._boxplot_options.get_widget().setVisible(
             plot_widget.name in {MISFITS, CROSS_ENSEMBLE_STATISTICS}
         )
+        self._statistics_options.get_widget().setVisible(plot_widget.name == STATISTICS)
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
@@ -540,9 +544,7 @@ class PlotWindow(QMainWindow):
 
             plot_config = PlotConfig(title=key_def.key)
             if selected_tab == STATISTICS:
-                plot_config.set_statistics_options(
-                    DEFAULT_ENABLED_STATISTICS, fill_bands=False
-                )
+                self._statistics_options.apply_to(plot_config)
             plot_config.set_title(self._titles.get(key_def.key, key_def.key))
             plot_config.set_x_label(self._x_labels.get(key_def.key))
             plot_config.set_y_label(self._y_labels.get(key_def.key))
