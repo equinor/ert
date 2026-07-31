@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from ert.gui.styling import ColorScheme
-from ert.gui.styling.theme_manager import theme as theme_module
-from ert.gui.styling.theme_manager.theme import load_qss
+from ert.gui.theme_manager import ColorScheme
+from ert.gui.theme_manager import theme as theme_module
+from ert.gui.theme_manager.theme import load_qss
 
 
 class _MissingResource:
