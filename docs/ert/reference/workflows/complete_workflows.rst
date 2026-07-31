@@ -90,7 +90,8 @@ keyword.
 
 Workflow logs with output from job execution can be found in the terminal where ERT was
 started. The output of workflows hooked in with :code:`HOOK_WORKFLOW` is in addition
-written to :code:`<UPDATE_LOG_PATH>/<run_id>/workflows.log`, see
+written to :code:`<UPDATE_LOG_PATH>/<run_id>/workflows.log` and to
+:code:`workflows.log` in the storage directory of the experiment, see
 :ref:`UPDATE_LOG_PATH <update_log_path>`.
 
 .. _runpath-file-workflows:

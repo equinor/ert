@@ -180,6 +180,7 @@ class RunModel(RunModelConfig, ABC):
     _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
     _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
     _workflow_log_id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
+    _pending_workflow_log: list[str] = PrivateAttr(default_factory=list)
 
     def __init__(
         self,
@@ -383,6 +384,7 @@ class RunModel(RunModelConfig, ABC):
 
         start_timestamp = datetime.datetime.now(tz=datetime.UTC)
         self._workflow_log_id = uuid.uuid4()
+        self._pending_workflow_log = []
         try:  # ruff: ignore[too-many-statements-in-try-clause]
             self.send_event(StartEvent(timestamp=start_timestamp))
             with (
@@ -855,6 +857,7 @@ class RunModel(RunModelConfig, ABC):
                     workflow_runner=workflow_runner,
                     hook=fixtures.hook,
                     workflow_name=Path(workflow.src_file).name,
+                    experiment=ensemble.experiment if ensemble is not None else None,
                     iteration=ensemble.iteration if ensemble is not None else None,
                 )
 
@@ -866,24 +869,45 @@ class RunModel(RunModelConfig, ABC):
         workflow_runner: WorkflowRunner,
         hook: HookRuntime,
         workflow_name: str,
+        experiment: Experiment | None,
         iteration: int | None,
     ) -> None:
-        for result in workflow_runner.jobResults():
-            self.send_event(
-                RunModelWorkflowLogEvent(
-                    run_id=self._workflow_log_id,
-                    hook=str(hook),
-                    workflow_name=workflow_name,
-                    job_name=result.name,
-                    job_index=result.index,
-                    arguments=result.arguments,
-                    stdout=result.stdout,
-                    stderr=result.stderr,
-                    failed=result.failed,
-                    timestamp=result.timestamp,
-                    iteration=iteration,
-                )
+        events = [
+            RunModelWorkflowLogEvent(
+                run_id=self._workflow_log_id,
+                hook=str(hook),
+                workflow_name=workflow_name,
+                job_name=result.name,
+                job_index=result.index,
+                arguments=result.arguments,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                failed=result.failed,
+                timestamp=result.timestamp,
+                iteration=iteration,
             )
+            for result in workflow_runner.jobResults()
+        ]
+        for event in events:
+            self.send_event(event)
+        self._persist_workflow_log(events, experiment)
+
+    def _persist_workflow_log(
+        self, events: list[RunModelWorkflowLogEvent], experiment: Experiment | None
+    ) -> None:
+        """Append the workflow output to the experiment it belongs to.
+
+        Hooks that run before the experiment exists in storage, such as
+        PRE_EXPERIMENT, are buffered until an experiment is available.
+        """
+        self._pending_workflow_log.extend(event.as_log_entry() for event in events)
+        if experiment is None or not self._pending_workflow_log:
+            return
+        try:
+            experiment.append_workflow_log(self._pending_workflow_log)
+        except Exception:
+            logger.exception("Failed to persist workflow log to storage")
+        self._pending_workflow_log = []
 
     def _evaluate_and_postprocess(
         self,

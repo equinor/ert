@@ -21,6 +21,7 @@ from ert.config import (
     HookRuntime,
     ModelConfig,
     ObservationType,
+    PreSimulationFixtures,
     PreUpdateFixtures,
     QueueConfig,
     QueueSystem,
@@ -985,3 +986,90 @@ def test_that_workflow_log_events_from_an_update_hook_carry_the_iteration(
     (event,) = _drain(status_queue)
     assert event.iteration == 2
     assert event.hook == "PRE_UPDATE"
+
+
+def test_that_workflow_output_is_appended_to_the_experiment_in_storage(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=SimpleQueue(),
+    )
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    log = experiment.workflow_log_path.read_text(encoding="utf-8")
+    assert "PRE_SIMULATION workflow=hello_workflow job=HELLO#0" in log
+    assert "hello from workflow" in log
+
+
+def test_that_pre_experiment_output_is_persisted_once_an_experiment_exists(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    later = _printing_workflow(tmp_path, "later", 'print("after the experiment")')
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.PRE_EXPERIMENT: [startup],
+            HookRuntime.PRE_SIMULATION: [later],
+        },
+        status_queue=SimpleQueue(),
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="exp")
+    assert not experiment.workflow_log_path.exists()
+
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    log = experiment.workflow_log_path.read_text(encoding="utf-8")
+    assert log.index("before the experiment") < log.index("after the experiment")
+
+
+def test_that_a_failure_to_persist_the_workflow_log_does_not_stop_the_experiment(
+    tmp_path, use_tmpdir, caplog
+):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=status_queue,
+    )
+    ensemble = MagicMock()
+    ensemble.iteration = 0
+    ensemble.experiment.append_workflow_log.side_effect = OSError("disk on fire")
+
+    with caplog.at_level(logging.ERROR):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=MagicMock(),
+                ensemble=ensemble,
+            )
+        )
+
+    assert "Failed to persist workflow log" in caplog.text
+    assert _drain(status_queue), "the event should still be sent"

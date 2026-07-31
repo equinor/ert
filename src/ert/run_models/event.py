@@ -109,7 +109,7 @@ class RunModelWorkflowLogEvent(BaseModel, extra="forbid"):
     timestamp: datetime
     iteration: int | None = None
 
-    def _as_log_entry(self) -> str:
+    def as_log_entry(self) -> str:
         status = "failed" if self.failed else "success"
         header = (
             f"=== {self.timestamp.isoformat(timespec='seconds')} {self.hook} "
@@ -133,7 +133,7 @@ class RunModelWorkflowLogEvent(BaseModel, extra="forbid"):
         log_file = output_path / str(self.run_id) / "workflows.log"
         log_file.parent.mkdir(parents=True, exist_ok=True)
         with log_file.open("a", encoding="utf-8") as fout:
-            fout.write(self._as_log_entry())
+            fout.write(self.as_log_entry())
 
 
 class RunPathCreationEvent(BaseModel, extra="forbid"):

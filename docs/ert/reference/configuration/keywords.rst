@@ -1938,6 +1938,11 @@ Only workflows hooked into an experiment with :ref:`HOOK_WORKFLOW
 <hook_workflow>` are logged this way. Workflows started with ``ert workflow``
 or from the *Run workflow* tool in the GUI are not.
 
+A copy of the same log is stored alongside the experiment it belongs to, in
+``<ENSPATH>/experiments/<experiment_id>/workflows.log``. Output from hooks that
+run before the experiment is created, such as ``PRE_EXPERIMENT``, is held back
+and written once the experiment exists.
+
 .. _keywords_related_to_running_the_forward_model:
 
 Keywords related to running the forward model
