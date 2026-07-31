@@ -5,6 +5,10 @@ from typing import Any
 
 from .plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .plot_style import PlotStyle
+from .statistics_style import (
+    BAND_AREA_STYLE,
+    STATISTICS,
+)
 
 
 class PlotConfig:
@@ -63,12 +67,8 @@ class PlotConfig:
         self._grid_enabled = True
 
         self._statistics_style = {
-            "mean": PlotStyle("Mean", line_style=""),
-            "p50": PlotStyle("P50", line_style=""),
-            "min-max": PlotStyle("Min/Max", line_style=""),
-            "p10-p90": PlotStyle("P10-P90", line_style=""),
-            "p33-p67": PlotStyle("P33-P67", line_style=""),
-            "std": PlotStyle("Std dev", line_style=""),
+            statistic: PlotStyle(style.label, line_style="")
+            for statistic, style in STATISTICS.items()
         }
 
         self._std_dev_factor = 1  # sigma 1 is default std dev
@@ -76,26 +76,19 @@ class PlotConfig:
         self.flip_response_axis = False
         self.flip_observation_axis = False
 
-    def set_statistics_styles_for_dimensionality(self, dimensionality: int) -> None:
-        mean_style = self._statistics_style["mean"]
-        p10p90_style = self._statistics_style["p10-p90"]
-        std_style = self._statistics_style["std"]
-
-        mean_style.line_style = ""
-        mean_style.marker = ""
-        p10p90_style.line_style = ""
-        p10p90_style.marker = ""
-        std_style.line_style = ""
-        std_style.marker = ""
-
-        if dimensionality == 2:
-            mean_style.line_style = "-"
-            p10p90_style.line_style = "--"
-        elif dimensionality == 1:
-            mean_style.line_style = "-"
-            mean_style.marker = "o"
-            std_style.line_style = "--"
-            std_style.marker = "D"
+    def set_statistics_options(
+        self,
+        enabled_statistics: set[str],
+        *,
+        fill_bands: bool,
+    ) -> None:
+        for statistic, style in self._statistics_style.items():
+            if statistic not in enabled_statistics:
+                style.line_style = ""
+            elif fill_bands and STATISTICS[statistic].is_band:
+                style.line_style = BAND_AREA_STYLE
+            else:
+                style.line_style = STATISTICS[statistic].line_style
 
     def get_number_of_colors(self) -> int:
         return len(self._line_color_cycle_colors)

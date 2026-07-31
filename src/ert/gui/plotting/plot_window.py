@@ -58,6 +58,7 @@ from .utils.observation_locations import transform_observation_locations
 from .utils.plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .utils.plot_types import ObservationPlotLocations
 from .utils.qt_creator import create_group_box, create_group_layout, create_side_panel
+from .utils.statistics_style import DEFAULT_ENABLED_STATISTICS
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 from .widgets.plot_controls import (
@@ -539,8 +540,8 @@ class PlotWindow(QMainWindow):
 
             plot_config = PlotConfig(title=key_def.key)
             if selected_tab == STATISTICS:
-                plot_config.set_statistics_styles_for_dimensionality(
-                    key_def.dimensionality
+                plot_config.set_statistics_options(
+                    DEFAULT_ENABLED_STATISTICS, fill_bands=False
                 )
             plot_config.set_title(self._titles.get(key_def.key, key_def.key))
             plot_config.set_x_label(self._x_labels.get(key_def.key))

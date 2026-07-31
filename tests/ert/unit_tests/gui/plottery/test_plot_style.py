@@ -1,7 +1,10 @@
 import math
 
+import pytest
+
 from ert.gui.plotting.utils import PlotConfig, PlotStyle
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter
+from ert.gui.plotting.utils.statistics_style import STATISTICS
 
 
 def test_conditional_axis_formatter():
@@ -205,39 +208,39 @@ def test_plot_config():
     ) != copy_of_plot_config.get_statistics_style("std")
 
 
-def test_that_two_dimensional_keys_draw_mean_and_p10_p90_as_lines():
+def test_that_an_enabled_statistic_gets_its_configured_line_style():
     plot_config = PlotConfig()
-    plot_config.set_statistics_styles_for_dimensionality(1)
 
-    plot_config.set_statistics_styles_for_dimensionality(2)
+    plot_config.set_statistics_options({"mean", "p10-p90"}, fill_bands=False)
+
+    assert plot_config.get_statistics_style("mean").line_style == "-"
+    assert plot_config.get_statistics_style("p10-p90").line_style == "--"
+
+
+def test_that_a_deselected_statistic_has_neither_line_style_nor_marker():
+    plot_config = PlotConfig()
+
+    plot_config.set_statistics_options(set(), fill_bands=False)
 
     mean_style = plot_config.get_statistics_style("mean")
-    assert mean_style.line_style == "-"
+    assert not mean_style.line_style
     assert not mean_style.marker
-
-    p10p90_style = plot_config.get_statistics_style("p10-p90")
-    assert p10p90_style.line_style == "--"
-    assert not p10p90_style.marker
-
-    std_style = plot_config.get_statistics_style("std")
-    assert not std_style.line_style
-    assert not std_style.marker
+    assert not mean_style.is_visible()
 
 
-def test_that_one_dimensional_keys_draw_mean_and_std_with_markers():
+def test_that_filling_bands_draws_selected_band_statistics_as_areas():
     plot_config = PlotConfig()
-    plot_config.set_statistics_styles_for_dimensionality(2)
 
-    plot_config.set_statistics_styles_for_dimensionality(1)
+    plot_config.set_statistics_options({"mean", "p33-p67"}, fill_bands=True)
 
-    mean_style = plot_config.get_statistics_style("mean")
-    assert mean_style.line_style == "-"
-    assert mean_style.marker == "o"
+    assert plot_config.get_statistics_style("p33-p67").line_style == "#"
+    assert plot_config.get_statistics_style("mean").line_style == "-"
 
-    std_style = plot_config.get_statistics_style("std")
-    assert std_style.line_style == "--"
-    assert std_style.marker == "D"
 
-    p10p90_style = plot_config.get_statistics_style("p10-p90")
-    assert not p10p90_style.line_style
-    assert not p10p90_style.marker
+@pytest.mark.parametrize("statistic", sorted(STATISTICS))
+def test_that_every_statistic_is_visible_when_enabled(statistic):
+    plot_config = PlotConfig()
+
+    plot_config.set_statistics_options({statistic}, fill_bands=False)
+
+    assert plot_config.get_statistics_style(statistic).is_visible()
