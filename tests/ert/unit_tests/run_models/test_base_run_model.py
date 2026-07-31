@@ -1073,3 +1073,31 @@ def test_that_a_failure_to_persist_the_workflow_log_does_not_stop_the_experiment
 
     assert "Failed to persist workflow log" in caplog.text
     assert _drain(status_queue), "the event should still be sent"
+
+
+def test_that_pre_experiment_output_is_persisted_when_no_later_hook_has_workflows(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_EXPERIMENT: [startup]},
+        status_queue=SimpleQueue(),
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    assert "before the experiment" in experiment.workflow_log_path.read_text(
+        encoding="utf-8"
+    )

@@ -839,37 +839,41 @@ class RunModel(RunModelConfig, ABC):
         fixtures: HookedWorkflowFixtures,
     ) -> None:
         ensemble = getattr(fixtures, "ensemble", None)
-        for workflow in self.hooked_workflows[fixtures.hook]:
-            workflow_runner = WorkflowRunner(
-                workflow=workflow,
-                fixtures=create_workflow_fixtures_from_hooked(fixtures),
-            )
-            self._workflow_runner = workflow_runner
-            try:
-                if self._end_event.is_set():
-                    workflow_runner.cancel()
-                    raise UserCancelled("Experiment cancelled by user during workflows")
-
-                workflow_runner.run_blocking()
-            finally:
-                self._workflow_runner = None
-                self._send_workflow_log_events(
-                    workflow_runner=workflow_runner,
-                    hook=fixtures.hook,
-                    workflow_name=Path(workflow.src_file).name,
-                    experiment=ensemble.experiment if ensemble is not None else None,
-                    iteration=ensemble.iteration if ensemble is not None else None,
+        experiment = ensemble.experiment if ensemble is not None else None
+        try:
+            for workflow in self.hooked_workflows[fixtures.hook]:
+                workflow_runner = WorkflowRunner(
+                    workflow=workflow,
+                    fixtures=create_workflow_fixtures_from_hooked(fixtures),
                 )
+                self._workflow_runner = workflow_runner
+                try:
+                    if self._end_event.is_set():
+                        workflow_runner.cancel()
+                        raise UserCancelled(
+                            "Experiment cancelled by user during workflows"
+                        )
 
-            if self._end_event.is_set():
-                raise UserCancelled("Experiment cancelled by user during workflows")
+                    workflow_runner.run_blocking()
+                finally:
+                    self._workflow_runner = None
+                    self._send_workflow_log_events(
+                        workflow_runner=workflow_runner,
+                        hook=fixtures.hook,
+                        workflow_name=Path(workflow.src_file).name,
+                        iteration=ensemble.iteration if ensemble is not None else None,
+                    )
+
+                if self._end_event.is_set():
+                    raise UserCancelled("Experiment cancelled by user during workflows")
+        finally:
+            self._persist_workflow_log(experiment)
 
     def _send_workflow_log_events(
         self,
         workflow_runner: WorkflowRunner,
         hook: HookRuntime,
         workflow_name: str,
-        experiment: Experiment | None,
         iteration: int | None,
     ) -> None:
         events = [
@@ -890,17 +894,14 @@ class RunModel(RunModelConfig, ABC):
         ]
         for event in events:
             self.send_event(event)
-        self._persist_workflow_log(events, experiment)
+        self._pending_workflow_log.extend(event.as_log_entry() for event in events)
 
-    def _persist_workflow_log(
-        self, events: list[RunModelWorkflowLogEvent], experiment: Experiment | None
-    ) -> None:
+    def _persist_workflow_log(self, experiment: Experiment | None) -> None:
         """Append the workflow output to the experiment it belongs to.
 
-        Hooks that run before the experiment exists in storage, such as
-        PRE_EXPERIMENT, are buffered until an experiment is available.
+        Output from hooks that run before the experiment exists in storage,
+        such as PRE_EXPERIMENT, is held back until an experiment is available.
         """
-        self._pending_workflow_log.extend(event.as_log_entry() for event in events)
         if experiment is None or not self._pending_workflow_log:
             return
         try:
