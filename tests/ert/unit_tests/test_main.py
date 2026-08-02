@@ -1,10 +1,11 @@
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from packaging.version import Version
 
 import ert.shared
-from ert.__main__ import ert_parser
+from ert import ErtScript, ErtScriptWorkflow
+from ert.__main__ import ert_parser, run_ert_storage
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -12,6 +13,7 @@ from ert.mode_definitions import (
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
+from ert.plugins import ErtRuntimePlugins
 
 
 @pytest.fixture(autouse=True)
@@ -227,3 +229,43 @@ def test_argparse_no_port_range():
         ],
     )
     assert parsed.port_range is None
+
+
+def test_run_ert_storage_uses_runtime_plugins_when_loading_config(
+    monkeypatch, tmp_path
+):
+    class SomeScript(ErtScript):
+        def run(self, *args):
+            pass
+
+    workflow_job = ErtScriptWorkflow(
+        name="SOME_SITE_INSTALLED_WFJOB",
+        ert_script=SomeScript,
+    )
+    runtime_plugins = ErtRuntimePlugins(
+        installed_workflow_jobs={workflow_job.name: workflow_job}
+    )
+
+    workflow_file = tmp_path / "my_hook_workflow"
+    workflow_file.write_text(f"{workflow_job.name}\n", encoding="utf-8")
+
+    config_file = tmp_path / "config.ert"
+    config_file.write_text(
+        f"""\
+NUM_REALIZATIONS 1
+LOAD_WORKFLOW {workflow_file} MY_HOOK
+HOOK_WORKFLOW MY_HOOK PRE_SIMULATION
+""",
+        encoding="utf-8",
+    )
+
+    server = Mock()
+    start_server = MagicMock()
+    start_server.return_value.__enter__.return_value = server
+    monkeypatch.setattr(ert.__main__.ErtServerController, "start_server", start_server)
+
+    args = Mock(config=str(config_file))
+    run_ert_storage(args, runtime_plugins)
+
+    start_server.assert_called_once()
+    server.wait.assert_called_once()

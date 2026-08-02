@@ -53,10 +53,17 @@ from ert.validation import (
 logger = logging.getLogger(__name__)
 
 
-def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
+def run_ert_storage(
+    args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None
+) -> None:
+    active_plugins = (
+        runtime_plugins if runtime_plugins is not None else get_site_plugins()
+    )
+    ert_config = ErtConfig.with_plugins(active_plugins).from_file(args.config)
+
     with ErtServerController.start_server(
         verbose=True,
-        project=Path(ErtConfig.from_file(args.config).ens_path),
+        project=Path(ert_config.ens_path),
         parent_pid=os.getpid(),
     ) as server:
         server.wait()
