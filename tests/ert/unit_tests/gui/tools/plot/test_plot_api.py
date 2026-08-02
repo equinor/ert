@@ -551,6 +551,63 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
         )
 
 
+def test_that_everest_batch_objectives_use_accepted_column(api_and_storage):
+    api, storage, _ = api_and_storage
+    objective_key = "npv"
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                EverestObjectivesConfig(
+                    input_files=[f"{objective_key}.json"],
+                    keys=[objective_key],
+                    scales=[1.0],
+                    weights=[1.0],
+                    objective_types=["mean"],
+                ).model_dump(mode="json")
+            ],
+            "ert_templates": [],
+            "observations": [],
+        }
+    )
+
+    accepted_ensemble = experiment.create_ensemble(
+        ensemble_size=1, name="batch_0", iteration=0
+    )
+    rejected_ensemble = experiment.create_ensemble(
+        ensemble_size=1, name="batch_1", iteration=1
+    )
+
+    for ensemble, objective_value in [
+        (accepted_ensemble, 2.0),
+        (rejected_ensemble, 3.0),
+    ]:
+        ensemble.save_batch_dataframes(
+            {
+                "batch_objectives": pl.DataFrame(
+                    {
+                        "batch_id": [ensemble.iteration],
+                        "total_objective_value": [objective_value],
+                    }
+                )
+            }
+        )
+
+    accepted_df = api.data_for_response(
+        str(accepted_ensemble.id), "total objective value"
+    )
+    rejected_df = api.data_for_response(
+        str(rejected_ensemble.id), "total objective value"
+    )
+
+    assert "accepted" in accepted_df.columns
+    assert "is_improvement" not in accepted_df.columns
+    assert accepted_df["accepted"].dtype == bool
+    assert rejected_df["accepted"].dtype == bool
+    assert accepted_df["accepted"].to_list() == [True]
+    assert rejected_df["accepted"].to_list() == [False]
+
+
 @pytest.mark.parametrize("well_name", ["46/3-7s", "FOPR"])
 def test_that_response_keys_do_not_match_keys_that_are_substrings(
     api_and_storage, well_name
