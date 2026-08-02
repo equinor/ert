@@ -130,6 +130,22 @@ def test_load_forward_model_foreign_raises():
         _ = forward_model_step_from_config_contents("EXECUTABLE /etc/passwd", "CONFIG")
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_load_forward_model_non_executable_relative_path_error_message():
+    executable = Path("script.sh")
+    executable.write_text("This is a script", encoding="utf-8")
+
+    with pytest.raises(ConfigValidationError) as exc_info:
+        _ = forward_model_step_from_config_contents("EXECUTABLE script.sh", "CONFIG")
+
+    message = str(exc_info.value)
+    assert (
+        f"File not executable: 'script.sh' which was resolved to {executable.resolve()}"
+        in message
+    )
+    assert "PosixPath" not in message
+
+
 def test_forward_model_stdout_stderr_defaults_to_filename():
     forward_model = forward_model_step_from_config_contents(
         "EXECUTABLE fm_dispatch.py", "CONFIG"
