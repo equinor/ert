@@ -17,6 +17,7 @@ from ert.observation_converters.summary_to_bulk import (
     BulkConfigConverter,
     _breakthrough_to_string,
 )
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 
 
 @pytest.mark.usefixtures("snake_oil_case")
@@ -28,7 +29,7 @@ def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
     stdout and moving the csv file into the observations folder.
     """
     args = MagicMock(format="bulk", config="snake_oil.ert")
-    convert_observations(args)
+    convert_observations(args, ErtRuntimePlugins())
 
     assert Path("summary_observations.csv").is_file()
     csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
@@ -349,7 +350,7 @@ def test_that_combination_of_precisions_is_maintained_in_csv_conversion(
 def test_that_invalid_format_raises_cli_error():
     args = MagicMock(format="Foo")
     with pytest.raises(ErtCliError):
-        convert_observations(args)
+        convert_observations(args, site_plugins=ErtRuntimePlugins())
 
 
 def test_that_breakthrough_to_string_strips_hour_minute_second_from_date_precision():
@@ -395,4 +396,43 @@ def test_that_no_summary_observations_raises_ert_cli_error():
     )
     args = MagicMock(format="bulk", config="snake_oil.ert")
     with pytest.raises(ErtCliError, match="No summary observations found"):
-        convert_observations(args)
+        convert_observations(args, ErtRuntimePlugins())
+
+
+def test_that_convert_observations_does_not_fail_when_config_has_hooked_workflows(
+    use_tmpdir,
+):
+    """This reproduces the case where ErtConfig.from_file() is called without
+    plugins while hooked workflows reference plugin-provided jobs.
+    """
+    site_plugins = get_site_plugins()
+
+    arbitrary_existing_job = next(iter(site_plugins.installed_workflow_jobs))
+
+    workflow_file = Path("my_hook_workflow")
+    workflow_file.write_text(f"{arbitrary_existing_job}\n", encoding="utf-8")
+
+    obs_config = "foo"
+    summary_obs = (
+        "SUMMARY_OBSERVATION { KEY = FOPR; VALUE = 10; ERROR = 5; DATE = 2000-01-01; };"
+    )
+    Path(obs_config).write_text(
+        summary_obs,
+        encoding="utf-8",
+    )
+
+    ert_config = "config.ert"
+    minimal_workflow_config = f"""\
+    NUM_REALIZATIONS 10
+    ECLBASE foo
+    OBS_CONFIG {obs_config}
+    LOAD_WORKFLOW {workflow_file} MY_HOOK
+    HOOK_WORKFLOW MY_HOOK PRE_SIMULATION
+    """
+    Path(ert_config).write_text(
+        minimal_workflow_config,
+        encoding="utf-8",
+    )
+
+    args = MagicMock(format="bulk", config=ert_config)
+    convert_observations(args, site_plugins)

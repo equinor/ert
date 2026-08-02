@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from dataclasses import fields
 from pathlib import Path
@@ -14,6 +16,7 @@ from ert.config import (
     make_summary_key_data,
 )
 from ert.config._shapes import CircleShapeConfig
+from ert.plugins import ErtRuntimePlugins
 
 INDENT2 = " " * 2
 INDENT4 = " " * 4
@@ -221,8 +224,9 @@ class BulkConfigConverter:
         )
 
 
-def convert_summary_to_bulk(config: str) -> None:
-    ert_config = ErtConfig.from_file(config)
+def convert_summary_to_bulk(config: str, runtime_plugins: ErtRuntimePlugins) -> None:
+    ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(config)
+
     if any(
         obs.type == "summary_observation" for obs in ert_config.observation_declarations
     ):

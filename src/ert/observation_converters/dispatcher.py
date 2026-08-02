@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Any
 
 from ert.cli.main import ErtCliError
 from ert.namespace import Namespace
+from ert.plugins import ErtRuntimePlugins
 
 from .history_to_summary import convert_history_to_summary
 from .summary_to_bulk import (
@@ -16,7 +18,7 @@ class SupportedFormat(StrEnum):
     BULK = "bulk"
 
 
-ConverterFunction = Callable[[str], None]
+ConverterFunction = Callable[[str, ErtRuntimePlugins], None]
 
 _SUPPORTED_CONVERSIONS: dict[SupportedFormat, ConverterFunction] = {
     SupportedFormat.BULK: convert_summary_to_bulk,
@@ -24,7 +26,7 @@ _SUPPORTED_CONVERSIONS: dict[SupportedFormat, ConverterFunction] = {
 }
 
 
-def convert_observations(args: Namespace, _site_plugins: Any | None = None) -> None:
+def convert_observations(args: Namespace, site_plugins: ErtRuntimePlugins) -> None:
     converter_func = _SUPPORTED_CONVERSIONS.get(args.format)
 
     if converter_func is None:
@@ -35,4 +37,4 @@ def convert_observations(args: Namespace, _site_plugins: Any | None = None) -> N
             f"{supported_formats}"
         )
 
-    converter_func(args.config)
+    converter_func(args.config, site_plugins)
