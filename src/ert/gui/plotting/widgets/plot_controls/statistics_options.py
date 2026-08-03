@@ -4,11 +4,8 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QGroupBox
-
 from ert.gui.plotting.utils.qt_creator import (
     create_checkbox_with_tooltip,
-    create_group_box,
     create_group_layout,
     create_labeled_row,
     create_spinbox_with_tooltip,
@@ -17,6 +14,7 @@ from ert.gui.plotting.utils.statistics_style import (
     DEFAULT_ENABLED_STATISTICS,
     STATISTICS,
 )
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 
 if TYPE_CHECKING:
     from ert.gui.plotting.utils import PlotConfig
@@ -57,7 +55,7 @@ class StatisticsOptions:
             logger=logger,
         )
 
-        self._statistics_options = create_group_box(
+        self._statistics_options = CollapsibleSection(
             "Statistics options",
             create_group_layout(
                 [
@@ -82,5 +80,5 @@ class StatisticsOptions:
             if checkbox.isChecked()
         }
 
-    def get_widget(self) -> QGroupBox:
+    def get_widget(self) -> CollapsibleSection:
         return self._statistics_options
