@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections import defaultdict
 from dataclasses import fields
 from pathlib import Path
@@ -225,7 +226,9 @@ class BulkConfigConverter:
 
 
 def convert_summary_to_bulk(config: str, runtime_plugins: ErtRuntimePlugins) -> None:
-    ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(config)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(config)
 
     if any(
         obs.type == "summary_observation" for obs in ert_config.observation_declarations
