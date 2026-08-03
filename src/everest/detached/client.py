@@ -211,24 +211,20 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
 def get_opt_status_from_batch_result_event(
     event: EverestBatchResultEvent,
 ) -> dict[str, Any]:
-    if not event.results:
-        return {}
-
-    assert event.batch is not None
-
-    if event.result_type == "FunctionResult":
-        return {
-            "batch": event.batch,
-            "controls": event.results["controls"],
-            "objective_value": event.results["total_objective_value"],
-            "expected_objectives": event.results["objectives"],
-            "failures": event.failures,
-        }
-
-    return {
+    status = {
+        "result_type": event.result_type,
         "batch": event.batch,
         "failures": event.failures,
     }
+    if event.results and event.result_type == "FunctionResult":
+        status.update(
+            {
+                "controls": event.results["controls"],
+                "objective_value": event.results["total_objective_value"],
+                "expected_objectives": event.results["objectives"],
+            }
+        )
+    return status
 
 
 def start_monitor(
