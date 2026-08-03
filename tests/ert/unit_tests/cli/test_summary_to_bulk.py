@@ -462,3 +462,20 @@ def test_that_convert_observations_does_not_fail_when_config_has_hooked_workflow
 
     args = MagicMock(format="bulk", config=ert_config)
     convert_observations(args, site_plugins)
+
+
+def test_that_dumping_to_csv_is_skipped_when_file_already_exists(use_tmpdir):
+    observations = [_make_summary_obs()]
+
+    Path(BulkConfigConverter.TARGET_FILE).write_text("existing", encoding="utf-8")
+    assert Path(BulkConfigConverter.TARGET_FILE).is_file()
+
+    converter = BulkConfigConverter(observations=observations)
+    with pytest.raises(
+        ErtCliError,
+        match=(
+            rf"A file with name '{BulkConfigConverter.TARGET_FILE}' already exists. "
+            "Will not overwrite it and exit instead."
+        ),
+    ):
+        converter.write_csv()
