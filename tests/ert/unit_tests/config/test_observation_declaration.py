@@ -28,7 +28,10 @@ from ert.config.parsing.observations_parser import (
     observations_parser,
 )
 from ert.observation_converters.history_to_summary import convert_history_to_summary
-from tests.ert.defaults_generator import create_seismic_observation
+from tests.ert.defaults_generator import (
+    create_seismic_observation,
+    create_seismic_observation_dict,
+)
 
 observation_contents = stlark.from_lark(observations_parser)
 
@@ -1040,19 +1043,45 @@ def test_that_invalid_value_type_in_seismic_observation_raises_error(
     )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_empty_seismic_observation_file_does_not_raise(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            """
+        ),
+        encoding="utf8",
+    )
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                create_seismic_observation_dict(
+                    csv="obs.csv",
+                ),
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=ShapeRegistry(),
+    )
+
+    assert obs == []
+
+
 @pytest.mark.parametrize(
     ("east", "north"),
     [
-        pytest.param([111.11, 111.11], [222.22, 222.22], id="same coordinates"),
+        pytest.param([111.11, 111.11], [222.222, 222.222], id="same coordinates"),
         pytest.param(
-            [111.1111111111111111111111, 111.11111111111111],
-            [222.2222222222222222222222222222222, 222.22222222222223],
-            id="lost precision",
+            [0.0, 0.0],
+            [0.0, 0.19],
+            id="less than double tolerance",
         ),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_duplicate_location_in_seismic_observation_raises(
+def test_that_seismic_observation_coordinate_distance_below_tolerance_raises(
     file_context_token, east, north
 ):
 
@@ -1071,11 +1100,9 @@ def test_that_duplicate_location_in_seismic_observation_raises(
             "",
             [
                 ObservationDict(
-                    {
-                        "type": ObservationType.SEISMIC,
-                        "name": "NAME",
-                        "CSV": "obs.csv",
-                    },
+                    create_seismic_observation_dict(
+                        csv="obs.csv",
+                    ),
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
                 )
             ],
@@ -1083,8 +1110,9 @@ def test_that_duplicate_location_in_seismic_observation_raises(
         )
 
     assert (
-        f"Seismic observation coordinates ({east[1]}, {north[1]}) "
-        "were not unique (after rounding from f64 to f32)." in str(err.value)
+        "Seismic observation coordinates with approximate locations "
+        f"[(({east[0]}, {north[0]}), ({east[1]}, {north[1]}))] "
+        "fall inside of a tolerance radius." in str(err.value)
     )
 
 
