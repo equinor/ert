@@ -303,7 +303,6 @@ class PlotWindow(QMainWindow):
 
             self._general_options = GeneralPlotOptions(
                 connection_point=self.update_plot,
-                is_everest=self.is_everest,
             )
             self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
             self._general_options.titleEditRequested.connect(self._edit_title)

@@ -19,6 +19,7 @@ from ert.gui.plotting.utils.qt_creator import (
     create_group_layout,
 )
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
+from ert.gui.utils import is_everest_application
 
 from .observation_color import ObservationColorEdit
 from .plot_color_palette_selector import PlotColorPaletteSelector
@@ -33,12 +34,10 @@ class GeneralPlotOptions(QObject):
     def __init__(
         self,
         connection_point: Callable[..., object],
-        *,
-        is_everest: bool,
     ) -> None:
         super().__init__()
 
-        self._is_everest = is_everest
+        self._is_everest = is_everest_application()
 
         def create_edit_button(
             name: str,
@@ -85,7 +84,7 @@ class GeneralPlotOptions(QObject):
             self._toggle_log_scale,
         ]
 
-        if not is_everest:
+        if not self._is_everest:
             self._observations_color_edit = ObservationColorEdit(
                 connection_point=connection_point,
                 observation_checkbox=self._toggle_observations,
