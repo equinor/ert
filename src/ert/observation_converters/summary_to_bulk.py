@@ -166,7 +166,7 @@ class BulkConfigConverter:
         csv_str.write(csv_header)
 
         for key in natsorted(self.key_to_smry_obs.keys()):
-            skd = make_summary_key_data(key)
+            summary_key_data = make_summary_key_data(key)
             # Sort observations chronologically
             sorted_smry_obs = sorted(
                 self.key_to_smry_obs[key],
@@ -174,8 +174,8 @@ class BulkConfigConverter:
             )
             for observation in sorted_smry_obs:
                 assert observation.type == "summary_observation"
-                for f in self.header_fields:
-                    v = getattr(skd, f)
+                for header_field in self.header_fields:
+                    v = getattr(summary_key_data, header_field)
                     if v is None:
                         csv_str.write(", ")
                     else:
@@ -186,7 +186,14 @@ class BulkConfigConverter:
                 csv_str.write(f"{observation.error:.3g}, ")
                 csv_str.write(f"{date}\n")
 
-        Path(self.TARGET_FILE).write_text(csv_str.getvalue(), encoding="utf-8")
+        try:
+            with Path(self.TARGET_FILE).open("x", encoding="utf-8") as f:
+                f.write(csv_str.getvalue())
+        except FileExistsError as error:
+            raise ErtCliError(
+                f"A file with name '{self.TARGET_FILE}' already exists. "
+                "Will not overwrite it and exit instead."
+            ) from error
 
     def print_bulk_config(
         self,
