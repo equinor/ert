@@ -496,7 +496,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         "observation format to summary, but this can be "
         "configured using the --format flag to specify "
         "which format to convert to."
-        "Valid formats are: bulk, summary"
+        "Valid formats are: bulk, summary, yaml"
     )
     convert_obs_parser = subparsers.add_parser(
         "convert_observations",
