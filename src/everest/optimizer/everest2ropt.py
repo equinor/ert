@@ -231,20 +231,17 @@ def _parse_optimization(
 
         ropt_backend["parallel"] = ever_opt.parallel
 
-        if ever_opt.perturbation_num is not None:
-            ropt_gradient["number_of_perturbations"] = ever_opt.perturbation_num
-            # For a single perturbation, use the ensemble for gradient calculation:
-            ropt_gradient["merge_realizations"] = (
-                ropt_gradient["number_of_perturbations"] == 1
-            )
+        ropt_gradient["number_of_perturbations"] = ever_opt.perturbation_num
+        # For a single perturbation, use the ensemble for gradient calculation:
+        ropt_gradient["merge_realizations"] = (
+            ropt_gradient["number_of_perturbations"] == 1
+        )
 
-        if ever_opt.min_pert_success is not None:
-            ropt_gradient["perturbation_min_success"] = ever_opt.min_pert_success
+        assert ever_opt.min_pert_success is not None
+        ropt_gradient["perturbation_min_success"] = ever_opt.min_pert_success
 
-        if ever_opt.min_realizations_success is not None:
-            ropt_realizations["realization_min_success"] = (
-                ever_opt.min_realizations_success
-            )
+        assert ever_opt.min_realizations_success is not None
+        ropt_realizations["realization_min_success"] = ever_opt.min_realizations_success
 
         if (cvar_opts := ever_opt.cvar) is not None:
             # set up the configuration of the realization filter that implements cvar:

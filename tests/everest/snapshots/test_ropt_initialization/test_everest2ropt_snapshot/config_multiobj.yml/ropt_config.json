@@ -11,7 +11,8 @@
   ],
   "gradient": {
     "merge_realizations": false,
-    "number_of_perturbations": 5
+    "number_of_perturbations": 5,
+    "perturbation_min_success": 5
   },
   "names": {
     "nonlinear_constraint": [],
@@ -51,6 +52,7 @@
     "stdout": "optimizer.stdout"
   },
   "realizations": {
+    "realization_min_success": 1,
     "weights": [
       1.0
     ]

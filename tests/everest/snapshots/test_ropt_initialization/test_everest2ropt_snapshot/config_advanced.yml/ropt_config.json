@@ -11,7 +11,8 @@
   "gradient": {
     "evaluation_policy": "speculative",
     "merge_realizations": false,
-    "number_of_perturbations": 5
+    "number_of_perturbations": 5,
+    "perturbation_min_success": 5
   },
   "linear_constraints": {
     "coefficients": [
@@ -80,6 +81,7 @@
     "stdout": "optimizer.stdout"
   },
   "realizations": {
+    "realization_min_success": 2,
     "weights": [
       0.25,
       0.75
