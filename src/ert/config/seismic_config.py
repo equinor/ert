@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, ClassVar, Literal, Self
 
+import numpy as np
 import polars as pl
+import scipy as sp
 
 from ert.substitutions import substitute_runpath_name
 
@@ -28,6 +30,8 @@ class SeismicConfig(SimulationResponseConfig):
     name: str = "seismic"
     type: Literal["seismic"] = "seismic"
 
+    TOLERANCE: ClassVar[float] = 0.1
+
     @property
     def expected_input_files(self) -> list[str]:
         return self.input_files
@@ -40,6 +44,28 @@ class SeismicConfig(SimulationResponseConfig):
             "north": pl.Float32,
             "values": pl.Float32,
         }
+
+    @staticmethod
+    def validate_distance_between_responses(df: pl.DataFrame) -> None:
+        easts = df["east"].to_numpy()
+        norths = df["north"].to_numpy()
+        coordinates = np.column_stack([easts, norths])
+        tree = sp.spatial.KDTree(coordinates)
+        too_close_pairs = tree.query_pairs(r=SeismicConfig.TOLERANCE * 2)
+        if too_close_pairs:
+            too_close_coords = [
+                (
+                    (float(easts[i]), float(norths[i])),
+                    (float(easts[j]), float(norths[j])),
+                )
+                for i, j in too_close_pairs
+            ]
+            raise InvalidResponseFile(
+                "Seismic response coordinates with approximate locations "
+                f"{too_close_coords} fall inside of a tolerance radius. All seismic "
+                "response coordinates are expected to be more than "
+                f"{SeismicConfig.TOLERANCE * 2} m apart."
+            )
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         responses = pl.DataFrame(schema=self.response_schema())
@@ -61,22 +87,7 @@ class SeismicConfig(SimulationResponseConfig):
                     "values": csv["OBS"].cast(pl.Float32),
                 }
             )
-            duplicates = (
-                df.group_by(["east", "north"])
-                .agg(pl.len().alias("count"))
-                .filter(pl.col("count") > 1)
-            )
-            duplicates_str = "\n".join(
-                f"  east={d['east']}, north={d['north']}, count={d['count']}"
-                for d in duplicates.to_dicts()
-            )
-            if len(duplicates) > 0:
-                raise InvalidResponseFile(
-                    "Seismic response coordinates were not unique (after rounding "
-                    "from f64 to f32). Approximate locations are:\n"
-                    f"{duplicates_str}"
-                )
-
+            self.validate_distance_between_responses(df)
             responses = pl.concat([responses, df], how="vertical")
         return self._assert_schema(responses, self.response_schema())
 
