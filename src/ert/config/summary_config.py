@@ -51,7 +51,7 @@ class SummaryConfig(SimulationResponseConfig):
                 "values": [pl.Series(row, dtype=pl.Float32) for row in data],
             }
         )
-        df = df.explode("values", "time")
+        df = df.explode("values", "time", empty_as_null=False)
         return df.sort(by=["time"])
 
     @property
