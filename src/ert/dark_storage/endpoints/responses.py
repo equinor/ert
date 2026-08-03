@@ -360,10 +360,10 @@ def data_for_response(
 
             assert filter_on is not None
             assert "report_step" in filter_on
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 report_step = int(filter_on["report_step"])
                 vals = data.filter(pl.col("report_step").eq(report_step))
-                pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010
+                pivoted = vals.drop("response_key", "report_step").pivot(  # ruff: ignore[pandas-use-of-dot-pivot-or-unstack]
                     on="index", values="values"
                 )
                 data = (

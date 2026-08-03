@@ -65,18 +65,18 @@ async def test_https_requests(change_to_tmpdir):
     )
     wait_for_server(session, 240)
     url, cert, auth = ServerConfig.get_server_context_from_conn_info(session.conn_info)
-    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # ruff: ignore[blocking-http-call-in-async-function]
     assert result.status_code == 200  # Request has succeeded
 
     # Test http request fail
     http_url = url.replace("https", "http")
-    with pytest.raises(Exception):  # noqa B017
-        response = requests.get(http_url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+    with pytest.raises(Exception):  # ruff: ignore[assert-raises-exception, pytest-raises-too-broad, pytest-raises-with-multiple-statements] B017
+        response = requests.get(http_url, verify=cert, auth=auth, proxies=PROXY)  # ruff: ignore[blocking-http-call-in-async-function]
         response.raise_for_status()
 
     # Test request with wrong password fails
     auth = ("admin", "wrong_password")
-    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # ruff: ignore[blocking-http-call-in-async-function]
 
     assert result.status_code == 401  # Unauthorized
 

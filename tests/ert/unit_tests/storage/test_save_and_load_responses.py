@@ -31,7 +31,7 @@ def test_that_saving_response_updates_configs(tmp_path):
             {
                 "response_key": ["FOPR", "FOPT:OP1", "FOPR:OP3", "FLAP", "F*"],
                 "time": pl.Series(
-                    [datetime(2000, 1, i) for i in range(1, 6)]  # noqa: DTZ001
+                    [datetime(2000, 1, i) for i in range(1, 6)]  # ruff: ignore[call-datetime-without-tzinfo]
                 ).dt.cast_time_unit("ms"),
                 "values": pl.Series([0.0, 1.0, 2.0, 3.0, 4.0], dtype=pl.Float32),
             }
@@ -136,7 +136,7 @@ def test_save_response_will_create_realization_directory(storage):
         pl.DataFrame(
             {
                 "response_key": ["DUMMY"],
-                "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),  # noqa: DTZ001
+                "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),  # ruff: ignore[call-datetime-without-tzinfo]
                 "values": pl.Series([0.0], dtype=pl.Float32),
             }
         ),
@@ -162,7 +162,7 @@ def test_save_response_will_not_recreate_ensemble_directory(storage):
             pl.DataFrame(
                 {
                     "response_key": ["DUMMY"],
-                    "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),  # noqa: DTZ001
+                    "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),  # ruff: ignore[call-datetime-without-tzinfo]
                     "values": pl.Series([0.0], dtype=pl.Float32),
                 }
             ),

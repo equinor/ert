@@ -793,7 +793,7 @@ def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
 
 
 @pytest.mark.slow
-def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_overwrites(  # noqa: E501
+def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_overwrites(  # ruff: ignore[line-too-long]
     tmp_path, monkeypatch
 ):
     """If a site plugin defines a forward model step that will fail validation, but

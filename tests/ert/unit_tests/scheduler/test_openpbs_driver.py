@@ -42,7 +42,7 @@ pytestmark = pytest.mark.xdist_group("openpbs")
 
 QSTAT_HEADER = (
     "Job id                         Name            User             Time Use S Queue\n"
-    "-----------------------------  --------------- ---------------  -------- - ---------------\n"  # noqa: E501
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"  # ruff: ignore[line-too-long]
 )
 QSTAT_HEADER_FORMAT = "%-30s %-15s %-15s %-8s %-1s %-5s"
 
@@ -471,7 +471,7 @@ def _mock_flaky_qstat(error_message_to_output: str):
                 echo "{error_message_to_output}" >&2
                 exit 2
             fi
-        """  # noqa: E501
+        """  # ruff: ignore[line-too-long]
         ),
         encoding="utf-8",
     )
@@ -589,7 +589,7 @@ async def mock_failure(message, *args, **kwargs):
 
 @pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
-def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(  # noqa: E501
+def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(  # ruff: ignore[line-too-long]
     monkeypatch, caplog, queue_name_config
 ):
     async def submit_that_fails(*args, **kwargs):
@@ -609,7 +609,7 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
 
 @pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
-def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(  # noqa: E501
+def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(  # ruff: ignore[line-too-long]
     monkeypatch, caplog, queue_name_config
 ):
     monkeypatch.setattr(EnsembleEvaluator, "BATCHING_INTERVAL", 0.05)

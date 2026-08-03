@@ -31,7 +31,7 @@ def create_observation_dataframes(
     config_errors: list[ErrorInfo] = []
     grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
     for obs in observations:
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             match obs:
                 case SummaryObservation():
                     grouped["summary"].append(

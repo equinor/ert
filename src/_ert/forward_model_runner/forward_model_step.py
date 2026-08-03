@@ -152,19 +152,19 @@ class ForwardModelStep:
         io.TextIOWrapper | None, io.TextIOWrapper | None, io.TextIOWrapper | None
     ]:
         if stdin_file := self.step_data.get("stdin"):
-            stdin = open(stdin_file, encoding="utf-8")  # noqa
+            stdin = open(stdin_file, encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
         else:
             stdin = None
 
         if self.std_err:
             os.makedirs(path.dirname(path.abspath(self.std_err)), exist_ok=True)
-            stderr = open(self.std_err, "w", encoding="utf-8")  # noqa
+            stderr = open(self.std_err, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
         else:
             stderr = None
 
         if self.std_out:
             os.makedirs(path.dirname(path.abspath(self.std_out)), exist_ok=True)
-            stdout = open(self.std_out, "w", encoding="utf-8")  # noqa
+            stdout = open(self.std_out, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
         else:
             stdout = None
 

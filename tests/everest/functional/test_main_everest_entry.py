@@ -156,7 +156,7 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
             while True:
                 status = get_experiment_status(config.storage_dir)
                 if status and status.status == ExperimentState.running:
-                    import _thread  # noqa: PLC0415
+                    import _thread  # ruff: ignore[import-outside-top-level]
 
                     _thread.interrupt_main()
                     return

@@ -438,7 +438,7 @@ class SnapshotModel(QAbstractItemModel):
                 # There is no method for truncating microseconds, so we remove them
                 delta -= timedelta(microseconds=delta.microseconds)
                 if delta < timedelta():
-                    global _warn_once  # noqa: PLW0603
+                    global _warn_once  # ruff: ignore[global-statement]
                     if _warn_once:
                         _warn_once = False
                         logger.warning(

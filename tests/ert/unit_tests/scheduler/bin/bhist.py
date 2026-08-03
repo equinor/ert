@@ -64,7 +64,7 @@ def bhist_long_formatter(jobstats: list[Job]) -> str:
                                 D </private/test_user>, Execution Pid <11111>;
 
             Summary of time in seconds spent in various states by  Mon Apr 19 11:33:14
-            PEND     PSUSP    RUN      USUSP    SSUSP    UNKWN    TOTAL\n\t\t"""  # noqa: E501
+            PEND     PSUSP    RUN      USUSP    SSUSP    UNKWN    TOTAL\n\t\t"""  # ruff: ignore[line-too-long]
             f"{job.pend!s:8.8s} {job.psusp!s:8.8s} {job.run!s:8.8s}"
             f"{job.ususp!s:8.8s} {job.ssusp!s:8.8s} {job.unkwn!s:8.8s}"
             f"{job.total!s:8.8s}"

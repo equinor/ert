@@ -68,7 +68,7 @@ def _handle_keyboard_interrupt(signal: int, _: Any, *, after: bool = False) -> N
             "kill request will be cancelled..."
         )
     sys.tracebacklimit = 0
-    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler] SIM115
     sys.exit()
 
 

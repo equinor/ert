@@ -26,7 +26,7 @@ sys.path.append(os.path.abspath("_ext"))
 # -- Project information -----------------------------------------------------
 
 project = "EVEREST"
-copyright = "2024, Equinor & TNO"  # noqa: A001
+copyright = "2024, Equinor & TNO"  # ruff: ignore[builtin-variable-shadowing]
 author = "Equinor & TNO"
 
 

@@ -642,7 +642,7 @@ def test_run_dialog_fm_label_show_correct_info(
 
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_simulation_fails(  # noqa E501
+def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_simulation_fails(  # ruff: ignore[line-too-long] E501
     qtbot: QtBot, use_tmpdir
 ):
     config_file = "minimal_config.ert"
@@ -815,7 +815,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                 raise AssertionError("No DesignMatrixPanel dialog found")
             dialog = dialogs[0]
 
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 model = dialog.model
                 assert model.rowCount() == 3
                 assert model.columnCount() == 1

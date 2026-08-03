@@ -46,7 +46,7 @@ class _ErtDocumentation(SphinxDirective):
                 continue
 
             if isinstance(docs, ForwardModelStepDocumentation):
-                docs = {  # noqa: PLW2901
+                docs = {  # ruff: ignore[redefined-loop-name]
                     "description": docs.description,
                     "examples": docs.examples,
                     "config_file": docs.config_file,

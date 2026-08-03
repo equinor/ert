@@ -609,7 +609,7 @@ class LocalStorage(BaseMode):
 
     @require_write
     def _migrate(self, version: int) -> None:
-        from .migration import (  # noqa: PLC0415
+        from .migration import (  # ruff: ignore[import-outside-top-level]
             to6,
             to7,
             to8,
@@ -643,7 +643,7 @@ class LocalStorage(BaseMode):
             to36,
         )
 
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             self._index = self._load_index()
             if version == 0:
                 # Make a backup of current storage,
@@ -842,7 +842,7 @@ def local_storage_set_ert_config(ert_config: ErtConfig | None) -> None:
         The ErtConfig instance to be used for migrations.
     """
 
-    global _migration_ert_config  # noqa: PLW0603
+    global _migration_ert_config  # ruff: ignore[global-statement]
     _migration_ert_config = ert_config
 
 

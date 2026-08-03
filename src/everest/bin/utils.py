@@ -130,8 +130,8 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
         )
     print("=" * 80)
     sys.tracebacklimit = 0
-    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
-    sys.stderr = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler] SIM115
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler] SIM115
     sys.exit()
 
 
@@ -210,7 +210,7 @@ class _DetachedMonitor:
         self._snapshots: dict[int, EnsembleSnapshot] = {}
 
     def update(self, status: dict[str, Any]) -> None:
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             if OPT_PROGRESS_ID in status:
                 opt_status = status[OPT_PROGRESS_ID]
                 if opt_status:

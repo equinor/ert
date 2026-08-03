@@ -1193,7 +1193,7 @@ def test_that_define_can_set_substitutions_to_the_empty_string():
             """
         )
     )
-    assert ert_config.substitutions.get("<TEST1>") == ""  # noqa
+    assert ert_config.substitutions.get("<TEST1>") == ""  # ruff: ignore[compare-to-empty-string]
 
 
 @pytest.mark.usefixtures("use_tmpdir")

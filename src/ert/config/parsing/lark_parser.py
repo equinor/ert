@@ -204,7 +204,7 @@ def _tree_to_dict(
         if kw != constraints.kw:  # is an alias
             kw.value = constraints.kw
 
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             args = constraints.join_args(args)
             subst_args = _substitute_args(args, constraints, defines)
             option_args = list(constraints.parse_options(subst_args))  # type: ignore

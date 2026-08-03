@@ -96,7 +96,7 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
         except RuntimeError:
             traceback_str = None
 
-        logger.exception(f"ERT GUI crashed unexpectedly with: {value}\n{traceback_str}")  # noqa: LOG004
+        logger.exception(f"ERT GUI crashed unexpectedly with: {value}\n{traceback_str}")  # ruff: ignore[log-exception-outside-except-handler]
 
         def recursive_logger_flush(logger: logging.Logger) -> None:
             for handler in logger.handlers:
@@ -176,7 +176,7 @@ def _start_initial_gui_window(
 
     storage_path = None
     if ert_config is not None:
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             if LocalStorage.check_migration_needed(Path(ert_config.ens_path)):
                 storage_version = _storage_version(Path(ert_config.ens_path))
                 current_version = _LOCAL_STORAGE_VERSION

@@ -68,7 +68,7 @@ def test_using_qt_model_tester(small_snapshot):
     model = SnapshotModel()
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # ruff: ignore[unused-variable], prevent GC
         model, reporting_mode
     )
 

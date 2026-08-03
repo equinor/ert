@@ -75,7 +75,7 @@ def run_simulator(summary_values=SUMMARY_VALUES):
     """
     summary = Summary.writer(
         "MY_REFCASE",
-        datetime(2000, 1, 1),  # noqa: DTZ001
+        datetime(2000, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
         10,
         10,
         10,
@@ -1120,7 +1120,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
         (
             {"REFCASE": "ECLIPSE_CASE"},
             lambda: run_sim(
-                datetime(2014, 9, 10)  # noqa: DTZ001
+                datetime(2014, 9, 10)  # ruff: ignore[call-datetime-without-tzinfo]
             ),
         ),
         (
@@ -1250,7 +1250,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
 def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),  # noqa: DTZ001
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
@@ -1479,7 +1479,7 @@ def test_that_general_observation_restart_must_match_gen_data_report_step(
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),  # noqa: DTZ001
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
             [
                 (k, "SM3/DAY", None)
                 for k in ["FOPR", "FWPR", "FOPRH", "FWPRH", "FGPR", "FGPRH"]
@@ -1531,7 +1531,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
 def test_that_segment_defaults_are_applied(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),  # noqa: DTZ001
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
             days=range(10),
         )
@@ -2170,7 +2170,7 @@ def test_that_unreachable_breakthrough_thresholds_has_none_response():
     assert response_df["values"].to_list() == [None]
 
 
-def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_turned_into_responses():  # noqa: E501
+def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_turned_into_responses():  # ruff: ignore[line-too-long]
     keys = ["WWCT:OP_1", "WWCT:OP_2"]
     obs_dates = ["2012-12-01", "2012-12-02"]
     thresholds = [0.2, 0.8]

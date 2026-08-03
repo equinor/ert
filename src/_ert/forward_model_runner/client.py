@@ -109,7 +109,7 @@ class Client:
     async def _receiver(self) -> None:
         last_heartbeat_time: float | None = None
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 _, raw_msg = await self.socket.recv_multipart()
                 if raw_msg == ACK_MSG:
                     self._ack_event.set()
@@ -146,7 +146,7 @@ class Client:
         if retries is None:
             retries = self.DEFAULT_MAX_RETRIES
         while retries >= 0:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 await self.socket.send_multipart([b"", message])
                 try:
                     await asyncio.wait_for(

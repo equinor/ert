@@ -118,7 +118,7 @@ def make_poly_example(folder, source, **kwargs):
     else:
         summary = Summary.writer(
             str(folder) + "/refcase/REFCASE",
-            datetime.datetime(2010, 1, 1),  # noqa: DTZ001
+            datetime.datetime(2010, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
             10,
             10,
             10,

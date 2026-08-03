@@ -110,7 +110,7 @@ class CSVExportJob(ErtScript):
                 summary_data = pl.DataFrame({})
 
             if not summary_data.is_empty():
-                pivoted_summary = summary_data.pivot(  # noqa: PD010
+                pivoted_summary = summary_data.pivot(  # ruff: ignore[pandas-use-of-dot-pivot-or-unstack]
                     index=["realization", "time"], on="response_key", values="values"
                 ).to_pandas()
 

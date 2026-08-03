@@ -817,6 +817,6 @@ def _read_time_map(file_contents: str) -> list[datetime]:
                 "DD/MM/YYYY date format is deprecated"
                 ", please use ISO date format YYYY-MM-DD."
             )
-            return datetime.strptime(date_str, "%d/%m/%Y")  # noqa: DTZ007
+            return datetime.strptime(date_str, "%d/%m/%Y")  # ruff: ignore[call-datetime-strptime-without-zone]
 
     return [str_to_datetime(line.strip()) for line in file_contents.splitlines()]

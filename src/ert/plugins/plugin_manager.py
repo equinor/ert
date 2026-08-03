@@ -52,8 +52,8 @@ class ErtPluginManager(pluggy.PluginManager):
     def __init__(self, plugins: Sequence[object] | None = None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)
 
-        import ert.plugins.hook_implementations  # noqa
-        import ert.plugins.hook_specifications  # noqa
+        import ert.plugins.hook_implementations  # ruff: ignore[import-outside-top-level]
+        import ert.plugins.hook_specifications  # ruff: ignore[import-outside-top-level]
 
         self.add_hookspecs(ert.plugins.hook_specifications)
         if plugins is None:

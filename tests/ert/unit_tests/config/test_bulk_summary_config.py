@@ -201,7 +201,7 @@ def test_that_multiple_bulk_summary_configs_can_be_in_the_same_config():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_breakthrough_can_be_instantiated_with_well_localization_through_summary_bulk_config():  # noqa: E501
+def test_that_breakthrough_can_be_instantiated_with_well_localization_through_summary_bulk_config():  # ruff: ignore[line-too-long]
     obs_config = """
     SUMMARY {
         VALUES = summary_values.csv;
@@ -233,7 +233,7 @@ def test_that_breakthrough_can_be_instantiated_with_well_localization_through_su
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_breakthrough_can_be_instantiated_without_well_localization_through_summary_bulk_config():  # noqa: E501
+def test_that_breakthrough_can_be_instantiated_without_well_localization_through_summary_bulk_config():  # ruff: ignore[line-too-long]
     obs_config = """
     SUMMARY {
         VALUES = summary_values.csv;
@@ -327,7 +327,7 @@ def test_that_summary_bulk_config_resolves_csv_in_subdirectory_from_main_config(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_breakthrough_in_bulk_summary_config_doesnt_append_well_name_if_well_name_is_in_breakthrough_key():  # noqa: E501
+def test_that_breakthrough_in_bulk_summary_config_doesnt_append_well_name_if_well_name_is_in_breakthrough_key():  # ruff: ignore[line-too-long]
     obs_config = """
     SUMMARY {
         VALUES = summary_values.csv;

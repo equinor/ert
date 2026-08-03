@@ -19,7 +19,7 @@ def test_exception_can_be_caught():
     # Using ErtThread throws an exception on the main thread so that pytest can
     # catch it.
     thread = ErtThread(target=watch_out_im_gonna_throw)
-    with pytest.raises(ErtThreadError, match="I threw") as e:  # noqa: PT012
+    with pytest.raises(ErtThreadError, match="I threw") as e:  # ruff: ignore[pytest-raises-with-multiple-statements]
         # Whichever of these that raises varies:
         thread.start()
         thread.join()
@@ -37,7 +37,7 @@ def test_exception_are_logged_with_traceback(caplog):
     # Using ErtThread throws an exception on the main thread so that pytest can
     # catch it.
     thread = ErtThread(target=watch_out_im_gonna_throw)
-    with pytest.raises(ErtThreadError):  # noqa: PT012
+    with pytest.raises(ErtThreadError):  # ruff: ignore[pytest-raises-with-multiple-statements]
         # Whichever of these that raises varies:
         thread.start()
         thread.join()

@@ -145,7 +145,7 @@ def create_experiment_args(
 
     _summary_time_delta = datetime.timedelta(30)
     summary_timesteps = [
-        datetime.datetime(2000, 1, 1) + datetime.timedelta(30) * i  # noqa: DTZ001
+        datetime.datetime(2000, 1, 1) + datetime.timedelta(30) * i  # ruff: ignore[call-datetime-without-tzinfo]
         for i in range(num_summary_timesteps)
     ]
     summary_response_keys = [

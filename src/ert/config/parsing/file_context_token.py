@@ -13,7 +13,7 @@ class FileContextToken(Token):
 
     filename: str
 
-    def __new__(cls, token: Token, filename: str) -> FileContextToken:  # noqa: PYI034
+    def __new__(cls, token: Token, filename: str) -> FileContextToken:  # ruff: ignore[non-self-return-type]
         inst = super().__new__(
             cls,
             token.type,

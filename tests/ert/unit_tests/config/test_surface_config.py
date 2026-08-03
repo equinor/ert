@@ -319,7 +319,7 @@ def test_surface_parameter_graph(shape, expected_nodes, expected_links):
     assert data["links"] == expected_links
 
 
-def test_surface_create_storage_datasets_raises_surface_mismatch_error_when_the_number_of_surface_parameters_is_different_than_base_surface_size():  # noqa
+def test_surface_create_storage_datasets_raises_surface_mismatch_error_when_the_number_of_surface_parameters_is_different_than_base_surface_size():  # ruff: ignore[line-too-long]
     surface_name = "foo_surface"
     realization = 13
     surface_parameters = 10

@@ -93,7 +93,7 @@ def create_summary_observation_dict(
 def create_breakthrough_observation(
     name: str = "breakthrough_observation",
     key: str = "WWCT:OP1",
-    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # noqa: DTZ001
+    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
     error: float = 10.0,
     threshold: float = 0.2,
 ) -> BreakthroughObservation:
@@ -109,7 +109,7 @@ def create_breakthrough_observation(
 def create_breakthrough_observation_dict(
     name: str = "breakthrough_observation",
     key: str = "WWCT:OP1",
-    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # noqa: DTZ001
+    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
     error: float = 10.0,
     threshold: float = 0.2,
 ) -> dict:

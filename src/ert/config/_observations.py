@@ -86,7 +86,7 @@ def _parse_date(date_str: str) -> datetime:
         date = datetime.fromisoformat(date_str)
     except ValueError:
         try:
-            date = datetime.strptime(date_str, "%d/%m/%Y")  # noqa: DTZ007
+            date = datetime.strptime(date_str, "%d/%m/%Y")  # ruff: ignore[call-datetime-strptime-without-zone]
         except ValueError as err:
             raise ObservationConfigError.with_context(
                 f"Unsupported date format {date_str}. Please use ISO date format",
@@ -115,7 +115,7 @@ def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
         if dtype == pl.String
     ]
     return df.with_columns(
-        pl.when(pl.col(col).str.strip_chars() == "")  # noqa: PLC1901 the truth value of an Expr is ambiguous
+        pl.when(pl.col(col).str.strip_chars() == "")  # ruff: ignore[compare-to-empty-string] the truth value of an Expr is ambiguous
         .then(None)
         .otherwise(pl.col(col).str.strip_chars())
         .alias(col)

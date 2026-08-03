@@ -66,7 +66,7 @@ def test_that_setting_pinned_to_none_does_not_emit_signal_and_clears_selection(
         assert widget.get_selected_controls() == []
 
 
-def test_that_setting_pinned_control_to_non_existent_control_does_not_emit_signal_and_clears_selection(  # noqa: E501
+def test_that_setting_pinned_control_to_non_existent_control_does_not_emit_signal_and_clears_selection(  # ruff: ignore[line-too-long]
     qtbot, controls_list
 ):
     widget = EverestControlSelectionWidget(controls=controls_list)

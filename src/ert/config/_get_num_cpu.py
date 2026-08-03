@@ -105,7 +105,7 @@ def _get_num_cpu(
     """
     parser = _Parser(lines_iter)
     slaves_num_cpu = None
-    try:  # noqa: PLW0717
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
         while (words := parser.next_line(None)) is not None:
             if not words:
                 continue

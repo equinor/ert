@@ -64,7 +64,7 @@ class ErtThread(_Thread):
 
 def _raise_on_main_thread(exception: BaseException) -> None:
     err_traceback = str(traceback.format_exc())
-    global _current_exception  # noqa: PLW0603
+    global _current_exception  # ruff: ignore[global-statement]
     _current_exception = ErtThreadError(
         exception, threading.current_thread(), err_traceback
     )
@@ -86,7 +86,7 @@ def _handler(signum: int, frametype: FrameType | None) -> None:
 
 
 def set_signal_handler() -> None:
-    global _can_raise  # noqa: PLW0603
+    global _can_raise  # ruff: ignore[global-statement]
     if _can_raise:
         return
 

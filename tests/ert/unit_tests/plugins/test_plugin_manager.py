@@ -212,7 +212,7 @@ def test_add_logging_handle(tmpdir):
     with tmpdir.as_cwd():
         pm = ErtPluginManager(plugins=[dummy_plugins])
         pm.add_logging_handle_to_root(logging.getLogger())
-        logging.critical("I should write this to spam.log")  # noqa: LOG015
+        logging.critical("I should write this to spam.log")  # ruff: ignore[root-logger-call]
         assert "I should write this to spam.log" in Path("spam.log").read_text(
             encoding="utf-8"
         )

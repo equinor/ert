@@ -1,4 +1,4 @@
-# ruff: noqa: E402
+# ruff: file-ignore[module-import-not-at-top-of-file]
 
 # At least for some combinations of pandas and matplotlib the numpy.datetime64
 # dates coming from pandas are not correctly recognized/converted by matplotlib.

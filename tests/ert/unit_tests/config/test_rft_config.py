@@ -59,7 +59,7 @@ def test_that_rfts_match_key_is_well_connection_cell():
 
 
 def test_that_match_key_dict_expr_fits_match_key():
-    date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+    date = datetime(2000, 1, 1).date()  # ruff: ignore[call-datetime-without-tzinfo]
 
     def response(well_connection_cell) -> pl.DataFrame:
         return pl.DataFrame(
@@ -1001,12 +1001,12 @@ def _rft_responses_for_approximation(
 ) -> pl.LazyFrame:
     # fmt: off
     layers = [  # depth  pressure    swat    sgas
-              (   5.0,    100.0,     0.1,     0.2),  # layer 1  # noqa: E201, E241
-              (  15.0,    200.0,     0.2,     0.3),  # layer 2  # noqa: E201, E241
-              (  25.0,     None,  np.nan,  np.nan),  # layer 3  # noqa: E201, E241, E272
-              (  35.0,     None,    None,    None),  # layer 4  # noqa: E201, E241, E272
-              (  45.0,    200.0,     0.2,     0.3),  # layer 5  # noqa: E201, E241
-              (  55.0,   1000.0,     0.3,     0.2),  # layer 6  # noqa: E201, E241
+              (   5.0,    100.0,     0.1,     0.2),  # layer 1  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+              (  15.0,    200.0,     0.2,     0.3),  # layer 2  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+              (  25.0,     None,  np.nan,  np.nan),  # layer 3  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+              (  35.0,     None,    None,    None),  # layer 4  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+              (  45.0,    200.0,     0.2,     0.3),  # layer 5  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+              (  55.0,   1000.0,     0.3,     0.2),  # layer 6  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ]
     # fmt: on
     depth, pressures, swat, sgas = zip(*layers, strict=True)
@@ -1267,7 +1267,7 @@ def test_rft_value_approximation(
     ("rft_response_config", "rft_obs_config"),
     [(False, True), (True, False), (True, True)],
 )
-def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_on_rft_config(  # noqa: E501
+def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_on_rft_config(  # ruff: ignore[line-too-long]
     approximate_missing_rft_values,
     expected_setting,
     rft_response_config,

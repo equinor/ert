@@ -132,18 +132,18 @@ def handle_exception(e: BaseException) -> None:
             "Plot API request timed out. Please check your connection ",
             "or the storage server status",
         )
-        logger.exception(e)  # noqa: LOG004
+        logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]
         open_error_dialog(type(e).__name__, str(e))
     elif isinstance(e, RequestError):
         e.args = (
             "An error occurred while making a request to the Plot API. ",
             "Please check your connection or the storage server status",
         )
-        logger.exception(e)  # noqa: LOG004
+        logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]
         open_error_dialog(type(e).__name__, str(e))
     elif isinstance(e, ServerBootFail):
         e.args = ("The storage server failed to start",)
-        logger.exception(e)  # noqa: LOG004
+        logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]
         open_error_dialog(type(e).__name__, str(e))
     else:
         raise e
@@ -442,7 +442,7 @@ class PlotWindow(QMainWindow):
             def fetch_data(
                 ensemble: EnsembleObject,
             ) -> tuple[EnsembleObject, pd.DataFrame | BaseException | None]:
-                try:  # noqa: PLW0717
+                try:  # ruff: ignore[too-many-statements-in-try-clause]
                     data = None
                     if is_gradient_plot:
                         data = PlotApi.data_for_gradient(

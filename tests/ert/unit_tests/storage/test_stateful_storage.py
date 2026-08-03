@@ -495,8 +495,8 @@ class StatefulStorageTest(RuleBasedStateMachine):
         summaries_strategy = summaries(
             summary_keys=expected_summary_keys,
             start_date=st.datetimes(
-                min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),  # noqa: DTZ007
-                max_value=datetime.strptime("2010-1-1", "%Y-%m-%d"),  # noqa: DTZ007
+                min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),  # ruff: ignore[call-datetime-strptime-without-zone]
+                max_value=datetime.strptime("2010-1-1", "%Y-%m-%d"),  # ruff: ignore[call-datetime-strptime-without-zone]
             ),
             time_deltas=st.lists(
                 st.floats(

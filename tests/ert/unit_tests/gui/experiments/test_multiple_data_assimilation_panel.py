@@ -64,7 +64,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
     assert panel.isConfigurationValid()
 
 
-def test_that_active_realizations_selector_validates_with_with_realizations_from_storage_on_rerun_from(  # noqa: E501
+def test_that_active_realizations_selector_validates_with_with_realizations_from_storage_on_rerun_from(  # ruff: ignore[line-too-long]
     qtbot: QtBot,
 ) -> None:
     """This is a test that makes sure that the active realizations field is
@@ -125,7 +125,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     assert panel.isConfigurationValid()
 
 
-def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initial_active_realizations_when_restart_run_toggled(  # noqa: E501
+def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initial_active_realizations_when_restart_run_toggled(  # ruff: ignore[line-too-long]
     qtbot,
 ):
     active_realizations = [True, True, False, True, True]
@@ -198,7 +198,7 @@ def test_that_multiple_data_assimilation_panel_shows_weight_mismatch_warning(
     assert "differs from the default ES-MDA weights" in warning_icon.toolTip()
 
 
-def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_formatting(  # noqa: E501
+def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_formatting(  # ruff: ignore[line-too-long]
     qtbot: QtBot,
 ) -> None:
     active_realizations = [True] * 5

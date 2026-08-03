@@ -1102,7 +1102,7 @@ def test_denied_run_path_warning_dialog_releases_storage_lock(
     assert not run_experiment_panel._model._storage._lock.is_locked
 
 
-def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_design_matrix(  # noqa: E501
+def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_design_matrix(  # ruff: ignore[line-too-long]
     qtbot,
     copy_poly_case_with_design_matrix,
     caplog,
