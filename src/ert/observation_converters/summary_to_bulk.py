@@ -67,6 +67,8 @@ def _key_to_obs_type(
 
 
 class BulkConfigConverter:
+    TARGET_FILE = "summary_observations.csv"
+
     def __init__(
         self,
         observations: list[Observation],
@@ -80,8 +82,6 @@ class BulkConfigConverter:
         self.key_to_brt_obs: dict[str, list[Observation]] = _key_to_obs_type(
             observations, "breakthrough"
         )
-
-        self.csv_file_name = "summary_observations.csv"
 
         self.breakthrough: dict[WellName, str] = self._well_to_breakthrough_string()
         self.localization: dict[WellName, str] = self._well_to_localization_string()
@@ -186,7 +186,7 @@ class BulkConfigConverter:
                 csv_str.write(f"{observation.error:.3g}, ")
                 csv_str.write(f"{date}\n")
 
-        Path(self.csv_file_name).write_text(csv_str.getvalue(), encoding="utf-8")
+        Path(self.TARGET_FILE).write_text(csv_str.getvalue(), encoding="utf-8")
 
     def print_bulk_config(
         self,
@@ -201,7 +201,7 @@ class BulkConfigConverter:
             for obs_dict in obs_list
         ]
         obs_names_str = INDENT4 + f"\n{INDENT4}".join(obs_names)
-        bulk_config_list = ["SUMMARY {", f"{INDENT2}VALUES = {self.csv_file_name};"]
+        bulk_config_list = ["SUMMARY {", f"{INDENT2}VALUES = {self.TARGET_FILE};"]
         for well in sorted(self.localization.keys() | self.breakthrough.keys()):
             bulk_config_list.extend(
                 [
@@ -217,7 +217,7 @@ class BulkConfigConverter:
         bulk_config_str = "\n".join(bulk_config_list)
         print(
             f"\n{len(obs_names)} observations can be replaced by: \n"
-            f"{INDENT2}1.  Copying the file '{self.csv_file_name}' to the folder "
+            f"{INDENT2}1.  Copying the file '{self.TARGET_FILE}' to the folder "
             f"containing your observation configuration.\n"
             f"{INDENT2}2.  Replacing the named observations below with the bulk "
             f"configuration\n\n"
