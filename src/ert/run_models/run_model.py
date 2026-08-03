@@ -860,7 +860,7 @@ class RunModel(RunModelConfig, ABC):
                     self._send_workflow_log_events(
                         workflow_runner=workflow_runner,
                         hook=fixtures.hook,
-                        workflow_name=Path(workflow.src_file).name,
+                        workflow_name=workflow.name,
                         iteration=ensemble.iteration if ensemble is not None else None,
                     )
 

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
-from typing import Any
+from pathlib import Path
+from typing import Any, Self
+
+from pydantic import model_validator
 
 from ert.base_model_context import BaseModelWithContextSupport
 
@@ -13,6 +16,8 @@ from .workflow_job import BaseErtScriptWorkflow, WorkflowJob
 
 class Workflow(BaseModelWithContextSupport):
     src_file: str
+    name: str = ""
+    """The name given by LOAD_WORKFLOW, or the file name when none was given."""
     cmd_list: list[tuple[WorkflowJob, Any]]
 
     def __len__(self) -> int:
@@ -23,6 +28,12 @@ class Workflow(BaseModelWithContextSupport):
 
     def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:  # type: ignore
         return iter(self.cmd_list)
+
+    @model_validator(mode="after")
+    def _default_name_to_file_name(self) -> Self:
+        if not self.name:
+            self.name = Path(self.src_file).name
+        return self
 
     @staticmethod
     def validate_workflow_job(
@@ -100,6 +111,7 @@ class Workflow(BaseModelWithContextSupport):
         src_file: str,
         context: dict[str, str] | None,
         job_dict: dict[str, WorkflowJob],
+        name: str | None = None,
     ) -> Workflow:
         cmd_list = cls._parse_command_list(
             src_file=src_file,
@@ -107,7 +119,11 @@ class Workflow(BaseModelWithContextSupport):
             job_dict=job_dict,
         )
 
-        return cls(src_file=src_file, cmd_list=cmd_list)
+        return cls(
+            src_file=src_file,
+            name=name or Path(src_file).name,
+            cmd_list=cmd_list,
+        )
 
     @classmethod
     def from_instructions(
@@ -120,6 +136,7 @@ class Workflow(BaseModelWithContextSupport):
         job = cls.validate_workflow_job(job_name, args, job_dict)
         return cls(
             src_file=workflow_name,
+            name=workflow_name,
             cmd_list=[(job, args)],
         )
 

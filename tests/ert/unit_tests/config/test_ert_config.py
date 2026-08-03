@@ -3227,3 +3227,43 @@ def test_that_log_shape_registry_logs_count_of_shapes(caplog):
         shape_registry.register(CircleShapeConfig(north=i, east=i, radius=i))
     log_shape_registry(shape_registry)
     assert "Count of shapes in ShapeRegistry: {'CircleShapeConfig': 10}" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_workflow_is_named_after_the_alias_given_to_load_workflow():
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("wf_file").write_text("WFJOB hello\n", encoding="utf-8")
+    Path("test.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            LOAD_WORKFLOW_JOB WFJOB
+            LOAD_WORKFLOW wf_file my_alias
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file("test.ert")
+
+    assert ert_config.workflows["my_alias"].name == "my_alias"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_workflow_without_an_alias_is_named_after_its_file():
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("wf_file").write_text("WFJOB hello\n", encoding="utf-8")
+    Path("test.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            LOAD_WORKFLOW_JOB WFJOB
+            LOAD_WORKFLOW wf_file
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file("test.ert")
+
+    assert ert_config.workflows["wf_file"].name == "wf_file"
