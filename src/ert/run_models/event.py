@@ -51,6 +51,7 @@ class EverestBatchResultEvent(BaseModel, extra="forbid"):
     everest_event: Literal["OPTIMIZATION_RESULT",]
     result_type: Literal["FunctionResult", "GradientResult"]
     results: dict[str, Any] | None = None
+    failures: dict[int, list[int]] | None = None
 
 
 class RunModelTimeEvent(RunModelEvent):
