@@ -48,8 +48,7 @@ class YamlConverter:
             )
             # Round dates without HH/MM/SS to just date
             for o in chronological_observations:
-                if o.date.endswith("T00:00:00"):
-                    o.date = o.date.split("T")[0]
+                o.date = o.date.removesuffix("T00:00:00")
             obs_dicts: list[YamlObservation] = [
                 {
                     "date": o.date,
