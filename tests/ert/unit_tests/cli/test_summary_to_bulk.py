@@ -381,21 +381,47 @@ def test_that_breakthrough_to_string_mainains_hour_minute_and_second_precision()
         assert f"DATE={precision};" in res
 
 
-@pytest.mark.usefixtures("snake_oil_case")
-def test_that_no_summary_observations_raises_ert_cli_error():
-    Path("observations/observations.txt").write_text(
-        """
-        GENERAL_OBSERVATION WPR_DIFF_1 {
-           DATA       = SNAKE_OIL_WPR_DIFF;
-           INDEX_LIST = 400,800,1200,1800;
-           RESTART    = 199;
-           OBS_FILE   = wpr_diff_obs.txt;
-        };
-        """,
+def test_that_no_summary_observations_raises_ert_cli_error(use_tmpdir):
+    obs_config = "foo"
+    brt_obs = (
+        "BREAKTHROUGH_OBSERVATION "
+        "{ KEY = FOPR; THRESHOLD = 10; ERROR = 5; DATE = 2000-01-01; };"
+    )
+    Path(obs_config).write_text(
+        brt_obs,
         encoding="utf-8",
     )
-    args = MagicMock(format="bulk", config="snake_oil.ert")
+
+    ert_config = "config.ert"
+    minimal_ert_config = f"""\
+    NUM_REALIZATIONS 10
+    ECLBASE foo
+    OBS_CONFIG {obs_config}
+    """
+    Path(ert_config).write_text(minimal_ert_config, encoding="utf-8")
+
+    args = MagicMock(format="bulk", config=ert_config)
     with pytest.raises(ErtCliError, match="No summary observations found"):
+        convert_observations(args, ErtRuntimePlugins())
+
+
+def test_that_errors_are_formatted_to_user_with_message(use_tmpdir):
+    obs_config = "foo"
+    summary_obs = "SUMMARY_OBSERVATION { This is not a valid observation };"
+    Path(obs_config).write_text(
+        summary_obs,
+        encoding="utf-8",
+    )
+
+    ert_config = "config.ert"
+    minimal_ert_config = f"""\
+    NUM_REALIZATIONS 10
+    ECLBASE foo
+    OBS_CONFIG {obs_config}
+    """
+    Path(ert_config).write_text(minimal_ert_config, encoding="utf-8")
+    args = MagicMock(format="bulk", config=ert_config)
+    with pytest.raises(ErtCliError, match="Failed to internalize the ert config"):
         convert_observations(args, ErtRuntimePlugins())
 
 
