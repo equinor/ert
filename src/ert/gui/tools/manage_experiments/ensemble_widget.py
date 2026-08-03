@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config.response_config import ResponseConfig
 from ert.config.rft_config import RFTConfig
+from ert.config.seismic_config import SeismicConfig
 from ert.gui.experiments.view.run_status import RunStatusView
 from ert.storage import Ensemble
 from ert.storage.blob_data import BlobType
@@ -317,6 +318,13 @@ class EnsembleWidget(QWidget):
                 return pl.concat(per_realization)
 
             responses = ens.load_responses(response_key, reals_with_responses)
+            if response_type == "seismic":
+                responses = (
+                    SeismicConfig.use_observation_locations_in_respective_responses(
+                        responses, obs
+                    )
+                )
+
             return _filter_by_match_key(responses, None)
 
         response_ds = _load_and_filter_responses()

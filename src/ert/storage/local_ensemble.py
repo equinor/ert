@@ -37,6 +37,7 @@ from ert.config.observation_quality_control import (
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
+from ert.config.seismic_config import SeismicConfig
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.substitutions import substitute_runpath_name
@@ -1028,7 +1029,7 @@ class LocalEnsemble(BaseMode):
 
                 # Filter out responses without observations
                 for col, observed_values in observed_cols.items():
-                    if col != "time":
+                    if col not in {"time", "east", "north"}:
                         responses = responses.filter(
                             pl.col(col).is_in(
                                 observed_values.implode(), nulls_equal=True
@@ -1041,6 +1042,17 @@ class LocalEnsemble(BaseMode):
                     values="values",
                     aggregate_function="mean",
                 )
+                if response_type == "seismic":
+                    pivoted = (
+                        SeismicConfig.use_observation_locations_in_respective_responses(
+                            pivoted, observations
+                        )
+                        # Due to performed validations, all match keys should be unique.
+                        # Calculating 'mean' anyway to assure no ugly error is raised if
+                        # validations are somehow bypassed
+                        .group_by(["response_key", "east", "north"])
+                        .agg(pl.col(str(real)).mean())
+                    )
 
                 if pivoted.is_empty():
                     # There are no responses for this realization,
