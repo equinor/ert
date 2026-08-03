@@ -261,30 +261,31 @@ class _DetachedMonitor:
 
         lines = [self._make_header(f"Optimization progress (Batch #{batch})")]
 
-        if controls := cli_monitor_data.get("controls"):
-            width = _get_max_width(controls.keys())
-            lines.append(
-                self._join_one_newline_indent(
-                    [
-                        f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
-                        for name, value in controls.items()
-                    ]
+        if cli_monitor_data.get("result_type") == "FunctionResult":
+            if controls := cli_monitor_data.get("controls"):
+                width = _get_max_width(controls.keys())
+                lines.append(
+                    self._join_one_newline_indent(
+                        [
+                            f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                            for name, value in controls.items()
+                        ]
+                    )
                 )
-            )
-        if expected_objectives := cli_monitor_data.get("expected_objectives"):
-            width = _get_max_width(expected_objectives.keys())
-            lines.append(
-                self._join_one_newline_indent(
-                    [
-                        f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
-                        for name, value in expected_objectives.items()
-                    ]
+            if expected_objectives := cli_monitor_data.get("expected_objectives"):
+                width = _get_max_width(expected_objectives.keys())
+                lines.append(
+                    self._join_one_newline_indent(
+                        [
+                            f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                            for name, value in expected_objectives.items()
+                        ]
+                    )
                 )
-            )
-        if objective_value := cli_monitor_data.get("objective_value"):
-            lines.append(
-                f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
-            )
+            if objective_value := cli_monitor_data.get("objective_value"):
+                lines.append(
+                    f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
+                )
 
         if failures := cli_monitor_data.get("failures", {}):
             failed_lines = []
