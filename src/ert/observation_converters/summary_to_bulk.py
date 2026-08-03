@@ -3,6 +3,7 @@ from __future__ import annotations
 import warnings
 from collections import defaultdict
 from dataclasses import fields
+from io import StringIO
 from pathlib import Path
 from typing import Literal
 
@@ -160,29 +161,32 @@ class BulkConfigConverter:
         return well_to_breakthrough
 
     def write_csv(self) -> None:
-        with Path(self.csv_file_name).open(mode="w", encoding="utf-8") as fout:
-            fout.write(", ".join([*self.header_fields, "value", "error", "date"]))
-            fout.write("\n")
-            for key in natsorted(self.key_to_smry_obs.keys()):
-                skd = make_summary_key_data(key)
-                # Sort observations chronologically
-                sorted_smry_obs = sorted(
-                    self.key_to_smry_obs[key],
-                    key=lambda obs: getattr(obs, "date", -1),
-                )
-                for observation in sorted_smry_obs:
-                    assert observation.type == "summary_observation"
-                    for f in self.header_fields:
-                        v = getattr(skd, f)
-                        if v is None:
-                            fout.write(", ")
-                        else:
-                            fout.write(f"{v}, ")
-                    # Strip to date precision given no HH-MM-SS
-                    date = observation.date.removesuffix("T00:00:00")
-                    fout.write(f"{observation.value:.3g}, ")
-                    fout.write(f"{observation.error:.3g}, ")
-                    fout.write(f"{date}\n")
+        csv_str = StringIO()
+        csv_header = ", ".join([*self.header_fields, "value", "error", "date"]) + "\n"
+        csv_str.write(csv_header)
+
+        for key in natsorted(self.key_to_smry_obs.keys()):
+            skd = make_summary_key_data(key)
+            # Sort observations chronologically
+            sorted_smry_obs = sorted(
+                self.key_to_smry_obs[key],
+                key=lambda obs: getattr(obs, "date", -1),
+            )
+            for observation in sorted_smry_obs:
+                assert observation.type == "summary_observation"
+                for f in self.header_fields:
+                    v = getattr(skd, f)
+                    if v is None:
+                        csv_str.write(", ")
+                    else:
+                        csv_str.write(f"{v}, ")
+                # Strip to date precision given no HH-MM-SS
+                date = observation.date.removesuffix("T00:00:00")
+                csv_str.write(f"{observation.value:.3g}, ")
+                csv_str.write(f"{observation.error:.3g}, ")
+                csv_str.write(f"{date}\n")
+
+        Path(self.csv_file_name).write_text(csv_str.getvalue(), encoding="utf-8")
 
     def print_bulk_config(
         self,
