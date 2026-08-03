@@ -396,3 +396,18 @@ def test_workflow_stops_with_stopping_job():
 
     # Expect no error raised
     WorkflowRunner(workflow, fixtures={}).run_blocking()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_a_job_runner_stops_reporting_it_is_running_when_arguments_are_rejected():
+    WorkflowCommon.createErtScriptsJob()
+    job = workflow_job_from_file(
+        name="SUBTRACT", config_file="subtract_script_job", origin="user"
+    )
+    runner = WorkflowJobRunner(job)
+
+    with pytest.raises(ValueError, match="requires at least 2 arguments"):
+        runner.run([1])
+
+    assert not runner.isRunning()
