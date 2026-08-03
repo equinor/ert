@@ -135,6 +135,13 @@ def test_that_output_captured_from_an_ert_script_is_still_written_to_stdout(caps
     assert captured.err == "to stderr\n"
 
 
+def _join(thread: threading.Thread) -> None:
+    thread.join(timeout=10)
+    assert not thread.is_alive(), (
+        f"{thread.name} did not finish; it would leave sys.stdout captured"
+    )
+
+
 def test_that_output_written_by_another_thread_is_left_out_of_the_capture():
     job_may_finish = threading.Event()
     other_thread_has_printed = threading.Event()
@@ -154,9 +161,10 @@ def test_that_output_written_by_another_thread_is_left_out_of_the_capture():
     job.start()
     other_thread = threading.Thread(target=print_from_another_thread)
     other_thread.start()
-    other_thread.join(timeout=10)
+    _join(other_thread)
+    assert other_thread_has_printed.is_set(), "the unrelated thread never printed"
     job_may_finish.set()
-    job.join(timeout=10)
+    _join(job)
 
     assert "from the job" in script.stdoutdata
     assert "from an unrelated thread" not in script.stdoutdata
@@ -179,7 +187,7 @@ def test_that_concurrent_scripts_only_capture_their_own_output():
     for thread in threads:
         thread.start()
     for thread in threads:
-        thread.join(timeout=10)
+        _join(thread)
 
     assert first.stdoutdata.strip() == "first"
     assert second.stdoutdata.strip() == "second"
