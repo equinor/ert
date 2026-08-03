@@ -897,9 +897,7 @@ class RunModel(RunModelConfig, ABC):
         self._pending_workflow_log.extend(event.as_log_entry() for event in events)
 
     def _persist_workflow_log(self, experiment: Experiment | None) -> None:
-        """Append the workflow output to the experiment it belongs to.
-
-        Output from hooks that run before the experiment exists in storage,
+        """Output from hooks that run before the experiment exists in storage,
         such as PRE_EXPERIMENT, is held back until an experiment is available.
         """
         if experiment is None or not self._pending_workflow_log:
