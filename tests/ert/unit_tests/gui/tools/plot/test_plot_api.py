@@ -254,7 +254,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
             "values": [pl.Series([1.0], dtype=pl.Float32)],
         }
     )
-    df = df.explode("values", "time")
+    df = df.explode("values", "time", empty_as_null=False)
     ensemble.save_response(
         "summary",
         df,
@@ -597,7 +597,7 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
                 "time": [pl.Series([date]).dt.cast_time_unit("ms")],
                 "values": [pl.Series([1.0], dtype=pl.Float32)],
             }
-        ).explode("values", "time"),
+        ).explode("values", "time", empty_as_null=False),
         0,
     )
     assert api.data_for_response(str(ensemble.id), "FOPR").to_csv() == dedent(

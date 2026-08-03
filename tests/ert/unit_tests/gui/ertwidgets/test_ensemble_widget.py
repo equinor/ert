@@ -78,7 +78,7 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
                 "time": [pl.Series([date]).dt.cast_time_unit("ms")],
                 "values": [pl.Series([1.0], dtype=pl.Float32)],
             }
-        ).explode("values", "time"),
+        ).explode("values", "time", empty_as_null=False),
         0,
     )
 

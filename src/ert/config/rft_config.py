@@ -392,7 +392,12 @@ class RFTConfig(SimulationResponseConfig):
                             ),
                         }
                     )
-                    .explode("depth", "values", "well_connection_cell")
+                    .explode(
+                        "depth",
+                        "values",
+                        "well_connection_cell",
+                        empty_as_null=False,
+                    )
                     .with_columns(
                         get_cell_column.alias("cell_center"),
                         get_cell_zone.alias("cell_zones"),

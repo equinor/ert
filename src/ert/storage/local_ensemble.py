@@ -1135,7 +1135,11 @@ class LocalEnsemble(BaseMode):
                 continue
 
             dfs_per_response_type.append(
-                pl.concat([first_columns, *realization_columns], how="horizontal")
+                pl.concat(
+                    [first_columns, *realization_columns],
+                    how="horizontal",
+                    strict=True,
+                )
             )
 
         return pl.concat(dfs_per_response_type, how="vertical").with_columns(
