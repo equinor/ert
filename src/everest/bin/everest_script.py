@@ -246,7 +246,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         "Starting experiment"
     )
 
-    run_id = start_experiment(
+    experiment_id = start_experiment(
         server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
         config=options.config,
     )
@@ -262,7 +262,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             name="EVEREST CLI monitor thread",
             args=[
                 ServerConfig.get_server_context_from_conn_info(client.conn_info),
-                run_id,
+                experiment_id,
             ],
             daemon=True,
         )
@@ -274,14 +274,14 @@ async def run_everest(options: argparse.Namespace) -> None:
             server_context=ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
             ),
-            run_id=run_id,
+            experiment_id=experiment_id,
         )
     else:
         run_detached_monitor(
             server_context=ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
             ),
-            run_id=run_id,
+            experiment_id=experiment_id,
         )
 
     msg: str = ""

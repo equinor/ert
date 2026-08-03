@@ -27,14 +27,14 @@ logger = logging.getLogger(__name__)
 class ExperimentClient:
     def __init__(
         self,
-        run_id: str,
+        experiment_id: str,
         url: str,
         cert_file: str,
         username: str,
         password: str,
         ssl_context: ssl.SSLContext,
     ) -> None:
-        self._run_id = run_id
+        self._experiment_id = experiment_id
         self._url = url
         self._cert = cert_file
         self._username = username
@@ -62,7 +62,9 @@ class ExperimentClient:
 
     @property
     def config(self) -> dict[str, str]:
-        return self._http_get(f"{EverEndpoints.config_path}/{self._run_id}").json()
+        return self._http_get(
+            f"{EverEndpoints.config_path}/{self._experiment_id}"
+        ).json()
 
     @property
     def credentials(self) -> str:
@@ -80,7 +82,7 @@ class ExperimentClient:
             try:  # ruff: ignore[too-many-statements-in-try-clause]
                 with connect(
                     self._url.replace("https://", "wss://")
-                    + f"/{EverEndpoints.events}/{self._run_id}",
+                    + f"/{EverEndpoints.events}/{self._experiment_id}",
                     ssl=self._ssl_context,
                     open_timeout=open_timeout,
                     additional_headers={"Authorization": f"Basic {self.credentials}"},

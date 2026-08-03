@@ -74,9 +74,9 @@ def stop_server(
     server_context: tuple[str, str, tuple[str, str]], retries: int = 5
 ) -> bool:
     """Stop server if found and it is running."""
+    url, cert, auth = server_context
     for retry in range(retries):
         try:
-            url, cert, auth = server_context
             stop_endpoint = f"{url}/{EverEndpoints.stop}"
             response = requests.post(
                 stop_endpoint,
@@ -93,25 +93,25 @@ def stop_server(
     return False
 
 
-def get_runs(
+def get_experiments(
     server_context: tuple[str, str, tuple[str, str]],
     retries: int = 5,
 ) -> list[str]:
+    url, cert, auth = server_context
     for retry in range(retries):
         try:
-            url, cert, auth = server_context
             response = requests.get(
-                f"{url}/{EverEndpoints.runs}",
+                f"{url}/{EverEndpoints.experiments}",
                 verify=cert,
                 auth=auth,
                 proxies=PROXY,
             )
             response.raise_for_status()
-            return response.json()["run_ids"]
+            return response.json()["experiment_ids"]
         except Exception:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
-    raise RuntimeError("Failed to get run_ids")
+    raise RuntimeError("Failed to get experiment_ids")
 
 
 def start_experiment(
@@ -119,9 +119,9 @@ def start_experiment(
     config: EverestConfig,
     retries: int = 5,
 ) -> str:
+    url, cert, auth = server_context
     for retry in range(retries):
         try:
-            url, cert, auth = server_context
             start_endpoint = f"{url}/{EverEndpoints.start_experiment}"
             response = requests.post(
                 start_endpoint,
@@ -131,7 +131,7 @@ def start_experiment(
                 json=config.to_dict(),
             )
             response.raise_for_status()
-            return response.json()["run_id"]
+            return response.json()["experiment_id"]
         except Exception:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
@@ -227,7 +227,7 @@ def get_opt_status_from_batch_result_event(
 def start_monitor(
     server_context: tuple[str, str, tuple[str, str]],
     callback: Callable[..., None],
-    run_id: str,
+    experiment_id: str,
     polling_interval: float = 0.1,
 ) -> None:
     """
@@ -243,7 +243,8 @@ def start_monitor(
 
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         with connect(
-            url.replace("https://", "wss://") + f"/{EverEndpoints.events}/{run_id}",
+            url.replace("https://", "wss://")
+            + f"/{EverEndpoints.events}/{experiment_id}",
             ssl=ssl_context,
             open_timeout=30,
             additional_headers={"Authorization": f"Basic {credentials}"},

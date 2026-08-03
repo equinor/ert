@@ -243,11 +243,13 @@ def test_everest_entry_detached_running(
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("everest.bin.monitor_script.get_runs", return_value=["test-run-id"])
+@patch(
+    "everest.bin.monitor_script.get_experiments", return_value=["test-experiment-id"]
+)
 @patch("everest.bin.monitor_script.create_ertserver_client")
 def test_everest_entry_detached_running_monitor(
     monitor_script_client_mock,
-    get_runs_mock,
+    get_experiments_mock,
     get_server_context_from_conn_info_mock,
     start_monitor_mock,
     change_to_tmpdir,
@@ -264,7 +266,7 @@ def test_everest_entry_detached_running_monitor(
     start_monitor_mock.assert_called_once()
     monitor_script_client_mock.assert_called_once()
     get_server_context_from_conn_info_mock.assert_called_once()
-    get_runs_mock.assert_called_once()
+    get_experiments_mock.assert_called_once()
 
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
@@ -333,11 +335,13 @@ def test_exception_raised_when_server_run_fails(
     side_effect=raise_system_error,
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("everest.bin.monitor_script.get_runs", return_value="test-run-id")
+@patch(
+    "everest.bin.monitor_script.get_experiments", return_value=["test-experiment-id"]
+)
 @patch("everest.bin.monitor_script.create_ertserver_client")
 def test_exception_raised_when_server_run_fails_monitor(
     monitor_script_client_mock,
-    run_ids_mock,
+    get_experiments_mock,
     get_server_context_from_conn_info_mock,
     start_monitor_mock,
     change_to_tmpdir,

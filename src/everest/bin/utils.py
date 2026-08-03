@@ -416,17 +416,17 @@ class _DetachedMonitor:
 
 def run_detached_monitor(
     server_context: tuple[str, str, tuple[str, str]],
-    run_id: str,
+    experiment_id: str,
 ) -> None:
     monitor = _DetachedMonitor()
-    start_monitor(server_context, callback=monitor.update, run_id=run_id)
+    start_monitor(server_context, callback=monitor.update, experiment_id=experiment_id)
 
 
 def run_empty_detached_monitor(
     server_context: tuple[str, str, tuple[str, str]],
-    run_id: str,
+    experiment_id: str,
 ) -> None:
-    start_monitor(server_context, callback=lambda _: None, run_id=run_id)
+    start_monitor(server_context, callback=lambda _: None, experiment_id=experiment_id)
 
 
 def _read_user_preferences(user_info_path: Path) -> dict[str, dict[str, Any]]:
