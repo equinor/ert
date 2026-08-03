@@ -14,10 +14,10 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
+      "failures": null,
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "batch_id": 0,
           "point.x": 0.1,
           "point.y": 0.1,
           "point.z": 0.1
@@ -39,6 +39,7 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
+      "failures": null,
       "result_type": "GradientResult",
       "results": {
         "objective_gradient_values": [
@@ -106,10 +107,10 @@
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
+      "failures": null,
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "batch_id": 1,
           "point.x": 0.900386,
           "point.y": 0.900548,
           "point.z": 0.899338
@@ -141,10 +142,10 @@
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
+      "failures": null,
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "batch_id": 2,
           "point.x": 0.500148,
           "point.y": 0.500228,
           "point.z": 0.499624
@@ -176,6 +177,7 @@
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
+      "failures": null,
       "result_type": "GradientResult",
       "results": {
         "objective_gradient_values": [
