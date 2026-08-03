@@ -237,10 +237,8 @@ def _parse_optimization(
             ropt_gradient["number_of_perturbations"] == 1
         )
 
-        assert ever_opt.min_pert_success is not None
         ropt_gradient["perturbation_min_success"] = ever_opt.min_pert_success
 
-        assert ever_opt.min_realizations_success is not None
         ropt_realizations["realization_min_success"] = ever_opt.min_realizations_success
 
         if (cvar_opts := ever_opt.cvar) is not None:
