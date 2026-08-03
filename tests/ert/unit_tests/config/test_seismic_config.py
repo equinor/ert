@@ -110,19 +110,38 @@ def test_that_seismic_config_reads_from_all_input_files(mocked_files):
     assert data["values"].to_list() == [1.0, 2.0, 3.0, 4.0]
 
 
+def test_that_empty_seismic_response_file_does_not_raise(mocked_files):
+    key = "horizon--amplitude_full_min_depth--20250101_20240101"
+    name = f"{key}.csv"
+    runpath = "/runpath"
+    simulated_path = runpath + "/" + name
+
+    mocked_files[simulated_path] = dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        """
+    )
+
+    seismic_config = SeismicConfig(
+        input_files=[name],
+        keys=[key],
+    )
+
+    data = seismic_config.read_from_file(runpath, 1, 1)
+    assert data.is_empty()
+
+
 @pytest.mark.parametrize(
     ("east", "north"),
     [
-        pytest.param([111.11, 111.11], [222.22, 222.22], id="same coordinates"),
-        pytest.param(
-            [111.1111111111111111111111, 111.11111111111111],
-            [222.2222222222222222222222222222222, 222.22222222222223],
-            id="lost precision",
-        ),
+        pytest.param([111.25, 111.25], [222.25, 222.25], id="same coordinates"),
+        pytest.param([0.0, 0.0], [0.1953125, 0.0], id="less than double tolerance"),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_duplicate_location_in_seismic_response_raises(mocked_files, east, north):
+def test_that_seismic_response_coordinate_distance_below_tolerance_raises(
+    mocked_files, east, north
+):
     key = "horizon--amplitude_full_min_depth--20250101_20240101"
     name = f"{key}.csv"
     runpath = "/runpath"
@@ -144,5 +163,8 @@ def test_that_duplicate_location_in_seismic_response_raises(mocked_files, east, 
     with pytest.raises(InvalidResponseFile) as err:
         seismic_config.read_from_file(runpath, 1, 1)
 
-    m = "Seismic response coordinates were not unique (after rounding from f64 to f32)"
-    assert m in str(err.value)
+    assert (
+        "Seismic response coordinates with approximate locations "
+        f"[(({east[0]}, {north[0]}), ({east[1]}, {north[1]}))] "
+        "fall inside of a tolerance radius." in str(err.value)
+    )
