@@ -3,7 +3,9 @@ import os
 import os.path
 import stat
 import textwrap
+from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -14,14 +16,37 @@ from ert.config.ert_config import (
     create_forward_model_json,
     forward_model_step_from_config_contents,
 )
+from ert.config.forward_model_step import ForwardModelStepJSON
+from tests.ert.unit_tests.forward_model_runner import (
+    create_stub_forward_model_step_json,
+)
+
+if TYPE_CHECKING:
+    from _ert.forward_model_runner.fm_dispatch import ForwardModelDescriptionJSON
+else:
+    ForwardModelDescriptionJSON = dict[str, Any]
 
 
-def create_jobs_json(fm_step_list):
-    return {"jobList": fm_step_list}
+def create_jobs_json(
+    fm_step_list: list[ForwardModelStepJSON],
+) -> ForwardModelDescriptionJSON:
+    return {
+        "experiment_id": None,
+        "ee_token": None,
+        "dispatch_url": None,
+        "real_id": 0,
+        "ens_id": None,
+        "ert_pid": "",
+        "run_id": "0",
+        "jobList": fm_step_list,
+        "global_environment": {},
+        "config_file": "",
+        "config_path": "",
+    }
 
 
 @pytest.fixture(autouse=True)
-def set_up_environ():
+def set_up_environ() -> Generator[None, Any, None]:
     keys = (
         "KEY_ONE",
         "KEY_TWO",
@@ -45,19 +70,19 @@ def set_up_environ():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_missing_joblist_json():
+def test_missing_joblist_json() -> None:
     with pytest.raises(KeyError):
-        ForwardModelRunner({})
+        ForwardModelRunner({})  # type: ignore
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_output_rename():
-    fm_step = {
-        "name": "TEST_FMSTEP",
-        "executable": "mkdir",
-        "stdout": "out",
-        "stderr": "err",
-    }
+def test_run_output_rename() -> None:
+    fm_step = create_stub_forward_model_step_json(
+        name="TEST_FMSTEP",
+        executable="mkdir",
+        stdout="out",
+        stderr="err",
+    )
     fm_step_list = [fm_step, fm_step, fm_step, fm_step, fm_step]
 
     fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
@@ -70,17 +95,17 @@ def test_run_output_rename():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_multiple_ok():
+def test_run_multiple_ok() -> None:
     fm_step_list = []
     dir_list = ["1", "2", "3", "4", "5"]
     for fm_step_index in dir_list:
-        fm_step = {
-            "name": "MKDIR",
-            "executable": "mkdir",
-            "stdout": f"mkdir_out.{fm_step_index}",
-            "stderr": f"mkdir_err.{fm_step_index}",
-            "argList": ["-p", "-v", fm_step_index],
-        }
+        fm_step = create_stub_forward_model_step_json(
+            name="MKDIR",
+            executable="mkdir",
+            stdout=f"mkdir_out.{fm_step_index}",
+            stderr=f"mkdir_err.{fm_step_index}",
+            argList=["-p", "-v", fm_step_index],
+        )
         fm_step_list.append(fm_step)
 
     fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
@@ -99,19 +124,21 @@ def test_run_multiple_ok():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given():
+def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given() -> (  # noqa: E501
+    None
+):
     fm_step_list = []
     file_list = ["1", "2", "3", "4", "5"]
     manifest = {}
     for fm_step_index in file_list:
         manifest[f"file_{fm_step_index}"] = fm_step_index
-        fm_step = {
-            "name": "TOUCH",
-            "executable": "touch",
-            "stdout": f"touch_out.{fm_step_index}",
-            "stderr": f"touch_err.{fm_step_index}",
-            "argList": [fm_step_index],
-        }
+        fm_step = create_stub_forward_model_step_json(
+            name="TOUCH",
+            executable="touch",
+            stdout=f"touch_out.{fm_step_index}",
+            stderr=f"touch_err.{fm_step_index}",
+            argList=[fm_step_index],
+        )
         fm_step_list.append(fm_step)
     Path("manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
@@ -123,19 +150,21 @@ def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error():
-    fm_step_list = []
+def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error() -> (
+    None
+):
+    fm_step_list: list[ForwardModelStepJSON] = []
     file_name = "test"
     manifest = {"file_1": f"{file_name}"}
 
     fm_step_list.append(
-        {
-            "name": "TOUCH",
-            "executable": "touch",
-            "stdout": "touch_out.test",
-            "stderr": "touch_err.test",
-            "argList": ["not_test"],
-        }
+        create_stub_forward_model_step_json(
+            name="TOUCH",
+            executable="touch",
+            stdout="touch_out.test",
+            stderr="touch_err.test",
+            argList=["not_test"],
+        )
     )
     Path("manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
@@ -153,20 +182,17 @@ def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_multiple_fail_only_runs_one():
+def test_run_multiple_fail_only_runs_one() -> None:
     fm_step_list = []
     for index in range(1, 6):
-        fm_step = {
-            "name": "exit",
-            "executable": "/bin/sh",
-            "stdout": "exit_out",
-            "stderr": "exit_err",
-            # produces something on stderr, and exits with
-            "argList": [
-                "-c",
-                f'echo "failed with {index}" 1>&2 ; exit {index}',
-            ],
-        }
+        fm_step = create_stub_forward_model_step_json(
+            name="exit",
+            executable="/bin/sh",
+            argList=["-c", f'echo "failed with {index}" 1>&2 ; exit {index}'],
+            stderr=f"exit_err.{index}",
+            stdout=f"exit_out.{index}",
+        )
+
         fm_step_list.append(fm_step)
 
     fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
@@ -179,7 +205,7 @@ def test_run_multiple_fail_only_runs_one():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_env_var_available_inside_step_context():
+def test_env_var_available_inside_step_context() -> None:
     Path("run_me.py").write_text(
         textwrap.dedent(
             """\
@@ -228,7 +254,7 @@ def test_env_var_available_inside_step_context():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_default_env_variables_available_inside_fm_step_context():
+def test_default_env_variables_available_inside_fm_step_context() -> None:
     Path("run_me.py").write_text(
         textwrap.dedent(
             """\

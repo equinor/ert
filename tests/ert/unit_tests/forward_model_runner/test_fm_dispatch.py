@@ -7,11 +7,12 @@ import os
 import signal
 import stat
 import sys
+from collections.abc import Generator
 from pathlib import Path
 from subprocess import Popen
 from textwrap import dedent
 from threading import Lock
-from typing import Any
+from typing import Any, NoReturn
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -19,7 +20,7 @@ import psutil
 import pytest
 
 import _ert.forward_model_runner.fm_dispatch
-from _ert.events import dispatcher_event_from_json
+from _ert.events import ForwardModelStepFailure, dispatcher_event_from_json
 from _ert.forward_model_runner.fm_dispatch import (
     FORWARD_MODEL_DESCRIPTION_FILE,
     FORWARD_MODEL_TERMINATED_MSG,
@@ -34,8 +35,12 @@ from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
 
 
+def _yield_messages(messages: list[Message]) -> Generator[Message, None, None]:
+    yield from messages
+
+
 @pytest.fixture
-def use_custom_setsid(use_tmpdir):
+def use_custom_setsid(use_tmpdir: Any) -> None:
     """macOS doesn't provide /usr/bin/setsid, so we roll our own"""
     Path("setsid").write_text(
         dedent(
@@ -93,7 +98,7 @@ def job_dict(
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_termination(
     tmp_path: Path,
-):
+) -> None:
     # Executes itself recursively and sleeps for 100 seconds
     executable = write_executable(
         tmp_path,
@@ -139,7 +144,7 @@ def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_terminatio
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_profile_is_logged_as_csv(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-):
+) -> None:
     """This tests that a csv is produced and has basic validity.
     It does not try to verify the validity of the logged RSS values.
     """
@@ -183,7 +188,7 @@ def test_memory_profile_is_logged_as_csv(
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     tmp_path: Path,
-):
+) -> None:
     executable = write_executable(
         tmp_path,
         "#!/usr/bin/env python\n"
@@ -217,26 +222,26 @@ def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     assert Path("step_C.out").is_file()
 
 
-def test_no_jobs_json_file_raises_IOError(tmp_path: Path):
+def test_no_jobs_json_file_raises_IOError(tmp_path: Path) -> None:
     with pytest.raises(IOError, match=r"No such file or directory: 'jobs.json'"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 
-def test_invalid_jobs_json_raises_OSError(tmp_path: Path):
+def test_invalid_jobs_json_raises_OSError(tmp_path: Path) -> None:
     (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text("not json")
 
     with pytest.raises(OSError, match="fm_dispatch failed to load JSON-file"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 
-def test_missing_directory_exits(tmp_path: Path):
+def test_missing_directory_exits(tmp_path: Path) -> None:
     with pytest.raises(SystemExit):
         fm_dispatch(["script.py", str(tmp_path / "non_existent")])
 
 
 def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
-):
+) -> None:
     lock = Lock()
     lock.acquire()
     monkeypatch.setattr(
@@ -251,7 +256,7 @@ def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
             }
         )
 
-        def create_jobs_file_after_lock():
+        def create_jobs_file_after_lock() -> None:
             wait_until(
                 lambda: (
                     (f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying")
@@ -273,7 +278,7 @@ def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
     ("is_interactive_run", "ens_id"),
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
 )
-def test_setup_reporters(is_interactive_run: bool, ens_id: str | None):
+def test_setup_reporters(is_interactive_run: bool, ens_id: str | None) -> None:
     reporters = _setup_reporters(is_interactive_run, ens_id, "")
 
     if not is_interactive_run and not ens_id:
@@ -290,7 +295,7 @@ def test_setup_reporters(is_interactive_run: bool, ens_id: str | None):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_fm_dispatch_kills_itself_after_unsuccessful_step():
+def test_fm_dispatch_kills_itself_after_unsuccessful_step() -> None:
     with (
         patch("_ert.forward_model_runner.fm_dispatch.os.killpg") as mock_killpg,
         patch("_ert.forward_model_runner.fm_dispatch.os.getpgid") as mock_getpgid,
@@ -300,7 +305,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
         ) as mock_runner,
     ):
         mock_runner.return_value.run.return_value = [
-            Init([], 0, 0),
+            Init([], "0", "0"),
             Finish().with_error("overall bad run"),
         ]
         mock_getpgid.return_value = 17
@@ -318,7 +323,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_killed_by_oom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_killed_by_oom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test out-of-memory detection for pid and descendants based
     on a mocked dmesg system utility.
     """
@@ -339,30 +344,29 @@ def test_killed_by_oom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     assert not killed_by_oom({child_pid + 1})
 
 
-def test_report_all_messages():
+def test_report_all_messages() -> None:
     message = MagicMock(spec=Message)
     reporter = MagicMock(spec=Reporter)
 
-    _report_all_messages(iter([message]), [reporter])
+    _report_all_messages(_yield_messages([message]), [reporter])
     reporter.report.assert_called_once_with(message)
 
 
-def test_report_all_messages_drops_reporter_on_error():
+def test_report_all_messages_drops_reporter_on_error() -> None:
     message1 = MagicMock(spec=Message)
     message2 = MagicMock(spec=Message)
     reporter = MagicMock(spec=Reporter)
 
-    def raises(*args, **kwargs):
+    def raises(self: Reporter, msg: Message) -> NoReturn:
         raise OSError("No space left on device")
 
     reporter.report.side_effect = raises
-
-    _report_all_messages(iter([message1, message2]), [reporter])
+    _report_all_messages(_yield_messages([message1, message2]), [reporter])
     reporter.report.assert_called_once_with(message1)
 
 
 @pytest.fixture
-def sleep_executable(tmp_path: Path):
+def sleep_executable(tmp_path: Path) -> str:
     return write_executable(
         tmp_path,
         dedent("""\
@@ -373,7 +377,7 @@ def sleep_executable(tmp_path: Path):
     )
 
 
-async def wait_for_msg(zmq_server, msg_type: str) -> None:
+async def wait_for_msg(zmq_server: MockZMQServer, msg_type: str) -> None:
     while True:
         await asyncio.sleep(0.5)
         if any(
@@ -388,7 +392,7 @@ async def wait_for_msg(zmq_server, msg_type: str) -> None:
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
     sleep_executable: str,
-):
+) -> None:
     async with MockZMQServer() as zmq_server:
         write_forward_model_description(
             {
@@ -419,10 +423,9 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
         await asyncio.wait_for(
             wait_for_msg(zmq_server, "forward_model_step.failure"), timeout=15
         )
-        assert (
-            dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
-            == FORWARD_MODEL_TERMINATED_MSG
-        )
+        final_event = dispatcher_event_from_json(zmq_server.messages[-1])
+        assert isinstance(final_event, ForwardModelStepFailure)
+        assert final_event.error_msg == FORWARD_MODEL_TERMINATED_MSG
 
 
 @pytest.mark.timeout(30)
@@ -430,7 +433,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg(
     sleep_executable: str,
-):
+) -> None:
     async with MockZMQServer() as zmq_server:
         write_forward_model_description(
             {
@@ -460,16 +463,15 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
         )
         await zmq_server.no_dealers.wait()
         fm_dispatch_process.wait(timeout=15)
-        assert (
-            dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
-            == FORWARD_MODEL_TERMINATED_MSG
-        )
+        final_event = dispatcher_event_from_json(zmq_server.messages[-1])
+        assert isinstance(final_event, ForwardModelStepFailure)
+        assert final_event.error_msg == FORWARD_MODEL_TERMINATED_MSG
 
 
 async def test_fm_dispatch_main_signals_sigterm_on_exception(
     capsys: pytest.CaptureFixture[str],
-):
-    def mock_fm_dispatch_raises(*args):
+) -> None:
+    def mock_fm_dispatch_raises(*args: list[str]) -> NoReturn:
         raise RuntimeError("forward model critical error")
 
     with (
