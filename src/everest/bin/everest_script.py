@@ -253,7 +253,7 @@ async def run_everest(options: argparse.Namespace) -> None:
 
     # blocks until the run is finished
     if options.gui:
-        from everest.gui.main import run_gui  # noqa
+        from everest.gui.main import run_gui  # ruff: ignore[import-outside-top-level]
 
         monitor_thread = ErtThread(
             target=run_empty_detached_monitor

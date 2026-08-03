@@ -87,7 +87,7 @@ def test_iterative_ensemble_format_is_set_by_target_ensemble():
     )
 
 
-def test_iterative_ensemble_format_defaults_to_current_when_no_target_ensemble_is_given():  # noqa: E501
+def test_iterative_ensemble_format_defaults_to_current_when_no_target_ensemble_is_given():  # ruff: ignore[line-too-long]
     assert (
         model_factory._iterative_ensemble_format(
             Namespace(current_ensemble="current", target_ensemble=None)
@@ -384,7 +384,7 @@ def test_evaluate_ensemble_paths(
         _setup_ensemble_smoother,
     ],
 )
-def test_that_setting_up_experiment_with_update_step_raises_config_validation_error_given_less_than_two_active_realizations(  # noqa: E501
+def test_that_setting_up_experiment_with_update_step_raises_config_validation_error_given_less_than_two_active_realizations(  # ruff: ignore[line-too-long]
     experiment_setup_method,
 ):
     """This test tests that specifying a single realization to run in an update

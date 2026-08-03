@@ -102,14 +102,14 @@ def test_that_make_observations_migrates_observations():
     Path("obs_config").write_text(obs_config_contents, encoding="utf8")
 
     # Create a simple refcase so the migration can read history values
-    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)  # noqa: DTZ001
+    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)  # ruff: ignore[call-datetime-without-tzinfo]
     summary.add_variable("FOPR", unit="SM3/DAY")
     summary.add_variable("FOPRH", unit="SM3/DAY")
     summary.add_variable("FWPR", unit="SM3/DAY")
     summary.add_variable("FWPRH", unit="SM3/DAY")
 
     # Create two timesteps: the explicit dates used in the test
-    start_date = datetime(2010, 3, 31)  # noqa: DTZ001
+    start_date = datetime(2010, 3, 31)  # ruff: ignore[call-datetime-without-tzinfo]
     # overwrite writer start date by recreating with desired start
     summary = Summary.writer("MY_REFCASE", start_date, 10, 10, 10)
     summary.add_variable("FOPR", unit="SM3/DAY")
@@ -125,7 +125,7 @@ def test_that_make_observations_migrates_observations():
     t0["FWPRH"] = 4
 
     # second step: 2015-06-13
-    second_date = datetime(2015, 6, 13)  # noqa: DTZ001
+    second_date = datetime(2015, 6, 13)  # ruff: ignore[call-datetime-without-tzinfo]
     days_between = (second_date - start_date).days
     t1 = summary.add_t_step(1, sim_days=days_between)
     t1["FOPR"] = 1
@@ -401,7 +401,7 @@ def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # noqa: E501
+def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # ruff: ignore[line-too-long]
     """A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
     indicate missing data. If encountered in an rft observations csv file
     it should be skipped and create a user warning.

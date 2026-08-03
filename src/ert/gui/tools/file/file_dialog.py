@@ -42,7 +42,7 @@ class FileDialog(QDialog):
 
         try:
             # We take care to close this file in _quit_thread()
-            self._file = Path(file_name).open(encoding="utf-8")  # noqa: SIM115
+            self._file = Path(file_name).open(encoding="utf-8")  # ruff: ignore[open-file-with-context-handler]
         except OSError as error:
             self._mb = QMessageBox(
                 QMessageBox.Icon.Critical,

@@ -93,7 +93,7 @@ class PlotApi:
 
         self._all_ensembles = []
         with create_ertserver_client(self.ens_path) as client:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 http_response = client.get("/experiments", timeout=TIMEOUT)
                 self._check_http_response(http_response)
                 experiments = http_response.json()

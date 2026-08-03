@@ -381,7 +381,7 @@ class LocalEnsemble(BaseMode):
             del self._existing_scalars
         self.get_ensemble_state()
 
-    @lru_cache  # noqa: B019
+    @lru_cache  # ruff: ignore[cached-instance-method]
     def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
         response_configs = self.experiment.simulation_response_configuration
         existing_scalars = self._existing_scalars
@@ -1778,7 +1778,7 @@ async def _read_parameters(
             continue
         start_time = time.perf_counter()
         logger.debug(f"Starting to load parameter: {config.name}")
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             ds = config.read_from_runpath(Path(run_path), realization, iteration)
             await asyncio.sleep(0)
             logger.debug(
@@ -1805,7 +1805,7 @@ async def _read_parameters(
 def _log_grid_contents(
     run_path: str, summary_config: SummaryConfig, iens: int, iter_: int
 ) -> None:
-    try:  # noqa: PLW0717
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
         filename = substitute_runpath_name(summary_config.input_files[0], iens, iter_)
         base, extension = os.path.splitext(filename)
         # Cut of extensions ".data", ".smspec" or ".unsmry"
@@ -1845,7 +1845,7 @@ async def _write_responses_to_storage(
     errors = []
     response_configs = ensemble.experiment.simulation_response_configuration.values()
     for config in response_configs:
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.type}")
             try:

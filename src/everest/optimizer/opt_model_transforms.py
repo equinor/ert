@@ -179,9 +179,9 @@ class ControlScaler(VariableTransform):
 
         # Correct for variable scaling:
         offsets = np.matmul(coefficients, self._offsets)
-        lower_bounds = lower_bounds - offsets  # noqa: PLR6104
-        upper_bounds = upper_bounds - offsets  # noqa: PLR6104
-        coefficients = coefficients * self._scaling_factors  # noqa: PLR6104
+        lower_bounds = lower_bounds - offsets  # ruff: ignore[non-augmented-assignment]
+        upper_bounds = upper_bounds - offsets  # ruff: ignore[non-augmented-assignment]
+        coefficients = coefficients * self._scaling_factors  # ruff: ignore[non-augmented-assignment]
 
         # Correct for constraint scaling:
         if self._auto_scale_input_constraints:
@@ -196,9 +196,9 @@ class ControlScaler(VariableTransform):
         else:
             assert self._input_constraint_scales is not None
             scales = np.asarray(self._input_constraint_scales, np.float64)
-        coefficients = coefficients / scales[:, np.newaxis]  # noqa: PLR6104
-        lower_bounds = lower_bounds / scales  # noqa: PLR6104
-        upper_bounds = upper_bounds / scales  # noqa: PLR6104
+        coefficients = coefficients / scales[:, np.newaxis]  # ruff: ignore[non-augmented-assignment]
+        lower_bounds = lower_bounds / scales  # ruff: ignore[non-augmented-assignment]
+        upper_bounds = upper_bounds / scales  # ruff: ignore[non-augmented-assignment]
 
         return coefficients, lower_bounds, upper_bounds
 
@@ -220,8 +220,8 @@ class ControlScaler(VariableTransform):
         """
         if self._scaling_factors is not None:
             # The inputs may be immutable arrays, hence the `noqa PLR6104`
-            lower_diffs = lower_diffs * self._scaling_factors  # noqa: PLR6104
-            upper_diffs = upper_diffs * self._scaling_factors  # noqa: PLR6104
+            lower_diffs = lower_diffs * self._scaling_factors  # ruff: ignore[non-augmented-assignment]
+            upper_diffs = upper_diffs * self._scaling_factors  # ruff: ignore[non-augmented-assignment]
         return lower_diffs, upper_diffs
 
     def linear_constraints_diffs_from_optimizer(
@@ -243,8 +243,8 @@ class ControlScaler(VariableTransform):
         """
         assert self._input_constraint_scales is not None
         # The inputs may be immutable arrays, hence the `noqa PLR6104`
-        lower_diffs = lower_diffs * self._input_constraint_scales  # noqa: PLR6104
-        upper_diffs = upper_diffs * self._input_constraint_scales  # noqa: PLR6104
+        lower_diffs = lower_diffs * self._input_constraint_scales  # ruff: ignore[non-augmented-assignment]
+        upper_diffs = upper_diffs * self._input_constraint_scales  # ruff: ignore[non-augmented-assignment]
         return lower_diffs, upper_diffs
 
 

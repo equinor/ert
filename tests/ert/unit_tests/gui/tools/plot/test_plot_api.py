@@ -220,7 +220,7 @@ def api_and_storage(monkeypatch, tmp_path):
 def test_plot_api_handles_urlescape(api_and_storage):
     api, storage, _ = api_and_storage
     key = "WBHP:46/3-7S"
-    date = datetime(year=2024, month=10, day=4)  # noqa: DTZ001
+    date = datetime(year=2024, month=10, day=4)  # ruff: ignore[call-datetime-without-tzinfo]
 
     experiment = storage.create_experiment(
         experiment_config={
@@ -471,7 +471,7 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
 ):
     api, storage, _ = api_and_storage
 
-    date = datetime(year=2024, month=10, day=4)  # noqa: DTZ001
+    date = datetime(year=2024, month=10, day=4)  # ruff: ignore[call-datetime-without-tzinfo]
     experiment_with_observation = storage.create_experiment(
         experiment_config={
             "parameter_configuration": [],
@@ -557,7 +557,7 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
 ):
     api, storage, _ = api_and_storage
     key = f"WBHP:{well_name}"
-    date = datetime(year=2024, month=10, day=4)  # noqa: DTZ001
+    date = datetime(year=2024, month=10, day=4)  # ruff: ignore[call-datetime-without-tzinfo]
 
     experiment = storage.create_experiment(
         experiment_config={

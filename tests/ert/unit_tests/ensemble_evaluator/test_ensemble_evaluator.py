@@ -455,7 +455,7 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
         )
         await dispatch.send(dispatcher_event_to_json(event))
 
-        async def try_sending_event_from_dispatcher_while_evaluator_is_terminating_dispatchers():  # noqa: E501
+        async def try_sending_event_from_dispatcher_while_evaluator_is_terminating_dispatchers():  # ruff: ignore[line-too-long]
             await started_terminating_all_dispatchers.wait()
             event = ForwardModelStepSuccess(
                 ensemble=evaluator.ensemble.id_,
@@ -583,7 +583,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
 
     async def wait_for_log_message():
         nonlocal caplog
-        while "Realization 0 was killed by the evaluator" not in caplog.text:  # noqa: ASYNC110
+        while "Realization 0 was killed by the evaluator" not in caplog.text:  # ruff: ignore[async-busy-wait]
             await asyncio.sleep(0.1)
 
     await asyncio.wait_for(wait_for_log_message(), timeout=10)

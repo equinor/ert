@@ -421,7 +421,7 @@ def ert_config_values(draw, use_eclbase=booleans):
         )
     )
     sum_keys = draw(small_list(summary_variables(), min_size=1))
-    first_date = datetime.datetime.strptime("1999-1-1", "%Y-%m-%d")  # noqa: DTZ007
+    first_date = datetime.datetime.strptime("1999-1-1", "%Y-%m-%d")  # ruff: ignore[call-datetime-strptime-without-zone]
     smspec = draw(
         smspecs(
             sum_keys=st.just(sum_keys),
@@ -535,7 +535,7 @@ def sim_job(installed_jobs):
 
 def get_date(observation, start):
     if observation.date is not None:
-        return datetime.datetime.strptime(observation.date, "%Y-%m-%d")  # noqa: DTZ007
+        return datetime.datetime.strptime(observation.date, "%Y-%m-%d")  # ruff: ignore[call-datetime-strptime-without-zone]
     delta = datetime.timedelta(days=0)
     if observation.days is not None:
         delta += datetime.timedelta(days=observation.days)

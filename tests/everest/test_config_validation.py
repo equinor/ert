@@ -300,7 +300,7 @@ def test_that_control_minimum_or_maximum_is_defined(
 def test_that_invalid_control_initial_guess_outside_bounds(
     variables: list[dict[str, Any]], count: int
 ):
-    with pytest.raises(ValueError) as e:  # noqa: PT011
+    with pytest.raises(ValueError) as e:  # ruff: ignore[pytest-raises-too-broad]
         everest_config_with_defaults(
             controls=[
                 {
@@ -1253,7 +1253,7 @@ def test_load_file_with_errors(capsys):
 )
 def test_warning_empty_controls_and_objectives(controls, objectives, error_msg):
     if error_msg:
-        with pytest.raises(ValueError) as e:  # noqa: PT011
+        with pytest.raises(ValueError) as e:  # ruff: ignore[pytest-raises-too-broad]
             everest_config_with_defaults(
                 objective_functions=objectives,
                 controls=controls,

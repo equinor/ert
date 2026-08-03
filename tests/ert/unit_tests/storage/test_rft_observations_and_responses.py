@@ -24,7 +24,7 @@ from tests.ert.defaults_generator import create_rft_observation
 def rft_response(
     *,
     well: tuple[str, ...] = ("WELL",),
-    date: tuple[date, ...] = (datetime(2000, 1, 1).date(),),  # noqa: DTZ001
+    date: tuple[date, ...] = (datetime(2000, 1, 1).date(),),  # ruff: ignore[call-datetime-without-tzinfo]
     prop: tuple[str, ...] = ("SWAT",),
     depth: tuple[float, ...] = (1006.6,),
     values: tuple[float, ...] = (100.0,),
@@ -143,7 +143,7 @@ def _create_rft_response_df(
     cell_center: tuple[float, float, float] = (100.0, 200.0, 25.0),
     cell_zones: tuple[str, ...] = (),
 ) -> pl.DataFrame:
-    time = datetime.strptime(date, "%Y-%m-%d").date()  # noqa: DTZ007
+    time = datetime.strptime(date, "%Y-%m-%d").date()  # ruff: ignore[call-datetime-strptime-without-zone]
     df = pl.DataFrame(
         {
             "response_key": [f"{well}:{date}:{prop}"],
@@ -500,7 +500,7 @@ def test_that_get_observations_and_responses_interpolates_rft_values(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
 
-        date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+        date = datetime(2000, 1, 1).date()  # ruff: ignore[call-datetime-without-tzinfo]
 
         # If the response is missing the required columns for interpolation,
         # we should skip interpolation and return None, even if interpolation is
@@ -605,7 +605,7 @@ def test_that_get_rft_observations_and_responses_returns_joined_data():
         (False, None),
     ],
 )
-def test_that_get_rft_observations_and_responses_includes_approximated_values_when_enabled(  # noqa: E501
+def test_that_get_rft_observations_and_responses_includes_approximated_values_when_enabled(  # ruff: ignore[line-too-long]
     approximate_missing_values, expected_approximated_values
 ):
     observation = create_rft_observation(zone="zone1")
@@ -810,7 +810,7 @@ def test_that_get_rft_observations_and_responses_raises_error_when_response_not_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_get_rft_observations_and_responses_raises_error_when_location_metadata_not_saved():  # noqa: E501
+def test_that_get_rft_observations_and_responses_raises_error_when_location_metadata_not_saved():  # ruff: ignore[line-too-long]
     with _create_rft_ensemble(1, [create_rft_observation()]) as ensemble:
         ensemble.save_response("rft", _create_rft_response_df(), 0)
         with pytest.raises(FileNotFoundError, match="observation_location_metadata"):
@@ -858,7 +858,7 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
         {
             "response_key": ["FOPR"] * 3,
             "time": pl.Series(
-                [datetime(2020, 1, 1), datetime(2020, 1, 15), datetime(2020, 2, 15)]  # noqa: DTZ001
+                [datetime(2020, 1, 1), datetime(2020, 1, 15), datetime(2020, 2, 15)]  # ruff: ignore[call-datetime-without-tzinfo]
             ).dt.cast_time_unit("ms"),
             "values": pl.Series([100.0, 200.0, 300.0], dtype=pl.Float32),
         }

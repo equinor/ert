@@ -162,7 +162,7 @@ def main() -> None:
         tracer.start_as_current_span("everest.everserver", context=ctx),
         NamedTemporaryFile() as log_file,
     ):
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             _configure_loggers(
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
                 logging_level=options.logging_level,

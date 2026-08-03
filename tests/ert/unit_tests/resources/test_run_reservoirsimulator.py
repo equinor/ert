@@ -167,7 +167,7 @@ def test_encoding_errors_in_prt_are_ignored(monkeypatch, error_count):
         f"æøå\nErrors {error_count}\nBugs 0", encoding="latin1"
     )
 
-    with pytest.raises(SystemExit) as excinfo:  # noqa: PT012
+    with pytest.raises(SystemExit) as excinfo:  # ruff: ignore[pytest-raises-with-multiple-statements]
         run_reservoirsimulator.run_reservoirsimulator(
             [
                 "eclipse",

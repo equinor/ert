@@ -117,7 +117,7 @@ class Event(Reporter):
         event = None
         start_time = None
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 if self._done.is_set() and start_time is None:
                     start_time = asyncio.get_event_loop().time()
                 if event is None:

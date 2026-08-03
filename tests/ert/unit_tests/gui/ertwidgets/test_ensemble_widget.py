@@ -47,7 +47,7 @@ def create_experiment_from_config(config: ErtConfig, storage):
 def test_that_missing_response_for_observation_response_key_does_not_crash(
     qtbot, storage
 ):
-    date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     observation_key = "FOPR"
     requested_keys = ["*"]
     received_keys = ["WRONG"]
@@ -94,7 +94,7 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
 def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     key = "WWCT:OP1"
 
     config = ErtConfig.from_dict(
@@ -141,7 +141,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
 
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
 def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
@@ -233,7 +233,7 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
 def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_enabled(
     qtbot, storage, approximate_missing_rft_values, visualized_responses
 ):
-    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
@@ -332,7 +332,7 @@ def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_en
 def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     qtbot, storage
 ):
-    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
     zone_a = "zone_a"
     zone_b = "zone_b"
     zones1 = [zone_a]
@@ -536,12 +536,12 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
                 create_breakthrough_observation_dict(
                     name="BRT_OP1",
                     threshold=0.4,
-                    date=datetime(year=2000, month=1, day=1),  # noqa: DTZ001
+                    date=datetime(year=2000, month=1, day=1),  # ruff: ignore[call-datetime-without-tzinfo]
                 ),
                 create_breakthrough_observation_dict(
                     name="BRT_OP2",
                     threshold=0.7,
-                    date=datetime(year=2000, month=1, day=9),  # noqa: DTZ001
+                    date=datetime(year=2000, month=1, day=9),  # ruff: ignore[call-datetime-without-tzinfo]
                 ),
             ],
             ["0.4", "0.7"],

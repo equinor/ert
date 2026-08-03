@@ -27,7 +27,7 @@ def make_summary_key_data(summary_key: str) -> SummaryKeyData:
     fields = summary_key.split(":")
     summary_variable = fields[0]
     skd = partial(SummaryKeyData, keyword=summary_variable)
-    try:  # noqa: PLW0717
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
         match SummaryKeyType.from_variable(summary_variable):
             case SummaryKeyType.FIELD | SummaryKeyType.OTHER:
                 return skd()

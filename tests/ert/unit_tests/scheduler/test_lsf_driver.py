@@ -427,8 +427,8 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
             {"1": "11", "2": "22", "3": "33", "4": "44", "5": "55", "6": "66"},
             ["1", "2", "3", "4", "5", "6"],
             255,
-            "Job <11> is being terminated\nJob <22> is being terminated\nJob <55> is being signaled",  # noqa: E501
-            "Job <33>: Job has already finished\nJob <44>: Job has already finished\nJob <66>: No matching job found",  # noqa: E501
+            "Job <11> is being terminated\nJob <22> is being terminated\nJob <55> is being signaled",  # ruff: ignore[line-too-long]
+            "Job <33>: Job has already finished\nJob <44>: Job has already finished\nJob <66>: No matching job found",  # ruff: ignore[line-too-long]
             None,
             id="batch_killing_jobs",
         ),
@@ -478,7 +478,7 @@ async def test_kill(
     else:
         bkill_args = Path("bkill_args").read_text(encoding="utf-8").strip().split("\n")
         assert (
-            f"-s SIGTERM {' '.join(mocked_iens2jobid[iens] for iens in realizations_to_kill)}"  # noqa: E501
+            f"-s SIGTERM {' '.join(mocked_iens2jobid[iens] for iens in realizations_to_kill)}"  # ruff: ignore[line-too-long]
             in bkill_args
         )
         await asyncio.wait_for(wait_for_sigkill_in_file(), timeout=5)

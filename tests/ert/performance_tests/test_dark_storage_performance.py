@@ -100,7 +100,7 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
             assert len(obs) == num_summary_obs
             assert np.isclose(obs[0].errors[0], 0.1)
             assert obs[0].x_axis[0].startswith("2010-01-02T00:00:00")
-            assert np.isclose(obs[0].values[0], 2.6357)  # noqa: PD011
+            assert np.isclose(obs[0].values[0], 2.6357)  # ruff: ignore[pandas-use-of-dot-values]
             assert len(obs[0].errors) == 1
             assert len(obs[0].x_axis) == 1
             assert len(obs[0].values) == 1
@@ -265,7 +265,7 @@ def test_plot_api_big_summary_memory_usage(
     dates = []
 
     for i in range(num_keys):
-        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates  # noqa: DTZ001
+        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates  # ruff: ignore[call-datetime-without-tzinfo]
 
     dates_df = pl.Series(dates, dtype=pl.Datetime).dt.cast_time_unit("ms")
 

@@ -534,7 +534,7 @@ def test_that_parameter_group_sizes_is_stored_in_matrix_blob_metadata(tmp_path):
         assert blobs[0].blob_info.parameter_group_sizes == {"PORO": 8, "PERM": 3}
 
 
-async def test_that_writing_and_reading_empty_response_in_storage_results_in_empty_df_with_schema_columns(  # noqa: E501
+async def test_that_writing_and_reading_empty_response_in_storage_results_in_empty_df_with_schema_columns(  # ruff: ignore[line-too-long]
     tmp_path, monkeypatch
 ):
     """This test writes an empty set of responses to storage and asserts that the

@@ -519,7 +519,7 @@ def convert_numeric_string_columns(df: pl.DataFrame) -> pl.DataFrame:
             except InvalidOperationError:
                 pass
 
-            try:  # noqa: SIM105
+            try:  # ruff: ignore[suppressible-exception]
                 df = df.with_columns(
                     pl.col(col).cast(pl.Float64, strict=True).alias(col)
                 )

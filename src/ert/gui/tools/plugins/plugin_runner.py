@@ -35,7 +35,7 @@ class PluginRunner:
 
     def run(self) -> None:
         ert_config = self.ert_config
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             plugin = self.__plugin
             run_paths = Runpaths.from_config(ert_config)
             arguments = plugin.getArguments(
@@ -45,7 +45,7 @@ class PluginRunner:
                     "reports_dir": str(
                         self.ert_config.analysis_config.log_path / "reports"
                     ),
-                    "observation_settings": ert_config.analysis_config.observation_settings,  # noqa: E501
+                    "observation_settings": ert_config.analysis_config.observation_settings,  # ruff: ignore[line-too-long]
                     "es_settings": ert_config.analysis_config.es_settings,
                     "run_paths": run_paths,
                 }

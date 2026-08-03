@@ -134,7 +134,7 @@ class Job:
         await sem.acquire()
         timeout_task: asyncio.Task[None] | None = None
         submit_task: asyncio.Task[None] | None = None
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
@@ -309,7 +309,7 @@ class Job:
     async def _verify_checksum(
         self,
         checksum_lock: asyncio.Lock,
-        timeout: int | None = None,  # noqa: ASYNC109
+        timeout: int | None = None,  # ruff: ignore[async-function-with-timeout]
     ) -> None:
         if timeout is None:
             timeout = self.DEFAULT_FILE_VERIFICATION_TIMEOUT

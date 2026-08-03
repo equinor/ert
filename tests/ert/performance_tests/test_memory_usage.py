@@ -151,8 +151,8 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
             source.save_response("gen_data", pl.concat(gendatas), real)
 
             # Corresponds to refcase previously used in this test
-            refcase_start = datetime.datetime(2010, 1, 1)  # noqa: DTZ001
-            refcase_end = datetime.datetime(2010, 4, 11)  # noqa: DTZ001
+            refcase_start = datetime.datetime(2010, 1, 1)  # ruff: ignore[call-datetime-without-tzinfo]
+            refcase_end = datetime.datetime(2010, 4, 11)  # ruff: ignore[call-datetime-without-tzinfo]
 
             obs_time_list = [
                 refcase_start + datetime.timedelta(days=i)

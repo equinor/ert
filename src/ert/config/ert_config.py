@@ -1054,7 +1054,7 @@ class ErtConfig(BaseModel):
         except ConfigValidationError as e:
             errors.append(e)
 
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             site_installed_forward_model_steps = dict(
                 copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
             )
@@ -1092,7 +1092,7 @@ class ErtConfig(BaseModel):
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
         obs_configs: list[Observation] = []
         shape_registry = ShapeRegistry()
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
                 log_observation_keys(obs_config_input)

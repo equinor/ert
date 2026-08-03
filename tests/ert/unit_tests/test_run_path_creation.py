@@ -302,7 +302,7 @@ async def test_that_run_template_replace_symlink_does_not_write_to_source(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_substitutions_created_with_the_define_keyword_is_substituted_in_template(  # noqa: E501
+async def test_that_substitutions_created_with_the_define_keyword_is_substituted_in_template(  # ruff: ignore[line-too-long]
     make_run_path,
 ):
     Path("template.tmpl").write_text("I WANT TO REPLACE:<MY_VAR>", encoding="utf-8")
@@ -1248,7 +1248,7 @@ def test_that_generate_parameter_files_raises_when_end_event_is_set(storage):
         side_effect=lambda run_path, real_nr, ensemble: time.sleep(1)
     )
 
-    with pytest.raises(UserCancelled), pytest.MonkeyPatch.context() as mp:  # noqa: PT012
+    with pytest.raises(UserCancelled), pytest.MonkeyPatch.context() as mp:  # ruff: ignore[pytest-raises-with-multiple-statements]
         mp.setattr(GenKwConfig, "write_to_runpath", mock_write_to_runpath)
         _generate_parameter_files(
             parameter_configs=prior_ensemble.experiment.parameter_configuration.values(),
@@ -1295,7 +1295,7 @@ async def test_that_create_run_path_raises_when_end_event_is_set(run_args, stora
         side_effect=lambda *args, **kwargs: time.sleep(1) or ({}, {})
     )
 
-    with pytest.raises(UserCancelled), pytest.MonkeyPatch.context() as mp:  # noqa: PT012
+    with pytest.raises(UserCancelled), pytest.MonkeyPatch.context() as mp:  # ruff: ignore[pytest-raises-with-multiple-statements]
         mp.setattr(
             _create_run_path,
             "_generate_parameter_files",

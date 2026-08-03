@@ -150,7 +150,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
         if ensemble:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 parameters = ensemble.get_realization_mask_with_parameters()
                 responses = ensemble.get_realization_mask_with_responses()
                 mask = np.logical_and(parameters, responses)

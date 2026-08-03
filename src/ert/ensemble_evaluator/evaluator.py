@@ -147,7 +147,7 @@ class EnsembleEvaluator:
         heartbeat_interval = 0.1
         closetracker_received: bool = False
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 event = await asyncio.wait_for(
                     self._events_to_send.get(), timeout=heartbeat_interval
                 )
@@ -401,7 +401,7 @@ class EnsembleEvaluator:
 
     async def listen_for_messages(self) -> None:
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 dealer, _, frame = await self._router_socket.recv_multipart()
                 await self._router_socket.send_multipart([dealer, b"", ACK_MSG])
                 sender = dealer.decode("utf-8")
@@ -421,7 +421,7 @@ class EnsembleEvaluator:
 
     async def _server(self) -> None:
         zmq_context = zmq.asyncio.Context()
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             self._router_socket: zmq.asyncio.Socket = zmq_context.socket(zmq.ROUTER)
             self._router_socket.setsockopt(zmq.LINGER, 0)
             if self._config.server_public_key and self._config.server_secret_key:

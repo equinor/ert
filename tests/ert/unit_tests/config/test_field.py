@@ -287,7 +287,7 @@ def test_invalid_keyvalue_gives_a_user_error_message(
         )
 
 
-def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_field_and_grid(  # noqa
+def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_field_and_grid(  # ruff: ignore[line-too-long]
     tmpdir, monkeypatch, parse_field_line
 ):
     class MockFieldFile:

@@ -313,7 +313,7 @@ class ExperimentRunner:
         run = _runs[self._run_id]
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         run_model: EverestRunModel | None = None
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             site_plugins = get_site_plugins()
             with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(

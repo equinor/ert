@@ -156,7 +156,7 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
         {
             "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
             "time": pl.Series(
-                [datetime.now() + timedelta(days=i) for i in range(6)]  # noqa: DTZ005
+                [datetime.now() + timedelta(days=i) for i in range(6)]  # ruff: ignore[call-datetime-now-without-tzinfo]
             ).dt.cast_time_unit("ms"),
             "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
         }
@@ -399,7 +399,7 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
     with open_storage(tmp_path, mode="w") as storage:
         response_keys = ["FOPR", "FOPT_OP1", "FOPR:OP3", "FLAP", "F*"]
         obs_keys = [f"o_{k}" for k in response_keys]
-        times = [datetime(2000, 1, 1, 1, 0)] * len(response_keys)  # noqa: DTZ001
+        times = [datetime(2000, 1, 1, 1, 0)] * len(response_keys)  # ruff: ignore[call-datetime-without-tzinfo]
         summary_observations = [
             {
                 "type": "summary_observation",
@@ -613,7 +613,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
     with open_storage(tmp_path, mode="w") as storage:
         response_key = "WWCT:OP1"
         # This observed time will be 1 day and 12 hours after derived breakthrough time
-        time = datetime(2000, 3, 2, 13, 0)  # noqa: DTZ001
+        time = datetime(2000, 3, 2, 13, 0)  # ruff: ignore[call-datetime-without-tzinfo]
 
         breakthrough_config = BreakthroughConfig(
             keys=[f"BREAKTHROUGH:{response_key}"],
@@ -650,7 +650,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
             {
                 "realization": [0] * 10,
                 "response_key": ["WWCT:OP1"] * 10,
-                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],  # noqa: DTZ001
+                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
                 "values": [n / 10 for n in range(10)],
             }
         )
@@ -703,7 +703,7 @@ def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
     tmp_path, summary_kwargs
 ):
     with open_storage(tmp_path, mode="w") as storage:
-        obs_date = datetime(2000, 1, 1)  # noqa: DTZ001
+        obs_date = datetime(2000, 1, 1)  # ruff: ignore[call-datetime-without-tzinfo]
 
         summary_config = SummaryConfig(input_files=["not_relevant"], keys=["*"])
 

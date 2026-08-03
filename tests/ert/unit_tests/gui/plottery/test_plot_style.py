@@ -50,7 +50,7 @@ def test_plot_style_test_defaults():
     assert style.color == "#000000"
     assert style.line_style == "-"
     assert math.isclose(style.alpha, 1.0)
-    assert style.marker == ""  # noqa: PLC1901
+    assert style.marker == ""  # ruff: ignore[compare-to-empty-string]
     assert math.isclose(style.width, 1.0)
     assert math.isclose(style.size, 7.5)
     assert style.is_enabled()
@@ -58,8 +58,8 @@ def test_plot_style_test_defaults():
     style.line_style = None
     style.marker = None
 
-    assert style.line_style == ""  # noqa: PLC1901
-    assert style.marker == ""  # noqa: PLC1901
+    assert style.line_style == ""  # ruff: ignore[compare-to-empty-string]
+    assert style.marker == ""  # ruff: ignore[compare-to-empty-string]
 
 
 def test_plot_style_builtin_checks():
@@ -72,10 +72,10 @@ def test_plot_style_builtin_checks():
     assert style.color == "notacolor"  # maybe make this a proper check in future ?
 
     style.line_style = None
-    assert style.line_style == ""  # noqa: PLC1901
+    assert style.line_style == ""  # ruff: ignore[compare-to-empty-string]
 
     style.marker = None
-    assert style.marker == ""  # noqa: PLC1901
+    assert style.marker == ""  # ruff: ignore[compare-to-empty-string]
 
     style.width = -1
     assert math.isclose(style.width, 0.0)

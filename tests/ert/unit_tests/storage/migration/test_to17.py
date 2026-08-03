@@ -1,4 +1,4 @@
-# ruff: noqa: DTZ005  # Timezones were not present in old storages
+# ruff: file-ignore[call-datetime-now-without-tzinfo]  # Timezones were not present in old storages
 import json
 from datetime import datetime
 from pathlib import Path

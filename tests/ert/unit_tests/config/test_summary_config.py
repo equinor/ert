@@ -164,7 +164,7 @@ def test_that_summary_observations_without_radius_gets_defaulted(
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
-def test_that_summary_observations_raises_error_when_east_or_north_are_undefined_given_localization_object(  # noqa: E501
+def test_that_summary_observations_raises_error_when_east_or_north_are_undefined_given_localization_object(  # ruff: ignore[line-too-long]
     tmpdir,
     loc_config_lines,
 ):

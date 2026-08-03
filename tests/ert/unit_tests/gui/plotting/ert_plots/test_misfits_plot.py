@@ -105,7 +105,7 @@ def test_that_misfit_conversion_for_summary_converts_to_equivalent_long_polars_d
     expected_df = pl.DataFrame(
         {
             "Realization": [0, 0],
-            "key_index": [datetime(2023, 1, 1), datetime(2023, 1, 2)],  # noqa: DTZ001
+            "key_index": [datetime(2023, 1, 1), datetime(2023, 1, 2)],  # ruff: ignore[call-datetime-without-tzinfo]
             "response": [12.0, 18.0],
             "error": [2.0, 2.0],
             "observation": [10.0, 20.0],

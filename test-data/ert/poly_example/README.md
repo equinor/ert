@@ -13,7 +13,7 @@ rng = np.random.default_rng(12345)
 
 
 def p(x):
-    return 0.5 * x ** 2 + x + 3
+    return 0.5 * x**2 + x + 3
 
 
 [(p(x) + rng.normal(loc=0, scale=0.2 * p(x)), 0.2 * p(x)) for x in [0, 2, 4, 6, 8]]

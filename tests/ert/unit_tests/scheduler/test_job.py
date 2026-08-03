@@ -160,7 +160,7 @@ async def test_job_run_sends_expected_events(
         # The execution flow through Job.run() is manipulated through job.returncode
         if attempt < max_submit - 1:
             job.returncode.set_result(1)
-            while job.returncode.done():  # noqa: ASYNC110
+            while job.returncode.done():  # ruff: ignore[async-busy-wait]
                 # wait until job.run() resets
                 # the future after seeing the failure
                 await asyncio.sleep(0)
@@ -602,7 +602,7 @@ async def test_excessive_warnings_from_fm_step_can_be_capped(
     assert "Reached maximum number" in caplog.text
 
 
-async def test_log_warnings_from_forward_model_can_detect_files_being_created_after_delay(  # noqa: E501
+async def test_log_warnings_from_forward_model_can_detect_files_being_created_after_delay(  # ruff: ignore[line-too-long]
     realization, mocker
 ):
     initial_timeout = Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
