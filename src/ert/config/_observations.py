@@ -10,6 +10,7 @@ from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
+    ClassVar,
     Literal,
     Self,
     assert_never,
@@ -19,6 +20,7 @@ from typing import (
 import numpy as np
 import pandas as pd
 import polars as pl
+import scipy as sp
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
 from resfo_utilities import InvalidSummaryKeyError, make_summary_key
 
@@ -1002,6 +1004,8 @@ class SeismicObservation(BaseObservation):
     error: float
     boundary_id: int | None = None
 
+    TOLERANCE: ClassVar[float] = 0.1
+
     @staticmethod
     def _load_observations(filepath: Path) -> pd.DataFrame:
         df = pd.read_csv(
@@ -1026,6 +1030,31 @@ class SeismicObservation(BaseObservation):
             )
 
         return df
+
+    @staticmethod
+    def validate_distance_between_observations(
+        observations: Sequence[SeismicObservation], filepath: Path
+    ) -> None:
+        if not observations:
+            return
+        coordinates = [(obs.east, obs.north) for obs in observations]
+        tree = sp.spatial.KDTree(coordinates)
+        too_close_pairs = tree.query_pairs(r=SeismicObservation.TOLERANCE * 2)
+        if too_close_pairs:
+            too_close_coords = [
+                (
+                    (observations[i].east, observations[i].north),
+                    (observations[j].east, observations[j].north),
+                )
+                for i, j in too_close_pairs
+            ]
+            raise ObservationConfigError.with_context(
+                "Seismic observation coordinates with approximate locations "
+                f"{too_close_coords} fall inside of a tolerance radius. "
+                "All seismic observation coordinates must be more than "
+                f"{SeismicObservation.TOLERANCE * 2} m apart.",
+                filepath,
+            )
 
     @classmethod
     def from_obs_dict(
@@ -1090,7 +1119,6 @@ class SeismicObservation(BaseObservation):
             boundary_id = shape_registry.register(boundary)
 
         seismic_observations = []
-        seen_coordinates: set[tuple[np.float32, np.float32]] = set()
         for row in df.itertuples():
             east = validate_float(str(row.X_UTME), "X_UTME")
             north = validate_float(str(row.Y_UTMN), "Y_UTMN")
@@ -1111,18 +1139,6 @@ class SeismicObservation(BaseObservation):
                 )
             )
 
-            coordinates = (
-                np.float32(east),
-                np.float32(north),
-            )
-            if coordinates in seen_coordinates:
-                original_coordinates = (row.X_UTME, row.Y_UTMN)
-                raise ObservationConfigError.with_context(
-                    f"Seismic observation coordinates {original_coordinates} "
-                    "were not unique (after rounding from f64 to f32).",
-                    filepath,
-                )
-            seen_coordinates.add(coordinates)
             seismic_observation = cls(
                 name=name,
                 filepath=filepath,
@@ -1135,6 +1151,7 @@ class SeismicObservation(BaseObservation):
             )
             seismic_observations.append(seismic_observation)
 
+        cls.validate_distance_between_observations(seismic_observations, filepath)
         return seismic_observations
 
 
