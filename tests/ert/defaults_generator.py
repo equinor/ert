@@ -1,6 +1,9 @@
 import datetime
 from pathlib import Path
 
+import numpy as np
+import polars as pl
+
 from ert.config._observations import (
     BreakthroughObservation,
     GeneralObservation,
@@ -9,6 +12,7 @@ from ert.config._observations import (
     SummaryObservation,
 )
 from ert.config.parsing.observations_parser import ObservationType
+from ert.config.seismic_config import SeismicConfig
 
 
 def create_general_observation(
@@ -180,7 +184,7 @@ def create_rft_observation_dict(
 
 def create_seismic_observation(
     name: str = "seismic_observation",
-    filepath: Path = Path("obs.csv"),
+    filepath: Path = Path("horizon--amplitude_full_min_depth--20250101_20240101.csv"),
     east: float = 1.0,
     north: float = 1.0,
     value: float = 1.0,
@@ -202,6 +206,25 @@ def create_seismic_observation(
 
 def create_seismic_observation_dict(
     name: str = "seismic_observation",
-    csv: str = "obs.csv",
+    csv: str = "horizon--amplitude_full_min_depth--20250101_20240101.csv",
 ) -> dict:
     return {"type": ObservationType.SEISMIC, "name": name, "CSV": csv}
+
+
+def create_seismic_response(
+    response_key: str = "horizon--amplitude_full_min_depth--20250101_20240101",
+    east: float = 1.0,
+    north: float = 1.0,
+    values: float = 1.1,
+) -> pl.DataFrame:
+    df = pl.DataFrame(
+        {
+            "response_key": [response_key],
+            "east": [np.float32(east)],
+            "north": [np.float32(north)],
+            "values": [np.float32(values)],
+        },
+        schema=SeismicConfig.response_schema(),
+    )
+    SeismicConfig._assert_schema(df, SeismicConfig.response_schema())
+    return df

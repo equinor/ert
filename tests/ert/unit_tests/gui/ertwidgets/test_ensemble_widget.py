@@ -21,7 +21,9 @@ from tests.ert.defaults_generator import (
     create_breakthrough_observation_dict,
     create_general_observation_dict,
     create_rft_observation_dict,
+    create_seismic_observation,
     create_seismic_observation_dict,
+    create_seismic_response,
     create_summary_observation_dict,
 )
 from tests.ert.utils import SnapshotBuilder
@@ -493,6 +495,34 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     verify_number_of_visualized_responses()
     observation_widget.setCurrentItem(top.child(1))
     verify_number_of_visualized_responses()
+
+
+def test_that_seismic_observations_use_tolerance_on_response_match(qtbot, storage):
+    observation = create_seismic_observation(east=1.0, north=1.0)
+    response = create_seismic_response(east=1.05, north=1.05)
+
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "SEISMIC": ["dummy.csv"],
+        }
+    )
+    config.observation_declarations.append(observation)
+
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
+    ensemble.save_response("seismic", response, 0)
+
+    ensemble_widget = EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    qtbot.addWidget(ensemble_widget)
+
+    panels_widget = ensemble_widget._tab_widget
+    panels_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    plot = ensemble_widget._figure.get_axes()
+    assert len(plot) == 1
+    assert len(plot[0].collections) == 2
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
