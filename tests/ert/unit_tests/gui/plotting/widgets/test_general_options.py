@@ -14,6 +14,14 @@ def _create_plot_context() -> PlotContext:
     return PlotContext(PlotConfig(), [], [], "some_key")
 
 
+@pytest.fixture
+def everest_application(monkeypatch):
+    monkeypatch.setattr(
+        "ert.gui.plotting.widgets.plot_controls.general_options.is_everest_application",
+        lambda: True,
+    )
+
+
 def _apply_options_to_plot_context(
     options: GeneralPlotOptions,
     plot_context: PlotContext,
@@ -33,7 +41,7 @@ def _apply_options_to_plot_context(
 
 
 def test_that_general_options_has_expected_default_checkbox_states(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
     assert options.legend_checkbox_state is True
@@ -64,7 +72,7 @@ def test_that_toggling_a_general_option_invokes_the_connection_point(
     checkbox_name,
 ) -> None:
     connection_point = Mock()
-    options = GeneralPlotOptions(connection_point, is_everest=False)
+    options = GeneralPlotOptions(connection_point)
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
@@ -97,7 +105,7 @@ def test_that_toggling_a_general_option_logs_sidebar_usage_once(
     checkbox_name,
     option_name,
 ) -> None:
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
@@ -131,7 +139,7 @@ def test_that_axis_label_button_requests_edit_for_its_axis(
     button_name,
     axis,
 ) -> None:
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
@@ -147,7 +155,7 @@ def test_that_axis_label_button_requests_edit_for_its_axis(
 
 
 def test_that_title_button_requests_title_edit(qtbot) -> None:
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     widget = options.get_widget()
     qtbot.addWidget(widget)
     widget.show()
@@ -176,7 +184,7 @@ def test_that_history_and_observations_visibility_can_be_set(
     history_visible,
     observations_visible,
 ):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
     options.get_widget().show()
     _expand(options.get_widget())
@@ -193,8 +201,10 @@ def test_that_history_and_observations_visibility_can_be_set(
     assert options._toggle_observations.isVisible() is observations_visible
 
 
-def test_that_everest_general_options_omit_history_and_observations(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=True)
+def test_that_everest_general_options_omit_history_and_observations(
+    qtbot, everest_application
+):
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
     _expand(options.get_widget())
     assert not options._toggle_history.isVisible()
@@ -202,7 +212,7 @@ def test_that_everest_general_options_omit_history_and_observations(qtbot):
 
 
 def test_that_legend_grid_and_color_cycle_are_written_to_the_plot_config(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
     options._toggle_grid.setChecked(False)
     plot_context = _create_plot_context()
@@ -225,7 +235,7 @@ def test_that_legend_grid_and_color_cycle_are_written_to_the_plot_config(qtbot):
 def test_that_log_scale_is_applied_only_when_the_current_tab_supports_it(
     qtbot, log_scale_available, expected_log_scale
 ):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
     options._toggle_log_scale.setChecked(True)
     plot_context = _create_plot_context()
@@ -238,7 +248,7 @@ def test_that_log_scale_is_applied_only_when_the_current_tab_supports_it(
 
 
 def test_that_history_and_observations_stay_disabled_when_the_key_has_neither(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
     plot_context = _create_plot_context()
 
@@ -249,7 +259,7 @@ def test_that_history_and_observations_stay_disabled_when_the_key_has_neither(qt
 
 
 def test_that_observations_stay_enabled_while_their_toggle_is_hidden(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
     options.get_widget().show()
     plot_context = _create_plot_context()
@@ -262,8 +272,10 @@ def test_that_observations_stay_enabled_while_their_toggle_is_hidden(qtbot):
     assert plot_context.plotConfig().is_observations_enabled()
 
 
-def test_that_everest_general_options_leave_history_and_observations_untouched(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=True)
+def test_that_everest_general_options_leave_history_and_observations_untouched(
+    qtbot, everest_application
+):
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
     plot_context = _create_plot_context()
     expected_observations_enabled = plot_context.plotConfig().is_observations_enabled()
@@ -279,7 +291,7 @@ def test_that_everest_general_options_leave_history_and_observations_untouched(q
 
 
 def test_that_palette_selector_returns_the_correct_color_cycle(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
     selector = options._color_cycle_selector
@@ -290,7 +302,7 @@ def test_that_palette_selector_returns_the_correct_color_cycle(qtbot):
 
 
 def test_that_palette_selector_child_can_be_found(qtbot):
-    options = GeneralPlotOptions(Mock(), is_everest=False)
+    options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
     selector = options.get_widget().findChild(
