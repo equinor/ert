@@ -10,6 +10,7 @@ from natsort import natsorted
 
 from ert.cli.main import ErtCliError
 from ert.config import (
+    ConfigValidationError,
     ErtConfig,
     Observation,
     ShapeRegistry,
@@ -228,7 +229,12 @@ class BulkConfigConverter:
 def convert_summary_to_bulk(config: str, runtime_plugins: ErtRuntimePlugins) -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(config)
+        try:
+            ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(config)
+        except ConfigValidationError as e:
+            raise ErtCliError(
+                f"Failed to internalize the ert config '{config}' with error:\n    {e}"
+            ) from e
 
     if any(
         obs.type == "summary_observation" for obs in ert_config.observation_declarations
