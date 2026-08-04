@@ -351,6 +351,9 @@ class PlotWindow(QMainWindow):
             self.addDockWidget(
                 Qt.DockWidgetArea.RightDockWidgetArea, self._plot_controls_dock
             )
+            # Removes the empty context menu that appears
+            # when right-clicking on the dock widgets
+            self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
 
             self.resizeDocks(
                 [self._keys_dock, self._plot_controls_dock],
