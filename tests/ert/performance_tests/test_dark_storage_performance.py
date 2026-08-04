@@ -295,7 +295,7 @@ def test_plot_api_big_summary_memory_usage(
     for real in range(ensemble.ensemble_size):
         ensemble.save_response("summary", big_summary.clone(), real)
 
-    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
+    with memray.Tracker("memray.bin"):
         # Initialize plotter window
         response_keys = {k.key for k in api.responses_api_key_defs}
         all_ensembles = [e.id for e in api.get_all_ensembles()]
@@ -401,7 +401,7 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
 def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
     api, _ = api_and_snake_oil_storage
 
-    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
+    with memray.Tracker("memray.bin"):
         key_infos = api.responses_api_key_defs
         all_ensembles = api.get_all_ensembles()
         # Cycle through all ensembles and get all responses
