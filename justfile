@@ -65,8 +65,8 @@ ert-cli-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/cli
 
 ert-memory-tests:
-    _RJEM_MALLOC_CONF="dirty_decay_ms:100,muzzy_decay_ms:100" pytest -n 2 {{pytest_args}} tests/ert -m "memory_test"
-    _RJEM_MALLOC_CONF="dirty_decay_ms:100,muzzy_decay_ms:100" pytest -n 2 {{pytest_args}} tests/ert -m "limit_memory" --memray
+    pytest -n 2 {{pytest_args}} tests/ert -m "memory_test"
+    pytest -n 2 {{pytest_args}} tests/ert -m "limit_memory" --memray
 
 ert-unit-tests:
     pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not (memory_test or limit_memory)"
