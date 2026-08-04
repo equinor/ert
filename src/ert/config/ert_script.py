@@ -25,11 +25,8 @@ class _CaptureProxy(io.TextIOBase):
     """Stands in for ``sys.stdout``/``sys.stderr`` while workflow jobs run.
 
     Everything written is passed on to the stream it replaced, so output still
-    reaches the terminal. Writes are recorded only when the writing thread has
-    an active capture, which keeps output produced by unrelated threads out of
-    the workflow log. Every other part of the stream interface is delegated to
-    the wrapped stream, so that jobs asking for a file descriptor, an encoding
-    or a binary buffer see the stream they would have seen without capturing.
+    reaches the terminal. Needed for capturing prints from internal jobs and
+    adding them to the log.
     """
 
     def __init__(self, stream: TextIO | None) -> None:
@@ -101,8 +98,6 @@ class _CaptureProxy(io.TextIOBase):
     def seekable(self) -> bool:
         return False
 
-    # The stream attributes below are read-only at runtime, so they can only be
-    # delegated with a property, which typeshed declares as writable.
     @property
     @override
     def encoding(self) -> str:  # type: ignore[override]
@@ -139,11 +134,7 @@ _capture_lock = threading.Lock()
 
 @contextlib.contextmanager
 def _capturing(stream_name: str) -> Iterator[io.StringIO]:
-    """Record what the calling thread writes to ``sys.<stream_name>``.
-
-    A single proxy is shared by all concurrent captures, and the original
-    stream is put back once the last capture is done.
-    """
+    # Record what the calling thread writes to ``sys.<stream_name>``
     with _capture_lock:
         stream = getattr(sys, stream_name)
         proxy = stream if isinstance(stream, _CaptureProxy) else _CaptureProxy(stream)

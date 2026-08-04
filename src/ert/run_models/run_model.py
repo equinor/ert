@@ -890,7 +890,7 @@ class RunModel(RunModelConfig, ABC):
                 timestamp=result.timestamp,
                 iteration=iteration,
             )
-            for result in workflow_runner.jobResults()
+            for result in workflow_runner.workflowJobResults()
         ]
         for event in events:
             self.send_event(event)

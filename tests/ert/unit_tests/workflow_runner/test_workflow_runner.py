@@ -221,7 +221,7 @@ def test_that_job_results_contain_one_entry_per_job_invocation():
     runner = WorkflowRunner(workflow, fixtures={})
     runner.run_blocking()
 
-    results = runner.jobResults()
+    results = runner.workflowJobResults()
     assert [(result.name, result.index, result.arguments) for result in results] == [
         ("DUMP", 0, ["dump1", "dump_text_1"]),
         ("DUMP", 1, ["dump2", "dump_text_2"]),

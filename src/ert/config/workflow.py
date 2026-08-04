@@ -17,7 +17,6 @@ from .workflow_job import BaseErtScriptWorkflow, WorkflowJob
 class Workflow(BaseModelWithContextSupport):
     src_file: str
     name: str = ""
-    """The name given by LOAD_WORKFLOW, or the file name when none was given."""
     cmd_list: list[tuple[WorkflowJob, Any]]
 
     def __len__(self) -> int:

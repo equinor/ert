@@ -253,7 +253,7 @@ class WorkflowRunner:
     def workflowReport(self) -> dict[str, dict[str, Any]]:
         return self.__status
 
-    def jobResults(self) -> list[WorkflowJobResult]:
+    def workflowJobResults(self) -> list[WorkflowJobResult]:
         """One entry per job invocation, in the order the jobs were run.
 
         Unlike workflowReport(), which is keyed by job name, this keeps the
