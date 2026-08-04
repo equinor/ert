@@ -90,9 +90,20 @@ keyword.
 
 Workflow logs with output from job execution can be found in the terminal where ERT was
 started. The output of workflows hooked in with :code:`HOOK_WORKFLOW` is in addition
-written to :code:`<UPDATE_LOG_PATH>/<run_id>/workflows.log` and to
-:code:`workflows.log` in the storage directory of the experiment, see
-:ref:`UPDATE_LOG_PATH <update_log_path>`.
+stored alongside the experiment it belongs to, in
+:code:`<ENSPATH>/experiments/<experiment_id>/workflows.log`. The file contains one
+entry per workflow job, holding whatever the job wrote to stdout and stderr::
+
+    === 2026-07-30T10:19:33+00:00 PRE_SIMULATION workflow=my_workflow job=MY_JOB#0 status=success
+    --- arguments ---
+    first_argument second_argument
+    --- stdout ---
+    Hello from the workflow
+
+Output from hooks that run before the experiment is created, such as
+:code:`PRE_EXPERIMENT`, is held back and written once the experiment exists.
+Workflows started with :code:`ert workflow` or from the *Run workflow* tool in
+the GUI are not logged this way.
 
 .. _runpath-file-workflows:
 
