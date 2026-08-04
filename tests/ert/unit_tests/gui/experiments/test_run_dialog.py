@@ -1,3 +1,4 @@
+import logging
 import tempfile
 from pathlib import Path
 from queue import SimpleQueue
@@ -21,6 +22,7 @@ from pytestqt.qtbot import QtBot
 import ert.run_models
 from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErtConfig
+from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -28,6 +30,7 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
     WarningEvent,
 )
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.gui.ertwidgets.suggestor.suggestor import Suggestor
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.ensemble_experiment_panel import (
@@ -41,6 +44,7 @@ from ert.gui.experiments.multiple_data_assimilation_panel import (
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
+from ert.gui.model.snapshot import FM_STEP_COLUMNS
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
     EnsembleExperiment,
@@ -126,6 +130,37 @@ def mock_set_env_key():
     mock = MagicMock()
     with patch("ert.run_models.run_model.RunModel.set_env_key", mock) as _mock:
         yield _mock
+
+
+@pytest.fixture
+def make_dialog_showing_snapshot(qtbot: QtBot):
+    """Build a RunDialog displaying a single finished iteration of the snapshot."""
+
+    def _make(snapshot: EnsembleSnapshot, status_count: dict[str, int]) -> RunDialog:
+        queue: SimpleQueue = SimpleQueue()
+        mock_api = MagicMock()
+        mock_api.experiment_name = "test"
+
+        dialog = RunDialog("Test", mock_api, queue, MagicMock())
+        qtbot.addWidget(dialog)
+        dialog.setup_event_monitoring()
+
+        queue.put(
+            FullSnapshotEvent(
+                snapshot=snapshot,
+                iteration_label="Iter 0",
+                total_iterations=1,
+                progress=0.0,
+                realization_count=sum(status_count.values()),
+                status_count=status_count,
+                iteration=0,
+            )
+        )
+        queue.put(EndEvent(failed=False, msg=""))
+        qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+        return dialog
+
+    return _make
 
 
 @pytest.fixture
@@ -1182,6 +1217,91 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
     assert isinstance(dialog._tab_widget.widget(0), RealizationWidget)
     qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)
+
+
+def test_that_only_user_initiated_realization_selection_is_logged(
+    make_dialog_showing_snapshot, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    dialog = make_dialog_showing_snapshot(
+        SnapshotBuilder()
+        .add_fm_step(
+            fm_step_id="0",
+            index="0",
+            name="fm_step_0",
+            status=state.FORWARD_MODEL_STATE_START,
+        )
+        .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN),
+        {"Unknown": 2},
+    )
+
+    def realization_log_messages() -> list[str]:
+        return [r.message for r in caplog.records if "Realization details" in r.message]
+
+    realization_widget = dialog._tab_widget.widget(0)
+    assert isinstance(realization_widget, RealizationWidget)
+
+    # Adding the tab selects realization 0 and refreshes the selection.
+    assert realization_log_messages() == []
+
+    index = realization_widget._real_list_model.index(0, 0)
+    realization_widget._real_view.clicked.emit(index)
+    realization_widget._real_view.clicked.emit(index)
+
+    assert realization_log_messages() == [
+        "Realization details opened in experiment status for iteration 0"
+    ]
+
+
+def test_that_opening_forward_model_step_output_and_error_is_logged_once(
+    make_dialog_showing_snapshot,
+    caplog: pytest.LogCaptureFixture,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    caplog.set_level(logging.INFO)
+    stdout_file = tmp_path / "stdout"
+    stdout_file.write_text("output", encoding="utf-8")
+    monkeypatch.setattr(FileDialog, "_init_thread", lambda self: None)
+
+    dialog = make_dialog_showing_snapshot(
+        SnapshotBuilder()
+        .add_fm_step(
+            fm_step_id="0",
+            index="0",
+            name="fm_step_0",
+            status=state.FORWARD_MODEL_STATE_FAILURE,
+            stdout=str(stdout_file),
+            error="boom",
+        )
+        .build(["0"], state.REALIZATION_STATE_FAILED),
+        {"Failed": 1},
+    )
+
+    overview = dialog._fm_step_overview
+    overview.set_realization(0, 0)
+    model = overview.model()
+    assert model is not None
+
+    stdout_index = model.index(0, FM_STEP_COLUMNS.index(ids.STDOUT))
+    overview.clicked.emit(stdout_index)
+    file_dialog = overview.findChild(FileDialog)
+    assert file_dialog is not None
+    file_dialog.close()
+    overview.clicked.emit(stdout_index)
+
+    def close_error_dialog() -> None:
+        modal_dialog = QApplication.activeModalWidget()
+        assert modal_dialog is not None
+        modal_dialog.close()
+
+    QTimer.singleShot(0, close_error_dialog)
+    overview.clicked.emit(model.index(0, FM_STEP_COLUMNS.index(ids.ERROR)))
+
+    assert [r.message for r in caplog.records if "experiment status" in r.message] == [
+        f"{ids.STDOUT.capitalize()} opened for forward model step in experiment status",
+        "Error message opened for forward model step in experiment status",
+    ]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
