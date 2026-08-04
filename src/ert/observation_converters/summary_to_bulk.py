@@ -182,8 +182,8 @@ class BulkConfigConverter:
                         csv_str.write(f"{v}, ")
                 # Strip to date precision given no HH-MM-SS
                 date = observation.date.removesuffix("T00:00:00")
-                csv_str.write(f"{observation.value:.3g}, ")
-                csv_str.write(f"{observation.error:.3g}, ")
+                csv_str.write(f"{observation.value}, ")
+                csv_str.write(f"{observation.error}, ")
                 csv_str.write(f"{date}\n")
 
         try:
