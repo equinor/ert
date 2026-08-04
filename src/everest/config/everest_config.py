@@ -133,32 +133,6 @@ def server_validation[T, **P](
     return wrapper
 
 
-def server_validation[T, **P](
-    f: Callable[Concatenate[T, P], T],
-) -> Callable[Concatenate[T, P], T]:
-    """
-    Decorator to ensure that a validation function
-    is only run in a server context.
-    Requires `ValidationInfo` to be passed as an argument.
-    """
-    sig = signature(f)
-
-    @wraps(f)
-    def wrapper(self: T, /, *args: P.args, **kwargs: P.kwargs) -> T:
-        bound = sig.bind(self, *args, **kwargs)
-        info = bound.arguments.get("info")
-        if (
-            not info
-            or not hasattr(info.context, "type")
-            or info.context.type != Context.SERVER
-        ):
-            return self
-
-        return f(self, *args, **kwargs)
-
-    return wrapper
-
-
 def _format_errors(validation_error: EverestValidationError) -> str:
     msg = (
         f"Found {len(validation_error.errors)} validation "
