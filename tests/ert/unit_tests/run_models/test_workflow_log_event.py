@@ -23,16 +23,6 @@ def _event(**kwargs) -> RunModelWorkflowLogEvent:
     return RunModelWorkflowLogEvent(**(defaults | kwargs))
 
 
-def test_that_workflow_log_is_written_to_a_run_id_directory_of_the_output_path(
-    tmp_path,
-):
-    run_id = uuid.uuid4()
-
-    _event(run_id=run_id, stdout="hello\n").write_as_log(tmp_path)
-
-    assert (tmp_path / str(run_id) / "workflows.log").is_file()
-
-
 def test_that_workflow_log_entry_contains_stdout_and_stderr(tmp_path):
     _event(stdout="on stdout\n", stderr="on stderr\n").write_as_log(tmp_path)
 

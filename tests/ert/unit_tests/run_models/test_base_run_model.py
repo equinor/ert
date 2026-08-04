@@ -1101,3 +1101,85 @@ def test_that_pre_experiment_output_is_persisted_when_no_later_hook_has_workflow
     assert "before the experiment" in experiment.workflow_log_path.read_text(
         encoding="utf-8"
     )
+
+
+def test_that_starting_an_experiment_discards_workflow_output_from_the_previous_one(
+    use_tmpdir,
+):
+    brm = create_run_model()
+    brm._status_queue = SimpleQueue()
+    brm._pending_workflow_log = ["output from a previous run\n"]
+    previous_log_id = brm._workflow_log_id
+
+    brm.start_simulations_thread(
+        EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
+    )
+
+    assert brm._pending_workflow_log == []
+    assert brm._workflow_log_id != previous_log_id
+
+
+def test_that_workflow_output_is_persisted_when_stop_on_fail_aborts_the_workflow(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(
+        tmp_path,
+        "failing",
+        'import sys\nprint("printed before failing")\nsys.exit(1)',
+        stop_on_fail=True,
+    )
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=SimpleQueue(),
+    )
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+
+    with pytest.raises(RuntimeError, match="failed with error"):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=brm._storage,
+                ensemble=ensemble,
+            )
+        )
+
+    assert "printed before failing" in experiment.workflow_log_path.read_text(
+        encoding="utf-8"
+    )
+
+
+def test_that_workflow_output_is_persisted_when_the_user_cancels_the_experiment(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    later = _printing_workflow(tmp_path, "later", 'print("never runs")')
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.PRE_EXPERIMENT: [startup],
+            HookRuntime.PRE_SIMULATION: [later],
+        },
+        status_queue=SimpleQueue(),
+    )
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    brm._end_event.set()
+
+    with pytest.raises(UserCancelled):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=brm._storage,
+                ensemble=ensemble,
+            )
+        )
+
+    log = experiment.workflow_log_path.read_text(encoding="utf-8")
+    assert "before the experiment" in log
+    assert "never runs" not in log
