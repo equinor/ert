@@ -93,6 +93,25 @@ def test_lint_forward_model_hook(plugin_manager):
     )
 
 
+def test_everest_hookspec_surface():
+    class Plugin:
+        @hookimpl
+        def get_forward_models_schemas(self):
+            return {"job": {}}
+
+    pm = MockPluginManager()
+    pm.register(Plugin())
+
+    assert not hasattr(pm.hook, "install_job_directories")
+    assert hasattr(pm.hook, "lint_forward_model")
+    assert hasattr(pm.hook, "get_forward_models_schemas")
+    assert hasattr(pm.hook, "parse_forward_model_schema")
+    assert hasattr(pm.hook, "installable_workflow_jobs")
+    assert hasattr(pm.hook, "get_forward_model_documentations")
+    assert hasattr(pm.hook, "check_forward_model_arguments")
+    assert pm.hook.get_forward_models_schemas() == [{"job": {}}]
+
+
 def test_add_logging_handle(plugin_manager):
     handle = logging.StreamHandler()
 

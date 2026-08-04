@@ -11,6 +11,7 @@ Forward model jobs
 
     builtin
     custom
+    plugins
 
 During optimization the values of the objective functions and output constraints
 are calculated by a series of jobs specified in the `forward_model` section of
