@@ -66,7 +66,7 @@ ert-cli-tests:
 
 ert-memory-tests:
     pytest -n 2 {{pytest_args}} tests/ert -m "memory_test"
-    pytest -n 2 {{pytest_args}} tests/ert -m "limit_memory" --memray
+    pytest {{pytest_args}} tests/ert -m "limit_memory" --memray
 
 ert-unit-tests:
     pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not (memory_test or limit_memory)"
