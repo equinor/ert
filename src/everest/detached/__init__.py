@@ -2,7 +2,7 @@
 
 from .client import (
     PROXY,
-    get_runs,
+    get_experiments,
     server_is_running,
     start_experiment,
     start_monitor,
@@ -14,7 +14,7 @@ from .client import (
 
 __all__ = [
     "PROXY",
-    "get_runs",
+    "get_experiments",
     "server_is_running",
     "start_experiment",
     "start_monitor",

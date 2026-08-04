@@ -170,7 +170,8 @@ def test_failed_jobs_monitor(
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
     partial(everest.detached.start_monitor, polling_interval=0.1)
     run_detached_monitor(
-        ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+        ("some/url", "cert", ("username", "password")),
+        experiment_id="test-experiment-id",
     )
     captured = capsys.readouterr()
     expected = [
@@ -206,7 +207,8 @@ def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
         run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+            ("some/url", "cert", ("username", "password")),
+            experiment_id="test-experiment-id",
         )
     captured = capsys.readouterr()
     expected = [
@@ -237,7 +239,8 @@ def test_forward_model_message_reaches_the_cli(
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
     partial(everest.detached.start_monitor, polling_interval=0.1)
     run_detached_monitor(
-        ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+        ("some/url", "cert", ("username", "password")),
+        experiment_id="test-experiment-id",
     )
     captured = capsys.readouterr()
 

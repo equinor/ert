@@ -19,7 +19,7 @@ from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 from everest.config import ServerConfig
-from everest.detached import get_runs
+from everest.detached import get_experiments
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
@@ -181,7 +181,7 @@ def main() -> None:
                 with create_ertserver_client(Path(server_path)) as client:
                     done = False
                     while not done:
-                        run_ids = get_runs(
+                        experiment_ids = get_experiments(
                             ServerConfig.get_server_context_from_conn_info(
                                 client.conn_info
                             )
@@ -189,14 +189,14 @@ def main() -> None:
                         active = [
                             ExperimentStatus(
                                 **client.get(
-                                    f"/experiment_server/{EverEndpoints.status}/{run_id}",
+                                    f"/experiment_server/{EverEndpoints.status}/{experiment_id}",
                                     auth=server.fetch_auth(),
                                 ).json()
                             ).status
                             in {ExperimentState.pending, ExperimentState.running}
-                            for run_id in run_ids
+                            for experiment_id in experiment_ids
                         ]
-                        done = run_ids and not any(active)
+                        done = experiment_ids and not any(active)
                         time.sleep(0.5)
         except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
