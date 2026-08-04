@@ -18,7 +18,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
-    QSplitter,
     QStyle,
     QTabWidget,
     QTextEdit,
@@ -48,6 +47,7 @@ from ert.gui.plotting.utils.plot_maps import (
     STATISTICS,
     STD_DEV,
 )
+from ert.gui.plotting.widgets.plot_side_panel import PlotSidePanel
 from ert.gui.utils import is_everest_application
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -59,7 +59,6 @@ from .utils.plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .utils.plot_types import ObservationPlotLocations
 from .utils.qt_creator import (
     create_group_layout,
-    create_side_panel,
 )
 from .widgets.collapsible_section import CollapsibleSection
 from .widgets.data_type_keys_widget import DataTypeKeysWidget
@@ -74,7 +73,8 @@ from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
 EVEREST_UPPER_BATCH_LIMIT = 20
-
+RIGHT_SIDE_PANEL_MIN_WIDTH = 300
+LEFT_SIDE_PANEL_MIN_WIDTH = 250
 logger = logging.getLogger(__name__)
 
 
@@ -262,6 +262,7 @@ class PlotWindow(QMainWindow):
             plot_case_objects = [obj for obj in ensembles if not obj.hidden]
 
             self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
+            self._data_type_keys_widget.setMinimumWidth(LEFT_SIDE_PANEL_MIN_WIDTH)
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
@@ -322,6 +323,7 @@ class PlotWindow(QMainWindow):
             )
             right_layout.addStretch(1)
             right_container.setLayout(right_layout)
+            right_container.setMinimumWidth(RIGHT_SIDE_PANEL_MIN_WIDTH)
 
             self._everest_controls_group.setVisible(False)
             self._everest_controls_plot_options.get_widget().setVisible(False)
@@ -329,15 +331,32 @@ class PlotWindow(QMainWindow):
             self._statistics_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
-            splitter = QSplitter(Qt.Orientation.Horizontal)
-            splitter.addWidget(
-                create_side_panel("View data type", self._data_type_keys_widget)
-            )
-            splitter.addWidget(self._central_tab)
-            splitter.addWidget(create_side_panel("Plot controls", right_container))
-            splitter.setStretchFactor(1, 1)
+            self.setCentralWidget(self._central_tab)
 
-            self.setCentralWidget(splitter)
+            self._keys_dock = PlotSidePanel(
+                "View data type",
+                self._data_type_keys_widget,
+                self,
+                LEFT_SIDE_PANEL_MIN_WIDTH,
+            )
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self._keys_dock)
+
+            self._plot_controls_dock = PlotSidePanel(
+                "Plot controls",
+                right_container,
+                self,
+                RIGHT_SIDE_PANEL_MIN_WIDTH,
+                on_right=True,
+            )
+            self.addDockWidget(
+                Qt.DockWidgetArea.RightDockWidgetArea, self._plot_controls_dock
+            )
+
+            self.resizeDocks(
+                [self._keys_dock, self._plot_controls_dock],
+                [LEFT_SIDE_PANEL_MIN_WIDTH, RIGHT_SIDE_PANEL_MIN_WIDTH],
+                Qt.Orientation.Horizontal,
+            )
 
             if self.getSelectedKey() is None:
                 self._show_no_data_message()
