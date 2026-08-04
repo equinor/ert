@@ -3,34 +3,17 @@ from __future__ import annotations
 from collections.abc import Callable
 from logging import Logger
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
 from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
-
-
-def create_side_panel(title: str, widget: QWidget) -> QWidget:
-    panel = QWidget()
-    layout = QVBoxLayout(panel)
-    layout.setContentsMargins(0, 0, 0, 0)
-
-    title_label = QLabel(title)
-    title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    title_label.setStyleSheet("padding-bottom: 7px;")
-    title_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-
-    layout.addWidget(title_label)
-    layout.addWidget(widget)
-    return panel
 
 
 def create_group_layout(widgets: list[QWidget] | None = None) -> QVBoxLayout:
