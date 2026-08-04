@@ -117,6 +117,7 @@ class FMStepOverview(QTableView):
     def __init__(self, snapshot_model: SnapshotModel, parent: QWidget | None) -> None:
         super().__init__(parent)
 
+        self._logged_openings: set[str] = set()
         self._fm_step_model = FMStepListProxyModel(self, 0, 0)
         self._fm_step_model.setSourceModel(snapshot_model)
 
@@ -153,6 +154,14 @@ class FMStepOverview(QTableView):
     def set_realization(self, iter_: int, real: int) -> None:
         self._fm_step_model.set_real(iter_, real)
 
+    def _log_first_opening_of(self, opened: str) -> None:
+        if opened in self._logged_openings:
+            return
+        self._logged_openings.add(opened)
+        logger.info(
+            f"{opened.capitalize()} opened for forward model step in experiment status"
+        )
+
     @Slot(QModelIndex)
     def _fm_step_clicked(self, index: QModelIndex) -> None:
         if not index.isValid():
@@ -162,6 +171,7 @@ class FMStepOverview(QTableView):
         if file_dialog and file_dialog.isVisible():
             file_dialog.raise_()
         elif selected_file and file_has_content(selected_file):
+            self._log_first_opening_of(FM_STEP_COLUMNS[index.column()])
             fm_step_name = index.siblingAtColumn(0).data()
             FileDialog(
                 selected_file,
@@ -172,6 +182,7 @@ class FMStepOverview(QTableView):
                 self,
             )
         elif FM_STEP_COLUMNS[index.column()] == ids.ERROR and index.data():
+            self._log_first_opening_of("error message")
             error_dialog = QDialog(self)
             error_dialog.setWindowTitle("Error information")
             layout = QVBoxLayout(error_dialog)

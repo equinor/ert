@@ -1,3 +1,4 @@
+import logging
 from typing import cast, override
 
 from PyQt6.QtCore import (
@@ -32,7 +33,10 @@ from ert.gui.model.snapshot import (
     MemoryUsageRole,
     RealIens,
 )
+from ert.gui.utils import log_once
 from ert.shared.status.utils import byte_with_unit
+
+logger = logging.getLogger(__name__)
 
 
 class RealizationWidget(QWidget):
@@ -72,6 +76,12 @@ class RealizationWidget(QWidget):
         selector_layout = QHBoxLayout()
         selector_layout.addWidget(self._iteration_selector)
         selector_layout.addStretch()
+
+        log_once(
+            self._real_view.clicked,
+            logger,
+            "Realization details opened in experiment status",
+        )
 
         layout = QVBoxLayout()
         layout.addLayout(selector_layout)
