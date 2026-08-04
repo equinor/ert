@@ -127,14 +127,6 @@ class RunModelWorkflowLogEvent(BaseModel, extra="forbid"):
             sections.append(f"--- stderr ---\n{self.stderr.rstrip('\n')}")
         return "\n".join(sections) + "\n\n"
 
-    def write_as_log(self, output_path: Path | None) -> None:
-        if output_path is None:
-            return
-        log_file = output_path / str(self.run_id) / "workflows.log"
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        with log_file.open("a", encoding="utf-8") as fout:
-            fout.write(self.as_log_entry())
-
 
 class RunPathCreationEvent(BaseModel, extra="forbid"):
     pass

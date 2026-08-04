@@ -512,7 +512,7 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_workflow_output_is_written_to_the_update_log_path():
+def test_that_workflow_output_is_written_to_the_experiment_in_storage():
     Path("print_job").write_text("EXECUTABLE print_script.sh\n", encoding="utf-8")
     Path("print_script.sh").write_text(
         dedent(
@@ -540,9 +540,10 @@ def test_that_workflow_output_is_written_to_the_update_log_path():
 
     run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
 
-    (log_file,) = Path("update_log").glob("*/workflows.log")
-    log = log_file.read_text(encoding="utf-8")
-    assert "PRE_SIMULATION workflow=print_workflow job=printjob#0" in log
+    with open_storage("storage", "r") as storage:
+        (experiment,) = storage.experiments
+        log = experiment.workflow_log_path.read_text(encoding="utf-8")
+    assert "PRE_SIMULATION workflow=wfprint job=printjob#0" in log
     assert "--- stdout ---\nhello from the workflow" in log
     assert "--- stderr ---\nproblem from the workflow" in log
 
