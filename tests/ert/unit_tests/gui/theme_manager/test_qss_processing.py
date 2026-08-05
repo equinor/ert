@@ -7,6 +7,7 @@ from ert.gui.theme_manager.qss_processing import (
     QssProcessingError,
     process_qss,
     read_qss_stylesheet_file,
+    resolve_includes,
     substitute_tokens,
 )
 from ert.gui.theme_manager.theme_utils import ColorTheme
@@ -153,3 +154,160 @@ def test_that_qss_processing_error_is_an_exception() -> None:
     assert issubclass(QssProcessingError, Exception)
     err = QssProcessingError("boom")
     assert str(err) == "boom"
+
+
+def test_that_resolve_includes_replaces_include_directive_with_file_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: "/* sidebar styles */",
+    )
+    template = 'before\n@include "sidebar.qss.in"\nafter'
+    result = resolve_includes(template)
+    assert result == "before\n/* sidebar styles */\nafter"
+
+
+def test_that_resolve_includes_handles_multiple_includes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contents = {
+        "qss_stylesheet/sidebar.qss.in": "sidebar",
+        "qss_stylesheet/nav.qss.in": "nav",
+    }
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: contents[filename],
+    )
+    template = '@include "sidebar.qss.in"\n@include "nav.qss.in"'
+    result = resolve_includes(template)
+    assert result == "sidebar\nnav"
+
+
+def test_that_resolve_includes_supports_nested_includes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contents = {
+        "qss_stylesheet/outer.qss.in": '@include "inner.qss.in"',
+        "qss_stylesheet/inner.qss.in": "inner-content",
+    }
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: contents[filename],
+    )
+    template = '@include "outer.qss.in"'
+    result = resolve_includes(template)
+    assert result == "inner-content"
+
+
+def test_that_resolve_includes_detects_circular_references(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contents = {
+        "qss_stylesheet/a.qss.in": '@include "b.qss.in"',
+        "qss_stylesheet/b.qss.in": '@include "a.qss.in"',
+    }
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: contents[filename],
+    )
+    template = '@include "a.qss.in"'
+    with pytest.raises(QssProcessingError, match="Circular @include"):
+        resolve_includes(template)
+
+
+def test_that_resolve_includes_returns_template_unchanged_when_no_includes() -> None:
+    template = "QWidget { color: black; }"
+    assert resolve_includes(template) == template
+
+
+def test_that_resolve_includes_raises_file_not_found_for_missing_include(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _raise(*, filename: str, resource_kind: str) -> str:
+        raise FileNotFoundError(f"not found: {resource_kind}")
+
+    monkeypatch.setattr(qss_mod, "read_theming_resource", _raise)
+
+    template = '@include "missing.qss.in"'
+    with pytest.raises(FileNotFoundError):
+        resolve_includes(template)
+
+
+def test_that_resolve_includes_resolves_indented_include_directive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: "nav",
+    )
+    template = 'before\n    @include "nav.qss.in"\nafter'
+    assert resolve_includes(template) == "before\nnav\nafter"
+
+
+def test_that_resolve_includes_resolves_include_with_trailing_whitespace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: "nav",
+    )
+    template = '@include "nav.qss.in"   \nafter'
+    assert resolve_includes(template) == "nav\nafter"
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        '@include "nav.css"',
+        '@include "nav"',
+    ],
+    ids=["wrong-suffix", "no-suffix"],
+)
+def test_that_resolve_includes_raises_for_include_of_non_qss_in_file(
+    template: str,
+) -> None:
+    with pytest.raises(QssProcessingError, match="Malformed @include directive"):
+        resolve_includes(template)
+
+
+def test_that_resolve_includes_raises_for_include_without_quoted_filename() -> None:
+    with pytest.raises(QssProcessingError, match="Malformed @include directive"):
+        resolve_includes("@include nav.qss.in")
+
+
+def test_that_resolve_includes_raises_for_trailing_content_after_include() -> None:
+    with pytest.raises(QssProcessingError, match="Malformed @include directive"):
+        resolve_includes('@include "nav.qss.in" extra')
+
+
+def test_that_resolve_includes_error_message_names_the_offending_directive() -> None:
+    with pytest.raises(QssProcessingError, match=r'@include "nav\.css"'):
+        resolve_includes('    @include "nav.css"   ')
+
+
+def test_that_resolve_includes_ignores_include_word_inside_a_rule_body() -> None:
+    template = 'QWidget { qproperty-name: "@include nav"; }'
+    assert resolve_includes(template) == template
+
+
+def test_that_resolve_includes_raises_for_malformed_include_in_included_file(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contents = {
+        "qss_stylesheet/outer.qss.in": '@include "inner.css"',
+    }
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: contents[filename],
+    )
+
+    with pytest.raises(QssProcessingError, match=r'@include "inner\.css"'):
+        resolve_includes('@include "outer.qss.in"')
