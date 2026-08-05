@@ -58,6 +58,8 @@ To install forward model steps that you want to have available in ERT you can us
             super().__init__(
                 name="MY_FORWARD_MODEL",
                 command=["my_executable", "<parameter1>", "<parameter2>"],
+                required_keywords=["<parameter1>"],
+                allowed_keywords=["<parameter2>"],
             )
 
         def validate_pre_realization_run(
@@ -93,6 +95,15 @@ throw ``ForwardModelStepValidationError`` to indicate that the configuration of 
 forward model step is invalid (which ert then handles gracefully and presents nicely
 to the user). If you want to show a warning in cases where the configuration cannot be
 validated pre-experiment, you can use the ``ForwardModelStepWarning.warn(...)`` method.
+
+Use ``required_keywords`` to declare named arguments that the user must provide. Use
+``allowed_keywords`` to reject named arguments not supported by the forward model
+step. The allowed-keyword check is opt-in: omitting ``allowed_keywords`` preserves the
+default of accepting any named argument. Required keywords are implicitly allowed; an
+empty list rejects all other named arguments. These declarations validate argument
+names only; use the validation methods for constraints on argument values. Keywords
+that only have a ``default_mapping`` are not implicitly allowed, so list them in
+``allowed_keywords`` when users should be able to override their defaults.
 
 .. code-block:: python
 

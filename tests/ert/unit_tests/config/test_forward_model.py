@@ -609,10 +609,16 @@ def test_that_flow_fm_gives_error_on_threads_in_opts(plugins_ert_config):
         )
 
 
-def test_that_flow_fm_gives_config_warning_on_unknown_options(plugins_ert_config):
-    with pytest.warns(ConfigWarning, match=r".*Unknown option.*Flow: .*DUMMY.*"):
+@pytest.mark.parametrize("fm_step_name", ["ECLIPSE100", "ECLIPSE300", "FLOW"])
+def test_that_reservoir_simulator_fm_rejects_unknown_keyword(
+    plugins_ert_config, fm_step_name
+):
+    with pytest.raises(
+        ConfigValidationError,
+        match=rf"Keyword <DUMMY> is not allowed for forward model step {fm_step_name}",
+    ):
         plugins_ert_config.from_file_contents(
-            "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<DUMMY>=moredummy)\n"
+            f"NUM_REALIZATIONS 1\nFORWARD_MODEL {fm_step_name}(<DUMMY>=moredummy)\n"
         )
 
 
@@ -1124,6 +1130,122 @@ def test_that_plugin_fm_step_is_parsed_successfully_with_required_arguments():
            C=derpyderp)
         """
     )
+
+
+def _load_forward_model_with_keyword_contract(
+    invocation: str,
+    *,
+    allowed_keywords: list[str] | None,
+    required_keywords: list[str] | None = None,
+    default_mapping: dict[str, str] | None = None,
+    command: list[str] | None = None,
+) -> ErtConfig:
+    class FMWithKeywordContract(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="FMWithKeywordContract",
+                command=command or ["echo"],
+                required_keywords=required_keywords or [],
+                allowed_keywords=allowed_keywords,
+                default_mapping=default_mapping or {},
+            )
+
+    return ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            installed_forward_model_steps={
+                "FMWithKeywordContract": FMWithKeywordContract(),
+            }
+        )
+    ).from_file_contents(
+        f"""
+        NUM_REALIZATIONS 1
+        FORWARD_MODEL FMWithKeywordContract{invocation}
+        """
+    )
+
+
+def test_that_plugin_fm_step_rejects_keyword_not_in_allowed_keywords():
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Keyword <C> is not allowed for forward model step "
+            r"FMWithKeywordContract\. Allowed keywords: <A>, <B>"
+        ),
+    ):
+        _load_forward_model_with_keyword_contract(
+            "(<A>=one,<C>=three)",
+            allowed_keywords=["<A>", "<B>"],
+            command=["echo", "<A>", "<B>"],
+        )
+
+
+def test_that_plugin_fm_step_without_allowed_keywords_accepts_unknown_keywords():
+    _load_forward_model_with_keyword_contract(
+        "(<UNKNOWN>=value)",
+        allowed_keywords=None,
+    )
+
+
+def test_that_plugin_fm_step_with_empty_allowed_keywords_rejects_named_argument():
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Keyword <A> is not allowed for forward model step "
+            r"FMWithKeywordContract\. Allowed keywords: none"
+        ),
+    ):
+        _load_forward_model_with_keyword_contract(
+            "(<A>=one)",
+            allowed_keywords=[],
+        )
+
+
+def test_that_allowed_keywords_do_not_restrict_keyword_values():
+    ert_config = _load_forward_model_with_keyword_contract(
+        '(<OPTIONS>="--foo --bar=baz")',
+        allowed_keywords=["<OPTIONS>"],
+        command=["echo", "<OPTIONS>"],
+    )
+
+    assert ert_config.forward_model_steps[0].private_args == {
+        "<OPTIONS>": "--foo --bar=baz"
+    }
+
+
+def test_that_required_keywords_are_implicitly_allowed():
+    _load_forward_model_with_keyword_contract(
+        "(<REQUIRED>=value)",
+        allowed_keywords=[],
+        required_keywords=["<REQUIRED>"],
+        command=["echo", "<REQUIRED>"],
+    )
+
+
+def test_that_defaulted_keyword_is_not_implicitly_allowed():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Keyword <PROTECTED> is not allowed",
+    ):
+        _load_forward_model_with_keyword_contract(
+            "(<PROTECTED>=override)",
+            allowed_keywords=[],
+            default_mapping={"<PROTECTED>": "default"},
+            command=["echo", "<PROTECTED>"],
+        )
+
+
+def test_that_required_keyword_typo_reports_unknown_and_missing_keywords():
+    with pytest.raises(ConfigValidationError) as exc_info:
+        _load_forward_model_with_keyword_contract(
+            "(<REQURIED>=value)",
+            allowed_keywords=[],
+            required_keywords=["<REQUIRED>"],
+            command=["echo", "<REQUIRED>"],
+        )
+
+    error = str(exc_info.value)
+    assert "Keyword <REQURIED> is not allowed" in error
+    assert "Required keyword <REQUIRED> not found" in error
 
 
 @pytest.mark.usefixtures("use_tmpdir")
