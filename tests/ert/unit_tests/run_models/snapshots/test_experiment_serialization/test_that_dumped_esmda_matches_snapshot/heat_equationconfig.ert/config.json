@@ -48,6 +48,7 @@
         "<ARG1>"
       ],
       "required_keywords": [],
+      "allowed_keywords": null,
       "arg_types": [],
       "environment": {
         "_ERT_ITERATION_NUMBER": "<ITER>",
