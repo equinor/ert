@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from ert.gui.theme_manager import ColorScheme
-from ert.gui.theme_manager import theme as theme_module
-from ert.gui.theme_manager.theme import load_qss
+from ert.gui.theme_manager import ColorTheme
+from ert.gui.theme_manager import theme_utils as theme_utils_module
+from ert.gui.theme_manager.theme_utils import load_qss
 
 
 class _MissingResource:
@@ -20,9 +20,9 @@ class _MissingPackage:
         return _MissingResource()
 
 
-@pytest.mark.parametrize("color_scheme", list(ColorScheme))
+@pytest.mark.parametrize("color_scheme", list(ColorTheme))
 def test_that_qss_file_is_loaded_for_each_color_scheme(
-    color_scheme: ColorScheme,
+    color_scheme: ColorTheme,
 ) -> None:
     content = load_qss(color_scheme)
     assert content.strip(), (
@@ -34,13 +34,13 @@ def test_that_qss_file_is_loaded_for_each_color_scheme(
 
 
 def test_that_dark_and_light_qss_differ() -> None:
-    assert load_qss(ColorScheme.DARK) != load_qss(ColorScheme.LIGHT)
+    assert load_qss(ColorTheme.DARK) != load_qss(ColorTheme.LIGHT)
 
 
 def test_that_load_qss_raises_file_not_found_when_theme_file_is_missing(
     monkeypatch,
 ) -> None:
-    monkeypatch.setattr(theme_module, "files", lambda _pkg: _MissingPackage())
+    monkeypatch.setattr(theme_utils_module, "files", lambda _pkg: _MissingPackage())
 
     with pytest.raises(FileNotFoundError, match="dark"):
-        load_qss(ColorScheme.DARK)
+        load_qss(ColorTheme.DARK)

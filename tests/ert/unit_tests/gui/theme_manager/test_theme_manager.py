@@ -7,9 +7,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
-from ert.gui.theme_manager import ColorScheme, ColorSchemeManager
+from ert.gui.theme_manager import ColorSchemeManager, ColorTheme
 from ert.gui.theme_manager import manager as manager_module
-from ert.gui.theme_manager.theme import load_qss
+from ert.gui.theme_manager.theme_utils import load_qss
 
 
 @pytest.fixture(autouse=True)
@@ -23,13 +23,13 @@ def test_that_manual_override_sets_current_color_scheme_and_emits_signal(qtbot) 
     manager = ColorSchemeManager()
     starting_color_scheme = manager.current_color_scheme
     target = (
-        ColorScheme.LIGHT
-        if starting_color_scheme == ColorScheme.DARK
-        else ColorScheme.DARK
+        ColorTheme.LIGHT
+        if starting_color_scheme == ColorTheme.DARK
+        else ColorTheme.DARK
     )
 
-    received: list[ColorScheme] = []
-    manager.color_scheme_changed.connect(received.append)
+    received: list[ColorTheme] = []
+    manager.color_theme_changed.connect(received.append)
 
     manager.set_color_scheme(target)
 
@@ -42,8 +42,8 @@ def test_that_setting_the_same_color_scheme_does_not_emit_signal(qtbot) -> None:
     manager = ColorSchemeManager()
     same = manager.current_color_scheme
 
-    received: list[ColorScheme] = []
-    manager.color_scheme_changed.connect(received.append)
+    received: list[ColorTheme] = []
+    manager.color_theme_changed.connect(received.append)
 
     manager.set_color_scheme(same)
 
@@ -68,11 +68,11 @@ def test_that_apply_installs_the_current_color_schemes_stylesheet_on_qapplicatio
     qtbot,
 ) -> None:
     manager = ColorSchemeManager()
-    manager.set_color_scheme(ColorScheme.DARK)
+    manager.set_color_scheme(ColorTheme.DARK)
 
     app = QApplication.instance()
     assert app is not None
-    assert app.styleSheet() == load_qss(ColorScheme.DARK)
+    assert app.styleSheet() == load_qss(ColorTheme.DARK)
 
 
 def test_that_follow_system_resets_to_detected_color_scheme_and_re_enables_auto_follow(
@@ -84,25 +84,25 @@ def test_that_follow_system_resets_to_detected_color_scheme_and_re_enables_auto_
         lambda: Qt.ColorScheme.Dark,
     )
     manager = ColorSchemeManager()
-    manager.set_color_scheme(ColorScheme.LIGHT)
+    manager.set_color_scheme(ColorTheme.LIGHT)
     assert manager.follows_system is False
 
     manager.follow_system()
 
     assert manager.follows_system is True
-    assert manager.current_color_scheme == ColorScheme.DARK
+    assert manager.current_color_scheme == ColorTheme.DARK
 
 
 def test_that_os_scheme_change_is_ignored_when_color_scheme_is_pinned(qtbot) -> None:
     manager = ColorSchemeManager()
-    manager.set_color_scheme(ColorScheme.LIGHT)
+    manager.set_color_scheme(ColorTheme.LIGHT)
 
-    received: list[ColorScheme] = []
-    manager.color_scheme_changed.connect(received.append)
+    received: list[ColorTheme] = []
+    manager.color_theme_changed.connect(received.append)
 
     manager._on_system_scheme_changed(Qt.ColorScheme.Dark)
 
-    assert manager.current_color_scheme == ColorScheme.LIGHT
+    assert manager.current_color_scheme == ColorTheme.LIGHT
     assert received == []
 
 
@@ -118,7 +118,7 @@ def test_that_os_scheme_change_updates_color_scheme_when_following_system(
         "colorScheme",
         lambda: Qt.ColorScheme.Light,
     )
-    manager.set_color_scheme(ColorScheme.LIGHT)
+    manager.set_color_scheme(ColorTheme.LIGHT)
     manager.follow_system()
 
     monkeypatch.setattr(
@@ -127,13 +127,13 @@ def test_that_os_scheme_change_updates_color_scheme_when_following_system(
         lambda: Qt.ColorScheme.Dark,
     )
 
-    received: list[ColorScheme] = []
-    manager.color_scheme_changed.connect(received.append)
+    received: list[ColorTheme] = []
+    manager.color_theme_changed.connect(received.append)
 
     manager._on_system_scheme_changed(Qt.ColorScheme.Dark)
 
-    assert manager.current_color_scheme == ColorScheme.DARK
-    assert received == [ColorScheme.DARK]
+    assert manager.current_color_scheme == ColorTheme.DARK
+    assert received == [ColorTheme.DARK]
 
 
 def test_that_apply_raises_runtime_error_when_no_qapplication_exists(
@@ -157,7 +157,7 @@ def test_that_apply_keeps_previous_stylesheet_and_logs_when_qss_is_missing(
     assert app is not None
     previous = app.styleSheet()
 
-    def _raise(_color_scheme: ColorScheme) -> str:
+    def _raise(_color_scheme: ColorTheme) -> str:
         raise FileNotFoundError("no qss")
 
     monkeypatch.setattr(manager_module, "load_qss", _raise)

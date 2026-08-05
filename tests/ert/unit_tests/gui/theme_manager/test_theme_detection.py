@@ -4,11 +4,11 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QGuiApplication, QPalette
 
-from ert.gui.theme_manager import ColorScheme
+from ert.gui.theme_manager import ColorTheme
 from ert.gui.theme_manager import manager as manager_module
 from ert.gui.theme_manager.manager import (
     _DARK_BASE_VALUE_THRESHOLD,
-    detect_system_color_scheme,
+    detect_system_color_theme,
 )
 
 
@@ -26,7 +26,7 @@ def test_that_detection_returns_dark_when_style_hints_report_dark(
         "colorScheme",
         lambda: Qt.ColorScheme.Dark,
     )
-    assert detect_system_color_scheme() == ColorScheme.DARK
+    assert detect_system_color_theme() == ColorTheme.DARK
 
 
 def test_that_detection_returns_light_when_style_hints_report_light(
@@ -37,7 +37,7 @@ def test_that_detection_returns_light_when_style_hints_report_light(
         "colorScheme",
         lambda: Qt.ColorScheme.Light,
     )
-    assert detect_system_color_scheme() == ColorScheme.LIGHT
+    assert detect_system_color_theme() == ColorTheme.LIGHT
 
 
 def test_that_detection_falls_back_to_palette_when_scheme_is_unknown(
@@ -51,7 +51,7 @@ def test_that_detection_falls_back_to_palette_when_scheme_is_unknown(
     # With the default Qt palette used in tests the base colour is white
     # (value 255), which is above ``_DARK_BASE_VALUE_THRESHOLD`` in
     # ``_palette_fallback``, so the fallback path must resolve to LIGHT.
-    assert detect_system_color_scheme() == ColorScheme.LIGHT
+    assert detect_system_color_theme() == ColorTheme.LIGHT
 
 
 def test_that_require_style_hints_raises_when_style_hints_are_unavailable(
@@ -70,7 +70,7 @@ def test_that_palette_fallback_returns_light_when_no_qapplication_exists(
     monkeypatch.setattr(
         manager_module.QApplication, "instance", staticmethod(lambda: None)
     )
-    assert manager_module._palette_fallback() == ColorScheme.LIGHT
+    assert manager_module._palette_fallback() == ColorTheme.LIGHT
 
 
 @pytest.mark.parametrize(
@@ -78,17 +78,17 @@ def test_that_palette_fallback_returns_light_when_no_qapplication_exists(
     [
         pytest.param(
             _DARK_BASE_VALUE_THRESHOLD - 1,
-            ColorScheme.DARK,
+            ColorTheme.DARK,
             id="returns-dark-when-base-value-is-below-threshold",
         ),
         pytest.param(
             _DARK_BASE_VALUE_THRESHOLD + 1,
-            ColorScheme.LIGHT,
+            ColorTheme.LIGHT,
             id="returns-light-when-base-value-is-above-threshold",
         ),
         pytest.param(
             _DARK_BASE_VALUE_THRESHOLD,
-            ColorScheme.LIGHT,
+            ColorTheme.LIGHT,
             id="returns-light-when-base-value-equals-threshold",
         ),
     ],
