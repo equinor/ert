@@ -1,4 +1,5 @@
 import logging
+import time
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -517,3 +518,35 @@ def test_that_job_runner_stops_reporting_it_is_running_when_arguments_are_reject
         runner.run([1])
 
     assert not runner.isRunning()
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_cancel_does_not_block_on_an_uncooperative_internal_job():
+    WorkflowCommon.createUncancellableWaitJob()
+
+    wait_job = workflow_job_from_file(
+        "uncancellable_wait_job", name="UNCANCELLABLE_WAIT", origin="user"
+    )
+    workflow = Workflow.from_file(
+        "uncancellable_wait_workflow", {}, {"UNCANCELLABLE_WAIT": wait_job}
+    )
+
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
+
+    workflow_runner.run()
+    wait_until(lambda: Path("uncancellable_wait_started_0").exists())
+
+    start = time.time()
+    workflow_runner.cancel()
+    elapsed = time.time() - start
+
+    # cancel() cannot forcibly interrupt an internal job that never checks
+    # isCancelled(); it must return immediately regardless, rather than
+    # blocking until the uncooperative job finishes on its own (5 seconds).
+    assert elapsed < 1
+    assert workflow_runner.isCancelled()
+
+    wait_until(lambda: Path("uncancellable_wait_finished_0").exists(), timeout=10)
+    workflow_runner.wait()
