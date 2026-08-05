@@ -302,7 +302,7 @@ def test_that_a_failed_everest_batch_result_event_is_shown(
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
         run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), run_id="test-run-id"
+            ("some/url", "cert", ("username", "password")), experiment_id="test-run-id"
         )
     captured = capsys.readouterr()
     expected = [
