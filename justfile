@@ -41,6 +41,7 @@ pack-updated-screenshots:
     #!/bin/bash
     staging="updated-screenshots"
     mkdir -p "$staging"
+    shopt -s nullglob
     for test_dir in pytest-mpl_results/*/; do
       # Filenames from pytest-mpl need a lot of massaging in order to
       # reconstruct the directory structure:
