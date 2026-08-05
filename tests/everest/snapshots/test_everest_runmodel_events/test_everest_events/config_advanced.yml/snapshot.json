@@ -14,7 +14,7 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -56,7 +56,7 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "GradientResult",
       "results": {
         "constraint_gradient": [
@@ -230,7 +230,7 @@
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -272,7 +272,7 @@
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "GradientResult",
       "results": {
         "constraint_gradient": [
@@ -446,7 +446,7 @@
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -488,7 +488,7 @@
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "GradientResult",
       "results": {
         "constraint_gradient": [
@@ -662,7 +662,7 @@
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -704,7 +704,7 @@
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "GradientResult",
       "results": {
         "constraint_gradient": [
@@ -878,7 +878,7 @@
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -920,7 +920,7 @@
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "GradientResult",
       "results": {
         "constraint_gradient": [
