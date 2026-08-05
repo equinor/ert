@@ -41,6 +41,7 @@
       "max_arg": null,
       "arglist": [],
       "required_keywords": [],
+      "allowed_keywords": null,
       "arg_types": [],
       "environment": {
         "_ERT_ITERATION_NUMBER": "<ITER>",
@@ -65,6 +66,7 @@
       "max_arg": null,
       "arglist": [],
       "required_keywords": [],
+      "allowed_keywords": null,
       "arg_types": [],
       "environment": {
         "_ERT_ITERATION_NUMBER": "<ITER>",
@@ -89,6 +91,7 @@
       "max_arg": null,
       "arglist": [],
       "required_keywords": [],
+      "allowed_keywords": null,
       "arg_types": [],
       "environment": {
         "_ERT_ITERATION_NUMBER": "<ITER>",

@@ -9,7 +9,6 @@ from ert import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
-    ForwardModelStepWarning,
     plugin,
 )
 
@@ -216,6 +215,7 @@ class Eclipse100(ForwardModelStepPlugin):
                 "<OPTS>",
             ],
             default_mapping={"<NUM_CPU>": "1", "<OPTS>": ""},
+            allowed_keywords=["<VERSION>", "<NUM_CPU>", "<OPTS>", "<ECLBASE>"],
         )
 
     def validate_pre_experiment(self, fm_json: ForwardModelStepJSON) -> None:
@@ -281,6 +281,7 @@ class Eclipse300(ForwardModelStepPlugin):
                 "<OPTS>",
             ],
             default_mapping={"<NUM_CPU>": "1", "<OPTS>": "", "<VERSION>": "version"},
+            allowed_keywords=["<VERSION>", "<NUM_CPU>", "<OPTS>", "<ECLBASE>"],
         )
 
     def validate_pre_experiment(
@@ -344,10 +345,10 @@ class Flow(ForwardModelStepPlugin):
                 "<NUM_CPU>": "1",
                 "<OPTS>": "",
             },
+            allowed_keywords=["<VERSION>", "<NUM_CPU>", "<OPTS>", "<ECLBASE>"],
         )
 
     def validate_pre_experiment(self, fm_json: ForwardModelStepJSON) -> None:
-        allowed_args = {"<VERSION>", "<NUM_CPU>", "<OPTS>", "<ECLBASE>"}
         if "--np" in self.private_args.get("<OPTS>", ""):
             raise ForwardModelStepValidationError(
                 "Do not supply --np as an option to FLOW, "
@@ -359,10 +360,6 @@ class Flow(ForwardModelStepPlugin):
                 "set NUM_CPU in the Ert config instead."
             )
 
-        if unknowns := set(self.private_args) - allowed_args:
-            raise ForwardModelStepWarning(
-                f"Unknown option(s) supplied to Flow: {sorted(unknowns)}"
-            )
         available_versions = _available_flow_versions(
             env_vars=fm_json["environment"] or {}
         )
