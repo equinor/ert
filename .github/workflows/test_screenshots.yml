@@ -3,6 +3,9 @@ name: Screenshot tests
 on:
   workflow_dispatch:
   pull_request:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -59,6 +62,14 @@ jobs:
           exit 1
         fi
         echo "Screenshot tests failed due to image diffs; updated screenshots were produced."
+
+    - name: Fail hard if screenshot fails on main branch
+      if: steps.screenshot-tests.outcome == 'failure' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        echo "Screenshot tests produced new/changed images after merge to main."
+        echo "This should not have happened and needs manual intervention."
+        echo "Maybe you forgot to merge a PR in ert-testdata?"
+        exit 1
 
     - name: Prepare artifact
       if: always()
