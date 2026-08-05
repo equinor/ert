@@ -7,7 +7,8 @@ from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QStyleHints
 from PyQt6.QtWidgets import QApplication
 
-from .theme_utils import ColorTheme, load_qss
+from .qss_processing import QssProcessingError, process_qss
+from .theme_utils import ColorTheme
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +91,10 @@ class ColorSchemeManager(QObject):
         if app is None:
             raise RuntimeError(_QAPPLICATION_MISSING)
         try:
-            stylesheet = load_qss(self._current_color_scheme)
-        except (OSError, UnicodeDecodeError):
+            stylesheet = process_qss(self._current_color_scheme)
+        except (OSError, UnicodeDecodeError, ValueError, QssProcessingError):
             logger.exception(
-                "Failed to load QSS for colour scheme'%s';"
+                "Failed to load QSS for colour scheme '%s';"
                 " keeping the previously applied stylesheet.",
                 self._current_color_scheme.value,
             )

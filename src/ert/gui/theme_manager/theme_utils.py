@@ -30,10 +30,3 @@ def read_theming_resource(*, filename: str, resource_kind: str) -> str:
     if not resource.is_file():
         raise FileNotFoundError(f"Could not find {resource_kind} at {filename}")
     return resource.read_text(encoding="utf-8")
-
-
-def load_qss(color_theme: ColorTheme) -> str:
-    return read_theming_resource(
-        filename=f"themes/{color_theme.value}.qss",
-        resource_kind=f"{color_theme.value}-theme stylesheet",
-    )

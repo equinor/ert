@@ -5,8 +5,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QGuiApplication, QPalette
 
 from ert.gui.theme_manager import ColorTheme
-from ert.gui.theme_manager import manager as manager_module
-from ert.gui.theme_manager.manager import (
+from ert.gui.theme_manager import theme_manager as manager_module
+from ert.gui.theme_manager.theme_manager import (
     _DARK_BASE_VALUE_THRESHOLD,
     detect_system_color_theme,
 )

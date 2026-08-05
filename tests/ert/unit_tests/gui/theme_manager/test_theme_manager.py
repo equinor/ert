@@ -8,8 +8,8 @@ from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
 from ert.gui.theme_manager import ColorSchemeManager, ColorTheme
-from ert.gui.theme_manager import manager as manager_module
-from ert.gui.theme_manager.theme_utils import load_qss
+from ert.gui.theme_manager import theme_manager as manager_module
+from ert.gui.theme_manager.qss_processing import process_qss
 
 
 @pytest.fixture(autouse=True)
@@ -72,7 +72,7 @@ def test_that_apply_installs_the_current_color_schemes_stylesheet_on_qapplicatio
 
     app = QApplication.instance()
     assert app is not None
-    assert app.styleSheet() == load_qss(ColorTheme.DARK)
+    assert app.styleSheet() == process_qss(ColorTheme.DARK)
 
 
 def test_that_follow_system_resets_to_detected_color_scheme_and_re_enables_auto_follow(
@@ -160,7 +160,7 @@ def test_that_apply_keeps_previous_stylesheet_and_logs_when_qss_is_missing(
     def _raise(_color_scheme: ColorTheme) -> str:
         raise FileNotFoundError("no qss")
 
-    monkeypatch.setattr(manager_module, "load_qss", _raise)
+    monkeypatch.setattr(manager_module, "process_qss", _raise)
 
     with caplog.at_level("ERROR"):
         manager.apply_stylesheet_from_qss()
