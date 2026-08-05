@@ -126,3 +126,40 @@ class WorkflowCommon:
         Path("fast_wait_workflow").write_text(
             "WAIT 0 1\nEXTERNAL_WAIT 1 1\n", encoding="utf-8"
         )
+
+    @staticmethod
+    def createUncancellableWaitJob():
+        Path("uncancellable_wait_job.py").write_text(
+            "import time\n"
+            "from pathlib import Path\n"
+            "\n"
+            "from ert import ErtScript\n"
+            "\n"
+            "class UncancellableWaitScript(ErtScript):\n"
+            "    def dump(self, filename, content):\n"
+            "        Path(filename).write_text(content, encoding='utf-8')\n"
+            "\n"
+            "    def run(self, *argv):\n"
+            "        number, wait_time = argv\n"
+            "        self.dump('uncancellable_wait_started_%d' % number, 'text')\n"
+            # Deliberately does not poll isCancelled(): this simulates an
+            # internal job that has not adopted the cancellation contract.
+            "        time.sleep(wait_time)\n"
+            "        self.dump('uncancellable_wait_finished_%d' % number, 'text')\n"
+            "        return None\n",
+            encoding="utf-8",
+        )
+
+        Path("uncancellable_wait_job").write_text(
+            "INTERNAL True\n"
+            "SCRIPT uncancellable_wait_job.py\n"
+            "MIN_ARG 2\n"
+            "MAX_ARG 2\n"
+            "ARG_TYPE 0 INT\n"
+            "ARG_TYPE 1 INT\n",
+            encoding="utf-8",
+        )
+
+        Path("uncancellable_wait_workflow").write_text(
+            "UNCANCELLABLE_WAIT 0 5\n", encoding="utf-8"
+        )
