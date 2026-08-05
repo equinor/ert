@@ -2,48 +2,23 @@ from __future__ import annotations
 
 import pytest
 
-from ert.gui.theme_manager import theme_utils
+from ert.gui.theme_manager import design_token as design_token_mod
 from ert.gui.theme_manager.design_token import (
     _HEX_COLOR,
     load_tokens,
     parse_design_tokens,
     validate_design_tokens,
 )
-from ert.gui.theme_manager.theme_utils import ColorTheme, read_theming_resource
+from ert.gui.theme_manager.theme_utils import ColorTheme
 
 
-class _MissingResource:
-    def is_file(self) -> bool:
-        return False
-
-    def __str__(self) -> str:
-        return "<missing>"
-
-
-class _MissingPackage:
-    def joinpath(self, _name: str) -> _MissingResource:
-        return _MissingResource()
-
-
-class _FakeResource:
-    """Return controlled text content so we can inject bad JSON / bad tokens."""
-
-    def __init__(self, text: str) -> None:
-        self._text = text
-
-    def is_file(self) -> bool:
-        return True
-
-    def read_text(self, encoding: str = "utf-8") -> str:
-        return self._text
-
-
-class _FakePackage:
-    def __init__(self, text: str) -> None:
-        self._text = text
-
-    def joinpath(self, _name: str) -> _FakeResource:
-        return _FakeResource(self._text)
+def _stub_token_file(monkeypatch: pytest.MonkeyPatch, text: str) -> None:
+    """Make design token reads return controlled text instead of shipped files."""
+    monkeypatch.setattr(
+        design_token_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: text,
+    )
 
 
 @pytest.mark.parametrize(
@@ -84,25 +59,6 @@ def test_that_hex_regex_matches_valid_colors(value: str) -> None:
 )
 def test_that_hex_regex_rejects_invalid_colors(value: str) -> None:
     assert _HEX_COLOR.fullmatch(value) is None
-
-
-@pytest.mark.parametrize("theme", list(ColorTheme))
-def test_that_read_theming_resource_returns_file_content(theme: ColorTheme) -> None:
-    content = read_theming_resource(
-        filename=f"themes/{theme.value}.json",
-        resource_kind=f"{theme.value}-theme design tokens",
-    )
-    assert isinstance(content, str)
-    assert len(content) > 0
-
-
-def test_that_read_theming_resource_raises_file_not_found_for_missing_file(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(theme_utils, "files", lambda _pkg: _MissingPackage())
-
-    with pytest.raises(FileNotFoundError, match="my-tokens"):
-        read_theming_resource(filename="nope.json", resource_kind="my-tokens")
 
 
 @pytest.mark.parametrize(
@@ -189,7 +145,10 @@ def test_that_load_tokens_returns_non_empty_dict_for_each_theme(
 def test_that_load_tokens_raises_file_not_found_when_theme_json_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(theme_utils, "files", lambda _pkg: _MissingPackage())
+    def _raise(*, filename: str, resource_kind: str) -> str:
+        raise FileNotFoundError(resource_kind)
+
+    monkeypatch.setattr(design_token_mod, "read_theming_resource", _raise)
 
     with pytest.raises(FileNotFoundError):
         load_tokens(ColorTheme.DARK)
@@ -198,7 +157,7 @@ def test_that_load_tokens_raises_file_not_found_when_theme_json_missing(
 def test_that_load_tokens_raises_value_error_for_invalid_json(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(theme_utils, "files", lambda _pkg: _FakePackage("{not json"))
+    _stub_token_file(monkeypatch, "{not json")
 
     with pytest.raises(ValueError, match="not valid JSON"):
         load_tokens(ColorTheme.LIGHT)
@@ -207,11 +166,7 @@ def test_that_load_tokens_raises_value_error_for_invalid_json(
 def test_that_load_tokens_raises_value_error_for_invalid_hex_colors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        theme_utils,
-        "files",
-        lambda _pkg: _FakePackage('{"bad-tok": "not-hex"}'),
-    )
+    _stub_token_file(monkeypatch, '{"bad-tok": "not-hex"}')
 
     with pytest.raises(ValueError, match="bad-tok"):
         load_tokens(ColorTheme.DARK)
