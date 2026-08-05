@@ -5,9 +5,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QPushButton
 
 from ert.gui.icon_utils import load_icon
-from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.plot_color_palettes import PALETTES_WITH_DESCRIPTIONS
 from ert.gui.plotting.widgets.plot_controls import CustomPaletteDialog
+from ert.gui.utils import log_once
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class PlotColorPaletteSelector(QComboBox):
                 Qt.ItemDataRole.ToolTipRole,
             )
         self.activated.connect(connection_point)
-        log_plot_option_usage_once(self.activated, logger, "Color palette")
+        log_once(self.activated, logger, "Plot sidebar option used: 'Color palette'")
         self.custom_palette_button = QPushButton(
             load_icon("add_circle_outlined.svg"), "Create custom palette"
         )
@@ -44,8 +44,10 @@ class PlotColorPaletteSelector(QComboBox):
             "The selected palette will be applied to all plots."
         )
         self.custom_palette_button.clicked.connect(self._open_custom_palette_dialog)
-        log_plot_option_usage_once(
-            self.custom_palette_button.clicked, logger, "Create custom palette"
+        log_once(
+            self.custom_palette_button.clicked,
+            logger,
+            "Plot sidebar option used: 'Create custom palette'",
         )
 
     def _open_custom_palette_dialog(self) -> None:
