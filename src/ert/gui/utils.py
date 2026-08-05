@@ -1,3 +1,6 @@
+import logging
+
+from PyQt6.QtCore import pyqtBoundSignal
 from PyQt6.QtWidgets import QApplication
 
 LEGEND_THRESHOLD = 5
@@ -29,3 +32,18 @@ def truncate_dropdown_item(text: str) -> str:
 
 def truncate_experiment_name(name: str) -> str:
     return truncate_string(name, LONGEST_DEFAULT_EXPERIMENT_NAME)
+
+
+def log_once(
+    signal: pyqtBoundSignal,
+    logger: logging.Logger,
+    message: str,
+    level: int = logging.INFO,
+) -> None:
+    """Log a message the first time a signal is emitted, then disconnect."""
+
+    def log_and_disconnect(*_signal_args: object) -> None:
+        logger.log(level, message)
+        signal.disconnect(log_and_disconnect)
+
+    signal.connect(log_and_disconnect)

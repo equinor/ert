@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
+from ert.gui.utils import log_once
 
 
 def create_side_panel(title: str, widget: QWidget) -> QWidget:
@@ -61,7 +61,7 @@ def create_checkbox_with_tooltip(
     checkbox.setToolTip(tooltip)
     checkbox.setChecked(initial_checked)
     checkbox.stateChanged.connect(connection_point)
-    log_plot_option_usage_once(checkbox.clicked, logger, name)
+    log_once(checkbox.clicked, logger, f"Plot sidebar option used: '{name}'")
     return checkbox
 
 
@@ -81,7 +81,7 @@ def create_spinbox_with_tooltip(
     spinbox.setRange(minimum, maximum)
     spinbox.setValue(initial_value)
     spinbox.valueChanged.connect(connection_point)
-    log_plot_option_usage_once(spinbox.valueChanged, logger, name)
+    log_once(spinbox.valueChanged, logger, f"Plot sidebar option used: '{name}'")
     return spinbox
 
 

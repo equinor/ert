@@ -7,11 +7,11 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.plotting.utils import PlotContext
-from ert.gui.plotting.utils.logging_utils import log_plot_option_usage_once
 from ert.gui.plotting.utils.qt_creator import (
     create_group_layout,
 )
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
+from ert.gui.utils import log_once
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +28,10 @@ class EverestControlsPlotOptions:
         self._display_over_button_group.addButton(self._display_over_batches_radio)
         self._display_over_button_group.addButton(self._display_over_controls_radio)
         self._display_over_button_group.buttonClicked.connect(connection_point)
-        log_plot_option_usage_once(
+        log_once(
             self._display_over_button_group.buttonClicked,
             logger,
-            "X-axis display option",
+            "Plot sidebar option used: 'X-axis display option'",
         )
         self._display_over_group = CollapsibleSection(
             "X-axis:",
