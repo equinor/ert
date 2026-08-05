@@ -235,11 +235,19 @@ class WorkflowRunner:
         return self.__cancelled
 
     def cancel(self) -> None:
+        """Request that the running workflow stop.
+
+        This only signals the request: no remaining job in the workflow
+        will start, and the currently running job is asked to stop, which
+        for an external job means its process is terminated. For an
+        internal job this is cooperative - it only stops once it next
+        checks isCancelled() itself - so this call does not wait for that
+        to happen. Use wait() to block until the workflow has actually
+        finished.
+        """
         self.__cancelled = True
         if self.__current_job is not None:
             self.__current_job.cancel()
-        if self.isRunning() or self._workflow_job is not None:
-            self.wait()
 
     def exception(self) -> BaseException | None:
         if self._workflow_job is not None:
