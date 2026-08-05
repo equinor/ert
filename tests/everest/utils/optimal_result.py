@@ -2,9 +2,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import polars as pl
 
 from everest.everest_storage import EverestStorage
+
+CONSTRAINT_TOL = 1e-6
 
 
 @dataclass
@@ -14,14 +17,42 @@ class OptimalResult:
     objectives: dict[str, Any]
 
 
+def constraint_violation_check(violation: pl.DataFrame | None) -> float:
+    if violation is None:
+        return 0.0
+    return violation.drop("batch_id").to_numpy().max().item()
+
+
 def get_optimal_result(output_dir: str) -> OptimalResult | None:
     experiment = EverestStorage.get_everest_experiment(Path(output_dir))
+    max_total_objective = np.inf
+    matching_batches = []
+    for ens in experiment.ensembles_with_function_results:
+        if ens.batch_objectives is None or ens.batch_objectives.is_empty():
+            continue
+        total_objective = ens.batch_objectives["total_objective_value"].item()
 
-    matching_batches = [
-        ens
-        for ens in experiment.ensembles_with_function_results
-        if not ens.batch_objectives.is_empty() and ens.is_improvement
-    ]
+        bound_violation = constraint_violation_check(
+            ens.batch_bound_constraint_violations
+        )
+        input_violation = constraint_violation_check(
+            ens.batch_input_constraint_violations
+        )
+        output_violation = constraint_violation_check(
+            ens.batch_output_constraint_violations
+        )
+
+        if (
+            max(
+                bound_violation,
+                input_violation,
+                output_violation,
+            )
+            < CONSTRAINT_TOL
+            and total_objective < max_total_objective
+        ):
+            matching_batches.append(ens)
+            max_total_objective = total_objective
 
     if matching_batches:
         matching_batches.sort(

@@ -101,7 +101,6 @@ class _Index(BaseModel, extra="forbid"):
     prior_ensemble_id: UUID | None
     started_at: datetime
     everest_realization_info: dict[int, EverestRealizationInfo] | None = None
-    is_improvement: bool | None = None
 
 
 class _Failure(BaseModel, extra="forbid"):
@@ -1725,17 +1724,6 @@ class LocalEnsemble(BaseMode):
                 pl.col(header_columns),
                 pl.exclude(header_columns),
             )
-        )
-
-    @property
-    def is_improvement(self) -> bool:
-        return bool(self._index.is_improvement)
-
-    def update_improvement_flag(self, is_improvement: bool) -> None:
-        self._index.is_improvement = is_improvement
-        self._storage._write_transaction(
-            self._path / "index.json",
-            self._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
     def load_all_misfit_data(self) -> pl.DataFrame:
