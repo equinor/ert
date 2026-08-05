@@ -204,6 +204,14 @@ class ErtScript:
         return self._stderrdata
 
     def isCancelled(self) -> bool:
+        """Whether the user has requested that this job be cancelled.
+
+        Cancellation is cooperative: calling ``cancel()`` only sets the flag
+        this method reads. Nothing forcibly interrupts a running ``run()``,
+        so a job that loops over realizations or ensembles should check
+        this periodically and return early when it is set. A job that
+        never checks it will simply run to completion.
+        """
         return self.__is_cancelled
 
     def hasFailed(self) -> bool:
