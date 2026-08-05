@@ -57,6 +57,7 @@ pack-updated-screenshots:
       echo "Mapped $full_dotted_name -> $target_dir/$filename"
     done
     [ -d "/tmp/test_docs_screenshots" ] && cp -r /tmp/test_docs_screenshots/* "$staging"
+    echo "Files staged for updated screenshots:"
     find "$staging" -type f -exec ls -l {} +
 
 ert-gui-tests:
