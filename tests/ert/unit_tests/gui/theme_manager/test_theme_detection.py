@@ -18,40 +18,44 @@ def _palette_with_base_value(value: int) -> QPalette:
     return palette
 
 
-def test_that_detection_returns_dark_when_style_hints_report_dark(
-    qtbot, monkeypatch
+@pytest.mark.parametrize(
+    ("reported_scheme", "expected_theme"),
+    [
+        pytest.param(Qt.ColorScheme.Dark, ColorTheme.DARK, id="dark"),
+        pytest.param(Qt.ColorScheme.Light, ColorTheme.LIGHT, id="light"),
+    ],
+)
+def test_that_detection_mirrors_the_scheme_reported_by_style_hints(
+    qtbot, monkeypatch, reported_scheme, expected_theme
 ) -> None:
-    monkeypatch.setattr(
-        QGuiApplication.styleHints(),
-        "colorScheme",
-        lambda: Qt.ColorScheme.Dark,
-    )
-    assert detect_system_color_theme() == ColorTheme.DARK
-
-
-def test_that_detection_returns_light_when_style_hints_report_light(
-    qtbot, monkeypatch
-) -> None:
-    monkeypatch.setattr(
-        QGuiApplication.styleHints(),
-        "colorScheme",
-        lambda: Qt.ColorScheme.Light,
-    )
-    assert detect_system_color_theme() == ColorTheme.LIGHT
+    hints = QGuiApplication.styleHints()
+    monkeypatch.setattr(hints, "colorScheme", lambda: reported_scheme)
+    assert detect_system_color_theme(hints) == expected_theme
 
 
 def test_that_detection_falls_back_to_palette_when_scheme_is_unknown(
     qtbot, monkeypatch
 ) -> None:
-    monkeypatch.setattr(
-        QGuiApplication.styleHints(),
-        "colorScheme",
-        lambda: Qt.ColorScheme.Unknown,
-    )
-    # With the default Qt palette used in tests the base colour is white
-    # (value 255), which is above ``_DARK_BASE_VALUE_THRESHOLD`` in
-    # ``_palette_fallback``, so the fallback path must resolve to LIGHT.
-    assert detect_system_color_theme() == ColorTheme.LIGHT
+    hints = QGuiApplication.styleHints()
+    monkeypatch.setattr(hints, "colorScheme", lambda: Qt.ColorScheme.Unknown)
+    # The default Qt palette used in tests has a white base colour (value
+    # 255), which is above _DARK_BASE_VALUE_THRESHOLD, so the fallback path
+    # must resolve to LIGHT.
+    assert detect_system_color_theme(hints) == ColorTheme.LIGHT
+
+
+def test_that_detection_does_not_inspect_the_palette_when_style_hints_report_a_scheme(
+    qtbot, monkeypatch
+) -> None:
+    hints = QGuiApplication.styleHints()
+    monkeypatch.setattr(hints, "colorScheme", lambda: Qt.ColorScheme.Dark)
+
+    def _fail() -> ColorTheme:
+        raise AssertionError("palette fallback must not run for an explicit scheme")
+
+    monkeypatch.setattr(manager_module, "_palette_fallback", _fail)
+
+    assert detect_system_color_theme(hints) == ColorTheme.DARK
 
 
 def test_that_require_style_hints_raises_when_style_hints_are_unavailable(
@@ -74,7 +78,7 @@ def test_that_palette_fallback_returns_light_when_no_qapplication_exists(
 
 
 @pytest.mark.parametrize(
-    ("base_value", "expected_scheme"),
+    ("base_value", "expected_theme"),
     [
         pytest.param(
             _DARK_BASE_VALUE_THRESHOLD - 1,
@@ -93,9 +97,9 @@ def test_that_palette_fallback_returns_light_when_no_qapplication_exists(
         ),
     ],
 )
-def test_that_palette_fallback_resolves_scheme_from_base_value_threshold(
-    qtbot, monkeypatch, base_value, expected_scheme
+def test_that_palette_fallback_resolves_theme_from_base_value_threshold(
+    qtbot, monkeypatch, base_value, expected_theme
 ) -> None:
     app = manager_module.QApplication.instance()
     monkeypatch.setattr(app, "palette", lambda: _palette_with_base_value(base_value))
-    assert manager_module._palette_fallback() == expected_scheme
+    assert manager_module._palette_fallback() == expected_theme

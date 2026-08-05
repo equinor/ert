@@ -18,15 +18,13 @@ _QAPPLICATION_MISSING = (
     "a colour scheme."
 )
 
+# HSV value cutoff for a dark palette base: dark bases sit near 42, light ones near 255.
 _DARK_BASE_VALUE_THRESHOLD = 70
-"""HSV ``value`` cutoff (0-255) below which the palette's base colour is
-considered dark enough to imply a dark theme.
 
-Chosen empirically: typical dark-mode base colours sit well under 70
-(Fusion dark ≈ 42), while light palettes are effectively white (255), so
-the midpoint is not needed and a low threshold avoids misclassifying
-dim-but-light themes as dark.
-"""
+_COLOR_THEME_MAP = {
+    Qt.ColorScheme.Dark: ColorTheme.DARK,
+    Qt.ColorScheme.Light: ColorTheme.LIGHT,
+}
 
 
 def _require_style_hints() -> QStyleHints:
@@ -36,25 +34,25 @@ def _require_style_hints() -> QStyleHints:
     return hints
 
 
-def detect_system_color_theme() -> ColorTheme:
-    hints = _require_style_hints()
-    scheme = hints.colorScheme()
-    if scheme == Qt.ColorScheme.Dark:
-        return ColorTheme.DARK
-    if scheme == Qt.ColorScheme.Light:
-        return ColorTheme.LIGHT
-    return _palette_fallback()
+def _application() -> QApplication | None:
+    return cast(QApplication | None, QApplication.instance())
 
 
 def _palette_fallback() -> ColorTheme:
-    app = cast(QApplication | None, QApplication.instance())
-    if app is None:
-        return ColorTheme.LIGHT
-    return (
-        ColorTheme.DARK
-        if app.palette().base().color().value() < _DARK_BASE_VALUE_THRESHOLD
-        else ColorTheme.LIGHT
-    )
+    app = _application()
+    if (
+        app is not None
+        and app.palette().base().color().value() < _DARK_BASE_VALUE_THRESHOLD
+    ):
+        return ColorTheme.DARK
+    return ColorTheme.LIGHT
+
+
+def detect_system_color_theme(hints: QStyleHints) -> ColorTheme:
+    color_theme = _COLOR_THEME_MAP.get(hints.colorScheme())
+    if color_theme is None:
+        return _palette_fallback()
+    return color_theme
 
 
 class ColorSchemeManager(QObject):
@@ -62,52 +60,34 @@ class ColorSchemeManager(QObject):
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
-        self._follows_system_color_scheme: bool = True
-        self._current_color_scheme: ColorTheme = detect_system_color_theme()
-        hints = _require_style_hints()
-        hints.colorSchemeChanged.connect(self._on_system_scheme_changed)
+        self._style_hints = _require_style_hints()
+        self._current_color_theme = detect_system_color_theme(self._style_hints)
+        self._style_hints.colorSchemeChanged.connect(self._on_system_scheme_changed)
         self.apply_stylesheet_from_qss()
 
     @property
-    def current_color_scheme(self) -> ColorTheme:
-        return self._current_color_scheme
-
-    @property
-    def follows_system(self) -> bool:
-        return self._follows_system_color_scheme
-
-    def set_color_scheme(self, color_scheme: ColorTheme) -> None:
-        """Pin the manager to ``color_scheme`` and stop following the OS scheme."""
-        self._follows_system_color_scheme = False
-        self._set_color_scheme_internal(color_scheme)
-
-    def follow_system(self) -> None:
-        """Resume following the OS colour scheme; re-syncs immediately."""
-        self._follows_system_color_scheme = True
-        self._set_color_scheme_internal(detect_system_color_theme())
+    def current_color_theme(self) -> ColorTheme:
+        return self._current_color_theme
 
     def apply_stylesheet_from_qss(self) -> None:
-        app = cast(QApplication | None, QApplication.instance())
+        app = _application()
         if app is None:
             raise RuntimeError(_QAPPLICATION_MISSING)
         try:
-            stylesheet = process_qss(self._current_color_scheme)
+            stylesheet = process_qss(self._current_color_theme)
         except (OSError, UnicodeDecodeError, ValueError, QssProcessingError):
             logger.exception(
                 "Failed to load QSS for colour scheme '%s';"
                 " keeping the previously applied stylesheet.",
-                self._current_color_scheme.value,
+                self._current_color_theme.value,
             )
             return
         app.setStyleSheet(stylesheet)
 
     def _on_system_scheme_changed(self, _scheme: Qt.ColorScheme) -> None:
-        if self._follows_system_color_scheme:
-            self._set_color_scheme_internal(detect_system_color_theme())
-
-    def _set_color_scheme_internal(self, color_scheme: ColorTheme) -> None:
-        if color_scheme == self._current_color_scheme:
+        color_theme = detect_system_color_theme(self._style_hints)
+        if color_theme == self._current_color_theme:
             return
-        self._current_color_scheme = color_scheme
+        self._current_color_theme = color_theme
         self.apply_stylesheet_from_qss()
-        self.color_theme_changed.emit(color_scheme)
+        self.color_theme_changed.emit(color_theme)
