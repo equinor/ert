@@ -53,7 +53,7 @@ dependencies = [
     "polars>=1.36.0",
     "progressbar2",
     "psutil",
-    "pyarrow", # extra dependency for pandas (parquet)
+    "pyarrow != 25.0.0", # extra dependency for pandas (parquet)
     "pydantic > 2",
     "pyqt6 < 6.10.0",  # rhel8 https://www.riverbankcomputing.com/pipermail/pyqt/2025-October/046342.html
     "python-dateutil",
