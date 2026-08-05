@@ -624,7 +624,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
             target_ensemble.save_batch_dataframes(dataframes=batch_dict)
-            target_ensemble.update_improvement_flag(is_improvement=False)
 
         for r in results:
             batches = (
@@ -753,59 +752,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         assert isinstance(obj_config, EverestObjectivesConfig)
         return obj_config
 
-    def _update_ensemble_improvement_flags(self) -> None:
-        assert self._experiment is not None
-
-        # This a somewhat arbitrary threshold, this should be a user choice
-        # during visualization:
-        CONSTRAINT_TOL = 1e-6
-
-        max_total_objective = np.inf
-        for ensemble in self._experiment.ensembles_with_function_results:
-            assert ensemble.batch_objectives is not None
-            total_objective = ensemble.batch_objectives["total_objective_value"].item()
-            bound_constraint_violation = (
-                0.0
-                if ensemble.batch_bound_constraint_violations is None
-                else (
-                    ensemble.batch_bound_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .max()
-                    .item()
-                )
-            )
-            input_constraint_violation = (
-                0.0
-                if ensemble.batch_input_constraint_violations is None
-                else (
-                    ensemble.batch_input_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .max()
-                    .item()
-                )
-            )
-            output_constraint_violation = (
-                0.0
-                if ensemble.batch_output_constraint_violations is None
-                else (
-                    ensemble.batch_output_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .max()
-                    .item()
-                )
-            )
-            if (
-                max(
-                    bound_constraint_violation,
-                    input_constraint_violation,
-                    output_constraint_violation,
-                )
-                < CONSTRAINT_TOL
-                and total_objective < max_total_objective
-            ):
-                ensemble.update_improvement_flag(is_improvement=True)
-                max_total_objective = total_objective
-
     def _create_experiment_storage(self) -> LocalExperiment:
         return self._storage.create_experiment(
             name=self.experiment_name, experiment_config=self.to_experiment_config()
@@ -836,8 +782,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         # Run the optimization:
         optimizer_exit_code = optimizer.run(initial_guesses)
 
-        # Store some final results.
-        self._update_ensemble_improvement_flags()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
