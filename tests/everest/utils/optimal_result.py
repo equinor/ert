@@ -5,9 +5,8 @@ from typing import Any
 import numpy as np
 import polars as pl
 
+from everest.config.utils import CONSTRAINT_TOLERANCE, constraint_violation_check
 from everest.everest_storage import EverestStorage
-
-CONSTRAINT_TOL = 1e-6
 
 
 @dataclass
@@ -15,12 +14,6 @@ class OptimalResult:
     batch: int
     controls: dict[str, Any]
     objectives: dict[str, Any]
-
-
-def constraint_violation_check(violation: pl.DataFrame | None) -> float:
-    if violation is None:
-        return 0.0
-    return violation.drop("batch_id").to_numpy().max().item()
 
 
 def get_optimal_result(output_dir: str) -> OptimalResult | None:
@@ -48,7 +41,7 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
                 input_violation,
                 output_violation,
             )
-            < CONSTRAINT_TOL
+            < CONSTRAINT_TOLERANCE
             and total_objective < max_total_objective
         ):
             matching_batches.append(ens)

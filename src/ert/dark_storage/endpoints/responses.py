@@ -19,6 +19,7 @@ from ert.dark_storage.common import (
     serialize_dataframe_to_response,
 )
 from ert.storage import Ensemble, Storage
+from everest.config.utils import CONSTRAINT_TOLERANCE, constraint_violation_check
 
 router = APIRouter(tags=["responses"])
 logger = logging.getLogger(__name__)
@@ -160,12 +161,6 @@ def data_for_response(
         if ensemble.batch_objectives is None:
             return pd.DataFrame()
 
-        def constraint_violation_check(violation: pl.DataFrame | None) -> float:
-            if violation is None:
-                return 0.0
-            return violation.drop("batch_id").to_numpy().max().item()
-
-        CONSTRAINT_TOL = 1e-6
         accepted_batches: list[tuple[Ensemble, float]] = []
         rejected_batches_with_value_and_reason: list[
             tuple[Ensemble, float, RejectionReason]
@@ -196,7 +191,7 @@ def data_for_response(
                     input_violation,
                     output_violation,
                 )
-                < CONSTRAINT_TOL
+                < CONSTRAINT_TOLERANCE
                 and total_objective < max_total_objective
             ):
                 accepted_batches.append(
