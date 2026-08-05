@@ -50,6 +50,16 @@ jobs:
       if: steps.screenshot-tests.outcome == 'failure'
       run: uv run just pack-updated-screenshots
 
+    - name: Fail on non-screenshot test failures
+      if: steps.screenshot-tests.outcome == 'failure'
+      run: |
+        if [ -z "$(find updated-screenshots -type f 2>/dev/null)" ]; then
+          echo "Screenshot tests failed, but no updated screenshots were produced."
+          echo "This indicates a failure unrelated to image diffs. Failing the job."
+          exit 1
+        fi
+        echo "Screenshot tests failed due to image diffs; updated screenshots were produced."
+
     - name: Prepare artifact
       if: always()
       run: |
