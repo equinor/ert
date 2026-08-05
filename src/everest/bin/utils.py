@@ -6,7 +6,7 @@ import shutil
 import sys
 import traceback
 from collections import defaultdict
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, KeysView, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -137,7 +137,7 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
     sys.exit()
 
 
-def _get_max_width(sequence: list[Any]) -> int:
+def _get_max_width(sequence: Sequence[str] | KeysView[str]) -> int:
     return max(len(item) for item in sequence)
 
 
@@ -261,27 +261,22 @@ class _DetachedMonitor:
 
         lines = [self._make_header(f"Optimization progress (Batch #{batch})")]
 
+        def mkline(data: dict[str, Any], width: int) -> str:
+            width = _get_max_width(data.keys())
+            return self._join_one_newline_indent(
+                [
+                    f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                    for name, value in data.items()
+                ]
+            )
+
         if cli_monitor_data.get("result_type") == "FunctionResult":
             if controls := cli_monitor_data.get("controls"):
                 width = _get_max_width(controls.keys())
-                lines.append(
-                    self._join_one_newline_indent(
-                        [
-                            f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
-                            for name, value in controls.items()
-                        ]
-                    )
-                )
+                lines.append(mkline(controls, width))
             if expected_objectives := cli_monitor_data.get("expected_objectives"):
                 width = _get_max_width(expected_objectives.keys())
-                lines.append(
-                    self._join_one_newline_indent(
-                        [
-                            f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
-                            for name, value in expected_objectives.items()
-                        ]
-                    )
-                )
+                lines.append(mkline(expected_objectives, width))
             if objective_value := cli_monitor_data.get("objective_value"):
                 lines.append(
                     f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
