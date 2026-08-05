@@ -687,8 +687,8 @@ replacement in the file content and the file name. All the scalar parameters
 available as magic strings.
 
 .. note::
-        In case of GEN_KW prior file contains `a UNIFORM 0 1`, the magic strings is <a>.
-        In case DESIGN_MATRIX contains column `SENSNAME` the magic string is <SENSNAME>.
+        In case the GEN_KW prior file contains ``a UNIFORM 0 1``, the magic strings is ``<a>``.
+        In case DESIGN_MATRIX contains column ``SENSNAME`` the magic string is ``<SENSNAME>``.
 
 *Example:*
 
