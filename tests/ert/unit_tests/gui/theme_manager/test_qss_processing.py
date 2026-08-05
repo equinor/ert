@@ -6,7 +6,6 @@ from ert.gui.theme_manager import qss_processing as qss_mod
 from ert.gui.theme_manager.qss_processing import (
     QssProcessingError,
     process_qss,
-    read_qss_stylesheet_file,
     resolve_includes,
     substitute_tokens,
 )
@@ -76,30 +75,6 @@ def test_that_substitute_tokens_raises_for_placeholder_with_uppercase_letters() 
 def test_that_substitute_tokens_raises_for_placeholder_with_underscores() -> None:
     with pytest.raises(QssProcessingError, match="bg_canvas"):
         substitute_tokens("color: {{bg_canvas}};", {"bg-canvas": "#fff"})
-
-
-def test_that_read_qss_stylesheet_file_returns_template_content(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        qss_mod,
-        "read_theming_resource",
-        lambda *, filename, resource_kind: f"content-of-{filename}",
-    )
-    result = read_qss_stylesheet_file("main")
-    assert result == "content-of-qss_stylesheet/main.qss.in"
-
-
-def test_that_read_qss_stylesheet_file_raises_file_not_found_for_missing_template(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def _raise(*, filename: str, resource_kind: str) -> str:
-        raise FileNotFoundError(f"not found: {resource_kind}")
-
-    monkeypatch.setattr(qss_mod, "read_theming_resource", _raise)
-
-    with pytest.raises(FileNotFoundError, match=r"not found.*QSS template"):
-        read_qss_stylesheet_file("missing")
 
 
 def test_that_process_qss_returns_fully_resolved_stylesheet(

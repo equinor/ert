@@ -3,8 +3,10 @@ from __future__ import annotations
 import pytest
 
 from ert.gui.theme_manager import design_token as design_token_mod
+from ert.gui.theme_manager import qss_processing as qss_mod
 from ert.gui.theme_manager import theme_utils
 from ert.gui.theme_manager.design_token import read_design_token_file
+from ert.gui.theme_manager.qss_processing import read_qss_stylesheet_file
 from ert.gui.theme_manager.theme_utils import ColorTheme, read_theming_resource
 
 
@@ -62,3 +64,27 @@ def test_that_read_design_token_file_raises_file_not_found_for_missing_theme_jso
 
     with pytest.raises(FileNotFoundError, match=r"not found.*design token"):
         read_design_token_file(ColorTheme.DARK)
+
+
+def test_that_read_qss_stylesheet_file_returns_template_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        qss_mod,
+        "read_theming_resource",
+        lambda *, filename, resource_kind: f"content-of-{filename}",
+    )
+    result = read_qss_stylesheet_file("main")
+    assert result == "content-of-qss_stylesheet/main.qss.in"
+
+
+def test_that_read_qss_stylesheet_file_raises_file_not_found_for_missing_template(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _raise(*, filename: str, resource_kind: str) -> str:
+        raise FileNotFoundError(f"not found: {resource_kind}")
+
+    monkeypatch.setattr(qss_mod, "read_theming_resource", _raise)
+
+    with pytest.raises(FileNotFoundError, match=r"not found.*QSS template"):
+        read_qss_stylesheet_file("missing")
