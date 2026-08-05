@@ -637,9 +637,8 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             if ens is None:
                 continue
 
-            results_dict: dict[str, Any] | None = None
+            results_dict: dict[str, Any] = {}
             if isinstance(result, FunctionResults):
-                results_dict = {}
                 if ens.realization_controls is not None:
                     results_dict |= {
                         "controls": ens.realization_controls.drop(
@@ -671,7 +670,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                         ).to_dicts()
                     }
             else:
-                results_dict = {}
                 objective_gradient = (
                     ens.batch_objective_gradient.drop("batch_id")
                     .sort("control_name")
@@ -742,7 +740,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                         else "GradientResult"
                     ),
                     results=results_dict,
-                    failures={k: v for k, v in failures.items() if v} or None,
+                    failures={k: v for k, v in failures.items() if v},
                 )
             )
 

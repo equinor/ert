@@ -287,7 +287,7 @@ class _DetachedMonitor:
                     f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
                 )
 
-        if failures := cli_monitor_data.get("failures", {}):
+        if failures := cli_monitor_data["failures"]:
             failed_lines = []
             if failed_functions := [r for r, p in failures.items() if -1 in p]:
                 s = "s" if len(failed_functions) > 1 else ""

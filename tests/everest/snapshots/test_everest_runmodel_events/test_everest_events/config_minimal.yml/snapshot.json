@@ -14,7 +14,7 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -39,7 +39,7 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "GradientResult",
       "results": {
         "objective_gradient_values": [
@@ -107,7 +107,7 @@
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -142,7 +142,7 @@
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "FunctionResult",
       "results": {
         "controls": {
@@ -177,7 +177,7 @@
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "failures": null,
+      "failures": {},
       "result_type": "GradientResult",
       "results": {
         "objective_gradient_values": [
