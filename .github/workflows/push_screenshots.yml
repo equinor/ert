@@ -44,6 +44,8 @@ jobs:
       run: |
         ERT_PR_TITLE=$(gh pr view "${PR_NUMBER}" --repo equinor/ert --json title --jq '.title')
         echo "ert_pr_title=${ERT_PR_TITLE}" >> "$GITHUB_OUTPUT"
+        ERT_PR_AUTHOR=$(gh pr view "${PR_NUMBER}" --repo equinor/ert --json author --jq '.author.login')
+        echo "ert_pr_author=${ERT_PR_AUTHOR}" >> "$GITHUB_OUTPUT"
 
     - name: Checkout ert-testdata
       if: steps.metadata.outputs.outcome == 'failure'
@@ -64,6 +66,7 @@ jobs:
         GH_TOKEN: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
         PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
         ERT_PR_TITLE: ${{ steps.ert-pr-title.outputs.ert_pr_title }}
+        ERT_PR_AUTHOR: ${{ steps.ert-pr-title.outputs.ert_pr_author }}
       run: |
         BRANCH="update-screenshots-ert-pr-${PR_NUMBER}"
         cd ert-testdata
@@ -86,7 +89,7 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --title "Update screenshots for ${ERT_PR_TITLE} (equinor/ert#${PR_NUMBER})" \
-            --body "Automatically updated screenshot baselines triggered by https://github.com/equinor/ert/pull/${PR_NUMBER}")
+            --body "Automatically updated screenshot baselines triggered by https://github.com/equinor/ert/pull/${PR_NUMBER} by @${ERT_PR_AUTHOR}")
           if [ "${PR_NUMBER}" != "0" ]; then
             gh pr comment "${PR_NUMBER}" \
               --repo equinor/ert \
