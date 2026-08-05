@@ -34,11 +34,11 @@ from .conftest import get_child, wait_for_child
     params=[
         ("FOPR", STATISTICS, "snake_oil"),
         ("FOPR", ENSEMBLE, "snake_oil"),
-        ("SNAKE_OIL_PARAM:OP1_OCTAVES", CROSS_ENSEMBLE_STATISTICS, "snake_oil"),
+        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", CROSS_ENSEMBLE_STATISTICS, "snake_oil"),
         ("COND", STD_DEV, "heat_equation"),
-        ("SNAKE_OIL_PARAM:OP1_OCTAVES", DISTRIBUTION, "snake_oil"),
-        ("SNAKE_OIL_PARAM:OP1_OCTAVES", GAUSSIAN_KDE, "snake_oil"),
-        ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM, "snake_oil"),
+        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", DISTRIBUTION, "snake_oil"),
+        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", GAUSSIAN_KDE, "snake_oil"),
+        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", HISTOGRAM, "snake_oil"),
         ("SNAKE_OIL_WPR_DIFF@199", ENSEMBLE, "snake_oil"),
     ],
 )
