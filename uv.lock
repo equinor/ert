@@ -1900,16 +1900,18 @@ wheels = [
 
 [[package]]
 name = "iterative-ensemble-smoother"
-version = "1.2.0"
+version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "joblib" },
+    { name = "networkx" },
     { name = "numpy" },
+    { name = "scikit-learn" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/47/9a/140d0e7d9bd419e741a0207cc44d90b05367fc9685b7037e79eaece92e70/iterative_ensemble_smoother-1.2.0.tar.gz", hash = "sha256:933fddeb3b355f128a57fd3698c837af202548b18acad46bd5b05e68da2501ad", size = 162553, upload-time = "2026-05-11T05:51:59.144Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c1/cb/cb5b313c3db7806ce5117dfe6493581a92617fbcf6ee2c3304fe603993a9/iterative_ensemble_smoother-1.3.0.tar.gz", hash = "sha256:9654ad52325797fac9ccde0e5e7d2deded52b70a699bb00de07bb5dfb3c367ab", size = 243931, upload-time = "2026-08-05T07:58:38.885Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/94/fd/2b48babe3be7ddb10a2b6237215686c3293659d06fb62df24e2721af8010/iterative_ensemble_smoother-1.2.0-py3-none-any.whl", hash = "sha256:2cf58e9713b6ddbd60df9e44e2277443fe8b3faddeff08c69fd26e89b61fbb69", size = 41283, upload-time = "2026-05-11T05:51:57.186Z" },
+    { url = "https://files.pythonhosted.org/packages/57/5a/b17aee44815bc2d34723e17d40667e5e08c96ff0b625c0271489228b57d6/iterative_ensemble_smoother-1.3.0-py3-none-any.whl", hash = "sha256:ba5661fe79f226a53fee87eebd40d5a230c42b7b8ebd75b51cbaca05afca83e3", size = 57748, upload-time = "2026-08-05T07:58:37.324Z" },
 ]
 
 [[package]]
