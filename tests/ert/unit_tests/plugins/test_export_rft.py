@@ -167,3 +167,40 @@ def test_that_export_rft_uses_custom_filename():
         assert output_file.exists()
 
         assert pl.read_csv(output_file)["pressure"][0] == responses_real0["values"][0]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_export_rft_stops_writing_files_once_cancelled(monkeypatch):
+    runpath_values = [
+        (Path("real0"), _create_rft_response_df()),
+        (Path("real1"), _create_rft_response_df(value=152.0)),
+    ]
+    for rp, _ in runpath_values:
+        rp.mkdir()
+
+    job = ExportRFTJob()
+    written_files = []
+    original_write_csv = pl.DataFrame.write_csv
+
+    def cancel_after_first_write(self, path, *args, **kwargs):
+        written_files.append(path)
+        job.cancel()
+        return original_write_csv(self, path, *args, **kwargs)
+
+    monkeypatch.setattr(pl.DataFrame, "write_csv", cancel_after_first_write)
+
+    with _create_rft_ensemble(ensemble_size=2) as ensemble:
+        for i, (_, response) in enumerate(runpath_values):
+            ensemble.save_response("rft", response, i)
+            ensemble.save_observation_location_metadata(
+                _create_rft_location_metadata_df(), i
+            )
+
+        job.run(_mock_runpath([str(rp) for rp, _ in runpath_values]), ensemble, [])
+
+    # Cancellation is noticed at the top of the next iteration, so the
+    # realization being written when cancel() was called still completes,
+    # but the one after it is skipped entirely.
+    assert len(written_files) == 1
+    assert (runpath_values[0][0] / "share/results/tables/rft_ert.csv").exists()
+    assert not (runpath_values[1][0] / "share/results/tables/rft_ert.csv").exists()
