@@ -90,6 +90,8 @@ jobs:
             --head "$BRANCH" \
             --title "Update screenshots for ${ERT_PR_TITLE} (equinor/ert#${PR_NUMBER})" \
             --body "Automatically updated screenshot baselines triggered by https://github.com/equinor/ert/pull/${PR_NUMBER} by @${ERT_PR_AUTHOR}")
+          gh pr edit "$PR_URL" --repo equinor/ert-testdata --add-assignee "${ERT_PR_AUTHOR}" --add-reviewer "${ERT_PR_AUTHOR}" \
+            || echo "::warning::Could not assign/request review from @${ERT_PR_AUTHOR} on ert-testdata (insufficient access)"
           if [ "${PR_NUMBER}" != "0" ]; then
             gh pr comment "${PR_NUMBER}" \
               --repo equinor/ert \
