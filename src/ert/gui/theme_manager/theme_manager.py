@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 _STYLE_HINTS_MISSING = "styleHints() unavailable; is a QGuiApplication running?"
 _QAPPLICATION_MISSING = (
     "QApplication instance not found; construct a QApplication before applying "
-    "a colour scheme."
+    "a color theme."
 )
 
 # HSV value cutoff for a dark palette base: dark bases sit near 42, light ones near 255.
@@ -55,7 +55,7 @@ def detect_system_color_theme(hints: QStyleHints) -> ColorTheme:
     return color_theme
 
 
-class ColorSchemeManager(QObject):
+class ColorThemeManager(QObject):
     color_theme_changed = pyqtSignal(ColorTheme)
 
     def __init__(self, parent: QObject | None = None) -> None:
@@ -77,7 +77,7 @@ class ColorSchemeManager(QObject):
             stylesheet = process_qss(self._current_color_theme)
         except (OSError, UnicodeDecodeError, ValueError, QssProcessingError):
             logger.exception(
-                "Failed to load QSS for colour scheme '%s';"
+                "Failed to load QSS for color theme '%s';"
                 " keeping the previously applied stylesheet.",
                 self._current_color_theme.value,
             )

@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QGuiApplication, QPalette
 from PyQt6.QtWidgets import QApplication
 
-from ert.gui.theme_manager import ColorSchemeManager, ColorTheme
+from ert.gui.theme_manager import ColorTheme, ColorThemeManager
 from ert.gui.theme_manager import theme_manager as manager_module
 from ert.gui.theme_manager.theme_manager import (
     _DARK_BASE_VALUE_THRESHOLD,
@@ -126,7 +126,7 @@ def test_that_palette_fallback_resolves_theme_from_base_value_threshold(
 def test_that_apply_raises_runtime_error_when_no_qapplication_exists(
     qtbot, monkeypatch
 ) -> None:
-    manager = ColorSchemeManager()
+    manager = ColorThemeManager()
 
     monkeypatch.setattr(
         manager_module.QApplication, "instance", staticmethod(lambda: None)
@@ -139,7 +139,7 @@ def test_that_apply_raises_runtime_error_when_no_qapplication_exists(
 def test_that_apply_sets_the_processed_qss_as_the_application_stylesheet(
     qtbot, monkeypatch
 ) -> None:
-    manager = ColorSchemeManager()
+    manager = ColorThemeManager()
     monkeypatch.setattr(manager_module, "process_qss", lambda _theme: "QWidget {}")
 
     manager.apply_stylesheet_from_qss()
@@ -155,7 +155,7 @@ def test_that_construction_applies_the_stylesheet_for_the_detected_theme(
     _pin_system_scheme(monkeypatch, Qt.ColorScheme.Dark)
     _stub_qss_per_theme(monkeypatch)
 
-    ColorSchemeManager()
+    ColorThemeManager()
 
     app = QApplication.instance()
     assert app is not None
@@ -165,7 +165,7 @@ def test_that_construction_applies_the_stylesheet_for_the_detected_theme(
 def test_that_apply_keeps_previous_stylesheet_and_logs_when_qss_is_missing(
     qtbot, monkeypatch, caplog
 ) -> None:
-    manager = ColorSchemeManager()
+    manager = ColorThemeManager()
     app = QApplication.instance()
     assert app is not None
     previous = app.styleSheet()
@@ -186,7 +186,7 @@ def test_that_os_theme_change_updates_current_theme_and_emits_signal(
     qtbot, monkeypatch
 ) -> None:
     _pin_system_scheme(monkeypatch, Qt.ColorScheme.Light)
-    manager = ColorSchemeManager()
+    manager = ColorThemeManager()
     assert manager.current_color_theme == ColorTheme.LIGHT
 
     received: list[ColorTheme] = []
@@ -203,7 +203,7 @@ def test_that_os_theme_change_to_the_active_theme_emits_no_signal(
     qtbot, monkeypatch
 ) -> None:
     _pin_system_scheme(monkeypatch, Qt.ColorScheme.Dark)
-    manager = ColorSchemeManager()
+    manager = ColorThemeManager()
 
     received: list[ColorTheme] = []
     manager.color_theme_changed.connect(received.append)
@@ -218,7 +218,7 @@ def test_that_theme_change_reapplies_the_stylesheet_for_the_new_theme(
 ) -> None:
     _pin_system_scheme(monkeypatch, Qt.ColorScheme.Light)
     _stub_qss_per_theme(monkeypatch)
-    manager = ColorSchemeManager()
+    manager = ColorThemeManager()
     app = QApplication.instance()
     assert app is not None
     assert app.styleSheet() == "/* qss for light */"
@@ -234,7 +234,7 @@ def test_that_style_hints_color_scheme_signal_triggers_a_stylesheet_reapply(
 ) -> None:
     _pin_system_scheme(monkeypatch, Qt.ColorScheme.Light)
     _stub_qss_per_theme(monkeypatch)
-    manager = ColorSchemeManager()
+    manager = ColorThemeManager()
     app = QApplication.instance()
     assert app is not None
 
