@@ -31,7 +31,7 @@ def test_marker_label_text_correct(qtbot, status: dict[str, int]):
 
         assert label_marker
         count = status.get(state, 0)
-        assert f" {state} ({count}/{realization_count})" in label_marker.text()
+        assert f"{state} ({count}/{realization_count})" in label_marker.text()
 
 
 @given(
