@@ -47,10 +47,18 @@ class ClosableDialog(QDialog):
         if self.close_button.isEnabled() or a0 is None or a0.key() != Qt.Key.Key_Escape:
             QDialog.keyPressEvent(self, a0)
 
-    def addButton(self, caption: str, listener: Callable[..., None]) -> QPushButton:
+    def addButton(
+        self,
+        caption: str,
+        listener: Callable[..., None],
+        *,
+        align_left: bool = False,
+    ) -> QPushButton:
         button = QPushButton(caption)
         button.setObjectName(str(caption).capitalize())
-        self.__button_layout.insertWidget(1, button)
+        # align_left inserts before the stretch, putting the button in the
+        # bottom-left corner instead of next to the close button.
+        self.__button_layout.insertWidget(0 if align_left else 1, button)
         button.clicked.connect(listener)
         return button
 

@@ -14,13 +14,12 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QToolButton,
+    QPushButton,
     QWidget,
 )
 
 from _ert.threading import ErtThread
 from ert.gui.ertwidgets import EnsembleSelector
-from ert.gui.icon_utils import load_icon
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowRunner
@@ -53,16 +52,11 @@ class RunWorkflowWidget(QWidget):
         self.source_ensemble_selector = EnsembleSelector(notifier, update_ert=False)
         layout.addRow("Ensemble", self.source_ensemble_selector)
 
-        self.run_button = QToolButton()
-        self.run_button.setIconSize(QSize(32, 32))
-        self.run_button.setText("Start workflow")
-        self.run_button.setIcon(load_icon("play_circle.svg"))
-        self.run_button.clicked.connect(self.startWorkflow)
-        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-
-        layout.addRow(self.run_button)
-
         self.setLayout(layout)
+
+        # Set by whoever embeds this widget in a dialog, see WorkflowsTool,
+        # so that it can be placed alongside that dialog's own buttons.
+        self.run_button: QPushButton | None = None
 
         self._running_workflow_dialog: WorkflowDialog | None = None
 
