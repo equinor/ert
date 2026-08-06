@@ -13,7 +13,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
+exclude-newer = "2026-08-03T11:17:43.872957Z"
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
@@ -1171,7 +1171,7 @@ dev = [
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
     { name = "resdata" },
-    { name = "resfo-utilities", extras = ["testing"], specifier = ">=0.5.0" },
+    { name = "resfo-utilities", extras = ["testing"], specifier = ">=1.1.0" },
     { name = "rust-just" },
     { name = "scikit-image" },
     { name = "sphinx" },
@@ -4465,7 +4465,7 @@ wheels = [
 
 [[package]]
 name = "resfo-utilities"
-version = "1.0.0"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "natsort" },
@@ -4473,17 +4473,17 @@ dependencies = [
     { name = "resfo" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/bb/37b7ef1d115170108c1613105d6d2f816c9a094f1a7a926316825803e0d4/resfo_utilities-1.0.0.tar.gz", hash = "sha256:60388d538c9cbc1b14bbf047c3fe4e91a5cb6777a08fc92e7e30bbdd01dbdd70", size = 131200, upload-time = "2026-06-29T11:15:10.652Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/07/02c278d7898333c387d6a3093affece37932ce05f85616f88b2182529358/resfo_utilities-1.1.0.tar.gz", hash = "sha256:8db3919e7d0e1e5751a3897df1de1a9cf6e0f8671a7653f0084e8ffcb224f4cb", size = 140558, upload-time = "2026-08-07T11:36:38.197Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/23/a16c19a6b4a4ce20b513b86710a83832a594196a616bab6ff1af8c9c002d/resfo_utilities-1.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:89b0ff2bbba592f5ff4cad64b4ea9d37e52f35fae570ecd0668cae685c3c77dd", size = 6655327, upload-time = "2026-06-29T11:14:51.58Z" },
-    { url = "https://files.pythonhosted.org/packages/b2/88/e5a9369f577abe02e3c5b95290816a4a68cc8c22197d842a5c43a95ba37c/resfo_utilities-1.0.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2dbdb005f6aa4791a70be82f770160da79c771cfa6425fc8029d5a974d3427b2", size = 8004625, upload-time = "2026-06-29T11:14:53.223Z" },
-    { url = "https://files.pythonhosted.org/packages/f7/7f/4c0ff0a91bf42dc79fb315d574412cba858086b7de82c85251034b9e994c/resfo_utilities-1.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:e65e5dab8e5a13d8e6c200ee877d5b3859f1320e39152d93614aafc56ed35709", size = 41035861, upload-time = "2026-06-29T11:14:55.165Z" },
-    { url = "https://files.pythonhosted.org/packages/00/d7/1e3ea7ce5a2316d4b5993f3f754ed42bf8b879a5b4ece449fbd0cb04de2f/resfo_utilities-1.0.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e306cfbc5f0be106fef3b40596001e945148be48b1ba051b4a54733519c01b7e", size = 6655381, upload-time = "2026-06-29T11:14:57.714Z" },
-    { url = "https://files.pythonhosted.org/packages/a9/b8/fd54bef796a8bd815e42ea435b71b90e7d1eac20b89113c52f9d0e5121f1/resfo_utilities-1.0.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7b98a3d0c3ede4d5b0e9bf3d92cdce75c888efef093c76be948933c3fde332b8", size = 8004699, upload-time = "2026-06-29T11:14:59.389Z" },
-    { url = "https://files.pythonhosted.org/packages/7f/06/0bcc7f49614ff8338fe25d164b10d1b31a152a1b7a4131a6c1261090c8a5/resfo_utilities-1.0.0-cp313-cp313-win_amd64.whl", hash = "sha256:cdbadde135c8ed0d98483319ba9bf7ea150c8b4c39a8cc716ce671547d2c3185", size = 41034060, upload-time = "2026-06-29T11:15:01.646Z" },
-    { url = "https://files.pythonhosted.org/packages/2b/d3/9ae110b5202b6bbad0f76ab63d9090994fa9bfcc48721c252f81dfdc314c/resfo_utilities-1.0.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:8eb3ec5444626c7291181080f94e9ed9d3c328a316d239e440ee232b2db9063b", size = 6655653, upload-time = "2026-06-29T11:15:04.394Z" },
-    { url = "https://files.pythonhosted.org/packages/17/0a/3f7d35fdab9a2c62e3203164ca3fd1e01f078cebfac0d46c4285cecc9b33/resfo_utilities-1.0.0-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7a359ff8eb6be9745adad4a9d67c7f9bb896349f9b18c09c2bd0e4f662df2ad4", size = 8004595, upload-time = "2026-06-29T11:15:05.951Z" },
-    { url = "https://files.pythonhosted.org/packages/93/3b/39e74f6f5c930ace801c6dd3a1f1d545cdb78dd5a743a3ce9d22bc91c8be/resfo_utilities-1.0.0-cp314-cp314-win_amd64.whl", hash = "sha256:c98ed6c306dba110a5395848cdbbf353993386d7db7575f71dcc4629c6e89790", size = 41290050, upload-time = "2026-06-29T11:15:08.044Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/86/0da6a252b15eacf8a3a947e69f0e8c59030016c0bfb795d6b059e0f50013/resfo_utilities-1.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:814634067d72c22f6b9d20a38076c73478a154c8708962444d5a93cf422df8c9", size = 6656304, upload-time = "2026-08-07T11:36:18.423Z" },
+    { url = "https://files.pythonhosted.org/packages/ae/4e/7a34cee4f8388ce00ea6481d7888311ada9414a1f9fdfc99aa3a86798d55/resfo_utilities-1.1.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6c2b00ae16db7bad5fe59eef0a7dd38ff43552b000cfb3cd8f7f8bc08f5cbd4b", size = 8005277, upload-time = "2026-08-07T11:36:20.131Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/c0/227f3e745abe1fc63ddb6b56ad006c5d6bfaffef967fb9ac00f0d54ae5de/resfo_utilities-1.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:6f1601f97873e745f78ea71dd3012743c204399040aba8c6298656e5c52287ce", size = 41224218, upload-time = "2026-08-07T11:36:22.45Z" },
+    { url = "https://files.pythonhosted.org/packages/83/02/c8a0fca24f81cf309487a647d4ff9cc20d7b06b3252dd9eeb9a3cc6e58ee/resfo_utilities-1.1.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:69b358b9a501417e4bf2fcab4d2885092d40cb4459d5e6b35970650296e09698", size = 6656423, upload-time = "2026-08-07T11:36:24.635Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/1f/8c21ca2c83b22c3d0e489f8a7fa07380f2c804ce053dd072d143e930922c/resfo_utilities-1.1.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4c9a2b00f76ae30e4a3b2a0a399da285503c46c75f6012928ec622cde0458725", size = 8005348, upload-time = "2026-08-07T11:36:26.239Z" },
+    { url = "https://files.pythonhosted.org/packages/54/56/5cd3cc6fcbd37624275ae040502f96a1e50807257ed61820f33a932d0a6d/resfo_utilities-1.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:46c9143d01c77fb509dde417fdc3c2b667a972f463e210aaf65e1086419ea4a9", size = 41223559, upload-time = "2026-08-07T11:36:28.761Z" },
+    { url = "https://files.pythonhosted.org/packages/da/2a/5a7900d7106a95d333e5326ccdbeda71c9564b8f790147992d2f76aa27b9/resfo_utilities-1.1.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:e0245dec8aecf39dd2361a6148aba8683b8a2358778dee4e50f6712b953e61ae", size = 6656343, upload-time = "2026-08-07T11:36:31.228Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/f0/d3a3c6c6dca2515389ecc46ec597bab76fd90fb0548a5304247cf01a3744/resfo_utilities-1.1.0-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9541ff79d8cf2eb002d7ca47417830d13174e8a5104197bce8d3e6efd889f313", size = 8005400, upload-time = "2026-08-07T11:36:32.823Z" },
+    { url = "https://files.pythonhosted.org/packages/59/36/694e06e591b55583486ca73a21c9a2814d7fa4171ab3ac52333842d09f45/resfo_utilities-1.1.0-cp314-cp314-win_amd64.whl", hash = "sha256:46a255df43f558a4f4ef040323219c7853ada3391ac9b66526cff40209607f9f", size = 41486893, upload-time = "2026-08-07T11:36:35.317Z" },
 ]
 
 [package.optional-dependencies]

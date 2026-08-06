@@ -172,7 +172,7 @@ class RFTConfig(SimulationResponseConfig):
             else:
                 location_cell_map[location] = WellConnectionCell(
                     (cell[0] + 1, cell[1] + 1, cell[2] + 1),
-                    tuple(grid.cell_corners(*cell).mean(axis=0)),
+                    tuple(grid.cell_corners(*cell, map_coordinates=True).mean(axis=0)),
                 )
         return location_cell_map
 
@@ -341,7 +341,9 @@ class RFTConfig(SimulationResponseConfig):
 
         def _cell_center(i: int, j: int, k: int) -> npt.NDArray[np.float32]:
             try:
-                return grid.cell_corners(i - 1, j - 1, k - 1).mean(axis=0)
+                return grid.cell_corners(
+                    i - 1, j - 1, k - 1, map_coordinates=True
+                ).mean(axis=0)
             except IndexError as err:
                 raise InvalidResponseFile(
                     f"Grid coordinates ({i}, {j}, {k}) are out of bounds "

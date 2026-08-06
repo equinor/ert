@@ -46,26 +46,53 @@ def cell_start(date=(1, 1, 2000), ijks=((1, 1, 1), (2, 1, 2)), *args, **kwargs):
     ]
 
 
+def rft_entry(
+    well_name: bytes,
+    date: tuple[int, int, int],
+    ijks: tuple[tuple[int, int, int], ...],
+    **kwargs,
+):
+
+    return [
+        *cell_start(well_name=well_name, date=date, ijks=ijks),
+        *[(k.ljust(8).upper(), float_arr(v)) for k, v in kwargs.items()],
+    ]
+
+
 def pad_to(lst: list[int], target_len: int):
     return np.pad(
         np.array(lst, dtype=np.int32), (0, target_len - len(lst)), mode="constant"
     )
 
 
-def create_egrid(nx, ny, nz, x_width, y_width, layer_height):
+def create_egrid(
+    nx,
+    ny,
+    nz,
+    x_width,
+    y_width,
+    layer_height,
+    *,
+    mapaxes=(0.0, 1.0, 0.0, 0.0, 1.0, 0.0),
+    shift_bottom_plane=(0.0, 0.0),
+):
     """EGrid file contents with nz layers, nx cells in the i direction and ny cells in
     the j direction.
 
     Each cell has width x_width in the i direction and y_width in the j direction and
     height layer_height in the z direction.
+
+    The bottom plane of the grid is shifted by shift_bottom_plane in the i and j
+    directions, respectively, allowing to create a skewed grid.
     """
 
     height = nz * layer_height
     cells_per_layer = nx * ny
 
+    xd, yd = shift_bottom_plane
     coord = np.array(
         [
-            [i * x_width, j * y_width, 0, i * x_width, j * y_width, height]
+            [i * x_width, j * y_width, 0, i * x_width + xd, j * y_width + yd, height]
             for j in range(ny + 1)
             for i in range(nx + 1)
         ],
@@ -82,7 +109,7 @@ def create_egrid(nx, ny, nz, x_width, y_width, layer_height):
     )
     return [
         ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
+        ("MAPAXES ", np.array(mapaxes, dtype=">f4")),
         ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
         ("GRIDHEAD", pad_to([1, nx, ny, nz], 100)),
         ("COORD   ", coord.ravel()),
