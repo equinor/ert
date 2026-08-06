@@ -21,7 +21,7 @@ def matches(pattern: str, text: str) -> bool:
     True
     >>> matches("my <ANY> is <ANY>!", "my name is John!")
     True
-    matches("my <ANY> is <ANY>!", "my name are John!")
+    >>> matches("my <ANY> is <ANY>!", "my name are John!")
     False
     """
     regex_pattern = re.escape(pattern)
