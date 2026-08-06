@@ -39,7 +39,8 @@ NOTE: The DESIGN_MATRIX validation is more strict than that of DESIGN2PARAMS.
 Some problems that were previously hidden or resulting in failures during runtime, will now result
 in errors during validation of the configuration:
 
-- Missing values (empty cells) in the design matrix
+- Missing or invalid values in the design matrix
+  (see :ref:`accepted cell values <design_matrix_cell_values>`)
 - Duplicate parameter names in the design matrix
 - Design sheet is empty
 - REAL column must only contain unique, positive integers
