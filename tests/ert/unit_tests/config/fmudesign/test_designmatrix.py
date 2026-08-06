@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from semeio.fmudesign import DesignMatrix
+from ert.config.fmudesign import DesignMatrix
 
 TESTDATA = Path(__file__).parent / "data"
 

@@ -8,8 +8,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from semeio.fmudesign import DesignMatrix, excel_to_dict
-from semeio.fmudesign.fmudesignrunner import EXAMPLES
+from ert.config.fmudesign import DesignMatrix, excel_to_dict
+from ert.config.fmudesign.fmudesignrunner import EXAMPLES
 
 EXAMPLE_FILES = [ex.filename for ex in EXAMPLES]
 
@@ -203,7 +203,8 @@ def test_all_example_files_cmd_init(tmpdir, monkeypatch, designfile, verbosity):
 @pytest.mark.parametrize("designfile", TEST_FILES, ids=[p.stem for p in TEST_FILES])
 def test_all_input_files_relative_paths(tmpdir, monkeypatch, designfile):
     """Smoketest all files, but invoke them from a directory above.
-    This tests that relative paths in the Excel files work correctly."""
+    This tests that relative paths in the Excel files work correctly.
+    """
 
     monkeypatch.chdir(tmpdir)
     copy_to = os.path.join(".", "path", "going", "down")

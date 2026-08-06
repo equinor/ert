@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from semeio.fmudesign import summarize_design
+from ert.config.fmudesign import summarize_design
 
 TESTDATA = Path(__file__).parent / "data"
 

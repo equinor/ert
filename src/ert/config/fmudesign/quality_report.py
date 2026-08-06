@@ -13,7 +13,7 @@ from probabilit.correlation import (
     nearest_correlation_matrix,
 )
 
-from semeio.fmudesign.design_distributions import to_probabilit
+from .design_distributions import to_probabilit
 
 if TYPE_CHECKING:
     from matplotlib.patches import Rectangle
@@ -382,7 +382,7 @@ class QualityReporter:
         def corrfunc(
             x: npt.NDArray[np.float64],
             y: npt.NDArray[np.float64],
-            **kwargs: Any,  # noqa: ANN401
+            **kwargs: Any,
         ) -> None:
             # Add correlations and grid to plots
             r, _ = sp.stats.pearsonr(x, y)
@@ -394,7 +394,7 @@ class QualityReporter:
             )
             ax.grid(visible=True, ls="--", alpha=0.5)
 
-        def add_grid(*args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+        def add_grid(*args: Any, **kwargs: Any) -> None:
             ax = plt.gca()
             ax.grid(visible=True, ls="--", alpha=0.5)
 

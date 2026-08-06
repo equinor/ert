@@ -7,8 +7,8 @@ import openpyxl
 import pandas as pd
 import pytest
 
-from semeio.fmudesign import excel_to_dict, inputdict_to_yaml
-from semeio.fmudesign._excel_to_dict import _assert_no_merged_cells, _has_value
+from ert.config.fmudesign import excel_to_dict, inputdict_to_yaml
+from ert.config.fmudesign._excel_to_dict import _assert_no_merged_cells, _has_value
 
 MOCK_GENERAL_INPUT = pd.DataFrame(
     data=[
@@ -113,7 +113,8 @@ def test_duplicate_sensname_exception(tmpdir, monkeypatch):
 
 def test_strip_spaces(tmpdir, monkeypatch):
     """Spaces before and after parameter names are probably
-    invisible user errors in Excel sheets. Remove them."""
+    invisible user errors in Excel sheets. Remove them.
+    """
     # pylint: disable=abstract-class-instantiated
     mock_spacious_designinput = pd.DataFrame(
         data=[

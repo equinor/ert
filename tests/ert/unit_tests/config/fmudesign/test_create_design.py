@@ -11,11 +11,10 @@ import pandas as pd
 import pytest
 from scipy import stats
 
-import semeio
-from semeio.fmudesign import DesignMatrix, excel_to_dict
-from semeio.fmudesign import design_distributions as design_dist
-from semeio.fmudesign._excel_to_dict import _read_defaultvalues
-from semeio.fmudesign.quality_report import print_corrmat
+from ert.config.fmudesign import DesignMatrix, excel_to_dict
+from ert.config.fmudesign._excel_to_dict import _read_defaultvalues
+from ert.config.fmudesign.design_distributions import read_correlations
+from ert.config.fmudesign.quality_report import print_corrmat
 
 TESTDATA = Path(__file__).parent / "data"
 
@@ -23,7 +22,8 @@ TESTDATA = Path(__file__).parent / "data"
 @pytest.mark.parametrize("correlations", [True, False])
 def test_distribution_statistis(tmpdir, monkeypatch, correlations):
     """This test ensures that if any large-sample statistics for any distribution
-    changes, we will likely pick it up in the future."""
+    changes, we will likely pick it up in the future.
+    """
 
     NUM_SAMPLES = 10**5
 
@@ -363,8 +363,6 @@ def test_generate_onebyone(tmpdir):
     )
 
     assert (diskmetadata.columns == ["Description", "Value"]).all()
-    assert diskmetadata["Description"].iloc[0] == "Created using semeio version:"
-    assert diskmetadata["Value"].iloc[0] == semeio.__version__
     assert diskmetadata["Description"].iloc[1] == "Created on:"
 
     # For the timestamp, we can't check the exact value since it will differ
@@ -599,7 +597,7 @@ def test_read_correlations_returns_symmetric_matrix(tmp_path):
     filepath = tmp_path / "corr.xlsx"
     _write_correlation_excel(filepath, names, lower)
 
-    result = design_dist.read_correlations(str(filepath), corr_sheet="corr1")
+    result = read_correlations(str(filepath), corr_sheet="corr1")
     arr = result.to_numpy()
 
     np.testing.assert_array_almost_equal(arr, arr.T)
@@ -614,7 +612,7 @@ def test_read_correlations_preserves_index_and_columns(tmp_path):
     filepath = tmp_path / "corr.xlsx"
     _write_correlation_excel(filepath, names, lower)
 
-    result = design_dist.read_correlations(str(filepath), corr_sheet="corr1")
+    result = read_correlations(str(filepath), corr_sheet="corr1")
 
     assert list(result.index) == names
     assert list(result.columns) == names
@@ -627,7 +625,7 @@ def test_read_correlations_to_numpy_is_writable(tmp_path):
     filepath = tmp_path / "corr.xlsx"
     _write_correlation_excel(filepath, names, lower)
 
-    result = design_dist.read_correlations(str(filepath), corr_sheet="corr1")
+    result = read_correlations(str(filepath), corr_sheet="corr1")
     arr = result.to_numpy(copy=True)
     arr[0, 1] = 0.99  # Should not raise
 

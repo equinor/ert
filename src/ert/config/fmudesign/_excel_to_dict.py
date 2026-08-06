@@ -16,8 +16,8 @@ import openpyxl
 import pandas as pd
 import yaml
 
-from semeio.fmudesign.design_distributions import read_correlations
-from semeio.fmudesign.utils import seeds_from_extern
+from .design_distributions import read_correlations
+from .utils import seeds_from_extern
 
 
 def excel_to_dict(
@@ -138,7 +138,8 @@ def _check_designinput(dsgn_input: pd.DataFrame) -> None:
 
 def _check_for_mixed_sensitivities(sens_name: str, sens_group: pd.DataFrame) -> None:
     """Checks for valid input in designinput sheet. A sensitivity cannot contain
-    two different sensitivity types"""
+    two different sensitivity types
+    """
 
     unique_types = sens_group["type"].dropna().unique()
     if len(unique_types) > 1:
@@ -602,7 +603,8 @@ def _read_scenario_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
 
 def _read_constants(sensgroup: pd.DataFrame) -> dict[str, Any]:
     """Reads constants to be used together with
-    seed sensitivity"""
+    seed sensitivity
+    """
     if "dist_param1" not in sensgroup.columns.to_numpy():
         sensgroup["dist_param1"] = float("NaN")
     paramdict: dict[str, Any] = {}
@@ -728,7 +730,7 @@ def _read_correlations(
     return correlations
 
 
-def _has_value(value: Any) -> bool:  # noqa: ANN401
+def _has_value(value: Any) -> bool:
     """Returns False only if the argument is np.nan"""
     try:
         return not np.isnan(value)

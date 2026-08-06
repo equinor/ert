@@ -26,10 +26,8 @@ from argparse import ArgumentParser, Namespace, _SubParsersAction
 from importlib.resources import as_file, files
 from pathlib import Path
 
-from packaging.version import Version
-
-import semeio
-from semeio.fmudesign import DesignMatrix, excel_to_dict
+from ._excel_to_dict import excel_to_dict
+from .create_design import DesignMatrix
 
 
 @dataclasses.dataclass
@@ -117,12 +115,6 @@ getting help:
         add_help=False,
     )
 
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=f"fmudesign {Version(semeio.__version__)}",
-    )
     parser.add_argument(
         "-h", "--help", action="help", help="Show this help message and exit"
     )
@@ -274,7 +266,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
 
 def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     """Handles the 'init' subcommand."""
-    EXAMPLES_DIR = files("semeio.fmudesign.examples")
+    EXAMPLES_DIR = files("ert.config.fmudesign.examples")
 
     # Verify that all examples in EXAMPLES_DIR exist on disk
     for example in EXAMPLES:
@@ -311,14 +303,15 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
 def main() -> None:
     """semeio.fmudesign is a command line utility for generating design matrices
 
-    Wrapper for the the semeio.fmudesign module"""
+    Wrapper for the the semeio.fmudesign module
+    """
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
 
     parser, _subparsers = get_parser()
 
     # Backwards compatibility. If not a known command, assume "run"
-    valid_cmds = ("run", "init", "-h", "--help", "-v", "--version")
+    valid_cmds = ("run", "init", "-h", "--help", "-v")
     if len(sys.argv) > 1 and sys.argv[1] not in valid_cmds:
         sys.argv.insert(1, "run")
 
@@ -331,7 +324,7 @@ def main() -> None:
 
     try:
         args.func(args)
-    except Exception:  # noqa: BLE001
+    except Exception:
         traceback.print_exc()
         print(
             "\n \n",
@@ -342,14 +335,6 @@ def main() -> None:
             "If you believe this error is a bug or are unable to fix it, create an issue or contact the scout team \n",  # noqa: E501
         )
         sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)
-
-    print(
-        "\n",
-        f"Thank you for using fmudesign {Version(semeio.__version__).base_version}\n",
-        " - Documentation:           https://equinor.github.io/fmu-tools/fmudesign.html\n",
-        " - Course docs:             https://fmu-docs.equinor.com/docs/fmu-coursedocs/fmu-howto/sensitivities/index.html\n",
-        " - Issues/feature requests: https://github.com/equinor/semeio/issues\n",
-    )
 
 
 if __name__ == "__main__":

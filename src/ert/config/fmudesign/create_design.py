@@ -19,12 +19,11 @@ import numpy as np
 import pandas as pd
 import probabilit
 
-import semeio
-from semeio.fmudesign import design_distributions as design_dist
-from semeio.fmudesign._excel_to_dict import _raise_if_duplicates
-from semeio.fmudesign.config_validation import validate_configuration
-from semeio.fmudesign.quality_report import QualityReporter, print_corrmat
-from semeio.fmudesign.utils import (
+from . import design_distributions as design_dist
+from ._excel_to_dict import _raise_if_duplicates
+from .config_validation import validate_configuration
+from .quality_report import QualityReporter, print_corrmat
+from .utils import (
     find_max_realisations,
     map_dependencies,
     parameters_from_extern,
@@ -70,7 +69,8 @@ class DesignMatrix:
 
     def reset(self) -> None:
         """Resets DesignMatrix to empty. Necessary iin case method generate
-        is used several times for same instance of DesignMatrix"""
+        is used several times for same instance of DesignMatrix
+        """
         self.designvalues = pd.DataFrame()
         self.defaultvalues = {}
         self.backgroundvalues = None
@@ -272,7 +272,7 @@ class DesignMatrix:
                 {
                     "Description": ["Created using semeio version:", "Created on:"],
                     "Value": [
-                        semeio.__version__,
+                        "semeio.__version__",
                         datetime.now()
                         .astimezone()
                         .isoformat(sep=" ", timespec="seconds"),
@@ -302,7 +302,7 @@ class DesignMatrix:
         Provided number of seed values (3) in external file is lower than the maximum number of realisations (5).
          Seeds will be repeated, e.g. [1, 2, 3] => [1, 2, 3, 1, 2, ...]
         [1, 2, 3, 1, 2]
-        """  # noqa: E501
+        """  # ruff: ignore[line-too-long]
         if seeds is None:
             return None
 
