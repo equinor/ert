@@ -30,6 +30,10 @@ class SeismicData:
         tolerance radius. Drop response otherwise. Required to match responses to
         observations regardless of location precision discrepancies.
         """
+        extra_cols = []
+        if "realization" in responses.columns:
+            extra_cols.append("realization")
+
         candidates = responses.rename(
             {
                 "east": "east_res",
@@ -50,19 +54,23 @@ class SeismicData:
             pl.col("north_obs") >= pl.col("north_res") - cls.TOLERANCE,
             pl.col("north_obs") <= pl.col("north_res") + cls.TOLERANCE,
         )
+
+        cols = ["response_key_res", "east_res", "north_res", "east_obs", "north_obs"]
         matched_on_location = (
             candidates.filter(
                 (pl.col("east_obs") - pl.col("east_res")).pow(2)
                 + (pl.col("north_obs") - pl.col("north_res")).pow(2)
                 <= cls.TOLERANCE**2
             )
-        ).select(["response_key_res", "east_res", "north_res", "east_obs", "north_obs"])
+        ).select(cols + extra_cols)
 
+        left_on = ["response_key", "east", "north", *extra_cols]
+        right_on = ["response_key_res", "east_res", "north_res", *extra_cols]
         return (
             responses.join(
                 matched_on_location,
-                left_on=["response_key", "east", "north"],
-                right_on=["response_key_res", "east_res", "north_res"],
+                left_on=left_on,
+                right_on=right_on,
                 how="inner",
             )
             .with_columns(
