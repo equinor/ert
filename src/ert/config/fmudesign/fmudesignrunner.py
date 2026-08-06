@@ -92,7 +92,7 @@ EXAMPLES = [
 ]
 
 
-def get_parser() -> tuple[ArgumentParser, _SubParsersAction]:
+def get_parser() -> tuple[ArgumentParser, _SubParsersAction]:  # type: ignore[type-arg]
     """Create argument parser and return (parser, subparsers)."""
 
     # =============== MAIN PARSER ===============

@@ -1,6 +1,4 @@
-"""
-Module for validation of config (typically read from Excel).
-"""
+"""Module for validation of config (typically read from Excel)."""
 
 import copy
 import numbers
@@ -35,12 +33,12 @@ def validate_configuration(
             print(f"{key!r} not set in general input sheet. Setting to default 0.")
             print("  - When set to 0, Iman Conover is used to induce correlations.")
             print(
-                "  - When set to a positive integer N, Iman Conover is followed by N iterations\n"  # noqa: E501
-                "    of random permutations (swaps). This leads to results that are never worse, and often better.\n"  # noqa: E501
-                "    It is especially useful for skewed distributions like lognormal and high dimensional problems."  # noqa: E501
+                "  - When set to a positive integer N, Iman Conover is followed by N iterations\n"  # ruff: ignore[line-too-long]
+                "    of random permutations (swaps). This leads to results that are never worse, and often better.\n"  # ruff: ignore[line-too-long]
+                "    It is especially useful for skewed distributions like lognormal and high dimensional problems."  # ruff: ignore[line-too-long]
             )
             print(
-                f"  If desired correlation does not match observed, try setting {key!r}=999 or higher."  # noqa: E501
+                f"  If desired correlation does not match observed, try setting {key!r}=999 or higher."  # ruff: ignore[line-too-long]
             )
         config[key] = 0
     else:

@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-import probabilit
+import probabilit  # type: ignore[import-untyped]
 
 from . import design_distributions as design_dist
 from ._excel_to_dict import _raise_if_duplicates
@@ -286,7 +286,9 @@ class DesignMatrix:
         )
 
     @staticmethod
-    def create_rms_seeds(seeds: list | str | None, max_reals: int) -> list | None:
+    def create_rms_seeds(
+        seeds: list[str] | str | None, max_reals: int
+    ) -> list[int] | None:
         """Create RMS seems from 'seeds' argument.
 
         Args:
@@ -300,7 +302,7 @@ class DesignMatrix:
         --------
         >>> DesignMatrix.create_rms_seeds([1, 2, 3], max_reals=5)
         Provided number of seed values (3) in external file is lower than the maximum number of realisations (5).
-         Seeds will be repeated, e.g. [1, 2, 3] => [1, 2, 3, 1, 2, ...]
+        Seeds will be repeated, e.g. [1, 2, 3] => [1, 2, 3, 1, 2, ...]
         [1, 2, 3, 1, 2]
         """  # ruff: ignore[line-too-long]
         if seeds is None:
@@ -314,10 +316,10 @@ class DesignMatrix:
                 print(
                     f"Provided number of seed values ({len(seeds)}) in external file "
                     f"is lower than the maximum number of realisations ({max_reals}).\n"
-                    " Seeds will be repeated, e.g. [1, 2, 3] => [1, 2, 3, 1, 2, ...]"
+                    "Seeds will be repeated, e.g. [1, 2, 3] => [1, 2, 3, 1, 2, ...]"
                 )
 
-            return [seeds[item % len(seeds)] for item in range(max_reals)]
+            return [int(seeds[item % len(seeds)]) for item in range(max_reals)]
 
         # Raise if none of the cases above apply. We do this because if we did not we
         # would return None, which is a valid case in itself.

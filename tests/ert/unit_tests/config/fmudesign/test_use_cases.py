@@ -1,6 +1,5 @@
 """Example use cases for semeio.fmudesign"""
 
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -201,7 +200,7 @@ def test_all_input_files_relative_paths(use_tmpdir, monkeypatch, designfile):
     This tests that relative paths in the Excel files work correctly.
     """
 
-    copy_to = os.path.join(".", "path", "going", "down")
+    copy_to = Path(".") / "path" / "going" / "down"
 
     Path(copy_to).mkdir(exist_ok=True, parents=True)
 
@@ -212,7 +211,7 @@ def test_all_input_files_relative_paths(use_tmpdir, monkeypatch, designfile):
 
     # Run the CLI tool (test will fail on non-zero status code)
     subprocess.run(
-        ["fmudesign", os.path.join(".", "path", "going", "down", designfile)],
+        ["fmudesign", Path(".") / "path" / "going" / "down" / designfile],
         check=True,
         capture_output=True,
         text=True,

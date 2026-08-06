@@ -1,6 +1,4 @@
-"""
-Module for utility functions that do not belong elsewhere.
-"""
+"""Module for utility functions that do not belong elsewhere."""
 
 from typing import Any
 

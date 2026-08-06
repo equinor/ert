@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-import probabilit
+import probabilit  # type: ignore[import-untyped]
 from scipy import stats
 
 

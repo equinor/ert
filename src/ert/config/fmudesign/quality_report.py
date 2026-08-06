@@ -9,7 +9,7 @@ import numpy.typing as npt
 import pandas as pd
 import scipy as sp
 import seaborn as sns
-from probabilit.correlation import (
+from probabilit.correlation import (  # type: ignore[import-untyped]
     nearest_correlation_matrix,
 )
 
@@ -416,7 +416,7 @@ class QualityReporter:
 
         # Add rugplots to diagonal plots
         for i, var in enumerate(df.columns):
-            pairgrid.diag_axes[i].scatter(  # type: ignore[index]
+            pairgrid.diag_axes[i].scatter(
                 df[var].to_numpy(),
                 np.zeros(len(df)),
                 marker="|",

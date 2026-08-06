@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
-import openpyxl
+import openpyxl  # type: ignore[import-untyped]
 import pandas as pd
 import yaml
 
@@ -218,7 +218,7 @@ def _excel_to_dict_onebyone(
     )
 
     def parse_value(value: object) -> object:
-        if pd.isna(value):  # type: ignore[call-overload]
+        if pd.isna(value):
             return None
         if isinstance(value, str):
             return value.strip()
@@ -533,8 +533,8 @@ def _read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
     if "decimals" in bck_input:
         decimals: dict[str, Any] = {}
         for row in bck_input.itertuples():
-            if _has_value(row.decimals) and _is_int(row.decimals):  # type: ignore[arg-type]
-                decimals[row.param_name] = int(row.decimals)  # type: ignore[arg-type, index]
+            if _has_value(row.decimals) and _is_int(row.decimals):
+                decimals[row.param_name] = int(row.decimals)
         backdict["decimals"] = decimals
 
     return backdict
@@ -743,9 +743,10 @@ def _is_int(teststring: str) -> bool:
     try:
         if not np.isnan(int(teststring)):
             return math.isclose((float(teststring) % 1), 0, abs_tol=1e-14)
-        return False  # It was a "number", but it was NaN.
     except ValueError:
         return False
+    else:
+        return False  # It was a "number", but it was NaN.
 
 
 def _raise_if_duplicates(container: Sequence[Hashable]) -> None:
