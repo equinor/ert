@@ -1,0 +1,8 @@
+sensno,sensname,senstype,casename1,startreal1,endreal1,casename2,startreal2,endreal2
+0,rms_seed,mc,P10_P90,0,9,nan,nan,nan
+1,hum_seed,mc,P10_P90,10,19,nan,nan,nan
+2,velmodel,scalar,alternative,20,29,nan,nan,nan
+3,owc_aeast,scalar,shallow,30,39,deep,40,49
+4,gas_fraction,scalar,no_fill,50,59,filled,60,69
+5,fault_seal,scalar,open,70,79,tight,80,89
+6,relp_go,scalar,lc,90,99,hc,100,109
