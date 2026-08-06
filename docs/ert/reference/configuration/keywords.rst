@@ -360,6 +360,13 @@ the final set of parameters (for example in parameters.txt in real==0) would be:
     as inactive in the ensemble and not run. For example, if the DESIGN_MATRIX only contains realization
     id 3, then the ensemble_size will be four. Here the realizations 0, 1, and 2 will be marked as inactive and not run.
 
+.. _design_matrix_cell_values:
+.. note::
+    Every cell in a used row or column of the design sheet and the default
+    sheet must hold a value. A cell is invalid if it is empty, contains only
+    whitespace, holds a numeric ``NaN``, or holds the text ``NONE``, ``NULL``
+    or ``NAN`` in any casing and ignoring surrounding whitespace.
+
 .. _eclbase:
 
 ECLBASE
