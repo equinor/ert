@@ -69,6 +69,7 @@ from ert.run_models.event import (
     RunModelErrorEvent,
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
+    WorkflowEvent,
 )
 from ert.shared.status.utils import (
     byte_with_unit,
@@ -83,6 +84,7 @@ from .view import (
     RealizationWidget,
     RunpathProgressWidget,
     UpdateWidget,
+    WorkflowLogWidget,
 )
 from .view.disk_space_widget import MountType
 
@@ -386,12 +388,41 @@ class RunDialog(QFrame):
     def is_experiment_done(self) -> bool:
         return self.flag_experiment_done
 
+    def _last_dynamic_tab_index(self) -> int:
+        """Index of the last tab that is not a pinned, persistent tab
+        (e.g. the Workflows tab, which is always kept as the rightmost
+        tab). Returns -1 if there are no dynamic tabs.
+        """
+        index = self._tab_widget.count() - 1
+        while index >= 0 and isinstance(
+            self._tab_widget.widget(index), WorkflowLogWidget
+        ):
+            index -= 1
+        return index
+
+    def _add_dynamic_tab(self, widget: QWidget, label: str) -> int:
+        """Add a tab for a per-iteration/update widget, keeping any pinned
+        tabs (e.g. Workflows) as the rightmost tab(s). If the user was
+        viewing the previously-last dynamic tab, follow along to the new
+        tab; otherwise leave the user's current tab selection untouched.
+        """
+        was_on_latest_dynamic_tab = (
+            self._tab_widget.currentIndex() == self._last_dynamic_tab_index()
+        )
+        insertion_index = self._last_dynamic_tab_index() + 1
+        tab_index = self._tab_widget.insertTab(insertion_index, widget, label)
+        if was_on_latest_dynamic_tab:
+            self._tab_widget.setCurrentIndex(tab_index)
+        return tab_index
+
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
         if isinstance(widget, RealizationWidget):
             widget.refresh_current_selection()
 
-        self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
+        self.fm_step_frame.setHidden(
+            isinstance(widget, UpdateWidget | WorkflowLogWidget)
+        )
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -413,14 +444,12 @@ class RunDialog(QFrame):
             widget.itemClicked.connect(self._select_real)
             widget.setProperty("identifier", f"tab-iter-{iteration}")
             self._select_real(widget._real_list_model.index(0, 0))
-            tab_index = self._tab_widget.addTab(
+            self._add_dynamic_tab(
                 widget,
                 f"Realizations for iteration {iteration}"
                 if not self.is_everest
                 else f"Batch {iteration}...",
             )
-            if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                self._tab_widget.setCurrentIndex(tab_index)
 
             if self.is_everest:
                 self._batch_result_types.append(set())
@@ -461,6 +490,16 @@ class RunDialog(QFrame):
         if rerun_failed_realizations is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
+        else:
+            # Other tabs (Realizations/Update) are updated in place for a
+            # rerun of failed realizations, but the Workflows tab has no
+            # such per-event update mechanism, so its previous run's rows
+            # must be cleared explicitly to avoid mixing old and new output.
+            for i in range(self._tab_widget.count()):
+                widget = self._tab_widget.widget(i)
+                if isinstance(widget, WorkflowLogWidget):
+                    widget.clear()
+                    break
 
         self._worker_thread = QThread(parent=self)
 
@@ -606,9 +645,7 @@ class RunDialog(QFrame):
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
                 widget = UpdateWidget(iteration)
-                tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
-                if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                    self._tab_widget.setCurrentIndex(tab_index)
+                self._add_dynamic_tab(widget, f"Update {iteration}")
                 widget.begin(event)
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()
@@ -622,6 +659,8 @@ class RunDialog(QFrame):
             case RunModelErrorEvent():
                 self._get_update_widget(event.iteration).error(event)
                 event.write_as_csv(self.output_path)
+            case WorkflowEvent():
+                self._get_or_create_workflow_log_widget().add_event(event)
             case EverestBatchResultEvent():
                 batch_types = self._batch_result_types[event.batch]
                 batch_types.add(event.result_type)
@@ -659,6 +698,15 @@ class RunDialog(QFrame):
             if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
                 return widget
         raise ValueError("Could not find UpdateWidget")
+
+    def _get_or_create_workflow_log_widget(self) -> WorkflowLogWidget:
+        for i in range(self._tab_widget.count()):
+            widget = self._tab_widget.widget(i)
+            if isinstance(widget, WorkflowLogWidget):
+                return widget
+        workflow_log_widget = WorkflowLogWidget(self)
+        self._tab_widget.addTab(workflow_log_widget, "Workflows")
+        return workflow_log_widget
 
     def update_total_progress(
         self, progress_value: float, iteration_label: str, iteration: int | None = None
