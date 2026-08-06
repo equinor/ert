@@ -427,17 +427,20 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
     [
         pytest.param(
             [0, None, 1],
-            r"Design matrix contains empty cells \['Row 3, column a'\]",
+            r"Design matrix contains empty cells or cells with a disallowed value "
+            r"\['Row 3, column a'\]",
             id="duplicate entries",
         ),
         pytest.param(
             [0, "      ", 1],
-            r"Design matrix contains empty cells \['Row 3, column a'\]",
+            r"Design matrix contains empty cells or cells with a disallowed value "
+            r"\['Row 3, column a'\]",
             id="whitespace entries",
         ),
         pytest.param(
             [0, "some", np.nan],
-            r"Design matrix contains empty cells \['Row 4, column a'\]",
+            r"Design matrix contains empty cells or cells with a disallowed value "
+            r"\['Row 4, column a'\]",
             id="invalid float values",
         ),
     ],
@@ -470,17 +473,20 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
         ),
         pytest.param(
             [["one", 1], ["b", ""], ["d", 6]],
-            r"Default sheet contains empty cells \['Row 2, column 1'\]",
+            r"Default sheet contains empty cells or cells with a disallowed value "
+            r"\['Row 2, column 1'\]",
             id="empty cells",
         ),
         pytest.param(
             [["something", 1], ["b", "          "], ["d", 6]],
-            r"Default sheet contains empty cells \['Row 2, column 1'\]",
+            r"Default sheet contains empty cells or cells with a disallowed value "
+            r"\['Row 2, column 1'\]",
             id="whitespace entries",
         ),
         pytest.param(
             [["something", 1], ["b", "None"], ["d", 6]],
-            r"Default sheet contains empty cells \['Row 2, column 1'\]",
+            r"Default sheet contains empty cells or cells with a disallowed value "
+            r"\['Row 2, column 1'\]",
             id="None entries",
         ),
         pytest.param(
@@ -658,7 +664,7 @@ def test_that_default_sheet_excel_error_cells_raise_config_validation_error(tmp_
 
     with pytest.raises(
         ConfigValidationError,
-        match=r"Default sheet contains empty cells",
+        match=r"Default sheet contains empty cells or cells with a disallowed value",
     ):
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
 
@@ -695,7 +701,8 @@ def test_that_blank_rows_do_not_shift_reported_design_sheet_row(tmp_path):
 
     with pytest.raises(
         ConfigValidationError,
-        match=r"Design matrix contains empty cells \['Row 5, column a'\]",
+        match=r"Design matrix contains empty cells or cells with a disallowed value "
+        r"\['Row 5, column a'\]",
     ):
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
 
@@ -716,7 +723,7 @@ def test_that_blank_rows_do_not_shift_reported_default_sheet_row(tmp_path):
 
     with pytest.raises(
         ConfigValidationError,
-        match=r"Default sheet contains empty cells "
+        match=r"Default sheet contains empty cells or cells with a disallowed value "
         r"\['Row 4, column 1'\]",
     ):
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
@@ -761,7 +768,7 @@ def test_that_blank_rows_above_the_data_do_not_shift_reported_rows_in_default_sh
     bad_row = leading_blank_rows + 2
     with pytest.raises(
         ConfigValidationError,
-        match=r"Default sheet contains empty cells "
+        match=r"Default sheet contains empty cells or cells with a disallowed value "
         rf"\['Row {bad_row}, column 1'\]",
     ):
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
