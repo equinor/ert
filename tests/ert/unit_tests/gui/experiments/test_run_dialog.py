@@ -1,7 +1,9 @@
 import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
+from uuid import uuid4
 
 import pandas as pd
 import pytest
@@ -40,6 +42,7 @@ from ert.gui.experiments.multiple_data_assimilation_panel import (
 )
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
+from ert.gui.experiments.view.workflow_log import WorkflowLogWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
@@ -49,6 +52,8 @@ from ert.run_models import (
 )
 from ert.run_models.event import (
     FinishedTotalRunPathCreationEvent,
+    RunModelUpdateBeginEvent,
+    RunModelWorkflowLogEvent,
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
@@ -1305,3 +1310,153 @@ HOOK_WORKFLOW_JOB slow_workflow_02 TOUCH_WORKFLOW {file_c} PRE_SIMULATION
         .findChild(QLabel)
         .text()
     )
+
+
+def _stop_event_monitoring(qtbot: QtBot, dialog: RunDialog, queue: SimpleQueue) -> None:
+    """Let the dialog's queue worker exit so it does not outlive the test."""
+    queue.put(EndEvent(failed=False, msg=""))
+    qtbot.waitUntil(dialog._worker_thread.isFinished, timeout=5000)
+
+
+def _workflow_log_event(
+    *,
+    job_name: str = "my_job",
+    job_index: int = 0,
+    iteration: int | None = 0,
+    stdout: str = "hello",
+    failed: bool = False,
+) -> RunModelWorkflowLogEvent:
+    return RunModelWorkflowLogEvent(
+        run_id=uuid4(),
+        hook="POST_SIMULATION",
+        workflow_name="my_workflow",
+        job_name=job_name,
+        job_index=job_index,
+        arguments=[],
+        stdout=stdout,
+        stderr="",
+        failed=failed,
+        timestamp=datetime.now(tz=UTC),
+        iteration=iteration,
+    )
+
+
+def test_that_the_first_workflow_log_event_adds_a_workflows_tab(qtbot: QtBot) -> None:
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    assert dialog._tab_widget.count() == 0
+
+    queue.put(_workflow_log_event(job_name="first", stdout="workflow output"))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+
+    assert dialog._tab_widget.tabText(0) == "Workflows"
+    widget = dialog._tab_widget.widget(0)
+    assert isinstance(widget, WorkflowLogWidget)
+    qtbot.waitUntil(lambda: widget._table.rowCount() == 1, timeout=2000)
+    assert widget._table.item(0, 2).text() == "first"
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+
+def test_that_further_workflow_log_events_reuse_the_same_workflows_tab(
+    qtbot: QtBot,
+) -> None:
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    queue.put(_workflow_log_event(job_name="first"))
+    queue.put(_workflow_log_event(job_name="second", job_index=1))
+    queue.put(_workflow_log_event(job_name="third", job_index=2, iteration=1))
+
+    widget = None
+
+    def has_all_events() -> bool:
+        nonlocal widget
+        if dialog._tab_widget.count() != 1:
+            return False
+        widget = dialog._tab_widget.widget(0)
+        return (
+            isinstance(widget, WorkflowLogWidget)
+            and widget._iteration_selector.count() == 2
+        )
+
+    qtbot.waitUntil(has_all_events, timeout=2000)
+    assert dialog._tab_widget.count() == 1
+    assert widget._table.rowCount() == 1
+    assert widget._table.item(0, 2).text() == "third"
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+
+def test_that_the_workflows_tab_does_not_steal_focus_from_the_current_tab(
+    qtbot: QtBot,
+) -> None:
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    queue.put(StartingTotalRunPathCreationEvent(total_runpaths_to_create=1))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+
+    queue.put(_workflow_log_event())
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 2, timeout=2000)
+
+    assert dialog._tab_widget.currentIndex() == 0
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+
+def test_that_new_iteration_and_update_tabs_do_not_steal_focus_from_the_workflows_tab(
+    qtbot: QtBot,
+) -> None:
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    queue.put(_workflow_log_event())
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    workflows_widget = dialog._tab_widget.widget(0)
+    assert isinstance(workflows_widget, WorkflowLogWidget)
+
+    # The user explicitly selects the Workflows tab.
+    dialog._tab_widget.setCurrentIndex(0)
+    assert dialog._tab_widget.currentWidget() is workflows_widget
+
+    queue.put(
+        FullSnapshotEvent(
+            snapshot=SnapshotBuilder().build(["0"], state.REALIZATION_STATE_UNKNOWN),
+            iteration_label="Foo",
+            total_iterations=1,
+            progress=0.0,
+            realization_count=1,
+            status_count={"Unknown": 1},
+            iteration=0,
+        )
+    )
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 2, timeout=2000)
+    assert dialog._tab_widget.currentWidget() is workflows_widget
+
+    queue.put(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 3, timeout=2000)
+    assert dialog._tab_widget.currentWidget() is workflows_widget
+
+    _stop_event_monitoring(qtbot, dialog, queue)
