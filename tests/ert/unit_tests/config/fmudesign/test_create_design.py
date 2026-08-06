@@ -400,10 +400,13 @@ def test_generate_full_mc_snapshot(snapshot):
     }
 
     # Serialize to string for snapshot comparison
-    snapshot_str = json.dumps(
-        snapshot_dict,
-        indent=2,
-        sort_keys=True,
+    snapshot_str = (
+        json.dumps(
+            snapshot_dict,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"  # The snapshot needs newline to satisfy formatting
     )
 
     # Verify against snapshot

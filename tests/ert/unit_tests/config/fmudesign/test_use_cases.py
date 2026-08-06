@@ -16,6 +16,7 @@ TESTDATA = Path(__file__).parent / "data"
 TEST_FILES = list((TESTDATA / "config").glob("design_input*.xlsx"))
 
 
+@pytest.mark.slow
 def test_prediction_rejection_sampled_ensemble(use_tmpdir, monkeypatch):
     """Test making a design matrix for prediction realizations based on an
     ensemble made with manual history matching (rejection sampling).
@@ -105,6 +106,7 @@ def test_prediction_rejection_sampled_ensemble(use_tmpdir, monkeypatch):
 @pytest.mark.parametrize(
     "gen_input_sheet", ["general_input", "General_Input", "GENERALINPUT"]
 )
+@pytest.mark.slow
 def test_constant_distribution(use_tmpdir, monkeypatch, gen_input_sheet):
     """Create a design matrix workbook with a single constant parameter 'a'."""
 
@@ -161,6 +163,7 @@ def test_constant_distribution(use_tmpdir, monkeypatch, gen_input_sheet):
 
 @pytest.mark.parametrize("designfile", TEST_FILES, ids=[p.stem for p in TEST_FILES])
 @pytest.mark.parametrize("verbosity", [0, 1, 2])
+@pytest.mark.slow
 def test_all_input_files(use_tmpdir, monkeypatch, designfile, verbosity):
     """Smoketest all files."""
 
@@ -178,6 +181,7 @@ def test_all_input_files(use_tmpdir, monkeypatch, designfile, verbosity):
 
 @pytest.mark.parametrize("designfile", EXAMPLE_FILES, ids=EXAMPLE_FILES)
 @pytest.mark.parametrize("verbosity", [0])
+@pytest.mark.slow
 def test_all_example_files_cmd_init(use_tmpdir, monkeypatch, designfile, verbosity):
     """Smoketest all files available in fmudesign init subcommand."""
     subprocess.run(
@@ -195,6 +199,7 @@ def test_all_example_files_cmd_init(use_tmpdir, monkeypatch, designfile, verbosi
 
 
 @pytest.mark.parametrize("designfile", TEST_FILES, ids=[p.stem for p in TEST_FILES])
+@pytest.mark.slow
 def test_all_input_files_relative_paths(use_tmpdir, monkeypatch, designfile):
     """Smoketest all files, but invoke them from a directory above.
     This tests that relative paths in the Excel files work correctly.
