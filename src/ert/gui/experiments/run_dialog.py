@@ -277,6 +277,7 @@ class RunDialog(QFrame):
 
         self._realization_widget: RealizationWidget | None = None
         self._updates_widget: UpdatesWidget | None = None
+        self._widget_before_runpaths: QWidget | None = None
 
         self._fm_step_label = QLabel(self)
         self._fm_step_label.setObjectName("fm_step_label")
@@ -468,6 +469,7 @@ class RunDialog(QFrame):
             self._tab_widget.clear()
             self._realization_widget = None
             self._updates_widget = None
+            self._widget_before_runpaths = None
 
         self._worker_thread = QThread(parent=self)
 
@@ -645,11 +647,20 @@ class RunDialog(QFrame):
                 tab_index = self._tab_widget.addTab(
                     runpath_creation_progress_widget, "Creating runpaths..."
                 )
+                self._widget_before_runpaths = self._tab_widget.currentWidget()
                 self._tab_widget.setCurrentIndex(tab_index)
                 runpath_creation_progress_widget.start(event.total_runpaths_to_create)
             case FinishedTotalRunPathCreationEvent():
                 last_index = self._tab_widget.count() - 1
                 runpath_widget = self._tab_widget.widget(last_index)
+                previous = self._widget_before_runpaths
+                if (
+                    self._tab_widget.currentWidget() is runpath_widget
+                    and previous is not None
+                    and self._tab_widget.indexOf(previous) >= 0
+                ):
+                    self._tab_widget.setCurrentWidget(previous)
+                self._widget_before_runpaths = None
                 self._tab_widget.removeTab(last_index)
                 if isinstance(runpath_widget, RunpathProgressWidget):
                     runpath_widget.deleteLater()
