@@ -229,9 +229,8 @@ def test_background_sheet(tmpdir, monkeypatch):
     assert dict_design["defaultvalues"]["extraseed"] == 0
 
 
-def test_assert_no_merged_cells(tmpdir, monkeypatch):
+def test_assert_no_merged_cells(use_tmpdir, monkeypatch):
     """Test that assert_no_merged_cells detects merged cells"""
-    monkeypatch.chdir(tmpdir)
 
     # Create Excel file with merged cells
     test_data = pd.DataFrame({"A": [1, 2], "B": [3, 4]})

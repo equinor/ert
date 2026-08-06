@@ -72,7 +72,7 @@ def test_designmatrix():
     assert isinstance(design.defaultvalues, dict)
 
 
-def test_endpoint(tmpdir, monkeypatch):
+def test_endpoint(use_tmpdir, monkeypatch):
     """Test the installed endpoint
 
     Will write generated design matrices to the pytest tmpdir directory,
@@ -87,8 +87,6 @@ def test_endpoint(tmpdir, monkeypatch):
         .to_dict()["background"]
     )
 
-    tmpdir.chdir()
-    monkeypatch.chdir(tmpdir)
     # Copy over input files:
     shutil.copy(str(designfile), ".")
     shutil.copy(Path(designfile).parent / dependency, ".")

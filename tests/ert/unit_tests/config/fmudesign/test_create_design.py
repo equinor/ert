@@ -20,7 +20,7 @@ TESTDATA = Path(__file__).parent / "data"
 
 
 @pytest.mark.parametrize("correlations", [True, False])
-def test_distribution_statistis(tmpdir, monkeypatch, correlations):
+def test_distribution_statistis(use_tmpdir, monkeypatch, correlations):
     """This test ensures that if any large-sample statistics for any distribution
     changes, we will likely pick it up in the future.
     """
@@ -207,7 +207,7 @@ def test_distribution_statistis(tmpdir, monkeypatch, correlations):
         assert np.sqrt(np.mean((obs_corr - corr_values) ** 2)) < 0.02
 
 
-def test_generate_onebyone(tmpdir):
+def test_generate_onebyone(use_tmpdir):
     """Test generation of onebyone design"""
 
     inputfile = TESTDATA / "config/design_input_example1.xlsx"
@@ -225,7 +225,6 @@ def test_generate_onebyone(tmpdir):
     assert design.designvalues.shape == (rows_in_design_matrix, 10)
 
     # Write to disk and check some validity
-    tmpdir.chdir()
     design.to_xlsx("designmatrix.xlsx")
     assert Path("designmatrix.xlsx").exists
     diskdesign = pd.read_excel("designmatrix.xlsx", engine="openpyxl")
@@ -411,7 +410,7 @@ def test_generate_full_mc_snapshot(snapshot):
     snapshot.assert_match(snapshot_str, "design_output_mc_with_correls.json")
 
 
-def test_generate_full_mc(tmpdir):
+def test_generate_full_mc(use_tmpdir):
     """Test generation of full monte carlo"""
     inputfile = TESTDATA / "config/design_input_mc_with_correls.xlsx"
     input_dict = excel_to_dict(inputfile)
@@ -423,7 +422,6 @@ def test_generate_full_mc(tmpdir):
     assert design.designvalues.shape == (500, 16)
 
     # Write to disk and check some validity
-    tmpdir.chdir()
     design.to_xlsx("designmatrix.xlsx")
     assert Path("designmatrix.xlsx").exists
     diskdesign = pd.read_excel(
@@ -487,70 +485,68 @@ def test_generate_full_mc(tmpdir):
     assert math.isclose(date_fractions.loc["2018-11-04"], 0.3)
 
 
-def test_generate_background(tmpdir):
+def test_generate_background(use_tmpdir):
     inputfile = TESTDATA / "config/design_input_background.xlsx"
     input_dict = excel_to_dict(inputfile)
     source_file = TESTDATA / "config/doe1.xlsx"
-    dest_file = tmpdir.join("doe1.xlsx")
+    dest_file = "doe1.xlsx"
     shutil.copy2(source_file, dest_file)
 
-    with tmpdir.as_cwd():
-        design = DesignMatrix()
-        design.generate(input_dict)
+    design = DesignMatrix()
+    design.generate(input_dict)
 
-        # Check that background parameters have same values in different sensitivities.
-        background_params = ["PARAM17", "PARAM18", "PARAM19"]
+    # Check that background parameters have same values in different sensitivities.
+    background_params = ["PARAM17", "PARAM18", "PARAM19"]
 
-        background_vals = design.designvalues.loc[
-            design.designvalues["SENSNAME"] == "background", background_params
-        ]
-        velmodel_vals = design.designvalues.loc[
-            design.designvalues["SENSNAME"] == "velmodel", background_params
-        ]
+    background_vals = design.designvalues.loc[
+        design.designvalues["SENSNAME"] == "background", background_params
+    ]
+    velmodel_vals = design.designvalues.loc[
+        design.designvalues["SENSNAME"] == "velmodel", background_params
+    ]
 
-        assert (background_vals.to_numpy() == velmodel_vals.to_numpy()).all()
+    assert (background_vals.to_numpy() == velmodel_vals.to_numpy()).all()
 
-        faults_vals = design.designvalues.loc[
-            design.designvalues["SENSNAME"] == "faults", background_params
-        ]
-        contacts_vals = design.designvalues.loc[
-            design.designvalues["SENSNAME"] == "contacts", background_params
-        ]
+    faults_vals = design.designvalues.loc[
+        design.designvalues["SENSNAME"] == "faults", background_params
+    ]
+    contacts_vals = design.designvalues.loc[
+        design.designvalues["SENSNAME"] == "contacts", background_params
+    ]
 
-        assert (faults_vals.to_numpy() == contacts_vals.to_numpy()).all()
+    assert (faults_vals.to_numpy() == contacts_vals.to_numpy()).all()
 
-        sens6 = design.designvalues[design.designvalues["SENSNAME"] == "sens6"]
-        # PARAM5 ~ TruncatedNormal(3, 1, 1, 5)
-        # PARAM6 ~ Uniform(0, 1)
-        assert np.isclose(
-            stats.spearmanr(sens6["PARAM5"], sens6["PARAM6"])[0],
-            0.8,
-            atol=0.1,
-        )
-        sens7 = design.designvalues[design.designvalues["SENSNAME"] == "sens7"]
+    sens6 = design.designvalues[design.designvalues["SENSNAME"] == "sens6"]
+    # PARAM5 ~ TruncatedNormal(3, 1, 1, 5)
+    # PARAM6 ~ Uniform(0, 1)
+    assert np.isclose(
+        stats.spearmanr(sens6["PARAM5"], sens6["PARAM6"])[0],
+        0.8,
+        atol=0.1,
+    )
+    sens7 = design.designvalues[design.designvalues["SENSNAME"] == "sens7"]
 
-        # PARAM9 and PARAM10 have a target correlation of 0.9 in the design config.
-        # The input correlation matrix is not positive semi-definite and is
-        # transformed to the closest positive semi-definite correlation matrix.
-        # The new correlation coefficient is 0.8.
-        # Using wide tolerance because the non-linear transformation between normal
-        # and target distributions can alter correlation strength.
-        assert np.isclose(
-            stats.spearmanr(sens7["PARAM9"], sens7["PARAM10"])[0],
-            0.8,
-            atol=0.2,
-        )
+    # PARAM9 and PARAM10 have a target correlation of 0.9 in the design config.
+    # The input correlation matrix is not positive semi-definite and is
+    # transformed to the closest positive semi-definite correlation matrix.
+    # The new correlation coefficient is 0.8.
+    # Using wide tolerance because the non-linear transformation between normal
+    # and target distributions can alter correlation strength.
+    assert np.isclose(
+        stats.spearmanr(sens7["PARAM9"], sens7["PARAM10"])[0],
+        0.8,
+        atol=0.2,
+    )
 
-        assert np.isclose(
-            stats.spearmanr(sens7["PARAM10"], sens7["PARAM11"])[0],
-            0.8,
-            atol=0.20,
-        )
+    assert np.isclose(
+        stats.spearmanr(sens7["PARAM10"], sens7["PARAM11"])[0],
+        0.8,
+        atol=0.20,
+    )
 
 
-def test_read_defaultvalues_duplicate_error(tmpdir, monkeypatch):
+def test_read_defaultvalues_duplicate_error(use_tmpdir, monkeypatch):
     """Test that read_defaultvalues raises ValueError for duplicate parameter names."""
-    monkeypatch.chdir(tmpdir)
 
     # Create a simple Excel file with duplicate parameter names in defaultvalues
     defaultvalues = pd.DataFrame(
