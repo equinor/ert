@@ -406,7 +406,8 @@ class DesignMatrix:
     ) -> list[str]:
         """
         Validate user inputted design matrix
-        :raises: ValueError if design matrix contains empty headers or empty cells
+        :raises: ValueError if design matrix contains empty headers, empty
+        cells, or cells with disallowed values
         """
         errors = []
         param_name_count = Counter(p for p in param_names if p is not None)
@@ -427,7 +428,10 @@ class DesignMatrix:
             )
         ]
         if len(empties) > 0:
-            errors.append(f"Design matrix contains empty cells {empties}")
+            errors.append(
+                "Design matrix contains empty cells or cells with a "
+                f"disallowed value {empties}"
+            )
 
         for column_num, param_name in enumerate(param_names):
             if param_name is None or len(param_name.split()) == 0:
@@ -501,7 +505,10 @@ class DesignMatrix:
             )
         ]
         if len(empty_cells) > 0:
-            raise ValueError(f"Default sheet contains empty cells {empty_cells}")
+            raise ValueError(
+                "Default sheet contains empty cells or cells with a "
+                f"disallowed value {empty_cells}"
+            )
         if default_df.select(pl.nth(0)).is_duplicated().any():
             raise ValueError("Default sheet contains duplicate parameter names")
 
