@@ -17,6 +17,7 @@ class BlobType(StrEnum):
     MATRIX = "matrix"
     SCALING_FACTORS = "scaling_factors"
     RHO_MATRIX = "rho_matrix"
+    EVEREST_BATCH_DATA = "everest_batch_data"
 
 
 class ObservationReportData(BaseModel):
@@ -49,8 +50,17 @@ class RhoStorageData(_MatrixBase):
     observation_keys: list[str] = []
 
 
+class EverestBatchData(BaseModel):
+    blob_type: Literal[BlobType.EVEREST_BATCH_DATA] = BlobType.EVEREST_BATCH_DATA
+    dataframe_name: str
+
+
 BlobInfo = (
-    MatrixStorageData | ObservationReportData | ScalingFactorsData | RhoStorageData
+    MatrixStorageData
+    | ObservationReportData
+    | ScalingFactorsData
+    | RhoStorageData
+    | EverestBatchData
 )
 
 
@@ -70,7 +80,11 @@ class BlobStorageData(BaseModel):
     file_type: str
     name: str
     blob_info: Annotated[
-        MatrixStorageData | ObservationReportData | ScalingFactorsData | RhoStorageData,
+        MatrixStorageData
+        | ObservationReportData
+        | ScalingFactorsData
+        | RhoStorageData
+        | EverestBatchData,
         Discriminator("blob_type"),
     ]
 
