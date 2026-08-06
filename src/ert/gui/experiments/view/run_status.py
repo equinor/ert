@@ -87,6 +87,7 @@ class RunStatusView(QWidget):
 
         realization_widget = RealizationWidget(0)
         realization_widget.setSnapshotModel(snapshot_model)
+        realization_widget.hide_iteration_selector()
 
         def select_real(index: QModelIndex) -> None:
             if not index.isValid():
@@ -97,7 +98,7 @@ class RunStatusView(QWidget):
                 f"Realization id {index.row()} in iteration {event.iteration}"
             )
 
-        realization_widget.itemClicked.connect(select_real)
+        realization_widget.realizationSelected.connect(select_real)
 
         progress_widget = ProgressWidget()
         progress_widget.update_progress(event.status_count, event.realization_count)
