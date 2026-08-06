@@ -28,6 +28,7 @@ from ert.config import (
     ParameterConfig,
     SummaryConfig,
 )
+from ert.config._reservoir_data_utils import SeismicData
 from ert.config.field import Field, field_transform
 from ert.config.observation_quality_control import (
     append_to_qc_error,
@@ -36,7 +37,6 @@ from ert.config.observation_quality_control import (
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
-from ert.config.seismic_config import SeismicConfig
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -1049,7 +1049,7 @@ class LocalEnsemble(BaseMode):
                 )
                 if response_type == "seismic":
                     pivoted = (
-                        SeismicConfig.use_observation_locations_in_respective_responses(
+                        SeismicData.use_observation_locations_in_respective_responses(
                             pivoted, observations
                         )
                         # Due to performed validations, all match keys should be unique.
