@@ -407,6 +407,17 @@ class RFTConfig(SimulationResponseConfig):
                     if prop != "DEPTH" and len(vals) > 0
                 ]
             )
+            if grid.map_axes:
+                transformed = grid.map_axes.transform_grid_points(
+                    np.asarray(df["cell_center"].to_list(), dtype=np.float32)
+                )
+                df = df.with_columns(
+                    pl.Series(
+                        "cell_center",
+                        transformed.tolist(),
+                        dtype=pl.Array(pl.Float32, 3),
+                    )
+                )
             return df.pipe(self._assert_schema, self.response_schema())
         except KeyError as err:
             raise InvalidResponseFile(
