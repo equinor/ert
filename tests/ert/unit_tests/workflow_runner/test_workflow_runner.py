@@ -228,6 +228,7 @@ def test_that_job_results_contain_one_entry_per_job_invocation():
     ]
     assert [result.stdout for result in results] == ["Hello World\n", "Hello World\n"]
     assert not any(result.failed for result in results)
+    assert not any(result.cancelled for result in results)
 
 
 @pytest.mark.slow
@@ -266,6 +267,12 @@ def test_workflow_thread_cancel_ert_script():
     assert not Path("wait_started_2").exists()
     assert not Path("wait_cancelled_2").exists()
     assert not Path("wait_finished_2").exists()
+
+    results = {result.index: result for result in workflow_runner.workflowJobResults()}
+    assert results[0].cancelled is False
+    assert results[0].failed is False
+    assert results[1].cancelled is True
+    assert results[1].failed is False
 
 
 @pytest.mark.slow

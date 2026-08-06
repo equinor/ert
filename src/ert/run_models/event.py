@@ -106,11 +106,17 @@ class RunModelWorkflowLogEvent(BaseModel, extra="forbid"):
     stdout: str
     stderr: str
     failed: bool
+    cancelled: bool = False
     timestamp: datetime
     iteration: int | None = None
 
     def as_log_entry(self) -> str:
-        status = "failed" if self.failed else "success"
+        if self.cancelled:
+            status = "cancelled"
+        elif self.failed:
+            status = "failed"
+        else:
+            status = "success"
         header = (
             f"=== {self.timestamp.isoformat(timespec='seconds')} {self.hook} "
             f"workflow={self.workflow_name} job={self.job_name}#{self.job_index} "

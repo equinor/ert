@@ -887,6 +887,7 @@ class RunModel(RunModelConfig, ABC):
                 stdout=result.stdout,
                 stderr=result.stderr,
                 failed=result.failed,
+                cancelled=result.cancelled,
                 timestamp=result.timestamp,
                 iteration=iteration,
             )

@@ -29,6 +29,7 @@ class WorkflowJobResult:
     stdout: str
     stderr: str
     failed: bool
+    cancelled: bool = False
     timestamp: datetime.datetime = field(
         default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
     )
@@ -171,6 +172,7 @@ class WorkflowRunner:
             if not self.__cancelled:
                 logger.info(f"Workflow job {jobrunner.name} starting")
                 jobrunner.run(args, fixtures=self.fixtures)
+                job_was_cancelled = self.__cancelled
                 self.__status[jobrunner.name] = {
                     "stdout": jobrunner.stdoutdata(),
                     "stderr": jobrunner.stderrdata(),
@@ -184,6 +186,7 @@ class WorkflowRunner:
                         stdout=jobrunner.stdoutdata(),
                         stderr=jobrunner.stderrdata(),
                         failed=jobrunner.hasFailed(),
+                        cancelled=job_was_cancelled,
                     )
                 )
 
@@ -205,6 +208,10 @@ class WorkflowRunner:
                         )
 
                     logger.error(f"Workflow job {jobrunner.name} failed", extra=info)
+                elif job_was_cancelled:
+                    logger.info(
+                        f"Workflow job {jobrunner.name} was cancelled", extra=info
+                    )
                 else:
                     logger.info(
                         f"Workflow job {jobrunner.name} completed successfully",

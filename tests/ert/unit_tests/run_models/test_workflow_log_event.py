@@ -53,6 +53,12 @@ def test_that_workflow_log_entry_header_states_hook_workflow_job_and_status():
     )
 
 
+def test_that_a_cancelled_job_is_reported_as_cancelled_even_if_not_failed():
+    entry = _event(cancelled=True, failed=False).as_log_entry()
+
+    assert "status=cancelled" in entry.splitlines()[0]
+
+
 def test_that_workflow_log_entries_are_separated_by_a_blank_line():
     first = _event(job_name="FIRST", stdout="first\n").as_log_entry()
     second = _event(job_name="SECOND", stdout="second\n").as_log_entry()
