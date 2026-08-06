@@ -354,9 +354,9 @@ class QualityReporter:
             print(
                 "Target correlation matrix and empirical correlation achieved",
                 " in data does not match well\n"
-                "This is natural with few samples, or very high/low desired correlations, "  # noqa: E501
+                "This is natural with few samples, or very high/low desired correlations, "  # ruff: ignore[line-too-long]
                 "or distributions that are far from\nnormal (e.g. lognormal)."
-                " Setting 'correlation_iterations' to 999 in the general input sheet might help.",  # noqa: E501
+                " Setting 'correlation_iterations' to 999 in the general input sheet might help.",  # ruff: ignore[line-too-long]
             )
 
     def plot_correlation(

@@ -99,7 +99,7 @@ def find_sheet(name: str, names: list[str]) -> str:
     Traceback (most recent call last):
       ...
     ValueError: No match for variable_input: ['generalinput', 'designinput', 'defaultinput']
-    """  # noqa: E501
+    """  # ruff: ignore[line-too-long]
 
     def sanitize(inputstring: str) -> str:
         return inputstring.lower().strip().replace("_", "")
