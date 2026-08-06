@@ -10,7 +10,6 @@ from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
-    ClassVar,
     Literal,
     Self,
     assert_never,
@@ -19,12 +18,12 @@ from typing import (
 
 import numpy as np
 import polars as pl
-import scipy as sp
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
 from resfo_utilities import InvalidSummaryKeyError, make_summary_key
 
 from ert.validation import rangestring_to_list
 
+from ._reservoir_data_utils import SeismicData
 from ._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeConfig, ShapeRegistry
 from .parsing import (
     ConfigWarning,
@@ -999,8 +998,6 @@ class SeismicObservation(BaseObservation):
     error: float
     boundary_id: int | None = None
 
-    TOLERANCE: ClassVar[float] = 0.1
-
     @staticmethod
     def _load_observations(filepath: Path) -> pl.DataFrame:
 
@@ -1043,8 +1040,7 @@ class SeismicObservation(BaseObservation):
         if not observations:
             return
         coordinates = [(obs.east, obs.north) for obs in observations]
-        tree = sp.spatial.KDTree(coordinates)
-        too_close_pairs = tree.query_pairs(r=SeismicObservation.TOLERANCE * 2)
+        too_close_pairs = SeismicData.get_too_close_coordinate_pairs(coordinates)
         if too_close_pairs:
             too_close_coords = [
                 (
@@ -1057,7 +1053,7 @@ class SeismicObservation(BaseObservation):
                 "Seismic observation coordinates with approximate locations "
                 f"{too_close_coords} fall inside of a tolerance radius. "
                 "All seismic observation coordinates must be more than "
-                f"{SeismicObservation.TOLERANCE * 2} m apart.",
+                f"{SeismicData.TOLERANCE * 2} m apart.",
                 filepath,
             )
 
