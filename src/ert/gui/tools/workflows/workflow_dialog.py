@@ -33,7 +33,7 @@ class WorkflowDialog(QDialog):
         layout.addWidget(widget)
 
         button_layout = QHBoxLayout()
-        self.close_button = QPushButton("Close")
+        self.close_button = QPushButton("Cancel")
         self.close_button.clicked.connect(self.closeButtonPressed.emit)
         button_layout.addStretch()
         button_layout.addWidget(self.close_button)
