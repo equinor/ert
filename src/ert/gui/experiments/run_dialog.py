@@ -647,11 +647,20 @@ class RunDialog(QFrame):
                 tab_index = self._tab_widget.addTab(
                     runpath_creation_progress_widget, "Creating runpaths..."
                 )
+                self._widget_before_runpaths = self._tab_widget.currentWidget()
                 self._tab_widget.setCurrentIndex(tab_index)
                 runpath_creation_progress_widget.start(event.total_runpaths_to_create)
             case FinishedTotalRunPathCreationEvent():
                 last_index = self._tab_widget.count() - 1
                 runpath_widget = self._tab_widget.widget(last_index)
+                previous = self._widget_before_runpaths
+                if (
+                    self._tab_widget.currentWidget() is runpath_widget
+                    and previous is not None
+                    and self._tab_widget.indexOf(previous) >= 0
+                ):
+                    self._tab_widget.setCurrentWidget(previous)
+                self._widget_before_runpaths = None
                 self._tab_widget.removeTab(last_index)
                 if isinstance(runpath_widget, RunpathProgressWidget):
                     runpath_widget.deleteLater()
