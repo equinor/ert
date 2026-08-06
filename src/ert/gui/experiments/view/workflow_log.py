@@ -235,3 +235,14 @@ class WorkflowLogWidget(QWidget):
     def _clear_detail(self) -> None:
         self._stdout_view.setPlainText(NO_OUTPUT_PLACEHOLDER)
         self._stderr_view.setPlainText(NO_OUTPUT_PLACEHOLDER)
+
+    def clear(self) -> None:
+        """Discard all displayed workflow events, e.g. before a rerun."""
+        self._events = {}
+        self._iteration_chosen_by_user = False
+        self._iteration_selector.blockSignals(True)
+        self._iteration_selector.clear()
+        self._iteration_selector.blockSignals(False)
+        self._table.clearContents()
+        self._table.setRowCount(0)
+        self._clear_detail()
