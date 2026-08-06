@@ -367,7 +367,35 @@ def egrid():
     return create_egrid(2, 2, 3, 50.0, 50.0, 1.0)
 
 
-def test_that_locations_are_found_in_corresponding_grid(mock_resfo_file, egrid):
+@pytest.mark.parametrize(
+    ("location", "mapaxes", "expected_center"),
+    [
+        pytest.param(
+            (1.0, 1.0, 1.0),
+            (0.0, 1.0, 0.0, 0.0, 1.0, 0.0),
+            [25.0, 25.0, 0.5],
+            id="without translation and rotation",
+        ),
+        pytest.param(
+            (101.0, 99.0, 1.0),
+            (
+                101.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                99.0,
+            ),
+            [125.0, 75.0, 0.5],
+            id="with translation and rotation",
+        ),
+    ],
+)
+def test_that_locations_are_found_in_corresponding_grid(
+    mock_resfo_file, location, mapaxes, expected_center
+):
+    egrid = create_egrid(2, 2, 3, 50.0, 50.0, 1.0, mapaxes=mapaxes)
+
     config = ErtConfig.from_dict(
         {
             "ECLBASE": "BASE",
@@ -382,9 +410,9 @@ def test_that_locations_are_found_in_corresponding_grid(mock_resfo_file, egrid):
                         "ERROR": "0.1",
                         "DATE": "2000-01-01",
                         "PROPERTY": "PRESSURE",
-                        "NORTH": 1.0,
-                        "EAST": 1.0,
-                        "TVD": 1.0,
+                        "EAST": location[0],
+                        "NORTH": location[1],
+                        "TVD": location[2],
                     },
                 ],
             ),
@@ -409,9 +437,12 @@ def test_that_locations_are_found_in_corresponding_grid(mock_resfo_file, egrid):
         "/tmp/does_not_exist", 1, 1, observations
     )
 
-    assert data["north"].to_list() == [1.0]
-    assert data["east"].to_list() == [1.0]
-    assert data["tvd"].to_list() == [1.0]
+    assert data["east"].to_list() == [location[0]]
+    assert data["north"].to_list() == [location[1]]
+    assert data["tvd"].to_list() == [location[2]]
+    np.testing.assert_allclose(
+        data["well_connection_cell_center"].to_numpy(), [expected_center]
+    )  # Expects center in map coordinates
 
 
 def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
@@ -977,6 +1008,51 @@ def test_that_cell_center_and_cell_zones_are_populated_from_egrid_and_zonemap(
     np.testing.assert_allclose(
         data["cell_center"].to_numpy(), [[25.0, 25.0, 0.5], [25.0, 25.0, 1.5]]
     )
+
+
+@pytest.mark.parametrize(
+    ("mapaxes", "expected_center"),
+    [
+        pytest.param(
+            (0.0, 1.0, 0.0, 0.0, 1.0, 0.0),
+            [25.0, 25.0, 0.5],
+            id="without translation and rotation",
+        ),
+        pytest.param(
+            (101.0, 100.0, 100.0, 100.0, 100.0, 99.0),
+            [125.0, 75.0, 0.5],
+            id="with translation and rotation",
+        ),
+    ],
+)
+def test_that_cell_centers_are_in_map_coordinates(
+    mock_resfo_file, mapaxes, expected_center
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        create_egrid(1, 1, 2, 50.0, 50.0, 1.0, mapaxes=mapaxes),
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name=b"WELL",
+                ijks=[(1, 1, 1)],
+            ),
+            ("PRESSURE", float_arr([10.0])),
+            ("DEPTH   ", float_arr([0.5])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL": {"2000-01-01": ["PRESSURE"]}},
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    np.testing.assert_allclose(data["cell_center"].to_numpy(), [expected_center])
 
 
 def _rft_responses_for_approximation(

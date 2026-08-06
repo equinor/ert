@@ -13,7 +13,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
+exclude-newer = "2026-08-03T11:17:43.872957Z"
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
@@ -1171,7 +1171,7 @@ dev = [
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
     { name = "resdata" },
-    { name = "resfo-utilities", extras = ["testing"], specifier = ">=0.5.0" },
+    { name = "resfo-utilities", extras = ["testing"], specifier = ">=1.1.0" },
     { name = "rust-just" },
     { name = "scikit-image" },
     { name = "sphinx" },
