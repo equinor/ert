@@ -427,17 +427,17 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
     [
         pytest.param(
             [0, None, 1],
-            r"Design matrix contains empty cells \['Row 1, column a'\]",
+            r"Design matrix contains empty cells \['Row 3, column a'\]",
             id="duplicate entries",
         ),
         pytest.param(
             [0, "      ", 1],
-            r"Design matrix contains empty cells \['Row 1, column a'\]",
+            r"Design matrix contains empty cells \['Row 3, column a'\]",
             id="whitespace entries",
         ),
         pytest.param(
             [0, "some", np.nan],
-            r"Design matrix contains empty cells \['Row 2, column a'\]",
+            r"Design matrix contains empty cells \['Row 4, column a'\]",
             id="invalid float values",
         ),
     ],
@@ -470,17 +470,17 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
         ),
         pytest.param(
             [["one", 1], ["b", ""], ["d", 6]],
-            r"Default sheet contains empty cells \['Row 1, column 1'\]",
+            r"Default sheet contains empty cells \['Row 2, column 1'\]",
             id="empty cells",
         ),
         pytest.param(
             [["something", 1], ["b", "          "], ["d", 6]],
-            r"Default sheet contains empty cells \['Row 1, column 1'\]",
+            r"Default sheet contains empty cells \['Row 2, column 1'\]",
             id="whitespace entries",
         ),
         pytest.param(
             [["something", 1], ["b", "None"], ["d", 6]],
-            r"Default sheet contains empty cells \['Row 1, column 1'\]",
+            r"Default sheet contains empty cells \['Row 2, column 1'\]",
             id="None entries",
         ),
         pytest.param(
@@ -659,5 +659,109 @@ def test_that_default_sheet_excel_error_cells_raise_config_validation_error(tmp_
     with pytest.raises(
         ConfigValidationError,
         match=r"Default sheet contains empty cells",
+    ):
+        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+
+
+def _write_sheets(
+    design_path, design_rows, default_rows=(("dummy_default", 1),)
+) -> None:
+    """Write sheets cell by cell so that blank rows can be expressed as None."""
+    with Workbook(design_path) as xl_write:
+        for sheet_name, rows in (
+            ("DesignSheet", design_rows),
+            ("DefaultSheet", default_rows),
+        ):
+            worksheet = xl_write.add_worksheet(sheet_name)
+            for row_index, row in enumerate(rows):
+                for col_index, value in enumerate(row):
+                    if value is not None:
+                        worksheet.write(row_index, col_index, value)
+
+
+def test_that_blank_rows_do_not_shift_reported_design_sheet_row(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _write_sheets(
+        design_path,
+        design_rows=[
+            ("REAL", "a", "b"),
+            (1, 0, 0),
+            (None, None, None),
+            (None, None, None),
+            (5, None, 2),  # spreadsheet row 5, empty cell in column a
+            (7, 1, 3),
+        ],
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Design matrix contains empty cells \['Row 5, column a'\]",
+    ):
+        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+
+
+def test_that_blank_rows_do_not_shift_reported_default_sheet_row(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _write_sheets(
+        design_path,
+        design_rows=[("REAL", "a"), (0, 1), (1, 2)],
+        default_rows=[
+            ("one", 1),
+            (None, None),
+            (None, None),
+            ("b", None),  # spreadsheet row 4, empty cell
+            ("d", 6),
+        ],
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Default sheet contains empty cells "
+        r"\['Row 4, column 1'\]",
+    ):
+        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+
+
+def test_that_blank_rows_are_dropped_without_error(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _write_sheets(
+        design_path,
+        design_rows=[
+            ("REAL", "a"),
+            (0, 1),
+            (None, None),
+            (1, 2),
+            (None, None),
+        ],
+        default_rows=[("one", 1), (None, None), ("d", 6)],
+    )
+
+    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+
+    assert design_matrix.design_matrix_df["realization"].to_list() == [0, 1]
+    assert design_matrix.design_matrix_df["a"].to_list() == [1, 2]
+    assert design_matrix.design_matrix_df["one"].to_list() == [1, 1]
+
+
+@pytest.mark.parametrize("leading_blank_rows", [0, 1, 2, 3])
+def test_that_blank_rows_above_the_data_do_not_shift_reported_rows(
+    tmp_path, leading_blank_rows
+):
+    """Both sheets anchor their read with ``skip_rows``, so the reported row
+    numbers stay correct even when the data does not start in row 1.
+    """
+    design_path = tmp_path / "design_matrix.xlsx"
+    blank = [(None, None)] * leading_blank_rows
+    _write_sheets(
+        design_path,
+        design_rows=[("REAL", "a"), (0, 1), (1, 2)],
+        default_rows=[*blank, ("one", 1), ("b", None)],
+    )
+
+    bad_row = leading_blank_rows + 2
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Default sheet contains empty cells "
+        rf"\['Row {bad_row}, column 1'\]",
     ):
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
