@@ -86,7 +86,8 @@ fetch-screenshot-baselines:
     rm -rf .tmp/ert-testdata
     git clone --depth 1 --filter=blob:none --sparse https://github.com/equinor/ert-testdata.git .tmp/ert-testdata
     cd .tmp/ert-testdata && git sparse-checkout set screenshotbaselines
-    cp --recursive .tmp/ert-testdata/screenshotbaselines/. .
+    cp -r .tmp/ert-testdata/screenshotbaselines/. .
+    rm -rf .tmp/ert-testdata
 
 build-ert-docs: fetch-screenshot-baselines
     sphinx-build -n -v -E -W ./docs/ert ./ert_docs
