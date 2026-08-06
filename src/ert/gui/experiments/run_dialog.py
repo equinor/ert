@@ -82,6 +82,7 @@ from .view import (
     ProgressWidget,
     RealizationWidget,
     RunpathProgressWidget,
+    UpdatesWidget,
     UpdateWidget,
 )
 from .view.disk_space_widget import MountType
@@ -275,6 +276,7 @@ class RunDialog(QFrame):
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
         self._realization_widget: RealizationWidget | None = None
+        self._updates_widget: UpdatesWidget | None = None
 
         self._fm_step_label = QLabel(self)
         self._fm_step_label.setObjectName("fm_step_label")
@@ -393,7 +395,7 @@ class RunDialog(QFrame):
         if isinstance(widget, RealizationWidget):
             widget.refresh_current_selection()
 
-        self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
+        self.fm_step_frame.setHidden(isinstance(widget, UpdatesWidget))
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -465,6 +467,7 @@ class RunDialog(QFrame):
             self._snapshot_model.reset()
             self._tab_widget.clear()
             self._realization_widget = None
+            self._updates_widget = None
 
         self._worker_thread = QThread(parent=self)
 
@@ -609,11 +612,10 @@ class RunDialog(QFrame):
                 )
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
-                widget = UpdateWidget(iteration)
-                tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
-                if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                    self._tab_widget.setCurrentIndex(tab_index)
-                widget.begin(event)
+                if self._updates_widget is None:
+                    self._updates_widget = UpdatesWidget()
+                    self._tab_widget.addTab(self._updates_widget, "Updates")
+                self._updates_widget.add_update(iteration).begin(event)
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()
                 self._get_update_widget(event.iteration).end(event)
@@ -659,11 +661,9 @@ class RunDialog(QFrame):
                     runpath_widget.advance()
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
-        for i in range(self._tab_widget.count()):
-            widget = self._tab_widget.widget(i)
-            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
-                return widget
-        raise ValueError("Could not find UpdateWidget")
+        if self._updates_widget is None:
+            raise ValueError("Could not find UpdateWidget")
+        return self._updates_widget.update_widget(iteration)
 
     def update_total_progress(
         self, progress_value: float, iteration_label: str, iteration: int | None = None
