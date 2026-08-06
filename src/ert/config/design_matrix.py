@@ -4,7 +4,7 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import numpy as np
 import polars as pl
@@ -30,6 +30,8 @@ class DesignMatrix:
     design_sheet: str
     default_sheet: str | None
     priority_source: str = "design_matrix"
+
+    DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
     def __post_init__(self) -> None:
         try:
@@ -311,7 +313,9 @@ class DesignMatrix:
         design_matrix_df = design_matrix_df.with_columns(
             [
                 pl.when(
-                    pl.col(col).str.to_lowercase().is_in(["nan", "null", "none", ""])
+                    pl.col(col)
+                    .str.to_lowercase()
+                    .is_in(DesignMatrix.DISALLOWED_CELL_VALUES)
                 )
                 .then(None)
                 .otherwise(pl.col(col))
@@ -468,7 +472,9 @@ class DesignMatrix:
         default_df = default_df.with_columns(
             [
                 pl.when(
-                    pl.col(col).str.to_lowercase().is_in(["nan", "null", "none", ""])
+                    pl.col(col)
+                    .str.to_lowercase()
+                    .is_in(DesignMatrix.DISALLOWED_CELL_VALUES)
                 )
                 .then(None)
                 .otherwise(pl.col(col))
