@@ -67,7 +67,7 @@ ert-cli-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/cli
 
 ert-memory-tests:
-    pytest -n 2 {{pytest_args}} tests/ert -m "memory_test"
+    pytest {{pytest_args}} tests/ert -m "memory_test"
     pytest {{pytest_args}} tests/ert -m "limit_memory" --memray
 
 ert-unit-tests:
