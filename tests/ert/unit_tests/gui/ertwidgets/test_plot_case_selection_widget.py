@@ -179,8 +179,9 @@ def test_that_ensemble_selection_reset_limits_and_selection(qtbot: QtBot):
     assert selected_max_equals_max_limit(widget, list_widget)
 
 
-def test_that_ensemble_selection_widget_with_invalid_limits():
+def test_that_ensemble_selection_widget_with_invalid_limits(qtbot: QtBot):
     widget = EnsembleSelectionWidget([], 1)
+    qtbot.addWidget(widget)
 
     with pytest.raises(
         ValueError,

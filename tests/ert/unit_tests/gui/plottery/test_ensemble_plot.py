@@ -74,6 +74,7 @@ def test_plot_ensemble_selection_widget_sorts_input_ensembles_reverse_chronologi
         for i, t in enumerate(times)
     ]
     list_widget = EnsembleSelectListWidget(ensembles, 1)
+    qtbot.addWidget(list_widget)
     # Assert experiments are sorted from Last -> First
     assert [list_widget.item(i).text() for i in range(len(ensembles))] == [
         "exp_2 : ens_2",  # Last

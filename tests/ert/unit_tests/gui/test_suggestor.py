@@ -20,6 +20,7 @@ from ert.gui.ertwidgets.suggestor.suggestor import _CopyAllButton
 )
 def test_suggestor_combines_errors_with_the_same_message(qtbot, errors, expected_num):
     suggestor = Suggestor(errors, [], [], lambda: None)
+    qtbot.addWidget(suggestor)
     msgs = suggestor.findChild(QWidget, name="suggestor_messages")
     assert msgs is not None
     msg_layout = msgs.layout()
@@ -34,13 +35,12 @@ def test_that_copy_all_button_concatenates_errors_warnings_and_deprecations(qtbo
         WarningInfo("deprecation", filename="script.py", line="7", is_deprecation=True)
     ]
     suggestor = Suggestor(errors, warnings, deprecations, lambda: None)
+    qtbot.addWidget(suggestor)
 
     all_buttons = suggestor.findChildren(QPushButton)
     copy_all_button = next(
         button for button in all_buttons if isinstance(button, _CopyAllButton)
     )
-    copy_all_button.click()
-
     expected_clipboard = """error
     script.py: Line 5
 
@@ -53,11 +53,19 @@ def test_that_copy_all_button_concatenates_errors_warnings_and_deprecations(qtbo
     def remove_whitespaces(s: str) -> str:
         return re.sub(r"\s+", "", s)
 
-    assert remove_whitespaces(QApplication.clipboard().text()) == remove_whitespaces(
-        expected_clipboard
-    )
+    clipboard = QApplication.clipboard()
+    original_clipboard = clipboard.text()
+    try:
+        copy_all_button.click()
+        assert remove_whitespaces(clipboard.text()) == remove_whitespaces(
+            expected_clipboard
+        )
+    finally:
+        clipboard.setText(original_clipboard)
 
 
 def test_that_empty_locations_are_filtered_out_of_the_suggestor_message(qtbot):
-    suggestor_message = SuggestorMessage("", "", "", QWidget(), "", [""] * 20)
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    suggestor_message = SuggestorMessage("", "", "", parent, "", [""] * 20)
     assert suggestor_message._locations == []

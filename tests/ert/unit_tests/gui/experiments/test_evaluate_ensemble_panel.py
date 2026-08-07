@@ -24,6 +24,7 @@ def test_that_the_run_experiments_button_is_disabled(qtbot):
     args = Mock()
     args.config = "poly.ert"
     gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
+    qtbot.addWidget(gui)
     experiment_panel = get_child(gui, ExperimentPanel)
     evaluate_ensemble_panel = get_child(experiment_panel, EvaluateEnsemblePanel)
     assert not evaluate_ensemble_panel.isConfigurationValid()

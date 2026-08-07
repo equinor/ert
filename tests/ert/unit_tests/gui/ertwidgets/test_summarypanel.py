@@ -19,4 +19,5 @@ from ert.gui.summarypanel import SummaryPanel
 )
 def test_runlength_encode_list(qtbot, strings, expected):
     panel = SummaryPanel(MagicMock())
+    qtbot.addWidget(panel)
     assert panel._runlength_encode_list(strings) == expected

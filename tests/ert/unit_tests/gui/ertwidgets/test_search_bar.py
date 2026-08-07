@@ -32,6 +32,8 @@ def test_search_bar_find(text, search, qtbot: QtBot):
     text_box = QPlainTextEdit()
     text_box.setPlainText(text)
     search_bar = SearchBar(text_box)
+    qtbot.addWidget(text_box)
+    qtbot.addWidget(search_bar)
 
     search_bar.setText(search)
     cursor = text_box.textCursor()
@@ -47,6 +49,8 @@ def test_search_bar_find_next(qtbot: QtBot):
     text_box = QPlainTextEdit()
     text_box.setPlainText("Testing search functionality. Testing is fun.")
     search_bar = SearchBar(text_box)
+    qtbot.addWidget(text_box)
+    qtbot.addWidget(search_bar)
 
     search_and_cursor_position = [
         ("Test", 4),  # First "Test"
@@ -69,6 +73,8 @@ def test_search_bar_highlight_all(qtbot: QtBot):
     input_text = "Testing GUI is so fun. I love GUI forever"
     text_box.setPlainText(input_text)
     search_bar = SearchBar(text_box)
+    qtbot.addWidget(text_box)
+    qtbot.addWidget(search_bar)
     search_bar.setText("GUI")
     search_bar._highlight_all_button.click()
     cursor = text_box.textCursor()

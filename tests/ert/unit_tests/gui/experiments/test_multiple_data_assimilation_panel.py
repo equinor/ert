@@ -141,6 +141,7 @@ def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initi
         active_realizations=active_realizations,
         config_num_realization=2,
     )
+    qtbot.addWidget(mda_panel)
     assert mda_panel._active_realizations_field.text() == active_realizations_string
     mda_panel.restart_run_toggled()
     assert mda_panel._active_realizations_field.text() == active_realizations_string
