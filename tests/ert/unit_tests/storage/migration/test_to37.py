@@ -13,30 +13,50 @@ def _write_index(ens_path: Path, index_data: dict) -> Path:
     return index_file
 
 
+ENSEMBLE_ID = "6ec3d3f0-8b5b-4a3f-9c1a-3f6a3b0f1c11"
+EXPERIMENT_ID = "1f2e3d4c-5b6a-4978-8899-aabbccddeeff"
+PRIOR_ENSEMBLE_ID = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+
+
+def _index_data(**overrides) -> dict:
+    data = {
+        "id": ENSEMBLE_ID,
+        "experiment_id": EXPERIMENT_ID,
+        "ensemble_size": 10,
+        "iteration": 3,
+        "name": "batch_0",
+        "prior_ensemble_id": PRIOR_ENSEMBLE_ID,
+        "started_at": "2023-01-01T00:00:00+00:00",
+        "everest_realization_info": {
+            "0": {"model_realization": 0, "perturbation": -1},
+            "1": {"model_realization": 0, "perturbation": 0},
+        },
+    }
+    data.update(overrides)
+    return data
+
+
 @pytest.mark.parametrize(
     ("original", "expected"),
     [
         pytest.param(
-            {
-                "id": "ens-id",
-                "ensemble": {"name": "batch_0", "iteration": 0, "is_improvement": True},
-            },
-            {"id": "ens-id", "ensemble": {"name": "batch_0", "iteration": 0}},
-            id="removes_is_improvement",
+            _index_data(is_improvement=True),
+            _index_data(),
+            id="removes_is_improvement_true",
         ),
         pytest.param(
-            {"ensemble": {"name": "batch_1", "iteration": 1, "is_improvement": False}},
-            {"ensemble": {"name": "batch_1", "iteration": 1}},
+            _index_data(is_improvement=False),
+            _index_data(),
             id="removes_is_improvement_false",
         ),
         pytest.param(
-            {"ensemble": {"name": "batch_5", "iteration": 3, "is_improvement": True}},
-            {"ensemble": {"name": "batch_5", "iteration": 3}},
-            id="removes_is_improvement_other_values",
+            _index_data(is_improvement=None),
+            _index_data(),
+            id="removes_is_improvement_none",
         ),
         pytest.param(
-            {"ensemble": {"name": "batch_0", "iteration": 0}},
-            {"ensemble": {"name": "batch_0", "iteration": 0}},
+            _index_data(),
+            _index_data(),
             id="leaves_untouched_when_missing",
         ),
     ],
@@ -68,12 +88,3 @@ def test_that_migration_does_not_fail_on_unexpectedly_structured_dirs(tmp_path):
     migrate(root)
 
     assert not_an_ensemble.read_text(encoding="utf-8") == "{}"
-
-
-def test_that_migration_does_not_fail_on_index_without_ensemble_entry(tmp_path):
-    root = tmp_path / "project"
-    index_file = _write_index(root / "ensembles" / "ensemble_1", {"id": "ens-id"})
-
-    migrate(root)
-
-    assert json.loads(index_file.read_text(encoding="utf-8")) == {"id": "ens-id"}
