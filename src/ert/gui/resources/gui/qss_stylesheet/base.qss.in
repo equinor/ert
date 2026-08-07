@@ -1,0 +1,4 @@
+QWidget {
+    background-color: {{bg-neutral-surface}};
+    color: {{text-neutral-strong}};
+}
