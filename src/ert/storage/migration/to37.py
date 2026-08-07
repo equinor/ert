@@ -19,9 +19,8 @@ def migrate(path: Path) -> None:
             continue
 
         index_data = json.loads(index_file.read_text(encoding="utf-8"))
-        ensemble_data = index_data.get("ensemble", {})
 
-        if "is_improvement" in ensemble_data:
-            ensemble_data.pop("is_improvement")
+        if "is_improvement" in index_data:
+            index_data.pop("is_improvement")
             index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
             logger.info("Removed is_improvement flag from %s", index_file)
