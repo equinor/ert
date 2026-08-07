@@ -14,6 +14,7 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QHelpEvent, QPainter, QPalette, QPen
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QHBoxLayout,
     QListView,
     QStyle,
     QStyledItemDelegate,
@@ -23,6 +24,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.experiments.view.iteration_selector import IterationSelector
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
     CallbackStatusMessageRole,
@@ -60,18 +62,30 @@ class RealizationWidget(QWidget):
             f"{self.palette().color(QPalette.ColorRole.Window).name()}; }}"
         )
 
-        self._real_view.clicked.connect(self._item_clicked)
+        self._iteration_selector = IterationSelector(self)
+        self._iteration_selector.currentIndexChanged.connect(self._iteration_selected)
+        self._selected_real: dict[int, int] = {}
+
+        selector_layout = QHBoxLayout()
+        selector_layout.addWidget(self._iteration_selector)
+        selector_layout.addStretch()
 
         layout = QVBoxLayout()
+        layout.addLayout(selector_layout)
         layout.addWidget(self._real_view)
 
         self.setLayout(layout)
 
     # Signal when the user selects another real
-    itemClicked = Signal(QModelIndex)
+    realizationSelected = Signal(QModelIndex)
 
-    def _item_clicked(self, item: QModelIndex) -> None:
-        self.itemClicked.emit(item)
+    def _on_current_changed(self, item: QModelIndex, _previous: QModelIndex) -> None:
+        if item.isValid():
+            self._set_selected_real(item)
+
+    def _set_selected_real(self, item: QModelIndex) -> None:
+        self._selected_real[self._iter] = item.row()
+        self.realizationSelected.emit(item)
 
     def setSnapshotModel(self, model: QAbstractItemModel) -> None:
         self._real_list_model = RealListModel(self, self._iter)
@@ -82,16 +96,48 @@ class RealizationWidget(QWidget):
 
         first_real = self._real_list_model.index(0, 0)
         selection_model = self._real_view.selectionModel()
-        if first_real.isValid() and selection_model:
-            selection_model.select(first_real, QItemSelectionModel.SelectionFlag.Select)
+        if selection_model:
+            selection_model.currentChanged.connect(self._on_current_changed)
+            if first_real.isValid():
+                selection_model.select(
+                    first_real, QItemSelectionModel.SelectionFlag.Select
+                )
 
     def clearSelection(self) -> None:
         self._real_view.clearSelection()
 
+    def hide_iteration_selector(self) -> None:
+        self._iteration_selector.hide()
+
+    def add_iteration(self, row: int, label: str) -> None:
+        self._iteration_selector.add_iteration(label, row)
+
+    def set_iteration_label(self, row: int, label: str) -> None:
+        index = self._iteration_selector.findData(row)
+        if index >= 0:
+            self._iteration_selector.setItemText(index, label)
+
+    def _iteration_selected(self, index: int) -> None:
+        if index < 0:
+            return
+        self._iter = self._iteration_selector.itemData(index)
+        self._real_list_model.setIter(self._iter)
+
+        realization_row = self._selected_real.get(self._iter, 0)
+        realization_index = self._real_list_model.index(realization_row, 0)
+        selection_model = self._real_view.selectionModel()
+        if realization_index.isValid() and selection_model:
+            if selection_model.currentIndex() == realization_index:
+                self._set_selected_real(realization_index)
+            else:
+                selection_model.setCurrentIndex(
+                    realization_index, QItemSelectionModel.SelectionFlag.ClearAndSelect
+                )
+
     def refresh_current_selection(self) -> None:
         selected_reals = self._real_view.selectedIndexes()
         if selected_reals:
-            self._item_clicked(selected_reals[0])
+            self._set_selected_real(selected_reals[0])
 
 
 class RealizationDelegate(QStyledItemDelegate):

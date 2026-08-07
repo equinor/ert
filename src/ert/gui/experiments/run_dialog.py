@@ -82,6 +82,7 @@ from .view import (
     ProgressWidget,
     RealizationWidget,
     RunpathProgressWidget,
+    UpdatesWidget,
     UpdateWidget,
 )
 from .view.disk_space_widget import MountType
@@ -274,6 +275,10 @@ class RunDialog(QFrame):
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
+        self._realization_widget: RealizationWidget | None = None
+        self._updates_widget: UpdatesWidget | None = None
+        self._widget_before_runpaths: QWidget | None = None
+
         self._fm_step_label = QLabel(self)
         self._fm_step_label.setObjectName("fm_step_label")
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
@@ -391,7 +396,7 @@ class RunDialog(QFrame):
         if isinstance(widget, RealizationWidget):
             widget.refresh_current_selection()
 
-        self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
+        self.fm_step_frame.setHidden(isinstance(widget, UpdatesWidget))
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -408,19 +413,20 @@ class RunDialog(QFrame):
                 else f"Progress for batch {iteration}"
             )
 
-            widget = RealizationWidget(iter_row)
-            widget.setSnapshotModel(self._snapshot_model)
-            widget.itemClicked.connect(self._select_real)
-            widget.setProperty("identifier", f"tab-iter-{iteration}")
-            self._select_real(widget._real_list_model.index(0, 0))
-            tab_index = self._tab_widget.addTab(
-                widget,
-                f"Realizations for iteration {iteration}"
+            if self._realization_widget is None:
+                self._realization_widget = RealizationWidget(iter_row)
+                self._realization_widget.setSnapshotModel(self._snapshot_model)
+                self._realization_widget.realizationSelected.connect(self._select_real)
+                self._tab_widget.addTab(
+                    self._realization_widget,
+                    "Realizations" if not self.is_everest else "Simulations",
+                )
+            self._realization_widget.add_iteration(
+                iter_row,
+                f"Iteration {iteration}"
                 if not self.is_everest
                 else f"Batch {iteration}...",
             )
-            if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                self._tab_widget.setCurrentIndex(tab_index)
 
             if self.is_everest:
                 self._batch_result_types.append(set())
@@ -461,6 +467,9 @@ class RunDialog(QFrame):
         if rerun_failed_realizations is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
+            self._realization_widget = None
+            self._updates_widget = None
+            self._widget_before_runpaths = None
 
         self._worker_thread = QThread(parent=self)
 
@@ -605,11 +614,10 @@ class RunDialog(QFrame):
                 )
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
-                widget = UpdateWidget(iteration)
-                tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
-                if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                    self._tab_widget.setCurrentIndex(tab_index)
-                widget.begin(event)
+                if self._updates_widget is None:
+                    self._updates_widget = UpdatesWidget()
+                    self._tab_widget.addTab(self._updates_widget, "Updates")
+                self._updates_widget.add_update(iteration).begin(event)
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()
                 self._get_update_widget(event.iteration).end(event)
@@ -626,9 +634,10 @@ class RunDialog(QFrame):
                 batch_types = self._batch_result_types[event.batch]
                 batch_types.add(event.result_type)
 
-                self._tab_widget.setTabText(
-                    event.batch, _batch_type_text(event.batch, batch_types)
-                )
+                if self._realization_widget is not None:
+                    self._realization_widget.set_iteration_label(
+                        event.batch, _batch_type_text(event.batch, batch_types)
+                    )
             case StartingTotalRunPathCreationEvent():
                 runpath_creation_progress_widget = RunpathProgressWidget(
                     self,
@@ -638,11 +647,20 @@ class RunDialog(QFrame):
                 tab_index = self._tab_widget.addTab(
                     runpath_creation_progress_widget, "Creating runpaths..."
                 )
+                self._widget_before_runpaths = self._tab_widget.currentWidget()
                 self._tab_widget.setCurrentIndex(tab_index)
                 runpath_creation_progress_widget.start(event.total_runpaths_to_create)
             case FinishedTotalRunPathCreationEvent():
                 last_index = self._tab_widget.count() - 1
                 runpath_widget = self._tab_widget.widget(last_index)
+                previous = self._widget_before_runpaths
+                if (
+                    self._tab_widget.currentWidget() is runpath_widget
+                    and previous is not None
+                    and self._tab_widget.indexOf(previous) >= 0
+                ):
+                    self._tab_widget.setCurrentWidget(previous)
+                self._widget_before_runpaths = None
                 self._tab_widget.removeTab(last_index)
                 if isinstance(runpath_widget, RunpathProgressWidget):
                     runpath_widget.deleteLater()
@@ -654,11 +672,9 @@ class RunDialog(QFrame):
                     runpath_widget.advance()
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
-        for i in range(self._tab_widget.count()):
-            widget = self._tab_widget.widget(i)
-            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
-                return widget
-        raise ValueError("Could not find UpdateWidget")
+        if self._updates_widget is None:
+            raise ValueError("Could not find UpdateWidget")
+        return self._updates_widget.update_widget(iteration)
 
     def update_total_progress(
         self, progress_value: float, iteration_label: str, iteration: int | None = None

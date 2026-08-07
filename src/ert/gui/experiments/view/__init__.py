@@ -2,7 +2,7 @@ from .disk_space_widget import DiskSpaceWidget
 from .progress_widget import ProgressWidget
 from .realization import RealizationWidget
 from .runpath_progress_widget import RunpathProgressWidget
-from .update import UpdateWidget
+from .update import UpdatesWidget, UpdateWidget
 
 __all__ = [
     "DiskSpaceWidget",
@@ -10,4 +10,5 @@ __all__ = [
     "RealizationWidget",
     "RunpathProgressWidget",
     "UpdateWidget",
+    "UpdatesWidget",
 ]

@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QProgressBar,
+    QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -31,6 +32,7 @@ from PyQt6.QtWidgets import (
 from ert.analysis.event import DataSection
 from ert.analysis.snapshots import ObservationStatus
 from ert.ensemble_evaluator import state
+from ert.gui.experiments.view.iteration_selector import IterationSelector
 from ert.run_models import (
     RunModelEvent,
     RunModelStatusEvent,
@@ -151,6 +153,40 @@ class ReportLogTable(UpdateLogTable):
             layout.addWidget(buttons)
 
             dialog.exec()
+
+
+class UpdatesWidget(QWidget):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        self._stack = QStackedWidget(self)
+
+        self._iteration_selector = IterationSelector(self)
+        self._iteration_selector.currentIndexChanged.connect(
+            self._stack.setCurrentIndex
+        )
+
+        selector_layout = QHBoxLayout()
+        selector_layout.addWidget(self._iteration_selector)
+        selector_layout.addStretch()
+
+        layout = QVBoxLayout()
+        layout.addLayout(selector_layout)
+        layout.addWidget(self._stack)
+        self.setLayout(layout)
+
+    def add_update(self, iteration: int) -> UpdateWidget:
+        widget = UpdateWidget(iteration)
+        self._stack.addWidget(widget)
+        self._iteration_selector.add_iteration(f"Update {iteration}", iteration)
+        return widget
+
+    def update_widget(self, iteration: int) -> UpdateWidget:
+        for i in range(self._stack.count()):
+            widget = self._stack.widget(i)
+            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
+                return widget
+        raise ValueError("Could not find UpdateWidget")
 
 
 class UpdateWidget(QWidget):
