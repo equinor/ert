@@ -991,6 +991,39 @@ def test_that_cell_center_and_cell_zones_are_populated_from_egrid_and_zonemap(
     )
 
 
+def test_that_cell_centers_are_in_map_coordinates(mock_resfo_file):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        create_egrid(
+            1, 1, 2, 50.0, 50.0, 1.0, mapaxes=(101.0, 100.0, 100.0, 100.0, 100.0, 99.0)
+        ),
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name=b"WELL",
+                ijks=[(1, 1, 1)],
+            ),
+            ("PRESSURE", float_arr([10.0])),
+            ("DEPTH   ", float_arr([0.5])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL": {"2000-01-01": ["PRESSURE"]}},
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    # The cell center in grid coordinates is (25.0, 25.0, 0.5).
+    # The mapaxes translates by 100 in x and y direction and rotates 90 degrees
+    # making the expected center in map coordinates (125.0, 75.0, 0.5).
+    np.testing.assert_allclose(data["cell_center"].to_numpy(), [[125.0, 75.0, 0.5]])
+
+
 def _rft_responses_for_approximation(
     well: str = "WELL",
     date: str = "2000-01-01",

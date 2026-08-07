@@ -52,7 +52,16 @@ def pad_to(lst: list[int], target_len: int):
     )
 
 
-def create_egrid(nx, ny, nz, x_width, y_width, layer_height):
+def create_egrid(
+    nx,
+    ny,
+    nz,
+    x_width,
+    y_width,
+    layer_height,
+    *,
+    mapaxes=(0.0, 1.0, 0.0, 0.0, 1.0, 0.0),
+):
     """EGrid file contents with nz layers, nx cells in the i direction and ny cells in
     the j direction.
 
@@ -82,7 +91,7 @@ def create_egrid(nx, ny, nz, x_width, y_width, layer_height):
     )
     return [
         ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
+        ("MAPAXES ", np.array(mapaxes, dtype=">f4")),
         ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
         ("GRIDHEAD", pad_to([1, nx, ny, nz], 100)),
         ("COORD   ", coord.ravel()),
