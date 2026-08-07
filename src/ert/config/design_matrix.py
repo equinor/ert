@@ -4,7 +4,7 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import numpy as np
 import polars as pl
@@ -30,6 +30,8 @@ class DesignMatrix:
     design_sheet: str
     default_sheet: str | None
     priority_source: str = "design_matrix"
+
+    DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
     def __post_init__(self) -> None:
         try:
@@ -267,23 +269,27 @@ class DesignMatrix:
             )
         except pl.exceptions.NoDataError as err:
             raise ValueError("Design sheet headers are empty.") from err
-        design_matrix_df = (
-            _read_excel(
-                lambda: pl.read_excel(
-                    self.xls_filename,
-                    sheet_name=self.design_sheet,
-                    has_header=False,
-                    drop_empty_cols=False,
-                    drop_empty_rows=True,
-                    raise_if_empty=False,
-                    infer_schema_length=None,
-                    read_options={"skip_rows": 1},
-                ),
-                f"Design sheet '{self.design_sheet}'",
-            )
-            .with_columns(pl.col(pl.Float32, pl.Float64).fill_nan(None))
-            .with_columns(pl.col(pl.String).str.strip_chars())
+        design_matrix_df = _read_excel(
+            lambda: pl.read_excel(
+                self.xls_filename,
+                sheet_name=self.design_sheet,
+                has_header=False,
+                drop_empty_cols=False,
+                drop_empty_rows=False,
+                raise_if_empty=False,
+                infer_schema_length=None,
+                read_options={"skip_rows": 1},
+            ),
+            f"Design sheet '{self.design_sheet}'",
         )
+        # The header row is skipped while reading, so the first body row read
+        # corresponds to row 2 in the spreadsheet.
+        design_matrix_df, excel_row_numbers = _drop_empty_rows(
+            design_matrix_df, first_excel_row=2
+        )
+        design_matrix_df = design_matrix_df.with_columns(
+            pl.col(pl.Float32, pl.Float64).fill_nan(None)
+        ).with_columns(pl.col(pl.String).str.strip_chars())
         if design_matrix_df.is_empty():
             raise ValueError("Design sheet body is empty.")
 
@@ -311,7 +317,9 @@ class DesignMatrix:
         design_matrix_df = design_matrix_df.with_columns(
             [
                 pl.when(
-                    pl.col(col).str.to_lowercase().is_in(["nan", "null", "none", ""])
+                    pl.col(col)
+                    .str.to_lowercase()
+                    .is_in(DesignMatrix.DISALLOWED_CELL_VALUES)
                 )
                 .then(None)
                 .otherwise(pl.col(col))
@@ -332,7 +340,7 @@ class DesignMatrix:
         param_names = tuple(param_names[i] for i in columns_to_keep)
 
         if errors := DesignMatrix._validate_design_matrix(
-            design_matrix_df, param_names
+            design_matrix_df, param_names, excel_row_numbers
         ):
             error_msg = "\n".join(errors)
             raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
@@ -392,11 +400,14 @@ class DesignMatrix:
 
     @staticmethod
     def _validate_design_matrix(
-        design_matrix: pl.DataFrame, param_names: tuple[str]
+        design_matrix: pl.DataFrame,
+        param_names: tuple[str],
+        excel_row_numbers: list[int],
     ) -> list[str]:
         """
         Validate user inputted design matrix
-        :raises: ValueError if design matrix contains empty headers or empty cells
+        :raises: ValueError if design matrix contains empty headers, empty
+        cells, or cells with disallowed values
         """
         errors = []
         param_name_count = Counter(p for p in param_names if p is not None)
@@ -410,14 +421,17 @@ class DesignMatrix:
                 f" {duplicates_formatted}"
             )
         empties = [
-            f"Row {i}, column {param_names[j]}"
+            f"Row {excel_row_numbers[i]}, column {param_names[j]}"
             for i, j in zip(
                 *np.where(design_matrix.select(pl.all().is_null())),
                 strict=False,
             )
         ]
         if len(empties) > 0:
-            errors.append(f"Design matrix contains empty cells {empties}")
+            errors.append(
+                "Design matrix contains empty cells or cells with a "
+                f"disallowed value {empties}"
+            )
 
         for column_num, param_name in enumerate(param_names):
             if param_name is None or len(param_name.split()) == 0:
@@ -452,12 +466,18 @@ class DesignMatrix:
                 sheet_name=defaults_sheetname,
                 has_header=False,
                 drop_empty_cols=True,
-                drop_empty_rows=True,
+                drop_empty_rows=False,
                 raise_if_empty=False,
-                read_options={"dtypes": "string"},
+                # `skip_rows` anchors the read at an absolute spreadsheet row.
+                # Without it the reader trims blank rows above the first
+                # non-empty row, which would shift the reported row numbers.
+                read_options={"dtypes": "string", "skip_rows": 0},
             ),
             f"Default sheet '{defaults_sheetname}'",
         )
+        # The defaults sheet has no header row, so the first row read
+        # corresponds to row 1 in the spreadsheet.
+        default_df, excel_row_numbers = _drop_empty_rows(default_df, first_excel_row=1)
         if default_df.is_empty():
             return {}
         if len(default_df.columns) < 2:
@@ -468,7 +488,9 @@ class DesignMatrix:
         default_df = default_df.with_columns(
             [
                 pl.when(
-                    pl.col(col).str.to_lowercase().is_in(["nan", "null", "none", ""])
+                    pl.col(col)
+                    .str.to_lowercase()
+                    .is_in(DesignMatrix.DISALLOWED_CELL_VALUES)
                 )
                 .then(None)
                 .otherwise(pl.col(col))
@@ -477,13 +499,16 @@ class DesignMatrix:
             ]
         )
         empty_cells = [
-            f"Row {i}, column {j}"
+            f"Row {excel_row_numbers[i]}, column {j}"
             for i, j in zip(
                 *np.where(default_df.select(pl.all().is_null())), strict=False
             )
         ]
         if len(empty_cells) > 0:
-            raise ValueError(f"Default sheet contains empty cells {empty_cells}")
+            raise ValueError(
+                "Default sheet contains empty cells or cells with a "
+                f"disallowed value {empty_cells}"
+            )
         if default_df.select(pl.nth(0)).is_duplicated().any():
             raise ValueError("Default sheet contains duplicate parameter names")
 
@@ -492,6 +517,33 @@ class DesignMatrix:
             for row in default_df.iter_rows()
             if row[0] not in existing_parameters
         }
+
+
+def _drop_empty_rows(
+    df: pl.DataFrame, first_excel_row: int
+) -> tuple[pl.DataFrame, list[int]]:
+    """
+    Drop rows where every cell is empty, equivalently to polars'
+    ``drop_empty_rows`` read option, while keeping track of which spreadsheet
+    row each surviving row originated from.
+
+    Callers must anchor their read with the ``skip_rows`` read option, otherwise
+    the Excel reader trims blank rows above the first non-empty row and
+    ``first_excel_row`` no longer describes the first row of ``df``.
+
+    :param first_excel_row: spreadsheet row number of the first row in ``df``.
+    :returns: the filtered dataframe and the spreadsheet row number of each of
+        its rows.
+    """
+    if df.height == 0 or df.width == 0:
+        return df, []
+    keep_row = df.select(
+        ~pl.all_horizontal(pl.all().is_null()).alias("keep")
+    ).to_series()
+    excel_row_numbers = [
+        row_index + first_excel_row for row_index, keep in enumerate(keep_row) if keep
+    ]
+    return df.filter(keep_row), excel_row_numbers
 
 
 def _read_excel(
