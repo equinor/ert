@@ -164,12 +164,6 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         EverestConfig(**min_config)
 
 
-@pytest.mark.xfail(
-    reason=(
-        "behavior must be looked at. Current code requires all directories on path"
-        "to be unwritable to raise validation error."
-    )
-)
 def test_that_simulation_folder_without_write_access_raises_validation_error(
     min_config, tmp_path
 ):
