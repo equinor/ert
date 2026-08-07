@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
@@ -1001,19 +1000,23 @@ def test_that_ert_chooses_minimum_realization_with_design_matrix(
 
 
 @pytest.mark.slow
-def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog):
-    with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
-        assert not run_dialog.findChild(FileDialog)  # No file dialog from fixture setup
+def test_that_file_dialog_close_when_run_dialog_hidden(
+    qtbot: QtBot,
+    run_dialog,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+):
+    qtbot.waitUntil(run_dialog.is_experiment_done, timeout=10000)
+    assert not run_dialog.findChild(FileDialog)  # No file dialog from fixture setup
 
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as tmp_file:
-            FileDialog._init_thread = lambda self: (
-                None
-            )  # To avoid firing up the file watcher
-            file_dialog = FileDialog(tmp_file.name, "the_step", 0, 0, 0, run_dialog)
-            assert run_dialog.findChild(FileDialog)
-            assert file_dialog.isVisible()
-            run_dialog.setVisible(False)
-            assert not file_dialog.isVisible()
+    monkeypatch.setattr(FileDialog, "_init_thread", lambda self: None)
+    output_file = tmp_path / "output"
+    output_file.touch()
+    file_dialog = FileDialog(str(output_file), "the_step", 0, 0, 0, run_dialog)
+    assert run_dialog.findChild(FileDialog)
+    assert file_dialog.isVisible()
+    run_dialog.setVisible(False)
+    assert not file_dialog.isVisible()
 
 
 @pytest.mark.slow
