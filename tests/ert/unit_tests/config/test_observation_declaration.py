@@ -4,6 +4,7 @@ from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
+from typing import cast
 
 import hypothesis.extra.lark as stlark
 import pytest
@@ -15,6 +16,7 @@ from ert.config._observations import (
     BreakthroughObservation,
     GeneralObservation,
     RFTObservation,
+    SeismicObservation,
     SummaryObservation,
     make_observations,
 )
@@ -861,10 +863,13 @@ def test_that_seismic_observation_instantiates(file_context_token):
     ]
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_non_existent_seismic_observation_file_raises_error(file_context_token):
+    directory = "dir"
+    Path(directory).mkdir()
     with pytest.raises(ObservationConfigError) as err:
         make_observations(
-            "dir",
+            directory,
             [
                 ObservationDict(
                     {
@@ -878,7 +883,7 @@ def test_that_non_existent_seismic_observation_file_raises_error(file_context_to
             shape_registry=ShapeRegistry(),
         )
 
-    assert "/dir/seismic_observations.csv) does not exist or is not accessible." in str(
+    assert "seismic_observations.csv' does not exist or is not accessible" in str(
         err.value
     )
 
@@ -1116,17 +1121,27 @@ def test_that_seismic_observation_coordinate_distance_below_tolerance_raises(
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_seismic_observation_reads_boundary_file(file_context_token):
-    Path("obs.csv").write_text(
-        dedent(
-            """
-            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
-            1.0,1.0,1.0,0.005,1.0
-            """
-        ),
+def default_seismic_file_content() -> str:
+    return dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        1.0,1.0,1.0,0.005,1.0
+        """
+    )
+
+
+def write_default_seismic_file_content(
+    filename="horizon--amplitude_full_min_depth--20250101_20240101.csv",
+):
+    Path(filename).write_text(
+        default_seismic_file_content(),
         encoding="utf8",
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_reads_boundary_file(file_context_token):
+    write_default_seismic_file_content("obs.csv")
     Path("boundary.pol").write_text(
         dedent(
             """
@@ -1185,15 +1200,9 @@ def test_that_non_existent_boundary_seismic_observation_file_raises_error(
 ):
     os.makedirs("directory/right/path", exist_ok=True)
     os.makedirs("directory/wrong/path", exist_ok=True)
-    Path("directory/obs.csv").write_text(
-        dedent(
-            """
-            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
-            1.0,1.0,1.0,0.005,1.0
-            """
-        ),
-        encoding="utf8",
-    )
+
+    write_default_seismic_file_content("directory/obs.csv")
+
     Path("directory/right/path/bound.pol").write_text(
         "Unexpected file location",
         encoding="utf8",
@@ -1219,3 +1228,97 @@ def test_that_non_existent_boundary_seismic_observation_file_raises_error(
         "/directory/wrong/path/bound.pol) does not exist or is not accessible."
         in str(err.value)
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_filenames_can_be_blob_pattern(file_context_token):
+    filename0 = "surface--amplitude_far_mean_depth--20190701_20180101.csv"
+    filename1 = "surface--amplitude_full_min_depth--20190901_20180101.csv"
+    filename2 = "surface--amplitude_full_min_depth--20180701_20180101.csv"
+    filename3 = ".surface--amplitude_full_mean_depth--20190701_20180101.csv.yml"
+
+    directory = "dir1/dir2/.."
+    os.makedirs(directory, exist_ok=True)
+
+    for filename in [filename0, filename1, filename2, filename3]:
+        write_default_seismic_file_content(f"{directory}/{filename}")
+
+    def make_observations_with_pattern(
+        pattern: str, directory: str = directory
+    ) -> list[SeismicObservation]:
+        shape_registry = ShapeRegistry()
+        obs = make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "CSV": f"{directory}/{pattern}",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=shape_registry,
+        )
+        return [cast(SeismicObservation, o) for o in obs]
+
+    p1 = "surface--amplitude_*_*_depth--20190[1-9]01_20180101.csv"
+    obs = make_observations_with_pattern(p1)
+    assert len(obs) == 2
+    assert sorted([o.filepath for o in obs]) == sorted(
+        [
+            Path(f"{directory}/{filename0}"),
+            Path(f"{directory}/{filename1}"),
+        ]
+    )
+
+    p2 = "surface*"
+    obs = make_observations_with_pattern(p2)
+    assert len(obs) == 3
+    assert sorted([o.filepath for o in obs]) == sorted(
+        [
+            Path(f"{directory}/{filename0}"),
+            Path(f"{directory}/{filename1}"),
+            Path(f"{directory}/{filename2}"),
+        ]
+    )
+
+    p3 = p1[:-4]
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations_with_pattern(p3)
+    assert f"No files matching pattern '{p3}' found in '{directory}'" in str(err.value)
+
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations_with_pattern(p1, directory="ufo")
+    assert "ufo' does not exist or is not accessible" in str(err.value)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_filepath_can_have_literal_metacharacters(file_context_token):
+    def make_observations_with_pattern(pattern: str) -> list[SeismicObservation]:
+        shape_registry = ShapeRegistry()
+        obs = make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "CSV": pattern,
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=shape_registry,
+        )
+        return [cast(SeismicObservation, o) for o in obs]
+
+    path_with_literal_wildcard = r"test*.csv"
+    path_fitting_to_wildcard = "test123.csv"
+    write_default_seismic_file_content(path_with_literal_wildcard)
+    write_default_seismic_file_content(path_fitting_to_wildcard)
+
+    wildcard_pattern = "test**"
+    literal_pattern = "test[*]*"
+
+    assert len(make_observations_with_pattern(pattern=wildcard_pattern)) == 2
+    assert len(make_observations_with_pattern(pattern=literal_pattern)) == 1

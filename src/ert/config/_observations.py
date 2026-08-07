@@ -10,7 +10,6 @@ from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
-    ClassVar,
     Literal,
     Self,
     assert_never,
@@ -20,12 +19,12 @@ from typing import (
 import numpy as np
 import pandas as pd
 import polars as pl
-import scipy as sp
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
 from resfo_utilities import InvalidSummaryKeyError, make_summary_key
 
 from ert.validation import rangestring_to_list
 
+from ._reservoir_data_utils import SeismicData
 from ._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeConfig, ShapeRegistry
 from .parsing import (
     ConfigWarning,
@@ -1004,8 +1003,6 @@ class SeismicObservation(BaseObservation):
     error: float
     boundary_id: int | None = None
 
-    TOLERANCE: ClassVar[float] = 0.1
-
     @staticmethod
     def _load_observations(filepath: Path) -> pd.DataFrame:
         df = pd.read_csv(
@@ -1038,8 +1035,7 @@ class SeismicObservation(BaseObservation):
         if not observations:
             return
         coordinates = [(obs.east, obs.north) for obs in observations]
-        tree = sp.spatial.KDTree(coordinates)
-        too_close_pairs = tree.query_pairs(r=SeismicObservation.TOLERANCE * 2)
+        too_close_pairs = SeismicData.get_too_close_coordinate_pairs(coordinates)
         if too_close_pairs:
             too_close_coords = [
                 (
@@ -1052,7 +1048,7 @@ class SeismicObservation(BaseObservation):
                 "Seismic observation coordinates with approximate locations "
                 f"{too_close_coords} fall inside of a tolerance radius. "
                 "All seismic observation coordinates must be more than "
-                f"{SeismicObservation.TOLERANCE * 2} m apart.",
+                f"{SeismicData.TOLERANCE * 2} m apart.",
                 filepath,
             )
 
@@ -1075,7 +1071,7 @@ class SeismicObservation(BaseObservation):
             shape_registry: ShapeRegistry for storing geometry.
         """
         name = ""
-        filepath: str | Path | None = None
+        filepath: str | None = None
         boundary_filepath: str | Path | None = None
         for key, value in observation_dict.items():
             match key:
@@ -1090,22 +1086,6 @@ class SeismicObservation(BaseObservation):
                 case _:
                     raise _unknown_key_error(str(key), observation_dict.context)
 
-        if filepath is None:
-            raise _missing_value_error(observation_dict.context, "CSV")
-
-        filepath = Path(directory) / filepath
-        if not filepath.exists():
-            raise ObservationConfigError.with_context(
-                f"The CSV file ({filepath.absolute()}) "
-                "does not exist or is not accessible.",
-                filepath,
-            )
-
-        if not name:
-            name = filepath.stem
-
-        df = cls._load_observations(filepath)
-
         boundary_id = None
         if boundary_filepath is not None:
             boundary_filepath = Path(directory) / boundary_filepath
@@ -1117,6 +1097,40 @@ class SeismicObservation(BaseObservation):
                 )
             boundary = PolygonShapeConfig.from_file(str(boundary_filepath))
             boundary_id = shape_registry.register(boundary)
+
+        if filepath is None:
+            raise _missing_value_error(observation_dict.context, "CSV")
+
+        matching_filepaths = SeismicData.resolve_pattern_filepaths(
+            directory,
+            filepath,
+            on_error=lambda msg: ObservationConfigError.with_context(msg, filepath),
+        )
+        seismic_observations_for_filepath: list[Self] = []
+        for matching_filepath in matching_filepaths:
+            seismic_observations_for_filepath.extend(
+                cls._from_filepath(
+                    name=name,
+                    filepath=matching_filepath,
+                    boundary_id=boundary_id,
+                    shape_registry=shape_registry,
+                )
+            )
+        return seismic_observations_for_filepath
+
+    @classmethod
+    def _from_filepath(
+        cls,
+        name: str,
+        filepath: Path,
+        boundary_id: int | None,
+        shape_registry: ShapeRegistry,
+    ) -> list[Self]:
+
+        if not name:
+            name = filepath.stem
+
+        df = cls._load_observations(filepath)
 
         seismic_observations = []
         for row in df.itertuples():

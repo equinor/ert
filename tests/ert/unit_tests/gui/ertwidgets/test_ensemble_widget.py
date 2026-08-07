@@ -330,6 +330,16 @@ def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_en
         assert len(collections) == 1
 
 
+def verify_number_of_visualized_responses(ensemble_widget, expected_num_responses):
+    plot = ensemble_widget._figure.get_axes()
+    assert len(plot) == 1
+    collections = plot[0].collections
+    assert len(collections) == 2
+    strip_plot_response_collection = collections[-1]
+    displayed_responses = np.asarray(strip_plot_response_collection.get_offsets())
+    assert len(displayed_responses) == expected_num_responses
+
+
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
 def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     qtbot, storage
@@ -481,37 +491,30 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
             f"Expected observation names {expected_children}, but got {children}"
         )
 
-    def verify_number_of_visualized_responses():
-        plot = ensemble_widget._figure.get_axes()
-        assert len(plot) == 1
-        collections = plot[0].collections
-        assert len(collections) == 2
-        strip_plot_response_collection = collections[-1]
-        displayed_responses = np.asarray(strip_plot_response_collection.get_offsets())
-        assert len(displayed_responses) == 1
-
     verify_observation_tree()
     observation_widget.setCurrentItem(top.child(0))
-    verify_number_of_visualized_responses()
+    verify_number_of_visualized_responses(ensemble_widget, expected_num_responses=1)
     observation_widget.setCurrentItem(top.child(1))
-    verify_number_of_visualized_responses()
+    verify_number_of_visualized_responses(ensemble_widget, expected_num_responses=1)
 
 
 def test_that_seismic_observations_use_tolerance_on_response_match(qtbot, storage):
     observation = create_seismic_observation(east=1.0, north=1.0)
-    response = create_seismic_response(east=1.05, north=1.05)
+    response0 = create_seismic_response(east=1.05, north=1.05)
+    response1 = create_seismic_response(east=1.05, north=1.05, values=1.2)
 
     config = ErtConfig.from_dict(
         {
-            "NUM_REALIZATIONS": 1,
+            "NUM_REALIZATIONS": 2,
             "SEISMIC": ["dummy.csv"],
         }
     )
     config.observation_declarations.append(observation)
 
     experiment = create_experiment_from_config(config, storage)
-    ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
-    ensemble.save_response("seismic", response, 0)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=2)
+    ensemble.save_response("seismic", response0, 0)
+    ensemble.save_response("seismic", response1, 1)
 
     ensemble_widget = EnsembleWidget()
     ensemble_widget.setEnsemble(ensemble)
@@ -520,9 +523,7 @@ def test_that_seismic_observations_use_tolerance_on_response_match(qtbot, storag
     panels_widget = ensemble_widget._tab_widget
     panels_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
 
-    plot = ensemble_widget._figure.get_axes()
-    assert len(plot) == 1
-    assert len(plot[0].collections) == 2
+    verify_number_of_visualized_responses(ensemble_widget, expected_num_responses=2)
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
