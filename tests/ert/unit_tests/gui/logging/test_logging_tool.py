@@ -20,10 +20,13 @@ def test_logging_widget(qtbot, caplog, log_func, expected):
     logging_handle = GUILogHandler()
     logger.addHandler(logging_handle)
 
-    widget = EventViewerPanel(logging_handle)
-    widget.show()
-    qtbot.addWidget(widget)
+    try:
+        widget = EventViewerPanel(logging_handle)
+        widget.show()
+        qtbot.addWidget(widget)
 
-    with qtbot.waitExposed(widget), caplog.at_level(logging.DEBUG):
-        log_func("Writing some text")
-        assert widget.text_box.toPlainText() == expected
+        with qtbot.waitExposed(widget), caplog.at_level(logging.DEBUG):
+            log_func("Writing some text")
+            assert widget.text_box.toPlainText() == expected
+    finally:
+        logger.removeHandler(logging_handle)

@@ -64,10 +64,16 @@ def _reraise_thread_exceptions_on_main_thread():
     set_signal_handler()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def _qt_add_search_paths(qapp):
     "Ensure that icons and such are found by the tests"
-    QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
+    original_paths = QDir.searchPaths("img")
+    QDir.setSearchPaths(
+        "img",
+        [str(files("ert.gui").joinpath("resources/gui/img")), *original_paths],
+    )
+    yield
+    QDir.setSearchPaths("img", original_paths)
 
 
 # Timeout settings are unreliable both on CI and

@@ -1,7 +1,6 @@
 import stat
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
@@ -40,11 +39,15 @@ def test_no_plugins():
 
 def test_that_ecl_and_flow_envvars_plugins_are_passed_through_plugin_context(
     monkeypatch,
+    tmp_path: Path,
 ):
-    some_tmpdir = tempfile.mkdtemp()
-    monkeypatch.chdir(some_tmpdir)
-    mock_dummy_plugins(Path(some_tmpdir))
-    monkeypatch.setattr(tempfile, "mkdtemp", Mock(return_value=some_tmpdir))
+    monkeypatch.chdir(tmp_path)
+    mock_dummy_plugins(tmp_path)
+    monkeypatch.setattr(
+        tempfile,
+        "mkdtemp",
+        lambda *_args, **_kwargs: str(tmp_path),
+    )
 
     runtime_plugins = get_site_plugins(
         plugin_manager=ErtPluginManager(plugins=[dummy_plugins])
