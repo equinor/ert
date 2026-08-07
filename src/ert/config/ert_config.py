@@ -701,10 +701,17 @@ def create_list_of_forward_model_steps_to_run(
 
         user_positional_args_by_step[id(fm_step)] = user_positional_args
 
-        try:
-            fm_step.check_required_keywords()
-        except ConfigValidationError as err:
-            errors.append(err)
+        keyword_errors: list[ConfigValidationError] = []
+        for check_keywords in (
+            fm_step.check_allowed_keywords,
+            fm_step.check_required_keywords,
+        ):
+            try:
+                check_keywords()
+            except ConfigValidationError as err:
+                keyword_errors.append(err)
+        if keyword_errors:
+            errors.extend(keyword_errors)
             continue
         fm_steps.append(fm_step)
 

@@ -96,6 +96,7 @@ class ForwardModelStepOptions(TypedDict, total=False):
     environment: NotRequired[dict[str, str]]
     default_mapping: NotRequired[dict[str, str]]
     required_keywords: NotRequired[list[str]]
+    allowed_keywords: NotRequired[list[str] | None]
 
 
 def _get_source_package() -> str:
@@ -157,6 +158,8 @@ class ForwardModelStep(BaseModelWithContextSupport):
         max_arg: The maximum number of arguments
         arglist: The arglist with which the executable is invoked
         required_keywords: Keywords that are required to be supplied by the user
+        allowed_keywords: Keywords that may be supplied by the user. If ``None``,
+            any keyword is allowed; an empty list allows no optional keywords.
         arg_types: Types of user-provided arguments, this list must have indices
             corresponding to the number of args that are user specified
             and thus also subject to substitution.
@@ -182,6 +185,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
     max_arg: int | None = None
     arglist: list[str] = Field(default_factory=list)
     required_keywords: list[str] = Field(default_factory=list)
+    allowed_keywords: list[str] | None = None
     arg_types: list[SchemaItemType] = Field(default_factory=list)
     environment: dict[str, str] = Field(default_factory=dict)
     default_mapping: dict[str, str] = Field(default_factory=dict)
@@ -220,6 +224,23 @@ class ForwardModelStep(BaseModelWithContextSupport):
             raise ConfigValidationError.with_context(
                 f"Required keyword{plural} {', '.join(sorted(missing_keywords))} "
                 f"not found for forward model step {self.name}",
+                self.name,
+            )
+
+    def check_allowed_keywords(self) -> None:
+        if self.allowed_keywords is None:
+            return
+
+        allowed_keywords = set(self.allowed_keywords) | set(self.required_keywords)
+        unexpected_keywords = set(self.private_args).difference(allowed_keywords)
+        if unexpected_keywords:
+            plural = "s" if len(unexpected_keywords) > 1 else ""
+            verb = "are" if plural else "is"
+            allowed_keywords_message = ", ".join(sorted(allowed_keywords)) or "none"
+            raise ConfigValidationError.with_context(
+                f"Keyword{plural} {', '.join(sorted(unexpected_keywords))} "
+                f"{verb} not allowed for forward model step {self.name}. "
+                f"Allowed keywords: {allowed_keywords_message}",
                 self.name,
             )
 
@@ -344,6 +365,7 @@ class ForwardModelStepPlugin(SiteInstalledForwardModelStep):
         environment = kwargs.get("environment", {}) or {}
         default_mapping = kwargs.get("default_mapping", {}) or {}
         required_keywords = kwargs.get("required_keywords", []) or []
+        allowed_keywords = kwargs.get("allowed_keywords")
 
         super().__init__(
             name=name,
@@ -359,6 +381,7 @@ class ForwardModelStepPlugin(SiteInstalledForwardModelStep):
             min_arg=0,
             max_arg=0,
             required_keywords=required_keywords,
+            allowed_keywords=allowed_keywords,
             arg_types=[],
             environment=environment,
             default_mapping=default_mapping,
