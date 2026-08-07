@@ -680,3 +680,18 @@ if __name__ == "__main__":
     import pytest
 
     pytest.main(args=[__file__, "--doctest-modules", "-v", "-l"])
+
+
+def test_that_fewer_seeds_than_realizations_are_repeated_and_informs_user(capsys):
+    reals = 5
+    seeds = [1, 2, 3]
+
+    rms_seeds = DesignMatrix().create_rms_seeds(seeds, max_reals=reals)
+
+    assert rms_seeds == [1, 2, 3, 1, 2]
+    stdout = capsys.readouterr().out
+    assert (
+        "Provided number of seed values (3) in external file is "
+        "lower than the maximum number of realisations (5)" in stdout
+    )
+    assert "Seeds will be repeated, e.g. [1, 2, 3] => [1, 2, 3, 1, 2, ...]" in stdout

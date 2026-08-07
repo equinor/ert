@@ -297,14 +297,7 @@ class DesignMatrix:
                 - "default": Generates sequential seeds 1001, 1002, 1003, ...
                 - list of seeds, e.g. [1, 2, 3]
             max_reals: Maximum number of seed values to generate or load
-
-        Examples
-        --------
-        >>> DesignMatrix.create_rms_seeds([1, 2, 3], max_reals=5)
-        Provided number of seed values (3) in external file is lower than the maximum number of realisations (5).
-        Seeds will be repeated, e.g. [1, 2, 3] => [1, 2, 3, 1, 2, ...]
-        [1, 2, 3, 1, 2]
-        """  # ruff: ignore[line-too-long]
+        """
         if seeds is None:
             return None
 
