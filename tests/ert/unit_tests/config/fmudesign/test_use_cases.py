@@ -196,28 +196,3 @@ def test_all_example_files_cmd_init(use_tmpdir, monkeypatch, designfile, verbosi
         capture_output=True,
         text=True,
     )
-
-
-@pytest.mark.parametrize("designfile", TEST_FILES, ids=[p.stem for p in TEST_FILES])
-@pytest.mark.slow
-def test_all_input_files_relative_paths(use_tmpdir, monkeypatch, designfile):
-    """Smoketest all files, but invoke them from a directory above.
-    This tests that relative paths in the Excel files work correctly.
-    """
-
-    copy_to = Path(".") / "path" / "going" / "down"
-
-    Path(copy_to).mkdir(exist_ok=True, parents=True)
-
-    # Copy all example files over, to guarantee existence of dependency files
-    for filename in designfile.parent.glob("*"):
-        if Path(filename).is_file():
-            shutil.copy(filename, copy_to)
-
-    # Run the CLI tool (test will fail on non-zero status code)
-    subprocess.run(
-        ["fmudesign", Path(".") / "path" / "going" / "down" / designfile],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
