@@ -34,7 +34,7 @@ def use_testclient(monkeypatch):
         """
         return quote(quote(quote(s, safe="")))
 
-    PlotApi.escape = test_escape
+    monkeypatch.setattr(PlotApi, "escape", test_escape)
 
     original_get = client.get
 
@@ -42,7 +42,9 @@ def use_testclient(monkeypatch):
         kwargs.pop("timeout", None)
         return original_get(*args, **kwargs)
 
-    client.get = get_without_timeout
+    monkeypatch.setattr(client, "get", get_without_timeout)
+    yield
+    client.close()
 
 
 def test_key_def_structure(api: PlotApi):

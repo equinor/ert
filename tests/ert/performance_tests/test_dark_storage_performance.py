@@ -62,17 +62,14 @@ def use_testclient(monkeypatch):
         """
         return quote(quote(quote(s, safe="")))
 
-    PlotApi.escape = test_escape
+    monkeypatch.setattr(PlotApi, "escape", test_escape)
+    yield
+    client.close()
 
 
 def run_in_loop[T](coro: Awaitable[T]) -> T:
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-
-    asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coro)
+    with asyncio.Runner() as runner:
+        return runner.run(coro)
 
 
 def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):

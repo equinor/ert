@@ -479,7 +479,8 @@ def test_migrate_storage_with_no_responses(
     if LocalStorage.check_migration_needed(storage_path):
         LocalStorage.perform_migration(storage_path)
 
-    open_storage(storage_path, "w")
+    with open_storage(storage_path, "w"):
+        pass
 
 
 @pytest.mark.slow
