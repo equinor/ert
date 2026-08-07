@@ -38,6 +38,7 @@ from ert.config import (
     ConfigValidationError,
     DesignMatrix,
     HookedWorkflowFixtures,
+    HookRuntime,
     ModelConfig,
     ParameterConfig,
     PostSimulationFixtures,
@@ -79,6 +80,7 @@ from ._create_run_path import create_run_path
 from .event import (
     EndEvent,
     FullSnapshotEvent,
+    RunModelWorkflowLogEvent,
     SnapshotUpdateEvent,
     StartEvent,
     StatusEvents,
@@ -177,6 +179,8 @@ class RunModel(RunModelConfig, ABC):
     _start_iteration: int = PrivateAttr(default=0)
     _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
     _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
+    _workflow_log_id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
+    _pending_workflow_log: list[str] = PrivateAttr(default_factory=list)
 
     def __init__(
         self,
@@ -379,6 +383,8 @@ class RunModel(RunModelConfig, ABC):
             self.send_event(WarningEvent(msg=str(message)))
 
         start_timestamp = datetime.datetime.now(tz=datetime.UTC)
+        self._workflow_log_id = uuid.uuid4()
+        self._pending_workflow_log = []
         try:  # ruff: ignore[too-many-statements-in-try-clause]
             self.send_event(StartEvent(timestamp=start_timestamp))
             with (
@@ -832,23 +838,76 @@ class RunModel(RunModelConfig, ABC):
         self,
         fixtures: HookedWorkflowFixtures,
     ) -> None:
-        for workflow in self.hooked_workflows[fixtures.hook]:
-            workflow_runner = WorkflowRunner(
-                workflow=workflow,
-                fixtures=create_workflow_fixtures_from_hooked(fixtures),
-            )
-            self._workflow_runner = workflow_runner
-            try:
+        ensemble = getattr(fixtures, "ensemble", None)
+        experiment = ensemble.experiment if ensemble is not None else None
+        try:
+            for workflow in self.hooked_workflows[fixtures.hook]:
+                workflow_runner = WorkflowRunner(
+                    workflow=workflow,
+                    fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                )
+                self._workflow_runner = workflow_runner
+                try:
+                    if self._end_event.is_set():
+                        workflow_runner.cancel()
+                        raise UserCancelled(
+                            "Experiment cancelled by user during workflows"
+                        )
+
+                    workflow_runner.run_blocking()
+                finally:
+                    self._workflow_runner = None
+                    self._send_workflow_log_events(
+                        workflow_runner=workflow_runner,
+                        hook=fixtures.hook,
+                        workflow_name=workflow.name,
+                        iteration=ensemble.iteration if ensemble is not None else None,
+                    )
+
                 if self._end_event.is_set():
-                    workflow_runner.cancel()
                     raise UserCancelled("Experiment cancelled by user during workflows")
+        finally:
+            self._persist_workflow_log(experiment)
 
-                workflow_runner.run_blocking()
-            finally:
-                self._workflow_runner = None
+    def _send_workflow_log_events(
+        self,
+        workflow_runner: WorkflowRunner,
+        hook: HookRuntime,
+        workflow_name: str,
+        iteration: int | None,
+    ) -> None:
+        events = [
+            RunModelWorkflowLogEvent(
+                run_id=self._workflow_log_id,
+                hook=str(hook),
+                workflow_name=workflow_name,
+                job_name=result.name,
+                job_index=result.index,
+                arguments=result.arguments,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                failed=result.failed,
+                cancelled=result.cancelled,
+                timestamp=result.timestamp,
+                iteration=iteration,
+            )
+            for result in workflow_runner.workflowJobResults()
+        ]
+        for event in events:
+            self.send_event(event)
+        self._pending_workflow_log.extend(event.as_log_entry() for event in events)
 
-            if self._end_event.is_set():
-                raise UserCancelled("Experiment cancelled by user during workflows")
+    def _persist_workflow_log(self, experiment: Experiment | None) -> None:
+        """Output from hooks that run before the experiment exists in storage,
+        such as PRE_EXPERIMENT, is held back until an experiment is available.
+        """
+        if experiment is None or not self._pending_workflow_log:
+            return
+        try:
+            experiment.append_workflow_log(self._pending_workflow_log)
+        except Exception:
+            logger.exception("Failed to persist workflow log to storage")
+        self._pending_workflow_log = []
 
     def _evaluate_and_postprocess(
         self,

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import types
 from concurrent import futures
 from concurrent.futures import Future
+from dataclasses import dataclass, field
 from typing import Any, Self
 
 from ert import ErtScript
@@ -15,6 +17,22 @@ from ert.config import (
     WorkflowFixtures,
     WorkflowJob,
 )
+
+
+@dataclass
+class WorkflowJobResult:
+    """The outcome of a single invocation of a workflow job."""
+
+    name: str
+    index: int
+    arguments: list[str]
+    stdout: str
+    stderr: str
+    failed: bool
+    cancelled: bool = False
+    timestamp: datetime.datetime = field(
+        default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
+    )
 
 
 class WorkflowJobRunner:
@@ -33,36 +51,36 @@ class WorkflowJobRunner:
             arguments = []
         fixtures = {} if fixtures is None else fixtures
         self.__running = True
-        if self.job.min_args and len(arguments) < self.job.min_args:
-            raise ValueError(
-                f"The job: {self.job.name} requires at least "
-                f"{self.job.min_args} arguments, {len(arguments)} given."
+        try:
+            if self.job.min_args and len(arguments) < self.job.min_args:
+                raise ValueError(
+                    f"The job: {self.job.name} requires at least "
+                    f"{self.job.min_args} arguments, {len(arguments)} given."
+                )
+
+            if self.job.max_args and self.job.max_args < len(arguments):
+                raise ValueError(
+                    f"The job: {self.job.name} can only have "
+                    f"{self.job.max_args} arguments, {len(arguments)} given."
+                )
+
+            if isinstance(self.job, BaseErtScriptWorkflow):
+                ert_script_class = self.job.load_ert_script_class()
+                self.__script = ert_script_class()
+                # We let stop on fail either from class or config take precedence
+                self.stop_on_fail = self.job.stop_on_fail or self.__script.stop_on_fail
+
+            else:
+                self.__script = ExternalErtScript(
+                    self.job.executable,  # type: ignore
+                )
+                self.stop_on_fail = self.job.stop_on_fail
+
+            return self.__script.initializeAndRun(
+                self.job.argument_types(), arguments, fixtures
             )
-
-        if self.job.max_args and self.job.max_args < len(arguments):
-            raise ValueError(
-                f"The job: {self.job.name} can only have "
-                f"{self.job.max_args} arguments, {len(arguments)} given."
-            )
-
-        if isinstance(self.job, BaseErtScriptWorkflow):
-            ert_script_class = self.job.load_ert_script_class()
-            self.__script = ert_script_class()
-            # We let stop on fail either from class or config take precedence
-            self.stop_on_fail = self.job.stop_on_fail or self.__script.stop_on_fail
-
-        else:
-            self.__script = ExternalErtScript(
-                self.job.executable,  # type: ignore
-            )
-            self.stop_on_fail = self.job.stop_on_fail
-
-        result = self.__script.initializeAndRun(
-            self.job.argument_types(), arguments, fixtures
-        )
-        self.__running = False
-
-        return result
+        finally:
+            self.__running = False
 
     @property
     def name(self) -> str:
@@ -119,6 +137,7 @@ class WorkflowRunner:
         self.__cancelled = False
         self.__current_job: WorkflowJobRunner | None = None
         self.__status: dict[str, dict[str, Any]] = {}
+        self.__job_results: list[WorkflowJobResult] = []
 
     def __enter__(self) -> Self:
         self.run()
@@ -144,19 +163,32 @@ class WorkflowRunner:
 
         # Reset status
         self.__status = {}
+        self.__job_results = []
         self.__running = True
 
-        for job, args in self.__workflow:
+        for index, (job, args) in enumerate(self.__workflow):
             jobrunner = WorkflowJobRunner(job)
             self.__current_job = jobrunner
             if not self.__cancelled:
                 logger.info(f"Workflow job {jobrunner.name} starting")
                 jobrunner.run(args, fixtures=self.fixtures)
+                job_was_cancelled = self.__cancelled
                 self.__status[jobrunner.name] = {
                     "stdout": jobrunner.stdoutdata(),
                     "stderr": jobrunner.stderrdata(),
                     "completed": not jobrunner.hasFailed(),
                 }
+                self.__job_results.append(
+                    WorkflowJobResult(
+                        name=jobrunner.name,
+                        index=index,
+                        arguments=[str(arg) for arg in args],
+                        stdout=jobrunner.stdoutdata(),
+                        stderr=jobrunner.stderrdata(),
+                        failed=jobrunner.hasFailed(),
+                        cancelled=job_was_cancelled,
+                    )
+                )
 
                 info = {
                     "class": "WORKFLOW_JOB",
@@ -176,6 +208,10 @@ class WorkflowRunner:
                         )
 
                     logger.error(f"Workflow job {jobrunner.name} failed", extra=info)
+                elif job_was_cancelled:
+                    logger.info(
+                        f"Workflow job {jobrunner.name} was cancelled", extra=info
+                    )
                 else:
                     logger.info(
                         f"Workflow job {jobrunner.name} completed successfully",
@@ -223,3 +259,11 @@ class WorkflowRunner:
 
     def workflowReport(self) -> dict[str, dict[str, Any]]:
         return self.__status
+
+    def workflowJobResults(self) -> list[WorkflowJobResult]:
+        """One entry per job invocation, in the order the jobs were run.
+
+        Unlike workflowReport(), which is keyed by job name, this keeps the
+        output of every invocation when the same job is run more than once.
+        """
+        return self.__job_results

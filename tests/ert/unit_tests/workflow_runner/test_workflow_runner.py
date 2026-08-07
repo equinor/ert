@@ -82,6 +82,37 @@ def test_error_handling_external_job():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_stdout_printed_before_an_external_job_fails_is_captured():
+    WorkflowCommon.createExternalDumpJob()
+
+    job = workflow_job_from_file(
+        name="DUMP", config_file="dump_failing_job", origin="user"
+    )
+
+    runner = WorkflowJobRunner(job)
+    runner.run([])
+
+    assert runner.stdoutdata() == "Hello Failing\n"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_failing_external_job_reports_its_exit_code_without_an_ert_stack_trace():
+    WorkflowCommon.createExternalDumpJob()
+
+    job = workflow_job_from_file(
+        name="DUMP", config_file="dump_failing_job", origin="user"
+    )
+
+    runner = WorkflowJobRunner(job)
+    runner.run([])
+
+    stderr = runner.stderrdata()
+    assert stderr.endswith("dump_failing.py failed with exit code 1")
+    assert "ert_script.py" not in stderr
+    assert "external_ert_script.py" not in stderr
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_run_internal_script():
     WorkflowCommon.createErtScriptsJob()
@@ -178,6 +209,28 @@ def test_workflow_run():
     assert Path("dump2").read_text(encoding="utf-8") == "dump_text_2"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_results_contain_one_entry_per_job_invocation():
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    runner = WorkflowRunner(workflow, fixtures={})
+    runner.run_blocking()
+
+    results = runner.workflowJobResults()
+    assert [(result.name, result.index, result.arguments) for result in results] == [
+        ("DUMP", 0, ["dump1", "dump_text_1"]),
+        ("DUMP", 1, ["dump2", "dump_text_2"]),
+    ]
+    assert [result.stdout for result in results] == ["Hello World\n", "Hello World\n"]
+    assert not any(result.failed for result in results)
+    assert not any(result.cancelled for result in results)
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
@@ -214,6 +267,12 @@ def test_workflow_thread_cancel_ert_script():
     assert not Path("wait_started_2").exists()
     assert not Path("wait_cancelled_2").exists()
     assert not Path("wait_finished_2").exists()
+
+    results = {result.index: result for result in workflow_runner.workflowJobResults()}
+    assert results[0].cancelled is False
+    assert results[0].failed is False
+    assert results[1].cancelled is True
+    assert results[1].failed is False
 
 
 @pytest.mark.slow
@@ -344,3 +403,18 @@ def test_workflow_stops_with_stopping_job():
 
     # Expect no error raised
     WorkflowRunner(workflow, fixtures={}).run_blocking()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_a_job_runner_stops_reporting_it_is_running_when_arguments_are_rejected():
+    WorkflowCommon.createErtScriptsJob()
+    job = workflow_job_from_file(
+        name="SUBTRACT", config_file="subtract_script_job", origin="user"
+    )
+    runner = WorkflowJobRunner(job)
+
+    with pytest.raises(ValueError, match="requires at least 2 arguments"):
+        runner.run([1])
+
+    assert not runner.isRunning()

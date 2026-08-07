@@ -511,6 +511,43 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
             run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
 
 
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_workflow_output_is_written_to_the_experiment_in_storage():
+    Path("print_job").write_text("EXECUTABLE print_script.sh\n", encoding="utf-8")
+    Path("print_script.sh").write_text(
+        dedent(
+            """\
+                #!/bin/bash
+                echo hello from the workflow
+                echo problem from the workflow >&2
+            """
+        ),
+        encoding="utf-8",
+    )
+    Path("print_script.sh").chmod(os.stat("print_script.sh").st_mode | 0o111)
+    Path("print_workflow").write_text("printjob\n", encoding="utf-8")
+
+    with Path("poly.ert").open(mode="a", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                   LOAD_WORKFLOW_JOB print_job printjob
+                   LOAD_WORKFLOW print_workflow wfprint
+                   HOOK_WORKFLOW wfprint PRE_SIMULATION
+                """
+            )
+        )
+
+    run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+
+    with open_storage("storage", "r") as storage:
+        (experiment,) = storage.experiments
+        log = experiment.workflow_log_path.read_text(encoding="utf-8")
+    assert "PRE_SIMULATION workflow=wfprint job=printjob#0" in log
+    assert "--- stdout ---\nhello from the workflow" in log
+    assert "--- stderr ---\nproblem from the workflow" in log
+
+
 @pytest.fixture(name="mock_cli_run")
 def fixture_mock_cli_run(monkeypatch):
     end_event = Mock()

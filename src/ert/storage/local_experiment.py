@@ -5,7 +5,7 @@ import io
 import json
 import logging
 import shutil
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from datetime import UTC, datetime
 from enum import StrEnum, auto
 from functools import cached_property
@@ -917,6 +917,18 @@ class LocalExperiment(BaseMode):
 
     def status_snapshot_path(self, iteration: int) -> Path:
         return self._path / "status" / f"iteration-{iteration}.json"
+
+    @property
+    def workflow_log_path(self) -> Path:
+        """The file holding the output of the workflows run for this experiment."""
+        return self._path / "workflows.log"
+
+    @require_write
+    def append_workflow_log(self, entries: Iterable[str]) -> None:
+        log_path = self.workflow_log_path
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as fout:
+            fout.writelines(entries)
 
     def write_status_snapshot(self, iteration: int, data: bytes) -> None:
         snapshot_path = self.status_snapshot_path(iteration)

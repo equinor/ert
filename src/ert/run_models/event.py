@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -93,6 +94,47 @@ class RunModelErrorEvent(RunModelEvent):
             self.data.to_csv("Report", output_path / str(self.run_id))
 
 
+class RunModelWorkflowLogEvent(BaseModel, extra="forbid"):
+    """The output of a single workflow job invocation."""
+
+    event_type: Literal["RunModelWorkflowLogEvent"] = "RunModelWorkflowLogEvent"
+    run_id: UUID
+    hook: str
+    workflow_name: str
+    job_name: str
+    job_index: int
+    arguments: list[str]
+    stdout: str
+    stderr: str
+    failed: bool
+    cancelled: bool = False
+    timestamp: datetime
+    iteration: int | None = None
+
+    def as_log_entry(self) -> str:
+        if self.cancelled:
+            status = "cancelled"
+        elif self.failed:
+            status = "failed"
+        else:
+            status = "success"
+        header = (
+            f"=== {self.timestamp.isoformat(timespec='seconds')} {self.hook} "
+            f"workflow={self.workflow_name} job={self.job_name}#{self.job_index} "
+            f"status={status}"
+        )
+        if self.iteration is not None:
+            header += f" iteration={self.iteration}"
+        sections = [header]
+        if self.arguments:
+            sections.append(f"--- arguments ---\n{' '.join(self.arguments)}")
+        if self.stdout:
+            sections.append(f"--- stdout ---\n{self.stdout.rstrip('\n')}")
+        if self.stderr:
+            sections.append(f"--- stderr ---\n{self.stderr.rstrip('\n')}")
+        return "\n".join(sections) + "\n\n"
+
+
 class RunPathCreationEvent(BaseModel, extra="forbid"):
     pass
 
@@ -126,6 +168,7 @@ StatusEvents = (
     | RunModelTimeEvent
     | RunModelUpdateBeginEvent
     | RunModelUpdateEndEvent
+    | RunModelWorkflowLogEvent
     | SnapshotUpdateEvent
     | StartEvent
     | WarningEvent
