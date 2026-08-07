@@ -287,7 +287,7 @@ class DesignMatrix:
 
     @staticmethod
     def create_rms_seeds(
-        seeds: list[str] | str | None, max_reals: int
+        seeds: list[int] | str | None, max_reals: int
     ) -> list[int] | None:
         """Create RMS seems from 'seeds' argument.
 
