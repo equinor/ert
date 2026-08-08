@@ -18,6 +18,7 @@ from resfo_utilities.testing import (
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
+from ert.config.parsing.observations_parser import ObservationConfigError
 from ert.observation_converters.history_to_summary import convert_history_to_summary
 
 
@@ -549,6 +550,145 @@ SUMMARY_OBSERVATION SUM_OBS_2 {
    ERROR    = 25.0;
    DATE     = 2024-01-31;
    KEY      = WOPRH;
+};
+"""
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_restart_without_refcase_or_time_map_gives_clear_error():
+    """
+    Test that using RESTART without REFCASE or TIME_MAP raises a clear
+    ObservationConfigError instead of crashing with an IndexError.
+    """
+    obs_config_path = Path("observations.txt")
+    obs_config_path.write_text(
+        dedent(
+            """\
+            SUMMARY_OBSERVATION WOPR_OP1_9 {
+                VALUE = 0.1;
+                ERROR = 0.05;
+                RESTART = 9;
+                KEY = WOPR:OP1;
+            };
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_path = Path("config.ert")
+    config_path.write_text(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            OBS_CONFIG observations.txt
+            """
+        ),
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_restart_out_of_range_of_time_map_gives_clear_error():
+    """
+    Test that a RESTART index beyond the length of TIME_MAP raises a clear
+    ObservationConfigError instead of crashing with an IndexError.
+    """
+    Path("time_map.txt").write_text(
+        dedent(
+            """\
+            2020-01-01
+            2020-01-11
+            2020-01-21
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    obs_config_path = Path("observations.txt")
+    obs_config_path.write_text(
+        dedent(
+            """\
+            SUMMARY_OBSERVATION WOPR_OP1_9 {
+                VALUE = 0.1;
+                ERROR = 0.05;
+                RESTART = 9;
+                KEY = WOPR:OP1;
+            };
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_path = Path("config.ert")
+    config_path.write_text(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            TIME_MAP time_map.txt
+            OBS_CONFIG observations.txt
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ObservationConfigError):
+        convert_history_to_summary(str(config_path))
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_restart_with_refcase_present_converts_successfully():
+    """
+    Regression test: RESTART with a valid REFCASE (restart index within
+    range) should convert cleanly, not raise.
+    """
+    smspec, unsmry = create_summary_smspec_unsmry(
+        summary_vectors={"FOPR": [100, 110, 120]},
+        start_date=datetime(2020, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
+    )
+    smspec.to_file(Path("REFCASE.SMSPEC"))
+    unsmry.to_file(Path("REFCASE.UNSMRY"))
+
+    obs_config_path = Path("observations.txt")
+    obs_config_path.write_text(
+        dedent(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE = 110.0;
+                ERROR = 5.0;
+                RESTART = 1;
+                KEY = FOPR;
+            };
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_path = Path("config.ert")
+    config_path.write_text(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            REFCASE REFCASE
+            OBS_CONFIG observations.txt
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Should not raise
+    convert_history_to_summary(str(config_path))
+
+    assert (
+        Path("observations.txt").read_text(encoding="utf-8")
+        == """SUMMARY_OBSERVATION FOPR_OBS {
+   VALUE    = 110.0;
+   ERROR    = 5.0;
+   DATE     = 2020-01-01;
+   KEY      = FOPR;
 };
 """
     )

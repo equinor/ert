@@ -684,6 +684,18 @@ def _get_restart(
     has_refcase: bool,
 ) -> int:
     if date_dict.restart is not None:
+        if not time_map:
+            raise ObservationConfigError.with_context(
+                f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
+                obs_name,
+            )
+        if date_dict.restart >= len(time_map):
+            raise ObservationConfigError.with_context(
+                f"RESTART {date_dict.restart} for observation {obs_name} is "
+                f"out of range: the REFCASE/TIME_MAP only has "
+                f"{len(time_map)} report step(s).",
+                obs_name,
+            )
         return date_dict.restart
     if not time_map:
         raise ObservationConfigError.with_context(
