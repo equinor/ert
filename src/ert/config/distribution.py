@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Annotated, Any, Literal, Self, TypeVar
+from typing import Annotated, Any, Literal, Self, TypeVar, override
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator, model_validator
-from scipy.special import ndtr
+from scipy.special import betaincinv, ndtr
 
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
@@ -27,6 +27,10 @@ class TransSettingsValidation(BaseModel):
             for name, field in cls.model_fields.items()
             if field.is_required() or (field.default is not None and name != "name")
         ]
+
+    @classmethod
+    def get_min_param_count(cls) -> int:
+        return len(cls.get_param_names())
 
 
 class UnifSettings(TransSettingsValidation):
@@ -380,6 +384,57 @@ class DerrfSettings(TransSettingsValidation):
         return np.clip(result, self.min, self.max)
 
 
+class PertSettings(TransSettingsValidation):
+    model_config = {"allow_inf_nan": False}
+
+    name: Literal["pert"] = "pert"
+    min: float = 0.0
+    mode: float = 0.5
+    max: float = 1.0
+    scale: float = 4.0
+
+    @classmethod
+    @override
+    def get_min_param_count(cls) -> int:
+        return 3
+
+    @model_validator(mode="after")
+    def valid_pert_params(self) -> Self:
+        errors = []
+        if not self.min < self.max:
+            errors.append(
+                ErrorInfo(
+                    message=f"Minimum {self.min} must be strictly less than"
+                    f" the maximum {self.max} for pert distribution"
+                )
+            )
+        if not (self.min < self.mode < self.max):
+            errors.append(
+                ErrorInfo(
+                    message=f"The mode {self.mode} must be strictly between"
+                    f" the minimum {self.min} and maximum {self.max}"
+                    " for pert distribution"
+                )
+            )
+        if self.scale <= 0:
+            errors.append(
+                ErrorInfo(
+                    message=f"Scale {self.scale} must be strictly greater than 0"
+                    " for pert distribution"
+                )
+            )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+        return self
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        span = self.max - self.min
+        alpha = 1 + self.scale * (self.mode - self.min) / span
+        beta = 1 + self.scale * (self.max - self.mode) / span
+        result = self.min + span * betaincinv(alpha, beta, ndtr(x))
+        return np.clip(result, self.min, self.max)
+
+
 DistributionSettings = Annotated[
     UnifSettings
     | LogNormalSettings
@@ -391,7 +446,8 @@ DistributionSettings = Annotated[
     | TruncNormalSettings
     | ErrfSettings
     | DerrfSettings
-    | TriangularSettings,
+    | TriangularSettings
+    | PertSettings,
     Field(discriminator="name"),
 ]
 
@@ -407,6 +463,7 @@ DISTRIBUTION_CLASSES: dict[str, type[DistributionSettings]] = {
     "TRIANGULAR": TriangularSettings,
     "ERRF": ErrfSettings,
     "DERRF": DerrfSettings,
+    "PERT": PertSettings,
 }
 
 

@@ -371,7 +371,12 @@ class GenKwConfig(ParameterConfig):
             )
         dist_cls = DISTRIBUTION_CLASSES[dist_name]
 
-        if len(values) != len(dist_cls.get_param_names()):
+        param_count = len(values)
+        if not (
+            dist_cls.get_min_param_count()
+            <= param_count
+            <= len(dist_cls.get_param_names())
+        ):
             raise ConfigValidationError.with_context(
                 f"Incorrect number of values: {values}, provided for variable "
                 f"{param_name} with distribution {dist_name}.",

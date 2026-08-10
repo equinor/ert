@@ -142,8 +142,25 @@ def test_short_definition_raises_config_error(tmp_path):
             {"name": "KEY10", "distribution": {"name": "const", "value": 10}},
             {"key": "KEY10", "function": "CONST", "parameters": {"VALUE": 10}},
         ),
+        (
+            {
+                "name": "KEY11",
+                "distribution": {
+                    "name": "pert",
+                    "min": 0,
+                    "mode": 1,
+                    "max": 2,
+                    "scale": 4,
+                },
+            },
+            {
+                "key": "KEY11",
+                "function": "PERT",
+                "parameters": {"MIN": 0, "MODE": 1, "MAX": 2, "SCALE": 4},
+            },
+        ),
     ],
-    ids=[f"KEY{i}" for i in range(1, 11)],
+    ids=[f"KEY{i}" for i in range(1, 12)],
 )
 def test_gen_kw_config_get_priors(spec, expected):
     cfg = GenKwConfig(**spec)
@@ -187,6 +204,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
         ("ERRF 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
         ("DERRF 10 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
         ("TRIANGULAR 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("PERT 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
     ],
 )
 async def test_gen_kw_is_log_or_not(
@@ -401,6 +419,74 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
                 update_strategy=None,
                 distribution=dist,
             )
+
+
+@pytest.mark.parametrize(
+    ("values", "expected_scale"),
+    [
+        (["0", "0.5", "1"], 4.0),
+        (["0", "0.5", "1", "2"], 2.0),
+    ],
+)
+def test_that_pert_uses_default_or_explicit_scale(values, expected_scale):
+    distribution = GenKwConfig._parse_distribution("MYNAME", "PERT", values)
+
+    assert distribution.model_dump() == {
+        "name": "pert",
+        "min": 0.0,
+        "mode": 0.5,
+        "max": 1.0,
+        "scale": expected_scale,
+    }
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        ["0", "0.5"],
+        ["0", "0.5", "1", "4", "5"],
+    ],
+)
+def test_that_pert_rejects_parameter_counts_other_than_three_or_four(values):
+    with pytest.raises(ConfigValidationError, match="Incorrect number of values"):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", values)
+
+
+def test_that_pert_requires_minimum_strictly_less_than_maximum():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Minimum .* must be strictly less than the maximum",
+    ):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", ["1", "1", "1"])
+
+
+@pytest.mark.parametrize("mode", ["-1", "0", "1", "2"])
+def test_that_pert_requires_mode_strictly_between_bounds(mode):
+    with pytest.raises(ConfigValidationError, match="must be strictly between"):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", ["0", mode, "1"])
+
+
+@pytest.mark.parametrize(
+    "parameter_index",
+    range(4),
+    ids=["minimum", "mode", "maximum", "scale"],
+)
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_that_pert_requires_finite_parameters(parameter_index, value):
+    values = ["0", "0.5", "1", "4"]
+    values[parameter_index] = value
+
+    with pytest.raises(ConfigValidationError, match="finite"):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", values)
+
+
+@pytest.mark.parametrize("scale", ["0", "-1"])
+def test_that_pert_requires_positive_scale(scale):
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"strictly greater than 0",
+    ):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", ["0", "0.5", "1", scale])
 
 
 @pytest.mark.parametrize(

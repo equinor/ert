@@ -394,6 +394,42 @@ To define a triangular distribution with a minimum of 1, mode (peak) of 3, and m
 
 .. image:: fig/triangular.png
 
+PERT: PERT Distribution
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``PERT`` keyword defines a beta-PERT distribution from a minimum, mode,
+and maximum value. An optional scale controls how strongly the distribution
+is concentrated around the mode.
+
+Syntax
+~~~~~~
+::
+
+    VAR PERT MIN MODE MAX [SCALE]
+
+Parameters
+~~~~~~~~~~
+- **MIN**: The minimum value of the distribution.
+- **MODE**: The most likely value. It must be strictly between ``MIN`` and
+  ``MAX``.
+- **MAX**: The maximum value of the distribution.
+- **SCALE**: An optional value greater than zero. The default is ``4``.
+  Larger values concentrate the distribution more strongly around ``MODE``.
+
+Examples
+~~~~~~~~
+To use the default scale:
+
+::
+
+    VAR_PERT PERT 1 3 5
+
+To use an explicit scale:
+
+::
+
+    VAR_PERT_SCALED PERT 1 3 5 2
+
 3D field parameters: ``FIELD``
 ------------------------------
 

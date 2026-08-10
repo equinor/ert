@@ -31,6 +31,7 @@ DISTRIBUTION_PARAMETERS: dict[str, list[str]] = {
     "LOGNORMAL": ["MEAN", "STD"],
     "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
     "TRIANGULAR": ["MIN", "MODE", "MAX"],
+    "PERT": ["MIN", "MODE", "MAX", "SCALE"],
     "UNIFORM": ["MIN", "MAX"],
     "DUNIF": ["STEPS", "MIN", "MAX"],
     "ERRF": ["MIN", "MAX", "SKEWNESS", "WIDTH"],
