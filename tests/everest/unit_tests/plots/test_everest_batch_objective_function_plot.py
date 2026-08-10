@@ -11,7 +11,7 @@ def batch_objective_data():
         {
             "batch_id": [0, 1, 2, 3],
             "objective_function_value": [8.0, 9.0, 10.0, 7.0],
-            "is_improvement": [True, True, False, True],
+            "accepted": [True, True, False, True],
             "improvement_value": [float("-inf"), 2.0, float("nan"), 2.0],
             "constraint_violation_type": [
                 None,

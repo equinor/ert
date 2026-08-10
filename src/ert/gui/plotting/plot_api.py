@@ -304,12 +304,12 @@ class PlotApi:
                 key_def is not None
                 and key_def.metadata.get("data_origin") == "everest_batch_objectives"
             ):
-                assert {"batch_id", "is_improvement"}.issubset(df.columns)
+                assert {"batch_id", "accepted"}.issubset(df.columns)
 
                 float_columns_names = (
-                    {"batch_id", "is_improvement", "constraint_violation_type"}
+                    {"batch_id", "accepted", "constraint_violation_type"}
                     if "constraint_violation_type" in df.columns
-                    else {"batch_id", "is_improvement"}
+                    else {"batch_id", "accepted"}
                 )
                 float_columns = [
                     col for col in df.columns if col not in float_columns_names
@@ -319,14 +319,14 @@ class PlotApi:
                     dict.fromkeys(float_columns, float)
                     | {
                         "batch_id": int,
-                        "is_improvement": bool,
+                        "accepted": bool,
                         "improvement_value": float,
                         "constraint_violation_type": str,
                     }
                     if "constraint_violation_type" in df.columns
                     else {
                         "batch_id": int,
-                        "is_improvement": bool,
+                        "accepted": bool,
                         "improvement_value": float,
                     }
                 )

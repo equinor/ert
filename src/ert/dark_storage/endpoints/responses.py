@@ -235,7 +235,7 @@ def data_for_response(
             pl.DataFrame(
                 {
                     "batch_id": [batch.iteration for batch, _ in accepted_batches],
-                    "is_improvement": [True] * len(accepted_batches),
+                    "accepted": [True] * len(accepted_batches),
                     "improvement_value": [value for _, value in accepted_batches],
                 }
             ),
@@ -243,7 +243,7 @@ def data_for_response(
             how="left",
         ).with_columns(
             pl.col("total_objective_value").neg(),
-            pl.col("is_improvement").fill_null(False),
+            pl.col("accepted").fill_null(False),
         )
 
         if rejected_batches_with_value_and_reason:
@@ -264,7 +264,7 @@ def data_for_response(
                     {
                         "batch_id": int,
                         "total_objective_value": float,
-                        "is_improvement": bool,
+                        "accepted": bool,
                         "improvement_value": float,
                         "constraint_violation_value": float,
                         "constraint_violation_type": str,
@@ -275,7 +275,7 @@ def data_for_response(
             {
                 "batch_id": int,
                 "total_objective_value": float,
-                "is_improvement": bool,
+                "accepted": bool,
                 "improvement_value": float,
             }
         )
