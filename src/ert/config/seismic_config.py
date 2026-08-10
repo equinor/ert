@@ -76,15 +76,24 @@ class SeismicConfig(SimulationResponseConfig):
                 raise InvalidResponseFile(
                     f"Expected seismic response file {filepath} does not exist."
                 )
-            csv = pl.read_csv(filepath)
+            suffix = filepath.suffix.lower()
+            if suffix == ".parquet":
+                data = pl.read_parquet(filepath)
+            elif suffix == ".csv":
+                data = pl.read_csv(filepath)
+            else:
+                raise InvalidResponseFile(
+                    f"Unsupported seismic response file extension {filepath.suffix!r} "
+                    f"for {filepath}. Expected '.csv' or '.parquet'."
+                )
             df = pl.DataFrame(
                 {
                     "response_key": key,
-                    "east": csv["X_UTME"].cast(pl.Float32),
-                    "north": csv["Y_UTMN"].cast(pl.Float32),
+                    "east": data["X_UTME"].cast(pl.Float32),
+                    "north": data["Y_UTMN"].cast(pl.Float32),
                     # even though this is a simulated response file, fmu-sim2seis named
                     # the column "OBS"
-                    "values": csv["OBS"].cast(pl.Float32),
+                    "values": data["OBS"].cast(pl.Float32),
                 }
             )
             self.validate_distance_between_responses(df)
