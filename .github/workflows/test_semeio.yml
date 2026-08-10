@@ -63,5 +63,5 @@ jobs:
     - name: Test semeio
       run: |
         pushd semeio
-        VIRTUAL_ENV=../.venv uv pip install ".[test]"
+        VIRTUAL_ENV=../.venv uv pip install . --group dev
         UV_PROJECT_ENVIRONMENT=../.venv uv run --no-sync pytest -n logical --ert-integration
