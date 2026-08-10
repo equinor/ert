@@ -585,6 +585,7 @@ original_open = open
 original_io_open = io.open
 original_stat = os.stat
 original_pl_read_csv = pl.read_csv
+original_pl_read_parquet = pl.read_parquet
 original_np_loadtxt = np.loadtxt
 
 
@@ -626,6 +627,17 @@ def mocked_files(mocker):
             return original_pl_read_csv(_fresh_buffer(data), *args[1:], **new_kwargs)
         return original_pl_read_csv(*args, **kwargs)
 
+    def mock_pl_read_parquet(*args, **kwargs):
+        path = args[0] if args else kwargs.get("source")
+        data = mocked_files.get(str(path))
+        if data is not None:
+            new_kwargs = {**kwargs}
+            new_kwargs.pop("source", None)
+            if isinstance(data, str):
+                data = data.encode()
+            return original_pl_read_parquet(BytesIO(data), *args[1:], **new_kwargs)
+        return original_pl_read_parquet(*args, **kwargs)
+
     def mock_np_loadtxt(*args, **kwargs):
         path = args[0] if args else kwargs.get("fname")
         data = mocked_files.get(str(path))
@@ -639,6 +651,7 @@ def mocked_files(mocker):
     mocker.patch("io.open", mock_io_open)
     mocker.patch("os.stat", mock_stat)
     mocker.patch("polars.read_csv", mock_pl_read_csv)
+    mocker.patch("polars.read_parquet", mock_pl_read_parquet)
     mocker.patch("numpy.loadtxt", mock_np_loadtxt)
 
     return mocked_files
