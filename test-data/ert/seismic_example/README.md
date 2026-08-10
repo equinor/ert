@@ -28,6 +28,13 @@ If needed, run the following to regenerate observation data:
 python mock_sim2seis.py --observations
 ```
 
+The format for the output files of `mock_sim2seis.py` can be set via the `--format` flag.
+The default format is `.csv` and the supported formats are `.csv` and `.parquet`.
+The following example sets the format to `.parquet`.
+````
+python mock_sim2seis.py --format parquet
+````
+
 Run setup:
 ```
 ert ensemble_experiment sim2seis.ert
