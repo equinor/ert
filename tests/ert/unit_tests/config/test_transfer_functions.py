@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
+from scipy.stats import beta as beta_distribution
 from scipy.stats import norm
 
 from ert.config.distribution import TransSettingsValidation, get_distribution
@@ -245,3 +246,64 @@ def test_that_triangular_is_monotonic(args):
             assert y1 >= y2
         else:
             assert y1 <= y2
+
+
+def valid_pert_params():
+    return nice_floats(min_value=-1e6, max_value=1e6).flatmap(
+        lambda mode: st.tuples(
+            st.floats(
+                min_value=mode - 2,
+                max_value=mode - 1,
+                allow_nan=False,
+                allow_infinity=False,
+            ),
+            st.just(mode),
+            st.floats(
+                min_value=mode + 1,
+                max_value=mode + 2,
+                allow_nan=False,
+                allow_infinity=False,
+            ).filter(lambda maximum: maximum > mode),
+            nice_floats(min_value=0.1, max_value=20),
+        )
+    )
+
+
+@given(nice_floats(), valid_pert_params())
+def test_that_pert_stays_within_bounds(x, args):
+    minimum, _, maximum, _ = args
+    dist = get_distribution("PERT", args)
+
+    assert minimum <= transform_scalar(dist, x) <= maximum
+
+
+def test_that_pert_transform_does_not_exceed_max_from_roundoff():
+    dist = get_distribution("PERT", [-1.003, 0, 1, 1])
+
+    assert transform_scalar(dist, 9) == 1
+
+
+@given(
+    st.tuples(nice_floats(), nice_floats()).map(sorted),
+    valid_pert_params(),
+)
+def test_that_pert_is_non_strictly_monotonic(x_values, args):
+    x1, x2 = x_values
+    dist = get_distribution("PERT", args)
+
+    assert transform_scalar(dist, x1) <= transform_scalar(dist, x2)
+
+
+@given(
+    nice_floats(min_value=-8, max_value=8),
+    valid_pert_params(),
+)
+def test_that_pert_matches_scaled_beta_quantiles(x, args):
+    minimum, mode, maximum, scale = args
+    span = maximum - minimum
+    alpha = 1 + scale * (mode - minimum) / span
+    beta = 1 + scale * (maximum - mode) / span
+    expected = beta_distribution.ppf(norm.cdf(x), alpha, beta, loc=minimum, scale=span)
+    dist = get_distribution("PERT", args)
+
+    assert np.isclose(transform_scalar(dist, x), expected)
