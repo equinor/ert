@@ -86,7 +86,6 @@ def _failed_realizations_messages(
             snapshots[event.iteration] = event.snapshot
         elif isinstance(event, SnapshotUpdateEvent) and event.snapshot:
             snapshot = snapshots[event.iteration]
-            assert isinstance(snapshot, EnsembleSnapshot)
             snapshot.merge_snapshot(event.snapshot)
     messages = [
         OPT_FAILURE_REALIZATIONS
