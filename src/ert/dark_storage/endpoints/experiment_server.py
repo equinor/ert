@@ -210,12 +210,8 @@ async def start_experiment(
     try:
         background_tasks.add_task(runner.run)
         experiment_state.config_path = config.config_path
-
         experiment_state.run_path = config.simulation_dir
         experiment_state.storage_path = config.output_dir
-
-        # Assume client and server is always in the same timezone
-        # so disregard timestamps
         experiment_state.start_time_unix = int(time.time())
         return JSONResponse({"experiment_id": experiment_id})
     except Exception as e:
