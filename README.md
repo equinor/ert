@@ -132,6 +132,8 @@ There are a set of style requirements, which are gathered in the `pre-commit`
 configuration. After running `uv sync --all-groups`, `pre-commit` is already
 available. To have it automatically run on each commit:
 
+Use double quotes (`"`) when quoting values in user-facing messages.
+
 ```sh
 uv run pre-commit install
 ```
