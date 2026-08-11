@@ -1003,10 +1003,21 @@ class SeismicObservation(BaseObservation):
 
     @staticmethod
     def _load_observations(filepath: Path) -> pl.DataFrame:
-        df = pl.read_csv(
-            filepath,
-            encoding="utf-8",
-        )
+
+        suffix = filepath.suffix.lower()
+        if suffix == ".csv":
+            df = pl.read_csv(
+                filepath,
+                encoding="utf-8",
+            )
+        elif suffix == ".parquet":
+            df = pl.read_parquet(filepath)
+        else:
+            raise ObservationConfigError.with_context(
+                f"The seismic observations file {filepath} "
+                "must be a CSV or Parquet file.",
+                filepath,
+            )
 
         required_columns = {
             "X_UTME",
@@ -1059,9 +1070,9 @@ class SeismicObservation(BaseObservation):
     ) -> list[Self]:
         """Create seismic observations from an observation dictionary.
 
-        File containing seismic observations (CSV) and file containing the polygon
-        limiting observations used in the match step (BOUNDARY) are specified relative
-        to the directory of the observation config.
+        File containing seismic observations (CSV or Parquet) and file containing the
+        polygon limiting observations used in the match step (BOUNDARY) are specified
+        relative to the directory of the observation config.
 
         Args:
             directory: Directory where observation config is located.
@@ -1071,6 +1082,13 @@ class SeismicObservation(BaseObservation):
         name = ""
         filepath: str | Path | None = None
         boundary_filepath: str | Path | None = None
+
+        if "CSV" in observation_dict and "OBS_FILE" in observation_dict:
+            raise ObservationConfigError.with_context(
+                "SEISMIC_OBSERVATION cannot contain both 'CSV' and 'OBS_FILE'.",
+                observation_dict.context,
+            )
+
         for key, value in observation_dict.items():
             match key:
                 case "type":
@@ -1078,6 +1096,13 @@ class SeismicObservation(BaseObservation):
                 case "name":
                     name = value
                 case "CSV":
+                    ConfigWarning.warn(
+                        "CSV key is deprecated for seismic observations. "
+                        "Use OBS_FILE instead.",
+                        observation_dict.context,
+                    )
+                    filepath = value
+                case "OBS_FILE":
                     filepath = value
                 case "BOUNDARY":
                     boundary_filepath = value
@@ -1085,12 +1110,12 @@ class SeismicObservation(BaseObservation):
                     raise _unknown_key_error(str(key), observation_dict.context)
 
         if filepath is None:
-            raise _missing_value_error(observation_dict.context, "CSV")
+            raise _missing_value_error(observation_dict.context, "OBS_FILE")
 
         filepath = Path(directory) / filepath
         if not filepath.exists():
             raise ObservationConfigError.with_context(
-                f"The CSV file ({filepath.absolute()}) "
+                f"The seismic observations file ({filepath.absolute()}) "
                 "does not exist or is not accessible.",
                 filepath,
             )

@@ -6,6 +6,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.extra.lark as stlark
+import polars as pl
 import pytest
 from hypothesis import given
 from resdata.summary import Summary
@@ -883,7 +884,7 @@ def test_that_non_existent_seismic_observation_file_raises_error(file_context_to
     )
 
 
-def test_that_missing_seismic_csv_filename_raises_error(file_context_token):
+def test_that_missing_seismic_observation_filename_raises_error(file_context_token):
     with pytest.raises(ObservationConfigError) as err:
         make_observations(
             "",
@@ -899,7 +900,7 @@ def test_that_missing_seismic_csv_filename_raises_error(file_context_token):
             shape_registry=ShapeRegistry(),
         )
 
-    assert 'Missing item "CSV" in SEISMIC_OBSERVATION' in str(err.value)
+    assert 'Missing item "OBS_FILE" in SEISMIC_OBSERVATION' in str(err.value)
 
 
 def test_that_unknown_seismic_key_raises_error(file_context_token):
@@ -955,6 +956,69 @@ def test_that_missing_columns_in_seismic_observation_file_raises(file_context_to
         "The seismic observations file seismic_observations.csv "
         "is missing required column(s) X_UTME, Y_UTMN." in str(err.value)
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_columns_in_seismic_parquet_observation_file_raises(
+    file_context_token,
+):
+    pl.DataFrame(
+        {
+            "OBS": [-0.00035666953938864876, 0.0005293887515127136],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [3.0, 1.0],
+            "CAT": ["Persian", "Siamese"],
+        }
+    ).write_parquet("seismic_observations.parquet")
+
+    with pytest.raises(
+        ObservationConfigError,
+        match=(
+            r"The seismic observations file seismic_observations.parquet "
+            r"is missing required column\(s\) X_UTME, Y_UTMN."
+        ),
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.parquet",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_rejects_unsupported_file_suffix(file_context_token):
+    Path("seismic_observations.txt").write_text("dummy", encoding="utf8")
+
+    with pytest.raises(
+        ObservationConfigError,
+        match=(
+            r"The seismic observations file seismic_observations.txt "
+            r"must be a CSV or Parquet file"
+        ),
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.txt",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

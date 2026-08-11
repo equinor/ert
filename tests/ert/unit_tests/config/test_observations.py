@@ -1,6 +1,7 @@
 import logging
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
+from io import BytesIO
 from pathlib import Path
 from textwrap import dedent
 from typing import cast
@@ -2402,7 +2403,7 @@ def test_that_providing_no_name_or_object_to_obs_raises_config_error(obs_content
         ert_config_from_parser(obs_content)
 
 
-def test_that_seismic_observation_dataframes_are_created(
+def test_that_seismic_observation_dataframes_are_created_deprecated_csv_key(
     mocked_files, file_context_token
 ):
     content1 = dedent(
@@ -2463,3 +2464,136 @@ def test_that_seismic_observation_dataframes_are_created(
             }
         ),
     )
+
+
+@pytest.mark.parametrize("file_format", ["parquet", "csv"])
+def test_that_seismic_observation_dataframes_are_created_from_obs_file(
+    mocked_files, file_context_token, file_format
+):
+    frame1 = pl.DataFrame(
+        {
+            "X_UTME": [100.25, 100.55],
+            "Y_UTMN": [200.25, 200.65],
+            "OBS": [1.1, 1.2],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [1.0, 1.0],
+        }
+    )
+    frame2 = pl.DataFrame(
+        {
+            "X_UTME": [100.85],
+            "Y_UTMN": [200.95],
+            "OBS": [1.3],
+            "OBS_ERROR": [0.005],
+            "REGION": [1.0],
+        }
+    )
+
+    if file_format == "parquet":
+        buf1, buf2 = BytesIO(), BytesIO()
+        frame1.write_parquet(buf1)
+        frame2.write_parquet(buf2)
+        mocked_files["obs1.parquet"] = buf1.getvalue()
+        mocked_files["obs2.parquet"] = buf2.getvalue()
+    else:
+        mocked_files["obs1.csv"] = frame1.write_csv()
+        mocked_files["obs2.csv"] = frame2.write_csv()
+
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": "NAME1",
+                            "OBS_FILE": f"obs1.{file_format}",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": None,
+                            "OBS_FILE": f"obs2.{file_format}",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                ],
+            ),
+        }
+    )
+    observations = create_observation_dataframes(
+        ert_config.observation_declarations, ert_config.shape_registry
+    )["seismic"]
+    assert_frame_equal(
+        observations,
+        pl.DataFrame(
+            {
+                "response_key": ["obs1", "obs1", "obs2"],
+                "observation_key": ["NAME1", "NAME1", "obs2"],
+                "observations": pl.Series([1.1, 1.2, 1.3], dtype=pl.Float32),
+                "std": pl.Series([0.005, 0.005, 0.005], dtype=pl.Float32),
+                "east": pl.Series([100.25, 100.55, 100.85], dtype=pl.Float32),
+                "north": pl.Series([200.25, 200.65, 200.95], dtype=pl.Float32),
+                "radius": pl.Series([3000.0, 3000.0, 3000.0], dtype=pl.Float32),
+                "boundary_id": pl.Series([None, None, None], dtype=pl.UInt16),
+            }
+        ),
+    )
+
+
+def test_that_seismic_observation_rejects_both_csv_and_obs_file(
+    mocked_files, file_context_token
+):
+    mocked_files["obs1.csv"] = dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        100.25,200.25,1.1,0.005,1.0"""
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"SEISMIC_OBSERVATION cannot contain both 'CSV' and 'OBS_FILE'.",
+    ):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SEISMIC,
+                                "name": "NAME1",
+                                "CSV": "obs1.csv",
+                                "OBS_FILE": "obs1.csv",
+                            },
+                            context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                        ),
+                    ],
+                ),
+            }
+        )
+
+
+def test_that_seismic_observation_reports_missing_obs_file_key(file_context_token):
+    with pytest.raises(
+        ConfigValidationError, match='Missing item "OBS_FILE" in SEISMIC_OBSERVATION'
+    ):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SEISMIC,
+                                "name": "NAME1",
+                            },
+                            context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                        ),
+                    ],
+                ),
+            }
+        )
