@@ -194,7 +194,7 @@ def load_status_snapshot_event(path: Path) -> FullSnapshotEvent | None:
     return event
 
 
-def load_workflow_log_events(path: Path) -> list[RunModelWorkflowLogEvent]:
+def load_workflow_events(path: Path) -> list[WorkflowEvent]:
     """Read the workflow job invocations persisted for an experiment.
 
     An experiment that never ran a workflow has no such file, which is not an
@@ -223,7 +223,7 @@ def load_workflow_log_events(path: Path) -> list[RunModelWorkflowLogEvent]:
         if not line.strip():
             continue
         try:
-            events.append(RunModelWorkflowLogEvent.model_validate_json(line))
+            events.append(WorkflowEvent.model_validate_json(line))
         except ValueError:
             logger.warning(
                 f"Skipping unreadable workflow event on line {line_number} of {path}",
