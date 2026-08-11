@@ -192,3 +192,41 @@ def load_status_snapshot_event(path: Path) -> FullSnapshotEvent | None:
             f"got {event.event_type}"
         )
     return event
+
+
+def load_workflow_log_events(path: Path) -> list[RunModelWorkflowLogEvent]:
+    """Read the workflow job invocations persisted for an experiment.
+
+    An experiment that never ran a workflow has no such file, which is not an
+    error, so a missing file yields no events.
+
+    Lines that cannot be parsed are skipped rather than discarding the whole
+    file: an interrupted ERT can leave a half-written final line behind, and
+    the output that was written before that is still worth showing.
+
+    Args:
+        path: The ``workflow_events.jsonl`` file to read.
+
+    Returns:
+        One event per readable line, in the order they were written.
+
+    Raises:
+        OSError: If the file exists but cannot be read.
+    """
+    if not path.is_file():
+        return []
+
+    events = []
+    for line_number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not line.strip():
+            continue
+        try:
+            events.append(RunModelWorkflowLogEvent.model_validate_json(line))
+        except ValueError:
+            logger.warning(
+                f"Skipping unreadable workflow event on line {line_number} of {path}",
+                exc_info=True,
+            )
+    return events
