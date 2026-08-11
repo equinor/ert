@@ -228,7 +228,7 @@ class SchemaItem:
 
                 if not os.access(absolute_path, os.X_OK):
                     context = (
-                        f"{token.value!r} which was resolved to {absolute_path!r}"
+                        f"{token.value!r} which was resolved to {absolute_path}"
                         if token.value != str(absolute_path)
                         else f"{token.value!r}"
                     )
