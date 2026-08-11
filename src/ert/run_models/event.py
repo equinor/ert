@@ -192,3 +192,25 @@ def load_status_snapshot_event(path: Path) -> FullSnapshotEvent | None:
             f"got {event.event_type}"
         )
     return event
+
+
+def load_workflow_events(path: Path) -> list[WorkflowEvent]:
+    # Read the workflow job invocations persisted for an experiment.
+
+    if not path.is_file():
+        return []
+
+    events: list[WorkflowEvent] = []
+    with path.open("rb") as events_file:
+        for line_number, line in enumerate(events_file, start=1):
+            if not line.strip():
+                continue
+            try:
+                events.append(WorkflowEvent.model_validate_json(line))
+            except ValueError:
+                logger.warning(
+                    f"Skipping unreadable workflow event on"
+                    f" line {line_number} of {path}",
+                    exc_info=True,
+                )
+    return events
