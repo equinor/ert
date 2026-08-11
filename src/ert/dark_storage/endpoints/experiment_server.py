@@ -201,8 +201,7 @@ async def start_experiment(
     experiment_state = ExperimentRunnerState()
     _experiments[experiment_id] = experiment_state
     request_data = await request.json()
-    # The output of warnings is the task of the user interface, not
-    # of everserver. Therefore we suppress them here:
+    # Suppress already reported warnings when we re-validate with plugins
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=ConfigWarning)
         config = EverestConfig.with_plugins(request_data)
