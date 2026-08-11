@@ -582,3 +582,128 @@ are correctly associated with reservoir zones.
 
 If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
 the expected zone, the observation will be deactivated with a warning during the simulation.
+
+
+Observation converters
+----------------------
+
+Ert provides a command-line tool for converting observation configurations between
+formats.
+
+Usage:
+
+.. code-block:: none
+
+    ert convert_observations <config.ert> [--format <format>]
+
+The ``--format`` flag specifies which format to convert to. If omitted, the default
+is ``summary``. Valid formats are:
+
+``summary`` (default)
+    Converts deprecated and unsupported history observations to summary observations.
+
+    The tool replaces the history observation declarations within the observation
+    configuration file with equivalent summary observations.
+
+    The old configuration is renamed to ``<filename>-<timestamp>.old`` in case there is
+    a need to retrieve the old version.
+
+    When trying to open Ert with a configuration containing history observations, Ert will
+    open with an error and prompt the user to run this workflow - as history observations
+    are no longer supported.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations config.ert
+
+
+``bulk``
+    Converts summary observations to the
+    :ref:`bulk CSV format <bulk_configuration_of_summary_observations>`. This produces a
+    file called ``summary_observations.csv`` containing all summary observation data
+    (one row per observation) and instructions printed to the terminal explaining how
+    to replace the existing configuration of summary observations with a
+    ``SUMMARY { ... }`` bulk block in the observation configuration file.
+
+    This tooling does not edit any existing files, and the output must manually be
+    added to the observation configuration.
+
+    The tooling will not overwrite the file ``summary_observations.csv`` if it already
+    exists.
+
+    As explained in detail in the
+    :ref:`bulk CSV format section <bulk_configuration_of_summary_observations>`, any
+    existing breakthrough observations and localization values are configured within the
+    printed ``SUMMARY { ... }`` bulk block - not in the csv file.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations snake_oil.ert --format bulk
+
+    Example terminal output:
+
+    .. code-block:: none
+
+        6 observations can be replaced by:
+          1.  Copying the file 'summary_observations.csv' to the folder containing your observation configuration.
+          2.  Replacing the named observations below with the bulk configuration
+
+        Observation names (to replace):
+        ==============================
+            WOPR_OP1_9
+            WOPR_OP1_36
+            WOPR_OP1_72
+            WOPR_OP1_108
+            WOPR_OP1_144
+            WOPR_OP1_190
+
+        Bulk configuration (replace with):
+        =================================
+        SUMMARY {
+          VALUES = summary_observations.csv;
+        };
+
+
+``yaml``
+    Exports summary observations to a YAML file format. The produced file receives the
+    name ``summary_observations.yaml``. The tooling will not overwrite the file
+    ``summary_observations.yaml`` if it already exists.
+
+    The YAML format is compatible with Webviz and can be used in plugins like
+    ``SimulationTimeSeries`` and ``HistoryMatch`` among others.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations snake_oil.ert --format yaml
+
+    Example of produced yaml file:
+
+    .. code-block:: none
+
+        smry:
+        - key: WOPR:OP1
+          observations:
+          - date: '2010-03-31'
+            value: 0.1
+            error: 0.05
+          - date: '2010-12-26'
+            value: 0.7
+            error: 0.07
+          - date: '2011-12-21'
+            value: 0.5
+            error: 0.05
+          - date: '2012-12-15'
+            value: 0.3
+            error: 0.075
+          - date: '2013-12-10'
+            value: 0.2
+            error: 0.035
+          - date: '2015-03-15'
+            value: 0.015
+            error: 0.01
