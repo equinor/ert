@@ -1,6 +1,8 @@
 import shutil
 import time
+from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 import numpy as np
 import pytest
@@ -24,15 +26,18 @@ from ert.gui.tools.manage_experiments.ensemble_widget import (
 from ert.gui.tools.manage_experiments.export_dialog import ExportDialog
 from ert.gui.tools.manage_experiments.storage_info_widget import (
     _ExperimentWidget,
+    _ExperimentWidgetTabs,
     _RealizationWidget,
     _WidgetType,
 )
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
+from ert.run_models.event import WorkflowEvent
 from ert.storage import (
     RealizationStorageState,
     Storage,
     open_storage,
 )
+from ert.workflow_runner import WorkflowJobStatus
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
@@ -797,3 +802,92 @@ def test_that_storage_widget_sorts_by_name_and_created(qtbot):
 
     tree_view.sortByColumn(1, Qt.SortOrder.DescendingOrder)
     qtbot.waitUntil(lambda: current_child_names() == ["b-ens", "a-ens"], timeout=500)
+
+
+def _workflow_event(job_name: str, stdout: str, hook: str = "PRE_EXPERIMENT") -> str:
+    return WorkflowEvent(
+        run_id=uuid4(),
+        hook=hook,
+        workflow_name="my_workflow",
+        job_name=job_name,
+        job_index=0,
+        arguments=[],
+        stdout=stdout,
+        stderr="",
+        status=WorkflowJobStatus.SUCCESS,
+        timestamp=datetime(2024, 1, 1, 12, 30, 45, tzinfo=UTC),
+        iteration=None,
+    ).model_dump_json()
+
+
+def test_that_the_workflows_tab_shows_the_output_stored_for_the_experiment(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    experiment = next(iter(storage.experiments))
+    experiment.append_workflow_events(
+        [
+            _workflow_event("FIRST_JOB", "output of the first job"),
+            _workflow_event("SECOND_JOB", "output of the second job"),
+        ]
+    )
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    qtbot.addWidget(tool)
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    storage_widget._tree_view.setCurrentIndex(
+        storage_widget._tree_view.model().index(0, 0)
+    )
+
+    experiment_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(experiment_widget, _ExperimentWidget)
+
+    experiment_widget._tab_widget.setCurrentIndex(_ExperimentWidgetTabs.WORKFLOWS_TAB)
+
+    table = experiment_widget._workflow_log_view._workflow_log._table
+    assert [table.item(row, 2).text() for row in range(table.rowCount())] == [
+        "FIRST_JOB",
+        "SECOND_JOB",
+    ]
+
+    table.selectRow(0)
+    assert (
+        experiment_widget._workflow_log_view._workflow_log._stdout_view.toPlainText()
+        == "output of the first job"
+    )
+
+
+def test_that_the_workflows_tab_is_empty_for_an_experiment_that_ran_no_workflows(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    qtbot.addWidget(tool)
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    storage_widget._tree_view.setCurrentIndex(
+        storage_widget._tree_view.model().index(0, 0)
+    )
+
+    experiment_widget = tool._storage_info_widget._content_layout.currentWidget()
+    experiment_widget._tab_widget.setCurrentIndex(_ExperimentWidgetTabs.WORKFLOWS_TAB)
+
+    workflow_log_view = experiment_widget._workflow_log_view
+    assert workflow_log_view._stack.currentWidget() is workflow_log_view._placeholder
