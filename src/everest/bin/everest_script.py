@@ -12,11 +12,13 @@ from pathlib import Path
 from textwrap import dedent
 
 import anyio
+from opentelemetry.trace import Status, StatusCode
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.services import create_ertserver_client
 from ert.storage.local_experiment import ExperimentState
+from ert.trace import trace
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
@@ -289,7 +291,11 @@ async def run_everest(options: argparse.Namespace) -> None:
     if experiment_status and experiment_status.status == ExperimentState.failed:
         msg = f"EVEREST run failed with: {experiment_status.message or 'Unknown error'}"
         logger.error(msg)
-        raise SystemExit(msg)
+        err = SystemExit(msg)
+        span = trace.get_current_span()
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        raise err
     if experiment_status:
         msg = (
             "EVEREST run finished with: "
