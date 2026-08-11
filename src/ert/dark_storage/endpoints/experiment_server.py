@@ -104,7 +104,7 @@ def _failed_realizations_messages(
 
 
 def _get_optimization_status(
-    exit_code: EverestExitCode, events: list[StatusEvents]
+    exit_code: EverestExitCode | None, events: list[StatusEvents]
 ) -> tuple[ExperimentState, str]:
     match exit_code:
         case EverestExitCode.MAX_BATCH_NUM_REACHED:
@@ -128,8 +128,10 @@ def _get_optimization_status(
             for msg in messages:
                 logging.getLogger(EXPERIMENT_SERVER).error(msg)
             return status_, "\n".join(messages)
-        case _:
+        case EverestExitCode.COMPLETED:
             return ExperimentState.completed, "Optimization completed."
+        case _:
+            raise ValueError(f"Invalid exit_code: {exit_code}")
 
 
 def _check_authentication(auth_header: str | None) -> None:
@@ -363,7 +365,6 @@ class ExperimentRunner:
                         await sub.is_done()
                     break
             await simulation_future
-            assert run_model.exit_code is not None
             exp_status, msg = _get_optimization_status(
                 run_model.exit_code,
                 run.events,
