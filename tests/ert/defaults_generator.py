@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
+from lark import Token
 
 from ert.config._observations import (
     BreakthroughObservation,
@@ -11,7 +12,8 @@ from ert.config._observations import (
     SeismicObservation,
     SummaryObservation,
 )
-from ert.config.parsing.observations_parser import ObservationType
+from ert.config.parsing.file_context_token import FileContextToken
+from ert.config.parsing.observations_parser import ObservationDict, ObservationType
 from ert.config.seismic_config import SeismicConfig
 
 
@@ -207,8 +209,24 @@ def create_seismic_observation(
 def create_seismic_observation_dict(
     name: str = "seismic_observation",
     csv: str = "horizon--amplitude_full_min_depth--20250101_20240101.csv",
-) -> dict:
-    return {"type": ObservationType.SEISMIC, "name": name, "CSV": csv}
+    obs_file: str | None = None,
+) -> ObservationDict:
+    data: dict = {"type": ObservationType.SEISMIC, "name": name}
+    if obs_file is not None:
+        data["OBS_FILE"] = obs_file
+    else:
+        data["CSV"] = csv
+    context = FileContextToken(
+        Token(
+            type="foo",
+            line=2,
+            column=5,
+            end_column=13,
+            value="SEISMIC_OBSERVATION",
+        ),
+        "observations.txt",
+    )
+    return ObservationDict(data, context=context)
 
 
 def create_seismic_response(

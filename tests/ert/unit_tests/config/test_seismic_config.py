@@ -1,5 +1,4 @@
 from io import BytesIO, StringIO
-from textwrap import dedent
 from typing import cast
 
 import polars as pl
@@ -32,31 +31,39 @@ def _mock_seismic_response(
         mocked_files[path] = buf.getvalue()
 
 
+@pytest.mark.parametrize("suffix", [".csv", ".parquet"])
 def test_that_seismic_observation_response_key_matches_simulated_response_key(
-    mocked_files,
+    mocked_files, suffix
 ):
     expected_response_key = "horizon--amplitude_full_min_depth--20250101_20240101"
-    name = f"{expected_response_key}.csv"
+    name = f"{expected_response_key}{suffix}"
     runpath = "/runpath"
     obs_path = "share/preprocessed/tables/" + name
     simulated_path_relative_to_runpath = "share/results/tables/" + name
     simulated_path = runpath + "/" + simulated_path_relative_to_runpath
 
-    mocked_files[obs_path] = dedent(
-        """
-        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
-        100.00,200.00,1.0,0.005,1.0
-        105.00,205.00,2.0,0.005,1.0
-        """
+    obs_frame = pl.DataFrame(
+        {
+            "X_UTME": [100.0, 105.0],
+            "Y_UTMN": [200.0, 205.0],
+            "OBS": [1.0, 2.0],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [1.0, 1.0],
+        }
     )
 
-    mocked_files[simulated_path] = dedent(
-        """
-        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
-        100.00,200.00,1.1,0.005,1.0
-        105.00,205.00,2.2,0.005,1.0
-        """
+    simulated_frame = pl.DataFrame(
+        {
+            "X_UTME": [100.0, 105.0],
+            "Y_UTMN": [200.0, 205.0],
+            "OBS": [1.1, 2.2],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [1.0, 1.0],
+        }
     )
+
+    _mock_seismic_response(mocked_files, obs_path, obs_frame, suffix)
+    _mock_seismic_response(mocked_files, simulated_path, simulated_frame, suffix)
 
     config = ErtConfig.from_dict(
         {
@@ -64,7 +71,7 @@ def test_that_seismic_observation_response_key_matches_simulated_response_key(
             "OBS_CONFIG": (
                 "obsconf",
                 [
-                    create_seismic_observation_dict(csv=obs_path),
+                    create_seismic_observation_dict(obs_file=obs_path),
                 ],
             ),
         }
