@@ -88,7 +88,6 @@ def _failed_realizations_messages(
             snapshot = snapshots[event.iteration]
             assert isinstance(snapshot, EnsembleSnapshot)
             snapshot.merge_snapshot(event.snapshot)
-    logging.getLogger("forward_models").info("Status event")
     messages = [
         OPT_FAILURE_REALIZATIONS
         if exit_code == EverestExitCode.TOO_FEW_REALIZATIONS
