@@ -237,7 +237,12 @@ def data_for_response(
                     "batch_id": [batch.iteration for batch, _ in accepted_batches],
                     "accepted": [True] * len(accepted_batches),
                     "improvement_value": [value for _, value in accepted_batches],
-                }
+                },
+                schema={
+                    "batch_id": objective_value_df.schema["batch_id"],
+                    "accepted": pl.Boolean,
+                    "improvement_value": pl.Float64,
+                },
             ),
             on="batch_id",
             how="left",
