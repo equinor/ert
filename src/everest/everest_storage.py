@@ -271,7 +271,7 @@ class EverestStorage:
                         for c in batch_objective_gradient.columns
                         if "constraint" in c.lower()
                     ],
-                ]
+                ].unique(maintain_order=True)
 
                 batch_objective_gradient = batch_objective_gradient.drop(
                     [
