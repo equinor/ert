@@ -256,6 +256,7 @@ class Event(Reporter):
                     max_memory_usage=msg.memory_status.max_rss,
                     current_memory_usage=msg.memory_status.rss,
                     cpu_seconds=msg.memory_status.cpu_seconds,
+                    computer_load=msg.memory_status.computer_load,
                 )
             )
 

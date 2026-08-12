@@ -354,6 +354,7 @@ class EnsembleSnapshot:
                             current_memory_usage=None,
                             max_memory_usage=None,
                             cpu_seconds=None,
+                            computer_load=None,
                             error=None,
                             stdout=None,
                             stderr=None,
@@ -385,6 +386,7 @@ class EnsembleSnapshot:
                 fm_data["current_memory_usage"] = event.current_memory_usage
                 fm_data["max_memory_usage"] = event.max_memory_usage
                 fm_data["cpu_seconds"] = event.cpu_seconds
+                fm_data["computer_load"] = event.computer_load
             case ForwardModelStepSuccess():
                 end_time = convert_iso8601_to_datetime(timestamp)
                 # Make sure error msg from previous failed run is replaced
@@ -459,6 +461,7 @@ class FMStepSnapshot(TypedDict, total=False):
     current_memory_usage: int | None
     max_memory_usage: int | None
     cpu_seconds: float | None
+    computer_load: float | None
     name: str | None
     error: str | None
     stdout: str | None

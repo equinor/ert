@@ -342,6 +342,36 @@ def test_overspent_cpu_is_logged(
     caplog.clear()
 
 
+def test_that_average_computer_load_is_included_in_overspent_cpu_message(
+    evaluator_to_use,
+    caplog,
+    monkeypatch,
+):
+    caplog.set_level(logging.WARNING)
+    evaluator, _ = evaluator_to_use
+
+    monkeypatch.setattr(TestEnsemble, "queue_system", QueueSystem.LSF)
+
+    start = datetime.datetime(2024, 1, 1, tzinfo=datetime.UTC)
+    duration = 100
+    num_cpu = 1
+    cpu_seconds = 1000.0  # Guarantees overspending is detected
+
+    evaluator.detect_overspent_cpu(
+        num_cpu,
+        "dummy",
+        FMStepSnapshot(
+            start_time=start,
+            end_time=start + datetime.timedelta(seconds=duration),
+            cpu_seconds=cpu_seconds,
+            computer_load=12.34,
+        ),
+    )
+
+    assert "Misconfigured NUM_CPU" in caplog.text
+    assert "computer load 12.34" in caplog.text
+
+
 @pytest.mark.slow
 async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
     (evaluator, event_queue) = evaluator_to_use
