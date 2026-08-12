@@ -1,1 +1,3 @@
 EXECUTABLE mock_sim2seis.py
+ARGLIST "--format" <FORMAT>
+DEFAULT <FORMAT> csv
