@@ -38,6 +38,8 @@ class ProcessTreeStatus:
 
     cpu_seconds: float = 0.0
 
+    computer_load: float | None = None  # Accumulated and averaged over time
+
     oom_score: int | None = None
 
     def __post_init__(self) -> None:
