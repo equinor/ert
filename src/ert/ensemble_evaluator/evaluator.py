@@ -734,8 +734,8 @@ class EnsembleEvaluator:
                     f"while the Ert config has only requested {num_cpu}.\n"
                     f"This means your experiment is consuming more CPU-resources than "
                     f"requested and will slow down other users experiments.\n"
-                    f"We kindly ask you to set "
-                    f"NUM_CPU={ceil(parallelization_obtained)} in your Ert config."
+                    f"We kindly ask you to add \n"
+                    f"NUM_CPU {ceil(parallelization_obtained)}\nto your Ert config."
                 )
                 self.max_parallelism_violation = max(
                     self.max_parallelism_violation,
