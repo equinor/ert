@@ -30,3 +30,4 @@ class EverEndpoints(StrEnum):
     experiments = "experiments"
     status = "status"
     events = "events"
+    runpath = "runpath"
