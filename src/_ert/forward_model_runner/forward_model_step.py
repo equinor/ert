@@ -17,7 +17,14 @@ from pathlib import Path
 from subprocess import Popen, run
 from typing import TYPE_CHECKING
 
-from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
+from psutil import (
+    AccessDenied,
+    NoSuchProcess,
+    Process,
+    TimeoutExpired,
+    ZombieProcess,
+    getloadavg,
+)
 
 from .reporting.message import (
     Exited,
@@ -215,6 +222,8 @@ class ForwardModelStep:
         max_memory_usage = 0
         fm_step_pids = {int(process.pid)}
         cpu_seconds_processtree: ProcesstreeTimer = ProcesstreeTimer()
+        computer_load_1min_sum = 0.0
+        computer_load_1min_samples = 0
         while True:
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
@@ -238,6 +247,9 @@ class ForwardModelStep:
             cpu_seconds_processtree.update(cpu_seconds_snapshot)
             fm_step_pids |= pids
             max_memory_usage = max(memory_rss, max_memory_usage)
+            with contextlib.suppress(OSError):
+                computer_load_1min_sum += getloadavg()[0]
+                computer_load_1min_samples += 1
             yield Running(
                 self,
                 ProcessTreeStatus(
@@ -246,6 +258,11 @@ class ForwardModelStep:
                     fm_step_id=self.index,
                     fm_step_name=self.step_data.get("name"),
                     cpu_seconds=cpu_seconds_processtree.total_cpu_seconds(),
+                    computer_load=(
+                        computer_load_1min_sum / computer_load_1min_samples
+                        if computer_load_1min_samples
+                        else None
+                    ),
                     oom_score=oom_score,
                 ),
             )

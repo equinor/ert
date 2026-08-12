@@ -720,11 +720,13 @@ class EnsembleEvaluator:
             parallelization_obtained > allowed_overspending
             and self.ensemble.queue_system != QueueSystem.LOCAL
         ):
+            computer_load = fm_step.get(ids.COMPUTER_LOAD, -1.0)
             logger.warning(
                 f"Misconfigured NUM_CPU, forward model step '{fm_step.get(ids.NAME)}' "
                 f"for realization {real_id} spent {cpu_seconds} cpu seconds "
                 f"with wall clock duration {duration:.1f} seconds, a factor of "
-                f"{parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}."
+                f"{parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}, "
+                f"computer load {computer_load:.2f}"
             )
             if parallelization_obtained > overspending_warning_threshold:
                 warning_msg = (
