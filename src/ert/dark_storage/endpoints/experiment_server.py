@@ -13,6 +13,7 @@ from base64 import b64decode
 from queue import SimpleQueue
 from typing import Annotated
 
+import anyio
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -23,6 +24,7 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pydantic import BaseModel
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
@@ -67,6 +69,10 @@ class ExperimentRunnerState:
 
 
 _experiments: dict[str, ExperimentRunnerState] = {}
+
+
+class PathsCheckRequest(BaseModel):
+    paths: list[str]
 
 
 def _get_experiment(experiment_id: str) -> ExperimentRunnerState:
@@ -258,6 +264,32 @@ async def start_time(
         return Response("No experiment started", status_code=404)
 
     return Response(str(experiment.start_time_unix), status_code=200)
+
+
+@router.post(f"/{EverEndpoints.runpath}", dependencies=authenticated)
+async def check_runpath_exists(
+    paths: PathsCheckRequest,
+) -> Response:
+    """
+    Check if any of the given paths (iteration directories) exists.
+    Returns a 200 response if at least one path exists, 404 otherwise.
+    """
+    exists = False
+
+    async with anyio.create_task_group() as tg:
+
+        async def _check_path(path: str) -> None:
+            nonlocal exists
+            if await anyio.Path(path).exists():
+                exists = True
+                tg.cancel_scope.cancel()
+
+        for path in paths.paths:
+            tg.start_soon(_check_path, path)
+
+    if exists:
+        return Response("Runpath exists", status_code=200)
+    return Response("Runpath does not exist", status_code=404)
 
 
 @router.websocket(f"/{EverEndpoints.events}/{{experiment_id}}")
