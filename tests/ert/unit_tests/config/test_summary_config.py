@@ -4,6 +4,7 @@ from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
+from warnings import WarningMessage
 
 import hypothesis.strategies as st
 import polars as pl
@@ -274,13 +275,18 @@ def test_that_when_not_finding_response_obs_keys_raises_warning(monkeypatch):
 
 def _collect_summary_response_warnings(
     response_key: str, simulated_response_key: str
-) -> list[warnings.WarningMessage]:
+) -> list[WarningMessage]:
     summary_config = SummaryConfig(keys=[response_key])
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as ws:
         summary_config._warn_about_missing_summary_responses(
             response_keys=[simulated_response_key], filename="foo"
         )
-    return w
+    return [
+        w
+        for w in ws
+        if issubclass(w.category, PostExperimentWarning)
+        and "Could not find response" in str(w.message)
+    ]
 
 
 def test_that_key_with_wildcard_with_response_is_not_warned_about():
