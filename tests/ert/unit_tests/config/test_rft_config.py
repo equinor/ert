@@ -1539,17 +1539,88 @@ def test_that_wildcard_well_with_wildcard_time_without_any_response_is_warned_ab
     assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
 
 
-def test_that_wildcard_well_with_wildcard_time_with_any_response_is_not_warned_about(
-    setup_mock_resfo_file,
-):
+def _collect_rft_response_warnings(
+    well: str, time: str
+) -> list[warnings.WarningMessage]:
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={
-            "*": {"*": ["PRESSURE", "SWAT"]},
+            well: {time: ["PRESSURE", "SWAT"]},
         },
     )
-    with warnings.catch_warnings():
-        warnings.simplefilter(  # Asserts no PostExperimentWarnings were raised
-            "error", PostExperimentWarning
-        )
+    with warnings.catch_warnings(record=True) as w:
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    return w
+
+
+def test_that_wildcard_well_with_wildcard_time_with_any_response_is_not_warned_about(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="*", time="*")
+
+    no_warnings = len(warnings) == 0
+    assert no_warnings
+
+
+def test_that_partly_wildcard_well_name_with_response_does_not_warn(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="WE*", time="*")
+
+    no_warnings = len(warnings) == 0
+    assert no_warnings
+
+
+def test_that_partly_wildcard_times_with_response_does_not_warn(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="*", time="2000*")
+
+    no_warnings = len(warnings) == 0
+    assert no_warnings
+
+
+def test_that_well_with_multiple_wildcard_with_response_does_not_warn(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="W*L*", time="*")
+
+    no_warnings = len(warnings) == 0
+    assert no_warnings
+
+
+def test_that_well_and_time_with_multiple_wildcard_with_response_does_not_warn(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="W*L*", time="2*00*01")
+
+    no_warnings = len(warnings) == 0
+    assert no_warnings
+
+
+def test_that_time_with_partial_wildcard_without_response_at_time_does_warn(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="WELL", time="1999*")
+
+    does_warn = len(warnings) > 0
+    assert does_warn
+
+
+def test_that_well_with_partial_wildcard_without_response_does_warn(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="NOT_A_W*", time="*")
+
+    does_warn = len(warnings) > 0
+    assert does_warn
+
+
+def test_that_well_and_time_with_partial_wildcard_without_response_does_warn(
+    setup_mock_resfo_file,
+):
+    warnings = _collect_rft_response_warnings(well="NOT_A_W*", time="1999*")
+
+    does_warn = len(warnings) > 0
+    assert does_warn

@@ -6,7 +6,6 @@ import logging
 import os
 import re
 from collections import defaultdict
-from copy import copy
 from dataclasses import InitVar, dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -295,26 +294,17 @@ class RFTConfig(SimulationResponseConfig):
             for well, time_dict in self.data_to_read.items()
             for time in time_dict
         }
-        well_times_with_response = {(well, time.isoformat()) for well, time in rft_data}
-
-        well_times_to_warn: set[tuple[str, str]] = well_times - well_times_with_response
-
-        # Given well / time wildcard, only warn if there are no responses for
-        # the corresponding well / time value
-        wells_with_responses = {well for well, time in well_times_with_response}
-        times_with_responses = {time for well, time in well_times_with_response}
-        for well, time in copy(well_times_to_warn):
-            if well == "*" and time in times_with_responses:
-                well_times_to_warn.remove((well, time))
-            if time == "*" and well in wells_with_responses:
-                well_times_to_warn.remove((well, time))
-
-        # Only warn about wildcard well and time if there are no responses
-        if (wildcard_well_time := ("*", "*")) in well_times and len(
-            well_times_with_response
-        ) > 0:
-            well_times_to_warn.remove(wildcard_well_time)
-
+        well_times_with_response = {
+            f"{well}:{time.isoformat()}" for well, time in rft_data
+        }
+        well_times_to_warn: set[tuple[str, str]] = {
+            (well, time)
+            for well, time in well_times
+            if not fnmatch.filter(
+                well_times_with_response,
+                f"{well}:{time}",
+            )
+        }
         formatted_items = [
             f"{well=} : {time=}" for well, time in sorted(well_times_to_warn)
         ]

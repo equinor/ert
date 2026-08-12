@@ -1,4 +1,5 @@
 import re
+import warnings
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
@@ -269,3 +270,78 @@ def test_that_when_not_finding_response_obs_keys_raises_warning(monkeypatch):
         WWCT:OP1"""
     )
     assert warning == expected_warning
+
+
+def _collect_summary_response_warnings(
+    response_key: str, simulated_response_key: str
+) -> list[warnings.WarningMessage]:
+    summary_config = SummaryConfig(keys=[response_key])
+    with warnings.catch_warnings(record=True) as w:
+        summary_config._warn_about_missing_summary_responses(
+            response_keys=[simulated_response_key], filename="foo"
+        )
+    return w
+
+
+def test_that_key_with_wildcard_with_response_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="WGOR*", simulated_response_key="WGOR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_key_with_multiple_wildcards_with_responses_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="W*:OP*", simulated_response_key="WGOR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_identical_key_containing_wildcard_with_response_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="W*OPR:OP1", simulated_response_key="WOPR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_key_with_partial_wildcard_without_response_is_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="F*", simulated_response_key="WOPR:OP1"
+    )
+
+    did_warn = len(w) > 0
+    assert did_warn
+
+
+def test_that_keys_with_preceding_wildcard_without_responses_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="*OP1", simulated_response_key="WOPR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_key_with_multiple_wildcards_without_response_is_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="W*OR:OP*", simulated_response_key="WOPR:OP1"
+    )
+
+    did_warn = len(w) > 0
+    assert did_warn
+
+
+def test_that_wildcard_key_without_response_is_warned_about():
+    summary_config = SummaryConfig(keys=["*"])
+    with warnings.catch_warnings(record=True) as w:
+        summary_config._warn_about_missing_summary_responses(
+            response_keys=[], filename="foo"
+        )
+    did_warn = len(w) > 0
+    assert did_warn
