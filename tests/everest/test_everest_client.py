@@ -187,7 +187,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(
 
     # Run the case through everserver
     everest_main_thread = threading.Thread(
-        target=everest_entry, args=[[str(config_path), "--skip-prompt"]]
+        target=everest_entry, args=[[str(config_path)]]
     )
 
     everest_main_thread.start()

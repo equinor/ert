@@ -67,7 +67,7 @@ def test_everest_entry_run(cached_example):
 
     # Setup command line arguments
     with capture_streams() as (out, _):
-        start_everest(["everest", "run", config_file, "--skip-prompt"])
+        start_everest(["everest", "run", config_file])
 
     assert (
         "EVEREST run finished with: Maximum number of batches reached" in out.getvalue()
@@ -166,7 +166,7 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
         thread.start()
 
         with pytest.raises(SystemExit):
-            start_everest(["everest", "run", "config.yml", "--skip-prompt"])
+            start_everest(["everest", "run", "config.yml"])
 
         out = capsys.readouterr().out
 

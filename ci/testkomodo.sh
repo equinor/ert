@@ -75,7 +75,7 @@ run_everest_eightcells_test() {
     # shellcheck source=/dev/null
     source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
 
-    everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
+    everest run "$CONFIG" --debug --disable-monitoring
     STATUS=$?
     if [ $STATUS -ne 0 ]; then
         echo "EVEREST eightcells test failed. Running everest kill"
