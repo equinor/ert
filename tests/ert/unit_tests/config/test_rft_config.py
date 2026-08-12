@@ -4,6 +4,7 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Any, cast
+from warnings import WarningMessage
 
 import numpy as np
 import polars as pl
@@ -1526,19 +1527,22 @@ def test_that_wildcard_well_with_wildcard_time_without_any_response_is_warned_ab
     assert any(all(e_w in str(w) for e_w in expected_warnings) for w in warnings)
 
 
-def _collect_rft_response_warnings(
-    well: str, time: str
-) -> list[warnings.WarningMessage]:
+def _collect_rft_response_warnings(well: str, time: str) -> list[WarningMessage]:
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={
             well: {time: ["PRESSURE", "SWAT"]},
         },
     )
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as ws:
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
-    return w
+    return [
+        w
+        for w in ws
+        if issubclass(w.category, PostExperimentWarning)
+        and "Could not find response" in str(w.message)
+    ]
 
 
 def test_that_wildcard_well_with_wildcard_time_with_any_response_is_not_warned_about(
