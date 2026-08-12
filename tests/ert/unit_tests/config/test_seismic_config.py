@@ -91,6 +91,28 @@ def test_that_seismic_observation_response_key_matches_simulated_response_key(
     assert set(data["response_key"].unique()) == {expected_response_key}
 
 
+def test_that_unsupported_seismic_response_file_extension_raises_invalid_response_file(
+    mocked_files,
+):
+    key = "horizon--amplitude_full_min_depth--20250101_20240101"
+    name = f"{key}.txt"
+    runpath = "/runpath"
+    mocked_files[f"{runpath}/{name}"] = "irrelevant content"
+
+    seismic_config = SeismicConfig(
+        input_files=[name],
+        keys=[key],
+    )
+
+    with pytest.raises(InvalidResponseFile) as err:
+        seismic_config.read_from_file(runpath, 1, 1)
+
+    assert (
+        f"Unsupported seismic response file extension '.txt' for {runpath}/{name}. "
+        "Expected '.csv' or '.parquet'." in str(err.value)
+    )
+
+
 def test_that_seismic_config_raises_when_reading_from_non_existing_file(tmp_path):
     seismic_config = SeismicConfig(
         input_files=["non-existent-file.csv"],
