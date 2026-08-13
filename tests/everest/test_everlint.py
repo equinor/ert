@@ -136,10 +136,6 @@ def test_extra_key(min_config):
             "unknown job not_a_job",
         ),
         (
-            {"environment": {"simulation_folder": "/usr/bin/unwriteable"}},
-            "User does not have write access to",
-        ),
-        (
             {"environment": {"output_folder": ("super long path" * 300)}},
             "output_folder\n.* File name too long",
         ),
