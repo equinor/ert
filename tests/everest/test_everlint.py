@@ -78,7 +78,7 @@ def test_extra_key(min_config):
         ),
         (
             {"config_path": "does_not_exist"},
-            "no such file or directory .*/does_not_exist",
+            "No such file or directory",
         ),
         (
             {
@@ -86,7 +86,7 @@ def test_extra_key(min_config):
                     {"template": "does_not_exist", "output_file": "not_relevant"}
                 ]
             },
-            "No such file or directory .*/does_not_exist",
+            "No such file or directory",
         ),
         (
             {"model": {"realizations": [-1]}},
@@ -164,26 +164,42 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         EverestConfig(**min_config)
 
 
-@pytest.mark.xfail(
-    reason=(
-        "behavior must be looked at. Current code requires all directories on path"
-        "to be unwritable to raise validation error."
-    )
-)
-def test_that_simulation_folder_without_write_access_raises_validation_error(
+def test_that_config_directory_without_write_access_raises_validation_error(
     min_config, tmp_path
 ):
-    unwritable = tmp_path / "unwritable"
-    unwritable.mkdir()
-    original_mode = unwritable.stat().st_mode
-    unwritable.chmod(0o555)
+    tmp_path.mkdir(exist_ok=True)
+    config_path = tmp_path / "config.yml"
+    config_path.touch()
+    original_mode = tmp_path.stat().st_mode
+    tmp_path.chmod(0o555)
+    min_config["config_path"] = str(config_path)
 
     try:
-        min_config["environment"] = {"simulation_folder": str(unwritable)}
-        with pytest.raises(ValidationError, match="User does not have write access to"):
+        with pytest.raises(ValidationError, match=f"'{tmp_path}' is not writeable"):
             EverestConfig(**min_config)
     finally:
-        unwritable.chmod(original_mode)
+        tmp_path.chmod(original_mode)
+
+
+def test_that_config_directory_parent_without_execute_access_raises_validation_error(
+    min_config, tmp_path
+):
+    tmp_path.mkdir(exist_ok=True)
+    config_path = tmp_path / "sub_dir"
+    config_path.mkdir(exist_ok=True)
+    config_file = config_path / "config.yml"
+    config_file.touch()
+    original_mode = tmp_path.stat().st_mode
+    tmp_path.chmod(0o444)
+    min_config["config_path"] = str(config_file)
+
+    try:
+        with pytest.raises(
+            ValidationError, match=f"No such file or directory {config_file}"
+        ):
+            EverestConfig(**min_config)
+    finally:
+        tmp_path.chmod(original_mode)
 
 
 @pytest.mark.parametrize(

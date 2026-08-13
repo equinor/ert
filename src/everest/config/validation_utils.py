@@ -301,24 +301,6 @@ def check_path_exists(
             raise ValueError(f"No such file or directory {exp_path}")
 
 
-def check_writeable_path(path_source: str, config_path: Path) -> None:
-    # check that the lowest existing folder is writeable
-    path = as_abs_path(path_source, str(config_path.parent))
-    while True:
-        if os.path.isdir(path):
-            if os.access(path, os.W_OK | os.X_OK):
-                break
-        elif Path(path).is_file():
-            raise ValueError(f"{path} is a file, cannot create folders inside it")
-        parent = os.path.dirname(path)
-        if parent == path:  # ie, if path is root
-            break
-        path = parent
-
-    if not os.access(path, os.W_OK | os.X_OK):
-        raise ValueError(f"User does not have write access to {path}")
-
-
 def validate_forward_model_configs(
     forward_model: list[str], install_jobs: list[InstallForwardModelStepConfig]
 ) -> None:
