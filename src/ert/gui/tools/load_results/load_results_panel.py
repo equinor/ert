@@ -4,14 +4,13 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
+from PyQt6.QtWidgets import QApplication, QFormLayout, QLabel, QMessageBox, QWidget
 
 from ert.config import ErtConfig, WarningInfo
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     EnsembleSelector,
-    QApplication,
     StringBox,
     Suggestor,
     TextBox,
