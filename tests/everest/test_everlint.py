@@ -78,7 +78,7 @@ def test_extra_key(min_config):
         ),
         (
             {"config_path": "does_not_exist"},
-            "no such file or directory .*/does_not_exist",
+            "No such file or directory",
         ),
         (
             {
@@ -86,7 +86,7 @@ def test_extra_key(min_config):
                     {"template": "does_not_exist", "output_file": "not_relevant"}
                 ]
             },
-            "No such file or directory .*/does_not_exist",
+            "No such file or directory",
         ),
         (
             {"model": {"realizations": [-1]}},
@@ -168,6 +168,47 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         EverestConfig(**min_config)
 
 
+<<<<<<< HEAD
+=======
+def test_that_config_directory_without_write_access_raises_validation_error(
+    min_config, tmp_path
+):
+    tmp_path.mkdir(exist_ok=True)
+    config_path = tmp_path / "config.yml"
+    config_path.touch()
+    original_mode = tmp_path.stat().st_mode
+    tmp_path.chmod(0o555)
+    min_config["config_path"] = str(config_path)
+
+    try:
+        with pytest.raises(ValidationError, match=f"'{tmp_path}' is not writeable"):
+            EverestConfig(**min_config)
+    finally:
+        tmp_path.chmod(original_mode)
+
+
+def test_that_config_directory_parent_without_execute_access_raises_validation_error(
+    min_config, tmp_path
+):
+    tmp_path.mkdir(exist_ok=True)
+    config_path = tmp_path / "sub_dir"
+    config_path.mkdir(exist_ok=True)
+    config_file = config_path / "config.yml"
+    config_file.touch()
+    original_mode = tmp_path.stat().st_mode
+    tmp_path.chmod(0o444)
+    min_config["config_path"] = str(config_file)
+
+    try:
+        with pytest.raises(
+            ValidationError, match=f"No such file or directory {config_file}"
+        ):
+            EverestConfig(**min_config)
+    finally:
+        tmp_path.chmod(original_mode)
+
+
+>>>>>>> c5bee30c5e (Bugfix EverestConfig simulation folder validation (#14140))
 @pytest.mark.parametrize(
     ("link", "source", "target"),
     [
