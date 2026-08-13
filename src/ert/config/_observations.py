@@ -18,7 +18,6 @@ from typing import (
 )
 
 import numpy as np
-import pandas as pd
 import polars as pl
 import scipy as sp
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
@@ -686,11 +685,7 @@ class RFTObservation(BaseObservation):
                 f"The CSV file ({filename}) does not exist or is not accessible.",
                 filename,
             )
-        csv_file = pd.read_csv(
-            filename,
-            encoding="utf-8",
-            on_bad_lines="error",
-        )
+        csv_file = pl.read_csv(filename, encoding="utf-8")
 
         required_columns = {
             "WELL_NAME",
@@ -701,7 +696,9 @@ class RFTObservation(BaseObservation):
             "EAST",
             "TVD",
         }
-        missing_required_columns = required_columns - set(csv_file.keys())
+
+        columns = set(csv_file.columns)
+        missing_required_columns = required_columns - columns
         if missing_required_columns:
             raise ObservationConfigError.with_context(
                 f"The rft observations file {filename} is missing required column(s) "
@@ -711,9 +708,9 @@ class RFTObservation(BaseObservation):
 
         rft_observations = []
         invalid_observations = []
-        for row in csv_file.itertuples(index=True):
-            east_val = validate_float(str(row.EAST), "EAST")
-            north_val = validate_float(str(row.NORTH), "NORTH")
+        for index, row in enumerate(csv_file.iter_rows(named=True)):
+            east_val = validate_float(str(row["EAST"]), "EAST")
+            north_val = validate_float(str(row["NORTH"]), "NORTH")
             radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
 
             shape_id = shape_registry.register(
@@ -725,22 +722,20 @@ class RFTObservation(BaseObservation):
             )
 
             rft_observation = cls(
-                name=f"{observation_dict['name']}[{row.Index}]",
-                well=str(row.WELL_NAME),
-                date=str(row.DATE),
+                name=f"{observation_dict['name']}[{index}]",
+                well=str(row["WELL_NAME"]),
+                date=str(row["DATE"]),
                 property=observed_property,
-                value=validate_float(
-                    str(getattr(row, observed_property)), observed_property
-                ),
-                error=validate_float(str(row.ERROR), "ERROR"),
+                value=validate_float(str(row[observed_property]), observed_property),
+                error=validate_float(str(row["ERROR"]), "ERROR"),
                 east=east_val,
                 north=north_val,
                 shape_id=shape_id,
-                tvd=validate_float(str(row.TVD), "TVD"),
-                md=validate_float(str(row.MD), "MD") if "MD" in csv_file else None,
+                tvd=validate_float(str(row["TVD"]), "TVD"),
+                md=validate_float(str(row["MD"]), "MD") if "MD" in columns else None,
                 zone=(
-                    str(row.ZONE)
-                    if "ZONE" in csv_file and row.ZONE is not None
+                    str(row["ZONE"])
+                    if "ZONE" in columns and row["ZONE"] is not None
                     else None
                 ),
             )
@@ -1007,11 +1002,10 @@ class SeismicObservation(BaseObservation):
     TOLERANCE: ClassVar[float] = 0.1
 
     @staticmethod
-    def _load_observations(filepath: Path) -> pd.DataFrame:
-        df = pd.read_csv(
+    def _load_observations(filepath: Path) -> pl.DataFrame:
+        df = pl.read_csv(
             filepath,
             encoding="utf-8",
-            on_bad_lines="error",
         )
 
         required_columns = {
@@ -1020,7 +1014,7 @@ class SeismicObservation(BaseObservation):
             "OBS",
             "OBS_ERROR",
         }
-        missing_required_columns = required_columns - set(df.keys())
+        missing_required_columns = required_columns - set(df.columns)
         if missing_required_columns:
             raise ObservationConfigError.with_context(
                 f"The seismic observations file {filepath} "
@@ -1119,11 +1113,11 @@ class SeismicObservation(BaseObservation):
             boundary_id = shape_registry.register(boundary)
 
         seismic_observations = []
-        for row in df.itertuples():
-            east = validate_float(str(row.X_UTME), "X_UTME")
-            north = validate_float(str(row.Y_UTMN), "Y_UTMN")
-            value = validate_float(str(row.OBS), "OBS")
-            error = validate_float(str(row.OBS_ERROR), "OBS_ERROR")
+        for row in df.iter_rows(named=True):
+            east = validate_float(str(row["X_UTME"]), "X_UTME")
+            north = validate_float(str(row["Y_UTMN"]), "Y_UTMN")
+            value = validate_float(str(row["OBS"]), "OBS")
+            error = validate_float(str(row["OBS_ERROR"]), "OBS_ERROR")
 
             # Currently supports only default localization radius as behavior of
             # LOCALIZATION keyword is undefined. All shapes are being registered
