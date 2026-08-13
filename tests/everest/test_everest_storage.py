@@ -111,3 +111,26 @@ def test_everest_data_stored_in_ert_local_storage(
         ]
 
         assert local_storage_params == formatted_control_names
+
+
+@pytest.mark.xdist_group("math_func/config_multiobj_advanced.yml")
+@pytest.mark.slow
+def test_that_constraint_gradients_have_one_row_per_control_with_multiple_objectives(
+    cached_example,
+):
+    config_path, config_file, _, _ = cached_example(
+        "math_func/config_multiobj_advanced.yml"
+    )
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    experiment = EverestStorage.get_everest_experiment(storage_path=config.storage_dir)
+
+    gradients = [
+        ensemble.batch_constraint_gradient
+        for ensemble in experiment.ensembles
+        if ensemble.batch_constraint_gradient is not None
+    ]
+
+    assert gradients
+    for gradient in gradients:
+        assert gradient.columns == ["batch_id", "control_name", "origin_distance"]
+        assert gradient["control_name"].to_list() == ["point.x", "point.y", "point.z"]
