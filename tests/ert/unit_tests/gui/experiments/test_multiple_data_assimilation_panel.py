@@ -58,9 +58,9 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
     assert realization_selector.isValid()
     assert realization_selector.get_text == "0-1, 3, 5-6"
     assert not ensemble_selector.isEnabled()
-    restart_checkbox = panel.findChild(QCheckBox, "restart_checkbox_esmda")
-    assert not restart_checkbox.isEnabled()
-    assert not restart_checkbox.isChecked()
+    select_prior_checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
+    assert not select_prior_checkbox.isEnabled()
+    assert not select_prior_checkbox.isChecked()
     assert panel.isConfigurationValid()
 
 
@@ -108,11 +108,11 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     assert realization_selector.text() == "0-19"
     assert panel.isConfigurationValid()
     assert not ensemble_selector.isEnabled()
-    restart_checkbox = panel.findChild(QCheckBox, "restart_checkbox_esmda")
-    assert restart_checkbox.isEnabled()
-    assert not restart_checkbox.isChecked()
-    restart_checkbox.click()
-    assert restart_checkbox.isChecked()
+    select_prior_checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
+    assert select_prior_checkbox.isEnabled()
+    assert not select_prior_checkbox.isChecked()
+    select_prior_checkbox.click()
+    assert select_prior_checkbox.isChecked()
     assert ensemble_selector.isEnabled()
     assert ensemble_selector.currentText() == "mock_experiment : mock_ensemble"
     assert realization_selector.text() == "0-2, 5"
@@ -120,12 +120,12 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     # We try rerunning from a realization that failed previously
     realization_selector.setText("0-2, 4-5")
     assert not panel.isConfigurationValid()
-    restart_checkbox.setChecked(False)
+    select_prior_checkbox.setChecked(False)
     assert realization_selector.text() == "0-19"
     assert panel.isConfigurationValid()
 
 
-def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initial_active_realizations_when_restart_run_toggled(  # ruff: ignore[line-too-long]
+def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initial_active_realizations_when_select_prior_toggled(  # ruff: ignore[line-too-long]
     qtbot,
 ):
     active_realizations = [True, True, False, True, True]
@@ -142,7 +142,7 @@ def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initi
         config_num_realization=2,
     )
     assert mda_panel._active_realizations_field.text() == active_realizations_string
-    mda_panel.restart_run_toggled()
+    mda_panel.select_prior_toggled()
     assert mda_panel._active_realizations_field.text() == active_realizations_string
 
 

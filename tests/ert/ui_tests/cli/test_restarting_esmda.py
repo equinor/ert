@@ -225,7 +225,7 @@ def _build_esmda_restart_model(prior_ensemble_id: str):
             realizations=None,
             target_ensemble="iter-<ITER>",
             weights="1,1",
-            restart_run=True,
+            select_prior=True,
             prior_ensemble_id=prior_ensemble_id,
             experiment_name="restart-experiment",
         ),

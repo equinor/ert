@@ -598,6 +598,6 @@
     }
   },
   "experiment_type": "Multiple Data Assimilation",
-  "restart_run": false,
+  "select_prior": false,
   "prior_ensemble_id": null
 }
