@@ -209,7 +209,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._ensemble_selector.ensemble_populated.connect(self.select_prior_toggled)
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
-        layout.addRow("Run from prior:", self._ensemble_selector)
+        layout.addRow("Run from:", self._ensemble_selector)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
