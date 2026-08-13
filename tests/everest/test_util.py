@@ -1,8 +1,15 @@
+import json
 from pathlib import Path
+
+import pytest
 
 from ert.storage import open_storage
 from ert.storage.local_experiment import ExperimentState, ExperimentStatus
-from everest.bin.utils import get_experiment_status
+from everest.bin.utils import (
+    get_experiment_status,
+    remove_show_scaling_warning_setting,
+)
+from everest.strings import EVEREST
 from tests.everest.utils import (
     everest_config_with_defaults,
     relpath,
@@ -55,3 +62,32 @@ def test_get_experiment_status(change_to_tmpdir):
     experiment.status = ExperimentStatus(status=ExperimentState.running)
     status = get_experiment_status(storage_dir)
     assert status.status == ExperimentState.running
+
+
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        (json.dumps({EVEREST: {"show_scaling_warning": True}}), None),
+        (json.dumps({EVEREST: {"show_scaling_warning": False}}), None),
+        (
+            json.dumps({EVEREST: {"show_scaling_warning": True, "other": 1}}),
+            {EVEREST: {"other": 1}},
+        ),
+        (
+            json.dumps({EVEREST: {"show_scaling_warning": True}, "ert": {"foo": 1}}),
+            {"ert": {"foo": 1}},
+        ),
+    ],
+)
+def test_that_removes_show_scaling_warning_key_or_deletes_empty_file(
+    change_to_tmpdir, monkeypatch, content, expected
+):
+    monkeypatch.setenv("HOME", str(Path.cwd()))
+    Path(".ert").write_text(content, encoding="utf-8")
+
+    remove_show_scaling_warning_setting()
+
+    if expected is None:
+        assert not Path(".ert").exists()
+    else:
+        assert json.loads(Path(".ert").read_text(encoding="utf-8")) == expected

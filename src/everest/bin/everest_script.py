@@ -36,6 +36,7 @@ from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
+    remove_show_scaling_warning_setting,
     run_detached_monitor,
     run_empty_detached_monitor,
     setup_logging,
@@ -53,6 +54,7 @@ def everest_entry(args: list[str] | None = None) -> None:
     makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=True)
     with setup_logging(options):
         logger.info(version_info())
+        remove_show_scaling_warning_setting()
 
         client_machine_hostname = socket.gethostname()
         server_queue_system = options.config.server.queue_system.name

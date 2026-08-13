@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging.config
 import os
 import shutil
@@ -407,6 +408,57 @@ def run_empty_detached_monitor(
     experiment_id: str,
 ) -> None:
     start_monitor(server_context, callback=lambda _: None, experiment_id=experiment_id)
+
+
+def remove_show_scaling_warning_setting() -> None:
+    """Remove the now unused "show_scaling_warning" everest preference from
+    the legacy ~/.ert preferences file, if present. The whole file is
+    deleted if removing it leaves the file empty; otherwise the file is
+    rewritten without that key, preserving any other content.
+    """
+    user_info_path = Path(os.getenv("HOME", "")) / ".ert"
+    if not user_info_path.exists():
+        return
+
+    logger = logging.getLogger(EVEREST)
+    content = user_info_path.read_text(encoding="utf-8")
+
+    try:
+        user_info = json.loads(content)
+    except json.decoder.JSONDecodeError as e:
+        logger.info(
+            "Preserving preferences file %s, could not be parsed: %s",
+            user_info_path,
+            e,
+        )
+        return
+
+    everest_pref = user_info.get(EVEREST)
+    if not isinstance(everest_pref, dict) or "show_scaling_warning" not in everest_pref:
+        return
+
+    everest_pref.pop("show_scaling_warning")
+    if not everest_pref:
+        user_info.pop(EVEREST)
+
+    if not user_info:
+        user_info_path.unlink()
+        logger.info(
+            "Deleted preferences file %s, previously containing: %s",
+            user_info_path,
+            content,
+        )
+    else:
+        user_info_path.write_text(
+            json.dumps(user_info, ensure_ascii=False, indent=4), encoding="utf-8"
+        )
+        logger.info(
+            "Removed legacy show_scaling_warning preference from %s, "
+            "previous content: %s, remaining content: %s",
+            user_info_path,
+            content,
+            user_info,
+        )
 
 
 def get_experiment_status(storage_dir: str) -> ExperimentStatus | None:
