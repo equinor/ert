@@ -202,12 +202,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
         self._ensemble_selector.setEnabled(False)
-        layout.addRow("Restart run:", self._restart_box)
+        layout.addRow("Select prior:", self._restart_box)
 
         self._ensemble_selector.ensemble_populated.connect(self.restart_run_toggled)
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
-        layout.addRow("Restart from:", self._ensemble_selector)
+        layout.addRow("Run from prior:", self._ensemble_selector)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
