@@ -266,7 +266,7 @@ def test_that_when_not_finding_response_obs_keys_raises_warning(monkeypatch):
     )
     expected_warning = dedent(
         """\
-        Could not find responses for key(s) in 'CASE':
+        Could not find responses for summary key(s) in 'CASE':
         WOPR:OP2
         WWCT:OP1"""
     )
