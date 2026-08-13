@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 
 from PyQt6.QtCore import pyqtBoundSignal
 from PyQt6.QtWidgets import QApplication
@@ -37,13 +38,17 @@ def truncate_experiment_name(name: str) -> str:
 def log_once(
     signal: pyqtBoundSignal,
     logger: logging.Logger,
-    message: str,
+    message: str | Callable[[], str],
     level: int = logging.INFO,
 ) -> None:
-    """Log a message the first time a signal is emitted, then disconnect."""
+    """Log once when the signal is first emitted.
+
+    Callable messages are evaluated when the signal is emitted.
+    """
 
     def log_and_disconnect(*_signal_args: object) -> None:
-        logger.log(level, message)
+        resolved_message = message if isinstance(message, str) else message()
+        logger.log(level, resolved_message)
         signal.disconnect(log_and_disconnect)
 
     signal.connect(log_and_disconnect)

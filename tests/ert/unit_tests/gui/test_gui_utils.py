@@ -1,11 +1,20 @@
+import logging
+
 import pytest
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSignal as Signal
 
 from ert.gui.utils import (
     LONGEST_DEFAULT_EXPERIMENT_NAME,
+    log_once,
     truncate_dropdown_item,
     truncate_experiment_name,
     truncate_string,
 )
+
+
+class SignalEmitter(QObject):
+    emitted = Signal()
 
 
 @pytest.mark.parametrize(
@@ -69,3 +78,23 @@ def test_that_truncate_dropdown_item_truncates_to_100_characters(
         assert len(truncatedItem) == 100
     else:
         assert len(truncatedItem) == len(dropdown_item)
+
+
+def test_that_log_once_evaluates_message_factory_on_first_signal_emission(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO)
+    emitter = SignalEmitter()
+    iteration = 0
+
+    log_once(
+        emitter.emitted,
+        logging.getLogger(__name__),
+        lambda: f"Iteration {iteration} selected",
+    )
+
+    iteration = 1
+    emitter.emitted.emit()
+    emitter.emitted.emit()
+
+    assert [record.message for record in caplog.records] == ["Iteration 1 selected"]
