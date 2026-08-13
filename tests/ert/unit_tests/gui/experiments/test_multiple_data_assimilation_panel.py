@@ -36,7 +36,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
 ) -> None:
     """This is a test that makes sure the realization selector autofills and
     validates with the num_realizations from config/designmatrix, and the autofilled
-    configuration is valid. It also makes sure the restart run button is disabled if
+    configuration is valid. It also makes sure the "Select prior" button is disabled if
     there are no previous experiments/ensembles in storage
     """
     active_realizations = [True, True, False, True, False, True, True]
