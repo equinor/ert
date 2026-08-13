@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QSizePolicy,
     QToolButton,
@@ -47,7 +47,7 @@ class CollapsibleSection(QWidget):
         self._toggle_button.setArrowType(
             Qt.ArrowType.DownArrow if checked else Qt.ArrowType.RightArrow
         )
-        self._content_widget.setVisible(checked)
+        QTimer.singleShot(0, lambda: self._content_widget.setVisible(checked))
 
     def set_title(self, title: str) -> None:
         self._toggle_button.setText(title)
