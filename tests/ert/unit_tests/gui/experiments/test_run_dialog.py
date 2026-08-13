@@ -253,11 +253,7 @@ def test_large_snapshot(
         timeout=timeout_per_iter * 3,
     )
     qtbot.waitUntil(
-        lambda: (
-            run_dialog._realization_widget is not None
-            and run_dialog._realization_widget._iteration_selector.count() == 2
-        ),
-        timeout=timeout_per_iter,
+        lambda: run_dialog._tab_widget.count() == 2, timeout=timeout_per_iter
     )
     qtbot.waitUntil(
         lambda: run_dialog.is_experiment_done() is True, timeout=timeout_per_iter
@@ -440,7 +436,7 @@ def test_large_snapshot(
                     iteration=1,
                 ),
             ],
-            1,
+            2,
             id="two_iterations",
         ),
     ],
@@ -637,9 +633,7 @@ def test_run_dialog_fm_label_show_correct_info(
     assert "Realization id 0 in iteration 0" in fm_step_label.text()
 
     # clicking realization 1 should update fm_label with realization 1, iteration 0
-    realization_box._set_selected_realization(
-        realization_box._real_list_model.index(1, 0)
-    )
+    realization_box._item_clicked(run_dialog._fm_step_overview.model().index(1, 0))
 
     assert (
         fm_step_label.text() == f"Realization id 1 in iteration 0{expected_host_info}"
@@ -739,13 +733,12 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         realization_widget._real_list_model.index(0, 0)
     ).center()
 
-    # realization 0 is already the current index, so clicking it changes no selection
-    qtbot.mouseClick(
-        realization_widget._real_view.viewport(),
-        Qt.MouseButton.LeftButton,
-        pos=click_pos,
-    )
-    qtbot.waitUntil(lambda: fm_step_overview.model()._real == 0, timeout=30000)
+    with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
+        qtbot.mouseClick(
+            realization_widget._real_view.viewport(),
+            Qt.MouseButton.LeftButton,
+            pos=click_pos,
+        )
 
     fm_step_stdout = fm_step_overview.model().index(0, 4)
     fm_step_stderr = fm_step_overview.model().index(0, 5)
@@ -889,51 +882,51 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                     iteration=1,
                 ),
             ],
-            1,
-            id="switching between iterations",
+            2,
+            id="changing from between tabs",
         ),
     ],
 )
-def test_that_switching_iteration_restores_the_realization_previously_selected_in_it(
+def test_forward_model_overview_label_selected_on_tab_change(
     events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):
-    def qt_bot_click_realization(realization_index: int) -> None:
-        view = run_dialog._realization_widget._real_view
+    def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
+        view = run_dialog._tab_widget.widget(iteration)._real_view
         model_index = view.model().index(realization_index, 0)
         view.scrollTo(model_index)
         rect = view.visualRect(model_index)
         click_pos = rect.center()
         qtbot.mouseClick(view.viewport(), Qt.MouseButton.LeftButton, pos=click_pos)
 
-    def select_iteration(iteration: int) -> None:
-        run_dialog._realization_widget._iteration_selector.setCurrentIndex(iteration)
+    def qt_bot_click_tab_index(tab_index: int) -> None:
+        tab_bar = run_dialog._tab_widget.tabBar()
+        tab_rect = tab_bar.tabRect(tab_index)
+        click_pos = tab_rect.center()
+        qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=click_pos)
 
+    # verify two tabs present
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
-    qtbot.waitUntil(
-        lambda: run_dialog._realization_widget._iteration_selector.count() == 2,
-        timeout=5000,
-    )
 
-    select_iteration(0)
+    qt_bot_click_tab_index(0)
     fm_step_label = run_dialog.findChild(QLabel, name="fm_step_label")
     assert "Realization id 0 in iteration 0" in fm_step_label.text()
 
-    qt_bot_click_realization(1)
+    qt_bot_click_realization(1, 0)
     assert "Realization id 1 in iteration 0" in fm_step_label.text()
 
-    select_iteration(1)
+    qt_bot_click_tab_index(1)
     assert "Realization id 0 in iteration 1" in fm_step_label.text()
 
-    qt_bot_click_realization(1)
+    qt_bot_click_realization(1, 1)
     assert "Realization id 1 in iteration 1" in fm_step_label.text()
 
-    select_iteration(0)
+    qt_bot_click_tab_index(0)
     assert "Realization id 1 in iteration 0" in fm_step_label.text()
 
-    select_iteration(1)
+    qt_bot_click_tab_index(1)
     assert "Realization id 1 in iteration 1" in fm_step_label.text()
 
 

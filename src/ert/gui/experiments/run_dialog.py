@@ -274,8 +274,6 @@ class RunDialog(QFrame):
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
-        self._realization_widget: RealizationWidget | None = None
-
         self._fm_step_label = QLabel(self)
         self._fm_step_label.setObjectName("fm_step_label")
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
@@ -391,7 +389,7 @@ class RunDialog(QFrame):
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
         if isinstance(widget, RealizationWidget):
-            widget.refresh_selected_realization()
+            widget.refresh_current_selection()
 
         self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
 
@@ -410,20 +408,19 @@ class RunDialog(QFrame):
                 else f"Progress for batch {iteration}"
             )
 
-            if self._realization_widget is None:
-                self._realization_widget = RealizationWidget(iter_row)
-                self._realization_widget.set_snapshot_model(self._snapshot_model)
-                self._realization_widget.realizationSelected.connect(self._select_real)
-                self._tab_widget.addTab(
-                    self._realization_widget,
-                    "Realizations" if not self.is_everest else "Simulations",
-                )
-            self._realization_widget.add_iteration(
-                iter_row,
-                f"Iteration {iteration}"
+            widget = RealizationWidget(iter_row)
+            widget.setSnapshotModel(self._snapshot_model)
+            widget.itemClicked.connect(self._select_real)
+            widget.setProperty("identifier", f"tab-iter-{iteration}")
+            self._select_real(widget._real_list_model.index(0, 0))
+            tab_index = self._tab_widget.addTab(
+                widget,
+                f"Realizations for iteration {iteration}"
                 if not self.is_everest
                 else f"Batch {iteration}...",
             )
+            if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
+                self._tab_widget.setCurrentIndex(tab_index)
 
             if self.is_everest:
                 self._batch_result_types.append(set())
@@ -464,7 +461,6 @@ class RunDialog(QFrame):
         if rerun_failed_realizations is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
-            self._realization_widget = None
 
         self._worker_thread = QThread(parent=self)
 
@@ -630,10 +626,9 @@ class RunDialog(QFrame):
                 batch_types = self._batch_result_types[event.batch]
                 batch_types.add(event.result_type)
 
-                if self._realization_widget is not None:
-                    self._realization_widget.set_iteration_label(
-                        event.batch, _batch_type_text(event.batch, batch_types)
-                    )
+                self._tab_widget.setTabText(
+                    event.batch, _batch_type_text(event.batch, batch_types)
+                )
             case StartingTotalRunPathCreationEvent():
                 runpath_creation_progress_widget = RunpathProgressWidget(
                     self,

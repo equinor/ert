@@ -14,7 +14,6 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QHelpEvent, QPainter, QPalette, QPen
 from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QHBoxLayout,
     QListView,
     QStyle,
     QStyledItemDelegate,
@@ -24,7 +23,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.experiments.view.iteration_selector import IterationSelector
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
     CallbackStatusMessageRole,
@@ -37,7 +35,6 @@ from ert.shared.status.utils import byte_with_unit
 
 class RealizationWidget(QWidget):
     triggeredTooltipTextDisplay = Signal(str)
-    realizationSelected = Signal(QModelIndex)
 
     def __init__(self, it: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -63,31 +60,20 @@ class RealizationWidget(QWidget):
             f"{self.palette().color(QPalette.ColorRole.Window).name()}; }}"
         )
 
-        self._iteration_selector = IterationSelector(self)
-        self._iteration_selector.currentIndexChanged.connect(
-            self._on_iteration_selection_changed
-        )
-        self._selected_realization_by_iteration: dict[int, int] = {}
-
-        selector_layout = QHBoxLayout()
-        selector_layout.addWidget(self._iteration_selector)
-        selector_layout.addStretch()
+        self._real_view.clicked.connect(self._item_clicked)
 
         layout = QVBoxLayout()
-        layout.addLayout(selector_layout)
         layout.addWidget(self._real_view)
 
         self.setLayout(layout)
 
-    def _on_current_changed(self, item: QModelIndex, _previous: QModelIndex) -> None:
-        if item.isValid():
-            self._set_selected_realization(item)
+    # Signal when the user selects another real
+    itemClicked = Signal(QModelIndex)
 
-    def _set_selected_realization(self, item: QModelIndex) -> None:
-        self._selected_realization_by_iteration[self._iter] = item.row()
-        self.realizationSelected.emit(item)
+    def _item_clicked(self, item: QModelIndex) -> None:
+        self.itemClicked.emit(item)
 
-    def set_snapshot_model(self, model: QAbstractItemModel) -> None:
+    def setSnapshotModel(self, model: QAbstractItemModel) -> None:
         self._real_list_model = RealListModel(self, self._iter)
         self._real_list_model.setSourceModel(model)
 
@@ -96,51 +82,16 @@ class RealizationWidget(QWidget):
 
         first_real = self._real_list_model.index(0, 0)
         selection_model = self._real_view.selectionModel()
-        if selection_model is None:
-            return
-
-        selection_model.currentChanged.connect(self._on_current_changed)
-        if first_real.isValid():
+        if first_real.isValid() and selection_model:
             selection_model.select(first_real, QItemSelectionModel.SelectionFlag.Select)
 
-    def hide_iteration_selector(self) -> None:
-        self._iteration_selector.hide()
+    def clearSelection(self) -> None:
+        self._real_view.clearSelection()
 
-    def add_iteration(self, row: int, label: str) -> None:
-        self._iteration_selector.add_iteration(label, row)
-
-    def set_iteration_label(self, row: int, label: str) -> None:
-        index = self._iteration_selector.findData(row)
-        if index >= 0:
-            self._iteration_selector.setItemText(index, label)
-
-    def _on_iteration_selection_changed(self, index: int) -> None:
-        if index < 0:
-            return
-
-        self._iter = self._iteration_selector.itemData(index)
-        self._real_list_model.setIter(self._iter)
-
-        realization_row = self._selected_realization_by_iteration.get(self._iter, 0)
-        realization_index = self._real_list_model.index(realization_row, 0)
-        selection_model = self._real_view.selectionModel()
-
-        if not realization_index.isValid() or selection_model is None:
-            return
-
-        if selection_model.currentIndex() == realization_index:
-            self._set_selected_realization(realization_index)
-            return
-
-        selection_model.setCurrentIndex(
-            realization_index,
-            QItemSelectionModel.SelectionFlag.ClearAndSelect,
-        )
-
-    def refresh_selected_realization(self) -> None:
+    def refresh_current_selection(self) -> None:
         selected_reals = self._real_view.selectedIndexes()
         if selected_reals:
-            self._set_selected_realization(selected_reals[0])
+            self._item_clicked(selected_reals[0])
 
 
 class RealizationDelegate(QStyledItemDelegate):
