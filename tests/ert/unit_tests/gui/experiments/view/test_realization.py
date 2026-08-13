@@ -52,39 +52,6 @@ class MockDelegate(QStyledItemDelegate):
         return self._size
 
 
-def test_that_iteration_selector_follows_the_newest_iteration_until_one_is_chosen(
-    qtbot,
-):
-    widget = RealizationWidget(0)
-    qtbot.addWidget(widget)
-    widget.set_snapshot_model(SnapshotModel())
-
-    widget.add_iteration(0, "Iteration 0")
-    assert widget._iteration_selector.currentIndex() == 0
-
-    widget.add_iteration(1, "Iteration 1")
-    assert widget._iteration_selector.currentIndex() == 1
-
-    widget._iteration_selector.setCurrentIndex(0)
-    widget.add_iteration(2, "Iteration 2")
-    assert widget._iteration_selector.currentIndex() == 0
-
-    widget._iteration_selector.setCurrentIndex(2)
-    widget.add_iteration(3, "Iteration 3")
-    assert widget._iteration_selector.currentIndex() == 3
-
-
-def test_that_iteration_labels_can_be_renamed_after_being_added(qtbot):
-    widget = RealizationWidget(0)
-    qtbot.addWidget(widget)
-    widget.set_snapshot_model(SnapshotModel())
-
-    widget.add_iteration(0, "Batch 0...")
-    widget.set_iteration_label(0, "Batch 0: fn")
-
-    assert widget._iteration_selector.itemText(0) == "Batch 0: fn"
-
-
 @pytest.mark.slow
 def test_delegate_drawing_count(small_snapshot, qtbot):
     it = 0
@@ -96,7 +63,7 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
         model = SnapshotModel()
         model._add_snapshot(SnapshotModel.prerender(small_snapshot), str(it))
 
-        widget.set_snapshot_model(model)
+        widget.setSnapshotModel(model)
 
         widget.move(0, 0)
         widget.resize(640, 480)
@@ -123,7 +90,7 @@ def test_selection_success(large_snapshot, qtbot):
     model = SnapshotModel()
     model._add_snapshot(SnapshotModel.prerender(large_snapshot), str(it))
 
-    widget.set_snapshot_model(model)
+    widget.setSnapshotModel(model)
 
     widget.resize(800, 600)
     widget.move(0, 0)
@@ -143,7 +110,7 @@ def test_selection_success(large_snapshot, qtbot):
         ) and str(node.id_) == str(selection_id)
 
     with qtbot.waitSignal(
-        widget.realizationSelected, timeout=30000, check_params_cb=check_selection_cb
+        widget.itemClicked, timeout=30000, check_params_cb=check_selection_cb
     ):
         qtbot.mouseClick(
             widget._real_view.viewport(),
@@ -161,7 +128,7 @@ def test_realization_hover_yields_tooltip(full_snapshot, qtbot):
 
     model = SnapshotModel()
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), str(it))
-    widget.set_snapshot_model(model)
+    widget.setSnapshotModel(model)
     model._update_snapshot(full_snapshot, str(it))
 
     widget.resize(800, 600)
