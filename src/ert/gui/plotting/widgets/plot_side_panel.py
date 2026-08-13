@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import (
     QWIDGETSIZE_MAX,
     QDockWidget,
@@ -113,11 +113,17 @@ class PlotSidePanel(QDockWidget):
         )
 
         if expanded:
-            self.setMinimumWidth(self._min_expanded_width)
-            self.setMaximumWidth(QWIDGETSIZE_MAX)
-            self._main_window.resizeDocks(
-                [self], [self._expanded_width], Qt.Orientation.Horizontal
-            )
+
+            def _expand() -> None:
+                self.setMinimumWidth(self._min_expanded_width)
+                self.setMaximumWidth(QWIDGETSIZE_MAX)
+                self._main_window.resizeDocks(
+                    [self], [self._expanded_width], Qt.Orientation.Horizontal
+                )
+
+            QTimer.singleShot(0, _expand)
         else:
-            # Collapsed width is button + slight padding
-            self.setFixedWidth(self._toggle_button.sizeHint().width() + 8)
+            QTimer.singleShot(
+                0,
+                lambda: self.setFixedWidth(self._toggle_button.sizeHint().width() + 8),
+            )

@@ -40,23 +40,27 @@ def test_that_collapsing_hides_content_but_keeps_toggle_button_visible(main_wind
     assert side_panel._toggle_button.isVisibleTo(side_panel.titleBarWidget())
 
 
-def test_that_collapsing_fixes_width_to_toggle_button_width(main_window):
+def test_that_collapsing_fixes_width_to_toggle_button_width(
+    qtbot: QtBot, main_window: QMainWindow
+) -> None:
     side_panel = make_side_panel(main_window)
 
     side_panel._toggle_button.setChecked(False)
 
     expected = side_panel._toggle_button.sizeHint().width() + 8
-    assert side_panel.minimumWidth() == expected
+    qtbot.waitUntil(lambda: side_panel.minimumWidth() == expected)
     assert side_panel.maximumWidth() == expected
 
 
-def test_that_expanding_restores_minimum_width_and_unbounded_maximum(main_window):
+def test_that_expanding_restores_minimum_width_and_unbounded_maximum(
+    qtbot: QtBot, main_window: QMainWindow
+) -> None:
     side_panel = make_side_panel(main_window)
 
     side_panel._toggle_button.setChecked(False)
     side_panel._toggle_button.setChecked(True)
 
-    assert side_panel.minimumWidth() == MIN_WIDTH
+    qtbot.waitUntil(lambda: side_panel.minimumWidth() == MIN_WIDTH)
     assert side_panel.maximumWidth() == QWIDGETSIZE_MAX
 
 
