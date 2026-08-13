@@ -99,8 +99,21 @@ jobs:
             --head "$BRANCH" \
             --title "Update screenshots for ${ERT_PR_TITLE} (equinor/ert#${PR_NUMBER})" \
             --body "Automatically updated screenshot baselines triggered by https://github.com/equinor/ert/pull/${PR_NUMBER} by @${ERT_PR_AUTHOR}")
-          gh pr edit "$PR_URL" --repo equinor/ert-testdata --add-assignee "${ERT_PR_AUTHOR}" --add-reviewer "${ERT_PR_AUTHOR}" \
-            || echo "::warning::Could not assign/request review from @${ERT_PR_AUTHOR} on ert-testdata (insufficient access)"
+          TESTDATA_PR_NUMBER="${PR_URL##*/}"
+          set +e
+          ASSIGNEE_ERR=$(gh api --method POST "repos/equinor/ert-testdata/issues/${TESTDATA_PR_NUMBER}/assignees" \
+            -f "assignees[]=${ERT_PR_AUTHOR}" 2>&1 > /dev/null)
+          ASSIGNEE_STATUS=$?
+          REVIEWER_ERR=$(gh api --method POST "repos/equinor/ert-testdata/pulls/${TESTDATA_PR_NUMBER}/requested_reviewers" \
+            -f "reviewers[]=${ERT_PR_AUTHOR}" 2>&1 > /dev/null)
+          REVIEWER_STATUS=$?
+          set -e
+          if [ "$ASSIGNEE_STATUS" -ne 0 ]; then
+            echo "::warning::Could not assign @${ERT_PR_AUTHOR} on ert-testdata (exit code ${ASSIGNEE_STATUS}): ${ASSIGNEE_ERR}"
+          fi
+          if [ "$REVIEWER_STATUS" -ne 0 ]; then
+            echo "::warning::Could not request review from @${ERT_PR_AUTHOR} on ert-testdata (exit code ${REVIEWER_STATUS}): ${REVIEWER_ERR}"
+          fi
           if [ "${PR_NUMBER}" != "0" ]; then
             gh pr comment "${PR_NUMBER}" \
               --repo equinor/ert \
