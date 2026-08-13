@@ -46,7 +46,6 @@ from everest.config.validation_utils import (
     InstallDataContext,
     check_for_duplicate_names,
     check_path_exists,
-    check_writeable_path,
     unique_items,
     validate_forward_model_configs,
 )
@@ -878,16 +877,6 @@ to read summary data from forward model, do:
             ConfigWarning.deprecation_warn(_WELLS_DEPRECATION)
         return self
 
-    @model_validator(mode="after")
-    def validate_that_environment_sim_folder_is_writeable(self) -> Self:
-        environment = self.environment
-        config_path = self.config_path
-        if environment is None or config_path is None:
-            return self
-
-        check_writeable_path(environment.simulation_folder, Path(config_path))
-        return self
-
     @field_validator("wells")
     @no_type_check
     @classmethod
@@ -934,10 +923,18 @@ to read summary data from forward model, do:
     @field_validator("config_path")
     @no_type_check
     @classmethod
-    def validate_config_path_exists(cls, config_path):
-        expanded_path = os.path.realpath(config_path)
-        if not Path(expanded_path).exists():
-            raise ValueError(f"no such file or directory {expanded_path}")
+    def validate_config_path_exists_and_is_writeable(cls, config_path):
+        """
+        `os.path.exists()` swallows all OSErrors instead returning false.
+        `Path.exists()` only shares this behavior for `>py-3.12`.
+        Replace with `Path.exists()` when we drop support for python 3.12.
+        """
+        path = Path(config_path).resolve()
+        # Will also return False if path is unreachable.
+        if not os.path.exists(path):  # ruff: ignore[os-path-exists]
+            raise ValueError(f"No such file or directory {path!s}")
+        if not os.access(path.parent, os.W_OK | os.X_OK):
+            raise ValueError(f"'{path.parent!s}' is not writeable or executable")
         return config_path
 
     def copy(self) -> "EverestConfig":  # type: ignore
