@@ -87,5 +87,5 @@ jobs:
         yq eval '.model.realizations = [0, 1]' -i config.yml
         yq eval '.simulator.queue_system.max_running = 4' -i config.yml
         uv run everest lint config.yml
-        uv run everest run config.yml --skip-prompt --disable-monitoring
+        uv run everest run config.yml --disable-monitoring
         popd

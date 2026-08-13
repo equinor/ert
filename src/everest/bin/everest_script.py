@@ -36,10 +36,10 @@ from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
+    remove_show_scaling_warning_setting,
     run_detached_monitor,
     run_empty_detached_monitor,
     setup_logging,
-    show_scaled_controls_warning,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,7 @@ def everest_entry(args: list[str] | None = None) -> None:
     makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=True)
     with setup_logging(options):
         logger.info(version_info())
+        remove_show_scaling_warning_setting()
 
         client_machine_hostname = socket.gethostname()
         server_queue_system = options.config.server.queue_system.name
@@ -151,11 +152,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
         ),
     )
     arg_parser.add_argument(
-        "--skip-prompt",
-        action="store_true",
-        help="Flag used to disable user prompts that will stop execution.",
-    )
-    arg_parser.add_argument(
         "--disable-monitoring",
         action="store_true",
         help=(
@@ -210,8 +206,6 @@ async def run_everest(options: argparse.Namespace) -> None:
         options.config.simulation_dir
     ).exists() and await directory_is_nonempty(options.config.simulation_dir):
         warn_user_that_runpath_is_nonempty()
-    if not options.skip_prompt:
-        show_scaled_controls_warning()
 
     try:
         output_dir = Path(options.config.output_dir)

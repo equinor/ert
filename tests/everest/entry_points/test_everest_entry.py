@@ -54,7 +54,7 @@ def test_everest_entry_debug(
         patch("everest.bin.utils.LOGGING_CONFIG", logger_conf),
         caplog.at_level(logging.DEBUG),
     ):
-        everest_entry(["config.yml", "--debug", "--skip"])
+        everest_entry(["config.yml", "--debug"])
     logstream = "\n".join(caplog.messages)
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
@@ -93,7 +93,7 @@ def test_everest_entry(
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
     config.write_to_file("config.yml")
-    everest_entry(["config.yml", "--skip"])
+    everest_entry(["config.yml"])
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
@@ -136,7 +136,7 @@ def test_everest_entry_detached_already_run(
     config.write_to_file("config.yml")
 
     # start a new run
-    everest_entry(["config.yml", "--skip-prompt"])
+    everest_entry(["config.yml"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     start_experiment_mock.assert_called_once()
@@ -152,7 +152,7 @@ def test_everest_entry_detached_already_run(
     assert kill_script_client_mock.call_count == 1
 
     # run again, should start a new run like above
-    everest_entry(["config.yml", "--skip-prompt"])
+    everest_entry(["config.yml"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     start_experiment_mock.assert_called_once()
@@ -214,7 +214,7 @@ def test_everest_entry_detached_running(
 
     # can't start a new run if one is already running
     with capture_streams() as (out, _):
-        everest_entry(["config.yml", "--skip-prompt"])
+        everest_entry(["config.yml"])
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
     start_server_mock.assert_not_called()
@@ -236,7 +236,7 @@ def test_everest_entry_detached_running(
     # if already running, nothing happens
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
-    everest_entry(["config.yml", "--skip-prompt"])
+    everest_entry(["config.yml"])
     kill_script_client_mock.assert_called_once()
     start_server_mock.assert_not_called()
 
@@ -327,7 +327,7 @@ def test_exception_raised_when_server_run_fails(
     config.write_to_file("config.yml")
 
     with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
-        everest_entry(["config.yml", "--skip-prompt"])
+        everest_entry(["config.yml"])
 
 
 @patch(
@@ -420,7 +420,7 @@ def test_that_run_everest_prints_where_it_runs(
         patch("everest.bin.everest_script.wait_for_server"),
         patch("everest.bin.everest_script.start_experiment"),
     ):
-        everest_entry(["config.yml", "--skip-prompt"])
+        everest_entry(["config.yml"])
 
         captured = capsys.readouterr().out
 

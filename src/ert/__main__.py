@@ -49,6 +49,7 @@ from ert.validation import (
     RangeStringArgument,
     ValidationStatus,
 )
+from everest.bin.utils import remove_show_scaling_warning_setting
 
 logger = logging.getLogger(__name__)
 
@@ -630,6 +631,7 @@ def main() -> None:
         sys.exit(exit_msg)
 
     logger = logging.getLogger(__name__)
+    remove_show_scaling_warning_setting()
     if args.verbose:
         root_logger = logging.getLogger()
         handler = logging.StreamHandler(sys.stdout)
