@@ -50,8 +50,8 @@ Run data assimilation
 =====================
 
 Because we do not have any ensembles with parameters and no responses, the `Ensemble` drop down in `Evaluate ensemble` is
-now empty. To start data assimilation, navigate to the `Multiple Data Assimilation` experiment mode, and check: `Restart run`,
-then select `prior` in the `Restart from` dropdown and start the experiment. This means that we do not have to rerun the
+now empty. To start data assimilation, navigate to the `Multiple Data Assimilation` experiment mode, and check: `Select prior`,
+then select `prior` in the `Run from` dropdown and start the experiment. This means that we do not have to rerun the
 prior, and we are able to evaluate coverage of the prior without running multiple iterations of ES-MDA first.
 
 .. image:: fig/restart_es_mda.gif
