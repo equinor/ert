@@ -31,7 +31,7 @@ from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 37
+_LOCAL_STORAGE_VERSION = 38
 
 
 def open_storage(
@@ -642,6 +642,7 @@ class LocalStorage(BaseMode):
             to35,
             to36,
             to37,
+            to38,
         )
 
         try:  # ruff: ignore[too-many-statements-in-try-clause]
@@ -708,6 +709,7 @@ class LocalStorage(BaseMode):
                     34: to35,
                     35: to36,
                     36: to37,
+                    37: to38,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)
