@@ -28,7 +28,7 @@ from ert.warnings import PostExperimentWarning
 @given(summaries(summary_keys=st.just(["WOPR:OP1"])))
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.slow
-@pytest.mark.filterwarnings(r"ignore:Could not find responses for key\(s\)")
+@pytest.mark.filterwarnings(r"ignore:Could not find responses")
 def test_that_reading_empty_summaries_returns_empty_df_with_column_schema(wopr_summary):
     smspec, unsmry = wopr_summary
     smspec.to_file("CASE.SMSPEC")

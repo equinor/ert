@@ -85,9 +85,7 @@ def test_that_match_key_dict_expr_fits_match_key():
     assert response2["response_dict"].to_list() == ["well_connection_cell=None"]
 
 
-@pytest.mark.filterwarnings(
-    r"ignore:Could not find responses for well\(s\) at time\(s\)"
-)
+@pytest.mark.filterwarnings(r"ignore:Could not find responses")
 def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo_file):
     mock_resfo_file("/tmp/does_not_exist/BASE.RFT", [])
     rft_config = RFTConfig(
@@ -787,9 +785,7 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
         rft_config.obtain_location_metadata("/tmp/does_not_exist", 1, 1, observations)
 
 
-@pytest.mark.filterwarnings(
-    r"ignore:Could not find responses for well\(s\) at time\(s\)"
-)
+@pytest.mark.filterwarnings(r"ignore:Could not find responses")
 def test_that_missing_egrid_without_locations_raises_invalid_response_file(
     mock_resfo_file,
 ):
@@ -897,9 +893,7 @@ def test_that_non_matching_wells_are_ignored_silently(mock_resfo_file, egrid):
     ]
 
 
-@pytest.mark.filterwarnings(
-    r"ignore:Could not find responses for well\(s\) at time\(s\)"
-)
+@pytest.mark.filterwarnings(r"ignore:Could not find responses")
 def test_that_wildcard_well_with_specific_date_matches_all_wells(
     mock_resfo_file, egrid
 ):
