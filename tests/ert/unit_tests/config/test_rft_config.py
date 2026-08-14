@@ -1447,9 +1447,10 @@ def _collect_rft_response_warnings(
     ]
 
 
-def test_that_no_wildcard_rft_key_with_response_doesnt_warn(
+def test_that_simple_rft_key_with_response_doesnt_warn(
     setup_mock_resfo_file,
 ):
+    """Simple means a RFT key not containing any wildcards in this context"""
     warnings_ = _collect_rft_response_warnings(
         wells=[_MOCK_RESFO_RFT_WELL],
         times=[_MOCK_RESFO_RFT_TIME],
