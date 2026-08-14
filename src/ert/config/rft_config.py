@@ -289,27 +289,36 @@ class RFTConfig(SimulationResponseConfig):
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry],
         rft_filename: str,
     ) -> None:
-        well_times = {
-            (well, time)
-            for well, time_dict in self.data_to_read.items()
-            for time in time_dict
-        }
-        well_times_with_response = {
-            f"{well}:{time.isoformat()}" for well, time in rft_data
-        }
-        well_times_to_warn: set[tuple[str, str]] = {
-            (well, time)
-            for well, time in well_times
-            if not fnmatch.filter(
-                well_times_with_response,
-                f"{well}:{time}",
-            )
-        }
-        formatted_items = [
-            f"{well=} : {time=}" for well, time in sorted(well_times_to_warn)
+        missing_response_properties = defaultdict(list)
+        for well, time_dict in self.data_to_read.items():
+            for time in time_dict:
+                expected_properties = set(time_dict[time])
+                # Find all well-time tuples matching expected well-time pattern
+                well_time_tuple_matches = [
+                    t
+                    for t in rft_data
+                    if fnmatch.fnmatch(t[0], well)
+                    and fnmatch.fnmatch(t[1].isoformat(), time)
+                ]
+                # Find all properties matching expected property patterns
+                property_matches = set()
+                for well_time in well_time_tuple_matches:
+                    properties_in_response = rft_data[well_time].property_values.keys()
+                    property_matches |= {
+                        exp_prop
+                        for exp_prop in expected_properties
+                        if fnmatch.filter(properties_in_response, exp_prop)
+                    }
+
+                for missing_property in expected_properties - property_matches:
+                    missing_response_properties[well, time].append(missing_property)
+
+        formatted_missing_rft_responses = [
+            f"well='{well}' : time='{time}' : properties={sorted(properties)}"
+            for (well, time), properties in missing_response_properties.items()
         ]
         _warn_about_missing_responses(
-            formatted_items, "well(s) at time(s)", rft_filename
+            sorted(formatted_missing_rft_responses), "RFT", rft_filename
         )
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
