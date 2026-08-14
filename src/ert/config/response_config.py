@@ -15,7 +15,7 @@ _RESPONSE_WARNING_LIMIT = 5
 
 def _warn_about_missing_responses(
     missing_items: list[str],
-    item_label: Literal["key(s)", "well(s) at time(s)"],
+    response_type: Literal["summary", "RFT"],
     filename: str,
 ) -> None:
     if not missing_items:
@@ -24,7 +24,7 @@ def _warn_about_missing_responses(
     num_excess = len(missing_items) - _RESPONSE_WARNING_LIMIT
 
     warning = (
-        f"Could not find responses for {item_label} in '{filename}':\n"
+        f"Could not find responses for {response_type} key(s) in '{filename}':\n"
         + "\n".join(missing_items[:_RESPONSE_WARNING_LIMIT])
         + (f"\n... and {num_excess} other missing responses" if num_excess > 0 else "")
     )
