@@ -47,6 +47,7 @@ jobs:
     - name: Run screenshot tests
       id: screenshot-tests
       run: |
+        git fetch origin main
         git rebase main
         uv run just screenshot-comparison-test
       continue-on-error: true
