@@ -42,6 +42,11 @@ different classes of observations using the associated keywords:
    from a reservoir simulator RFT file. Examples are pressure and saturation
    values.
 
+ - :ref:`SEISMIC_OBSERVATION <seismic_observation>`: For loading spatially
+   distributed observations along a horizon, typically 4D seismic
+   attributes. Observations are loaded from a CSV or Parquet file with
+   one row per measurement location.
+
 
 Please note that observations and datatypes are quite tightly linked together.
 Before reading this you should have a firm grasp of the dynamic data types
@@ -707,3 +712,80 @@ is ``summary``. Valid formats are:
           - date: '2015-03-15'
             value: 0.015
             error: 0.01
+
+
+.. _seismic_observation:
+
+SEISMIC_OBSERVATION keyword
+---------------------------
+
+The keyword ``SEISMIC_OBSERVATION`` is used to condition on spatially
+distributed observations along a horizon, such as 4D seismic attributes
+(amplitude, time-shift, impedance change, etc.). Each observation
+represents a single measurement at a specific horizontal location, and a
+single ``SEISMIC_OBSERVATION`` declaration typically defines many
+individual measurements loaded from an external file.
+
+A minimal seismic observation is created as follows:
+
+.. code-block:: none
+
+   SEISMIC_OBSERVATION OBS_MEAN_2025 {
+      OBS_FILE = path/to/observations.csv;
+   };
+
+The name (``OBS_MEAN_2025`` above) is used as a label for the observation
+within ERT and must be unique. If the name is omitted, the stem of the
+observation file will be used.
+
+Observations are read from either a CSV file or a Parquet file. The file
+type is determined from the file extension (``.csv`` or ``.parquet``).
+Parquet is the preferred format for seismic observations as it is a typed,
+compressed binary format that is significantly smaller and faster to load
+than CSV. The file must contain one row per observation with the following
+required columns:
+
+- ``X_UTME``: Easting coordinate of the measurement location.
+- ``Y_UTMN``: Northing coordinate of the measurement location.
+- ``OBS``: The observed value at that location.
+- ``OBS_ERROR``: The observation error (absolute standard deviation).
+
+.. note::
+   The ``CSV`` key is a deprecated alias for ``OBS_FILE``.
+   Existing configurations using ``CSV = path/to/observations.csv;`` will
+   continue to work but emit a deprecation warning; new configurations should
+   use ``OBS_FILE``. ``OBS_FILE`` and ``CSV`` cannot be combined in the same
+   declaration.
+
+An example of such a CSV could look like this:
+
+.. code-block:: none
+
+   X_UTME,Y_UTMN,OBS,OBS_ERROR
+   463401.665023891,6929758.90312445,0.008602961,0.005
+   463312.374851203,6929712.58234601,-0.007062605,0.005
+   463245.488743621,6929689.04095157,0.009096828,0.005
+   463198.920134567,6929645.33178924,-0.007231411,0.005
+
+All observation coordinates within a single ``SEISMIC_OBSERVATION``
+declaration must be at least 0.2 m apart. Overlapping or duplicate
+coordinates will cause ERT to raise a configuration error.
+
+Limiting observations with a boundary polygon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An optional ``BOUNDARY`` file may be provided to restrict which
+observations are used during the update step. Observations located
+outside the polygon are deactivated. The boundary file must contain a
+closed polygon, given as ``X Y Z`` triplets, with the polygon terminated
+by a line containing ``999.0 999.0 999.0``:
+
+.. code-block:: none
+
+   SEISMIC_OBSERVATION OBS_MIN_2025 {
+      OBS_FILE = path/to/observations.csv;
+      BOUNDARY = path/to/boundary.pol;
+   };
+
+The boundary file is resolved relative to the directory containing the
+observation configuration file, the same as ``OBS_FILE``.
