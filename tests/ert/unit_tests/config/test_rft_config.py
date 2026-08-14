@@ -1558,6 +1558,29 @@ def test_that_all_wildcard_rft_key_doesnt_warn(
     assert no_warnings
 
 
+def test_that_all_wildcard_rft_key_warns_given_no_responses_at_all(
+    mock_resfo_file, egrid
+):
+    mock_resfo_file(
+        _MOCK_RESFO_DIR + "/BASE.RFT",
+        [],
+    )
+    mock_resfo_file(
+        _MOCK_RESFO_DIR + "/BASE.EGRID",
+        egrid,
+    )
+    warnings_ = _collect_rft_response_warnings(
+        wells=["*"],
+        times=["*"],
+        property_lists=[["*"]],
+    )
+    warning_message = str(warnings_.pop().message)
+    assert warning_message == (
+        "Could not find responses for RFT key(s) in 'BASE.RFT':\n"
+        "well='*' : time='*' : properties=['*']"
+    )
+
+
 def test_that_properties_without_response_warns_while_with_response_doesnt_warn(
     setup_mock_resfo_file,
 ):
