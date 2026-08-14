@@ -13,8 +13,8 @@ One solution is to restart from ``default_2`` which is straightforward in ERT.
 
 **Steps to Restart from `default_2`:**
 
-1. Check the "Select prior" checkbox.
-2. Use the "Run from" drop-down list to select the ensemble you wish to restart from.
+1. Check the "Restart run" checkbox.
+2. Use the "Restart from" drop-down list to select the ensemble you wish to restart from.
     In this example, you'll pick ``default_2``.
 3. Click "Run Experiment".
     This creates a new ensemble which by default is called ``default_2_3``.
