@@ -21,12 +21,10 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
 
     es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
     assert es_mda_panel
-    select_prior_checkbox = es_mda_panel.findChild(
-        QCheckBox, name="select_prior_checkbox_esmda"
-    )
-    assert select_prior_checkbox
-    select_prior_checkbox.click()
-    assert select_prior_checkbox.isChecked()
+    restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
+    assert restart_checkbox
+    restart_checkbox.click()
+    assert restart_checkbox.isChecked()
 
     es_mda_panel._ensemble_selector.setCurrentText("iter-0")
     assert es_mda_panel._ensemble_selector.selected_ensemble.name == "iter-0"
@@ -74,14 +72,12 @@ def test_that_esmda_active_realizations_are_set_only_when_restart_is_checked(
     active_reals = es_mda_panel.findChild(StringBox, "active_realizations_box")
     assert active_reals.text() == "0-9"
 
-    select_prior_checkbox = es_mda_panel.findChild(
-        QCheckBox, name="select_prior_checkbox_esmda"
-    )
-    assert select_prior_checkbox
-    assert not select_prior_checkbox.isChecked()
-    select_prior_checkbox.click()
+    restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
+    assert restart_checkbox
+    assert not restart_checkbox.isChecked()
+    restart_checkbox.click()
     assert active_reals.text() == "0-1"
-    select_prior_checkbox.click()
+    restart_checkbox.click()
     assert active_reals.text() == "0-9"
 
 
@@ -121,13 +117,11 @@ def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
         == "Total progress 100% — Experiment completed."
     )
     assert wsb.text() == default_weights
-    select_prior_checkbox = es_mda_panel.findChild(
-        QCheckBox, name="select_prior_checkbox_esmda"
-    )
-    assert select_prior_checkbox
-    assert not select_prior_checkbox.isChecked()
-    select_prior_checkbox.click()
+    restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
+    assert restart_checkbox
+    assert not restart_checkbox.isChecked()
+    restart_checkbox.click()
     # selecting restart will trigger reading of metadata.json containing custom weights
-    assert select_prior_checkbox.isChecked()
+    assert restart_checkbox.isChecked()
     assert not wsb.isEnabled()
     assert wsb.text() == custom_weights

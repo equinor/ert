@@ -320,7 +320,7 @@ class MultipleDataAssimilationConfig(
     InitialEnsembleRunModelConfig, UpdateRunModelConfig
 ):
     experiment_type: ExperimentType = ExperimentType.ES_MDA
-    select_prior: bool
+    restart_run: bool
     prior_ensemble_id: str | None
     arg_weights: str | None = Field(default=None, exclude=True)
 
@@ -337,7 +337,7 @@ class MultipleDataAssimilationConfig(
             **self._initial_ensemble_experiment_config(),
             **self._update_experiment_config(),
             **self._common_fields(),
-            "select_prior": self.select_prior,
+            "restart_run": self.restart_run,
             "prior_ensemble_id": self.prior_ensemble_id,
             "experiment_type": ExperimentType.ES_MDA,
         }

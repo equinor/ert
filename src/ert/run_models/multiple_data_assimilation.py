@@ -49,7 +49,7 @@ class MultipleDataAssimilation(
         self._parsed_weights = self.parse_weights(self.analysis_settings.weights)
         start_iteration = 0
         total_iterations = len(self._parsed_weights) + 1
-        if self.select_prior:
+        if self.restart_run:
             if not self.prior_ensemble_id:
                 raise ValueError("For restart run, prior ensemble must be set")
             start_iteration = (
@@ -93,7 +93,7 @@ class MultipleDataAssimilation(
             raise ErtRunError("ESMDA does not support restart")
 
         target_experiment = None
-        if self.select_prior:
+        if self.restart_run:
             id_ = self.prior_ensemble_id
             assert id_ is not None
 

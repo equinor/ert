@@ -117,7 +117,7 @@ class ExperimentConfig(TypedDict, total=False):
     ensemble_id: str
 
     # ESMDA
-    select_prior: bool
+    restart_run: bool
     prior_ensemble_id: str | None
 
     # Everest
