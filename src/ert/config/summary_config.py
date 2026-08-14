@@ -38,7 +38,7 @@ class SummaryConfig(ResponseConfig):
         keys_missing_responses = [
             key for key in self.keys if not fnmatch.filter(response_keys, key)
         ]
-        _warn_about_missing_responses(keys_missing_responses, "key(s)", filename)
+        _warn_about_missing_responses(keys_missing_responses, "summary", filename)
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
