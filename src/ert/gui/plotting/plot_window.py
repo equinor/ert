@@ -766,12 +766,18 @@ class PlotWindow(QMainWindow):
             else f"Select up to {max_selected} ensembles"
         )
 
+        is_observed_seismic = (
+            key_def.observations
+            and key_def.response is not None
+            and key_def.response.type == "seismic"
+        )
         available_widgets = [
             widget
             for widget in self._plot_widgets
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
+            and (not is_observed_seismic or widget.name == MISFITS)
         ]
 
         def everest_data_origin_check(origin: list[str]) -> bool:
