@@ -49,9 +49,7 @@ class MultipleDataAssimilation(
         self._parsed_weights = self.parse_weights(self.analysis_settings.weights)
         start_iteration = 0
         total_iterations = len(self._parsed_weights) + 1
-        if self.restart_run:
-            if not self.prior_ensemble_id:
-                raise ValueError("For restart run, prior ensemble must be set")
+        if self.prior_ensemble_id:
             start_iteration = (
                 self._storage.get_ensemble(self.prior_ensemble_id).iteration + 1
             )
@@ -93,17 +91,18 @@ class MultipleDataAssimilation(
             raise ErtRunError("ESMDA does not support restart")
 
         target_experiment = None
-        if self.restart_run:
-            id_ = self.prior_ensemble_id
-            assert id_ is not None
 
+        if self.prior_ensemble_id:
             try:
-                ensemble_id = UUID(id_)
+                ensemble_id = UUID(self.prior_ensemble_id)
                 prior = self._storage.get_ensemble(ensemble_id)
             except (KeyError, ValueError) as err:
-                logger.error(f"Could not load prior ensemble '{id_}': {err}")
+                logger.error(
+                    "Could not load prior ensemble '{self.prior_ensemble_id}': {err}"
+                )
                 raise ErtRunError(
-                    f"Prior ensemble with ID: {id_} does not exist or is broken"
+                    f"Prior ensemble with ID: {self.prior_ensemble_id} "
+                    "does not exist or is broken"
                 ) from err
 
             experiment = prior.experiment
@@ -122,16 +121,16 @@ class MultipleDataAssimilation(
                     experiment_config=self._create_experiment_for_restart(
                         experiment.experiment_config
                     ),
-                    name=f"Restart from {prior.name}",
+                    name=f"Run from {prior.name}",
                 )
             except Exception as err:
                 logger.exception(
                     f"Failed to create restart experiment from prior ensemble "
-                    f"'{prior.name}' (ID: {id_})"
+                    f"'{prior.name}' (ID: {self.prior_ensemble_id})"
                 )
                 raise ErtRunError(
-                    f"Could not restart from prior ensemble '{prior.name}' "
-                    f"(ID: {id_}): {err}"
+                    f"Could not run from prior ensemble '{prior.name}' "
+                    f"(ID: {self.prior_ensemble_id}): {err}"
                 ) from err
         else:
             self.run_workflows(

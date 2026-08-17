@@ -62,7 +62,6 @@ class Arguments:
     target_ensemble: str
     realizations: str
     weights: str
-    restart_run: bool
     prior_ensemble_id: str  # UUID not serializable in json
     experiment_name: str
 
@@ -195,19 +194,21 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         layout.addRow("Active realizations:", self._active_realizations_field)
         self._active_realizations_field.setObjectName("active_realizations_box")
 
-        self._restart_box = QCheckBox("")
-        self._restart_box.setObjectName("restart_checkbox_esmda")
-        self._restart_box.toggled.connect(self.restart_run_toggled)
-        self._restart_box.toggled.connect(self.update_experiment_edit)
+        self._select_prior_ensemble_box = QCheckBox("")
+        self._select_prior_ensemble_box.setObjectName("select_prior_checkbox_esmda")
+        self._select_prior_ensemble_box.toggled.connect(self.select_prior_toggled)
+        self._select_prior_ensemble_box.toggled.connect(self.update_experiment_edit)
 
-        self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
+        self._select_prior_ensemble_box.setEnabled(
+            bool(self._ensemble_selector._ensemble_list())
+        )
         self._ensemble_selector.setEnabled(False)
-        layout.addRow("Restart run:", self._restart_box)
+        layout.addRow("Select prior ensemble:", self._select_prior_ensemble_box)
 
-        self._ensemble_selector.ensemble_populated.connect(self.restart_run_toggled)
+        self._ensemble_selector.ensemble_populated.connect(self.select_prior_toggled)
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
-        layout.addRow("Restart from:", self._ensemble_selector)
+        layout.addRow("Run from prior ensemble:", self._ensemble_selector)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
@@ -286,16 +287,18 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def _evaluate_weights_box_enabled(self) -> None:
         self._relative_iteration_weights_box.setEnabled(
-            not self._restart_box.isChecked()
+            not self._select_prior_ensemble_box.isChecked()
             or (
                 self._ensemble_selector.selected_ensemble is not None
                 and not self._ensemble_selector.selected_ensemble.relative_weights
             )
         )
 
-    def restart_run_toggled(self) -> None:
-        self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
-        self._ensemble_selector.setEnabled(self._restart_box.isChecked())
+    def select_prior_toggled(self) -> None:
+        self._select_prior_ensemble_box.setEnabled(
+            bool(self._ensemble_selector._ensemble_list())
+        )
+        self._ensemble_selector.setEnabled(self._select_prior_ensemble_box.isChecked())
 
         self._relative_iteration_weights_box.setText(
             (
@@ -303,12 +306,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 and self._ensemble_selector.selected_ensemble.relative_weights
             )
             or self._configured_weights
-            if self._restart_box.isChecked()
+            if self._select_prior_ensemble_box.isChecked()
             else self._configured_weights
         )
         self._weights_source = self._relative_iteration_weights_box.text()
         self._update_weights_mismatch_warning()
-        if self._restart_box.isChecked():
+        if self._select_prior_ensemble_box.isChecked():
             self._active_realizations_field.setValidator(
                 self._previous_ensemble_realizations_validator
             )
@@ -418,11 +421,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             target_ensemble=self._target_ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
-            restart_run=self._restart_box.isChecked(),
             prior_ensemble_id=(
                 str(self._ensemble_selector.selected_ensemble.id)
                 if self._ensemble_selector.selected_ensemble is not None
-                and self._restart_box.isChecked()
+                and self._select_prior_ensemble_box.isChecked()
                 else ""
             ),
             experiment_name=self._experiment_name_field.get_text,

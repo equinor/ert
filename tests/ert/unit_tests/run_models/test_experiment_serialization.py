@@ -408,7 +408,6 @@ def multidass(_):
     # Note: this does not test restart runs, it may be
     # better to test that separately
     return {
-        "restart_run": False,
         "prior_ensemble_id": None,
     }
 
@@ -877,7 +876,6 @@ def test_that_dumped_esmda_matches_snapshot(
             realizations="1,2",
             target_ensemble="iter-<ITER>",
             weights="4, 2, 1",
-            restart_run=False,
             prior_ensemble_id=None,
             experiment_name="es-mda",
         ),

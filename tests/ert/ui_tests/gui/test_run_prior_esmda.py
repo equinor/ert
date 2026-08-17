@@ -8,9 +8,9 @@ from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from .conftest import get_child
 
 
-def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
+def test_run_prior_esmda(ensemble_experiment_has_run_no_failure, qtbot):
     """This runs an es-mda run from an ensemble created from an ensemble_experiment
-    run, via the restart feature for es-mda.
+    run, via the run prior feature for es-mda.
     Regression test for several issues where this failed only in the gui.
     """
     gui = ensemble_experiment_has_run_no_failure
@@ -21,10 +21,12 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
 
     es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
     assert es_mda_panel
-    restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
-    assert restart_checkbox
-    restart_checkbox.click()
-    assert restart_checkbox.isChecked()
+    select_prior_checkbox = es_mda_panel.findChild(
+        QCheckBox, name="select_prior_checkbox_esmda"
+    )
+    assert select_prior_checkbox
+    select_prior_checkbox.click()
+    assert select_prior_checkbox.isChecked()
 
     es_mda_panel._ensemble_selector.setCurrentText("iter-0")
     assert es_mda_panel._ensemble_selector.selected_ensemble.name == "iter-0"
@@ -39,12 +41,12 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
     )
 
 
-def test_that_esmda_active_realizations_are_set_only_when_restart_is_checked(
+def test_that_esmda_active_realizations_are_set_only_when_select_prior_is_checked(
     opened_main_window_poly, qtbot
 ):
     """This runs a experiment and then verifies that this does
     not interfere with the activate realizations in the es_mda panel unless the
-    restart from that specific ensemble is checked.
+    select_prior from that specific ensemble is checked.
     """
     gui = opened_main_window_poly
 
@@ -72,12 +74,14 @@ def test_that_esmda_active_realizations_are_set_only_when_restart_is_checked(
     active_reals = es_mda_panel.findChild(StringBox, "active_realizations_box")
     assert active_reals.text() == "0-9"
 
-    restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
-    assert restart_checkbox
-    assert not restart_checkbox.isChecked()
-    restart_checkbox.click()
+    select_prior_checkbox = es_mda_panel.findChild(
+        QCheckBox, name="select_prior_checkbox_esmda"
+    )
+    assert select_prior_checkbox
+    assert not select_prior_checkbox.isChecked()
+    select_prior_checkbox.click()
     assert active_reals.text() == "0-1"
-    restart_checkbox.click()
+    select_prior_checkbox.click()
     assert active_reals.text() == "0-9"
 
 
@@ -86,7 +90,7 @@ def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
 ):
     """This tests verifies that weights are stored in the metadata.json file
     when running esmda and that the content is read back and populated in the
-    GUI when enabling restart functionality.
+    GUI when enabling selecting prior ensemble functionality.
     """
     gui = opened_main_window_minimal_realizations
 
@@ -117,11 +121,14 @@ def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
         == "Total progress 100% — Experiment completed."
     )
     assert wsb.text() == default_weights
-    restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
-    assert restart_checkbox
-    assert not restart_checkbox.isChecked()
-    restart_checkbox.click()
-    # selecting restart will trigger reading of metadata.json containing custom weights
-    assert restart_checkbox.isChecked()
+    select_prior_checkbox = es_mda_panel.findChild(
+        QCheckBox, name="select_prior_checkbox_esmda"
+    )
+    assert select_prior_checkbox
+    assert not select_prior_checkbox.isChecked()
+    select_prior_checkbox.click()
+    # selecting prior ensemble will trigger
+    # reading of metadata.json containing custom weights
+    assert select_prior_checkbox.isChecked()
     assert not wsb.isEnabled()
     assert wsb.text() == custom_weights

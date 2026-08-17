@@ -75,8 +75,7 @@ def patch_run_model(monkeypatch):
             MultipleDataAssimilation,
             {
                 "target_ensemble": "ens%d",
-                "restart_run": False,
-                "prior_ensemble_id": "N/A",
+                "prior_ensemble_id": "",
             },
             EXPECTED_CALL_ORDER_WITH_ONE_UPDATE,
         ),
