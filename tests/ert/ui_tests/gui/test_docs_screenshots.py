@@ -52,7 +52,7 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
 TODOS = [
     "docs/ert/getting_started/configuration/poly_new/with_results/parameter_viewer.png",
     "docs/ert/getting_started/updating_parameters/fig/update_report.png",
-    "docs/ert/getting_started/howto/restart-es-mda.png",
+    "docs/ert/getting_started/howto/select_prior_es-mda.png",
     "docs/ert/getting_started/howto/ert_screenshot_adaptive_loc.png",
 ]
 

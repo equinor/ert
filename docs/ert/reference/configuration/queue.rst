@@ -47,7 +47,7 @@ On Crash or Exit
 Realizations that were submitted before the early exit will keep on running.
 Results in a runpath can be loaded manually if enough realizations completed.
 Normally ert will do this automatically at the end of each iteration.
-See also :ref:`restarting_es-mda`.
+See also :ref:`selecting_prior_es-mda`.
 
 LOCAL queue
 -----------
