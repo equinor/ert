@@ -70,7 +70,6 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
                 target_ensemble="target",
                 experiment_name="experiment",
                 num_iterations=1,
-                restart_run=False,
                 prior_ensemble_id="",
                 weights="2,3",
             ),
@@ -199,8 +198,7 @@ def test_that_setup_multiple_data_assimilation_uses_the_arguments_from_the_cli(
             realizations="0-4,8",
             weights="6,4,2",
             target_ensemble="test_case_%d",
-            restart_run=False,
-            prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
+            prior_ensemble_id=None,
             experiment_name="My-experiment",
             starting_iteration=0,
         ),
@@ -215,8 +213,7 @@ def test_that_setup_multiple_data_assimilation_uses_the_arguments_from_the_cli(
         == [True] * 5 + [False] * 3 + [True] * 1 + [False] * 91
     )
     assert model.target_ensemble == "test_case_%d"
-    assert model.prior_ensemble_id == "b272fe09-83ac-4744-b667-9a0a5415420b"
-    assert model.restart_run is False
+    assert model.prior_ensemble_id is None
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
@@ -235,8 +232,7 @@ def test_that_setup_multiple_data_assimilation_uses_config_weights_when_cli_omit
             realizations="0-4,8",
             target_ensemble="test_case_%d",
             weights=None,
-            restart_run=False,
-            prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
+            prior_ensemble_id=None,
             experiment_name="My-experiment",
             starting_iteration=0,
         ),
@@ -281,7 +277,6 @@ def test_multiple_data_assimilation_restart_paths(
         realizations="0,1",
         weights="6,4,2",
         target_ensemble="restart_case_%d",
-        restart_run=True,
         prior_ensemble_id=str(uuid1()),
         experiment_name="just_assimilatin",
     )
@@ -319,7 +314,6 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
         realizations="0",
         weights="6,4,2",
         target_ensemble="restart_case_%d",
-        restart_run=True,
         prior_ensemble_id=str(uuid1()),
         experiment_name=None,
     )
@@ -392,7 +386,7 @@ def test_that_setting_up_experiment_with_update_step_raises_config_validation_er
     ones specified in the gui) and all active realization in the 'config', meaning we
     are referring to two different active realizations.
     """
-    args = MagicMock(realizations="0", restart_run=False, prior_ensemble_id="")
+    args = MagicMock(realizations="0", prior_ensemble_id="")
     config = MagicMock()
     config.active_realizations = [True] * 10
     config.analysis_config = MagicMock(minimum_required_realizations=1)

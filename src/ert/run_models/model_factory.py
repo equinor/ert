@@ -456,23 +456,20 @@ def _setup_ensemble_information_filter(
     )
 
 
-def _determine_restart_info(args: Namespace) -> tuple[bool, str | None]:
+def _determine_previous_ensemble_id(args: Namespace) -> str | None:
     """Handles differences in configuration between CLI and GUI.
 
     Returns
     -------
-    A tuple containing the restart_run flag and the ensemble
-    to run from.
+    The prior ensemble id to start from.
     """
     if hasattr(args, "restart_ensemble_id"):
         # When running from CLI
-        restart_run = args.restart_ensemble_id is not None
         prior_ensemble = args.restart_ensemble_id or ""
     else:
         # When running from GUI
-        restart_run = args.restart_run
         prior_ensemble = args.prior_ensemble_id
-    return restart_run, prior_ensemble
+    return prior_ensemble
 
 
 def _setup_multiple_data_assimilation(
@@ -481,7 +478,7 @@ def _setup_multiple_data_assimilation(
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> MultipleDataAssimilation:
-    restart_run, prior_ensemble = _determine_restart_info(args)
+    prior_ensemble = _determine_previous_ensemble_id(args)
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
     if sum(active_realizations) < 2:
@@ -490,7 +487,7 @@ def _setup_multiple_data_assimilation(
         )
 
     parameter_configs, design_matrix = _merge_parameters(
-        design_matrix=None if restart_run else config.analysis_config.design_matrix,
+        design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
     )
@@ -500,7 +497,6 @@ def _setup_multiple_data_assimilation(
         active_realizations=active_realizations,
         target_ensemble=_iterative_ensemble_format(args),
         arg_weights=args.weights,
-        restart_run=restart_run,
         prior_ensemble_id=prior_ensemble,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         experiment_name=args.experiment_name,

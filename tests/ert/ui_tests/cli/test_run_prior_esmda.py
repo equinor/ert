@@ -167,7 +167,7 @@ def test_that_running_esmda_from_restart_uses_previous_observations_and_paramete
     )
 
     with open_storage("storage") as storage:
-        experiment = storage.get_experiment_by_name("Restart from default")
+        experiment = storage.get_experiment_by_name("Run from default")
 
     for param in experiment.parameter_keys:
         assert param in {"a", "b", "c"}
@@ -216,7 +216,7 @@ def poly_prior_ensemble_id(
         return str(ensemble.id)
 
 
-def _build_esmda_restart_model(prior_ensemble_id: str):
+def _build_esmda_run_prior_model(prior_ensemble_id: str):
     config = ErtConfig.from_file("config.ert")
     return create_model(
         config,
@@ -225,7 +225,6 @@ def _build_esmda_restart_model(prior_ensemble_id: str):
             realizations=None,
             target_ensemble="iter-<ITER>",
             weights="1,1",
-            restart_run=True,
             prior_ensemble_id=prior_ensemble_id,
             experiment_name="restart-experiment",
         ),
@@ -234,10 +233,10 @@ def _build_esmda_restart_model(prior_ensemble_id: str):
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_that_restarting_esmda_with_invalid_prior_ensemble_id_gives_error_message(
+def test_that_running_prior_esmda_with_invalid_prior_ensemble_id_gives_error_message(
     poly_prior_ensemble_id,
 ):
-    model = _build_esmda_restart_model(poly_prior_ensemble_id)
+    model = _build_esmda_run_prior_model(poly_prior_ensemble_id)
 
     model.prior_ensemble_id = "not-a-valid-uuid"
 
@@ -249,7 +248,7 @@ def test_that_restarting_esmda_with_invalid_prior_ensemble_id_gives_error_messag
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_that_restarting_esmda_from_prior_with_localized_gen_obs_gives_error_message(
+def test_that_running_prior_esmda_with_localized_gen_obs_gives_error_message(
     poly_prior_ensemble_id,
 ):
     with open_storage("storage", mode="w") as storage:
@@ -264,13 +263,13 @@ def test_that_restarting_esmda_from_prior_with_localized_gen_obs_gives_error_mes
             observation["radius"] = None
         index_path.write_text(json.dumps(index), encoding="utf-8")
 
-    model = _build_esmda_restart_model(poly_prior_ensemble_id)
+    model = _build_esmda_run_prior_model(poly_prior_ensemble_id)
 
     try:
         with pytest.raises(
             ErtRunError,
             match=(
-                f"Could not restart from prior ensemble 'default' "
+                f"Could not run from prior ensemble 'default' "
                 f"\\(ID: {poly_prior_ensemble_id}\\):"
             ),
         ):

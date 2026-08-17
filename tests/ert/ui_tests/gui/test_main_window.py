@@ -734,7 +734,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
     gui.close()
 
 
-def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_valid_cases(
+def test_that_es_mda_select_prior_run_box_is_disabled_when_there_are_no_valid_cases(
     qtbot, opened_main_window_minimal_realizations, run_experiment
 ):
     gui = opened_main_window_minimal_realizations
@@ -749,23 +749,25 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_valid_cases(
     es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
     assert es_mda_panel
 
-    restart_button = get_child(es_mda_panel, QCheckBox, name="restart_checkbox_esmda")
+    select_prior_button = get_child(
+        es_mda_panel, QCheckBox, name="select_prior_checkbox_esmda"
+    )
     ensemble_selector = get_child(es_mda_panel, EnsembleSelector)
 
-    assert restart_button
+    assert select_prior_button
 
     assert ensemble_selector.count() == 0
-    assert not restart_button.isEnabled()
+    assert not select_prior_button.isEnabled()
 
     add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
 
     assert ensemble_selector.count() == 0
-    assert not restart_button.isEnabled()
+    assert not select_prior_button.isEnabled()
 
     run_experiment(EnsembleExperiment, gui)
 
     assert ensemble_selector.count() == 1
-    assert restart_button.isEnabled()
+    assert select_prior_button.isEnabled()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
