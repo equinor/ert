@@ -8,7 +8,6 @@ import numpy as np
 import polars as pl
 
 from ert.config._reservoir_data_utils import SeismicData
-from ert.substitutions import substitute_runpath_name
 
 from .parsing import (
     ConfigDict,
@@ -64,15 +63,21 @@ class SeismicConfig(SimulationResponseConfig):
                 f"{SeismicData.TOLERANCE * 2} m apart."
             )
 
+    def _collect_response_filepaths(self, run_path: str) -> list[Path]:
+        filepaths = []
+        for file in self.expected_input_files:
+            filepaths.extend(
+                SeismicData.resolve_pattern_filepaths(
+                    run_path, file, on_error=InvalidResponseFile
+                )
+            )
+        return list(dict.fromkeys(filepaths))
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         responses = pl.DataFrame(schema=self.response_schema())
-        for key, file in zip(self.keys, self.expected_input_files, strict=True):
-            filepath_runpath_relative = substitute_runpath_name(file, iens, iter_)
-            filepath = Path(run_path) / filepath_runpath_relative
-            if not filepath.exists():
-                raise InvalidResponseFile(
-                    f"Expected seismic response file {filepath} does not exist."
-                )
+        filepaths = self._collect_response_filepaths(run_path)
+        keys = [f.stem for f in filepaths]
+        for key, filepath in zip(keys, filepaths, strict=True):
             suffix = filepath.suffix.lower()
             if suffix == ".parquet":
                 data = pl.read_parquet(filepath)
@@ -114,4 +119,5 @@ class SeismicConfig(SimulationResponseConfig):
             name="seismic",
             input_files=files,
             keys=[Path(f).stem for f in files],
+            has_finalized_keys=False,
         )
