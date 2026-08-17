@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Literal, cast
 import numpy as np
 import pandas as pd
 import polars as pl
-from matplotlib.lines import Line2D
 
 from ert.gui.plotting.shared_plots.generic_boxplot_with_scatter import (
     generate_legend_items,
@@ -320,96 +319,38 @@ class MisfitsPlot:
         axes.set_ylim(y_min, y_max)
         axes.axhline(0.0, color="black", linewidth=0.5, alpha=0.5)
 
-        config = plot_context.plotConfig()
         for position, ens_key in zip(positions, plotted_keys, strict=True):
             color = color_map[ens_key]
             values = ensemble_misfits[ens_key]
-            axes.boxplot(
+            generate_plots(
+                plot_context,
+                axes,
                 [values],
-                positions=[position],
-                widths=box_width,
-                whis=(LOWER_PERCENTILE_FOR_WHISKERS, UPPER_PERCENTILE_FOR_WHISKERS),
-                patch_artist=True,
-                showfliers=True,
-                boxprops={
-                    "facecolor": color,
-                    "alpha": 0.8,
-                    "edgecolor": color,
-                    "linewidth": 0.7,
-                },
-                whiskerprops={
-                    "color": color,
-                    "alpha": 1,
-                    "linewidth": 1,
-                    "linestyle": "--",
-                },
-                capprops={
-                    "color": color,
-                    "alpha": 1,
-                    "linewidth": 2,
-                    "linestyle": "--",
-                },
-                medianprops={"color": "black", "linewidth": 1, "alpha": 1},
-                flierprops={
-                    "marker": "o",
-                    "alpha": 1,
-                    "markeredgewidth": 0.3 + (0.4 * (1 - box_width)),
-                    "markeredgecolor": color,
-                    "markerfacecolor": "none",
-                },
+                [position],
+                box_width,
+                color,
+                LOWER_PERCENTILE_FOR_WHISKERS,
+                UPPER_PERCENTILE_FOR_WHISKERS,
+                legend_label=ens_key[0],
             )
-            axes.plot(
-                position,
-                float(np.nanmean(values)),
-                "D",
-                markersize=4,
-                color="black",
-                zorder=3,
-            )
-            median_val = float(np.nanmedian(values))
-            axes.annotate(
-                f"{median_val:.3g}",
-                xy=(position + box_width / 2, median_val),
-                xytext=(4, 0),
-                textcoords="offset points",
-                va="center",
-                ha="left",
-                fontsize=10,
-                color="black",
-                zorder=4,
-            )
+            if plot_context.box_plot:
+                median_val = float(np.nanmedian(values))
+                axes.annotate(
+                    f"{median_val:.3g}",
+                    xy=(position + box_width / 2, median_val),
+                    xytext=(4, 0),
+                    textcoords="offset points",
+                    va="center",
+                    ha="left",
+                    fontsize=10,
+                    color="black",
+                    zorder=4,
+                )
 
-        config.add_legend_item(
-            "Median", Line2D([0], [0], color="black", linewidth=0.9, alpha=1)
-        )
-        config.add_legend_item(
-            f"Whiskers ({LOWER_PERCENTILE_FOR_WHISKERS}-"
-            f"{UPPER_PERCENTILE_FOR_WHISKERS} %)",
-            Line2D([0], [0], color="black", linewidth=2, linestyle="--", alpha=1),
-        )
-        config.add_legend_item(
-            "Outliers",
-            Line2D(
-                [0],
-                [0],
-                marker="o",
-                color="none",
-                markeredgecolor="black",
-                markerfacecolor="none",
-                markersize=6,
-                alpha=1,
-            ),
-        )
-        config.add_legend_item(
-            "Mean",
-            Line2D(
-                [0],
-                [0],
-                marker="D",
-                linestyle="None",
-                color="black",
-                markersize=4,
-            ),
+        generate_legend_items(
+            plot_context,
+            LOWER_PERCENTILE_FOR_WHISKERS,
+            UPPER_PERCENTILE_FOR_WHISKERS,
         )
 
         axes.set_xlim(-0.5, len(plotted_keys) - 0.5)
