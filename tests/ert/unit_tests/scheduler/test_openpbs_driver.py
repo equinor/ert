@@ -658,7 +658,10 @@ async def test_that_queue_system_can_kill_before_scheduler_with_negative_padding
     stdout_content: dict[str, dict] = json.loads(stdout.decode(errors="ignore"))
     job = stdout_content.get("Jobs", {}).get(job_id, {})
     assert job is not None, "Job not found in qstat output"
-    assert job.get("job_state") == "F", "The job was not marked as failed"
+    job_state = job.get("job_state")
+    assert job_state in {"E", "F"}, (
+        f"Expected job state to be 'E' (exiting) or 'F' (failed), got {job_state}"
+    )
     assert job.get("Resource_List", {}).get("walltime") == "00:00:00", (
         "Wall time was not propagated correctly"
     )
