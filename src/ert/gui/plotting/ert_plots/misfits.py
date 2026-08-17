@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Literal, cast
 import numpy as np
 import pandas as pd
 import polars as pl
+from matplotlib.lines import Line2D
 
 from ert.gui.plotting.shared_plots.generic_boxplot_with_scatter import (
     generate_legend_items,
@@ -158,7 +159,14 @@ class MisfitsPlot:
                 plot_context,
             )
 
-        elif response_type in {"gen_data", "rft", "seismic"}:
+        elif response_type == "seismic":
+            self._plot_seismic_mean_misfits(
+                figure,
+                data_with_misfits,
+                plot_context,
+            )
+
+        elif response_type in {"gen_data", "rft"}:
             self._plot_misfits(
                 figure,
                 data_with_misfits,
@@ -269,4 +277,154 @@ class MisfitsPlot:
             axes,
             default_x_label="",
             default_y_label="Value",
+        )
+
+    def _plot_seismic_mean_misfits(
+        self,
+        figure: Figure,
+        data_with_misfits: dict[tuple[str, str], pl.DataFrame],
+        plot_context: PlotContext,
+    ) -> None:
+        plot_context.plot_type = PlotType.BOX
+
+        sorted_ensemble_keys = sorted(data_with_misfits.keys())
+        color_map = self._map_ensembles_to_colours(
+            sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
+        )
+
+        # Average observation-point misfits within each realization. Each box then
+        # represents the ensemble distribution of mean misfits across realizations.
+        ensemble_misfits: dict[tuple[str, str], npt.NDArray[np.float64]] = {}
+        for ens_key in sorted_ensemble_keys:
+            df = data_with_misfits[ens_key]
+            if df.is_empty():
+                continue
+            ensemble_misfits[ens_key] = (
+                df.group_by("Realization")
+                .agg(pl.col("misfit").mean())
+                .get_column("misfit")
+                .to_numpy()
+            )
+
+        plotted_keys = list(ensemble_misfits.keys())
+        ensemble_names = [k[0] for k in plotted_keys]
+        positions = list(range(len(plotted_keys)))
+        box_width = 0.6
+
+        all_misfits = pl.DataFrame(
+            {"misfit": np.concatenate(list(ensemble_misfits.values()))}
+        )
+        y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
+
+        axes = figure.add_subplot(111)
+        axes.set_ylim(y_min, y_max)
+        axes.axhline(0.0, color="black", linewidth=0.5, alpha=0.5)
+
+        config = plot_context.plotConfig()
+        for position, ens_key in zip(positions, plotted_keys, strict=True):
+            color = color_map[ens_key]
+            values = ensemble_misfits[ens_key]
+            axes.boxplot(
+                [values],
+                positions=[position],
+                widths=box_width,
+                whis=(LOWER_PERCENTILE_FOR_WHISKERS, UPPER_PERCENTILE_FOR_WHISKERS),
+                patch_artist=True,
+                showfliers=True,
+                boxprops={
+                    "facecolor": color,
+                    "alpha": 0.8,
+                    "edgecolor": color,
+                    "linewidth": 0.7,
+                },
+                whiskerprops={
+                    "color": color,
+                    "alpha": 1,
+                    "linewidth": 1,
+                    "linestyle": "--",
+                },
+                capprops={
+                    "color": color,
+                    "alpha": 1,
+                    "linewidth": 2,
+                    "linestyle": "--",
+                },
+                medianprops={"color": "black", "linewidth": 1, "alpha": 1},
+                flierprops={
+                    "marker": "o",
+                    "alpha": 1,
+                    "markeredgewidth": 0.3 + (0.4 * (1 - box_width)),
+                    "markeredgecolor": color,
+                    "markerfacecolor": "none",
+                },
+            )
+            axes.plot(
+                position,
+                float(np.nanmean(values)),
+                "D",
+                markersize=4,
+                color="black",
+                zorder=3,
+            )
+            median_val = float(np.nanmedian(values))
+            axes.annotate(
+                f"{median_val:.3g}",
+                xy=(position + box_width / 2, median_val),
+                xytext=(4, 0),
+                textcoords="offset points",
+                va="center",
+                ha="left",
+                fontsize=10,
+                color="black",
+                zorder=4,
+            )
+
+        config.add_legend_item(
+            "Median", Line2D([0], [0], color="black", linewidth=0.9, alpha=1)
+        )
+        config.add_legend_item(
+            f"Whiskers ({LOWER_PERCENTILE_FOR_WHISKERS}-"
+            f"{UPPER_PERCENTILE_FOR_WHISKERS} %)",
+            Line2D([0], [0], color="black", linewidth=2, linestyle="--", alpha=1),
+        )
+        config.add_legend_item(
+            "Outliers",
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="none",
+                markeredgecolor="black",
+                markerfacecolor="none",
+                markersize=6,
+                alpha=1,
+            ),
+        )
+        config.add_legend_item(
+            "Mean",
+            Line2D(
+                [0],
+                [0],
+                marker="D",
+                linestyle="None",
+                color="black",
+                markersize=4,
+            ),
+        )
+
+        axes.set_xlim(-0.5, len(plotted_keys) - 0.5)
+        axes.set_xticks(positions, labels=ensemble_names)
+
+        plot_context.plotConfig().set_title(
+            f"{plot_context.key()} (Mean signed Chi-squared misfit per ensemble)"
+            if plot_context.plotConfig().is_unnamed()
+            else f"{plot_context.plotConfig().title()} (Signed Chi-squared)"
+        )
+
+        PlotTools.finalize_plot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label="Ensemble name",
+            default_y_label="Mean signed Chi-squared misfit",
         )
