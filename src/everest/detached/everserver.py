@@ -22,9 +22,6 @@ from everest.config import ServerConfig
 from everest.detached import get_experiments
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
-    EVEREST,
-    EVERSERVER,
-    EXPERIMENT_SERVER,
     OPTIMIZATION_LOG_DIR,
     EverEndpoints,
 )
@@ -67,17 +64,7 @@ def _configure_loggers(
                 for logger_name, logger_config in ert_loggers.items()
                 if logger_config.get("level") == "WARNING"
             },
-            EVERSERVER: {
-                "handlers": ["endpoint_log"],
-                "level": logging_level,
-                "propagate": False,
-            },
-            EXPERIMENT_SERVER: {
-                "handlers": ["endpoint_log"],
-                "level": logging_level,
-                "propagate": False,
-            },
-            EVEREST: {
+            "everest": {
                 "handlers": ["everest_log"],
                 "level": logging_level,
                 "propagate": False,
@@ -169,7 +156,7 @@ def main() -> None:
                 output_file=log_file.name,
             )
 
-            logging.getLogger(EVERSERVER).info("Everserver starting ...")
+            logging.getLogger(__name__).info("Everserver starting ...")
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
             # Starting the server
@@ -200,9 +187,9 @@ def main() -> None:
                         time.sleep(0.5)
         except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
-            logging.getLogger(EVERSERVER).info("Everserver stopped by user")
+            logging.getLogger(__name__).info("Everserver stopped by user")
         except Exception as e:
-            logging.getLogger(EVERSERVER).exception(e)
+            logging.getLogger(__name__).exception(e)
 
 
 if __name__ == "__main__":
