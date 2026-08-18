@@ -62,7 +62,7 @@ class Arguments:
     target_ensemble: str
     realizations: str
     weights: str
-    prior_ensemble_id: str  # UUID not serializable in json
+    prior_ensemble_id: str | None  # UUID not serializable in json
     experiment_name: str
 
 
@@ -425,7 +425,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 str(self._ensemble_selector.selected_ensemble.id)
                 if self._ensemble_selector.selected_ensemble is not None
                 and self._select_prior_ensemble_box.isChecked()
-                else ""
+                else None
             ),
             experiment_name=self._experiment_name_field.get_text,
         )

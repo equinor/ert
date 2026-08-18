@@ -465,7 +465,7 @@ def _determine_previous_ensemble_id(args: Namespace) -> str | None:
     """
     if hasattr(args, "restart_ensemble_id"):
         # When running from CLI
-        prior_ensemble = args.restart_ensemble_id or ""
+        prior_ensemble = args.restart_ensemble_id or None
     else:
         # When running from GUI
         prior_ensemble = args.prior_ensemble_id
