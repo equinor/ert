@@ -203,10 +203,12 @@ class ExperimentPanel(QWidget):
             True,
         )
 
-        experiment_type_valid = any(
-            p.update_strategy is not None
-            for p in config.ensemble_config.parameter_configs.values()
-        ) and bool(config.observation_declarations)
+        merged_parameters = config.parameter_configurations_with_design_matrix
+        updatable_parameters_exist = any(
+            p.update_strategy is not None for p in merged_parameters
+        )
+        observations_exist = bool(config.observation_declarations)
+        experiment_model_enabled = updatable_parameters_exist and observations_exist
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
@@ -217,7 +219,7 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_type_valid,
+            experiment_model_enabled,
         )
         self.addExperimentConfigPanel(
             EnsembleSmootherPanel(
@@ -228,7 +230,7 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_type_valid,
+            experiment_model_enabled,
         )
         self.addExperimentConfigPanel(
             EnsembleInformationFilterPanel(
@@ -239,11 +241,11 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_type_valid,
+            experiment_model_enabled,
         )
         self.addExperimentConfigPanel(
             ManualUpdatePanel(run_path, notifier, analysis_config),
-            experiment_type_valid,
+            experiment_model_enabled,
         )
 
         self.configuration_summary = SummaryPanel(config)
