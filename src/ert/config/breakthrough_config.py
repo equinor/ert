@@ -18,6 +18,15 @@ class BreakthroughConfig(DerivedResponseConfig):
     observed_dates: list[datetime] = Field(default_factory=list)
     has_finalized_keys: bool = True
 
+    @staticmethod
+    def response_schema() -> dict[str, Any]:
+        return {
+            "response_key": pl.String,
+            "threshold": pl.Float64,
+            "time": pl.Datetime(time_unit="ms", time_zone=None),
+            "values": pl.Float32,
+        }
+
     def derive_from_storage(
         self, iter_: int, realization: int, ensemble: Any
     ) -> pl.DataFrame:
@@ -55,7 +64,9 @@ class BreakthroughConfig(DerivedResponseConfig):
             time_offset_series = pl.Series(breakthrough_time_offsets, dtype=pl.Float32)
         else:
             time_offset_series = pl.Series(breakthrough_time_offsets, dtype=Float32)
-            time_series = pl.Series(breakthrough_times).dt.cast_time_unit("ms")
+            time_series = pl.Series(breakthrough_times)
+
+        time_series = time_series.dt.cast_time_unit("ms")
 
         return pl.DataFrame(
             {
@@ -64,7 +75,7 @@ class BreakthroughConfig(DerivedResponseConfig):
                 "time": time_series,
                 "values": time_offset_series,
             }
-        )
+        ).pipe(self._assert_schema, self.response_schema())
 
     @property
     def match_key(self) -> list[str]:
