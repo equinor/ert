@@ -1145,7 +1145,7 @@ requires-dist = [
     { name = "pyzmq" },
     { name = "requests" },
     { name = "resfo", specifier = ">=5.0.0" },
-    { name = "resfo-utilities", specifier = ">=0.5.0" },
+    { name = "resfo-utilities", specifier = ">=1.1.0" },
     { name = "ropt", extras = ["pandas"], specifier = ">=0.28.1,<0.29" },
     { name = "ropt-dakota", specifier = ">=0.28,<0.29" },
     { name = "ruamel-yaml" },
