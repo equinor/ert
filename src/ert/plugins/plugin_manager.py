@@ -319,10 +319,24 @@ class ErtPluginManager(pluggy.PluginManager):
         self.hook.legacy_ertscript_workflow(config=config)
         return config
 
-    def add_logging_handle_to_root(self, logger: logging.Logger) -> None:
+    def add_logging_handle_to_root(
+        self, logger: logging.Logger
+    ) -> list[logging.Handler]:
         handles = self.hook.add_log_handle_to_root()
+        # Loggers configured with propagate=False never forward their records
+        # to the root logger's handlers, so the plugin handles must be
+        # attached directly to them as well.
+        non_propagating_loggers = [
+            existing_logger
+            for existing_logger in logging.Logger.manager.loggerDict.values()
+            if isinstance(existing_logger, logging.Logger)
+            and not existing_logger.propagate
+        ]
         for handle in handles:
             logger.addHandler(handle)
+            for non_propagating_logger in non_propagating_loggers:
+                non_propagating_logger.addHandler(handle)
+        return handles
 
     def get_ip_address(self) -> str:
         ip_address: list[str] = self.hook.get_ip_address()

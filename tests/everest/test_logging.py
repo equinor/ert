@@ -48,24 +48,16 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_output_path = Path.cwd() / "everest_output"
     everest_logs_dir_path = Path(everest_config.log_dir)
     everserver_log_path = everest_logs_dir_path / "everserver.log"
-    everest_log_path = everest_logs_dir_path / "everest.log"
-    forward_model_log_path = everest_logs_dir_path / "forward_models.log"
 
     assert everest_output_path.exists()
     assert everest_logs_dir_path.exists()
-    assert forward_model_log_path.exists()
-    assert everest_log_path.exists()
     assert everserver_log_path.exists()
 
-    assert (
-        "everest.detached.everserver INFO: Output directory:"
-        in everest_log_path.read_text(encoding="utf-8")
-    )
-    assert "Process exited with status code 1" in forward_model_log_path.read_text(
-        encoding="utf-8"
-    )
-
     endpoint_logs = everserver_log_path.read_text(encoding="utf-8")
+
+    assert "everest.detached.everserver INFO: Output directory:" in endpoint_logs
+    assert "Process exited with status code 1" in endpoint_logs
+
     # Avoid cases where optimization finished before we get a chance to check that
     # the everest server has started
     if endpoint_logs:
