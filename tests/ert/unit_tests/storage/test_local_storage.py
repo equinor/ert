@@ -5,6 +5,7 @@ import shutil
 import stat
 from datetime import datetime, timedelta
 from pathlib import Path
+from textwrap import dedent
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import hypothesis.strategies as st
@@ -20,6 +21,8 @@ from ert.config import (
 from ert.config._observations import (
     BreakthroughObservation,
 )
+from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
+from ert.config.seismic_config import SeismicConfig
 from ert.dark_storage.common import ErtStoragePermissionError
 from ert.storage import (
     ErtStorageException,
@@ -31,6 +34,8 @@ from ert.storage.blob_data import BlobType
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
 from ert.storage.mode import ModeError
 from tests.ert.defaults_generator import (
+    create_seismic_observation,
+    create_seismic_response,
     create_summary_observation,
 )
 from tests.ert.unit_tests.storage._storage_test_helpers import (
@@ -153,7 +158,7 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
         {
             "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
             "time": pl.Series(
-                [datetime.now() + timedelta(days=i) for i in range(6)]  # noqa: DTZ005
+                [datetime.now() + timedelta(days=i) for i in range(6)]  # ruff: ignore[call-datetime-now-without-tzinfo]
             ).dt.cast_time_unit("ms"),
             "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
         }
@@ -396,7 +401,7 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
     with open_storage(tmp_path, mode="w") as storage:
         response_keys = ["FOPR", "FOPT_OP1", "FOPR:OP3", "FLAP", "F*"]
         obs_keys = [f"o_{k}" for k in response_keys]
-        times = [datetime(2000, 1, 1, 1, 0)] * len(response_keys)  # noqa: DTZ001
+        times = [datetime(2000, 1, 1, 1, 0)] * len(response_keys)  # ruff: ignore[call-datetime-without-tzinfo]
         summary_observations = [
             {
                 "type": "summary_observation",
@@ -654,7 +659,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
     with open_storage(tmp_path, mode="w") as storage:
         response_key = "WWCT:OP1"
         # This observed time will be 1 day and 12 hours after derived breakthrough time
-        time = datetime(2000, 3, 2, 13, 0)  # noqa: DTZ001
+        time = datetime(2000, 3, 2, 13, 0)  # ruff: ignore[call-datetime-without-tzinfo]
 
         breakthrough_config = BreakthroughConfig(
             keys=[f"BREAKTHROUGH:{response_key}"],
@@ -691,7 +696,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
             {
                 "realization": [0] * 10,
                 "response_key": ["WWCT:OP1"] * 10,
-                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],  # noqa: DTZ001
+                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
                 "values": [n / 10 for n in range(10)],
             }
         )
@@ -744,7 +749,7 @@ def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
     tmp_path, summary_kwargs
 ):
     with open_storage(tmp_path, mode="w") as storage:
-        obs_date = datetime(2000, 1, 1)  # noqa: DTZ001
+        obs_date = datetime(2000, 1, 1)  # ruff: ignore[call-datetime-without-tzinfo]
 
         summary_config = SummaryConfig(input_files=["not_relevant"], keys=["*"])
 
@@ -789,3 +794,179 @@ def test_that_get_observations_and_responses_adds_qc_error_on_summary_mismatch(
         np.testing.assert_equal(obs_and_responses["1"].to_list(), [None])
         assert obs_and_responses["qc_error_0"].to_list() == [msg]
         assert obs_and_responses["qc_error_1"].to_list() == [msg]
+
+
+def test_that_get_observations_and_responses_bounds_seismic_observations(
+    tmp_path, mocked_files
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        seismic_config = SeismicConfig()
+
+        mocked_files["polygon.pol"] = dedent(
+            """
+            0.000000 0.000000 0.000000
+            0.000000 1.000000 0.000000
+            1.000000 1.000000 0.000000
+            1.000000 0.000000 0.000000
+            999.000000 999.000000 999.000000
+            """
+        )
+        boundary = PolygonShapeConfig.from_file("polygon.pol")
+        shape_registry = ShapeRegistry()
+        boundary_id = shape_registry.register(boundary)
+
+        seismic_observation1 = create_seismic_observation(
+            name="seismic_observation_inside",
+            filepath=Path("obs.csv"),
+            east=0.5,
+            north=0.5,
+            boundary_id=boundary_id,
+        )
+
+        seismic_observation2 = create_seismic_observation(
+            name="seismic_observation_outside",
+            filepath=Path("obs.csv"),
+            east=1.5,
+            north=1.5,
+            boundary_id=boundary_id,
+        )
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [seismic_config.model_dump(mode="json")],
+                "observations": [
+                    seismic_observation1.model_dump(mode="json"),
+                    seismic_observation2.model_dump(mode="json"),
+                ],
+                "shape_registry": shape_registry.model_dump(mode="json"),
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        response_dataframe = pl.DataFrame(
+            {
+                "response_key": ["obs", "obs"],
+                "east": [np.float32(0.5), np.float32(1.5)],
+                "north": [np.float32(0.5), np.float32(1.5)],
+                "values": [np.float32(1), np.float32(2)],
+            }
+        )
+        seismic_config._assert_schema(
+            response_dataframe, seismic_config.response_schema()
+        )
+        ensemble.save_response("seismic", response_dataframe, 0)
+
+        iens_active_index = np.array([0])
+        active_observations = [
+            "seismic_observation_inside",
+            "seismic_observation_outside",
+        ]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["observation_key"].to_list() == [
+            "seismic_observation_inside",
+        ]
+
+
+def test_that_get_observations_and_responses_compares_seismic_with_tolerance(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        seismic_config = SeismicConfig()
+
+        seismic_observation1 = create_seismic_observation(
+            name="1_observation_no_matching_response",
+            east=0.5,
+            north=0.5,
+        )
+
+        seismic_observation2 = create_seismic_observation(
+            name="2_observation_with_different_response_key",
+            filepath=Path("wrong_response_key_obs.csv"),
+            east=0.6,
+            north=0.6,
+            value=100.0,
+        )
+
+        seismic_observation3 = create_seismic_observation(
+            name="3_observation_one_matching_response",
+            east=1.5,
+            north=1.5,
+        )
+
+        # Note that two matching responses / two observations sharing a matching
+        # response should be impossible if all validations are completed. Values for
+        # each response key are assured to be outside of the 2 * tolerance distance from
+        # each other, both for responses and observations. Thus within 1 * tolerance
+        # radius there should be a maximum of one match between observation and
+        # response. Below unexpected setups are present to assure function returns a
+        # reasonable result regardless of performed validations.
+        seismic_observation4 = create_seismic_observation(
+            name="4_observation_two_matching_responses",
+            east=2.5,
+            north=2.5,
+        )
+
+        seismic_observation5 = create_seismic_observation(
+            name="5_observation_share_matching_response1",
+            east=3.45,
+            north=3.45,
+        )
+
+        seismic_observation6 = create_seismic_observation(
+            name="6_observation_share_matching_response2",
+            east=3.55,
+            north=3.55,
+        )
+
+        observations = [
+            seismic_observation1,
+            seismic_observation2,
+            seismic_observation3,
+            seismic_observation4,
+            seismic_observation5,
+            seismic_observation6,
+        ]
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [seismic_config.model_dump(mode="json")],
+                "observations": [obs.model_dump(mode="json") for obs in observations],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        wrong_response_key_response = create_seismic_response(
+            response_key="wrong_response_key_response", east=0.5, north=0.5, values=10.0
+        )
+        response_setup_data = [0.58, 1.57, 2.45, 2.55, 3.5]
+        seismic_response = pl.concat(
+            [
+                create_seismic_response(east=val, north=val, values=val)
+                for val in response_setup_data
+            ]
+        )
+        ensemble.save_response(
+            "seismic", pl.concat([wrong_response_key_response, seismic_response]), 0
+        )
+
+        iens_active_index = np.array([0])
+        active_observations = [obs.name for obs in observations]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        expected_easts = [0.5, 0.6, 1.5, 2.5, 3.45, 3.55]
+        expected_values = [None, None, 1.57, 2.5, 3.5, 3.5]
+
+        assert obs_and_responses["observation_key"].to_list() == active_observations
+        assert pytest.approx(obs_and_responses["east"].to_list()) == expected_easts
+        assert pytest.approx(obs_and_responses["0"].to_list()) == expected_values

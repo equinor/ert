@@ -121,7 +121,7 @@ def test_divide_into_categories_job_source(test_input, expected_source_package):
 
 
 @pytest.mark.parametrize("fm_step", ErtPluginManager().forward_model_steps)
-def test_that_forward_model_step_documentation_source_package_matches_the_actual_source_package(  # noqa: E501
+def test_that_forward_model_step_documentation_source_package_matches_the_actual_source_package(  # ruff: ignore[line-too-long]
     fm_step,
 ):
     # The test assumes that repr(fm_step) returns a string on format:

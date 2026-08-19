@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fnmatch
 import logging
 from typing import Any, Literal
 
@@ -33,8 +34,10 @@ class SummaryConfig(SimulationResponseConfig):
     def _warn_about_missing_summary_responses(
         self, response_keys: list[str], filename: str
     ) -> None:
-        keys_missing_responses = sorted(set(self.keys) - set(response_keys) - {"*"})
-        _warn_about_missing_responses(keys_missing_responses, "key(s)", filename)
+        keys_missing_responses = [
+            key for key in self.keys if not fnmatch.filter(response_keys, key)
+        ]
+        _warn_about_missing_responses(keys_missing_responses, "summary", filename)
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
@@ -51,7 +54,7 @@ class SummaryConfig(SimulationResponseConfig):
                 "values": [pl.Series(row, dtype=pl.Float32) for row in data],
             }
         )
-        df = df.explode("values", "time")
+        df = df.explode("values", "time", empty_as_null=False)
         return df.sort(by=["time"])
 
     @property

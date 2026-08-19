@@ -112,7 +112,7 @@ class _Proc(threading.Thread):
         except Exception as exc:
             conn_info = exc
 
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             self._propagate_connection_info_from_childproc(conn_info)
 
             while True:
@@ -381,7 +381,7 @@ class ErtServerController:
             self._connection_info_future.set_exception(info)
             return
 
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             storage = Path(self._storage_path)
             if not storage.exists():
                 raise RuntimeError(f"No storage exists at: {self._storage_path}")
@@ -440,7 +440,7 @@ def create_ert_server_controller(
 ) -> ErtServerController:
     path = Path(project)
     # Wait for storage_server.json file to appear
-    try:  # noqa: PLW0717
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
         if timeout is None:
             timeout = 240
         t = -1

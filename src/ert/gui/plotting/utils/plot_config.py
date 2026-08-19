@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import itertools
-from copy import copy
 from typing import Any
 
-from .plot_limits import PlotLimits
+from .plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .plot_style import PlotStyle
+from .statistics_style import (
+    BAND_AREA_STYLE,
+    STATISTICS,
+)
 
 
 class PlotConfig:
@@ -21,27 +24,13 @@ class PlotConfig:
         if self._plot_settings is None:
             self._plot_settings = {"SHOW_HISTORY": True}
 
-        okabe_ito_hex = [
-            "#E69F00",  # Orange
-            "#56B4E9",  # Sky Blue
-            "#009E73",  # Bluish Green
-            "#F0E442",  # Yellow
-            "#0072B2",  # Blue
-            "#D55E00",  # Vermillion
-            "#CC79A7",  # Reddish Purple
-            "#000000",  # Black
-        ]
-
-        alpha_value = 1.0
-        self.set_line_color_cycle([(colour, alpha_value) for colour in okabe_ito_hex])
+        self.set_line_color_cycle(TABLEAU_10_COLOR_CYCLE)
 
         self._legend_items: list[Any] = []
         self._legend_labels: list[str] = []
 
         self._x_label = x_label
         self._y_label = y_label
-
-        self._limits = PlotLimits()
 
         self._default_style = PlotStyle(
             name="Default", color=None, marker="", alpha=0.8
@@ -78,18 +67,28 @@ class PlotConfig:
         self._grid_enabled = True
 
         self._statistics_style = {
-            "mean": PlotStyle("Mean", line_style=""),
-            "p50": PlotStyle("P50", line_style=""),
-            "min-max": PlotStyle("Min/Max", line_style=""),
-            "p10-p90": PlotStyle("P10-P90", line_style=""),
-            "p33-p67": PlotStyle("P33-P67", line_style=""),
-            "std": PlotStyle("Std dev", line_style=""),
+            statistic: PlotStyle(style.label, line_style="")
+            for statistic, style in STATISTICS.items()
         }
 
         self._std_dev_factor = 1  # sigma 1 is default std dev
 
         self.flip_response_axis = False
         self.flip_observation_axis = False
+
+    def set_statistics_options(
+        self,
+        enabled_statistics: set[str],
+        *,
+        fill_bands: bool,
+    ) -> None:
+        for statistic, style in self._statistics_style.items():
+            if statistic not in enabled_statistics:
+                style.line_style = ""
+            elif fill_bands and STATISTICS[statistic].is_band:
+                style.line_style = BAND_AREA_STYLE
+            else:
+                style.line_style = STATISTICS[statistic].line_style
 
     def get_number_of_colors(self) -> int:
         return len(self._line_color_cycle_colors)
@@ -179,10 +178,10 @@ class PlotConfig:
     def legend_labels(self) -> list[str]:
         return self._legend_labels
 
-    def set_x_label(self, label: str) -> None:
+    def set_x_label(self, label: str | None) -> None:
         self._x_label = label
 
-    def set_y_label(self, label: str) -> None:
+    def set_y_label(self, label: str | None) -> None:
         self._y_label = label
 
     def set_observations_enabled(self, enabled: bool) -> None:
@@ -256,14 +255,6 @@ class PlotConfig:
         self._default_style.width = style.width
         self._default_style.size = style.size
 
-    @property
-    def limits(self) -> PlotLimits:
-        return copy(self._limits)
-
-    @limits.setter
-    def limits(self, value: PlotLimits) -> None:
-        self._limits = copy(value)
-
     def copy_config_from(self, other: PlotConfig) -> None:
         self._default_style.copy_style_from(
             other._default_style, copy_enabled_state=True
@@ -314,8 +305,6 @@ class PlotConfig:
 
         self._x_label = other._x_label
         self._y_label = other._y_label
-
-        self._limits = copy(other._limits)
 
         if other._title is not None:
             self._title = other._title

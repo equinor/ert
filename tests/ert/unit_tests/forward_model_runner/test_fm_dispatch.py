@@ -405,7 +405,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
             }
         )
 
-        fm_dispatch_process = Popen(  # noqa: ASYNC220
+        fm_dispatch_process = Popen(  # ruff: ignore[create-subprocess-in-async-function]
             [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
         )
         p = psutil.Process(fm_dispatch_process.pid)
@@ -447,7 +447,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
             }
         )
 
-        fm_dispatch_process = Popen(  # noqa: ASYNC220
+        fm_dispatch_process = Popen(  # ruff: ignore[create-subprocess-in-async-function]
             [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
         )
 

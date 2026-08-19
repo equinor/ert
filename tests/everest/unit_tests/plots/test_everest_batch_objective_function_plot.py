@@ -11,7 +11,7 @@ def batch_objective_data():
         {
             "batch_id": [0, 1, 2, 3],
             "objective_function_value": [8.0, 9.0, 10.0, 7.0],
-            "is_improvement": [True, True, False, True],
+            "accepted": [True, True, False, True],
             "improvement_value": [float("-inf"), 2.0, float("nan"), 2.0],
             "constraint_violation_type": [
                 None,
@@ -98,3 +98,15 @@ def test_that_hovering_over_points_shows_correct_tooltip(
 
     move_cursor(axes=axes, x=0.0, y=0.0)
     assert not tooltip.get_visible()
+
+
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
+def test_that_batch_objective_function_plot_matches_baseline(
+    everest_ensemble, batch_objective_data, generic_plot_context
+):
+    return create_everest_figure(
+        EverestBatchObjectiveFunctionPlot(),
+        batch_objective_data,
+        generic_plot_context,
+        everest_ensemble,
+    )

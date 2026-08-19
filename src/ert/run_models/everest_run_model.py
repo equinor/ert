@@ -624,25 +624,25 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
             target_ensemble.save_batch_dataframes(dataframes=batch_dict)
-            target_ensemble.update_improvement_flag(is_improvement=False)
 
-        for r in results:
+        for result in results:
             batches = (
                 self._experiment.ensembles_with_function_results
-                if isinstance(r, FunctionResults)
+                if isinstance(result, FunctionResults)
                 else self._experiment.ensembles_with_gradient_results
             )
-            ens = next((ens for ens in batches if ens.iteration == r.batch_id), None)
+            ens = next(
+                (ens for ens in batches if ens.iteration == result.batch_id), None
+            )
             if ens is None:
                 continue
 
-            results_dict: dict[str, Any] | None = None
-            if isinstance(r, FunctionResults):
-                results_dict = {}
+            results_dict: dict[str, Any] = {}
+            if isinstance(result, FunctionResults):
                 if ens.realization_controls is not None:
                     results_dict |= {
                         "controls": ens.realization_controls.drop(
-                            "realization", "simulation_id"
+                            "batch_id", "realization", "simulation_id"
                         ).to_dicts()[0],
                     }
 
@@ -670,7 +670,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                         ).to_dicts()
                     }
             else:
-                results_dict = {}
                 objective_gradient = (
                     ens.batch_objective_gradient.drop("batch_id")
                     .sort("control_name")
@@ -719,14 +718,29 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                         "perturbation_constraints": perturbation_gradient_dicts
                     }
 
+            failures = defaultdict(list)
+            if ens.everest_realization_info is not None:
+                for realization in ens.everest_realization_info:
+                    if ens.has_failure(realization):
+                        model_realization = ens.everest_realization_info[realization][
+                            "model_realization"
+                        ]
+                        perturbation = ens.everest_realization_info[realization][
+                            "perturbation"
+                        ]
+                        failures[model_realization].append(perturbation)
+
             self.send_event(
                 EverestBatchResultEvent(
-                    batch=r.batch_id,
+                    batch=result.batch_id,
                     everest_event="OPTIMIZATION_RESULT",
-                    result_type="FunctionResult"
-                    if isinstance(r, FunctionResults)
-                    else "GradientResult",
+                    result_type=(
+                        "FunctionResult"
+                        if isinstance(result, FunctionResults)
+                        else "GradientResult"
+                    ),
                     results=results_dict,
+                    failures={k: v for k, v in failures.items() if v},
                 )
             )
 
@@ -752,59 +766,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         # EVEREST optimization.
         assert isinstance(obj_config, EverestObjectivesConfig)
         return obj_config
-
-    def _update_ensemble_improvement_flags(self) -> None:
-        assert self._experiment is not None
-
-        # This a somewhat arbitrary threshold, this should be a user choice
-        # during visualization:
-        CONSTRAINT_TOL = 1e-6
-
-        max_total_objective = np.inf
-        for ensemble in self._experiment.ensembles_with_function_results:
-            assert ensemble.batch_objectives is not None
-            total_objective = ensemble.batch_objectives["total_objective_value"].item()
-            bound_constraint_violation = (
-                0.0
-                if ensemble.batch_bound_constraint_violations is None
-                else (
-                    ensemble.batch_bound_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .max()
-                    .item()
-                )
-            )
-            input_constraint_violation = (
-                0.0
-                if ensemble.batch_input_constraint_violations is None
-                else (
-                    ensemble.batch_input_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .max()
-                    .item()
-                )
-            )
-            output_constraint_violation = (
-                0.0
-                if ensemble.batch_output_constraint_violations is None
-                else (
-                    ensemble.batch_output_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .max()
-                    .item()
-                )
-            )
-            if (
-                max(
-                    bound_constraint_violation,
-                    input_constraint_violation,
-                    output_constraint_violation,
-                )
-                < CONSTRAINT_TOL
-                and total_objective < max_total_objective
-            ):
-                ensemble.update_improvement_flag(is_improvement=True)
-                max_total_objective = total_objective
 
     def _create_experiment_storage(self) -> LocalExperiment:
         return self._storage.create_experiment(
@@ -836,8 +797,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         # Run the optimization:
         optimizer_exit_code = optimizer.run(initial_guesses)
 
-        # Store some final results.
-        self._update_ensemble_improvement_flags()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS

@@ -99,7 +99,7 @@ def _expand_wildcards(
         ['deer', 'dog']
         >>> _expand_wildcards(np.array(["apple", "APPLE", "Apple"]), ["apple"])
         ['apple']
-    """  # noqa: E501
+    """  # ruff: ignore[line-too-long]
     matches = []
     for pattern in patterns:
         matches.extend([str(val) for val in input_list if fnmatch(val, pattern)])
@@ -343,7 +343,7 @@ def _compute_observation_statuses(
 
     if outlier_settings is None:
         return df_with_status.with_columns(
-            pl.when(pl.col("missing_realizations") != "")  # noqa PLC1901
+            pl.when(pl.col("missing_realizations") != "")  # ruff: ignore[compare-to-empty-string] PLC1901
             .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
             .otherwise(pl.lit(ObservationStatus.ACTIVE))
             .alias("status")
@@ -373,7 +373,7 @@ def _compute_observation_statuses(
     )
 
     return df_with_status.with_columns(
-        pl.when(pl.col("missing_realizations") != "")  # noqa PLC1901
+        pl.when(pl.col("missing_realizations") != "")  # ruff: ignore[compare-to-empty-string] PLC1901
         .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
         .when(pl.col(_OutlierColumns.response_std) <= outlier_settings.std_cutoff)
         .then(pl.lit(ObservationStatus.STD_CUTOFF))

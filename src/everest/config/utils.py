@@ -1,4 +1,14 @@
+import polars as pl
+
 from ert.config import EverestControl, SamplerConfig
+
+CONSTRAINT_TOLERANCE = 1e-6
+
+
+def constraint_violation_check(violation: pl.DataFrame | None) -> float:
+    if violation is None:
+        return 0.0
+    return violation.drop("batch_id").to_numpy().max().item()
 
 
 def get_samplers(

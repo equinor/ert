@@ -1,29 +1,22 @@
 .. _ert_kw_full_doc:
 
+################
 List of keywords
-================
+################
 
-For your convenience, the description of the keywords in the ERT configuration file
-are divided into the following groups:
-
-* Commonly used keywords not related to parametrization. I.e. keywords giving
-  the data, grid, and observation file, defining how to run simulations
-  and how to store results. These keywords are described in :ref:`Commonly used
-  keywords.<commonly_used_keywords>`
-* Keywords related to parametrization of the ECLIPSE model. These keywords are
-  described in :ref:`Parametrization keywords<parameterization_keywords>`.
-* Keywords related to the simulation in :ref:`Keywords controlling the simulation<keywords_controlling_the_simulations>`.
-* Advanced keywords not related to parametrization. These keywords are described
-  in :ref:`Advanced keywords<advanced_keywords>`.
-
+.. contents::
+   :depth: 1
+   :local:
+   :class: this-will-duplicate-information-and-it-is-still-useful-here
 
 Table of keywords
------------------
+=================
 
 ======================================================================   ======================================  ==============================  ==============================================================================================================================================
 Keyword name                                                             Required                                Default value                   Purpose
 ======================================================================   ======================================  ==============================  ==============================================================================================================================================
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                               NO                                                                      Set analysis module internal state variable
+:ref:`APPROXIMATE_MISSING_RFT_VALUES <approximate_missing_rft_values>`   NO                                      FALSE                           Interpolate/extrapolate RFT values for observation locations with missing simulator responses
 :ref:`CASE_TABLE <case_table>`                                           NO                                                                      Deprecated
 :ref:`CREATE_WORKFLOW_FROM_JOB <create_workflow_from_job>`               NO                                                                      Define and register a single-job workflow inline
 :ref:`DATA_FILE <data_file>`                                             NO                                                                      Provide an ECLIPSE data file for the problem
@@ -31,7 +24,6 @@ Keyword name                                                             Require
 :ref:`DEFINE <define>`                                                   NO                                                                      Define keywords with config scope
 :ref:`DESIGN_MATRIX <design_matrix>`                                     NO                                                                      Add design matrix parameters from a spreadsheet
 :ref:`ECLBASE <eclbase>`                                                 NO                                                                      Define a name for the ECLIPSE simulations.
-:ref:`STD_CUTOFF <std_cutoff>`                                           NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`ENKF_ALPHA <enkf_alpha>`                                           NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_TRUNCATION <enkf_truncation>`                                 NO                                      0.98                            Cutoff used on singular value spectrum
 :ref:`ENSPATH <enspath>`                                                 NO                                      storage                         Folder used for storage of simulation results
@@ -44,7 +36,6 @@ Keyword name                                                             Require
 :ref:`HOOK_WORKFLOW_JOB <hook_workflow_job>`                             NO                                                                      Define a single-job workflow inline and hook it to a runtime step
 :ref:`INCLUDE <include>`                                                 NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                         NO                                                                      Install a job for use in a forward model
-:ref:`APPROXIMATE_MISSING_RFT_VALUES <approximate_missing_rft_values>`   NO                                      FALSE                           Interpolate/extrapolate RFT values for observation locations with missing simulator responses
 :ref:`INVERSION <inversion_algorithm>`                                   NO                                                                      Deprecated. Set inversion method for analysis module
 :ref:`JOBNAME <jobname>`                                                 NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
 :ref:`LOAD_WORKFLOW <load_workflow>`                                     NO                                                                      Load a workflow into ERT
@@ -60,18 +51,20 @@ Keyword name                                                             Require
 :ref:`OBS_CONFIG <obs_config>`                                           NO                                                                      File specifying observations with uncertainties
 :ref:`QUEUE_OPTION <queue_option>`                                       NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                       NO                                      LOCAL_DRIVER                    System used for running simulation jobs
+:ref:`RANDOM_SEED <random_seed>`                                         NO                                                                      Set a fixed integer seed to gain reproducibility and avoid randomness.
 :ref:`REALIZATION_MEMORY <realization_memory>`                           NO                                                                      Set the expected memory requirements for a realization
 :ref:`RFT <rft>`                                                         NO                                                                      Specify which RFT data to load from simulator output
 :ref:`RUNPATH <runpath>`                                                 NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                       NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                       NO                                                                      Install arbitrary files in the runpath directory
 :ref:`SETENV <setenv>`                                                   NO                                                                      You can modify the UNIX environment with SETENV calls
+:ref:`STD_CUTOFF <std_cutoff>`                                           NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`STOP_LONG_RUNNING <stop_long_running>`                             NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
-:ref:`SUBMIT_SLEEP  <submit_sleep>`                                      NO                                      0.0                             Determines for how long in seconds the system will sleep between submitting jobs.
-:ref:`SUMMARY  <summary>`                                                NO                                                                      Add summary vectors for internalization
+:ref:`SUBMIT_SLEEP <submit_sleep>`                                       NO                                      0.0                             Determines for how long in seconds the system will sleep between submitting jobs.
+:ref:`SUMMARY <summary>`                                                 NO                                                                      Add summary vectors for internalization
 :ref:`SURFACE <surface>`                                                 NO                                                                      Surface parameter read from RMS IRAP file
-:ref:`UPDATE_LOG_PATH  <update_log_path>`                                NO                                      update_log                      Summary of the update steps are stored in this directory
-:ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>`                  NO                                                                      Directory containing workflow jobs
+:ref:`UPDATE_LOG_PATH <update_log_path>`                                 NO                                      update_log                      Summary of the update steps are stored in this directory
+:ref:`WORKFLOW_JOB_DIRECTORY <workflow_job_directory>`                   NO                                                                      Directory containing workflow jobs
 :ref:`ZONEMAP <zonemap>`                                                 NO                                                                      Map grid layers to geological zone names for RFT validation
 ======================================================================   ======================================  ==============================  ==============================================================================================================================================
 
@@ -694,8 +687,8 @@ replacement in the file content and the file name. All the scalar parameters
 available as magic strings.
 
 .. note::
-        In case of GEN_KW prior file contains `a UNIFORM 0 1`, the magic strings is <a>.
-        In case DESIGN_MATRIX contains column `SENSNAME` the magic string is <SENSNAME>.
+        In case the GEN_KW prior file contains ``a UNIFORM 0 1``, the magic strings is ``<a>``.
+        In case DESIGN_MATRIX contains column ``SENSNAME`` the magic string is ``<SENSNAME>``.
 
 *Example:*
 
@@ -725,7 +718,7 @@ knows if the DATA file is to be executed in parallel.
 .. _keywords_controlling_the_simulations:
 
 Keywords controlling the experiment
------------------------------------
+===================================
 
 .. _min_realizations:
 
@@ -825,6 +818,16 @@ seconds. A value of 0 means unlimited runtime.
         MAX_RUNTIME 50
 
 The MAX_RUNTIME key is optional.
+
+.. _max_submit:
+
+MAX_SUBMIT
+----------
+
+How many times a realization can be submitted to the queue system in case of
+realization failures. Default is 1, meaning there will be no resubmission upon
+failures.
+
 
 .. _parameterization_keywords:
 
@@ -1481,6 +1484,10 @@ cases, but strongly recommended to ensure that you have control over which
 data is used, and that everything is consistent in the case where the forward
 model is run again.
 
+
+Response and observation keywords
+=================================
+
 .. _summary:
 
 SUMMARY
@@ -1587,6 +1594,48 @@ observations must be assigned to zones.
 ::
 
         APPROXIMATE_MISSING_RFT_VALUES TRUE
+
+.. _zonemap:
+
+ZONEMAP
+-------
+
+The ZONEMAP keyword specifies a file that maps simulation grid layers (K indices)
+to geological zone names. This is primarily used to validate :ref:`RFT_OBSERVATION <rft_observation>`
+locations to ensure that observations fall within the expected geological zones.
+
+The zonemap file format is simple: each line contains a K-layer index (1-indexed)
+followed by one or more zone names that apply to that layer:
+
+::
+
+    -- Format: K_layer zone1 [zone2 ...]
+    1  TopZone
+    2  TopZone
+    3  MiddleZone
+    4  MiddleZone
+    5  BottomZone
+    6  BottomZone
+
+*Example usage:*
+
+::
+
+        ZONEMAP my_zones.txt
+
+The file my_zones.txt should be located in the runpath in the above example. In
+general, when the ZONEMAP is set to a relative path then it is interpreted as relative
+to the runpath, otherwise it should be located at the absolute path.
+
+When RFT observations include a ZONE specification (either in the CSV file or
+directly in the observation), ERT will validate that the observation's grid
+location matches the expected zone from the ZONEMAP. If an observation is
+located in a different zone than specified, it will be deactivated with a warning.
+
+.. note::
+    Grid layers are 1-indexed in the ZONEMAP file. Multiple zone names can be
+    specified for a single layer if it spans multiple geological zones.
+
 
 .. _analysis_module:
 
@@ -1874,26 +1923,6 @@ UPDATE_LOG_PATH
 
 A summary of the data used for updates are stored in this directory.
 
-.. _max_submit:
-
-MAX_SUBMIT
-----------
-
-How many times a realization can be submitted to the queue system in case of
-realization failures. Default is 1, meaning there will be no resubmission upon
-failures.
-
-.. _advanced_keywords:
-
-Advanced keywords
-=================
-
-The keywords in this section, controls advanced features of ERT. Insight in
-the internals of ERT and/or ECLIPSE may
-be required to fully understand their effect. Moreover, many of these keywords
-are defined in the site configuration, and thus optional to set for the user,
-but required when installing ERT at a new site.
-
 .. _keywords_related_to_running_the_forward_model:
 
 Keywords related to running the forward model
@@ -1970,12 +1999,14 @@ in :ref:`queue-system-chapter`. In brief, the queue systems have the following o
   ``SQUEUE``, ``PARTITION``, ``SQUEUE_TIMEOUT``, ``MAX_RUNTIME``, ``INCLUDE_HOST``,
   ``EXCLUDE_HOST``, ``MAX_RUNNING``
 
-In addition, some options apply to all queue systems:
+In addition, some options apply to all queue systems.
 
 
 
 Workflow hooks
 ==============
+
+For more details on the workflows refer to the :ref:`Workflows <workflows>` section.
 
 .. _hook_workflow:
 
@@ -1983,33 +2014,8 @@ HOOK_WORKFLOW
 -------------
 
 With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
-'hooks'; meaning workflows which will be run automatically at certain
-points during ERTs execution. Currently there are five points in ERTs
-flow of execution where you can hook in a workflow:
-
-- Before the simulations (all forward models for a realization) start using :code:`PRE_SIMULATION`,
-- after all the simulations have completed using :code:`POST_SIMULATION`,
-- before the update step using :code:`PRE_UPDATE`
-- after the update step using :code:`POST_UPDATE` and
-- only before the first update using :code:`PRE_FIRST_UPDATE`.
-
-For non-iterative algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UPDATE`.
-The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
-
-::
-
-   HOOK_WORKFLOW initWFLOW        PRE_SIMULATION
-   HOOK_WORKFLOW preUpdateWFLOW   PRE_UPDATE
-   HOOK_WORKFLOW postUpdateWFLOW  POST_UPDATE
-   HOOK_WORKFLOW QC_WFLOW1        POST_SIMULATION
-   HOOK_WORKFLOW QC_WFLOW2        POST_SIMULATION
-
-In this example the workflow :code:`initWFLOW` will run after all the
-:term:`simulation` directories have been created, just before the forward
-model is submitted to the queue. The workflow :code:`preUpdateWFLOW`
-will be run before the update step and :code:`postUpdateWFLOW` will be
-run after the update step. When all the simulations have completed the
-two workflows :code:`QC_WFLOW1` and :code:`QC_WFLOW2` will be run.
+'hooks'; meaning workflows which will be run automatically at :ref:`certain
+points <automatically-run-workflows>` during ERTs execution.
 
 Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW` keyword.
@@ -2096,6 +2102,9 @@ Use the keyword :code:`LOAD_WORKFLOW_JOB` to specify jobs by name:
 The :code:`LOAD_WORKFLOW_JOB` keyword will load one workflow job.
 The name of the job is optional, and will be fetched from the configuration file if not provided.
 
+See :ref:`Configuring workflow jobs <configuring_workflow_jobs_chapter>` on how to
+create the job itself.
+
 .. _workflow_job_directory:
 
 WORKFLOW_JOB_DIRECTORY
@@ -2118,49 +2127,9 @@ all get the name of the file as the name of the job. The
 :code:`WORKFLOW_JOB_DIRECTORY` keyword will *not* load configuration
 files recursively.
 
-.. _zonemap:
-
-ZONEMAP
--------
-
-The ZONEMAP keyword specifies a file that maps simulation grid layers (K indices)
-to geological zone names. This is primarily used to validate :ref:`RFT_OBSERVATION <rft_observation>`
-locations to ensure that observations fall within the expected geological zones.
-
-The zonemap file format is simple: each line contains a K-layer index (1-indexed)
-followed by one or more zone names that apply to that layer:
-
-::
-
-    -- Format: K_layer zone1 [zone2 ...]
-    1  TopZone
-    2  TopZone
-    3  MiddleZone
-    4  MiddleZone
-    5  BottomZone
-    6  BottomZone
-
-*Example usage:*
-
-::
-
-        ZONEMAP my_zones.txt
-
-The file my_zones.txt should be located in the runpath in the above example. In
-general, when the ZONEMAP is set to a relative path then it is interpreted as relative
-to the runpath, otherwise it should be located at the absolute path.
-
-When RFT observations include a ZONE specification (either in the CSV file or
-directly in the observation), ERT will validate that the observation's grid
-location matches the expected zone from the ZONEMAP. If an observation is
-located in a different zone than specified, it will be deactivated with a warning.
-
-.. note::
-    Grid layers are 1-indexed in the ZONEMAP file. Multiple zone names can be
-    specified for a single layer if it spans multiple geological zones.
 
 Manipulating the environment variables
---------------------------------------
+======================================
 
 .. _setenv:
 

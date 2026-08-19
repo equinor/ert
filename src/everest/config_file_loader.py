@@ -101,7 +101,7 @@ def _render_definitions(
     def render(s: str, d: dict[str, Any]) -> str:
         return jinja_env.from_string(s).render(**d)
 
-    for key in definitions:  # noqa: PLC0206
+    for key in definitions:  # ruff: ignore[dict-index-missing-items]
         if not isinstance(definitions[key], str):
             continue
 

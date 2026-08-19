@@ -89,7 +89,7 @@ class StatisticsPlot:
         plot_history(plot_context, axes)
 
         default_x_label = "Date" if plot_context.is_date_support_active() else "Index"
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

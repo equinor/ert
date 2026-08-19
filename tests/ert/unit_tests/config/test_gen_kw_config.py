@@ -860,7 +860,7 @@ def test_genkw_paramgraph_transformfn_node_correspondence():
     assert data["nodes"] == [{"id": 0}]
 
 
-def test_genkw_raises_config_validation_error_from_pydantic_validation_error_given_invalid_model_input(  # noqa E501
+def test_genkw_raises_config_validation_error_from_pydantic_validation_error_given_invalid_model_input(  # ruff: ignore[line-too-long] E501
     monkeypatch,
 ):
     # Bool is not a valid input to GenKwConfig's "distribution" attribute

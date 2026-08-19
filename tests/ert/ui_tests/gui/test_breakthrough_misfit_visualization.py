@@ -1,6 +1,8 @@
 import pytest
 
-from ert.gui.plotting.plot_window import MISFITS
+from ert.gui.plotting.utils.plot_maps import (
+    MISFITS,
+)
 from tests.ert.ui_tests.gui.test_breakthrough_visualization import (
     create_breakthrough_figure,
 )
@@ -8,7 +10,7 @@ from tests.ert.ui_tests.gui.test_breakthrough_visualization import (
 plot_figure = create_breakthrough_figure(MISFITS)
 
 
-@pytest.mark.mpl_image_compare(tolerance=10.0)
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
 @pytest.mark.skip_mac_ci
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_breakthrough_misfit_visualization_images_are_unchanged(plot_figure):

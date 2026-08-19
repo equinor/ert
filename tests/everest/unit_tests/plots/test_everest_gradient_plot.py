@@ -138,3 +138,14 @@ def test_that_on_hover_displays_batch_and_control_info(
         y=-5.0,
     )
     assert not hover_annot.get_visible()
+
+
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
+def test_that_gradient_plot_matches_baseline(
+    controls_data, generic_plot_context, everest_ensemble
+):
+    plot = EverestGradientsPlot()
+    plot.set_selected_controls(["control_1", "control_2"])
+    return create_everest_figure(
+        plot, controls_data, generic_plot_context, everest_ensemble
+    )

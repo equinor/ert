@@ -52,7 +52,7 @@ def test_save_running_config(
     )
     config.write_to_file("config.yml")
 
-    everest_entry(["config.yml", "--skip-prompt"])
+    everest_entry(["config.yml"])
     saved_config_path = Path(config.output_dir) / "config.yml"
 
     assert saved_config_path.exists()

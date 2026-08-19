@@ -102,7 +102,7 @@ class EnsemblePlot:
                 labels=tooltip_labels,
             )
 
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

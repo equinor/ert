@@ -19,6 +19,7 @@ from ert.dark_storage.common import (
     serialize_dataframe_to_response,
 )
 from ert.storage import Ensemble, Storage
+from everest.config.utils import CONSTRAINT_TOLERANCE, constraint_violation_check
 
 router = APIRouter(tags=["responses"])
 logger = logging.getLogger(__name__)
@@ -160,12 +161,6 @@ def data_for_response(
         if ensemble.batch_objectives is None:
             return pd.DataFrame()
 
-        def constraint_violation_check(violation: pl.DataFrame | None) -> float:
-            if violation is None:
-                return 0.0
-            return violation.drop("batch_id").to_numpy().max().item()
-
-        CONSTRAINT_TOL = 1e-6
         accepted_batches: list[tuple[Ensemble, float]] = []
         rejected_batches_with_value_and_reason: list[
             tuple[Ensemble, float, RejectionReason]
@@ -196,7 +191,7 @@ def data_for_response(
                     input_violation,
                     output_violation,
                 )
-                < CONSTRAINT_TOL
+                < CONSTRAINT_TOLERANCE
                 and total_objective < max_total_objective
             ):
                 accepted_batches.append(
@@ -240,15 +235,20 @@ def data_for_response(
             pl.DataFrame(
                 {
                     "batch_id": [batch.iteration for batch, _ in accepted_batches],
-                    "is_improvement": [True] * len(accepted_batches),
+                    "accepted": [True] * len(accepted_batches),
                     "improvement_value": [value for _, value in accepted_batches],
-                }
+                },
+                schema={
+                    "batch_id": objective_value_df.schema["batch_id"],
+                    "accepted": pl.Boolean,
+                    "improvement_value": pl.Float64,
+                },
             ),
             on="batch_id",
             how="left",
         ).with_columns(
             pl.col("total_objective_value").neg(),
-            pl.col("is_improvement").fill_null(False),
+            pl.col("accepted").fill_null(False),
         )
 
         if rejected_batches_with_value_and_reason:
@@ -269,7 +269,7 @@ def data_for_response(
                     {
                         "batch_id": int,
                         "total_objective_value": float,
-                        "is_improvement": bool,
+                        "accepted": bool,
                         "improvement_value": float,
                         "constraint_violation_value": float,
                         "constraint_violation_type": str,
@@ -280,7 +280,7 @@ def data_for_response(
             {
                 "batch_id": int,
                 "total_objective_value": float,
-                "is_improvement": bool,
+                "accepted": bool,
                 "improvement_value": float,
             }
         )
@@ -360,10 +360,10 @@ def data_for_response(
 
             assert filter_on is not None
             assert "report_step" in filter_on
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 report_step = int(filter_on["report_step"])
                 vals = data.filter(pl.col("report_step").eq(report_step))
-                pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010
+                pivoted = vals.drop("response_key", "report_step").pivot(  # ruff: ignore[pandas-use-of-dot-pivot-or-unstack]
                     on="index", values="values"
                 )
                 data = (

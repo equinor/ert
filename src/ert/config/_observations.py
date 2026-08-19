@@ -6,17 +6,26 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self, assert_never, get_type_hints
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    Self,
+    assert_never,
+    get_type_hints,
+)
 
 import numpy as np
-import pandas as pd
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field
+import scipy as sp
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 from resfo_utilities import InvalidSummaryKeyError, make_summary_key
 
 from ert.validation import rangestring_to_list
 
-from ._shapes import CircleShapeConfig, ShapeConfig, ShapeRegistry
+from ._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeConfig, ShapeRegistry
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
@@ -25,6 +34,9 @@ from .parsing import (
     ObservationType,
 )
 from .parsing.file_context_token import FileContextToken
+
+if TYPE_CHECKING:
+    from pydantic import SerializerFunctionWrapHandler
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +52,26 @@ class ErrorModes(StrEnum):
 class BaseObservation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    shape_id: int | None = None
+
+    @model_serializer(mode="wrap")
+    def _serialize_with_order(
+        self, handler: SerializerFunctionWrapHandler
+    ) -> dict[str, Any]:
+        data = handler(self)
+
+        # with default serialization shape_id would have become the first written key,
+        # but it is not that interesting to be on top
+        shape_id = data.pop("shape_id", None)
+        data["shape_id"] = shape_id
+
+        return data
+
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        if self.shape_id is not None:
+            return shape_registry.get(self.shape_id)
+        return None
+
 
 class _SummaryValues(BaseObservation):
     type: Literal["summary_observation"] = "summary_observation"
@@ -48,7 +80,6 @@ class _SummaryValues(BaseObservation):
     error: float
     key: str  #: The :term:`summary key` in the summary response
     date: str
-    shape_id: int | None = None
 
 
 def _parse_date(date_str: str) -> datetime:
@@ -56,7 +87,7 @@ def _parse_date(date_str: str) -> datetime:
         date = datetime.fromisoformat(date_str)
     except ValueError:
         try:
-            date = datetime.strptime(date_str, "%d/%m/%Y")  # noqa: DTZ007
+            date = datetime.strptime(date_str, "%d/%m/%Y")  # ruff: ignore[call-datetime-strptime-without-zone]
         except ValueError as err:
             raise ObservationConfigError.with_context(
                 f"Unsupported date format {date_str}. Please use ISO date format",
@@ -85,7 +116,7 @@ def strip_dataframe_whitespaces(df: pl.DataFrame) -> pl.DataFrame:
         if dtype == pl.String
     ]
     return df.with_columns(
-        pl.when(pl.col(col).str.strip_chars() == "")  # noqa: PLC1901 the truth value of an Expr is ambiguous
+        pl.when(pl.col(col).str.strip_chars() == "")  # ruff: ignore[compare-to-empty-string] the truth value of an Expr is ambiguous
         .then(None)
         .otherwise(pl.col(col).str.strip_chars())
         .alias(col)
@@ -400,11 +431,6 @@ class SummaryObservation(_SummaryValues):
             )
         return shape_id
 
-    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
-        if self.shape_id is not None:
-            return shape_registry.get(self.shape_id)
-        return None
-
     @classmethod
     def default_name(cls, summary_key: str, date: str) -> str:
         return f"{summary_key}:{date}"
@@ -418,7 +444,6 @@ class _GeneralObservation(BaseObservation):
     error: float
     restart: int
     index: int
-    shape_id: int | None = None
 
 
 class GeneralObservation(_GeneralObservation):
@@ -618,7 +643,6 @@ class RFTObservation(BaseObservation):
     north: float
     tvd: float
     md: float | None = None
-    shape_id: int | None = None
     zone: str | None = None
 
     @classmethod
@@ -661,11 +685,7 @@ class RFTObservation(BaseObservation):
                 f"The CSV file ({filename}) does not exist or is not accessible.",
                 filename,
             )
-        csv_file = pd.read_csv(
-            filename,
-            encoding="utf-8",
-            on_bad_lines="error",
-        )
+        csv_file = pl.read_csv(filename, encoding="utf-8")
 
         required_columns = {
             "WELL_NAME",
@@ -676,7 +696,9 @@ class RFTObservation(BaseObservation):
             "EAST",
             "TVD",
         }
-        missing_required_columns = required_columns - set(csv_file.keys())
+
+        columns = set(csv_file.columns)
+        missing_required_columns = required_columns - columns
         if missing_required_columns:
             raise ObservationConfigError.with_context(
                 f"The rft observations file {filename} is missing required column(s) "
@@ -686,9 +708,9 @@ class RFTObservation(BaseObservation):
 
         rft_observations = []
         invalid_observations = []
-        for row in csv_file.itertuples(index=True):
-            east_val = validate_float(str(row.EAST), "EAST")
-            north_val = validate_float(str(row.NORTH), "NORTH")
+        for index, row in enumerate(csv_file.iter_rows(named=True)):
+            east_val = validate_float(str(row["EAST"]), "EAST")
+            north_val = validate_float(str(row["NORTH"]), "NORTH")
             radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
 
             shape_id = shape_registry.register(
@@ -700,22 +722,20 @@ class RFTObservation(BaseObservation):
             )
 
             rft_observation = cls(
-                name=f"{observation_dict['name']}[{row.Index}]",
-                well=str(row.WELL_NAME),
-                date=str(row.DATE),
+                name=f"{observation_dict['name']}[{index}]",
+                well=str(row["WELL_NAME"]),
+                date=str(row["DATE"]),
                 property=observed_property,
-                value=validate_float(
-                    str(getattr(row, observed_property)), observed_property
-                ),
-                error=validate_float(str(row.ERROR), "ERROR"),
+                value=validate_float(str(row[observed_property]), observed_property),
+                error=validate_float(str(row["ERROR"]), "ERROR"),
                 east=east_val,
                 north=north_val,
                 shape_id=shape_id,
-                tvd=validate_float(str(row.TVD), "TVD"),
-                md=validate_float(str(row.MD), "MD") if "MD" in csv_file else None,
+                tvd=validate_float(str(row["TVD"]), "TVD"),
+                md=validate_float(str(row["MD"]), "MD") if "MD" in columns else None,
                 zone=(
-                    str(row.ZONE)
-                    if "ZONE" in csv_file and row.ZONE is not None
+                    str(row["ZONE"])
+                    if "ZONE" in columns and row["ZONE"] is not None
                     else None
                 ),
             )
@@ -882,11 +902,6 @@ class RFTObservation(BaseObservation):
 
         return [obs_instance]
 
-    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
-        if self.shape_id is not None:
-            return shape_registry.get(self.shape_id)
-        return None
-
 
 class BreakthroughObservation(BaseObservation):
     type: Literal["breakthrough"] = "breakthrough"
@@ -895,7 +910,6 @@ class BreakthroughObservation(BaseObservation):
     date: datetime
     error: float
     threshold: float
-    shape_id: int | None = None
 
     @classmethod
     def from_obs_dict(
@@ -983,33 +997,27 @@ class SeismicObservation(BaseObservation):
     north: float
     value: float
     error: float
+    boundary_id: int | None = None
 
-    @classmethod
-    def from_csv(
-        cls,
-        directory: str,
-        name: str,
-        filepath: str | Path,
-    ) -> list[Self]:
-        """Create seismic observations from a CSV file.
+    TOLERANCE: ClassVar[float] = 0.1
 
-        Args:
-            directory: Directory where observation config is located.
-            name: Name of the observation
-            filepath: Path to the CSV file containing seismic observations.
-              Relative to the directory.
-        """
-        filepath = Path(directory) / filepath
-        if not filepath.exists():
+    @staticmethod
+    def _load_observations(filepath: Path) -> pl.DataFrame:
+
+        suffix = filepath.suffix.lower()
+        if suffix == ".csv":
+            df = pl.read_csv(
+                filepath,
+                encoding="utf-8",
+            )
+        elif suffix == ".parquet":
+            df = pl.read_parquet(filepath)
+        else:
             raise ObservationConfigError.with_context(
-                f"The CSV file ({filepath}) does not exist or is not accessible.",
+                f"The seismic observations file {filepath} "
+                "must be a CSV or Parquet file.",
                 filepath,
             )
-        csv_file = pd.read_csv(
-            filepath,
-            encoding="utf-8",
-            on_bad_lines="error",
-        )
 
         required_columns = {
             "X_UTME",
@@ -1017,7 +1025,7 @@ class SeismicObservation(BaseObservation):
             "OBS",
             "OBS_ERROR",
         }
-        missing_required_columns = required_columns - set(csv_file.keys())
+        missing_required_columns = required_columns - set(df.columns)
         if missing_required_columns:
             raise ObservationConfigError.with_context(
                 f"The seismic observations file {filepath} "
@@ -1026,35 +1034,32 @@ class SeismicObservation(BaseObservation):
                 filepath,
             )
 
-        if not name:
-            name = filepath.stem
+        return df
 
-        seismic_observations = []
-        seen_coordinates: set[tuple[np.float32, np.float32]] = set()
-        for row in csv_file.itertuples():
-            seismic_observation = cls(
-                name=name,
-                filepath=filepath,
-                east=validate_float(str(row.X_UTME), "X_UTME"),
-                north=validate_float(str(row.Y_UTMN), "Y_UTMN"),
-                value=validate_float(str(row.OBS), "OBS"),
-                error=validate_float(str(row.OBS_ERROR), "OBS_ERROR"),
-            )
-            coordinates = (
-                np.float32(seismic_observation.east),
-                np.float32(seismic_observation.north),
-            )
-            if coordinates in seen_coordinates:
-                original_coordinates = (row.X_UTME, row.Y_UTMN)
-                raise ObservationConfigError.with_context(
-                    f"Seismic observation coordinates {original_coordinates} "
-                    "were not unique (after rounding from f64 to f32).",
-                    filepath,
+    @staticmethod
+    def validate_distance_between_observations(
+        observations: Sequence[SeismicObservation], filepath: Path
+    ) -> None:
+        if not observations:
+            return
+        coordinates = [(obs.east, obs.north) for obs in observations]
+        tree = sp.spatial.KDTree(coordinates)
+        too_close_pairs = tree.query_pairs(r=SeismicObservation.TOLERANCE * 2)
+        if too_close_pairs:
+            too_close_coords = [
+                (
+                    (observations[i].east, observations[i].north),
+                    (observations[j].east, observations[j].north),
                 )
-            seen_coordinates.add(coordinates)
-            seismic_observations.append(seismic_observation)
-
-        return seismic_observations
+                for i, j in too_close_pairs
+            ]
+            raise ObservationConfigError.with_context(
+                "Seismic observation coordinates with approximate locations "
+                f"{too_close_coords} fall inside of a tolerance radius. "
+                "All seismic observation coordinates must be more than "
+                f"{SeismicObservation.TOLERANCE * 2} m apart.",
+                filepath,
+            )
 
     @classmethod
     def from_obs_dict(
@@ -1065,13 +1070,25 @@ class SeismicObservation(BaseObservation):
     ) -> list[Self]:
         """Create seismic observations from an observation dictionary.
 
+        File containing seismic observations (CSV or Parquet) and file containing the
+        polygon limiting observations used in the match step (BOUNDARY) are specified
+        relative to the directory of the observation config.
+
         Args:
             directory: Directory where observation config is located.
             observation_dict: Dictionary containing the observation configuration.
             shape_registry: ShapeRegistry for storing geometry.
         """
         name = ""
-        csv_filename: str | None = None
+        filepath: str | Path | None = None
+        boundary_filepath: str | Path | None = None
+
+        if "CSV" in observation_dict and "OBS_FILE" in observation_dict:
+            raise ObservationConfigError.with_context(
+                "SEISMIC_OBSERVATION cannot contain both 'CSV' and 'OBS_FILE'.",
+                observation_dict.context,
+            )
+
         for key, value in observation_dict.items():
             match key:
                 case "type":
@@ -1079,21 +1096,82 @@ class SeismicObservation(BaseObservation):
                 case "name":
                     name = value
                 case "CSV":
-                    csv_filename = value
+                    ConfigWarning.warn(
+                        "CSV key is deprecated for seismic observations. "
+                        "Use OBS_FILE instead.",
+                        observation_dict.context,
+                    )
+                    filepath = value
+                case "OBS_FILE":
+                    filepath = value
+                case "BOUNDARY":
+                    boundary_filepath = value
                 case _:
                     raise _unknown_key_error(str(key), observation_dict.context)
 
-        if csv_filename is None:
-            raise _missing_value_error(observation_dict.context, "CSV")
+        if filepath is None:
+            raise _missing_value_error(observation_dict.context, "OBS_FILE")
 
-        return cls.from_csv(
-            directory,
-            name,
-            csv_filename,
-        )
+        filepath = Path(directory) / filepath
+        if not filepath.exists():
+            raise ObservationConfigError.with_context(
+                f"The seismic observations file ({filepath.absolute()}) "
+                "does not exist or is not accessible.",
+                filepath,
+            )
 
-    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
-        return None
+        if not name:
+            name = filepath.stem
+
+        df = cls._load_observations(filepath)
+
+        boundary_id = None
+        if boundary_filepath is not None:
+            boundary_filepath = Path(directory) / boundary_filepath
+            if not boundary_filepath.exists():
+                raise ObservationConfigError.with_context(
+                    f"The boundary file ({boundary_filepath.absolute()}) "
+                    "does not exist or is not accessible.",
+                    boundary_filepath,
+                )
+            boundary = PolygonShapeConfig.from_file(str(boundary_filepath))
+            boundary_id = shape_registry.register(boundary)
+
+        seismic_observations = []
+        for row in df.iter_rows(named=True):
+            east = validate_float(str(row["X_UTME"]), "X_UTME")
+            north = validate_float(str(row["Y_UTMN"]), "Y_UTMN")
+            value = validate_float(str(row["OBS"]), "OBS")
+            error = validate_float(str(row["OBS_ERROR"]), "OBS_ERROR")
+
+            # Currently supports only default localization radius as behavior of
+            # LOCALIZATION keyword is undefined. All shapes are being registered
+            # separately, even though it might make sense to introduce one relative
+            # shape for all observations which know their east/north and have a common
+            # radius
+            radius = DEFAULT_LOCALIZATION_RADIUS
+            shape_id = shape_registry.register(
+                CircleShapeConfig(
+                    east=east,
+                    north=north,
+                    radius=radius,
+                )
+            )
+
+            seismic_observation = cls(
+                name=name,
+                filepath=filepath,
+                east=east,
+                north=north,
+                value=value,
+                error=error,
+                shape_id=shape_id,
+                boundary_id=boundary_id,
+            )
+            seismic_observations.append(seismic_observation)
+
+        cls.validate_distance_between_observations(seismic_observations, filepath)
+        return seismic_observations
 
 
 Observation = Annotated[

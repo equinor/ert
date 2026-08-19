@@ -15,7 +15,10 @@ from starlette.websockets import WebSocketDisconnect
 
 from ert.config import ConfigWarning
 from ert.dark_storage.app import app
-from ert.dark_storage.endpoints.experiment_server import ExperimentRunnerState, _runs
+from ert.dark_storage.endpoints.experiment_server import (
+    ExperimentRunnerState,
+    _experiments,
+)
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import StatusEvents
 from ert.scheduler.event import FinishedEvent
@@ -38,23 +41,23 @@ from everest.strings import (
 
 @pytest.fixture
 def setup_client(monkeypatch):
-    original = dict(_runs)
+    original = dict(_experiments)
 
     def func(events=None):
         events = [EndEvent(failed=False, msg="Complete")] if events is None else events
 
-        _runs.clear()
-        run_id = "test-run-id"
+        _experiments.clear()
+        experiment_id = "experiment_id"
         state = ExperimentRunnerState()
         state.events = cast(list[StatusEvents], events)
-        _runs[run_id] = state
+        _experiments[experiment_id] = state
 
         monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
-        return TestClient(app), state.subscribers, run_id
+        return TestClient(app), state.subscribers, experiment_id
 
     yield func
-    _runs.clear()
-    _runs.update(original)
+    _experiments.clear()
+    _experiments.update(original)
 
 
 async def wait_for_server_to_complete(config):
@@ -240,9 +243,11 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
 
 
 def test_websocket_no_authentication(setup_client):
-    client, _, run_id = setup_client()
+    client, _, experiment_id = setup_client()
     with (
-        client.websocket_connect(f"/experiment_server/events/{run_id}") as websocket,
+        client.websocket_connect(
+            f"/experiment_server/events/{experiment_id}"
+        ) as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
     ):
         websocket.receive_json()
@@ -250,11 +255,11 @@ def test_websocket_no_authentication(setup_client):
 
 
 def test_websocket_wrong_password(setup_client):
-    client, _, run_id = setup_client()
+    client, _, experiment_id = setup_client()
     credentials = b64encode(b"username:wrong_password").decode()
     with (
         client.websocket_connect(
-            f"/experiment_server/events/{run_id}",
+            f"/experiment_server/events/{experiment_id}",
             headers={"Authorization": f"Basic {credentials}"},
         ) as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
@@ -265,16 +270,16 @@ def test_websocket_wrong_password(setup_client):
 
 @pytest.mark.flaky(rerun=3)
 def test_websocket_multiple_connections(setup_client):
-    client, subscribers, run_id = setup_client()
+    client, subscribers, experiment_id = setup_client()
     credentials = b64encode(b"username:password").decode()
     with client.websocket_connect(
-        f"/experiment_server/events/{run_id}",
+        f"/experiment_server/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event = websocket.receive_json()
         websocket.close()
     with client.websocket_connect(
-        f"/experiment_server/events/{run_id}",
+        f"/experiment_server/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event_2 = websocket.receive_json()
@@ -283,15 +288,17 @@ def test_websocket_multiple_connections(setup_client):
 
 
 def test_websocket_multiple_connections_one_fails(setup_client):
-    client, subscribers, run_id = setup_client()
+    client, subscribers, experiment_id = setup_client()
     credentials = b64encode(b"username:password").decode()
     with (
-        client.websocket_connect(f"/experiment_server/events/{run_id}") as websocket,
+        client.websocket_connect(
+            f"/experiment_server/events/{experiment_id}"
+        ) as websocket,
         pytest.raises(WebSocketDisconnect),
     ):
         websocket.receive_json()
     with client.websocket_connect(
-        f"/experiment_server/events/{run_id}",
+        f"/experiment_server/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event = websocket.receive_json()
@@ -309,23 +316,23 @@ def test_websocket_multiple_events_in_queue(setup_client):
         TestEvent("event_2"),
         EndEvent(failed=False, msg="Done"),
     ]
-    client, _, run_id = setup_client(expected)
+    client, _, experiment_id = setup_client(expected)
     credentials = b64encode(b"username:password").decode()
     event_msgs = []
     with client.websocket_connect(
-        f"/experiment_server/events/{run_id}",
+        f"/experiment_server/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event_msgs.extend(websocket.receive_json() for _ in expected)
     assert event_msgs == [jsonable_encoder(e) for e in expected]
 
 
-def test_that_multiple_started_experiments_each_receive_distinct_run_ids(
+def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
     monkeypatch,
 ):
     monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
-    original = dict(_runs)
-    _runs.clear()
+    original = dict(_experiments)
+    _experiments.clear()
     try:
         credentials = b64encode(b"username:password").decode()
         auth_headers = {"Authorization": f"Basic {credentials}"}
@@ -350,26 +357,31 @@ def test_that_multiple_started_experiments_each_receive_distinct_run_ids(
                 headers=auth_headers,
             )
         assert r1.status_code == r2.status_code == 200
-        run_id_1 = r1.json()["run_id"]
-        run_id_2 = r2.json()["run_id"]
-        assert run_id_1 != run_id_2
-        runs_response = client.get("/experiment_server/runs", headers=auth_headers)
+        experiment_id_1 = r1.json()["experiment_id"]
+        experiment_id_2 = r2.json()["experiment_id"]
+        assert experiment_id_1 != experiment_id_2
+        runs_response = client.get(
+            "/experiment_server/experiments", headers=auth_headers
+        )
         assert runs_response.status_code == 200
-        assert set(runs_response.json()["run_ids"]) >= {run_id_1, run_id_2}
+        assert set(runs_response.json()["experiment_ids"]) >= {
+            experiment_id_1,
+            experiment_id_2,
+        }
     finally:
-        _runs.clear()
-        _runs.update(original)
+        _experiments.clear()
+        _experiments.update(original)
 
 
 async def test_websocket_no_events_on_connect(setup_client):
     events = []
-    client, subs, run_id = setup_client(events)
+    client, subs, experiment_id = setup_client(events)
     credentials = b64encode(b"username:password").decode()
     result = []
     expected_result = EndEvent(failed=False, msg="Test message")
 
     with client.websocket_connect(
-        f"/experiment_server/events/{run_id}",
+        f"/experiment_server/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
 
@@ -400,13 +412,13 @@ def test_that_get_status_returns_successfully(setup_client):
 
 
 @pytest.mark.parametrize(
-    ("run_id", "credentials", "expected_status_code", "expected_response"),
+    ("experiment_id", "credentials", "expected_status_code", "expected_response"),
     [
         (
             "1",
             b64encode(b"username:password").decode(),
             404,
-            {"detail": "Run '1' not found"},
+            {"detail": "Experiment '1' not found"},
         ),
         (
             None,
@@ -422,13 +434,13 @@ def test_that_get_status_returns_successfully(setup_client):
         ),
     ],
 )
-def test_that_get_status_by_run_id_endpoint_returns_expected_response(
-    setup_client, run_id, credentials, expected_status_code, expected_response
+def test_that_get_status_by_experiment_id_endpoint_returns_expected_response(
+    setup_client, experiment_id, credentials, expected_status_code, expected_response
 ):
-    client, _, valid_run_id = setup_client()
+    client, _, valid_experiment_id = setup_client()
 
     response = client.get(
-        f"/experiment_server/status/{run_id or valid_run_id}",
+        f"/experiment_server/status/{experiment_id or valid_experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     )
     assert response.status_code == expected_status_code
@@ -438,11 +450,11 @@ def test_that_get_status_by_run_id_endpoint_returns_expected_response(
 def test_that_get_config_path_returns_not_found_for_pending_experiment_state(
     setup_client,
 ):
-    client, _, run_id = setup_client()
+    client, _, experiment_id = setup_client()
     credentials = b64encode(b"username:password").decode()
 
     response = client.get(
-        f"/experiment_server/config_path/{run_id}",
+        f"/experiment_server/config_path/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     )
     assert response.status_code == 404
@@ -452,23 +464,23 @@ def test_that_get_config_path_returns_not_found_for_pending_experiment_state(
 def test_that_get_config_path_returns_successfully_for_running_experiment(
     setup_client,
 ):
-    client, _, run_id = setup_client()
+    client, _, experiment_id = setup_client()
     credentials = b64encode(b"username:password").decode()
 
-    assert run_id in _runs
-    _runs[run_id].status.status = ExperimentState.running
+    assert experiment_id in _experiments
+    _experiments[experiment_id].status.status = ExperimentState.running
     response = client.get(
-        f"/experiment_server/config_path/{run_id}",
+        f"/experiment_server/config_path/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     )
     assert response.status_code == 200
 
 
 def test_that_experiment_stop_endpoint_returns_successfully(setup_client):
-    client, _, run_id = setup_client()
+    client, _, experiment_id = setup_client()
 
-    assert run_id in _runs
-    assert _runs[run_id].status.status == ExperimentState.pending
+    assert experiment_id in _experiments
+    assert _experiments[experiment_id].status.status == ExperimentState.pending
 
     credentials = b64encode(b"username:password").decode()
 
@@ -481,15 +493,15 @@ def test_that_experiment_stop_endpoint_returns_successfully(setup_client):
     assert response.text == "Raise STOP flag succeeded. EVEREST initiates shutdown.."
 
     # ExperimentState should be updated to 'stopped' after the stop endpoint is called
-    assert _runs[run_id].status.status == ExperimentState.stopped
-    assert _runs[run_id].status.message == "Server stopped by user"
+    assert _experiments[experiment_id].status.status == ExperimentState.stopped
+    assert _experiments[experiment_id].status.message == "Server stopped by user"
 
 
 def test_that_experiment_stop_endpoint_correctly_shuts_down_server(setup_client):
     client, _, _ = setup_client()
 
-    # Clear _runs to force server shutdown when stop endpoint is called
-    _runs.clear()
+    # Clear _experiments to force server shutdown when stop endpoint is called
+    _experiments.clear()
 
     credentials = b64encode(b"username:password").decode()
     previous_handler = getsignal(SIGTERM)

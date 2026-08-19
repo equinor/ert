@@ -100,7 +100,7 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
             assert len(obs) == num_summary_obs
             assert np.isclose(obs[0].errors[0], 0.1)
             assert obs[0].x_axis[0].startswith("2010-01-02T00:00:00")
-            assert np.isclose(obs[0].values[0], 2.6357)  # noqa: PD011
+            assert np.isclose(obs[0].values[0], 2.6357)  # ruff: ignore[pandas-use-of-dot-values]
             assert len(obs[0].errors) == 1
             assert len(obs[0].x_axis) == 1
             assert len(obs[0].values) == 1
@@ -265,7 +265,7 @@ def test_plot_api_big_summary_memory_usage(
     dates = []
 
     for i in range(num_keys):
-        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates  # noqa: DTZ001
+        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates  # ruff: ignore[call-datetime-without-tzinfo]
 
     dates_df = pl.Series(dates, dtype=pl.Datetime).dt.cast_time_unit("ms")
 
@@ -295,13 +295,13 @@ def test_plot_api_big_summary_memory_usage(
     for real in range(ensemble.ensemble_size):
         ensemble.save_response("summary", big_summary.clone(), real)
 
-    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
+    with memray.Tracker("memray.bin"):
         # Initialize plotter window
         response_keys = {k.key for k in api.responses_api_key_defs}
         all_ensembles = [e.id for e in api.get_all_ensembles()]
         assert set(keys_df.to_list()) == set(response_keys)
 
-        # call updatePlot()
+        # call update_plot()
         ensemble_to_data_map: dict[str, pd.DataFrame] = {}
         sample_key = keys_df.sample(1).item()
         for ensemble in all_ensembles:
@@ -365,8 +365,10 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
         # Cycle through all ensembles and get all responses
         for key_info in key_infos_params:
             for ensemble in all_ensembles:
-                api.data_for_parameter(
-                    ensemble_id=ensemble.id, parameter_key=key_info.parameter.name
+                PlotApi.data_for_parameter(
+                    ensemble_id=ensemble.id,
+                    parameter_key=key_info.parameter.name,
+                    ens_path=api.ens_path,
                 )
 
         for key_info in key_infos_responses:
@@ -399,7 +401,7 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
 def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
     api, _ = api_and_snake_oil_storage
 
-    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
+    with memray.Tracker("memray.bin"):
         key_infos = api.responses_api_key_defs
         all_ensembles = api.get_all_ensembles()
         # Cycle through all ensembles and get all responses

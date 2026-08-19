@@ -27,6 +27,72 @@
 Highlighted changes
 ===================
 
+Version 24.0
+------------
+
+New Everest plots
+#################
+
+Several new plots have been added for Everest, along with adjustments to the
+underlying ERT plotting functionality to support them.
+
+Total objective value
+~~~~~~~~~~~~~~~~~~~~~
+
+Shows the aggregated objective value,
+separated into accepted and rejected batches.
+All available batches are plotted by default, up to a maximum of 20 (previously
+five).
+
+.. image:: v24_batch_objective.png
+
+Hovering over a batch point shows why the batch was rejected, for example
+non-improvement or constraint violation.
+
+.. image:: v24_rejected_hover.gif
+
+Objective function
+~~~~~~~~~~~~~~~~~~
+
+Shows every realization per batch. All batches are plotted by default, up to a
+maximum of 20 (previously five). Hovering over a line reveals the realization
+number, making it possible to isolate a single realization.
+
+.. image:: v24_objective_hover.gif
+
+Controls
+~~~~~~~~
+
+Several controls can now be plotted together, rather than one plot per control.
+This makes the batches easier to compare, since there is no longer any need to
+jump back and forth between separate control plots.
+
+.. image:: v24_controls.png
+
+The x-axis can be switched from batch to control. All batches are then drawn at
+the same x-position for a given control, so the vertical spread shows how much
+that control has varied across batches.
+
+.. image:: v24_alternative_controls_view.gif
+
+.. image:: v24_controls_alternative_view.png
+
+Gradient
+~~~~~~~~
+
+Shows the gradient of one or more controls for each batch, for both objectives
+and constraints.
+
+.. image:: v24_objective_gradient.png
+
+Constraints
+~~~~~~~~~~~
+
+Plots the output constraint values together with their upper and lower bounds,
+making it easier to identify batch constraint violations.
+
+.. image:: v24_constraint_plot.png
+
 Version 23.0
 ------------
 

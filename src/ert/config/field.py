@@ -135,7 +135,7 @@ class Field(ParameterConfig):
 
         grid_extension = Path(grid_file_path).suffix.lower()
 
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             if grid_extension == ".egrid":
                 grid = xtgeo.grid_from_file(grid_file_path)
                 ertbox_params = calculate_ertbox_parameters(grid)

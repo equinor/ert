@@ -6,11 +6,11 @@ from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.extra.lark as stlark
+import polars as pl
 import pytest
 from hypothesis import given
 from resdata.summary import Summary
 
-from ert.__main__ import run_convert_observations
 from ert.config._observations import (
     DEFAULT_LOCALIZATION_RADIUS,
     BreakthroughObservation,
@@ -19,7 +19,7 @@ from ert.config._observations import (
     SummaryObservation,
     make_observations,
 )
-from ert.config._shapes import CircleShapeConfig, ShapeRegistry
+from ert.config._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeRegistry
 from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
@@ -28,8 +28,11 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
     observations_parser,
 )
-from ert.namespace import Namespace
-from tests.ert.defaults_generator import create_seismic_observation
+from ert.observation_converters.history_to_summary import convert_history_to_summary
+from tests.ert.defaults_generator import (
+    create_seismic_observation,
+    create_seismic_observation_dict,
+)
 
 observation_contents = stlark.from_lark(observations_parser)
 
@@ -103,14 +106,14 @@ def test_that_make_observations_migrates_observations():
     Path("obs_config").write_text(obs_config_contents, encoding="utf8")
 
     # Create a simple refcase so the migration can read history values
-    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)  # noqa: DTZ001
+    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)  # ruff: ignore[call-datetime-without-tzinfo]
     summary.add_variable("FOPR", unit="SM3/DAY")
     summary.add_variable("FOPRH", unit="SM3/DAY")
     summary.add_variable("FWPR", unit="SM3/DAY")
     summary.add_variable("FWPRH", unit="SM3/DAY")
 
     # Create two timesteps: the explicit dates used in the test
-    start_date = datetime(2010, 3, 31)  # noqa: DTZ001
+    start_date = datetime(2010, 3, 31)  # ruff: ignore[call-datetime-without-tzinfo]
     # overwrite writer start date by recreating with desired start
     summary = Summary.writer("MY_REFCASE", start_date, 10, 10, 10)
     summary.add_variable("FOPR", unit="SM3/DAY")
@@ -126,7 +129,7 @@ def test_that_make_observations_migrates_observations():
     t0["FWPRH"] = 4
 
     # second step: 2015-06-13
-    second_date = datetime(2015, 6, 13)  # noqa: DTZ001
+    second_date = datetime(2015, 6, 13)  # ruff: ignore[call-datetime-without-tzinfo]
     days_between = (second_date - start_date).days
     t1 = summary.add_t_step(1, sim_days=days_between)
     t1["FOPR"] = 1
@@ -148,7 +151,7 @@ def test_that_make_observations_migrates_observations():
     )
     Path("config.ert").write_text(config_content, encoding="utf8")
 
-    run_convert_observations(Namespace(config="config.ert"))
+    convert_history_to_summary("config.ert")
 
     # Re-parse the migrated obs_config and build the observation objects
     migrated_contents = Path("obs_config").read_text(encoding="utf8")
@@ -402,7 +405,7 @@ def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # noqa: E501
+def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # ruff: ignore[line-too-long]
     """A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
     indicate missing data. If encountered in an rft observations csv file
     it should be skipped and create a user warning.
@@ -808,28 +811,6 @@ def test_that_rft_observation_can_be_provided_radius_localization_keyword(
         assert math.isclose(shape.radius, 2500)
 
 
-def test_that_shape_registry_reuses_identical_circle_shapes():
-    shape_registry = ShapeRegistry()
-    shape_id_1 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    shape_id_2 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    assert shape_id_1 == shape_id_2
-
-
-def test_that_shape_registry_assigns_new_id_for_different_shapes():
-    shape_registry = ShapeRegistry()
-    shape_id_1 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
-    )
-    shape_id_2 = shape_registry.register(
-        CircleShapeConfig(east=10.0, north=20.0, radius=3000.0)
-    )
-    assert shape_id_1 != shape_id_2
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_seismic_observation_instantiates(file_context_token):
     Path("obs.csv").write_text(
@@ -861,18 +842,22 @@ def test_that_seismic_observation_instantiates(file_context_token):
         create_seismic_observation(
             name="NAME",
             filepath=Path("obs.csv"),
-            east=461231.5537527473,
+            east=461231.55375274725,
             north=5933187.729869121,
-            value=-0.0003566695393886,
+            value=-0.00035666953938864876,
             error=0.005,
+            shape_id=0,
+            boundary_id=None,
         ),
         create_seismic_observation(
             name="NAME",
             filepath=Path("obs.csv"),
             east=461156.9532936567,
             north=5933317.28138355,
-            value=-0.0005293887515127,
+            value=-0.0005293887515127136,
             error=0.005,
+            shape_id=1,
+            boundary_id=None,
         ),
     ]
 
@@ -880,7 +865,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
 def test_that_non_existent_seismic_observation_file_raises_error(file_context_token):
     with pytest.raises(ObservationConfigError) as err:
         make_observations(
-            "",
+            "dir",
             [
                 ObservationDict(
                     {
@@ -894,13 +879,12 @@ def test_that_non_existent_seismic_observation_file_raises_error(file_context_to
             shape_registry=ShapeRegistry(),
         )
 
-    assert (
-        "The CSV file (seismic_observations.csv) does not exist or is not accessible."
-        in str(err.value)
+    assert "/dir/seismic_observations.csv) does not exist or is not accessible." in str(
+        err.value
     )
 
 
-def test_that_missing_seismic_csv_filename_raises_error(file_context_token):
+def test_that_missing_seismic_observation_filename_raises_error(file_context_token):
     with pytest.raises(ObservationConfigError) as err:
         make_observations(
             "",
@@ -916,7 +900,7 @@ def test_that_missing_seismic_csv_filename_raises_error(file_context_token):
             shape_registry=ShapeRegistry(),
         )
 
-    assert 'Missing item "CSV" in SEISMIC_OBSERVATION' in str(err.value)
+    assert 'Missing item "OBS_FILE" in SEISMIC_OBSERVATION' in str(err.value)
 
 
 def test_that_unknown_seismic_key_raises_error(file_context_token):
@@ -975,6 +959,69 @@ def test_that_missing_columns_in_seismic_observation_file_raises(file_context_to
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_columns_in_seismic_parquet_observation_file_raises(
+    file_context_token,
+):
+    pl.DataFrame(
+        {
+            "OBS": [-0.00035666953938864876, 0.0005293887515127136],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [3.0, 1.0],
+            "CAT": ["Persian", "Siamese"],
+        }
+    ).write_parquet("seismic_observations.parquet")
+
+    with pytest.raises(
+        ObservationConfigError,
+        match=(
+            r"The seismic observations file seismic_observations.parquet "
+            r"is missing required column\(s\) X_UTME, Y_UTMN."
+        ),
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.parquet",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_rejects_unsupported_file_suffix(file_context_token):
+    Path("seismic_observations.txt").write_text("dummy", encoding="utf8")
+
+    with pytest.raises(
+        ObservationConfigError,
+        match=(
+            r"The seismic observations file seismic_observations.txt "
+            r"must be a CSV or Parquet file"
+        ),
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.txt",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_seismic_observation_defaults_all_names_to_filename(file_context_token):
     Path("obs.csv").write_text(
         dedent(
@@ -1009,6 +1056,8 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             north=1.0,
             value=1.0,
             error=0.005,
+            shape_id=0,
+            boundary_id=None,
         ),
         create_seismic_observation(
             name="obs",
@@ -1017,6 +1066,8 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             north=2.0,
             value=1.0,
             error=0.005,
+            shape_id=1,
+            boundary_id=None,
         ),
     ]
 
@@ -1056,19 +1107,45 @@ def test_that_invalid_value_type_in_seismic_observation_raises_error(
     )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_empty_seismic_observation_file_does_not_raise(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            """
+        ),
+        encoding="utf8",
+    )
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                create_seismic_observation_dict(
+                    csv="obs.csv",
+                ),
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=ShapeRegistry(),
+    )
+
+    assert obs == []
+
+
 @pytest.mark.parametrize(
     ("east", "north"),
     [
-        pytest.param([111.11, 111.11], [222.22, 222.22], id="same coordinates"),
+        pytest.param([111.11, 111.11], [222.222, 222.222], id="same coordinates"),
         pytest.param(
-            [111.1111111111111111111111, 111.11111111111111],
-            [222.2222222222222222222222222222222, 222.22222222222223],
-            id="lost precision",
+            [0.0, 0.0],
+            [0.0, 0.19],
+            id="less than double tolerance",
         ),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_duplicate_location_in_seismic_observation_raises(
+def test_that_seismic_observation_coordinate_distance_below_tolerance_raises(
     file_context_token, east, north
 ):
 
@@ -1087,10 +1164,114 @@ def test_that_duplicate_location_in_seismic_observation_raises(
             "",
             [
                 ObservationDict(
+                    create_seismic_observation_dict(
+                        csv="obs.csv",
+                    ),
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "Seismic observation coordinates with approximate locations "
+        f"[(({east[0]}, {north[0]}), ({east[1]}, {north[1]}))] "
+        "fall inside of a tolerance radius." in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_reads_boundary_file(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            1.0,1.0,1.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    Path("boundary.pol").write_text(
+        dedent(
+            """
+            0.000000 0.000000 0.000000
+            0.000000 1.000000 0.000000
+            1.000000 1.000000 0.000000
+            1.000000 0.000000 0.000000
+            999.000000 999.000000 999.000000
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "NAME",
+                    "CSV": "obs.csv",
+                    "BOUNDARY": "boundary.pol",
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        create_seismic_observation(
+            name="NAME",
+            filepath=Path("obs.csv"),
+            east=1.0,
+            north=1.0,
+            value=1.0,
+            error=0.005,
+            shape_id=1,
+            boundary_id=0,
+        )
+    ]
+    boundary = shape_registry.get(0)
+    assert isinstance(boundary, PolygonShapeConfig)
+    expected = [
+        (0.0, 0.0),
+        (0.0, 1.0),
+        (1.0, 1.0),
+        (1.0, 0.0),
+        (0.0, 0.0),
+    ]
+    assert boundary.vertices == expected
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_boundary_seismic_observation_file_raises_error(
+    file_context_token,
+):
+    os.makedirs("directory/right/path", exist_ok=True)
+    os.makedirs("directory/wrong/path", exist_ok=True)
+    Path("directory/obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            1.0,1.0,1.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    Path("directory/right/path/bound.pol").write_text(
+        "Unexpected file location",
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "directory",
+            [
+                ObservationDict(
                     {
                         "type": ObservationType.SEISMIC,
                         "name": "NAME",
                         "CSV": "obs.csv",
+                        "BOUNDARY": "wrong/path/bound.pol",
                     },
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
                 )
@@ -1099,6 +1280,6 @@ def test_that_duplicate_location_in_seismic_observation_raises(
         )
 
     assert (
-        f"Seismic observation coordinates ({east[1]}, {north[1]}) "
-        "were not unique (after rounding from f64 to f32)." in str(err.value)
+        "/directory/wrong/path/bound.pol) does not exist or is not accessible."
+        in str(err.value)
     )

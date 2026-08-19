@@ -5,7 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
-import pandas as pd
+import polars as pl
 import pytest
 from resdata.summary import Summary
 
@@ -14,7 +14,6 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.config import ErtConfig, ObservationSettings
-from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
@@ -112,7 +111,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
         ert_config.runpath_config.num_realizations
         * [
             [
-                datetime(2014, 9, 9, 1, 11)  # noqa: DTZ001
+                datetime(2014, 9, 9, 1, 11)  # ruff: ignore[call-datetime-without-tzinfo]
             ]
         ],
     )
@@ -145,9 +144,9 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
     )
 
     response_times = [
-        [datetime(2014, 9, 9)],  # noqa: DTZ001
-        [datetime(2014, 9, 9)],  # noqa: DTZ001
-        [datetime(2017, 9, 9)],  # noqa: DTZ001
+        [datetime(2014, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2017, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
     ]
     create_responses(prior_ensemble, response_times)
 
@@ -183,11 +182,11 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble.ensemble_size,
     )
     response_times = [
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11), datetime(2017, 9, 9)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11), datetime(2017, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
     ]
     create_responses(prior_ensemble, response_times)
 
@@ -235,11 +234,11 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble.ensemble_size,
     )
     response_times = [
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11), datetime(2014, 9, 9)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11), datetime(2014, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
     ]
     create_responses(prior_ensemble, response_times)
 
@@ -272,28 +271,31 @@ def test_that_mismatched_responses_gives_nan_measured_data(prior_ensemble):
     )
 
     response_times = [
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
-        [datetime(2017, 9, 9)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2014, 9, 9, 1, 11)],  # ruff: ignore[call-datetime-without-tzinfo]
+        [datetime(2017, 9, 9)],  # ruff: ignore[call-datetime-without-tzinfo]
     ]
     create_responses(prior_ensemble, response_times)
 
-    measured_data = MeasuredData(prior_ensemble)
+    measured_data = prior_ensemble._load_measured_data()
 
-    fopr_1 = measured_data.data["FOPR_1"]
-    assert isinstance(fopr_1, pd.DataFrame)
-    assert np.isclose(fopr_1.loc["OBS"].iloc[0], 0.9)
-    assert np.isclose(fopr_1.loc["STD"].iloc[0], 0.05)
-    assert np.isclose(fopr_1.loc[0].iloc[0], -1.6038367748260498)
-    assert np.isclose(fopr_1.loc[1].iloc[0], 0.06409991532564163)
-    assert pd.isna(fopr_1.loc[2].iloc[0])
+    fopr_1 = measured_data.filter(pl.col("observation_key") == "FOPR_1").row(
+        0, named=True
+    )
+    assert np.isclose(fopr_1["OBS"], 0.9)
+    assert np.isclose(fopr_1["STD"], 0.05)
+    assert np.isclose(fopr_1["0"], -1.6038367748260498)
+    assert np.isclose(fopr_1["1"], 0.06409991532564163)
+    assert fopr_1["2"] is None
 
-    fopr_2 = measured_data.data["FOPR_2"]
-    assert np.isclose(fopr_2.loc["OBS"].iloc[0], 1.1)
-    assert np.isclose(fopr_2.loc["STD"].iloc[0], 0.05)
-    assert pd.isna(fopr_2.loc[0].iloc[0])
-    assert pd.isna(fopr_2.loc[1].iloc[0])
-    assert pd.isna(fopr_1.loc[2].iloc[0])
+    fopr_2 = measured_data.filter(pl.col("observation_key") == "FOPR_2").row(
+        0, named=True
+    )
+    assert np.isclose(fopr_2["OBS"], 1.1)
+    assert np.isclose(fopr_2["STD"], 0.05)
+    assert fopr_2["0"] is None
+    assert fopr_2["1"] is None
+    assert fopr_2["2"] is None
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
@@ -307,7 +309,7 @@ def test_reading_past_2263_is_ok(ert_config, prior_ensemble):
 
     create_responses(
         prior_ensemble,
-        ert_config.runpath_config.num_realizations * [[datetime(2500, 9, 9)]],  # noqa: DTZ001
+        ert_config.runpath_config.num_realizations * [[datetime(2500, 9, 9)]],  # ruff: ignore[call-datetime-without-tzinfo]
     )
 
     responses = prior_ensemble.load_responses("summary", (0, 1, 2))
@@ -319,16 +321,16 @@ def test_reading_past_2263_is_ok(ert_config, prior_ensemble):
         {
             "realization": 0,
             "response_key": "FOPR",
-            "time": datetime(2500, 9, 10, 0, 0),  # noqa: DTZ001
+            "time": datetime(2500, 9, 10, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
         },
         {
             "realization": 1,
             "response_key": "FOPR",
-            "time": datetime(2500, 9, 10, 0, 0),  # noqa: DTZ001
+            "time": datetime(2500, 9, 10, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
         },
         {
             "realization": 2,
             "response_key": "FOPR",
-            "time": datetime(2500, 9, 10, 0, 0),  # noqa: DTZ001
+            "time": datetime(2500, 9, 10, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
         },
     ]

@@ -219,7 +219,7 @@ def test_that_init_updates_the_info_tab(qtbot):
 
     # select the correct tab
     ensemble_widget = tool.findChild(EnsembleWidget)
-    ensemble_widget._currentTabChanged(1)
+    ensemble_widget._current_tab_changed(1)
 
     assert "UNDEFINED" in html_edit.toPlainText()
     assert "RealizationStorageState.UNDEFINED" not in html_edit.toPlainText()
@@ -233,7 +233,7 @@ def test_that_init_updates_the_info_tab(qtbot):
 
     # Change back to first tab
     tool.setCurrentIndex(0)
-    ensemble_widget._currentTabChanged(1)
+    ensemble_widget._current_tab_changed(1)
     assert "PARAMETERS_LOADED" in html_edit.toPlainText()
     assert "RealizationStorageState.PARAMETERS_LOADED" not in html_edit.toPlainText()
 

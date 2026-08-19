@@ -147,7 +147,7 @@ class EnsembleEvaluator:
         heartbeat_interval = 0.1
         closetracker_received: bool = False
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 event = await asyncio.wait_for(
                     self._events_to_send.get(), timeout=heartbeat_interval
                 )
@@ -401,7 +401,7 @@ class EnsembleEvaluator:
 
     async def listen_for_messages(self) -> None:
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 dealer, _, frame = await self._router_socket.recv_multipart()
                 await self._router_socket.send_multipart([dealer, b"", ACK_MSG])
                 sender = dealer.decode("utf-8")
@@ -421,7 +421,7 @@ class EnsembleEvaluator:
 
     async def _server(self) -> None:
         zmq_context = zmq.asyncio.Context()
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             self._router_socket: zmq.asyncio.Socket = zmq_context.socket(zmq.ROUTER)
             self._router_socket.setsockopt(zmq.LINGER, 0)
             if self._config.server_public_key and self._config.server_secret_key:
@@ -720,11 +720,13 @@ class EnsembleEvaluator:
             parallelization_obtained > allowed_overspending
             and self.ensemble.queue_system != QueueSystem.LOCAL
         ):
+            computer_load = fm_step.get(ids.COMPUTER_LOAD, -1.0)
             logger.warning(
                 f"Misconfigured NUM_CPU, forward model step '{fm_step.get(ids.NAME)}' "
                 f"for realization {real_id} spent {cpu_seconds} cpu seconds "
                 f"with wall clock duration {duration:.1f} seconds, a factor of "
-                f"{parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}."
+                f"{parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}, "
+                f"computer load {computer_load:.2f}"
             )
             if parallelization_obtained > overspending_warning_threshold:
                 warning_msg = (
@@ -734,8 +736,8 @@ class EnsembleEvaluator:
                     f"while the Ert config has only requested {num_cpu}.\n"
                     f"This means your experiment is consuming more CPU-resources than "
                     f"requested and will slow down other users experiments.\n"
-                    f"We kindly ask you to set "
-                    f"NUM_CPU={ceil(parallelization_obtained)} in your Ert config."
+                    f"We kindly ask you to add \n"
+                    f"NUM_CPU {ceil(parallelization_obtained)}\nto your Ert config."
                 )
                 self.max_parallelism_violation = max(
                     self.max_parallelism_violation,

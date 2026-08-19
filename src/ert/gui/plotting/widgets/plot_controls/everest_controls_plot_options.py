@@ -1,12 +1,19 @@
+import logging
 from collections.abc import Callable
 
 from PyQt6.QtWidgets import (
     QButtonGroup,
-    QGroupBox,
     QRadioButton,
 )
 
-from ert.gui.plotting.utils.qt_creator import create_group_box, create_group_layout
+from ert.gui.plotting.utils import PlotContext
+from ert.gui.plotting.utils.qt_creator import (
+    create_group_layout,
+)
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
+from ert.gui.utils import log_once
+
+logger = logging.getLogger(__name__)
 
 
 class EverestControlsPlotOptions:
@@ -21,8 +28,12 @@ class EverestControlsPlotOptions:
         self._display_over_button_group.addButton(self._display_over_batches_radio)
         self._display_over_button_group.addButton(self._display_over_controls_radio)
         self._display_over_button_group.buttonClicked.connect(connection_point)
-
-        self._display_over_group = create_group_box(
+        log_once(
+            self._display_over_button_group.buttonClicked,
+            logger,
+            "Plot sidebar option used: 'X-axis display option'",
+        )
+        self._display_over_group = CollapsibleSection(
             "X-axis:",
             create_group_layout(
                 [
@@ -32,8 +43,11 @@ class EverestControlsPlotOptions:
             ),
         )
 
-    def get_widget(self) -> QGroupBox:
+    def get_widget(self) -> CollapsibleSection:
         return self._display_over_group
+
+    def update_plot_context(self, plot_context: PlotContext) -> None:
+        plot_context.by_batch = self.is_batches_selected()
 
     def is_batches_selected(self) -> bool:
         return self._display_over_batches_radio.isChecked()

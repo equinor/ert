@@ -68,7 +68,7 @@ ContextString = FileContextToken
 T = TypeVar("T")
 
 
-class ContextList(list[T]):  # noqa: FURB189
+class ContextList(list[T]):  # ruff: ignore[subclass-builtin]
     token: FileContextToken
 
     def __init__(self, token: FileContextToken) -> None:

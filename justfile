@@ -41,6 +41,7 @@ pack-updated-screenshots:
     #!/bin/bash
     staging="updated-screenshots"
     mkdir -p "$staging"
+    shopt -s nullglob
     for test_dir in pytest-mpl_results/*/; do
       # Filenames from pytest-mpl need a lot of massaging in order to
       # reconstruct the directory structure:
@@ -56,6 +57,7 @@ pack-updated-screenshots:
       echo "Mapped $full_dotted_name -> $target_dir/$filename"
     done
     [ -d "/tmp/test_docs_screenshots" ] && cp -r /tmp/test_docs_screenshots/* "$staging"
+    echo "Files staged for updated screenshots:"
     find "$staging" -type f -exec ls -l {} +
 
 ert-gui-tests:
@@ -65,8 +67,8 @@ ert-cli-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/cli
 
 ert-memory-tests:
-    _RJEM_MALLOC_CONF="dirty_decay_ms:100,muzzy_decay_ms:100" pytest -n 2 {{pytest_args}} tests/ert -m "memory_test"
-    _RJEM_MALLOC_CONF="dirty_decay_ms:100,muzzy_decay_ms:100" pytest -n 2 {{pytest_args}} tests/ert -m "limit_memory" --memray
+    pytest {{pytest_args}} tests/ert -m "memory_test"
+    pytest {{pytest_args}} tests/ert -m "limit_memory" --memray
 
 ert-unit-tests:
     pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not (memory_test or limit_memory)"
@@ -84,7 +86,8 @@ fetch-screenshot-baselines:
     rm -rf .tmp/ert-testdata
     git clone --depth 1 --filter=blob:none --sparse https://github.com/equinor/ert-testdata.git .tmp/ert-testdata
     cd .tmp/ert-testdata && git sparse-checkout set screenshotbaselines
-    cp --recursive .tmp/ert-testdata/screenshotbaselines/. .
+    cp -r .tmp/ert-testdata/screenshotbaselines/. .
+    rm -rf .tmp/ert-testdata
 
 build-ert-docs: fetch-screenshot-baselines
     sphinx-build -n -v -E -W ./docs/ert ./ert_docs

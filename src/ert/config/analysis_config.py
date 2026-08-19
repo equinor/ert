@@ -243,7 +243,7 @@ class AnalysisConfig:
                     f"The {', '.join(errors)} keyword(s) has been removed and "
                     "functionality replaced with the ENKF_TRUNCATION keyword. "
                     "Please see "
-                    "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "  # noqa: E501
+                    "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "  # ruff: ignore[line-too-long]
                     "for documentation how to use this instead."
                 )
             )

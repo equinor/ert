@@ -3,6 +3,7 @@ import logging
 from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import hypothesis.strategies as st
@@ -19,12 +20,13 @@ from ert.storage.local_ensemble import (
     _write_responses_to_storage,
 )
 from tests.ert.defaults_generator import create_rft_observation
+from tests.ert.rft_generator import create_egrid, rft_entry
 
 
 def rft_response(
     *,
     well: tuple[str, ...] = ("WELL",),
-    date: tuple[date, ...] = (datetime(2000, 1, 1).date(),),  # noqa: DTZ001
+    date: tuple[date, ...] = (datetime(2000, 1, 1).date(),),  # ruff: ignore[call-datetime-without-tzinfo]
     prop: tuple[str, ...] = ("SWAT",),
     depth: tuple[float, ...] = (1006.6,),
     values: tuple[float, ...] = (100.0,),
@@ -143,7 +145,7 @@ def _create_rft_response_df(
     cell_center: tuple[float, float, float] = (100.0, 200.0, 25.0),
     cell_zones: tuple[str, ...] = (),
 ) -> pl.DataFrame:
-    time = datetime.strptime(date, "%Y-%m-%d").date()  # noqa: DTZ007
+    time = datetime.strptime(date, "%Y-%m-%d").date()  # ruff: ignore[call-datetime-strptime-without-zone]
     df = pl.DataFrame(
         {
             "response_key": [f"{well}:{date}:{prop}"],
@@ -458,33 +460,80 @@ def test_that_get_observations_and_responses_adds_qc_error_on_rft_mismatch(
         assert obs_and_responses["qc_error_1"].to_list() == [msg, None]
 
 
+def _list_of_tuples_to_dict(keys: list[str], tuples: list[tuple]) -> dict[str, Any]:
+    return dict(zip(keys, zip(*tuples, strict=True), strict=True))
+
+
 @pytest.mark.parametrize(
-    (
-        "approximate_missing_values",
-        "missing_required_columns",
-        "expected_response_values",
-    ),
+    "approximate_missing_values",
     [
-        pytest.param(True, False, [110.0, 310.0], id="interpolate enabled"),
-        pytest.param(False, False, [None, None], id="interpolate disabled"),
-        pytest.param(True, True, [None, None], id="missing required columns"),
+        pytest.param(True, id="interpolate enabled"),
+        pytest.param(False, id="interpolate disabled"),
+    ],
+)
+@pytest.mark.parametrize(
+    "missing_obs_cell_center",
+    [
+        pytest.param(True, id="observation cell center available"),
+        pytest.param(False, id="observation cell center missing"),
+    ],
+)
+@pytest.mark.parametrize(
+    "missing_required_columns",
+    [
+        pytest.param(True, id="missing required columns"),
+        pytest.param(False, id="all required columns present"),
     ],
 )
 def test_that_get_observations_and_responses_interpolates_rft_values(
     tmp_path,
+    mocked_files,
+    mock_resfo_file,
+    missing_obs_cell_center,
     approximate_missing_values,
     missing_required_columns,
-    expected_response_values,
 ):
+    if approximate_missing_values and not missing_required_columns:
+        expected_response_values = (
+            [112.5, 190.0] if missing_obs_cell_center else [100.0, 200.0]
+        )
+    else:
+        expected_response_values = [None, None]
+
+    # fmt: off
+    well_rft = [
+    #        ijks     pressure   depth
+        ( (1, 1, 1),   50.0,   50.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+        ( (1, 1, 3),  150.0,  250.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+    ]
+    # fmt: on
+
+    well = _list_of_tuples_to_dict(["ijks", "pressure", "depth"], well_rft)
+
     with open_storage(tmp_path, mode="w") as storage:
         rft_config = RFTConfig(
             input_files=["BASE.RFT"],
+            zonemap=Path("zonemap.txt"),
             data_to_read={"WELL": {"2000-01-01": ["PRESSURE"]}},
             approximate_missing_values=approximate_missing_values,
         )
 
-        obs1 = rft_observation(name="RFT_OBS1", value=100.0, tvd=1000.0, zone="zone1")
-        obs2 = rft_observation(name="RFT_OBS2", value=200.0, tvd=2000.0, zone="zone1")
+        obs1 = rft_observation(
+            name="RFT_OBS1",
+            value=100.0,
+            east=345.0,
+            north=155.0,
+            tvd=155.0,
+            zone="zone1",
+        )
+        obs2 = rft_observation(
+            name="RFT_OBS2",
+            value=200.0,
+            east=455.0,
+            north=155.0,
+            tvd=355.0,
+            zone="zone1",
+        )
 
         experiment = storage.create_experiment(
             experiment_config={
@@ -500,34 +549,52 @@ def test_that_get_observations_and_responses_interpolates_rft_values(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
 
-        date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+        BASE_PATH = "path/does/not/exist"
+        mock_resfo_file(
+            f"{BASE_PATH}/BASE.EGRID",
+            create_egrid(
+                1,
+                1,
+                4,
+                100,
+                100,
+                100,
+                mapaxes=(100.0, 101.0, 100.0, 100.0, 101.0, 100.0),
+                shift_bottom_plane=(400.0, 0.0),
+            ),
+        )
+        mock_resfo_file(
+            f"{BASE_PATH}/BASE.RFT",
+            [
+                *rft_entry(date=(1, 1, 2000), well_name=b"WELL", **well),
+            ],
+        )
+        mocked_files[f"{BASE_PATH}/zonemap.txt"] = (
+            "1 zone1\n2 zone1\n3 zone1\n4 zone1\n"
+        )
+
+        observations = ensemble.experiment.observations["rft"]
+        assert observations is not None
 
         # If the response is missing the required columns for interpolation,
         # we should skip interpolation and return None, even if interpolation is
         # enabled. The test drops the columns to simulate a legacy response without
         # these columns.
-        drop_columns = ["cell_center", "cell_zones"] if missing_required_columns else []
+        drop_from_response = (
+            ["cell_center", "cell_zones"] if missing_required_columns else []
+        )
+        drop_from_metadata = (
+            ["well_connection_cell_center"] if missing_obs_cell_center else []
+        )
+
         ensemble.save_response(
             "rft",
-            rft_response(
-                well=("WELL", "WELL"),
-                date=(date, date),
-                prop=("PRESSURE", "PRESSURE"),
-                depth=(500.0, 1500.0),
-                values=(50.0, 150.0),
-                well_connection_cell=((10, 10, 10), (10, 10, 12)),
-                cell_center=((100.0, 105.0, 700.0), (100.0, 105.0, 1200.0)),
-                cell_zones=(("zone1",), ("zone1",)),
-            ).drop(drop_columns),
+            rft_config.read_from_file(BASE_PATH, 0, 0).drop(drop_from_response),
             0,
         )
         ensemble.save_observation_location_metadata(
-            location_metadata(
-                east=(100.0, 100.0),
-                north=(105.0, 105.0),
-                tvd=(1000.0, 2000.0),
-                actual_zones=(("zone1",), ("zone1",)),
-                well_connection_cell=((10, 10, 11), (10, 10, 13)),
+            rft_config.obtain_location_metadata(BASE_PATH, 0, 0, observations).drop(
+                drop_from_metadata
             ),
             0,
         )
@@ -605,7 +672,7 @@ def test_that_get_rft_observations_and_responses_returns_joined_data():
         (False, None),
     ],
 )
-def test_that_get_rft_observations_and_responses_includes_approximated_values_when_enabled(  # noqa: E501
+def test_that_get_rft_observations_and_responses_includes_approximated_values_when_enabled(  # ruff: ignore[line-too-long]
     approximate_missing_values, expected_approximated_values
 ):
     observation = create_rft_observation(zone="zone1")
@@ -810,7 +877,7 @@ def test_that_get_rft_observations_and_responses_raises_error_when_response_not_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_get_rft_observations_and_responses_raises_error_when_location_metadata_not_saved():  # noqa: E501
+def test_that_get_rft_observations_and_responses_raises_error_when_location_metadata_not_saved():  # ruff: ignore[line-too-long]
     with _create_rft_ensemble(1, [create_rft_observation()]) as ensemble:
         ensemble.save_response("rft", _create_rft_response_df(), 0)
         with pytest.raises(FileNotFoundError, match="observation_location_metadata"):
@@ -858,7 +925,7 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
         {
             "response_key": ["FOPR"] * 3,
             "time": pl.Series(
-                [datetime(2020, 1, 1), datetime(2020, 1, 15), datetime(2020, 2, 15)]  # noqa: DTZ001
+                [datetime(2020, 1, 1), datetime(2020, 1, 15), datetime(2020, 2, 15)]  # ruff: ignore[call-datetime-without-tzinfo]
             ).dt.cast_time_unit("ms"),
             "values": pl.Series([100.0, 200.0, 300.0], dtype=pl.Float32),
         }

@@ -54,6 +54,11 @@ class MonitorDate(StrEnum):
     JAN2030 = "20300101"
 
 
+class OutputFormat(StrEnum):
+    CSV = "csv"
+    PARQUET = "parquet"
+
+
 # Coordinate/region table: (X_UTME, Y_UTMN, REGION)
 COORDINATE_TABLE: list[tuple[float, float, float]] = [
     (463401.665023891, 6929758.90312445, 1.0),
@@ -157,7 +162,7 @@ def _obs_error(obs_value: float) -> float:
     return default_error + small_perturbation
 
 
-def _build_filename(
+def _build_stem(
     horizon: HorizonName,
     attribute: Attribute,
     stacking_offset: StackingOffset,
@@ -166,17 +171,20 @@ def _build_filename(
     base: BaseDate,
     monitor: MonitorDate,
 ) -> str:
-    """Constructs a filename consistent with fmu-sim2seis naming convention."""
+    """Constructs a filename stem (no extension) consistent with fmu-sim2seis naming
+    convention.
+    """
     attr_part = (
         f"{attribute.value}_{stacking_offset.value}"
         f"_{calculation.value}_{vertical_domain.value}"
     )
-    return f"{horizon.value}--{attr_part}--{monitor.value}_{base.value}.csv"
+    return f"{horizon.value}--{attr_part}--{monitor.value}_{base.value}"
 
 
-def generate_csv(
+def generate_file(
     parameters: dict[str, dict[str, float]],
     output_dir: Path,
+    output_format: OutputFormat,
     horizon: HorizonName,
     attribute: Attribute,
     stacking_offset: StackingOffset,
@@ -185,7 +193,8 @@ def generate_csv(
     base: BaseDate,
     monitor: MonitorDate,
 ) -> Path:
-    """Generate a single seismic CSV file for the given setup parameter combination.
+    """Generate a single seismic file (CSV or parquet) for the given setup parameter
+    combination.
 
     Both observation file and modelled data file have the same structure, including
     column names.
@@ -193,15 +202,16 @@ def generate_csv(
     All the files in the example have the same number of rows, so we assume it is
     expected.
     """
-    filename = _build_filename(
+    stem = _build_stem(
         horizon, attribute, stacking_offset, calculation, vertical_domain, base, monitor
     )
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    filepath = output_dir / filename
+    filepath = output_dir / f"{stem}.{output_format}"
 
     rows = []
     for i, (x, y, region) in enumerate(COORDINATE_TABLE):
-        obs = _create_value(filename, i, parameters)
+        obs = _create_value(stem, i, parameters)
         rows.append(
             {
                 "X_UTME": x,
@@ -213,7 +223,10 @@ def generate_csv(
         )
 
     df = pd.DataFrame(rows)
-    df.to_csv(filepath, index=False)
+    if output_format is OutputFormat.PARQUET:
+        df.to_parquet(filepath, index=False)
+    else:
+        df.to_csv(filepath, index=False)
     print(f"Written: {filepath}")
     return filepath
 
@@ -221,6 +234,7 @@ def generate_csv(
 def generate_many(
     parameters: dict[str, dict[str, float]],
     output_dir: Path,
+    output_format: OutputFormat,
     horizons: list[HorizonName] | None = None,
     attributes: list[Attribute] | None = None,
     stacking_offsets: list[StackingOffset] | None = None,
@@ -229,7 +243,7 @@ def generate_many(
     bases: list[BaseDate] | None = None,
     monitors: list[MonitorDate] | None = None,
 ) -> None:
-    """Generate CSV files for every combination of the supplied setup parameter
+    """Generate output files for every combination of the supplied setup parameter
     lists.
     """
     horizons = horizons or [HorizonName.HORIZON]
@@ -249,15 +263,16 @@ def generate_many(
         bases,
         monitors,
     ):
-        generate_csv(
+        generate_file(
             parameters,
             output_dir,
+            output_format,
             *combo,
         )
 
 
 if __name__ == "__main__":
-    """Generate .csv files consistent with fmu-sim2seis.
+    """Generate .csv and/or .parquet files consistent with fmu-sim2seis.
 
     Run with no parameters to generate modelled data files, or with --observations to
     generate observation files.
@@ -267,6 +282,13 @@ if __name__ == "__main__":
         "--observations",
         action="store_true",
         help="Generate observation files.",
+    )
+    parser.add_argument(
+        "--format",
+        type=OutputFormat,
+        choices=list(OutputFormat),
+        default=OutputFormat.CSV,
+        help="Output file format.",
     )
     args = parser.parse_args()
 
@@ -280,6 +302,7 @@ if __name__ == "__main__":
     generate_many(
         parameters,
         output_dir,
+        output_format=args.format,
         monitors=[MonitorDate.JAN2025, MonitorDate.JAN2026],
         calculations=[Calculation.MEAN, Calculation.MIN],
     )

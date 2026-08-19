@@ -221,7 +221,7 @@ class StorageWidget(QWidget):
                             ],
                             "ert_templates": self._ert_config.ert_templates,
                             "experiment_type": ExperimentType.MANUAL,
-                            "shape_registry": self._ert_config.shape_registry.model_dump(  # noqa: E501
+                            "shape_registry": self._ert_config.shape_registry.model_dump(  # ruff: ignore[line-too-long]
                                 mode="json"
                             ),
                         },

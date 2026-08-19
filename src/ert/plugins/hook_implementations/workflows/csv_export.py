@@ -100,7 +100,8 @@ class CSVExportJob(ErtScript):
                     ensemble_data = ensemble_data.join(design_matrix_data, how="outer")
 
             misfit_data = ensemble.load_all_misfit_data()
-            if not misfit_data.empty:
+            if not misfit_data.is_empty():
+                misfit_data = misfit_data.to_pandas().set_index("Realization")
                 ensemble_data = ensemble_data.join(misfit_data, how="outer")
             realizations = ensemble.get_realization_list_with_responses()
 
@@ -110,7 +111,7 @@ class CSVExportJob(ErtScript):
                 summary_data = pl.DataFrame({})
 
             if not summary_data.is_empty():
-                pivoted_summary = summary_data.pivot(  # noqa: PD010
+                pivoted_summary = summary_data.pivot(  # ruff: ignore[pandas-use-of-dot-pivot-or-unstack]
                     index=["realization", "time"], on="response_key", values="values"
                 ).to_pandas()
 

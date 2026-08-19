@@ -136,7 +136,7 @@ class EverestConstraintsPlot:
             hover_color=config.next_color()[0],
         )
 
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

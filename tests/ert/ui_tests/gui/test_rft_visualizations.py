@@ -12,9 +12,11 @@ from ert.config import ErtConfig
 from ert.config.parsing.observations_parser import ObservationType
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.plotting.plot_window import (
+    PlotWindow,
+)
+from ert.gui.plotting.utils.plot_maps import (
     ENSEMBLE,
     STATISTICS,
-    PlotWindow,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectListWidget
 from ert.services import ErtServerController
@@ -160,7 +162,7 @@ def plot_figure(qtbot: QtBot, request, rft_config: ErtConfig):
 # We had an issue where the mpl_image_compare decorator
 # was put on an inner function. That makes any failure not
 # report so it has to be on a top level test.
-@pytest.mark.mpl_image_compare(tolerance=10.0)
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
 @pytest.mark.skip_mac_ci  # test is slow
 def test_that_all_rft_visualizations_are_unchanged(plot_figure):
     return plot_figure

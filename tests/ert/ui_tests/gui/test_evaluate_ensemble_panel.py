@@ -11,7 +11,7 @@ from tests.ert.ui_tests.gui.conftest import (
 )
 
 
-def test_evaluate_ensemble_active_realizations_resets_to_all_realizations_with_parameters_when_all_realizations_are_successful(  # noqa
+def test_evaluate_ensemble_active_realizations_resets_to_all_realizations_with_parameters_when_all_realizations_are_successful(  # ruff: ignore[line-too-long]
     qtbot, opened_main_window_poly
 ):
     gui = opened_main_window_poly

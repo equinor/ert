@@ -7,9 +7,9 @@ Observations
 General overview
 ----------------
 
-When using ERT to condition on dynamic data, it is necessary to
+When using ert to condition on dynamic data, it is necessary to
 specify the data/observations to be used. For every piece of data
-ERT needs to know:
+ert needs to know:
 
  - The measured value of the data.
  - The uncertainty (standard deviation) of the measured data.
@@ -17,7 +17,7 @@ ERT needs to know:
  - How to simulate a response of the data given a parameterized forward model.
 
 This information is configured in an observation file. The name/path
-to this observation file is declared in the main ERT config file using the
+to this observation file is declared in the main ert config file using the
 :ref:`OBS_CONFIG <obs_config>` keyword.
 
 The observation file is a plain text file, and is in essence built around four
@@ -42,10 +42,15 @@ different classes of observations using the associated keywords:
    from a reservoir simulator RFT file. Examples are pressure and saturation
    values.
 
+ - :ref:`SEISMIC_OBSERVATION <seismic_observation>`: For loading spatially
+   distributed observations along a horizon, typically 4D seismic
+   attributes. Observations are loaded from a CSV or Parquet file with
+   one row per measurement location.
+
 
 Please note that observations and datatypes are quite tightly linked together.
 Before reading this you should have a firm grasp of the dynamic data types
-as described in :ref:`Data types available in ERT <Data_types_available_in_ERT>`.
+as described in :ref:`Data types available in ert <Data_types_available_in_ERT>`.
 
 
 .. _summary_observation:
@@ -77,7 +82,7 @@ created as follows:
 This will create an observation of group oil production for the Brent
 group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
-label for the observation within ERT and must be unique.
+label for the observation within ert and must be unique.
 
 Date format YYYY-MM-DD (ISO 8601) is required. Other time formats, like
 DD/MM/YYYY or DD.MM.YYYY, are deprecated and their support will be removed in a
@@ -135,7 +140,7 @@ keyword is ABS.
 
 The default value for `ERROR_MIN` is 0.1.
 
-ERT will not load an observation if the total error associated with an observation is zero.
+Ert will not load an observation if the total error associated with an observation is zero.
 A zero error is incompatible with the logic used in the history matching
 process. Therefore, setting a minimum error is particularly important for
 observations that could happen to be zero. For example, if an observation is the
@@ -230,7 +235,7 @@ Where the provided csv file will contain one row for each observation.
 Required columns to create summary observations are: keyword, value,
 error, date.
 
-Without these columns, the configuration is invalid, and Ert will raise
+Without these columns, the configuration is invalid, and ert will raise
 an error.
 
 A csv file containing a single summary observation might look like:
@@ -406,7 +411,7 @@ Here we use INDEX_LIST to indicate that we are interested in element
    ========
 
 
-If ``INDEX_LIST`` not defined, Ert assumes that the observations point
+If ``INDEX_LIST`` not defined, ert assumes that the observations point
 to the first ``n`` ``GEN_DATA`` points:
 
 .. code-block:: none
@@ -462,8 +467,8 @@ While the observation configuration file could include this:
       OBS_FILE   = some_file.txt;
    };
 
-Before ERT starts we expect there to be a file called ``some_file.txt``  with the
-observed values and the uncertainty. After the forward model has completed, ERT
+Before ert starts we expect there to be a file called ``some_file.txt``  with the
+observed values and the uncertainty. After the forward model has completed, ert
 will load the responses from a file called ``rft_BH67``.
 
 If ``REPORT_STEP`` and ``RESTART`` are provided,
@@ -576,9 +581,211 @@ Using zones with RFT observations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When an RFT observation includes a ZONE identifier (either in the CSV file or specified directly),
-ERT will validate that the measurement location falls within the expected geological zone defined
+ert will validate that the measurement location falls within the expected geological zone defined
 in the :ref:`ZONEMAP <zonemap>`. This provides an additional quality check to ensure observations
 are correctly associated with reservoir zones.
 
 If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
 the expected zone, the observation will be deactivated with a warning during the simulation.
+
+
+Observation converters
+----------------------
+
+Ert provides a command-line tool for converting observation configurations between
+formats.
+
+Usage:
+
+.. code-block:: none
+
+    ert convert_observations <config.ert> [--format <format>]
+
+The ``--format`` flag specifies which format to convert to. If omitted, the default
+is ``summary``. Valid formats are:
+
+``summary`` (default)
+    Converts deprecated and unsupported history observations to summary observations.
+
+    The tool replaces the history observation declarations within the observation
+    configuration file with equivalent summary observations.
+
+    The old configuration is renamed to ``<filename>-<timestamp>.old`` in case there is
+    a need to retrieve the old version.
+
+    When trying to open ert with a configuration containing history observations, ert will
+    open with an error and prompt the user to run this workflow - as history observations
+    are no longer supported.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations config.ert
+
+
+``bulk``
+    Converts summary observations to the
+    :ref:`bulk CSV format <bulk_configuration_of_summary_observations>`. This produces a
+    file called ``summary_observations.csv`` containing all summary observation data
+    (one row per observation) and instructions printed to the terminal explaining how
+    to replace the existing configuration of summary observations with a
+    ``SUMMARY { ... }`` bulk block in the observation configuration file.
+
+    This tooling does not edit any existing files, and the output must manually be
+    added to the observation configuration.
+
+    The tooling will not overwrite the file ``summary_observations.csv`` if it already
+    exists.
+
+    As explained in detail in the
+    :ref:`bulk CSV format section <bulk_configuration_of_summary_observations>`, any
+    existing breakthrough observations and localization values are configured within the
+    printed ``SUMMARY { ... }`` bulk block - not in the csv file.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations snake_oil.ert --format bulk
+
+    Example terminal output:
+
+    .. code-block:: none
+
+        6 observations can be replaced by:
+          1.  Copying the file 'summary_observations.csv' to the folder containing your observation configuration.
+          2.  Replacing the named observations below with the bulk configuration
+
+        Observation names (to replace):
+        ==============================
+            WOPR_OP1_9
+            WOPR_OP1_36
+            WOPR_OP1_72
+            WOPR_OP1_108
+            WOPR_OP1_144
+            WOPR_OP1_190
+
+        Bulk configuration (replace with):
+        =================================
+        SUMMARY {
+          VALUES = summary_observations.csv;
+        };
+
+
+``yaml``
+    Exports summary observations to a YAML file format. The produced file receives the
+    name ``summary_observations.yaml``. The tooling will not overwrite the file
+    ``summary_observations.yaml`` if it already exists.
+
+    The YAML format is compatible with Webviz and can be used in plugins like
+    ``SimulationTimeSeries`` and ``HistoryMatch`` among others.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations snake_oil.ert --format yaml
+
+    Example of produced yaml file:
+
+    .. code-block:: none
+
+        smry:
+        - key: WOPR:OP1
+          observations:
+          - date: '2010-03-31'
+            value: 0.1
+            error: 0.05
+          - date: '2010-12-26'
+            value: 0.7
+            error: 0.07
+          - date: '2011-12-21'
+            value: 0.5
+            error: 0.05
+          - date: '2012-12-15'
+            value: 0.3
+            error: 0.075
+          - date: '2013-12-10'
+            value: 0.2
+            error: 0.035
+          - date: '2015-03-15'
+            value: 0.015
+            error: 0.01
+
+
+.. _seismic_observation:
+
+SEISMIC_OBSERVATION keyword
+---------------------------
+
+The keyword ``SEISMIC_OBSERVATION`` is used to condition on spatially
+distributed observations along a horizon, such as 4D seismic attributes
+(amplitude, time-shift, impedance change, etc.). Each observation
+represents a single measurement at a specific horizontal location, and a
+single ``SEISMIC_OBSERVATION`` declaration typically defines many
+individual measurements loaded from an external file.
+
+A minimal seismic observation is created as follows:
+
+.. code-block:: none
+
+   SEISMIC_OBSERVATION OBS_MEAN_2025 {
+      OBS_FILE = path/to/observations.csv;
+   };
+
+The name (``OBS_MEAN_2025`` above) is used as a label for the observation
+within ERT and must be unique. If the name is omitted, the stem of the
+observation file will be used.
+
+Observations are read from either a CSV file or a Parquet file. The file
+type is determined from the file extension (``.csv`` or ``.parquet``).
+Parquet is the preferred format for seismic observations as it is a typed,
+compressed binary format that is significantly smaller and faster to load
+than CSV. The file must contain one row per observation with the following
+required columns:
+
+- ``X_UTME``: Easting coordinate of the measurement location.
+- ``Y_UTMN``: Northing coordinate of the measurement location.
+- ``OBS``: The observed value at that location.
+- ``OBS_ERROR``: The observation error (absolute standard deviation).
+
+.. note::
+   The ``CSV`` key is a deprecated alias for ``OBS_FILE``.
+   Existing configurations using ``CSV = path/to/observations.csv;`` will
+   continue to work but emit a deprecation warning; new configurations should
+   use ``OBS_FILE``. ``OBS_FILE`` and ``CSV`` cannot be combined in the same
+   declaration.
+
+An example of such a CSV could look like this:
+
+.. code-block:: none
+
+   X_UTME,Y_UTMN,OBS,OBS_ERROR
+   463401.665023891,6929758.90312445,0.008602961,0.005
+   463312.374851203,6929712.58234601,-0.007062605,0.005
+   463245.488743621,6929689.04095157,0.009096828,0.005
+   463198.920134567,6929645.33178924,-0.007231411,0.005
+
+All observation coordinates within a single ``SEISMIC_OBSERVATION``
+declaration must be at least 0.2 m apart. Overlapping or duplicate
+coordinates will cause ERT to raise a configuration error.
+
+Limiting observations with a boundary polygon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An optional ``BOUNDARY`` file may be provided to restrict which
+observations are used during the update step. Observations located
+outside the polygon are deactivated. The boundary file must contain a
+closed polygon, given as ``X Y Z`` triplets, with the polygon terminated
+by a line containing ``999.0 999.0 999.0``:
+
+.. code-block:: none
+
+   SEISMIC_OBSERVATION OBS_MIN_2025 {
+      OBS_FILE = path/to/observations.csv;
+      BOUNDARY = path/to/boundary.pol;
+   };
+
+The boundary file is resolved relative to the directory containing the
+observation configuration file, the same as ``OBS_FILE``.

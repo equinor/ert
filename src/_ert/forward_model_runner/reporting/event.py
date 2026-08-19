@@ -117,7 +117,7 @@ class Event(Reporter):
         event = None
         start_time = None
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 if self._done.is_set() and start_time is None:
                     start_time = asyncio.get_event_loop().time()
                 if event is None:
@@ -256,6 +256,7 @@ class Event(Reporter):
                     max_memory_usage=msg.memory_status.max_rss,
                     current_memory_usage=msg.memory_status.rss,
                     cpu_seconds=msg.memory_status.cpu_seconds,
+                    computer_load=msg.memory_status.computer_load,
                 )
             )
 

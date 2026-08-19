@@ -4,11 +4,20 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
+from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QCheckBox, QLabel, QPushButton
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QLabel,
+    QPushButton,
+    QToolButton,
+    QToolTip,
+)
 from pytestqt.qtbot import QtBot
 
+from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
 from ert.gui.plotting.ert_plots.gaussian_kde import plotGaussianKDE
@@ -21,7 +30,16 @@ from ert.gui.plotting.plot_window import (
     make_seismic_y_label,
 )
 from ert.gui.plotting.utils import PlotConfig, PlotContext
+from ert.gui.plotting.utils.plot_maps import (
+    DISTRIBUTION,
+    ENSEMBLE,
+    ERT_PLOT_MAP,
+    GAUSSIAN_KDE,
+    HISTOGRAM,
+    STATISTICS,
+)
 from ert.gui.plotting.widgets import DataTypeKeysWidget
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 from ert.gui.plotting.widgets.plot_widget import PlotWidget
 from ert.services import ErtServerController
 
@@ -195,9 +213,10 @@ def test_warning_is_visible_on_incompatible_plot_api_version(
 def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_checkbox(
     qtbot: QtBot, monkeypatch
 ):
-    """This test verifies that the log scale checkbox is hidden when plotting a gen_kw
-    with negative values. It also makes sure that the plotter remembers if log scale
-    was used, and re-applies it when switching back.
+    """Verify sidebar log-scale checkbox behavior for GEN_KW values.
+
+    The checkbox is hidden for keys with negative values, and its checked state
+    is preserved when switching back to a key that supports log scale.
     """
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
@@ -238,12 +257,14 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
         plot_api_key_def_negative,
     ]
 
-    def mock_data_for_parameter(ensemble_id: str, parameter_key: str) -> pd.DataFrame:
+    def mock_data_for_parameter(
+        ensemble_id: str, parameter_key: str, ens_path: Path
+    ) -> pd.DataFrame:
         if parameter_key == "gen_kw_a":
             return pd.DataFrame({0: [0.1, 0.5, 0.9]})
         return pd.DataFrame({0: [-0.1, -0.5, -0.9]})
 
-    mock_plot_api.data_for_parameter.side_effect = mock_data_for_parameter
+    mock_plot_api_cls.data_for_parameter.side_effect = mock_data_for_parameter
     mock_plot_api.has_history_data.return_value = False
 
     mock_plot_api.get_all_ensembles.return_value = [
@@ -256,14 +277,17 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
         )
     ]
 
-    plot_window = PlotWindow(config_file="", ens_path="", parent=None)
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
 
     plot_widget = plot_window._central_tab.currentWidget()
     assert plot_widget is not None
 
-    log_checkbox = plot_widget.findChild(QCheckBox, name="log_scale_checkbox")
+    log_checkbox = plot_window.findChild(QCheckBox, name="log_scale_checkbox")
+    assert log_checkbox is not None
     assert log_checkbox.isVisible()
     assert not log_checkbox.isChecked()
 
@@ -276,8 +300,7 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
 
     assert get_x_axis_scale() == "linear"
 
-    qtbot.mouseClick(log_checkbox, Qt.MouseButton.LeftButton)
-    # Default selection is the first key (gen_kw_a), which has only positive values.
+    log_checkbox.setChecked(True)
     qtbot.waitUntil(lambda: get_x_axis_scale() == "log", timeout=5000)
     assert log_checkbox.isChecked()
 
@@ -296,6 +319,560 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     qtbot.waitUntil(log_checkbox.isVisible, timeout=5000)
     assert log_checkbox.isChecked(), "Log scale checkbox should still be checked"
     assert get_x_axis_scale() == "log", "Plot scale should still be log"
+
+
+@pytest.mark.parametrize(
+    ("key", "history_data_available", "observations_available"),
+    [
+        pytest.param("summary", False, False, id="neither-available"),
+        pytest.param("summary", True, False, id="history-available"),
+        pytest.param("summary", False, True, id="observations-available"),
+        pytest.param("summary", True, True, id="both-available"),
+        pytest.param("summaryH", False, False, id="history-key"),
+        pytest.param("summaryH", False, True, id="history-key-with-observations"),
+        pytest.param("WOPRH:OP1", False, False, id="well-history-key"),
+    ],
+)
+def test_that_history_and_observations_checkboxes_match_data_availability(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+    history_data_available: bool,
+    observations_available: bool,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    key_def = PlotApiKeyDefinition(
+        key,
+        index_type="TIME",
+        metadata={"data_origin": "SUMMARY"},
+        observations=observations_available,
+        dimensionality=1,
+        response=MagicMock(type="summary"),
+    )
+    mock_plot_api.responses_api_key_defs = [key_def]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = history_data_available
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
+    history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
+    assert history_checkbox is not None
+    is_history_key = key.endswith("H") or "H:" in key
+    assert history_checkbox.isVisible() is history_data_available
+    if is_history_key:
+        mock_plot_api.has_history_data.assert_not_called()
+
+    observations_checkbox = plot_window.findChild(
+        QCheckBox, name="observations_checkbox"
+    )
+    assert observations_checkbox is not None
+    assert observations_checkbox.isVisible() is observations_available
+
+
+def test_that_history_and_observations_checkbox_state_update_when_switching_keys(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    key_defs = [
+        PlotApiKeyDefinition(
+            "summary",
+            index_type="TIME",
+            metadata={"data_origin": "SUMMARY"},
+            observations=True,
+            dimensionality=1,
+            response=MagicMock(type="summary"),
+        ),
+        PlotApiKeyDefinition(
+            "summaryH",
+            index_type="TIME",
+            metadata={"data_origin": "SUMMARY"},
+            observations=False,
+            dimensionality=1,
+            response=MagicMock(type="summary"),
+        ),
+    ]
+    mock_plot_api.responses_api_key_defs = key_defs
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = True
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
+    history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
+    observations_checkbox = plot_window.findChild(
+        QCheckBox, name="observations_checkbox"
+    )
+    assert history_checkbox is not None
+    assert observations_checkbox is not None
+    data_type_keys_widget = plot_window._data_type_keys_widget.data_type_keys_widget
+    filter_model = plot_window._data_type_keys_widget.filter_model
+
+    assert history_checkbox.isVisible()
+    assert observations_checkbox.isVisible()
+
+    history_checkbox.setChecked(False)
+    observations_checkbox.setChecked(False)
+
+    mock_plot_api.has_history_data.reset_mock()
+    data_type_keys_widget.setCurrentIndex(filter_model.index(1, 0))
+    qtbot.waitUntil(lambda: not history_checkbox.isVisible(), timeout=5000)
+    qtbot.waitUntil(lambda: not observations_checkbox.isVisible(), timeout=5000)
+    mock_plot_api.has_history_data.assert_not_called()
+
+    data_type_keys_widget.setCurrentIndex(filter_model.index(0, 0))
+    qtbot.waitUntil(history_checkbox.isVisible, timeout=5000)
+    qtbot.waitUntil(observations_checkbox.isVisible, timeout=5000)
+    mock_plot_api.has_history_data.assert_called_once_with("summary")
+    assert not history_checkbox.isChecked()
+    assert not observations_checkbox.isChecked()
+
+
+def test_that_general_option_checkboxes_change_rendered_plot(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    observations_enabled_states: list[bool] = []
+    original_set_observations_enabled = PlotConfig.set_observations_enabled
+
+    def record_observations_enabled(plot_config: PlotConfig, enabled: bool) -> None:
+        observations_enabled_states.append(enabled)
+        original_set_observations_enabled(plot_config, enabled)
+
+    monkeypatch.setattr(
+        PlotConfig,
+        "set_observations_enabled",
+        record_observations_enabled,
+    )
+
+    key_def = PlotApiKeyDefinition(
+        "summary",
+        index_type="TIME",
+        metadata={"data_origin": "SUMMARY"},
+        observations=True,
+        dimensionality=2,
+        response=MagicMock(type="summary"),
+    )
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+    mock_plot_api.responses_api_key_defs = [key_def]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.data_for_response.return_value = pd.DataFrame(
+        {
+            pd.Timestamp("2023-01-01"): [1.0, 2.0],
+            pd.Timestamp("2023-01-02"): [2.0, 3.0],
+        },
+        index=pd.Index([0, 1], name="Realization"),
+    )
+    mock_plot_api.has_history_data.return_value = True
+    mock_plot_api.history_data.return_value = pd.DataFrame(
+        {"history": [1.5, 2.5]},
+        index=pd.to_datetime(["2023-01-01", "2023-01-02"]),
+    )
+    mock_plot_api.observations_for_key.return_value = pd.DataFrame()
+    mock_plot_api.get_all_ensembles.return_value = [ensemble]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
+
+    statistics_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.tabText(index) == STATISTICS
+    )
+    plot_window._central_tab.setCurrentIndex(statistics_index)
+    plot_widget = cast(PlotWidget, plot_window._central_tab.currentWidget())
+    qtbot.waitUntil(lambda: len(plot_widget._figure.axes) == 1, timeout=5000)
+
+    def current_axes():
+        return plot_widget._figure.axes[0]
+
+    def current_legend_labels() -> set[str]:
+        legend = current_axes().get_legend()
+        return (
+            set()
+            if legend is None
+            else {text.get_text() for text in legend.get_texts()}
+        )
+
+    legend_checkbox = plot_window.findChild(QCheckBox, name="legend_checkbox")
+    grid_checkbox = plot_window.findChild(QCheckBox, name="grid_checkbox")
+    history_checkbox = plot_window.findChild(QCheckBox, name="history_checkbox")
+    observations_checkbox = plot_window.findChild(
+        QCheckBox, name="observations_checkbox"
+    )
+    assert legend_checkbox is not None
+    assert grid_checkbox is not None
+    assert history_checkbox is not None
+    assert observations_checkbox is not None
+    assert history_checkbox.isVisible()
+    assert current_axes().get_legend() is not None
+    assert "History" in current_legend_labels()
+    assert any(gridline.get_visible() for gridline in current_axes().get_xgridlines())
+
+    for checkbox in (
+        history_checkbox,
+        observations_checkbox,
+        legend_checkbox,
+        grid_checkbox,
+    ):
+        checkbox.setChecked(False)
+    qtbot.waitUntil(
+        lambda: "History" not in current_legend_labels(),
+        timeout=5000,
+    )
+    qtbot.waitUntil(lambda: observations_enabled_states[-1] is False, timeout=5000)
+    qtbot.waitUntil(lambda: current_axes().get_legend() is None, timeout=5000)
+    qtbot.waitUntil(
+        lambda: (
+            not any(
+                gridline.get_visible() for gridline in current_axes().get_xgridlines()
+            )
+        ),
+        timeout=5000,
+    )
+
+    for checkbox in (
+        history_checkbox,
+        observations_checkbox,
+        legend_checkbox,
+        grid_checkbox,
+    ):
+        checkbox.setChecked(True)
+    qtbot.waitUntil(
+        lambda: "History" in current_legend_labels(),
+        timeout=5000,
+    )
+    qtbot.waitUntil(lambda: current_axes().get_legend() is not None, timeout=5000)
+    qtbot.waitUntil(
+        lambda: any(
+            gridline.get_visible() for gridline in current_axes().get_xgridlines()
+        ),
+        timeout=5000,
+    )
+    qtbot.waitUntil(lambda: observations_enabled_states[-1] is True, timeout=5000)
+
+    general_options = plot_window._general_options.get_widget()
+    std_dev_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.tabText(index) == "Std dev"
+    )
+    plot_window._central_tab.setCurrentIndex(std_dev_index)
+    qtbot.waitUntil(lambda: not general_options.isVisible(), timeout=5000)
+
+    plot_window._central_tab.setCurrentIndex(statistics_index)
+    qtbot.waitUntil(general_options.isVisible, timeout=5000)
+
+
+def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.PlotApi",
+        mock_plot_api_cls,
+    )
+
+    key_def = PlotApiKeyDefinition(
+        "gen_kw",
+        index_type=None,
+        metadata={"data_origin": "GEN_KW"},
+        observations=False,
+        dimensionality=1,
+        parameter=GenKwConfig(
+            name="gen_kw",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        ),
+    )
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = [key_def]
+    mock_plot_api_cls.data_for_parameter.return_value = pd.DataFrame(
+        {0: [0.1, 0.5, 0.9]}
+    )
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
+
+    tab_index_by_name = {
+        plot_window._central_tab.tabText(index): index
+        for index in range(plot_window._central_tab.count())
+    }
+
+    histogram_index = tab_index_by_name[HISTOGRAM]
+    assert plot_window._central_tab.isTabEnabled(histogram_index)
+
+    log_scale_tabs = {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE}
+    non_log_scale_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.isTabEnabled(index)
+        and plot_window._central_tab.tabText(index) not in log_scale_tabs
+    )
+
+    log_checkbox = plot_window.findChild(
+        QCheckBox,
+        name="log_scale_checkbox",
+    )
+    assert log_checkbox is not None
+
+    plot_window._central_tab.setCurrentIndex(histogram_index)
+    qtbot.waitUntil(log_checkbox.isVisible, timeout=5000)
+
+    log_checkbox.setChecked(True)
+    assert log_checkbox.isChecked()
+
+    plot_window._central_tab.setCurrentIndex(non_log_scale_index)
+    qtbot.waitUntil(lambda: not log_checkbox.isVisible(), timeout=5000)
+
+    plot_window._central_tab.setCurrentIndex(histogram_index)
+    qtbot.waitUntil(log_checkbox.isVisible, timeout=5000)
+
+    assert log_checkbox.isChecked()
+
+
+def _plot_window_with_response_and_gen_kw_keys(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> PlotWindow:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    mock_plot_api.responses_api_key_defs = [
+        PlotApiKeyDefinition(
+            "POLY_RES",
+            index_type="VALUE",
+            metadata={"data_origin": "gen_data"},
+            observations=False,
+            dimensionality=2,
+            response=MagicMock(type="gen_data"),
+        )
+    ]
+    mock_plot_api.parameters_api_key_defs = [
+        PlotApiKeyDefinition(
+            "gen_kw",
+            index_type=None,
+            metadata={"data_origin": "GEN_KW"},
+            observations=False,
+            dimensionality=1,
+            parameter=GenKwConfig(
+                name="gen_kw",
+                distribution={"name": "uniform", "min": 0, "max": 1},
+            ),
+        )
+    ]
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    return plot_window
+
+
+def _select_data_type_key(plot_window: PlotWindow, key: str) -> None:
+    filter_model = plot_window._data_type_keys_widget.filter_model
+    for row in range(filter_model.rowCount()):
+        index = filter_model.index(row, 0)
+        if str(filter_model.data(index)) == key:
+            plot_window._data_type_keys_widget.data_type_keys_widget.setCurrentIndex(
+                index
+            )
+            return
+    raise AssertionError(f"Data type key '{key}' not found")
+
+
+def _current_tab_name(plot_window: PlotWindow) -> str:
+    return plot_window._central_tab.tabText(plot_window._central_tab.currentIndex())
+
+
+def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Reversing the plot map changes every tab position, so a default tab
+    # resolved by position would land on the wrong plot type.
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.ERT_PLOT_MAP",
+        dict(reversed(list(ERT_PLOT_MAP.items()))),
+    )
+
+    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, monkeypatch)
+
+    _select_data_type_key(plot_window, "POLY_RES")
+    _select_data_type_key(plot_window, "gen_kw")
+    assert _current_tab_name(plot_window) == HISTOGRAM
+
+    _select_data_type_key(plot_window, "POLY_RES")
+    assert _current_tab_name(plot_window) == ENSEMBLE
+
+
+def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_it(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, monkeypatch)
+
+    _select_data_type_key(plot_window, "gen_kw")
+    plot_window._central_tab.setCurrentWidget(
+        plot_window._find_widget_by_name(GAUSSIAN_KDE)
+    )
+
+    _select_data_type_key(plot_window, "POLY_RES")
+    _select_data_type_key(plot_window, "gen_kw")
+    assert _current_tab_name(plot_window) == GAUSSIAN_KDE
+
+
+@pytest.mark.parametrize("tab_name", [HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE])
+@pytest.mark.parametrize(
+    ("values", "expected_visible"),
+    [
+        pytest.param([-0.1, -0.5, -0.9], False, id="negative-values"),
+        pytest.param([0.1, 0.1, 0.1], False, id="constant-values"),
+        pytest.param([0.1, 0.5, 0.9], True, id="positive-values"),
+    ],
+)
+def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    tab_name: str,
+    values: list[float],
+    expected_visible: bool,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    key_def = PlotApiKeyDefinition(
+        "gen_kw",
+        index_type=None,
+        metadata={"data_origin": "GEN_KW"},
+        observations=False,
+        dimensionality=1,
+        parameter=GenKwConfig(
+            name="gen_kw",
+            distribution={"name": "uniform", "min": 0.0, "max": 1.0},
+        ),
+    )
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = [key_def]
+    mock_plot_api_cls.data_for_parameter.return_value = pd.DataFrame({0: values})
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    general_options = plot_window._general_options.get_widget()
+    _expand(general_options)
+
+    tab_index = next(
+        index
+        for index in range(plot_window._central_tab.count())
+        if plot_window._central_tab.tabText(index) == tab_name
+    )
+    plot_window._central_tab.setCurrentIndex(tab_index)
+
+    log_checkbox = plot_window.findChild(QCheckBox, name="log_scale_checkbox")
+    assert log_checkbox is not None
+    qtbot.waitUntil(
+        lambda: log_checkbox.isVisible() is expected_visible,
+        timeout=5000,
+    )
 
 
 @pytest.mark.slow
@@ -337,7 +914,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
     mock_plot_api.parameters_api_key_defs = [plot_api_key_def]
 
     def mixed_dtype_data_for_parameter(
-        ensemble_id: str, parameter_key: str
+        ensemble_id: str, parameter_key: str, ens_path: Path
     ) -> pd.DataFrame:
         assert parameter_key == "animal_type"
         return pd.DataFrame(
@@ -346,7 +923,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
             }
         )
 
-    mock_plot_api.data_for_parameter.side_effect = mixed_dtype_data_for_parameter
+    mock_plot_api_cls.data_for_parameter.side_effect = mixed_dtype_data_for_parameter
     mock_plot_api.has_history_data.return_value = False
     mock_plot_api.get_all_ensembles.return_value = [
         EnsembleObject(
@@ -363,7 +940,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
     plot_window.show()
 
     # This is the call that previously crashed with TypeError.
-    plot_window.updatePlot()
+    plot_window.update_plot()
 
 
 def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():
@@ -389,7 +966,17 @@ def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():
     plotGaussianKDE(fig, ctx, {ensemble: categorical_df}, _observation_data=None)
 
 
-def test_that_plot_widget_hides_log_scale_checkbox_for_const_distribution(qtbot: QtBot):
+@pytest.mark.parametrize(
+    "axis",
+    [
+        pytest.param("x", id="x-axis"),
+        pytest.param("y", id="y-axis"),
+    ],
+)
+def test_that_clicking_axis_label_emits_edit_request(
+    qtbot: QtBot,
+    axis: str,
+) -> None:
     ensemble = EnsembleObject(
         "ensemble",
         "ensemble",
@@ -398,65 +985,486 @@ def test_that_plot_widget_hides_log_scale_checkbox_for_const_distribution(qtbot:
         "2026-01-01T00:00:00",
     )
 
-    ctx = PlotContext(
+    plot_context = PlotContext(
         PlotConfig(),
         ensembles=[ensemble],
         ensembles_color_indexes=[0],
-        key="gen_kw",
+        key="some_key",
         layer=None,
     )
 
-    plotter = HistogramPlot()
-    plotter.plot = MagicMock(return_value=None)
-    plot_widget = PlotWidget("Histogram", plotter)
+    def _plot_with_axis_labels(figure: Figure, *_args, **_kwargs) -> None:
+        axes = figure.add_subplot(111)
+        axes.set_xlabel("Old x label")
+        axes.set_ylabel("Old y label")
+
+    plotter = MagicMock()
+    plotter.dimensionality = 1
+    plotter.requires_observations = False
+    plotter.plot.side_effect = _plot_with_axis_labels
+
+    plot_widget = PlotWidget("Any", plotter)
     qtbot.addWidget(plot_widget)
-    plot_widget.show()
-    qtbot.waitUntil(plot_widget.isVisible)
 
-    log_checkbox = plot_widget.findChild(QCheckBox, name="log_scale_checkbox")
-    assert log_checkbox is not None
+    received: list[str] = []
+    plot_widget.axisLabelEditRequested.connect(received.append)
 
-    non_const_key_def = PlotApiKeyDefinition(
-        "gen_kw_nonconst",
-        index_type=None,
-        metadata={"data_origin": "GEN_KW"},
-        observations=False,
-        dimensionality=1,
-        parameter=GenKwConfig(
-            name="gen_kw_nonconst",
-            distribution={"name": "uniform", "min": 0.0, "max": 1.0},
-        ),
-    )
-    plot_widget.updatePlot(
-        ctx,
-        {ensemble: pd.DataFrame({0: [0.1, 0.2, 0.3]})},
+    plot_widget.update_plot(
+        plot_context,
+        {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})},
         pd.DataFrame(),
         {},
         None,
-        non_const_key_def,
     )
-    assert log_checkbox.isVisible()
 
-    const_key_def = PlotApiKeyDefinition(
-        "gen_kw_const",
-        index_type=None,
-        metadata={"data_origin": "GEN_KW"},
-        observations=False,
-        dimensionality=1,
-        parameter=GenKwConfig(
-            name="gen_kw_const",
-            distribution={"name": "const", "value": 0.1},
-        ),
+    axes = plot_widget._figure.axes[0]
+    artist = axes.xaxis.label if axis == "x" else axes.yaxis.label
+    pick_event = type("PickEventStub", (), {"artist": artist})()
+    plot_widget._on_canvas_pick(pick_event)
+
+    assert received == [axis]
+
+
+def test_that_clicking_title_emits_edit_request(qtbot: QtBot) -> None:
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
     )
-    plot_widget.updatePlot(
-        ctx,
-        {ensemble: pd.DataFrame({0: [0.1, 0.1, 0.1]})},
+
+    plot_context = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="some_key",
+        layer=None,
+    )
+
+    def _plot_with_title(figure: Figure, *_args, **_kwargs) -> None:
+        axes = figure.add_subplot(111)
+        axes.set_title("Old title")
+
+    plotter = MagicMock()
+    plotter.dimensionality = 1
+    plotter.requires_observations = False
+    plotter.plot.side_effect = _plot_with_title
+
+    plot_widget = PlotWidget("Any", plotter)
+    qtbot.addWidget(plot_widget)
+
+    received = MagicMock()
+    plot_widget.titleEditRequested.connect(received)
+
+    plot_widget.update_plot(
+        plot_context,
+        {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})},
         pd.DataFrame(),
         {},
         None,
-        const_key_def,
     )
-    assert not log_checkbox.isVisible()
+
+    pick_event = type(
+        "PickEventStub", (), {"artist": plot_widget._figure.axes[0].title}
+    )()
+    plot_widget._on_canvas_pick(pick_event)
+
+    received.assert_called_once_with()
+
+
+@pytest.mark.parametrize(
+    "text_kind",
+    [
+        pytest.param("x-axis", id="x-axis"),
+        pytest.param("y-axis", id="y-axis"),
+        pytest.param("title", id="title"),
+    ],
+)
+def test_that_hovering_editable_text_shows_it_as_clickable(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    text_kind: str,
+) -> None:
+    show_text = MagicMock()
+    monkeypatch.setattr(QToolTip, "showText", show_text)
+
+    plotter = MagicMock()
+    plotter.dimensionality = 1
+    plotter.requires_observations = False
+
+    def _plot_with_editable_text(figure: Figure, *_args, **_kwargs) -> None:
+        axes = figure.add_subplot(111)
+        axes.set_xlabel("X label")
+        axes.set_ylabel("Y label")
+        axes.set_title("Title")
+
+    plotter.plot.side_effect = _plot_with_editable_text
+    plot_widget = PlotWidget("Any", plotter)
+    qtbot.addWidget(plot_widget)
+    plot_widget.update_plot(
+        PlotContext(
+            PlotConfig(),
+            ensembles=[],
+            ensembles_color_indexes=[],
+            key="key",
+            layer=None,
+        ),
+        {},
+        pd.DataFrame(),
+        {},
+        None,
+    )
+
+    axes = plot_widget._figure.axes[0]
+    text = {
+        "x-axis": axes.xaxis.label,
+        "y-axis": axes.yaxis.label,
+        "title": axes.title,
+    }[text_kind]
+    original_properties = text.get_fontproperties().copy()
+    x_pos, y_pos = text.get_window_extent().get_points().mean(axis=0)
+    event = MouseEvent("motion_notify_event", plot_widget._canvas, x_pos, y_pos)
+    plot_widget._on_canvas_motion(event)
+
+    assert text.get_fontweight() == "bold"
+    assert show_text.call_args.args[1:] == ("Click to edit", plot_widget._canvas)
+
+    plot_widget._on_canvas_leave(Event("figure_leave_event", plot_widget._canvas))
+
+    assert text.get_fontproperties() == original_properties
+    assert plot_widget._hovered_text_artist is None
+    assert plot_widget._hovered_font_properties is None
+
+
+def _create_plot_window_for_text_edit(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> PlotWindow:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.get_all_ensembles.return_value = []
+
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.getSelectedKey = MagicMock(
+        return_value=MagicMock(key="some_key", dimensionality=1, metadata={})
+    )
+    return plot_window
+
+
+def _expand(section: CollapsibleSection) -> None:
+    button = section.findChild(QToolButton)
+    assert button is not None
+    button.setChecked(True)
+
+
+@pytest.mark.parametrize(
+    ("axis", "configured_label", "visible_label", "expected_label"),
+    [
+        pytest.param(
+            "x",
+            "Configured x",
+            "Visible x label",
+            "Configured x",
+            id="configured-x-label",
+        ),
+        pytest.param(
+            "y",
+            "Configured y",
+            "Visible y label",
+            "Configured y",
+            id="configured-y-label",
+        ),
+        pytest.param(
+            "x",
+            None,
+            "Visible x label",
+            "Visible x label",
+            id="visible-x-label",
+        ),
+        pytest.param(
+            "y",
+            None,
+            "Visible y label",
+            "Visible y label",
+            id="visible-y-label",
+        ),
+    ],
+)
+def test_that_sidebar_axis_label_edit_uses_configured_or_visible_label(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    axis: str,
+    configured_label: str | None,
+    visible_label: str | None,
+    expected_label: str,
+) -> None:
+    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    get_text_input = MagicMock(return_value=("", False))
+    plot_window._general_options.get_text_input = get_text_input
+    labels = plot_window._x_labels if axis == "x" else plot_window._y_labels
+    labels["some_key"] = configured_label
+    current_widget = plot_window._central_tab.currentWidget()
+    assert isinstance(current_widget, PlotWidget)
+    if visible_label is not None:
+        axis_object = current_widget._figure.add_subplot(111)
+        if axis == "x":
+            axis_object.set_xlabel(visible_label)
+        else:
+            axis_object.set_ylabel(visible_label)
+
+    plot_window._edit_axis_label(axis)
+
+    get_text_input.assert_called_once_with(
+        f"Edit {axis}-label", f"New {axis}-label:", expected_label
+    )
+
+
+@pytest.mark.parametrize(
+    ("axis", "current_label", "new_label", "accepted"),
+    [
+        pytest.param("x", "Old x", "New x", True, id="x-axis-accepted"),
+        pytest.param("y", "Old y", "New y", True, id="y-axis-accepted"),
+        pytest.param(
+            "x",
+            "Existing label",
+            "Changed despite cancellation",
+            False,
+            id="x-axis-cancelled",
+        ),
+        pytest.param(
+            "x",
+            "Existing label",
+            "",
+            True,
+            id="x-axis-cleared",
+        ),
+    ],
+)
+def test_that_axis_label_edit_updates_or_preserves_persistent_config(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    axis: str,
+    current_label: str,
+    new_label: str,
+    accepted: bool,
+) -> None:
+    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    get_text_input = MagicMock(return_value=(new_label, accepted))
+    plot_window._general_options.get_text_input = get_text_input
+    plot_window.update_plot = MagicMock()
+    labels = plot_window._x_labels if axis == "x" else plot_window._y_labels
+    labels["some_key"] = current_label
+
+    plot_window._edit_axis_label(axis)
+
+    expected_label = (new_label or None) if accepted else current_label
+    assert labels["some_key"] == expected_label
+    get_text_input.assert_called_once_with(
+        f"Edit {axis}-label", f"New {axis}-label:", current_label
+    )
+
+
+@pytest.mark.parametrize(
+    ("dialog_value", "expected_title", "accepted"),
+    [
+        pytest.param("New title", "New title", True, id="custom-title"),
+        pytest.param("", "some_key", True, id="empty-title-restores-key-title"),
+        pytest.param(
+            "Changed despite cancellation",
+            "Existing title",
+            False,
+            id="cancelled-title",
+        ),
+    ],
+)
+def test_that_title_edit_updates_or_preserves_persistent_config(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    dialog_value: str,
+    expected_title: str,
+    accepted: bool,
+) -> None:
+    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    get_text_input = MagicMock(return_value=(dialog_value, accepted))
+    plot_window._general_options.get_text_input = get_text_input
+    plot_window.update_plot = MagicMock()
+    plot_window._titles["some_key"] = "Existing title"
+
+    plot_window._edit_title()
+
+    assert plot_window._titles["some_key"] == expected_title
+    get_text_input.assert_called_once_with("Edit title", "New title:", "Existing title")
+
+
+@pytest.mark.slow
+def test_that_clearing_custom_title_restores_key_title_when_rendering(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = [
+        PlotApiKeyDefinition(
+            "some_key",
+            index_type=None,
+            metadata={"data_origin": "GEN_KW"},
+            observations=False,
+            dimensionality=1,
+            parameter=GenKwConfig(
+                name="some_key",
+                distribution=RawSettings(),
+                group="DESIGN_MATRIX",
+                input_source=DataSource.DESIGN_MATRIX,
+            ),
+        )
+    ]
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+    mock_plot_api_cls.data_for_parameter.return_value = pd.DataFrame(
+        {0: [1.0, 2.0, 3.0]}
+    )
+    mock_plot_api.has_history_data.return_value = False
+
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window._general_options.get_text_input = MagicMock(return_value=("", True))
+    plot_window.update_plot()
+
+    plot_window._titles["some_key"] = "Custom title"
+    plot_window._edit_title()
+
+    plot_widget = plot_window._central_tab.currentWidget()
+    assert plot_widget._figure.axes[0].get_title() == "some_key"
+
+
+@pytest.mark.slow
+def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.responses_api_key_defs = [
+        PlotApiKeyDefinition(
+            "BREAKTHROUGH:WWCT:OP1",
+            index_type=None,
+            metadata={"data_origin": "summary"},
+            observations=False,
+            dimensionality=2,
+            response=BreakthroughConfig(),
+        )
+    ]
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+    mock_plot_api.data_for_response.return_value = pd.DataFrame({0: [1.0, 2.0, 3.0]})
+    mock_plot_api.has_history_data.return_value = False
+
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.update_plot()
+
+    plot_widget = cast(PlotWidget, plot_window._central_tab.currentWidget())
+    assert plot_widget._figure.axes[0].get_title() == "BREAKTHROUGH:WWCT:OP1"
+
+
+def test_that_resetting_axis_label_restores_histogram_default_label(
+    qtbot: QtBot,
+) -> None:
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+
+    plot_config = PlotConfig()
+    plot_config.set_x_label("Custom x-label")
+    plot_config.histogram = True
+
+    plot_context = PlotContext(
+        plot_config,
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="some_key",
+        layer=None,
+    )
+
+    plot_widget = PlotWidget("Distribution", HistogramPlot())
+    qtbot.addWidget(plot_widget)
+
+    ensemble_data = {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})}
+
+    plot_widget.update_plot(
+        plot_context,
+        ensemble_data,
+        pd.DataFrame(),
+        {},
+        None,
+    )
+
+    assert plot_widget._figure.axes[0].get_xlabel() == "Custom x-label"
+
+    plot_config.set_x_label(None)
+
+    plot_widget.update_plot(
+        plot_context,
+        ensemble_data,
+        pd.DataFrame(),
+        {},
+        None,
+    )
+
+    assert plot_widget._figure.axes[0].get_xlabel() == "Value"
 
 
 def test_that_separators_are_included_in_everest(

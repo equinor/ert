@@ -31,7 +31,7 @@ def find_conn_info() -> ErtClientConnectionInfo:
 
     In the event that nothing is found, a RuntimeError is raised.
     """
-    global _CACHED_CONN_INFO  # noqa: PLW0603
+    global _CACHED_CONN_INFO  # ruff: ignore[global-statement]
     if _CACHED_CONN_INFO is not None:
         return _CACHED_CONN_INFO
 

@@ -6,7 +6,6 @@ import logging
 import os
 import re
 from collections import defaultdict
-from copy import copy
 from dataclasses import InitVar, dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -172,7 +171,7 @@ class RFTConfig(SimulationResponseConfig):
             else:
                 location_cell_map[location] = WellConnectionCell(
                     (cell[0] + 1, cell[1] + 1, cell[2] + 1),
-                    tuple(grid.cell_corners(*cell).mean(axis=0)),
+                    tuple(grid.cell_corners(*cell, map_coordinates=True).mean(axis=0)),
                 )
         return location_cell_map
 
@@ -239,7 +238,7 @@ class RFTConfig(SimulationResponseConfig):
         )
 
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry] = {}
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             with RFTReader.open(filepath) as rft:
                 for entry in rft:
                     date = entry.date
@@ -290,36 +289,36 @@ class RFTConfig(SimulationResponseConfig):
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry],
         rft_filename: str,
     ) -> None:
-        well_times = {
-            (well, time)
-            for well, time_dict in self.data_to_read.items()
-            for time in time_dict
-        }
-        well_times_with_response = {(well, time.isoformat()) for well, time in rft_data}
+        missing_response_properties = defaultdict(list)
+        for well, time_dict in self.data_to_read.items():
+            for time in time_dict:
+                expected_properties = set(time_dict[time])
+                # Find all well-time tuples matching expected well-time pattern
+                well_time_tuple_matches = [
+                    t
+                    for t in rft_data
+                    if fnmatch.fnmatch(t[0], well)
+                    and fnmatch.fnmatch(t[1].isoformat(), time)
+                ]
+                # Find all properties matching expected property patterns
+                property_matches = set()
+                for well_time in well_time_tuple_matches:
+                    properties_in_response = rft_data[well_time].property_values.keys()
+                    property_matches |= {
+                        exp_prop
+                        for exp_prop in expected_properties
+                        if fnmatch.filter(properties_in_response, exp_prop)
+                    }
 
-        well_times_to_warn: set[tuple[str, str]] = well_times - well_times_with_response
+                for missing_property in expected_properties - property_matches:
+                    missing_response_properties[well, time].append(missing_property)
 
-        # Given well / time wildcard, only warn if there are no responses for
-        # the corresponding well / time value
-        wells_with_responses = {well for well, time in well_times_with_response}
-        times_with_responses = {time for well, time in well_times_with_response}
-        for well, time in copy(well_times_to_warn):
-            if well == "*" and time in times_with_responses:
-                well_times_to_warn.remove((well, time))
-            if time == "*" and well in wells_with_responses:
-                well_times_to_warn.remove((well, time))
-
-        # Only warn about wildcard well and time if there are no responses
-        if (wildcard_well_time := ("*", "*")) in well_times and len(
-            well_times_with_response
-        ) > 0:
-            well_times_to_warn.remove(wildcard_well_time)
-
-        formatted_items = [
-            f"{well=} : {time=}" for well, time in sorted(well_times_to_warn)
+        formatted_missing_rft_responses = [
+            f"well='{well}' : time='{time}' : properties={sorted(properties)}"
+            for (well, time), properties in missing_response_properties.items()
         ]
         _warn_about_missing_responses(
-            formatted_items, "well(s) at time(s)", rft_filename
+            sorted(formatted_missing_rft_responses), "RFT", rft_filename
         )
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
@@ -341,7 +340,9 @@ class RFTConfig(SimulationResponseConfig):
 
         def _cell_center(i: int, j: int, k: int) -> npt.NDArray[np.float32]:
             try:
-                return grid.cell_corners(i - 1, j - 1, k - 1).mean(axis=0)
+                return grid.cell_corners(
+                    i - 1, j - 1, k - 1, map_coordinates=True
+                ).mean(axis=0)
             except IndexError as err:
                 raise InvalidResponseFile(
                     f"Grid coordinates ({i}, {j}, {k}) are out of bounds "
@@ -392,7 +393,12 @@ class RFTConfig(SimulationResponseConfig):
                             ),
                         }
                     )
-                    .explode("depth", "values", "well_connection_cell")
+                    .explode(
+                        "depth",
+                        "values",
+                        "well_connection_cell",
+                        empty_as_null=False,
+                    )
                     .with_columns(
                         get_cell_column.alias("cell_center"),
                         get_cell_zone.alias("cell_zones"),

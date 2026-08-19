@@ -3,6 +3,9 @@ name: Screenshot tests
 on:
   workflow_dispatch:
   pull_request:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -23,13 +26,13 @@ jobs:
       with:
         os: ubuntu-latest
 
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       id: setup_python
       with:
         python-version: '3.14'
 
     - name: Install uv
-      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       with:
         enable-cache: true
         prune-cache: false
@@ -49,6 +52,24 @@ jobs:
     - name: Pack updated screenshots
       if: steps.screenshot-tests.outcome == 'failure'
       run: uv run just pack-updated-screenshots
+
+    - name: Fail on non-screenshot test failures
+      if: steps.screenshot-tests.outcome == 'failure'
+      run: |
+        if [ -z "$(find updated-screenshots -type f 2>/dev/null)" ]; then
+          echo "Screenshot tests failed, but no updated screenshots were produced."
+          echo "This indicates a failure unrelated to image diffs. Failing the job."
+          exit 1
+        fi
+        echo "Screenshot tests failed due to image diffs; updated screenshots were produced."
+
+    - name: Fail hard if screenshot fails on main branch
+      if: steps.screenshot-tests.outcome == 'failure' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        echo "Screenshot tests produced new/changed images after merge to main."
+        echo "This should not have happened and needs manual intervention."
+        echo "Maybe you forgot to merge a PR in ert-testdata?"
+        exit 1
 
     - name: Prepare artifact
       if: always()

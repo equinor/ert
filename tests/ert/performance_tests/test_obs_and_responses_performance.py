@@ -145,7 +145,7 @@ def create_experiment_args(
 
     _summary_time_delta = datetime.timedelta(30)
     summary_timesteps = [
-        datetime.datetime(2000, 1, 1) + datetime.timedelta(30) * i  # noqa: DTZ001
+        datetime.datetime(2000, 1, 1) + datetime.timedelta(30) * i  # ruff: ignore[call-datetime-without-tzinfo]
         for i in range(num_summary_timesteps)
     ]
     summary_response_keys = [
@@ -165,7 +165,9 @@ def create_experiment_args(
     response_key_repeated = pl.concat(
         [smry_response_key_series] * num_summary_timesteps
     )
-    time_repeated = smry_time_series.repeat_by(num_summary_keys).explode()
+    time_repeated = smry_time_series.repeat_by(num_summary_keys).explode(
+        empty_as_null=False
+    )
     values_repeated = pl.concat([smry_values_series] * num_summary_timesteps)
 
     # Create the DataFrame

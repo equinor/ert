@@ -15,11 +15,10 @@ from resfo_utilities.testing import (
     Unsmry,
 )
 
-from ert.__main__ import run_convert_observations
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
-from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import convert_history_to_summary
 
 
 def create_summary_smspec_unsmry(
@@ -77,7 +76,7 @@ def test_that_history_observations_are_converted_to_summary_observations(tmp_pat
             "FOPTH": [2] * 10,
             "FWPTH": [3] * 10,
         },
-        start_date=datetime(2020, 1, 1),  # noqa: DTZ001
+        start_date=datetime(2020, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
         time_step_in_days=30,
     )
 
@@ -205,7 +204,7 @@ def test_that_general_observations_with_date_use_restart_from_time_map():
     Path("config.ert").write_text(
         config_path.read_text(encoding="utf-8"), encoding="utf-8"
     )
-    run_convert_observations(Namespace(config=str(config_path)))
+    convert_history_to_summary(str(config_path))
     assert (
         Path("observations.txt").read_text(encoding="utf-8")
         == """GENERAL_OBSERVATION GEN_OBS {
@@ -227,7 +226,7 @@ def test_that_summary_observations_with_restart_use_date_from_refcase():
     # Create a refcase
     smspec, unsmry = create_summary_smspec_unsmry(
         summary_vectors={"FOPR": [100, 110, 120]},
-        start_date=datetime(2020, 1, 1),  # noqa: DTZ001
+        start_date=datetime(2020, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
     )
     smspec.to_file(Path("REFCASE.SMSPEC"))
     unsmry.to_file(Path("REFCASE.UNSMRY"))
@@ -280,7 +279,7 @@ def test_that_summary_observations_with_restart_use_date_from_refcase():
     Path("config.ert").write_text(
         config_path.read_text(encoding="utf-8"), encoding="utf-8"
     )
-    run_convert_observations(Namespace(config=str(config_path)))
+    convert_history_to_summary(str(config_path))
     assert (
         Path("observations.txt").read_text(encoding="utf-8")
         == """SUMMARY_OBSERVATION FOPR_OBS {
@@ -307,7 +306,7 @@ SUMMARY_OBSERVATION FOPR_OBS2 {
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_history_summary_and_general_obs_are_all_migrated_together(tmp_path):
-    start_date = datetime(2024, 1, 1)  # noqa: DTZ001
+    start_date = datetime(2024, 1, 1)  # ruff: ignore[call-datetime-without-tzinfo]
     smspec, unsmry = create_summary_smspec_unsmry(
         summary_vectors={
             "FOPRH": [1.0] * 5,
@@ -438,8 +437,8 @@ SUMMARY_OBSERVATION SUM_OBS_2 {
         (c.source_observation.name, c.source_observation.restart, c.date)
         for c in result.summary_obs_changes
     ] == [
-        ("SUM_OBS_1", 2, datetime(2024, 1, 11, 0, 0)),  # noqa: DTZ001
-        ("SUM_OBS_2", 4, datetime(2024, 1, 31, 0, 0)),  # noqa: DTZ001
+        ("SUM_OBS_1", 2, datetime(2024, 1, 11, 0, 0)),  # ruff: ignore[call-datetime-without-tzinfo]
+        ("SUM_OBS_2", 4, datetime(2024, 1, 31, 0, 0)),  # ruff: ignore[call-datetime-without-tzinfo]
     ]
 
     shutil.copy("observations.txt", "observations_edited.txt")

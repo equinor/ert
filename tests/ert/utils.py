@@ -250,7 +250,7 @@ class MockZMQServer:
 
     async def _handler(self):
         while True:
-            try:  # noqa: PLW0717
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
                 dealer, __, frame = await self.router_socket.recv_multipart()
                 if self.store_messages and frame not in self.filtered_message_types:
                     self.messages.append(frame.decode("utf-8"))

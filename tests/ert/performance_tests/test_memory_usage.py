@@ -14,7 +14,6 @@ import py
 import pytest
 import xtgeo
 
-from ert.__main__ import run_convert_observations
 from ert.analysis import (
     enif_update,
     smoother_update,
@@ -22,7 +21,7 @@ from ert.analysis import (
 from ert.config import ErtConfig, ObservationSettings
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
-from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import convert_history_to_summary
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 from tests.ert.performance_tests.performance_utils import make_poly_example
@@ -50,7 +49,7 @@ def poly_template(monkeypatch):
         update_steps=1,
     )
     monkeypatch.chdir(folder)
-    run_convert_observations(Namespace(config=str(folder / "poly.ert")))
+    convert_history_to_summary(str(folder / "poly.ert"))
     return folder
 
 
@@ -152,8 +151,8 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
             source.save_response("gen_data", pl.concat(gendatas), real)
 
             # Corresponds to refcase previously used in this test
-            refcase_start = datetime.datetime(2010, 1, 1)  # noqa: DTZ001
-            refcase_end = datetime.datetime(2010, 4, 11)  # noqa: DTZ001
+            refcase_start = datetime.datetime(2010, 1, 1)  # ruff: ignore[call-datetime-without-tzinfo]
+            refcase_end = datetime.datetime(2010, 4, 11)  # ruff: ignore[call-datetime-without-tzinfo]
 
             obs_time_list = [
                 refcase_start + datetime.timedelta(days=i)

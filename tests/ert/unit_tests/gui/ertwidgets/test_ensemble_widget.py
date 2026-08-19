@@ -21,7 +21,9 @@ from tests.ert.defaults_generator import (
     create_breakthrough_observation_dict,
     create_general_observation_dict,
     create_rft_observation_dict,
+    create_seismic_observation,
     create_seismic_observation_dict,
+    create_seismic_response,
     create_summary_observation_dict,
 )
 from tests.ert.utils import SnapshotBuilder
@@ -47,7 +49,7 @@ def create_experiment_from_config(config: ErtConfig, storage):
 def test_that_missing_response_for_observation_response_key_does_not_crash(
     qtbot, storage
 ):
-    date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     observation_key = "FOPR"
     requested_keys = ["*"]
     received_keys = ["WRONG"]
@@ -78,7 +80,7 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
                 "time": [pl.Series([date]).dt.cast_time_unit("ms")],
                 "values": [pl.Series([1.0], dtype=pl.Float32)],
             }
-        ).explode("values", "time"),
+        ).explode("values", "time", empty_as_null=False),
         0,
     )
 
@@ -94,7 +96,7 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
 def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     key = "WWCT:OP1"
 
     config = ErtConfig.from_dict(
@@ -141,7 +143,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
 
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
 def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
@@ -233,7 +235,7 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
 def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_enabled(
     qtbot, storage, approximate_missing_rft_values, visualized_responses
 ):
-    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
@@ -332,7 +334,7 @@ def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_en
 def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     qtbot, storage
 ):
-    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
+    date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
     zone_a = "zone_a"
     zone_b = "zone_b"
     zones1 = [zone_a]
@@ -495,6 +497,34 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     verify_number_of_visualized_responses()
 
 
+def test_that_seismic_observations_use_tolerance_on_response_match(qtbot, storage):
+    observation = create_seismic_observation(east=1.0, north=1.0)
+    response = create_seismic_response(east=1.05, north=1.05)
+
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "SEISMIC": ["dummy.csv"],
+        }
+    )
+    config.observation_declarations.append(observation)
+
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
+    ensemble.save_response("seismic", response, 0)
+
+    ensemble_widget = EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    qtbot.addWidget(ensemble_widget)
+
+    panels_widget = ensemble_widget._tab_widget
+    panels_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    plot = ensemble_widget._figure.get_axes()
+    assert len(plot) == 1
+    assert len(plot[0].collections) == 2
+
+
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
 def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
     config = ErtConfig.from_dict(
@@ -536,12 +566,12 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
                 create_breakthrough_observation_dict(
                     name="BRT_OP1",
                     threshold=0.4,
-                    date=datetime(year=2000, month=1, day=1),  # noqa: DTZ001
+                    date=datetime(year=2000, month=1, day=1),  # ruff: ignore[call-datetime-without-tzinfo]
                 ),
                 create_breakthrough_observation_dict(
                     name="BRT_OP2",
                     threshold=0.7,
-                    date=datetime(year=2000, month=1, day=9),  # noqa: DTZ001
+                    date=datetime(year=2000, month=1, day=9),  # ruff: ignore[call-datetime-without-tzinfo]
                 ),
             ],
             ["0.4", "0.7"],
@@ -754,3 +784,44 @@ def test_that_run_status_tab_shows_placeholder_when_no_snapshot_exists(qtbot, st
 
     run_status_view = ensemble_widget._run_status_view
     assert run_status_view._stack.currentWidget() is run_status_view._placeholder
+
+
+def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
+    qtbot, storage
+):
+
+    date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
+    key = "FOPR"
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASE",
+            "SUMMARY": [key],
+            "OBS_CONFIG": (
+                "obs_config",
+                [
+                    create_summary_observation_dict(key=key, date=date.isoformat()),
+                ],
+            ),
+        }
+    )
+
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
+    ensemble.save_response(
+        "summary",
+        pl.DataFrame(
+            {
+                "response_key": [key],
+                "time": [pl.Series([date]).dt.cast_time_unit("ms")],
+                "values": [pl.Series([1.0], dtype=pl.Float32)],
+            }
+        ).explode("values", "time"),
+        0,
+    )
+
+    ensemble_widget = EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    misfit_df = ensemble_widget.get_misfit_df()
+    assert isinstance(misfit_df, pl.DataFrame)
+    assert misfit_df.columns[0] == "Realization"

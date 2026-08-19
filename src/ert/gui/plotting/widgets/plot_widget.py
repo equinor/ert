@@ -6,27 +6,26 @@ from typing import TYPE_CHECKING, Protocol, override
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from matplotlib.backend_bases import Event, MouseEvent, PickEvent
 from matplotlib.backends.backend_qt5agg import (  # type: ignore
     FigureCanvas,
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QStringListModel, Qt, pyqtBoundSignal
+from matplotlib.font_manager import FontProperties
+from matplotlib.text import Text
+from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QComboBox,
-    QHBoxLayout,
+    QToolTip,
     QVBoxLayout,
     QWidget,
     QWidgetAction,
 )
 
-from ert.config.distribution import ConstSettings
-from ert.config.gen_kw_config import GenKwConfig
-from ert.gui.icon_utils import load_icon
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_types import ObservationPlotLocations
 
@@ -47,7 +46,7 @@ class Plotter(Protocol):
         figure: Figure,
         plot_context: "PlotContext",
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
-        observations: pd.DataFrame,
+        observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
@@ -55,8 +54,7 @@ class Plotter(Protocol):
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
-    customizationTriggered = Signal()
-    layerIndexChanged = Signal(int)
+    layer_index_changed = Signal(int)
 
     def __init__(
         self,
@@ -67,25 +65,13 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     ) -> None:
         super().__init__(canvas, parent, coordinates)  # type: ignore
 
-        gear = load_icon("edit.svg")
-        customize_action = QAction(gear, "Customize", self)
-        customize_action.setToolTip("Customize plot settings")
-        customize_action.triggered.connect(self.customizationTriggered)
-        customize_action.triggered.connect(
-            lambda: self.logToolbarUsage(customize_action.text())
-        )
-
         layer_combobox = QComboBox()
         self._model = QStringListModel()
         layer_combobox.setModel(self._model)
-        layer_combobox.currentIndexChanged.connect(self.layerIndexChanged)
+        layer_combobox.currentIndexChanged.connect(self.layer_index_changed)
 
         for action in self.actions():
-            if str(action.text()).lower() == "subplots":
-                self.removeAction(action)
-
-            if str(action.text()).lower() == "customize":
-                self.insertAction(action, customize_action)
+            if str(action.text()).lower() in {"subplots", "customize"}:
                 self.removeAction(action)
 
             # insert the layer widget before the coordinates widget
@@ -120,9 +106,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
 
 class PlotWidget(QWidget):
-    customizationTriggered = Signal()
-    _plotUpdateRequested = Signal()
-    layerIndexChanged = Signal(int)
+    axisLabelEditRequested = Signal(str)
+    titleEditRequested = Signal()
+    layer_index_changed = Signal(int)
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
     showLayerWidget = Signal(bool)
@@ -138,35 +124,25 @@ class PlotWidget(QWidget):
         self._name = name
         self._plotter = plotter
         self._figure = Figure()
-        self._figure.set_layout_engine("tight")
+        self._figure.set_layout_engine("constrained")
         self._canvas = FigureCanvas(self._figure)
+        self._canvas.mpl_connect("pick_event", self._on_canvas_pick)
+        self._canvas.mpl_connect("motion_notify_event", self._on_canvas_motion)
+        self._canvas.mpl_connect("figure_leave_event", self._on_canvas_leave)
         self._canvas.setParent(self)
         self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._canvas.setFocus()
+        self._hovered_text_artist: Text | None = None
+        self._hovered_font_properties: FontProperties | None = None
 
         vbox = QVBoxLayout()
         vbox.addWidget(self._canvas)
         self._toolbar = CustomNavigationToolbar(self._canvas, self)
-        self._toolbar.customizationTriggered.connect(self.customizationTriggered)
-        self._toolbar.layerIndexChanged.connect(self.layerIndexChanged)
+        self._toolbar.layer_index_changed.connect(self.layer_index_changed)
         self.updateLayerWidget.connect(self._toolbar.updateLayerWidget)
         self.resetLayerWidget.connect(self._toolbar.resetLayerWidget)
         self.showLayerWidget.connect(self._toolbar.showLayerWidget)
 
-        self._log_checkbox = QCheckBox("Log scale", self)
-        self._log_checkbox.setObjectName("log_scale_checkbox")
-        self._log_checkbox.setCheckable(True)
-        # only for histogram plot see _sync_log_checkbox
-        self._log_checkbox.setVisible(False)
-        self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
-        self._log_checkbox.clicked.connect(self.logLogScaleButtonUsage)
-        self._log_checkbox.toggled.connect(self._plotUpdateRequested)
-
-        checkbox_row = QHBoxLayout()
-        checkbox_row.addWidget(self._log_checkbox)
-        checkbox_row.setContentsMargins(16, 8, 16, 8)
-        checkbox_row.addStretch()
-        vbox.addLayout(checkbox_row)
         vbox.addWidget(self._toolbar)
         vbox.addSpacing(8)
         self.setLayout(vbox)
@@ -174,43 +150,14 @@ class PlotWidget(QWidget):
         self._log_scale_valid_values = True
         self.resetPlot()
 
-    @property
-    def plotUpdateRequested(self) -> pyqtBoundSignal:
-        return self._plotUpdateRequested
-
     def resetPlot(self) -> None:
         self._figure.clear()
-
-    def _sync_log_checkbox(self, key_def: PlotApiKeyDefinition | None = None) -> None:
-        if (
-            type(self._plotter).__name__
-            in {
-                "HistogramPlot",
-                "DistributionPlot",
-                "GaussianKDEPlot",
-            }
-            and self._log_scale_valid_values
-        ):
-            if key_def is not None:
-                a = key_def.parameter
-                if isinstance(a, GenKwConfig) and isinstance(
-                    a.distribution, ConstSettings
-                ):
-                    self._log_checkbox.setVisible(False)
-                    return
-            self._log_checkbox.setVisible(True)
-        else:
-            self._log_checkbox.setVisible(False)
 
     @property
     def name(self) -> str:
         return self._name
 
-    def logLogScaleButtonUsage(self) -> None:
-        logger.info(f"Plotwidget utility used: 'Log scale button' in tab '{self.name}'")
-        self._log_checkbox.clicked.disconnect()  # Log only once
-
-    def updatePlot(
+    def update_plot(
         self,
         plot_context: "PlotContext",
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
@@ -221,12 +168,6 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
-            self._sync_log_checkbox(key_def)
-            plot_context.log_scale = (
-                self._log_checkbox.isVisible()
-                and self._log_checkbox.isChecked()
-                and self._log_scale_valid_values
-            )
             self._plotter.plot(
                 self._figure,
                 plot_context,
@@ -236,6 +177,7 @@ class PlotWidget(QWidget):
                 obs_loc,
                 key_def,
             )
+            self._enable_text_picking()
             self._canvas.draw()
         except Exception as e:
             logger.exception(e)
@@ -250,3 +192,71 @@ class PlotWidget(QWidget):
                 "An error occurred during plotting. "
                 "This stack trace is helpful for diagnosing the problem."
             )
+
+    def _enable_text_picking(self) -> None:
+        self._hovered_text_artist = None
+        self._hovered_font_properties = None
+        QToolTip.hideText()
+
+        for text_artist in self._editable_text_artists():
+            text_artist.set_picker(True)
+
+    def _editable_text_artists(self) -> list[Text]:
+        return [
+            text_artist
+            for axes in self._figure.axes
+            for text_artist in (axes.xaxis.label, axes.yaxis.label, axes.title)
+        ]
+
+    def _clear_hovered_text_artist(self) -> None:
+        if (
+            self._hovered_text_artist is not None
+            and self._hovered_font_properties is not None
+        ):
+            self._hovered_text_artist.set_fontproperties(self._hovered_font_properties)
+
+        self._hovered_text_artist = None
+        self._hovered_font_properties = None
+        QToolTip.hideText()
+
+    def _on_canvas_motion(self, event: MouseEvent) -> None:
+        hovered_text_artist = next(
+            (
+                text_artist
+                for text_artist in self._editable_text_artists()
+                if text_artist.contains(event)[0]
+            ),
+            None,
+        )
+        if hovered_text_artist is self._hovered_text_artist:
+            return
+
+        self._clear_hovered_text_artist()
+        if hovered_text_artist is None:
+            self._canvas.draw_idle()
+            return
+
+        self._hovered_text_artist = hovered_text_artist
+        self._hovered_font_properties = hovered_text_artist.get_fontproperties().copy()
+        hovered_text_artist.set_fontweight("bold")
+        QToolTip.showText(QCursor.pos(), "Click to edit", self._canvas)
+
+        self._canvas.draw_idle()
+
+    def _on_canvas_leave(self, _: Event) -> None:
+        self._clear_hovered_text_artist()
+        self._canvas.draw_idle()
+
+    def _on_canvas_pick(self, event: PickEvent) -> None:
+        for axes in self._figure.axes:
+            if event.artist is axes.xaxis.label:
+                self.axisLabelEditRequested.emit("x")
+                return
+
+            if event.artist is axes.yaxis.label:
+                self.axisLabelEditRequested.emit("y")
+                return
+
+            if event.artist is axes.title:
+                self.titleEditRequested.emit()
+                return

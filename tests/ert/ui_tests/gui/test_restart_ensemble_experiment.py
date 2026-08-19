@@ -121,7 +121,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
                         output = [_evaluate(coeffs, x) for x in range(10)]
                         with open("poly.out", "w", encoding="utf-8") as f:
                             f.write("\\n".join(map(str, output)))
-                    """  # noqa: E501
+                    """  # ruff: ignore[line-too-long]
             ),
             encoding="utf-8",
         )
@@ -279,7 +279,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
                         output = [_evaluate(coeffs, x) for x in range(10)]
                         with open("poly.out", "w", encoding="utf-8") as f:
                             f.write("\\n".join(map(str, output)))
-                    """  # noqa: E501
+                    """  # ruff: ignore[line-too-long]
             ),
             encoding="utf-8",
         )

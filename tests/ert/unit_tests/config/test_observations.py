@@ -1,6 +1,7 @@
 import logging
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
+from io import BytesIO
 from pathlib import Path
 from textwrap import dedent
 from typing import cast
@@ -16,7 +17,6 @@ from pydantic import ValidationError
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
 
-from ert.__main__ import run_convert_observations
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ShapeRegistry
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import (
@@ -34,7 +34,7 @@ from ert.config.parsing.observations_parser import (
 from ert.config.rft_config import RFTConfig
 from ert.gui.plotting.ert_plots.observations import _plotObservations
 from ert.gui.plotting.utils import PlotConfig
-from ert.namespace import Namespace
+from ert.observation_converters.history_to_summary import convert_history_to_summary
 from tests.ert.defaults_generator import (
     create_breakthrough_observation_dict,
     create_rft_observation_dict,
@@ -76,7 +76,7 @@ def run_simulator(summary_values=SUMMARY_VALUES):
     """
     summary = Summary.writer(
         "MY_REFCASE",
-        datetime(2000, 1, 1),  # noqa: DTZ001
+        datetime(2000, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
         10,
         10,
         10,
@@ -120,7 +120,7 @@ def make_refcase_observations(
         + extra_config
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
-    run_convert_observations(Namespace(config="config.ert"))
+    convert_history_to_summary("config.ert")
 
     migrated_config = ErtConfig.from_file("config.ert")
     return create_observation_dataframes(
@@ -245,7 +245,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given
         config_file = tmp_dir / "config.ert"
         config_file.write_text(config_content)
 
-        run_convert_observations(Namespace(config=str(config_file)))
+        convert_history_to_summary(str(config_file))
 
         migrated_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
@@ -299,7 +299,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
     config_file = Path("config.ert")
     config_file.write_text(config_content, encoding="utf-8")
 
-    run_convert_observations(Namespace(config=str(config_file)))
+    convert_history_to_summary(str(config_file))
 
     migrated_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
@@ -449,7 +449,7 @@ def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcas
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    run_convert_observations(Namespace(config="config.ert"))
+    convert_history_to_summary("config.ert")
 
     migrated = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
@@ -522,7 +522,7 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    run_convert_observations(Namespace(config="config.ert"))
+    convert_history_to_summary("config.ert")
     ert_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
         ert_config.observation_declarations, ert_config.shape_registry
@@ -591,7 +591,7 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
             """
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -672,7 +672,7 @@ def test_that_absolute_error_must_be_greater_than_zero_in_history_observations()
     with pytest.raises(
         ConfigValidationError, match=r"must be given a strictly positive value"
     ):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -777,7 +777,7 @@ def test_that_error_types_are_not_allowed_in_general_observations(error_type):
     )
 
     with pytest.raises(ConfigValidationError, match=r"Unknown key 'ERROR_(MODE|MIN)'"):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 def test_that_empty_observations_file_causes_exception():
@@ -805,7 +805,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         ConfigValidationError,
         match="REFCASE is required for HISTORY_OBSERVATION",
     ):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -877,7 +877,7 @@ def test_that_invalid_time_map_file_raises_config_validation_error():
     )
 
     with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 def test_that_non_existent_obs_file_is_invalid(file_context_token):
@@ -929,7 +929,7 @@ def test_that_non_existent_time_map_file_is_invalid():
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
     with pytest.raises(ObservationConfigError, match="TIME_MAP"):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1121,7 +1121,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
         (
             {"REFCASE": "ECLIPSE_CASE"},
             lambda: run_sim(
-                datetime(2014, 9, 10)  # noqa: DTZ001
+                datetime(2014, 9, 10)  # ruff: ignore[call-datetime-without-tzinfo]
             ),
         ),
         (
@@ -1213,7 +1213,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
         Path("config.ert").write_text("\n".join(config_lines), encoding="utf-8")
 
         with expectation:
-            run_convert_observations(Namespace(config="config.ert"))
+            convert_history_to_summary("config.ert")
             ErtConfig.from_file("config.ert")
 
 
@@ -1251,7 +1251,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
 def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),  # noqa: DTZ001
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
@@ -1282,7 +1282,7 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
         with pytest.warns(ConfigWarning, match=message):
-            run_convert_observations(Namespace(config="config.ert"))
+            convert_history_to_summary("config.ert")
 
 
 @given(
@@ -1320,7 +1320,7 @@ def test_that_history_observations_values_are_fetched_from_refcase(
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -1480,7 +1480,7 @@ def test_that_general_observation_restart_must_match_gen_data_report_step(
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),  # noqa: DTZ001
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
             [
                 (k, "SM3/DAY", None)
                 for k in ["FOPR", "FWPR", "FOPRH", "FWPRH", "FGPR", "FGPRH"]
@@ -1518,7 +1518,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -1532,7 +1532,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
 def test_that_segment_defaults_are_applied(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),  # noqa: DTZ001
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
             days=range(10),
         )
@@ -1562,7 +1562,7 @@ def test_that_segment_defaults_are_applied(tmpdir):
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
         ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
             ert_config.observation_declarations, ert_config.shape_registry
@@ -1639,7 +1639,7 @@ def test_that_properties_are_valid_in_a_segment(segment_property, value, error_m
         encoding="utf-8",
     )
     with pytest.raises(ConfigValidationError, match=error_msg):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 @pytest.mark.parametrize(
@@ -1675,7 +1675,7 @@ def test_that_restart_cannot_be_non_positive_in_summary_observation(
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
     with pytest.raises(ConfigValidationError, match=error_msg):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 def test_that_value_must_be_set_in_summary_observation():
@@ -1728,7 +1728,7 @@ def test_that_error_variants_must_be_a_positive_number_in_history_observation(
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1754,7 +1754,7 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_history_observation():
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1821,7 +1821,7 @@ def test_that_property_must_be_a_positive_number_in_general_observation(
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1853,7 +1853,7 @@ def test_that_date_must_be_a_date_in_general_observation():
         encoding="utf-8",
     )
     with pytest.raises(ConfigValidationError, match="Please use ISO date format"):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 def test_that_value_must_be_a_number_in_general_observation():
@@ -1908,7 +1908,7 @@ def test_that_property_must_be_a_positive_number_in_summary_observation(
     )
 
     with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
+        convert_history_to_summary("config.ert")
 
 
 def test_that_date_must_be_a_date_in_summary_observation():
@@ -1968,7 +1968,7 @@ def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key)
             encoding="utf-8",
         )
         with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
-            run_convert_observations(Namespace(config="config.ert"))
+            convert_history_to_summary("config.ert")
     else:
         with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
             ert_config_from_parser(
@@ -2171,7 +2171,7 @@ def test_that_unreachable_breakthrough_thresholds_has_none_response():
     assert response_df["values"].to_list() == [None]
 
 
-def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_turned_into_responses():  # noqa: E501
+def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_turned_into_responses():  # ruff: ignore[line-too-long]
     keys = ["WWCT:OP_1", "WWCT:OP_2"]
     obs_dates = ["2012-12-01", "2012-12-02"]
     thresholds = [0.2, 0.8]
@@ -2403,7 +2403,7 @@ def test_that_providing_no_name_or_object_to_obs_raises_config_error(obs_content
         ert_config_from_parser(obs_content)
 
 
-def test_that_seismic_observation_dataframes_are_created(
+def test_that_seismic_observation_dataframes_are_created_deprecated_csv_key(
     mocked_files, file_context_token
 ):
     content1 = dedent(
@@ -2459,7 +2459,141 @@ def test_that_seismic_observation_dataframes_are_created(
                 "std": pl.Series([0.005, 0.005, 0.005], dtype=pl.Float32),
                 "east": pl.Series([100.25, 100.55, 100.85], dtype=pl.Float32),
                 "north": pl.Series([200.25, 200.65, 200.95], dtype=pl.Float32),
-                "radius": pl.Series([None, None, None], dtype=pl.Float32),
+                "radius": pl.Series([3000.0, 3000.0, 3000.0], dtype=pl.Float32),
+                "boundary_id": pl.Series([None, None, None], dtype=pl.UInt16),
             }
         ),
     )
+
+
+@pytest.mark.parametrize("file_format", ["parquet", "csv"])
+def test_that_seismic_observation_dataframes_are_created_from_obs_file(
+    mocked_files, file_context_token, file_format
+):
+    frame1 = pl.DataFrame(
+        {
+            "X_UTME": [100.25, 100.55],
+            "Y_UTMN": [200.25, 200.65],
+            "OBS": [1.1, 1.2],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [1.0, 1.0],
+        }
+    )
+    frame2 = pl.DataFrame(
+        {
+            "X_UTME": [100.85],
+            "Y_UTMN": [200.95],
+            "OBS": [1.3],
+            "OBS_ERROR": [0.005],
+            "REGION": [1.0],
+        }
+    )
+
+    if file_format == "parquet":
+        buf1, buf2 = BytesIO(), BytesIO()
+        frame1.write_parquet(buf1)
+        frame2.write_parquet(buf2)
+        mocked_files["obs1.parquet"] = buf1.getvalue()
+        mocked_files["obs2.parquet"] = buf2.getvalue()
+    else:
+        mocked_files["obs1.csv"] = frame1.write_csv()
+        mocked_files["obs2.csv"] = frame2.write_csv()
+
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": "NAME1",
+                            "OBS_FILE": f"obs1.{file_format}",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": None,
+                            "OBS_FILE": f"obs2.{file_format}",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                ],
+            ),
+        }
+    )
+    observations = create_observation_dataframes(
+        ert_config.observation_declarations, ert_config.shape_registry
+    )["seismic"]
+    assert_frame_equal(
+        observations,
+        pl.DataFrame(
+            {
+                "response_key": ["obs1", "obs1", "obs2"],
+                "observation_key": ["NAME1", "NAME1", "obs2"],
+                "observations": pl.Series([1.1, 1.2, 1.3], dtype=pl.Float32),
+                "std": pl.Series([0.005, 0.005, 0.005], dtype=pl.Float32),
+                "east": pl.Series([100.25, 100.55, 100.85], dtype=pl.Float32),
+                "north": pl.Series([200.25, 200.65, 200.95], dtype=pl.Float32),
+                "radius": pl.Series([3000.0, 3000.0, 3000.0], dtype=pl.Float32),
+                "boundary_id": pl.Series([None, None, None], dtype=pl.UInt16),
+            }
+        ),
+    )
+
+
+def test_that_seismic_observation_rejects_both_csv_and_obs_file(
+    mocked_files, file_context_token
+):
+    mocked_files["obs1.csv"] = dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        100.25,200.25,1.1,0.005,1.0"""
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"SEISMIC_OBSERVATION cannot contain both 'CSV' and 'OBS_FILE'.",
+    ):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SEISMIC,
+                                "name": "NAME1",
+                                "CSV": "obs1.csv",
+                                "OBS_FILE": "obs1.csv",
+                            },
+                            context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                        ),
+                    ],
+                ),
+            }
+        )
+
+
+def test_that_seismic_observation_reports_missing_obs_file_key(file_context_token):
+    with pytest.raises(
+        ConfigValidationError, match='Missing item "OBS_FILE" in SEISMIC_OBSERVATION'
+    ):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SEISMIC,
+                                "name": "NAME1",
+                            },
+                            context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                        ),
+                    ],
+                ),
+            }
+        )

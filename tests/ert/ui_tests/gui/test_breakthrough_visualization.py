@@ -12,7 +12,11 @@ from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig, ObservationType
 from ert.gui.main import _setup_main_window
-from ert.gui.plotting.plot_window import ENSEMBLE, STD_DEV, PlotWindow
+from ert.gui.plotting.plot_window import PlotWindow
+from ert.gui.plotting.utils.plot_maps import (
+    ENSEMBLE,
+    STD_DEV,
+)
 from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.services import ErtServerController
@@ -92,7 +96,7 @@ def summary_response(realization: int) -> pl.DataFrame:
         {
             "response_key": ["WWCT:OP1"] * num_points,
             "time": [
-                datetime(2000, 1, day)  # noqa: DTZ001
+                datetime(2000, 1, day)  # ruff: ignore[call-datetime-without-tzinfo]
                 for day in range(1, num_points + 1)
             ],
             "values": pl.Series(values, dtype=pl.Float32),
@@ -163,7 +167,7 @@ def create_breakthrough_figure(plot_tab_name: str):
 plot_figure = create_breakthrough_figure(ENSEMBLE)
 
 
-@pytest.mark.mpl_image_compare(tolerance=10.0)
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
 @pytest.mark.skip_mac_ci
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_breakthrough_ensemble_visualization_images_are_unchanged(plot_figure):

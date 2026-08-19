@@ -82,6 +82,7 @@ class ForwardModelStepRunning(ForwardModelStepBaseEvent):
     max_memory_usage: int | None = None
     current_memory_usage: int | None = None
     cpu_seconds: float = 0.0
+    computer_load: float | None = None
 
 
 class ForwardModelStepSuccess(ForwardModelStepBaseEvent):

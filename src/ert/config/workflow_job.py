@@ -194,8 +194,6 @@ class BaseErtScriptWorkflow(_WorkflowJob, ABC):
                 f"Failed to load {self.name}, script had wrong "
                 f"type, expected ErtScript, got {ertscript_class}"
             )
-        if ertscript_class.__doc__:
-            self.description = textwrap.dedent(ertscript_class.__doc__.strip())
         return self
 
     @property
@@ -226,6 +224,12 @@ class SiteInstalledErtScriptWorkflow(BaseErtScriptWorkflow):
 
     def load_ert_script_class(self) -> builtins.type[ErtScript]:
         return self.ert_script
+
+    @model_validator(mode="after")
+    def set_default_description(self) -> Self:
+        if not self.description and self.ert_script.__doc__:
+            self.description = textwrap.dedent(self.ert_script.__doc__.strip())
+        return self
 
     @model_validator(mode="before")
     @classmethod

@@ -701,10 +701,17 @@ def create_list_of_forward_model_steps_to_run(
 
         user_positional_args_by_step[id(fm_step)] = user_positional_args
 
-        try:
-            fm_step.check_required_keywords()
-        except ConfigValidationError as err:
-            errors.append(err)
+        keyword_errors: list[ConfigValidationError] = []
+        for check_keywords in (
+            fm_step.check_allowed_keywords,
+            fm_step.check_required_keywords,
+        ):
+            try:
+                check_keywords()
+            except ConfigValidationError as err:
+                keyword_errors.append(err)
+        if keyword_errors:
+            errors.extend(keyword_errors)
             continue
         fm_steps.append(fm_step)
 
@@ -1054,7 +1061,7 @@ class ErtConfig(BaseModel):
         except ConfigValidationError as e:
             errors.append(e)
 
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             site_installed_forward_model_steps = dict(
                 copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
             )
@@ -1092,7 +1099,7 @@ class ErtConfig(BaseModel):
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
         obs_configs: list[Observation] = []
         shape_registry = ShapeRegistry()
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
                 log_observation_keys(obs_config_input)

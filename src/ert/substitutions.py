@@ -127,6 +127,6 @@ def substitute_runpath_name(
     )
 
     if "%d" in substituted:
-        substituted = substituted % realization  # noqa
+        substituted = substituted % realization  # ruff: ignore[non-augmented-assignment]
 
     return substituted

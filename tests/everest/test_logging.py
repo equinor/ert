@@ -43,7 +43,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     # start_server() loads config based on config_path, so we need to actually
     # overwrite it
     everest_config.write_to_file("config_minimal.yml")
-    start_everest(["everest", "run", "config_minimal.yml", "--skip-prompt"])
+    start_everest(["everest", "run", "config_minimal.yml"])
 
     everest_output_path = Path.cwd() / "everest_output"
     everest_logs_dir_path = Path(everest_config.log_dir)

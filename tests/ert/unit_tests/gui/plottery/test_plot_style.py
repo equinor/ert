@@ -1,8 +1,10 @@
-import datetime
 import math
 
-from ert.gui.plotting.utils import PlotConfig, PlotLimits, PlotStyle
+import pytest
+
+from ert.gui.plotting.utils import PlotConfig, PlotStyle
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter
+from ert.gui.plotting.utils.statistics_style import STATISTICS
 
 
 def test_conditional_axis_formatter():
@@ -48,7 +50,7 @@ def test_plot_style_test_defaults():
     assert style.color == "#000000"
     assert style.line_style == "-"
     assert math.isclose(style.alpha, 1.0)
-    assert style.marker == ""  # noqa: PLC1901
+    assert style.marker == ""  # ruff: ignore[compare-to-empty-string]
     assert math.isclose(style.width, 1.0)
     assert math.isclose(style.size, 7.5)
     assert style.is_enabled()
@@ -56,8 +58,8 @@ def test_plot_style_test_defaults():
     style.line_style = None
     style.marker = None
 
-    assert style.line_style == ""  # noqa: PLC1901
-    assert style.marker == ""  # noqa: PLC1901
+    assert style.line_style == ""  # ruff: ignore[compare-to-empty-string]
+    assert style.marker == ""  # ruff: ignore[compare-to-empty-string]
 
 
 def test_plot_style_builtin_checks():
@@ -70,10 +72,10 @@ def test_plot_style_builtin_checks():
     assert style.color == "notacolor"  # maybe make this a proper check in future ?
 
     style.line_style = None
-    assert style.line_style == ""  # noqa: PLC1901
+    assert style.line_style == ""  # ruff: ignore[compare-to-empty-string]
 
     style.marker = None
-    assert style.marker == ""  # noqa: PLC1901
+    assert style.marker == ""  # ruff: ignore[compare-to-empty-string]
 
     style.width = -1
     assert math.isclose(style.width, 0.0)
@@ -117,16 +119,6 @@ def test_plot_style_copy_style():
 
 def test_plot_config():
     plot_config = PlotConfig(title="Golden Sample", x_label="x", y_label="y")
-
-    limits = PlotLimits()
-    limits.count_limits = 1, 2
-    limits.density_limits = 5, 6
-    limits.date_limits = datetime.date(2005, 2, 5), datetime.date(2006, 2, 6)
-    limits.index_limits = 7, 8
-    limits.value_limits = 9.0, 10.0
-
-    plot_config.limits = limits
-    assert plot_config.limits == limits
 
     plot_config.set_distribution_line_enabled(True)
     plot_config.set_legend_enabled(False)
@@ -184,8 +176,6 @@ def test_plot_config():
 
     assert plot_config.title() == copy_of_plot_config.title()
 
-    assert plot_config.limits == copy_of_plot_config.limits
-
     plot_config.current_color()  # cycle state will not be copied
     plot_config.next_color()
 
@@ -216,3 +206,41 @@ def test_plot_config():
     assert plot_config.get_statistics_style(
         "std"
     ) != copy_of_plot_config.get_statistics_style("std")
+
+
+def test_that_an_enabled_statistic_gets_its_configured_line_style():
+    plot_config = PlotConfig()
+
+    plot_config.set_statistics_options({"mean", "p10-p90"}, fill_bands=False)
+
+    assert plot_config.get_statistics_style("mean").line_style == "-"
+    assert plot_config.get_statistics_style("p10-p90").line_style == "--"
+
+
+def test_that_a_deselected_statistic_has_neither_line_style_nor_marker():
+    plot_config = PlotConfig()
+
+    plot_config.set_statistics_options(set(), fill_bands=False)
+
+    mean_style = plot_config.get_statistics_style("mean")
+    assert not mean_style.line_style
+    assert not mean_style.marker
+    assert not mean_style.is_visible()
+
+
+def test_that_filling_bands_draws_selected_band_statistics_as_areas():
+    plot_config = PlotConfig()
+
+    plot_config.set_statistics_options({"mean", "p33-p67"}, fill_bands=True)
+
+    assert plot_config.get_statistics_style("p33-p67").line_style == "#"
+    assert plot_config.get_statistics_style("mean").line_style == "-"
+
+
+@pytest.mark.parametrize("statistic", sorted(STATISTICS))
+def test_that_every_statistic_is_visible_when_enabled(statistic):
+    plot_config = PlotConfig()
+
+    plot_config.set_statistics_options({statistic}, fill_bands=False)
+
+    assert plot_config.get_statistics_style(statistic).is_visible()

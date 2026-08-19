@@ -66,14 +66,15 @@ class ExperimentRunnerState:
     start_time_unix: int | None = None
 
 
-_runs: dict[str, ExperimentRunnerState] = {}
-security = HTTPBasic()
+_experiments: dict[str, ExperimentRunnerState] = {}
 
 
-def _get_run(run_id: str) -> ExperimentRunnerState:
-    if run_id not in _runs:
-        raise HTTPException(status_code=404, detail=f"Run '{run_id}' not found")
-    return _runs[run_id]
+def _get_experiment(experiment_id: str) -> ExperimentRunnerState:
+    if experiment_id not in _experiments:
+        raise HTTPException(
+            status_code=404, detail=f"Experiment '{experiment_id}' not found"
+        )
+    return _experiments[experiment_id]
 
 
 def _failed_realizations_messages(
@@ -143,7 +144,15 @@ def _check_authentication(auth_header: str | None) -> None:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
 
-def _check_user(credentials: HTTPBasicCredentials) -> None:
+def verify_auth(
+    request: Request,
+    credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())],
+) -> None:
+    logging.getLogger(EXPERIMENT_SERVER).debug(
+        f"{request.scope['path']} entered from "
+        f"{request.client.host if request.client else 'unknown host'} "
+        f"with HTTP {request.method}"
+    )
     if credentials.password != os.environ["ERT_STORAGE_TOKEN"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -152,91 +161,65 @@ def _check_user(credentials: HTTPBasicCredentials) -> None:
         )
 
 
-def _log(request: Request) -> None:
-    logging.getLogger(EXPERIMENT_SERVER).debug(
-        f"{request.scope['path']} entered from "
-        f"{request.client.host if request.client else 'unknown host'} "
-        f"with HTTP {request.method}"
-    )
+authenticated = [Depends(verify_auth)]
 
 
-@router.get("/")
-def get_status(
-    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)]
-) -> PlainTextResponse:
-    _log(request)
-    _check_user(credentials)
+@router.get("/", dependencies=authenticated)
+def get_status() -> PlainTextResponse:
     return PlainTextResponse("EVEREST is running")
 
 
-@router.get(f"/{EverEndpoints.status}/{{run_id}}")
+@router.get(f"/{EverEndpoints.status}/{{experiment_id}}", dependencies=authenticated)
 def experiment_status(
-    request: Request,
-    run: Annotated[ExperimentRunnerState, Depends(_get_run)],
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+    experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
 ) -> ExperimentStatus:
-    _log(request)
-    _check_user(credentials)
-    return run.status
+    return experiment.status
 
 
-@router.get("/runs")
-def runs(
-    request: Request,
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
-) -> JSONResponse:
-    _log(request)
-    _check_user(credentials)
-    return JSONResponse({"run_ids": list(_runs.keys())})
+@router.get("/" + EverEndpoints.experiments, dependencies=authenticated)
+def experiments() -> JSONResponse:
+    return JSONResponse({"experiment_ids": list(_experiments.keys())})
 
 
-@router.post("/" + EverEndpoints.stop)
-def stop(
-    request: Request,
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
-) -> Response:
-    _log(request)
-    _check_user(credentials)
-    if not _runs:
+@router.post("/" + EverEndpoints.stop, dependencies=authenticated)
+def stop() -> Response:
+    if not _experiments:
         os.kill(os.getpid(), signal.SIGTERM)
-    for run in _runs.values():
-        run.status = ExperimentStatus(
+    for experiment in _experiments.values():
+        experiment.status = ExperimentStatus(
             message="Server stopped by user", status=ExperimentState.stopped
         )
     return Response("Raise STOP flag succeeded. EVEREST initiates shutdown..", 200)
 
 
-@router.post("/" + EverEndpoints.start_experiment)
+@router.post("/" + EverEndpoints.start_experiment, dependencies=authenticated)
 async def start_experiment(
     request: Request,
     background_tasks: BackgroundTasks,
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ) -> JSONResponse:
-    _log(request)
-    _check_user(credentials)
-    run_id = str(uuid.uuid4())
-    run_state = ExperimentRunnerState()
-    _runs[run_id] = run_state
+    experiment_id = str(uuid.uuid4())
+    experiment_state = ExperimentRunnerState()
+    _experiments[experiment_id] = experiment_state
     request_data = await request.json()
     # The output of warnings is the task of the user interface, not
     # of everserver. Therefore we suppress them here:
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=ConfigWarning)
         config = EverestConfig.with_plugins(request_data)
-    runner = ExperimentRunner(config, run_id)
+    runner = ExperimentRunner(config, experiment_id)
     try:
         background_tasks.add_task(runner.run)
-        run_state.config_path = config.config_path
+        experiment_state.config_path = config.config_path
 
-        run_state.run_path = config.simulation_dir
-        run_state.storage_path = config.output_dir
+        experiment_state.run_path = config.simulation_dir
+        experiment_state.storage_path = config.output_dir
 
         # Assume client and server is always in the same timezone
         # so disregard timestamps
-        run_state.start_time_unix = int(time.time())
-        return JSONResponse({"run_id": run_id})
+        experiment_state.start_time_unix = int(time.time())
+        return JSONResponse({"experiment_id": experiment_id})
     except Exception as e:
-        run_state.status = ExperimentStatus(
+        experiment_state.status = ExperimentStatus(
             status=ExperimentState.failed,
             message=f"Could not start experiment: {e!s}",
         )
@@ -246,52 +229,50 @@ async def start_experiment(
         )
 
 
-@router.get(f"/{EverEndpoints.config_path}/{{run_id}}")
+@router.get(
+    f"/{EverEndpoints.config_path}/{{experiment_id}}", dependencies=authenticated
+)
 async def config_path(
-    request: Request,
-    run: Annotated[ExperimentRunnerState, Depends(_get_run)],
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+    experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
 ) -> JSONResponse:
-    _log(request)
-    _check_user(credentials)
-    if run.status.status == ExperimentState.pending:
+    if experiment.status.status == ExperimentState.pending:
         return JSONResponse("No experiment started", status_code=404)
 
     return JSONResponse(
         {
-            "config_path": str(run.config_path),
-            "run_path": str(run.run_path),
-            "storage_path": str(run.storage_path),
+            "config_path": str(experiment.config_path),
+            "run_path": str(experiment.run_path),
+            "storage_path": str(experiment.storage_path),
         },
         status_code=200,
     )
 
 
-@router.get(f"/{EverEndpoints.start_time}/{{run_id}}")
+@router.get(
+    f"/{EverEndpoints.start_time}/{{experiment_id}}", dependencies=authenticated
+)
 async def start_time(
-    request: Request,
-    run: Annotated[ExperimentRunnerState, Depends(_get_run)],
-    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+    experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
 ) -> Response:
-    _log(request)
-    _check_user(credentials)
-    if run.status.status == ExperimentState.pending:
+    if experiment.status.status == ExperimentState.pending:
         return Response("No experiment started", status_code=404)
 
-    return Response(str(run.start_time_unix), status_code=200)
+    return Response(str(experiment.start_time_unix), status_code=200)
 
 
-@router.websocket(f"/{EverEndpoints.events}/{{run_id}}")
-async def websocket_endpoint(websocket: WebSocket, run_id: str) -> None:
+@router.websocket(f"/{EverEndpoints.events}/{{experiment_id}}")
+async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
     await websocket.accept()
     _check_authentication(websocket.headers.get("Authorization"))
-    if run_id not in _runs:
+    if experiment_id not in _experiments:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     subscriber_id = str(uuid.uuid4())
     try:
         while True:
-            event = await _get_event(subscriber_id=subscriber_id, run_id=run_id)
+            event = await _get_event(
+                subscriber_id=subscriber_id, experiment_id=experiment_id
+            )
             await websocket.send_json(jsonable_encoder(event))
             if isinstance(event, EndEvent):
                 break
@@ -303,16 +284,16 @@ async def websocket_endpoint(websocket: WebSocket, run_id: str) -> None:
         )
         # Give some time for subscribers to get events
         await asyncio.sleep(5)
-        _runs[run_id].subscribers[subscriber_id].done()
+        _experiments[experiment_id].subscribers[subscriber_id].done()
 
 
-async def _get_event(subscriber_id: str, run_id: str) -> StatusEvents:
+async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
     """
     The function waits until there is an event available for the subscriber
     and returns the event. If the subscriber is up to date it will
     wait until we wake up the subscriber using notify
     """
-    run = _runs[run_id]
+    run = _experiments[experiment_id]
     if subscriber_id not in run.subscribers:
         run.subscribers[subscriber_id] = Subscriber()
     subscriber = run.subscribers[subscriber_id]
@@ -329,18 +310,18 @@ class ExperimentRunner:
     def __init__(
         self,
         everest_config: EverestConfig,
-        run_id: str,
+        experiment_id: str,
     ) -> None:
         super().__init__()
 
         self._everest_config = everest_config
-        self._run_id = run_id
+        self._experiment_id = experiment_id
 
     async def run(self) -> None:
-        run = _runs[self._run_id]
+        run = _experiments[self._experiment_id]
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         run_model: EverestRunModel | None = None
-        try:  # noqa: PLW0717
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             site_plugins = get_site_plugins()
             with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(

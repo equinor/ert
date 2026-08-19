@@ -72,6 +72,22 @@ def test_legacy_workflow_config_description_defaults_to_its_docstring():
     assert configs.get_workflows()["MockedErtScript"].description == "description"
 
 
+def test_that_explicit_workflow_description_takes_precedence_over_ertscript_docstring():
+    class MockedErtScript(ErtScript):
+        """Class docstring."""
+
+    configs = workflow_config.WorkflowConfigs()
+    configs.add_workflow(
+        ert_script=MockedErtScript,
+        description="Explicit description.",
+    )
+
+    assert (
+        configs.get_workflows()["MockedErtScript"].description
+        == "Explicit description."
+    )
+
+
 @pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_description_through_parameter():
     class MockedErtScript(ErtScript):

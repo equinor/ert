@@ -32,7 +32,7 @@ class EverestBatchObjectiveFunctionPlot:
     Input data: assumed to be a dictionary of DataFrames, where
     each DataFrame contains columns for 'batch_id',
     some variation of the aggregated objective value
-    and 'is_improvement'.
+    and 'accepted'.
     """
 
     def __init__(self) -> None:
@@ -69,7 +69,7 @@ class EverestBatchObjectiveFunctionPlot:
             not in {
                 "batch_id",
                 "realization",
-                "is_improvement",
+                "accepted",
                 "constraint_violation_type",
             }
         )
@@ -77,32 +77,32 @@ class EverestBatchObjectiveFunctionPlot:
 
         color = config.next_color()
 
-        improvement_data = data[data["is_improvement"]]
+        accepted_data = data[data["accepted"]]
 
         lines = axes.plot(
-            improvement_data["batch_id"],
-            improvement_data[value_col],
+            accepted_data["batch_id"],
+            accepted_data[value_col],
             "-o",
             color=color,
         )
 
         scatter_labels = []
         scatter_data = []
-        if not improvement_data.empty:
+        if not accepted_data.empty:
             scatter_data.append(
                 axes.scatter(
-                    improvement_data["batch_id"],
-                    improvement_data[value_col],
+                    accepted_data["batch_id"],
+                    accepted_data[value_col],
                     c=color,
                     s=20,
                     zorder=5,
                 )
             )
-            for _, row in improvement_data.iterrows():
+            for _, row in accepted_data.iterrows():
                 batch_id = int(row["batch_id"])
                 scatter_labels.append(f"Batch {batch_id}")
 
-        rejected_data = data[~data["is_improvement"]]
+        rejected_data = data[~data["accepted"]]
         if not rejected_data.empty:
             scatter_data.append(
                 axes.scatter(
@@ -148,7 +148,7 @@ class EverestBatchObjectiveFunctionPlot:
                 labels=scatter_labels,
             )
 
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

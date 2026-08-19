@@ -187,3 +187,13 @@ def test_that_tooltip_shows_on_hover(everest_ensemble, generic_plot_context):
     )
 
     assert not hover_annotation.get_visible()
+
+
+@pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
+def test_that_constraints_plot_matches_baseline(everest_ensemble, generic_plot_context):
+    return create_everest_figure(
+        EverestConstraintsPlot(),
+        generate_constraints_data(1),
+        generic_plot_context,
+        everest_ensemble,
+    )

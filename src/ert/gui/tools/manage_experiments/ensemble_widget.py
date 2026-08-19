@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config.response_config import ResponseConfig
 from ert.config.rft_config import RFTConfig
+from ert.config.seismic_config import SeismicConfig
 from ert.gui.experiments.view.run_status import RunStatusView
 from ert.storage import Ensemble
 from ert.storage.blob_data import BlobType
@@ -198,7 +199,7 @@ class EnsembleWidget(QWidget):
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.RUN_STATUS_TAB, self._run_status_view, "Run status"
         )
-        self._tab_widget.currentChanged.connect(self._currentTabChanged)
+        self._tab_widget.currentChanged.connect(self._current_tab_changed)
 
         layout = QVBoxLayout()
         layout.addWidget(self._tab_widget)
@@ -317,6 +318,13 @@ class EnsembleWidget(QWidget):
                 return pl.concat(per_realization)
 
             responses = ens.load_responses(response_key, reals_with_responses)
+            if response_type == "seismic":
+                responses = (
+                    SeismicConfig.use_observation_locations_in_respective_responses(
+                        responses, obs
+                    )
+                )
+
             return _filter_by_match_key(responses, None)
 
         response_ds = _load_and_filter_responses()
@@ -353,7 +361,7 @@ class EnsembleWidget(QWidget):
 
         self._canvas.draw()
 
-    def _currentTabChanged(self, index: int) -> None:
+    def _current_tab_changed(self, index: int) -> None:
         if index == _EnsembleWidgetTabs.STATE_TAB:
             self._state_text_edit.clear()
             html = "<table>"
@@ -465,11 +473,7 @@ class EnsembleWidget(QWidget):
     def get_misfit_df(self) -> DataFrame:
         assert self._ensemble is not None
         with capture_specific_warning(PerformanceWarning):
-            df = self._ensemble.load_all_misfit_data()
-        realization_column = pl.Series(df.index)
-        df = pl.from_pandas(df)
-        df.insert_column(0, realization_column)
-        return df
+            return self._ensemble.load_all_misfit_data()
 
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:
@@ -481,7 +485,7 @@ class EnsembleWidget(QWidget):
 
         current_index = self._tab_widget.currentIndex()
         if current_index > 0:
-            self._currentTabChanged(current_index)
+            self._current_tab_changed(current_index)
         else:
             self._tab_widget.setCurrentIndex(0)
 

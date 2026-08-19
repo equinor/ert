@@ -1,6 +1,10 @@
 import datetime
 from pathlib import Path
 
+import numpy as np
+import polars as pl
+from lark import Token
+
 from ert.config._observations import (
     BreakthroughObservation,
     GeneralObservation,
@@ -8,7 +12,9 @@ from ert.config._observations import (
     SeismicObservation,
     SummaryObservation,
 )
-from ert.config.parsing.observations_parser import ObservationType
+from ert.config.parsing.file_context_token import FileContextToken
+from ert.config.parsing.observations_parser import ObservationDict, ObservationType
+from ert.config.seismic_config import SeismicConfig
 
 
 def create_general_observation(
@@ -93,7 +99,7 @@ def create_summary_observation_dict(
 def create_breakthrough_observation(
     name: str = "breakthrough_observation",
     key: str = "WWCT:OP1",
-    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # noqa: DTZ001
+    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
     error: float = 10.0,
     threshold: float = 0.2,
 ) -> BreakthroughObservation:
@@ -109,7 +115,7 @@ def create_breakthrough_observation(
 def create_breakthrough_observation_dict(
     name: str = "breakthrough_observation",
     key: str = "WWCT:OP1",
-    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # noqa: DTZ001
+    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
     error: float = 10.0,
     threshold: float = 0.2,
 ) -> dict:
@@ -180,11 +186,13 @@ def create_rft_observation_dict(
 
 def create_seismic_observation(
     name: str = "seismic_observation",
-    filepath: Path = Path("obs.csv"),
+    filepath: Path = Path("horizon--amplitude_full_min_depth--20250101_20240101.csv"),
     east: float = 1.0,
     north: float = 1.0,
     value: float = 1.0,
     error: float = 0.005,
+    shape_id: int | None = None,
+    boundary_id: int | None = None,
 ) -> SeismicObservation:
     return SeismicObservation(
         name=name,
@@ -193,11 +201,48 @@ def create_seismic_observation(
         north=north,
         value=value,
         error=error,
+        shape_id=shape_id,
+        boundary_id=boundary_id,
     )
 
 
 def create_seismic_observation_dict(
     name: str = "seismic_observation",
-    csv: str = "obs.csv",
-) -> dict:
-    return {"type": ObservationType.SEISMIC, "name": name, "CSV": csv}
+    csv: str = "horizon--amplitude_full_min_depth--20250101_20240101.csv",
+    obs_file: str | None = None,
+) -> ObservationDict:
+    data: dict = {"type": ObservationType.SEISMIC, "name": name}
+    if obs_file is not None:
+        data["OBS_FILE"] = obs_file
+    else:
+        data["CSV"] = csv
+    context = FileContextToken(
+        Token(
+            type="foo",
+            line=2,
+            column=5,
+            end_column=13,
+            value="SEISMIC_OBSERVATION",
+        ),
+        "observations.txt",
+    )
+    return ObservationDict(data, context=context)
+
+
+def create_seismic_response(
+    response_key: str = "horizon--amplitude_full_min_depth--20250101_20240101",
+    east: float = 1.0,
+    north: float = 1.0,
+    values: float = 1.1,
+) -> pl.DataFrame:
+    df = pl.DataFrame(
+        {
+            "response_key": [response_key],
+            "east": [np.float32(east)],
+            "north": [np.float32(north)],
+            "values": [np.float32(values)],
+        },
+        schema=SeismicConfig.response_schema(),
+    )
+    SeismicConfig._assert_schema(df, SeismicConfig.response_schema())
+    return df

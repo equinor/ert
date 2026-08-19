@@ -103,7 +103,7 @@ class RealNode(_NodeBase):
 @dataclass
 class ForwardModelStepNode(_NodeBase):
     parent: RealNode | None = None
-    data: FMStepSnapshot = field(default_factory=lambda: FMStepSnapshot())  # noqa: PLW0108
+    data: FMStepSnapshot = field(default_factory=lambda: FMStepSnapshot())  # ruff: ignore[unnecessary-lambda]
     children: dict[str, None] = field(default_factory=dict)
 
     def row(self) -> int:

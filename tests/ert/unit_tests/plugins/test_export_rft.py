@@ -57,7 +57,7 @@ def _create_rft_response_df(
     cell_center: tuple[float, float, float] = (100.0, 200.0, 25.0),
     cell_zones: tuple[str, ...] = (),
 ) -> pl.DataFrame:
-    time = datetime.strptime(date, "%Y-%m-%d").date()  # noqa: DTZ007
+    time = datetime.strptime(date, "%Y-%m-%d").date()  # ruff: ignore[call-datetime-strptime-without-zone]
     df = pl.DataFrame(
         {
             "response_key": [f"{well}:{date}:{prop}"],

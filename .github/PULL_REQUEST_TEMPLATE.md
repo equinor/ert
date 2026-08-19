@@ -15,6 +15,8 @@ _Short description of the approach_
       --exec 'just rapid-tests'`)
 
 ## When applicable
+- [ ] **When screenshots are changed**: Review screenshot-PR in ert-testdata,
+      merge screenshot-PR in ert-testdata **before** merging this PR.
 - [ ] **When there are user facing changes**: Updated documentation
 - [ ] **New behavior or changes to existing untested code**: Ensured that unit tests are added (See [Ground Rules](https://github.com/equinor/ert/blob/main/CONTRIBUTING.md#ground-rules)).
 - [ ] **Large PR**: Prepare changes in small commits for more convenient review

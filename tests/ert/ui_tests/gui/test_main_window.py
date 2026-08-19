@@ -40,12 +40,11 @@ from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
 from ert.gui.plotting.plot_window import (
-    GEN_KW_DEFAULT,
-    RESPONSE_DEFAULT,
     PlotApi,
     PlotWindow,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectListWidget
+from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -312,6 +311,15 @@ def test_that_the_plot_window_contains_the_expected_elements(
         case_selection = get_child(
             plot_window, EnsembleSelectListWidget, "ensemble_selector"
         )
+        general_options = get_child(plot_window, CollapsibleSection, "general_options")
+        for checkbox_name in (
+            "legend_checkbox",
+            "grid_checkbox",
+            "history_checkbox",
+            "observations_checkbox",
+            "log_scale_checkbox",
+        ):
+            assert get_child(general_options, QCheckBox, checkbox_name)
 
         # Assert that the Case selection widget contains the expected ensembles
         ensemble_names = [
@@ -374,8 +382,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
             qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
 
         def get_log_checkbox():
-            w = plot_window._central_tab.currentWidget()
-            return w.findChild(QCheckBox, "log_scale_checkbox")
+            return plot_window.findChild(QCheckBox, "log_scale_checkbox")
 
         # make sure plotter remembers plot types selected previously
         response_index = 0  # responses are at the start, thus POLY_RES@0 is at index0
@@ -385,14 +392,15 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
         # check default selections
         click_plotter_item(response_index)
-        assert plot_window._central_tab.currentIndex() == RESPONSE_DEFAULT
+        assert plot_window._central_tab.currentIndex() == tab_index_by_text("Ensemble")
 
         # no log scale checkbox yet
         cb = get_log_checkbox()
-        assert not cb.isVisibleTo(plot_window._central_tab.currentWidget())
+        assert cb is not None
+        assert not cb.isVisible()
 
         click_plotter_item(gen_kw_index)
-        assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
+        assert plot_window._central_tab.currentIndex() == tab_index_by_text("Histogram")
 
         # alter selections
         click_plotter_item(response_index)
@@ -406,15 +414,11 @@ def test_that_the_plot_window_contains_the_expected_elements(
         click_plotter_item(gen_kw_index)
         assert plot_window._central_tab.currentIndex() == gen_kw_alternate_index
 
-        # wait until the checkbox exists
-        qtbot.waitUntil(lambda: get_log_checkbox() is not None, timeout=2000)
         cb = get_log_checkbox()
-
-        # wait until it becomes visible
-        qtbot.waitUntil(
-            lambda: cb.isVisibleTo(plot_window._central_tab.currentWidget()) is True,
-            timeout=2000,
-        )
+        assert cb is not None
+        # COEFFS distributions start at 0 (UNIFORM 0 N) and esmda posterior
+        # values can go negative, so log scale is correctly suppressed here.
+        assert not cb.isVisible()
 
         # finally click all items
         for i in range(model.rowCount()):
@@ -1098,7 +1102,7 @@ def test_denied_run_path_warning_dialog_releases_storage_lock(
     assert not run_experiment_panel._model._storage._lock.is_locked
 
 
-def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_design_matrix(  # noqa: E501
+def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_design_matrix(  # ruff: ignore[line-too-long]
     qtbot,
     copy_poly_case_with_design_matrix,
     caplog,

@@ -131,7 +131,7 @@ class EverestGradientsPlot:
             PlotType.BAR, axes, figure, data=bar_containers, labels=bar_labels
         )
 
-        PlotTools.finalizePlot(
+        PlotTools.finalize_plot(
             plot_context,
             figure,
             axes,

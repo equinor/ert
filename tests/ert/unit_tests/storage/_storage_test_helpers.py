@@ -6,7 +6,7 @@ class RaisingWriteNamedTemporaryFile:
     entered = False
 
     def __init__(self, *args, **kwargs) -> None:
-        self.wrapped = tempfile.NamedTemporaryFile(*args, **kwargs)  # noqa
+        self.wrapped = tempfile.NamedTemporaryFile(*args, **kwargs)  # ruff: ignore[open-file-with-context-handler]
         RaisingWriteNamedTemporaryFile.entered = False
 
     def __enter__(self, *args, **kwargs) -> MagicMock:

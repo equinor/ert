@@ -12,11 +12,13 @@ from pathlib import Path
 from textwrap import dedent
 
 import anyio
+from opentelemetry.trace import Status, StatusCode
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.services import create_ertserver_client
 from ert.storage.local_experiment import ExperimentState
+from ert.trace import trace
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
@@ -34,10 +36,10 @@ from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
+    remove_show_scaling_warning_setting,
     run_detached_monitor,
     run_empty_detached_monitor,
     setup_logging,
-    show_scaled_controls_warning,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,7 @@ def everest_entry(args: list[str] | None = None) -> None:
     makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=True)
     with setup_logging(options):
         logger.info(version_info())
+        remove_show_scaling_warning_setting()
 
         client_machine_hostname = socket.gethostname()
         server_queue_system = options.config.server.queue_system.name
@@ -149,11 +152,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
         ),
     )
     arg_parser.add_argument(
-        "--skip-prompt",
-        action="store_true",
-        help="Flag used to disable user prompts that will stop execution.",
-    )
-    arg_parser.add_argument(
         "--disable-monitoring",
         action="store_true",
         help=(
@@ -208,8 +206,6 @@ async def run_everest(options: argparse.Namespace) -> None:
         options.config.simulation_dir
     ).exists() and await directory_is_nonempty(options.config.simulation_dir):
         warn_user_that_runpath_is_nonempty()
-    if not options.skip_prompt:
-        show_scaled_controls_warning()
 
     try:
         output_dir = Path(options.config.output_dir)
@@ -246,14 +242,14 @@ async def run_everest(options: argparse.Namespace) -> None:
         "Starting experiment"
     )
 
-    run_id = start_experiment(
+    experiment_id = start_experiment(
         server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
         config=options.config,
     )
 
     # blocks until the run is finished
     if options.gui:
-        from everest.gui.main import run_gui  # noqa
+        from everest.gui.main import run_gui  # ruff: ignore[import-outside-top-level]
 
         monitor_thread = ErtThread(
             target=run_empty_detached_monitor
@@ -262,7 +258,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             name="EVEREST CLI monitor thread",
             args=[
                 ServerConfig.get_server_context_from_conn_info(client.conn_info),
-                run_id,
+                experiment_id,
             ],
             daemon=True,
         )
@@ -274,14 +270,14 @@ async def run_everest(options: argparse.Namespace) -> None:
             server_context=ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
             ),
-            run_id=run_id,
+            experiment_id=experiment_id,
         )
     else:
         run_detached_monitor(
             server_context=ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
             ),
-            run_id=run_id,
+            experiment_id=experiment_id,
         )
 
     msg: str = ""
@@ -289,7 +285,11 @@ async def run_everest(options: argparse.Namespace) -> None:
     if experiment_status and experiment_status.status == ExperimentState.failed:
         msg = f"EVEREST run failed with: {experiment_status.message or 'Unknown error'}"
         logger.error(msg)
-        raise SystemExit(msg)
+        err = SystemExit(msg)
+        span = trace.get_current_span()
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        raise err
     if experiment_status:
         msg = (
             "EVEREST run finished with: "

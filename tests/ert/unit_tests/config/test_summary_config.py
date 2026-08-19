@@ -1,8 +1,10 @@
 import re
+import warnings
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
+from warnings import WarningMessage
 
 import hypothesis.strategies as st
 import polars as pl
@@ -26,7 +28,7 @@ from ert.warnings import PostExperimentWarning
 @given(summaries(summary_keys=st.just(["WOPR:OP1"])))
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.slow
-@pytest.mark.filterwarnings(r"ignore:Could not find responses for key\(s\)")
+@pytest.mark.filterwarnings(r"ignore:Could not find responses")
 def test_that_reading_empty_summaries_returns_empty_df_with_column_schema(wopr_summary):
     smspec, unsmry = wopr_summary
     smspec.to_file("CASE.SMSPEC")
@@ -164,7 +166,7 @@ def test_that_summary_observations_without_radius_gets_defaulted(
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
-def test_that_summary_observations_raises_error_when_east_or_north_are_undefined_given_localization_object(  # noqa: E501
+def test_that_summary_observations_raises_error_when_east_or_north_are_undefined_given_localization_object(  # ruff: ignore[line-too-long]
     tmpdir,
     loc_config_lines,
 ):
@@ -264,8 +266,88 @@ def test_that_when_not_finding_response_obs_keys_raises_warning(monkeypatch):
     )
     expected_warning = dedent(
         """\
-        Could not find responses for key(s) in 'CASE':
+        Could not find responses for summary key(s) in 'CASE':
         WOPR:OP2
         WWCT:OP1"""
     )
     assert warning == expected_warning
+
+
+def _collect_summary_response_warnings(
+    response_key: str, simulated_response_key: str
+) -> list[WarningMessage]:
+    summary_config = SummaryConfig(keys=[response_key])
+    with warnings.catch_warnings(record=True) as ws:
+        summary_config._warn_about_missing_summary_responses(
+            response_keys=[simulated_response_key], filename="foo"
+        )
+    return [
+        w
+        for w in ws
+        if issubclass(w.category, PostExperimentWarning)
+        and "Could not find response" in str(w.message)
+    ]
+
+
+def test_that_key_with_wildcard_with_response_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="WGOR*", simulated_response_key="WGOR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_key_with_multiple_wildcards_with_responses_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="W*:OP*", simulated_response_key="WGOR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_identical_key_containing_wildcard_with_response_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="W*OPR:OP1", simulated_response_key="WOPR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_key_with_partial_wildcard_without_response_is_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="F*", simulated_response_key="WOPR:OP1"
+    )
+
+    did_warn = len(w) > 0
+    assert did_warn
+
+
+def test_that_keys_with_preceding_wildcard_without_responses_is_not_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="*OP1", simulated_response_key="WOPR:OP1"
+    )
+
+    no_warnings = len(w) == 0
+    assert no_warnings
+
+
+def test_that_key_with_multiple_wildcards_without_response_is_warned_about():
+    w = _collect_summary_response_warnings(
+        response_key="W*OR:OP*", simulated_response_key="WOPR:OP1"
+    )
+
+    did_warn = len(w) > 0
+    assert did_warn
+
+
+def test_that_wildcard_key_without_response_is_warned_about():
+    summary_config = SummaryConfig(keys=["*"])
+    with warnings.catch_warnings(record=True) as w:
+        summary_config._warn_about_missing_summary_responses(
+            response_keys=[], filename="foo"
+        )
+    did_warn = len(w) > 0
+    assert did_warn

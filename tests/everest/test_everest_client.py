@@ -18,7 +18,7 @@ from ert.services import create_ertserver_client
 from ert.shared import find_available_socket
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import get_runs, server_is_running
+from everest.detached import get_experiments, server_is_running
 from everest.strings import EverEndpoints
 from tests.ert.utils import wait_until
 
@@ -44,7 +44,7 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, ExperimentClient]:
     )
 
     everest_client = ExperimentClient(
-        run_id="test_run_id",
+        experiment_id="test_experiment_id",
         url=server_url,
         cert_file="N/A",
         username="",
@@ -187,7 +187,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(
 
     # Run the case through everserver
     everest_main_thread = threading.Thread(
-        target=everest_entry, args=[[str(config_path), "--skip-prompt"]]
+        target=everest_entry, args=[[str(config_path)]]
     )
 
     everest_main_thread.start()
@@ -213,7 +213,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(
     monitor_threads = []
     for _ in range(5):
         client = ExperimentClient(
-            run_id=get_runs(server_context)[-1],
+            experiment_id=get_experiments(server_context)[-1],
             url=url,
             cert_file=cert,
             username=username,

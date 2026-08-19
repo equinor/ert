@@ -41,7 +41,7 @@ def api(tmpdir, source_root, monkeypatch):
         test_data_root = source_root / "test-data" / "ert"
         test_data_dir = test_data_root / "snake_oil"
         shutil.copytree(test_data_dir, "test_data")
-        os.chdir("test_data")  # noqa: TID251  inside tmpdir.as_cwd() which restores
+        os.chdir("test_data")  # ruff: ignore[banned-api]  inside tmpdir.as_cwd() which restores
         yield PlotApi(test_data_dir)
 
 
@@ -168,7 +168,7 @@ def mocked_requests_get(*args, **kwargs):
 
     records = {
         "/ensembles/ens_id_3/responses/FOPR": summary_parquet_data,
-        "/ensembles/ens_id_3/responses/BPR%25253A1%25252C3%25252C8": summary_parquet_data,  # noqa
+        "/ensembles/ens_id_3/responses/BPR%25253A1%25252C3%25252C8": summary_parquet_data,  # ruff: ignore[line-too-long]
         (
             "/ensembles/ens_id_3/parameters/SNAKE_OIL_PARAM%25253ABPR_138_PERSISTENCE"
         ): parameter_parquet_data,
