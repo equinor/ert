@@ -576,3 +576,47 @@ async def test_that_writing_and_reading_empty_response_in_storage_results_in_emp
         responses = ensemble.load_responses("FOPR", (0,))
         assert responses.is_empty()
         assert responses.columns == response_column_scheme
+
+
+def test_that_batch_dataframes_are_saved_as_everest_blobs(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=3, iteration=0, name="batch_0"
+        )
+
+        objectives = pl.DataFrame(
+            {"batch_id": [0], "total_objective_value": [1.5], "distance": [0.5]}
+        )
+        gradient = pl.DataFrame(
+            {"batch_id": [0], "control_name": ["x"], "distance": [2.0]}
+        )
+
+        ensemble.save_batch_dataframes(
+            {
+                "batch_objectives": objectives,
+                "batch_objective_gradient": gradient,
+            }
+        )
+
+        blobs = ensemble.load_blobs(BlobType.EVEREST_BATCH_DATA)
+        assert {blob.blob_info.dataframe_name for blob in blobs} == {
+            "batch_objectives",
+            "batch_objective_gradient",
+        }
+
+        assert ensemble.batch_objectives.equals(objectives)
+        assert ensemble.batch_objective_gradient.equals(gradient)
+        assert ensemble.has_function_results
+
+
+def test_that_reading_absent_batch_dataframe_returns_none(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=3, iteration=0, name="batch_0"
+        )
+
+        assert ensemble.batch_objectives is None
+        assert ensemble.batch_constraint_gradient is None
+        assert not ensemble.has_function_results

@@ -4,6 +4,7 @@ import json
 import re
 
 import pandas as pd
+import polars as pl
 import pytest
 from requests import Response
 from starlette.testclient import TestClient
@@ -377,6 +378,64 @@ def test_that_blob_endpoint_returns_blob_bytes(tmp_path, monkeypatch, dark_stora
     assert resp.status_code == 200
     assert resp.headers["content-type"] == "application/octet-stream"
     assert resp.content == blob_bytes
+
+
+def test_that_blobs_endpoint_lists_everest_batch_dataframes(
+    tmp_path, monkeypatch, dark_storage_app
+):
+    storage_path = tmp_path / "storage"
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="batch_0"
+        )
+        ensemble.save_batch_dataframes(
+            {
+                "batch_objectives": pl.DataFrame(
+                    {"batch_id": [0], "total_objective_value": [1.5]}
+                ),
+                "batch_objective_gradient": pl.DataFrame(
+                    {"batch_id": [0], "control_name": ["x"], "distance": [2.0]}
+                ),
+            }
+        )
+        ensemble_id = ensemble.id
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+    with TestClient(dark_storage_app) as client:
+        resp = client.get(f"/ensembles/{ensemble_id}/blobs")
+
+    assert resp.status_code == 200
+    blobs = resp.json()
+    by_name = {blob["name"]: blob for blob in blobs}
+    assert set(by_name) == {"batch_objectives", "batch_objective_gradient"}
+    for name, blob in by_name.items():
+        assert blob["file_type"] == "application/parquet"
+        assert blob["blob_info"]["blob_type"] == "everest_batch_data"
+        assert blob["blob_info"]["dataframe_name"] == name
+
+
+def test_that_blob_endpoint_returns_everest_batch_dataframe_parquet(
+    tmp_path, monkeypatch, dark_storage_app
+):
+    storage_path = tmp_path / "storage"
+    objectives = pl.DataFrame({"batch_id": [0], "total_objective_value": [1.5]})
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment(name="test-experiment")
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="batch_0"
+        )
+        ensemble.save_batch_dataframes({"batch_objectives": objectives})
+        [blob] = ensemble.load_blobs()
+        ensemble_id = ensemble.id
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+    with TestClient(dark_storage_app) as client:
+        resp = client.get(f"/ensembles/{ensemble_id}/blobs/{blob.uri}")
+
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/octet-stream"
+    assert pl.read_parquet(io.BytesIO(resp.content)).equals(objectives)
 
 
 @pytest.mark.slow
