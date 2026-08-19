@@ -665,6 +665,9 @@ async def test_that_queue_system_can_kill_before_scheduler_with_negative_padding
     assert job.get("Resource_List", {}).get("walltime") == "00:00:00", (
         "Wall time was not propagated correctly"
     )
-    assert "exceeded resource walltime" in job.get("comment", "").lower(), (
-        "Job did not fail due to exceeding wall time"
-    )
+    if job_state == "F":
+        # If we are only in job state E (exiting) the error message
+        # is not ready yet.
+        assert "exceeded resource walltime" in job.get("comment", "").lower(), (
+            "Job did not fail due to exceeding wall time"
+        )
