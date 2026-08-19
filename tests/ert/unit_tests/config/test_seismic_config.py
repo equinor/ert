@@ -1,4 +1,5 @@
 from io import BytesIO, StringIO
+from pathlib import Path
 from typing import cast
 
 import polars as pl
@@ -31,13 +32,14 @@ def _mock_seismic_response(
         mocked_files[path] = buf.getvalue()
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("suffix", [".csv", ".parquet"])
 def test_that_seismic_observation_response_key_matches_simulated_response_key(
     mocked_files, suffix
 ):
     expected_response_key = "horizon--amplitude_full_min_depth--20250101_20240101"
     name = f"{expected_response_key}{suffix}"
-    runpath = "/runpath"
+    runpath = "runpath"
     obs_path = "share/preprocessed/tables/" + name
     simulated_path_relative_to_runpath = "share/results/tables/" + name
     simulated_path = runpath + "/" + simulated_path_relative_to_runpath
@@ -64,6 +66,16 @@ def test_that_seismic_observation_response_key_matches_simulated_response_key(
 
     _mock_seismic_response(mocked_files, obs_path, obs_frame, suffix)
     _mock_seismic_response(mocked_files, simulated_path, simulated_frame, suffix)
+
+    Path(obs_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(simulated_path).parent.mkdir(parents=True, exist_ok=True)
+
+    if suffix.endswith("parquet"):
+        Path(obs_path).write_bytes(mocked_files[obs_path])
+        Path(simulated_path).write_bytes(mocked_files[simulated_path])
+    else:
+        Path(obs_path).write_text(mocked_files[obs_path], encoding="utf8")
+        Path(simulated_path).write_text(mocked_files[simulated_path], encoding="utf8")
 
     config = ErtConfig.from_dict(
         {
@@ -119,7 +131,7 @@ def test_that_seismic_config_raises_when_reading_from_non_existing_file(tmp_path
         keys=["key"],
     )
     with pytest.raises(InvalidResponseFile):
-        seismic_config.read_from_file(tmp_path / "non-existent-file.csv", 1, 1)
+        seismic_config.read_from_file(tmp_path, 1, 1)
 
 
 @pytest.mark.parametrize("suffix", [".csv", ".parquet"])

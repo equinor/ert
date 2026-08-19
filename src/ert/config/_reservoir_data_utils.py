@@ -1,4 +1,7 @@
-from collections.abc import Sequence
+import fnmatch
+import re
+from collections.abc import Callable, Sequence
+from pathlib import Path
 from typing import ClassVar
 
 import numpy as np
@@ -83,3 +86,54 @@ class SeismicData:
             )
             .drop(["east_obs", "north_obs"])
         )
+
+    @staticmethod
+    def resolve_pattern_filepaths(
+        basedir: str,
+        pattern: str,
+        on_error: Callable[[str], Exception],
+    ) -> list[Path]:
+        """Resolve all file paths matching a pattern against filenames only.
+
+        The pattern can include a directory path (e.g., "../subdir/obs-*.csv"),
+        but the pattern itself is only matched against the filename component.
+        Literal glob metacharacters (* ?) should be wrapped in brackets: "test[*].csv".
+
+        Args:
+            basedir: Base directory.
+            pattern: Pattern with optional directory path and possible glob-style
+            wildcards in the filename.
+            on_error: Callable to raise a custom exception.
+
+        """
+        pattern_path = Path(pattern)
+        search_dir = Path(basedir) / pattern_path.parent
+        if not search_dir.exists():
+            raise on_error(
+                f"Directory '{search_dir.absolute()}' does not exist "
+                "or is not accessible."
+            )
+
+        filename_pattern = pattern_path.name
+        has_glob = any(char in filename_pattern for char in "*?[")
+        if not has_glob:
+            path = search_dir / filename_pattern
+            if not path.exists():
+                raise on_error(
+                    f"File '{path.absolute()}' does not exist or is not accessible."
+                )
+            return [path]
+
+        compiled_pattern = re.compile(fnmatch.translate(filename_pattern))
+        matching_paths = [
+            path
+            for path in search_dir.iterdir()
+            if path.is_file() and compiled_pattern.fullmatch(path.name)
+        ]
+
+        if not matching_paths:
+            raise on_error(
+                f"No files matching pattern '{filename_pattern}' found "
+                f"in '{search_dir}'"
+            )
+        return sorted(matching_paths)
