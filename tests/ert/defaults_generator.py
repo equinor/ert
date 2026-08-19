@@ -242,3 +242,15 @@ def create_seismic_response(
     )
     SeismicConfig._assert_schema(df, SeismicConfig.response_schema())
     return df
+
+
+def seismic_file_content() -> pl.DataFrame:
+    return pl.DataFrame(
+        {
+            "X_UTME": [100.0, 110.0, 120.0],
+            "Y_UTMN": [200.0, 210.0, 220.0],
+            "OBS": [1.0, 1.1, 1.2],
+            "OBS_ERROR": [0.005, 0.005, 0.005],
+            "REGION": [1.0, 1.0, 1.0],
+        }
+    )
