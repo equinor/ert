@@ -17,6 +17,7 @@ from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
+from ert.config.seismic_config import SeismicConfig
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -25,6 +26,7 @@ from ._observations import (
     GeneralObservation,
     Observation,
     RFTObservation,
+    SeismicObservation,
     SummaryObservation,
     make_observations,
 )
@@ -1250,6 +1252,7 @@ class ErtConfig(BaseModel):
 
             cls_config.derive_rft_response_input_from_observations(config_dict)
             cls_config.derive_breakthrough_response_input_from_observations()
+            cls_config.derive_seismic_response_input_from_observations()
 
             cls_config.random_seed_generator.user_defined_seed = config_dict.get(
                 ConfigKeys.RANDOM_SEED
@@ -1311,6 +1314,23 @@ class ErtConfig(BaseModel):
                 thresholds=[o.threshold for o in bt_obs],
                 observed_dates=[o.date for o in bt_obs],
             )
+
+    def derive_seismic_response_input_from_observations(self) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        seismic_obs = [o for o in observations if isinstance(o, SeismicObservation)]
+
+        if "seismic" not in ensemble_config.response_configs and seismic_obs:
+            default_dir = Path("share/results/tables")
+            response_files = list(
+                dict.fromkeys(str(default_dir / o.filepath.name) for o in seismic_obs)
+            )
+            seismic_config = SeismicConfig.from_config_dict(
+                {ConfigKeys.SEISMIC: response_files}
+            )
+            assert seismic_config is not None
+            ensemble_config.response_configs["seismic"] = seismic_config
 
     @classmethod
     def _create_list_of_forward_model_steps_to_run(
