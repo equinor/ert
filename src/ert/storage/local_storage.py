@@ -31,6 +31,7 @@ from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
+
 _LOCAL_STORAGE_VERSION = 38
 
 
