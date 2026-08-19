@@ -252,15 +252,16 @@ a well.
 The WELL keyword can contain two types of configuration: LOCALIZATION and
 BREAKTHROUGH.
 
-LOCALIZATION contains two required fields: NORTH and EAST, and optionally
-RADIUS. These localization attributes will be applied to all observations
-sharing the same well name as the WELL configuration.
+:ref:`LOCALIZATION <localization_keyword>` is defined like a regular
+:ref:`LOCALIZATION keyword <localization_keyword>` but will be applied to all observations
+in the csv file sharing the same well name as the WELL configuration.
 
-BREAKTHROUGH allows the user to define a BREAKTHROUGH observation for
-the given well. BREAKTHROUGH is configured like a regular
-BREAKTHROUGH_OBSERVATION - which requires the fields KEY, THRESHOLD, DATE
-and ERROR. BREAKTHROUGH will also inherit the LOCALIZATION values should
-they be defined for the well. Only one occurrence of BREAKTHROUGH can
+BREAKTHROUGH allows the user to define a
+:ref:`BREAKTHROUGH observation <breakthrough_observation>` for the given well.
+BREAKTHROUGH is configured like a regular
+:ref:`BREAKTHROUGH_OBSERVATION <breakthrough_observation>` - which requires the fields
+KEY, THRESHOLD, DATE and ERROR. BREAKTHROUGH will also inherit the LOCALIZATION values
+should they be defined for the well. Only one occurrence of BREAKTHROUGH can
 be configured per WELL.
 
 A SUMMARY configuration containing all of these elements may look like:
@@ -583,6 +584,8 @@ are correctly associated with reservoir zones.
 
 If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
 the expected zone, the observation will be deactivated with a warning during the simulation.
+
+.. _localization_keyword:
 
 The LOCALIZATION keyword - Configuring observations with location
 -----------------------------------------------------------------
