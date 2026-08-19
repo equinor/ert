@@ -132,7 +132,7 @@ Here are two examples:
 .. _error_modes:
 
 Error modes for summary observations
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
 The default error mode for the :ref:`SUMMARY_OBSERVATION <summary_observation>`
