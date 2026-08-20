@@ -157,9 +157,9 @@ def test_that_convert_summary_observations_extracts_localization_information(cap
       VALUES = summary_observations.csv;
       WELL WELL_WITH_LOCALIZATION {
         LOCALIZATION {
-          EAST=10.0;
-          NORTH=20.0;
-          RADIUS=2500.0;
+          EAST = 10.0;
+          NORTH = 20.0;
+          RADIUS = 2500.0;
         };
       };
     };""")
@@ -236,9 +236,9 @@ def test_that_localization_can_be_gathered_from_breakthrough(capsys):
     assert (
         "  WELL OP1 {\n"
         "    LOCALIZATION {\n"
-        "      EAST=10.0;\n"
-        "      NORTH=20.0;\n"
-        "      RADIUS=2500.0;\n"
+        "      EAST = 10.0;\n"
+        "      NORTH = 20.0;\n"
+        "      RADIUS = 2500.0;\n"
         "    };\n"
     ) in capsys.readouterr().out
 
@@ -479,3 +479,24 @@ def test_that_dumping_to_csv_is_skipped_when_file_already_exists(use_tmpdir):
         ),
     ):
         converter.write_csv()
+
+
+def test_that_localization_keywords_have_space_between_equal_sign_and_value():
+    """This test is here to document the need for white spaces for localization
+    keywords and values as this is more correct according to ert conventions.
+    """
+    shape_registry = ShapeRegistry()
+    shape_id = shape_registry.register(
+        CircleShapeConfig(east=10, north=20, radius=2500)
+    )
+    obs = _make_summary_obs(shape_id=shape_id)
+    converter = BulkConfigConverter(observations=[obs], shape_registry=shape_registry)
+
+    localization_string = converter.localization.pop("OP1")
+
+    assert "EAST = 10" in localization_string
+    assert "EAST=10" not in localization_string
+    assert "NORTH = 20" in localization_string
+    assert "NORTH=20" not in localization_string
+    assert "RADIUS = 2500" in localization_string
+    assert "RADIUS=2500" not in localization_string
