@@ -101,7 +101,7 @@ Jobs that loop over realizations or ensembles should check
 
     class MyJob(ErtScript):
         def run(self, ensemble: Ensemble):
-            for realization in ensemble.get_realization_list():
+            for realization in ensemble.get_realization_list_with_responses():
                 if self.isCancelled():
                     return
                 process(realization)
