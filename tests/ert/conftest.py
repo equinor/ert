@@ -31,6 +31,7 @@ from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ConfigWarning, ErtConfig
 from ert.config.parsing.file_context_token import FileContextToken
+from ert.config.rft_config import _get_zonemap, _read_egrid
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -66,6 +67,18 @@ def log_check():
 def _reraise_thread_exceptions_on_main_thread():
     """Allow `_ert.threading.ErtThread` to re-raise exceptions on main thread"""
     set_signal_handler()
+
+
+@pytest.fixture(autouse=True)
+def _clear_rft_caches():
+    """Reset the module-level EGRID and zonemap caches so cached entries from
+    previous tests do not leak into tests that expect a missing or different file.
+    """
+    _read_egrid.cache_clear()
+    _get_zonemap.cache_clear()
+    yield
+    _read_egrid.cache_clear()
+    _get_zonemap.cache_clear()
 
 
 @pytest.fixture
