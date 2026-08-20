@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import json
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 import yaml
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -16,6 +19,10 @@ from PyQt6.QtWidgets import (
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 
 from .ensemble_widget import EnsembleWidget
+from .rft_qc_widget import RftQcWidget
+
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
 
 
 class _WidgetType(IntEnum):
@@ -30,6 +37,11 @@ class _ExperimentWidgetTabs(IntEnum):
     OBSERVATIONS_TAB = 1
     PARAMETERS_TAB = 2
     RESPONSES_TAB = 3
+
+
+class _RealizationWidgetTabs(IntEnum):
+    REALIZATION_TAB = 0
+    INSPECT_RFT_TAB = 1
 
 
 class _ExperimentWidget(QWidget):
@@ -109,7 +121,7 @@ class _ExperimentWidget(QWidget):
 
 
 class _RealizationWidget(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, ert_config: ErtConfig | None = None) -> None:
         QWidget.__init__(self)
 
         info_frame = QFrame()
@@ -136,16 +148,38 @@ class _RealizationWidget(QWidget):
 
         info_frame.setLayout(layout)
 
-        tab_widget = QTabWidget()
-        tab_widget.addTab(info_frame, "Realization")
+        self._tab_widget = QTabWidget()
+        self._tab_widget.insertTab(
+            _RealizationWidgetTabs.REALIZATION_TAB, info_frame, "Realization"
+        )
+
+        self._rft_qc_widget = RftQcWidget(ert_config=ert_config)
+        self._tab_widget.insertTab(
+            _RealizationWidgetTabs.INSPECT_RFT_TAB, self._rft_qc_widget, "Inspect RFT"
+        )
+        self._tab_widget.setTabEnabled(_RealizationWidgetTabs.INSPECT_RFT_TAB, False)
+        self._rft_tab_selected = False
+        self._tab_widget.currentChanged.connect(self._on_tab_changed)
 
         layout = QVBoxLayout()
-        layout.addWidget(tab_widget)
+        layout.addWidget(self._tab_widget)
 
         self.setLayout(layout)
 
+    def _on_tab_changed(self, index: int) -> None:
+        self._rft_tab_selected = index == _RealizationWidgetTabs.INSPECT_RFT_TAB
+        if self._rft_tab_selected:
+            self._rft_qc_widget.load_current_realization()
+
     @Slot(RealizationStorageState)
     def setRealization(self, ensemble: Ensemble, realization: int) -> None:
+        has_rft = "rft" in ensemble.experiment.response_configuration
+        self._tab_widget.setTabEnabled(_RealizationWidgetTabs.INSPECT_RFT_TAB, has_rft)
+        if has_rft:
+            self._rft_qc_widget.update_realization(
+                ensemble, realization, load=self._rft_tab_selected
+            )
+
         realization_state = ensemble.get_ensemble_state()[realization]
         self._state_label.setText(
             "Realization state: "
@@ -166,12 +200,12 @@ class _RealizationWidget(QWidget):
 
 
 class StorageInfoWidget(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, ert_config: ErtConfig | None = None) -> None:
         QWidget.__init__(self)
 
         self._experiment_widget = _ExperimentWidget()
         self._ensemble_widget = EnsembleWidget()
-        self._realization_widget = _RealizationWidget()
+        self._realization_widget = _RealizationWidget(ert_config=ert_config)
         empty_widget = QWidget()
         self.setMinimumWidth(200)
 
