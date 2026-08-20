@@ -563,6 +563,60 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
+def test_that_observations_in_the_tree_are_constrained_by_response_key(qtbot, storage):
+    name = "obs"
+    key1 = "key1"
+    key2 = "key2"
+    date1 = "2000-01-01"
+    date2 = "2123-12-15"
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASE",
+            "SUMMARY": ["*"],
+            "OBS_CONFIG": (
+                "obs_config",
+                [
+                    {
+                        "type": ObservationType.SUMMARY,
+                        "name": name,
+                        "KEY": key1,
+                        "DATE": date1,
+                        "VALUE": 1.0,
+                        "ERROR": 1.0,
+                    },
+                    {
+                        "type": ObservationType.SUMMARY,
+                        "name": name,
+                        "KEY": key2,
+                        "DATE": date2,
+                        "VALUE": 1.0,
+                        "ERROR": 1.0,
+                    },
+                ],
+            ),
+        }
+    )
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=1)
+
+    ensemble_widget = _EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    qtbot.addWidget(ensemble_widget)
+
+    panels_widget = ensemble_widget._tab_widget
+    panels_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    observation_widget = ensemble_widget.findChild(QTreeWidget)
+    assert observation_widget.topLevelItemCount() == 2
+
+    for i in range(observation_widget.topLevelItemCount()):
+        top = observation_widget.topLevelItem(i)
+        assert top is not None
+        assert top.childCount() == 1
+
+
+@pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
 @pytest.mark.parametrize(
     ("observations", "expected_name_order"),
     [
