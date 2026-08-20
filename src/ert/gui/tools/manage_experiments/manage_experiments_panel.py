@@ -9,11 +9,13 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSplitter,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
+from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertwidgets import (
     CheckList,
     EnsembleSelector,
@@ -30,6 +32,10 @@ from .storage_widget import StorageWidget
 if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
+
+
+DIVIDER_COLOR_DARK = "#2d2d2d"
+DIVIDER_COLOR_LIGHT = "#b0b0b0"
 
 
 class ManageExperimentsPanel(QTabWidget):
@@ -54,14 +60,33 @@ class ManageExperimentsPanel(QTabWidget):
         panel = QWidget()
         panel.setObjectName("create_new_ensemble_tab")
 
-        layout = QHBoxLayout()
         storage_widget = StorageWidget(
             self.notifier, self.ert_config, self.ensemble_size
         )
         self._storage_info_widget = StorageInfoWidget()
 
-        layout.addWidget(storage_widget)
-        layout.addWidget(self._storage_info_widget, stretch=1)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(storage_widget)
+        splitter.addWidget(self._storage_info_widget)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([500, 900])
+        splitter.setCollapsible(0, False)
+        splitter.setCollapsible(1, False)
+        splitter.setHandleWidth(7)
+        divider_color = DIVIDER_COLOR_DARK if is_dark_mode() else DIVIDER_COLOR_LIGHT
+        splitter.setStyleSheet(
+            f"""
+            QSplitter::handle:horizontal {{
+                background-color: {divider_color};
+                margin: 0 2px;
+            }}
+            """
+        )
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(splitter)
         panel.setLayout(layout)
 
         storage_widget.onSelectExperiment.connect(
