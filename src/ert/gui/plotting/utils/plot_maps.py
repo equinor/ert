@@ -2,6 +2,7 @@ from collections.abc import Callable
 
 from ert.gui.plotting.ert_plots import (
     CrossEnsembleStatisticsPlot,
+    CrossPlot,
     DistributionPlot,
     FieldUpdatePlot,
     HistogramPlot,
@@ -31,6 +32,7 @@ MAPS = "Maps"
 STATISTICS = "Statistics"
 STD_DEV = "Std dev"
 MISFITS = "Misfits"
+CROSSPLOT = "Cross plot"
 WATERFALL = "Waterfall"
 EVEREST_CONTROLS_PLOT = "Controls"
 EVEREST_GRADIENTS_PLOT = "Gradient"
@@ -41,6 +43,7 @@ EVEREST_CONSTRAINT_PLOT = "Constraints"
 ERT_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     STATISTICS: StatisticsPlot,
     MISFITS: MisfitsPlot,
+    CROSSPLOT: CrossPlot,
     MAPS: MapsPlot,
     HISTOGRAM: HistogramPlot,
     DISTRIBUTION: DistributionPlot,

@@ -1,4 +1,5 @@
 from .cesp import CrossEnsembleStatisticsPlot
+from .cross import CrossPlot
 from .distribution import DistributionPlot
 from .field_update_plot import FieldUpdatePlot
 from .histogram import HistogramPlot
@@ -10,6 +11,7 @@ from .waterfall import WaterfallPlot
 
 __all__ = [
     "CrossEnsembleStatisticsPlot",
+    "CrossPlot",
     "DistributionPlot",
     "FieldUpdatePlot",
     "HistogramPlot",
