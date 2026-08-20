@@ -74,6 +74,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         ]
         self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         layout.addRow("Ensemble:", self._ensemble_selector)
+
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
@@ -107,11 +108,20 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
         self._experiment_name_field = StringBox(
             TextModel(""),
-            placeholder_text="Manual update",
+            placeholder_text="Manual update"
+            if notifier.current_ensemble is None
+            else f"Manual update of {notifier.current_ensemble.name}",
         )
 
         self._experiment_name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._experiment_name_field)
+        self._ensemble_selector.ensemble_selected.connect(
+            lambda ensemble: self._experiment_name_field.setPlaceholderText(
+                f"Manual update of {ensemble.name}"
+                if ensemble is not None
+                else "Manual update"
+            )
+        )
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
@@ -198,3 +208,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, ManualUpdatePanel):
             self._realizations_from_fs()
+
+            self._experiment_name_field.setPlaceholderText(
+                f"Manual update of {self._ensemble_selector.selected_ensemble.name}"
+                if self._ensemble_selector.selected_ensemble is not None
+                else "Manual update"
+            )
