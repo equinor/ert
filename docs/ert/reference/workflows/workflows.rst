@@ -86,6 +86,7 @@ Cancelling internal workflow jobs
 
 A running workflow can be cancelled, either from the *Run workflow* tool in
 the GUI, or by terminating an experiment that is executing a hooked workflow.
+
 For an external workflow job this is straightforward: the invoked process is
 terminated.
 

@@ -54,8 +54,6 @@ class RunWorkflowWidget(QWidget):
 
         self.setLayout(layout)
 
-        # Set by whoever embeds this widget in a dialog, see WorkflowsTool,
-        # so that it can be placed alongside that dialog's own buttons.
         self.run_button: QPushButton | None = None
 
         self._running_workflow_dialog: WorkflowDialog | None = None

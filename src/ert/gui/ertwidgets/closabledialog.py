@@ -56,8 +56,6 @@ class ClosableDialog(QDialog):
     ) -> QPushButton:
         button = QPushButton(caption)
         button.setObjectName(str(caption).capitalize())
-        # align_left inserts before the stretch, putting the button in the
-        # bottom-left corner instead of next to the close button.
         self.__button_layout.insertWidget(0 if align_left else 1, button)
         button.clicked.connect(listener)
         return button
