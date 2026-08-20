@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_EXPANDED_STATE = True
+
 
 class StatisticsOptions:
     """Owns the statistics selection, which persists across keys."""
@@ -64,6 +66,7 @@ class StatisticsOptions:
                     create_labeled_row("Std dev multiplier", self._std_dev_factor),
                 ]
             ),
+            expanded=DEFAULT_EXPANDED_STATE,
         )
 
     def update_plot_context(self, plot_config: PlotConfig) -> None:

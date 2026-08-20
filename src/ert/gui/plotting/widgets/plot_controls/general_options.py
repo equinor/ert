@@ -26,6 +26,8 @@ from .plot_color_palette_selector import PlotColorPaletteSelector
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_EXPANDED_STATE = True
+
 
 class GeneralPlotOptions(QObject):
     axisLabelEditRequested = Signal(str)
@@ -112,6 +114,7 @@ class GeneralPlotOptions(QObject):
         self._general_options = CollapsibleSection(
             "General options",
             create_group_layout(widgets),
+            expanded=DEFAULT_EXPANDED_STATE,
         )
         self._general_options.setObjectName("general_options")
 

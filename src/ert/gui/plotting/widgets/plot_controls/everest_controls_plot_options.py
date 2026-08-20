@@ -15,6 +15,8 @@ from ert.gui.utils import log_once
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_EXPANDED_STATE = True
+
 
 class EverestControlsPlotOptions:
     def __init__(self, connection_point: Callable[..., object]) -> None:
@@ -41,6 +43,7 @@ class EverestControlsPlotOptions:
                     self._display_over_controls_radio,
                 ]
             ),
+            expanded=DEFAULT_EXPANDED_STATE,
         )
 
     def get_widget(self) -> CollapsibleSection:
