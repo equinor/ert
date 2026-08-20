@@ -208,14 +208,10 @@ def create_seismic_observation(
 
 def create_seismic_observation_dict(
     name: str = "seismic_observation",
-    csv: str = "horizon--amplitude_full_min_depth--20250101_20240101.csv",
-    obs_file: str | None = None,
+    obs_file: str = "horizon--amplitude_full_min_depth--20250101_20240101.csv",
 ) -> ObservationDict:
     data: dict = {"type": ObservationType.SEISMIC, "name": name}
-    if obs_file is not None:
-        data["OBS_FILE"] = obs_file
-    else:
-        data["CSV"] = csv
+    data["OBS_FILE"] = obs_file
     context = FileContextToken(
         Token(
             type="foo",

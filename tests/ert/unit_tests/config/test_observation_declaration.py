@@ -833,7 +833,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
                 {
                     "type": ObservationType.SEISMIC,
                     "name": "NAME",
-                    "CSV": "obs.csv",
+                    "OBS_FILE": "obs.csv",
                 },
                 context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
             )
@@ -876,7 +876,7 @@ def test_that_non_existent_seismic_observation_file_raises_error(file_context_to
                     {
                         "type": ObservationType.SEISMIC,
                         "name": "NAME",
-                        "CSV": "seismic_observations.csv",
+                        "OBS_FILE": "seismic_observations.csv",
                     },
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
                 )
@@ -917,7 +917,7 @@ def test_that_unknown_seismic_key_raises_error(file_context_token):
                     {
                         "type": ObservationType.SEISMIC,
                         "name": "NAME",
-                        "CSV": "seismic_observations.csv",
+                        "OBS_FILE": "seismic_observations.csv",
                         "UNKNOWN_KEY": "unexpected_value",
                     },
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
@@ -949,7 +949,7 @@ def test_that_missing_columns_in_seismic_observation_file_raises(file_context_to
                     {
                         "type": ObservationType.SEISMIC,
                         "name": "NAME",
-                        "CSV": "seismic_observations.csv",
+                        "OBS_FILE": "seismic_observations.csv",
                     },
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
                 )
@@ -1046,7 +1046,7 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
                 {
                     "type": ObservationType.SEISMIC,
                     "name": None,
-                    "CSV": "obs.csv",
+                    "OBS_FILE": "obs.csv",
                 },
                 context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
             )
@@ -1098,7 +1098,7 @@ def test_that_invalid_value_type_in_seismic_observation_raises_error(
                     {
                         "type": ObservationType.SEISMIC,
                         "name": "NAME",
-                        "CSV": "obs.csv",
+                        "OBS_FILE": "obs.csv",
                     },
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
                 )
@@ -1127,7 +1127,7 @@ def test_that_empty_seismic_observation_file_does_not_raise(file_context_token):
         [
             ObservationDict(
                 create_seismic_observation_dict(
-                    csv="obs.csv",
+                    obs_file="obs.csv",
                 ),
                 context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
             )
@@ -1170,7 +1170,7 @@ def test_that_seismic_observation_coordinate_distance_below_tolerance_raises(
             [
                 ObservationDict(
                     create_seismic_observation_dict(
-                        csv="obs.csv",
+                        obs_file="obs.csv",
                     ),
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
                 )
@@ -1226,7 +1226,7 @@ def test_that_seismic_observation_reads_boundary_file(file_context_token):
                 {
                     "type": ObservationType.SEISMIC,
                     "name": "NAME",
-                    "CSV": "obs.csv",
+                    "OBS_FILE": "obs.csv",
                     "BOUNDARY": "boundary.pol",
                 },
                 context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
@@ -1279,7 +1279,7 @@ def test_that_non_existent_boundary_seismic_observation_file_raises_error(
                     {
                         "type": ObservationType.SEISMIC,
                         "name": "NAME",
-                        "CSV": "obs.csv",
+                        "OBS_FILE": "obs.csv",
                         "BOUNDARY": "wrong/path/bound.pol",
                     },
                     context=file_context_token(obs_type="SEISMIC_OBSERVATION"),

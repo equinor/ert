@@ -57,7 +57,7 @@ def test_parse_observations():
         };
 
         SEISMIC_OBSERVATION SEIS_OBS {
-           CSV=path/to/seismic_obs.csv;
+           OBS_FILE=path/to/seismic_obs.csv;
         };
     """,
         "",
@@ -104,7 +104,7 @@ def test_parse_observations():
         {
             "type": ObservationType.SEISMIC,
             "name": "SEIS_OBS",
-            "CSV": "path/to/seismic_obs.csv",
+            "OBS_FILE": "path/to/seismic_obs.csv",
         },
     ]
 
@@ -293,7 +293,7 @@ def test_that_parser_sets_undefined_observation_names_to_none():
         };
         SEISMIC_OBSERVATION
         {
-           CSV=path/to/seismic_obs.csv;
+           OBS_FILE=path/to/seismic_obs.csv;
         };
     """
     parsed_obs = parse_observations(
