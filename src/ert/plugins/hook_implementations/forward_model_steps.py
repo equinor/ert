@@ -374,13 +374,13 @@ class Flow(ForwardModelStepPlugin):
 
     FORWARD_MODEL FLOW(<ECLBASE>, <VERSION>=xxx, <OPTS>="--ignore-errors")
 
-The :code:`OPTS` argument is optional and can be removed. :code:`ECLBASE` can
-also be defaulted. Multiple options can be supplied by separating them
-with a space.
+The :code:`OPTS` argument is optional and can be skipped. :code:`ECLBASE` can
+also be defaulted. Multiple options in :code:`OPTS` can be supplied by
+separating them with a space.
 
-ERT will be able to run the flow simulator if there is a binary named
-:code:`flow` or the wrapper :code:`flowrun` in the users :code:`$PATH`
-environment variable.
+ERT will be able to run the flow simulator if there is an executable named
+:code:`flow` or :code:`flowrun` found in the user's :code:`$PATH` environment
+variable.
 
 If :code:`flowrun` is found, it will take precedence, and then it will be
 possible to select the version of flow to use by setting :code:`<VERSION>`.
