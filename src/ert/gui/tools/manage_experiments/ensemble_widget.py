@@ -414,7 +414,8 @@ class EnsembleWidget(QWidget):
                         root.setData(0, Qt.ItemDataRole.UserRole, response_type)
 
                     obs_ds = obs_ds_for_type.filter(
-                        pl.col("observation_key").eq(obs_key)
+                        (pl.col("observation_key").eq(obs_key))
+                        & (pl.col("response_key").eq(response_key))
                     ).unique()
 
                     for observation_data in obs_ds.iter_slices(n_rows=1):
