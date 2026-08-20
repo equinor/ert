@@ -175,19 +175,19 @@ def get_status() -> PlainTextResponse:
     return PlainTextResponse("EVEREST is running")
 
 
-@router.get(f"/{EverEndpoints.status}/{{experiment_id}}", dependencies=authenticated)
+@router.get(f"/{EverEndpoints.STATUS}/{{experiment_id}}", dependencies=authenticated)
 def experiment_status(
     experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
 ) -> ExperimentStatus:
     return experiment.status
 
 
-@router.get("/" + EverEndpoints.experiments, dependencies=authenticated)
+@router.get("/" + EverEndpoints.EXPERIMENTS, dependencies=authenticated)
 def experiments() -> JSONResponse:
     return JSONResponse({"experiment_ids": list(_experiments.keys())})
 
 
-@router.post("/" + EverEndpoints.stop, dependencies=authenticated)
+@router.post("/" + EverEndpoints.STOP, dependencies=authenticated)
 def stop() -> Response:
     if not _experiments:
         os.kill(os.getpid(), signal.SIGTERM)
@@ -198,7 +198,7 @@ def stop() -> Response:
     return Response("Raise STOP flag succeeded. EVEREST initiates shutdown..", 200)
 
 
-@router.post("/" + EverEndpoints.start_experiment, dependencies=authenticated)
+@router.post("/" + EverEndpoints.START_EXPERIMENT, dependencies=authenticated)
 async def start_experiment(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -236,7 +236,7 @@ async def start_experiment(
 
 
 @router.get(
-    f"/{EverEndpoints.config_path}/{{experiment_id}}", dependencies=authenticated
+    f"/{EverEndpoints.CONFIG_PATH}/{{experiment_id}}", dependencies=authenticated
 )
 async def config_path(
     experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
@@ -255,7 +255,7 @@ async def config_path(
 
 
 @router.get(
-    f"/{EverEndpoints.start_time}/{{experiment_id}}", dependencies=authenticated
+    f"/{EverEndpoints.START_TIME}/{{experiment_id}}", dependencies=authenticated
 )
 async def start_time(
     experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
@@ -266,7 +266,7 @@ async def start_time(
     return Response(str(experiment.start_time_unix), status_code=200)
 
 
-@router.post(f"/{EverEndpoints.runpath}", dependencies=authenticated)
+@router.post(f"/{EverEndpoints.RUNPATH}", dependencies=authenticated)
 async def check_runpath_exists(
     paths: PathsCheckRequest,
 ) -> Response:
@@ -292,7 +292,7 @@ async def check_runpath_exists(
     return Response("Runpath does not exist", status_code=404)
 
 
-@router.websocket(f"/{EverEndpoints.events}/{{experiment_id}}")
+@router.websocket(f"/{EverEndpoints.EVENTS}/{{experiment_id}}")
 async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
     await websocket.accept()
     _check_authentication(websocket.headers.get("Authorization"))
