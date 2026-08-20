@@ -93,7 +93,7 @@ def test_that_stop_invokes_correct_endpoint(
 ):
     server_app, server_thread, client, wait_until_alive = client_server_mock
 
-    @server_app.post(f"/{EverEndpoints.stop}")
+    @server_app.post(f"/{EverEndpoints.STOP}")
     def stop():
         return Response("STOP..", 200)
 
@@ -113,7 +113,7 @@ def test_that_stop_errors_on_non_ok_httpcode(
 ):
     server_app, server_thread, client, wait_until_alive = client_server_mock
 
-    @server_app.post(f"/{EverEndpoints.stop}")
+    @server_app.post(f"/{EverEndpoints.STOP}")
     def stop():
         return Response("STOP..", 505)
 

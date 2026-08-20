@@ -63,7 +63,7 @@ class ExperimentClient:
     @property
     def config(self) -> dict[str, str]:
         return self._http_get(
-            f"{EverEndpoints.config_path}/{self._experiment_id}"
+            f"{EverEndpoints.CONFIG_PATH}/{self._experiment_id}"
         ).json()
 
     @property
@@ -82,7 +82,7 @@ class ExperimentClient:
             try:  # ruff: ignore[too-many-statements-in-try-clause]
                 with connect(
                     self._url.replace("https://", "wss://")
-                    + f"/{EverEndpoints.events}/{self._experiment_id}",
+                    + f"/{EverEndpoints.EVENTS}/{self._experiment_id}",
                     ssl=self._ssl_context,
                     open_timeout=open_timeout,
                     additional_headers={"Authorization": f"Basic {self.credentials}"},
@@ -133,7 +133,7 @@ class ExperimentClient:
 
     def stop(self) -> None:
         try:
-            response = self._http_post(EverEndpoints.stop)
+            response = self._http_post(EverEndpoints.STOP)
         except requests.exceptions.ConnectionError as e:
             logger.error(
                 "Connection error when cancelling EVEREST "
@@ -154,7 +154,7 @@ class ExperimentClient:
         else:
             logger.error(
                 f"Failed to cancel EVEREST experiment: "
-                f"POST @ {self._url}/{EverEndpoints.stop}, "
+                f"POST @ {self._url}/{EverEndpoints.STOP}, "
                 f"server responded with status {response.status_code}: "
                 f"{HTTPStatus(response.status_code).phrase}"
             )

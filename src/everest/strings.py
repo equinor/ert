@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import StrEnum, auto
 
 DEFAULT_OUTPUT_DIR = "everest_output"
 DEFAULT_LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"
@@ -23,11 +23,11 @@ STORAGE_DIR = "simulation_results"
 
 
 class EverEndpoints(StrEnum):
-    stop = "stop"
-    start_experiment = "start_experiment"
-    config_path = "config_path"
-    start_time = "start_time_unix"
-    experiments = "experiments"
-    status = "status"
-    events = "events"
-    runpath = "runpath"
+    STOP = auto()
+    START_EXPERIMENT = auto()
+    CONFIG_PATH = auto()
+    START_TIME = auto()
+    EXPERIMENTS = auto()
+    STATUS = auto()
+    EVENTS = auto()
+    RUNPATH = auto()

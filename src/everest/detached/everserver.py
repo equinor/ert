@@ -189,7 +189,7 @@ def main() -> None:
                         active = [
                             ExperimentStatus(
                                 **client.get(
-                                    f"/experiment_server/{EverEndpoints.status}/{experiment_id}",
+                                    f"/experiment_server/{EverEndpoints.STATUS}/{experiment_id}",
                                     auth=server.fetch_auth(),
                                 ).json()
                             ).status

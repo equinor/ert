@@ -77,7 +77,7 @@ def stop_server(
     url, cert, auth = server_context
     for retry in range(retries):
         try:
-            stop_endpoint = f"{url}/{EverEndpoints.stop}"
+            stop_endpoint = f"{url}/{EverEndpoints.STOP}"
             response = requests.post(
                 stop_endpoint,
                 verify=cert,
@@ -101,7 +101,7 @@ def get_experiments(
     for retry in range(retries):
         try:
             response = requests.get(
-                f"{url}/{EverEndpoints.experiments}",
+                f"{url}/{EverEndpoints.EXPERIMENTS}",
                 verify=cert,
                 auth=auth,
                 proxies=PROXY,
@@ -122,7 +122,7 @@ def start_experiment(
     url, cert, auth = server_context
     for retry in range(retries):
         try:
-            start_endpoint = f"{url}/{EverEndpoints.start_experiment}"
+            start_endpoint = f"{url}/{EverEndpoints.START_EXPERIMENT}"
             response = requests.post(
                 start_endpoint,
                 verify=cert,
@@ -247,7 +247,7 @@ def start_monitor(
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         with connect(
             url.replace("https://", "wss://")
-            + f"/{EverEndpoints.events}/{experiment_id}",
+            + f"/{EverEndpoints.EVENTS}/{experiment_id}",
             ssl=ssl_context,
             open_timeout=30,
             additional_headers={"Authorization": f"Basic {credentials}"},
