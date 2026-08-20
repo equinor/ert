@@ -4,6 +4,7 @@ import gc
 import io
 import json
 import os
+import sys
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
 from urllib.parse import quote
@@ -257,6 +258,10 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
     ],
 )
 @pytest.mark.flaky(reruns=2)
+@pytest.mark.skipif(
+    sys.version_info < (3, 13),
+    reason="Fails on Python<3.13 (http://github.com/equinor/ert/issues/14188)",
+)
 def test_plot_api_big_summary_memory_usage(
     num_reals, num_dates, num_keys, max_memory_mb, use_tmpdir, api_and_storage
 ):
