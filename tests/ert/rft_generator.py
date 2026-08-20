@@ -72,6 +72,9 @@ def create_egrid(
     x_width,
     y_width,
     layer_height,
+    x_offset=0.0,
+    y_offset=0.0,
+    z_offset=0.0,
     *,
     mapaxes=(0.0, 1.0, 0.0, 0.0, 1.0, 0.0),
     shift_bottom_plane=(0.0, 0.0),
@@ -81,6 +84,8 @@ def create_egrid(
 
     Each cell has width x_width in the i direction and y_width in the j direction and
     height layer_height in the z direction.
+
+    The first cell starts at (x_offset, y_offset, z_offset) which defaults to (0,0,0)
 
     The bottom plane of the grid is shifted by shift_bottom_plane in the i and j
     directions, respectively, allowing to create a skewed grid.
@@ -92,7 +97,14 @@ def create_egrid(
     xd, yd = shift_bottom_plane
     coord = np.array(
         [
-            [i * x_width, j * y_width, 0, i * x_width + xd, j * y_width + yd, height]
+            [
+                i * x_width + x_offset,
+                j * y_width + y_offset,
+                z_offset,
+                i * x_width + x_offset + xd,
+                j * y_width + y_offset + yd,
+                height + z_offset,
+            ]
             for j in range(ny + 1)
             for i in range(nx + 1)
         ],
@@ -101,8 +113,8 @@ def create_egrid(
 
     zcoord = np.array(
         [
-            [z * layer_height] * (cells_per_layer * 4)
-            + [(z + 1) * layer_height] * (cells_per_layer * 4)
+            [z * layer_height + z_offset] * (cells_per_layer * 4)
+            + [(z + 1) * layer_height + z_offset] * (cells_per_layer * 4)
             for z in range(nz)
         ],
         dtype=">f4",
