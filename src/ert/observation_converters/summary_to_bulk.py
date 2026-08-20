@@ -123,11 +123,11 @@ class BulkConfigConverter:
 
         lines = [
             f"{INDENT4}LOCALIZATION {{",
-            f"{INDENT6}EAST={shape.east};",
-            f"{INDENT6}NORTH={shape.north};",
+            f"{INDENT6}EAST = {shape.east};",
+            f"{INDENT6}NORTH = {shape.north};",
         ]
         if shape.radius is not None:
-            lines.append(f"{INDENT6}RADIUS={shape.radius};")
+            lines.append(f"{INDENT6}RADIUS = {shape.radius};")
         lines.append(f"{INDENT4}}};")
         return "\n".join(lines)
 
