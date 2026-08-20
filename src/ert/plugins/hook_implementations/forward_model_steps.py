@@ -354,11 +354,6 @@ class Flow(ForwardModelStepPlugin):
                 "Do not supply --np as an option to FLOW, "
                 "set NUM_CPU in the Ert config instead."
             )
-        if "--threads" in self.private_args.get("<OPTS>", ""):
-            raise ForwardModelStepValidationError(
-                "Do not supply --threads as an option to FLOW, "
-                "set NUM_CPU in the Ert config instead."
-            )
 
         available_versions = _available_flow_versions(
             env_vars=fm_json["environment"] or {}
