@@ -192,7 +192,6 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
 
     assert experiment_json["parameters"] == {
         "a": {
-            "dimensionality": 1,
             "distribution": {
                 "max": 1.0,
                 "min": 0.0,
@@ -206,7 +205,6 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
             "update_strategy": "global",
         },
         "b": {
-            "dimensionality": 1,
             "distribution": {
                 "max": 2.0,
                 "min": 0.0,
@@ -220,7 +218,6 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
             "update_strategy": "global",
         },
         "c": {
-            "dimensionality": 1,
             "distribution": {
                 "max": 5.0,
                 "min": 0.0,

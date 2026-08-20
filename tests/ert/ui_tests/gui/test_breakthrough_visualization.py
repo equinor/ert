@@ -16,6 +16,7 @@ from ert.gui.plotting.plot_window import PlotWindow
 from ert.gui.plotting.utils.plot_maps import (
     ENSEMBLE,
     STD_DEV,
+    TABS_FOR_DATA_ORIGIN,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.tools.event_viewer import GUILogHandler
@@ -71,7 +72,10 @@ def select_plotter_figure(plot_window: PlotWindow, key: str, plot_tab_name: str)
                     found_selected_key = True
                     assert central_tab.isTabEnabled(tab_index)
                     central_tab.setCurrentWidget(tab)
-                    assert key_def.dimensionality == tab._plotter.dimensionality
+                    assert (
+                        tab.name
+                        in TABS_FOR_DATA_ORIGIN[key_def.metadata["data_origin"]]
+                    )
                     if plot_tab_name == STD_DEV:
                         # we need a better resolution for box plots
                         tab._figure.set_size_inches(

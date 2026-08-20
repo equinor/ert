@@ -10,7 +10,6 @@ def create_key_def(key: str, data_origin: str = "summary") -> PlotApiKeyDefiniti
         key=key,
         index_type=None,
         observations=False,
-        dimensionality=1,
         metadata={"data_origin": data_origin},
     )
 

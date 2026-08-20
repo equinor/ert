@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 
 class HistogramPlot:
     def __init__(self) -> None:
-        self.dimensionality = 1
         self.requires_observations = False
 
     @staticmethod

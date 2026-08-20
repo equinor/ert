@@ -131,13 +131,11 @@ def mocked_requests_get(*args, **kwargs):
         "/ensembles/ens_id_1/parameters": [
             {
                 "name": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
             {
                 "name": "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
-                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
@@ -145,13 +143,11 @@ def mocked_requests_get(*args, **kwargs):
         "/ensembles/ens_id_3/parameters": [
             {
                 "name": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
             {
                 "name": "I_AM_A_PARAM",
-                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
@@ -159,7 +155,6 @@ def mocked_requests_get(*args, **kwargs):
         "/ensembles/ens_id_5/parameters": [
             {
                 "name": "I_AM_A_PARAM",
-                "dimensionality": 1,
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
@@ -193,7 +188,6 @@ def mocked_requests_get(*args, **kwargs):
                     "name": "BPR_138_PERSISTENCE",
                     "forward_init": False,
                     "update": True,
-                    "dimensionality": 1,
                     "distribution": {"name": "uniform", "min": 0.2, "max": 0.7},
                     "group": "SNAKE_OIL_PARAM",
                     "input_source": "sampled",
@@ -203,7 +197,6 @@ def mocked_requests_get(*args, **kwargs):
                     "name": "OP1_DIVERGENCE_SCALE",
                     "forward_init": False,
                     "update": True,
-                    "dimensionality": 1,
                     "distribution": {"name": "uniform", "min": 0.5, "max": 1.5},
                     "group": "SNAKE_OIL_PARAM",
                     "input_source": "sampled",
@@ -213,7 +206,6 @@ def mocked_requests_get(*args, **kwargs):
                     "name": "I_AM_A_PARAM",
                     "forward_init": False,
                     "update": True,
-                    "dimensionality": 1,
                     "distribution": {"name": "normal", "mean": 0.0, "std": 1.0},
                     "group": "SNAKE_OIL_PARAM",
                     "input_source": "sampled",

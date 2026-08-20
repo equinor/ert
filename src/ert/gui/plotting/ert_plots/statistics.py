@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
 class StatisticsPlot:
     def __init__(self) -> None:
-        self.dimensionality = 2
         self.requires_observations = False
 
     @staticmethod

@@ -49,7 +49,6 @@ def test_key_def_structure(api: PlotApi):
     key_defs = api.parameters_api_key_defs + api.responses_api_key_defs
     fopr = next(x for x in key_defs if x.key == "FOPR")
     fopr_expected = {
-        "dimensionality": 2,
         "index_type": "VALUE",
         "key": "FOPR",
         "metadata": {"data_origin": "summary"},
@@ -64,7 +63,6 @@ def test_key_def_structure(api: PlotApi):
 
     bpr = next(x for x in key_defs if x.key == "BPR:1,3,8")
     bpr_expected = {
-        "dimensionality": 2,
         "index_type": "VALUE",
         "key": "BPR:1,3,8",
         "metadata": {"data_origin": "summary"},
@@ -82,7 +80,6 @@ def test_key_def_structure(api: PlotApi):
     )
 
     bpr_parameter_expected = {
-        "dimensionality": 1,
         "index_type": None,
         "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
         "metadata": {"data_origin": "gen_kw"},
@@ -92,7 +89,6 @@ def test_key_def_structure(api: PlotApi):
                 "name": "BPR_138_PERSISTENCE",
                 "forward_init": False,
                 "update": True,
-                "dimensionality": 1,
                 "distribution": {"name": "uniform", "min": 0.2, "max": 0.7},
                 "group": "SNAKE_OIL_PARAM",
                 "input_source": "sampled",

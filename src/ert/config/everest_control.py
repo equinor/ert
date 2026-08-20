@@ -147,7 +147,6 @@ class EverestControl(ParameterConfig):
     """
 
     type: Literal["everest_parameters"] = "everest_parameters"
-    dimensionality: Literal[1] = 1
     input_key: str
     forward_init: bool = False
     output_file: str = ""

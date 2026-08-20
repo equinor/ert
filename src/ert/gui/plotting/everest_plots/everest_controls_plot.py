@@ -34,7 +34,6 @@ class EverestControlsPlot:
     """
 
     def __init__(self) -> None:
-        self.dimensionality = 2
         self.requires_observations = False
         self.selected_controls: list[str] = []
 

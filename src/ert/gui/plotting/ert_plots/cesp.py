@@ -29,7 +29,6 @@ LOWER_PERCENTILE_FOR_WHISKERS = 10
 
 class CrossEnsembleStatisticsPlot:
     def __init__(self) -> None:
-        self.dimensionality = 1
         self.requires_observations = False
 
     @staticmethod
