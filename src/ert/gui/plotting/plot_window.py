@@ -31,6 +31,7 @@ from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.gui.plotting.utils.plot_maps import (
     CROSS_ENSEMBLE_STATISTICS,
+    CROSSPLOT,
     DISTRIBUTION,
     ENSEMBLE,
     ERT_PLOT_MAP,
@@ -70,6 +71,7 @@ from .widgets.plot_controls import (
     StatisticsOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
+from .widgets.plot_realization_selection_widget import RealizationSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
 EVEREST_UPPER_BATCH_LIMIT = 20
@@ -298,6 +300,19 @@ class PlotWindow(QMainWindow):
                 expanded=True,
             )
 
+            max_realizations = max((ens.size for ens in plot_case_objects), default=0)
+            self._realization_selection_widget = RealizationSelectionWidget(
+                [str(i) for i in range(max_realizations)]
+            )
+            self._realization_selection_widget.realizationSelectionChanged.connect(
+                self.update_plot
+            )
+            self._realization_group = CollapsibleSection(
+                "Select realization",
+                create_group_layout([self._realization_selection_widget]),
+                expanded=True,
+            )
+
             self._everest_controls_plot_options = EverestControlsPlotOptions(
                 self.update_plot
             )
@@ -317,6 +332,7 @@ class PlotWindow(QMainWindow):
                     self._general_options.get_widget(),
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
+                    self._realization_group,
                     self._boxplot_options.get_widget(),
                     self._statistics_options.get_widget(),
                 ]
@@ -327,6 +343,7 @@ class PlotWindow(QMainWindow):
 
             self._everest_controls_group.setVisible(False)
             self._everest_controls_plot_options.get_widget().setVisible(False)
+            self._realization_group.setVisible(False)
             self._boxplot_options.get_widget().setVisible(False)
             self._statistics_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
@@ -418,6 +435,7 @@ class PlotWindow(QMainWindow):
         )
         self._statistics_options.get_widget().setVisible(plot_widget.name == STATISTICS)
         self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
+        self._realization_group.setVisible(plot_widget.name == CROSSPLOT)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
@@ -514,6 +532,15 @@ class PlotWindow(QMainWindow):
                         handle_exception(result)
                     elif result is not None:
                         ensemble_to_data_map[ensemble] = result
+
+            if plot_widget.name == CROSSPLOT:
+                selected_realization = (
+                    self._realization_selection_widget.get_selected_realization()
+                )
+                if selected_realization is not None:
+                    for ensemble, data in list(ensemble_to_data_map.items()):
+                        mask = data.index.astype(str) == selected_realization
+                        ensemble_to_data_map[ensemble] = data.loc[mask]
 
             log_scale_valid_values = True
             if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
@@ -775,7 +802,8 @@ class PlotWindow(QMainWindow):
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
-            and (not is_observed_seismic or widget.name == MISFITS)
+            and (not is_observed_seismic or widget.name in {MISFITS, CROSSPLOT})
+            and (widget.name != CROSSPLOT or is_observed_seismic)
         ]
 
         def everest_data_origin_check(origin: list[str]) -> bool:
