@@ -123,7 +123,7 @@ class StorageWidget(QWidget):
         self._notifier = notifier
         self._ert_config = ert_config
         self._ensemble_size = ensemble_size
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(250)
 
         self._tree_view = QTreeView(self)
         storage_model = StorageModel(self._notifier.storage)
