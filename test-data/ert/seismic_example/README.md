@@ -35,14 +35,11 @@ The following example sets the format to `.parquet`.
 python mock_sim2seis.py --format parquet
 ````
 
-Run setup for observation data in `.csv` format:
+Run setup:
 ```
 ert ensemble_experiment sim2seis.ert
 ```
-Run setup for observation data in `.parquet` format:
-```
-ert ensemble_experiment sim2seis_parquet.ert
-```
+Note that setup expects observation data in both `.csv` and `.parquet` formats.
 
 Observation data is found under `share/preprocessed/tables`. Modelled data is found
 under `share/results/tables`. Note that modelled data have the same structure as

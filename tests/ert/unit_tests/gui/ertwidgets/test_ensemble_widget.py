@@ -642,10 +642,10 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
         pytest.param(
             [
                 create_seismic_observation_dict(
-                    name="SEISMIC1", csv="seismic--20250101_20240101.csv"
+                    name="SEISMIC1", obs_file="seismic--20250101_20240101.csv"
                 ),
                 create_seismic_observation_dict(
-                    name="SEISMIC2", csv="seismic--20260101_20240101.csv"
+                    name="SEISMIC2", obs_file="seismic--20260101_20240101.csv"
                 ),
             ],
             ["99.0, 200.0", "100.0, 200.0"],

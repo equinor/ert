@@ -11,11 +11,10 @@ RANDOM_SEED 1234
 GEN_KW COEFFS coeff_priors
 
 INSTALL_JOB mock_sim2seis MOCK_SIM2SEIS
-FORWARD_MODEL mock_sim2seis
+FORWARD_MODEL mock_sim2seis(<FORMAT>=csv)
+FORWARD_MODEL mock_sim2seis(<FORMAT>=parquet)
 
-SEISMIC share/results/tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv
-SEISMIC share/results/tables/horizon--amplitude_full_mean_depth--20260101_20240101.csv
-SEISMIC share/results/tables/horizon--amplitude_full_min_depth--20250101_20240101.csv
-SEISMIC share/results/tables/horizon--amplitude_full_min_depth--20260101_20240101.csv
+SEISMIC share/results/tables/horizon--amplitude_full_*_depth--20250101_20240101.csv
+SEISMIC share/results/tables/horizon--amplitude_full_*_depth--20260101_20240101.parquet
 
 OBS_CONFIG obs.txt

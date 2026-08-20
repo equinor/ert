@@ -1079,25 +1079,12 @@ class SeismicObservation(BaseObservation):
         filepath: str | None = None
         boundary_filepath: str | Path | None = None
 
-        if "CSV" in observation_dict and "OBS_FILE" in observation_dict:
-            raise ObservationConfigError.with_context(
-                "SEISMIC_OBSERVATION cannot contain both 'CSV' and 'OBS_FILE'.",
-                observation_dict.context,
-            )
-
         for key, value in observation_dict.items():
             match key:
                 case "type":
                     pass
                 case "name":
                     name = value
-                case "CSV":
-                    ConfigWarning.warn(
-                        "CSV key is deprecated for seismic observations. "
-                        "Use OBS_FILE instead.",
-                        observation_dict.context,
-                    )
-                    filepath = value
                 case "OBS_FILE":
                     filepath = value
                 case "BOUNDARY":

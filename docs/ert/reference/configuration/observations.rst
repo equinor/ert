@@ -622,13 +622,6 @@ required columns:
 - ``OBS``: The observed value at that location.
 - ``OBS_ERROR``: The observation error (absolute standard deviation).
 
-.. note::
-   The ``CSV`` key is a deprecated alias for ``OBS_FILE``.
-   Existing configurations using ``CSV = path/to/observations.csv;`` will
-   continue to work but emit a deprecation warning; new configurations should
-   use ``OBS_FILE``. ``OBS_FILE`` and ``CSV`` cannot be combined in the same
-   declaration.
-
 An example of such a CSV could look like this:
 
 .. code-block:: none
