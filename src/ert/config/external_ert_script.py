@@ -16,6 +16,11 @@ class ExternalErtScript(ErtScript):
         self.__job: Popen[bytes] | None = None
 
     def run(self, *args: Any) -> None:
+        if self.isCancelled():
+            # cancel() was called before the process was spawned; there is
+            # nothing running yet for it to terminate.
+            return
+
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 

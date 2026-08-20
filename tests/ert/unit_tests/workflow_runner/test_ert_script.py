@@ -1,3 +1,5 @@
+import os
+import stat
 import sys
 import threading
 from pathlib import Path
@@ -5,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from ert import ErtScript
+from ert.config import ExternalErtScript
 
 from .workflow_common import WorkflowCommon
 
@@ -145,6 +148,24 @@ def test_that_output_captured_from_ert_script_is_still_written_to_stdout(capsys)
     captured = capsys.readouterr()
     assert captured.out == "to stdout\n"
     assert captured.err == "to stderr\n"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_external_ert_script_does_not_spawn_process_once_cancelled():
+    Path("touch_ran.sh").write_text(
+        "#!/usr/bin/env bash\ntouch ran\n", encoding="utf-8"
+    )
+    st = os.stat("touch_ran.sh")
+    Path("touch_ran.sh").chmod(st.st_mode | stat.S_IEXEC)
+
+    script = ExternalErtScript("./touch_ran.sh")
+    # Cancellation arriving before the process is spawned - e.g. racing with
+    # WorkflowJobRunner publishing this script as the current job - must
+    # prevent the process from ever starting.
+    script.cancel()
+    script.initializeAndRun([], [])
+
+    assert not Path("ran").exists()
 
 
 def _join(thread: threading.Thread) -> None:
