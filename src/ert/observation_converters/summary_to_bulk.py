@@ -162,7 +162,7 @@ class BulkConfigConverter:
 
     def write_csv(self) -> None:
         csv_str = StringIO()
-        csv_header = ", ".join([*self.header_fields, "value", "error", "date"]) + "\n"
+        csv_header = ",".join([*self.header_fields, "value", "error", "date"]) + "\n"
         csv_str.write(csv_header)
 
         for key in natsorted(self.key_to_smry_obs.keys()):
@@ -177,13 +177,13 @@ class BulkConfigConverter:
                 for header_field in self.header_fields:
                     v = getattr(summary_key_data, header_field)
                     if v is None:
-                        csv_str.write(", ")
+                        csv_str.write(",")
                     else:
-                        csv_str.write(f"{v}, ")
+                        csv_str.write(f"{v},")
                 # Strip to date precision given no HH-MM-SS
                 date = observation.date.removesuffix("T00:00:00")
-                csv_str.write(f"{observation.value}, ")
-                csv_str.write(f"{observation.error}, ")
+                csv_str.write(f"{observation.value},")
+                csv_str.write(f"{observation.error},")
                 csv_str.write(f"{date}\n")
 
         try:

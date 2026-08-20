@@ -34,13 +34,13 @@ def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
     assert Path("summary_observations.csv").is_file()
     csv_content = Path("summary_observations.csv").read_text(encoding="utf-8")
     expected_csv_content = [
-        "keyword, well, value, error, date",
-        "WOPR, OP1, 0.1, 0.05, 2010-03-31",
-        "WOPR, OP1, 0.7, 0.07, 2010-12-26",
-        "WOPR, OP1, 0.5, 0.05, 2011-12-21",
-        "WOPR, OP1, 0.3, 0.075, 2012-12-15",
-        "WOPR, OP1, 0.2, 0.035, 2013-12-10",
-        "WOPR, OP1, 0.015, 0.01, 2015-03-15",
+        "keyword,well,value,error,date",
+        "WOPR,OP1,0.1,0.05,2010-03-31",
+        "WOPR,OP1,0.7,0.07,2010-12-26",
+        "WOPR,OP1,0.5,0.05,2011-12-21",
+        "WOPR,OP1,0.3,0.075,2012-12-15",
+        "WOPR,OP1,0.2,0.035,2013-12-10",
+        "WOPR,OP1,0.015,0.01,2015-03-15",
     ]
 
     assert all(line in csv_content for line in expected_csv_content)
@@ -87,6 +87,10 @@ def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
         old_obs.pop("name")
         new_obs.pop("name")
         assert old_obs == new_obs
+
+    # Regression test to ensure we do not have whitespaces in the csv format
+    # as that unnecessarily complicates the format for other software.
+    assert " " not in csv_content
 
 
 @pytest.fixture(name="patched_csv_writer")
@@ -289,10 +293,10 @@ def test_that_bpr_observation_populates_ijk_columns_while_others_are_left_empty(
     assert all(h in header for h in expected_headers)
 
     bpr_line = lines[1]
-    assert bpr_line == "BPR, , 1, 2, 3, 0.5, 0.02, 2010-01-27"
+    assert bpr_line == "BPR,,1,2,3,0.5,0.02,2010-01-27"
 
     wopr_line = lines[2]
-    assert wopr_line == "WOPR, OP1, , , , 0.5, 0.02, 2010-01-27"
+    assert wopr_line == "WOPR,OP1,,,,0.5,0.02,2010-01-27"
 
 
 @pytest.mark.usefixtures("patched_csv_writer")
@@ -324,7 +328,7 @@ def test_that_precision_is_stripped_given_date_precision_in_csv_conversion(
     lines = csv_content.strip().split("\n")
 
     obs_line = lines[1]
-    assert obs_line.split(", ")[-1] == date
+    assert obs_line.split(",")[-1] == date
 
 
 @pytest.mark.usefixtures("patched_csv_writer")
@@ -343,8 +347,8 @@ def test_that_combination_of_precisions_is_maintained_in_csv_conversion(
 
     date_line = lines[1]
     hour_line = lines[2]
-    assert date_precision == date_line.split()[-1]
-    assert hour_precision == hour_line.split()[-1]
+    assert date_precision == date_line.split(",")[-1]
+    assert hour_precision == hour_line.split(",")[-1]
 
 
 def test_that_invalid_format_raises_cli_error():
