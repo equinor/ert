@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertwidgets import (
     CheckList,
     EnsembleSelector,
@@ -26,16 +25,13 @@ from ert.sample_prior import sample_prior
 from ert.storage import Ensemble
 from ert.storage.realization_storage_state import RealizationStorageState
 
+from .rft_qc_widget import divider_color
 from .storage_info_widget import StorageInfoWidget
 from .storage_widget import StorageWidget
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
-
-
-DIVIDER_COLOR_DARK = "#2d2d2d"
-DIVIDER_COLOR_LIGHT = "#b0b0b0"
 
 
 class ManageExperimentsPanel(QTabWidget):
@@ -63,7 +59,7 @@ class ManageExperimentsPanel(QTabWidget):
         storage_widget = StorageWidget(
             self.notifier, self.ert_config, self.ensemble_size
         )
-        self._storage_info_widget = StorageInfoWidget()
+        self._storage_info_widget = StorageInfoWidget(self.ert_config)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(storage_widget)
@@ -74,11 +70,10 @@ class ManageExperimentsPanel(QTabWidget):
         splitter.setCollapsible(0, False)
         splitter.setCollapsible(1, False)
         splitter.setHandleWidth(7)
-        divider_color = DIVIDER_COLOR_DARK if is_dark_mode() else DIVIDER_COLOR_LIGHT
         splitter.setStyleSheet(
             f"""
             QSplitter::handle:horizontal {{
-                background-color: {divider_color};
+                background-color: {divider_color()};
                 margin: 0 2px;
             }}
             """

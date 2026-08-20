@@ -39,7 +39,7 @@ dependencies = [
     "jinja2 >= 2.10",
     "lark",
     "lxml",
-    "matplotlib",
+    "matplotlib>=3.11.1",
     "netCDF4",
     "networkx",
     "numpy",

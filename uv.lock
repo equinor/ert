@@ -1151,7 +1151,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=2.10" },
     { name = "lark" },
     { name = "lxml" },
-    { name = "matplotlib" },
+    { name = "matplotlib", specifier = ">=3.11.1" },
     { name = "natsort", specifier = ">=8.4.0" },
     { name = "netcdf4" },
     { name = "networkx" },

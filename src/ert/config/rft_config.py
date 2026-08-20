@@ -648,7 +648,7 @@ class RFTConfig(SimulationResponseConfig):
                         "depth": float(missing_response_point[2]),
                         "values": np.float32(v0 + t * (v1 - v0)),
                         "well_connection_cell": missing["well_connection_cell"],
-                        "cell_center": [np.nan, np.nan, np.nan],
+                        "cell_center": missing_response_point,
                         "cell_zones": [missing["zone"]],
                     }
                 )
