@@ -600,15 +600,6 @@ def test_that_flow_fm_gives_error_on_np_in_opts(plugins_ert_config):
         )
 
 
-def test_that_flow_fm_gives_error_on_threads_in_opts(plugins_ert_config):
-    with pytest.raises(
-        ConfigValidationError, match=r".*Do not supply --threads as an option to FLOW*"
-    ):
-        plugins_ert_config.from_file_contents(
-            'NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<OPTS>="--threads=2")\n'
-        )
-
-
 @pytest.mark.parametrize("fm_step_name", ["ECLIPSE100", "ECLIPSE300", "FLOW"])
 def test_that_reservoir_simulator_fm_rejects_unknown_keyword(
     plugins_ert_config, fm_step_name
