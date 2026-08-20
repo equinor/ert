@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QRadioButton, QToolButton
 
 from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.widgets.plot_controls.everest_controls_plot_options import (
+    DEFAULT_EXPANDED_STATE,
     EverestControlsPlotOptions,
 )
 
@@ -16,6 +17,7 @@ def test_that_everest_controls_plot_options_initializes_with_expected_default_st
     qtbot.addWidget(options.get_widget())
 
     assert options.is_batches_selected() is True
+    assert options.get_widget()._toggle_button.isChecked() is DEFAULT_EXPANDED_STATE
 
 
 def test_that_the_selected_x_axis_is_written_to_the_plot_context(qtbot):
@@ -64,10 +66,3 @@ def test_that_selecting_x_axis_display_option_logs_sidebar_usage_once(qtbot, cap
 
         batches_radio.click()
         assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
-
-
-def test_that_everest_controls_plot_options_defaults_to_collapsed_state(qtbot):
-    options = EverestControlsPlotOptions(Mock())
-    qtbot.addWidget(options.get_widget())
-
-    assert not options.get_widget()._toggle_button.isChecked()

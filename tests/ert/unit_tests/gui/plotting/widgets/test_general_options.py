@@ -7,7 +7,10 @@ from PyQt6.QtWidgets import QCheckBox, QPushButton, QToolButton
 from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.utils.plot_color_palettes import PALETTES_WITH_DESCRIPTIONS
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
-from ert.gui.plotting.widgets.plot_controls.general_options import GeneralPlotOptions
+from ert.gui.plotting.widgets.plot_controls.general_options import (
+    DEFAULT_EXPANDED_STATE,
+    GeneralPlotOptions,
+)
 
 
 def _create_plot_context() -> PlotContext:
@@ -40,7 +43,7 @@ def _apply_options_to_plot_context(
     )
 
 
-def test_that_general_options_has_expected_default_checkbox_states(qtbot):
+def test_that_general_options_has_expected_default_states(qtbot):
     options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
@@ -49,6 +52,7 @@ def test_that_general_options_has_expected_default_checkbox_states(qtbot):
     assert options.history_checkbox_state is True
     assert options.observations_checkbox_state is True
     assert options.log_checkbox_state is False
+    assert options.get_widget()._toggle_button.isChecked() is DEFAULT_EXPANDED_STATE
 
 
 def _expand(section: CollapsibleSection) -> None:
