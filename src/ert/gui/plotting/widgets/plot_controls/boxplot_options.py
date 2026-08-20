@@ -10,6 +10,8 @@ from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_EXPANDED_STATE = True
+
 
 class BoxplotOptions:
     def __init__(self, connection_point: Callable[..., object]) -> None:
@@ -41,6 +43,7 @@ class BoxplotOptions:
                     self._toggle_outliers,
                 ]
             ),
+            expanded=DEFAULT_EXPANDED_STATE,
         )
 
     @property

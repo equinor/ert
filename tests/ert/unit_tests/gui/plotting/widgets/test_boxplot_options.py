@@ -4,7 +4,10 @@ from unittest.mock import Mock
 import pytest
 
 from ert.gui.plotting.utils import PlotConfig, PlotContext
-from ert.gui.plotting.widgets.plot_controls.boxplot_options import BoxplotOptions
+from ert.gui.plotting.widgets.plot_controls.boxplot_options import (
+    DEFAULT_EXPANDED_STATE,
+    BoxplotOptions,
+)
 
 
 def test_that_boxplot_checkbox_states_are_written_to_the_plot_context(qtbot):
@@ -22,7 +25,7 @@ def test_that_boxplot_checkbox_states_are_written_to_the_plot_context(qtbot):
     assert plot_context.outliers is True
 
 
-def test_that_boxplot_options_has_expected_default_checkbox_states(qtbot):
+def test_that_boxplot_options_has_expected_default_states(qtbot):
     options = BoxplotOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
@@ -30,6 +33,8 @@ def test_that_boxplot_options_has_expected_default_checkbox_states(qtbot):
     assert options.outliers_checkbox_state is True
     assert options.box_checkbox_state is True
     assert options.scatter_checkbox_state is False
+
+    assert options.get_widget()._toggle_button.isChecked() is DEFAULT_EXPANDED_STATE
 
 
 def test_that_setting_boxplot_option_state_updates_underlying_checkbox(qtbot):
@@ -81,10 +86,3 @@ def test_that_toggling_a_boxplot_option_logs_sidebar_usage_once(
 
         checkbox.click()
         assert [r.getMessage() for r in caplog.records].count(expected_message) == 1
-
-
-def test_that_boxplot_options_defaults_to_collapsed_state(qtbot):
-    options = BoxplotOptions(Mock())
-    qtbot.addWidget(options.get_widget())
-
-    assert not options.get_widget()._toggle_button.isChecked()
