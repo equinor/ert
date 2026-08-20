@@ -22,22 +22,9 @@ from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.config.response_config import _RESPONSE_WARNING_LIMIT
-from ert.config.rft_config import _get_zonemap, _read_egrid
 from ert.warnings import PostExperimentWarning
 from tests.ert.defaults_generator import create_rft_observation_dict
 from tests.ert.rft_generator import cell_start, create_egrid, float_arr
-
-
-@pytest.fixture(autouse=True)
-def _clear_rft_caches():
-    """Reset the module-level EGRID and zonemap caches so cached entries from
-    previous tests do not leak into tests that expect a missing or different file.
-    """
-    _read_egrid.cache_clear()
-    _get_zonemap.cache_clear()
-    yield
-    _read_egrid.cache_clear()
-    _get_zonemap.cache_clear()
 
 
 def test_that_rfts_match_key_is_well_connection_cell():
