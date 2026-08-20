@@ -39,6 +39,7 @@ class EnsembleObject:
     started_at: str
     has_func_eval: bool = False
     has_gradient: bool = False
+    size: int | None = None
 
 
 class PlotApiKeyDefinition(NamedTuple):
@@ -113,6 +114,7 @@ class PlotApi:
                             has_gradient=bool(
                                 response_json["userdata"].get("has_gradient", False)
                             ),
+                            size=int(response_json["size"]),
                         )
                     )
         except IndexError as exc:
