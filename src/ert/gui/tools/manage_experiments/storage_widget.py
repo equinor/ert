@@ -205,7 +205,7 @@ class StorageWidget(QWidget):
                     response_configuration = (
                         self._ert_config.ensemble_config.response_configuration
                     )
-                    ensemble = storage.create_experiment(
+                    storage.create_experiment(
                         experiment_config={
                             "parameter_configuration": [
                                 c.model_dump(mode="json")
@@ -232,7 +232,6 @@ class StorageWidget(QWidget):
                         iteration=create_experiment_dialog.iteration,
                     )
 
-                self._notifier.set_current_ensemble_id(ensemble.id)
             except OSError as err:
                 logger.error(str(err))
                 Suggestor(

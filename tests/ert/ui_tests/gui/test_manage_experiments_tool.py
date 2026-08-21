@@ -82,7 +82,6 @@ def test_design_matrix_in_manage_experiments_panel(
     ensemble = notifier.storage.get_experiment_by_name(
         "my-experiment"
     ).get_ensemble_by_name("my-design")
-    notifier.set_current_ensemble_id(ensemble.id)
     assert all(
         RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
     )
@@ -155,7 +154,6 @@ def test_init_prior(qtbot):
             RealizationStorageState.UNDEFINED in s
             for s in ensemble.get_ensemble_state()
         )
-    notifier.set_current_ensemble_id(ensemble.id)
 
     tool = ManageExperimentsPanel(
         config, notifier, config.runpath_config.num_realizations
@@ -181,7 +179,7 @@ def test_that_init_updates_the_info_tab(qtbot):
     ensemble_config = config.ensemble_config
 
     with notifier.write_storage() as storage:
-        ensemble = storage.create_experiment(
+        storage.create_experiment(
             experiment_config={
                 "parameter_configuration": [
                     pc.model_dump(mode="json")
@@ -200,7 +198,6 @@ def test_that_init_updates_the_info_tab(qtbot):
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations, name="default"
         )
-    notifier.set_current_ensemble_id(ensemble.id)
 
     tool = ManageExperimentsPanel(
         config, notifier, config.runpath_config.num_realizations

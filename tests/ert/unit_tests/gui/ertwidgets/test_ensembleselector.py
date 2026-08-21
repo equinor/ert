@@ -24,14 +24,29 @@ def notifier():
     return ErtNotifier()
 
 
-def test_empty(qtbot, notifier):
+@pytest.fixture
+def storage_with_three_ensembles(storage, notifier):
+    ensemble_a = storage.create_experiment().create_ensemble(name="a", ensemble_size=1)
+    ensemble_b = storage.create_experiment().create_ensemble(
+        name="b", ensemble_size=1, prior_ensemble=ensemble_a
+    )
+    storage.create_experiment().create_ensemble(
+        name="c", ensemble_size=1, prior_ensemble=ensemble_b
+    )
+
+    notifier.set_storage(str(storage.path))
+
+
+def test_that_ensemble_selector_is_empty_when_no_storage_is_set(qtbot, notifier):
     widget = EnsembleSelector(notifier)
     qtbot.addWidget(widget)
 
     assert widget.count() == 0
 
 
-def test_current_ensemble(qtbot, notifier, storage):
+def test_that_ensemble_selector_is_populated_regardless_of_storage_creation_order(
+    qtbot, notifier, storage
+):
     ensemble = storage.create_experiment().create_ensemble(
         name="default", ensemble_size=1
     )
@@ -42,7 +57,6 @@ def test_current_ensemble(qtbot, notifier, storage):
     assert widget.count() == 0
 
     notifier.set_storage(str(storage.path))
-    notifier.set_current_ensemble_id(ensemble.id)
     assert widget.count() == 1
     assert widget.currentData() == str(ensemble.id)
 
@@ -69,19 +83,6 @@ def test_ensembles_are_sorted_failed_first_then_by_start_time(storage):
         ensemble_c,
         ensemble_a,
     ]
-
-
-@pytest.fixture
-def storage_with_three_ensembles(storage, notifier):
-    ensemble_a = storage.create_experiment().create_ensemble(name="a", ensemble_size=1)
-    ensemble_b = storage.create_experiment().create_ensemble(
-        name="b", ensemble_size=1, prior_ensemble=ensemble_a
-    )
-    storage.create_experiment().create_ensemble(
-        name="c", ensemble_size=1, prior_ensemble=ensemble_b
-    )
-
-    notifier.set_storage(str(storage.path))
 
 
 def test_that_when_filters_are_not_provided_then_all_ensembles_are_selected(
