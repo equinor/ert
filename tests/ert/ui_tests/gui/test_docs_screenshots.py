@@ -11,12 +11,13 @@ from pytestqt.qtbot import QtBot
 from skimage import io, transform
 from skimage.metrics import structural_similarity as ssim
 
-from ert.gui.ertwidgets import CopyableLabel
+from ert.gui.ertwidgets import ClosableDialog, CopyableLabel, TextBox
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
 from ert.gui.experiments.view import RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectionWidget
+from ert.gui.tools.load_results import LoadResultsPanel
 from ert.run_models import EnsembleExperiment, EnsembleSmoother, RunModel
 from ert.services import ErtServerController
 from ert.storage import open_storage
@@ -136,6 +137,7 @@ PNGS_TESTED_FOR_CHANGE = [
     "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_b.png",
     "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_c.png",
     "docs/ert/getting_started/configuration/poly_new/with_more_observations/coeff_b.png",
+    "docs/ert/getting_started/load_results_manually.png",
 ]
 
 FIXED_RANDOM_SEED = 11223344
@@ -148,6 +150,7 @@ PLOT_OBS_PNG_THRESHOLD = 0.9999
 PLOTS_PNG_THRESHOLD = 0.9999
 POLY_PLOT_PNG_THRESHOLD = 0.9999
 SIMULATIONS_PNG_THRESHOLD = 0.9999
+LOAD_RESULTS_MANUALLY_PNG_THRESHOLD = 0.9999
 
 
 class ExampleFolders(StrEnum):
@@ -214,8 +217,10 @@ class GuiEvaluator:
         self.gui = gui
         self.qtbot = qtbot
 
-    def compare_img_with_gui(self, img_name: str, threshold: float = 0.99) -> None:
-        temp_image_path: Path = self.qtbot.screenshot(self.gui)
+    def compare_img_with_gui(
+        self, img_name: str, threshold: float = 0.99, widget: QWidget | None = None
+    ) -> None:
+        temp_image_path: Path = self.qtbot.screenshot(widget or self.gui)
         new_img: np.ndarray = io.imread(temp_image_path, as_gray=True)
 
         image_path = self.example_folder / img_name
@@ -424,6 +429,36 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
         set_data_type_selection_index(data_type_widget, 1)
 
         gui_evaluator.compare_img_with_gui("plots.png", PLOTS_PNG_THRESHOLD)
+
+    assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+@pytest.mark.screenshot_test
+def test_that_load_results_manually_screenshot_is_up_to_date(
+    qtbot, source_root: Path, ensemble_experiment_has_run_no_failure
+):
+    example_folder = Path("docs/ert/getting_started")
+    gui = ensemble_experiment_has_run_no_failure
+
+    gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
+
+    def handle_load_results_dialog() -> None:
+        dialog = wait_for_child(gui, qtbot, ClosableDialog)
+        panel = get_child(dialog, LoadResultsPanel)
+
+        run_path_edit = get_child(panel, TextBox, name="runpath_edit_lrm")
+        current_directory = str(Path.cwd())
+        run_path_edit.setText(run_path_edit.get_text.replace(current_directory, "."))
+
+        gui_evaluator.compare_img_with_gui(
+            "load_results_manually.png",
+            LOAD_RESULTS_MANUALLY_PNG_THRESHOLD,
+            widget=dialog,
+        )
+        dialog.close()
+
+    QTimer.singleShot(500, handle_load_results_dialog)
+    gui.load_results_tool.trigger()
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
