@@ -863,7 +863,7 @@ def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
         experiment_name="foo",
         current_ensemble="bar",
     )
-    model = create_model(ert_config, args, MagicMock())
+    model = create_model(ert_config, args, SimpleQueue())
     model.log_at_startup()
     assert "'observations': '<REDACTED>'" in caplog.text
     assert "'shape_registry': '<REDACTED>'" in caplog.text
