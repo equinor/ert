@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -11,12 +10,9 @@ from PyQt6.QtWidgets import QComboBox
 from ert.config import ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.utils import truncate_dropdown_item
-from ert.storage import RealizationStorageState
+from ert.storage import Ensemble, RealizationStorageState
 
 from .suggestor import Suggestor
-
-if TYPE_CHECKING:
-    from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +29,7 @@ class EnsembleSelector(QComboBox):
     """
 
     ensemble_populated = Signal()
+    ensemble_selected = Signal(Ensemble)
 
     def __init__(
         self,
@@ -48,6 +45,7 @@ class EnsembleSelector(QComboBox):
         self.setEnabled(False)
 
         notifier.ertChanged.connect(self.populate)
+        self.currentIndexChanged.connect(self._on_current_index_changed)
 
         if notifier.is_storage_available:
             self.populate()
@@ -60,6 +58,11 @@ class EnsembleSelector(QComboBox):
             )
         except KeyError:
             return None
+
+    def _on_current_index_changed(self, _: int) -> None:
+        ensemble = self.selected_ensemble
+        if ensemble:
+            self.ensemble_selected.emit(ensemble)
 
     def populate(self) -> None:
         block = self.blockSignals(True)

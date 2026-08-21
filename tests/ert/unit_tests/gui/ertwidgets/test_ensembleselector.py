@@ -67,6 +67,36 @@ def test_that_ensemble_selector_is_populated_regardless_of_storage_creation_orde
     assert widget.currentData() == str(ensemble.id)
 
 
+def test_that_changing_one_selector_leaves_other_selectors_and_notifier_unchanged(
+    qtbot, notifier, storage
+):
+    ensemble_a = storage.create_experiment().create_ensemble(
+        name="default_a", ensemble_size=1
+    )
+    ensemble_b = storage.create_experiment().create_ensemble(
+        name="default_b", ensemble_size=1
+    )
+    notifier.set_storage(str(storage.path))
+
+    widget_a = EnsembleSelector(notifier)
+    widget_b = EnsembleSelector(notifier)
+    qtbot.addWidget(widget_a)
+    qtbot.addWidget(widget_b)
+
+    widget_b_selection = widget_b.selected_ensemble
+    notifier_selection = notifier.current_ensemble
+
+    # Select the ensemble in widget_a that is not currently selected
+    assert widget_a.selected_ensemble is not None
+    other = ensemble_a if widget_a.selected_ensemble.id == ensemble_b.id else ensemble_b
+    widget_a.setCurrentIndex(widget_a.findData(str(other.id)))
+
+    assert widget_a.selected_ensemble is not None
+    assert widget_a.selected_ensemble.id == other.id
+    assert widget_b.selected_ensemble == widget_b_selection
+    assert notifier.current_ensemble == notifier_selection
+
+
 def test_ensembles_are_sorted_failed_first_then_by_start_time(storage):
     ensemble_a = storage.create_experiment().create_ensemble(
         name="default_a", ensemble_size=1

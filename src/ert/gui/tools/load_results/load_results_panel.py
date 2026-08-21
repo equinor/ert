@@ -42,6 +42,9 @@ class LoadResultsPanel(QWidget):
 
         layout = QFormLayout()
 
+        self._ensemble_selector = EnsembleSelector(self._notifier)
+        self._ensemble_selector.ensemble_selected.connect(self.refresh)
+
         self._run_path_text = TextBox(TextModel(self._read_current_run_path()))
         self._run_path_text.setFixedHeight(80)
         self._run_path_text.setValidator(StringDefinition(required=["<IENS>"]))
@@ -53,8 +56,8 @@ class LoadResultsPanel(QWidget):
 
         self.help_iter_lbl = QLabel("<ITER> will be replaced by: 0")
         self.help_iens_lbl = QLabel("<IENS> will be replaced by %")
+
         layout.addRow("Load data from run path: ", self._run_path_text)
-        self._ensemble_selector = EnsembleSelector(self._notifier)
         layout.addRow("", self.help_iens_lbl)
         layout.addRow("", self.help_iter_lbl)
         layout.addRow("Load into ensemble:", self._ensemble_selector)
@@ -84,10 +87,12 @@ class LoadResultsPanel(QWidget):
         self.help_iter_lbl.setVisible("<ITER>" in self._run_path_text.get_text)
 
     def _read_current_run_path(self) -> str:
-        current_ensemble = self._notifier.current_ensemble_name
         run_path = self._resolved_run_path
-        run_path = run_path.replace("<ERTCASE>", current_ensemble)
-        return run_path.replace("<ERT-CASE>", current_ensemble)
+        if self._ensemble_selector.selected_ensemble:
+            current_ensemble = self._ensemble_selector.selected_ensemble.name
+            run_path = run_path.replace("<ERTCASE>", current_ensemble)
+            run_path = run_path.replace("<ERT-CASE>", current_ensemble)
+        return run_path
 
     def is_configuration_valid(self) -> bool:
         return (
