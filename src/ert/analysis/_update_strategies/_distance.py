@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import time
 from collections.abc import Callable
 from datetime import timedelta
@@ -37,6 +38,8 @@ if TYPE_CHECKING:
 
     from ._protocol import ObservationContext
 
+logger = logging.getLogger(__name__)
+
 
 class DistanceLocalizationUpdate:
     """Distance-based localization for Field and Surface parameters."""
@@ -55,32 +58,42 @@ class DistanceLocalizationUpdate:
         self._obs_loc: ObservationLocations | None = None
         self._smoother: LocalizedESMDA | None = None
         self._ensemble_size: int = 0
-        self._num_obs: int = 0
-        self._location_mask: npt.NDArray[np.bool_] | None = None
 
     def prepare(self, obs_context: ObservationContext) -> None:
+        if obs_context.observation_locations is None:
+            raise RuntimeError(
+                "Distance localization requires observation_locations in context"
+            )
         self._obs_loc = obs_context.observation_locations
         self._ensemble_size = obs_context.ensemble_size
-        self._num_obs = obs_context.num_observations
 
-        if self._obs_loc is None:
-            self._location_mask = np.zeros(self._num_obs, dtype=bool)
-        else:
-            self._location_mask = self._obs_loc.location_mask
+        mask = self._obs_loc.location_mask
+        responses = obs_context.responses[mask, :]
+        obs_values = obs_context.observation_values[mask]
+        obs_errors = obs_context.observation_errors[mask]
+        observation_perturbations = obs_context.observation_perturbations[mask, :]
+        excluded_observations = obs_context.num_observations - obs_values.shape[0]
+        if excluded_observations:
+            logger.info(
+                "Distance localization excluded %d observations without location data; "
+                "%d observations with locations will be assimilated",
+                excluded_observations,
+                obs_values.shape[0],
+            )
 
         self._smoother = LocalizedESMDA(
-            covariance=obs_context.observation_errors**2,
-            observations=obs_context.observation_values,
+            covariance=obs_errors**2,
+            observations=obs_values,
             alpha=1,
             # Observation perturbations are supplied explicitly below, so no
             # smoother RNG is used.
             seed=None,
         )
         self._smoother.prepare_assimilation(
-            Y=obs_context.responses,
+            Y=responses,
             truncation=self._enkf_truncation,
             overwrite=False,
-            observation_perturbations=obs_context.observation_perturbations,
+            observation_perturbations=observation_perturbations,
         )
 
     def update(
@@ -89,12 +102,13 @@ class DistanceLocalizationUpdate:
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
     ) -> npt.NDArray[np.floating]:
-        if self._smoother is None or self._location_mask is None:
+        if self._obs_loc is None or self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
         num_params = param_ensemble.shape[0]
-        num_located_obs = int(np.count_nonzero(self._location_mask))
-        batch_size = calculate_localization_batch_size(num_params, self._num_obs)
+        batch_size = calculate_localization_batch_size(
+            num_params, self._obs_loc.xpos.shape[0]
+        )
         batches = split_by_batch_size(np.arange(0, num_params), batch_size)
         num_batches = len(batches)
 
@@ -104,8 +118,7 @@ class DistanceLocalizationUpdate:
                 msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
                 f"using distance-based localization, "
                 f"{num_params} parameters, "
-                f"{self._num_obs} observations "
-                f"({num_located_obs} with locations), "
+                f"{self._obs_loc.xpos.shape[0]} observations, "
                 f"{self._ensemble_size} realizations"
                 f"{batch_info}"
             )
@@ -147,18 +160,6 @@ class DistanceLocalizationUpdate:
         )
         return self._experiment.load_rho_matrix(param_name, obs_keys)
 
-    def _full_localization_matrix(
-        self,
-        num_params: int,
-        located_rho: npt.NDArray[np.floating] | None,
-    ) -> npt.NDArray[np.floating]:
-        assert self._location_mask is not None
-
-        rho = np.ones((num_params, self._num_obs), dtype=np.float32)
-        if located_rho is not None:
-            rho[:, self._location_mask] = located_rho.astype(np.float32, copy=False)
-        return rho
-
     def _update_field(
         self,
         param_ensemble: npt.NDArray[np.floating],
@@ -166,19 +167,8 @@ class DistanceLocalizationUpdate:
         batches: list[npt.NDArray[np.int_]],
         non_zero_variance_mask: npt.NDArray[np.bool_],
     ) -> npt.NDArray[np.floating]:
-        assert self._smoother is not None
-        assert self._location_mask is not None
-
-        # No located observations; use global assimilation
-        if not self._location_mask.any():
-            X = param_ensemble[non_zero_variance_mask]
-            param_ensemble[non_zero_variance_mask] = self._smoother.assimilate_batch(
-                X=X,
-                overwrite=True,
-            )
-            return param_ensemble
-
         assert self._obs_loc is not None
+        assert self._smoother is not None
 
         ertbox = param_config.ertbox_params
         if ertbox.xinc is None:
@@ -194,7 +184,7 @@ class DistanceLocalizationUpdate:
 
         cached_rho = self._load_rho_from_storage(param_config.name)
         if cached_rho is not None:
-            rho_2d = cached_rho
+            rho_2d = cached_rho.astype(np.float32, copy=False)
         else:
             xpos, ypos = transform_positions_to_local_field_coordinates(
                 ertbox.origin,
@@ -205,7 +195,7 @@ class DistanceLocalizationUpdate:
 
             ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
                 ertbox.rotation_angle,
-                np.zeros_like(self._obs_loc.main_range),
+                np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
             )
 
             rho_matrix = calc_rho_for_2d_grid_layer(
@@ -219,7 +209,7 @@ class DistanceLocalizationUpdate:
                 obs_perp_range=self._obs_loc.main_range,
                 obs_anisotropy_angle=ellipse_rotation,
                 axis_orientation=ertbox.axis_orientation,
-            )
+            ).astype(np.float32, copy=False)
 
             rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
 
@@ -242,9 +232,7 @@ class DistanceLocalizationUpdate:
             if update_idx.size == 0:
                 continue
             xy_idx = update_idx // ertbox.nz
-            rho_batch = self._full_localization_matrix(
-                len(update_idx), rho_2d[xy_idx, :]
-            )
+            rho_batch = rho_2d[xy_idx, :]
 
             def localization_callback(
                 K: npt.NDArray[np.floating],
@@ -268,23 +256,12 @@ class DistanceLocalizationUpdate:
         batches: list[npt.NDArray[np.int_]],
         non_zero_variance_mask: npt.NDArray[np.bool_],
     ) -> npt.NDArray[np.floating]:
-        assert self._smoother is not None
-        assert self._location_mask is not None
-
-        # No located observations; use global assimilation
-        if not self._location_mask.any():
-            X = param_ensemble[non_zero_variance_mask]
-            param_ensemble[non_zero_variance_mask] = self._smoother.assimilate_batch(
-                X=X,
-                overwrite=True,
-            )
-            return param_ensemble
-
         assert self._obs_loc is not None
+        assert self._smoother is not None
 
         cached_rho = self._load_rho_from_storage(param_config.name)
         if cached_rho is not None:
-            rho_flat = cached_rho
+            rho_flat = cached_rho.astype(np.float32, copy=False)
         else:
             xpos, ypos = transform_positions_to_local_field_coordinates(
                 (param_config.xori, param_config.yori),
@@ -314,7 +291,7 @@ class DistanceLocalizationUpdate:
                 obs_perp_range=self._obs_loc.main_range,
                 obs_anisotropy_angle=rotation_angle,
                 axis_orientation=AxisOrientation.LEFT_HANDED,
-            )
+            ).astype(np.float32, copy=False)
 
             rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
 
@@ -336,9 +313,7 @@ class DistanceLocalizationUpdate:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
             if update_idx.size == 0:
                 continue
-            rho_batch = self._full_localization_matrix(
-                len(update_idx), rho_flat[update_idx, :]
-            )
+            rho_batch = rho_flat[update_idx, :]
 
             def localization_callback(
                 K: npt.NDArray[np.floating],
