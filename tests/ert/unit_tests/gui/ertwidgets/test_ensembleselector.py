@@ -53,44 +53,6 @@ def test_current_ensemble(qtbot, notifier, storage):
     assert widget.currentData() == str(ensemble.id)
 
 
-def test_changing_ensemble(qtbot, notifier, storage):
-    ensemble_a = storage.create_experiment().create_ensemble(
-        name="default_a", ensemble_size=1
-    )
-    ensemble_b = storage.create_experiment().create_ensemble(
-        name="default_b", ensemble_size=1
-    )
-
-    notifier.set_storage(str(storage.path))
-    notifier.set_current_ensemble_id(ensemble_a.id)
-    widget_a = EnsembleSelector(notifier)
-    widget_b = EnsembleSelector(notifier)
-    qtbot.addWidget(widget_a)
-    qtbot.addWidget(widget_b)
-
-    assert widget_a.count() == 2
-    assert widget_b.count() == 2
-
-    # Latest ensemble is selected in both
-    assert widget_a.currentData() == str(ensemble_b.id)
-    assert widget_b.currentData() == str(ensemble_b.id)
-
-    # Second ensemble is selected via signal, widgets do not change'
-    # selections
-    notifier.set_current_ensemble_id(ensemble_b.id)
-    assert widget_a.currentData() == str(ensemble_b.id)
-    assert widget_b.currentData() == str(ensemble_b.id)
-
-    # Changing back to first ensemble via widget sets the global current_ensemble
-    qtbot.keyClicks(
-        widget_a,
-        widget_a.itemText(widget_a.findData(str(ensemble_a.id))),
-    )
-    assert notifier.current_ensemble.id == ensemble_a.id
-    assert widget_a.currentData() == str(ensemble_a.id)
-    assert widget_b.currentData() == str(ensemble_a.id)
-
-
 def test_ensembles_are_sorted_failed_first_then_by_start_time(storage):
     ensemble_a = storage.create_experiment().create_ensemble(
         name="default_a", ensemble_size=1

@@ -46,7 +46,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         notifier: ErtNotifier,
         analysis_config: AnalysisConfig,
     ) -> None:
-        self.notifier = notifier
         super().__init__(ManualUpdate)
         self.setObjectName("Manual_update_panel")
 

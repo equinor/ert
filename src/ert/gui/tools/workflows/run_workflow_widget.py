@@ -50,7 +50,7 @@ class RunWorkflowWidget(QWidget):
 
         layout.addRow("Workflow", self._workflow_combo)
 
-        self.source_ensemble_selector = EnsembleSelector(notifier, update_ert=False)
+        self.source_ensemble_selector = EnsembleSelector(notifier)
         layout.addRow("Ensemble", self.source_ensemble_selector)
 
         self.run_button = QToolButton()
