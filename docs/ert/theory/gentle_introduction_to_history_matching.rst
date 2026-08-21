@@ -417,6 +417,8 @@ Finally, let's discuss the **innovation covariance**:
 
 So, the update strength is proportional to the cross-covariance between parameters and responses, inverse proportional to the innovation covariance and proportional to the innovation.
 
+.. _spurious_correlations:
+
 Spurious correlations
 ~~~~~~~~~~~~~~~~~~~~~
 
