@@ -376,37 +376,40 @@ class RFTConfig(SimulationResponseConfig):
         get_cell_column = _get_cell_center()
         get_cell_zone = _get_cell_zone()
         try:
-            df = pl.concat(
-                [
-                    pl.DataFrame(
-                        {
-                            "response_key": [f"{well}:{time.isoformat()}:{prop}"],
-                            "well": [well],
-                            "date": [time.isoformat()],
-                            "property": [prop],
-                            "time": [time],
-                            "depth": [rft_data[well, time].property_values["DEPTH"]],
-                            "values": [vals],
-                            "well_connection_cell": pl.Series(
-                                [rft_data[well, time].well_connection_cells.tolist()],
-                                dtype=pl.List(pl.Array(pl.Int64, 3)),
-                            ),
-                        }
-                    )
-                    .explode(
-                        "depth",
-                        "values",
-                        "well_connection_cell",
-                        empty_as_null=False,
-                    )
-                    .with_columns(
-                        get_cell_column.alias("cell_center"),
-                        get_cell_zone.alias("cell_zones"),
-                    )
-                    for (well, time), inner_dict in rft_data.items()
-                    for prop, vals in inner_dict.property_values.items()
-                    if prop != "DEPTH" and len(vals) > 0
-                ]
+            dfs = [
+                pl.DataFrame(
+                    {
+                        "response_key": [f"{well}:{time.isoformat()}:{prop}"],
+                        "well": [well],
+                        "date": [time.isoformat()],
+                        "property": [prop],
+                        "time": [time],
+                        "depth": [rft_data[well, time].property_values["DEPTH"]],
+                        "values": [vals],
+                        "well_connection_cell": pl.Series(
+                            [rft_data[well, time].well_connection_cells.tolist()],
+                            dtype=pl.List(pl.Array(pl.Int64, 3)),
+                        ),
+                    }
+                )
+                .explode(
+                    "depth",
+                    "values",
+                    "well_connection_cell",
+                    empty_as_null=False,
+                )
+                .with_columns(
+                    get_cell_column.alias("cell_center"),
+                    get_cell_zone.alias("cell_zones"),
+                )
+                for (well, time), inner_dict in rft_data.items()
+                for prop, vals in inner_dict.property_values.items()
+                if prop != "DEPTH" and len(vals) > 0
+            ]
+            df = (
+                pl.concat(dfs)
+                if len(dfs) > 0
+                else pl.DataFrame(schema=self.response_schema())
             )
             return df.pipe(self._assert_schema, self.response_schema())
         except KeyError as err:
