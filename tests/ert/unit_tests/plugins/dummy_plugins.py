@@ -46,17 +46,6 @@ def site_configurations():
     }
 
 
-@plugin(name="dummy")
-def job_documentation(job_name):
-    if job_name == "job1":
-        return {
-            "description": "job description",
-            "examples": "example 1 and example 2",
-            "category": "test.category.for.job",
-        }
-    return None
-
-
 class ExamplePlugin:
     name = "example"
 
