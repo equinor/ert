@@ -388,29 +388,16 @@ class RunDialog(QFrame):
     def is_experiment_done(self) -> bool:
         return self.flag_experiment_done
 
-    def _last_dynamic_tab_index(self) -> int:
-        """Index of the last tab that is not a pinned, persistent tab
-        (e.g. the Workflows tab, which is always kept as the rightmost
-        tab). Returns -1 if there are no dynamic tabs.
-        """
-        index = self._tab_widget.count() - 1
-        while index >= 0 and isinstance(
-            self._tab_widget.widget(index), WorkflowLogWidget
-        ):
-            index -= 1
-        return index
-
     def _add_dynamic_tab(self, widget: QWidget, label: str) -> int:
-        """Add a tab for a per-iteration/update widget, keeping any pinned
-        tabs (e.g. Workflows) as the rightmost tab(s). If the user was
-        viewing the previously-last dynamic tab, follow along to the new
-        tab; otherwise leave the user's current tab selection untouched.
-        """
+        # If the current tab is the last dynamic tab,
+        # we want to keep it selected after adding a new tab.
+        last_index = self._tab_widget.count() - 1
         was_on_latest_dynamic_tab = (
-            self._tab_widget.currentIndex() == self._last_dynamic_tab_index()
+            last_index >= 0
+            and not isinstance(self._tab_widget.widget(last_index), WorkflowLogWidget)
+            and self._tab_widget.currentIndex() == last_index
         )
-        insertion_index = self._last_dynamic_tab_index() + 1
-        tab_index = self._tab_widget.insertTab(insertion_index, widget, label)
+        tab_index = self._tab_widget.addTab(widget, label)
         if was_on_latest_dynamic_tab:
             self._tab_widget.setCurrentIndex(tab_index)
         return tab_index
@@ -705,7 +692,7 @@ class RunDialog(QFrame):
             if isinstance(widget, WorkflowLogWidget):
                 return widget
         workflow_log_widget = WorkflowLogWidget(self)
-        self._tab_widget.addTab(workflow_log_widget, "Workflows")
+        self._tab_widget.insertTab(0, workflow_log_widget, "Workflows")
         return workflow_log_widget
 
     def update_total_progress(

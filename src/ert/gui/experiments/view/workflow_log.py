@@ -18,31 +18,19 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.ensemble_evaluator.state import COLOR_FAILED, COLOR_FINISHED
+from ert.ensemble_evaluator.state import COLOR_CANCELLED, COLOR_FAILED, COLOR_FINISHED
 from ert.run_models.event import WorkflowEvent
 from ert.workflow_runner import WorkflowJobStatus
 
 NO_ITERATION_LABEL = "Pre/post experiment"
 NO_OUTPUT_PLACEHOLDER = "(no output)"
-COLOR_WORKFLOW_CANCELLED = (255, 193, 7)
 _EXPERIMENT_WIDE_HOOKS = frozenset({"PRE_EXPERIMENT", "POST_EXPERIMENT"})
 
 _COLUMNS = ("Hook", "Workflow", "Job", "Status", "Time")
 
 
 class WorkflowLogWidget(QWidget):
-    """Table of workflow job invocations with their captured output.
-
-    Rows are added from :class:`WorkflowEvent`s, one row per job
-    invocation. The iteration selector filters which invocations are listed,
-    and selecting a row shows that job's full stdout and stderr below.
-
-    PRE_EXPERIMENT and POST_EXPERIMENT hooks run once for the whole
-    experiment rather than per iteration, so their events are grouped under
-    a dedicated "Pre/post experiment" entry regardless of the iteration
-    value on the event itself (POST_EXPERIMENT's event does carry the last
-    iteration's number, since an ensemble already exists by then).
-    """
+    # Table of workflow job invocations with their captured output.
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -127,13 +115,6 @@ class WorkflowLogWidget(QWidget):
             self._append_row(event)
 
     def _group_key(self, event: WorkflowEvent) -> int | None:
-        """The iteration selector entry an event belongs under.
-
-        PRE_EXPERIMENT and POST_EXPERIMENT hooks run once for the whole
-        experiment - PRE_EXPERIMENT even before an ensemble/iteration exists -
-        so both are grouped under the "Pre/post experiment" entry regardless
-        of the iteration their event happens to carry.
-        """
         if event.hook in _EXPERIMENT_WIDE_HOOKS:
             return None
         return event.iteration
@@ -210,7 +191,7 @@ class WorkflowLogWidget(QWidget):
     def _status_and_color(self, event: WorkflowEvent) -> tuple[str, QColor]:
         match event.status:
             case WorkflowJobStatus.CANCELLED:
-                return "Cancelled", QColor(*COLOR_WORKFLOW_CANCELLED)
+                return "Cancelled", QColor(*COLOR_CANCELLED)
             case WorkflowJobStatus.FAILED:
                 return "Failed", QColor(*COLOR_FAILED)
             case WorkflowJobStatus.SUCCESS:
