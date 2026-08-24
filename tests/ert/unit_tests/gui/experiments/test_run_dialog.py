@@ -1412,11 +1412,14 @@ def test_that_the_workflows_tab_does_not_steal_focus_from_the_current_tab(
 
     queue.put(StartingTotalRunPathCreationEvent(total_runpaths_to_create=1))
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    runpath_widget = dialog._tab_widget.widget(0)
 
     queue.put(_workflow_log_event())
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 2, timeout=2000)
 
-    assert dialog._tab_widget.currentIndex() == 0
+    # The Workflows tab is inserted to the left, so the runpath widget
+    # shifts to index 1, but must remain the current tab.
+    assert dialog._tab_widget.currentWidget() is runpath_widget
 
     _stop_event_monitoring(qtbot, dialog, queue)
 
