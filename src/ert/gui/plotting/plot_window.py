@@ -167,7 +167,6 @@ class PlotWindow(QMainWindow):
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
         self._preferred_ensemble_x_axis_format = PlotContext.INDEX_AXIS
-        self._ens_path = ens_path
         self._api = PlotApi(ens_path)
 
         self.local_version = get_storage_api_version()
@@ -481,9 +480,7 @@ class PlotWindow(QMainWindow):
                 try:  # ruff: ignore[too-many-statements-in-try-clause]
                     data = None
                     if is_gradient_plot:
-                        data = PlotApi.data_for_gradient(
-                            ensemble.id, key, self._ens_path
-                        )
+                        data = self._api.data_for_gradient(ensemble.id, key)
                     elif (
                         key_def.response is not None
                         or key_def.metadata.get("data_origin")
@@ -495,20 +492,18 @@ class PlotWindow(QMainWindow):
                             filter_on=key_def.filter_on,
                         )
                     elif is_controls_plot:
-                        data = PlotApi.data_for_controls(
+                        data = self._api.data_for_controls(
                             ensemble_id=ensemble.id,
                             parameter_keys=tuple(selected_controls)
                             or tuple(self._everest_parameters),
-                            ens_path=self._ens_path,
                         )
                     elif key_def.parameter is not None and (
                         key_def.parameter.type
                         in {"gen_kw", "everest_parameters", "everest_objective"}
                     ):
-                        data = PlotApi.data_for_parameter(
+                        data = self._api.data_for_parameter(
                             ensemble_id=ensemble.id,
                             parameter_key=key_def.parameter.name,
-                            ens_path=self._ens_path,
                         )
                 except BaseException as e:
                     return ensemble, e
