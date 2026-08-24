@@ -14,11 +14,11 @@ from pydantic import ValidationError
 from websockets import ConnectionClosedError, ConnectionClosedOK
 from websockets.sync.client import connect
 
-from ert.dark_storage.client import Client
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
+from ert.services.shared_client import Client
 from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import (

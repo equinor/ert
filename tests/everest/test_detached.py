@@ -21,10 +21,10 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
     activate_script,
 )
-from ert.dark_storage.client import ErtClientConnectionInfo
 from ert.plugins import ErtRuntimePlugins
 from ert.scheduler.event import FinishedEvent
 from ert.services import create_ertserver_client
+from ert.services.shared_client import ErtClientConnectionInfo
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
