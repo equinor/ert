@@ -1,14 +1,12 @@
 import io
 import os
 import shutil
-from contextlib import contextmanager
-from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 
-from ert.gui.plotting import plot_api
 from ert.gui.plotting.plot_api import PlotApi
+from ert.services.ert_client import ErtClient
 
 
 class MockResponse:
@@ -29,20 +27,19 @@ class MockResponse:
         return self.status_code == 200
 
 
+class MockClient:
+    def request(self, method, url, **kwargs):
+        return mocked_requests_get(url, **kwargs)
+
+
 @pytest.fixture
-def api(tmpdir, source_root, monkeypatch):
-    @contextmanager
-    def session(project: str):
-        yield MagicMock(get=mocked_requests_get)
-
-    monkeypatch.setattr(plot_api, "create_ertserver_client", session)
-
+def api(tmpdir, source_root):
     with tmpdir.as_cwd():
         test_data_root = source_root / "test-data" / "ert"
         test_data_dir = test_data_root / "snake_oil"
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")  # ruff: ignore[banned-api]  inside tmpdir.as_cwd() which restores
-        yield PlotApi(test_data_dir)
+        yield PlotApi(test_data_dir, ErtClient(MockClient()))
 
 
 def mocked_requests_get(*args, **kwargs):

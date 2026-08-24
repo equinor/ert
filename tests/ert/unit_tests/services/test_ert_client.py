@@ -1,7 +1,7 @@
 import io
 from typing import Any
 
-import polars as pl
+import pandas as pd
 import pytest
 
 from ert.services.ert_client import ErtClient
@@ -41,7 +41,7 @@ class RecordingClient:
     def _payload_for(url: str) -> Any:
         if "/parameters/" in url or "/responses/" in url or "/gradients/" in url:
             stream = io.BytesIO()
-            pl.DataFrame({"0": [1.0, 2.0, 3.0]}).write_parquet(stream)
+            pd.DataFrame({"0": [1.0, 2.0, 3.0]}).to_parquet(stream)
             return stream.getvalue()
         if url == "/experiments":
             return [{"id": "exp_1", "ensemble_ids": ["ens_1"]}]
