@@ -3,7 +3,8 @@ import warnings
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, cast
+from textwrap import dedent
+from typing import cast
 from warnings import WarningMessage
 
 import numpy as np
@@ -1320,29 +1321,38 @@ def test_rft_value_approximation(
 
 
 @pytest.mark.parametrize(
-    ("approximate_missing_rft_values", "expected_setting"),
-    [(None, False), (False, False), (True, True)],
+    ("approximate_missing_rft_values_config", "expected_setting"),
+    [(None, False), ("FALSE", False), ("TRUE", True)],
 )
 @pytest.mark.parametrize(
     ("rft_response_config", "rft_obs_config"),
     [(False, True), (True, False), (True, True)],
 )
 def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_on_rft_config(  # ruff: ignore[line-too-long]
-    approximate_missing_rft_values,
+    approximate_missing_rft_values_config,
     expected_setting,
     rft_response_config,
     rft_obs_config,
 ):
-    config_dict: dict[str, Any] = {"ECLBASE": "BASE"}
-    if approximate_missing_rft_values is not None:
-        config_dict["APPROXIMATE_MISSING_RFT_VALUES"] = approximate_missing_rft_values
-    if rft_response_config:
-        config_dict["RFT"] = [{"WELL": "*", "DATE": "*", "PROPERTIES": "*"}]
+    rft_keyword = "RFT WELL:* DATE:* PROPERTIES:*" if rft_response_config else ""
+    approximate_keyword = (
+        f"APPROXIMATE_MISSING_RFT_VALUES {approximate_missing_rft_values_config}"
+        if approximate_missing_rft_values_config is not None
+        else ""
+    )
+    config_dict = ErtConfig._config_dict_from_contents(
+        dedent(
+            f"""\
+            NUM_REALIZATIONS 1
+            ECLBASE BASE
+            {rft_keyword}
+            {approximate_keyword}
+            """
+        ),
+        "./config.ert",
+    )
     if rft_obs_config:
-        config_dict["OBS_CONFIG"] = (
-            "obsconf",
-            [create_rft_observation_dict()],
-        )
+        config_dict["OBS_CONFIG"] = ("obsconf", [create_rft_observation_dict()])
 
     config = ErtConfig.from_dict(config_dict)
     rft_config = cast(RFTConfig, config.ensemble_config.response_configs["rft"])
