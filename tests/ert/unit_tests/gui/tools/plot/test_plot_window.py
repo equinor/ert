@@ -33,6 +33,7 @@ from ert.gui.plotting.plot_window import (
 )
 from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.utils.plot_maps import (
+    CROSSPLOT,
     DISTRIBUTION,
     ENSEMBLE,
     ERT_PLOT_MAP,
@@ -125,21 +126,7 @@ def mock_plot_api(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
 
 
 @pytest.mark.slow
-def test_that_no_data_message_is_displayed(
-    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
-):
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
+def test_that_no_data_message_is_displayed(qtbot: QtBot, tmp_path, use_tmpdir):
     with ErtServerController.init_service(project=tmp_path):
         pw = PlotWindow("", tmp_path, None)
         qtbot.addWidget(pw)
@@ -163,19 +150,8 @@ def test_that_no_data_message_is_displayed(
     [(OBSERVATION_KEY_DEFS, "Observations available"), ([], None)],
 )
 def test_that_legend_displays_correct_message(
-    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir, key_defs, expected
+    qtbot: QtBot, tmp_path, use_tmpdir, key_defs, expected, mock_plot_api
 ):
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     mock_plot_api.responses_api_key_defs = []
     mock_plot_api.parameters_api_key_defs = key_defs
@@ -197,19 +173,11 @@ def test_that_legend_displays_correct_message(
 
 @pytest.mark.slow
 def test_that_observation_legend_is_not_displayed_when_its_everest(
-    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
+    qtbot: QtBot,
+    tmp_path,
+    use_tmpdir,
+    monkeypatch,
 ):
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
     monkeypatch.setattr(
         "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
@@ -254,25 +222,14 @@ def test_warning_is_visible_on_incompatible_plot_api_version(
 
 @pytest.mark.slow
 def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_checkbox(
-    qtbot: QtBot, monkeypatch
+    qtbot: QtBot,
+    mock_plot_api,
 ):
     """Verify sidebar log-scale checkbox behavior for GEN_KW values.
 
     The checkbox is hidden for keys with negative values, and its checked state
     is preserved when switching back to a key that supports log scale.
     """
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
     plot_api_key_def_positive = PlotApiKeyDefinition(
         "gen_kw_a",
         index_type=None,
@@ -1624,7 +1581,6 @@ def _plot_window_with_observed_seismic_and_gen_data_keys(
         )
         for index in range(3)
     ]
-
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     return plot_window
@@ -1716,3 +1672,172 @@ def test_that_selecting_a_key_restoring_the_maps_tab_narrows_selection_to_one(
     assert _current_tab_name(plot_window) == MAPS
     assert selection_widget.get_maximum_ensemble_limit() == 1
     assert len(selection_widget.get_selected_ensembles()) == 1
+
+
+def test_that_realization_count_matches_largest_selected_ensemble(
+    qtbot: QtBot, mock_plot_api: MagicMock
+):
+
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble", "ensemble", False, "experiment", "2026-01-01T00:00:00", size=3
+        ),
+        EnsembleObject(
+            "ensemble2", "ensemble2", False, "experiment", "2026-01-01T00:00:00", size=8
+        ),
+    ]
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = False
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    ensemble_list = plot_window._ensemble_selection_widget._selected_ensembles
+    realization_list = plot_window._realization_selection_widget._realizations_list
+    assert realization_list.count() == 3
+    ensemble_list.slot_toggle_plot(ensemble_list.item(1))
+
+    assert len(ensemble_list) == 2
+    assert realization_list.count() == 8
+
+    labels = [realization_list.item(i).text() for i in range(realization_list.count())]
+    assert labels == [str(i) for i in range(8)]
+
+
+def test_that_realization_selector_ignores_hidden_ensembles_when_computing_max_size(
+    qtbot: QtBot, mock_plot_api: MagicMock
+):
+
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble", "ensemble", False, "experiment", "2026-01-01T00:00:00", size=3
+        ),
+        EnsembleObject(
+            "ensemble2", "ensemble2", True, "experiment", "2026-01-01T00:00:00", size=8
+        ),
+    ]
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = False
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    ensemble_list = plot_window._ensemble_selection_widget._selected_ensembles
+    assert len(ensemble_list) == 1
+    realization_list = plot_window._realization_selection_widget._realizations_list
+    assert realization_list.count() == 3
+
+    labels = [realization_list.item(i).text() for i in range(realization_list.count())]
+    assert labels == [str(i) for i in range(3)]
+
+
+@pytest.mark.slow
+def test_that_realization_selection_group_is_visible_only_when_cross_plot_tab_is_active(
+    qtbot: QtBot,
+    mock_plot_api: MagicMock,
+):
+    expected_visible_by_tab = {
+        ENSEMBLE: False,
+        STATISTICS: False,
+        CROSSPLOT: True,
+        MISFITS: False,
+    }
+
+    seismic_key_def = PlotApiKeyDefinition(
+        "seismic_key",
+        index_type="VALUE",
+        metadata={"data_origin": "seismic"},
+        observations=True,
+        dimensionality=2,
+        response=MagicMock(type="seismic"),
+    )
+    mock_plot_api.responses_api_key_defs = [seismic_key_def]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ens", "ens", False, "experiment", "2026-01-01T00:00:00", size=3
+        ),
+    ]
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+
+    plot_window.show()
+
+    for selected_tab, expected_visible in expected_visible_by_tab.items():
+        tab_index = next(
+            index
+            for index in range(plot_window._central_tab.count())
+            if plot_window._central_tab.tabText(index) == selected_tab
+        )
+        plot_window._central_tab.setCurrentIndex(tab_index)
+
+        qtbot.waitUntil(
+            lambda expected_visible=expected_visible: (
+                plot_window._realization_group.isVisible() is expected_visible
+            ),
+            timeout=5000,
+        )
+
+
+@pytest.mark.parametrize(
+    ("response_type", "data_origin", "cross_plot_enabled"),
+    [
+        pytest.param("seismic", "seismic", True),
+        pytest.param("summary", "SUMMARY", False),
+    ],
+)
+def test_that_cross_plot_tab_is_enabled_only_for_observed_seismic_keys(
+    qtbot: QtBot,
+    response_type: str,
+    data_origin: str,
+    cross_plot_enabled: bool,
+    mock_plot_api: MagicMock,
+):
+
+    key_def = PlotApiKeyDefinition(
+        "observed_key",
+        index_type="VALUE",
+        metadata={"data_origin": data_origin},
+        observations=True,
+        dimensionality=2,
+        response=MagicMock(type=response_type),
+    )
+    mock_plot_api.responses_api_key_defs = [key_def]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ens", "ens", False, "experiment", "2026-01-01T00:00:00", size=3
+        ),
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    tab_index_by_name = {
+        plot_window._central_tab.tabText(i): i
+        for i in range(plot_window._central_tab.count())
+    }
+
+    data_type_keys_widget = plot_window._data_type_keys_widget.data_type_keys_widget
+    data_type_keys_widget.setCurrentIndex(
+        plot_window._data_type_keys_widget.filter_model.index(0, 0)
+    )
+
+    qtbot.waitUntil(
+        lambda: (
+            plot_window._central_tab.isTabEnabled(tab_index_by_name[CROSSPLOT])
+            == cross_plot_enabled
+            and plot_window._central_tab.isTabEnabled(tab_index_by_name[ENSEMBLE])
+            == (not cross_plot_enabled)
+        ),
+        timeout=5000,
+    )
