@@ -27,19 +27,19 @@ This entry point should point to the module where your ert plugin(s) exists.
 If you have more than one module, add additional lines.
 
 
-Kinds of plugins
-----------------
+Writing plugins
+---------------
 
-A plugin is created with the `ert.plugin` decorator and the function name describes what kind of plugin it is.
+A plugin is created with the `ert.plugin` decorator and the function name
+describes what kind of plugin it is.
 
-Forward models
-~~~~~~~~~~~~~~
+Forward model steps
+~~~~~~~~~~~~~~~~~~~
+
 To install forward model steps that you want to have available in ERT you can use
 :code:`installable_forward_model_steps`.
 
 .. code-block:: python
-
-    from typing import Optional
 
     import ert
 
@@ -65,7 +65,7 @@ To install forward model steps that you want to have available in ERT you can us
             pass
 
         @staticmethod
-        def documentation() -> Optional[ert.ForwardModelStepDocumentation]:
+        def documentation() -> ert.ForwardModelStepDocumentation | None:
             return ert.ForwardModelStepDocumentation(
                 category="utility.templating",
                 source_package="my_plugin",
@@ -94,28 +94,18 @@ default of accepting any named argument. Required keywords and keywords with a
 list rejects all other named arguments. These declarations validate argument names
 only; use the validation methods for constraints on argument values.
 
-.. code-block:: python
-
-   import ert
-
-   @ert.plugin(name="my_plugin")
-   def job_documentation(step_name: str):
-       if step_name == "my_step":
-            return {
-                "description": "step description",
-                "examples": "...",
-                "category": "test.category.for.step",
-            }
-
 When creating documentation in ERT, forward model steps will be grouped by their
 main categories (ie. the category listed before the first dot).
 
-Forward model configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting environment variables for forward model steps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Forward model steps can be configured through the plugin system by using the ``forward_model_configuration`` hook.
-For each forward model step name in the config dict, a set of configuration parameters specific to that forward model can be specified.
-These configurations will be injected as environment variables when starting the forward model, and will be isolated from other forward models.
+The shell environment in which steps are run can be configured through the
+plugin system by using the ``forward_model_configuration`` hook. For each
+forward model step name in the config dict, a set of configuration parameters
+specific to that forward model can be specified. These configurations will be
+injected as environment variables when starting the forward model, and will be
+isolated from other forward models.
 
 .. code-block:: python
 
