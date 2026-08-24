@@ -7,7 +7,7 @@ Introduction
 Assuming the following package structure::
 
     your_package
-    ├── pyproject.toml        # or setup.py
+    ├── pyproject.toml
     └── src
         └── your_module
             ├── __init__.py
@@ -17,15 +17,6 @@ Assuming the following package structure::
 where the ert plugins are defined in :code:`your_plugins.py`, then discovery is done
 by registering your plugin via a setuptools entry point, with the namespace :code:`ert`:
 
-.. code-block:: python
-
-    # setup.py
-    setup(
-        ...
-        entry_points={"ert": ["your_module_jobs = your_module.your_plugins"]},
-        ...
-    )
-
 .. code-block:: toml
 
     # pyproject.toml
@@ -33,8 +24,7 @@ by registering your plugin via a setuptools entry point, with the namespace :cod
     your_module_jobs = "your_module.your_plugins"
 
 This entry point should point to the module where your ert plugin(s) exists.
-(Notice that the entry point expects a list, so you can register multiple
-modules).
+If you have more than one module, add additional lines.
 
 
 Kinds of plugins
