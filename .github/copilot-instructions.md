@@ -89,6 +89,7 @@ Focus on: correctness, clarity, reliability, and maintainability.
 - [ ] Code does not contain trivial or redundant documentation.
 - [ ] There is no commented-out (dead) code.
 - [ ] User-facing changes include/update relevant `.rst` documentation under `docs/`.
+- [ ] New code should prefer the variant runpath over "run path" or run_path
 
 ---
 
