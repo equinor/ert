@@ -59,6 +59,13 @@ class SharedClient:
             cls._instance = cls(key, client)
         return cls._instance
 
+    @classmethod
+    def close_client(cls) -> None:
+        with cls._instance_lock:
+            if cls._instance is not None:
+                cls._instance._client.close()
+                cls._instance = None
+
     @property
     def project(self) -> Path:
         return self._project
