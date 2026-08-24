@@ -72,7 +72,8 @@ It is not about being correct, it is about being relevant and coherent.
         experiment consists of one or more ensembles, which are related via
         zero or more update steps. In the case of ensemble smoother you will have one
         prior ensemble and one posterior ensemble, while for multiple data assimilation
-        there will be multiple posterior ensembles.
+        there will typically be four ensembles, the sampled prior, the posterior after the first update,
+        the posterior after the second update and finally the posterior after the third update.
 
     evaluating an ensemble
         Recall that a realisation consists of a forward model :code:`fm` together with input
