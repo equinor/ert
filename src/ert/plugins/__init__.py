@@ -25,7 +25,6 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
             if (
                 func.__name__
                 in {
-                    "job_documentation",
                     "installable_workflow_jobs",
                     "help_links",
                     "installable_forward_model_steps",
