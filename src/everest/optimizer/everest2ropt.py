@@ -35,7 +35,6 @@ def _parse_controls(
         "mask": [control.enabled for control in controls],
         "seed": random_seed,
         "samplers": sampler_indices,
-        "transforms": [0],
     }
 
     ropt_samplers = [
@@ -80,7 +79,7 @@ def _parse_objectives(
             function_estimators.append({"method": objective_type})
         function_estimator_indices.append(function_estimator_idx)
 
-    ropt_objectives: dict[str, Any] = {"weights": weights, "transforms": [0]}
+    ropt_objectives: dict[str, Any] = {"weights": weights}
     ropt_function_estimators: list[dict[str, Any]] = []
     if function_estimators:
         # Only needed if we specified at least one objective type:
@@ -325,7 +324,6 @@ def everest2ropt(
     if ropt_linear_constraints:
         ropt_config["linear_constraints"] = ropt_linear_constraints
     if ropt_nonlinear_constraints:
-        ropt_nonlinear_constraints["transforms"] = [0]
         ropt_config["nonlinear_constraints"] = ropt_nonlinear_constraints
         ropt_config["nonlinear_constraint_transforms"] = [
             nonlinear_constraint_transform

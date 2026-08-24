@@ -53,9 +53,6 @@
     "lower_bounds": [
       0.1
     ],
-    "transforms": [
-      0
-    ],
     "upper_bounds": [
       null
     ]
@@ -65,9 +62,6 @@
   ],
   "objectives": {
     "function_estimators": [
-      0
-    ],
-    "transforms": [
       0
     ],
     "weights": [
@@ -115,9 +109,6 @@
       0
     ],
     "seed": 999,
-    "transforms": [
-      0
-    ],
     "types": [
       1,
       1,

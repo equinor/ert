@@ -35,9 +35,6 @@
     "function_estimators": [
       0
     ],
-    "transforms": [
-      0
-    ],
     "weights": [
       1.0
     ]
@@ -82,9 +79,6 @@
       0
     ],
     "seed": 123,
-    "transforms": [
-      0
-    ],
     "types": [
       1,
       1,
