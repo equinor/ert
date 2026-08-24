@@ -105,6 +105,7 @@ def test_key_def_structure(api: PlotApi):
 
 def test_case_structure(api):
     ensembles = [ensemble.name for ensemble in api.get_all_ensembles()]
+    sizes = [ensemble.size for ensemble in api.get_all_ensembles()]
     hidden_case = [
         ensemble.name for ensemble in api.get_all_ensembles() if ensemble.hidden
     ]
@@ -117,6 +118,7 @@ def test_case_structure(api):
         "uninitialized_ensemble",
     ]
 
+    assert sizes == [4, 4, 4, 4, 4, 4]
     assert ensembles == expected
     assert hidden_case == [".ensemble_2", "uninitialized_ensemble"]
 
