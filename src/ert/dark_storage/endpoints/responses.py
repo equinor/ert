@@ -245,7 +245,7 @@ def data_for_response(
                 },
                 schema={
                     "batch_id": objective_value_df.schema["batch_id"],
-                    "accepted": pl.Boolean,
+                    "is_improvement": pl.Boolean,
                     "improvement_value": pl.Float64,
                 },
             ),
