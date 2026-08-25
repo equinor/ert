@@ -218,6 +218,54 @@ def test_add_logging_handle(tmpdir):
         )
 
 
+def test_that_add_logging_handle_returns_the_handles(tmpdir):
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        handles = pm.add_logging_handle_to_root(logging.getLogger())
+        assert len(handles) == 1
+        assert isinstance(handles[0], logging.FileHandler)
+
+
+def test_that_non_propagating_loggers_also_receive_plugin_log_handles(tmpdir):
+    """A logger configured with propagate=False never forwards its records to
+    the root logger's handlers. Since add_logging_handle_to_root is meant to
+    make plugin-provided handlers (e.g. a remote log exporter) see every log
+    record regardless of which logger emitted it, such loggers must have the
+    plugin handles attached directly.
+    """
+    with tmpdir.as_cwd():
+        non_propagating_logger = logging.getLogger(
+            "test_non_propagating_logger_receives_plugin_handles"
+        )
+        non_propagating_logger.propagate = False
+        non_propagating_logger.setLevel(logging.DEBUG)
+        try:
+            pm = ErtPluginManager(plugins=[dummy_plugins])
+            pm.add_logging_handle_to_root(logging.getLogger())
+            non_propagating_logger.critical("I should also end up in spam.log")
+            assert "I should also end up in spam.log" in Path("spam.log").read_text(
+                encoding="utf-8"
+            )
+        finally:
+            non_propagating_logger.handlers.clear()
+            non_propagating_logger.propagate = True
+
+
+def test_that_propagating_loggers_are_not_directly_attached_by_plugin_handles(tmpdir):
+    """Loggers with the default propagate=True already forward their records
+    to the root logger, so attaching plugin handles directly to them as well
+    would cause duplicate log entries.
+    """
+    with tmpdir.as_cwd():
+        propagating_logger = logging.getLogger(
+            "test_propagating_logger_is_not_directly_attached"
+        )
+        assert propagating_logger.propagate
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        pm.add_logging_handle_to_root(logging.getLogger())
+        assert propagating_logger.handlers == []
+
+
 def test_add_span_processor():
     pm = ErtPluginManager(plugins=[dummy_plugins])
     pm.add_span_processor_to_trace_provider()
