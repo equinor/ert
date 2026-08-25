@@ -15,7 +15,7 @@ from typing import Any
 from ert.services.ert_client import ErtClient
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import stop_server, wait_for_server_to_stop
+from everest.detached import wait_for_server_to_stop
 from everest.util import version_info
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ def _handle_keyboard_interrupt(signal: int, _: Any, *, after: bool = False) -> N
 
 def kill_everest(options: argparse.Namespace) -> None:
     try:
-        client = ErtClient.for_project(
+        client = ErtClient.get_client(
             Path(ServerConfig.get_session_dir(options.config.output_dir)),
             connect_timeout=1,
         )
@@ -86,7 +86,7 @@ def kill_everest(options: argparse.Namespace) -> None:
         print("Server is not running.")
         return
 
-    stopping = stop_server(server_context)
+    stopping = client.stop_experiment_server()
     if threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, partial(_handle_keyboard_interrupt, after=True))
 

@@ -34,10 +34,9 @@ from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (
     server_is_running,
-    start_monitor,
-    stop_server,
     wait_for_server_to_stop,
 )
+from everest.detached.client import start_monitor
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import format_list
 
@@ -106,14 +105,14 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
             "The optimization will be stopped and the program will exit..."
         )
         try:
-            client = ErtClient.for_project(
+            client = ErtClient.get_client(
                 Path(ServerConfig.get_session_dir(options.config.output_dir))
             )
             server_context = ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
             )
             if server_is_running(*server_context):
-                stop_server(server_context)
+                client.stop_experiment_server()
                 wait_for_server_to_stop(server_context, timeout=10)
 
         except TimeoutError:

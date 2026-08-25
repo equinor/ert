@@ -1,0 +1,13 @@
+config_path: config.yml
+controls:
+  - max: 0.1
+    min: 0.0
+    name: my_control
+    perturbation_magnitude: 0.01
+    variables:
+      - {initial_guess: 0.1, name: test}
+model:
+  realizations: [0]
+  realizations_weights: [1.0]
+objective_functions:
+  - {name: my_objective}

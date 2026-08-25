@@ -22,7 +22,6 @@ from ert.trace import trace
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    start_experiment,
     start_server,
     wait_for_server,
 )
@@ -164,7 +163,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 async def run_everest(options: argparse.Namespace) -> None:
 
     try:
-        ErtClient.for_project(
+        ErtClient.get_client(
             Path(ServerConfig.get_session_dir(options.config.output_dir)),
             connect_timeout=1,
         )
@@ -228,7 +227,7 @@ async def run_everest(options: argparse.Namespace) -> None:
     print("Waiting for server ...")
     logger.debug("Waiting for response from everserver")
     wait_start_time: float = time.monotonic()
-    client = ErtClient.for_project(
+    client = ErtClient.get_client(
         Path(ServerConfig.get_session_dir(options.config.output_dir))
     )
     wait_for_server(client, timeout=600)
@@ -238,11 +237,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         f"waiting for {time.monotonic() - wait_start_time:g} seconds. "
         "Starting experiment"
     )
-
-    experiment_id = start_experiment(
-        server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
-        config=options.config,
-    )
+    experiment_id = client.start_experiment(options.config)
 
     # blocks until the run is finished
     if options.gui:

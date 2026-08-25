@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 import ssl
 import time
 import traceback
@@ -91,55 +90,6 @@ def stop_server(
         else:
             return True
     return False
-
-
-def get_experiments(
-    server_context: tuple[str, str, tuple[str, str]],
-    retries: int = 5,
-) -> list[str]:
-    url, cert, auth = server_context
-    for retry in range(retries):
-        try:
-            response = requests.get(
-                f"{url}/{EverEndpoints.EXPERIMENTS}",
-                verify=cert,
-                auth=auth,
-                proxies=PROXY,
-            )
-            response.raise_for_status()
-            return response.json()["experiment_ids"]
-        except Exception:
-            logger.debug(traceback.format_exc())
-            time.sleep(retry)
-    raise RuntimeError("Failed to get experiment_ids")
-
-
-def start_experiment(
-    server_context: tuple[str, str, tuple[str, str]],
-    config: EverestConfig,
-    retries: int = 5,
-) -> str:
-    url, cert, auth = server_context
-    for retry in range(retries):
-        try:
-            start_endpoint = f"{url}/{EverEndpoints.START_EXPERIMENT}"
-            response = requests.post(
-                start_endpoint,
-                verify=cert,
-                auth=auth,
-                proxies=PROXY,  # type: ignore
-                json=config.to_dict(),
-            )
-            response.raise_for_status()
-            return response.json()["experiment_id"]
-        except Exception:
-            logger.debug(traceback.format_exc())
-            time.sleep(retry)
-    raise RuntimeError("Failed to start experiment")
-
-
-def extract_errors_from_file(path: str) -> list[str]:
-    return re.findall(r"(Error \w+.*)", Path(path).read_text(encoding="utf-8"))
 
 
 def wait_for_server(api: ErtClient, timeout: float) -> None:

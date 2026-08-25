@@ -35,7 +35,6 @@ from everest.detached import (
     PROXY,
     server_is_running,
     start_server,
-    stop_server,
     wait_for_server,
     wait_for_server_to_stop,
 )
@@ -85,7 +84,7 @@ async def test_https_requests(change_to_tmpdir):
         *ServerConfig.get_server_context_from_conn_info(client.conn_info)
     )
     server_context = ServerConfig.get_server_context_from_conn_info(client.conn_info)
-    if stop_server(server_context):
+    if client.stop_experiment_server():
         wait_for_server_to_stop(server_context, 240)
         assert not server_is_running(*server_context)
 
