@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QTextEdit
 
@@ -115,3 +116,13 @@ class TextBox(QTextEdit):
 
     def refresh(self) -> None:
         self.validateString()
+
+    def sizeHint(self) -> QSize:
+        hint = super().sizeHint()
+        if self._preferred_height is not None:
+            hint.setHeight(self._preferred_height)
+        return hint
+
+    def setPreferredHeightInLines(self, lines: float) -> None:
+        self._preferred_height = round(self.fontMetrics().height() * lines)
+        self.updateGeometry()
