@@ -4,7 +4,14 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
+from PyQt6.QtWidgets import (
+    QFormLayout,
+    QLabel,
+    QMessageBox,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 from ert.config import ErtConfig, WarningInfo
 from ert.gui.ertnotifier import ErtNotifier
@@ -28,8 +35,7 @@ class LoadResultsPanel(QWidget):
     def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         QWidget.__init__(self)
 
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(200)
+        self.setMinimumWidth(600)
 
         self._notifier = notifier
 
@@ -40,27 +46,41 @@ class LoadResultsPanel(QWidget):
         self.setWindowTitle("Load results manually")
         self.activateWindow()
 
-        layout = QFormLayout()
+        expanding_form = QFormLayout()
+        runpath_label_text = "Enter runpath to load results from: "
+        runpath_label = QLabel(runpath_label_text)
 
         self._ensemble_selector = EnsembleSelector(self._notifier)
         self._ensemble_selector.ensemble_selected.connect(self.refresh)
 
-        self._runpath_text = TextBox(TextModel(self._read_current_runpath()))
-        self._runpath_text.setFixedHeight(80)
-        self._runpath_text.setValidator(StringDefinition(required=["<IENS>"]))
-        self._runpath_text.setObjectName("runpath_edit_lrm")
-        self._runpath_text.getValidationSupport().validationChanged.connect(
+        self._runpath_textbox = TextBox(TextModel(self._read_current_runpath()))
+        self._runpath_textbox.setPreferredHeightInLines(3)
+        self._runpath_textbox.setMinimumHeight(10)
+        self._runpath_textbox.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        self._runpath_textbox.setValidator(StringDefinition(required=["<IENS>"]))
+        self._runpath_textbox.setObjectName("runpath_edit_lrm")
+        self._runpath_textbox.getValidationSupport().validationChanged.connect(
             self.panelConfigurationChanged
         )
-        self._runpath_text.textChanged.connect(self._text_change)
+        self._runpath_textbox.textChanged.connect(self._text_change)
 
-        self.help_iter_lbl = QLabel("<ITER> will be replaced by: 0")
+        expanding_form.addRow(runpath_label, self._runpath_textbox)
+
+        fixed_form = QFormLayout()
+        label_width = runpath_label.sizeHint().width()
+
+        def make_qlabel(text: str) -> QLabel:
+            """Propagate width of upper left label to other labels"""
+            label = QLabel(text)
+            label.setMinimumWidth(label_width)
+            return label
+
         self.help_iens_lbl = QLabel("<IENS> will be replaced by %")
 
-        layout.addRow("Load data from run path: ", self._runpath_text)
-        layout.addRow("", self.help_iens_lbl)
-        layout.addRow("", self.help_iter_lbl)
-        layout.addRow("Load into ensemble:", self._ensemble_selector)
+        fixed_form.addRow(make_qlabel(""), self.help_iens_lbl)
+        fixed_form.addRow(make_qlabel("Load into ensemble:"), self._ensemble_selector)
 
         ensemble_size = config.runpath_config.num_realizations
         self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
@@ -74,17 +94,22 @@ class LoadResultsPanel(QWidget):
         self.help_iens_lbl.setText(
             f"<IENS> will be replaced by {self._active_realizations_field.get_text}"
         )
-        layout.addRow("Realizations to load:", self._active_realizations_field)
+        fixed_form.addRow(
+            make_qlabel("Realizations to load:"), self._active_realizations_field
+        )
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.panelConfigurationChanged
         )
+
+        layout = QVBoxLayout()
+        layout.addLayout(expanding_form, 1)
+        layout.addLayout(fixed_form, 0)
         self.setLayout(layout)
 
     def _text_change(self) -> None:
         active_realizations = self._active_realizations_field.get_text
-        self.help_iens_lbl.setText(f"<IENS> will be replace by {active_realizations}")
-        self.help_iter_lbl.setVisible("<ITER>" in self._runpath_text.get_text)
+        self.help_iens_lbl.setText(f"<IENS> will be replaced by {active_realizations}")
 
     def _read_current_runpath(self) -> str:
         runpath = self._resolved_runpath
@@ -92,11 +117,12 @@ class LoadResultsPanel(QWidget):
             current_ensemble = self._ensemble_selector.selected_ensemble.name
             runpath = runpath.replace("<ERTCASE>", current_ensemble)
             runpath = runpath.replace("<ERT-CASE>", current_ensemble)
-        return runpath
+        return runpath.replace("<ITER>", "0")
 
     def is_configuration_valid(self) -> bool:
         return (
-            self._active_realizations_field.isValid() and self._runpath_text.isValid()
+            self._active_realizations_field.isValid()
+            and self._runpath_textbox.isValid()
         )
 
     def load(self) -> int:
@@ -113,7 +139,7 @@ class LoadResultsPanel(QWidget):
                     self._ensemble_selector.selected_ensemble.id
                 )
                 loaded = load_parameters_and_responses_from_runpath(
-                    run_path_format=self._runpath_text.get_text,
+                    run_path_format=self._runpath_textbox.get_text,
                     ensemble=write_ensemble,
                     active_realizations=active_realizations,
                 )
@@ -148,5 +174,5 @@ class LoadResultsPanel(QWidget):
         return loaded
 
     def refresh(self) -> None:
-        self._runpath_text.setText(self._read_current_runpath())
-        self._runpath_text.refresh()
+        self._runpath_textbox.setText(self._read_current_runpath())
+        self._runpath_textbox.refresh()
