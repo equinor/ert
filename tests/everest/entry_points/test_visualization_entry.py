@@ -12,15 +12,11 @@ from tests.everest.utils import capture_streams, everest_config_with_defaults
     side_effect=StopIteration,
 )
 @patch(
-    "everest.bin.visualization_script.EverestStorage.check_for_deprecated_seba_storage"
-)
-@patch(
     "everest.bin.visualization_script.LocalStorage.check_migration_needed",
     return_value=False,
 )
 def test_that_visualization_entry_prints_error_when_storage_has_no_experiment(
     check_migration,
-    check_deprecated,
     get_experiment,
     ert_server,
     run_plotter_gui_mock,
@@ -43,15 +39,11 @@ def test_that_visualization_entry_prints_error_when_storage_has_no_experiment(
     return_value=MagicMock(ensembles_with_function_results=[]),
 )
 @patch(
-    "everest.bin.visualization_script.EverestStorage.check_for_deprecated_seba_storage"
-)
-@patch(
     "everest.bin.visualization_script.LocalStorage.check_migration_needed",
     return_value=False,
 )
 def test_that_visualization_entry_prints_error_when_no_function_results(
     check_migration,
-    check_deprecated,
     get_experiment,
     ert_server,
     run_plotter_gui_mock,
@@ -74,15 +66,11 @@ def test_that_visualization_entry_prints_error_when_no_function_results(
     return_value=MagicMock(ensembles_with_function_results=["some_ensemble"]),
 )
 @patch(
-    "everest.bin.visualization_script.EverestStorage.check_for_deprecated_seba_storage"
-)
-@patch(
     "everest.bin.visualization_script.LocalStorage.check_migration_needed",
     return_value=False,
 )
 def test_that_visualization_entry_opens_gui_when_data_is_present(
     check_migration,
-    check_deprecated,
     get_experiment,
     ert_server,
     run_plotter_gui_mock,

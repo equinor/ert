@@ -406,9 +406,6 @@ def test_that_run_everest_prints_where_it_runs(
 
     with (
         patch(
-            "everest.bin.everest_script.EverestStorage.check_for_deprecated_seba_storage"
-        ),
-        patch(
             "everest.bin.everest_script.create_ertserver_client",
             side_effect=[TimeoutError(), MagicMock()],
         ),

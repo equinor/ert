@@ -26,7 +26,6 @@ from everest.detached import (
     start_server,
     wait_for_server,
 )
-from everest.everest_storage import EverestStorage
 from everest.strings import EVEREST
 from everest.util import (
     version_info,
@@ -163,9 +162,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 
 async def run_everest(options: argparse.Namespace) -> None:
-    EverestStorage.check_for_deprecated_seba_storage(
-        options.config.optimization_output_dir
-    )
 
     try:
         create_ertserver_client(

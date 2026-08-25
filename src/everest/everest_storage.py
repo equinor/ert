@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import traceback
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -11,7 +10,6 @@ from ropt.results import FunctionResults, GradientResults, Results
 
 from ert.storage import LocalExperiment, open_storage
 from ert.storage.local_ensemble import BatchDataframes
-from everest.strings import EVEREST
 
 logger = logging.getLogger(__name__)
 
@@ -132,21 +130,6 @@ class EverestStorage:
         ).select(select + values)
         df = cls._rename_ropt_df_columns(df)
         return cls._enforce_dtypes(df)
-
-    @staticmethod
-    def check_for_deprecated_seba_storage(output_dir: str) -> None:
-        if (Path(output_dir) / "seba.db").exists() or (
-            Path(output_dir) / "seba.db.backup"
-        ).exists():
-            trace = "\n".join(traceback.format_stack())
-            logging.getLogger(EVEREST).error(
-                f"Tried opening old seba storage.Traceback: {trace}"
-            )
-            raise SystemExit(
-                f"Trying to open old storage @ {output_dir}/seba.db."
-                "This storage can only be opened with an "
-                "ert[everest] version <= 12.1.2"
-            )
 
     @classmethod
     def _unpack_function_results(cls, results: FunctionResults) -> _FunctionResults:

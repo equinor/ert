@@ -121,10 +121,8 @@ def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
     with setup_logging(options):
-        config_file, optimization_dir, yml_config = options.config
+        config_file, _, yml_config = options.config
         config = EverestConfig.load_file(config_file)
-
-        EverestStorage.check_for_deprecated_seba_storage(optimization_dir)
 
         opt_controls = opt_controls_by_batch(config.storage_dir, options.batch)
         if opt_controls is None:
