@@ -1138,8 +1138,8 @@ def _rft_observation_for_approximation(
     east: float = 5.0,
     north: float = 5.0,
     tvd: float = 15.0,
-    well_connection_cell: tuple[int, int, int] = (1, 1, 3),
-    well_connection_cell_center: tuple[float, float, float] = (5.0, 5.0, 25.0),
+    well_connection_cell: tuple[int, int, int] | None = (1, 1, 3),
+    well_connection_cell_center: tuple[float, float, float] | None = (5.0, 5.0, 25.0),
     zone: str | None = "zone1",
 ) -> pl.DataFrame:
     def _make_dataframe(prop: str) -> pl.DataFrame:
@@ -1311,6 +1311,16 @@ def _expected_approximated_values(
                 "available. I.e. no zonemap file."
             ),
         ),
+        pytest.param(
+            _rft_responses_for_approximation(),
+            _rft_observation_for_approximation(
+                tvd=25.0,
+                well_connection_cell=None,  # <= observation is outside the grid
+                well_connection_cell_center=None,  # <= observation is outside the grid
+            ),
+            None,
+            id=("Test that approximation is not done when observation is outside grid"),
+        ),
     ],
 )
 def test_rft_value_approximation(
@@ -1322,9 +1332,15 @@ def test_rft_value_approximation(
         responses=rft_responses, observations=rft_observations
     )
 
-    approximated_values = responses_with_approximations.filter(
-        pl.col("well_connection_cell") == [1, 1, 3]  # The cell of the observation
-    ).collect()
+    # rechunk before the anti-join: polars raises a PanicException on multi-chunk
+    # frames when a join on Array columns yields an empty result.
+    # See: https://github.com/pola-rs/polars/issues/29093
+    rft_responses = rft_responses.collect()
+    approximated_values = (
+        responses_with_approximations.collect()
+        .rechunk()
+        .join(rft_responses, on=rft_responses.columns, how="anti")
+    )
 
     assert dict(
         zip(

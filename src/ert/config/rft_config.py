@@ -538,6 +538,16 @@ class RFTConfig(SimulationResponseConfig):
             how="anti",
         )
 
+        # Only attempt to approximate missing values for observations that have a
+        # well connection cell since currently observations and responses are matched
+        # based on well connection cell.
+        # Responses could be approximated for observations without a
+        # well connection cell based on its utm coordinates, however this will require
+        # a fallback mechanism to match responses to observations when
+        # the well_connection_cell is None.
+        observations_with_missing_response = observations_with_missing_response.filter(
+            pl.col("well_connection_cell").is_not_null()
+        )
         if observations_with_missing_response.is_empty():
             return responses
 
