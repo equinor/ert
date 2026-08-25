@@ -11,7 +11,6 @@ from ert.services import create_ertserver_client
 from ert.storage import ErtStorageException, ExperimentState
 from everest.config import EverestConfig, ServerConfig
 from everest.detached.client import get_experiments
-from everest.everest_storage import EverestStorage
 
 from .utils import (
     ArgParseFormatter,
@@ -33,10 +32,6 @@ def monitor_entry(args: list[str] | None = None) -> None:
                 signal.SIGINT,
                 partial(handle_keyboard_interrupt, options=options),
             )
-
-        EverestStorage.check_for_deprecated_seba_storage(
-            options.config.optimization_output_dir
-        )
 
         monitor_everest(options)
 

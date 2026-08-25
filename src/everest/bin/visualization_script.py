@@ -44,9 +44,6 @@ def visualization_entry(args: list[str] | None = None) -> None:
             f"Starting everest results entrypoint with args {args} in {Path.cwd()}"
         )
         ever_config = options.config
-        EverestStorage.check_for_deprecated_seba_storage(
-            ever_config.optimization_output_dir
-        )
 
         if LocalStorage.check_migration_needed(Path(ever_config.storage_dir)):
             logger.info("Migrating ERT storage from everest results entrypoint")
