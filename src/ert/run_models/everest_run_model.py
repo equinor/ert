@@ -62,13 +62,13 @@ from everest.config import (
     EverestConfig,
 )
 from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
-from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
     EverestOptModelTransforms,
     get_optimization_domain_transforms,
 )
 from everest.strings import EVEREST
+from everest.util.ropt_unpacker import unpack_ropt_results
 
 from .event import EverestBatchResultEvent, EverestStatusEvent
 from .run_model import RunModel, StatusEvents
@@ -619,7 +619,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
         assert self._experiment is not None
 
-        batch_dataframes = EverestStorage.unpack_ropt_results(results)
+        batch_dataframes = unpack_ropt_results(results)
 
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
