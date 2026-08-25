@@ -65,7 +65,7 @@ Collapsible sidepanels
 
 You can resize and hide both the data selection panel and the plot controls panel. The
 main navigation is always shown. To resize a panel, drag the border next to the
-plot. To hide it, click the arrow in its top right corner.
+plot. To hide a panel, click the arrow in its top corner nearest the plot.
 
 .. image:: v25/collapse_sidepanel.png
 
