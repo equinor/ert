@@ -109,6 +109,34 @@ def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo
     }
 
 
+@pytest.mark.filterwarnings(r"ignore:Could not find responses")
+def test_that_rft_with_no_matching_properties_returns_empty_frame(
+    mock_resfo_file, egrid
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([100.0, 200.0])),
+            ("SWAT    ", float_arr([0.1, 0.2])),
+            ("SGAS    ", float_arr([0.3, 0.4])),
+            ("DEPTH   ", float_arr([20.0, 30.0])),
+        ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        egrid,
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL": {"2000-01-01": ["FOO"]}},
+    )
+    df = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    assert df.is_empty()
+    assert df.schema == RFTConfig.response_schema()
+
+
 def test_that_rft_with_empty_data_to_read_returns_empty_df(mock_resfo_file):
     mock_resfo_file("/tmp/does_not_exist/BASE.RFT", [])
     rft_config = RFTConfig(input_files=["BASE.RFT"], data_to_read={})
