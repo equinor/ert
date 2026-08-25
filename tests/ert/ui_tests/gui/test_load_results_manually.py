@@ -21,9 +21,9 @@ def test_validation(ensemble_experiment_has_run_no_failure, qtbot):
 
         load_button = get_child(panel.parent(), QPushButton, name="Load")
 
-        run_path_edit = get_child(panel, TextBox, name="run_path_edit_lrm")
-        assert run_path_edit.isEnabled()
-        valid_text = run_path_edit.get_text
+        runpath_edit = get_child(panel, TextBox, name="runpath_edit_lrm")
+        assert runpath_edit.isEnabled()
+        valid_text = runpath_edit.get_text
         assert "<IENS>" in valid_text
 
         active_realizations = get_child(
@@ -38,9 +38,9 @@ def test_validation(ensemble_experiment_has_run_no_failure, qtbot):
         active_realizations.setText(default_value_active_reals)
         assert load_button.isEnabled()
 
-        run_path_edit.setText(valid_text.replace("<IENS>", "<IES>"))
+        runpath_edit.setText(valid_text.replace("<IENS>", "<IES>"))
         assert not load_button.isEnabled()
-        run_path_edit.setText(valid_text)
+        runpath_edit.setText(valid_text)
         assert load_button.isEnabled()
 
         dialog.close()

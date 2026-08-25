@@ -33,7 +33,7 @@ class LoadResultsPanel(QWidget):
 
         self._notifier = notifier
 
-        self._resolved_run_path = str(
+        self._resolved_runpath = str(
             Path(config.runpath_config.runpath_format_string).resolve()
         )
 
@@ -45,19 +45,19 @@ class LoadResultsPanel(QWidget):
         self._ensemble_selector = EnsembleSelector(self._notifier)
         self._ensemble_selector.ensemble_selected.connect(self.refresh)
 
-        self._run_path_text = TextBox(TextModel(self._read_current_run_path()))
-        self._run_path_text.setFixedHeight(80)
-        self._run_path_text.setValidator(StringDefinition(required=["<IENS>"]))
-        self._run_path_text.setObjectName("run_path_edit_lrm")
-        self._run_path_text.getValidationSupport().validationChanged.connect(
+        self._runpath_text = TextBox(TextModel(self._read_current_runpath()))
+        self._runpath_text.setFixedHeight(80)
+        self._runpath_text.setValidator(StringDefinition(required=["<IENS>"]))
+        self._runpath_text.setObjectName("runpath_edit_lrm")
+        self._runpath_text.getValidationSupport().validationChanged.connect(
             self.panelConfigurationChanged
         )
-        self._run_path_text.textChanged.connect(self._text_change)
+        self._runpath_text.textChanged.connect(self._text_change)
 
         self.help_iter_lbl = QLabel("<ITER> will be replaced by: 0")
         self.help_iens_lbl = QLabel("<IENS> will be replaced by %")
 
-        layout.addRow("Load data from run path: ", self._run_path_text)
+        layout.addRow("Load data from run path: ", self._runpath_text)
         layout.addRow("", self.help_iens_lbl)
         layout.addRow("", self.help_iter_lbl)
         layout.addRow("Load into ensemble:", self._ensemble_selector)
@@ -84,19 +84,19 @@ class LoadResultsPanel(QWidget):
     def _text_change(self) -> None:
         active_realizations = self._active_realizations_field.get_text
         self.help_iens_lbl.setText(f"<IENS> will be replace by {active_realizations}")
-        self.help_iter_lbl.setVisible("<ITER>" in self._run_path_text.get_text)
+        self.help_iter_lbl.setVisible("<ITER>" in self._runpath_text.get_text)
 
-    def _read_current_run_path(self) -> str:
-        run_path = self._resolved_run_path
+    def _read_current_runpath(self) -> str:
+        runpath = self._resolved_runpath
         if self._ensemble_selector.selected_ensemble:
             current_ensemble = self._ensemble_selector.selected_ensemble.name
-            run_path = run_path.replace("<ERTCASE>", current_ensemble)
-            run_path = run_path.replace("<ERT-CASE>", current_ensemble)
-        return run_path
+            runpath = runpath.replace("<ERTCASE>", current_ensemble)
+            runpath = runpath.replace("<ERT-CASE>", current_ensemble)
+        return runpath
 
     def is_configuration_valid(self) -> bool:
         return (
-            self._active_realizations_field.isValid() and self._run_path_text.isValid()
+            self._active_realizations_field.isValid() and self._runpath_text.isValid()
         )
 
     def load(self) -> int:
@@ -113,7 +113,7 @@ class LoadResultsPanel(QWidget):
                     self._ensemble_selector.selected_ensemble.id
                 )
                 loaded = load_parameters_and_responses_from_runpath(
-                    run_path_format=self._run_path_text.get_text,
+                    run_path_format=self._runpath_text.get_text,
                     ensemble=write_ensemble,
                     active_realizations=active_realizations,
                 )
@@ -148,5 +148,5 @@ class LoadResultsPanel(QWidget):
         return loaded
 
     def refresh(self) -> None:
-        self._run_path_text.setText(self._read_current_run_path())
-        self._run_path_text.refresh()
+        self._runpath_text.setText(self._read_current_runpath())
+        self._runpath_text.refresh()
