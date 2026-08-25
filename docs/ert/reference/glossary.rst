@@ -46,10 +46,34 @@ It is not about being correct, it is about being relevant and coherent.
         simulate and reason about than the template model.
 
     ensemble
-        As the name hints towards, ERT's approach to studying a template model, is to
-        create an ensemble of realisations. In particular, an ensemble is a list of
-        realisations. The idea is that with a sufficiently large ensemble the
-        uncertainty of the template model is represented by the ensemble.
+        An ensemble is a list of realisations, i.e. a set of execution results of the
+        same iteration of the same forward model for various input values (parameters).
+        The idea is that with a sufficiently large ensemble the uncertainty of the model
+        is represented by the ensemble. An ensemble
+        consists of input parameters and the corresponding responses of the forward model, and
+        each ensemble can trace its lineage to its parent ensemble and the experiment.
+        Parent ensemble is called "prior", when child one is called "posterior". In an update
+        we load the response of a prior ensemble and use it together with observation values
+        to create a posterior ensemble. For example, the lineage in multiple data assimilation
+        experiment can be show as:
+
+        .. code-block:: python
+
+           prior = sample_parameters()
+           for iteration, weight in enumerate(weights):
+               posterior = update(prior, weight)
+               prior = posterior
+
+    experiment
+        We define an experiment as a complete specification for running an ensemble of
+        models, which includes the parameter definitions and a set of observation values and
+        their responses. It also includes the specification of the forward model, and the
+        update method to be applied on the ensemble as well as the update settings. An
+        experiment consists of one or more ensembles, which are related via
+        zero or more update steps. In the case of ensemble smoother you will have one
+        prior ensemble and one posterior ensemble, while for multiple data assimilation
+        there will typically be four ensembles, the sampled prior, the posterior after the first update,
+        the posterior after the second update and finally the posterior after the third update.
 
     evaluating an ensemble
         Recall that a realisation consists of a forward model :code:`fm` together with input
@@ -84,11 +108,6 @@ It is not about being correct, it is about being relevant and coherent.
         way to obtain a merged ensemble response where all realisations that was
         successful in at least one the two ensembles evaluations will be successful in
         the merged ensemble response.
-
-    experiment
-        An experiment consists of one or more ensembles, which may be related via
-        zero or more update steps. For example you might have a prior ensemble that
-        results in the posterior ensemble by running IES.
 
     simulation
         There are two uses of the word simulation:
