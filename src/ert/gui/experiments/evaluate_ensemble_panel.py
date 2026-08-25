@@ -35,7 +35,6 @@ class Arguments:
 
 class EvaluateEnsemblePanel(ExperimentConfigPanel):
     def __init__(self, run_path: str, notifier: ErtNotifier) -> None:
-        self.notifier = notifier
         super().__init__(EvaluateEnsemble)
         self.setObjectName("Evaluate_parameters_panel")
 
@@ -45,9 +44,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         def show_only_no_children_filter(
             ensembles: Iterable[Ensemble],
         ) -> Iterable[Ensemble]:
-            parents = [
-                ens.parent for ens in self.notifier.storage.ensembles if ens.parent
-            ]
+            parents = [ens.parent for ens in notifier.storage.ensembles if ens.parent]
             return (ensemble for ensemble in ensembles if ensemble.id not in parents)
 
         # Filter out any ensembles which have children.

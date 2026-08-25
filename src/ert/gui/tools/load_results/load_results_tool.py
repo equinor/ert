@@ -27,14 +27,14 @@ class LoadResultsTool(Tool):
         if self._import_widget is None:
             self._import_widget = LoadResultsPanel(self._config, self._notifier)
             self._import_widget.panelConfigurationChanged.connect(
-                self.validationStatusChanged
+                self._validation_status_changed
             )
             self._dialog = ClosableDialog(
                 "Load results manually",
                 self._import_widget,
                 self.parent(),  # type: ignore
             )
-            self._loadButton = self._dialog.addButton("Load", self.load)
+            self._loadButton = self._dialog.addButton("Load", self._load)
             self._dialog.setObjectName("load_results_manually_tool")
 
         else:
@@ -46,7 +46,7 @@ class LoadResultsTool(Tool):
         assert self._dialog is not None
         self._dialog.exec()
 
-    def load(self, _: Any) -> None:
+    def _load(self, _: Any) -> None:
         logger.info("Gui utility: LoadResults tool was used")
         assert self._dialog is not None
         assert self._import_widget is not None
@@ -54,10 +54,11 @@ class LoadResultsTool(Tool):
         self._dialog.toggleButton(caption="Load", enabled=False)
         self._import_widget.load()
         self._dialog.accept()
+        self._dialog.enableCloseButton()
 
-    def validationStatusChanged(self) -> None:
+    def _validation_status_changed(self) -> None:
         assert self._dialog is not None
         assert self._import_widget is not None
         self._dialog.toggleButton(
-            caption="Load", enabled=self._import_widget.isConfigurationValid()
+            caption="Load", enabled=self._import_widget.is_configuration_valid()
         )

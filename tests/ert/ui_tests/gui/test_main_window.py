@@ -476,8 +476,6 @@ def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
     create_widget = get_child(storage_widget, AddWidget)
     qtbot.mouseClick(create_widget.addButton, Qt.MouseButton.LeftButton)
 
-    assert experiments_panel.notifier.current_ensemble.iteration == 42
-
     # Go to the "initialize from scratch" panel
     experiments_panel.setCurrentIndex(1)
     current_tab = experiments_panel.currentWidget()

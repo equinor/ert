@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING
-from uuid import UUID
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -12,12 +10,9 @@ from PyQt6.QtWidgets import QComboBox
 from ert.config import ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.utils import truncate_dropdown_item
-from ert.storage import RealizationStorageState
+from ert.storage import Ensemble, RealizationStorageState
 
 from .suggestor import Suggestor
-
-if TYPE_CHECKING:
-    from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +22,6 @@ class EnsembleSelector(QComboBox):
     Parameters
     ----------
     notifier: ErtNotifier
-    update_ert: bool, optional
-        If True, changing the selection in this combo box will update the
-        current ensemble in ERT.
     filters: iterable of callables, optional
         An iterable of "or" filter functions to apply to the ensemble list. If
         provided, only ensembles that pass at least one filter will be shown.
@@ -37,36 +29,23 @@ class EnsembleSelector(QComboBox):
     """
 
     ensemble_populated = Signal()
+    ensemble_selected = Signal(Ensemble)
 
     def __init__(
         self,
         notifier: ErtNotifier,
         *,
-        update_ert: bool = True,
         filters: Iterable[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = (),
     ) -> None:
         super().__init__()
+
         self.notifier = notifier
-
-        # If true current ensemble of ert will be changed
-        self._update_ert = update_ert
-
         self._or_filters = filters
-
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-
         self.setEnabled(False)
 
-        if update_ert:
-            # Update ERT when this combo box is changed
-            self.currentIndexChanged.connect(self._on_current_index_changed)
-
-            # Update this combo box when ERT is changed
-            notifier.current_ensemble_changed.connect(
-                self._on_global_current_ensemble_changed
-            )
-
         notifier.ertChanged.connect(self.populate)
+        self.currentIndexChanged.connect(self._on_current_index_changed)
 
         if notifier.is_storage_available:
             self.populate()
@@ -79,6 +58,11 @@ class EnsembleSelector(QComboBox):
             )
         except KeyError:
             return None
+
+    def _on_current_index_changed(self, _: int) -> None:
+        ensemble = self.selected_ensemble
+        if ensemble:
+            self.ensemble_selected.emit(ensemble)
 
     def populate(self) -> None:
         block = self.blockSignals(True)
@@ -139,9 +123,3 @@ class EnsembleSelector(QComboBox):
             ),
             reverse=True,
         )
-
-    def _on_current_index_changed(self, index: int) -> None:
-        self.notifier.set_current_ensemble_id(UUID(self.itemData(index)))
-
-    def _on_global_current_ensemble_changed(self, data: UUID | None) -> None:
-        self.setCurrentIndex(max(self.findData(str(data), Qt.ItemDataRole.UserRole), 0))

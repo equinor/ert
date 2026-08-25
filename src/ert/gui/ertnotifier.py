@@ -13,7 +13,6 @@ class ErtNotifier(QObject):
     ertChanged = Signal()
     experiment_started = Signal()
     experiment_ended = Signal()
-    current_ensemble_changed = Signal(object, name="currentEnsembleChanged")
 
     def __init__(self) -> None:
         QObject.__init__(self)
@@ -78,17 +77,11 @@ class ErtNotifier(QObject):
 
         self.ertChanged.emit()
 
-    @Slot(object)
+    @Slot(str)
     def set_storage(self, storage_path: str) -> None:
         self._storage = open_storage(storage_path, mode="r")
         self._storage_path = storage_path
         self.emitErtChange()
-
-    @Slot(object)
-    def set_current_ensemble_id(self, ensemble_id: UUID | None = None) -> None:
-        if ensemble_id != self._current_ensemble_id:
-            self._current_ensemble_id = ensemble_id
-            self.current_ensemble_changed.emit(ensemble_id)
 
     @Slot(bool)
     def set_is_experiment_running(self, is_running: bool) -> None:
