@@ -2,14 +2,21 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
+info = """
+Remove redundant 'restart_run' Multiple Data Assimilation class key.
+Convert emtpy 'prior_ensemble_id' to None.
+"""
 
-info = "Remove redundant 'restart_run' Multiple Data Assimilation class key"
 
-
-def _remove_redundant_restart_run_mda_key(path: Path) -> None:
+def _process_mda_experiments(
+    path: Path, callback: Callable[[dict[str, Any]], None]
+) -> None:
+    """Apply a transformation to all MDA experiment index files."""
     experiments_dir = path / "experiments"
     if not experiments_dir.exists():
         return
@@ -25,14 +32,22 @@ def _remove_redundant_restart_run_mda_key(path: Path) -> None:
         index_data = json.loads(index_file.read_text(encoding="utf-8"))
         experiment_data = index_data.get("experiment", {})
 
-        experiment_type = experiment_data.get("experiment_type", "")
-        if experiment_type != "Multiple Data Assimilation":
+        if experiment_data.get("experiment_type") != "Multiple Data Assimilation":
             continue
 
-        experiment_data.pop("restart_run", None)
-
+        callback(experiment_data)
         index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
 
 
 def migrate(path: Path) -> None:
-    _remove_redundant_restart_run_mda_key(path)
+    def remove_restart_run(exp_data: dict[str, Any]) -> None:
+        exp_data.pop("restart_run", None)
+
+    def fix_prior_ensemble_id(exp_data: dict[str, Any]) -> None:
+        if "prior_ensemble_id" not in exp_data:
+            return
+        if not exp_data.get("prior_ensemble_id"):
+            exp_data["prior_ensemble_id"] = None
+
+    _process_mda_experiments(path, remove_restart_run)
+    _process_mda_experiments(path, fix_prior_ensemble_id)

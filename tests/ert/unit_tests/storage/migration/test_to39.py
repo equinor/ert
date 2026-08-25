@@ -6,6 +6,7 @@ from hypothesis import assume, given, settings
 from ert.storage.migration.to39 import migrate
 
 _RESTART_RUN_KEY = "restart_run"
+_PRIOR_ENSEMBLE_ID_KEY = "prior_ensemble_id"
 _MDA_EXP_TYPE = "Multiple Data Assimilation"
 
 
@@ -67,3 +68,17 @@ def test_that_non_mda_experiment_type_is_not_migrated(
     )
 
     assert _RESTART_RUN_KEY in migrated_experiment
+
+
+def test_that_no_prior_ensemble_id_is_none(tmp_path):
+
+    original_experiment_data = {
+        "experiment_type": _MDA_EXP_TYPE,
+        "prior_ensemble_id": "",
+    }
+
+    migrated_experiment = migrate_and_load_updated_experiment(
+        tmp_path, original_experiment_data
+    )
+
+    assert migrated_experiment[_PRIOR_ENSEMBLE_ID_KEY] is None
