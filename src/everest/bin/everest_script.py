@@ -16,7 +16,7 @@ from opentelemetry.trace import Status, StatusCode
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
-from ert.services import create_ertserver_client
+from ert.services.ert_client import ErtClient
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import trace
 from ert.utils import makedirs_if_needed
@@ -164,8 +164,9 @@ def _build_args_parser() -> argparse.ArgumentParser:
 async def run_everest(options: argparse.Namespace) -> None:
 
     try:
-        create_ertserver_client(
-            Path(ServerConfig.get_session_dir(options.config.output_dir)), timeout=1
+        ErtClient.for_project(
+            Path(ServerConfig.get_session_dir(options.config.output_dir)),
+            connect_timeout=1,
         )
         server_running = True
     except TimeoutError:
@@ -227,7 +228,7 @@ async def run_everest(options: argparse.Namespace) -> None:
     print("Waiting for server ...")
     logger.debug("Waiting for response from everserver")
     wait_start_time: float = time.monotonic()
-    client = create_ertserver_client(
+    client = ErtClient.for_project(
         Path(ServerConfig.get_session_dir(options.config.output_dir))
     )
     wait_for_server(client, timeout=600)

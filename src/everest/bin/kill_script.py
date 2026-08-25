@@ -12,7 +12,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from ert.services import create_ertserver_client
+from ert.services.ert_client import ErtClient
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import stop_server, wait_for_server_to_stop
@@ -74,8 +74,9 @@ def _handle_keyboard_interrupt(signal: int, _: Any, *, after: bool = False) -> N
 
 def kill_everest(options: argparse.Namespace) -> None:
     try:
-        client = create_ertserver_client(
-            Path(ServerConfig.get_session_dir(options.config.output_dir)), timeout=1
+        client = ErtClient.for_project(
+            Path(ServerConfig.get_session_dir(options.config.output_dir)),
+            connect_timeout=1,
         )
         server_context = ServerConfig.get_server_context_from_conn_info(
             client.conn_info

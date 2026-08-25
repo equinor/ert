@@ -7,7 +7,7 @@ from functools import partial
 from pathlib import Path
 from textwrap import dedent
 
-from ert.services import create_ertserver_client
+from ert.services.ert_client import ErtClient
 from ert.storage import ErtStorageException, ExperimentState
 from everest.config import EverestConfig, ServerConfig
 from everest.detached.client import get_experiments
@@ -78,31 +78,25 @@ def _build_args_parser() -> argparse.ArgumentParser:
 def monitor_everest(options: argparse.Namespace) -> None:
     config: EverestConfig = options.config
     try:  # ruff: ignore[too-many-statements-in-try-clause]
-        with create_ertserver_client(
-            Path(ServerConfig.get_session_dir(config.output_dir)), timeout=1
-        ) as client:
-            server_context = ServerConfig.get_server_context_from_conn_info(
-                client.conn_info
-            )
-            experiment_id = get_experiments(server_context)[-1]
-            run_detached_monitor(
-                server_context=server_context, experiment_id=experiment_id
-            )
+        client = ErtClient.for_project(
+            Path(ServerConfig.get_session_dir(config.output_dir)), connect_timeout=1
+        )
+        server_context = ServerConfig.get_server_context_from_conn_info(
+            client.conn_info
+        )
+        experiment_id = get_experiments(server_context)[-1]
+        run_detached_monitor(server_context=server_context, experiment_id=experiment_id)
 
-            try:
-                experiment_status = get_experiment_status(str(config.storage_dir))
-                if (
-                    experiment_status
-                    and experiment_status.status == ExperimentState.failed
-                ):
-                    raise SystemExit(experiment_status.message or "Optimization failed")
-                if experiment_status:
-                    print(
-                        experiment_status.message
-                        or "Optimization completed successfully"
-                    )
-            except ErtStorageException as err:
-                print(f"Error reading experiment status: {err}")
+        try:
+            experiment_status = get_experiment_status(str(config.storage_dir))
+            if experiment_status and experiment_status.status == ExperimentState.failed:
+                raise SystemExit(experiment_status.message or "Optimization failed")
+            if experiment_status:
+                print(
+                    experiment_status.message or "Optimization completed successfully"
+                )
+        except ErtStorageException as err:
+            print(f"Error reading experiment status: {err}")
 
     except TimeoutError:
         try:  # ruff: ignore[too-many-statements-in-try-clause]

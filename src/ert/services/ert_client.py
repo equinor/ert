@@ -16,7 +16,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-from .shared_client import Methods, SharedClient
+from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
 
 DEFAULT_TIMEOUT = 120
 DEFAULT_CACHE_SIZE = 256
@@ -123,6 +123,10 @@ class ErtClient:
     @property
     def client(self) -> SharedClient:
         return self._client
+
+    @property
+    def conn_info(self) -> ErtClientConnectionInfo:
+        return self._client.conn_info
 
     def clear_cache(self) -> None:
         with self._cache_lock:

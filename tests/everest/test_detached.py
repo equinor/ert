@@ -23,7 +23,7 @@ from ert.config.queue_config import (
 )
 from ert.plugins import ErtRuntimePlugins
 from ert.scheduler.event import FinishedEvent
-from ert.services import create_ertserver_client
+from ert.services import ErtClient
 from ert.services.shared_client import ErtClientConnectionInfo
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
@@ -60,11 +60,11 @@ async def test_https_requests(change_to_tmpdir):
     makedirs_if_needed(Path(everest_config.output_dir), roll_if_exists=True)
     await start_server(everest_config, logging_level=logging.INFO)
 
-    session = create_ertserver_client(
+    client = ErtClient.for_project(
         Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
     )
-    wait_for_server(session, 240)
-    url, cert, auth = ServerConfig.get_server_context_from_conn_info(session.conn_info)
+    wait_for_server(client, 240)
+    url, cert, auth = ServerConfig.get_server_context_from_conn_info(client.conn_info)
     result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # ruff: ignore[blocking-http-call-in-async-function]
     assert result.status_code == 200  # Request has succeeded
 
@@ -82,9 +82,9 @@ async def test_https_requests(change_to_tmpdir):
 
     # Test stopping server
     assert server_is_running(
-        *ServerConfig.get_server_context_from_conn_info(session.conn_info)
+        *ServerConfig.get_server_context_from_conn_info(client.conn_info)
     )
-    server_context = ServerConfig.get_server_context_from_conn_info(session.conn_info)
+    server_context = ServerConfig.get_server_context_from_conn_info(client.conn_info)
     if stop_server(server_context):
         wait_for_server_to_stop(server_context, 240)
         assert not server_is_running(*server_context)

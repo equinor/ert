@@ -51,6 +51,7 @@ def setup_svg_search_path():
 @pytest.fixture(autouse=True)
 def reset_ert_api_client():
     # The client is process-wide and bound to one project, but each test has its own.
+    SharedClient.close_client()
     yield
     SharedClient.close_client()
 
