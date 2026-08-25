@@ -27,6 +27,204 @@
 Highlighted changes
 ===================
 
+Version 25.0
+------------
+
+Sidepanels for "Create plot"-window
+###################################
+
+The plotting window now has a clear layout: the left side is for navigation, and
+the right side is for changing how the plot looks and/or behaves.
+
+The left side holds the main ERT navigation, with *Start experiment*, *Create plot*
+and *Manage experiments*, and next to it the data type panel, where you select what
+data to plot. The main navigation is always shown. The data type panel can be
+hidden to make more room for the plot.
+
+The right side holds the plot controls panel, which gathers all the settings that
+change the plot. This panel can also be hidden/collapsed.
+
+Left sidepanel: Data types
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This panel behaves the same as before. The data type panel lists the data available for
+plotting. What you select here decides what the plot shows.
+
+.. image:: v25/navigation.png
+
+Right sidepanel: Plot controls
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Settings that change the plot, such as which ensembles to show, what colours to
+use and how the x- and y-axis are set up, are now in the right sidepanel.
+
+.. image:: v25/plot_controls.png
+
+Collapsible sidepanels
+~~~~~~~~~~~~~~~~~~~~~~
+
+You can resize and hide both the data selection panel and the plot controls panel. The
+main navigation is always shown. To resize a panel, drag the border next to the
+plot. To hide it, click the arrow in its top right corner.
+
+.. image:: v25/collapse_sidepanel.png
+
+Collapsing both sidepanels allows you to maximise the plot area, as seen below:
+
+.. image:: v25/collapsed_view.png
+
+
+Plot settings moved to the right sidepanel
+##########################################
+
+Settings that used to be hidden in a separate window are now easily accessible
+in the right sidepanel. They are grouped into sections that you can open and
+close by clicking the section's heading.
+
+Below are some of the new sections in the right sidepanel, with a short description of what they do.
+
+General options
+###############
+The general options section contains options that affect the plot as a whole, such as the title,
+x and y axis, grid and the legend.
+
+.. image:: v25/general_options.png
+
+
+Log scale
+~~~~~~~~~
+The log scale checkbox has moved from the bottom toolbar to "General options" in
+the right sidepanel, where it is easier to find.
+
+.. image:: v25/log_scale.png
+
+
+Legend, grid and observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Here you turn the legend, grid and observations on and off. Next to the observation
+checkbox there is a colour picker for changing the colour of the observation markers.
+
+.. image:: v25/observations.png
+
+
+
+Color palette
+~~~~~~~~~~~~~
+You can pick a colour palette for the plot from a list of ready-made palettes.
+
+.. image:: v25/select_palette.png
+.. image:: v25/open_palette.png
+
+If none of them fit, click "Create custom palette" to open a window where you
+choose your own colours.
+
+.. image:: v25/create_custom.png
+.. image:: v25/custom_palette_dialog.png
+
+Edit title and axis labels
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can edit the title and axis labels from the right sidepanel with the edit
+button next to each one.
+
+You can also click the title or an axis label in the plot to edit it there.
+
+.. image:: v25/change_label.png
+.. image:: v25/label_dialog.png
+
+
+Boxplot options
+###############
+
+Boxplots, such as "Misfits" and "Cross ensemble statistics", have their own section
+in the right sidepanel. Here you choose which parts of the plot to show:
+
+Boxplot
+    The box covers the middle half of the data, from the first to the third
+    quartile, with a black line at the median. The dashed whiskers reach the
+    outermost data points that fall within the 5th to 95th percentile in
+    "Misfits", and within the 10th to 90th percentile in "Cross ensemble
+    statistics". On by default.
+
+Outliers
+    Points outside the whiskers, drawn as hollow circles. On by default. This
+    only has an effect when the boxplot is shown.
+
+Mean
+    The mean value of the data, drawn as a black diamond. On by default.
+
+Scatter points
+    Every single data point, spread out slightly so overlapping points are easier
+    to see. Off by default.
+
+.. image:: v25/boxplot_options.png
+
+
+Statistics options
+##################
+
+The "Statistics" plot has its own section in the right sidepanel. Previously hidden
+in a separate window, these options work exactly as before. Here you choose which
+statistics to draw on top of the data:
+
+Mean
+    The mean of the ensemble, drawn as a solid line. On by default.
+
+P50
+    The median, drawn as a dashed line.
+
+Std dev
+    A band one standard deviation above and below the mean.
+
+Min/Max
+    A band covering the smallest and largest value.
+
+P10-P90
+    A band covering the 10th to the 90th percentile. On by default.
+
+P33-P67
+    A band covering the 33rd to the 67th percentile.
+
+The last two settings change how the bands are drawn rather than which statistics
+you see:
+
+Area
+    Draw the bands as a filled area instead of a pair of lines. Off by default.
+    This affects Std dev, Min/Max, P10-P90 and P33-P67, but not Mean and P50,
+    which are always single lines.
+
+Std dev multiplier
+    Choose how many standard deviations the Std dev band covers. You can pick a
+    value from 1 to 3, and the default is 1.
+
+.. image:: v25/statistics_options.png
+
+
+Style removal
+#############
+
+As previously mentioned, most of the options in the old customization window are now available in the
+sections above. A few have been removed instead of moved.
+
+Line and marker styles
+    You can no longer set the line style, line thickness, marker shape and marker
+    size for the default, history and observation lines, or for each statistic in
+    the "Statistics" plot. These now use fixed styles, which are shown in the
+    legend when enabled. Colours can still be changed with the colour palette, and the
+    observation markers still have their own colour picker.
+
+Axis limits
+    The settings for fixing the axis limits have been removed. They were rarely
+    used and did not always take effect. The magnifying glass in the bottom
+    toolbar covers the same functionality: drag a rectangle in the plot to zoom in on it,
+    and use the home button to go back to the full view.
+
+    .. image:: v25/magnifying_glass.png
+
+Copy style to
+    The option for applying the settings of one plot to other data keys has been
+    removed together with the customization window.
+
+
 Version 24.0
 ------------
 
