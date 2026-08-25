@@ -750,8 +750,8 @@ class RFTConfig(SimulationResponseConfig):
                 keys=keys,
                 data_to_read=data_to_read,
                 zonemap=config_dict.get(ConfigKeys.ZONEMAP),
-                approximate_missing_values=config_dict.get(
-                    ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
+                approximate_missing_values=bool(
+                    config_dict.get(ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False)
                 ),
             )
 

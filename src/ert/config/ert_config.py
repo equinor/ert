@@ -1275,8 +1275,8 @@ class ErtConfig(BaseModel):
                 input_files=[summary_file_base_name],
                 data_to_read={},
                 zonemap=self.zonemap,
-                approximate_missing_values=config_dict.get(
-                    ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False
+                approximate_missing_values=bool(
+                    config_dict.get(ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False)
                 ),
             )
 
