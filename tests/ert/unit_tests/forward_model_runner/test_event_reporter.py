@@ -13,6 +13,7 @@ from _ert.forward_model_runner.client import ClientConnectionError
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import Event
 from _ert.forward_model_runner.reporting.message import (
+    Checksum,
     Exited,
     Finish,
     Init,
@@ -150,6 +151,20 @@ def test_report_inconsistent_events():
         TransitionError, match=r"Illegal transition None -> \(MessageType<Finish>,\)"
     ):
         reporter.report(Finish())
+
+
+def test_that_stop_with_exited_event_after_checksum_does_not_raise():
+    fmstep1 = ForwardModelStep(
+        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
+    )
+    with MockZMQServer() as mock_server:
+        reporter = Event(evaluator_url=mock_server.uri)
+        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Start(fmstep1))
+        reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
+        reporter.report(Checksum(checksum_dict={}, run_path="."))
+
+        reporter.stop(exited_event=Exited(fmstep1, exit_code=1))
 
 
 def test_report_with_failed_reporter_but_finished_jobs():
