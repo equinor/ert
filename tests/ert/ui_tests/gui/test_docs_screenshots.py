@@ -35,84 +35,17 @@ from .conftest import get_child, wait_for_child
 # and in case we want to verify that all pngs under docs are tested for change unless
 # they are listed as not applicable
 PNGS_NOT_APPLICABLE_FOR_GENERATION = [
-    "docs/ert/theory/images/posterior_path.png",
-    "docs/ert/theory/images/intro_adaptive_localization.png",
-    "docs/ert/theory/images/intro_assisted_history_matching.png",
-    "docs/ert/theory/images/intro_corr_p_5_N_50.png",
-    "docs/ert/theory/images/intro_cross_covariance.png",
-    "docs/ert/theory/images/intro_distance_based_localization.png",
-    "docs/ert/theory/images/intro_distance_based_localization_2.png",
-    "docs/ert/theory/images/intro_es_equation.png",
-    "docs/ert/theory/images/intro_esmda.png",
-    "docs/ert/theory/images/intro_ies.png",
-    "docs/ert/theory/images/intro_intro.png",
-    "docs/ert/theory/images/intro_manual_history_matching.png",
-    "docs/ert/theory/images/intro_obs_error_covariance.png",
-    "docs/ert/theory/images/intro_parameter_matrix.png",
-    "docs/ert/theory/images/intro_perturbed_observations.png",
-    "docs/ert/theory/images/intro_response_covariance.png",
-    "docs/ert/theory/images/intro_response_matrix.png",
-    "docs/ert/theory/images/intro_result_of_updating.png",
-    "docs/ert/theory/images/intro_spurious_correlations.png",
-    "docs/ert/theory/images/intro_tiny_reservoir.png",
-    "docs/ert/theory/images/intro_uncertainty.png",
-    "docs/ert/theory/images/intro_updating.png",
-    "docs/ert/about/v9_auto_scale.png",
-    "docs/ert/about/v10_manage_experiments.png",
-    "docs/ert/about/log_scale_button.png",
-    "docs/ert/about/license-retry.png",
-    "docs/ert/about/click-on-stderr.png",
-    "docs/ert/about/click-show-details.png",
-    "docs/ert/about/v9_update_param.png",
-    "docs/ert/about/version-8.0-suggestor.png",
-    "docs/ert/about/misfit_export.png",
-    "docs/ert/about/breakthrough.png",
-    "docs/ert/about/v25/boxplot_options.png",
-    "docs/ert/about/v25/change_label.png",
-    "docs/ert/about/v25/collapse_sidepanel.png",
-    "docs/ert/about/v25/collapsed_view.png",
-    "docs/ert/about/v25/create_custom.png",
-    "docs/ert/about/v25/custom_palette_dialog.png",
-    "docs/ert/about/v25/general_options.png",
-    "docs/ert/about/v25/label_dialog.png",
-    "docs/ert/about/v25/log_scale.png",
-    "docs/ert/about/v25/magnifying_glass.png",
-    "docs/ert/about/v25/navigation.png",
-    "docs/ert/about/v25/observations.png",
-    "docs/ert/about/v25/open_palette.png",
-    "docs/ert/about/v25/plot_controls.png",
-    "docs/ert/about/v25/select_palette.png",
-    "docs/ert/about/v25/statistics_options.png",
-    "docs/ert/about/v24/batch_objective.png",
-    "docs/ert/about/v24/constraint_plot.png",
-    "docs/ert/about/v24/controls.png",
-    "docs/ert/about/v24/controls_alternative_view.png",
-    "docs/ert/about/v24/objective_gradient.png",
-    "docs/ert/about/v24/run_status_experiment_view.png",
+    "docs/ert/theory/images/*",
+    "docs/ert/about/*",
+    "docs/ert/about/v25/*",
+    "docs/ert/about/v24/*",
     "docs/ert/img/logo.png",
-    "docs/ert/reference/configuration/fig/errf_symmetric_uniform.png",
-    "docs/ert/reference/configuration/fig/truncated_ok.png",
-    "docs/ert/reference/configuration/fig/const.png",
-    "docs/ert/reference/configuration/fig/lognormal.png",
-    "docs/ert/reference/configuration/fig/derrf_symmetric_uniform.png",
-    "docs/ert/reference/configuration/fig/dunif.png",
-    "docs/ert/reference/configuration/fig/loguniform.png",
-    "docs/ert/reference/configuration/fig/triangular.png",
-    "docs/ert/reference/configuration/fig/derrf_right_skewed.png",
-    "docs/ert/reference/configuration/fig/normal.png",
-    "docs/ert/reference/configuration/fig/uniform.png",
-    "docs/ert/reference/configuration/fig/errf_right_skewed_unimodal.png",
+    "docs/ert/reference/configuration/fig/*",
     "docs/ert/getting_started/configuration/poly_new/minimal/warning.png",
     "docs/ert/getting_started/configuration/poly_new/minimal/startdialog.png",
     "docs/ert/getting_started/updating_parameters/fig/prior_response.png",
     "docs/ert/getting_started/updating_parameters/fig/prior_params.png",
-    "docs/everest/images/deter_vs_robust.png",
-    "docs/everest/images/architecture_design.png",
-    "docs/everest/images/everest_wf.png",
-    "docs/everest/images/enopt_objfunc.png",
-    "docs/everest/images/Everest_vs_Ert_03.png",
-    "docs/everest/images/Everest_vs_Ert_02.png",
-    "docs/everest/images/Everest_vs_Ert_01.png",
+    "docs/everest/images/*",
 ]
 
 
@@ -569,16 +502,22 @@ def test_that_all_png_files_under_the_docs_folder_has_been_considered_for_testin
     source_root: Path,
 ):
     docs_folder = source_root / "docs"
-    pngs_files_in_docs = {
-        str(file.relative_to(source_root)) for file in docs_folder.rglob("*.png")
+    pngs_files_in_docs = set(docs_folder.rglob("*.png"))
+
+    considered_pngs = {
+        file
+        for pattern in (
+            *PNGS_NOT_APPLICABLE_FOR_GENERATION,
+            *PNGS_TESTED_FOR_CHANGE,
+            *TODOS,
+        )
+        for file in source_root.glob(pattern)
     }
 
-    uncategorized_png_files = (
-        pngs_files_in_docs
-        - set(PNGS_NOT_APPLICABLE_FOR_GENERATION)
-        - set(PNGS_TESTED_FOR_CHANGE)
-        - set(TODOS)
-    )
+    uncategorized_png_files = {
+        str(file.relative_to(source_root))
+        for file in pngs_files_in_docs - considered_pngs
+    }
 
     newline = "\n  - "
     assert not uncategorized_png_files, (
