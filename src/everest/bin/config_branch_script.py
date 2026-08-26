@@ -8,7 +8,7 @@ from typing import Any
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
-from everest.everest_storage import EverestStorage
+from everest.util._utils import get_everest_experiment
 
 from .utils import ArgParseFormatter
 
@@ -64,7 +64,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 
 def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] | None:
-    experiment = EverestStorage.get_everest_experiment(optimization_dir)
+    experiment = get_everest_experiment(optimization_dir)
 
     assert experiment is not None
     function_batch = next(

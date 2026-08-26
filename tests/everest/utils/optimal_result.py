@@ -6,7 +6,7 @@ import numpy as np
 import polars as pl
 
 from everest.config.utils import CONSTRAINT_TOLERANCE, constraint_violation_check
-from everest.everest_storage import EverestStorage
+from everest.util._utils import get_everest_experiment
 
 
 @dataclass
@@ -17,7 +17,7 @@ class OptimalResult:
 
 
 def get_optimal_result(output_dir: str) -> OptimalResult | None:
-    experiment = EverestStorage.get_everest_experiment(Path(output_dir))
+    experiment = get_everest_experiment(Path(output_dir))
     max_total_objective = np.inf
     matching_batches = []
     for ens in experiment.ensembles_with_function_results:

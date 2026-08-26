@@ -6,7 +6,7 @@ import pytest
 from everest.bin.config_branch_script import config_branch_entry
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
-from everest.everest_storage import EverestStorage
+from everest.util._utils import get_everest_experiment
 
 
 @pytest.mark.slow
@@ -31,7 +31,7 @@ def test_config_branch_entry(cached_example):
     assert len(new_controls[0]["variables"]) == len(old_controls[0]["variables"])
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
+    experiment = get_everest_experiment(config.storage_dir)
 
     new_controls_initial_guesses = {
         var["initial_guess"] for var in new_controls[0]["variables"]
@@ -79,7 +79,7 @@ def test_config_branch_preserves_config_section_order(cached_example):
     assert "-initial_guess:0.1" in diff_lines
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
+    experiment = get_everest_experiment(config.storage_dir)
     control_names = experiment.parameter_keys
     batch_1_info = next(b for b in experiment.ensembles if b.iteration == 1)
     realization_control_vals = batch_1_info.realization_controls.select(
