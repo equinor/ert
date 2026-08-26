@@ -13,9 +13,7 @@ from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 T = TypeVar("T", bound="TransSettingsValidation")
 
 
-class TransSettingsValidation(BaseModel):
-    model_config = {"extra": "forbid"}
-
+class TransSettingsValidation(BaseModel, extra="forbid"):
     @classmethod
     def create(cls, *args: Any, **kwargs: Any) -> Self:
         return cls(*args, **kwargs)
