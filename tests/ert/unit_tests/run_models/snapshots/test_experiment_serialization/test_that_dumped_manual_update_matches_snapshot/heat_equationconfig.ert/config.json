@@ -232,5 +232,6 @@
         "radius": 20.0
       }
     }
-  }
+  },
+  "experiment_name": "my_experiment"
 }

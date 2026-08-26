@@ -18,6 +18,7 @@ from ert.gui.ertwidgets import (
     StringBox,
     Suggestor,
     TargetEnsembleModel,
+    TextModel,
 )
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
@@ -35,6 +36,7 @@ class Arguments:
     ensemble_id: str
     target_ensemble: str
     ensemble_size: int
+    experiment_name: str
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -72,6 +74,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         ]
         self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         layout.addRow("Ensemble:", self._ensemble_selector)
+
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
@@ -102,6 +105,23 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
+
+        self._experiment_name_field = StringBox(
+            TextModel(""),
+            placeholder_text="Manual update"
+            if notifier.current_ensemble is None
+            else f"Manual update of {notifier.current_ensemble.name}",
+        )
+
+        self._experiment_name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._experiment_name_field)
+        self._ensemble_selector.ensemble_selected.connect(
+            lambda ensemble: self._experiment_name_field.setPlaceholderText(
+                f"Manual update of {ensemble.name}"
+                if ensemble is not None
+                else "Manual update"
+            )
+        )
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
@@ -143,6 +163,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             realizations=self._active_realizations_field.text(),
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
+            experiment_name=self._experiment_name_field.get_text,
         )
 
     def _realizations_from_fs(self) -> None:
@@ -187,3 +208,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, ManualUpdatePanel):
             self._realizations_from_fs()
+
+            self._experiment_name_field.setPlaceholderText(
+                f"Manual update of {self._ensemble_selector.selected_ensemble.name}"
+                if self._ensemble_selector.selected_ensemble is not None
+                else "Manual update"
+            )

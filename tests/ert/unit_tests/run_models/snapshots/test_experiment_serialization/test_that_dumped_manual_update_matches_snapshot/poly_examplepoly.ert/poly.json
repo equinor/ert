@@ -193,5 +193,6 @@
   "ert_templates": [],
   "shape_registry": {
     "shapes": {}
-  }
+  },
+  "experiment_name": "my_experiment"
 }
