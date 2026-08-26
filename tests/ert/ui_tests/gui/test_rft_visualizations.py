@@ -17,6 +17,7 @@ from ert.gui.plotting.plot_window import (
 from ert.gui.plotting.utils.plot_maps import (
     ENSEMBLE,
     STATISTICS,
+    TABS_FOR_DATA_ORIGIN,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectListWidget
 from ert.services import ErtServerController
@@ -146,14 +147,18 @@ def plot_figure(qtbot: QtBot, request, rft_config: ErtConfig):
                         if central_tab.isTabEnabled(widget_index):
                             central_tab.setCurrentWidget(tab)
                             assert (
-                                selected_key.dimensionality
-                                == tab._plotter.dimensionality
+                                tab.name
+                                in TABS_FOR_DATA_ORIGIN[
+                                    selected_key.metadata["data_origin"]
+                                ]
                             )
                             yield tab._figure.figure
                         else:
                             assert (
-                                selected_key.dimensionality
-                                != tab._plotter.dimensionality
+                                tab.name
+                                not in TABS_FOR_DATA_ORIGIN[
+                                    selected_key.metadata["data_origin"]
+                                ]
                             )
         assert found_selected_key
         plot_window.close()

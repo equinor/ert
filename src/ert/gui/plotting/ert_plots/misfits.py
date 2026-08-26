@@ -36,7 +36,6 @@ class MisfitsPlot:
     """
 
     def __init__(self) -> None:
-        self.dimensionality = 2
         self.requires_observations = True
 
     @staticmethod

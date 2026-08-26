@@ -55,7 +55,6 @@ def make_key_def():
             index_type=None,
             metadata={"data_origin": data_origin},
             observations=True,
-            dimensionality=2,
         )
 
     return _make

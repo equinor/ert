@@ -20,6 +20,7 @@ from pytestqt.qtbot import QtBot
 from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
+from ert.config.summary_config import SummaryConfig
 from ert.gui.plotting.ert_plots.gaussian_kde import plotGaussianKDE
 from ert.gui.plotting.ert_plots.histogram import HistogramPlot
 from ert.gui.plotting.models import DataTypeSeparator
@@ -31,12 +32,23 @@ from ert.gui.plotting.plot_window import (
 )
 from ert.gui.plotting.utils import PlotConfig, PlotContext
 from ert.gui.plotting.utils.plot_maps import (
+    CROSS_ENSEMBLE_STATISTICS,
     DISTRIBUTION,
     ENSEMBLE,
     ERT_PLOT_MAP,
+    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+    EVEREST_CONSTRAINT_PLOT,
+    EVEREST_CONTROLS_PLOT,
+    EVEREST_GRADIENTS_PLOT,
+    EVEREST_OBJECTIVE_FUNCTION_PLOT,
+    EVEREST_PLOT_MAP,
     GAUSSIAN_KDE,
     HISTOGRAM,
+    MISFITS,
+    SHARED_PLOT_MAP,
     STATISTICS,
+    STD_DEV,
+    TABS_FOR_DATA_ORIGIN,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
@@ -49,21 +61,18 @@ EVEREST_KEY_DEFS = [
         index_type="VALUE",
         metadata={"data_origin": "everest_objectives"},
         observations=False,
-        dimensionality=2,
     ),
     PlotApiKeyDefinition(
         "ctrl1",
         index_type=None,
         metadata={"data_origin": "everest_parameters"},
         observations=False,
-        dimensionality=1,
     ),
     PlotApiKeyDefinition(
         "con1",
         index_type="VALUE",
         metadata={"data_origin": "everest_constraints"},
         observations=False,
-        dimensionality=2,
     ),
 ]
 
@@ -73,7 +82,6 @@ OBSERVATION_KEY_DEFS = [
         index_type="VALUE",
         metadata={"data_origin": "everest_observations"},
         observations=True,
-        dimensionality=2,
     )
 ]
 
@@ -233,9 +241,8 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     plot_api_key_def_positive = PlotApiKeyDefinition(
         "gen_kw_a",
         index_type=None,
-        metadata={"data_origin": "GEN_KW"},
+        metadata={"data_origin": "gen_kw"},
         observations=False,
-        dimensionality=1,
         parameter=GenKwConfig(
             name="gen_kw_a", distribution={"name": "uniform", "min": 0, "max": 1}
         ),
@@ -243,9 +250,8 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     plot_api_key_def_negative = PlotApiKeyDefinition(
         "gen_kw_b",
         index_type=None,
-        metadata={"data_origin": "GEN_KW"},
+        metadata={"data_origin": "gen_kw"},
         observations=False,
-        dimensionality=1,
         parameter=GenKwConfig(
             name="gen_kw_b", distribution={"name": "uniform", "min": -1, "max": 0}
         ),
@@ -355,9 +361,8 @@ def test_that_history_and_observations_checkboxes_match_data_availability(
     key_def = PlotApiKeyDefinition(
         key,
         index_type="TIME",
-        metadata={"data_origin": "SUMMARY"},
+        metadata={"data_origin": "summary"},
         observations=observations_available,
-        dimensionality=1,
         response=MagicMock(type="summary"),
     )
     mock_plot_api.responses_api_key_defs = [key_def]
@@ -404,17 +409,15 @@ def test_that_history_and_observations_checkbox_state_update_when_switching_keys
         PlotApiKeyDefinition(
             "summary",
             index_type="TIME",
-            metadata={"data_origin": "SUMMARY"},
+            metadata={"data_origin": "summary"},
             observations=True,
-            dimensionality=1,
             response=MagicMock(type="summary"),
         ),
         PlotApiKeyDefinition(
             "summaryH",
             index_type="TIME",
-            metadata={"data_origin": "SUMMARY"},
+            metadata={"data_origin": "summary"},
             observations=False,
-            dimensionality=1,
             response=MagicMock(type="summary"),
         ),
     ]
@@ -488,9 +491,8 @@ def test_that_general_option_checkboxes_change_rendered_plot(
     key_def = PlotApiKeyDefinition(
         "summary",
         index_type="TIME",
-        metadata={"data_origin": "SUMMARY"},
+        metadata={"data_origin": "summary"},
         observations=True,
-        dimensionality=2,
         response=MagicMock(type="summary"),
     )
     ensemble = EnsembleObject(
@@ -634,9 +636,8 @@ def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
     key_def = PlotApiKeyDefinition(
         "gen_kw",
         index_type=None,
-        metadata={"data_origin": "GEN_KW"},
+        metadata={"data_origin": "gen_kw"},
         observations=False,
-        dimensionality=1,
         parameter=GenKwConfig(
             name="gen_kw",
             distribution={"name": "uniform", "min": 0, "max": 1},
@@ -723,7 +724,6 @@ def _plot_window_with_response_and_gen_kw_keys(
             index_type="VALUE",
             metadata={"data_origin": "gen_data"},
             observations=False,
-            dimensionality=2,
             response=MagicMock(type="gen_data"),
         )
     ]
@@ -731,9 +731,8 @@ def _plot_window_with_response_and_gen_kw_keys(
         PlotApiKeyDefinition(
             "gen_kw",
             index_type=None,
-            metadata={"data_origin": "GEN_KW"},
+            metadata={"data_origin": "gen_kw"},
             observations=False,
-            dimensionality=1,
             parameter=GenKwConfig(
                 name="gen_kw",
                 distribution={"name": "uniform", "min": 0, "max": 1},
@@ -831,9 +830,8 @@ def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
     key_def = PlotApiKeyDefinition(
         "gen_kw",
         index_type=None,
-        metadata={"data_origin": "GEN_KW"},
+        metadata={"data_origin": "gen_kw"},
         observations=False,
-        dimensionality=1,
         parameter=GenKwConfig(
             name="gen_kw",
             distribution={"name": "uniform", "min": 0.0, "max": 1.0},
@@ -899,9 +897,8 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
     plot_api_key_def = PlotApiKeyDefinition(
         "animal_type",
         index_type=None,
-        metadata={"data_origin": "GEN_KW"},
+        metadata={"data_origin": "gen_kw"},
         observations=False,
-        dimensionality=1,
         parameter=GenKwConfig(
             name="animal_type",
             distribution=RawSettings(),
@@ -999,7 +996,6 @@ def test_that_clicking_axis_label_emits_edit_request(
         axes.set_ylabel("Old y label")
 
     plotter = MagicMock()
-    plotter.dimensionality = 1
     plotter.requires_observations = False
     plotter.plot.side_effect = _plot_with_axis_labels
 
@@ -1047,7 +1043,6 @@ def test_that_clicking_title_emits_edit_request(qtbot: QtBot) -> None:
         axes.set_title("Old title")
 
     plotter = MagicMock()
-    plotter.dimensionality = 1
     plotter.requires_observations = False
     plotter.plot.side_effect = _plot_with_title
 
@@ -1090,7 +1085,6 @@ def test_that_hovering_editable_text_shows_it_as_clickable(
     monkeypatch.setattr(QToolTip, "showText", show_text)
 
     plotter = MagicMock()
-    plotter.dimensionality = 1
     plotter.requires_observations = False
 
     def _plot_with_editable_text(figure: Figure, *_args, **_kwargs) -> None:
@@ -1159,7 +1153,7 @@ def _create_plot_window_for_text_edit(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.getSelectedKey = MagicMock(
-        return_value=MagicMock(key="some_key", dimensionality=1, metadata={})
+        return_value=MagicMock(key="some_key", metadata={"data_origin": "gen_kw"})
     )
     return plot_window
 
@@ -1325,9 +1319,8 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
         PlotApiKeyDefinition(
             "some_key",
             index_type=None,
-            metadata={"data_origin": "GEN_KW"},
+            metadata={"data_origin": "gen_kw"},
             observations=False,
-            dimensionality=1,
             parameter=GenKwConfig(
                 name="some_key",
                 distribution=RawSettings(),
@@ -1386,7 +1379,6 @@ def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
             index_type=None,
             metadata={"data_origin": "summary"},
             observations=False,
-            dimensionality=2,
             response=BreakthroughConfig(),
         )
     ]
@@ -1530,3 +1522,157 @@ def test_that_datatype_separators_are_never_set_as_default(
 def test_that_seismic_y_label_is_created(key, expected_y_label):
     label = make_seismic_y_label(key)
     assert label == expected_y_label
+
+
+@pytest.mark.parametrize(
+    ("data_origin", "has_observations", "expected_enabled_tabs"),
+    [
+        (
+            "gen_kw",
+            False,
+            {HISTOGRAM, GAUSSIAN_KDE, DISTRIBUTION, CROSS_ENSEMBLE_STATISTICS},
+        ),
+        ("field", False, {STD_DEV}),
+        ("summary", False, {ENSEMBLE, STATISTICS}),
+        ("summary", True, {ENSEMBLE, STATISTICS, MISFITS}),
+    ],
+)
+def test_that_enabled_plot_tabs_are_determined_by_the_data_origin_of_the_key(
+    data_origin: str,
+    has_observations: bool,
+    expected_enabled_tabs: set[str],
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    is_parameter = data_origin in {"gen_kw", "field"}
+    key_def = PlotApiKeyDefinition(
+        "some_key",
+        index_type=None if is_parameter else "VALUE",
+        metadata={"data_origin": data_origin},
+        observations=has_observations,
+        parameter=GenKwConfig(
+            name="some_key",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        )
+        if data_origin == "gen_kw"
+        else None,
+        response=None if is_parameter else SummaryConfig(keys=["some_key"]),
+    )
+    mock_plot_api.parameters_api_key_defs = [key_def] if is_parameter else []
+    mock_plot_api.responses_api_key_defs = [] if is_parameter else [key_def]
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    plot_window.getSelectedKey = MagicMock(return_value=key_def)
+    plot_window.keySelected()
+
+    central_tab = plot_window._central_tab
+    enabled_tabs = {
+        central_tab.tabText(index)
+        for index in range(central_tab.count())
+        if central_tab.isTabEnabled(index)
+    }
+    assert enabled_tabs == expected_enabled_tabs
+
+
+@pytest.mark.parametrize(
+    ("data_origin", "expected_enabled_tabs"),
+    [
+        ("everest_parameters", {EVEREST_CONTROLS_PLOT}),
+        (
+            "everest_objectives",
+            {EVEREST_OBJECTIVE_FUNCTION_PLOT, EVEREST_GRADIENTS_PLOT},
+        ),
+        ("everest_constraints", {EVEREST_CONSTRAINT_PLOT, EVEREST_GRADIENTS_PLOT}),
+        ("everest_batch_objectives", {EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT}),
+        ("summary", {ENSEMBLE}),
+    ],
+)
+def test_that_everest_data_origins_only_enable_their_own_plot_tabs(
+    data_origin: str,
+    expected_enabled_tabs: set[str],
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.is_everest_application", lambda: True
+    )
+
+    is_parameter = data_origin == "everest_parameters"
+    key_def = PlotApiKeyDefinition(
+        "some_key",
+        index_type=None if is_parameter else "VALUE",
+        metadata={"data_origin": data_origin},
+        observations=False,
+        parameter=None,
+        response=SummaryConfig(keys=["some_key"]) if data_origin == "summary" else None,
+    )
+    mock_plot_api.parameters_api_key_defs = [key_def] if is_parameter else []
+    mock_plot_api.responses_api_key_defs = [] if is_parameter else [key_def]
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+            has_func_eval=True,
+        )
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+    plot_window.getSelectedKey = MagicMock(return_value=key_def)
+    plot_window.keySelected()
+
+    central_tab = plot_window._central_tab
+    enabled_tabs = {
+        central_tab.tabText(index)
+        for index in range(central_tab.count())
+        if central_tab.isTabEnabled(index)
+    }
+    assert enabled_tabs == expected_enabled_tabs
+
+
+def test_that_every_plot_tab_is_reachable_from_exactly_the_known_data_origins() -> None:
+    tabs_in_plot_maps = set(ERT_PLOT_MAP) | set(EVEREST_PLOT_MAP) | set(SHARED_PLOT_MAP)
+    tabs_in_origin_table = {
+        tab for tabs in TABS_FOR_DATA_ORIGIN.values() for tab in tabs
+    }
+    assert tabs_in_origin_table == tabs_in_plot_maps

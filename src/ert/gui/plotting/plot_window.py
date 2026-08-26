@@ -35,7 +35,6 @@ from ert.gui.plotting.utils.plot_maps import (
     ENSEMBLE,
     ERT_PLOT_MAP,
     EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
-    EVEREST_CONSTRAINT_PLOT,
     EVEREST_CONTROLS_PLOT,
     EVEREST_GRADIENTS_PLOT,
     EVEREST_OBJECTIVE_FUNCTION_PLOT,
@@ -46,6 +45,7 @@ from ert.gui.plotting.utils.plot_maps import (
     SHARED_PLOT_MAP,
     STATISTICS,
     STD_DEV,
+    TABS_FOR_DATA_ORIGIN,
 )
 from ert.gui.plotting.widgets.plot_side_panel import PlotSidePanel
 from ert.gui.utils import is_everest_application
@@ -235,21 +235,10 @@ class PlotWindow(QMainWindow):
             self._central_tab.currentChanged.connect(self.current_tab_changed)
             self.log_plot_tab_usage(self._central_tab.tabText(0), default=True)
 
-            self._prev_key_dimensionality = -1
             self._prev_key: str | None = None
             self._prev_key_origin: str | None = None
-            if self.is_everest:
-                self._default_tab_for_dimensionality = {
-                    1: self._widget_by_name(ENSEMBLE),
-                    2: self._widget_by_name(EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT),
-                    3: self._widget_by_name(ENSEMBLE),  # Fallback
-                }
-            else:
-                self._default_tab_for_dimensionality = {
-                    1: self._widget_by_name(HISTOGRAM),
-                    2: self._widget_by_name(ENSEMBLE),
-                    3: self._widget_by_name(STD_DEV),
-                }
+            self._prev_available_tabs: frozenset[str] | None = None
+            self._default_tab_for_available_tabs: dict[frozenset[str], PlotWidget] = {}
 
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
@@ -436,19 +425,8 @@ class PlotWindow(QMainWindow):
             require_gradient=is_gradient_plot,
         )
 
-        if (
-            plot_widget._plotter.dimensionality == key_def.dimensionality
-            or (
-                plot_widget.name
-                in {
-                    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
-                    EVEREST_OBJECTIVE_FUNCTION_PLOT,
-                    EVEREST_CONTROLS_PLOT,
-                    EVEREST_GRADIENTS_PLOT,
-                    EVEREST_CONSTRAINT_PLOT,
-                }
-            )
-            or (key_def.metadata.get("data_origin") == "everest_batch_objectives")
+        if plot_widget.name in TABS_FOR_DATA_ORIGIN.get(
+            key_def.metadata.get("data_origin", ""), []
         ):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
@@ -772,36 +750,11 @@ class PlotWindow(QMainWindow):
         available_widgets = [
             widget
             for widget in self._plot_widgets
-            if widget._plotter.dimensionality == key_def.dimensionality
+            if widget.name
+            in TABS_FOR_DATA_ORIGIN.get(key_def.metadata.get("data_origin", ""), [])
             and (key_def.observations or not widget._plotter.requires_observations)
-            and not is_everest_specific_widget
             and (not is_observed_seismic or widget.name == MISFITS)
         ]
-
-        def everest_data_origin_check(origin: list[str]) -> bool:
-            return key_def.metadata.get("data_origin") in origin
-
-        everest_plot_and_origin = [
-            (EVEREST_OBJECTIVE_FUNCTION_PLOT, ["everest_objectives"]),
-            (EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT, ["everest_batch_objectives"]),
-            (EVEREST_CONSTRAINT_PLOT, ["everest_constraints"]),
-            (EVEREST_CONTROLS_PLOT, ["everest_parameters"]),
-            (EVEREST_GRADIENTS_PLOT, ["everest_constraints", "everest_objectives"]),
-        ]
-
-        def everest_available_widget_selection(
-            widget_tuple_list: list[tuple[str, list[str]]],
-        ) -> None:
-            for widget_name, origin in widget_tuple_list:
-                widget = self._widget_by_name(widget_name)
-                if everest_data_origin_check(origin):
-                    if widget not in available_widgets:
-                        available_widgets.append(widget)
-                elif widget in available_widgets:
-                    available_widgets.remove(widget)
-
-        if self.is_everest:
-            everest_available_widget_selection(everest_plot_and_origin)
 
         previous_widget = self._central_tab.currentWidget()
 
@@ -818,21 +771,25 @@ class PlotWindow(QMainWindow):
             )
         current_widget = self._central_tab.currentWidget()
 
-        if 0 < self._prev_key_dimensionality != key_def.dimensionality:
+        available_tabs = frozenset(widget.name for widget in available_widgets)
+        if (
+            self._prev_available_tabs is not None
+            and self._prev_available_tabs != available_tabs
+        ):
             if isinstance(previous_widget, PlotWidget):
-                self._default_tab_for_dimensionality[self._prev_key_dimensionality] = (
+                self._default_tab_for_available_tabs[self._prev_available_tabs] = (
                     previous_widget
                 )
-            current_widget = self._default_tab_for_dimensionality[
-                key_def.dimensionality
-            ]
+            remembered_widget = self._default_tab_for_available_tabs.get(available_tabs)
+            if remembered_widget is not None:
+                current_widget = remembered_widget
 
         if current_widget not in available_widgets and available_widgets:
             current_widget = available_widgets[0]
 
         self._central_tab.setCurrentWidget(current_widget)
         self._central_tab.currentChanged.connect(self.current_tab_changed)
-        self._prev_key_dimensionality = key_def.dimensionality
+        self._prev_available_tabs = available_tabs
         self._prev_key = key_def.key
         self._prev_key_origin = key_def.metadata.get("data_origin")
         self.update_plot()

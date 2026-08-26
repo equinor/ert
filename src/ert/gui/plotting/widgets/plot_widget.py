@@ -38,7 +38,6 @@ logger = logging.getLogger(__name__)
 class Plotter(Protocol):
     """Protocol for plot strategies used by PlotWidget."""
 
-    dimensionality: int
     requires_observations: bool
 
     def plot(

@@ -190,7 +190,6 @@
       "name": "t",
       "forward_init": false,
       "update_strategy": "adaptive",
-      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.5,
@@ -204,7 +203,6 @@
       "name": "x",
       "forward_init": false,
       "update_strategy": "adaptive",
-      "dimensionality": 1,
       "distribution": {
         "name": "normal",
         "mean": 0.8,
@@ -218,7 +216,6 @@
       "name": "COND",
       "forward_init": true,
       "update_strategy": "adaptive",
-      "dimensionality": 3,
       "ertbox_params": {
         "nx": 50,
         "ny": 50,

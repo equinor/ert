@@ -60,7 +60,6 @@ logger = logging.getLogger(__name__)
 
 class SurfaceConfig(ParameterConfig):
     type: Literal["surface"] = "surface"
-    dimensionality: Literal[2] = 2
     ncol: int
     nrow: int
     xori: float

@@ -196,7 +196,6 @@
       "name": "a",
       "forward_init": false,
       "update_strategy": "global",
-      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.0,
@@ -210,7 +209,6 @@
       "name": "b",
       "forward_init": false,
       "update_strategy": "global",
-      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.0,
@@ -224,7 +222,6 @@
       "name": "c",
       "forward_init": false,
       "update_strategy": "global",
-      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.0,

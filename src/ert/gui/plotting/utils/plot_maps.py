@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from ert.config.known_response_types import KNOWN_ERT_RESPONSE_TYPES
 from ert.gui.plotting.ert_plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
@@ -51,4 +52,25 @@ EVEREST_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
 }
 SHARED_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     ENSEMBLE: EnsemblePlot,
+}
+
+ERT_RESPONSE_ORIGINS: frozenset[str] = frozenset(
+    response_type.model_fields["type"].default
+    for response_type in KNOWN_ERT_RESPONSE_TYPES
+)
+
+_ERT_RESPONSE_TABS = [ENSEMBLE, STATISTICS, MISFITS]
+
+TABS_FOR_DATA_ORIGIN: dict[str, list[str]] = {
+    "gen_kw": [HISTOGRAM, GAUSSIAN_KDE, DISTRIBUTION, CROSS_ENSEMBLE_STATISTICS],
+    "surface": _ERT_RESPONSE_TABS,
+    "field": [STD_DEV],
+    "everest_parameters": [EVEREST_CONTROLS_PLOT],
+    "everest_objectives": [
+        EVEREST_OBJECTIVE_FUNCTION_PLOT,
+        EVEREST_GRADIENTS_PLOT,
+    ],
+    "everest_constraints": [EVEREST_CONSTRAINT_PLOT, EVEREST_GRADIENTS_PLOT],
+    "everest_batch_objectives": [EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT],
+    **dict.fromkeys(ERT_RESPONSE_ORIGINS, _ERT_RESPONSE_TABS),
 }

@@ -52,7 +52,6 @@ class PlotApiKeyDefinition(NamedTuple):
     key: str
     index_type: str | None
     observations: bool
-    dimensionality: int
     metadata: dict[Any, Any]
     filter_on: dict[Any, Any] | None = None
     parameter: ParameterConfig | None = None
@@ -171,7 +170,6 @@ class PlotApi:
                         key=param_key,
                         index_type=None,
                         observations=False,
-                        dimensionality=metadata["dimensionality"],
                         metadata={"data_origin": metadata["type"]},
                         parameter=param_cfg,
                     )
@@ -219,7 +217,6 @@ class PlotApi:
                                             key=subkey,
                                             index_type="VALUE",
                                             observations=has_obs,
-                                            dimensionality=2,
                                             metadata={
                                                 "data_origin": response_type,
                                             },
@@ -233,7 +230,6 @@ class PlotApi:
                                     key=key,
                                     index_type="VALUE",
                                     observations=has_obs,
-                                    dimensionality=2,
                                     metadata={"data_origin": response_type},
                                     response=response_config,
                                 )
@@ -245,7 +241,6 @@ class PlotApi:
                             key="total objective value",
                             index_type="VALUE",
                             observations=False,
-                            dimensionality=2,
                             metadata={"data_origin": "everest_batch_objectives"},
                         )
                     )
