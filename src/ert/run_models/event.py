@@ -216,17 +216,16 @@ def load_workflow_events(path: Path) -> list[WorkflowEvent]:
     if not path.is_file():
         return []
 
-    events = []
-    for line_number, line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
-        if not line.strip():
-            continue
-        try:
-            events.append(WorkflowEvent.model_validate_json(line))
-        except ValueError:
-            logger.warning(
-                f"Skipping unreadable workflow event on line {line_number} of {path}",
-                exc_info=True,
-            )
+    events: list[WorkflowEvent] = []
+    with path.open("rb") as events_file:
+        for line_number, line in enumerate(events_file, start=1):
+            if not line.strip():
+                continue
+            try:
+                events.append(WorkflowEvent.model_validate_json(line))
+            except ValueError:
+                logger.warning(
+                    f"Skipping unreadable workflow event on line {line_number} of {path}",
+                    exc_info=True,
+                )
     return events
