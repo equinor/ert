@@ -179,9 +179,7 @@ def perform_ensemble_update(
         std_cutoff=observation_settings.outlier_settings.std_cutoff,
         global_scaling=global_scaling,
     )
-    smoother_snapshot.observations_and_responses = preprocessed_data.drop(
-        [*map(str, iens_active_index), "response_key"]
-    ).select(
+    smoother_snapshot.observations_and_responses = preprocessed_data.select(
         "observation_key",
         "index",
         "observations",
