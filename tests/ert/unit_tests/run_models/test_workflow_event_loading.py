@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from ert.run_models.event import WorkflowEvent, load_workflow_events
+from ert.workflow_runner import WorkflowJobStatus
 
 
 def _event(job_name: str = "JOB", **kwargs) -> WorkflowEvent:
@@ -16,7 +17,7 @@ def _event(job_name: str = "JOB", **kwargs) -> WorkflowEvent:
             "arguments": [],
             "stdout": "",
             "stderr": "",
-            "failed": False,
+            "status": WorkflowJobStatus.SUCCESS,
             "timestamp": datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             **kwargs,
         }

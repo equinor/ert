@@ -135,8 +135,6 @@ class _ExperimentWidget(QWidget):
         html += "</table>"
         self._observations_text_edit.setHtml(html)
 
-        # The workflow tab loads lazily, so it needs a nudge when the user
-        # switches experiment while already looking at it.
         self._current_tab_changed(self._tab_widget.currentIndex())
 
 
