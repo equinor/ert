@@ -118,10 +118,9 @@ log.
 Workflows hooked in with :code:`HOOK_WORKFLOW` are in addition recorded
 alongside the experiment they belong to, in
 :code:`<ENSPATH>/experiments/<experiment_id>/workflow_events.jsonl`. That file
-holds one JSON object per job invocation and backs the *Workflows* tab, both in
-the run dialog while the experiment runs and under *Manage experiments* once it
+holds one JSON object per job invocation and backs the *Workflows* tab in *Manage experiments* once it
 has finished, so the output of an earlier run can be inspected again later. It
-is a machine-readable file; read the ERT log rather than this file directly.
+is a machine-readable file and users are encouraged to read the ERT log instead.
 Output from hooks that ran before the experiment is created, such as
 :code:`PRE_EXPERIMENT`, is held back and written once the experiment exists.
 
