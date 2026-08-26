@@ -18,12 +18,13 @@ from uuid import UUID, uuid4
 import polars as pl
 import xarray as xr
 from filelock import FileLock, Timeout
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, TypeAdapter
 
 import ert.storage
 from ert.config import ErtConfig
 from ert.shared import __version__
 
+from .blob_data import BlobInfo, BlobStorageData, BlobType
 from .local_ensemble import LocalEnsemble
 from .local_experiment import ExperimentConfig, LocalExperiment
 from .mode import BaseMode, Mode, ModeLiteral, require_write
@@ -748,6 +749,64 @@ class LocalStorage(BaseMode):
         if numeric_suffixes:
             return experiment_name + "_" + str(max(numeric_suffixes) + 1)
         return experiment_name + "_0"
+
+    @require_write
+    def save_blob(
+        self,
+        *,
+        name: str,
+        data: bytes,
+        blob_info: BlobInfo,
+        file_type: str,
+        blob_dir: Path,
+    ) -> BlobStorageData:
+        """Create a blob record and persist its data and JSON sidecar."""
+        blob_id = uuid4().hex[:8]
+        uri = f"{blob_id}.blob"
+        instance = BlobStorageData(
+            uri=uri,
+            file_size=len(data),
+            file_type=file_type,
+            name=name,
+            blob_info=blob_info,
+        )
+        blob_dir.mkdir(parents=True, exist_ok=True)
+        self._write_transaction(blob_dir / uri, data)
+        self._write_transaction(
+            blob_dir / f"{uri}.json",
+            instance.model_dump_json(indent=2).encode("utf-8"),
+        )
+        return instance
+
+    def load_blobs(
+        self,
+        blob_dir: Path,
+        blob_type: BlobType | None = None,
+    ) -> list[BlobStorageData]:
+        """Return metadata for every blob in *blob_dir*, optionally filtered by type."""
+        if not blob_dir.exists():
+            return []
+        adapter: TypeAdapter[BlobStorageData] = TypeAdapter(BlobStorageData)
+        results = []
+        for json_path in blob_dir.glob("*.json"):
+            meta = adapter.validate_json(json_path.read_bytes())
+            if blob_type is None or meta.blob_info.blob_type == blob_type:
+                results.append(meta)
+        return results
+
+    def load_blob(self, blob_dir: Path, uri: str) -> bytes:
+        """Return raw bytes for the blob identified by *uri* inside *blob_dir*."""
+        resolved_dir = blob_dir.resolve()
+        blob_path = (resolved_dir / uri).resolve()
+        try:
+            blob_path.relative_to(resolved_dir)
+        except ValueError:
+            logger.warning("Blob URI %s resolves outside of blob directory", uri)
+            raise FileNotFoundError(uri) from None
+        if not blob_path.exists():
+            logger.warning("Blob file %s not found", uri)
+            raise FileNotFoundError(uri)
+        return blob_path.read_bytes()
 
     def _write_transaction(self, filename: str | os.PathLike[str], data: bytes) -> None:
         """

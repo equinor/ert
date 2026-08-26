@@ -655,11 +655,11 @@ class LocalExperiment(BaseMode):
         blob_type: BlobType | None = None,
     ) -> list[BlobStorageData]:
         """List blob metadata stored at experiment level, filtered by type."""
-        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
+        return self._storage.load_blobs(self._path / BLOB_DATA_DIR, blob_type)
 
     def load_blob(self, uri: str) -> bytes:
         """Load blob bytes by URI from the experiment-level blob directory."""
-        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
+        return self._storage.load_blob(self._path / BLOB_DATA_DIR, uri)
 
     def load_rho_matrix(
         self, param_name: str, observation_keys: list[str] | None = None
@@ -698,7 +698,7 @@ class LocalExperiment(BaseMode):
     @require_write
     def save_blob(self, event: AnalysisRhoMatrixEvent) -> None:
         """Save the rho-matrix blob emitted during a distance-localization update."""
-        BlobStorageData.save_blob(
+        self._storage.save_blob(
             name=event.param_name,
             data=event.matrix_bytes,
             blob_info=RhoStorageData(
@@ -710,7 +710,6 @@ class LocalExperiment(BaseMode):
                 observation_keys=event.observation_keys,
             ),
             file_type="application/x-npz",
-            storage=self._storage,
             blob_dir=self._path / BLOB_DATA_DIR,
         )
 
