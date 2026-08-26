@@ -153,7 +153,7 @@ def test_report_inconsistent_events():
         reporter.report(Finish())
 
 
-def test_that_stop_with_exited_event_after_checksum_does_not_raise():
+def test_that_stop_with_exited_event_after_checksum_does_not_raise(caplog):
     fmstep1 = ForwardModelStep(
         {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
     )
@@ -165,6 +165,8 @@ def test_that_stop_with_exited_event_after_checksum_does_not_raise():
         reporter.report(Checksum(checksum_dict={}, run_path="."))
 
         reporter.stop(exited_event=Exited(fmstep1, exit_code=1))
+
+    assert "Ignoring Exited event on stop" in caplog.text
 
 
 def test_report_with_failed_reporter_but_finished_jobs():
