@@ -253,13 +253,13 @@ def terminate_on_parent_death(
 
 
 def _join_terminate_thread(terminate_on_parent_death_thread: threading.Thread) -> None:
-    """Join the terminate thread, handling BaseServiceExit (which is used by EVEREST)"""
+    """Join the terminate thread, handling ErtServerExit (which is used by EVEREST)"""
     try:
         terminate_on_parent_death_thread.join()
     except ErtServerExit:
         logger = logging.getLogger("ert.shared.storage.info")
         logger.info(
-            "Got BaseServiceExit while joining terminate thread, "
+            "Got ErtServerExit while joining terminate thread, "
             "as expected from ert_server.py"
         )
 
