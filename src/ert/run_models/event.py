@@ -225,7 +225,8 @@ def load_workflow_events(path: Path) -> list[WorkflowEvent]:
                 events.append(WorkflowEvent.model_validate_json(line))
             except ValueError:
                 logger.warning(
-                    f"Skipping unreadable workflow event on line {line_number} of {path}",
+                    f"Skipping unreadable workflow event on"
+                    f" line {line_number} of {path}",
                     exc_info=True,
                 )
     return events
