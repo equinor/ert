@@ -34,7 +34,10 @@ from _ert.forward_model_runner.reporting.message import (
     Running,
     Start,
 )
-from _ert.forward_model_runner.reporting.statemachine import StateMachine
+from _ert.forward_model_runner.reporting.statemachine import (
+    StateMachine,
+    TransitionError,
+)
 from _ert.threading import ErtThread
 
 logger = logging.getLogger(__name__)
@@ -107,7 +110,16 @@ class Event(Reporter):
 
     def stop(self, exited_event: Exited | None = None) -> None:
         if exited_event:
-            self._statemachine.transition(exited_event)
+            try:
+                self._statemachine.transition(exited_event)
+            except TransitionError:
+                # A SIGTERM (e.g. from terminating the experiment) can arrive
+                # after all steps have completed, when reporting an Exited event
+                # is no longer legal. Skip it and shut down cleanly.
+                logger.warning(
+                    "Ignoring Exited event on stop; "
+                    "forward model already past the running state"
+                )
         self._event_queue.put(Event._sentinel)
         self._done.set()
         if self._event_publisher_thread.is_alive():
