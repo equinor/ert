@@ -30,6 +30,14 @@ Highlighted changes
 Version 24.0
 ------------
 
+Run status of previously completed iterations
+#############################################
+
+Added functionality to store and visualize the run status of iterations in previously ran experiments.
+The status of the run can be inspected from the "Run status" tab, found when an iteration is selected in the "Manage experiments" view.
+
+.. image:: v24/run_status_experiment_view.png
+
 New Everest plots
 #################
 
@@ -44,12 +52,12 @@ separated into accepted and rejected batches.
 All available batches are plotted by default, up to a maximum of 20 (previously
 five).
 
-.. image:: v24_batch_objective.png
+.. image:: v24/batch_objective.png
 
 Hovering over a batch point shows why the batch was rejected, for example
 non-improvement or constraint violation.
 
-.. image:: v24_rejected_hover.gif
+.. image:: v24/rejected_hover.gif
 
 Objective function
 ~~~~~~~~~~~~~~~~~~
@@ -58,7 +66,7 @@ Shows every realization per batch. All batches are plotted by default, up to a
 maximum of 20 (previously five). Hovering over a line reveals the realization
 number, making it possible to isolate a single realization.
 
-.. image:: v24_objective_hover.gif
+.. image:: v24/objective_hover.gif
 
 Controls
 ~~~~~~~~
@@ -67,15 +75,15 @@ Several controls can now be plotted together, rather than one plot per control.
 This makes the batches easier to compare, since there is no longer any need to
 jump back and forth between separate control plots.
 
-.. image:: v24_controls.png
+.. image:: v24/controls.png
 
 The x-axis can be switched from batch to control. All batches are then drawn at
 the same x-position for a given control, so the vertical spread shows how much
 that control has varied across batches.
 
-.. image:: v24_alternative_controls_view.gif
+.. image:: v24/alternative_controls_view.gif
 
-.. image:: v24_controls_alternative_view.png
+.. image:: v24/controls_alternative_view.png
 
 Gradient
 ~~~~~~~~
@@ -83,7 +91,7 @@ Gradient
 Shows the gradient of one or more controls for each batch, for both objectives
 and constraints.
 
-.. image:: v24_objective_gradient.png
+.. image:: v24/objective_gradient.png
 
 Constraints
 ~~~~~~~~~~~
@@ -91,7 +99,7 @@ Constraints
 Plots the output constraint values together with their upper and lower bounds,
 making it easier to identify batch constraint violations.
 
-.. image:: v24_constraint_plot.png
+.. image:: v24/constraint_plot.png
 
 Version 23.0
 ------------
