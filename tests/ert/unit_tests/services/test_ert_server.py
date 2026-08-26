@@ -206,7 +206,7 @@ os.close(fd)
 )
 def test_json_deleted(server):
     """
-    _BaseService is responsible for deleting the JSON file after the
+    ErtServer is responsible for deleting the JSON file after the
     subprocess is finished running.
     """
     server.fetch_connection_info()  # wait for it to start
