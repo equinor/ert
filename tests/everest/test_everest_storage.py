@@ -5,7 +5,7 @@ import pytest
 
 from ert.storage import open_storage
 from everest.config import EverestConfig
-from everest.everest_storage import EverestStorage
+from everest.util._utils import get_everest_experiment
 
 
 @pytest.mark.slow
@@ -30,7 +30,7 @@ def test_csv_export(config_file, cached_example, snapshot):
     config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    experiment = EverestStorage.get_everest_experiment(
+    experiment = get_everest_experiment(
         storage_path=config.storage_dir,
     )
     combined_df, pert_real_df, batch_df = experiment.export_dataframes()
@@ -122,7 +122,7 @@ def test_that_constraint_gradients_have_one_row_per_control_with_multiple_object
         "math_func/config_multiobj_advanced.yml"
     )
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    experiment = EverestStorage.get_everest_experiment(storage_path=config.storage_dir)
+    experiment = get_everest_experiment(storage_path=config.storage_dir)
 
     gradients = [
         ensemble.batch_constraint_gradient

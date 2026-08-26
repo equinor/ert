@@ -16,7 +16,7 @@ from ert.services import ErtServerController
 from ert.storage import LocalStorage
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
-from everest.everest_storage import EverestStorage
+from everest.util._utils import get_everest_experiment
 
 from .utils import ArgParseFormatter
 
@@ -50,7 +50,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
             LocalStorage.perform_migration(Path(ever_config.storage_dir))
 
         try:
-            experiment = EverestStorage.get_everest_experiment(
+            experiment = get_everest_experiment(
                 storage_path=ever_config.storage_dir,
             )
         except StopIteration as e:

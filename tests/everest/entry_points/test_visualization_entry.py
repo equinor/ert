@@ -8,7 +8,7 @@ from tests.everest.utils import capture_streams, everest_config_with_defaults
 @patch("everest.bin.visualization_script.run_plotter_gui")
 @patch("everest.bin.visualization_script.ErtServerController")
 @patch(
-    "everest.bin.visualization_script.EverestStorage.get_everest_experiment",
+    "everest.bin.visualization_script.get_everest_experiment",
     side_effect=StopIteration,
 )
 @patch(
@@ -35,7 +35,7 @@ def test_that_visualization_entry_prints_error_when_storage_has_no_experiment(
 @patch("everest.bin.visualization_script.run_plotter_gui")
 @patch("everest.bin.visualization_script.ErtServerController")
 @patch(
-    "everest.bin.visualization_script.EverestStorage.get_everest_experiment",
+    "everest.bin.visualization_script.get_everest_experiment",
     return_value=MagicMock(ensembles_with_function_results=[]),
 )
 @patch(
@@ -62,7 +62,7 @@ def test_that_visualization_entry_prints_error_when_no_function_results(
 @patch("everest.bin.visualization_script.run_plotter_gui")
 @patch("everest.bin.visualization_script.ErtServerController")
 @patch(
-    "everest.bin.visualization_script.EverestStorage.get_everest_experiment",
+    "everest.bin.visualization_script.get_everest_experiment",
     return_value=MagicMock(ensembles_with_function_results=["some_ensemble"]),
 )
 @patch(

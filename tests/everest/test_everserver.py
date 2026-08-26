@@ -32,11 +32,11 @@ from everest.detached import (
     start_server,
     wait_for_server,
 )
-from everest.everest_storage import EverestStorage
 from everest.strings import (
     OPT_FAILURE_ALL_REALIZATIONS,
     OPT_FAILURE_REALIZATIONS,
 )
+from everest.util._utils import get_everest_experiment
 
 
 @pytest.fixture
@@ -153,7 +153,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     assert status is not None
     assert status.status == ExperimentState.completed
     assert status.message == "Maximum number of batches reached."
-    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
+    experiment = get_everest_experiment(config.storage_dir)
 
     # Check that there is only one batch.
     assert {b.iteration for b in experiment.ensembles} == {0}
