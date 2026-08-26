@@ -284,13 +284,15 @@ class WorkflowLogView(QWidget):
         """
         if path == self._loaded_path:
             return
-        self._loaded_path = path
+        self._loaded_path = None
 
         try:
             events = load_workflow_events(path)
         except OSError:
             logger.warning(f"Could not read workflow events from {path}", exc_info=True)
             events = []
+        else:
+            self._loaded_path = path
 
         if not events:
             self._workflow_log.clear()
