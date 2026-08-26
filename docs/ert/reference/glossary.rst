@@ -7,14 +7,11 @@ language for communication between ERT developers. In other words, explain the
 ERT community's perspective on related concepts. Furthermore, the hope is that
 the same terms can then be used for communication with related development
 efforts and our users. With this in mind it is important to realise that the
-text below is not the *ultimate truth* |TM|, but a basis for which we can
+text below is not the ultimate truth, but a basis for which we can
 continue our discussions. This will be most valuable if we continuously compare
 our codified data models, as well as our communication with users (through
 dialog and user interfaces) towards these concepts. And it might very well be
 that it is the below concepts that needs to be matured further.
-
-.. |TM| unicode:: U+2122
-.. trademark sign
 
 A second motivation for writing this is that as soon as ERT is exposing a
 concept via its interface, that being through a configuration file, an API or a
