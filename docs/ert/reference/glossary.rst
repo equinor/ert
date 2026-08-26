@@ -109,6 +109,10 @@ It is not about being correct, it is about being relevant and coherent.
         ert we only consider simulators that produces
         :term:`summary files` as output. This includes, OPM flow and Eclipse.
 
+    runpath
+        A directory on disk where the execution of the forward model happens. There is one
+        runpath for every realization.
+
     simulation
         There are two uses of the word simulation:
          * A synonym for running a realization, ie. executing all the forward model steps.
