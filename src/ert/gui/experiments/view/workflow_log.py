@@ -119,12 +119,6 @@ class WorkflowLogWidget(QWidget):
             self._append_row(event)
 
     def load_events(self, events: Iterable[WorkflowEvent]) -> None:
-        """Replace everything on display with the given events.
-
-        Unlike repeated :meth:`add_event` calls this rebuilds the iteration
-        selector once, at the end, which is what a stored experiment's events
-        should be loaded with.
-        """
         self.clear()
         for event in events:
             self._events.setdefault(self._group_key(event), []).append(event)
@@ -246,13 +240,7 @@ class WorkflowLogWidget(QWidget):
 
 
 class WorkflowLogView(QWidget):
-    """Workflow output of a finished experiment, read back from storage.
-
-    Wraps the same :class:`WorkflowLogWidget` the run dialog shows live, so a
-    stored experiment's workflow output looks exactly like it did while it ran.
-    The events are only read when :meth:`load_events` is first called with a
-    given path, which lets the owning tab load them lazily.
-    """
+    # Workflow output of a finished experiment, read back from storage.
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -274,11 +262,6 @@ class WorkflowLogView(QWidget):
         layout.addWidget(self._stack)
 
     def load_events(self, path: Path) -> None:
-        """Show the workflow events stored at ``path``, reading it at most once.
-
-        Args:
-            path: The experiment's ``workflow_events.jsonl``.
-        """
         if path == self._loaded_path:
             return
         self._loaded_path = None

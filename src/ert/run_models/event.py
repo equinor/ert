@@ -195,24 +195,8 @@ def load_status_snapshot_event(path: Path) -> FullSnapshotEvent | None:
 
 
 def load_workflow_events(path: Path) -> list[WorkflowEvent]:
-    """Read the workflow job invocations persisted for an experiment.
+    # Read the workflow job invocations persisted for an experiment.
 
-    An experiment that never ran a workflow has no such file, which is not an
-    error, so a missing file yields no events.
-
-    Lines that cannot be parsed are skipped rather than discarding the whole
-    file: an interrupted ERT can leave a half-written final line behind, and
-    the output that was written before that is still worth showing.
-
-    Args:
-        path: The ``workflow_events.jsonl`` file to read.
-
-    Returns:
-        One event per readable line, in the order they were written.
-
-    Raises:
-        OSError: If the file exists but cannot be read.
-    """
     if not path.is_file():
         return []
 
