@@ -382,6 +382,7 @@ def test_that_load_results_manually_screenshot_is_up_to_date(
         run_path_edit = get_child(panel, TextBox, name="runpath_edit_lrm")
         current_directory = str(Path.cwd())
         run_path_edit.setText(run_path_edit.get_text.replace(current_directory, "."))
+        run_path_edit.clearFocus()
 
         gui_evaluator.compare_img_with_gui(
             "load_results_manually.png",
