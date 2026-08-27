@@ -91,6 +91,8 @@ class ExperimentPanel(QWidget):
         run_path = config.runpath_config.runpath_format_string
         self._config_file = config_file
 
+        self._parameters_updatable = self._is_parameters_updatable()
+
         self.setObjectName("experiment_panel")
         layout = QVBoxLayout()
 
@@ -182,7 +184,6 @@ class ExperimentPanel(QWidget):
                 run_path,
                 notifier,
             ),
-            True,
         )
 
         active_realizations = config.active_realizations
@@ -196,19 +197,10 @@ class ExperimentPanel(QWidget):
                 run_path,
                 notifier,
             ),
-            True,
         )
         self.addExperimentConfigPanel(
             EvaluateEnsemblePanel(run_path, notifier),
-            True,
         )
-
-        merged_parameters = config.parameter_configurations_with_design_matrix
-        updatable_parameters_exist = any(
-            p.update_strategy is not None for p in merged_parameters
-        )
-        observations_exist = bool(config.observation_declarations)
-        experiment_model_enabled = updatable_parameters_exist and observations_exist
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
@@ -219,7 +211,6 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_model_enabled,
         )
         self.addExperimentConfigPanel(
             EnsembleSmootherPanel(
@@ -230,7 +221,6 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_model_enabled,
         )
         self.addExperimentConfigPanel(
             EnsembleInformationFilterPanel(
@@ -241,11 +231,9 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_model_enabled,
         )
         self.addExperimentConfigPanel(
             ManualUpdatePanel(run_path, notifier, analysis_config),
-            experiment_model_enabled,
         )
 
         self.configuration_summary = SummaryPanel(config)
@@ -253,9 +241,20 @@ class ExperimentPanel(QWidget):
 
         self.setLayout(layout)
 
-    def addExperimentConfigPanel(
-        self, panel: ExperimentConfigPanel, mode_enabled: bool
-    ) -> None:
+    def _is_parameters_updatable(self) -> bool:
+        merged_params = self.config.parameter_configurations_with_design_matrix
+        updatable_parameters_exist = any(
+            p.update_strategy is not None for p in merged_params
+        )
+        observations_exist = bool(self.config.observation_declarations)
+        return updatable_parameters_exist and observations_exist
+
+    def _is_panel_enabled(self, requires_updatable_parameters: bool) -> bool:
+        if requires_updatable_parameters:
+            return self._parameters_updatable
+        return True
+
+    def addExperimentConfigPanel(self, panel: ExperimentConfigPanel) -> None:
         assert isinstance(panel, ExperimentConfigPanel)
         self._experiment_stack.addWidget(panel)
         experiment_type = panel.get_experiment_type()
@@ -266,7 +265,7 @@ class ExperimentPanel(QWidget):
             experiment_type.group(),
         )
 
-        if not mode_enabled:
+        if not self._is_panel_enabled(panel.requires_updatable_parameters):
             item_count = self._experiment_type_combo.count() - 1
             model = self._experiment_type_combo.model()
             assert isinstance(model, QStandardItemModel)
