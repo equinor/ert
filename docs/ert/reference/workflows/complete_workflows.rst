@@ -1,7 +1,7 @@
 .. _complete_workflows_chapter:
 
 Complete workflows
-==================
+===========
 
 A workflow is a list of calls to workflow jobs, with additional arguments. The
 job name should be the first element on each line. Based on the two
@@ -132,6 +132,9 @@ alongside the experiment they belong to, in
 holds one JSON object per job invocation and backs the *Workflows* tab in *Manage experiments* once it
 has finished, so the output of an earlier run can be inspected again later. It
 is a machine-readable file and users are encouraged to read the ERT log instead.
+To view this in the GUI, select the experiment in the *Experiments* tool, then
+select the *Workflow events* tab, which lists every workflow job that has been
+run for that experiment; clicking on a job shows its output.
 Output from hooks that ran before the experiment is created, such as
 :code:`PRE_EXPERIMENT`, is held back and written once the experiment exists.
 
