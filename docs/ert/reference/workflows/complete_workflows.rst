@@ -89,7 +89,7 @@ Observe that the workflows being 'hooked in' with the
 keyword.
 
 Workflow output
------------------
+---------------
 
 Output from workflow jobs is written to the ERT log.
 Every job invocation gets an output that the job wrote to stdout and stderr::
@@ -103,6 +103,11 @@ Every job invocation gets an output that the job wrote to stdout and stderr::
 This covers every way a workflow can be started: hooked in with
 :code:`HOOK_WORKFLOW`, run with :code:`ert workflow`, or started from the *Run
 workflow* tool in the GUI.
+
+The :code:`status` field is one of :code:`success`, :code:`failed` or
+:code:`cancelled`. Only :code:`failed` is logged at :code:`ERROR` level;
+jobs that were stopped because the workflow was cancelled are logged at
+:code:`INFO` level.
 
 .. _runpath-file-workflows:
 
