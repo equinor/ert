@@ -40,6 +40,23 @@ class WorkflowJobResult:
             return "failed"
         return "success"
 
+    def as_log_entry(self, workflow_name: str, hook: str | None = None) -> str:
+        header = "Workflow job"
+        if hook is not None:
+            header += f" {hook}"
+        header += (
+            f" workflow={workflow_name} job={self.name}#{self.index} "
+            f"status={self.status}"
+        )
+        sections = [header]
+        if self.arguments:
+            sections.append(f"--- arguments ---\n{' '.join(self.arguments)}")
+        if self.stdout:
+            sections.append(f"--- stdout ---\n{self.stdout.rstrip('\n')}")
+        if self.stderr:
+            sections.append(f"--- stderr ---\n{self.stderr.rstrip('\n')}")
+        return "\n".join(sections)
+
 
 class WorkflowJobRunner:
     def __init__(self, workflow_job: WorkflowJob) -> None:
@@ -131,9 +148,11 @@ class WorkflowRunner:
         self,
         workflow: Workflow,
         fixtures: WorkflowFixtures,
+        hook: str | None = None,
     ) -> None:
         self.__workflow = workflow
         self.fixtures = fixtures
+        self._hook = hook
 
         self.__workflow_result: bool | None = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -175,17 +194,17 @@ class WorkflowRunner:
         for index, (job, args) in enumerate(self.__workflow):
             if self.__cancelled:
                 # The workflow was cancelled before this job started
-                self.__job_results.append(
-                    WorkflowJobResult(
-                        name=job.name,
-                        index=index,
-                        arguments=[str(arg) for arg in args],
-                        stdout="",
-                        stderr="",
-                        failed=False,
-                        cancelled=True,
-                    )
+                result = WorkflowJobResult(
+                    name=job.name,
+                    index=index,
+                    arguments=[str(arg) for arg in args],
+                    stdout="",
+                    stderr="",
+                    failed=False,
+                    cancelled=True,
                 )
+                self.__job_results.append(result)
+                logger.info(self._log_entry(result), extra=self._log_extra(result))
                 continue
 
             jobrunner = WorkflowJobRunner(job)
@@ -210,21 +229,11 @@ class WorkflowRunner:
             )
             self.__job_results.append(result)
 
-            info = {
-                "class": "WORKFLOW_JOB",
-                "job_name": result.name,
-                "arguments": " ".join(result.arguments),
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "execution_type": jobrunner.execution_type,
-            }
+            extra = self._log_extra(result, execution_type=jobrunner.execution_type)
             if failed and not job_was_cancelled:
-                logger.error(f"Workflow job {result.name} failed", extra=info)
+                logger.error(self._log_entry(result), extra=extra)
             else:
-                logger.info(
-                    f"Workflow job {result.name} completed successfully",
-                    extra=info,
-                )
+                logger.info(self._log_entry(result), extra=extra)
 
             if jobrunner.hasFailed() and jobrunner.stop_on_fail:
                 self.__running = False
@@ -235,6 +244,25 @@ class WorkflowRunner:
         self.__current_job = None
         self.__running = False
         self.__workflow_result = True
+
+    def _log_entry(self, result: WorkflowJobResult) -> str:
+        return result.as_log_entry(workflow_name=self.__workflow.name, hook=self._hook)
+
+    def _log_extra(
+        self, result: WorkflowJobResult, execution_type: str | None = None
+    ) -> dict[str, Any]:
+        extra: dict[str, Any] = {
+            "class": "WORKFLOW_JOB",
+            "job_name": result.name,
+            "workflow_name": self.__workflow.name,
+            "arguments": " ".join(result.arguments),
+            "status": result.status,
+        }
+        if self._hook is not None:
+            extra["hook"] = self._hook
+        if execution_type is not None:
+            extra["execution_type"] = execution_type
+        return extra
 
     def isRunning(self) -> bool:
         if self.__running:
