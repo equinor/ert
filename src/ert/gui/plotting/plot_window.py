@@ -43,6 +43,7 @@ from ert.gui.plotting.utils.plot_maps import (
     GAUSSIAN_KDE,
     HISTOGRAM,
     MISFITS,
+    SEISMIC_MAP,
     SHARED_PLOT_MAP,
     STATISTICS,
     STD_DEV,
@@ -775,7 +776,7 @@ class PlotWindow(QMainWindow):
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
-            and (not is_observed_seismic or widget.name == MISFITS)
+            and (not is_observed_seismic or widget.name in {MISFITS, SEISMIC_MAP})
         ]
 
         def everest_data_origin_check(origin: list[str]) -> bool:
