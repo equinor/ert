@@ -2,6 +2,7 @@ import asyncio
 import logging
 import math
 import os
+import stat
 import uuid
 import warnings
 from pathlib import Path
@@ -16,14 +17,20 @@ from _ert.events import EESnapshotUpdate
 from ert.config import (
     CircleShapeConfig,
     ErtConfig,
+    ExecutableWorkflow,
+    HookRuntime,
     ModelConfig,
     ObservationType,
+    PreSimulationFixtures,
+    PreUpdateFixtures,
     QueueConfig,
     QueueSystem,
     ShapeRegistry,
+    Workflow,
 )
 from ert.config.parsing import ObservationDict
 from ert.config.queue_config import LsfQueueOptions
+from ert.config.workflow_fixtures import PostExperimentFixtures, PreExperimentFixtures
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
 from ert.ensemble_evaluator.evaluator import ParallelismViolation
 from ert.ensemble_evaluator.event import FullSnapshotEvent
@@ -31,11 +38,13 @@ from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models import create_model
+from ert.run_models.event import WorkflowEvent
 from ert.run_models.run_model import (
     RunModel,
     UserCancelled,
 )
 from ert.warnings import PostExperimentWarning
+from ert.workflow_runner import WorkflowJobResult, WorkflowJobStatus, WorkflowRunner
 
 
 @pytest.fixture(autouse=True)
@@ -880,3 +889,424 @@ def test_that_ert_config_logs_insensitive_information_about_observations_and_sha
         f"Count of shapes in ShapeRegistry: {{'{CircleShapeConfig.__name__}': 1}}"
         in caplog.text
     )
+
+
+def _drain(status_queue):
+    events = []
+    while not status_queue.empty():
+        events.append(status_queue.get())
+    return events
+
+
+def _persisted_workflow_events(experiment):
+    """The workflow events persisted to storage for an experiment, oldest first."""
+    if not experiment.workflow_events_path.exists():
+        return []
+    return [
+        WorkflowEvent.model_validate_json(line)
+        for line in experiment.workflow_events_path.read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+
+
+def _printing_workflow(tmp_path, name, script, *, stop_on_fail=False):
+    executable = tmp_path / f"{name}.py"
+    executable.write_text(f"#!/usr/bin/env python\n{script}\n", encoding="utf-8")
+    executable.chmod(executable.stat().st_mode | stat.S_IEXEC)
+    return Workflow(
+        src_file=str(tmp_path / f"{name}_workflow"),
+        cmd_list=[
+            (
+                ExecutableWorkflow(
+                    name=name.upper(),
+                    executable=str(executable),
+                    stop_on_fail=stop_on_fail,
+                ),
+                [],
+            )
+        ],
+    )
+
+
+def test_that_run_workflows_sends_a_workflow_event_per_job(tmp_path, use_tmpdir):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    workflow.cmd_list.append(workflow.cmd_list[0])
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_EXPERIMENT: [workflow]},
+        status_queue=status_queue,
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    events = _drain(status_queue)
+    assert [(e.job_name, e.job_index, e.stdout) for e in events] == [
+        ("HELLO", 0, "hello from workflow\n"),
+        ("HELLO", 1, "hello from workflow\n"),
+    ]
+    assert all(e.hook == "PRE_EXPERIMENT" for e in events)
+    assert all(e.run_id == brm._workflow_run_id for e in events)
+    assert all(e.status is WorkflowJobStatus.SUCCESS for e in events)
+
+
+def test_that_a_workflow_event_is_sent_when_stop_on_fail_aborts_the_workflow(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(
+        tmp_path,
+        "failing",
+        'import sys\nprint("printed before failing")\nsys.exit(1)',
+        stop_on_fail=True,
+    )
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_EXPERIMENT: [workflow]},
+        status_queue=status_queue,
+    )
+
+    with pytest.raises(RuntimeError, match="failed with error"):
+        brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    (event,) = _drain(status_queue)
+    assert event.status is WorkflowJobStatus.FAILED
+    assert event.stdout == "printed before failing\n"
+
+
+def test_that_a_cancelled_job_and_its_unstarted_siblings_carry_the_workflow_name(
+    use_tmpdir,
+):
+    """Regression test: a job interrupted by cancellation and the jobs after
+    it that never got a chance to start are both reported as cancelled, and
+    both kinds of result still carry the originating workflow's name once
+    turned into events.
+    """
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={},
+        status_queue=status_queue,
+    )
+
+    workflow_runner = MagicMock()
+    workflow_runner.workflow_job_results.return_value = [
+        WorkflowJobResult(
+            name="INTERRUPTED",
+            index=0,
+            arguments=[],
+            stdout="partial output",
+            stderr="",
+            status=WorkflowJobStatus.CANCELLED,
+        ),
+        WorkflowJobResult(
+            name="NEVER_STARTED",
+            index=1,
+            arguments=[],
+            stdout="",
+            stderr="",
+            status=WorkflowJobStatus.CANCELLED,
+        ),
+    ]
+
+    brm._send_workflow_events(
+        workflow_runner=workflow_runner,
+        hook=HookRuntime.PRE_SIMULATION,
+        workflow_name="my_workflow",
+        iteration=0,
+    )
+
+    interrupted_event, never_started_event = _drain(status_queue)
+    assert interrupted_event.workflow_name == "my_workflow"
+    assert interrupted_event.status is WorkflowJobStatus.CANCELLED
+
+    assert never_started_event.workflow_name == "my_workflow"
+    assert never_started_event.status is WorkflowJobStatus.CANCELLED
+
+
+def test_that_workflow_events_from_an_update_hook_carry_the_iteration(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello")')
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_UPDATE: [workflow]},
+        status_queue=status_queue,
+    )
+    ensemble = MagicMock()
+    ensemble.iteration = 2
+
+    brm.run_workflows(
+        fixtures=PreUpdateFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=MagicMock(),
+            ensemble=ensemble,
+            es_settings=MagicMock(),
+            observation_settings=MagicMock(),
+        )
+    )
+
+    (event,) = _drain(status_queue)
+    assert event.iteration == 2
+    assert event.hook == "PRE_UPDATE"
+
+
+def test_that_workflow_output_is_appended_to_the_experiment_in_storage(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=SimpleQueue(),
+    )
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    (event,) = _persisted_workflow_events(experiment)
+    assert event.hook == "PRE_SIMULATION"
+    assert event.workflow_name == "hello_workflow"
+    assert event.job_name == "HELLO"
+    assert event.job_index == 0
+    assert event.stdout == "hello from workflow\n"
+
+
+def test_that_pre_experiment_output_is_persisted_once_an_experiment_exists(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    later = _printing_workflow(tmp_path, "later", 'print("after the experiment")')
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.PRE_EXPERIMENT: [startup],
+            HookRuntime.PRE_SIMULATION: [later],
+        },
+        status_queue=SimpleQueue(),
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="exp")
+    assert not experiment.workflow_events_path.exists()
+
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
+        "before the experiment\n",
+        "after the experiment\n",
+    ]
+
+
+def test_that_a_failure_to_persist_workflow_events_does_not_stop_the_experiment(
+    tmp_path, use_tmpdir, caplog
+):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=status_queue,
+    )
+    ensemble = MagicMock()
+    ensemble.iteration = 0
+    ensemble.experiment.append_workflow_events.side_effect = OSError("disk on fire")
+
+    with caplog.at_level(logging.ERROR):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=MagicMock(),
+                ensemble=ensemble,
+            )
+        )
+
+    assert "Failed to persist workflow events to storage" in caplog.text
+    assert _drain(status_queue), "the event should still be sent"
+
+
+def test_that_pre_experiment_output_is_persisted_when_no_later_hook_has_workflows(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_EXPERIMENT: [startup]},
+        status_queue=SimpleQueue(),
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
+        "before the experiment\n"
+    ]
+
+
+def test_that_starting_an_experiment_discards_workflow_output_from_the_previous_one(
+    use_tmpdir,
+):
+    brm = create_run_model()
+    brm._status_queue = SimpleQueue()
+    brm._pending_workflow_events = [MagicMock()]
+    previous_log_id = brm._workflow_run_id
+
+    brm.start_simulations_thread(
+        EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
+    )
+
+    assert brm._pending_workflow_events == []
+    assert brm._workflow_run_id != previous_log_id
+
+
+def test_that_workflow_output_is_persisted_when_stop_on_fail_aborts_the_workflow(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(
+        tmp_path,
+        "failing",
+        'import sys\nprint("printed before failing")\nsys.exit(1)',
+        stop_on_fail=True,
+    )
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=SimpleQueue(),
+    )
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+
+    with pytest.raises(RuntimeError, match="failed with error"):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=brm._storage,
+                ensemble=ensemble,
+            )
+        )
+
+    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
+        "printed before failing\n"
+    ]
+
+
+def test_that_workflow_output_is_persisted_when_the_user_cancels_the_experiment(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    later = _printing_workflow(tmp_path, "later", 'print("never runs")')
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.PRE_EXPERIMENT: [startup],
+            HookRuntime.PRE_SIMULATION: [later],
+        },
+        status_queue=SimpleQueue(),
+    )
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    brm._end_event.set()
+
+    with pytest.raises(UserCancelled):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=brm._storage,
+                ensemble=ensemble,
+            )
+        )
+
+    startup_event, skipped_event = _persisted_workflow_events(experiment)
+    assert startup_event.stdout == "before the experiment\n"
+    assert startup_event.status is not WorkflowJobStatus.CANCELLED
+    assert skipped_event.workflow_name == "later_workflow"
+    assert skipped_event.status is WorkflowJobStatus.CANCELLED
+    assert not skipped_event.stdout
+
+
+def test_that_workflows_hooked_after_a_cancelled_one_still_appear_as_cancelled(
+    tmp_path, use_tmpdir
+):
+    """Regression test: when several workflows are hooked to the same
+    runtime and cancellation happens while the first one is running, the
+    workflows that come after it in the hook's list must still be reported
+    (as cancelled) rather than silently disappearing from the workflow events.
+    """
+    first = _printing_workflow(tmp_path, "first", 'print("first workflow")')
+    second = _printing_workflow(tmp_path, "second", 'print("second workflow")')
+    third = _printing_workflow(tmp_path, "third", 'print("third workflow")')
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.POST_EXPERIMENT: [first, second, third],
+        },
+        status_queue=status_queue,
+    )
+
+    # Simulate cancellation happening while the first workflow is running,
+    # i.e. before the second and third ones get their turn.
+    real_run_blocking = WorkflowRunner.run_blocking
+
+    def _run_blocking_then_cancel(self):
+        brm._end_event.set()
+        return real_run_blocking(self)
+
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+
+    with (
+        patch.object(
+            WorkflowRunner, "run_blocking", _run_blocking_then_cancel, create=False
+        ),
+        pytest.raises(UserCancelled),
+    ):
+        brm.run_workflows(
+            fixtures=PostExperimentFixtures(
+                random_seed=1, storage=brm._storage, ensemble=ensemble
+            )
+        )
+
+    events = _drain(status_queue)
+    assert [e.workflow_name for e in events] == [
+        "first_workflow",
+        "second_workflow",
+        "third_workflow",
+    ]
+    first_event, second_event, third_event = events
+
+    assert first_event.status is WorkflowJobStatus.SUCCESS
+
+    for skipped_event in (second_event, third_event):
+        assert skipped_event.status is WorkflowJobStatus.CANCELLED
