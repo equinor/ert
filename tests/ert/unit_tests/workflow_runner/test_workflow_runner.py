@@ -11,7 +11,7 @@ from ert.config.workflow_job import (
     UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
 )
-from ert.workflow_runner import WorkflowJobRunner, WorkflowRunner
+from ert.workflow_runner import WorkflowJobRunner, WorkflowJobStatus, WorkflowRunner
 from tests.ert.utils import wait_until
 
 from .workflow_common import WorkflowCommon
@@ -222,14 +222,13 @@ def test_that_job_results_contain_one_entry_per_job_invocation():
     runner = WorkflowRunner(workflow, fixtures={})
     runner.run_blocking()
 
-    results = runner.workflowJobResults()
+    results = runner.workflow_job_results()
     assert [(result.name, result.index, result.arguments) for result in results] == [
         ("DUMP", 0, ["dump1", "dump_text_1"]),
         ("DUMP", 1, ["dump2", "dump_text_2"]),
     ]
     assert [result.stdout for result in results] == ["Hello World\n", "Hello World\n"]
-    assert not any(result.failed for result in results)
-    assert not any(result.cancelled for result in results)
+    assert all(result.status is WorkflowJobStatus.SUCCESS for result in results)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -336,17 +335,16 @@ def test_workflow_thread_cancel_ert_script():
     assert not Path("wait_cancelled_2").exists()
     assert not Path("wait_finished_2").exists()
 
-    results = {result.index: result for result in workflow_runner.workflowJobResults()}
-    assert results[0].cancelled is False
-    assert results[0].failed is False
-    # The job that was interrupted by cancellation did not complete, so it
-    # is reported as failed rather than as a separate "cancelled" status.
-    assert results[1].cancelled is False
-    assert results[1].failed is True
+    results = {
+        result.index: result for result in workflow_runner.workflow_job_results()
+    }
+    assert results[0].status is WorkflowJobStatus.SUCCESS
+    # The job that was interrupted by cancellation is reported as cancelled,
+    # not as failed.
+    assert results[1].status is WorkflowJobStatus.CANCELLED
     # The remaining job never got a chance to start, so it is reported as
     # cancelled rather than silently omitted.
-    assert results[2].cancelled is True
-    assert results[2].failed is False
+    assert results[2].status is WorkflowJobStatus.CANCELLED
 
 
 @pytest.mark.slow

@@ -6,6 +6,7 @@ import types
 from concurrent import futures
 from concurrent.futures import Future
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any, Self
 
 from ert import ErtScript
@@ -19,6 +20,12 @@ from ert.config import (
 )
 
 
+class WorkflowJobStatus(StrEnum):
+    SUCCESS = "success"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
 @dataclass
 class WorkflowJobResult:
     name: str
@@ -26,19 +33,10 @@ class WorkflowJobResult:
     arguments: list[str]
     stdout: str
     stderr: str
-    failed: bool
-    cancelled: bool = False
+    status: WorkflowJobStatus
     timestamp: datetime.datetime = field(
         default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
     )
-
-    @property
-    def status(self) -> str:
-        if self.cancelled:
-            return "cancelled"
-        if self.failed:
-            return "failed"
-        return "success"
 
     def as_log_entry(self, workflow_name: str, hook: str | None = None) -> str:
         header = "Workflow job"
@@ -200,8 +198,7 @@ class WorkflowRunner:
                     arguments=[str(arg) for arg in args],
                     stdout="",
                     stderr="",
-                    failed=False,
-                    cancelled=True,
+                    status=WorkflowJobStatus.CANCELLED,
                 )
                 self.__job_results.append(result)
                 logger.info(self._log_entry(result), extra=self._log_extra(result))
@@ -211,13 +208,18 @@ class WorkflowRunner:
             self.__current_job = jobrunner
             logger.info(f"Workflow job {jobrunner.name} starting")
             jobrunner.run(args, fixtures=self.fixtures)
-            job_was_cancelled = self.__cancelled
 
-            failed = jobrunner.hasFailed() or job_was_cancelled
+            if self.__cancelled:
+                status = WorkflowJobStatus.CANCELLED
+            elif jobrunner.hasFailed():
+                status = WorkflowJobStatus.FAILED
+            else:
+                status = WorkflowJobStatus.SUCCESS
+
             self.__status[jobrunner.name] = {
                 "stdout": jobrunner.stdoutdata(),
                 "stderr": jobrunner.stderrdata(),
-                "completed": not failed,
+                "completed": status is WorkflowJobStatus.SUCCESS,
             }
             result = WorkflowJobResult(
                 name=jobrunner.name,
@@ -225,12 +227,12 @@ class WorkflowRunner:
                 arguments=[str(arg) for arg in args],
                 stdout=jobrunner.stdoutdata(),
                 stderr=jobrunner.stderrdata(),
-                failed=failed,
+                status=status,
             )
             self.__job_results.append(result)
 
             extra = self._log_extra(result, execution_type=jobrunner.execution_type)
-            if failed and not job_was_cancelled:
+            if status is WorkflowJobStatus.FAILED:
                 logger.error(self._log_entry(result), extra=extra)
             else:
                 logger.info(self._log_entry(result), extra=extra)
@@ -302,7 +304,7 @@ class WorkflowRunner:
     def workflowReport(self) -> dict[str, dict[str, Any]]:
         return self.__status
 
-    def workflowJobResults(self) -> list[WorkflowJobResult]:
+    def workflow_job_results(self) -> list[WorkflowJobResult]:
         """One entry per job invocation, in the order the jobs were run.
 
         Unlike workflowReport(), which is keyed by job name, this keeps the
