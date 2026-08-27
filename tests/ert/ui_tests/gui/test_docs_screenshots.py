@@ -239,9 +239,11 @@ class GuiEvaluator:
         if ssim_score < threshold:
             tmp_img_storage = Path("/tmp/test_docs_screenshots") / self.example_folder
             tmp_img_storage.mkdir(exist_ok=True, parents=True)
-            shutil.copy(temp_image_path, tmp_img_storage / img_name)
+            generated_image_path = tmp_img_storage / img_name
+            shutil.copy(temp_image_path, generated_image_path)
             self.gui_changed.append(
-                f"{image_path} SSIM:{ssim_score} < Threshold:{threshold}"
+                f"{image_path} SSIM:{ssim_score} < Threshold:{threshold} "
+                f"(generated image saved to {generated_image_path})"
             )
 
         temp_image_path.unlink()
