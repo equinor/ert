@@ -39,11 +39,13 @@ from ert.config import (
     ConfigValidationError,
     DesignMatrix,
     HookedWorkflowFixtures,
+    HookRuntime,
     ModelConfig,
     ParameterConfig,
     PostSimulationFixtures,
     PreSimulationFixtures,
     QueueConfig,
+    Workflow,
     create_workflow_fixtures_from_hooked,
 )
 from ert.config.queue_config import KnownQueueOptionsAdapter
@@ -74,7 +76,7 @@ from ert.storage import (
 from ert.trace import tracer
 from ert.utils import log_duration
 from ert.warnings import PostExperimentWarning, capture_specific_warning
-from ert.workflow_runner import WorkflowRunner
+from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
 
 from ._create_run_path import create_run_path
 from .event import (
@@ -83,6 +85,7 @@ from .event import (
     SnapshotUpdateEvent,
     StartEvent,
     StatusEvents,
+    WorkflowEvent,
 )
 
 if TYPE_CHECKING:
@@ -180,6 +183,8 @@ class RunModel(RunModelConfig, ABC):
     _start_iteration: int = PrivateAttr(default=0)
     _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
     _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
+    _workflow_run_id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
+    _pending_workflow_events: list[WorkflowEvent] = PrivateAttr(default_factory=list)
 
     def __init__(
         self,
@@ -380,6 +385,8 @@ class RunModel(RunModelConfig, ABC):
             self.send_event(WarningEvent(msg=str(message)))
 
         start_timestamp = datetime.datetime.now(tz=datetime.UTC)
+        self._workflow_run_id = uuid.uuid4()
+        self._pending_workflow_events = []
         try:  # ruff: ignore[too-many-statements-in-try-clause]
             self.send_event(StartEvent(timestamp=start_timestamp))
             with (
@@ -833,24 +840,110 @@ class RunModel(RunModelConfig, ABC):
         self,
         fixtures: HookedWorkflowFixtures,
     ) -> None:
-        for workflow in self.hooked_workflows[fixtures.hook]:
-            workflow_runner = WorkflowRunner(
-                workflow=workflow,
-                fixtures=create_workflow_fixtures_from_hooked(fixtures),
-                hook=str(fixtures.hook),
-            )
-            self._workflow_runner = workflow_runner
-            try:
+        ensemble = getattr(fixtures, "ensemble", None)
+        experiment = ensemble.experiment if ensemble is not None else None
+        iteration = ensemble.iteration if ensemble is not None else None
+        try:
+            for workflow in self.hooked_workflows[fixtures.hook]:
                 if self._end_event.is_set():
-                    workflow_runner.cancel()
-                    raise UserCancelled("Experiment cancelled by user during workflows")
+                    # Cancel all remaining workflows
+                    self._send_cancelled_workflow_events(
+                        workflow=workflow,
+                        hook=fixtures.hook,
+                        iteration=iteration,
+                    )
+                    continue
 
-                workflow_runner.run_blocking()
-            finally:
-                self._workflow_runner = None
+                workflow_runner = WorkflowRunner(
+                    workflow=workflow,
+                    fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                    hook=str(fixtures.hook),
+                )
+                self._workflow_runner = workflow_runner
+                try:
+                    workflow_runner.run_blocking()
+                finally:
+                    self._workflow_runner = None
+                    self._send_workflow_events(
+                        workflow_runner=workflow_runner,
+                        hook=fixtures.hook,
+                        workflow_name=workflow.name,
+                        iteration=iteration,
+                    )
+        finally:
+            self._persist_workflow_events_to_storage(experiment)
 
-            if self._end_event.is_set():
-                raise UserCancelled("Experiment cancelled by user during workflows")
+        if self._end_event.is_set():
+            raise UserCancelled("Experiment cancelled by user during workflows")
+
+    def _send_workflow_events(
+        self,
+        workflow_runner: WorkflowRunner,
+        hook: HookRuntime,
+        workflow_name: str,
+        iteration: int | None,
+    ) -> None:
+        events = [
+            WorkflowEvent(
+                run_id=self._workflow_run_id,
+                hook=str(hook),
+                workflow_name=workflow_name,
+                job_name=result.name,
+                job_index=result.index,
+                arguments=result.arguments,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                status=result.status,
+                timestamp=result.timestamp,
+                iteration=iteration,
+            )
+            for result in workflow_runner.workflow_job_results()
+        ]
+        for event in events:
+            self.send_event(event)
+        self._pending_workflow_events.extend(events)
+
+    def _send_cancelled_workflow_events(
+        self,
+        workflow: Workflow,
+        hook: HookRuntime,
+        iteration: int | None,
+    ) -> None:
+        # Report jobs not started due to cancellation
+        now = datetime.datetime.now(tz=datetime.UTC)
+        events = [
+            WorkflowEvent(
+                run_id=self._workflow_run_id,
+                hook=str(hook),
+                workflow_name=workflow.name,
+                job_name=job.name,
+                job_index=index,
+                arguments=[str(arg) for arg in args],
+                stdout="",
+                stderr="",
+                status=WorkflowJobStatus.CANCELLED,
+                timestamp=now,
+                iteration=iteration,
+            )
+            for index, (job, args) in enumerate(workflow)
+        ]
+        for event in events:
+            self.send_event(event)
+        self._pending_workflow_events.extend(events)
+
+    def _persist_workflow_events_to_storage(
+        self, experiment: Experiment | None
+    ) -> None:
+        # Hold back output until storage is created
+        if experiment is None or not self._pending_workflow_events:
+            return
+        try:
+            experiment.append_workflow_events(
+                event.model_dump_json() for event in self._pending_workflow_events
+            )
+        except Exception:
+            logger.exception("Failed to persist workflow events to storage")
+        self._pending_workflow_events = []
 
     def _evaluate_and_postprocess(
         self,
