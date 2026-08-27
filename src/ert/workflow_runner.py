@@ -33,36 +33,36 @@ class WorkflowJobRunner:
             arguments = []
         fixtures = {} if fixtures is None else fixtures
         self.__running = True
-        if self.job.min_args and len(arguments) < self.job.min_args:
-            raise ValueError(
-                f"The job: {self.job.name} requires at least "
-                f"{self.job.min_args} arguments, {len(arguments)} given."
+        try:
+            if self.job.min_args and len(arguments) < self.job.min_args:
+                raise ValueError(
+                    f"The job: {self.job.name} requires at least "
+                    f"{self.job.min_args} arguments, {len(arguments)} given."
+                )
+
+            if self.job.max_args and self.job.max_args < len(arguments):
+                raise ValueError(
+                    f"The job: {self.job.name} can only have "
+                    f"{self.job.max_args} arguments, {len(arguments)} given."
+                )
+
+            if isinstance(self.job, BaseErtScriptWorkflow):
+                ert_script_class = self.job.load_ert_script_class()
+                self.__script = ert_script_class()
+                # We let stop on fail either from class or config take precedence
+                self.stop_on_fail = self.job.stop_on_fail or self.__script.stop_on_fail
+
+            else:
+                self.__script = ExternalErtScript(
+                    self.job.executable,  # type: ignore
+                )
+                self.stop_on_fail = self.job.stop_on_fail
+
+            return self.__script.initializeAndRun(
+                self.job.argument_types(), arguments, fixtures
             )
-
-        if self.job.max_args and self.job.max_args < len(arguments):
-            raise ValueError(
-                f"The job: {self.job.name} can only have "
-                f"{self.job.max_args} arguments, {len(arguments)} given."
-            )
-
-        if isinstance(self.job, BaseErtScriptWorkflow):
-            ert_script_class = self.job.load_ert_script_class()
-            self.__script = ert_script_class()
-            # We let stop on fail either from class or config take precedence
-            self.stop_on_fail = self.job.stop_on_fail or self.__script.stop_on_fail
-
-        else:
-            self.__script = ExternalErtScript(
-                self.job.executable,  # type: ignore
-            )
-            self.stop_on_fail = self.job.stop_on_fail
-
-        result = self.__script.initializeAndRun(
-            self.job.argument_types(), arguments, fixtures
-        )
-        self.__running = False
-
-        return result
+        finally:
+            self.__running = False
 
     @property
     def name(self) -> str:
