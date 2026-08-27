@@ -24,14 +24,19 @@ logger = logging.getLogger(__name__)
 class _CaptureProxy(io.TextIOBase):
     """Stands in for ``sys.stdout``/``sys.stderr`` while workflow jobs run.
 
-    Everything written is passed on to the stream it replaced, so output still
-    reaches the terminal. Needed for capturing prints from internal jobs and
-    adding them to the log.
+    Internal jobs print straight to ``sys.stdout``/``sys.stderr``, so replacing
+    those streams is the only way to get hold of what they write. Everything
+    written is passed on to the stream this proxy replaced, so output still
+    reaches the terminal.
+
+    Capture is per-thread: a thread collects only what it writes itself, so
+    workflow jobs running concurrently do not pick up each other's output.
+    Threads that are not capturing are unaffected beyond the forwarding.
     """
 
-    def __init__(self, stream: TextIO | None) -> None:
+    def __init__(self, stream: TextIO) -> None:
         super().__init__()
-        self.wrapped = stream
+        self.wrapped_stream = stream
         self._local = threading.local()
         self._users = 0
 
@@ -58,9 +63,7 @@ class _CaptureProxy(io.TextIOBase):
     def write(self, s: str, /) -> int:
         for buffer in self._buffers:
             buffer.write(s)
-        if self.wrapped is None:
-            return len(s)
-        return self.wrapped.write(s)
+        return self.wrapped_stream.write(s)
 
     @override
     def writelines(self, lines: Iterable[str], /) -> None:  # type: ignore[override]
@@ -69,8 +72,7 @@ class _CaptureProxy(io.TextIOBase):
 
     @override
     def flush(self) -> None:
-        if self.wrapped is not None:
-            self.wrapped.flush()
+        self.wrapped_stream.flush()
 
     @override
     def close(self) -> None:
@@ -78,13 +80,11 @@ class _CaptureProxy(io.TextIOBase):
 
     @override
     def fileno(self) -> int:
-        if self.wrapped is None:
-            raise io.UnsupportedOperation("fileno")
-        return self.wrapped.fileno()
+        return self.wrapped_stream.fileno()
 
     @override
     def isatty(self) -> bool:
-        return self.wrapped is not None and self.wrapped.isatty()
+        return self.wrapped_stream.isatty()
 
     @override
     def writable(self) -> bool:
@@ -101,32 +101,32 @@ class _CaptureProxy(io.TextIOBase):
     @property
     @override
     def encoding(self) -> str:  # type: ignore[override]
-        return getattr(self.wrapped, "encoding", "utf-8")
+        return getattr(self.wrapped_stream, "encoding", "utf-8")
 
     @property
     @override
     def errors(self) -> str | None:  # type: ignore[override]
-        return getattr(self.wrapped, "errors", None)
+        return getattr(self.wrapped_stream, "errors", None)
 
     @property
     @override
     def newlines(self) -> Any:  # type: ignore[override]
-        return getattr(self.wrapped, "newlines", None)
+        return getattr(self.wrapped_stream, "newlines", None)
 
     @property
     def buffer(self) -> Any:
-        return self.wrapped.buffer  # type: ignore[union-attr]
+        return self.wrapped_stream.buffer
 
     @property
     def name(self) -> Any:
-        return getattr(self.wrapped, "name", None)
+        return getattr(self.wrapped_stream, "name", None)
 
     @property
     def line_buffering(self) -> bool:
-        return getattr(self.wrapped, "line_buffering", False)
+        return getattr(self.wrapped_stream, "line_buffering", False)
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self.__dict__["wrapped"], name)
+        return getattr(self.__dict__["wrapped_stream"], name)
 
 
 _capture_lock = threading.Lock()
@@ -135,6 +135,7 @@ _capture_lock = threading.Lock()
 @contextlib.contextmanager
 def _capturing(stream_name: str) -> Iterator[io.StringIO]:
     # Record what the calling thread writes to ``sys.<stream_name>``
+    proxy: _CaptureProxy
     with _capture_lock:
         stream = getattr(sys, stream_name)
         proxy = stream if isinstance(stream, _CaptureProxy) else _CaptureProxy(stream)
@@ -145,9 +146,14 @@ def _capturing(stream_name: str) -> Iterator[io.StringIO]:
             yield buffer
     finally:
         with _capture_lock:
+            # Captures running at the same time share one proxy, so only the
+            # last one to finish puts the original stream back. The identity
+            # check keeps us from doing so if something else has replaced
+            # sys.<stream_name> in the meantime, as restoring would then throw
+            # away their stream rather than ours.
             proxy._users -= 1
             if proxy._users == 0 and getattr(sys, stream_name) is proxy:
-                setattr(sys, stream_name, proxy.wrapped)
+                setattr(sys, stream_name, proxy.wrapped_stream)
 
 
 class ExternalScriptError(RuntimeError):
