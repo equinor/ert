@@ -232,7 +232,9 @@ def _open_and_capture_threshold(panel, qtbot):
         nonlocal captured_value
         dialog = QApplication.activeModalWidget()
         if isinstance(dialog, QDialog) and dialog.windowTitle() == "Edit variables":
-            spinner = dialog.findChild(QDoubleSpinBox, name="localization_threshold")
+            spinner = dialog.findChild(
+                QDoubleSpinBox, name="localization_correlation_threshold"
+            )
             if spinner is not None:
                 captured_value = spinner.value()
             dialog.accept()
