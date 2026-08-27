@@ -389,7 +389,7 @@ def test_that_distance_localization_stores_and_reuses_rho_blob(
         assert iter0_events[0].observation_keys == obs_keys
         assert iter0_events[0].data_type == "float32"
 
-        blobs = experiment.load_blobs(BlobType.RHO_MATRIX)
+        blobs = experiment._load_blob_metadata(BlobType.RHO_MATRIX)
         assert len(blobs) == 1
         assert isinstance(blobs[0].blob_info, RhoStorageData)
         assert blobs[0].blob_info.param_name == param_config.name

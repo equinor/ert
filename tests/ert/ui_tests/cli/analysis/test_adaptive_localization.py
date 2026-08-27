@@ -220,7 +220,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
     )
     with open_storage(storage_path) as storage:
         ensemble = storage.get_ensemble(posterior_ens_id)
-        scaling_blobs = ensemble.load_blobs(BlobType.SCALING_FACTORS)
+        scaling_blobs = ensemble.load_blob_metadata(BlobType.SCALING_FACTORS)
         assert len(scaling_blobs) == 1
         sf = pl.read_parquet(io.BytesIO(ensemble.load_blob(scaling_blobs[0].uri)))
         records_from_pl = (

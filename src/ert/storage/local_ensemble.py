@@ -1349,12 +1349,12 @@ class LocalEnsemble(BaseMode):
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
 
-    def load_blobs(
+    def load_blob_metadata(
         self,
         blob_type: BlobType | None = None,
     ) -> list[BlobStorageData]:
         """List blob metadata, filtered by type."""
-        return self._storage.load_blobs(self._path / BLOB_DATA_DIR, blob_type)
+        return self._storage.load_blob_metadata(self._path / BLOB_DATA_DIR, blob_type)
 
     def load_blob(self, uri: str) -> bytes:
         """Load blob bytes by URI."""
@@ -1431,7 +1431,7 @@ class LocalEnsemble(BaseMode):
 
     @property
     def has_function_results(self) -> bool:
-        for meta in self.load_blobs(BlobType.EVEREST_BATCH_DATA):
+        for meta in self.load_blob_metadata(BlobType.EVEREST_BATCH_DATA):
             if (
                 isinstance(meta.blob_info, EverestBatchData)
                 and meta.blob_info.dataframe_name == "batch_objectives"
@@ -1449,7 +1449,7 @@ class LocalEnsemble(BaseMode):
         )
 
     def _read_batch_dataframe(self, dataframe_name: str) -> pl.DataFrame | None:
-        for meta in self.load_blobs(BlobType.EVEREST_BATCH_DATA):
+        for meta in self.load_blob_metadata(BlobType.EVEREST_BATCH_DATA):
             if (
                 isinstance(meta.blob_info, EverestBatchData)
                 and meta.blob_info.dataframe_name == dataframe_name

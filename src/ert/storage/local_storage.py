@@ -778,7 +778,7 @@ class LocalStorage(BaseMode):
         )
         return instance
 
-    def load_blobs(
+    def load_blob_metadata(
         self,
         blob_dir: Path,
         blob_type: BlobType | None = None,
