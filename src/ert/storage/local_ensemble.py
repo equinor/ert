@@ -1349,16 +1349,16 @@ class LocalEnsemble(BaseMode):
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
 
-    def load_blobs(
+    def load_blob_metadata(
         self,
         blob_type: BlobType | None = None,
     ) -> list[BlobStorageData]:
         """List blob metadata, filtered by type."""
-        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
+        return self._storage.load_blob_metadata(self._path / BLOB_DATA_DIR, blob_type)
 
     def load_blob(self, uri: str) -> bytes:
         """Load blob bytes by URI."""
-        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
+        return self._storage.load_blob(self._path / BLOB_DATA_DIR, uri)
 
     @require_write
     def save_blob(
@@ -1370,7 +1370,7 @@ class LocalEnsemble(BaseMode):
             file_type = (
                 "application/x-npz" if blob_event.sparse else "application/x-npy"
             )
-            BlobStorageData.save_blob(
+            self._storage.save_blob(
                 name=blob_event.name,
                 data=blob_event.matrix_bytes,
                 blob_info=MatrixStorageData(
@@ -1381,11 +1381,10 @@ class LocalEnsemble(BaseMode):
                     parameter_group_sizes=blob_event.parameter_group_sizes,
                 ),
                 file_type=file_type,
-                storage=self._storage,
                 blob_dir=blob_dir,
             )
         elif blob_event.event_type == "AnalysisScalingEvent":
-            BlobStorageData.save_blob(
+            self._storage.save_blob(
                 name="scaling_factors",
                 data=blob_event.scaling_bytes,
                 blob_info=ScalingFactorsData(
@@ -1394,7 +1393,6 @@ class LocalEnsemble(BaseMode):
                     num_groups=blob_event.num_groups,
                 ),
                 file_type="application/parquet",
-                storage=self._storage,
                 blob_dir=blob_dir,
             )
         else:
@@ -1404,14 +1402,13 @@ class LocalEnsemble(BaseMode):
                 schema=blob_event.data.header,
                 orient="row",
             ).write_parquet(buf)
-            BlobStorageData.save_blob(
+            self._storage.save_blob(
                 name="observation_report",
                 data=buf.getvalue(),
                 blob_info=ObservationReportData(
                     update_algorithm=blob_event.update_algorithm,
                 ),
                 file_type="application/parquet",
-                storage=self._storage,
                 blob_dir=blob_dir,
             )
 
@@ -1424,18 +1421,17 @@ class LocalEnsemble(BaseMode):
             buf = io.BytesIO()
             df.write_parquet(buf)
             data = buf.getvalue()
-            BlobStorageData.save_blob(
+            self._storage.save_blob(
                 name=df_name,
                 data=data,
                 blob_info=EverestBatchData(dataframe_name=df_name),
                 file_type="application/parquet",
-                storage=self._storage,
                 blob_dir=blob_dir,
             )
 
     @property
     def has_function_results(self) -> bool:
-        for meta in self.load_blobs(BlobType.EVEREST_BATCH_DATA):
+        for meta in self.load_blob_metadata(BlobType.EVEREST_BATCH_DATA):
             if (
                 isinstance(meta.blob_info, EverestBatchData)
                 and meta.blob_info.dataframe_name == "batch_objectives"
@@ -1453,7 +1449,7 @@ class LocalEnsemble(BaseMode):
         )
 
     def _read_batch_dataframe(self, dataframe_name: str) -> pl.DataFrame | None:
-        for meta in self.load_blobs(BlobType.EVEREST_BATCH_DATA):
+        for meta in self.load_blob_metadata(BlobType.EVEREST_BATCH_DATA):
             if (
                 isinstance(meta.blob_info, EverestBatchData)
                 and meta.blob_info.dataframe_name == dataframe_name

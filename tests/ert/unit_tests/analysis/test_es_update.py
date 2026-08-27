@@ -870,7 +870,7 @@ def test_that_autoscaling_saves_scaling_factors_to_posterior_ensemble(storage):
             posterior_ensemble=posterior_ensemble,
         )
 
-        scaling_blobs = posterior_ensemble.load_blobs(BlobType.SCALING_FACTORS)
+        scaling_blobs = posterior_ensemble.load_blob_metadata(BlobType.SCALING_FACTORS)
         assert len(scaling_blobs) == 1
         raw = posterior_ensemble.load_blob(scaling_blobs[0].uri)
         scaling_factors = pl.read_parquet(io.BytesIO(raw))
@@ -881,7 +881,7 @@ def test_that_autoscaling_saves_scaling_factors_to_posterior_ensemble(storage):
         assert scaling_factors["scaling_factor"].to_list() == [2.0, 3.0]
 
         # Verify nothing was saved to the prior ensemble
-        assert prior_ensemble.load_blobs(BlobType.SCALING_FACTORS) == []
+        assert prior_ensemble.load_blob_metadata(BlobType.SCALING_FACTORS) == []
 
 
 @pytest.mark.parametrize(

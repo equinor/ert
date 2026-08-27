@@ -230,7 +230,7 @@ class EnsembleWidget(QWidget):
         ax.set_title(selected.observation_key)
         ax.grid(True)
         obs = selected.observation_data
-        scaling_blobs = self._ensemble.load_blobs(BlobType.SCALING_FACTORS)
+        scaling_blobs = self._ensemble.load_blob_metadata(BlobType.SCALING_FACTORS)
         if scaling_blobs:
             try:
                 raw = self._ensemble.load_blob(scaling_blobs[0].uri)

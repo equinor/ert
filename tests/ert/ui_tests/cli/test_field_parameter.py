@@ -48,7 +48,7 @@ def test_field_param_update_using_heat_equation_enif(
         n_params = n_cond + 2  # + INIT_TEMP_SCALE + CORR_LENGTH
         n_obs = len(experiment.observations["summary"])
 
-        matrix_blobs = posterior.load_blobs(BlobType.MATRIX)
+        matrix_blobs = posterior.load_blob_metadata(BlobType.MATRIX)
         blob_by_name = {m.name: m for m in matrix_blobs}
         assert set(blob_by_name) == {"H", "Prec_u", "Prec_eps", "K"}
 
@@ -84,7 +84,7 @@ def test_field_param_update_using_heat_equation_enif(
         assert k.blob_info.update_algorithm == "enif"
         assert len(posterior.load_blob(k.uri)) == k.file_size
 
-        obs_blobs = posterior.load_blobs(BlobType.OBSERVATION_REPORT)
+        obs_blobs = posterior.load_blob_metadata(BlobType.OBSERVATION_REPORT)
         assert len(obs_blobs) == 1
         assert obs_blobs[0].file_type == "application/parquet"
         assert obs_blobs[0].file_size > 0

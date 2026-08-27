@@ -292,7 +292,7 @@ def test_that_observation_report_blob_writes_parquet_metadata_and_can_be_loaded(
         assert metadata["name"] == "observation_report"
         assert metadata["file_size"] > 0
 
-        loaded_blobs = ensemble.load_blobs(BlobType.OBSERVATION_REPORT)
+        loaded_blobs = ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)
         assert len(loaded_blobs) == 1
         assert isinstance(loaded_blobs[0], BlobStorageData)
         assert isinstance(loaded_blobs[0].blob_info, ObservationReportData)
@@ -406,7 +406,7 @@ def test_that_load_blobs_rejects_malformed_blob_metadata(
         (blob_dir / "metadata.blob.json").write_bytes(metadata)
 
         with pytest.raises(ValidationError):
-            ensemble.load_blobs()
+            ensemble.load_blob_metadata()
 
 
 @pytest.mark.parametrize(
@@ -473,7 +473,7 @@ def test_that_sparse_and_dense_matrix_blobs_can_be_saved_and_loaded(tmp_path):
         ensemble.save_blob(dense_event)
 
         # load_blobs returns all matrix metadata
-        all_blobs = ensemble.load_blobs(BlobType.MATRIX)
+        all_blobs = ensemble.load_blob_metadata(BlobType.MATRIX)
         assert len(all_blobs) == 2
         assert all(isinstance(m, BlobStorageData) for m in all_blobs)
         assert all(isinstance(m.blob_info, MatrixStorageData) for m in all_blobs)
@@ -528,7 +528,7 @@ def test_that_parameter_group_sizes_is_stored_in_matrix_blob_metadata(tmp_path):
         )
         ensemble.save_blob(event)
 
-        blobs = ensemble.load_blobs(BlobType.MATRIX)
+        blobs = ensemble.load_blob_metadata(BlobType.MATRIX)
         assert len(blobs) == 1
         assert isinstance(blobs[0].blob_info, MatrixStorageData)
         assert blobs[0].blob_info.parameter_group_sizes == {"PORO": 8, "PERM": 3}
@@ -599,7 +599,7 @@ def test_that_batch_dataframes_are_saved_as_everest_blobs(tmp_path):
             }
         )
 
-        blobs = ensemble.load_blobs(BlobType.EVEREST_BATCH_DATA)
+        blobs = ensemble.load_blob_metadata(BlobType.EVEREST_BATCH_DATA)
         assert {blob.blob_info.dataframe_name for blob in blobs} == {
             "batch_objectives",
             "batch_objective_gradient",

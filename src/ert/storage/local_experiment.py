@@ -649,16 +649,16 @@ class LocalExperiment(BaseMode):
             if b.has_gradient_results
         ]
 
-    def load_blobs(
+    def _load_blob_metadata(
         self,
         blob_type: BlobType | None = None,
     ) -> list[BlobStorageData]:
         """List blob metadata stored at experiment level, filtered by type."""
-        return BlobStorageData.load_all(self._path / BLOB_DATA_DIR, blob_type)
+        return self._storage.load_blob_metadata(self._path / BLOB_DATA_DIR, blob_type)
 
     def load_blob(self, uri: str) -> bytes:
         """Load blob bytes by URI from the experiment-level blob directory."""
-        return BlobStorageData.read_bytes(self._path / BLOB_DATA_DIR, uri)
+        return self._storage.load_blob(self._path / BLOB_DATA_DIR, uri)
 
     def load_rho_matrix(
         self, param_name: str, observation_keys: list[str] | None = None
@@ -672,7 +672,7 @@ class LocalExperiment(BaseMode):
         However, if the current set contains keys absent from the blob the
         matrix is invalid and ``None`` is returned so it is recomputed.
         """
-        for blob in self.load_blobs(BlobType.RHO_MATRIX):
+        for blob in self._load_blob_metadata(BlobType.RHO_MATRIX):
             if (
                 isinstance(blob.blob_info, RhoStorageData)
                 and blob.blob_info.param_name == param_name
@@ -697,7 +697,7 @@ class LocalExperiment(BaseMode):
     @require_write
     def save_blob(self, event: AnalysisRhoMatrixEvent) -> None:
         """Save the rho-matrix blob emitted during a distance-localization update."""
-        BlobStorageData.save_blob(
+        self._storage.save_blob(
             name=event.param_name,
             data=event.matrix_bytes,
             blob_info=RhoStorageData(
@@ -709,7 +709,6 @@ class LocalExperiment(BaseMode):
                 observation_keys=event.observation_keys,
             ),
             file_type="application/x-npz",
-            storage=self._storage,
             blob_dir=self._path / BLOB_DATA_DIR,
         )
 

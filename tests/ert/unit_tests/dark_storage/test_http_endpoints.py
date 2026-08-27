@@ -367,7 +367,7 @@ def test_that_blob_endpoint_returns_blob_bytes(tmp_path, monkeypatch, dark_stora
                 update_algorithm="ensemble_smoother",
             )
         )
-        blob = ensemble.load_blobs()[0]
+        blob = ensemble.load_blob_metadata()[0]
         blob_bytes = ensemble.load_blob(blob.uri)
         ensemble_id = ensemble.id
 
@@ -426,7 +426,7 @@ def test_that_blob_endpoint_returns_everest_batch_dataframe_parquet(
             experiment, ensemble_size=1, iteration=0, name="batch_0"
         )
         ensemble.save_batch_dataframes({"batch_objectives": objectives})
-        [blob] = ensemble.load_blobs()
+        [blob] = ensemble.load_blob_metadata()
         ensemble_id = ensemble.id
 
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))

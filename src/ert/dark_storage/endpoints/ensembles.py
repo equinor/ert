@@ -50,7 +50,7 @@ def get_blobs(
 ) -> list[BlobStorageData]:
     with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-        return ensemble.load_blobs()
+        return ensemble.load_blob_metadata()
 
 
 @router.get("/ensembles/{ensemble_id}/blobs/{uri}")

@@ -45,7 +45,7 @@ def test_that_rho_matrix_metadata_contains_observation_keys(tmp_path):
         experiment = storage.create_experiment()
         experiment.save_blob(event)
 
-        blobs = experiment.load_blobs(BlobType.RHO_MATRIX)
+        blobs = experiment._load_blob_metadata(BlobType.RHO_MATRIX)
 
     assert len(blobs) == 1
     blob = blobs[0]
