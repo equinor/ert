@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -20,6 +21,7 @@ from ert.ensemble_evaluator.event import (
     StartEvent,
     WarningEvent,
 )
+from ert.workflow_runner import WorkflowJobStatus
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +95,23 @@ class RunModelErrorEvent(RunModelEvent):
             self.data.to_csv("Report", output_path / str(self.run_id))
 
 
+class WorkflowEvent(BaseModel, extra="forbid"):
+    """The output of a single workflow job invocation."""
+
+    event_type: Literal["WorkflowEvent"] = "WorkflowEvent"
+    run_id: UUID
+    hook: str
+    workflow_name: str
+    job_name: str
+    job_index: int
+    arguments: list[str]
+    stdout: str
+    stderr: str
+    status: WorkflowJobStatus
+    timestamp: datetime
+    iteration: int | None = None
+
+
 class RunPathCreationEvent(BaseModel, extra="forbid"):
     pass
 
@@ -129,6 +148,7 @@ StatusEvents = (
     | SnapshotUpdateEvent
     | StartEvent
     | WarningEvent
+    | WorkflowEvent
     | EnsembleEvaluationWarning
     | StartingTotalRunPathCreationEvent
     | FinishedTotalRunPathCreationEvent
