@@ -1,32 +1,11 @@
 import math
 
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QCheckBox, QDoubleSpinBox
+from PyQt6.QtWidgets import QDoubleSpinBox
 from pytestqt.qtbot import QtBot
 
 from ert.config import ESSettings
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-
-
-@pytest.fixture
-def panel_with_localization_on(qtbot: QtBot):
-    def func(settings, ensemble_size):
-        widget = AnalysisModuleVariablesPanel(settings, ensemble_size)
-        widget.show()
-        qtbot.addWidget(widget)
-        check_box = widget.findChild(QCheckBox, name="localization")
-        qtbot.mouseClick(check_box, Qt.MouseButton.LeftButton)
-        return settings, widget
-
-    return func
-
-
-def test_that_turning_on_localization_is_saved(panel_with_localization_on):
-    settings = ESSettings()
-    assert settings.localization is False
-    settings, _ = panel_with_localization_on(settings, 123)
-    assert settings.localization is True
 
 
 @pytest.mark.parametrize(
@@ -38,21 +17,29 @@ def test_that_turning_on_localization_is_saved(panel_with_localization_on):
         (200, 3 / math.sqrt(200)),
     ],
 )
-def test_default_localization_threshold(
-    panel_with_localization_on, ensemble_size, expected
+def test_that_default_localization_threshold_depends_on_ensemble_size(
+    qtbot: QtBot, ensemble_size, expected
 ):
     settings = ESSettings()
-    _, widget = panel_with_localization_on(settings, ensemble_size)
+    widget = AnalysisModuleVariablesPanel(settings, ensemble_size)
+    qtbot.addWidget(widget)
 
-    spinner = widget.findChild(QDoubleSpinBox, name="localization_threshold")
+    spinner = widget.findChild(
+        QDoubleSpinBox, name="localization_correlation_threshold"
+    )
     assert spinner.value() == pytest.approx(expected)
 
 
 @pytest.mark.parametrize("set_value", [0.0, 0.2, 0.5, 1.0])
-def test_setting_localization_threshold(panel_with_localization_on, set_value):
+def test_that_setting_localization_threshold_updates_analysis_settings(
+    qtbot: QtBot, set_value
+):
     settings = ESSettings()
-    _, widget = panel_with_localization_on(settings, 123)
+    widget = AnalysisModuleVariablesPanel(settings, 123)
+    qtbot.addWidget(widget)
 
-    spinner = widget.findChild(QDoubleSpinBox, name="localization_threshold")
+    spinner = widget.findChild(
+        QDoubleSpinBox, name="localization_correlation_threshold"
+    )
     spinner.setValue(set_value)
     assert spinner.value() == settings.localization_correlation_threshold == set_value
