@@ -120,6 +120,7 @@ def start_experiment(
     retries: int = 5,
 ) -> str:
     url, cert, auth = server_context
+    last_error: str | None = None
     for retry in range(retries):
         try:
             start_endpoint = f"{url}/{EverEndpoints.START_EXPERIMENT}"
@@ -132,10 +133,20 @@ def start_experiment(
             )
             response.raise_for_status()
             return response.json()["experiment_id"]
-        except Exception:
+        except requests.HTTPError:
+            last_error = response.text
             logger.debug(traceback.format_exc())
+            if 400 <= response.status_code < 500:
+                break  # 4xx should not trigger retries
             time.sleep(retry)
-    raise RuntimeError("Failed to start experiment")
+        except Exception:
+            last_error = traceback.format_exc()
+            logger.debug(last_error)
+            time.sleep(retry)
+    message = "Failed to start experiment"
+    if last_error:
+        message += f": {last_error}"
+    raise RuntimeError(message)
 
 
 def extract_errors_from_file(path: str) -> list[str]:

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 from base64 import b64encode
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import cast
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
+import yaml
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
@@ -37,6 +39,7 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
 )
 from everest.util._utils import get_everest_experiment
+from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
 
 
 @pytest.fixture
@@ -339,21 +342,19 @@ def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
         client = TestClient(app)
         mock_runner = MagicMock()
         mock_runner.run = AsyncMock()
-        with (
-            patch.object(EverestConfig, "with_plugins", return_value=MagicMock()),
-            patch(
-                "ert.dark_storage.endpoints.experiment_server.ExperimentRunner",
-                return_value=mock_runner,
-            ),
+        config_body = everest_config_with_defaults().to_dict()
+        with patch(
+            "ert.dark_storage.endpoints.experiment_server.ExperimentRunner",
+            return_value=mock_runner,
         ):
             r1 = client.post(
                 "/experiment_server/start_experiment",
-                json={"type": "everest_config"},
+                json=config_body,
                 headers=auth_headers,
             )
             r2 = client.post(
                 "/experiment_server/start_experiment",
-                json={"type": "everest_config"},
+                json=config_body,
                 headers=auth_headers,
             )
         assert r1.status_code == r2.status_code == 200
@@ -371,6 +372,93 @@ def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
     finally:
         _experiments.clear()
         _experiments.update(original)
+
+
+def test_that_start_experiment_with_incomplete_schema_returns_422(monkeypatch):
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    credentials = b64encode(b"username:password").decode()
+    auth_headers = {"Authorization": f"Basic {credentials}"}
+    client = TestClient(app)
+
+    # Missing all required fields (controls, objective_functions,
+    # config_path, model): schema validation should reject this before
+    # the endpoint body (and thus ExperimentRunner) is ever reached.
+    response = client.post(
+        "/experiment_server/start_experiment",
+        json={},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+    missing_fields = {
+        tuple(error["loc"])
+        for error in response.json()["detail"]
+        if error["type"] == "missing"
+    }
+    assert missing_fields == {
+        ("body", "controls"),
+        ("body", "objective_functions"),
+        ("body", "config_path"),
+        ("body", "model"),
+    }
+
+
+def test_that_start_experiment_with_unknown_forward_model_job_returns_422(
+    monkeypatch,
+):
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    credentials = b64encode(b"username:password").decode()
+    auth_headers = {"Authorization": f"Basic {credentials}"}
+    client = TestClient(app)
+
+    config_body = yaml.safe_load(MIN_CONFIG) | {
+        "forward_model": ["totally_unknown_job_xyz"]
+    }
+
+    response = client.post(
+        "/experiment_server/start_experiment",
+        json=config_body,
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+    assert "unknown job totally_unknown_job_xyz" in response.text
+
+
+def test_that_start_experiment_mutes_config_warnings(monkeypatch):
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    credentials = b64encode(b"username:password").decode()
+    auth_headers = {"Authorization": f"Basic {credentials}"}
+    client = TestClient(app)
+    mock_runner = MagicMock()
+    mock_runner.run = AsyncMock()
+
+    config_body = yaml.safe_load(MIN_CONFIG)
+
+    def _raise_a_config_warning(*args, **kwargs):
+        warnings.warn("Forced test ConfigWarning", category=ConfigWarning, stacklevel=2)
+
+    monkeypatch.setattr(
+        "everest.config.everest_config.validate_forward_model_configs",
+        _raise_a_config_warning,
+    )
+
+    with (
+        patch(
+            "ert.dark_storage.endpoints.experiment_server.ExperimentRunner",
+            return_value=mock_runner,
+        ),
+        warnings.catch_warnings(record=True) as caught_warnings,
+    ):
+        warnings.simplefilter("always")
+        response = client.post(
+            "/experiment_server/start_experiment",
+            json=config_body,
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 200
+    assert not any(issubclass(w.category, ConfigWarning) for w in caught_warnings)
 
 
 async def test_websocket_no_events_on_connect(setup_client):

@@ -6,6 +6,7 @@ from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
+from pydantic_core.core_schema import ValidationInfo
 
 init_context_var = ContextVar("_init_context_var", default=None)
 
@@ -20,6 +21,15 @@ def use_runtime_plugins(value: ErtRuntimePlugins) -> Iterator[None]:
         yield
     finally:
         init_context_var.reset(token)
+
+
+def get_runtime_plugins(info: ValidationInfo) -> ErtRuntimePlugins | None:
+    """Return the active runtime plugins for a pydantic validator.
+
+    When validating through FastAPI, the context is only available
+    through init_context_var.
+    """
+    return info.context or init_context_var.get()
 
 
 class BaseModelWithContextSupport(BaseModel, extra="forbid"):

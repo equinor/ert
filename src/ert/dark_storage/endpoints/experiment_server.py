@@ -10,6 +10,8 @@ import traceback
 import uuid
 import warnings
 from base64 import b64decode
+from collections.abc import AsyncIterator
+from contextlib import ExitStack
 from queue import SimpleQueue
 from typing import Annotated
 
@@ -170,6 +172,17 @@ def verify_auth(
 authenticated = [Depends(verify_auth)]
 
 
+async def _with_runtime_plugins() -> AsyncIterator[None]:
+    stack = ExitStack()
+    try:
+        stack.enter_context(warnings.catch_warnings())
+        warnings.filterwarnings("ignore", category=ConfigWarning)
+        stack.enter_context(use_runtime_plugins(get_site_plugins()))
+        yield
+    finally:
+        stack.close()
+
+
 @router.get("/", dependencies=authenticated)
 def get_status() -> PlainTextResponse:
     return PlainTextResponse("EVEREST is running")
@@ -198,19 +211,17 @@ def stop() -> Response:
     return Response("Raise STOP flag succeeded. EVEREST initiates shutdown..", 200)
 
 
-@router.post("/" + EverEndpoints.START_EXPERIMENT, dependencies=authenticated)
+@router.post(
+    "/" + EverEndpoints.START_EXPERIMENT,
+    dependencies=[*authenticated, Depends(_with_runtime_plugins)],
+)
 async def start_experiment(
-    request: Request,
+    config: EverestConfig,
     background_tasks: BackgroundTasks,
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState()
     _experiments[experiment_id] = experiment_state
-    request_data = await request.json()
-    # Suppress already reported warnings when we re-validate with plugins
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=ConfigWarning)
-        config = EverestConfig.with_plugins(request_data)
     runner = ExperimentRunner(config, experiment_id)
     try:
         background_tasks.add_task(runner.run)

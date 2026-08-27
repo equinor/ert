@@ -32,7 +32,11 @@ from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.nodes import ScalarNode
 from ruamel.yaml.representer import Representer
 
-from ert.base_model_context import BaseModelWithContextSupport, use_runtime_plugins
+from ert.base_model_context import (
+    BaseModelWithContextSupport,
+    get_runtime_plugins,
+    use_runtime_plugins,
+)
 from ert.config import (
     ConfigWarning,
     EverestConstraintsConfig,
@@ -574,8 +578,9 @@ class EverestConfig(BaseModelWithContextSupport):
         if not forward_model_jobs:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
-        if info.context:  # Add plugin jobs
-            installed_jobs_name += info.context.installed_forward_model_steps.keys()
+        runtime_plugins = get_runtime_plugins(info)
+        if runtime_plugins:  # Add plugin jobs
+            installed_jobs_name += runtime_plugins.installed_forward_model_steps.keys()
 
         errors = []
         for fm_job in forward_model_jobs:
