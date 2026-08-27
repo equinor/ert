@@ -94,6 +94,10 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
+    @property
+    def requires_updatable_parameters(self) -> bool:
+        return False
+
     @override
     def isConfigurationValid(self) -> bool:
         return (

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -17,6 +18,10 @@ class ExperimentConfigPanel(QWidget):
         super().__init__()
         self.setContentsMargins(10, 10, 10, 10)
         self.__run_model = run_model
+
+    @property
+    @abstractmethod
+    def requires_updatable_parameters(self) -> bool: ...
 
     def get_experiment_type(self) -> type[RunModel]:
         return self.__run_model

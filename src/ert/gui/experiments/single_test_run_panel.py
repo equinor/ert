@@ -59,6 +59,10 @@ class SingleTestRunPanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
 
+    @property
+    def requires_updatable_parameters(self) -> bool:
+        return False
+
     @override
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(TEST_RUN_MODE, "ensemble", "single_test_run")

@@ -182,6 +182,10 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                     parent=self,
                 ).show()
 
+    @property
+    def requires_updatable_parameters(self) -> bool:
+        return True
+
     @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
