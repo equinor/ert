@@ -50,7 +50,7 @@ Left sidepanel: Data types
 This panel behaves the same as before. The data type panel lists the data available for
 plotting. What you select here decides what the plot shows.
 
-.. image:: v25/navigation.png
+.. image:: images/v25/navigation.png
 
 Right sidepanel: Plot controls
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,7 +58,7 @@ Right sidepanel: Plot controls
 Settings that change the plot, such as which ensembles to show, what colours to
 use and how the x- and y-axis are set up, are now in the right sidepanel.
 
-.. image:: v25/plot_controls.png
+.. image:: images/v25/plot_controls.png
 
 Collapsible sidepanels
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -67,11 +67,11 @@ You can resize and hide both the data selection panel and the plot controls pane
 main navigation is always shown. To resize a panel, drag the border next to the
 plot. To hide a panel, click the arrow in its top corner nearest the plot.
 
-.. image:: v25/collapse_sidepanel.png
+.. image:: images/v25/collapse_sidepanel.png
 
 Collapsing both sidepanels allows you to maximise the plot area, as seen below:
 
-.. image:: v25/collapsed_view.png
+.. image:: images/v25/collapsed_view.png
 
 
 Plot settings moved to the right sidepanel
@@ -88,7 +88,7 @@ General options
 The general options section contains options that affect the plot as a whole, such as the title,
 x and y axis, grid and the legend.
 
-.. image:: v25/general_options.png
+.. image:: images/v25/general_options.png
 
 
 Log scale
@@ -96,7 +96,7 @@ Log scale
 The log scale checkbox has moved from the bottom toolbar to "General options" in
 the right sidepanel, where it is easier to find.
 
-.. image:: v25/log_scale.png
+.. image:: images/v25/log_scale.png
 
 
 Legend, grid and observations
@@ -104,7 +104,7 @@ Legend, grid and observations
 Here you turn the legend, grid and observations on and off. Next to the observation
 checkbox there is a colour picker for changing the colour of the observation markers.
 
-.. image:: v25/observations.png
+.. image:: images/v25/observations.png
 
 
 
@@ -112,14 +112,14 @@ Color palette
 ~~~~~~~~~~~~~
 You can pick a colour palette for the plot from a list of ready-made palettes.
 
-.. image:: v25/select_palette.png
-.. image:: v25/open_palette.png
+.. image:: images/v25/select_palette.png
+.. image:: images/v25/open_palette.png
 
 If none of them fit, click "Create custom palette" to open a window where you
 choose your own colours.
 
-.. image:: v25/create_custom.png
-.. image:: v25/custom_palette_dialog.png
+.. image:: images/v25/create_custom.png
+.. image:: images/v25/custom_palette_dialog.png
 
 Edit title and axis labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,8 +128,8 @@ button next to each one.
 
 You can also click the title or an axis label in the plot to edit it there.
 
-.. image:: v25/change_label.png
-.. image:: v25/label_dialog.png
+.. image:: images/v25/change_label.png
+.. image:: images/v25/label_dialog.png
 
 
 Boxplot options
@@ -156,7 +156,7 @@ Scatter points
     Every single data point, spread out slightly so overlapping points are easier
     to see. Off by default.
 
-.. image:: v25/boxplot_options.png
+.. image:: images/v25/boxplot_options.png
 
 
 Statistics options
@@ -196,7 +196,7 @@ Std dev multiplier
     Choose how many standard deviations the Std dev band covers. You can pick a
     value from 1 to 3, and the default is 1.
 
-.. image:: v25/statistics_options.png
+.. image:: images/v25/statistics_options.png
 
 
 Style removal
@@ -218,7 +218,7 @@ Axis limits
     toolbar covers the same functionality: drag a rectangle in the plot to zoom in on it,
     and use the home button to go back to the full view.
 
-    .. image:: v25/magnifying_glass.png
+    .. image:: images/v25/magnifying_glass.png
 
 Copy style to
     The option for applying the settings of one plot to other data keys has been
@@ -234,7 +234,7 @@ Run status of previously completed iterations
 Added functionality to store and visualize the run status of iterations in previously ran experiments.
 The status of the run can be inspected from the "Run status" tab, found when an iteration is selected in the "Manage experiments" view.
 
-.. image:: v24/run_status_experiment_view.png
+.. image:: images/v24/run_status_experiment_view.png
 
 New Everest plots
 #################
@@ -250,12 +250,12 @@ separated into accepted and rejected batches.
 All available batches are plotted by default, up to a maximum of 20 (previously
 five).
 
-.. image:: v24/batch_objective.png
+.. image:: images/v24/batch_objective.png
 
 Hovering over a batch point shows why the batch was rejected, for example
 non-improvement or constraint violation.
 
-.. image:: v24/rejected_hover.gif
+.. image:: images/v24/rejected_hover.gif
 
 Objective function
 ~~~~~~~~~~~~~~~~~~
@@ -264,7 +264,7 @@ Shows every realization per batch. All batches are plotted by default, up to a
 maximum of 20 (previously five). Hovering over a line reveals the realization
 number, making it possible to isolate a single realization.
 
-.. image:: v24/objective_hover.gif
+.. image:: images/v24/objective_hover.gif
 
 Controls
 ~~~~~~~~
@@ -273,15 +273,15 @@ Several controls can now be plotted together, rather than one plot per control.
 This makes the batches easier to compare, since there is no longer any need to
 jump back and forth between separate control plots.
 
-.. image:: v24/controls.png
+.. image:: images/v24/controls.png
 
 The x-axis can be switched from batch to control. All batches are then drawn at
 the same x-position for a given control, so the vertical spread shows how much
 that control has varied across batches.
 
-.. image:: v24/alternative_controls_view.gif
+.. image:: images/v24/alternative_controls_view.gif
 
-.. image:: v24/controls_alternative_view.png
+.. image:: images/v24/controls_alternative_view.png
 
 Gradient
 ~~~~~~~~
@@ -289,7 +289,7 @@ Gradient
 Shows the gradient of one or more controls for each batch, for both objectives
 and constraints.
 
-.. image:: v24/objective_gradient.png
+.. image:: images/v24/objective_gradient.png
 
 Constraints
 ~~~~~~~~~~~
@@ -297,7 +297,7 @@ Constraints
 Plots the output constraint values together with their upper and lower bounds,
 making it easier to identify batch constraint violations.
 
-.. image:: v24/constraint_plot.png
+.. image:: images/v24/constraint_plot.png
 
 Version 23.0
 ------------
@@ -401,7 +401,7 @@ the simulation passes a certain threshold.
 It's similar to a summary observation, but the observed and uncertain property is the date
 instead of the value.
 
-.. image:: breakthrough.png
+.. image:: images/breakthrough.png
 
 The details regarding breakthrough observation can be read about in
 :ref:`breakthrough observation <breakthrough_observation>`.
@@ -443,7 +443,7 @@ Export misfit to csv option
 Under Manage experiments, by selecting an ensemble, it is now possible to export the
 misfit data to a csv file.
 
-.. image:: misfit_export.png
+.. image:: images/misfit_export.png
 
 Version 18.0
 ------------
@@ -483,7 +483,7 @@ bottom toolbar (red circle). This control lets you switch the histogram’s
 x-axis between linear and logarithmic scales. The toggle is available only
 on Histogram, while other plots remain unchanged.
 
-.. image:: log_scale_button.png
+.. image:: images/log_scale_button.png
 
 .. note::
 
@@ -516,7 +516,7 @@ A new panel has been introduced, which is dedicated to displaying detailed
 information for each experiment. This streamlines the process of reviewing and
 analyzing experiment data.
 
-.. image:: v10_manage_experiments.png
+.. image:: images/v10_manage_experiments.png
 
 
 Longer retries for license error
@@ -529,17 +529,17 @@ minutes to between 19 and 32 minutes (depending on randomized values). In order
 to check whether your realization is waiting for the license server to respond,
 while running the experiment, click on "show details":
 
-.. image:: click-show-details.png
+.. image:: images/click-show-details.png
 
 
 Click on the square for the long running realization, 0 in the image and then,
 click the "OPEN" button in the column STDERR for row ECLIPSE100:
 
-.. image:: click-on-stderr.png
+.. image:: images/click-on-stderr.png
 
 If the message contains "Eclipse failed due to license failure, retrying in XXs" then the license server is busy and we will automatically retry running eclipse in the specified number of seconds.
 
-.. image:: license-retry.png
+.. image:: images/license-retry.png
 
 
 Breaking changes for plugins, forward models and api endpoints
@@ -603,7 +603,7 @@ where there is a file called **disable** containing:
 
 This will now generate an error, which will suggest a course of action:
 
-.. image:: v9_update_param.png
+.. image:: images/v9_update_param.png
 
 To update, delete the workflow config file (in this example the **disable** file),
 and remove the following from your configuration:
@@ -638,7 +638,7 @@ New configuration for MISFIT_PREPROCESSOR
 Previously the MISFIT_PREPROCESSOR workflow was moved into ERT, and in this release the configuration of that workflow
 will change, if it is present in your configuration you will get an error on startup suggesting a course of action:
 
-.. image:: v9_update_param.png
+.. image:: images/v9_update_param.png
 
 To update, delete the workflow config file (in this example the **misfit** file),
 and remove the following from your configuration:
@@ -670,7 +670,7 @@ In this version of ERT we have cleaned up a lot of unused analysis keywords. Som
 while others that were previously deprecated have now been removed. If they are present in your
 configuration, you will get a message in the suggestor at startup:
 
-.. image:: version-8.0-suggestor.png
+.. image:: images/version-8.0-suggestor.png
 
 We encourage everyone to keep their configuration updated and remove and replace deprecated keywords.
 
@@ -692,7 +692,7 @@ of 0.0 the update will be identical to no localization, while at a correlation t
 will be identical to the prior, and there will be no update. Note that the feature is still experimental, and
 any feedback is welcomed.
 
-.. image:: version-8.0-localization.gif
+.. image:: images/version-8.0-localization.gif
 
 Delete run path
 ###############
@@ -701,7 +701,7 @@ We added an option to delete run path if it exists. Running in an existing run p
 For example ERT expects to read a number of files after the forward model has completed. If those files exists from a previous
 run, and for some reason the new forward model did not overwrite them, ERT will read outdated information. Example:
 
-.. image:: version-8.0-delete-runpath.gif
+.. image:: images/version-8.0-delete-runpath.gif
 
 Note that if the run path is large, deleting it might take several minutes.
 
@@ -711,7 +711,7 @@ Details view in simulations panel
 There is a new tab in the `Details` view of the `Run simulations` panel, showing the progress of the update. While in most cases the
 update is fairly quick, if running with Adaptive localization, the run time will be longer, and this tab will show the progress.
 
-.. image:: version-8.0-update.gif
+.. image:: images/version-8.0-update.gif
 
 Observations in storage
 #######################
