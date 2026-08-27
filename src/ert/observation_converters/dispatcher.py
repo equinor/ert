@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from enum import StrEnum
 
@@ -12,6 +13,8 @@ from .summary_to_bulk import (
     convert_summary_to_bulk,
 )
 from .summary_to_yaml import convert_summary_to_yaml
+
+logger = logging.getLogger(__name__)
 
 
 class SupportedFormat(StrEnum):
@@ -40,4 +43,5 @@ def convert_observations(args: Namespace, site_plugins: ErtRuntimePlugins) -> No
             f"{supported_formats}"
         )
 
+    logger.info(f"Observation converter used with format: '{args.format}'")
     converter_func(args.config, site_plugins)
