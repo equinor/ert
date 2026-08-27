@@ -390,6 +390,16 @@ class PlotWindow(QMainWindow):
                 self._ensemble_selection_widget.clear_ensemble_selection()
         else:
             self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+        self._update_ensemble_group_title()
+
+    def _update_ensemble_group_title(self) -> None:
+        max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
+        str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
+        self._ensemble_group.set_title(
+            f"Select{str_num_of_ens} batches"
+            if self.is_everest
+            else f"Select up to {max_selected} ensemble(s)"
+        )
 
     @Slot(int)
     def current_tab_changed(self, index: int) -> None:
@@ -767,13 +777,7 @@ class PlotWindow(QMainWindow):
             else:
                 self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
 
-        max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
-        str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
-        self._ensemble_group.set_title(
-            f"Select{str_num_of_ens} batches"
-            if self.is_everest
-            else f"Select up to {max_selected} ensembles"
-        )
+        self._update_ensemble_group_title()
 
         is_observed_seismic = (
             key_def.observations
