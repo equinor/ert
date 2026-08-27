@@ -10,7 +10,7 @@ from ert.config.workflow_job import (
     UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
 )
-from ert.workflow_runner import WorkflowJobRunner, WorkflowRunner
+from ert.workflow_runner import WorkflowJobRunner, WorkflowJobStatus, WorkflowRunner
 from tests.ert.utils import wait_until
 
 from .workflow_common import WorkflowCommon
@@ -215,6 +215,16 @@ def test_workflow_thread_cancel_ert_script():
     assert not Path("wait_cancelled_2").exists()
     assert not Path("wait_finished_2").exists()
 
+    results = {
+        result.index: result for result in workflow_runner.workflow_job_results()
+    }
+    assert results[0].status is WorkflowJobStatus.SUCCESS
+    # The job that was interrupted by cancellation is reported as cancelled,
+    # not as failed.
+    assert results[1].status is WorkflowJobStatus.CANCELLED
+    # The remaining job never got a chance to start, so it is reported as
+    # cancelled rather than silently omitted.
+    assert results[2].status is WorkflowJobStatus.CANCELLED
 
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
@@ -344,3 +354,39 @@ def test_workflow_stops_with_stopping_job():
 
     # Expect no error raised
     WorkflowRunner(workflow, fixtures={}).run_blocking()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_a_job_runner_stops_reporting_it_is_running_when_arguments_are_rejected():
+    WorkflowCommon.createErtScriptsJob()
+    job = workflow_job_from_file(
+        name="SUBTRACT", config_file="subtract_script_job", origin="user"
+    )
+    runner = WorkflowJobRunner(job)
+
+    with pytest.raises(ValueError, match="requires at least 2 arguments"):
+        runner.run([1])
+
+    assert not runner.isRunning()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_results_contain_one_entry_per_job_invocation():
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    runner = WorkflowRunner(workflow, fixtures={})
+    runner.run_blocking()
+
+    results = runner.workflow_job_results()
+    assert [(result.name, result.index, result.arguments) for result in results] == [
+        ("DUMP", 0, ["dump1", "dump_text_1"]),
+        ("DUMP", 1, ["dump2", "dump_text_2"]),
+    ]
+    assert [result.stdout for result in results] == ["Hello World\n", "Hello World\n"]
+    assert all(result.status is WorkflowJobStatus.SUCCESS for result in results)
