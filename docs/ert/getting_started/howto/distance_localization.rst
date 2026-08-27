@@ -109,6 +109,16 @@ In practice:
 
 The default radius is set to 3000 meters.
 
+A figure like the one below illustrates the influence range from different wells.
+Each of the four wells have their own radius of influence.
+The grid cell colored with blue is within the range of observation located
+at  A and C, but not within the range of B and D. The grid cell colored
+with red is within the range of observation in location B, C and D and
+will be influenced by those in the update.
+
+.. image:: illustrating_influence_range.png
+
+
 Configuration file vs GUI
 --------------------------
 
