@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import inspect
+import io
 import logging
 import sys
+import threading
 import traceback
 from abc import abstractmethod
+from collections.abc import Iterable, Iterator
 from types import MappingProxyType, ModuleType
-from typing import Any
+from typing import Any, TextIO, override
 
 from .workflow_fixtures import (
     WorkflowFixtures,
@@ -15,6 +19,143 @@ from .workflow_fixtures import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class _CaptureProxy(io.TextIOBase):
+    """Stands in for ``sys.stdout``/``sys.stderr`` while workflow jobs run.
+
+    Everything written is passed on to the stream it replaced, so output still
+    reaches the terminal. Needed for capturing prints from internal jobs and
+    adding them to the log.
+    """
+
+    def __init__(self, stream: TextIO | None) -> None:
+        super().__init__()
+        self.wrapped = stream
+        self._local = threading.local()
+        self._users = 0
+
+    @property
+    def _buffers(self) -> list[io.StringIO]:
+        buffers: list[io.StringIO] | None = getattr(self._local, "buffers", None)
+        if buffers is None:
+            buffers = []
+            self._local.buffers = buffers
+        return buffers
+
+    @contextlib.contextmanager
+    def capture(self) -> Iterator[io.StringIO]:
+        """Record what the calling thread writes for the duration of the block."""
+        buffer = io.StringIO()
+        buffers = self._buffers
+        buffers.append(buffer)
+        try:
+            yield buffer
+        finally:
+            buffers.remove(buffer)
+
+    @override
+    def write(self, s: str, /) -> int:
+        for buffer in self._buffers:
+            buffer.write(s)
+        if self.wrapped is None:
+            return len(s)
+        return self.wrapped.write(s)
+
+    @override
+    def writelines(self, lines: Iterable[str], /) -> None:  # type: ignore[override]
+        for line in lines:
+            self.write(line)
+
+    @override
+    def flush(self) -> None:
+        if self.wrapped is not None:
+            self.wrapped.flush()
+
+    @override
+    def close(self) -> None:
+        """Closing is ignored, as the wrapped stream outlives the capture."""
+
+    @override
+    def fileno(self) -> int:
+        if self.wrapped is None:
+            raise io.UnsupportedOperation("fileno")
+        return self.wrapped.fileno()
+
+    @override
+    def isatty(self) -> bool:
+        return self.wrapped is not None and self.wrapped.isatty()
+
+    @override
+    def writable(self) -> bool:
+        return True
+
+    @override
+    def readable(self) -> bool:
+        return False
+
+    @override
+    def seekable(self) -> bool:
+        return False
+
+    @property
+    @override
+    def encoding(self) -> str:  # type: ignore[override]
+        return getattr(self.wrapped, "encoding", "utf-8")
+
+    @property
+    @override
+    def errors(self) -> str | None:  # type: ignore[override]
+        return getattr(self.wrapped, "errors", None)
+
+    @property
+    @override
+    def newlines(self) -> Any:  # type: ignore[override]
+        return getattr(self.wrapped, "newlines", None)
+
+    @property
+    def buffer(self) -> Any:
+        return self.wrapped.buffer  # type: ignore[union-attr]
+
+    @property
+    def name(self) -> Any:
+        return getattr(self.wrapped, "name", None)
+
+    @property
+    def line_buffering(self) -> bool:
+        return getattr(self.wrapped, "line_buffering", False)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.__dict__["wrapped"], name)
+
+
+_capture_lock = threading.Lock()
+
+
+@contextlib.contextmanager
+def _capturing(stream_name: str) -> Iterator[io.StringIO]:
+    # Record what the calling thread writes to ``sys.<stream_name>``
+    with _capture_lock:
+        stream = getattr(sys, stream_name)
+        proxy = stream if isinstance(stream, _CaptureProxy) else _CaptureProxy(stream)
+        proxy._users += 1
+        setattr(sys, stream_name, proxy)
+    try:
+        with proxy.capture() as buffer:
+            yield buffer
+    finally:
+        with _capture_lock:
+            proxy._users -= 1
+            if proxy._users == 0 and getattr(sys, stream_name) is proxy:
+                setattr(sys, stream_name, proxy.wrapped)
+
+
+class ExternalScriptError(RuntimeError):
+    """Raised when an external workflow job exits with a non-zero exit code.
+
+    Reported without a stack trace, since it would only
+    show ert internals and could be confusing
+    """
 
 
 class ErtScript:
@@ -113,7 +254,7 @@ class ErtScript:
                         f"Mixture of fixtures and positional arguments, err: {e}"
                     )
 
-            return self.run(*arguments)
+            return self._run_capturing_output(arguments)
         except AttributeError as e:
             error_msg = str(e)
             if not hasattr(self, "run"):
@@ -139,6 +280,10 @@ class ErtScript:
                 f"User warning in workflow script {self.__class__.__name__}: {uw}"
             )
             return uw.args[0]
+        except ExternalScriptError as e:
+            self.output_stack_trace(error=str(e))
+            logger.error(f"Workflow job failed: {e!s}")
+            return None
         except BaseException as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
             self.output_stack_trace(f"{e!s}\n{full_trace}")
@@ -149,6 +294,14 @@ class ErtScript:
             return None
         finally:
             self.cleanup()
+
+    def _run_capturing_output(self, arguments: list[Any]) -> Any:
+        with _capturing("stdout") as stdout, _capturing("stderr") as stderr:
+            try:
+                return self.run(*arguments)
+            finally:
+                self._stdoutdata = self.stdoutdata + stdout.getvalue()
+                self._stderrdata = self.stderrdata + stderr.getvalue()
 
     # Need to have unique modules in case of identical object naming in scripts
     __module_count = 0
@@ -179,7 +332,10 @@ class ErtScript:
             f"error while running:\n{str(stack_trace).strip()}\n"
         )
 
-        self._stderrdata = error
+        existing_stderr = self.stderrdata
+        if existing_stderr and not existing_stderr.endswith("\n"):
+            existing_stderr += "\n"
+        self._stderrdata = existing_stderr + error
         self.__failed = True
 
     @staticmethod
