@@ -30,6 +30,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
     TEST_RUN_MODE,
 )
+from ert.run_models.event import WorkflowEvent
 from ert.sample_prior import sample_prior
 from ert.scheduler.driver import Driver
 from ert.scheduler.job import Job
@@ -509,6 +510,49 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
                 run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
         else:
             run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_workflow_output_is_written_to_the_experiment_in_storage():
+    Path("print_job").write_text("EXECUTABLE print_script.sh\n", encoding="utf-8")
+    Path("print_script.sh").write_text(
+        dedent(
+            """\
+                #!/bin/bash
+                echo hello from the workflow
+                echo problem from the workflow >&2
+            """
+        ),
+        encoding="utf-8",
+    )
+    Path("print_script.sh").chmod(os.stat("print_script.sh").st_mode | 0o111)
+    Path("print_workflow").write_text("printjob\n", encoding="utf-8")
+
+    with Path("poly.ert").open(mode="a", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                   LOAD_WORKFLOW_JOB print_job printjob
+                   LOAD_WORKFLOW print_workflow wfprint
+                   HOOK_WORKFLOW wfprint PRE_SIMULATION
+                """
+            )
+        )
+
+    run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+
+    with open_storage("storage", "r") as storage:
+        (experiment,) = storage.experiments
+        (line,) = experiment.workflow_events_path.read_text(
+            encoding="utf-8"
+        ).splitlines()
+    event = WorkflowEvent.model_validate_json(line)
+    assert event.hook == "PRE_SIMULATION"
+    assert event.workflow_name == "wfprint"
+    assert event.job_name == "printjob"
+    assert event.job_index == 0
+    assert event.stdout == "hello from the workflow\n"
+    assert event.stderr == "problem from the workflow\n"
 
 
 @pytest.fixture(name="mock_cli_run")
