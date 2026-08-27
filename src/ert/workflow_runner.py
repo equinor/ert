@@ -129,9 +129,11 @@ class WorkflowRunner:
         self,
         workflow: Workflow,
         fixtures: WorkflowFixtures,
+        hook: str | None = None,
     ) -> None:
         self.__workflow = workflow
         self.fixtures = fixtures
+        self._hook = hook
 
         self.__workflow_result: bool | None = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -173,21 +175,23 @@ class WorkflowRunner:
         for index, (job, args) in enumerate(self.__workflow):
             if self.__cancelled:
                 # The workflow was cancelled before this job started
-                self.__job_results.append(
-                    WorkflowJobResult(
-                        name=job.name,
-                        index=index,
-                        arguments=[str(arg) for arg in args],
-                        stdout="",
-                        stderr="",
-                        status=WorkflowJobStatus.CANCELLED,
-                    )
+                result = WorkflowJobResult(
+                    name=job.name,
+                    index=index,
+                    arguments=[str(arg) for arg in args],
+                    stdout="",
+                    stderr="",
+                    status=WorkflowJobStatus.CANCELLED,
                 )
+                self.__job_results.append(result)
+                logger.info(self._log_entry(result), extra=self._log_extra(result))
                 continue
 
             jobrunner = WorkflowJobRunner(job)
             self.__current_job = jobrunner
-            logger.info(f"Workflow job {jobrunner.name} starting")
+            logger.info(
+                f"Workflow job starting; {self._job_description(jobrunner.name, index)}"
+            )
             jobrunner.run(args, fixtures=self.fixtures)
 
             if self.__cancelled:
@@ -212,21 +216,11 @@ class WorkflowRunner:
             )
             self.__job_results.append(result)
 
-            info = {
-                "class": "WORKFLOW_JOB",
-                "job_name": result.name,
-                "arguments": " ".join(result.arguments),
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "execution_type": jobrunner.execution_type,
-            }
+            extra = self._log_extra(result, execution_type=jobrunner.execution_type)
             if status is WorkflowJobStatus.FAILED:
-                logger.error(f"Workflow job {result.name} failed", extra=info)
+                logger.error(self._log_entry(result), extra=extra)
             else:
-                logger.info(
-                    f"Workflow job {result.name} completed successfully",
-                    extra=info,
-                )
+                logger.info(self._log_entry(result), extra=extra)
 
             if jobrunner.hasFailed() and jobrunner.stop_on_fail:
                 self.__running = False
@@ -237,6 +231,39 @@ class WorkflowRunner:
         self.__current_job = None
         self.__running = False
         self.__workflow_result = True
+
+    def _job_description(self, job_name: str, index: int) -> str:
+        """Identify a job invocation the same way in every workflow log line."""
+        return (
+            f"hook={self._hook} workflow={self.__workflow.name} job={job_name}#{index}"
+        )
+
+    def _log_entry(self, result: WorkflowJobResult) -> str:
+        description = self._job_description(result.name, result.index)
+        sections = [f"Workflow job result; {description} status={result.status}"]
+        if result.arguments:
+            sections.append(f"--- arguments ---\n{' '.join(result.arguments)}")
+        if result.stdout:
+            sections.append(f"--- stdout ---\n{result.stdout.rstrip('\n')}")
+        if result.stderr:
+            sections.append(f"--- stderr ---\n{result.stderr.rstrip('\n')}")
+        return "\n".join(sections)
+
+    def _log_extra(
+        self, result: WorkflowJobResult, execution_type: str | None = None
+    ) -> dict[str, Any]:
+        extra: dict[str, Any] = {
+            "class": "WORKFLOW_JOB",
+            "job_name": result.name,
+            "workflow_name": self.__workflow.name,
+            "arguments": " ".join(result.arguments),
+            "status": result.status,
+        }
+        if self._hook is not None:
+            extra["hook"] = self._hook
+        if execution_type is not None:
+            extra["execution_type"] = execution_type
+        return extra
 
     def isRunning(self) -> bool:
         if self.__running:
