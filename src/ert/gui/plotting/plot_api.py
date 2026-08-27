@@ -532,6 +532,10 @@ class PlotApi:
                                 "STD": obs["errors"],
                                 "OBS": obs["values"],
                                 "key_index": key_index,
+                                "EAST": obs.get("east")
+                                or [float("nan")] * len(obs["values"]),
+                                "NORTH": obs.get("north")
+                                or [float("nan")] * len(obs["values"]),
                             }
                         )
                     )

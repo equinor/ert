@@ -271,6 +271,8 @@ def test_plot_api_handles_urlescape(api_and_storage):
         STD,1.0
         OBS,1.0
         key_index,2024-10-04 00:00:00
+        EAST,
+        NORTH,
         """
     )
 
@@ -413,7 +415,7 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
 
     ensemble = next(x for x in api.get_all_ensembles() if x.id == str(ens.id))
     obs_data = api.observations_for_key([ensemble.id], "WOPR:OP1")
-    assert obs_data.shape == (3, 6)
+    assert obs_data.shape == (5, 6)
 
 
 def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage):
