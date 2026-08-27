@@ -36,9 +36,7 @@ from .conftest import get_child, wait_for_child
 # they are listed as not applicable
 PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/theory/images/*",
-    "docs/ert/about/*",
-    "docs/ert/about/v25/*",
-    "docs/ert/about/v24/*",
+    "docs/ert/about/images/**/*.png",
     "docs/ert/img/logo.png",
     "docs/ert/reference/configuration/fig/*",
     "docs/ert/getting_started/configuration/poly_new/minimal/warning.png",
