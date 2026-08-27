@@ -359,3 +359,25 @@ def test_that_a_job_runner_stops_reporting_it_is_running_when_arguments_are_reje
         runner.run([1])
 
     assert not runner.isRunning()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_results_contain_one_entry_per_job_invocation():
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    runner = WorkflowRunner(workflow, fixtures={})
+    runner.run_blocking()
+
+    results = runner.workflowJobResults()
+    assert [(result.name, result.index, result.arguments) for result in results] == [
+        ("DUMP", 0, ["dump1", "dump_text_1"]),
+        ("DUMP", 1, ["dump2", "dump_text_2"]),
+    ]
+    assert [result.stdout for result in results] == ["Hello World\n", "Hello World\n"]
+    assert not any(result.failed for result in results)
+    assert not any(result.cancelled for result in results)

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import types
 from concurrent import futures
 from concurrent.futures import Future
+from dataclasses import dataclass, field
 from typing import Any, Self
 
 from ert import ErtScript
@@ -15,6 +17,28 @@ from ert.config import (
     WorkflowFixtures,
     WorkflowJob,
 )
+
+
+@dataclass
+class WorkflowJobResult:
+    name: str
+    index: int
+    arguments: list[str]
+    stdout: str
+    stderr: str
+    failed: bool
+    cancelled: bool = False
+    timestamp: datetime.datetime = field(
+        default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
+    )
+
+    @property
+    def status(self) -> str:
+        if self.cancelled:
+            return "cancelled"
+        if self.failed:
+            return "failed"
+        return "success"
 
 
 class WorkflowJobRunner:
@@ -119,6 +143,7 @@ class WorkflowRunner:
         self.__cancelled = False
         self.__current_job: WorkflowJobRunner | None = None
         self.__status: dict[str, dict[str, Any]] = {}
+        self.__job_results: list[WorkflowJobResult] = []
 
     def __enter__(self) -> Self:
         self.run()
@@ -144,43 +169,68 @@ class WorkflowRunner:
 
         # Reset status
         self.__status = {}
+        self.__job_results = []
         self.__running = True
 
-        for job, args in self.__workflow:
+        for index, (job, args) in enumerate(self.__workflow):
+            if self.__cancelled:
+                # The workflow was cancelled before this job started
+                self.__job_results.append(
+                    WorkflowJobResult(
+                        name=job.name,
+                        index=index,
+                        arguments=[str(arg) for arg in args],
+                        stdout="",
+                        stderr="",
+                        failed=False,
+                        cancelled=True,
+                    )
+                )
+                continue
+
             jobrunner = WorkflowJobRunner(job)
             self.__current_job = jobrunner
-            if not self.__cancelled:
-                logger.info(f"Workflow job {jobrunner.name} starting")
-                jobrunner.run(args, fixtures=self.fixtures)
-                self.__status[jobrunner.name] = {
-                    "stdout": jobrunner.stdoutdata(),
-                    "stderr": jobrunner.stderrdata(),
-                    "completed": not jobrunner.hasFailed(),
-                }
+            logger.info(f"Workflow job {jobrunner.name} starting")
+            jobrunner.run(args, fixtures=self.fixtures)
+            job_was_cancelled = self.__cancelled
 
-                info = {
-                    "class": "WORKFLOW_JOB",
-                    "job_name": jobrunner.name,
-                    "arguments": " ".join(args),
-                    "stdout": jobrunner.stdoutdata(),
-                    "stderr": jobrunner.stderrdata(),
-                    "execution_type": jobrunner.execution_type,
-                }
+            failed = jobrunner.hasFailed() or job_was_cancelled
+            self.__status[jobrunner.name] = {
+                "stdout": jobrunner.stdoutdata(),
+                "stderr": jobrunner.stderrdata(),
+                "completed": not failed,
+            }
+            result = WorkflowJobResult(
+                name=jobrunner.name,
+                index=index,
+                arguments=[str(arg) for arg in args],
+                stdout=jobrunner.stdoutdata(),
+                stderr=jobrunner.stderrdata(),
+                failed=failed,
+            )
+            self.__job_results.append(result)
 
-                if jobrunner.hasFailed():
-                    if jobrunner.stop_on_fail:
-                        self.__running = False
-                        raise RuntimeError(
-                            f"Workflow job {info['job_name']}"
-                            f" failed with error: {info['stderr']}"
-                        )
+            info = {
+                "class": "WORKFLOW_JOB",
+                "job_name": result.name,
+                "arguments": " ".join(result.arguments),
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "execution_type": jobrunner.execution_type,
+            }
+            if failed and not job_was_cancelled:
+                logger.error(f"Workflow job {result.name} failed", extra=info)
+            else:
+                logger.info(
+                    f"Workflow job {result.name} completed successfully",
+                    extra=info,
+                )
 
-                    logger.error(f"Workflow job {jobrunner.name} failed", extra=info)
-                else:
-                    logger.info(
-                        f"Workflow job {jobrunner.name} completed successfully",
-                        extra=info,
-                    )
+            if jobrunner.hasFailed() and jobrunner.stop_on_fail:
+                self.__running = False
+                raise RuntimeError(
+                    f"Workflow job {result.name} failed with error: {result.stderr}"
+                )
 
         self.__current_job = None
         self.__running = False
@@ -223,3 +273,11 @@ class WorkflowRunner:
 
     def workflowReport(self) -> dict[str, dict[str, Any]]:
         return self.__status
+
+    def workflowJobResults(self) -> list[WorkflowJobResult]:
+        """One entry per job invocation, in the order the jobs were run.
+
+        Unlike workflowReport(), which is keyed by job name, this keeps the
+        output of every invocation when the same job is run more than once.
+        """
+        return self.__job_results
