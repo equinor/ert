@@ -5,7 +5,7 @@ import io
 import json
 import logging
 import shutil
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from datetime import UTC, datetime
 from enum import StrEnum, auto
 from functools import cached_property
@@ -915,6 +915,23 @@ class LocalExperiment(BaseMode):
 
     def status_snapshot_path(self, iteration: int) -> Path:
         return self._path / "status" / f"iteration-{iteration}.json"
+
+    @property
+    def workflow_events_path(self) -> Path:
+        """The events describing the workflows run for this experiment.
+
+        One JSON-serialized workflow log event per line, used to repopulate
+        the workflow view when an experiment is opened again later.
+        """
+        return self._path / "workflow_events.jsonl"
+
+    @require_write
+    def append_workflow_events(self, lines: Iterable[str]) -> None:
+        """Append already JSON-serialized workflow log events, one per line."""
+        events_path = self.workflow_events_path
+        events_path.parent.mkdir(parents=True, exist_ok=True)
+        with events_path.open("a", encoding="utf-8") as fout:
+            fout.writelines(f"{line}\n" for line in lines)
 
     def write_status_snapshot(self, iteration: int, data: bytes) -> None:
         snapshot_path = self.status_snapshot_path(iteration)
