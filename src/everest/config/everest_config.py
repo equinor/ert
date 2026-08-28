@@ -646,15 +646,16 @@ class EverestConfig(BaseModelWithContextSupport):
                 executable = Path(job.executable)
                 if not executable.is_absolute():
                     executable = self.config_directory / executable
-                if not executable.exists():
+                if executable.exists():
+                    if executable.is_dir():
+                        errors.append(
+                            "Expected executable file, "
+                            f"but {job.executable!r} is a directory"
+                        )
+                    elif not os.access(executable, os.X_OK):
+                        errors.append(f"File not executable: {job.executable!r}")
+                else:
                     errors.append(f"Could not find executable: {job.executable!r}")
-                if executable.is_dir():
-                    errors.append(
-                        "Expected executable file, "
-                        f"but {job.executable!r} is a directory"
-                    )
-                if not os.access(executable, os.X_OK):
-                    errors.append(f"File not executable: {job.executable!r}")
             return errors
 
         errors = []
