@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from ert.gui.plotting.utils.plot_types import ObservationPlotLocations
 
 
-class SeismicMapPlot:
+class MisfitMapPlot:
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = True

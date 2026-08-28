@@ -42,8 +42,8 @@ from ert.gui.plotting.utils.plot_maps import (
     EVEREST_PLOT_MAP,
     GAUSSIAN_KDE,
     HISTOGRAM,
+    MISFIT_MAP,
     MISFITS,
-    SEISMIC_MAP,
     SHARED_PLOT_MAP,
     STATISTICS,
     STD_DEV,
@@ -384,7 +384,7 @@ class PlotWindow(QMainWindow):
         return self._api.api_version
 
     def _apply_ensemble_selection_policy_for_tab(self, tab_name: str) -> None:
-        if tab_name == SEISMIC_MAP:
+        if tab_name == MISFIT_MAP:
             self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
             if len(self._ensemble_selection_widget.get_selected_ensembles()) > 1:
                 self._ensemble_selection_widget.clear_ensemble_selection()
@@ -790,7 +790,7 @@ class PlotWindow(QMainWindow):
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
-            and (not is_observed_seismic or widget.name in {MISFITS, SEISMIC_MAP})
+            and (not is_observed_seismic or widget.name in {MISFITS, MISFIT_MAP})
         ]
 
         def everest_data_origin_check(origin: list[str]) -> bool:
