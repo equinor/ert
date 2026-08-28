@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from PyQt6.QtCore import QMargins, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
+from PyQt6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QHBoxLayout,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from ert.config import AnalysisConfig
 from ert.gui.icon_utils import load_icon
 
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from .closabledialog import ClosableDialog
 
 
 class AnalysisModuleEdit(QWidget):
@@ -38,18 +44,42 @@ class AnalysisModuleEdit(QWidget):
         self.setLayout(layout)
 
     def showVariablesPopup(self) -> None:
+        dialog = QDialog(self.parent())  # type: ignore
+        dialog.setWindowTitle("Edit variables")
+        dialog.setModal(True)
+        dialog.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
+        dialog.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+        dialog.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
+
+        layout = QVBoxLayout()
         variable_dialog = AnalysisModuleVariablesPanel(
             self.analysis_config,
             self.ensemble_size,
         )
-        dialog = ClosableDialog(
-            "Edit variables",
-            variable_dialog,
-            self.parent(),  # type: ignore
+
+        layout.addWidget(variable_dialog, stretch=1)
+
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
         )
-        dialog.finished.connect(
-            lambda _: self.on_dialog_closed.emit(
+        save_button = button_box.button(QDialogButtonBox.StandardButton.Save)
+        assert save_button is not None
+        save_button.setAutoDefault(False)
+        cancel_button = button_box.button(QDialogButtonBox.StandardButton.Cancel)
+        assert cancel_button is not None
+        cancel_button.setAutoDefault(False)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(button_box)
+        layout.addLayout(button_layout)
+
+        dialog.setLayout(layout)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.on_dialog_closed.emit(
                 variable_dialog.changed_updated_parameter_strategies
             )
-        )
-        dialog.exec()
