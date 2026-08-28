@@ -237,26 +237,33 @@ class Eclipse100(ForwardModelStepPlugin):
     @staticmethod
     def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
-            description="The Eclipse 100 black-oil reservoir simulator from SLB",
+            description="""The Eclipse 100 black-oil reservoir simulator from SLB.
+
+Ert will parse the DATA-file for the :code:`PARALLEL` keyword and set up the
+correct number of CPUs. If the :code:`PARALLEL` keyword is set up/computed
+during the forward model, then :code:`NUM_CPU` must be set in the Ert config
+for correct configuration of CPU usage.
+            """,
             category="simulators.reservoir",
             examples="""
-The version, number of cpu, and whether or not to ignore errors and whether
-or not to produce `YOUR_CASE_NAME.h5` output files can be configured in the
-configuration file when adding the job, as such:
+The version, whether or not to ignore errors and whether or not to produce
+:code:`YOUR_CASE_NAME.h5` output files can be configured in the configuration
+file when adding the job, as such:
 
 
 .. code-block:: bash
 
-    FORWARD_MODEL ECLIPSE100(<ECLBASE>, <VERSION>=xxxx, \
-        <OPTS>={"--ignore-errors", "--summary-conversion"})
+    FORWARD_MODEL ECLIPSE100(<ECLBASE>, <VERSION>=xxxx, \\
+        <OPTS>="--ignore-errors --summary-conversion")
 
 The :code:`OPTS` argument is optional and can be removed, fully or partially.
 In absence of :code:`--ignore-errors` eclipse will fail on errors.
 Adding the flag :code:`--ignore-errors` will result in eclipse ignoring errors.
 
-And in absence of :code:`--summary-conversions` eclipse will run without producing
-`YOUR_CASE_NAME.h5` output files. Add flag :code:`--summary-conversions` to produce
-`YOUR_CASE_NAME.h5` output files.
+And in absence of :code:`--summary-conversions` eclipse will run without
+producing :code:`YOUR_CASE_NAME.h5` output files. Add flag
+:code:`--summary-conversion` to produce :code:`YOUR_CASE_NAME.h5` output
+files.
 """,
         )
 
@@ -305,18 +312,24 @@ class Eclipse300(ForwardModelStepPlugin):
     @staticmethod
     def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
-            description="The Eclipse 300 compositional reservoir simulator from SLB",
+            description="""The Eclipse 300 compositional reservoir simulator from SLB.
+
+Ert will parse the DATA-file for the :code:`PARALLEL` keyword and set up the
+correct number of CPUs. If the :code:`PARALLEL` keyword is set up/computed
+during the forward model, then :code:`NUM_CPU` must be set in the Ert config
+for correct configuration of CPU usage.
+""",
             category="simulators.reservoir",
             examples="""
-The version, number of cpu and whether or not to ignore errors can
-be configured in the configuration file when adding the job, as such:
+The version and whether or not to ignore errors can be configured in the
+configuration file when adding the step, as such:
 
 .. code-block:: bash
 
     FORWARD_MODEL ECLIPSE300(<ECLBASE>, <VERSION>=xxxx, <OPTS>="--ignore-errors")
 
 The :code:`OPTS` argument is optional and can be removed, thus running eclipse
-without ignoring errors
+without ignoring errors.
 """,
         )
 
@@ -368,15 +381,11 @@ class Flow(ForwardModelStepPlugin):
     @staticmethod
     def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
-            category="simulators.reservoir",
-            examples="""
-.. code-block:: bash
+            description="""Forward model for OPM Flow simulator.
 
-    FORWARD_MODEL FLOW(<ECLBASE>, <VERSION>=xxx, <OPTS>="--ignore-errors")
-
-The :code:`OPTS` argument is optional and can be skipped. :code:`ECLBASE` can
-also be defaulted. Multiple options in :code:`OPTS` can be supplied by
-separating them with a space.
+Flow will be run with the number of CPUs defined either through
+the keyword :code:`NUM_CPU` or parsed from the :code:`PARALLEL` keyword
+in the DATA file if :code:`NUM_CPU` is not set.
 
 ERT will be able to run the flow simulator if there is an executable named
 :code:`flow` or :code:`flowrun` found in the user's :code:`$PATH` environment
@@ -385,9 +394,22 @@ variable.
 If :code:`flowrun` is found, it will take precedence, and then it will be
 possible to select the version of flow to use by setting :code:`<VERSION>`.
 Available versions are verified towards what :code:`flowrun --report-versions`
-returns.
+returns. An appropriate setting for the threads parameter (per CPU core)
+will automatically be selected if :code:`flowrun` is found.
+
+Any options that should be forwarded to the simulator should be included
+in the :code:`<OPTS>` argument, multiple arguments can be supplied by
+separating them with a space.
 """,
-            description="""Forward model for OPM Flow simulator""",
+            category="simulators.reservoir",
+            examples="""
+.. code-block:: bash
+
+    FORWARD_MODEL FLOW(<ECLBASE>, <VERSION>=rc46, <OPTS>="--ignore-errors")
+
+The :code:`OPTS` argument is optional and can be skipped. :code:`ECLBASE` can
+also be defaulted.
+""",
         )
 
 
