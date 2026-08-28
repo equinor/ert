@@ -654,7 +654,7 @@ class EverestConfig(BaseModelWithContextSupport):
                         f"but {job.executable!r} is a directory"
                     )
                 if not os.access(executable, os.X_OK):
-                    errors.append("File not executable: {job.executable!r}")
+                    errors.append(f"File not executable: {job.executable!r}")
             return errors
 
         errors = []
