@@ -297,6 +297,13 @@ def _setup_manual_update(
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
     validate_minimum_realizations(config, active_realizations.tolist())
 
+    # update any changed update strategies for parameters
+    for parameter in config.ensemble_config.parameter_configuration:
+        if parameter.type.upper() in args.changed_updated_parameter_strategies:
+            parameter.update_strategy = args.changed_updated_parameter_strategies[
+                parameter.type.upper()
+            ]
+
     runmodel_config = ManualUpdateConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
@@ -377,6 +384,13 @@ def _setup_ensemble_smoother(
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
     )
+
+    # update any changed update strategies for parameters
+    for parameter in parameter_configs:
+        if parameter.type.upper() in args.changed_updated_parameter_strategies:
+            parameter.update_strategy = args.changed_updated_parameter_strategies[
+                parameter.type.upper()
+            ]
 
     runmodel_config = EnsembleSmootherConfig(
         target_ensemble=args.target_ensemble,
@@ -491,6 +505,13 @@ def _setup_multiple_data_assimilation(
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
     )
+
+    # update any changed update strategies for parameters
+    for parameter in parameter_configs:
+        if parameter.type.upper() in args.changed_updated_parameter_strategies:
+            parameter.update_strategy = args.changed_updated_parameter_strategies[
+                parameter.type.upper()
+            ]
 
     runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,

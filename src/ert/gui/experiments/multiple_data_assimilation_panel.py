@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ErrorInfo, ParameterConfig
+from ert.config import ErrorInfo, LocalizationType, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -53,6 +53,8 @@ if TYPE_CHECKING:
 
     from ert.config import AnalysisConfig
     from ert.storage import Ensemble
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,6 +66,7 @@ class Arguments:
     weights: str
     prior_ensemble_id: str | None  # UUID not serializable in json
     experiment_name: str
+    changed_updated_parameter_strategies: dict[str, LocalizationType]
 
 
 class MultipleDataAssimilationPanel(ExperimentConfigPanel):
@@ -77,9 +80,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         config_num_realization: int,
     ) -> None:
         super().__init__(MultipleDataAssimilation)
+
         self.notifier = notifier
         self._configured_weights = analysis_config.es_settings.weights
         self._weights_source = self._configured_weights
+        self._changed_updated_parameter_strategies: dict[str, LocalizationType] = {}
 
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -128,12 +133,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings,
+            analysis_config,
             sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
+        self._analysis_module_edit.on_dialog_closed.connect(
+            self._changed_updated_parameter_strategies.update
+        )
+
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/experiment/active_realizations",
@@ -428,6 +437,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 else None
             ),
             experiment_name=self._experiment_name_field.get_text,
+            changed_updated_parameter_strategies=self._changed_updated_parameter_strategies,
         )
 
     def setWeights(self, weights: Any) -> None:

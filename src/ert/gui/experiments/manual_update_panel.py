@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 
-from ert.config import AnalysisConfig, ErrorInfo
+from ert.config import AnalysisConfig, ErrorInfo, LocalizationType
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -37,6 +37,7 @@ class Arguments:
     target_ensemble: str
     ensemble_size: int
     experiment_name: str
+    changed_updated_parameter_strategies: dict[str, LocalizationType]
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -50,6 +51,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     ) -> None:
         super().__init__(ManualUpdate)
         self.setObjectName("Manual_update_panel")
+        self._changed_updated_parameter_strategies: dict[str, LocalizationType] = {}
 
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -93,9 +95,16 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
-        self._analysis_module_edit = AnalysisModuleEdit(analysis_config.es_settings, 0)
+        self._analysis_module_edit = AnalysisModuleEdit(
+            analysis_config,
+            0,
+        )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         self._analysis_module_edit.setEnabled(False)
+        self._analysis_module_edit.on_dialog_closed.connect(
+            self._changed_updated_parameter_strategies.update
+        )
+
         layout.addRow("Analysis module:", self._analysis_module_edit)
         self._active_realizations_model = ActiveRealizationsModel(0, show_default=False)
         self._active_realizations_field = StringBox(
@@ -164,6 +173,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
             experiment_name=self._experiment_name_field.get_text,
+            updated_parameter_strategies=self._changed_updated_parameter_strategies,
         )
 
     def _realizations_from_fs(self) -> None:
