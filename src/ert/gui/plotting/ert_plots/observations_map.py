@@ -62,7 +62,7 @@ class ObservationsMapPlot:
         )
 
         axes.set_title("Observation map")
-        axes.ticklabel_format(useOffset=True, style="plain")
+        axes.ticklabel_format(useOffset=False, style="plain")
         axes.set_aspect("equal")
         axes.set_xlabel("east coordinate")
         axes.set_ylabel("north coordinate")
