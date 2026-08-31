@@ -298,11 +298,12 @@ def _setup_manual_update(
     validate_minimum_realizations(config, active_realizations.tolist())
 
     # update any changed update strategies for parameters
-    for parameter in config.ensemble_config.parameter_configuration:
-        if parameter.type.upper() in args.changed_updated_parameter_strategies:
-            parameter.update_strategy = args.changed_updated_parameter_strategies[
-                parameter.type.upper()
-            ]
+    if hasattr(args, "changed_updated_parameter_strategies"):
+        for parameter in config.ensemble_config.parameter_configuration:
+            if parameter.type.upper() in args.changed_updated_parameter_strategies:
+                parameter.update_strategy = args.changed_updated_parameter_strategies[
+                    parameter.type.upper()
+                ]
 
     runmodel_config = ManualUpdateConfig(
         random_seed=config.random_seed,
@@ -326,6 +327,7 @@ def _setup_manual_update(
         ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
         experiment_name=args.experiment_name,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -362,6 +364,7 @@ def _setup_manual_update_enif(
         ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
         experiment_name=args.experiment_name,
+        parameter_configuration=[],
     )
     return ManualUpdateEnIF(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -386,11 +389,12 @@ def _setup_ensemble_smoother(
     )
 
     # update any changed update strategies for parameters
-    for parameter in parameter_configs:
-        if parameter.type.upper() in args.changed_updated_parameter_strategies:
-            parameter.update_strategy = args.changed_updated_parameter_strategies[
-                parameter.type.upper()
-            ]
+    if hasattr(args, "changed_updated_parameter_strategies"):
+        for parameter in parameter_configs:
+            if parameter.type.upper() in args.changed_updated_parameter_strategies:
+                parameter.update_strategy = args.changed_updated_parameter_strategies[
+                    parameter.type.upper()
+                ]
 
     runmodel_config = EnsembleSmootherConfig(
         target_ensemble=args.target_ensemble,
@@ -507,11 +511,12 @@ def _setup_multiple_data_assimilation(
     )
 
     # update any changed update strategies for parameters
-    for parameter in parameter_configs:
-        if parameter.type.upper() in args.changed_updated_parameter_strategies:
-            parameter.update_strategy = args.changed_updated_parameter_strategies[
-                parameter.type.upper()
-            ]
+    if hasattr(args, "changed_updated_parameter_strategies"):
+        for parameter in parameter_configs:
+            if parameter.type.upper() in args.changed_updated_parameter_strategies:
+                parameter.update_strategy = args.changed_updated_parameter_strategies[
+                    parameter.type.upper()
+                ]
 
     runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,

@@ -35,7 +35,7 @@ class AnalysisModuleEdit(QWidget):
         variables_popup_button = QPushButton("Edit")
         variables_popup_button.setObjectName("analysis_variables_popup_button")
         variables_popup_button.setIcon(load_icon("edit.svg"))
-        variables_popup_button.clicked.connect(self.showVariablesPopup)
+        variables_popup_button.clicked.connect(self._show_update_settings_dialog)
 
         layout.addWidget(variables_popup_button, 0, Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(QMargins(0, 0, 0, 0))
@@ -43,21 +43,21 @@ class AnalysisModuleEdit(QWidget):
 
         self.setLayout(layout)
 
-    def showVariablesPopup(self) -> None:
+    def _show_update_settings_dialog(self) -> None:
         dialog = QDialog(self.parent())  # type: ignore
-        dialog.setWindowTitle("Edit variables")
+        dialog.setWindowTitle("Update settings")
         dialog.setModal(True)
         dialog.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
         dialog.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         dialog.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         layout = QVBoxLayout()
-        variable_dialog = AnalysisModuleVariablesPanel(
+        update_settings_dialog = AnalysisModuleVariablesPanel(
             self.analysis_config,
             self.ensemble_size,
         )
 
-        layout.addWidget(variable_dialog, stretch=1)
+        layout.addWidget(update_settings_dialog, stretch=1)
 
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
@@ -78,8 +78,9 @@ class AnalysisModuleEdit(QWidget):
         layout.addLayout(button_layout)
 
         dialog.setLayout(layout)
+        dialog.setFixedSize(450, 300)
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.on_dialog_closed.emit(
-                variable_dialog.changed_updated_parameter_strategies
+                update_settings_dialog.changed_updated_parameter_strategies
             )

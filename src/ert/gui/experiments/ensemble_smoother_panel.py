@@ -108,7 +108,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             self._changed_updated_parameter_strategies.update
         )
 
-        layout.addRow("Analysis module:", self._analysis_module_edit)
+        layout.addRow("Update settings:", self._analysis_module_edit)
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/experiment/active_realizations",

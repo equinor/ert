@@ -105,7 +105,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             self._changed_updated_parameter_strategies.update
         )
 
-        layout.addRow("Analysis module:", self._analysis_module_edit)
+        layout.addRow("Update settings:", self._analysis_module_edit)
         self._active_realizations_model = ActiveRealizationsModel(0, show_default=False)
         self._active_realizations_field = StringBox(
             self._active_realizations_model,  # type: ignore
@@ -173,7 +173,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
             experiment_name=self._experiment_name_field.get_text,
-            updated_parameter_strategies=self._changed_updated_parameter_strategies,
+            changed_updated_parameter_strategies=self._changed_updated_parameter_strategies,
         )
 
     def _realizations_from_fs(self) -> None:

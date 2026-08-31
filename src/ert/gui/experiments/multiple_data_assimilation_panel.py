@@ -138,7 +138,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
-        layout.addRow("Analysis module:", self._analysis_module_edit)
+        layout.addRow("Update settings:", self._analysis_module_edit)
         self._analysis_module_edit.on_dialog_closed.connect(
             self._changed_updated_parameter_strategies.update
         )

@@ -49,11 +49,8 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.blockSignals(True)
 
-        layout.addRow(QLabel("<b>Parameter type update strategies</b>"))
         layout.addRow(
-            QLabel(
-                "The following strategies determine how the localization is applied to each parameter for each parameter type."
-            )
+            QLabel("<b>Select the localization method for each parameter type</b>")
         )
 
         gen_kw_combobox = QComboBox(self)
@@ -97,8 +94,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         layout.addRow("SURFACE", surface_combobox)
 
-        layout.addRow(QLabel("<b>General update settings</b>"))
-        layout.addRow(QLabel("Maybe something here"))
+        layout.addRow(QLabel("<b>General settings</b>"))
 
         var_name = "enkf_truncation"
         metadata = AnalysisModule.model_fields[var_name]
