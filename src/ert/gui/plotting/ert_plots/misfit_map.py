@@ -87,7 +87,7 @@ class MisfitMapPlot:
         )
 
         axes_misfit.set_title("Misfit map")
-        axes_misfit.ticklabel_format(useOffset=True, style="plain")
+        axes_misfit.ticklabel_format(useOffset=False, style="plain")
         axes_misfit.set_aspect("equal")
         axes_misfit.set_xlabel("east coordinate")
         axes_misfit.set_ylabel("north coordinate")
