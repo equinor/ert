@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
+import shutil
 from typing import Any
 from uuid import UUID
 
+import numpy as np
 from pydantic import PrivateAttr
 
 from ert.config import (
@@ -170,6 +172,7 @@ class MultipleDataAssimilation(
                 posterior,
                 evaluator_server_config,
             )
+            self._delete_intermediate_runpaths(posterior)
             prior = posterior
 
         self.run_workflows(
@@ -204,3 +207,37 @@ class MultipleDataAssimilation(
     @classmethod
     def group(cls) -> str | None:
         return MULTIPLE_DATA_ASSIMILATION_GROUP
+
+    def _delete_intermediate_runpaths(self, posterior: Ensemble) -> None:
+        """Remove the runpaths of an iteration that is neither the first nor the last.
+
+        The update step reads parameters and responses from storage, so the
+        runpath of a *successful* realization is redundant once its forward
+        models have completed.
+
+        Runpaths of realizations that failed during this iteration are
+        deliberately kept: their responses never reached storage, so the runpath
+        holds the only record of the failure (forward model stdout/stderr and
+        error file). ES-MDA deactivates a failed realization permanently, so it
+        is never re-run and that evidence is never regenerated.
+
+        Note:
+            ``self.active_realizations`` is deliberately read *after* evaluation,
+            which has already deactivated the realizations that failed. That
+            leaves exactly the set whose data is safely in storage.
+        """
+        if not self.delete_intermediate_runpaths:
+            return
+        if posterior.iteration >= len(self._parsed_weights):
+            return
+        realizations_stored_successfully = np.where(self.active_realizations)[0]
+        for path in self._run_paths.get_paths(
+            realizations_stored_successfully, posterior.iteration
+        ):
+            logger.info(f"Deleting runpath of intermediate iteration: {path}")
+            try:
+                shutil.rmtree(path)
+            except OSError:
+                logger.warning(
+                    "Failed to delete intermediate runpath: %s", path, exc_info=True
+                )

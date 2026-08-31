@@ -72,6 +72,7 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
                 num_iterations=1,
                 prior_ensemble_id="",
                 weights="2,3",
+                delete_intermediate_runpaths=False,
             ),
             queue.SimpleQueue(),
         )
@@ -201,6 +202,7 @@ def test_that_setup_multiple_data_assimilation_uses_the_arguments_from_the_cli(
             prior_ensemble_id=None,
             experiment_name="My-experiment",
             starting_iteration=0,
+            delete_intermediate_runpaths=False,
         ),
         ObservationSettings(),
         queue.SimpleQueue(),
@@ -235,6 +237,7 @@ def test_that_setup_multiple_data_assimilation_uses_config_weights_when_cli_omit
             prior_ensemble_id=None,
             experiment_name="My-experiment",
             starting_iteration=0,
+            delete_intermediate_runpaths=False,
         ),
         ObservationSettings(),
         queue.SimpleQueue(),
@@ -279,6 +282,7 @@ def test_multiple_data_assimilation_restart_paths(
         target_ensemble="restart_case_%d",
         prior_ensemble_id=str(uuid1()),
         experiment_name="just_assimilatin",
+        delete_intermediate_runpaths=False,
     )
 
     monkeypatch.setattr(
