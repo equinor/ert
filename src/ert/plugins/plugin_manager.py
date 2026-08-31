@@ -77,6 +77,8 @@ class ErtPluginManager(pluggy.PluginManager):
             for plugin in plugins:
                 self.register(plugin)
 
+        self._log_handles: list[logging.Handler] | None = None
+
     def __str__(self) -> str:
         self_str = "ERT Plugin manager:\n"
         for plugin in self.get_plugins():
@@ -322,7 +324,10 @@ class ErtPluginManager(pluggy.PluginManager):
     def add_logging_handle_to_root(
         self, logger: logging.Logger
     ) -> list[logging.Handler]:
-        handles = self.hook.add_log_handle_to_root()
+        # Avoid duplicate loggers
+        if self._log_handles is None:
+            self._log_handles = self.hook.add_log_handle_to_root()
+        handles = self._log_handles
         # Loggers configured with propagate=False never forward their records
         # to the root logger's handlers, so the plugin handles must be
         # attached directly to them as well.
