@@ -189,11 +189,11 @@ DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
         DESIGN_MATRIX poly_design.xlsx
 
 
-Additionally, there are three optional named arguments:
+Additionally, there are four optional named arguments:
 
 ::
 
-        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet> PRIORITY:<design_matrix|sampled>
+        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet> PRIORITY:<design_matrix|sampled> UPDATE:<TRUE|FALSE>
 
 where:
 
@@ -205,6 +205,10 @@ where:
    If set to `design_matrix`, parameters found in the design matrix will override values from :ref:`GEN_KW <gen_kw>`.
    If set to `sampled`, parameters will be sampled normally overwriting values from :ref:`DESIGN_MATRIX  <design_matrix>`.
    Default is `design_matrix`.
+
+4. UPDATE:<TRUE|FALSE> - experimentally enables updates of numeric design matrix parameters.
+   Values are updated directly without transformation, bounds enforcement, or distribution validation.
+   Non-numeric parameters remain fixed. Default is `FALSE`.
 
 
 *Example:*
@@ -323,8 +327,9 @@ wherein coeff_priors
         f UNIFORM 0 10
 
 
-The overlapping parameters are b, c and d and the values will read from the design matrix
-and the update will be disabled, while f would be sampled and the update flag will remain.
+The overlapping parameters are b, c and d and the values will read from the design matrix.
+Their update will be disabled unless ``UPDATE:TRUE`` is set on ``DESIGN_MATRIX``, while f
+would be sampled and its update setting will remain.
 In this case the final set of parameters (for example in parameters.txt in real==0) would be:
 ::
 
@@ -1213,8 +1218,9 @@ history matching process. It must be set to either TRUE or FALSE. The parameters
 
         The ``INIT_FILES:`` named attribute that was used to provide externally sampled values has been removed from GEN_KW.
         To provide values sampled outside of ERT, please see :ref:`DESIGN_MATRIX <design_matrix>`.
-        Note that only parameters sampled internally in ERT will be updated during assisted history matching, and
-        parameters provided through ``DESIGN_MATRIX`` will be constant.
+        Parameters provided through ``DESIGN_MATRIX`` are constant by default. Numeric
+        design matrix parameters can be updated experimentally by setting ``UPDATE:TRUE``.
+        Such values are updated directly without transformation or bounds enforcement.
 
 A configuration example is shown below:
 

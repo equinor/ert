@@ -13,8 +13,10 @@ from polars.exceptions import InvalidOperationError
 
 from ert.config.parsing.config_errors import ConfigWarning
 
+from ._get_update_from_options import get_update_from_options
 from .distribution import RawSettings
 from .gen_kw_config import DataSource, GenKwConfig
+from .parameter_config import LocalizationType
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -30,6 +32,7 @@ class DesignMatrix:
     design_sheet: str
     default_sheet: str | None
     priority_source: str = "design_matrix"
+    update_strategy: LocalizationType | None = None
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
@@ -50,12 +53,29 @@ class DesignMatrix:
                 f" {exc}",
                 str(self.xls_filename),
             ) from exc
+        if self.update_strategy is not None:
+            fixed_parameters = sorted(
+                config.name
+                for config in self.parameter_configurations
+                if config.update_strategy is None
+            )
+            warning = (
+                "Updating DESIGN_MATRIX parameters is experimental. "
+                "Numeric parameters will be updated without transformation, "
+                "bounds enforcement, or distribution validation."
+            )
+            if fixed_parameters:
+                warning += (
+                    " Non-numeric parameters will remain fixed: "
+                    f"{', '.join(fixed_parameters)}."
+                )
+            ConfigWarning.warn(warning)
 
     @classmethod
     def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
-        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET", "PRIORITY"]
+        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET", "PRIORITY", "UPDATE"]
         option_errors = [
             ErrorInfo(
                 f"Option {option} is not a valid DESIGN_MATRIX option. "
@@ -70,6 +90,9 @@ class DesignMatrix:
         design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
         default_sheet = options.get("DEFAULT_SHEET", None)
         priority_source = options.get("PRIORITY", DataSource.DESIGN_MATRIX)
+        update_strategy = (
+            get_update_from_options(options) if "UPDATE" in options else None
+        )
         errors = []
         if filename.suffix not in {
             ".xlsx",
@@ -101,6 +124,7 @@ class DesignMatrix:
             design_sheet=design_sheet,
             default_sheet=default_sheet,
             priority_source=priority_source,
+            update_strategy=update_strategy,
         )
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
@@ -193,7 +217,7 @@ class DesignMatrix:
 
         for param_cfg in existing_parameters:
             if isinstance(param_cfg, GenKwConfig) and param_cfg.name in design_cfgs:
-                del design_cfgs[param_cfg.name]
+                design_cfg = design_cfgs.pop(param_cfg.name)
                 input_source = DataSource(
                     self.parameter_priority.get(
                         param_cfg.name, DataSource.DESIGN_MATRIX.value
@@ -205,7 +229,7 @@ class DesignMatrix:
                         update_strategy=(
                             param_cfg.update_strategy
                             if input_source == DataSource.SAMPLED
-                            else None
+                            else design_cfg.update_strategy
                         ),
                         distribution=(
                             RawSettings()
@@ -380,10 +404,22 @@ class DesignMatrix:
 
         design_matrix_df = convert_numeric_string_columns(design_matrix_df)
 
+        numeric_parameters = {
+            col
+            for col, dtype in design_matrix_df.schema.items()
+            if col != "realization" and dtype.is_numeric()
+        }
+        if self.update_strategy is not None and not numeric_parameters:
+            raise ValueError(
+                "UPDATE:TRUE requires at least one numeric DESIGN_MATRIX parameter."
+            )
+
         parameter_configurations: list[GenKwConfig] = [
             GenKwConfig(
                 name=col,
-                update_strategy=None,
+                update_strategy=(
+                    self.update_strategy if col in numeric_parameters else None
+                ),
                 group=DESIGN_MATRIX_GROUP,
                 input_source=DataSource.DESIGN_MATRIX,
                 distribution={"name": "raw"},

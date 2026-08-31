@@ -341,16 +341,49 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
     "copy_poly_case", "use_site_configurations_with_no_queue_options"
 )
 @pytest.mark.parametrize(
-    ("experiment_mode", "ensemble_name", "iterations"),
+    (
+        "experiment_mode",
+        "ensemble_name",
+        "iterations",
+        "design_matrix_options",
+        "design_matrix_is_updated",
+    ),
     [
-        (ES_MDA_MODE, "default_", 4),
-        (ENSEMBLE_SMOOTHER_MODE, "iter-", 2),
+        pytest.param(
+            ES_MDA_MODE,
+            "default_",
+            4,
+            "",
+            False,
+            id="esmda_keeps_design_matrix_fixed",
+        ),
+        pytest.param(
+            ENSEMBLE_SMOOTHER_MODE,
+            "iter-",
+            2,
+            "",
+            False,
+            id="es_keeps_design_matrix_fixed",
+        ),
+        pytest.param(
+            ENSEMBLE_SMOOTHER_MODE,
+            "iter-",
+            2,
+            " UPDATE:TRUE",
+            True,
+            id="es_updates_design_matrix",
+        ),
     ],
 )
-def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
+def test_that_design_matrix_parameters_are_updated_only_when_update_is_true(
+    experiment_mode,
+    ensemble_name,
+    iterations,
+    design_matrix_options,
+    design_matrix_is_updated,
+):
     design_path = "design_matrix.xlsx"
-    reals = range(10)
-    values = [random.uniform(0, 2) for _ in reals]
+    values = np.linspace(0.1, 1.9, 10).tolist()
     _create_design_matrix(
         design_path,
         pl.DataFrame(
@@ -363,7 +396,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
 
     Path("poly.ert").write_text(
         dedent(
-            """\
+            f"""\
                 QUEUE_OPTION LOCAL MAX_RUNNING 2
                 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                 OBS_CONFIG observations
@@ -372,7 +405,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                 GEN_KW COEFFS_B coeff_priors_b
                 GEN_KW COEFFS_C coeff_priors_c
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
-                DESIGN_MATRIX design_matrix.xlsx
+                DESIGN_MATRIX design_matrix.xlsx{design_matrix_options}
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
@@ -426,6 +459,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
         )
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     coeffs_a_previous = None
+    coeffs_b_previous = None
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
         for i in range(iterations):
@@ -438,10 +472,13 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                 assert not np.array_equal(coeffs_a, coeffs_a_previous)
             coeffs_a_previous = coeffs_a
 
-            # coeffs_b should be overridden by design matrix and be the
-            # same for all realizations
             coeffs_b = ensemble.load_parameters("b")["b"].to_list()
-            assert values == pytest.approx(coeffs_b, 0.0001)
+            if design_matrix_is_updated:
+                if coeffs_b_previous is not None:
+                    assert not np.allclose(coeffs_b, coeffs_b_previous)
+                coeffs_b_previous = coeffs_b
+            else:
+                assert values == pytest.approx(coeffs_b, 0.0001)
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")

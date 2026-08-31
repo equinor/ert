@@ -12,6 +12,7 @@ from ert.config import (
     GenKwConfig,
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
+from ert.config.parameter_config import LocalizationType
 from ert.config.parsing.config_errors import ConfigWarning
 from tests.ert.conftest import _create_design_matrix
 
@@ -210,6 +211,73 @@ def test_merge_with_existing_parameters_with_custom_priorities(
         assert config.group == group_name[config.name], (
             f"{config} mismatch in group name"
         )
+
+
+def test_that_update_true_enables_raw_updates_for_numeric_parameters(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_path,
+        pl.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "integer_parameter": [1, 2, 3],
+                "float_parameter": [0.1, 0.2, 0.3],
+                "category": ["low", "medium", "high"],
+            }
+        ),
+    )
+
+    with pytest.warns(
+        ConfigWarning, match="Updating DESIGN_MATRIX parameters is experimental"
+    ):
+        design_matrix = DesignMatrix.from_config_list(
+            [str(design_path), {"UPDATE": "TRUE"}]
+        )
+
+    parameter_configs = {
+        config.name: config for config in design_matrix.parameter_configurations
+    }
+    assert parameter_configs["integer_parameter"].update_strategy == (
+        LocalizationType.GLOBAL
+    )
+    assert parameter_configs["float_parameter"].update_strategy == (
+        LocalizationType.GLOBAL
+    )
+    assert parameter_configs["category"].update_strategy is None
+    assert all(
+        config.distribution.name == "raw" for config in parameter_configs.values()
+    )
+    np.testing.assert_array_equal(
+        parameter_configs["float_parameter"].transform_numpy(
+            np.array([-1.5, 0.0, 2.5])
+        ),
+        np.array([-1.5, 0.0, 2.5]),
+    )
+
+
+def test_that_invalid_design_matrix_update_option_is_rejected(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_path,
+        pl.DataFrame({"REAL": [0, 1], "parameter": [1.0, 2.0]}),
+    )
+
+    with pytest.raises(ConfigValidationError, match="Invalid UPDATE option: MAYBE"):
+        DesignMatrix.from_config_list([str(design_path), {"UPDATE": "MAYBE"}])
+
+
+def test_that_update_true_requires_a_numeric_parameter(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_path,
+        pl.DataFrame({"REAL": [0, 1], "category": ["low", "high"]}),
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="UPDATE:TRUE requires at least one numeric DESIGN_MATRIX parameter",
+    ):
+        DesignMatrix.from_config_list([str(design_path), {"UPDATE": "TRUE"}])
 
 
 @pytest.mark.parametrize(
