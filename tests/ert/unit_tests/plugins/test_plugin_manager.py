@@ -11,6 +11,21 @@ from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
 
 
+@pytest.fixture(autouse=True)
+def _cleanup_root_logger_handlers():
+    """Ensure handlers are detached and closed after each test so file
+    descriptors are not leaked and later tests don't unexpectedly write
+    to files opened by earlier tests.
+    """
+    root_logger = logging.getLogger()
+    pre_existing_handlers = list(root_logger.handlers)
+    yield
+    for handler in list(root_logger.handlers):
+        if handler not in pre_existing_handlers:
+            root_logger.removeHandler(handler)
+            handler.close()
+
+
 def test_no_plugins():
     pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations])
     assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
