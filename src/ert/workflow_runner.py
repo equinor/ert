@@ -26,6 +26,13 @@ class WorkflowJobStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+def _job_description(
+    workflow_name: str, job_name: str, job_index: int, hook: str | None
+) -> str:
+    """Identify a job invocation the same way in every workflow log line."""
+    return f"hook={hook} workflow={workflow_name} job={job_name}#{job_index}"
+
+
 @dataclass
 class WorkflowJobResult:
     name: str
@@ -39,14 +46,8 @@ class WorkflowJobResult:
     )
 
     def as_log_entry(self, workflow_name: str, hook: str | None = None) -> str:
-        header = "Workflow job"
-        if hook is not None:
-            header += f" {hook}"
-        header += (
-            f" workflow={workflow_name} job={self.name}#{self.index} "
-            f"status={self.status}"
-        )
-        sections = [header]
+        description = _job_description(workflow_name, self.name, self.index, hook)
+        sections = [f"Workflow job result; {description} status={self.status}"]
         if self.arguments:
             sections.append(f"--- arguments ---\n{' '.join(self.arguments)}")
         if self.stdout:
@@ -206,7 +207,10 @@ class WorkflowRunner:
 
             jobrunner = WorkflowJobRunner(job)
             self.__current_job = jobrunner
-            logger.info(f"Workflow job {jobrunner.name} starting")
+            description = _job_description(
+                self.__workflow.name, jobrunner.name, index, self._hook
+            )
+            logger.info(f"Workflow job starting; {description}")
             jobrunner.run(args, fixtures=self.fixtures)
 
             if self.__cancelled:

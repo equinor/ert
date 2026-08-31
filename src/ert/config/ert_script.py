@@ -9,7 +9,7 @@ import sys
 import threading
 import traceback
 from abc import abstractmethod
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from types import MappingProxyType, ModuleType
 from typing import Any, TextIO, override
 
@@ -66,11 +66,6 @@ class _CaptureProxy(io.TextIOBase):
         return self.wrapped_stream.write(s)
 
     @override
-    def writelines(self, lines: Iterable[str], /) -> None:  # type: ignore[override]
-        for line in lines:
-            self.write(line)
-
-    @override
     def flush(self) -> None:
         self.wrapped_stream.flush()
 
@@ -88,19 +83,15 @@ class _CaptureProxy(io.TextIOBase):
 
     @override
     def writable(self) -> bool:
+        # IOBase defaults to False, so this one is load-bearing. readable() and
+        # seekable() are left to IOBase, which already reports False.
         return True
-
-    @override
-    def readable(self) -> bool:
-        return False
-
-    @override
-    def seekable(self) -> bool:
-        return False
 
     @property
     @override
     def encoding(self) -> str:  # type: ignore[override]
+        # TextIOBase defines encoding, errors and newlines as descriptors
+        # returning None, so __getattr__ is never consulted for them.
         return getattr(self.wrapped_stream, "encoding", "utf-8")
 
     @property
@@ -112,18 +103,6 @@ class _CaptureProxy(io.TextIOBase):
     @override
     def newlines(self) -> Any:  # type: ignore[override]
         return getattr(self.wrapped_stream, "newlines", None)
-
-    @property
-    def buffer(self) -> Any:
-        return self.wrapped_stream.buffer
-
-    @property
-    def name(self) -> Any:
-        return getattr(self.wrapped_stream, "name", None)
-
-    @property
-    def line_buffering(self) -> bool:
-        return getattr(self.wrapped_stream, "line_buffering", False)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.__dict__["wrapped_stream"], name)

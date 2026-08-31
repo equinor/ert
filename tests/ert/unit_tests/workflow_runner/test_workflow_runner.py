@@ -260,11 +260,14 @@ def test_that_the_hook_a_workflow_was_run_from_is_named_in_the_ert_log(caplog):
     with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
         WorkflowRunner(workflow, fixtures={}, hook="POST_EXPERIMENT").run_blocking()
 
-    assert "Workflow job POST_EXPERIMENT workflow=dump_workflow" in caplog.text
+    assert (
+        "Workflow job result; hook=POST_EXPERIMENT workflow=dump_workflow"
+        in caplog.text
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_workflow_run_outside_a_hook_is_logged_without_a_hook(caplog):
+def test_that_a_workflow_run_outside_a_hook_is_logged_with_hook_none(caplog):
     WorkflowCommon.createExternalDumpJob()
 
     dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
@@ -275,7 +278,31 @@ def test_that_a_workflow_run_outside_a_hook_is_logged_without_a_hook(caplog):
     with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
         WorkflowRunner(workflow, fixtures={}).run_blocking()
 
-    assert "Workflow job workflow=dump_workflow" in caplog.text
+    assert "Workflow job result; hook=None workflow=dump_workflow" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_job_is_logged_as_starting_before_it_is_logged_as_finished(caplog):
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
+        WorkflowRunner(workflow, fixtures={}, hook="PRE_SIMULATION").run_blocking()
+
+    started = (
+        "Workflow job starting; hook=PRE_SIMULATION workflow=dump_workflow job=DUMP#0"
+    )
+    finished = (
+        "Workflow job result; hook=PRE_SIMULATION"
+        " workflow=dump_workflow job=DUMP#0 status=success"
+    )
+    assert started in caplog.text
+    assert finished in caplog.text
+    assert caplog.text.index(started) < caplog.text.index(finished)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
