@@ -7,6 +7,7 @@ from ert.gui.plotting.ert_plots import (
     HistogramPlot,
     MisfitMapPlot,
     MisfitsPlot,
+    ObservationsMapPlot,
     StatisticsPlot,
     StdDevPlot,
 )
@@ -28,6 +29,7 @@ HISTOGRAM = "Histogram"
 MISFIT_MAP = "Misfit map"
 STATISTICS = "Statistics"
 STD_DEV = "Std dev"
+OBSERVATIONS_MAP = "Observations map"
 MISFITS = "Misfits"
 EVEREST_CONTROLS_PLOT = "Controls"
 EVEREST_GRADIENTS_PLOT = "Gradient"
@@ -43,6 +45,7 @@ ERT_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     DISTRIBUTION: DistributionPlot,
     CROSS_ENSEMBLE_STATISTICS: CrossEnsembleStatisticsPlot,
     MISFIT_MAP: MisfitMapPlot,
+    OBSERVATIONS_MAP: ObservationsMapPlot,
     STD_DEV: StdDevPlot,
 }
 EVEREST_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
