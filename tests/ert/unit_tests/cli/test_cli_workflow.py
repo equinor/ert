@@ -24,9 +24,7 @@ def test_executing_workflow(storage):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_output_of_a_workflow_run_from_the_cli_is_in_the_ert_log(
-    storage, caplog
-):
+def test_that_output_of_a_workflow_run_from_the_cli_is_in_the_ert_log(storage, caplog):
     Path("print_job").write_text("EXECUTABLE print_script.sh\n", encoding="utf-8")
     print_script = Path("print_script.sh")
     print_script.write_text(

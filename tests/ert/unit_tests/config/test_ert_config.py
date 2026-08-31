@@ -3230,7 +3230,7 @@ def test_that_log_shape_registry_logs_count_of_shapes(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_workflow_is_named_after_the_alias_given_to_load_workflow():
+def test_that_a_workflow_is_named_after_alias_given_to_load_workflow():
     Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
     Path("wf_file").write_text("WFJOB hello\n", encoding="utf-8")
     Path("test.ert").write_text(
