@@ -241,6 +241,27 @@ def test_that_add_logging_handle_returns_the_handles(tmpdir):
         assert isinstance(handles[0], logging.FileHandler)
 
 
+def test_that_add_logging_handle_to_root_is_idempotent(tmpdir):
+    """Calling add_logging_handle_to_root more than once on the same plugin
+    manager instance must not create new handler instances or attach
+    duplicate handlers to the root logger.
+    """
+    with tmpdir.as_cwd():
+        root_logger = logging.getLogger()
+        pre_existing_handlers = list(root_logger.handlers)
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        first_handles = pm.add_logging_handle_to_root(root_logger)
+        second_handles = pm.add_logging_handle_to_root(root_logger)
+
+        assert first_handles == second_handles
+        added_handlers = [
+            handler
+            for handler in root_logger.handlers
+            if handler not in pre_existing_handlers
+        ]
+        assert added_handlers == first_handles
+
+
 def test_that_non_propagating_loggers_also_receive_plugin_log_handles(tmpdir):
     """A logger configured with propagate=False never forwards its records to
     the root logger's handlers. Since add_logging_handle_to_root is meant to
