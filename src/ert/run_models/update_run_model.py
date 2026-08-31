@@ -1,6 +1,9 @@
 import dataclasses
 import functools
+import logging
 import uuid
+
+import polars as pl
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
@@ -15,12 +18,14 @@ from ert.analysis.event import (
     AnalysisStatusEvent,
     AnalysisTimeEvent,
 )
+from ert.analysis.snapshots import ObservationStatus, SmootherSnapshot
 from ert.config import (
     HookRuntime,
     PostUpdateFixtures,
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
 )
+from ert.config.observation_quality_control import RFT_LOCATION_NOT_IN_GRID_ERROR
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -32,6 +37,8 @@ from ert.run_models.event import (
 from ert.run_models.run_model import ErtRunError, RunModel
 from ert.run_models.run_model_configs import UpdateRunModelConfig
 from ert.storage import Ensemble, LocalExperiment
+
+logger = logging.getLogger(__name__)
 
 
 class UpdateRunModel(RunModel, UpdateRunModelConfig):
@@ -71,7 +78,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             experiment=prior.experiment,
         )
 
-        smoother_update(
+        smoother_snapshot = smoother_update(
             prior,
             posterior,
             update_settings=self.update_settings,
@@ -81,6 +88,31 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             global_scaling=weight,
             progress_callback=progress_callback,
             active_realizations=self.active_realizations,
+        )
+        self._log_rft_observations_outside_grid(prior, smoother_snapshot)
+
+    def _log_rft_observations_outside_grid(
+        self, prior: Ensemble, smoother_snapshot: SmootherSnapshot
+    ) -> None:
+        rft_observations = prior.experiment.observations.get("rft")
+        if rft_observations is None:
+            return
+
+        obs_and_responses = smoother_snapshot.observations_and_responses
+        if obs_and_responses is None:
+            return
+        num_outside_grid = obs_and_responses.filter(
+            (pl.col("status") != ObservationStatus.ACTIVE)
+            & pl.col("missing_realizations").str.contains(
+                RFT_LOCATION_NOT_IN_GRID_ERROR, literal=True
+            )
+        ).height
+        logger.info(
+            "Update step %d: %d of %d RFT observations deactivated because their "
+            "location was outside the grid",
+            prior.iteration,
+            num_outside_grid,
+            rft_observations.height,
         )
 
     def update(
