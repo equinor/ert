@@ -133,8 +133,8 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        self._parameter_configuration = parameter_configuration
         design_matrix = analysis_config.design_matrix
-        merged_parameters = parameter_configuration
         if design_matrix is not None:
             layout.addRow(
                 "Design matrix",
@@ -144,12 +144,16 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
-            merged_parameters = design_matrix.merge_with_existing_parameters(
-                merged_parameters
+            self._parameter_configuration = (
+                design_matrix.merge_with_existing_parameters(
+                    self._parameter_configuration
+                )
             )
 
-        if merged_parameters:
-            layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
+        if self._parameter_configuration:
+            layout.addRow(
+                "Parameters", get_parameters_button(self._parameter_configuration, self)
+            )
 
         self.setLayout(layout)
 
