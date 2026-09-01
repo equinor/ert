@@ -83,7 +83,7 @@ def test_error_handling_external_job():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_stdout_printed_before_an_external_job_fails_is_captured():
+def test_that_stdout_printed_before_external_job_fails_is_captured():
     WorkflowCommon.createExternalDumpJob()
 
     job = workflow_job_from_file(
@@ -97,7 +97,7 @@ def test_that_stdout_printed_before_an_external_job_fails_is_captured():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_failing_external_job_reports_its_exit_code_without_an_ert_stack_trace():
+def test_that_failing_external_job_reports_its_exit_code_without_ert_stack_trace():
     WorkflowCommon.createExternalDumpJob()
 
     job = workflow_job_from_file(
@@ -232,7 +232,7 @@ def test_that_job_results_contain_one_entry_per_job_invocation():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_output_of_a_workflow_job_is_written_to_the_ert_log(caplog):
+def test_that_output_of_workflow_job_is_written_to_ert_log(caplog):
     WorkflowCommon.createExternalDumpJob()
 
     dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
@@ -249,7 +249,7 @@ def test_that_the_output_of_a_workflow_job_is_written_to_the_ert_log(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_hook_a_workflow_was_run_from_is_named_in_the_ert_log(caplog):
+def test_that_hook_workflow_was_run_from_is_named_in_ert_log(caplog):
     WorkflowCommon.createExternalDumpJob()
 
     dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
@@ -267,7 +267,7 @@ def test_that_the_hook_a_workflow_was_run_from_is_named_in_the_ert_log(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_workflow_run_outside_a_hook_is_logged_with_hook_none(caplog):
+def test_that_workflow_run_outside_hook_is_logged_with_hook_none(caplog):
     WorkflowCommon.createExternalDumpJob()
 
     dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
@@ -282,7 +282,7 @@ def test_that_a_workflow_run_outside_a_hook_is_logged_with_hook_none(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_job_is_logged_as_starting_before_it_is_logged_as_finished(caplog):
+def test_that_job_is_logged_as_starting_before_it_is_logged_as_finished(caplog):
     WorkflowCommon.createExternalDumpJob()
 
     dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
@@ -306,7 +306,7 @@ def test_that_a_job_is_logged_as_starting_before_it_is_logged_as_finished(caplog
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_output_of_a_job_that_stops_the_workflow_is_still_logged(caplog):
+def test_that_output_of_job_that_stops_workflow_is_still_logged(caplog):
     WorkflowCommon.createExternalDumpJob()
     with Path("dump_failing_job").open("a", encoding="utf-8") as f:
         f.write("STOP_ON_FAIL True")
@@ -506,7 +506,7 @@ def test_workflow_stops_with_stopping_job():
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
-def test_that_a_job_runner_stops_reporting_it_is_running_when_arguments_are_rejected():
+def test_that_job_runner_stops_reporting_it_is_running_when_arguments_are_rejected():
     WorkflowCommon.createErtScriptsJob()
     job = workflow_job_from_file(
         name="SUBTRACT", config_file="subtract_script_job", origin="user"

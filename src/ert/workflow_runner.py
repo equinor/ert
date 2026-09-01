@@ -26,13 +26,6 @@ class WorkflowJobStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
-def _job_description(
-    workflow_name: str, job_name: str, job_index: int, hook: str | None
-) -> str:
-    """Identify a job invocation the same way in every workflow log line."""
-    return f"hook={hook} workflow={workflow_name} job={job_name}#{job_index}"
-
-
 @dataclass
 class WorkflowJobResult:
     name: str
@@ -44,17 +37,6 @@ class WorkflowJobResult:
     timestamp: datetime.datetime = field(
         default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
     )
-
-    def as_log_entry(self, workflow_name: str, hook: str | None = None) -> str:
-        description = _job_description(workflow_name, self.name, self.index, hook)
-        sections = [f"Workflow job result; {description} status={self.status}"]
-        if self.arguments:
-            sections.append(f"--- arguments ---\n{' '.join(self.arguments)}")
-        if self.stdout:
-            sections.append(f"--- stdout ---\n{self.stdout.rstrip('\n')}")
-        if self.stderr:
-            sections.append(f"--- stderr ---\n{self.stderr.rstrip('\n')}")
-        return "\n".join(sections)
 
 
 class WorkflowJobRunner:
@@ -207,10 +189,9 @@ class WorkflowRunner:
 
             jobrunner = WorkflowJobRunner(job)
             self.__current_job = jobrunner
-            description = _job_description(
-                self.__workflow.name, jobrunner.name, index, self._hook
+            logger.info(
+                f"Workflow job starting; {self._job_description(jobrunner.name, index)}"
             )
-            logger.info(f"Workflow job starting; {description}")
             jobrunner.run(args, fixtures=self.fixtures)
 
             if self.__cancelled:
@@ -251,8 +232,22 @@ class WorkflowRunner:
         self.__running = False
         self.__workflow_result = True
 
+    def _job_description(self, job_name: str, index: int) -> str:
+        """Identify a job invocation the same way in every workflow log line."""
+        return (
+            f"hook={self._hook} workflow={self.__workflow.name} job={job_name}#{index}"
+        )
+
     def _log_entry(self, result: WorkflowJobResult) -> str:
-        return result.as_log_entry(workflow_name=self.__workflow.name, hook=self._hook)
+        description = self._job_description(result.name, result.index)
+        sections = [f"Workflow job result; {description} status={result.status}"]
+        if result.arguments:
+            sections.append(f"--- arguments ---\n{' '.join(result.arguments)}")
+        if result.stdout:
+            sections.append(f"--- stdout ---\n{result.stdout.rstrip('\n')}")
+        if result.stderr:
+            sections.append(f"--- stderr ---\n{result.stderr.rstrip('\n')}")
+        return "\n".join(sections)
 
     def _log_extra(
         self, result: WorkflowJobResult, execution_type: str | None = None

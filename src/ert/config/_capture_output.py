@@ -40,7 +40,7 @@ class _CaptureProxy(io.TextIOBase):
         super().__init__()
         self.wrapped_stream = stream
         self._local = threading.local()
-        self._users = 0
+        self._active_captures = 0
 
     @property
     def _buffers(self) -> list[io.StringIO]:
@@ -120,7 +120,7 @@ def capturing(stream_name: str) -> Iterator[io.StringIO]:
     with _capture_lock:
         stream = getattr(sys, stream_name)
         proxy = stream if isinstance(stream, _CaptureProxy) else _CaptureProxy(stream)
-        proxy._users += 1
+        proxy._active_captures += 1
         setattr(sys, stream_name, proxy)
     try:
         with proxy.capture() as buffer:
@@ -132,6 +132,6 @@ def capturing(stream_name: str) -> Iterator[io.StringIO]:
             # check keeps us from doing so if something else has replaced
             # sys.<stream_name> in the meantime, as restoring would then throw
             # away their stream rather than ours.
-            proxy._users -= 1
-            if proxy._users == 0 and getattr(sys, stream_name) is proxy:
+            proxy._active_captures -= 1
+            if proxy._active_captures == 0 and getattr(sys, stream_name) is proxy:
                 setattr(sys, stream_name, proxy.wrapped_stream)
