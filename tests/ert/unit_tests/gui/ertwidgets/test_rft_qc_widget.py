@@ -219,6 +219,7 @@ def _display_all_points(widget) -> None:
     ):
         list_widget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         list_widget.selectAll()
+    widget._plot._fit_view_to_displayed_points()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
