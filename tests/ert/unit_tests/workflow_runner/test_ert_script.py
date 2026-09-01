@@ -83,7 +83,7 @@ def test_that_exits_in_ert_script_is_trapped():
     assert failing.hasFailed()
 
 
-def test_that_stdout_and_stderr_printed_by_an_ert_script_are_captured():
+def test_that_stdout_and_stderr_printed_by_ert_script_are_captured():
     class PrintingScript(ErtScript):
         def run(self):
             print("to stdout")
@@ -96,7 +96,7 @@ def test_that_stdout_and_stderr_printed_by_an_ert_script_are_captured():
     assert script.stderrdata == "to stderr\n"
 
 
-def test_that_output_printed_before_an_ert_script_raises_is_captured():
+def test_that_output_printed_before_ert_script_raises_is_captured():
     class PrintingAndFailingScript(ErtScript):
         def run(self):
             print("printed before failing")
@@ -109,7 +109,7 @@ def test_that_output_printed_before_an_ert_script_raises_is_captured():
     assert script.stdoutdata == "printed before failing\n"
 
 
-def test_that_the_stack_trace_of_a_failing_script_is_appended_to_captured_stderr():
+def test_that_stack_trace_of_failing_script_is_appended_to_captured_stderr():
     class PrintingAndFailingScript(ErtScript):
         def run(self):
             print("printed to stderr", file=sys.stderr)
@@ -122,7 +122,7 @@ def test_that_the_stack_trace_of_a_failing_script_is_appended_to_captured_stderr
     assert "ValueError: boom" in script.stderrdata
 
 
-def test_that_stderr_without_a_trailing_newline_is_separated_from_the_stack_trace():
+def test_that_stderr_without_trailing_newline_is_separated_from_stack_trace():
     class PrintingAndFailingScript(ErtScript):
         def run(self):
             print("partial", end="", file=sys.stderr)
@@ -134,7 +134,7 @@ def test_that_stderr_without_a_trailing_newline_is_separated_from_the_stack_trac
     assert script.stderrdata.startswith("partial\nboom\n")
 
 
-def test_that_output_captured_from_an_ert_script_is_still_written_to_stdout(capsys):
+def test_that_output_captured_from_ert_script_is_still_written_to_stdout(capsys):
     class PrintingScript(ErtScript):
         def run(self):
             print("to stdout")
@@ -154,7 +154,7 @@ def _join(thread: threading.Thread) -> None:
     )
 
 
-def test_that_output_written_by_another_thread_is_left_out_of_the_capture():
+def test_that_output_written_by_another_thread_is_left_out_of_capture():
     job_may_finish = threading.Event()
     other_thread_has_printed = threading.Event()
 
@@ -205,7 +205,7 @@ def test_that_concurrent_scripts_only_capture_their_own_output():
     assert second.stdoutdata.strip() == "second"
 
 
-def test_that_the_original_streams_are_restored_after_capturing():
+def test_that_original_streams_are_restored_after_capturing():
     class PrintingScript(ErtScript):
         def run(self):
             print("hello")
@@ -220,7 +220,7 @@ def test_that_the_original_streams_are_restored_after_capturing():
 @pytest.mark.parametrize(
     "attribute", ["fileno", "isatty", "encoding", "errors", "buffer", "line_buffering"]
 )
-def test_that_the_captured_stdout_exposes_the_same_attributes_as_the_real_one(
+def test_that_captured_stdout_exposes_same_attributes_as_real_one(
     attribute,
 ):
     def look_up(stream):

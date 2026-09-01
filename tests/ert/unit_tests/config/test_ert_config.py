@@ -3230,7 +3230,7 @@ def test_that_log_shape_registry_logs_count_of_shapes(caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_workflow_is_named_after_alias_given_to_load_workflow():
+def test_that_workflow_takes_name_given_to_load_workflow():
     Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
     Path("wf_file").write_text("WFJOB hello\n", encoding="utf-8")
     Path("test.ert").write_text(
@@ -3238,7 +3238,7 @@ def test_that_a_workflow_is_named_after_alias_given_to_load_workflow():
             """
             NUM_REALIZATIONS 1
             LOAD_WORKFLOW_JOB WFJOB
-            LOAD_WORKFLOW wf_file my_alias
+            LOAD_WORKFLOW wf_file my_workflow_name
             """
         ),
         encoding="utf-8",
@@ -3246,11 +3246,11 @@ def test_that_a_workflow_is_named_after_alias_given_to_load_workflow():
 
     ert_config = ErtConfig.from_file("test.ert")
 
-    assert ert_config.workflows["my_alias"].name == "my_alias"
+    assert ert_config.workflows["my_workflow_name"].name == "my_workflow_name"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_a_workflow_without_an_alias_is_named_after_its_file():
+def test_that_workflow_without_explicit_name_is_named_after_its_file():
     Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
     Path("wf_file").write_text("WFJOB hello\n", encoding="utf-8")
     Path("test.ert").write_text(
