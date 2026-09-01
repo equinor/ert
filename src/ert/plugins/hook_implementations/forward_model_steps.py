@@ -239,10 +239,11 @@ class Eclipse100(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             description="""The Eclipse 100 black-oil reservoir simulator from SLB.
 
-:ref:`DATA_FILE <data_file>` Ert will parse the DATA-file for the :code:`PARALLEL` keyword and set up the
-correct number of CPUs. If the :code:`PARALLEL` keyword is set up/computed
-during the forward model, then :code:`NUM_CPU` must be set in the Ert config
-for correct configuration of CPU usage.
+If you have used the :ref:`DATA_FILE <data_file>` keyword Ert will parse the
+DATA-file for the :code:`PARALLEL` keyword and set up the correct number of
+CPUs. If the :code:`PARALLEL` keyword is set up/computed during the forward
+model, then :code:`NUM_CPU` must be set in the Ert config for correct
+configuration of CPU usage.
             """,
             category="simulators.reservoir",
             examples="""
@@ -314,10 +315,11 @@ class Eclipse300(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             description="""The Eclipse 300 compositional reservoir simulator from SLB.
 
-Ert will parse the DATA-file for the :code:`PARALLEL` keyword and set up the
-correct number of CPUs. If the :code:`PARALLEL` keyword is set up/computed
-during the forward model, then :code:`NUM_CPU` must be set in the Ert config
-for correct configuration of CPU usage.
+If you have used the :ref:`DATA_FILE <data_file>` keyword Ert will parse the
+DATA-file for the :code:`PARALLEL` keyword and set up the correct number of
+CPUs. If the :code:`PARALLEL` keyword is set up/computed during the forward
+model, then :code:`NUM_CPU` must be set in the Ert config for correct
+configuration of CPU usage.
 """,
             category="simulators.reservoir",
             examples="""
@@ -383,9 +385,10 @@ class Flow(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             description="""Forward model for OPM Flow simulator.
 
-Flow will be run with the number of CPUs defined either through
-the keyword :code:`NUM_CPU` or parsed from the :code:`PARALLEL` keyword
-in the DATA file if :code:`NUM_CPU` is not set.
+Flow will be run with the number of CPUs defined either through the keyword
+:code:`NUM_CPU` or parsed from the :code:`PARALLEL` keyword in the DATA file
+(requires usage of the :ref:`DATA_FILE <data_file>` keyword) if :code:`NUM_CPU`
+is not set.
 
 ERT will be able to run the flow simulator if there is an executable named
 :code:`flow` or :code:`flowrun` found in the user's :code:`$PATH` environment
