@@ -239,7 +239,7 @@ class Eclipse100(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             description="""The Eclipse 100 black-oil reservoir simulator from SLB.
 
-Ert will parse the DATA-file for the :code:`PARALLEL` keyword and set up the
+:ref:`DATA_FILE <data_file>` Ert will parse the DATA-file for the :code:`PARALLEL` keyword and set up the
 correct number of CPUs. If the :code:`PARALLEL` keyword is set up/computed
 during the forward model, then :code:`NUM_CPU` must be set in the Ert config
 for correct configuration of CPU usage.
