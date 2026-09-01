@@ -598,12 +598,26 @@ def test_that_rft_qc_widget_loads_and_displays_observations_responses_and_file_r
         assert widget._file_responses.is_empty()
 
 
-def _mock_rft_ensemble(stored_observations, stored_location_metadata, stored_responses):
+def _mock_rft_ensemble(
+    stored_observations,
+    stored_location_metadata,
+    stored_responses,
+    *,
+    approximate_missing_values: bool = False,
+):
     ensemble = MagicMock()
     experiment = MagicMock()
     experiment.observations = (
         {} if stored_observations is None else {"rft": stored_observations}
     )
+    experiment.response_configuration = {
+        "rft": RFTConfig(
+            input_files=[],
+            data_to_read={},  # Read all available RFT data
+            zonemap=None,
+            approximate_missing_values=approximate_missing_values,
+        )
+    }
     type(ensemble).experiment = PropertyMock(return_value=experiment)
     if isinstance(stored_location_metadata, BaseException):
         ensemble.load_observation_location_metadata.side_effect = (
@@ -913,6 +927,130 @@ def test_that_observations_status_column_is_added(qtbot):
         _PointStatus.NOT_IN_GRID,
         _PointStatus.NO_RESPONSE,
     ]
+
+
+@pytest.mark.parametrize(
+    ("with_observations"),
+    [
+        pytest.param(
+            False,
+            id="no rft observations",
+        ),
+        pytest.param(
+            True,
+            id="with rft observations",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("with_responses"),
+    [
+        pytest.param(
+            False,
+            id="no rft responses",
+        ),
+        pytest.param(
+            True,
+            id="with rft responses",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("approximate_missing_values"),
+    [
+        pytest.param(
+            False,
+            id="approximate off",
+        ),
+        pytest.param(
+            True,
+            id="approximate on",
+        ),
+    ],
+)
+def test_that_response_status_column_is_added(
+    qtbot,
+    with_observations,
+    with_responses,
+    approximate_missing_values,
+):
+    # fmt: off
+    observations = [
+        # east  north   tvd   zone    observation
+        ( 1.0,   1.0,   2.0, "zone1",  10.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+    ] if with_observations else []
+
+    metadata = [
+        # east  north   tvd   actual_zones  connection_cell   cell_center
+        ( 1.0,   1.0,   2.0, ["zone1"],       [1, 1, 2],    [1.0, 1.0, 2.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+    ] if with_observations else []
+
+    responses = [
+        # connection_cell  values   cell_center      depth  cell_zones
+        ( [1, 1, 1],       10.0,   [1.0, 1.0, 1.0],   1.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+        ( [1, 1, 3],       12.0,   [1.0, 1.0, 3.0],   3.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+    ] if with_responses else []
+    # fmt: on
+
+    if not with_responses:
+        expected_statuses = []
+    elif approximate_missing_values and with_observations:
+        expected_statuses = [_PointStatus.RESPONSE] * 2 + [_PointStatus.APPROXIMATED]
+    else:
+        expected_statuses = [_PointStatus.RESPONSE] * 2
+
+    stored_observations = pl.DataFrame(
+        observations,
+        schema={
+            "east": pl.Float32,
+            "north": pl.Float32,
+            "tvd": pl.Float32,
+            "zone": pl.String,
+            "observations": pl.Float32,
+        },
+        orient="row",
+    ).with_columns(
+        pl.lit("WELL:2000-01-01:PRESSURE").alias("response_key"),
+        pl.lit("WELL").alias("well"),
+        pl.lit("2000-01-01").alias("date"),
+        pl.lit(5.0, dtype=pl.Float32).alias("std"),
+    )
+
+    stored_location_metadata = pl.DataFrame(
+        metadata,
+        schema=RFTConfig.location_metadata_schema(),
+        orient="row",
+    )
+
+    stored_responses = pl.DataFrame(
+        responses,
+        schema={
+            "well_connection_cell": pl.Array(pl.Int64, 3),
+            "values": pl.Float32,
+            "cell_center": pl.Array(pl.Float32, 3),
+            "depth": pl.Float32,
+            "cell_zones": pl.List(pl.String),
+        },
+        orient="row",
+    ).with_columns(
+        pl.lit("WELL:2000-01-01:PRESSURE").alias("response_key"),
+        pl.lit("WELL").alias("well"),
+        pl.lit("2000-01-01").alias("date"),
+        pl.lit("PRESSURE").alias("property"),
+    )
+
+    ensemble = _mock_rft_ensemble(
+        stored_observations=stored_observations,
+        stored_location_metadata=stored_location_metadata,
+        stored_responses=stored_responses,
+        approximate_missing_values=approximate_missing_values,
+    )
+
+    widget = RftQcWidget()
+    qtbot.addWidget(widget)
+    widget.update_realization(ensemble, 0)
+
+    assert widget._responses["status"].to_list() == expected_statuses
 
 
 def test_that_deduplicate_points_per_coordinate_and_status_keeps_one_point_per_coordinate_per_status():  # ruff: ignore[line-too-long]
