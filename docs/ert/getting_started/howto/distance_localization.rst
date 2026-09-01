@@ -113,11 +113,7 @@ Configuration file vs GUI
 --------------------------
 
 Distance based localization can only be enabled through the configuration
-file. The GUI analysis module dialog exposes only adaptive localization
-settings.
+file.
 
-If distance localization is configured for a parameter type, it is used for
-that type even when adaptive localization is enabled in the GUI. The GUI's
-adaptive localization settings are used only for parameters whose configured
-strategy is ``ADAPTIVE``; they do not replace a configured ``DISTANCE``
-strategy.
+For adaptive localization, the GUI provides a way to set the correlation threshold and truncation parameters.
+Note that the values set in the GUI will override any values set in the configuration file.
