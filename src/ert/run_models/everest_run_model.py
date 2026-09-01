@@ -55,7 +55,7 @@ from ert.run_models.run_model_configs import EverestRunModelConfig
 from ert.runpaths import Runpaths
 from ert.storage import ExperimentState, ExperimentStatus
 from ert.storage.local_ensemble import EverestRealizationInfo
-from ert.storage.local_experiment import ExperimentType, LocalExperiment
+from ert.storage.local_experiment import LocalExperiment
 from ert.substitutions import Substitutions
 from everest.config import (
     ControlConfig,
@@ -547,10 +547,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     @classmethod
     def description(cls) -> str:
         return "Run batches "
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.EVEREST
 
     @property
     def exit_code(self) -> EverestExitCode | None:

@@ -10,7 +10,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.run_model_configs import ManualUpdateConfig
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentType, LocalExperiment
+from ert.storage.local_experiment import LocalExperiment
 
 from .run_model import ErtRunError
 
@@ -56,10 +56,6 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     @classmethod
     def description(cls) -> str:
         return "Load parameters and responses from existing → update"
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.MANUAL_UPDATE
 
     def _create_experiment_storage(self) -> LocalExperiment:
         experiment_config = self.to_experiment_config(
