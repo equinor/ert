@@ -4,16 +4,9 @@ from functools import partial
 from typing import cast
 
 from annotated_types import Ge, Gt, Le
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QDoubleSpinBox,
     QFormLayout,
-    QFrame,
-    QHBoxLayout,
-    QLabel,
-    QLayout,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -26,9 +19,6 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.analysis_module = analysis_module
 
         layout = QFormLayout()
-        layout.setVerticalSpacing(5)
-        layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.setHorizontalSpacing(150)
 
         self.blockSignals(True)
 
@@ -44,46 +34,8 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
-        layout.addRow(self.create_horizontal_line())
-        layout.addRow(QLabel("Localization"))
-
-        loc_options = AnalysisModule.model_fields["localization"]
-        layout.addRow(QLabel(loc_options.description))
-
-        localization_frame = QFrame()
-        localization_frame.setLayout(QVBoxLayout())
-        main_loc_layout = cast(QLayout, localization_frame.layout())
-        main_loc_layout.setContentsMargins(0, 0, 0, 0)
-
-        checkbox_frame = QFrame()
-        checkbox_layout = QHBoxLayout()
-        checkbox_frame.setLayout(checkbox_layout)
-        checkbox_layout.setContentsMargins(0, 0, 0, 0)
-
-        localization_metadata = AnalysisModule.model_fields["localization"]
-        localization_checkbox = QCheckBox(localization_metadata.title)
-        localization_checkbox.setObjectName("localization")
-        localization_checkbox.clicked.connect(
-            partial(
-                self.valueChangedCheckBox,
-                "localization",
-                localization_checkbox,
-            )
-        )
-        localization_checkbox.setChecked(analysis_module.localization)
-
-        checkbox_layout.addWidget(localization_checkbox)
-        checkbox_layout.addStretch(1)
-        main_loc_layout.addWidget(checkbox_frame)
-
-        spinner_frame = QFrame()
-        spinner_layout = QHBoxLayout()
-        spinner_frame.setLayout(spinner_layout)
-        spinner_layout.setContentsMargins(0, 0, 0, 0)
-
         var_name = "localization_correlation_threshold"
         metadata = AnalysisModule.model_fields[var_name]
-
         self.local_spinner = self.createDoubleSpinBox(
             var_name,
             analysis_module.correlation_threshold(ensemble_size),
@@ -91,32 +43,11 @@ class AnalysisModuleVariablesPanel(QWidget):
             cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
             0.1,
         )
-        self.local_spinner.setObjectName("localization_threshold")
-        self.local_spinner.setEnabled(localization_checkbox.isChecked())
-
-        loc_corr_thresh_options = AnalysisModule.model_fields[
-            "localization_correlation_threshold"
-        ]
-        spinner_layout.addWidget(QLabel(loc_corr_thresh_options.description))
-
-        spinner_layout.addWidget(self.local_spinner)
-        spinner_layout.addStretch(1)
-        main_loc_layout.addWidget(spinner_frame)
-
-        localization_checkbox.stateChanged.connect(self.local_spinner.setEnabled)
-
-        layout.addRow(localization_frame)
+        self.local_spinner.setObjectName("localization_correlation_threshold")
+        layout.addRow("Adaptive localization correlation threshold", self.local_spinner)
 
         self.setLayout(layout)
         self.blockSignals(False)
-
-    @staticmethod
-    def create_horizontal_line() -> QFrame:
-        hline = QFrame()
-        hline.setFrameShape(QFrame.Shape.HLine)
-        hline.setFrameShadow(QFrame.Shadow.Sunken)
-        hline.setFixedHeight(20)
-        return hline
 
     def createDoubleSpinBox(
         self,
@@ -143,6 +74,3 @@ class AnalysisModuleVariablesPanel(QWidget):
 
     def valueChangedSpinner(self, name: str, value: float) -> None:
         setattr(self.analysis_module, name, value)
-
-    def valueChangedCheckBox(self, name: str, control: QCheckBox) -> None:
-        setattr(self.analysis_module, name, control.isChecked())
