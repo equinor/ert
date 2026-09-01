@@ -4,9 +4,6 @@ DEFAULT_OUTPUT_DIR = "everest_output"
 DEFAULT_LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"
 
 EVEREST = "everest"
-EVERSERVER = "everserver"
-EXPERIMENT_SERVER = "experiment_server"
-
 NAME = "name"
 
 OPTIMIZATION_OUTPUT_DIR = "optimization_output"

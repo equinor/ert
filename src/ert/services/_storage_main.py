@@ -201,8 +201,8 @@ def run_server(
     os.environ["ERT_STORAGE_ENS_PATH"] = str(args.project.absolute())
     config = (
         # uvicorn.Config() resets the logging config (overriding additional
-        # handlers added to loggers like e.g. the ert_azurelogger handler
-        # added through the plugin system
+        # handlers added to loggers through the plugin system, e.g. log
+        # handlers registered by external logging plugins)
         uvicorn.Config(DARK_STORAGE_APP, **config_args)
         if uvicorn_config is None
         else uvicorn_config

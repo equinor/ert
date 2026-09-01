@@ -22,9 +22,6 @@ from everest.config import ServerConfig
 from everest.detached import get_experiments
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
-    EVEREST,
-    EVERSERVER,
-    EXPERIMENT_SERVER,
     OPTIMIZATION_LOG_DIR,
     EverEndpoints,
 )
@@ -35,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 def _configure_loggers(
     log_dir: Path, logging_level: int, output_file: str | None
-) -> None:
+) -> list[logging.Handler]:
     def make_handler_config(path: Path, log_level: int) -> dict[str, Any]:
         makedirs_if_needed(path.parent)
         return {
@@ -50,52 +47,23 @@ def _configure_loggers(
         "version": 1,
         "disable_existing_loggers": False,
         "handlers": {
-            "endpoint_log": make_handler_config(
+            "everserver_log": make_handler_config(
                 log_dir / "everserver.log", logging_level
             ),
-            "everest_log": make_handler_config(log_dir / "everest.log", logging_level),
             "ropt_log": make_handler_config(log_dir / "ropt.log", logging_level),
-            "forward_models_log": make_handler_config(
-                log_dir / "forward_models.log", logging_level
-            ),
         },
         "loggers": {
-            "root": {"handlers": ["endpoint_log"], "level": logging_level},
+            "root": {"handlers": ["everserver_log"], "level": logging_level},
             "uvicorn": {"level": logging.WARNING},
             **{
                 logger_name: {"level": logging.WARNING}
                 for logger_name, logger_config in ert_loggers.items()
                 if logger_config.get("level") == "WARNING"
             },
-            EVERSERVER: {
-                "handlers": ["endpoint_log"],
-                "level": logging_level,
-                "propagate": False,
-            },
-            EXPERIMENT_SERVER: {
-                "handlers": ["endpoint_log"],
-                "level": logging_level,
-                "propagate": False,
-            },
-            EVEREST: {
-                "handlers": ["everest_log"],
-                "level": logging_level,
-                "propagate": False,
-            },
             "ropt": {
                 "handlers": ["ropt_log"],
                 "level": logging_level,
                 "propagate": False,
-            },
-            "forward_models": {
-                "handlers": ["forward_models_log"],
-                "level": logging_level,
-                "propagate": False,
-            },
-            "ert.scheduler.job": {
-                "handlers": ["forward_models_log"],
-                "propagate": False,
-                "level": logging_level,
             },
         },
         "formatters": {
@@ -114,8 +82,10 @@ def _configure_loggers(
     logging.config.dictConfig(logging_config)
 
     plugin_manager = ErtPluginManager()
-    plugin_manager.add_logging_handle_to_root(logging.getLogger())
+    plugin_log_handles = plugin_manager.add_logging_handle_to_root(logging.getLogger())
     plugin_manager.add_span_processor_to_trace_provider()
+
+    return plugin_log_handles
 
 
 def get_trace_context():
@@ -162,14 +132,15 @@ def main() -> None:
         tracer.start_as_current_span("everest.everserver", context=ctx),
         NamedTemporaryFile() as log_file,
     ):
+        plugin_log_handles: list[logging.Handler] = []
         try:  # ruff: ignore[too-many-statements-in-try-clause]
-            _configure_loggers(
+            plugin_log_handles = _configure_loggers(
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
                 logging_level=options.logging_level,
                 output_file=log_file.name,
             )
 
-            logging.getLogger(EVERSERVER).info("Everserver starting ...")
+            logging.getLogger(__name__).info("Everserver starting ...")
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
             # Starting the server
@@ -200,9 +171,18 @@ def main() -> None:
                         time.sleep(0.5)
         except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
-            logging.getLogger(EVERSERVER).info("Everserver stopped by user")
+            logging.getLogger(__name__).info("Everserver stopped by user")
         except Exception as e:
-            logging.getLogger(EVERSERVER).exception(e)
+            logging.getLogger(__name__).exception(e)
+        finally:
+            # Explicitly flush plugin-provided log handlers (e.g. one sending
+            # logs to a remote monitoring backend) since process shutdown may
+            # not reliably trigger their internal batched-export flush via
+            # atexit.
+            for handle in plugin_log_handles:
+                force_flush = getattr(handle, "force_flush", None)
+                if callable(force_flush):
+                    force_flush()
 
 
 if __name__ == "__main__":

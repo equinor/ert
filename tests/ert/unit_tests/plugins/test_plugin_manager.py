@@ -11,6 +11,21 @@ from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
 
 
+@pytest.fixture(autouse=True)
+def _cleanup_root_logger_handlers():
+    """Ensure handlers are detached and closed after each test so file
+    descriptors are not leaked and later tests don't unexpectedly write
+    to files opened by earlier tests.
+    """
+    root_logger = logging.getLogger()
+    pre_existing_handlers = list(root_logger.handlers)
+    yield
+    for handler in list(root_logger.handlers):
+        if handler not in pre_existing_handlers:
+            root_logger.removeHandler(handler)
+            handler.close()
+
+
 def test_no_plugins():
     pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations])
     assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
@@ -216,6 +231,75 @@ def test_add_logging_handle(tmpdir):
         assert "I should write this to spam.log" in Path("spam.log").read_text(
             encoding="utf-8"
         )
+
+
+def test_that_add_logging_handle_returns_the_handles(tmpdir):
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        handles = pm.add_logging_handle_to_root(logging.getLogger())
+        assert len(handles) == 1
+        assert isinstance(handles[0], logging.FileHandler)
+
+
+def test_that_add_logging_handle_to_root_is_idempotent(tmpdir):
+    """Calling add_logging_handle_to_root more than once on the same plugin
+    manager instance must not create new handler instances or attach
+    duplicate handlers to the root logger.
+    """
+    with tmpdir.as_cwd():
+        root_logger = logging.getLogger()
+        pre_existing_handlers = list(root_logger.handlers)
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        first_handles = pm.add_logging_handle_to_root(root_logger)
+        second_handles = pm.add_logging_handle_to_root(root_logger)
+
+        assert first_handles == second_handles
+        added_handlers = [
+            handler
+            for handler in root_logger.handlers
+            if handler not in pre_existing_handlers
+        ]
+        assert added_handlers == first_handles
+
+
+def test_that_non_propagating_loggers_also_receive_plugin_log_handles(tmpdir):
+    """A logger configured with propagate=False never forwards its records to
+    the root logger's handlers. Since add_logging_handle_to_root is meant to
+    make plugin-provided handlers (e.g. a remote log exporter) see every log
+    record regardless of which logger emitted it, such loggers must have the
+    plugin handles attached directly.
+    """
+    with tmpdir.as_cwd():
+        non_propagating_logger = logging.getLogger(
+            "test_non_propagating_logger_receives_plugin_handles"
+        )
+        non_propagating_logger.propagate = False
+        non_propagating_logger.setLevel(logging.DEBUG)
+        try:
+            pm = ErtPluginManager(plugins=[dummy_plugins])
+            pm.add_logging_handle_to_root(logging.getLogger())
+            non_propagating_logger.critical("I should also end up in spam.log")
+            assert "I should also end up in spam.log" in Path("spam.log").read_text(
+                encoding="utf-8"
+            )
+        finally:
+            non_propagating_logger.handlers.clear()
+            non_propagating_logger.propagate = True
+
+
+def test_that_propagating_loggers_are_not_directly_attached_by_plugin_handles(tmpdir):
+    """Loggers with the default propagate=True already forward their records
+    to the root logger, so attaching plugin handles directly to them as well
+    would cause duplicate log entries.
+    """
+    with tmpdir.as_cwd():
+        propagating_logger = logging.getLogger(
+            "test_propagating_logger_is_not_directly_attached"
+        )
+        assert propagating_logger.propagate
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        pm.add_logging_handle_to_root(logging.getLogger())
+        assert propagating_logger.handlers == []
 
 
 def test_add_span_processor():
