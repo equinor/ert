@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 import warnings
+from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from typing import TYPE_CHECKING, TextIO
 
@@ -338,11 +339,25 @@ def build_strategy_map(
     strategy_handlers = _build_strategy_handlers(strategies)
 
     strategy_map = {}
+    clustered_strategy_summary = defaultdict(list)
     for param_name in parameters:
         param_cfg = param_configs[param_name]
         strategy = _resolve_strategy(param_cfg, param_name, strategy_handlers)
         if strategy is not None:
             strategy_map[param_name] = strategy
+
+        strategy_key = (
+            param_cfg.update_strategy.name
+            if param_cfg.update_strategy is not None
+            else "none"
+        )
+        clustered_strategy_summary[strategy_key].append(param_name)
+
+    for strategy_name, params in clustered_strategy_summary.items():
+        logger.info(
+            f"Update strategy '{strategy_name}' for "
+            f"parameters '{', '.join(sorted(params))}'"
+        )
 
     return strategy_map
 
