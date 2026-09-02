@@ -26,7 +26,7 @@ from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
-from .experiment_config_panel import ExperimentConfigPanel
+from .experiment_config_panel import ExperimentConfigPanel, has_updatable_parameters
 
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig, ParameterConfig
@@ -186,6 +186,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
             self._experiment_name_field.isValid()
             and self._ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
+            and has_updatable_parameters(self._parameter_configuration)
         )
 
     @override
