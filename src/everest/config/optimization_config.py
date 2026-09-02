@@ -4,7 +4,7 @@ from textwrap import dedent
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
-from ropt.workflow import find_backend_plugin, validate_backend_options
+from ropt.utils import get_plugin_name, validate_backend_options
 
 from everest.config.cvar_config import CVaRConfig
 from everest.strings import EVEREST
@@ -352,7 +352,7 @@ class OptimizationConfig(BaseModel, extra="forbid"):
         )
 
         try:
-            plugin_name = find_backend_plugin(algorithm)
+            plugin_name = get_plugin_name("backend", algorithm)
         except ValueError:
             raise
         except Exception as exc:
