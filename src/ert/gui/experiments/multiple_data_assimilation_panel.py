@@ -46,7 +46,7 @@ from ert.validation.ensemble_realizations_argument import EnsembleRealizationsAr
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
-from .experiment_config_panel import ExperimentConfigPanel
+from .experiment_config_panel import ExperimentConfigPanel, has_updatable_parameters
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -416,6 +416,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
             and self.weights_valid
+            and has_updatable_parameters(self._parameter_configuration)
         )
 
     @override
