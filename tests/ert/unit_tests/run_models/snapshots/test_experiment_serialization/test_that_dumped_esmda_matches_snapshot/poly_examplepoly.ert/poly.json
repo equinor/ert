@@ -305,6 +305,5 @@
   "shape_registry": {
     "shapes": {}
   },
-  "experiment_type": "Multiple Data Assimilation",
   "prior_ensemble_id": null
 }
