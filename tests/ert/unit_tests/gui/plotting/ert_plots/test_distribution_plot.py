@@ -10,11 +10,9 @@ from ert.gui.plotting.ert_plots.distribution import (
     DEFAULT_GKDE_LABEL,
     DEFAULT_HISTOGRAM_LABEL,
     DistributionPlot,
-    _array_is_constant,
 )
 from ert.gui.plotting.plot_api import EnsembleObject
-from ert.gui.plotting.utils.plot_config import PlotConfig
-from ert.gui.plotting.utils.plot_context import PlotContext
+from ert.gui.plotting.utils import PlotConfig, PlotContext, PlotTools
 
 
 def _make_ensemble(name: str = "ensemble_1") -> EnsembleObject:
@@ -203,7 +201,7 @@ def test_that_gkde_line_is_not_drawn_for_constant_data(
 def test_that_array_is_constant_detects_empty_constant_and_varying(
     data: pd.DataFrame, expected: bool
 ) -> None:
-    assert bool(_array_is_constant(data[0])) is expected
+    assert bool(PlotTools.array_is_constant(data[0])) is expected
 
 
 def test_that_rug_only_plot_uses_log_x_scale_when_log_scale_enabled(
