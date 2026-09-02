@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from functools import partial
 from typing import cast
 
 from annotated_types import Ge, Gt, Le
@@ -15,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import AnalysisConfig, AnalysisModule, LocalizationType
+from ert.config import AnalysisModule, LocalizationType
 
 
 class _LocalizationTypeModel(QStandardItemModel):
@@ -35,18 +33,17 @@ class _LocalizationTypeModel(QStandardItemModel):
 class AnalysisModuleVariablesPanel(QWidget):
     def __init__(
         self,
-        analysis_config: AnalysisConfig,
-        ensemble_size: int,
+        update_strategies: dict[str, LocalizationType],
+        correlation_threshold: float,
+        enkf_truncation: float,
     ) -> None:
         QWidget.__init__(self)
 
-        self.analysis_config = analysis_config
-        self._changed_updated_parameter_strategies: dict[str, LocalizationType] = (
-            defaultdict(lambda: LocalizationType.GLOBAL)
-        )
+        self._update_strategies = update_strategies
+        self._correlation_threshold = correlation_threshold
+        self._enkf_truncation = enkf_truncation
 
         layout = QFormLayout()
-
         self.blockSignals(True)
 
         layout.addRow(
@@ -61,7 +58,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             self._find_correct_index(gen_kw_combobox, "GEN_KW")
         )
         gen_kw_combobox.currentIndexChanged.connect(
-            lambda index: self._changed_updated_parameter_strategies.__setitem__(
+            lambda index: self._update_strategies.__setitem__(
                 "GEN_KW",
                 gen_kw_combobox.itemData(index, Qt.ItemDataRole.UserRole),
             )
@@ -74,7 +71,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             self._find_correct_index(field_combobox, "FIELD")
         )
         field_combobox.currentIndexChanged.connect(
-            lambda index: self._changed_updated_parameter_strategies.__setitem__(
+            lambda index: self._update_strategies.__setitem__(
                 "FIELD",
                 field_combobox.itemData(index, Qt.ItemDataRole.UserRole),
             )
@@ -87,7 +84,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             self._find_correct_index(surface_combobox, "SURFACE")
         )
         surface_combobox.currentIndexChanged.connect(
-            lambda index: self._changed_updated_parameter_strategies.__setitem__(
+            lambda index: self._update_strategies.__setitem__(
                 "SURFACE",
                 surface_combobox.itemData(index, Qt.ItemDataRole.UserRole),
             )
@@ -100,38 +97,54 @@ class AnalysisModuleVariablesPanel(QWidget):
         metadata = AnalysisModule.model_fields[var_name]
         self.truncation_spinner = self._create_double_spinbox(
             var_name,
-            analysis_config.es_settings.enkf_truncation,
+            self._enkf_truncation,
             cast(float, next(v for v in metadata.metadata if isinstance(v, Gt)).gt)
             + 0.001,
             cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
             0.01,
         )
+        self.truncation_spinner.valueChanged.connect(
+            lambda value: setattr(self, "_enkf_truncation", value)
+        )
+
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
         var_name = "localization_correlation_threshold"
         metadata = AnalysisModule.model_fields[var_name]
-        self.local_spinner = self._create_double_spinbox(
+        self.treshold_spinner = self._create_double_spinbox(
             var_name,
-            analysis_config.es_settings.correlation_threshold(ensemble_size),
+            self._correlation_threshold,
             cast(float, next(v for v in metadata.metadata if isinstance(v, Ge)).ge),
             cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
             0.1,
         )
-        self.local_spinner.setObjectName("localization_correlation_threshold")
-        layout.addRow("Adaptive localization correlation threshold", self.local_spinner)
+        self.treshold_spinner.setObjectName("localization_correlation_threshold")
+        self.treshold_spinner.valueChanged.connect(
+            lambda value: setattr(self, "_correlation_threshold", value)
+        )
+
+        layout.addRow(
+            "Adaptive localization correlation threshold", self.treshold_spinner
+        )
 
         self.setLayout(layout)
         self.blockSignals(False)
 
     @property
-    def changed_updated_parameter_strategies(self) -> dict[str, LocalizationType]:
-        return self._changed_updated_parameter_strategies
+    def changed_update_strategies(self) -> dict[str, LocalizationType]:
+        return self._update_strategies
+
+    @property
+    def correlation_threshold(self) -> float:
+        return self._correlation_threshold
+
+    @property
+    def enkf_truncation(self) -> float:
+        return self._enkf_truncation
 
     def _find_correct_index(self, combobox: QComboBox, type_name: str) -> int:
-        if type_name in self.analysis_config.parameter_type_update_strategies:
-            localization_type = self.analysis_config.parameter_type_update_strategies[
-                type_name
-            ]
+        if type_name in self._update_strategies:
+            localization_type = self._update_strategies[type_name]
             if (
                 index := combobox.findData(localization_type, Qt.ItemDataRole.UserRole)
             ) != -1:
@@ -156,10 +169,4 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         spinner.setSingleStep(step_length)
         spinner.setValue(variable_value)
-        spinner.valueChanged.connect(
-            partial(self._value_changed_spinner, variable_name)
-        )
         return spinner
-
-    def _value_changed_spinner(self, name: str, value: float) -> None:
-        setattr(self, name, value)

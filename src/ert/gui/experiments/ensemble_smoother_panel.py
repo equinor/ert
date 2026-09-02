@@ -7,7 +7,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
 
-from ert.config import LocalizationType
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -40,7 +39,6 @@ class Arguments:
     target_ensemble: str
     realizations: str
     experiment_name: str
-    changed_updated_parameter_strategies: dict[str, LocalizationType]
 
 
 class EnsembleSmootherPanel(ExperimentConfigPanel):
@@ -55,7 +53,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
     ) -> None:
         super().__init__(EnsembleSmoother)
         self.notifier = notifier
-        self._changed_updated_parameter_strategies: dict[str, LocalizationType] = {}
         self.setObjectName("ensemble_smoother_panel")
 
         layout = QFormLayout()
@@ -98,15 +95,11 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config,
-            sum(
-                active_realizations
-            ),  # only use active realizations for setting threshold
+            es_settings=analysis_config.es_settings,
+            parameter_config=parameter_configuration,
+            ensemble_size=sum(active_realizations),
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
-        self._analysis_module_edit.on_dialog_closed.connect(
-            self._changed_updated_parameter_strategies.update
-        )
 
         layout.addRow("Update settings:", self._analysis_module_edit)
         self._active_realizations_field = StringBox(
@@ -179,5 +172,4 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             experiment_name=self._experiment_name_field.get_text,
-            changed_updated_parameter_strategies=self._changed_updated_parameter_strategies,
         )

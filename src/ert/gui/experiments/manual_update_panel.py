@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 
-from ert.config import AnalysisConfig, ErrorInfo, LocalizationType
+from ert.config import AnalysisConfig, ErrorInfo, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -37,7 +37,6 @@ class Arguments:
     target_ensemble: str
     ensemble_size: int
     experiment_name: str
-    changed_updated_parameter_strategies: dict[str, LocalizationType]
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -48,10 +47,11 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
     ) -> None:
         super().__init__(ManualUpdate)
         self.setObjectName("Manual_update_panel")
-        self._changed_updated_parameter_strategies: dict[str, LocalizationType] = {}
+        self._analysis_config = analysis_config
 
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -96,14 +96,12 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config,
-            0,
+            es_settings=analysis_config.es_settings,
+            parameter_config=parameter_configuration,
+            ensemble_size=0,
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         self._analysis_module_edit.setEnabled(False)
-        self._analysis_module_edit.on_dialog_closed.connect(
-            self._changed_updated_parameter_strategies.update
-        )
 
         layout.addRow("Update settings:", self._analysis_module_edit)
         self._active_realizations_model = ActiveRealizationsModel(0, show_default=False)
@@ -173,7 +171,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
             experiment_name=self._experiment_name_field.get_text,
-            changed_updated_parameter_strategies=self._changed_updated_parameter_strategies,
         )
 
     def _realizations_from_fs(self) -> None:
@@ -203,7 +200,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 active_realizations_size = sum(
                     self._active_realizations_model.getActiveRealizationsMask()
                 )
-                self._analysis_module_edit.ensemble_size = active_realizations_size
+                self._analysis_module_edit._ensemble_size = active_realizations_size
+
                 self._analysis_module_edit.setEnabled(bool(active_realizations_size))
             except OSError as err:
                 logger.error(str(err))

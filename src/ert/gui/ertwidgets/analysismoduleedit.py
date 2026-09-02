@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections import defaultdict
+
 from PyQt6.QtCore import QMargins, Qt
-from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -11,24 +12,24 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import AnalysisConfig
+from ert.config import ESSettings, LocalizationType, ParameterConfig
 from ert.gui.icon_utils import load_icon
 
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
 class AnalysisModuleEdit(QWidget):
-    on_dialog_closed = Signal(dict)
-
     def __init__(
         self,
-        analysis_config: AnalysisConfig,
+        es_settings: ESSettings,
+        parameter_config: list[ParameterConfig],
         ensemble_size: int,
     ) -> None:
         QWidget.__init__(self)
 
-        self.analysis_config = analysis_config
-        self.ensemble_size = ensemble_size
+        self._es_settings: ESSettings = es_settings
+        self._parameter_config: list[ParameterConfig] = parameter_config
+        self._ensemble_size: int = ensemble_size
 
         layout = QHBoxLayout()
 
@@ -52,9 +53,22 @@ class AnalysisModuleEdit(QWidget):
         dialog.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         layout = QVBoxLayout()
+
+        update_strategies: dict[str, LocalizationType] = defaultdict(
+            lambda: LocalizationType.GLOBAL
+        )
+        for parameter_config in self._parameter_config:
+            if parameter_config.update_strategy:
+                update_strategies[parameter_config.type.upper()] = (
+                    parameter_config.update_strategy
+                )
+
         update_settings_dialog = AnalysisModuleVariablesPanel(
-            self.analysis_config,
-            self.ensemble_size,
+            update_strategies=update_strategies,
+            correlation_threshold=self._es_settings.correlation_threshold(
+                self._ensemble_size
+            ),
+            enkf_truncation=self._es_settings.enkf_truncation,
         )
 
         layout.addWidget(update_settings_dialog, stretch=1)
@@ -81,6 +95,14 @@ class AnalysisModuleEdit(QWidget):
         dialog.setFixedSize(450, 300)
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.on_dialog_closed.emit(
-                update_settings_dialog.changed_updated_parameter_strategies
+            # update
+            self._es_settings.localization_correlation_threshold = (
+                update_settings_dialog._correlation_threshold
             )
+            self._es_settings.enkf_truncation = update_settings_dialog.enkf_truncation
+
+            # update map
+            for name, strategy in update_settings_dialog._update_strategies.items():
+                for parameter_config in self._parameter_config:
+                    if parameter_config.type.upper() == name:
+                        parameter_config.update_strategy = strategy
