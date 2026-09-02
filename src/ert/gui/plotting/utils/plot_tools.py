@@ -5,6 +5,7 @@ import math
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.ticker as mticker
+import pandas as pd
 from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.collections import PathCollection
 from matplotlib.container import BarContainer
@@ -197,3 +198,12 @@ class PlotTools:
     def remove_spines(axes: Axes, spines_to_remove: list[str]) -> None:
         for spine in spines_to_remove:
             axes.spines[spine].set_visible(False)
+
+    @staticmethod
+    def array_is_constant(data: pd.Series | pd.DataFrame) -> bool:
+        array = data.to_numpy()
+        return array.shape[0] == 0 or (array[0] == array).all()
+
+    @staticmethod
+    def array_is_empty_or_non_numeric(data: pd.Series | pd.DataFrame) -> bool:
+        return data.empty or not pd.api.types.is_numeric_dtype(data)
