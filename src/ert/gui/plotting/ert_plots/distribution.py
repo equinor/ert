@@ -214,7 +214,9 @@ class DistributionPlot:
     def _plot_gkde(
         self, axes: Axes, data: pd.Series, config: PlotConfig, log_scale: bool
     ) -> None:
-        if _array_is_empty_or_non_numeric(data) or _array_is_constant(data):
+        if PlotTools.array_is_empty_or_non_numeric(data) or PlotTools.array_is_constant(
+            data
+        ):
             return
         indexes, evaluated = self._evaluate_kde(data, log_scale=log_scale)
         if log_scale:
@@ -227,7 +229,7 @@ class DistributionPlot:
         plot_context: PlotContext,
         histogram_axes: Axes,
     ) -> None:
-        if _array_is_empty_or_non_numeric(data):
+        if PlotTools.array_is_empty_or_non_numeric(data):
             return
 
         config = plot_context.plotConfig()
@@ -290,7 +292,7 @@ class DistributionPlot:
                 strict=False,
             )
         ):
-            if _array_is_empty_or_non_numeric(data[0]):
+            if PlotTools.array_is_empty_or_non_numeric(data[0]):
                 continue
 
             rug = rug_plots[index]
@@ -372,12 +374,3 @@ def set_ylabel_by_config(plot_context: PlotContext, axes: Axes, y_label: str) ->
     if config.y_label() is None:
         config.set_y_label(y_label)
     PlotTools.set_labels_for_axes_from_context(axes, plot_context)
-
-
-def _array_is_constant(data: pd.Series | pd.DataFrame) -> bool:
-    array = data.to_numpy()
-    return array.shape[0] == 0 or (array[0] == array).all()
-
-
-def _array_is_empty_or_non_numeric(data: pd.Series | pd.DataFrame) -> bool:
-    return data.empty or not pd.api.types.is_numeric_dtype(data)
