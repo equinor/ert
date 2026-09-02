@@ -597,6 +597,5 @@
         "radius": 20.0
       }
     }
-  },
-  "experiment_type": "Ensemble Information Filter"
+  }
 }
