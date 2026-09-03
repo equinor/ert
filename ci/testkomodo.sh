@@ -107,6 +107,9 @@ start_tests() {
     elif [ "$CI_SUBSYSTEM_TEST" == "ert-unit-tests" ]; then
       just -f "${CI_SOURCE_ROOT}"/justfile ert-unit-tests
       return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "fmudesign" ]; then
+      just -f "${CI_SOURCE_ROOT}"/justfile fmudesign-tests
+      return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "everest" ]; then
       just -f "${CI_SOURCE_ROOT}"/justfile everest-tests
       return $?
