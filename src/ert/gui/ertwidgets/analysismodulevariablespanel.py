@@ -24,7 +24,7 @@ class _LocalizationTypeModel(QStandardItemModel):
         if exclude is not None:
             type_set -= exclude
 
-        for localization_type in type_set:
+        for localization_type in sorted(type_set, key=lambda lt: lt.name):
             item = QStandardItem(localization_type.name)
             item.setData(localization_type, Qt.ItemDataRole.UserRole)
             self.appendRow(item)
@@ -111,20 +111,20 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         var_name = "localization_correlation_threshold"
         metadata = AnalysisModule.model_fields[var_name]
-        self.treshold_spinner = self._create_double_spinbox(
+        self.threshold_spinner = self._create_double_spinbox(
             var_name,
             self._correlation_threshold,
             cast(float, next(v for v in metadata.metadata if isinstance(v, Ge)).ge),
             cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
             0.1,
         )
-        self.treshold_spinner.setObjectName("localization_correlation_threshold")
-        self.treshold_spinner.valueChanged.connect(
+        self.threshold_spinner.setObjectName("localization_correlation_threshold")
+        self.threshold_spinner.valueChanged.connect(
             lambda value: setattr(self, "_correlation_threshold", value)
         )
 
         layout.addRow(
-            "Adaptive localization correlation threshold", self.treshold_spinner
+            "Adaptive localization correlation threshold", self.threshold_spinner
         )
 
         self.setLayout(layout)
