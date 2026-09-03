@@ -14,7 +14,6 @@ from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QDoubleSpinBox,
     QLabel,
     QMenuBar,
     QMessageBox,
@@ -34,7 +33,6 @@ from ert.gui.ertwidgets import (
     StringBox,
     Suggestor,
 )
-from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
@@ -488,7 +486,6 @@ def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
         name="initialize_from_scratch_button",
     )
     qtbot.mouseClick(initialize_button, Qt.MouseButton.LeftButton)
-
 
 
 def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(

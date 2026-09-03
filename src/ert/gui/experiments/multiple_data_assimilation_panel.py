@@ -133,7 +133,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
             parameter_config=parameter_configuration,
-            ensemble_size=sum(active_realizations),
+            ensemble_size=sum(
+                active_realizations
+            ),  # only use active realizations for setting threshold
         )
         layout.addRow("Update settings:", self._analysis_module_edit)
 

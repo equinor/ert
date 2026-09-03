@@ -311,7 +311,6 @@ class ManualUpdateConfig(UpdateRunModelConfig):
         shape_registry = prior_experiment_config.get("shape_registry")
         if shape_registry is None and self.shape_registry is not None:
             shape_registry = self.shape_registry.model_dump(mode="json")
-
         experiment_config: ExperimentConfig = {
             "ensemble_id": self.ensemble_id,
             "ert_templates": self.ert_templates,
