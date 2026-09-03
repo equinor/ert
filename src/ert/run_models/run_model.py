@@ -702,8 +702,6 @@ class RunModel(RunModelConfig, ABC):
             self._max_parallelism_violation, evaluator.max_parallelism_violation
         )
 
-        logger.debug("tasks complete")
-
         if self._end_event.is_set():
             logger.debug("Run model cancelled - post evaluation")
             try:
