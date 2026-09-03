@@ -43,6 +43,14 @@ from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
 
 
 @pytest.fixture
+def authorized_client(monkeypatch):
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    credentials = b64encode(b"username:password").decode()
+    auth_headers = {"Authorization": f"Basic {credentials}"}
+    return TestClient(app), auth_headers
+
+
+@pytest.fixture
 def setup_client(monkeypatch):
     original = dict(_experiments)
 
@@ -331,15 +339,12 @@ def test_websocket_multiple_events_in_queue(setup_client):
 
 
 def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
-    monkeypatch,
+    authorized_client,
 ):
-    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    client, auth_headers = authorized_client
     original = dict(_experiments)
     _experiments.clear()
     try:
-        credentials = b64encode(b"username:password").decode()
-        auth_headers = {"Authorization": f"Basic {credentials}"}
-        client = TestClient(app)
         mock_runner = MagicMock()
         mock_runner.run = AsyncMock()
         config_body = everest_config_with_defaults().to_dict()
@@ -374,11 +379,8 @@ def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
         _experiments.update(original)
 
 
-def test_that_start_experiment_with_incomplete_schema_returns_422(monkeypatch):
-    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
-    credentials = b64encode(b"username:password").decode()
-    auth_headers = {"Authorization": f"Basic {credentials}"}
-    client = TestClient(app)
+def test_that_start_experiment_with_incomplete_schema_returns_422(authorized_client):
+    client, auth_headers = authorized_client
 
     # Missing all required fields (controls, objective_functions,
     # config_path, model): schema validation should reject this before
@@ -404,12 +406,9 @@ def test_that_start_experiment_with_incomplete_schema_returns_422(monkeypatch):
 
 
 def test_that_start_experiment_with_unknown_forward_model_job_returns_422(
-    monkeypatch,
+    authorized_client,
 ):
-    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
-    credentials = b64encode(b"username:password").decode()
-    auth_headers = {"Authorization": f"Basic {credentials}"}
-    client = TestClient(app)
+    client, auth_headers = authorized_client
 
     config_body = yaml.safe_load(MIN_CONFIG) | {
         "forward_model": ["totally_unknown_job_xyz"]
@@ -425,11 +424,8 @@ def test_that_start_experiment_with_unknown_forward_model_job_returns_422(
     assert "unknown job totally_unknown_job_xyz" in response.text
 
 
-def test_that_start_experiment_mutes_config_warnings(monkeypatch):
-    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
-    credentials = b64encode(b"username:password").decode()
-    auth_headers = {"Authorization": f"Basic {credentials}"}
-    client = TestClient(app)
+def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypatch):
+    client, auth_headers = authorized_client
     mock_runner = MagicMock()
     mock_runner.run = AsyncMock()
 
