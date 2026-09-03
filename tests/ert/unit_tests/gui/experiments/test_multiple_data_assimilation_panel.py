@@ -32,6 +32,73 @@ from .conftest import (
 )
 
 
+def test_that_configuration_is_invalid_when_no_updatable_parameters_exists(
+    qtbot: QtBot,
+):
+
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+
+    param_mock: ParameterConfig = Mock(
+        spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL
+    )
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=[param_mock],
+        run_path="",
+        notifier=notifier,
+        active_realizations=[True],
+        config_num_realization=1,
+    )
+    qtbot.addWidget(panel)
+
+    assert panel.isConfigurationValid()
+
+    param_mock_no_update: ParameterConfig = Mock(
+        spec=ParameterConfig, update_strategy=None
+    )
+    panel._parameter_configuration = [param_mock_no_update]
+    assert not panel.isConfigurationValid()
+
+
+def test_that_configuration_is_valid_when_running_from_prior_ensemble_with_no_current_parameters_updatable(  # ruff: ignore[line-too-long]
+    qtbot: QtBot,
+):
+
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "mock_ensemble",
+        "mock_experiment",
+        [
+            REALIZATION_FINISHED_SUCCESSFULLY,
+        ],
+        experiment_type=ExperimentType.ES_MDA,
+        iteration=0,
+    )
+
+    param_mock: ParameterConfig = Mock(spec=ParameterConfig, update_strategy=None)
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=[param_mock],
+        run_path="",
+        notifier=notifier,
+        active_realizations=[True],
+        config_num_realization=1,
+    )
+    qtbot.addWidget(panel)
+    assert not panel.isConfigurationValid()
+
+    select_prior_ensemble_checkbox = panel.findChild(
+        QCheckBox, "select_prior_checkbox_esmda"
+    )
+    assert not select_prior_ensemble_checkbox.isChecked()
+    select_prior_ensemble_checkbox.click()
+    assert select_prior_ensemble_checkbox.isChecked()
+
+    assert panel.isConfigurationValid()
+
+
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_config(
     qtbot: QtBot,
 ) -> None:
