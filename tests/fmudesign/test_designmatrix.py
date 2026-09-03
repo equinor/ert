@@ -14,7 +14,7 @@ def assert_valid_designmatrix(design_values):
     assert not design_values.isna().any().any()
 
 
-def test_designmatrix():
+def test_that_design_matrix_generates_seed_sensitivity_for_each_repeat():
     design = DesignMatrix()
     design.generate(
         {
@@ -40,7 +40,7 @@ def test_designmatrix():
 
 
 @pytest.mark.slow
-def test_endpoint_with_relative_input_and_custom_output_paths(tmp_path, monkeypatch):
+def test_that_cli_accepts_relative_input_and_custom_output_paths(tmp_path, monkeypatch):
     case_dir = tmp_path / "path" / "going" / "down"
     case_dir.mkdir(parents=True)
     subprocess.run(
@@ -73,7 +73,7 @@ def test_endpoint_with_relative_input_and_custom_output_paths(tmp_path, monkeypa
 
 
 @pytest.mark.slow
-def test_endpoint_resolves_external_seeds_file_relative_to_input(tmp_path, monkeypatch):
+def test_that_cli_resolves_external_seeds_file_relative_to_input(tmp_path, monkeypatch):
     """'rms_seeds' can also point to an external file. Like 'background' above,
     it must be resolved relative to the input file, not the CWD: the seeds file
     only exists in the nested case_dir, so a CWD-relative fallback would fail
