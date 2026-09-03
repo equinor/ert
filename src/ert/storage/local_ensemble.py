@@ -609,11 +609,16 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        cfgs = [
-            p
-            for p in self.experiment.parameter_configuration.values()
-            if group in {p.name, p.group_name}
-        ]
+        parameter_config = self.experiment.parameter_configuration.get(group)
+        cfgs = (
+            [parameter_config]
+            if parameter_config is not None
+            else [
+                p
+                for p in self.experiment.parameter_configuration.values()
+                if group == p.group_name
+            ]
+        )
         if not cfgs:
             raise KeyError(f"{group} is not registered to the experiment.")
 
