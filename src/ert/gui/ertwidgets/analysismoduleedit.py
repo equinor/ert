@@ -63,11 +63,15 @@ class AnalysisModuleEdit(QWidget):
                     parameter_config.update_strategy
                 )
 
+        correlation_threshold = 1.0
+        if self._ensemble_size != 0:
+            correlation_threshold = self._es_settings.correlation_threshold(
+                self._ensemble_size
+            )
+
         update_settings_dialog = AnalysisModuleVariablesPanel(
             update_strategies=update_strategies,
-            correlation_threshold=self._es_settings.correlation_threshold(
-                self._ensemble_size
-            ),
+            correlation_threshold=correlation_threshold,
             enkf_truncation=self._es_settings.enkf_truncation,
         )
 
