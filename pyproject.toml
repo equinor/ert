@@ -43,6 +43,7 @@ dependencies = [
     "netCDF4",
     "networkx",
     "numpy",
+    "openpyxl",
     "opentelemetry-api",
     "opentelemetry-instrumentation-threading",
     "opentelemetry-sdk",
@@ -51,6 +52,7 @@ dependencies = [
     "pandas",
     "pluggy>=1.3.0",
     "polars>=1.36.0",
+    "probabilit>=0.4.1",
     "progressbar2",
     "psutil",
     "pyarrow", # extra dependency for pandas (parquet)
@@ -86,6 +88,7 @@ ert = "ert.__main__:main"
 "fm_dispatch.py" = "_ert.forward_model_runner.fm_dispatch:main"
 everest = "everest.bin.main:start_everest"
 everserver = "everest.detached.everserver:main"
+fmudesign = "fmudesign.fmudesignrunner:main"
 
 [project.urls]
 Repository = "https://github.com/equinor/ert"
@@ -137,6 +140,7 @@ types = [
     "types-decorator",
     "types-docutils",
     "types-tqdm",
+    "types-openpyxl",
     "types-psutil",
     "types-setuptools",
     "types-tabulate",
@@ -156,6 +160,7 @@ ert = [
     "logging/storage_log.conf",
 ]
 everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
+"fmudesign.examples" = ["*.xlsx", "*.yml", "*.yaml", "*.toml"]
 
 
 [tool.pytest.ini_options]

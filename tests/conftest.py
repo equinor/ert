@@ -102,6 +102,11 @@ def change_to_tmpdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
 
+@pytest.fixture
+def use_tmpdir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+
 @pytest.fixture(autouse=True)
 def env_save():
     exceptions = [
