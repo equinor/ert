@@ -248,7 +248,6 @@ class WorkflowLogView(QWidget):
         self._stack = QStackedWidget(self)
 
         self._placeholder = QLabel(NO_WORKFLOWS_PLACEHOLDER, self)
-        self._placeholder.setObjectName("workflow_log_placeholder")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._stack.addWidget(self._placeholder)
 
