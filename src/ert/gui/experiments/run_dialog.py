@@ -389,16 +389,17 @@ class RunDialog(QFrame):
         return self.flag_experiment_done
 
     def _add_dynamic_tab(self, widget: QWidget, label: str) -> int:
-        # If the current tab is the last dynamic tab,
-        # we want to keep it selected after adding a new tab.
+        # If the currently selected tab is the most recently added dynamic
+        # tab, keep following along as new tabs are added; otherwise the
+        # user has navigated elsewhere and we leave their selection alone.
         last_index = self._tab_widget.count() - 1
-        was_on_latest_dynamic_tab = (
+        follow_new_tab = (
             last_index >= 0
             and not isinstance(self._tab_widget.widget(last_index), WorkflowLogWidget)
             and self._tab_widget.currentIndex() == last_index
         )
         tab_index = self._tab_widget.addTab(widget, label)
-        if was_on_latest_dynamic_tab:
+        if follow_new_tab:
             self._tab_widget.setCurrentIndex(tab_index)
         return tab_index
 

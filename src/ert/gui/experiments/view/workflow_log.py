@@ -39,7 +39,6 @@ class WorkflowLogWidget(QWidget):
         self._iteration_chosen_by_user = False
 
         self._iteration_selector = QComboBox(self)
-        self._iteration_selector.setObjectName("workflow_log_iteration_selector")
         self._iteration_selector.currentIndexChanged.connect(self._on_iteration_changed)
         self._iteration_selector.activated.connect(self._on_iteration_chosen_by_user)
 
@@ -50,7 +49,6 @@ class WorkflowLogWidget(QWidget):
         selector_row.addStretch()
 
         self._table = QTableWidget(0, len(_COLUMNS), self)
-        self._table.setObjectName("workflow_log_table")
         self._table.setHorizontalHeaderLabels(_COLUMNS)
         vertical_header = self._table.verticalHeader()
         assert vertical_header is not None
@@ -66,8 +64,8 @@ class WorkflowLogWidget(QWidget):
         )
         self._table.itemSelectionChanged.connect(self._on_row_selected)
 
-        self._stdout_view = self._make_output_view("workflow_log_stdout")
-        self._stderr_view = self._make_output_view("workflow_log_stderr")
+        self._stdout_view = self._make_output_view()
+        self._stderr_view = self._make_output_view()
 
         detail = QSplitter(Qt.Orientation.Horizontal, self)
         detail.addWidget(self._make_labelled_output("Stdout", self._stdout_view))
@@ -87,9 +85,8 @@ class WorkflowLogWidget(QWidget):
 
         self._clear_detail()
 
-    def _make_output_view(self, object_name: str) -> QPlainTextEdit:
+    def _make_output_view(self) -> QPlainTextEdit:
         view = QPlainTextEdit(self)
-        view.setObjectName(object_name)
         view.setReadOnly(True)
         view.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         view.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
