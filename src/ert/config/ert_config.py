@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from os import path
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self, cast, overload
 
 from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, model_validator
@@ -63,6 +63,7 @@ from .parsing import (
     parse_contents,
     read_file,
 )
+from .parsing.file_context_token import FileContextToken
 from .parsing.observations_parser import ObservationDict
 from .queue_config import KnownQueueOptions, QueueConfig
 from .rft_config import RFTConfig
@@ -466,6 +467,18 @@ def _validate_fixtures(
     return errors
 
 
+class _DeclaredHook(NamedTuple):
+    config_file_line: int
+    workflow: Workflow
+
+
+def _config_file_line_of(workflow_name: str) -> int:
+    # return 0 from workflows that are not from a config file, e.g. created from a job
+    if isinstance(workflow_name, FileContextToken) and workflow_name.line is not None:
+        return workflow_name.line
+    return 0
+
+
 def create_and_hook_workflows(
     hook_workflow_info: list[tuple[str, HookRuntime]],
     hook_workflow_job_info: list[list[str]],
@@ -475,7 +488,7 @@ def create_and_hook_workflows(
     substitutions: dict[str, str],
 ) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
     workflows = {}
-    hooked_workflows = defaultdict(list)
+    declared_hooks: defaultdict[HookRuntime, list[_DeclaredHook]] = defaultdict(list)
 
     errors: list[ErrorInfo | ConfigValidationError] = []
 
@@ -543,7 +556,9 @@ def create_and_hook_workflows(
         workflow = workflows[hook_name]
         errors.extend(_validate_fixtures(hook_name, workflow, mode))
 
-        hooked_workflows[mode].append(workflow)
+        declared_hooks[mode].append(
+            _DeclaredHook(_config_file_line_of(hook_name), workflow)
+        )
 
     for inline_workflow_hook in hook_workflow_job_info:
         inline_workflow = inline_workflow_hook[:-1]
@@ -562,12 +577,21 @@ def create_and_hook_workflows(
             wf_name, wf = _create_workflow_from_job(inline_workflow)
             _register_workflow(inline_workflow, wf_name, wf)
             errors.extend(_validate_fixtures(wf_name, wf, mode))
-            hooked_workflows[mode].append(wf)
+            declared_hooks[mode].append(
+                _DeclaredHook(_config_file_line_of(wf_name), wf)
+            )
         except ConfigValidationError as err:
             errors.append(err)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
+
+    hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = defaultdict(list)
+    for mode, hooks in declared_hooks.items():
+        hooks_in_config_file_order = sorted(
+            hooks, key=lambda hook: hook.config_file_line
+        )
+        hooked_workflows[mode] = [hook.workflow for hook in hooks_in_config_file_order]
 
     return workflows, hooked_workflows
 

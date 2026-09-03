@@ -2053,6 +2053,10 @@ The last argument must be one of the supported runtime step values:
 
    HOOK_WORKFLOW_JOB export_rft EXPORT_RFT some_path/rft.csv POST_SIMULATION
 
+Hooks declared with :code:`HOOK_WORKFLOW_JOB` and :code:`HOOK_WORKFLOW` share the
+same execution order at a given runtime step, which follows the order of
+declaration in the config file. See :ref:`automatically-run-workflows`.
+
 .. _load_workflow:
 
 LOAD_WORKFLOW
