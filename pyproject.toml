@@ -79,10 +79,13 @@ dependencies = [
     "resfo-utilities>=1.1.0",
     "natsort>=8.4.0",
     "shapely>=2.1.2",
+    "probabilit>=0.4.2",
+    "openpyxl>=3.1.5",
 ]
 
 [project.scripts]
 ert = "ert.__main__:main"
+fmudesign = "ert.config.fmudesign.fmudesignrunner:main"
 "fm_dispatch.py" = "_ert.forward_model_runner.fm_dispatch:main"
 everest = "everest.bin.main:start_everest"
 everserver = "everest.detached.everserver:main"
