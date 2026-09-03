@@ -131,7 +131,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.blockSignals(False)
 
     @property
-    def changed_update_strategies(self) -> dict[str, LocalizationType]:
+    def update_strategies(self) -> dict[str, LocalizationType]:
         return self._update_strategies
 
     @property

@@ -95,14 +95,11 @@ class AnalysisModuleEdit(QWidget):
         dialog.setFixedSize(450, 300)
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            # update
             self._es_settings.localization_correlation_threshold = (
-                update_settings_dialog._correlation_threshold
+                update_settings_dialog.correlation_threshold
             )
             self._es_settings.enkf_truncation = update_settings_dialog.enkf_truncation
-
-            # update map
-            for name, strategy in update_settings_dialog._update_strategies.items():
+            for name, strategy in update_settings_dialog.update_strategies.items():
                 for parameter_config in self._parameter_config:
                     if parameter_config.type.upper() == name:
                         parameter_config.update_strategy = strategy
