@@ -11,7 +11,6 @@ on:
         type: string
 
 env:
-  NO_PROJECT_RES: 1
   UV_FROZEN: true
   OMP_NUM_THREADS: 1
 
