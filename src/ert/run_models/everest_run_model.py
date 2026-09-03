@@ -1082,6 +1082,11 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 else None
             )
 
+        # A non-finite result means the simulation failed; ropt marks failures with NaN.
+        objectives = np.where(np.isfinite(objectives), objectives, np.nan)
+        if constraints is not None:
+            constraints = np.where(np.isfinite(constraints), constraints, np.nan)
+
         evaluator_result = EvaluationBatchResult(
             objectives=objectives,
             constraints=constraints,
