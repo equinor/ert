@@ -25,11 +25,9 @@ from ._configurations import (
 
 @pytest.mark.slow
 @pytest.mark.parametrize("correlations", [True, False])
-def test_distribution_statistics(tmp_path, correlations):
-    """This test ensures that if any large-sample statistics for any distribution
-    changes, we will likely pick it up in the future.
-    """
-
+def test_that_generated_distributions_match_configured_statistics(
+    tmp_path, correlations
+):
     NUM_SAMPLES = 10**5
 
     def gl(paramname, distname, p1, p2, p3="", p4=""):
@@ -225,9 +223,7 @@ def test_distribution_statistics(tmp_path, correlations):
         assert np.sqrt(np.mean((obs_corr - corr_values) ** 2)) < 0.02
 
 
-def test_generate_onebyone(tmp_path):
-    """Test generation of onebyone design"""
-
+def test_that_onebyone_design_contains_configured_cases_and_values(tmp_path):
     input_dict = onebyone_configuration()
 
     # Note that repeats are set to 10 in general_input sheet.
@@ -422,7 +418,7 @@ def _full_mc_input(tmp_path):
     return full_mc_configuration(correlation_path)
 
 
-def test_generate_full_mc_snapshot(snapshot, tmp_path):
+def test_that_joint_full_monte_carlo_design_matches_snapshot(snapshot, tmp_path):
     input_dict = _full_mc_input(tmp_path)
     design = DesignMatrix()
     design.generate(input_dict)
@@ -430,10 +426,7 @@ def test_generate_full_mc_snapshot(snapshot, tmp_path):
     _assert_design_snapshot(design, snapshot)
 
 
-def test_generate_full_mc_snapshot_independent(snapshot, tmp_path):
-    """Same config as test_generate_full_mc_snapshot, but with the opt-in
-    'independent' seed strategy.
-    """
+def test_that_independent_full_monte_carlo_design_matches_snapshot(snapshot, tmp_path):
     input_dict = _full_mc_input(tmp_path)
     input_dict["seed_strategy"] = "independent"
     design = DesignMatrix()
@@ -442,8 +435,7 @@ def test_generate_full_mc_snapshot_independent(snapshot, tmp_path):
     _assert_design_snapshot(design, snapshot)
 
 
-def test_generate_full_mc(tmp_path):
-    """Test generation of full monte carlo"""
+def test_that_full_monte_carlo_design_applies_dependencies_and_correlations(tmp_path):
     input_dict = _full_mc_input(tmp_path)
 
     design = DesignMatrix()
@@ -514,7 +506,9 @@ def test_generate_full_mc(tmp_path):
 
 
 @pytest.mark.slow
-def test_generate_background(tmp_path):
+def test_that_background_fills_inactive_parameters_without_overwriting_sensitivities(
+    tmp_path,
+):
     correlation_path = tmp_path / "background-correlations.xlsx"
     _write_correlation_sheets(
         correlation_path,
@@ -603,7 +597,9 @@ def test_generate_background(tmp_path):
     )
 
 
-def test_read_defaultvalues_duplicate_error(tmp_path):
+def test_that_read_defaultvalues_rejects_names_duplicated_after_stripping_whitespace(
+    tmp_path,
+):
     defaultvalues = pd.DataFrame(
         columns=["param_name", "default_value"],
         data=[
@@ -638,7 +634,7 @@ def _write_correlation_excel(filepath, names, lower_values):
     _write_correlation_sheets(filepath, {"corr1": (names, arr)})
 
 
-def test_read_correlations_returns_labeled_symmetric_matrix(tmp_path):
+def test_that_read_correlations_returns_labeled_symmetric_matrix(tmp_path):
     names = ["A", "B", "C"]
     lower = [[1.0], [0.5, 1.0], [0.3, 0.4, 1.0]]
     filepath = tmp_path / "corr.xlsx"
@@ -655,7 +651,7 @@ def test_read_correlations_returns_labeled_symmetric_matrix(tmp_path):
     assert np.isclose(arr[0, 1], 0.5)
 
 
-def test_print_corrmat_formats_without_mutating_input(capsys):
+def test_that_print_corrmat_formats_without_mutating_input(capsys):
     values = np.array([[1, -0.0, 0.9], [-0.0, 1, 0], [0.9, 0, 1.0]])
     df = pd.DataFrame(values, index=["A", "B", "C"], columns=["A", "B", "C"])
     original = df.copy()
@@ -669,7 +665,7 @@ def test_print_corrmat_formats_without_mutating_input(capsys):
     pd.testing.assert_frame_equal(df, original)
 
 
-def test_fill_with_background_values():
+def test_that_fill_with_background_values_replaces_missing_parameter_values():
     dm = DesignMatrix()
     dm.designvalues = pd.DataFrame(
         {
@@ -685,7 +681,7 @@ def test_fill_with_background_values():
     assert dm.designvalues["param1"].tolist() == [10.0, 20.0]
 
 
-def test_set_decimals_propagates_zero_to_dependency():
+def test_that_set_decimals_propagates_zero_precision_to_dependency():
     design = DesignMatrix()
     design.designvalues = pd.DataFrame({"SOURCE": [1.6], "TARGET": [1.6]})
     config = {
@@ -770,8 +766,7 @@ def _design_dict(
     return config
 
 
-def test_default_strategy_is_joint():
-    """Omitting seed_strategy must equal explicitly passing 'joint'."""
+def test_that_omitted_seed_strategy_uses_joint_sampling():
     params = {"A": ("normal", ["0", "1"], None), "B": ("uniform", ["0", "1"], None)}
 
     def sample(**kwargs):
@@ -803,8 +798,9 @@ def _assert_stability(stable, before, after, columns):
 
 
 @pytest.mark.parametrize("strategy", ["joint", "independent"])
-def test_marginal_distributions_are_correct(strategy):
-    """Both strategies must reproduce the requested marginals."""
+def test_that_sampling_strategies_reproduce_configured_marginal_distributions(
+    strategy,
+):
     params = {"N": ("normal", ["0", "2"], None), "U": ("uniform", ["-5", "0"], None)}
     design = DesignMatrix()
     design.generate(_design_dict(params, strategy, repeats=10000))
@@ -818,7 +814,7 @@ def test_marginal_distributions_are_correct(strategy):
     assert np.isclose(u.mean(), -2.5, atol=0.1)
 
 
-def test_independent_reordering_parameters_keeps_values():
+def test_that_independent_sampling_preserves_values_when_parameters_are_reordered():
     ab = {"A": ("normal", ["0", "1"], None), "B": ("uniform", ["0", "1"], None)}
     ba = {"B": ("uniform", ["0", "1"], None), "A": ("normal", ["0", "1"], None)}
     _assert_stability(
@@ -826,7 +822,7 @@ def test_independent_reordering_parameters_keeps_values():
     )
 
 
-def test_independent_adding_a_parameter_keeps_discrete_parameter_values():
+def test_that_independent_sampling_preserves_existing_values_when_parameter_is_added():
     base = {
         "A": ("normal", ["0", "1"], None),
         "D": ("discrete", ["red, green, blue"], None),
@@ -837,7 +833,7 @@ def test_independent_adding_a_parameter_keeps_discrete_parameter_values():
     assert list(first["D"]) == list(second["D"])
 
 
-def test_independent_changing_distribution_keeps_other_parameter_values():
+def test_that_independent_sampling_preserves_other_values_when_distribution_changes():
     base = {"A": ("normal", ["0", "1"], None), "B": ("uniform", ["0", "1"], None)}
     changed = {"A": ("normal", ["0", "1"], None), "B": ("uniform", ["0", "5"], None)}
     np.testing.assert_array_equal(
@@ -846,7 +842,7 @@ def test_independent_changing_distribution_keeps_other_parameter_values():
     )
 
 
-def test_independent_different_base_seed_changes_values():
+def test_that_independent_sampling_changes_values_when_base_seed_changes():
     base = {"A": ("normal", ["0", "1"], None)}
     assert not np.allclose(
         _col(_sample_mc(base, base=1), "A"), _col(_sample_mc(base, base=2), "A")
@@ -854,8 +850,9 @@ def test_independent_different_base_seed_changes_values():
 
 
 @pytest.mark.parametrize("strategy", ["joint", "independent"])
-def test_correlation_group_is_correlated(tmp_path, strategy):
-    """Both strategies must induce the requested correlation."""
+def test_that_sampling_strategies_induce_configured_group_correlation(
+    tmp_path, strategy
+):
     path = tmp_path / "corr.xlsx"
     _write_correlation_sheets(path, {"corr1": (["X", "Y"], [[1.0, 0.7], [0.7, 1.0]])})
     params = {
@@ -874,7 +871,9 @@ def test_correlation_group_is_correlated(tmp_path, strategy):
     assert abs(achieved - 0.7) < 0.05
 
 
-def test_independent_editing_one_group_does_not_touch_others(tmp_path):
+def test_that_independent_sampling_preserves_other_groups_when_group_is_removed(
+    tmp_path,
+):
     path = tmp_path / "corr.xlsx"
     _write_correlation_sheets(
         path,
@@ -904,7 +903,7 @@ def test_independent_editing_one_group_does_not_touch_others(tmp_path):
         )
 
 
-def test_independent_background_param_edit_leaves_other_background_stable():
+def test_that_independent_sampling_preserves_background_when_parameter_is_added():
     """Background parameters are seeded independently too, so adding one leaves
     the others unchanged (the joint strategy would reshuffle them).
     """
@@ -931,7 +930,7 @@ def test_independent_background_param_edit_leaves_other_background_stable():
     )
 
 
-def test_independent_without_seed_is_valid_and_nonreproducible():
+def test_that_independent_sampling_without_seed_is_finite_and_nonreproducible():
     """With no distribution_seed a random base is drawn per run: the output must
     be valid but differ between runs.
     """
@@ -948,8 +947,9 @@ def test_independent_without_seed_is_valid_and_nonreproducible():
 @pytest.mark.parametrize(
     ("strategy", "stable"), [("independent", True), ("joint", False)]
 )
-def test_designmatrix_adding_a_parameter_end_to_end(strategy, stable):
-    """Adding a parameter is stable only under the independent strategy."""
+def test_that_adding_parameter_preserves_values_only_with_independent_strategy(
+    strategy, stable
+):
     p2 = {"A": ("normal", ["0", "1"], None), "B": ("uniform", ["0", "1"], None)}
     p3 = {**p2, "C": ("triang", ["0", "1", "2"], None)}
     d2, d3 = DesignMatrix(), DesignMatrix()
@@ -958,7 +958,7 @@ def test_designmatrix_adding_a_parameter_end_to_end(strategy, stable):
     _assert_stability(stable, d2.designvalues, d3.designvalues, ["A", "B"])
 
 
-def test_derive_rng_distinguishes_delimited_keys():
+def test_that_derive_rng_distinguishes_different_key_component_boundaries():
     keys_a = ("a", "param", "b:param:c")
     keys_b = ("a:param:b", "param", "c")
     stream_a = _derive_rng(42, *keys_a).random(8)
@@ -966,15 +966,14 @@ def test_derive_rng_distinguishes_delimited_keys():
     assert not np.array_equal(stream_a, stream_b)
 
 
-def test_derive_rng_is_deterministic():
+def test_that_derive_rng_repeats_stream_for_same_key():
     np.testing.assert_array_equal(
         _derive_rng(42, "foo", "param", "A").random(8),
         _derive_rng(42, "foo", "param", "A").random(8),
     )
 
 
-def test_independent_group_may_share_a_name_with_a_parameter(tmp_path):
-    """A correlation *sheet* may be named like a parameter."""
+def test_that_independent_sampling_allows_shared_group_and_parameter_name(tmp_path):
     path = tmp_path / "corr.xlsx"
     _write_correlation_sheets(path, {"PORO": (["X", "Y"], [[1.0, 0.7], [0.7, 1.0]])})
     params = {
@@ -994,7 +993,7 @@ def test_independent_group_may_share_a_name_with_a_parameter(tmp_path):
 
 
 @pytest.mark.parametrize("strategy", ["joint", "independent"])
-def test_overlapping_correlation_groups_raise(tmp_path, strategy):
+def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strategy):
     """A parameter listed in two correlation matrices is ambiguous: only one of
     the two requested correlations can be honoured, so it must be rejected.
 
@@ -1030,18 +1029,18 @@ def test_overlapping_correlation_groups_raise(tmp_path, strategy):
         )
 
 
-def test_unknown_seed_strategy_raises():
+def test_that_unknown_seed_strategy_raises_value_error():
     """The low-level API must reject typos instead of silently using 'joint'."""
     with pytest.raises(ValueError, match="seed_strategy"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, strategy="bogus")
 
 
-def test_independent_without_base_seed_raises():
+def test_that_independent_sampling_without_base_seed_raises_value_error():
     with pytest.raises(ValueError, match="base_seed"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, base=None)
 
 
-def test_independent_same_param_name_differs_between_sensitivities():
+def test_that_independent_sampling_uses_distinct_stream_per_sensitivity():
     """The sensitivity name is part of the key, so two sensitivities sharing a
     parameter name must not receive identical samples.
     """
@@ -1051,7 +1050,9 @@ def test_independent_same_param_name_differs_between_sensitivities():
     assert not np.allclose(_col(first, "A"), _col(second, "A"))
 
 
-def test_independent_correlated_background_is_correlated_and_stable(tmp_path):
+def test_that_independent_sampling_preserves_correlated_background_when_extended(
+    tmp_path,
+):
     """Background parameters may also be correlated; the group must keep its
     correlation and stay stable when an unrelated background parameter is added.
     """

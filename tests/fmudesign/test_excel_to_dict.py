@@ -55,7 +55,7 @@ def _write_config_workbook(
     return path
 
 
-def test_excel_to_dict(tmp_path):
+def test_that_excel_to_dict_parses_workbook_into_configuration_dictionary(tmp_path):
     input_path = _write_config_workbook(tmp_path / "designinput.xlsx")
     dict_design = excel_to_dict(input_path)
 
@@ -84,7 +84,7 @@ def test_excel_to_dict(tmp_path):
     assert "RMS_SEED" in yaml_path.read_text(encoding="utf-8")
 
 
-def test_duplicate_sensname_exception(tmp_path):
+def test_that_duplicate_sensitivity_names_raise_value_error(tmp_path):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
@@ -105,7 +105,9 @@ def test_duplicate_sensname_exception(tmp_path):
         excel_to_dict(input_path)
 
 
-def test_strip_spaces(tmp_path):
+def test_that_excel_to_dict_strips_sensitivity_and_parameter_name_whitespace(
+    tmp_path,
+):
     """Spaces before and after parameter names are probably
     invisible user errors in Excel sheets. Remove them.
     """
@@ -135,7 +137,7 @@ def test_strip_spaces(tmp_path):
     assert [par.strip() for par in def_params] == def_params
 
 
-def test_mixed_senstype_exception(tmp_path):
+def test_that_mixed_sensitivity_types_raise_value_error(tmp_path):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
@@ -154,11 +156,11 @@ def test_mixed_senstype_exception(tmp_path):
 @pytest.mark.parametrize(
     ("value", "expected"), [(1, True), (np.nan, False), (None, True)]
 )
-def test_has_value(value, expected):
+def test_that_has_value_treats_only_nan_as_missing(value, expected):
     assert _has_value(value) is expected
 
 
-def test_background_sheet(tmp_path):
+def test_that_excel_to_dict_parses_background_sheet(tmp_path):
     general_input = pd.DataFrame(
         data=[
             ["designtype", "onebyone"],
@@ -251,7 +253,9 @@ BACKGROUND_WITH_CORR = pd.DataFrame(
         ),
     ],
 )
-def test_invalid_background_correlation_sheet_raises(tmp_path, index, columns, error):
+def test_that_invalid_background_correlation_sheet_raises_value_error(
+    tmp_path, index, columns, error
+):
     corr_matrix = pd.DataFrame(
         [[1.0, np.nan], [0.5, 1.0]],
         index=index,
@@ -268,10 +272,7 @@ def test_invalid_background_correlation_sheet_raises(tmp_path, index, columns, e
         excel_to_dict(input_path)
 
 
-def test_background_sheet_that_does_not_exist(tmp_path):
-    """A background sheet name that does not exist must be reported, listing the
-    sheets that are available.
-    """
+def test_that_missing_background_sheet_error_lists_available_sheets(tmp_path):
     input_path = _write_background_workbook(
         tmp_path / "designinput.xlsx", BACKGROUND_WITH_CORR, None, "typo_sheet"
     )
@@ -288,7 +289,9 @@ def test_background_sheet_that_does_not_exist(tmp_path):
 @pytest.mark.parametrize(
     "background_name", ["Backgroundsheet", "background_sheet", " backgroundsheet "]
 )
-def test_background_sheet_name_is_matched_softly(tmp_path, background_name):
+def test_that_background_sheet_matching_ignores_case_underscores_and_whitespace(
+    tmp_path, background_name
+):
     corr_matrix = pd.DataFrame(
         [[1.0, np.nan], [0.5, 1.0]],
         index=["PARAM_A", "PARAM_B"],
@@ -306,7 +309,7 @@ def test_background_sheet_name_is_matched_softly(tmp_path, background_name):
     assert background["correlations"]["sheetnames"] == ["bgcorr"]
 
 
-def test_background_file_that_does_not_exist(use_tmpdir):
+def test_that_missing_background_csv_file_raises_value_error(use_tmpdir):
     input_path = _write_background_workbook(
         "designinput.xlsx",
         BACKGROUND_WITH_CORR,
@@ -324,7 +327,7 @@ def test_background_file_that_does_not_exist(use_tmpdir):
 
 
 @pytest.mark.parametrize("background_name", ["None", "none", np.nan])
-def test_background_not_in_use(tmp_path, background_name):
+def test_that_none_like_background_names_disable_background(tmp_path, background_name):
     input_path = _write_background_workbook(
         tmp_path / "designinput.xlsx", BACKGROUND_WITH_CORR, None, background_name
     )
@@ -332,7 +335,7 @@ def test_background_not_in_use(tmp_path, background_name):
     assert excel_to_dict(input_path)["background"] is None
 
 
-def test_assert_no_merged_cells(tmp_path):
+def test_that_assert_no_merged_cells_rejects_merged_cells(tmp_path):
     input_path = tmp_path / "test_file.xlsx"
     test_data = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
     test_data.to_excel(input_path, sheet_name="sheet1", index=False)
@@ -346,7 +349,7 @@ def test_assert_no_merged_cells(tmp_path):
         _assert_no_merged_cells(input_path)
 
 
-def test_excel_to_dict_passes_seed_strategy(tmp_path):
+def test_that_excel_to_dict_preserves_seed_strategy(tmp_path):
     general = pd.DataFrame(
         data=[
             ["designtype", "onebyone"],
