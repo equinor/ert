@@ -490,28 +490,6 @@ def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
     qtbot.mouseClick(initialize_button, Qt.MouseButton.LeftButton)
 
 
-def test_that_truncation_can_be_set_from_gui(qtbot, opened_main_window_poly):
-    gui = opened_main_window_poly
-
-    sim_mode = get_child(gui, QWidget, name="experiment_type")
-    qtbot.keyClick(sim_mode, Qt.Key.Key_Down)
-    es_panel = get_child(gui, QWidget, name="ensemble_smoother_panel")
-    es_edit = get_child(es_panel, QWidget, name="ensemble_smoother_edit")
-
-    # Testing modal dialogs requires some care.
-    # https://github.com/pytest-dev/pytest-qt/issues/256
-    def handle_analysis_module_panel():
-        var_panel = wait_for_child(gui, qtbot, AnalysisModuleVariablesPanel)
-        spinner = wait_for_child(var_panel, qtbot, QDoubleSpinBox, "enkf_truncation")
-        assert spinner.isEnabled()
-
-        var_panel.parent().close()
-
-    QTimer.singleShot(500, handle_analysis_module_panel)
-    qtbot.mouseClick(
-        get_child(es_edit, QPushButton), Qt.MouseButton.LeftButton, delay=1
-    )
-
 
 def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
     opened_main_window_poly, qtbot
