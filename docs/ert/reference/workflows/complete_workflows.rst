@@ -1,7 +1,7 @@
 .. _complete_workflows_chapter:
 
 Complete workflows
-===========
+==================
 
 A workflow is a list of calls to workflow jobs, with additional arguments. The
 job name should be the first element on each line. Based on the two
@@ -114,15 +114,11 @@ jobs that were stopped because the workflow was cancelled are logged at
 Workflows hooked in with :code:`HOOK_WORKFLOW` are in addition recorded
 alongside the experiment they belong to, in
 :code:`<ENSPATH>/experiments/<experiment_id>/workflow_events.jsonl`. That file
-holds one JSON object per job invocation and exists so the GUI can show the
-output of a workflow again later; it is not meant to be read directly. To view this
-in the GUI, select the experiment in the *Experiments* tool, then select the
-*Workflow events* tab.
-
-The GUI will show a list of all workflow jobs that have
-been run for that experiment, and clicking on a job will show its output.
+holds one JSON object per job invocation and backs the *Workflows* tab in *Manage experiments* once it
+has finished, so the output of an earlier run can be inspected again later. It
+is a machine-readable file and users are encouraged to read the ERT log instead.
 Output from hooks that ran before the experiment is created, such as
-:code:`PRE_EXPERIMENT`, is held back and written once the storage is created.
+:code:`PRE_EXPERIMENT`, is held back and written once the experiment exists.
 
 .. _runpath-file-workflows:
 
