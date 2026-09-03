@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import time
 from typing import Any
 from uuid import UUID
 
@@ -226,6 +227,8 @@ class MultipleDataAssimilation(
             which has already deactivated the realizations that failed. That
             leaves exactly the set whose data is safely in storage.
         """
+        # Time the cleanup
+        start_time = time.time()
         if not self.delete_intermediate_runpaths:
             return
         if posterior.iteration >= len(self._parsed_weights):
@@ -241,3 +244,7 @@ class MultipleDataAssimilation(
                 logger.warning(
                     "Failed to delete intermediate runpath: %s", path, exc_info=True
                 )
+        end_time = time.time()
+        logger.info(
+            f"Intermediate runpath cleanup took {end_time - start_time:.2f} seconds"
+        )
