@@ -88,8 +88,28 @@ Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW`
 keyword.
 
-Workflow logs with output from job execution can be found in the terminal where ERT was
-started.
+Workflow output
+---------------
+
+Output from workflow jobs is written to the ERT log.
+Every job invocation gets an output that the job wrote to stdout and stderr::
+
+    2026-07-30 10:19:33,041 - ert.workflow_runner - MainThread - INFO - Workflow job starting; hook=PRE_SIMULATION workflow=my_workflow job=MY_JOB#0
+    2026-07-30 10:19:33,052 - ert.workflow_runner - MainThread - INFO - Workflow job result; hook=PRE_SIMULATION workflow=my_workflow job=MY_JOB#0 status=success
+    --- arguments ---
+    first_argument second_argument
+    --- stdout ---
+    Hello from the workflow
+
+This covers every way a workflow can be started: hooked in with
+:code:`HOOK_WORKFLOW`, run with :code:`ert workflow`, or started from the *Run
+workflow* tool in the GUI. Workflows that were not started from a hook, such as
+a manual run, are logged with :code:`hook=None`.
+
+The :code:`status` field is one of :code:`success`, :code:`failed` or
+:code:`cancelled`. Only :code:`failed` is logged at :code:`ERROR` level;
+jobs that were stopped because the workflow was cancelled are logged at
+:code:`INFO` level.
 
 .. _runpath-file-workflows:
 

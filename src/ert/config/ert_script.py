@@ -9,12 +9,21 @@ from abc import abstractmethod
 from types import MappingProxyType, ModuleType
 from typing import Any
 
+from ._capture_output import capturing
 from .workflow_fixtures import (
     WorkflowFixtures,
     all_hooked_workflow_fixtures,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class ExternalScriptError(RuntimeError):
+    """Raised when an external workflow job exits with a non-zero exit code.
+
+    Reported without a stack trace, since it would only
+    show ert internals and could be confusing
+    """
 
 
 class ErtScript:
@@ -113,7 +122,7 @@ class ErtScript:
                         f"Mixture of fixtures and positional arguments, err: {e}"
                     )
 
-            return self.run(*arguments)
+            return self._run_capturing_output(arguments)
         except AttributeError as e:
             error_msg = str(e)
             if not hasattr(self, "run"):
@@ -139,6 +148,10 @@ class ErtScript:
                 f"User warning in workflow script {self.__class__.__name__}: {uw}"
             )
             return uw.args[0]
+        except ExternalScriptError as e:
+            self.output_stack_trace(error=str(e))
+            logger.error(f"Workflow job failed: {e!s}")
+            return None
         except BaseException as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
             self.output_stack_trace(f"{e!s}\n{full_trace}")
@@ -149,6 +162,14 @@ class ErtScript:
             return None
         finally:
             self.cleanup()
+
+    def _run_capturing_output(self, arguments: list[Any]) -> Any:
+        with capturing("stdout") as stdout, capturing("stderr") as stderr:
+            try:
+                return self.run(*arguments)
+            finally:
+                self._stdoutdata = self.stdoutdata + stdout.getvalue()
+                self._stderrdata = self.stderrdata + stderr.getvalue()
 
     # Need to have unique modules in case of identical object naming in scripts
     __module_count = 0
@@ -179,7 +200,10 @@ class ErtScript:
             f"error while running:\n{str(stack_trace).strip()}\n"
         )
 
-        self._stderrdata = error
+        existing_stderr = self.stderrdata
+        if existing_stderr and not existing_stderr.endswith("\n"):
+            existing_stderr += "\n"
+        self._stderrdata = existing_stderr + error
         self.__failed = True
 
     @staticmethod
