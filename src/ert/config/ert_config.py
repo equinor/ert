@@ -468,14 +468,21 @@ def _validate_fixtures(
 
 
 class _DeclaredHook(NamedTuple):
-    config_file_line: int
+    declaration_order: int
     workflow: Workflow
 
 
-def _config_file_line_of(workflow_name: str) -> int:
-    # return 0 from workflows that are not from a config file, e.g. created from a job
-    if isinstance(workflow_name, FileContextToken) and workflow_name.line is not None:
-        return workflow_name.line
+def _declaration_order_of(workflow_name: str) -> int:
+    """Position of the hook among all instructions in the fully resolved
+    config (after INCLUDE files are spliced in), used to order hooks by
+    where they were declared.
+    """
+    if (
+        isinstance(workflow_name, FileContextToken)
+        and workflow_name.declaration_order is not None
+    ):
+        return workflow_name.declaration_order
+    # return 0 for jobs not declared in the config file, e.g. site-installed jobs
     return 0
 
 
@@ -557,7 +564,7 @@ def create_and_hook_workflows(
         errors.extend(_validate_fixtures(hook_name, workflow, mode))
 
         declared_hooks[mode].append(
-            _DeclaredHook(_config_file_line_of(hook_name), workflow)
+            _DeclaredHook(_declaration_order_of(hook_name), workflow)
         )
 
     for inline_workflow_hook in hook_workflow_job_info:
@@ -578,7 +585,7 @@ def create_and_hook_workflows(
             _register_workflow(inline_workflow, wf_name, wf)
             errors.extend(_validate_fixtures(wf_name, wf, mode))
             declared_hooks[mode].append(
-                _DeclaredHook(_config_file_line_of(wf_name), wf)
+                _DeclaredHook(_declaration_order_of(wf_name), wf)
             )
         except ConfigValidationError as err:
             errors.append(err)
@@ -588,10 +595,10 @@ def create_and_hook_workflows(
 
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = defaultdict(list)
     for mode, hooks in declared_hooks.items():
-        hooks_in_config_file_order = sorted(
-            hooks, key=lambda hook: hook.config_file_line
+        hooks_in_declaration_order = sorted(
+            hooks, key=lambda hook: hook.declaration_order
         )
-        hooked_workflows[mode] = [hook.workflow for hook in hooks_in_config_file_order]
+        hooked_workflows[mode] = [hook.workflow for hook in hooks_in_declaration_order]
 
     return workflows, hooked_workflows
 
