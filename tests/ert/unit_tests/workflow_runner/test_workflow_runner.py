@@ -1,4 +1,6 @@
 import logging
+import threading
+import time
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -517,3 +519,79 @@ def test_that_job_runner_stops_reporting_it_is_running_when_arguments_are_reject
         runner.run([1])
 
     assert not runner.isRunning()
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_cancel_does_not_block_on_an_uncooperative_internal_job():
+    WorkflowCommon.createUncancellableWaitJob()
+
+    wait_job = workflow_job_from_file(
+        "uncancellable_wait_job", name="UNCANCELLABLE_WAIT", origin="user"
+    )
+    workflow = Workflow.from_file(
+        "uncancellable_wait_workflow", {}, {"UNCANCELLABLE_WAIT": wait_job}
+    )
+
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
+
+    workflow_runner.run()
+    wait_until(lambda: Path("uncancellable_wait_started_0").exists())
+
+    start = time.time()
+    workflow_runner.cancel()
+    elapsed = time.time() - start
+
+    # cancel() cannot forcibly interrupt an internal job that never checks
+    # isCancelled(); it must return immediately regardless, rather than
+    # blocking until the uncooperative job finishes on its own (5 seconds).
+    assert elapsed < 1
+    assert workflow_runner.isCancelled()
+
+    wait_until(lambda: Path("uncancellable_wait_finished_0").exists(), timeout=10)
+    workflow_runner.wait()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_a_cancel_call_racing_with_job_startup_still_cancels_the_job(
+    monkeypatch,
+):
+    """Regression test for a race between cancel() and a job publishing
+    itself as the current job but not yet having created its ErtScript.
+
+    cancel() reaching WorkflowJobRunner in that window must not be a
+    silent no-op: the cancellation has to be applied as soon as the
+    script is created.
+    """
+    WorkflowCommon.createWaitJob()
+    wait_job = workflow_job_from_file("wait_job", name="WAIT", origin="user")
+    workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
+
+    job_runner_published = threading.Event()
+    may_create_script = threading.Event()
+    original_run = WorkflowJobRunner.run
+
+    def delayed_run(self, *args, **kwargs):
+        # At this point the WorkflowRunner has already published this
+        # WorkflowJobRunner as its current job, but self.__script does
+        # not exist yet.
+        job_runner_published.set()
+        assert may_create_script.wait(timeout=10)
+        return original_run(self, *args, **kwargs)
+
+    monkeypatch.setattr(WorkflowJobRunner, "run", delayed_run)
+
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
+    workflow_runner.run()
+
+    assert job_runner_published.wait(timeout=10)
+    workflow_runner.cancel()
+    may_create_script.set()
+
+    wait_until(lambda: Path("wait_cancelled_0").exists(), timeout=10)
+    workflow_runner.wait()
+
+    assert workflow_runner.isCancelled()
+    assert not Path("wait_started_1").exists()

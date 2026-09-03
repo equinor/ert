@@ -27,5 +27,8 @@ class WorkflowsTool(Tool):
     def trigger(self) -> None:
         run_workflow_widget = RunWorkflowWidget(self.config, self.notifier)
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())  # type: ignore
+        run_workflow_widget.run_button = dialog.addButton(
+            "Start workflow", run_workflow_widget.startWorkflow, align_left=True
+        )
         dialog.exec()
         self.notifier.emitErtChange()  # workflow may have added new cases.
