@@ -18,12 +18,22 @@ from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.event import status_event_from_json, status_event_to_json
 from ert.run_models.everest_run_model import EverestRunModel
+from ert.services import SharedClient
 from everest.config import (
     EverestConfig,
 )
 from everest.config.control_config import ControlConfig
 from everest.detached import everserver
 from tests.everest.utils import MIN_CONFIG, get_optimal_result, relpath
+
+
+@pytest.fixture(autouse=True)
+def reset_ert_api_client():
+    # The client is process-wide and bound to one project, but each test has its own.
+    # Background threads may rebind it after teardown, so reset on the way in too.
+    SharedClient.close_client()
+    yield
+    SharedClient.close_client()
 
 
 @pytest.fixture

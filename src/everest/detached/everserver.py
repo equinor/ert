@@ -13,7 +13,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.services import ErtServerController, ErtServerExit, create_ertserver_client
+from ert.services import ErtClient, ErtServerController, ErtServerExit
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
@@ -23,7 +23,6 @@ from everest.detached import get_experiments
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     OPTIMIZATION_LOG_DIR,
-    EverEndpoints,
 )
 from everest.util import version_info
 
@@ -149,26 +148,21 @@ def main() -> None:
                 timeout=240, project=Path(server_path), logging_config=log_file.name
             ) as server:
                 server.fetch_connection_info()
-                with create_ertserver_client(Path(server_path)) as client:
-                    done = False
-                    while not done:
-                        experiment_ids = get_experiments(
-                            ServerConfig.get_server_context_from_conn_info(
-                                client.conn_info
-                            )
-                        )
-                        active = [
-                            ExperimentStatus(
-                                **client.get(
-                                    f"/experiment_server/{EverEndpoints.STATUS}/{experiment_id}",
-                                    auth=server.fetch_auth(),
-                                ).json()
-                            ).status
-                            in {ExperimentState.pending, ExperimentState.running}
-                            for experiment_id in experiment_ids
-                        ]
-                        done = experiment_ids and not any(active)
-                        time.sleep(0.5)
+                client = ErtClient.for_project(Path(server_path))
+                done = False
+                while not done:
+                    experiment_ids = get_experiments(
+                        ServerConfig.get_server_context_from_conn_info(client.conn_info)
+                    )
+                    active = [
+                        ExperimentStatus(
+                            **client.experiment_status(experiment_id)
+                        ).status
+                        in {ExperimentState.pending, ExperimentState.running}
+                        for experiment_id in experiment_ids
+                    ]
+                    done = experiment_ids and not any(active)
+                    time.sleep(0.5)
         except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
             logging.getLogger(__name__).info("Everserver stopped by user")

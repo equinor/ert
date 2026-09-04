@@ -27,8 +27,8 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
 
 
 @patch(
-    "everest.bin.everest_script.create_ertserver_client",
-    side_effect=[TimeoutError(), MagicMock()],
+    "everest.bin.everest_script.ErtClient",
+    **{"for_project.side_effect": [TimeoutError(), MagicMock()]},
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("everest.bin.everest_script.run_detached_monitor")

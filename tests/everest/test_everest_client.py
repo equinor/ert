@@ -14,7 +14,7 @@ from starlette.responses import Response
 
 from ert.gui.experiments.experiment_client import ExperimentClient
 from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
-from ert.services import create_ertserver_client
+from ert.services import ErtClient
 from ert.shared import find_available_socket
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
@@ -191,18 +191,18 @@ def test_that_multiple_everest_clients_can_connect_to_server(
     )
 
     everest_main_thread.start()
-    client = create_ertserver_client(
+    api = ErtClient.for_project(
         Path(ServerConfig.get_session_dir(ever_config.output_dir))
     )
 
     def everserver_is_running():
         return server_is_running(
-            *ServerConfig.get_server_context_from_conn_info(client.conn_info)
+            *ServerConfig.get_server_context_from_conn_info(api.conn_info)
         )
 
     wait_until(everserver_is_running, interval=1, timeout=300)
 
-    server_context = ServerConfig.get_server_context_from_conn_info(client.conn_info)
+    server_context = ServerConfig.get_server_context_from_conn_info(api.conn_info)
     url, cert, auth = server_context
 
     ssl_context = ssl.create_default_context()

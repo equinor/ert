@@ -18,7 +18,7 @@ from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
-from ert.services.shared_client import Client
+from ert.services.ert_client import ErtClient
 from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import (
@@ -142,7 +142,7 @@ def extract_errors_from_file(path: str) -> list[str]:
     return re.findall(r"(Error \w+.*)", Path(path).read_text(encoding="utf-8"))
 
 
-def wait_for_server(client: Client, timeout: float) -> None:
+def wait_for_server(api: ErtClient, timeout: float) -> None:
     """
     Waits until the everest server has started. Polls
     for server availability until timeout (measured in seconds).
@@ -156,7 +156,7 @@ def wait_for_server(client: Client, timeout: float) -> None:
     wait_start_time: float = time.monotonic()
     while time.monotonic() - wait_start_time <= timeout:
         if server_is_running(
-            *ServerConfig.get_server_context_from_conn_info(client.conn_info)
+            *ServerConfig.get_server_context_from_conn_info(api.conn_info)
         ):
             return
         until_timeout = max(0, timeout - (time.monotonic() - wait_start_time))

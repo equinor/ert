@@ -14,7 +14,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.experiments import RunDialog
 from ert.gui.experiments.experiment_client import ExperimentClient
 from ert.plugins import ErtPluginManager
-from ert.services import create_ertserver_client
+from ert.services.ert_client import ErtClient
 from everest.config import ServerConfig
 from everest.detached import get_experiments, wait_for_server
 
@@ -43,13 +43,13 @@ class EverestMainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def run(self) -> None:
-        storage_client = create_ertserver_client(
+        client = ErtClient.for_project(
             Path(ServerConfig.get_session_dir(self.output_dir))
         )
-        wait_for_server(storage_client, 60)
+        wait_for_server(client, 60)
 
         server_context = ServerConfig.get_server_context_from_conn_info(
-            storage_client.conn_info
+            client.conn_info
         )
         url, cert, auth = server_context
 
@@ -57,7 +57,7 @@ class EverestMainWindow(QMainWindow):
         ssl_context.load_verify_locations(cafile=cert)
         username, password = auth
 
-        client = ExperimentClient(
+        exp_client = ExperimentClient(
             experiment_id=get_experiments(server_context)[-1],
             url=url,
             cert_file=cert,
@@ -66,12 +66,12 @@ class EverestMainWindow(QMainWindow):
             ssl_context=ssl_context,
         )
 
-        config = client.config
+        config = exp_client.config
         title = Path(config["config_path"]).name
         self.setWindowTitle(f"EVEREST - {title}")
 
-        run_model_api = client.create_run_model_api()
-        event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(
+        run_model_api = exp_client.create_run_model_api()
+        event_queue, event_monitor_thread = exp_client.setup_event_queue_from_ws_endpoint(
             refresh_interval=0.02, open_timeout=40, websocket_recv_timeout=1.0
         )
 
