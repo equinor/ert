@@ -751,34 +751,6 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
-    def validate_cvar_nreals_interval(self) -> Self:
-        optimization = self.optimization
-        if not optimization:
-            return self
-
-        cvar = optimization.cvar
-
-        if not cvar:
-            return self
-
-        nreals = cvar.number_of_realizations
-        model = self.model
-
-        if (
-            cvar
-            and nreals is not None
-            and model is not None
-            and not (0 < nreals < len(model.realizations))
-        ):
-            raise ValueError(
-                f"number_of_realizations: (got {nreals}) was"
-                f" expected to be between 0 and number of realizations specified "
-                f"in model config: {len(model.realizations)}"
-            )
-
-        return self
-
-    @model_validator(mode="after")
     def validate_install_data_source_exists(self) -> Self:
         install_data = self.install_data or []
         if not install_data:

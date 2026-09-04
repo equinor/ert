@@ -112,10 +112,7 @@ class OptimizationConfig(BaseModel, extra="forbid"):
             be used to minimize risk. Effectively this means that at each
             iteration the objective and constraint functions will be calculated
             as the mean over the sub-set of the realizations that perform worst.
-            The size of this set is specified as an absolute number or as a
-            percentile value. These options are selected by setting either the
-            `number_of_realizations` option, or the `percentile` option, which
-            are mutually exclusive.
+            The size of this set is specified by the `percentile` option.
             """
         ),
     )

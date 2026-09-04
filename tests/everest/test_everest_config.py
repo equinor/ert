@@ -142,7 +142,7 @@ def test_that_control_config_is_initialized_with_control_variables():
 def test_that_optimization_config_is_initialized_with_cvar_config():
     optimization_dict = {
         "algorithm": "mesh_adaptive_search",
-        "cvar": {"number_of_realizations": 999999},
+        "cvar": {"percentile": 0.3},
     }
 
     parsed_config = OptimizationConfig(**optimization_dict)
@@ -150,8 +150,7 @@ def test_that_optimization_config_is_initialized_with_cvar_config():
 
     assert isinstance(cvar_config, CVaRConfig)
 
-    assert cvar_config.number_of_realizations == 999999
-    assert "percentile" not in cvar_config
+    assert cvar_config.percentile == pytest.approx(0.3)
 
 
 def test_that_get_output_dir_returns_same_for_old_and_new():

@@ -286,21 +286,12 @@ def _parse_optimization(
 
         if (cvar_opts := ever_opt.cvar) is not None:
             # set up the configuration of the realization filter that implements cvar:
-            if cvar_opts.percentile is not None:
-                cvar_config = {
-                    "method": "cvar-objective",
-                    "options": {
-                        "percentile": cvar_opts.percentile,
-                    },
-                }
-            elif cvar_opts.number_of_realizations is not None:
-                cvar_config = {
-                    "method": "sort-objective",
-                    "options": {
-                        "first": 0,
-                        "last": cvar_opts.number_of_realizations - 1,
-                    },
-                }
+            cvar_config = {
+                "method": "cvar-objective",
+                "options": {
+                    "percentile": cvar_opts.percentile,
+                },
+            }
 
     return ropt_optimizer, ropt_backend, ropt_gradient, ropt_realizations, cvar_config
 

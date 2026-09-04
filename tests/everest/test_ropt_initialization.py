@@ -228,39 +228,8 @@ def test_everest2ropt_cvar(ever_config):
 
     config_dict["optimization"]["cvar"] = {}
 
-    with pytest.raises(ValidationError, match="Invalid CVaR section"):
+    with pytest.raises(ValidationError, match="percentile"):
         EverestConfig.model_validate(config_dict)
-
-    config_dict["optimization"]["cvar"] = {
-        "percentile": 0.1,
-        "number_of_realizations": 1,
-    }
-
-    with pytest.raises(ValidationError, match=r".*Invalid CVaR section.*"):
-        EverestConfig.model_validate(config_dict)
-
-    config_dict["optimization"]["cvar"] = {
-        "number_of_realizations": 1,
-    }
-
-    config = EverestConfig.model_validate(config_dict)
-    ropt_config, _ = everest2ropt(
-        [ctrl for c in config.controls for ctrl in c.to_ert_parameter_config()],
-        config.create_ert_objectives_config(),
-        config.input_constraints,
-        config.create_ert_output_constraints_config(),
-        config.optimization,
-        config.model,
-        config.environment.random_seed,
-        config.optimization_output_dir,
-    )
-
-    assert ropt_config["objectives"]["realization_filters"] == [0]
-    assert len(ropt_config["realization_filters"]) == 1
-    assert ropt_config["realization_filters"][0]["method"] == "sort-objective"
-    assert ropt_config["realization_filters"][0]["options"]["sort"] == [0]
-    assert ropt_config["realization_filters"][0]["options"]["first"] == 0
-    assert ropt_config["realization_filters"][0]["options"]["last"] == 0
 
     config_dict["optimization"]["cvar"] = {
         "percentile": 0.3,
