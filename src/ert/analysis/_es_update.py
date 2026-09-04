@@ -410,14 +410,25 @@ def _resolve_strategy(
         type[ParameterConfig], dict[LocalizationType, UpdateStrategy]
     ],
 ) -> UpdateStrategy | None:
-    if param_cfg.update_strategy is None or type(param_cfg) not in strategy_handlers:
+    if param_cfg.update_strategy is None:
+        return None
+
+    handler = strategy_handlers.get(type(param_cfg))
+    if handler is None:
         logger.warning(
             f"Parameter '{param_name}' has unrecognized config type "
             f"'{type(param_cfg).__name__}'. Parameter will not be updated"
         )
         return None
 
-    return strategy_handlers[type(param_cfg)].get(param_cfg.update_strategy)
+    strategy = handler.get(param_cfg.update_strategy)
+    if strategy is None:
+        logger.warning(
+            f"Update strategy '{param_cfg.update_strategy.name}' is not supported for "
+            f"parameter '{param_name}' of type '{type(param_cfg).__name__}'. "
+            "Parameter will not be updated"
+        )
+    return strategy
 
 
 def smoother_update(
