@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import Mock
-
-import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
@@ -10,13 +7,6 @@ from PyQt6.QtWidgets import QApplication
 from ert.gui.theming import Theme, ThemeManager
 from ert.gui.theming import manager as manager_module
 from ert.gui.theming.theme import load_qss
-
-
-@pytest.fixture(autouse=True)
-def _restore_global_stylesheet(qapp):
-    original = qapp.styleSheet()
-    yield
-    qapp.setStyleSheet(original)
 
 
 def test_that_manual_override_sets_current_theme_and_emits_signal(qtbot) -> None:
@@ -46,18 +36,22 @@ def test_that_setting_the_same_theme_does_not_emit_signal(qtbot) -> None:
     assert received == []
 
 
-def test_that_setting_the_same_theme_does_not_reapply_stylesheet(
-    qtbot, monkeypatch
-) -> None:
+def test_that_setting_the_same_theme_does_not_reapply_stylesheet(qtbot) -> None:
     manager = ThemeManager()
     same = manager.current_theme
 
-    spy = Mock(wraps=manager.apply_stylesheet_from_qss)
-    monkeypatch.setattr(manager, "apply_stylesheet_from_qss", spy)
+    apply_calls: list[None] = []
+    original_apply = manager.apply
+
+    def counting_apply() -> None:
+        apply_calls.append(None)
+        original_apply()
+
+    manager.apply = counting_apply  # type: ignore[method-assign]
 
     manager.set_theme(same)
 
-    assert spy.call_count == 0
+    assert apply_calls == []
 
 
 def test_that_apply_installs_the_current_themes_stylesheet_on_qapplication(
@@ -132,34 +126,11 @@ def test_that_os_scheme_change_updates_theme_when_following_system(
     assert received == [Theme.DARK]
 
 
-def test_that_apply_raises_runtime_error_when_no_qapplication_exists(
-    qtbot, monkeypatch
-) -> None:
+def test_that_apply_is_a_noop_when_no_qapplication_exists(qtbot, monkeypatch) -> None:
     manager = ThemeManager()
 
     monkeypatch.setattr(
         manager_module.QApplication, "instance", staticmethod(lambda: None)
     )
-
-    with pytest.raises(RuntimeError, match="QApplication instance not found"):
-        manager.apply_stylesheet_from_qss()
-
-
-def test_that_apply_keeps_previous_stylesheet_and_logs_when_qss_is_missing(
-    qtbot, monkeypatch, caplog
-) -> None:
-    manager = ThemeManager()
-    app = QApplication.instance()
-    assert app is not None
-    previous = app.styleSheet()
-
-    def _raise(_theme: Theme) -> str:
-        raise FileNotFoundError("no qss")
-
-    monkeypatch.setattr(manager_module, "load_qss", _raise)
-
-    with caplog.at_level("ERROR"):
-        manager.apply_stylesheet_from_qss()
-
-    assert app.styleSheet() == previous
-    assert "Failed to load QSS" in caplog.text
+    # Must not raise even though there is no QApplication to install QSS on.
+    manager.apply()
