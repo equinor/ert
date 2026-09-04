@@ -1,8 +1,16 @@
 from textwrap import dedent
 
 import pytest
+import shapely
 
 from ert.config._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeRegistry
+
+
+def _polygon_from_coords(coords: list[list[tuple[float, float]]]) -> PolygonShapeConfig:
+    """Create a PolygonShapeConfig from coordinate lists. No holes are considered."""
+    polygons = [shapely.Polygon(ring) for ring in coords]
+    multipolygon = shapely.MultiPolygon(polygons)
+    return PolygonShapeConfig(wkt=multipolygon.wkt)
 
 
 def test_that_shape_registry_reuses_identical_circle_shapes():
@@ -41,14 +49,16 @@ def test_that_polygon_shape_is_read_from_file(mocked_files):
     )
     shape = PolygonShapeConfig.from_file("polygon.pol")
     expected = [
-        (0.5, 4.0),
-        (1.0, 7.0),
-        (2.0, 9.0),
-        (3.0, 6.0),
-        (1.0, 5.0),
-        (0.5, 4.0),
+        [
+            (0.5, 4.0),
+            (1.0, 7.0),
+            (2.0, 9.0),
+            (3.0, 6.0),
+            (1.0, 5.0),
+            (0.5, 4.0),
+        ]
     ]
-    assert shape.vertices == expected
+    assert shape == _polygon_from_coords(expected)
 
 
 def test_that_polygon_shape_is_normalized(mocked_files):
@@ -64,13 +74,15 @@ def test_that_polygon_shape_is_normalized(mocked_files):
     )
     shape = PolygonShapeConfig.from_file("polygon.pol")
     expected = [
-        (1.0, 6.0),
-        (3.0, 9.0),
-        (4.0, 6.0),
-        (2.0, 5.0),
-        (1.0, 6.0),
+        [
+            (1.0, 6.0),
+            (3.0, 9.0),
+            (4.0, 6.0),
+            (2.0, 5.0),
+            (1.0, 6.0),
+        ]
     ]
-    assert shape.vertices == expected
+    assert shape == _polygon_from_coords(expected)
 
 
 def test_that_polygon_shape_is_simplified_within_tolerance(mocked_files):
@@ -90,17 +102,19 @@ def test_that_polygon_shape_is_simplified_within_tolerance(mocked_files):
     )
     shape = PolygonShapeConfig.from_file("polygon.pol")
     expected = [
-        (0.0, 0.0),
-        (0.0, 2.0),
-        (1.0, 2.2),
-        (2.0, 2.0),
-        (2.0, 0.0),
-        (0.0, 0.0),
+        [
+            (0.0, 0.0),
+            (0.0, 2.0),
+            (1.0, 2.2),
+            (2.0, 2.0),
+            (2.0, 0.0),
+            (0.0, 0.0),
+        ]
     ]
-    assert shape.vertices == expected
+    assert shape == _polygon_from_coords(expected)
 
 
-def test_that_polygon_shape_raises_when_multiple_polygons_found(mocked_files):
+def test_that_polygon_shape_keeps_disjoint_polygons(mocked_files):
     mocked_files["polygon.pol"] = dedent(
         """
         0.000000 0.000000 0.000000
@@ -118,7 +132,159 @@ def test_that_polygon_shape_raises_when_multiple_polygons_found(mocked_files):
         999.000000 999.000000 999.000000
         """
     )
-    with pytest.raises(ValueError, match="Multiple polygons found in the file"):
+    shape = PolygonShapeConfig.from_file("polygon.pol")
+    expected = [
+        [
+            (0.0, 0.0),
+            (0.0, 1.0),
+            (1.0, 1.0),
+            (1.0, 0.0),
+            (0.0, 0.0),
+        ],
+        [
+            (2.0, 2.0),
+            (2.0, 3.0),
+            (3.0, 3.0),
+            (3.0, 2.0),
+            (2.0, 2.0),
+        ],
+    ]
+    assert shape == _polygon_from_coords(expected)
+
+
+def test_that_polygon_shape_merges_overlapping_polygons(mocked_files):
+    mocked_files["polygon.pol"] = dedent(
+        """
+        0.000000 0.000000 0.000000
+        0.000000 2.000000 0.000000
+        2.000000 2.000000 0.000000
+        2.000000 0.000000 0.000000
+        0.000000 0.000000 0.000000
+        999.000000 999.000000 999.000000
+
+        1.000000 1.000000 0.000000
+        1.000000 3.000000 0.000000
+        3.000000 3.000000 0.000000
+        3.000000 1.000000 0.000000
+        1.000000 1.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    shape = PolygonShapeConfig.from_file("polygon.pol")
+    expected = [
+        [
+            (0.0, 0.0),
+            (0.0, 2.0),
+            (1.0, 2.0),
+            (1.0, 3.0),
+            (3.0, 3.0),
+            (3.0, 1.0),
+            (2.0, 1.0),
+            (2.0, 0.0),
+            (0.0, 0.0),
+        ]
+    ]
+    assert shape == _polygon_from_coords(expected)
+
+
+def test_that_polygon_shape_preserves_holes_in_merged_polygon(mocked_files):
+    top = dedent(
+        """
+        0.000000 2.000000 0.000000
+        4.000000 2.000000 0.000000
+        4.000000 3.000000 0.000000
+        0.000000 3.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    bottom = dedent(
+        """
+        0.000000 0.000000 0.000000
+        4.000000 0.000000 0.000000
+        4.000000 1.000000 0.000000
+        0.000000 1.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    left = dedent(
+        """
+        0.000000 1.000000 0.000000
+        1.000000 1.000000 0.000000
+        1.000000 2.000000 0.000000
+        0.000000 2.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    right = dedent(
+        """
+        3.000000 1.000000 0.000000
+        4.000000 1.000000 0.000000
+        4.000000 2.000000 0.000000
+        3.000000 2.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    mocked_files["polygon.pol"] = top + bottom + left + right
+    shape = PolygonShapeConfig.from_file("polygon.pol")
+    assert shape.contains(0.5, 0.5)
+    assert not shape.contains(1.5, 1.5)
+
+
+def test_that_polygon_shape_normalizes_and_simplifies_multipolygons(mocked_files):
+    polygon1 = dedent(
+        """
+        0.000000 0.000000 0.000000
+        2.000000 0.000000 0.000000
+        2.000000 2.000000 0.000000
+        0.000000 2.000000 0.000000
+        0.000000 0.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    polygon2 = dedent(
+        """
+        2.000000 0.000000 0.000000
+        4.000000 0.000000 0.000000
+        4.000000 2.000000 0.000000
+        2.000000 2.000000 0.000000
+        2.000000 0.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    polygon3 = dedent(
+        """
+        4.000000 4.000000 0.000000
+        6.000000 4.000000 0.000000
+        6.000000 6.000000 0.000000
+        4.000000 6.000000 0.000000
+        4.000000 4.000000 0.000000
+        999.000000 999.000000 999.000000
+        """
+    )
+    mocked_files["polygon.pol"] = polygon3 + polygon2 + polygon1
+    shape = PolygonShapeConfig.from_file("polygon.pol")
+    expected = [
+        [
+            (0.0, 0.0),
+            (0.0, 2.0),
+            (4.0, 2.0),
+            (4.0, 0.0),
+            (0.0, 0.0),
+        ],
+        [
+            (4.0, 4.0),
+            (4.0, 6.0),
+            (6.0, 6.0),
+            (6.0, 4.0),
+            (4.0, 4.0),
+        ],
+    ]
+    assert shape == _polygon_from_coords(expected)
+
+
+def test_that_polygon_shape_raises_when_geometry_is_empty(mocked_files):
+    mocked_files["polygon.pol"] = ""
+    with pytest.raises(ValueError, match="could not be converted to polygons"):
         PolygonShapeConfig.from_file("polygon.pol")
 
 
@@ -188,7 +354,9 @@ def test_that_polygons_are_not_equal_outside_tolerance(mocked_files):
 
 def test_that_polygons_are_not_equal_to_circles():
     shape1 = PolygonShapeConfig(
-        vertices=[(0.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 0.0), (0.0, 1.0)]
+        wkt=_polygon_from_coords(
+            [[(0.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 0.0), (0.0, 1.0)]]
+        ).wkt
     )
     shape2 = CircleShapeConfig(east=1.0, north=1.0, radius=1.0)
 

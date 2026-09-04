@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Annotated, ClassVar, Literal, Self
+from typing import Annotated, ClassVar, Literal, Self, cast
 
 import shapely
 import xtgeo
@@ -41,16 +41,16 @@ class CircleShapeConfig(ShapeConfig):
 
 
 class PolygonShapeConfig(ShapeConfig):
-    """Configuration for a polygonal shape.
+    """Configuration for a (multi)polygonal shape.
 
     Attributes:
-        vertices: List of (east, north) tuples defining the polygon vertices. Vertices
-        are expected to be normalized in shapely's sense (first vertex is the lowest,
-        and vertices are ordered clockwise).
+        wkt: Well-Known Text representation of the multipolygon. Vertices are expected
+        to be normalized in shapely's sense (first vertex is the lowest, and vertices
+        are ordered clockwise).
     """
 
     type: Literal["polygon"] = "polygon"
-    vertices: list[tuple[float, float]]
+    wkt: str  # Well-Known Text representation of the multipolygon
 
     TOLERANCE: ClassVar[float] = 0.1
 
@@ -62,37 +62,48 @@ class PolygonShapeConfig(ShapeConfig):
             filepath: Path to a file containing polygon definition. Supported formats
             are the ones supported by xtgeo.polygons_from_file
             https://xtgeo.readthedocs.io/en/latest/api-points-polygons.html#xtgeo.polygons_from_file.
-            Expected to contain exactly one polygon with no holes.
+            Expected to contain one or more polygons with no holes. Multiple polygons
+            (disjoint or overlapping) are preserved; overlapping polygons are merged.
         """
-        xtgeo_polygon = xtgeo.polygons_from_file(filepath)
-
-        if len(set(xtgeo_polygon.dataframe["POLY_ID"])) != 1:
-            raise ValueError(
-                "Multiple polygons found in the file. "
-                "Behavior is defined only for one polygon."
-            )
+        xtgeo_polygons = xtgeo.polygons_from_file(filepath)
+        line_strings = xtgeo_polygons.get_shapely_objects()
 
         try:
-            shapely_polygon = (
-                shapely.Polygon(xtgeo_polygon.get_xyz_arrays())
-                .simplify(tolerance=cls.TOLERANCE)
-                .normalize()
-            )
+            separate_polygons = [shapely.Polygon(poly.coords) for poly in line_strings]
+            polygon_union = shapely.union_all(separate_polygons)
         except Exception as e:
             raise ValueError(f"Failed to create polygon from file {filepath}") from e
 
-        vertices = shapely.get_coordinates(shapely_polygon).tolist()
+        if isinstance(polygon_union, shapely.MultiPolygon):
+            multipolygon = polygon_union
+        elif isinstance(polygon_union, shapely.Polygon):
+            multipolygon = shapely.MultiPolygon([polygon_union])
+        else:
+            raise ValueError(
+                f"Shapes in the file '{filepath}' could not be converted to polygons. "
+                f"Unexpected geometry type {type(polygon_union).__name__}"
+            )
 
-        return cls(vertices=vertices)
+        cleaned_polygons = [
+            cast(
+                shapely.Polygon,
+                geom.simplify(tolerance=cls.TOLERANCE).normalize(),
+            )
+            for geom in multipolygon.geoms
+        ]
+        multipolygon = shapely.MultiPolygon(cleaned_polygons)
+
+        return cls(wkt=multipolygon.wkt)
 
     @cached_property
-    def _polygon(self) -> shapely.Polygon:
-        poly = shapely.Polygon(self.vertices)
-        shapely.prepare(poly)
-        return poly
+    def _polygon(self) -> shapely.MultiPolygon:
+        multipolygon = shapely.from_wkt(self.wkt)
+        assert isinstance(multipolygon, shapely.MultiPolygon)
+        shapely.prepare(multipolygon)
+        return multipolygon
 
     def contains(self, east: float, north: float) -> bool:
-        """Check if a point is inside the polygon.
+        """Check if a point is inside any of the internal polygons.
 
         Args:
             east: UTM_X-coordinate of the point

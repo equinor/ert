@@ -174,15 +174,9 @@ def test_that_observation_without_zones_are_not_disabled_by_zone_check():
 
 
 def test_that_observations_within_boundary_stay_while_outside_are_removed():
-    boundary = PolygonShapeConfig(
-        vertices=[
-            (0.0, 0.0),
-            (0.0, 1.0),
-            (1.0, 1.0),
-            (1.0, 0.0),
-            (0.0, 0.0),
-        ]
-    )
+    polygon1 = "((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))"
+    polygon2 = "((3 3 0, 3 4 0, 4 4 0, 4 3 0, 3 3 0))"
+    boundary = PolygonShapeConfig(wkt=f"MULTIPOLYGON Z ({polygon1}, {polygon2})")
     shape_registry = ShapeRegistry()
     boundary_id = shape_registry.register(boundary)
 
@@ -207,8 +201,13 @@ def test_that_observations_within_boundary_stay_while_outside_are_removed():
                 east=2.5,
                 north=2.5,
             ),
+            create_seismic_observation(
+                east=3.5,
+                north=3.5,
+                boundary_id=boundary_id,
+            ),
         ]
     )
 
     qc = qc_seismic_observations(observations, shape_registry)
-    assert qc["east"].to_list() == [0.5, 2.5]
+    assert qc["east"].to_list() == [0.5, 2.5, 3.5]
