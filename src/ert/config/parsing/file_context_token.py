@@ -33,6 +33,10 @@ class FileContextToken(Token):
 
         inst_fct = cast(FileContextToken, inst)
         inst_fct.filename = filename
+        if isinstance(token, FileContextToken):
+            # Re-wrapping an already-tagged token (e.g. in replace_value())
+            # must not silently lose its declaration_order.
+            inst_fct.declaration_order = token.declaration_order
         return inst_fct
 
     def __repr__(self) -> str:
