@@ -57,6 +57,25 @@ def test_model_config_jobname_and_eclbase(extra_config, expected):
     assert ModelConfig.from_dict(config_dict).jobname_format_string == expected
 
 
+def test_that_runpath_validation_raises_error_when_static_prefix_is_not_a_dir(tmp_path):
+    file = tmp_path / "not_a_dir"
+    file.write_text("This is a file")
+
+    with pytest.raises(ValueError, match="not a directory"):
+        ModelConfig(runpath_format_string=str(file / "<IENS>" / "<ITER>"))
+
+
+def test_that_runpath_validation_does_not_raise_error_when_static_prefix_is_a_dir(
+    tmp_path,
+):
+    static_dir = tmp_path / "dir"
+    static_dir.mkdir()
+
+    ModelConfig(
+        runpath_format_string=str(static_dir / "<IENS>" / "static_part" / "<ITER>")
+    )
+
+
 @pytest.mark.parametrize(
     ("total_space", "used_space", "to_warn", "expected_warning"),
     [
