@@ -15,6 +15,18 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+ES_MDA_DELETE_RUNPATHS_HELP_TEXT = (
+    "Delete the runpath directories of intermediate iterations\n"
+    "once their forward models have completed,\n"
+    "keeping only the initial prior and the final posterior on disk.\n"
+    "Runpaths of failed realizations are always kept,\n"
+    "so failures can still be investigated.\n"
+    "Results are still available in storage,\n"
+    "but the deleted intermediate iterations can no longer\n"
+    "be inspected or used as a prior for a restart."
+)
+
+
 def log_duration(
     logger: logging.Logger,
     logging_level: int = logging.DEBUG,

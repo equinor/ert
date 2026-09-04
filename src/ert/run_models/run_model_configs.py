@@ -329,6 +329,7 @@ class MultipleDataAssimilationConfig(
 ):
     prior_ensemble_id: str | None
     arg_weights: str | None = Field(default=None, exclude=True)
+    delete_intermediate_runpaths: bool = False
 
     @model_validator(mode="after")
     def _update_weights(self) -> Self:
@@ -344,6 +345,7 @@ class MultipleDataAssimilationConfig(
             **self._update_experiment_config(),
             **self._common_fields(),
             "prior_ensemble_id": self.prior_ensemble_id,
+            "delete_intermediate_runpaths": (self.delete_intermediate_runpaths),
             "experiment_type": ExperimentType.ES_MDA,
         }
 

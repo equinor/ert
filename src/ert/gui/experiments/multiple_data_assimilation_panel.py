@@ -36,6 +36,7 @@ from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.storage.local_experiment import ExperimentType
 from ert.storage.realization_storage_state import RealizationStorageState
+from ert.utils import ES_MDA_DELETE_RUNPATHS_HELP_TEXT
 from ert.validation import (
     ExperimentValidation,
     NumberListStringArgument,
@@ -64,6 +65,7 @@ class Arguments:
     weights: str
     prior_ensemble_id: str | None  # UUID not serializable in json
     experiment_name: str
+    delete_intermediate_runpaths: bool
 
 
 class MultipleDataAssimilationPanel(ExperimentConfigPanel):
@@ -209,6 +211,19 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
         layout.addRow("Run from prior ensemble:", self._ensemble_selector)
+
+        self._delete_intermediate_runpaths_box = QCheckBox("")
+        self._delete_intermediate_runpaths_box.setObjectName(
+            "delete_intermediate_runpaths_checkbox_esmda"
+        )
+        self._delete_intermediate_runpaths_box.setToolTip(
+            ES_MDA_DELETE_RUNPATHS_HELP_TEXT
+        )
+        self._delete_intermediate_runpaths_box.setChecked(False)
+        layout.addRow(
+            "Delete intermediate runpaths:",
+            self._delete_intermediate_runpaths_box,
+        )
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
@@ -428,6 +443,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 else None
             ),
             experiment_name=self._experiment_name_field.get_text,
+            delete_intermediate_runpaths=(
+                self._delete_intermediate_runpaths_box.isChecked()
+            ),
         )
 
     def setWeights(self, weights: Any) -> None:

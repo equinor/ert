@@ -498,6 +498,7 @@ def _setup_multiple_data_assimilation(
         target_ensemble=_iterative_ensemble_format(args),
         arg_weights=args.weights,
         prior_ensemble_id=prior_ensemble,
+        delete_intermediate_runpaths=args.delete_intermediate_runpaths,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         experiment_name=args.experiment_name,
         queue_config=config.queue_config,

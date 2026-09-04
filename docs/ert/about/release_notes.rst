@@ -27,6 +27,38 @@
 Highlighted changes
 ===================
 
+Version 25.1
+------------
+
+Delete intermediate runpaths in ES-MDA
+######################################
+
+ES-MDA keeps a full runpath directory per realization per iteration, which for a
+large model takes up a substantial amount of scratch-disk space.
+The intermediate runpaths are often not needed after the iteration has completed.
+Deleting the intermediate runpaths could save a significant amount of disk space,
+without affecting the ability to restart the experiment from the prior ensemble,
+make prediction runs or to QC the final results.
+
+The new "Delete intermediate runpaths" option, available as
+``--delete-intermediate-runpaths`` in the CLI, deletes the runpaths of the
+intermediate iterations as soon as they are no longer needed. The runpaths of
+the initial prior and the final posterior are kept. It is off by default, since
+the deletion cannot be undone.
+
+Results in storage are unaffected, so this does not change what you can plot or
+export. Two things are worth knowing before enabling it:
+
+- Runpaths of realizations that *failed* are always kept. A failed realization
+  never got its responses loaded into storage, so its runpath holds the only
+  record of why it failed.
+- A deleted intermediate iteration can no longer be used as a prior for a
+  restart. Leave the option off if you expect to
+  :ref:`run from a prior ensemble <selecting_prior_es-mda>`.
+
+.. image:: images/v25/delete_intermediate_runpaths.png
+
+
 Version 25.0
 ------------
 
