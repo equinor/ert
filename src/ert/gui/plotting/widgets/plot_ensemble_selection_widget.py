@@ -262,23 +262,41 @@ class EnsembleSelectListWidget(QListWidget):
         super().dropEvent(event)
         self.ensembleSelectionListChanged.emit()
 
+    def _uncheck_item(self, item: QListWidgetItem) -> None:
+        self.release_color(item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX))
+        item.setData(Qt.ItemDataRole.CheckStateRole, False)
+
+    def _check_item(self, item: QListWidgetItem) -> None:
+        item.setData(
+            EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
+            self.assign_available_color(
+                item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
+            ),
+        )
+        item.setData(Qt.ItemDataRole.CheckStateRole, True)
+
     def slot_toggle_plot(self, item: QListWidgetItem) -> None:
         count = len(self.get_checked_ensembles())
         selected = item.data(Qt.ItemDataRole.CheckStateRole)
 
+        if not selected and self.get_maximum_ensemble_limit() == 1 and count == 1:
+            for ensemble_index in range(self._ensemble_count):
+                ensemble_item = self.item(ensemble_index)
+                if (
+                    ensemble_item is not None
+                    and ensemble_item is not item
+                    and ensemble_item.data(Qt.ItemDataRole.CheckStateRole)
+                ):
+                    self._uncheck_item(ensemble_item)
+                    break
+            self._check_item(item)
+            self.ensembleSelectionListChanged.emit()
+            return
+
         if selected and count > self.get_minimum_ensemble_limit():
-            self.release_color(
-                item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
-            )
-            item.setData(Qt.ItemDataRole.CheckStateRole, False)
+            self._uncheck_item(item)
         elif not selected and count < self.get_maximum_ensemble_limit():
-            item.setData(
-                EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
-                self.assign_available_color(
-                    item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
-                ),
-            )
-            item.setData(Qt.ItemDataRole.CheckStateRole, True)
+            self._check_item(item)
 
         self.ensembleSelectionListChanged.emit()
 

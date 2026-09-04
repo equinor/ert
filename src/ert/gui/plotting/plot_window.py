@@ -42,7 +42,9 @@ from ert.gui.plotting.utils.plot_maps import (
     EVEREST_PLOT_MAP,
     GAUSSIAN_KDE,
     HISTOGRAM,
+    MISFIT_MAP,
     MISFITS,
+    OBSERVATIONS_MAP,
     SHARED_PLOT_MAP,
     STATISTICS,
     STD_DEV,
@@ -382,10 +384,30 @@ class PlotWindow(QMainWindow):
     def get_plot_api_version(self) -> str:
         return self._api.api_version
 
+    def _apply_ensemble_selection_policy_for_tab(self, tab_name: str) -> None:
+        if tab_name == MISFIT_MAP:
+            self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
+            if len(self._ensemble_selection_widget.get_selected_ensembles()) > 1:
+                self._ensemble_selection_widget.clear_ensemble_selection()
+        else:
+            self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+        self._update_ensemble_group_title()
+
+    def _update_ensemble_group_title(self) -> None:
+        max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
+        str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
+        self._ensemble_group.set_title(
+            f"Select{str_num_of_ens} batches"
+            if self.is_everest
+            else f"Select up to {max_selected} ensemble(s)"
+        )
+
     @Slot(int)
     def current_tab_changed(self, index: int) -> None:
+        tab_name = self._central_tab.tabText(index)
+        self._apply_ensemble_selection_policy_for_tab(tab_name)
         self.update_plot()
-        self.log_plot_tab_usage(self._central_tab.tabText(index))
+        self.log_plot_tab_usage(tab_name)
 
     def log_plot_tab_usage(self, tab_name: str, *, default: bool = False) -> None:
         msg = f"Plotwindow tab used: {tab_name}" + (" (default tab)" if default else "")
@@ -756,13 +778,7 @@ class PlotWindow(QMainWindow):
             else:
                 self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
 
-        max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
-        str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
-        self._ensemble_group.set_title(
-            f"Select{str_num_of_ens} batches"
-            if self.is_everest
-            else f"Select up to {max_selected} ensembles"
-        )
+        self._update_ensemble_group_title()
 
         is_observed_seismic = (
             key_def.observations
@@ -775,7 +791,10 @@ class PlotWindow(QMainWindow):
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
-            and (not is_observed_seismic or widget.name == MISFITS)
+            and (
+                not is_observed_seismic
+                or widget.name in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP}
+            )
         ]
 
         def everest_data_origin_check(origin: list[str]) -> bool:
@@ -831,6 +850,9 @@ class PlotWindow(QMainWindow):
             current_widget = available_widgets[0]
 
         self._central_tab.setCurrentWidget(current_widget)
+        self._apply_ensemble_selection_policy_for_tab(
+            self._central_tab.tabText(self._central_tab.currentIndex())
+        )
         self._central_tab.currentChanged.connect(self.current_tab_changed)
         self._prev_key_dimensionality = key_def.dimensionality
         self._prev_key = key_def.key
