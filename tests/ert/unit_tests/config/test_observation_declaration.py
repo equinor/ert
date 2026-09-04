@@ -1248,14 +1248,8 @@ def test_that_seismic_observation_reads_boundary_file(file_context_token):
     ]
     boundary = shape_registry.get(0)
     assert isinstance(boundary, PolygonShapeConfig)
-    expected = [
-        (0.0, 0.0),
-        (0.0, 1.0),
-        (1.0, 1.0),
-        (1.0, 0.0),
-        (0.0, 0.0),
-    ]
-    assert boundary.vertices == expected
+    expected = "MULTIPOLYGON Z (((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0)))"
+    assert boundary.wkt == expected
 
 
 @pytest.mark.usefixtures("use_tmpdir")
