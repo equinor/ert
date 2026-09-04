@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import os.path
+import re
 import shutil
 from pathlib import Path
 
@@ -24,6 +25,8 @@ DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
 DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
 DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
+
+_TOKEN_REGEX = re.compile(r"<[^<>]+>")
 
 FULL_DISK_PERCENTAGE_THRESHOLD = 0.97
 MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD = 200 * 1000**3  # 200 GB
@@ -74,6 +77,9 @@ class ModelConfig(BaseModel, extra="forbid"):
             )
             ConfigWarning.warn(msg)
             logger.warning(msg)
+
+        cls._validate_static_parts_exists(result)
+
         with contextlib.suppress(Exception):
             mount_dir = get_mount_directory(Path(runpath_format_string))
             total_space, used_space, free_space = shutil.disk_usage(mount_dir)
@@ -126,6 +132,27 @@ class ModelConfig(BaseModel, extra="forbid"):
                 ConfigKeys.GEN_KW_EXPORT_NAME, DEFAULT_GEN_KW_EXPORT_NAME
             ),
         )
+
+    @staticmethod
+    def _validate_static_parts_exists(runpath_format: str) -> None:
+
+        parts = Path(runpath_format).parts
+
+        static_parts = []
+        for part in parts:
+            if _TOKEN_REGEX.search(part):
+                break
+            static_parts.append(part)
+
+        if not static_parts:
+            return
+
+        static_dir = Path(*static_parts)
+        if static_dir.exists() and not static_dir.is_dir():
+            raise ConfigValidationError(
+                f"Invalid runpath format; {static_dir} exists, but is not a directory."
+            )
+        return
 
 
 def _replace_runpath_format(format_string: str) -> str:
