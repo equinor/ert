@@ -1,7 +1,9 @@
 import gc
 import unittest
+from contextlib import contextmanager
 from datetime import date, datetime
 from textwrap import dedent
+from unittest.mock import MagicMock
 from urllib.parse import quote
 
 import httpx
@@ -43,6 +45,26 @@ def use_testclient(monkeypatch):
         return original_get(*args, **kwargs)
 
     client.get = get_without_timeout
+
+
+@pytest.mark.parametrize(
+    ("status_code", "blobs", "expected"),
+    [
+        (200, [{"name": "K", "blob_info": {"blob_type": "matrix"}}], True),
+        (200, [{"name": "K", "blob_info": {"blob_type": "rho_matrix"}}], False),
+        (404, [], False),
+    ],
+)
+def test_that_has_kalman_gain_requires_a_matrix_k_blob(
+    api: PlotApi, monkeypatch, status_code, blobs, expected
+) -> None:
+    @contextmanager
+    def mock_client(_project):
+        yield MagicMock(get=lambda *_args, **_kwargs: MockResponse(blobs, status_code))
+
+    monkeypatch.setattr(plot_api, "create_ertserver_client", mock_client)
+
+    assert api.has_kalman_gain("ensemble-id") is expected
 
 
 def test_key_def_structure(api: PlotApi):

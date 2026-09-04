@@ -591,3 +591,33 @@ class PlotApi:
                 # Deserialize the numpy array
                 return np.load(io.BytesIO(http_response.content))
             return np.array([])
+
+    def has_kalman_gain(self, ensemble_id: str) -> bool:
+        with create_ertserver_client(self.ens_path) as client:
+            http_response = client.get(
+                f"/ensembles/{ensemble_id}/blobs",
+                timeout=TIMEOUT,
+            )
+            if http_response.status_code != 200:
+                return False
+            blobs = http_response.json()
+            return any(
+                b.get("name") == "K"
+                and b.get("blob_info", {}).get("blob_type") == "matrix"
+                for b in blobs
+            )
+
+    def data_for_waterfall(
+        self, ensemble_id: str, parameter_key: str, nobservations: int = 10
+    ) -> pd.DataFrame:
+        with create_ertserver_client(self.ens_path) as client:
+            http_response = client.get(
+                f"/ensembles/{ensemble_id}/waterfall/{PlotApi.escape(parameter_key)}",
+                params={"nobservations": nobservations},
+                timeout=TIMEOUT,
+            )
+            if http_response.status_code != 200:
+                return pd.DataFrame()
+
+            stream = io.BytesIO(http_response.content)
+            return pd.read_parquet(stream)
