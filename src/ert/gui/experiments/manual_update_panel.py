@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 
-from ert.config import AnalysisConfig, ErrorInfo
+from ert.config import AnalysisConfig, ErrorInfo, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -47,9 +47,11 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
     ) -> None:
         super().__init__(ManualUpdate)
         self.setObjectName("Manual_update_panel")
+        self._analysis_config = analysis_config
 
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -93,10 +95,15 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
-        self._analysis_module_edit = AnalysisModuleEdit(analysis_config.es_settings, 0)
+        self._analysis_module_edit = AnalysisModuleEdit(
+            es_settings=analysis_config.es_settings,
+            parameter_config=parameter_configuration,
+            ensemble_size=0,
+        )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         self._analysis_module_edit.setEnabled(False)
-        layout.addRow("Analysis module:", self._analysis_module_edit)
+
+        layout.addRow("Update settings:", self._analysis_module_edit)
         self._active_realizations_model = ActiveRealizationsModel(0, show_default=False)
         self._active_realizations_field = StringBox(
             self._active_realizations_model,  # type: ignore
@@ -193,7 +200,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 active_realizations_size = sum(
                     self._active_realizations_model.getActiveRealizationsMask()
                 )
-                self._analysis_module_edit.ensemble_size = active_realizations_size
+                self._analysis_module_edit._ensemble_size = active_realizations_size
+
                 self._analysis_module_edit.setEnabled(bool(active_realizations_size))
             except OSError as err:
                 logger.error(str(err))

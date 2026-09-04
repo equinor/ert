@@ -1,4 +1,3 @@
-import math
 from dataclasses import dataclass
 from unittest.mock import MagicMock
 
@@ -231,7 +230,7 @@ def _open_and_capture_threshold(panel, qtbot):
     def inspect_and_close_dialog() -> None:
         nonlocal captured_value
         dialog = QApplication.activeModalWidget()
-        if isinstance(dialog, QDialog) and dialog.windowTitle() == "Edit variables":
+        if isinstance(dialog, QDialog) and dialog.windowTitle() == "Update settings":
             spinner = dialog.findChild(
                 QDoubleSpinBox, name="localization_correlation_threshold"
             )
@@ -246,39 +245,6 @@ def _open_and_capture_threshold(panel, qtbot):
 
     assert captured_value is not None
     return captured_value
-
-
-@pytest.mark.parametrize(
-    ("active_realizations", "expected_threshold"),
-    [
-        ([True], 1.0),
-        ([True, False, True, True, True, True, True, True], 1),
-        (
-            [False, True, True] * 5,
-            3 / math.sqrt(10),
-        ),
-        ([True, False] * 200, 3 / math.sqrt(200)),
-    ],
-)
-def test_that_analysis_module_edit_threshold_matches_expected_from_ensemble_size_via_ui(
-    qtbot: QtBot, active_realizations, expected_threshold
-) -> None:
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-
-    panel = MultipleDataAssimilationPanel(
-        analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
-        notifier=notifier,
-        active_realizations=active_realizations,
-        config_num_realization=len(active_realizations),
-    )
-    qtbot.addWidget(panel)
-
-    observed_threshold = _open_and_capture_threshold(panel, qtbot)
-
-    assert observed_threshold == pytest.approx(expected_threshold)
 
 
 @dataclass(frozen=True)

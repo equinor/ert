@@ -53,6 +53,8 @@ if TYPE_CHECKING:
 
     from ert.config import AnalysisConfig
     from ert.storage import Ensemble
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -77,6 +79,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         config_num_realization: int,
     ) -> None:
         super().__init__(MultipleDataAssimilation)
+
         self.notifier = notifier
         self._configured_weights = analysis_config.es_settings.weights
         self._weights_source = self._configured_weights
@@ -128,12 +131,14 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings,
-            sum(
+            es_settings=analysis_config.es_settings,
+            parameter_config=parameter_configuration,
+            ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
-        layout.addRow("Analysis module:", self._analysis_module_edit)
+        layout.addRow("Update settings:", self._analysis_module_edit)
+
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/experiment/active_realizations",

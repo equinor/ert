@@ -86,7 +86,7 @@ class ESSettings(BaseModel):
         Section 2.3 - Localization in the CHOP problem
         """
         if self.localization_correlation_threshold is None:
-            return 3 / math.sqrt(ensemble_size)
+            return min(1.0, 3 / math.sqrt(ensemble_size))
         return self.localization_correlation_threshold
 
 
