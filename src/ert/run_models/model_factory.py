@@ -103,8 +103,9 @@ def _merge_parameters(
     parameter_configs: list[ParameterConfig],
     *,
     require_updateable_param: bool = False,
+    prior_ensemble_selected: bool = False,
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
-    if design_matrix is None:
+    if design_matrix is None or prior_ensemble_selected:
         return parameter_configs, None
 
     merged_parameter_configs = design_matrix.merge_with_existing_parameters(
@@ -487,9 +488,10 @@ def _setup_multiple_data_assimilation(
         )
 
     parameter_configs, design_matrix = _merge_parameters(
-        design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
+        design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
+        prior_ensemble_selected=bool(prior_ensemble),
     )
 
     runmodel_config = MultipleDataAssimilationConfig(

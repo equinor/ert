@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErrorInfo, ParameterConfig
+from ert.config.design_matrix import DesignMatrix
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -46,7 +47,7 @@ from ert.validation.ensemble_realizations_argument import EnsembleRealizationsAr
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
-from .experiment_config_panel import ExperimentConfigPanel
+from .experiment_config_panel import ExperimentConfigPanel, has_updatable_parameters
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -224,7 +225,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
 
         design_matrix = analysis_config.design_matrix
-        merged_parameters = parameter_configuration
         if design_matrix is not None:
             layout.addRow(
                 "Design matrix",
@@ -234,16 +234,31 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
-            merged_parameters = design_matrix.merge_with_existing_parameters(
-                merged_parameters
-            )
 
-        if merged_parameters:
-            layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
+        self._parameter_configuration = self._determine_param_config(
+            design_matrix, parameter_configuration, self._prior_ensemble_selected
+        )
+
+        if self._parameter_configuration:
+            layout.addRow(
+                "Parameters", get_parameters_button(self._parameter_configuration, self)
+            )
 
         self.setLayout(layout)
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    def _determine_param_config(
+        self,
+        design_matrix: DesignMatrix | None,
+        parameter_configuration: list[ParameterConfig],
+        prior_ensemble_selected: bool,
+    ) -> list[ParameterConfig]:
+
+        if design_matrix and not prior_ensemble_selected:
+            return design_matrix.merge_with_existing_parameters(parameter_configuration)
+
+        return parameter_configuration
 
     @override
     @Slot(QWidget)
@@ -324,6 +339,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._active_realizations_field.model.setValueFromMask(  # type: ignore
                 self._initial_active_realizations
             )
+
+        # If prior selected, running might become valid
+        self.experiment_configuration_changed.emit()
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
@@ -412,7 +430,23 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
             and self.weights_valid
+            and (
+                has_updatable_parameters(self._parameter_configuration)
+                or self._prior_ensemble_selected
+            )
         )
+
+    def _get_prior_ensemble_id(self) -> str | None:
+        return (
+            str(self._ensemble_selector.selected_ensemble.id)
+            if self._ensemble_selector.selected_ensemble is not None
+            and self._select_prior_ensemble_box.isChecked()
+            else None
+        )
+
+    @property
+    def _prior_ensemble_selected(self) -> bool:
+        return bool(self._get_prior_ensemble_id())
 
     @override
     def get_experiment_arguments(self) -> Arguments:
@@ -421,12 +455,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             target_ensemble=self._target_ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
-            prior_ensemble_id=(
-                str(self._ensemble_selector.selected_ensemble.id)
-                if self._ensemble_selector.selected_ensemble is not None
-                and self._select_prior_ensemble_box.isChecked()
-                else None
-            ),
+            prior_ensemble_id=self._get_prior_ensemble_id(),
             experiment_name=self._experiment_name_field.get_text,
         )
 

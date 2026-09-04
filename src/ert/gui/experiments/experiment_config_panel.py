@@ -6,6 +6,8 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QWidget
 
+from ert.config.parameter_config import ParameterConfig
+
 if TYPE_CHECKING:
     from ert.run_models import RunModel
 
@@ -30,3 +32,7 @@ class ExperimentConfigPanel(QWidget):
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> Any:
         pass
+
+
+def has_updatable_parameters(parameter_configurations: list[ParameterConfig]) -> bool:
+    return any(param.update_strategy is not None for param in parameter_configurations)
