@@ -13,6 +13,11 @@ class FileContextToken(Token):
 
     filename: str
 
+    # Position of this token among all instructions in the fully resolved
+    # config, i.e. after INCLUDE files have been spliced into place.
+    # defaults to None for tokens created outside of config file parsing.
+    declaration_order: int | None = None
+
     def __new__(cls, token: Token, filename: str) -> FileContextToken:  # ruff: ignore[non-self-return-type]
         inst = super().__new__(
             cls,
@@ -28,6 +33,10 @@ class FileContextToken(Token):
 
         inst_fct = cast(FileContextToken, inst)
         inst_fct.filename = filename
+        if isinstance(token, FileContextToken):
+            # Re-wrapping an already-tagged token (e.g. in replace_value())
+            # must not silently lose its declaration_order.
+            inst_fct.declaration_order = token.declaration_order
         return inst_fct
 
     def __repr__(self) -> str:
@@ -47,7 +56,9 @@ class FileContextToken(Token):
         return hash(self.value)
 
     def update(self, value: Any = None) -> FileContextToken:  # type: ignore[override]
-        return FileContextToken(super().update(value=value), self.filename)
+        updated = FileContextToken(super().update(value=value), self.filename)
+        updated.declaration_order = self.declaration_order
+        return updated
 
     @classmethod
     def join_tokens(
@@ -67,7 +78,10 @@ class FileContextToken(Token):
             if x.line == max_end_line
             if x.end_column is not None
         )
-        return FileContextToken(
+        declaration_orders = [
+            x.declaration_order for x in tokens if x.declaration_order is not None
+        ]
+        joined = FileContextToken(
             Token(
                 type=first.type,
                 value=separator.join(tokens) if tokens else None,
@@ -80,6 +94,9 @@ class FileContextToken(Token):
             ),
             filename=first.filename,
         )
+        if declaration_orders:
+            joined.declaration_order = min(declaration_orders)
+        return joined
 
     def replace_value(self, old: str, new: str, count: int = -1) -> FileContextToken:
         if old in self.value:
