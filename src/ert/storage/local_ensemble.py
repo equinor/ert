@@ -597,7 +597,7 @@ class LocalEnsemble(BaseMode):
 
     def load_parameters(
         self,
-        group: str,
+        groupname_or_parametername: str,
         realizations: int | npt.NDArray[np.int_] | None = None,
         *,
         transformed: bool = False,
@@ -608,22 +608,32 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        cfgs = [
-            p
-            for p in self.experiment.parameter_configuration.values()
-            if group in {p.name, p.group_name}
-        ]
+        parameter_config = self.experiment.parameter_configuration.get(
+            groupname_or_parametername
+        )
+        cfgs = (
+            [parameter_config]
+            if parameter_config is not None
+            else [
+                p
+                for p in self.experiment.parameter_configuration.values()
+                if groupname_or_parametername == p.group_name
+            ]
+        )
         if not cfgs:
-            raise KeyError(f"{group} is not registered to the experiment.")
+            raise KeyError(
+                f"{groupname_or_parametername} is not registered to the experiment."
+            )
 
-        # if group refers to a group name, we expect the same cardinality
+        # if groupname_or_parametername refers to a group name,
+        # we expect the same cardinality
         cardinality = next(cfg.cardinality for cfg in cfgs)
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
             return self.load_scalar_keys(
                 [cfg.name for cfg in cfgs], realizations, transformed=transformed
             )
         return self._load_dataset(
-            group,
+            groupname_or_parametername,
             (
                 realizations
                 if realizations is not None
