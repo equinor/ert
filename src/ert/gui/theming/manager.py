@@ -116,8 +116,8 @@ class ThemeManager(QObject):
             self._set_theme_internal(detect_system_theme())
 
     def _set_theme_internal(self, theme: Theme) -> None:
-        if theme == self._current_theme:
-            return
+        changed = theme != self._current_theme
         self._current_theme = theme
         self.apply()
-        self.theme_changed.emit(theme)
+        if changed:
+            self.theme_changed.emit(theme)
