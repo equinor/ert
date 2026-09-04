@@ -1,8 +1,9 @@
 import io
 import logging
+import re
 from contextlib import ExitStack as does_not_raise
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import polars as pl
@@ -525,6 +526,43 @@ def test_that_alpha_can_be_used_for_outlier_detection(
         assert (
             posterior_update.observations_and_responses["status"].to_list() == expected
         )
+
+
+@pytest.mark.parametrize("update_strategy", LocalizationType)
+def test_that_update_strategies_are_logged_in_clusters(caplog, update_strategy):
+    def make_param(strategy):
+        return GenKwConfig(
+            name="KEY",
+            group="GROUP",
+            update_strategy=strategy,
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        )
+
+    param_configs = {
+        "a": make_param(update_strategy),
+        "b": make_param(update_strategy),
+        "c": make_param(None),
+    }
+
+    with caplog.at_level(logging.INFO):
+        build_strategy_map(
+            parameters=["a", "b", "c"],
+            param_configs=param_configs,
+            enkf_truncation=0.5,
+            correlation_threshold=Mock(),
+        )
+
+    strategy_name = update_strategy.name.lower()
+
+    assert any(
+        re.search(rf"update strategy.*?{strategy_name}.*?'a, b'", msg, re.IGNORECASE)
+        for msg in caplog.messages
+    )
+
+    assert any(
+        re.search(r"update strategy.*?none.*?'c'", msg, re.IGNORECASE)
+        for msg in caplog.messages
+    )
 
 
 @pytest.mark.parametrize(
