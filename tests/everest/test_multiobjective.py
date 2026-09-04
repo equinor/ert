@@ -63,7 +63,6 @@ def test_multi_objectives2ropt():
         config.model,
         config.environment.random_seed,
         config.optimization_output_dir,
-        None,
     )
     assert len(enopt_config["objectives"]["weights"]) == 2
     assert enopt_config["objectives"]["weights"][0] == weights[0]

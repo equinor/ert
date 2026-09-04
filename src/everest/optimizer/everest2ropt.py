@@ -2,7 +2,7 @@ import os
 from typing import Any
 
 from ropt.enums import VariableType
-from ropt.transforms import VariableTransform
+from ropt.utils import scales_and_offsets_from_bounds
 
 from ert.config import EverestConstraintsConfig, EverestControl, EverestObjectivesConfig
 from everest.config import (
@@ -14,17 +14,40 @@ from everest.config import (
 from everest.config.utils import get_samplers
 
 
+def _get_scales_and_offsets(
+    controls: list[EverestControl],
+) -> tuple[list[float], list[float]]:
+    scales: list[float] = []
+    offsets: list[float] = []
+    for control in controls:
+        if control.control_type == "integer":
+            # An integer control is left alone: the optimizer needs its values
+            # to stay whole, and an affine map would not keep them that way.
+            scales.append(1.0)
+            offsets.append(0.0)
+        else:
+            scale, offset = scales_and_offsets_from_bounds(
+                control.min, control.max, control.scaled_range
+            )
+            scales.append(float(scale))
+            offsets.append(float(offset))
+    return scales, offsets
+
+
 def _parse_controls(
     controls: list[EverestControl], random_seed: int
 ) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
     control_types = [VariableType[control.control_type.upper()] for control in controls]
     initial_guesses = [control.initial_guess for control in controls]
     samplers, sampler_indices = get_samplers(controls)
+    scales, offsets = _get_scales_and_offsets(controls)
     ropt_variables: dict[str, Any] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "variable_count": len(initial_guesses),
         "lower_bounds": [control.min for control in controls],
         "upper_bounds": [control.max for control in controls],
+        "scales": scales,
+        "offsets": offsets,
         "perturbation_magnitudes": [
             control.perturbation_magnitude for control in controls
         ],
@@ -77,9 +100,13 @@ def _parse_objectives(
 
     ropt_objectives: dict[str, Any] = {
         "weights": weights,
-        "scales": objective_functions.scales,
+        "scales": (
+            [1.0] * len(objective_functions.scales)
+            if auto_scale
+            else objective_functions.scales
+        ),
         "auto_scale": auto_scale,
-        # Objectives are maximized, but a spread is minimized.
+        # Objectives are maximized, but a stddev is minimized.
         "maximize": [
             objective_type != "stddev"
             for objective_type in objective_functions.objective_types
@@ -112,6 +139,7 @@ def _get_bounds(
 def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig],
     controls: list[EverestControl],
+    auto_scale: bool,
 ) -> dict[str, Any]:
     formatted_control_names = [control.input_key for control in controls]
     formatted_control_names_dotdash = [
@@ -145,6 +173,11 @@ def _parse_input_constraints(
             "coefficients": coefficients_matrix,
             "lower_bounds": lower_bounds,
             "upper_bounds": upper_bounds,
+            "scales": [
+                1.0 if auto_scale or constraint.scale is None else constraint.scale
+                for constraint in input_constraints
+            ],
+            "auto_scale": auto_scale,
         }
     return {}
 
@@ -170,7 +203,11 @@ def _parse_output_constraints(
                     strict=False,
                 )
             ],
-            "scales": output_constraints.scales,
+            "scales": (
+                [1.0] * len(output_constraints.scales)
+                if auto_scale
+                else output_constraints.scales
+            ),
             "auto_scale": auto_scale,
         }
     return {}
@@ -277,14 +314,15 @@ def everest2ropt(
     model: ModelConfig,
     random_seed: int,
     optimization_output_dir: str,
-    variable_transform: VariableTransform | None,
 ) -> tuple[dict[str, Any], list[float]]:
     auto_scale = optimization is not None and optimization.auto_scale
     ropt_variables, ropt_samplers = _parse_controls(controls, random_seed)
     ropt_objectives, ropt_function_estimators = _parse_objectives(
         objective_functions, auto_scale
     )
-    ropt_linear_constraints = _parse_input_constraints(input_constraints, controls)
+    ropt_linear_constraints = _parse_input_constraints(
+        input_constraints, controls, auto_scale
+    )
     ropt_nonlinear_constraints = _parse_output_constraints(
         output_constraints, auto_scale
     )
@@ -320,7 +358,6 @@ def everest2ropt(
         "realizations": ropt_realizations,
         "optimizer": ropt_optimizer,
         "backend": ropt_backend,
-        "variable_transforms": [variable_transform],
         "names": {
             "variable": [control.input_key for control in controls],
             "objective": objective_functions.keys,

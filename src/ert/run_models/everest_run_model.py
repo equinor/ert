@@ -14,7 +14,6 @@ import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterator, MutableSequence
 from enum import IntEnum, auto
-from functools import cached_property
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
@@ -63,7 +62,6 @@ from everest.config import (
 )
 from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.optimizer.opt_model_transforms import ControlScaler, get_control_scaler
 from everest.strings import EVEREST
 from everest.util.ropt_unpacker import unpack_ropt_results
 
@@ -526,14 +524,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             c for c in self.parameter_configuration if c.type == "everest_parameters"
         ]
 
-    @cached_property
-    def _control_scaler(self) -> ControlScaler:
-        return get_control_scaler(
-            self._everest_control_configs,
-            self.input_constraints,
-            self.optimization.auto_scale,
-        )
-
     @classmethod
     def name(cls) -> str:
         return "Optimization run"
@@ -841,7 +831,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             self.model,
             self.random_seed,
             self.optimization_output_dir,
-            self._control_scaler,
         )
         try:
             optimizer = BasicOptimizer(
