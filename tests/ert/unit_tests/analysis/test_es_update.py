@@ -1,8 +1,9 @@
 import io
 import logging
+import re
 from contextlib import ExitStack as does_not_raise
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import polars as pl
@@ -1222,6 +1223,35 @@ def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplo
         posterior_ensemble=posterior_ensemble,
     )
     assert not any("Deactivating observations" in m for m in caplog.messages)
+
+
+def test_that_update_strategies_are_logged_in_clusters(caplog):
+    def make_param(strategy):
+        return GenKwConfig(
+            name="KEY_2",
+            group="EXTRA_PARAMETER",
+            update_strategy=strategy,
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        )
+
+    param_configs = {
+        "a": make_param(LocalizationType.GLOBAL),
+        "b": make_param(LocalizationType.GLOBAL),
+        "c": make_param(None),
+    }
+
+    with caplog.at_level(logging.INFO):
+        build_strategy_map(
+            parameters=["a", "b", "c"],
+            param_configs=param_configs,
+            enkf_truncation=0.5,
+            correlation_threshold=Mock(),
+        )
+
+    logged_text = " ".join(caplog.messages)
+
+    assert re.search(r"update strategy.*?global.*?'a, b'", logged_text, re.IGNORECASE)
+    assert re.search(r"update strategy.*?none.*?'c'", logged_text, re.IGNORECASE)
 
 
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
