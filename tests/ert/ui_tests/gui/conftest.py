@@ -33,6 +33,7 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
+from ert.services import SharedClient
 from ert.storage import Storage
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
@@ -45,6 +46,13 @@ def setup_svg_search_path():
     QDir.addSearchPath(
         "img", str(files("ert.gui").joinpath("../../ert/gui/resources/gui/img"))
     )
+
+
+@pytest.fixture(autouse=True)
+def reset_ert_api_client():
+    # The client is process-wide and bound to one project, but each test has its own.
+    yield
+    SharedClient.close_client()
 
 
 @contextmanager

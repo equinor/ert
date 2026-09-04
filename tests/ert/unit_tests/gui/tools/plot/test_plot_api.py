@@ -16,8 +16,8 @@ from starlette.testclient import TestClient
 from ert.config import EverestObjectivesConfig, GenKwConfig, SummaryConfig
 from ert.dark_storage import common
 from ert.dark_storage.app import app
-from ert.gui.plotting import plot_api
 from ert.gui.plotting.plot_api import PlotApi, PlotApiKeyDefinition
+from ert.services import ErtClient, ert_client
 from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
@@ -25,7 +25,17 @@ from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 @pytest.fixture(autouse=True)
 def use_testclient(monkeypatch):
     client = TestClient(app)
-    monkeypatch.setattr(plot_api, "create_ertserver_client", lambda project: client)
+
+    class TestClientAdapter:
+        def request(self, method, url, **kwargs):
+            kwargs.pop("timeout", None)
+            return client.request(method, url, **kwargs)
+
+    monkeypatch.setattr(
+        ErtClient,
+        "get_client",
+        classmethod(lambda cls, *args, **kwargs: cls(TestClientAdapter())),
+    )
 
     def test_escape(s: str) -> str:
         """
@@ -34,15 +44,7 @@ def use_testclient(monkeypatch):
         """
         return quote(quote(quote(s, safe="")))
 
-    PlotApi.escape = test_escape
-
-    original_get = client.get
-
-    def get_without_timeout(*args, **kwargs):
-        kwargs.pop("timeout", None)
-        return original_get(*args, **kwargs)
-
-    client.get = get_without_timeout
+    monkeypatch.setattr(ert_client, "_escape", test_escape)
 
 
 def test_key_def_structure(api: PlotApi):
@@ -123,9 +125,7 @@ def test_case_structure(api):
 def test_can_load_data_and_observations(api):
     responses = [("BPR:1,3,8", False), ("FOPR", True)]
     ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
-    data = PlotApi.data_for_parameter(
-        ensemble.id, "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE", api.ens_path
-    )
+    data = api.data_for_parameter(ensemble.id, "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE")
     assert not data.empty
 
     for key, has_observations in responses:
@@ -276,7 +276,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
 
 
 def test_plot_api_handles_empty_gen_kw(api_and_storage):
-    _, storage, ens_path = api_and_storage
+    api, storage, _ = api_and_storage
     key = "gen_kw"
     name = "<poro>"
     experiment = storage.create_experiment(
@@ -295,7 +295,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
         }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-    assert PlotApi.data_for_parameter(str(ensemble.id), key, ens_path).empty
+    assert api.data_for_parameter(str(ensemble.id), key).empty
     ensemble.save_parameters(
         dataset=pl.DataFrame(
             {
@@ -304,7 +304,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
             }
         ),
     )
-    assert PlotApi.data_for_parameter(str(ensemble.id), name, ens_path).to_csv() == (
+    assert api.data_for_parameter(str(ensemble.id), name).to_csv() == (
         dedent(
             """\
         Realization,0
@@ -315,7 +315,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
 
 
 def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
-    _, storage, ens_path = api_and_storage
+    api, storage, _ = api_and_storage
     experiment = storage.create_experiment(
         experiment_config={
             "parameter_configuration": [
@@ -331,14 +331,12 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
         }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-    assert PlotApi.data_for_parameter(str(ensemble.id), "gen_kw", ens_path).empty
-    assert PlotApi.data_for_parameter(
-        str(ensemble.id), "gen_kw:does_not_exist", ens_path
-    ).empty
+    assert api.data_for_parameter(str(ensemble.id), "gen_kw").empty
+    assert api.data_for_parameter(str(ensemble.id), "gen_kw:does_not_exist").empty
 
 
 def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
-    _, storage, ens_path = api_and_storage
+    api, storage, _ = api_and_storage
     experiment = storage.create_experiment(
         experiment_config={
             "parameter_configuration": [
@@ -363,7 +361,7 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
             }
         ),
     )
-    test = PlotApi.data_for_parameter(str(ensemble.id), "subgroup:1:2:2", ens_path)
+    test = api.data_for_parameter(str(ensemble.id), "subgroup:1:2:2")
     assert test.to_numpy() == np.array([[10]])
 
 
@@ -676,51 +674,41 @@ def test_that_data_for_response_returns_empty_for_gradient_only_ensemble(
 def test_that_data_for_gradient_returns_empty_when_no_gradient_parquet_saved(
     api_and_storage,
 ):
-    _, storage, ens_path = api_and_storage
+    api, storage, _ = api_and_storage
     ensemble, objective_key = _create_gradient_only_ensemble(storage)
 
     # No batch_objective_gradient.parquet was saved, so the gradient
     # endpoint returns an empty DataFrame. PlotApi must not crash.
-    result = PlotApi.data_for_gradient(str(ensemble.id), objective_key, ens_path)
+    result = api.data_for_gradient(str(ensemble.id), objective_key)
     assert isinstance(result, pd.DataFrame)
     assert result.empty
 
 
 def test_that_data_for_gradient_is_fetched_once_for_repeated_calls(api_and_storage):
-    _, storage, ens_path = api_and_storage
+    api, storage, _ = api_and_storage
     ensemble, objective_key = _create_gradient_only_ensemble(storage)
-
-    PlotApi.data_for_gradient.cache_clear()  # type: ignore
 
     for i in range(5):
         # The addition of @<some string> should result in the same cache key
         # if the prefix is the same.
         key = objective_key + "@filler" if i % 2 == 0 else objective_key
-        _ = PlotApi.data_for_gradient(str(ensemble.id), key, ens_path)
+        _ = api.data_for_gradient(str(ensemble.id), key)
 
     # hits, misses, maxsize, currsize
     expected_cache_info = (4, 1, 256, 1)
 
-    assert (
-        PlotApi.data_for_gradient.cache_info() == expected_cache_info  # type: ignore
-    )
+    assert api._cached_gradient.cache_info() == expected_cache_info
 
 
 def test_that_data_for_controls_and_parameters_is_fetched_once_for_repeated_calls(api):
-
-    PlotApi.data_for_controls.cache_clear()
-    PlotApi.data_for_parameter.cache_clear()
-
     ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
 
     for _ in range(5):
-        _ = PlotApi.data_for_controls(
-            ensemble.id, ("SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",), api.ens_path
-        )
+        _ = api.data_for_controls(ensemble.id, ("SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",))
 
     # hits, misses, maxsize, currsize
     expected_cache_info_controls = (4, 1, 128, 1)
     expected_cache_info_parameters = (0, 1, 256, 1)
 
-    assert PlotApi.data_for_controls.cache_info() == expected_cache_info_controls
-    assert PlotApi.data_for_parameter.cache_info() == expected_cache_info_parameters
+    assert api._cached_controls.cache_info() == expected_cache_info_controls
+    assert api._cached_parameter.cache_info() == expected_cache_info_parameters

@@ -24,8 +24,9 @@ from ert.dark_storage.app import app
 from ert.dark_storage.endpoints import ensembles, experiments
 from ert.dark_storage.endpoints.observations import get_observations_for_response
 from ert.dark_storage.endpoints.responses import get_response
-from ert.gui.plotting import plot_api
 from ert.gui.plotting.plot_api import PlotApi
+from ert.services import ert_client
+from ert.services.ert_client import ErtClient
 from ert.storage import Storage, open_storage
 
 
@@ -54,7 +55,17 @@ def get_response_autofilter(
 @pytest.fixture(autouse=True)
 def use_testclient(monkeypatch):
     client = TestClient(app)
-    monkeypatch.setattr(plot_api, "create_ertserver_client", lambda project: client)
+
+    class TestClientAdapter:
+        def request(self, method, url, **kwargs):
+            kwargs.pop("timeout", None)
+            return client.request(method, url, **kwargs)
+
+    monkeypatch.setattr(
+        ErtClient,
+        "get_client",
+        classmethod(lambda cls, *args, **kwargs: cls(TestClientAdapter())),
+    )
 
     def test_escape(s: str) -> str:
         """
@@ -63,7 +74,7 @@ def use_testclient(monkeypatch):
         """
         return quote(quote(quote(s, safe="")))
 
-    PlotApi.escape = test_escape
+    monkeypatch.setattr(ert_client, "_escape", test_escape)
 
 
 def run_in_loop[T](coro: Awaitable[T]) -> T:
@@ -370,10 +381,9 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
         # Cycle through all ensembles and get all responses
         for key_info in key_infos_params:
             for ensemble in all_ensembles:
-                PlotApi.data_for_parameter(
+                api.data_for_parameter(
                     ensemble_id=ensemble.id,
                     parameter_key=key_info.parameter.name,
-                    ens_path=api.ens_path,
                 )
 
         for key_info in key_infos_responses:
