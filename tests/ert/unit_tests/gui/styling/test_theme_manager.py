@@ -7,9 +7,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
-from ert.gui.theme_manager import ColorScheme, ColorSchemeManager
-from ert.gui.theme_manager import manager as manager_module
-from ert.gui.theme_manager.theme import load_qss
+from ert.gui.styling import ColorScheme, ColorSchemeManager
+from ert.gui.styling.theme_manager import manager as manager_module
+from ert.gui.styling.theme_manager.theme import load_qss
 
 
 @pytest.fixture(autouse=True)
