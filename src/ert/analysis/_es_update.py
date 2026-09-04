@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 import warnings
+from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from typing import TYPE_CHECKING, TextIO
 
@@ -329,58 +330,105 @@ def build_strategy_map(
     dict[str, UpdateStrategy]
         Mapping from parameter group names to update strategies.
     """
-    if not progress_callback:
-        progress_callback = noop_progress_callback
+    progress_callback = progress_callback or noop_progress_callback
 
-    strategy_map: dict[str, UpdateStrategy] = {}
-
-    field_distance_strategy = DistanceLocalizationUpdate(
-        enkf_truncation, Field, progress_callback, experiment
+    # Create strategies with shared configuration
+    strategies = _create_strategies(
+        enkf_truncation, correlation_threshold, progress_callback, experiment
     )
+    strategy_handlers = _build_strategy_handlers(strategies)
 
-    surface_distance_strategy = DistanceLocalizationUpdate(
-        enkf_truncation, SurfaceConfig, progress_callback, experiment
-    )
-
-    global_strategy = GlobalESUpdate(
-        enkf_truncation,
-        progress_callback,
-    )
-
-    adaptive_localization_strategy = AdaptiveLocalizationUpdate(
-        correlation_threshold,
-        enkf_truncation,
-        progress_callback,
-    )
-
+    strategy_map = {}
+    clustered_strategy_summary = defaultdict(list)
     for param_name in parameters:
         param_cfg = param_configs[param_name]
-        if isinstance(param_cfg, Field):
-            if param_cfg.update_strategy == LocalizationType.DISTANCE:
-                strategy_map[param_name] = field_distance_strategy
-            elif param_cfg.update_strategy == LocalizationType.ADAPTIVE:
-                strategy_map[param_name] = adaptive_localization_strategy
-            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
-                strategy_map[param_name] = global_strategy
-        elif isinstance(param_cfg, SurfaceConfig):
-            if param_cfg.update_strategy == LocalizationType.DISTANCE:
-                strategy_map[param_name] = surface_distance_strategy
-            elif param_cfg.update_strategy == LocalizationType.ADAPTIVE:
-                strategy_map[param_name] = adaptive_localization_strategy
-            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
-                strategy_map[param_name] = global_strategy
-        elif isinstance(param_cfg, GenKwConfig):
-            if param_cfg.update_strategy == LocalizationType.ADAPTIVE:
-                strategy_map[param_name] = adaptive_localization_strategy
-            elif param_cfg.update_strategy == LocalizationType.GLOBAL:
-                strategy_map[param_name] = global_strategy
-        else:
-            logger.warning(
-                f"Parameter '{param_name}' has unrecognized config type "
-                f"'{type(param_cfg).__name__}'. Parameter will not be updated"
-            )
+        strategy = _resolve_strategy(param_cfg, param_name, strategy_handlers)
+        if strategy is not None:
+            strategy_map[param_name] = strategy
+
+        strategy_key = (
+            param_cfg.update_strategy.name
+            if param_cfg.update_strategy is not None
+            else "none"
+        )
+        clustered_strategy_summary[strategy_key].append(param_name)
+
+    for strategy_name, params in clustered_strategy_summary.items():
+        logger.info(
+            f"Update strategy '{strategy_name}' for "
+            f"parameters '{', '.join(sorted(params))}'"
+        )
 
     return strategy_map
+
+
+def _create_strategies(
+    enkf_truncation: float,
+    correlation_threshold: Callable[[int], float],
+    progress_callback: Callable[[AnalysisEvent], None],
+    experiment: LocalExperiment | None,
+) -> dict[str, UpdateStrategy]:
+    return {
+        "field_distance": DistanceLocalizationUpdate(
+            enkf_truncation, Field, progress_callback, experiment
+        ),
+        "surface_distance": DistanceLocalizationUpdate(
+            enkf_truncation, SurfaceConfig, progress_callback, experiment
+        ),
+        "global": GlobalESUpdate(enkf_truncation, progress_callback),
+        "adaptive": AdaptiveLocalizationUpdate(
+            correlation_threshold, enkf_truncation, progress_callback
+        ),
+    }
+
+
+def _build_strategy_handlers(
+    strategies: dict[str, UpdateStrategy],
+) -> dict[type[ParameterConfig], dict[LocalizationType, UpdateStrategy]]:
+    return {
+        Field: {
+            LocalizationType.DISTANCE: strategies["field_distance"],
+            LocalizationType.ADAPTIVE: strategies["adaptive"],
+            LocalizationType.GLOBAL: strategies["global"],
+        },
+        SurfaceConfig: {
+            LocalizationType.DISTANCE: strategies["surface_distance"],
+            LocalizationType.ADAPTIVE: strategies["adaptive"],
+            LocalizationType.GLOBAL: strategies["global"],
+        },
+        GenKwConfig: {
+            LocalizationType.ADAPTIVE: strategies["adaptive"],
+            LocalizationType.GLOBAL: strategies["global"],
+        },
+    }
+
+
+def _resolve_strategy(
+    param_cfg: ParameterConfig,
+    param_name: str,
+    strategy_handlers: dict[
+        type[ParameterConfig], dict[LocalizationType, UpdateStrategy]
+    ],
+) -> UpdateStrategy | None:
+    if param_cfg.update_strategy is None:
+        return None
+
+    handler = strategy_handlers.get(type(param_cfg))
+    if handler is None:
+        logger.warning(
+            f"Parameter '{param_name}' has unrecognized config type "
+            f"'{type(param_cfg).__name__}'. Parameter will not be updated"
+        )
+        return None
+
+    strategy = handler.get(param_cfg.update_strategy)
+    if strategy is None:
+        logger.warning(
+            f"Update strategy '{param_cfg.update_strategy.name}' is not supported for "
+            f"parameter '{param_name}' of type '{type(param_cfg).__name__}'. "
+            "Parameter will not be updated"
+        )
+    return strategy
 
 
 def smoother_update(
