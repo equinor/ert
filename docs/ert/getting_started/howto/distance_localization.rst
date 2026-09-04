@@ -9,6 +9,34 @@ methods when the ensemble size is limited.
 
 For theoretical background, see :ref:`distance_based_localization`.
 
+Briefly how it works
+---------------------
+
+In distance-based localization, lateral distance (not including vertical distance)
+is measured by Euclidean distance by using the (x, y) coordinates of the
+observations and location of field parameters. The implemented method is
+based on the publication of Emerick (2016).  A matrix, called RHO,
+or localization matrix, has one element RHO(i,j) per pair of observation (index j)
+and field parameter value (index i). If the distance between the observation
+and the field parameter is 0, the RHO value, which is a scaling weight for
+the Kalman Gain matrix, will be 1 and it will decrease with distance to 0
+at two times the specified radius of influence of the observation.
+The scaling function with normalized distance used here is the Gaspari-Cohn correlation
+function. In ERT, each observation with an associated position is associated with an
+influence radius in current version. When calculating updated field parameter,
+the observations that have the field parameter within its influence range
+(two times the specified radius with the Gaspari-Cohn function) will contribute
+to the calculation of the updated field parameter.
+A figure like the one below illustrates this.
+Each of the four wells have their own radius of influence.
+The grid cell colored with blue is within the range of observation located
+at  A and C, but not within the range of B and D. The grid cell colored
+with red is within the range of observation in location B, C and D and
+will be influenced by those in the update.
+
+.. image:: illustrating_influence_range.png
+
+
 Enabling distance based localization
 -------------------------------------
 
@@ -113,7 +141,11 @@ Configuration file vs GUI
 --------------------------
 
 Distance based localization can only be enabled through the configuration
-file.
+file. The GUI analysis module dialog exposes only adaptive localization
+settings.
 
-For adaptive localization, the GUI provides a way to set the correlation threshold and truncation parameters.
-Note that the values set in the GUI will override any values set in the configuration file.
+If distance localization is configured for a parameter type, it is used for
+that type even when adaptive localization is enabled in the GUI. The GUI's
+adaptive localization settings are used only for parameters whose configured
+strategy is ``ADAPTIVE``; they do not replace a configured ``DISTANCE``
+strategy.
