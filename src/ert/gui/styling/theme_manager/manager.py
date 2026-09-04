@@ -94,8 +94,7 @@ class ColorSchemeManager(QObject):
             stylesheet = load_qss(self._current_color_scheme)
         except (OSError, UnicodeDecodeError):
             logger.exception(
-                "Failed to load QSS for colour scheme'%s';"
-                " keeping the previously applied stylesheet.",
+                "Failed to load QSS for colour scheme '%s'; keeping previous styling.",
                 self._current_color_scheme.value,
             )
             return
