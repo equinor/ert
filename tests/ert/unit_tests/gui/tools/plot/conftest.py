@@ -73,41 +73,47 @@ def mocked_requests_get(*args, **kwargs):
 
     ensemble = {
         "/ensembles/ens_id_1": {
+            "size": 4,
             "userdata": {
                 "name": "ensemble_1",
                 "experiment_name": "experiment",
                 "started_at": "2012-12-10T00:00:00",
-            }
+            },
         },
         "/ensembles/ens_id_2": {
+            "size": 4,
             "userdata": {
                 "name": ".ensemble_2",
                 "experiment_name": "experiment",
                 "started_at": "2012-12-10T01:00:00",
-            }
+            },
         },
         "/ensembles/ens_id_3": {
+            "size": 4,
             "userdata": {
                 "name": "default_0",
                 "experiment_name": "experiment",
                 "started_at": "2012-12-10T02:00:00",
-            }
+            },
         },
         "/ensembles/ens_id_4": {
+            "size": 4,
             "userdata": {
                 "name": "default_1",
                 "experiment_name": "experiment",
                 "started_at": "2012-12-10T03:00:00",
-            }
+            },
         },
         "/ensembles/ens_id_5": {
+            "size": 4,
             "userdata": {
                 "name": "default_manyobs",
                 "experiment_name": "experiment",
                 "started_at": "2012-12-10T04:00:00",
-            }
+            },
         },
         "/ensembles/ens_id_uninitialized": {
+            "size": 4,
             "userdata": {
                 "name": "uninitialized_ensemble",
                 "experiment_name": "experiment",
