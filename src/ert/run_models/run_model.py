@@ -835,6 +835,7 @@ class RunModel(RunModelConfig, ABC):
             workflow_runner = WorkflowRunner(
                 workflow=workflow,
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                hook=str(fixtures.hook),
             )
             self._workflow_runner = workflow_runner
             try:
