@@ -19,7 +19,6 @@ from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 from everest.config import ServerConfig
-from everest.detached import get_experiments
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     OPTIMIZATION_LOG_DIR,
@@ -151,9 +150,7 @@ def main() -> None:
                 client = ErtClient.for_project(Path(server_path))
                 done = False
                 while not done:
-                    experiment_ids = get_experiments(
-                        ServerConfig.get_server_context_from_conn_info(client.conn_info)
-                    )
+                    experiment_ids = client.experiment_ids()
                     active = [
                         ExperimentStatus(
                             **client.experiment_status(experiment_id)

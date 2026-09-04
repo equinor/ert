@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import io
 import json
+import logging
+import queue
+import ssl
 import threading
+import time
+import traceback
+from base64 import b64encode
 from collections import OrderedDict
 from collections.abc import Callable
 from copy import deepcopy
@@ -15,6 +21,16 @@ import httpx
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from pydantic import ValidationError
+from websockets.exceptions import ConnectionClosedError
+from websockets.sync.client import connect
+
+from _ert.threading import ErtThread
+from ert.run_models.event import (
+    StatusEvents,
+    status_event_from_json,
+)
+from everest.strings import EverEndpoints
 
 from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
 
@@ -23,6 +39,8 @@ DEFAULT_CACHE_SIZE = 256
 
 _PARQUET = {"accept": "application/x-parquet"}
 _EXPERIMENT_SERVER = "/experiment_server"
+
+logger = logging.getLogger(__name__)
 
 
 def _escape(value: str) -> str:
@@ -141,7 +159,7 @@ class ErtClient:
         return str(self._get("/version").json())
 
     def experiments(self) -> list[dict[str, Any]]:
-        return list(self._get("/experiments").json())
+        return self._get("/experiments").json()
 
     def ensemble(self, ensemble_id: str) -> dict[str, Any]:
         return dict(self._get(f"/ensembles/{ensemble_id}").json())
@@ -231,40 +249,119 @@ class ErtClient:
         return response.status_code == httpx.codes.OK
 
     def experiment_ids(self) -> list[str]:
-        response = self._experiment_server_get("experiments")
+        response = self._experiment_server_get(EverEndpoints.EXPERIMENTS)
         return list(response.json()["experiment_ids"])
 
     def experiment_status(self, experiment_id: str) -> dict[str, Any]:
-        return dict(self._experiment_server_get(f"status/{experiment_id}").json())
+        return dict(
+            self._experiment_server_get(
+                f"{EverEndpoints.STATUS}/{experiment_id}"
+            ).json()
+        )
 
-    def experiment_config_path(self, experiment_id: str) -> dict[str, Any]:
-        return dict(self._experiment_server_get(f"config_path/{experiment_id}").json())
+    def experiment_config(self, experiment_id: str) -> dict[str, str]:
+        return self._experiment_server_get(
+            f"{EverEndpoints.CONFIG_PATH}/{experiment_id}"
+        ).json()
 
     def experiment_start_time(self, experiment_id: str) -> int:
-        return int(self._experiment_server_get(f"start_time/{experiment_id}").text)
+        return int(
+            self._experiment_server_get(
+                f"{EverEndpoints.START_TIME}/{experiment_id}"
+            ).text
+        )
+
+    def setup_event_queue_from_ws_endpoint(
+        self,
+        experiment_id: str,
+        refresh_interval: float = 0.01,
+        open_timeout: float = 30,
+        websocket_recv_timeout: float = 1.0,
+    ) -> tuple[queue.SimpleQueue[StatusEvents], ErtThread]:
+        """Return a queue of experiment events and the thread that fills it.
+
+        The caller owns the thread and must start it.
+        """
+        event_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+
+        url = (
+            self.conn_info.base_url.replace("https://", "wss://")
+            + f"{_EXPERIMENT_SERVER}/{EverEndpoints.EVENTS}/{experiment_id}"
+        )
+        username, password = self._auth
+        credentials = b64encode(f"{username}:{password}".encode()).decode()
+
+        def passthrough_ws_events() -> None:
+            try:  # ruff: ignore[too-many-statements-in-try-clause]
+                with connect(
+                    url,
+                    ssl=self._ssl_context,
+                    open_timeout=open_timeout,
+                    additional_headers={"Authorization": f"Basic {credentials}"},
+                ) as websocket:
+                    while True:
+                        try:
+                            message = websocket.recv(timeout=websocket_recv_timeout)
+                        except TimeoutError:
+                            message = None
+                        if message:
+                            try:
+                                event_queue.put(status_event_from_json(message))
+                            except ValidationError as e:
+                                logger.error(
+                                    "Error when processing event %s", exc_info=e
+                                )
+
+                        time.sleep(refresh_interval)
+            except ConnectionClosedError:
+                logger.debug("Connection closed by server")
+            except Exception:
+                logger.debug(traceback.format_exc())
+
+        monitor_thread = ErtThread(
+            name="ert_storage_api_event_monitor",
+            target=passthrough_ws_events,
+            daemon=True,
+        )
+
+        return event_queue, monitor_thread
 
     def start_experiment(self, config: dict[str, Any]) -> str:
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_SERVER}/start_experiment",
+            f"{_EXPERIMENT_SERVER}/{EverEndpoints.START_EXPERIMENT}",
             auth=self._auth,
             json=config,
         )
         return str(_checked(response).json()["experiment_id"])
 
-    def stop_experiment_server(self) -> None:
-        _checked(self._request("POST", f"{_EXPERIMENT_SERVER}/stop", auth=self._auth))
+    def stop_experiment_server(self) -> bool:
+        return (
+            self._request(
+                "POST",
+                f"{_EXPERIMENT_SERVER}/{EverEndpoints.STOP}",
+                auth=self._auth,
+            ).status_code
+            == 200
+        )
 
     def runpath_exists(self, paths: list[str]) -> bool:
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_SERVER}/runpath",
+            f"{_EXPERIMENT_SERVER}/{EverEndpoints.RUNPATH}",
             auth=self._auth,
             json={"paths": paths},
         )
         return response.status_code == httpx.codes.OK
 
     # <-------------- Internals -------------->
+
+    @property
+    def _ssl_context(self) -> ssl.SSLContext | None:
+        cert = self._client.conn_info.cert
+        if not isinstance(cert, str):
+            return None
+        return ssl.create_default_context(cafile=cert)
 
     @property
     def _auth(self) -> tuple[str, str]:

@@ -28,7 +28,6 @@ from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     everserver,
-    start_experiment,
     start_server,
     wait_for_server,
 )
@@ -72,10 +71,7 @@ async def wait_for_server_to_complete(config):
     driver = await start_server(config, logging.DEBUG)
     api = ErtClient.for_project(Path(ServerConfig.get_session_dir(config.output_dir)))
     wait_for_server(api, 120)
-    start_experiment(
-        server_context=ServerConfig.get_server_context_from_conn_info(api.conn_info),
-        config=config,
-    )
+    api.start_experiment(config)
     await server_running()
 
 

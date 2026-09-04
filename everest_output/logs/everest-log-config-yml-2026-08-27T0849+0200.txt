@@ -1,0 +1,2 @@
+2026-08-27 08:49:56,002 - everest - MainThread - DEBUG - No definitions node found in configuration file
+2026-08-27 08:49:56,104 - everest - MainThread - DEBUG - No definitions node found in configuration file

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ssl
 from pathlib import Path
 
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -10,13 +9,14 @@ from PyQt6.QtWidgets import (
     QMainWindow,
 )
 
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.experiments import RunDialog
-from ert.gui.experiments.experiment_client import ExperimentClient
 from ert.plugins import ErtPluginManager
+from ert.run_models.run_model import RunModelAPI
 from ert.services.ert_client import ErtClient
 from everest.config import ServerConfig
-from everest.detached import get_experiments, wait_for_server
+from everest.detached import wait_for_server
 
 
 class EverestMainWindow(QMainWindow):
@@ -43,40 +43,40 @@ class EverestMainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def run(self) -> None:
-        client = ErtClient.for_project(
+        client = ErtClient.get_client(
             Path(ServerConfig.get_session_dir(self.output_dir))
         )
         wait_for_server(client, 60)
 
-        server_context = ServerConfig.get_server_context_from_conn_info(
-            client.conn_info
+        experiment_id = client.experiment_ids()[-1]
+        config = client.experiment_config(experiment_id)
+
+        config_filename = Path(config["config_path"]).name
+        self.setWindowTitle(f"EVEREST - {config_filename}")
+
+        def start_fn(
+            evaluator_server_config: EvaluatorServerConfig,
+            *,
+            rerun_failed_realizations: bool = False,
+        ) -> None:
+            pass
+
+        run_model_api = RunModelAPI(
+            experiment_name=config_filename,
+            supports_rerunning_failed_realizations=False,
+            start_simulations_thread=start_fn,
+            cancel=client.stop_experiment_server,  # type: ignore
+            has_failed_realizations=lambda: False,
         )
-        url, cert, auth = server_context
-
-        ssl_context = ssl.create_default_context()
-        ssl_context.load_verify_locations(cafile=cert)
-        username, password = auth
-
-        exp_client = ExperimentClient(
-            experiment_id=get_experiments(server_context)[-1],
-            url=url,
-            cert_file=cert,
-            username=username,
-            password=password,
-            ssl_context=ssl_context,
-        )
-
-        config = exp_client.config
-        title = Path(config["config_path"]).name
-        self.setWindowTitle(f"EVEREST - {title}")
-
-        run_model_api = exp_client.create_run_model_api()
-        event_queue, event_monitor_thread = exp_client.setup_event_queue_from_ws_endpoint(
-            refresh_interval=0.02, open_timeout=40, websocket_recv_timeout=1.0
+        event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(
+            experiment_id=experiment_id,
+            refresh_interval=0.02,
+            open_timeout=40,
+            websocket_recv_timeout=1.0,
         )
 
         run_dialog = RunDialog(
-            title=title,
+            title=config_filename,
             run_model_api=run_model_api,
             event_queue=event_queue,
             notifier=ErtNotifier(),

@@ -1,7 +1,7 @@
 import logging
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import DEFAULT, MagicMock, patch
 
 import pytest
 
@@ -27,11 +27,9 @@ def raise_system_error(*args, **kwargs):
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
     "everest.bin.everest_script.ErtClient",
-    **{"for_project.side_effect": [TimeoutError(), MagicMock()]},
+    **{"for_project.side_effect": [TimeoutError(), DEFAULT]},
 )
-@patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_debug(
-    start_experiment_mock,
     everest_script_api_mock,
     get_server_context_from_conn_info_mock,
     start_server_mock,
@@ -59,9 +57,9 @@ def test_everest_entry_debug(
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
-    start_experiment_mock.assert_called_once()
+    everest_script_api_mock.for_project.return_value.start_experiment.assert_called_once()
     assert everest_script_api_mock.for_project.call_count == 2
-    assert get_server_context_from_conn_info_mock.call_count == 2
+    get_server_context_from_conn_info_mock.assert_called_once()
 
     # the config file itself is dumped at DEBUG level
     assert '"controls"' in logstream
@@ -76,11 +74,9 @@ def test_everest_entry_debug(
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
     "everest.bin.everest_script.ErtClient",
-    **{"for_project.side_effect": [TimeoutError(), MagicMock()]},
+    **{"for_project.side_effect": [TimeoutError(), DEFAULT]},
 )
-@patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry(
-    start_experiment_mock,
     everest_script_api_mock,
     get_server_context_from_conn_info_mock,
     start_server_mock,
@@ -97,24 +93,23 @@ def test_everest_entry(
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
-    start_experiment_mock.assert_called_once()
+    everest_script_api_mock.for_project.return_value.start_experiment.assert_called_once()
     assert everest_script_api_mock.for_project.call_count == 2
-    assert get_server_context_from_conn_info_mock.call_count == 2
+    get_server_context_from_conn_info_mock.assert_called_once()
 
 
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@patch("everest.bin.everest_script.start_experiment")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
     "everest.bin.everest_script.ErtClient",
     **{
         "for_project.side_effect": [
             TimeoutError(),
-            MagicMock(),
+            DEFAULT,
             TimeoutError(),
-            MagicMock(),
+            DEFAULT,
         ]
     },
 )
@@ -126,7 +121,6 @@ def test_everest_entry_detached_already_run(
     kill_script_api_mock,
     everest_script_api_mock,
     get_server_context_from_conn_info_mock,
-    start_experiment_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
@@ -139,6 +133,9 @@ def test_everest_entry_detached_already_run(
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
     config.write_to_file("config.yml")
+    start_experiment_mock = (
+        everest_script_api_mock.for_project.return_value.start_experiment
+    )
 
     # start a new run
     everest_entry(["config.yml"])
@@ -200,13 +197,14 @@ def test_everest_entry_detached_already_run_monitor(
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@patch("everest.bin.kill_script.stop_server", return_value=True)
 @patch("everest.bin.kill_script.wait_for_server_to_stop")
-@patch("everest.bin.kill_script.ErtClient")
+@patch(
+    "everest.bin.kill_script.ErtClient",
+    **{"for_project.return_value.stop_experiment_server.return_value": True},
+)
 def test_everest_entry_detached_running(
     kill_api_mock,
     wait_for_server_to_stop_mock,
-    stop_server_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
@@ -219,6 +217,7 @@ def test_everest_entry_detached_running(
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
     config.write_to_file("config.yml")
+    stop_server_mock = kill_api_mock.for_project.return_value.stop_experiment_server
 
     # can't start a new run if one is already running
     with capture_streams() as (out, _):
@@ -252,12 +251,11 @@ def test_everest_entry_detached_running(
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
-    "everest.bin.monitor_script.get_experiments", return_value=["test-experiment-id"]
+    "everest.bin.monitor_script.ErtClient",
+    **{"for_project.return_value.experiment_ids.return_value": ["test-experiment-id"]},
 )
-@patch("everest.bin.monitor_script.ErtClient")
 def test_everest_entry_detached_running_monitor(
     monitor_script_api_mock,
-    get_experiments_mock,
     get_server_context_from_conn_info_mock,
     start_monitor_mock,
     change_to_tmpdir,
@@ -274,7 +272,7 @@ def test_everest_entry_detached_running_monitor(
     start_monitor_mock.assert_called_once()
     monitor_script_api_mock.for_project.assert_called_once()
     get_server_context_from_conn_info_mock.assert_called_once()
-    get_experiments_mock.assert_called_once()
+    monitor_script_api_mock.for_project.return_value.experiment_ids.assert_called_once()
 
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
@@ -318,16 +316,14 @@ def mock_ssl(monkeypatch):
 )
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@patch("everest.bin.everest_script.start_experiment")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
     "everest.bin.everest_script.ErtClient",
-    **{"for_project.side_effect": [TimeoutError(), MagicMock()]},
+    **{"for_project.side_effect": [TimeoutError(), DEFAULT]},
 )
 def test_exception_raised_when_server_run_fails(
     everest_script_api_mock,
     get_server_context_from_conn_info_mock,
-    start_experiment_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
@@ -347,12 +343,11 @@ def test_exception_raised_when_server_run_fails(
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
-    "everest.bin.monitor_script.get_experiments", return_value=["test-experiment-id"]
+    "everest.bin.monitor_script.ErtClient",
+    **{"for_project.return_value.experiment_ids.return_value": ["test-experiment-id"]},
 )
-@patch("everest.bin.monitor_script.ErtClient")
 def test_exception_raised_when_server_run_fails_monitor(
     monitor_script_api_mock,
-    get_experiments_mock,
     get_server_context_from_conn_info_mock,
     start_monitor_mock,
     change_to_tmpdir,
@@ -418,7 +413,7 @@ def test_that_run_everest_prints_where_it_runs(
     with (
         patch(
             "everest.bin.everest_script.ErtClient",
-            **{"for_project.side_effect": [TimeoutError(), MagicMock()]},
+            **{"for_project.side_effect": [TimeoutError(), DEFAULT]},
         ),
         patch(
             "everest.config.ServerConfig.get_server_context_from_conn_info",
@@ -426,7 +421,6 @@ def test_that_run_everest_prints_where_it_runs(
         ),
         patch("everest.bin.everest_script.start_server"),
         patch("everest.bin.everest_script.wait_for_server"),
-        patch("everest.bin.everest_script.start_experiment"),
     ):
         everest_entry(["config.yml"])
 
