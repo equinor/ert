@@ -5,6 +5,8 @@ import polars as pl
 from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
 from ert.config.rft_config import RFTConfig
 
+RFT_LOCATION_NOT_IN_GRID_ERROR = "did not find grid coordinate for location"
+
 
 def ensure_qc_error_column(df: pl.DataFrame) -> pl.DataFrame:
     """
@@ -54,7 +56,7 @@ def _qc_observation_location_is_in_the_grid(
     df: pl.DataFrame,
 ) -> pl.DataFrame:
     location_error = pl.concat_str(
-        pl.lit("did not find grid coordinate for location "),
+        pl.lit(f"{RFT_LOCATION_NOT_IN_GRID_ERROR} "),
         pl.col("east").cast(pl.String),
         pl.lit(", "),
         pl.col("north").cast(pl.String),
