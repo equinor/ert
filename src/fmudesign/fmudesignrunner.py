@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import functools
+import logging
 import shutil
 import sys
 import traceback
@@ -31,10 +32,15 @@ from pathlib import Path
 from packaging.version import Version
 from pydantic import ValidationError
 
+from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
+from ert.trace import tracer
 
 from ._excel_to_dict import excel_to_dict
 from .create_design import DesignMatrix, _normalize_xlsx_filename
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 @dataclasses.dataclass
@@ -320,15 +326,14 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     sys.exit(0)
 
 
+@tracer.start_as_current_span("fmudesign.application.start")
 def main() -> None:
     """fmudesign is a command line utility for generating design matrices
 
     Wrapper for the fmudesign module
     """
-
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
-
     parser, _subparsers = get_parser()
 
     # Backwards compatibility. If not a known command, assume "run"
@@ -343,6 +348,10 @@ def main() -> None:
         parser.print_help()
         sys.exit(0)
 
+    root_logger = logging.getLogger()
+    setup_site_logging(root_logger)
+    logger.info(f"Running fmudesign with args: {sys.argv[1:]}")
+
     err_guide_msg = (
         "\n \n"
         "fmudesign failed. Read the error message above and fix the input file.\n"
@@ -351,17 +360,21 @@ def main() -> None:
         " - Issues/feature requests: https://github.com/equinor/ert/issues\n"
         "If you believe this error is a bug or are unable to fix it, create an issue or contact the scout team \n"  # ruff: ignore[line-too-long]
     )
+
     try:
         args.func(args)
     except ValidationError as e:
         for err in e.errors(include_url=False):
-            print(
+            msg = (
                 f"Validation error for '{err['loc'][0]}': "
                 f"{err['msg']}, was '{err['input']}'"
             )
+            logger.error(msg)
+            print(msg)
         print(err_guide_msg)
         sys.exit(1)
-    except Exception:
+    except Exception as err:
+        logger.exception(f"fmudesign crashed unexpectedly with '{err}'")
         traceback.print_exc()
         print(err_guide_msg)
         sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)

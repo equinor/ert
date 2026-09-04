@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Literal, Self
 
@@ -14,6 +15,8 @@ from pydantic import (
 
 from .config_validation import SeedStrategy
 from .utils import resolve_path
+
+logger = logging.getLogger(__name__)
 
 
 class GeneralInput(BaseModel):
