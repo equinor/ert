@@ -86,8 +86,6 @@ def test_upper_bound_output_constraint_def(tmp_path):
         config.environment.random_seed,
         config.optimization_output_dir,
         None,
-        None,
-        None,
     )
 
     expected_nonlinear_constraint_representation = {

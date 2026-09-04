@@ -46,23 +46,28 @@
       "point.x.2"
     ]
   },
-  "nonlinear_constraint_transforms": [
-    null
-  ],
   "nonlinear_constraints": {
+    "auto_scale": false,
     "lower_bounds": [
+      0.1
+    ],
+    "scales": [
       0.1
     ],
     "upper_bounds": [
       null
     ]
   },
-  "objective_transforms": [
-    null
-  ],
   "objectives": {
+    "auto_scale": false,
     "function_estimators": [
       0
+    ],
+    "maximize": [
+      true
+    ],
+    "scales": [
+      1.0
     ],
     "weights": [
       1.0

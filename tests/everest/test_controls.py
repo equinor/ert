@@ -246,8 +246,6 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
         1234,
         "dummy",
         None,
-        None,
-        None,
     )
 
     ropt_index_wise = everest2ropt(
@@ -263,8 +261,6 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
         ever_config_index_wise.model,
         1234,
         "dummy",
-        None,
-        None,
         None,
     )
 
@@ -317,8 +313,6 @@ def test_that_controls_ordering_disregards_index():
         ever_config_var_wise.model,
         1234,
         "dummy",
-        None,
-        None,
         None,
     )
 
@@ -380,8 +374,6 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
         1234,
         "dummy",
         None,
-        None,
-        None,
     )
 
     ropt_config2, initial2 = everest2ropt(
@@ -393,8 +385,6 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
         ever_config2.model,
         1234,
         "dummy",
-        None,
-        None,
         None,
     )
 

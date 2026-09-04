@@ -29,13 +29,19 @@
       "point.z"
     ]
   },
-  "objective_transforms": [
-    null
-  ],
   "objectives": {
+    "auto_scale": false,
     "function_estimators": [
       0,
       0
+    ],
+    "maximize": [
+      true,
+      true
+    ],
+    "scales": [
+      0.6666666667,
+      1.0
     ],
     "weights": [
       0.5,

@@ -3,7 +3,7 @@ import pytest
 
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.optimizer.opt_model_transforms import get_optimization_domain_transforms
+from everest.optimizer.opt_model_transforms import get_control_scaler
 from tests.everest.utils import everest_config_with_defaults
 
 
@@ -62,25 +62,20 @@ def test_transforms_controls_scaling(ever_config):
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
         None,
-        None,
-        None,
     )
-    transforms = get_optimization_domain_transforms(
+    control_scaler = get_control_scaler(
         [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
         False,
     )
     assert np.allclose(
-        transforms["control_scaler"].to_optimizer(
+        control_scaler.to_optimizer(
             np.asarray(ropt_config["variables"]["lower_bounds"])
         ),
         0.3,
     )
     assert np.allclose(
-        transforms["control_scaler"].to_optimizer(
+        control_scaler.to_optimizer(
             np.asarray(ropt_config["variables"]["upper_bounds"])
         ),
         0.7,
@@ -106,8 +101,6 @@ def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
         None,
-        None,
-        None,
     )
 
     controls = [
@@ -124,12 +117,9 @@ def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
     for control in controls:
         control.scaled_range = [0.3, 0.7]
 
-    transforms = get_optimization_domain_transforms(
+    transforms = get_control_scaler(
         controls,
-        ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
         scaling == "auto-scale",
     )
 
@@ -138,7 +128,7 @@ def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
     upper_bounds = np.asarray(ropt_config["linear_constraints"]["upper_bounds"])
 
     transformed_coefficients, transformed_lower_bounds, transformed_upper_bounds = (
-        transforms["control_scaler"].linear_constraints_to_optimizer(
+        transforms.linear_constraints_to_optimizer(
             coefficients, lower_bounds, upper_bounds
         )
     )
@@ -170,180 +160,57 @@ def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
     assert np.allclose(transformed_coefficients, scaled_coefficients)
 
 
-def test_objective_no_scaling(ever_config):
-    transforms = get_optimization_domain_transforms(
+def _ropt_config(ever_config, objectives=None, output_constraints=None):
+    ropt_config, _ = everest2ropt(
         [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
+        ever_config.create_ert_objectives_config()
+        if objectives is None
+        else objectives,
         ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
+        ever_config.create_ert_output_constraints_config()
+        if output_constraints is None
+        else output_constraints,
+        ever_config.optimization,
         ever_config.model,
-        False,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+        None,
     )
-    transforms["objective_scaler"].calculate_auto_scales([4.0, 1.0], [0, 1])
-    assert np.all(
-        transforms["objective_scaler"].to_optimizer(np.asarray([1.0, 2.0])) == [-1, -2]
-    )
+    return ropt_config
 
 
-def test_objective_manual_scaling(ever_config):
+def test_that_objective_scales_are_passed_to_ropt(ever_config):
     objectives_config = ever_config.create_ert_objectives_config()
     objectives_config.scales[0] = 2.0
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        objectives_config,
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        False,
-    )
-    transforms["objective_scaler"].calculate_auto_scales(
-        np.asarray([4.0, 1.0]), np.asarray(ever_config.model.realizations)
-    )
-    assert np.all(
-        transforms["objective_scaler"].to_optimizer(np.asarray([1.0, 2.0]))
-        == [-0.5, -2]
-    )
+    ropt_config = _ropt_config(ever_config, objectives=objectives_config)
+    assert ropt_config["objectives"]["scales"] == [2.0, 1.0]
+    assert not ropt_config["objectives"]["auto_scale"]
 
 
-def test_objective_auto_scaling(ever_config):
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        True,
-    )
-    transforms["objective_scaler"].calculate_auto_scales(
-        np.asarray([[5.0, 1.25], [5.0, 1.25]]), [0, 1]
-    )
-
-    assert np.all(
-        transforms["objective_scaler"].to_optimizer(np.asarray([1.0, 2.0]))
-        == [-0.5, -1]
-    )
+def test_that_mean_objectives_are_maximized(ever_config):
+    ropt_config = _ropt_config(ever_config)
+    assert ropt_config["objectives"]["maximize"] == [True, True]
 
 
-def test_that_objective_auto_scaling_with_zero_realization_weights_fails(ever_config):
-    ever_config.model.realizations_weights = [0.0, 0.0]
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        True,
-    )
-    with pytest.raises(
-        RuntimeError,
-        match="Auto-scaling of the objective failed to estimate a positive scale",
-    ):
-        transforms["objective_scaler"].calculate_auto_scales(
-            np.asarray([[5.0, 1.25], [5.0, 1.25]]), [0, 1]
-        )
+def test_that_a_spread_objective_is_minimized(ever_config):
+    objectives_config = ever_config.create_ert_objectives_config()
+    objectives_config.objective_types[1] = "stddev"
+    ropt_config = _ropt_config(ever_config, objectives=objectives_config)
+    # The direction is applied to the aggregate, so maximizing a spread would
+    # ask for the least robust solution rather than the most robust one.
+    assert ropt_config["objectives"]["maximize"] == [True, False]
 
 
-def test_that_objective_auto_scaling_with_zero_objectives_fails(ever_config):
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        True,
-    )
-    with pytest.raises(
-        RuntimeError,
-        match="Auto-scaling of the objective failed to estimate a positive scale",
-    ):
-        transforms["objective_scaler"].calculate_auto_scales(np.zeros((2, 2)), [0, 1])
+def test_that_auto_scale_enables_it_for_objectives_and_output_constraints(ever_config):
+    ever_config.optimization.auto_scale = True
+    ropt_config = _ropt_config(ever_config)
+    assert ropt_config["objectives"]["auto_scale"]
+    assert ropt_config["nonlinear_constraints"]["auto_scale"]
 
 
-def test_output_constraint_no_scaling(ever_config):
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        False,
-    )
-    transforms["constraint_scaler"].calculate_auto_scales([2.0, 1.0], [0, 1])
-    assert np.all(
-        transforms["constraint_scaler"].to_optimizer(np.asarray([1.0, 2.0])) == [1, 2]
-    )
-
-
-def test_output_constraint_manual_scaling(ever_config):
+def test_that_output_constraint_scales_are_passed_to_ropt(ever_config):
     constraints_config = ever_config.create_ert_output_constraints_config()
     constraints_config.scales[0] = 2.0
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        constraints_config,
-        ever_config.model,
-        False,
-    )
-    transforms["constraint_scaler"].calculate_auto_scales(
-        np.asarray([4.0, 1.0]), np.asarray(ever_config.model.realizations)
-    )
-    assert np.all(
-        transforms["constraint_scaler"].to_optimizer(np.asarray([1.0, 2.0])) == [0.5, 2]
-    )
-
-
-def test_output_constraint_auto_scaling(ever_config):
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        True,
-    )
-    transforms["constraint_scaler"].calculate_auto_scales(
-        np.asarray([[4.0, 2.0], [4.0, 2.0]]), [0, 1]
-    )
-
-    assert np.all(
-        transforms["constraint_scaler"].to_optimizer(np.asarray([1.0, 2.0]))
-        == [0.25, 1.0]
-    )
-
-
-def test_that_output_constraint_auto_scaling_with_zero_realization_weights_fails(
-    ever_config,
-):
-    ever_config.model.realizations_weights = [0.0, 0.0]
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        True,
-    )
-    with pytest.raises(
-        RuntimeError,
-        match="Auto-scaling of the constraints failed to estimate a positive scale",
-    ):
-        transforms["constraint_scaler"].calculate_auto_scales(
-            np.asarray([[4.0, 2.0], [4.0, 2.0]]), [0, 1]
-        )
-
-
-def test_that_output_constraint_auto_scaling_with_zero_constraints_fails(ever_config):
-    transforms = get_optimization_domain_transforms(
-        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
-        ever_config.create_ert_objectives_config(),
-        ever_config.input_constraints,
-        ever_config.create_ert_output_constraints_config(),
-        ever_config.model,
-        True,
-    )
-    with pytest.raises(
-        RuntimeError,
-        match="Auto-scaling of the constraints failed to estimate a positive scale",
-    ):
-        transforms["constraint_scaler"].calculate_auto_scales(np.zeros((2, 2)), [0, 1])
+    ropt_config = _ropt_config(ever_config, output_constraints=constraints_config)
+    assert ropt_config["nonlinear_constraints"]["scales"] == [2.0, 1.0]
+    assert not ropt_config["nonlinear_constraints"]["auto_scale"]

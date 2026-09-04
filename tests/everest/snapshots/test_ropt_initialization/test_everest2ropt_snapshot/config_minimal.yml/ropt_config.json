@@ -28,12 +28,16 @@
       "point.z"
     ]
   },
-  "objective_transforms": [
-    null
-  ],
   "objectives": {
+    "auto_scale": false,
     "function_estimators": [
       0
+    ],
+    "maximize": [
+      true
+    ],
+    "scales": [
+      1.0
     ],
     "weights": [
       1.0
