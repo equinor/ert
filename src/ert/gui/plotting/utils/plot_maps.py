@@ -9,6 +9,7 @@ from ert.gui.plotting.ert_plots import (
     StatisticsPlot,
     StdDevPlot,
 )
+from ert.gui.plotting.ert_plots.observations_map import ObservationsMapPlot
 from ert.gui.plotting.everest_plots import (
     EverestBatchObjectiveFunctionPlot,
     EverestConstraintsPlot,
@@ -25,6 +26,7 @@ GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 MISFIT_MAP = "Misfit map"
+OBSERVATIONS_MAP = "Observations map"
 STATISTICS = "Statistics"
 STD_DEV = "Std dev"
 MISFITS = "Misfits"
@@ -38,6 +40,7 @@ ERT_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     STATISTICS: StatisticsPlot,
     MISFITS: MisfitsPlot,
     MISFIT_MAP: MisfitMapPlot,
+    OBSERVATIONS_MAP: ObservationsMapPlot,
     HISTOGRAM: HistogramPlot,
     DISTRIBUTION: DistributionPlot,
     CROSS_ENSEMBLE_STATISTICS: CrossEnsembleStatisticsPlot,

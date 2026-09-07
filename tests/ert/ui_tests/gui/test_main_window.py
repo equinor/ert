@@ -354,6 +354,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
             "Histogram",
             "Misfit map",
             "Statistics",
+            "Observations map",
             "Std dev",
             "Misfits",
         }

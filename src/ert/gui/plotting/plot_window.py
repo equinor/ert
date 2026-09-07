@@ -44,6 +44,7 @@ from ert.gui.plotting.utils.plot_maps import (
     HISTOGRAM,
     MISFIT_MAP,
     MISFITS,
+    OBSERVATIONS_MAP,
     SHARED_PLOT_MAP,
     STATISTICS,
     STD_DEV,
@@ -387,7 +388,7 @@ class PlotWindow(QMainWindow):
         return self._api.api_version
 
     def _apply_ensemble_selection_policy_for_tab(self, tab_name: str) -> None:
-        if tab_name == MISFIT_MAP:
+        if tab_name in {MISFIT_MAP, OBSERVATIONS_MAP}:
             self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
             if len(self._ensemble_selection_widget.get_selected_ensembles()) > 1:
                 self._ensemble_selection_widget.clear_ensemble_selection()
@@ -614,8 +615,9 @@ class PlotWindow(QMainWindow):
                 history_data_available=history_data_available,
                 has_observations=key_def.observations,
                 show_observations=key_def.observations
-                and selected_tab not in {MISFITS, MISFIT_MAP},
-                show_color_palette=key_def.observations and selected_tab != MISFIT_MAP,
+                and selected_tab not in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP},
+                show_color_palette=key_def.observations
+                and selected_tab not in {MISFIT_MAP, OBSERVATIONS_MAP},
                 log_scale_available=log_scale_valid_values
                 and selected_tab in {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE},
             )
@@ -795,7 +797,10 @@ class PlotWindow(QMainWindow):
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
-            and (not is_observed_seismic or widget.name in {MISFITS, MISFIT_MAP})
+            and (
+                not is_observed_seismic
+                or widget.name in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP}
+            )
         ]
 
         def everest_data_origin_check(origin: list[str]) -> bool:
