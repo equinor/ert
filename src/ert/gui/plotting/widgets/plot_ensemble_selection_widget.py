@@ -140,12 +140,7 @@ class EnsembleSelectListWidget(QListWidget):
             it.setData(Qt.ItemDataRole.CheckStateRole, i < cutoff)
             self.addItem(it)
             self._ensemble_count += 1
-            it.setToolTip(
-                f"{item_text}\n"
-                f"Toggle up to {self.get_maximum_ensemble_limit()} plots or reorder by"
-                "drag & drop\n"
-                f"Order determines draw order and color"
-            )
+            self._tooltip_for_ensemble_selection(it)
 
         if (viewport := self.viewport()) is not None:
             viewport.setMouseTracking(True)
@@ -262,23 +257,41 @@ class EnsembleSelectListWidget(QListWidget):
         super().dropEvent(event)
         self.ensembleSelectionListChanged.emit()
 
+    def _uncheck_item(self, item: QListWidgetItem) -> None:
+        self.release_color(item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX))
+        item.setData(Qt.ItemDataRole.CheckStateRole, False)
+
+    def _check_item(self, item: QListWidgetItem) -> None:
+        item.setData(
+            EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
+            self.assign_available_color(
+                item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
+            ),
+        )
+        item.setData(Qt.ItemDataRole.CheckStateRole, True)
+
     def slot_toggle_plot(self, item: QListWidgetItem) -> None:
         count = len(self.get_checked_ensembles())
         selected = item.data(Qt.ItemDataRole.CheckStateRole)
 
+        if not selected and self.get_maximum_ensemble_limit() == 1 and count == 1:
+            for ensemble_index in range(self._ensemble_count):
+                ensemble_item = self.item(ensemble_index)
+                if (
+                    ensemble_item is not None
+                    and ensemble_item is not item
+                    and ensemble_item.data(Qt.ItemDataRole.CheckStateRole)
+                ):
+                    self._uncheck_item(ensemble_item)
+                    break
+            self._check_item(item)
+            self.ensembleSelectionListChanged.emit()
+            return
+
         if selected and count > self.get_minimum_ensemble_limit():
-            self.release_color(
-                item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
-            )
-            item.setData(Qt.ItemDataRole.CheckStateRole, False)
+            self._uncheck_item(item)
         elif not selected and count < self.get_maximum_ensemble_limit():
-            item.setData(
-                EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
-                self.assign_available_color(
-                    item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
-                ),
-            )
-            item.setData(Qt.ItemDataRole.CheckStateRole, True)
+            self._check_item(item)
 
         self.ensembleSelectionListChanged.emit()
 
@@ -294,6 +307,18 @@ class EnsembleSelectListWidget(QListWidget):
                 f"Maximum selected ensembles limit ({value}) cannot be less than 1"
             )
         self._maximum_selected = value
+        for i in range(self._ensemble_count):
+            if (item := self.item(i)) is not None:
+                self._tooltip_for_ensemble_selection(item)
+
+    def _tooltip_for_ensemble_selection(self, item: QListWidgetItem) -> None:
+        item_text = item.text()
+        item.setToolTip(
+            f"{item_text}\n"
+            f"Toggle up to {self.get_maximum_ensemble_limit()} plot(s) or reorder "
+            "by drag & drop\n"
+            f"Order determines draw order and color"
+        )
 
     def get_maximum_ensemble_limit(self) -> int:
         return self._maximum_selected
