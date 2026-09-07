@@ -43,35 +43,6 @@ def test_that_sampler_config_with_wrong_method():
         SamplerConfig(backend="scipy", method="hey")
 
 
-def test_that_cvar_attrs_are_mutex():
-    cvar = {"percentile": 0.1, "number_of_realizations": 3}
-    with pytest.raises(ValueError, match="Invalid CVaR section"):
-        everest_config_with_defaults(optimization={"cvar": cvar})
-
-
-@pytest.mark.parametrize("nreals", [-1, 0, 8])
-def test_that_cvar_nreals_interval_outside_range_errors(nreals):
-    with pytest.raises(ValueError, match=f"number_of_realizations: \\(got {nreals}"):
-        everest_config_with_defaults(
-            optimization={
-                "cvar": {
-                    "number_of_realizations": nreals,
-                }
-            },
-            model={"realizations": [1, 2, 3, 4, 5, 6]},
-        )
-
-
-@pytest.mark.parametrize("nreals", [1, 2, 3, 4, 5])
-def test_that_cvar_nreals_valid_doesnt_error(nreals):
-    everest_config_with_defaults(
-        optimization={
-            "cvar": {
-                "number_of_realizations": nreals,
-            }
-        },
-        model={"realizations": [1, 2, 3, 4, 5, 6]},
-    )
 
 
 def test_that_max_runtime_errors_only_on_negative():
