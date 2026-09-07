@@ -218,15 +218,14 @@ async def start_experiment(
         experiment_state.storage_path = config.output_dir
         experiment_state.start_time_unix = int(time.time())
         return JSONResponse({"experiment_id": experiment_id})
-    except Exception as e:
+    except Exception:
+        error_message = "Could not start experiment due to an internal error."
         experiment_state.status = ExperimentStatus(
             status=ExperimentState.failed,
-            message=f"Could not start experiment: {e!s}",
+            message=error_message,
         )
-        logging.getLogger(__name__).exception(e)
-        return JSONResponse(
-            {"error": f"Could not start experiment: {e!s}"}, status_code=501
-        )
+        logging.getLogger(__name__).exception("Failed to start experiment")
+        return JSONResponse({"error": error_message}, status_code=501)
 
 
 @router.get(
