@@ -15,6 +15,7 @@ import yaml
 from .general_input import GeneralInput
 from .read_background import read_background
 from .read_correlations import parse_sensitivity_correlations
+from .read_distributions import parse_distribution_parameters
 from .utils import (
     _has_value,
     find_sheet,
@@ -209,7 +210,9 @@ def _excel_to_dict_onebyone(
 
         elif sens_type == "dist":
             sensdict["senstype"] = sens_type
-            sensdict["parameters"] = _read_dist_sensitivity(group)
+            sensdict["parameters"] = parse_distribution_parameters(
+                group, source="sensitivity"
+            )
             sensdict["correlations"] = None
             if "corr_sheet" in group:
                 sensdict["correlations"] = parse_sensitivity_correlations(
@@ -413,60 +416,6 @@ def _read_constants(sensgroup: pd.DataFrame) -> dict[str, Any]:
             )
         distparams = row.dist_param1
         paramdict[str(row.param_name)] = [str(row.dist_name), distparams]
-    return paramdict
-
-
-def _read_dist_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
-    """Reads parameters and distributions
-    for monte carlo sensitivities
-    """
-    for col_name in ("dist_param1", "dist_param2", "dist_param3", "dist_param4"):
-        if col_name not in sensgroup:
-            sensgroup[col_name] = float("NaN")
-    paramdict: dict[str, Any] = {}
-    for row in sensgroup.itertuples():
-        if not _has_value(row.param_name):
-            raise ValueError(
-                f"Dist sensitivity {row.sensname} specified "
-                "where one line has empty parameter "
-                "name "
-            )
-        if not _has_value(row.dist_param1):
-            raise ValueError(
-                f"Parameter {row.param_name} has been input "
-                'as type "dist" but with empty '
-                "first distribution parameter "
-            )
-        if not _has_value(row.dist_param2) and _has_value(row.dist_param3):
-            raise ValueError(
-                f"Parameter {row.param_name} has been input with "
-                'value for "dist_param3" while '
-                '"dist_param2" is empty. This is not '
-                "allowed"
-            )
-        if not _has_value(row.dist_param3) and _has_value(row.dist_param4):
-            raise ValueError(
-                f"Parameter {row.param_name} has been input with "
-                'value for "dist_param4" while '
-                '"dist_param3" is empty. This is not '
-                "allowed"
-            )
-        distparams = [
-            item
-            for item in [
-                row.dist_param1,
-                row.dist_param2,
-                row.dist_param3,
-                row.dist_param4,
-            ]
-            if _has_value(item)
-        ]
-        if "corr_sheet" in sensgroup:
-            corrsheet = None if not _has_value(row.corr_sheet) else row.corr_sheet
-        else:
-            corrsheet = None
-        paramdict[str(row.param_name)] = [str(row.dist_name), distparams, corrsheet]
-
     return paramdict
 
 
