@@ -5,6 +5,7 @@ from ert.gui.plotting.ert_plots import (
     DistributionPlot,
     FieldUpdatePlot,
     HistogramPlot,
+    MisfitMapPlot,
     MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
@@ -26,6 +27,7 @@ FIELD_UPDATE_PLOT = "Field update"
 GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
+MISFIT_MAP = "Misfit map"
 STATISTICS = "Statistics"
 STD_DEV = "Std dev"
 MISFITS = "Misfits"
@@ -39,6 +41,7 @@ EVEREST_CONSTRAINT_PLOT = "Constraints"
 ERT_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     STATISTICS: StatisticsPlot,
     MISFITS: MisfitsPlot,
+    MISFIT_MAP: MisfitMapPlot,
     HISTOGRAM: HistogramPlot,
     DISTRIBUTION: DistributionPlot,
     CROSS_ENSEMBLE_STATISTICS: CrossEnsembleStatisticsPlot,

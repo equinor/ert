@@ -25,6 +25,56 @@ UPPER_PERCENTILE_FOR_WHISKERS = 95
 LOWER_PERCENTILE_FOR_WHISKERS = 5
 
 
+def wide_pandas_to_long_polars_with_misfits(
+    ensemble_to_data_map: dict[tuple[str, str], pd.DataFrame],
+    observation_data: pd.DataFrame,
+    response_type: Literal["summary", "gen_data", "rft", "breakthrough", "seismic"],
+) -> dict[tuple[str, str], pl.DataFrame]:
+    if response_type in {"summary", "breakthrough"}:
+        key_index_with_correct_dtype = pl.col("key_index").str.to_datetime(strict=False)
+    elif response_type in {"gen_data", "rft"}:
+        key_index_with_correct_dtype = (
+            pl.col("key_index").cast(pl.Float32).cast(pl.UInt16)
+        )
+    elif response_type == "seismic":
+        key_index_with_correct_dtype = (
+            pl.col("key_index").cast(pl.Float32).cast(pl.Int32)
+        )
+    else:
+        raise ValueError(f"Unsupported response_type: {response_type}")
+
+    obs_df = (
+        pl.from_pandas(observation_data.T)
+        .rename({"OBS": "observation", "STD": "error"})
+        .with_columns(pl.col("key_index").cast(pl.String))
+        .with_columns(key_index_with_correct_dtype)
+    )
+
+    return {
+        ens_key: (
+            pl.from_pandas(df, include_index=True)
+            .unpivot(
+                index=df.index.name,
+                variable_name="key_index",
+                value_name="response",
+            )
+            .with_columns(key_index_with_correct_dtype)
+            .join(obs_df, on="key_index", how="inner")
+            .with_columns(
+                (pl.col("response") - pl.col("observation")).alias("residual")
+            )
+            .with_columns(
+                (
+                    pl.col("residual").sign()
+                    * (pl.col("residual") / pl.col("error")).pow(2)
+                ).alias("misfit")
+            )
+            .drop("residual")
+        )
+        for ens_key, df in ensemble_to_data_map.items()
+    }
+
+
 class MisfitsPlot:
     """
     Visualize signed chi-squared misfits between simulated responses and observations.
@@ -73,58 +123,6 @@ class MisfitsPlot:
 
         return y_min, y_max
 
-    @staticmethod
-    def _wide_pandas_to_long_polars_with_misfits(
-        ensemble_to_data_map: dict[tuple[str, str], pd.DataFrame],
-        observation_data: pd.DataFrame,
-        response_type: Literal["summary", "gen_data", "rft", "breakthrough", "seismic"],
-    ) -> dict[tuple[str, str], pl.DataFrame]:
-        if response_type in {"summary", "breakthrough"}:
-            key_index_with_correct_dtype = pl.col("key_index").str.to_datetime(
-                strict=False
-            )
-        elif response_type in {"gen_data", "rft"}:
-            key_index_with_correct_dtype = (
-                pl.col("key_index").cast(pl.Float32).cast(pl.UInt16)
-            )
-        elif response_type == "seismic":
-            key_index_with_correct_dtype = (
-                pl.col("key_index").cast(pl.Float32).cast(pl.Int32)
-            )
-        else:
-            raise ValueError(f"Unsupported response_type: {response_type}")
-
-        obs_df = (
-            pl.from_pandas(observation_data.T)
-            .rename({"OBS": "observation", "STD": "error"})
-            .with_columns(pl.col("key_index").cast(pl.String))
-            .with_columns(key_index_with_correct_dtype)
-        )
-
-        return {
-            ens_key: (
-                pl.from_pandas(df, include_index=True)
-                .unpivot(
-                    index=df.index.name,
-                    variable_name="key_index",
-                    value_name="response",
-                )
-                .with_columns(key_index_with_correct_dtype)
-                .join(obs_df, on="key_index", how="inner")
-                .with_columns(
-                    (pl.col("response") - pl.col("observation")).alias("residual")
-                )
-                .with_columns(
-                    (
-                        pl.col("residual").sign()
-                        * (pl.col("residual") / pl.col("error")).pow(2)
-                    ).alias("misfit")
-                )
-                .drop("residual")
-            )
-            for ens_key, df in ensemble_to_data_map.items()
-        }
-
     def plot(
         self,
         figure: Figure,
@@ -141,7 +139,7 @@ class MisfitsPlot:
             return
 
         response_type = key_def.metadata["data_origin"]
-        data_with_misfits = self._wide_pandas_to_long_polars_with_misfits(
+        data_with_misfits = wide_pandas_to_long_polars_with_misfits(
             {(eo.name, eo.id): df for eo, df in ensemble_to_data_map.items()},
             observation_data,
             response_type,
