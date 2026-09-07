@@ -240,17 +240,9 @@ class QualityReporter:
         """
         fig, ax = plt.subplots(figsize=(6, 4))
 
-        # Calculate normalized proportions
-        proportions = series.value_counts(normalize=True)
-        value_counts = series.value_counts(normalize=False)
-
-        # Create DataFrame for seaborn
-        plot_data = pd.DataFrame(
-            {var_name: proportions.index, "proportion": proportions.to_numpy()}
-        ).sort_values(by=var_name)
-
-        # Use seaborn barplot with normalized values
-        sns.barplot(data=plot_data, x=var_name, y="proportion", ax=ax)
+        value_counts = series.value_counts().sort_index()
+        proportions = value_counts / value_counts.sum()
+        sns.barplot(x=value_counts.index, y=proportions.to_numpy(), ax=ax)
 
         # Create string to describe distribution
         var_string = (
@@ -262,14 +254,12 @@ class QualityReporter:
         )
 
         ax.set_title(f"{var_name}\n{var_string}", fontsize=7)
+        ax.set_xlabel(var_name)
         ax.set_ylabel("Proportion")
 
         # Add percentage labels on bars
-        for _proportion, count, p in zip(
-            proportions, value_counts, ax.patches, strict=False
-        ):
+        for count, p in zip(value_counts, ax.patches, strict=False):
             rect = cast("Rectangle", p)
-            # assert math.isclose(_proportion, rect.get_height())
             percentage = f"{rect.get_height():.1%} (n={count:.0f})"
             ax.annotate(
                 percentage,
