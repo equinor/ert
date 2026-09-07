@@ -229,6 +229,69 @@ def _write_background_workbook(path, background, corr_matrix, background_name):
     return path
 
 
+@pytest.mark.parametrize("sheet", ["designinput", "backgroundsheet"])
+@pytest.mark.parametrize(
+    ("missing_field", "error"),
+    [
+        (
+            "param_name",
+            (
+                r"(Dist sensitivity uncertainty|Background parameters)"
+                r".*empty parameter name"
+            ),
+        ),
+        (
+            "dist_param1",
+            r"Parameter PARAM_A .*empty first distribution parameter",
+        ),
+        (
+            "dist_param2",
+            r'Parameter PARAM_A .*"dist_param3" while "dist_param2" is empty',
+        ),
+        (
+            "dist_param3",
+            r'Parameter PARAM_A .*"dist_param4" while "dist_param3" is empty',
+        ),
+    ],
+    ids=[
+        "missing-name",
+        "missing-first-argument",
+        "gap-before-third",
+        "gap-before-fourth",
+    ],
+)
+def test_that_missing_distribution_fields_report_the_field_and_source(
+    tmp_path, sheet, missing_field, error
+):
+    row = {
+        "param_name": "PARAM_A",
+        "dist_name": "normal",
+        "dist_param1": 0,
+        "dist_param2": 1,
+        "dist_param3": -1,
+        "dist_param4": 1,
+    }
+    row[missing_field] = None
+    if sheet == "designinput":
+        row = {"sensname": "uncertainty", "type": "dist", **row}
+    distribution_rows = pd.DataFrame([list(row), list(row.values())])
+    input_path = tmp_path / "designinput.xlsx"
+
+    if sheet == "designinput":
+        _write_config_workbook(input_path, design_input=distribution_rows)
+    else:
+        _write_background_workbook(input_path, distribution_rows, None, sheet)
+
+    with pytest.raises(ValueError, match=error) as exc_info:
+        excel_to_dict(input_path)
+
+    message = str(exc_info.value).lower()
+    if sheet == "backgroundsheet":
+        assert "background" in message
+    else:
+        assert "background" not in message
+
+
 BACKGROUND_WITH_CORR = pd.DataFrame(
     data=[
         ["param_name", "dist_name", "dist_param1", "dist_param2", "corr_sheet"],
