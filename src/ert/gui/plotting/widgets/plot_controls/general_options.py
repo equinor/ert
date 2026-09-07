@@ -99,8 +99,8 @@ class GeneralPlotOptions(QObject):
                 ]
             )
 
-        palette_container = QWidget()
-        palette_layout = QVBoxLayout(palette_container)
+        self._palette_container = QWidget()
+        palette_layout = QVBoxLayout(self._palette_container)
         palette_layout.setContentsMargins(0, 0, 0, 0)
         palette_layout.setSpacing(2)
         palette_layout.addWidget(QLabel("Selected color palette:"))
@@ -109,7 +109,7 @@ class GeneralPlotOptions(QObject):
         palette_layout.addWidget(self._color_cycle_selector)
         palette_layout.addWidget(self._color_cycle_selector.get_custom_palette_button())
 
-        widgets.extend([palette_container, edit_buttons])
+        widgets.extend([self._palette_container, edit_buttons])
 
         self._general_options = CollapsibleSection(
             "General options",
@@ -167,6 +167,7 @@ class GeneralPlotOptions(QObject):
         history_data_available: bool,
         has_observations: bool,
         show_observations: bool,
+        show_color_palette: bool = True,
         log_scale_available: bool,
     ) -> None:
         plot_config = plot_context.plotConfig()
@@ -185,6 +186,7 @@ class GeneralPlotOptions(QObject):
         self._observations_color_edit.setVisible(
             show_observations and self.observations_checkbox_state
         )
+        self._palette_container.setVisible(show_color_palette)
         plot_config.set_history_enabled(
             self.history_checkbox_state and history_data_available
         )
