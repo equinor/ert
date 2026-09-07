@@ -140,13 +140,15 @@ def test_that_cli_verbosity_controls_sensitivity_plot_generation(
     monkeypatch.chdir(tmp_path)
     designfile = "ex4_background_parameters.xlsx"
     _run_cli("init", designfile)
-    result = _run_cli("run", designfile, *(["--verbose"] * verbosity))
+    result = _run_cli(
+        "run", designfile, "analysis/design.v2", *(["--verbose"] * verbosity)
+    )
 
-    assert (tmp_path / "generateddesignmatrix.xlsx").is_file()
+    assert (tmp_path / "analysis/design.v2.xlsx").is_file()
     assert "CONTINUOUS PARAMETERS" in result.stdout
     assert "CORRELATION_GROUP 'corr1'" in result.stdout
-    assert (tmp_path / "generateddesignmatrix/background/PARAM17.png").is_file()
-    sensitivity_plot = tmp_path / "generateddesignmatrix/sens7/PARAM9.png"
+    assert (tmp_path / "analysis/design.v2/background/PARAM17.png").is_file()
+    sensitivity_plot = tmp_path / "analysis/design.v2/sens7/PARAM9.png"
     if verbosity == 2:
         assert sensitivity_plot.is_file()
     else:

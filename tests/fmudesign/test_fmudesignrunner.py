@@ -160,7 +160,7 @@ def test_that_subcommand_run_raises_when_config_does_not_exist(use_tmpdir):
 def test_that_subcommand_run_raises_when_config_is_equal_to_destination(use_tmpdir):
     _, subparsers = get_parser()
     parser_run = subparsers.choices["run"]
-    duplicate_name = "duplicate_name"
+    duplicate_name = "duplicate_name.xlsx"
     Path(duplicate_name).touch()
     args = _create_run_args(
         config_file_name=duplicate_name, destination_file_name=duplicate_name
@@ -252,3 +252,43 @@ def test_that_subcommand_init_creates_auxiliary_files(use_tmpdir, capsys):
     assert Path(auxiliary_file).is_file()
     assert f"Created file {example_file!r}." in stdout
     assert f"Created auxiliary file {auxiliary_file!r}." in stdout
+
+
+def test_that_run_rejects_output_matching_input_after_adding_xlsx_suffix(
+    tmp_path, monkeypatch
+):
+    input_path = tmp_path / "config.xlsx"
+    original_content = b"original workbook"
+    input_path.write_bytes(original_content)
+
+    parser, _ = fmudesignrunner.get_parser()
+    args = parser.parse_args(["run", str(input_path), str(input_path.with_suffix(""))])
+    monkeypatch.setattr(
+        fmudesignrunner,
+        "excel_to_dict",
+        lambda *args, **kwargs: pytest.fail("Input workbook was parsed"),
+    )
+
+    with pytest.raises(OSError, match="Identical name"):
+        args.func(args)
+
+    assert input_path.read_bytes() == original_content
+
+
+def test_that_init_copies_nothing_when_auxiliary_destination_exists(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    auxiliary_path = Path("ex2_doe1.xlsx")
+    original_content = b"existing auxiliary workbook"
+    auxiliary_path.write_bytes(original_content)
+
+    parser, _ = fmudesignrunner.get_parser()
+    args = parser.parse_args(["init", "ex2_correlations.xlsx"])
+
+    with pytest.raises(SystemExit) as exc_info:
+        args.func(args)
+
+    assert exc_info.value.code == 1
+    assert not Path("ex2_correlations.xlsx").exists()
+    assert auxiliary_path.read_bytes() == original_content
