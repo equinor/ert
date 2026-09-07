@@ -190,50 +190,7 @@
   },
   "experiment_name": "es-mda",
   "design_matrix": null,
-  "parameter_configuration": [
-    {
-      "type": "gen_kw",
-      "name": "a",
-      "forward_init": false,
-      "update_strategy": "global",
-      "dimensionality": 1,
-      "distribution": {
-        "name": "uniform",
-        "min": 0.0,
-        "max": 1.0
-      },
-      "group": "COEFFS",
-      "input_source": "sampled"
-    },
-    {
-      "type": "gen_kw",
-      "name": "b",
-      "forward_init": false,
-      "update_strategy": "global",
-      "dimensionality": 1,
-      "distribution": {
-        "name": "uniform",
-        "min": 0.0,
-        "max": 2.0
-      },
-      "group": "COEFFS",
-      "input_source": "sampled"
-    },
-    {
-      "type": "gen_kw",
-      "name": "c",
-      "forward_init": false,
-      "update_strategy": "global",
-      "dimensionality": 1,
-      "distribution": {
-        "name": "uniform",
-        "min": 0.0,
-        "max": 5.0
-      },
-      "group": "COEFFS",
-      "input_source": "sampled"
-    }
-  ],
+  "parameter_configuration": [],
   "response_configuration": [
     {
       "type": "gen_data",

@@ -233,5 +233,6 @@
       }
     }
   },
-  "experiment_name": "my_experiment"
+  "experiment_name": "my_experiment",
+  "parameter_configuration": []
 }

@@ -66,7 +66,7 @@ class Arguments:
     weights: str
     prior_ensemble_id: str | None  # UUID not serializable in json
     experiment_name: str
-    parameter_config: list[ParameterConfig]
+    parameter_configuration: list[ParameterConfig]
 
 
 class MultipleDataAssimilationPanel(ExperimentConfigPanel):
@@ -447,7 +447,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 else None
             ),
             experiment_name=self._experiment_name_field.get_text,
-            parameter_config=self._analysis_module_edit.parameter_config,
+            parameter_configuration=self._analysis_module_edit.parameter_config,
         )
 
     def setWeights(self, weights: Any) -> None:
