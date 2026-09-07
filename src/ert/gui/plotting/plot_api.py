@@ -455,6 +455,8 @@ class PlotApi:
                             "STD": obs["errors"],
                             "OBS": obs["values"],
                             "key_index": key_index,
+                            "EAST": obs["east"],
+                            "NORTH": obs["north"],
                         }
                     )
                 )
