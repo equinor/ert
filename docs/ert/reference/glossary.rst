@@ -52,10 +52,10 @@ It is not about being correct, it is about being relevant and coherent.
         is represented by the ensemble. An ensemble
         consists of input parameters and the corresponding responses of the forward model, and
         each ensemble can trace its lineage to its parent ensemble and the experiment.
-        Parent ensemble is called "prior", when child one is called "posterior". In an update
+        Parent ensemble is called "prior", when child is called "posterior". In an update
         we load the response of a prior ensemble and use it together with observation values
         to create a posterior ensemble. For example, the lineage in multiple data assimilation
-        experiment can be show as:
+        experiment can be shown as:
 
         .. code-block:: python
 
