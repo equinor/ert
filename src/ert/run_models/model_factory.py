@@ -490,7 +490,7 @@ def _setup_multiple_data_assimilation(
 
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
-        parameter_configs=config.ensemble_config.parameter_configuration,
+        parameter_configs=args.parameter_config,
         require_updateable_param=True,
     )
 
