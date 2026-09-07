@@ -414,7 +414,14 @@ def _resolve_strategy(
         )
         return None
 
-    return strategy_handlers[type(param_cfg)].get(param_cfg.update_strategy)
+    strategy = handler.get(param_cfg.update_strategy)
+    if strategy is None:
+        logger.warning(
+            f"Update strategy '{param_cfg.update_strategy.name}' is not supported for "
+            f"parameter '{param_name}' of type '{type(param_cfg).__name__}'. "
+            "Parameter will not be updated"
+        )
+    return strategy
 
 
 def smoother_update(
