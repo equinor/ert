@@ -34,7 +34,7 @@ from pydantic import ValidationError
 from ert.shared import __version__ as ert_version
 
 from ._excel_to_dict import excel_to_dict
-from .create_design import DesignMatrix
+from .create_design import DesignMatrix, _normalize_xlsx_filename
 
 
 @dataclasses.dataclass
@@ -252,8 +252,8 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
     if not Path(args.config).is_file():
         raise OSError(f"Input file {args.config} does not exist")
 
-    # Check if destination exists
-    if Path(args.config).resolve() == Path(args.destination).resolve():
+    destination = _normalize_xlsx_filename(args.destination)
+    if Path(args.config).resolve() == Path(destination).resolve():
         raise OSError(
             f'Identical name "{args.config}" have been provided for the input'
             "file and the output file"
@@ -270,7 +270,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
 
     # If destination is 'analysis/generateddesignmatrix.xlsx', then plots
     # will be saved to 'analysis/generateddesignmatrix/<SENSNAME>/<VARNAME>.png'
-    output_dir = Path(args.destination).parent / Path(args.destination).stem
+    output_dir = Path(destination).with_suffix("")
     design = DesignMatrix(verbosity=args.verbose, output_dir=output_dir)
 
     design.generate(config)
@@ -293,21 +293,26 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
         sys.exit(0)
 
     filename = args.file.strip()
-    valid_names = {ex.filename for ex in EXAMPLES}
-    if filename not in valid_names:
-        print(f"Error on {filename!r}. Not found among: {valid_names}")
+    examples_by_filename = {example.filename: example for example in EXAMPLES}
+    if filename not in examples_by_filename:
+        print(f"Error on {filename!r}. Not found among: {set(examples_by_filename)}")
         sys.exit(1)
 
-    if Path(filename).exists():
-        print(f"Error on {filename!r}. Already exists.")
+    example = examples_by_filename[filename]
+    destinations = [filename, *example.other_files]
+    existing_destinations = [
+        destination for destination in destinations if Path(destination).exists()
+    ]
+    if existing_destinations:
+        for destination in existing_destinations:
+            print(f"Error on {destination!r}. Already exists.")
         sys.exit(1)
 
     with as_file(EXAMPLES_DIR / filename) as source_path:
         shutil.copy(source_path, filename)
         print(f"Created file {filename!r}.")
 
-    examples_by_filename = {example.filename: example for example in EXAMPLES}
-    for other_file in examples_by_filename[filename].other_files:
+    for other_file in example.other_files:
         with as_file(EXAMPLES_DIR / other_file) as source_path:
             shutil.copy(source_path, other_file)
             print(f"  Created auxiliary file {other_file!r}.")
