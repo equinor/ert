@@ -105,5 +105,8 @@ class AnalysisModuleEdit(QWidget):
             self._es_settings.enkf_truncation = update_settings_dialog.enkf_truncation
             for name, strategy in update_settings_dialog.update_strategies.items():
                 for parameter_config in self._parameter_config:
-                    if parameter_config.type.upper() == name:
+                    if (
+                        parameter_config.type.upper() == name
+                        and parameter_config.update_strategy is not None
+                    ):
                         parameter_config.update_strategy = strategy

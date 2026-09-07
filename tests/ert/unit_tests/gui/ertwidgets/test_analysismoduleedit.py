@@ -50,6 +50,7 @@ def test_that_settings_are_updated_correctly(qtbot: QtBot):
     qtbot.addWidget(widget)
 
     def inspect_and_accept_dialog() -> None:
+
         dialog = QApplication.activeModalWidget()
         assert dialog is not None
         assert isinstance(dialog, QDialog)
@@ -74,6 +75,44 @@ def test_that_settings_are_updated_correctly(qtbot: QtBot):
     assert pytest.approx(es_settings.localization_correlation_threshold) == 0.7
     assert pytest.approx(es_settings.enkf_truncation) == 0.3
     assert widget._parameter_config[0].update_strategy == LocalizationType.ADAPTIVE
+
+
+def test_that_only_gen_kw_parameters_with_update_strategy_are_updated(qtbot: QtBot):
+    parameter_without_strategy = GenKwConfig(
+        name="without_strategy",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=None,
+    )
+    parameter_with_strategy = GenKwConfig(
+        name="with_strategy",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=LocalizationType.GLOBAL,
+    )
+
+    widget = AnalysisModuleEdit(
+        es_settings=ESSettings(),
+        parameter_config=[parameter_without_strategy, parameter_with_strategy],
+        ensemble_size=10,
+    )
+    qtbot.addWidget(widget)
+
+    def select_adaptive_strategy_and_accept_dialog() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+
+        panel = dialog.findChild(AnalysisModuleVariablesPanel)
+        assert panel is not None
+        panel._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
+        dialog.accept()
+
+    QTimer.singleShot(0, select_adaptive_strategy_and_accept_dialog)
+
+    button = widget.findChild(QPushButton)
+    assert button is not None
+    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+
+    assert parameter_without_strategy.update_strategy is None
+    assert parameter_with_strategy.update_strategy == LocalizationType.ADAPTIVE
 
 
 def test_that_settings_are_not_updated_on_cancel(qtbot: QtBot):
