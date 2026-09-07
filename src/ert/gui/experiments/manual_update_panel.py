@@ -37,6 +37,7 @@ class Arguments:
     target_ensemble: str
     ensemble_size: int
     experiment_name: str
+    parameter_configuration: list[ParameterConfig]
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -112,6 +113,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+            self.experiment_configuration_changed
+        )
 
         self._experiment_name_field = StringBox(
             TextModel(""),
@@ -130,19 +134,30 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             )
         )
 
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
-            self.experiment_configuration_changed
-        )
         self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
         self._ensemble_selector.ensemble_populated.connect(
             self.experiment_configuration_changed
         )
+        self._ensemble_selector.ensemble_populated.connect(
+            self._parameter_configuration_changed
+        )
+
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
+        self._ensemble_selector.currentIndexChanged.connect(
+            self._parameter_configuration_changed
+        )
+
         self.setLayout(layout)
 
     @property
     def selected_update_method(self) -> str:
         return self._update_method_dropdown.currentText()
+
+    def _parameter_configuration_changed(self) -> None:
+        if self._ensemble_selector.selected_ensemble is not None:
+            self._analysis_module_edit.parameter_config = list(
+                self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
+            )
 
     @Slot(str)
     def _on_update_method_changed(self, new_method: str) -> None:
@@ -171,6 +186,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
             experiment_name=self._experiment_name_field.get_text,
+            parameter_configuration=self._analysis_module_edit.parameter_config,
         )
 
     def _realizations_from_fs(self) -> None:

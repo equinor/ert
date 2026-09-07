@@ -44,6 +44,14 @@ class AnalysisModuleEdit(QWidget):
 
         self.setLayout(layout)
 
+    @property
+    def parameter_config(self) -> list[ParameterConfig]:
+        return self._parameter_config
+
+    @parameter_config.setter
+    def parameter_config(self, value: list[ParameterConfig]) -> None:
+        self._parameter_config = value
+
     def _show_update_settings_dialog(self) -> None:
         dialog = QDialog(self.parent())  # type: ignore
         dialog.setWindowTitle("Update settings")
