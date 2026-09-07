@@ -352,6 +352,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
             "Distribution",
             "Ensemble",
             "Histogram",
+            "Misfit map",
             "Statistics",
             "Std dev",
             "Misfits",
