@@ -319,7 +319,11 @@ def _setup_manual_update(
         ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
         experiment_name=args.experiment_name,
-        parameter_configuration=args.parameter_configuration,
+        parameter_configuration=getattr(
+            args,
+            "parameter_configuration",
+            config.ensemble_config.parameter_configuration,
+        ),
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -356,7 +360,7 @@ def _setup_manual_update_enif(
         ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
         experiment_name=args.experiment_name,
-        parameter_configuration=[],
+        parameter_configuration=args.parameter_configuration,
     )
     return ManualUpdateEnIF(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -490,7 +494,11 @@ def _setup_multiple_data_assimilation(
 
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
-        parameter_configs=args.parameter_configuration,
+        parameter_configs=getattr(
+            args,
+            "parameter_configuration",
+            config.ensemble_config.parameter_configuration,
+        ),
         require_updateable_param=True,
     )
 
