@@ -965,7 +965,7 @@ def _printing_workflow(tmp_path, name, script, *, stop_on_fail=False):
     )
 
 
-def test_that_run_workflows_sends_a_workflow_event_per_job(tmp_path, use_tmpdir):
+def test_that_run_workflows_sends_workflow_event_per_job(tmp_path, use_tmpdir):
     workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
     workflow.cmd_list.append(workflow.cmd_list[0])
     status_queue = SimpleQueue()
@@ -986,7 +986,7 @@ def test_that_run_workflows_sends_a_workflow_event_per_job(tmp_path, use_tmpdir)
     assert all(e.status is WorkflowJobStatus.SUCCESS for e in events)
 
 
-def test_that_a_workflow_event_is_sent_when_stop_on_fail_aborts_the_workflow(
+def test_that_workflow_event_is_sent_when_stop_on_fail_aborts_workflow(
     tmp_path, use_tmpdir
 ):
     workflow = _printing_workflow(
@@ -1009,7 +1009,7 @@ def test_that_a_workflow_event_is_sent_when_stop_on_fail_aborts_the_workflow(
     assert event.stdout == "printed before failing\n"
 
 
-def test_that_a_cancelled_job_and_its_unstarted_siblings_carry_the_workflow_name(
+def test_that_cancelled_job_and_unstarted_siblings_carry_workflow_name(
     use_tmpdir,
 ):
     """Regression test: a job interrupted by cancellation and the jobs after
@@ -1058,9 +1058,7 @@ def test_that_a_cancelled_job_and_its_unstarted_siblings_carry_the_workflow_name
     assert never_started_event.status is WorkflowJobStatus.CANCELLED
 
 
-def test_that_workflow_events_from_an_update_hook_carry_the_iteration(
-    tmp_path, use_tmpdir
-):
+def test_that_workflow_events_from_update_hook_carry_iteration(tmp_path, use_tmpdir):
     workflow = _printing_workflow(tmp_path, "hello", 'print("hello")')
     status_queue = SimpleQueue()
     brm = create_run_model(
@@ -1087,7 +1085,7 @@ def test_that_workflow_events_from_an_update_hook_carry_the_iteration(
     assert event.hook == "PRE_UPDATE"
 
 
-def test_that_workflow_output_is_appended_to_the_experiment_in_storage(
+def test_that_workflow_output_is_appended_to_experiment_in_storage(
     tmp_path, use_tmpdir
 ):
     workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
@@ -1116,7 +1114,7 @@ def test_that_workflow_output_is_appended_to_the_experiment_in_storage(
     assert event.stdout == "hello from workflow\n"
 
 
-def test_that_pre_experiment_output_is_persisted_once_an_experiment_exists(
+def test_that_pre_experiment_output_is_persisted_once_experiment_exists(
     tmp_path, use_tmpdir
 ):
     startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
@@ -1151,7 +1149,7 @@ def test_that_pre_experiment_output_is_persisted_once_an_experiment_exists(
     ]
 
 
-def test_that_a_failure_to_persist_workflow_events_does_not_stop_the_experiment(
+def test_that_failure_to_persist_workflow_events_does_not_stop_experiment(
     tmp_path, use_tmpdir, caplog
 ):
     workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
@@ -1207,7 +1205,7 @@ def test_that_pre_experiment_output_is_persisted_when_no_later_hook_has_workflow
     ]
 
 
-def test_that_starting_an_experiment_discards_workflow_output_from_the_previous_one(
+def test_that_starting_experiment_discards_workflow_output_from_previous_experiment(
     use_tmpdir,
 ):
     brm = create_run_model()
@@ -1223,7 +1221,7 @@ def test_that_starting_an_experiment_discards_workflow_output_from_the_previous_
     assert brm._workflow_run_id != previous_log_id
 
 
-def test_that_workflow_output_is_persisted_when_stop_on_fail_aborts_the_workflow(
+def test_that_workflow_output_is_persisted_when_stop_on_fail_aborts_workflow(
     tmp_path, use_tmpdir
 ):
     workflow = _printing_workflow(
@@ -1255,7 +1253,7 @@ def test_that_workflow_output_is_persisted_when_stop_on_fail_aborts_the_workflow
     ]
 
 
-def test_that_workflow_output_is_persisted_when_the_user_cancels_the_experiment(
+def test_that_workflow_output_is_persisted_when_user_cancels_experiment(
     tmp_path, use_tmpdir
 ):
     startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
@@ -1292,7 +1290,7 @@ def test_that_workflow_output_is_persisted_when_the_user_cancels_the_experiment(
     assert not skipped_event.stdout
 
 
-def test_that_workflows_hooked_after_a_cancelled_one_still_appear_as_cancelled(
+def test_that_workflows_hooked_after_cancelled_workflow_still_appear_as_cancelled(
     tmp_path, use_tmpdir
 ):
     """Regression test: when several workflows are hooked to the same
