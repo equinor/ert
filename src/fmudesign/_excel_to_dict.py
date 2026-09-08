@@ -12,6 +12,8 @@ import openpyxl
 import pandas as pd
 import yaml
 
+from ert.config.design_matrix import read_default_values
+
 from .general_input import GeneralInput
 from .read_background import read_background
 from .read_correlations import parse_sensitivity_correlations
@@ -152,7 +154,9 @@ def _excel_to_dict_onebyone(
         "seeds": rms_seeds,
         "correlation_iterations": general_input.correlation_iterations,
         "seed_strategy": general_input.seed_strategy,
-        "defaultvalues": _read_defaultvalues(input_filename, default_values_sheet),
+        "defaultvalues": read_default_values(
+            Path(input_filename), default_values_sheet, has_header=True
+        ),
         "sensitivities": {},
     }  # This is the config that we read and return
 
@@ -253,43 +257,6 @@ def _excel_to_dict_onebyone(
         output["sensitivities"][str(sensname)] = sensdict
 
     return output
-
-
-def _read_defaultvalues(filename: str, sheetname: str) -> dict[str, Any]:
-    """Reads defaultvalues, also used as values for
-    reference/base case
-
-    Args:
-        filename (str): Name of excel file
-        sheetname (string): name of defaultsheet
-
-    Returns:
-        dict with defaultvalues (parameter, value)
-    """
-    default_df = (
-        pd.read_excel(filename, sheetname, header=0, index_col=0, engine="openpyxl")
-        .dropna(axis=0, how="all")
-        # Drop all unnamed columns from the df
-        .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
-    )
-
-    if default_df.empty:
-        return {}
-
-    # Strip leading/trailing spaces from parameter names such that
-    # for example "  PARAM" and "PARAM" are treated as duplicates.
-    default_df.index = default_df.index.str.strip()
-
-    # Check for duplicates and raise error if found
-    duplicates = default_df.index.duplicated(keep=False)
-    if duplicates.any():
-        duplicate_names = default_df.index[duplicates].unique()
-        raise ValueError(
-            f"Duplicate parameter names found in sheet '{sheetname}': "
-            f"{', '.join(duplicate_names)}. All parameter names must be unique."
-        )
-
-    return {str(k): v for k, v in default_df.iloc[:, 0].to_dict().items()}
 
 
 def _read_dependencies(
