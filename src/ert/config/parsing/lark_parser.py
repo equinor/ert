@@ -192,13 +192,18 @@ def _tree_to_dict(
     errors = []
     cwd = os.path.dirname(os.path.abspath(config_file))
 
-    for node in tree.children:
+    for declaration_order, node in enumerate(tree.children):
         args: list[FileContextToken]
         kw: FileContextToken
         kw, *args = node  # type: ignore
         if kw not in schema:
             ConfigWarning.warn(f"Unknown keyword {kw!r}", kw)
             continue
+
+        kw.declaration_order = declaration_order
+        for arg in args:
+            if isinstance(arg, FileContextToken):
+                arg.declaration_order = declaration_order
 
         constraints = schema[kw]
         if kw != constraints.kw:  # is an alias
