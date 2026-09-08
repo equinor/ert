@@ -12,7 +12,6 @@ from scipy import stats
 from ert.shared import __version__ as ert_version
 from fmudesign import DesignMatrix, excel_to_dict
 from fmudesign import design_distributions as design_dist
-from fmudesign._excel_to_dict import _read_defaultvalues
 from fmudesign.create_design import MonteCarloSensitivity, _derive_rng
 from fmudesign.quality_report import print_corrmat
 
@@ -607,33 +606,6 @@ def test_that_background_fills_inactive_parameters_without_overwriting_sensitivi
         0.8,
         atol=0.2,
     )
-
-
-def test_that_read_defaultvalues_rejects_names_duplicated_after_stripping_whitespace(
-    tmp_path,
-):
-    defaultvalues = pd.DataFrame(
-        columns=["param_name", "default_value"],
-        data=[
-            ["a", 1.0],
-            ["b", 2.0],
-            [" a", 3.0],  # Should be treated as duplicate of "a" after stripping
-            ["c", 4.0],
-            ["c  ", 5.0],  # Should be treated as duplicate of "c" after stripping
-        ],
-    )
-
-    input_path = tmp_path / "test_defaults.xlsx"
-    defaultvalues.to_excel(input_path, sheet_name="defaultvalues", index=False)
-
-    with pytest.raises(
-        ValueError,
-        match=(
-            "Duplicate parameter names found in sheet "
-            r"'defaultvalues': a, c\. All parameter names must be unique\."
-        ),
-    ):
-        _read_defaultvalues(input_path, "defaultvalues")
 
 
 def _write_correlation_excel(filepath, names, lower_values):

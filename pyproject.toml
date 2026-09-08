@@ -81,6 +81,7 @@ dependencies = [
     "resfo-utilities>=1.1.0",
     "natsort>=8.4.0",
     "shapely>=2.1.2",
+    "python-calamine>=0.8.2",
 ]
 
 [project.scripts]
