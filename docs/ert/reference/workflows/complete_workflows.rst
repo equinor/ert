@@ -1,7 +1,7 @@
 .. _complete_workflows_chapter:
 
 Complete workflows
-===========
+==================
 
 A workflow is a list of calls to workflow jobs, with additional arguments. The
 job name should be the first element on each line. Based on the two
