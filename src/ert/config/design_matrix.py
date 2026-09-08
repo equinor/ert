@@ -10,6 +10,8 @@ import numpy as np
 import polars as pl
 from fastexcel import CalamineCellError, CalamineError
 from polars.exceptions import InvalidOperationError
+from python_calamine import CalamineError as PythonCalamineError
+from python_calamine import CalamineWorkbook
 
 from ert.config.parsing.config_errors import ConfigWarning
 
@@ -349,11 +351,13 @@ class DesignMatrix:
         design_matrix_df.columns = list(param_names)
 
         if self.default_sheet is not None:
-            defaults_to_use = DesignMatrix._read_defaultssheet(
-                self.xls_filename, self.default_sheet, design_matrix_df.columns
+            defaults = read_default_values(
+                self.xls_filename, self.default_sheet, has_header=False
             )
             design_matrix_df = design_matrix_df.with_columns(
-                pl.lit(value).alias(name) for name, value in defaults_to_use.items()
+                pl.lit(value).alias(name)
+                for name, value in defaults.items()
+                if name not in design_matrix_df.columns
             )
 
         if "realization" in design_matrix_df.schema:
@@ -446,79 +450,58 @@ class DesignMatrix:
                 errors.append(f"Numeric parameter name found in column {column_num}.")
         return errors
 
-    @staticmethod
-    def _read_defaultssheet(
-        xls_filename: Path,
-        defaults_sheetname: str,
-        existing_parameters: list[str],
-    ) -> dict[str, str | float | int]:
-        """
-        Construct a dict of keys and values to be used as defaults from the
-        first two columns in a spreadsheet. Only returns the keys that are
-        different from the existing parameters.
 
-        Returns a dict of default values
+def read_default_values(
+    xls_filename: Path, sheet_name: str, *, has_header: bool
+) -> dict[str, str | float | int | bool]:
+    """
+    Construct a dict of keys and values to be used as defaults from the
+    first two columns in a spreadsheet.
+    """
+    try:
+        with CalamineWorkbook.from_path(xls_filename) as workbook:
+            rows = workbook.get_sheet_by_name(sheet_name).to_python(
+                skip_empty_area=False
+            )
+    except PythonCalamineError as err:
+        raise ValueError(
+            f"The default sheet '{sheet_name}' in '{xls_filename}' "
+            f"could not be read: {err}"
+        ) from err
 
-        :raises: ValueError if defaults sheet is non-empty but non-parsable
-        """
-        default_df = _read_excel(
-            lambda: pl.read_excel(
-                xls_filename,
-                sheet_name=defaults_sheetname,
-                has_header=False,
-                drop_empty_cols=True,
-                drop_empty_rows=False,
-                raise_if_empty=False,
-                # `has_header=False` and `skip_rows` anchor the read at an
-                # absolute spreadsheet row. Without it the reader trims blank
-                # rows above the first non-empty row, which would shift the
-                # reported row numbers.
-                read_options={"dtypes": "string", "skip_rows": 0},
-            ),
-            f"Default sheet '{defaults_sheetname}'",
-        )
-        # The defaults sheet has no header row, so the first row read
-        # corresponds to row 1 in the spreadsheet.
-        default_df, excel_row_numbers = _drop_empty_rows(default_df, first_excel_row=1)
-        if default_df.is_empty():
-            return {}
-        if len(default_df.columns) < 2:
+    defaults: dict[str, str | float | int | bool] = {}
+    empty_cells: list[str] = []
+    duplicate_names = False
+    for row_number, row in enumerate(
+        rows[int(has_header) :], start=1 + int(has_header)
+    ):
+        if all(isinstance(cell, str) and not cell for cell in row):
+            continue
+        if len(row) < 2:
             raise ValueError("Defaults sheet must have at least two columns")
-        default_df = default_df.select(pl.nth(0, 1)).with_columns(
-            pl.nth(0, 1).str.strip_chars()
-        )
-        default_df = default_df.with_columns(
-            [
-                pl.when(
-                    pl.col(col)
-                    .str.to_lowercase()
-                    .is_in(DesignMatrix.DISALLOWED_CELL_VALUES)
-                )
-                .then(None)
-                .otherwise(pl.col(col))
-                .alias(col)
-                for col in default_df.columns
-            ]
-        )
-        empty_cells = [
-            f"Row {excel_row_numbers[i]}, column {j}"
-            for i, j in zip(
-                *np.where(default_df.select(pl.all().is_null())), strict=False
-            )
-        ]
-        if len(empty_cells) > 0:
-            raise ValueError(
-                "Default sheet contains empty cells or cells with a "
-                f"disallowed value {empty_cells}"
-            )
-        if default_df.select(pl.nth(0)).is_duplicated().any():
-            raise ValueError("Default sheet contains duplicate parameter names")
 
-        return {
-            row[0]: convert_to_numeric(row[1])
-            for row in default_df.iter_rows()
-            if row[0] not in existing_parameters
-        }
+        name = str(row[0]).strip()
+        value = row[1]
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        elif not isinstance(value, (int, float)):
+            value = convert_to_numeric(str(value).strip())
+        empty_cells.extend(
+            f"Row {row_number}, column {column}"
+            for column, cell in enumerate((name, value))
+            if str(cell).lower() in DesignMatrix.DISALLOWED_CELL_VALUES
+        )
+        duplicate_names |= name in defaults
+        defaults[name] = value
+
+    if empty_cells:
+        raise ValueError(
+            "Default sheet contains empty cells or cells with a "
+            f"disallowed value {empty_cells}"
+        )
+    if duplicate_names:
+        raise ValueError("Default sheet contains duplicate parameter names")
+    return defaults
 
 
 def _drop_empty_rows(

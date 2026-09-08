@@ -11,7 +11,7 @@ from ert.config import (
     DesignMatrix,
     GenKwConfig,
 )
-from ert.config.design_matrix import DESIGN_MATRIX_GROUP
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP, read_default_values
 from ert.config.parsing.config_errors import ConfigWarning
 from tests.ert.conftest import _create_design_matrix
 
@@ -544,6 +544,30 @@ def test_default_values_used(tmp_path):
     )
 
 
+def test_that_default_values_preserve_numeric_precision_and_scalar_types(tmp_path):
+    expected = {
+        "tiny": 1e-10,
+        "precise": 1.234567890123,
+        "enabled": True,
+        "disabled": False,
+        "boolean_text": "true",
+        "zero": 0,
+        "iterations": 42,
+        "offset": -3,
+    }
+    design_path = tmp_path / "defaults.xlsx"
+    with Workbook(design_path) as workbook:
+        sheet = workbook.add_worksheet("DefaultSheet")
+        for row, values in enumerate(expected.items()):
+            sheet.write_row(row, 0, values)
+
+    actual = read_default_values(design_path, "DefaultSheet", has_header=False)
+
+    assert actual == expected
+    for name, value in expected.items():
+        assert type(actual[name]) is type(value), name
+
+
 def test_whitespace_is_stripped_from_string_parameters(tmp_path):
     design_path = tmp_path / "design_matrix.xlsx"
     design_matrix_df = pl.DataFrame(
@@ -669,6 +693,14 @@ def test_that_default_sheet_excel_error_cells_raise_config_validation_error(tmp_
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
 
 
+def test_that_missing_default_sheet_raises_config_validation_error(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _write_sheets(design_path, design_rows=[("REAL", "a"), (0, 1)])
+
+    with pytest.raises(ConfigValidationError, match="MissingDefaults"):
+        DesignMatrix(design_path, "DesignSheet", "MissingDefaults")
+
+
 def _write_sheets(
     design_path, design_rows, default_rows=(("dummy_default", 1),)
 ) -> None:
@@ -754,9 +786,6 @@ def test_that_blank_rows_are_dropped_without_error(tmp_path):
 def test_that_blank_rows_above_the_data_do_not_shift_reported_rows_in_default_sheet(
     tmp_path, leading_blank_rows
 ):
-    """Both sheets anchor their read with ``skip_rows``, so the reported row
-    numbers stay correct even when the data does not start in row 1.
-    """
     design_path = tmp_path / "design_matrix.xlsx"
     blank = [(None, None)] * leading_blank_rows
     _write_sheets(
