@@ -14,9 +14,9 @@ from urllib.parse import quote
 import httpx
 import numpy as np
 import numpy.typing as npt
-import polars as pl
+import pandas as pd
 
-from .shared_client import Methods, SharedClient
+from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
 
 DEFAULT_TIMEOUT = 120
 DEFAULT_CACHE_SIZE = 256
@@ -31,9 +31,8 @@ def _escape(value: str) -> str:
 
 
 def _uncached_copy[T](value: T) -> T:
-    """Polars frames are cheap to clone, and callers must not reach the cached one."""
-    if isinstance(value, pl.DataFrame):
-        return cast("T", value.clone())
+    if isinstance(value, pd.DataFrame):
+        return cast("T", value.copy())
     return deepcopy(value)
 
 
@@ -81,8 +80,8 @@ def _checked(response: httpx.Response) -> httpx.Response:
     return response
 
 
-def _response_to_parquet(response: httpx.Response) -> pl.DataFrame:
-    return pl.read_parquet(io.BytesIO(response.content))
+def _response_to_parquet(response: httpx.Response) -> pd.DataFrame:
+    return pd.read_parquet(io.BytesIO(response.content))
 
 
 class ErtClient:
@@ -125,6 +124,10 @@ class ErtClient:
     def client(self) -> SharedClient:
         return self._client
 
+    @property
+    def conn_info(self) -> ErtClientConnectionInfo:
+        return self._client.conn_info
+
     def clear_cache(self) -> None:
         with self._cache_lock:
             self._cache.clear()
@@ -149,11 +152,11 @@ class ErtClient:
     def ensemble_blob(self, ensemble_id: str, uri: str) -> bytes:
         return self._get(f"/ensembles/{ensemble_id}/blobs/{_escape(uri)}").content
 
-    def parameter(self, ensemble_id: str, parameter_key: str) -> pl.DataFrame:
+    def parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
         return self._parameter(ensemble_id, parameter_key)
 
     @_cached
-    def _parameter(self, ensemble_id: str, parameter_key: str) -> pl.DataFrame:
+    def _parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
         return _response_to_parquet(
             self._get(
                 f"/ensembles/{ensemble_id}/parameters/{_escape(parameter_key)}",
@@ -178,7 +181,7 @@ class ErtClient:
         ensemble_id: str,
         response_key: str,
         filter_on: dict[str, Any] | None = None,
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
         return _response_to_parquet(
             self._get(
                 f"/ensembles/{ensemble_id}/responses/{_escape(response_key)}",
@@ -187,11 +190,11 @@ class ErtClient:
             )
         )
 
-    def gradient(self, ensemble_id: str, response_key: str) -> pl.DataFrame:
+    def gradient(self, ensemble_id: str, response_key: str) -> pd.DataFrame:
         return self._gradient(ensemble_id, response_key)
 
     @_cached
-    def _gradient(self, ensemble_id: str, response_key: str) -> pl.DataFrame:
+    def _gradient(self, ensemble_id: str, response_key: str) -> pd.DataFrame:
         return _response_to_parquet(
             self._request(
                 "GET",

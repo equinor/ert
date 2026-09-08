@@ -283,7 +283,9 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
 
     # Verify that all examples in EXAMPLES_DIR exist on disk
     for example in EXAMPLES:
-        assert (EXAMPLES_DIR / example.filename).is_file()
+        assert (EXAMPLES_DIR / example.filename).is_file(), (
+            f"Example file '{example.filename}' does not exist"
+        )
 
     # No files were provided
     if not args.file:

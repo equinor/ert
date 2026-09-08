@@ -7,6 +7,7 @@ import pytest
 import yaml
 from ruamel.yaml import YAML
 
+from ert.services import SharedClient
 from ert.storage import ExperimentState
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
@@ -80,6 +81,10 @@ def test_everest_entry_run(cached_example):
     assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)
 
     assert optimal.objectives["distance"] == pytest.approx(0.0, abs=0.0005)
+
+    # `everest run` and `everest monitor` are separate processes in real usage, so
+    # drop the client that `run` bound to the now-stopped server.
+    SharedClient.close_client()
 
     with capture_streams():
         start_everest(["everest", "monitor", config_file])

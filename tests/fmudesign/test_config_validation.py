@@ -15,7 +15,7 @@ def _minimal_config(**extra):
     }
 
 
-def test_seed_strategy_defaults_to_joint():
+def test_that_seed_strategy_defaults_to_joint():
     cfg = validate_configuration(_minimal_config())
     assert cfg["seed_strategy"] is SeedStrategy.JOINT
 
@@ -31,12 +31,12 @@ def test_seed_strategy_defaults_to_joint():
         ("None", SeedStrategy.JOINT),
     ],
 )
-def test_seed_strategy_is_normalized(value, expected):
+def test_that_seed_strategy_input_is_normalized_to_enum(value, expected):
     cfg = validate_configuration(_minimal_config(seed_strategy=value))
     assert cfg["seed_strategy"] is expected
 
 
 @pytest.mark.parametrize("value", ["bogus", ["independent"], {"joint": 1}, 5, 1.5])
-def test_invalid_seed_strategy_raises_value_error(value):
+def test_that_invalid_seed_strategy_raises_value_error(value):
     with pytest.raises(ValueError, match="seed_strategy"):
         validate_configuration(_minimal_config(seed_strategy=value))

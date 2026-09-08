@@ -25,7 +25,9 @@ def _run_cli(*args):
     )
 
 
-def test_prediction_rejection_sampled_ensemble(tmp_path):
+def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
+    tmp_path,
+):
     general_input = pd.DataFrame(
         data=[
             ["designtype", "onebyone"],
@@ -88,7 +90,9 @@ def test_prediction_rejection_sampled_ensemble(tmp_path):
 @pytest.mark.parametrize(
     "gen_input_sheet", ["general_input", "General_Input", "GENERALINPUT"]
 )
-def test_constant_distribution(tmp_path, gen_input_sheet):
+def test_that_constant_distribution_generates_identical_parameter_values(
+    tmp_path, gen_input_sheet
+):
     general_input = pd.DataFrame(
         data=[
             ["designtype", "onebyone"],
@@ -130,7 +134,9 @@ def test_constant_distribution(tmp_path, gen_input_sheet):
 
 @pytest.mark.slow
 @pytest.mark.parametrize("verbosity", [1, 2])
-def test_cli_verbosity_levels(tmp_path, monkeypatch, verbosity):
+def test_that_cli_verbosity_controls_sensitivity_plot_generation(
+    tmp_path, monkeypatch, verbosity
+):
     monkeypatch.chdir(tmp_path)
     designfile = "ex4_background_parameters.xlsx"
     _run_cli("init", designfile)
@@ -148,7 +154,9 @@ def test_cli_verbosity_levels(tmp_path, monkeypatch, verbosity):
 
 
 @pytest.mark.slow
-def test_advanced_example_excel_parsing(tmp_path, monkeypatch):
+def test_that_advanced_examples_preserve_correlations_and_dependencies(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     _run_cli("init", "ex2_correlations.xlsx")
     _run_cli("init", "ex8_mc_with_correls.xlsx")
@@ -185,7 +193,9 @@ def test_advanced_example_excel_parsing(tmp_path, monkeypatch):
 
 @pytest.mark.slow
 @pytest.mark.parametrize("designfile", EXAMPLE_FILES, ids=EXAMPLE_FILES)
-def test_all_example_files_cmd_init(tmp_path, monkeypatch, designfile):
+def test_that_each_example_initializes_and_generates_a_design_matrix(
+    tmp_path, monkeypatch, designfile
+):
     monkeypatch.chdir(tmp_path)
     _run_cli("init", designfile)
     _run_cli("run", designfile)

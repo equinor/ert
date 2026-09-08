@@ -47,7 +47,7 @@ TEXT_STRIPPED_OR_NONE = st.one_of(TEXT_STRIPPED_NOT_NUMERIC, st.none())
     "required_key",
     (key for key, info in GeneralInput.model_fields.items() if info.is_required()),
 )
-def test_that_missing_required_keys_raises_validation_error(required_key):
+def test_that_missing_required_key_raises_validation_error(required_key):
     general_input_dict = base_general_input_dict()
     general_input_dict.pop(required_key)
     with pytest.raises(ValidationError):
@@ -58,13 +58,13 @@ def test_that_missing_required_keys_raises_validation_error(required_key):
     "optional_key",
     (key for key, info in GeneralInput.model_fields.items() if not info.is_required()),
 )
-def test_that_missing_optional_keys_does_not_raise_validation_error(optional_key):
+def test_that_missing_optional_key_does_not_raise_validation_error(optional_key):
     general_input_dict = base_general_input_dict()
     general_input_dict.pop(optional_key)
     GeneralInput.from_dict(general_input_dict)
 
 
-def test_that_extra_key_raises_value_error():
+def test_that_extra_key_raises_validation_error():
     extra = {"extra_key": "foo"}
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         GeneralInput.from_dict(base_general_input_dict() | extra)
@@ -76,7 +76,7 @@ def test_that_designtype_onebyone_is_accepted():
 
 
 @given(TEXT_STRIPPED)
-def test_that_other_design_types_than_onebyone_raises_validation_error(text):
+def test_that_design_type_other_than_onebyone_raises_validation_error(text):
     assume(text != "onebyone")
     general_input_dict = base_general_input_dict() | {"designtype": text}
     with pytest.raises(ValueError, match="Input should be 'onebyone'"):
@@ -84,7 +84,7 @@ def test_that_other_design_types_than_onebyone_raises_validation_error(text):
 
 
 @given(st.integers(min_value=1, max_value=10000))
-def test_that_positive_int_repeats_is_accepted(positive_int):
+def test_that_positive_integer_string_is_accepted_for_repeats(positive_int):
     general_input_dict = base_general_input_dict() | {"repeats": str(positive_int)}
     result = GeneralInput.from_dict(general_input_dict)
     assert result.repeats == positive_int
@@ -133,7 +133,7 @@ def test_that_negative_distribution_seed_raises_validation_error(value):
 
 
 @given(TEXT_STRIPPED_NOT_NUMERIC)
-def test_that_invalid_distribution_seed_types_raises_validation_error(
+def test_that_non_numeric_distribution_seed_raises_validation_error(
     invalid_distribution_seed,
 ):
     general_input_dict = base_general_input_dict() | {
@@ -165,7 +165,7 @@ def test_that_rms_seeds_existing_file_is_accepted(use_tmpdir):
     assert result.rms_seeds == Path(seeds_file_name).resolve()
 
 
-def test_that_rms_seeds_non_existing_file_raises(use_tmpdir):
+def test_that_non_existing_rms_seeds_file_raises_validation_error(use_tmpdir):
     seeds_file_name = "seeds.csv"
     general_input_dict = base_general_input_dict() | {
         "rms_seeds": seeds_file_name,
@@ -174,7 +174,7 @@ def test_that_rms_seeds_non_existing_file_raises(use_tmpdir):
         GeneralInput.from_dict(general_input_dict)
 
 
-def test_that_rms_seeds_from_extern_csv_file_in_subdirectory_is_accepted(use_tmpdir):
+def test_that_rms_seeds_file_is_resolved_relative_to_input_file(use_tmpdir):
     subdir = Path("subdir")
     subdir.mkdir()
     seeds_file_name = "seeds.csv"
@@ -198,7 +198,7 @@ def test_that_invalid_rms_seeds_types_raises_validation_error(invalid_rms_seeds)
         GeneralInput.from_dict(general_input_dict)
 
 
-def test_that_rms_seeds_from_external_txt_file_is_resolved(use_tmpdir):
+def test_that_rms_seeds_txt_file_is_resolved_to_absolute_path(use_tmpdir):
     seeds_file_name = "seeds.txt"
     Path(seeds_file_name).write_text("1\n2\n3", encoding="utf-8")
     gi = GeneralInput.from_dict(
@@ -230,7 +230,7 @@ def test_that_non_negative_correlation_iterations_is_accepted(value):
 
 
 @given(TEXT_STRIPPED_NOT_NUMERIC)
-def test_that_invalid_correlation_iterations_raises_validation_error(
+def test_that_non_numeric_correlation_iterations_raises_validation_error(
     invalid_correlation_iterations,
 ):
     general_input_dict = base_general_input_dict() | {
@@ -261,7 +261,7 @@ def test_that_missing_seed_strategy_defaults_to_joint():
     assert result.seed_strategy == SeedStrategy.JOINT
 
 
-def test_that_seed_strategy_defaults_to_string_type():
+def test_that_default_seed_strategy_has_string_type():
     general_input_dict = base_general_input_dict()
     general_input_dict.pop("seed_strategy")
     result = GeneralInput.from_dict(general_input_dict)
@@ -325,12 +325,7 @@ def test_that_non_existing_background_csv_path_is_accepted_as_str():
     assert result.background == bg_file
 
 
-def test_that_background_file_with_rel_path_to_input_file_is_resolved_to_path_from_cwd(
-    use_tmpdir,
-):
-    """Tests that background file with relative path to input_filename is resolved
-    to path.
-    """
+def test_that_background_path_is_resolved_relative_to_input_file(use_tmpdir):
     subdir = Path("subdir")
     subdir.mkdir()
     input_file = subdir / "input.csv"
@@ -357,7 +352,7 @@ def test_that_background_path_is_serialized_as_string(use_tmpdir):
     assert isinstance(gi.model_dump()["background"], str)
 
 
-def test_that_serialize_paths_doesnt_fail_given_none():
+def test_that_serializing_none_background_preserves_none():
     gi = GeneralInput.from_dict(base_general_input_dict())
     assert gi.model_dump()["background"] is None
 
@@ -373,7 +368,7 @@ def _rows_to_xlsx_bytestream(rows: list[list[Any]]) -> BytesIO:
     return excel_stream
 
 
-def test_that_columns_in_excel_is_reduced_to_first_two_in_read_general_input():
+def test_that_read_general_input_ignores_excel_columns_after_first_two():
     rows = [
         ["designtype", "onebyone", "third_column", "fourth_column"],
         ["repeats", 10, "third_column", "fourth_column"],
@@ -392,7 +387,7 @@ def test_that_columns_in_excel_is_reduced_to_first_two_in_read_general_input():
     }
 
 
-def test_that_empty_rows_in_excel_is_filtered_out_in_read_general_input():
+def test_that_read_general_input_filters_empty_excel_rows():
     empty_row = ["", ""]
     rows = [
         empty_row,
@@ -433,10 +428,7 @@ def test_that_empty_rows_in_excel_is_filtered_out_in_read_general_input():
         "NaN",
     ],
 )
-def test_that_none_rows_in_excel_is_filtered_out_in_read_general_input(none_like):
-    """This tests that various none like values are interpreted as None and filtered
-    out when the keyword to the corresponding value is an empty cell.
-    """
+def test_that_read_general_input_filters_empty_keys_with_none_like_values(none_like):
     empty_cell = ""
     rows = [["foo", "bar"], [empty_cell, none_like]]
 
@@ -447,7 +439,7 @@ def test_that_none_rows_in_excel_is_filtered_out_in_read_general_input(none_like
 
 
 @pytest.mark.parametrize("none_like", ["none", "None", "NONE", "null", "NULL"])
-def test_that_none_keyword_in_excel_is_not_cast_to_none_type(none_like):
+def test_that_read_general_input_preserves_none_like_excel_keys(none_like):
     rows = [
         ["designtype", "onebyone"],
         [none_like, "none"],
@@ -459,7 +451,7 @@ def test_that_none_keyword_in_excel_is_not_cast_to_none_type(none_like):
     assert result[none_like] is None
 
 
-def test_that_empty_keyword_cell_in_excel_is_cast_to_empty_string():
+def test_that_read_general_input_preserves_empty_excel_key_as_empty_string():
     rows = [
         ["designtype", "onebyone"],
         ["", "foo"],
@@ -483,7 +475,7 @@ def test_that_empty_keyword_cell_in_excel_is_cast_to_empty_string():
 )
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.slow
-def test_that_from_xlsx_produce_general_input_with_excel_values(
+def test_that_from_xlsx_constructs_general_input_from_excel_values(
     repeats,
     distribution_seed,
     rms_seeds,

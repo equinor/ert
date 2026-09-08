@@ -151,6 +151,11 @@ class PlotWidget(QWidget):
         self.resetPlot()
 
     def resetPlot(self) -> None:
+        # Some figures contain twinaxes
+        # Resetting the xscale to linear for all axes
+        # to avoid log scale issues when re-plotting after a log scale plot
+        for ax in self._figure.axes:
+            ax.set_xscale("linear")
         self._figure.clear()
 
     @property

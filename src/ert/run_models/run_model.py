@@ -702,8 +702,6 @@ class RunModel(RunModelConfig, ABC):
             self._max_parallelism_violation, evaluator.max_parallelism_violation
         )
 
-        logger.debug("tasks complete")
-
         if self._end_event.is_set():
             logger.debug("Run model cancelled - post evaluation")
             try:
@@ -837,6 +835,7 @@ class RunModel(RunModelConfig, ABC):
             workflow_runner = WorkflowRunner(
                 workflow=workflow,
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                hook=str(fixtures.hook),
             )
             self._workflow_runner = workflow_runner
             try:

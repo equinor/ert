@@ -87,7 +87,7 @@ class MultipleDataAssimilation(
             "Running ES-MDA with relative weights: %s", self.analysis_settings.weights
         )
         if rerun_failed_realizations:
-            raise ErtRunError("ESMDA does not support restart")
+            raise ErtRunError("ESMDA does not support rerunning failed realizations")
 
         target_experiment = None
 

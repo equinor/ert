@@ -20,7 +20,6 @@ from pytestqt.qtbot import QtBot
 from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
-from ert.gui.plotting.ert_plots.gaussian_kde import plotGaussianKDE
 from ert.gui.plotting.ert_plots.histogram import HistogramPlot
 from ert.gui.plotting.models import DataTypeSeparator
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
@@ -34,7 +33,6 @@ from ert.gui.plotting.utils.plot_maps import (
     DISTRIBUTION,
     ENSEMBLE,
     ERT_PLOT_MAP,
-    GAUSSIAN_KDE,
     HISTOGRAM,
     STATISTICS,
 )
@@ -257,14 +255,12 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
         plot_api_key_def_negative,
     ]
 
-    def mock_data_for_parameter(
-        ensemble_id: str, parameter_key: str, ens_path: Path
-    ) -> pd.DataFrame:
+    def mock_data_for_parameter(ensemble_id: str, parameter_key: str) -> pd.DataFrame:
         if parameter_key == "gen_kw_a":
             return pd.DataFrame({0: [0.1, 0.5, 0.9]})
         return pd.DataFrame({0: [-0.1, -0.5, -0.9]})
 
-    mock_plot_api_cls.data_for_parameter.side_effect = mock_data_for_parameter
+    mock_plot_api.data_for_parameter.side_effect = mock_data_for_parameter
     mock_plot_api.has_history_data.return_value = False
 
     mock_plot_api.get_all_ensembles.return_value = [
@@ -645,9 +641,7 @@ def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
 
     mock_plot_api.responses_api_key_defs = []
     mock_plot_api.parameters_api_key_defs = [key_def]
-    mock_plot_api_cls.data_for_parameter.return_value = pd.DataFrame(
-        {0: [0.1, 0.5, 0.9]}
-    )
+    mock_plot_api.data_for_parameter.return_value = pd.DataFrame({0: [0.1, 0.5, 0.9]})
     mock_plot_api.has_history_data.return_value = False
     mock_plot_api.get_all_ensembles.return_value = [
         EnsembleObject(
@@ -673,7 +667,7 @@ def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
     histogram_index = tab_index_by_name[HISTOGRAM]
     assert plot_window._central_tab.isTabEnabled(histogram_index)
 
-    log_scale_tabs = {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE}
+    log_scale_tabs = {HISTOGRAM, DISTRIBUTION}
     non_log_scale_index = next(
         index
         for index in range(plot_window._central_tab.count())
@@ -792,15 +786,15 @@ def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_i
 
     _select_data_type_key(plot_window, "gen_kw")
     plot_window._central_tab.setCurrentWidget(
-        plot_window._find_widget_by_name(GAUSSIAN_KDE)
+        plot_window._find_widget_by_name(HISTOGRAM)
     )
 
     _select_data_type_key(plot_window, "POLY_RES")
     _select_data_type_key(plot_window, "gen_kw")
-    assert _current_tab_name(plot_window) == GAUSSIAN_KDE
+    assert _current_tab_name(plot_window) == HISTOGRAM
 
 
-@pytest.mark.parametrize("tab_name", [HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE])
+@pytest.mark.parametrize("tab_name", [HISTOGRAM, DISTRIBUTION])
 @pytest.mark.parametrize(
     ("values", "expected_visible"),
     [
@@ -842,7 +836,7 @@ def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
 
     mock_plot_api.responses_api_key_defs = []
     mock_plot_api.parameters_api_key_defs = [key_def]
-    mock_plot_api_cls.data_for_parameter.return_value = pd.DataFrame({0: values})
+    mock_plot_api.data_for_parameter.return_value = pd.DataFrame({0: values})
     mock_plot_api.has_history_data.return_value = False
     mock_plot_api.get_all_ensembles.return_value = [
         EnsembleObject(
@@ -914,7 +908,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
     mock_plot_api.parameters_api_key_defs = [plot_api_key_def]
 
     def mixed_dtype_data_for_parameter(
-        ensemble_id: str, parameter_key: str, ens_path: Path
+        ensemble_id: str, parameter_key: str
     ) -> pd.DataFrame:
         assert parameter_key == "animal_type"
         return pd.DataFrame(
@@ -923,7 +917,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
             }
         )
 
-    mock_plot_api_cls.data_for_parameter.side_effect = mixed_dtype_data_for_parameter
+    mock_plot_api.data_for_parameter.side_effect = mixed_dtype_data_for_parameter
     mock_plot_api.has_history_data.return_value = False
     mock_plot_api.get_all_ensembles.return_value = [
         EnsembleObject(
@@ -941,29 +935,6 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
 
     # This is the call that previously crashed with TypeError.
     plot_window.update_plot()
-
-
-def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():
-    ensemble = EnsembleObject(
-        "ensemble",
-        "ensemble",
-        False,
-        "experiment",
-        "2026-01-01T00:00:00",
-    )
-    categorical_df = pd.DataFrame({0: ["cat", "dog", "fish"], 1: [12, 12, 12]})
-
-    fig = Figure()
-    ctx = PlotContext(
-        PlotConfig(),
-        ensembles=[ensemble],
-        ensembles_color_indexes=[0],
-        key="animal_type",
-        layer=None,
-    )
-
-    # Should not raise (categorical data is simply skipped).
-    plotGaussianKDE(fig, ctx, {ensemble: categorical_df}, _observation_data=None)
 
 
 @pytest.mark.parametrize(
@@ -1345,9 +1316,7 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
             "2026-01-01T00:00:00",
         )
     ]
-    mock_plot_api_cls.data_for_parameter.return_value = pd.DataFrame(
-        {0: [1.0, 2.0, 3.0]}
-    )
+    mock_plot_api.data_for_parameter.return_value = pd.DataFrame({0: [1.0, 2.0, 3.0]})
     mock_plot_api.has_history_data.return_value = False
 
     monkeypatch.setattr(
