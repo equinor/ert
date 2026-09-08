@@ -88,6 +88,17 @@ Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW`
 keyword.
 
+Workflows hooked to the same point run in the order they are declared in the
+config file. This also holds when :code:`HOOK_WORKFLOW` and
+:code:`HOOK_WORKFLOW_JOB` are mixed, so a workflow that depends on the output
+of another one only needs to be declared after it::
+
+   HOOK_WORKFLOW_JOB first_workflow MY_JOB PRE_SIMULATION
+   LOAD_WORKFLOW second_workflow
+   HOOK_WORKFLOW second_workflow PRE_SIMULATION
+
+Here :code:`first_workflow` runs before :code:`second_workflow`.
+
 Workflow logs with output from job execution can be found in the terminal where ERT was
 started.
 

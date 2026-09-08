@@ -2972,6 +2972,103 @@ def test_that_hook_workflow_job_registers_and_hooks_workflow(ert_config_with_job
     assert ert_config.workflows["my_wf"] in ert_config.hooked_workflows[mode]
 
 
+@pytest.mark.parametrize(
+    ("hook_lines_in_config_order", "expected_hook_order"),
+    [
+        pytest.param(
+            [
+                "HOOK_WORKFLOW_JOB inline_wf MY_JOB PRE_SIMULATION",
+                "HOOK_WORKFLOW loaded_wf PRE_SIMULATION",
+            ],
+            ["inline_wf", "loaded_wf"],
+            id="hook_workflow_job_declared_before_hook_workflow",
+        ),
+        pytest.param(
+            [
+                "HOOK_WORKFLOW loaded_wf PRE_SIMULATION",
+                "HOOK_WORKFLOW_JOB inline_wf MY_JOB PRE_SIMULATION",
+            ],
+            ["loaded_wf", "inline_wf"],
+            id="hook_workflow_declared_before_hook_workflow_job",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hooked_workflows_are_ordered_by_position_in_config_file(
+    ert_config_with_job, hook_lines_in_config_order, expected_hook_order
+):
+    Path("loaded_wf").write_text("MY_JOB\n", encoding="utf-8")
+    hook_lines = "\n".join(hook_lines_in_config_order)
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        LOAD_WORKFLOW loaded_wf
+        {hook_lines}
+        """)
+    )
+
+    hooked_workflows = ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]
+    actual_hook_order = [Path(wf.src_file).name for wf in hooked_workflows]
+    assert actual_hook_order == expected_hook_order
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hooked_workflows_across_include_are_ordered_by_declaration(
+    ert_config_with_job,
+):
+    """A hook declared in an INCLUDE'd file must keep its position relative to
+    hooks declared directly in the including config file, not be reordered to
+    the position of the INCLUDE line itself or grouped by keyword.
+    """
+    Path("included.ert").write_text(
+        dedent("""
+        LOAD_WORKFLOW loaded_wf
+        HOOK_WORKFLOW loaded_wf PRE_SIMULATION
+        """),
+        encoding="utf-8",
+    )
+    Path("loaded_wf").write_text("MY_JOB\n", encoding="utf-8")
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent("""
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB inline_wf_before MY_JOB PRE_SIMULATION
+        INCLUDE included.ert
+        HOOK_WORKFLOW_JOB inline_wf_after MY_JOB PRE_SIMULATION
+        """)
+    )
+
+    hooked_workflows = ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]
+    actual_hook_order = [Path(wf.src_file).name for wf in hooked_workflows]
+    assert actual_hook_order == ["inline_wf_before", "loaded_wf", "inline_wf_after"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hooked_workflows_are_ordered_when_name_uses_a_define(
+    ert_config_with_job,
+):
+    """A hook whose name is built from a DEFINE must keep its declared
+    position, not fall back to the front because the substitution replaced
+    its underlying token with a new one.
+    """
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent("""
+        DEFINE <WF_SUFFIX> substituted
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB before_wf MY_JOB PRE_SIMULATION
+        HOOK_WORKFLOW_JOB inline_wf_<WF_SUFFIX> MY_JOB PRE_SIMULATION
+        HOOK_WORKFLOW_JOB after_wf MY_JOB PRE_SIMULATION
+        """)
+    )
+
+    hooked_workflows = ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]
+    actual_hook_order = [Path(wf.src_file).name for wf in hooked_workflows]
+    assert actual_hook_order == [
+        "before_wf",
+        "inline_wf_substituted",
+        "after_wf",
+    ]
+
+
 def test_that_create_workflow_from_job_with_unknown_job_name_raises_error():
     with pytest.raises(
         ConfigValidationError,
