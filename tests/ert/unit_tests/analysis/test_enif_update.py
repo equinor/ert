@@ -1,9 +1,35 @@
 import networkx as nx
 import numpy as np
 import pytest
+import scipy as sp
 
-from ert.analysis._enif_update import compute_nan_masks, prune_nan_nodes
+from ert.analysis._enif_update import (
+    _compute_kalman_gain,
+    compute_nan_masks,
+    prune_nan_nodes,
+)
 from ert.config import SurfaceConfig
+
+
+def test_that_kalman_gain_uses_posterior_parameter_precision():
+    H = sp.sparse.csc_array([[1.0, 2.0], [0.0, 1.0]])
+    residual_precision = sp.sparse.diags_array([3.0, 5.0], format="csc")
+    prior_precision = sp.sparse.csc_array([[2.0, 0.0], [0.0, 4.0]])
+    posterior_precision = prior_precision + H.T @ residual_precision @ H
+
+    K = _compute_kalman_gain(posterior_precision, H, residual_precision)
+
+    expected = np.linalg.solve(
+        posterior_precision.toarray(),
+        (H.T @ residual_precision).toarray(),
+    )
+    wrong_prior_gain = np.linalg.solve(
+        prior_precision.toarray(),
+        (H.T @ residual_precision).toarray(),
+    )
+
+    np.testing.assert_allclose(K, expected)
+    assert not np.allclose(K, wrong_prior_gain)
 
 
 def test_that_prune_nan_nodes_preserves_adjacency_and_relabels():

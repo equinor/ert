@@ -91,6 +91,23 @@ def compute_nan_masks(
     return param_nan_masks, parameter_group_sizes, X_full, nan_row_mask
 
 
+def _compute_kalman_gain(
+    parameter_precision: sp.sparse.sparray,
+    H: sp.sparse.sparray,
+    residual_precision: sp.sparse.sparray,
+) -> npt.NDArray[np.floating]:
+    """Compute Kalman gain K from equation 66 in Lunde 2025.
+
+    The sparse solve avoids forming parameter_precision^{-1} explicitly.
+    """
+    B = H.T @ residual_precision
+    if sp.sparse.issparse(B):
+        B = B.toarray()
+
+    lu = sp.sparse.linalg.splu(sp.sparse.csc_matrix(parameter_precision))
+    return lu.solve(B)
+
+
 def enif_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
@@ -360,18 +377,9 @@ def analysis_EnIF(
         seed=random_seed,
     )
 
-    # Kalman gain K = Prec_u^{-1} H^T Prec_r, where Prec_r accounts for both
-    # observation error and unexplained regression variance. Available after
-    # transport() which sets unexplained_variance on the EnIF object.
-    # Also, this avoids forming inv(Prec_u) explicitly by factorizing Prec_u with
-    # sparse LU and solving Prec_u K = H^T Prec_r.
-    Prec_r = gtmap.Prec_residual_noisy()
-    B = H.T @ Prec_r
-    if sp.sparse.issparse(B):
-        B = B.toarray()
-
-    lu = sp.sparse.linalg.splu(sp.sparse.csc_matrix(Prec_u))
-    K = lu.solve(B)
+    # transport() updates gtmap.Prec_u from prior to posterior precision.
+    assert gtmap.Prec_u is not None
+    K = _compute_kalman_gain(gtmap.Prec_u, H, gtmap.Prec_residual_noisy())
     k_buf = io.BytesIO()
     np.save(k_buf, K)
     progress_callback(
