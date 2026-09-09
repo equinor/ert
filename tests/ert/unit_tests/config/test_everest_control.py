@@ -8,7 +8,7 @@ import numpy as np
 import polars as pl
 
 from ert.config import EverestControl
-from ert.run_models._create_run_path import _generate_parameter_files
+from ert.run_models._create_runpath import _generate_parameter_files
 
 
 def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
@@ -40,21 +40,21 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
         pl.DataFrame({"realization": [5], "point.z": [3.5]}),
     ]
 
-    run_path = tmp_path / "runpath" / "realization-5"
+    runpath = tmp_path / "runpath" / "realization-5"
 
-    run_path.mkdir(parents=True)
+    runpath.mkdir(parents=True)
 
     _generate_parameter_files(
         parameter_configs=controls,
         export_base_name="parameters",
-        run_path=run_path,
+        runpath=runpath,
         iens=5,
         fs=mock_ensemble,
         iteration=0,
         end_event=threading.Event(),
     )
 
-    output_file = run_path / "point.json"
+    output_file = runpath / "point.json"
     output_file.write_text(
         json.dumps(json.loads(output_file.read_text()), sort_keys=True),
         encoding="utf-8",
@@ -96,20 +96,20 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
         pl.DataFrame({"realization": [5], "point.x.2": [3.5]}),
     ]
 
-    run_path = tmp_path / "runpath" / "realization-5"
-    run_path.mkdir(parents=True)
+    runpath = tmp_path / "runpath" / "realization-5"
+    runpath.mkdir(parents=True)
 
     _generate_parameter_files(
         parameter_configs=controls,
         export_base_name="parameters",
-        run_path=run_path,
+        runpath=runpath,
         iens=5,
         fs=mock_ensemble,
         iteration=0,
         end_event=threading.Event(),
     )
 
-    output_file = run_path / "point.json"
+    output_file = runpath / "point.json"
     assert output_file.exists()
     result_data = json.loads(output_file.read_text())
     assert result_data == {"x": {"0": 1.5, "1": 2.5, "2": 3.5}}

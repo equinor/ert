@@ -15,7 +15,7 @@ from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
-from .create_runpath import create_runpath
+from .create_runpath import _create_runpath as create_runpath
 
 
 @pytest.fixture
