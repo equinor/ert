@@ -29,7 +29,7 @@ DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
 @dataclass
 class DesignMatrix:
-    xls_filename: Path
+    filename: Path
     design_sheet: str
     default_sheet: str | None
     priority_source: str = "design_matrix"
@@ -48,10 +48,10 @@ class DesignMatrix:
             }
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
-                f"Error reading design matrix {self.xls_filename}"
+                f"Error reading design matrix {self.filename}"
                 f" ({self.design_sheet} {self.default_sheet or ''}):"
                 f" {exc}",
-                str(self.xls_filename),
+                str(self.filename),
             ) from exc
 
     @classmethod
@@ -97,7 +97,7 @@ class DesignMatrix:
             raise ConfigValidationError.from_collected(errors)
         assert design_sheet is not None
         return cls(
-            xls_filename=filename,
+            filename=filename,
             design_sheet=design_sheet,
             default_sheet=default_sheet,
             priority_source=priority_source,
@@ -111,9 +111,9 @@ class DesignMatrix:
         if common_keys:
             errors.append(
                 ErrorInfo(
-                    f"Design Matrices '{self.xls_filename.name} "
+                    f"Design Matrices '{self.filename.name} "
                     f"({self.design_sheet} {self.default_sheet or ''})' and "
-                    f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} "
+                    f"'{dm_other.filename.name} ({dm_other.design_sheet} "
                     f"{dm_other.default_sheet or ''})' "
                     "contains columns with the same name: "
                     f"{common_keys}!"
@@ -129,17 +129,17 @@ class DesignMatrix:
             if not any(real_intersection):
                 errors.append(
                     ErrorInfo(
-                        f"Design Matrices '{self.xls_filename.name} "
+                        f"Design Matrices '{self.filename.name} "
                         f"({self.design_sheet} {self.default_sheet or ''})' and "
-                        f"'{dm_other.xls_filename.name} "
+                        f"'{dm_other.filename.name} "
                         f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
                         "do not have any active realizations in common!"
                     )
                 )
             else:
                 ConfigWarning.warn(
-                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} "
-                    f"{self.default_sheet or ''})' and '{dm_other.xls_filename.name} "
+                    f"Design Matrices '{self.filename.name} ({self.design_sheet} "
+                    f"{self.default_sheet or ''})' and '{dm_other.filename.name} "
                     f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
                     "do not have the same active realizations. The merged design "
                     "matrix will only contain the realizations that are active "
@@ -157,9 +157,9 @@ class DesignMatrix:
         except ValueError as exc:
             raise ConfigValidationError(
                 f"Error when merging design matrices "
-                f"'{self.xls_filename.name} ({self.design_sheet}"
+                f"'{self.filename.name} ({self.design_sheet}"
                 f" {self.default_sheet or ''})'"
-                f" and '{dm_other.xls_filename.name} ({dm_other.design_sheet} "
+                f" and '{dm_other.filename.name} ({dm_other.design_sheet} "
                 f"{dm_other.default_sheet or ''})': {exc}!"
             ) from exc
 
@@ -257,7 +257,7 @@ class DesignMatrix:
             param_names = (
                 _read_excel(
                     lambda: pl.read_excel(
-                        self.xls_filename,
+                        self.filename,
                         sheet_name=self.design_sheet,
                         has_header=False,
                         read_options={"n_rows": 1, "dtypes": "string"},
@@ -271,7 +271,7 @@ class DesignMatrix:
             raise ValueError("Design sheet headers are empty.") from err
         design_matrix_df = _read_excel(
             lambda: pl.read_excel(
-                self.xls_filename,
+                self.filename,
                 sheet_name=self.design_sheet,
                 has_header=False,
                 drop_empty_cols=False,
@@ -350,7 +350,7 @@ class DesignMatrix:
 
         if self.default_sheet is not None:
             defaults = read_default_values(
-                self.xls_filename, self.default_sheet, has_header=False
+                self.filename, self.default_sheet, has_header=False
             )
             design_matrix_df = design_matrix_df.with_columns(
                 pl.lit(value).alias(name)
@@ -450,21 +450,20 @@ class DesignMatrix:
 
 
 def read_default_values(
-    xls_filename: Path, sheet_name: str, *, has_header: bool
+    filename: Path, sheet_name: str, *, has_header: bool
 ) -> dict[str, str | float | int | bool]:
     """
     Construct a dict of keys and values to be used as defaults from the
     first two columns in a spreadsheet.
     """
     try:
-        with CalamineWorkbook.from_path(xls_filename) as workbook:
+        with CalamineWorkbook.from_path(filename) as workbook:
             rows = workbook.get_sheet_by_name(sheet_name).to_python(
                 skip_empty_area=False
             )
     except PythonCalamineError as err:
         raise ValueError(
-            f"The default sheet '{sheet_name}' in '{xls_filename}' "
-            f"could not be read: {err}"
+            f"The default sheet '{sheet_name}' in '{filename}' could not be read: {err}"
         ) from err
 
     defaults: dict[str, str | float | int | bool] = {}

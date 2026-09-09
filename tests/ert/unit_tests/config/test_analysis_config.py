@@ -110,7 +110,7 @@ def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog
             ],
         }
     )
-    assert "Duplicate DESIGN_MATRIX entries DesignMatrix(xls_filename=" in caplog.text
+    assert "Duplicate DESIGN_MATRIX entries DesignMatrix(filename=" in caplog.text
     assert "only reading once." in caplog.text
 
 
