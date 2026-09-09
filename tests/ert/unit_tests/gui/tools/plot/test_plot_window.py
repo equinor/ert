@@ -1,3 +1,5 @@
+import logging
+import socket
 from pathlib import Path
 from typing import cast
 from unittest.mock import MagicMock
@@ -40,6 +42,7 @@ from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
 from ert.gui.plotting.widgets.plot_widget import PlotWidget
 from ert.services import ErtServerController
+from ert.shared import get_ip_address, get_machine_name, getfqdn_with_timeout
 
 EVEREST_KEY_DEFS = [
     PlotApiKeyDefinition(
@@ -190,8 +193,17 @@ def test_that_observation_legend_is_not_displayed_when_its_everest(
 
 @pytest.mark.slow
 def test_warning_is_visible_on_incompatible_plot_api_version(
-    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
+    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir, caplog
 ):
+    caplog.set_level(logging.INFO)
+    print(
+        "DIAGNOSTIC hostnames: "
+        f"gethostname={socket.gethostname()!r} "
+        f"getfqdn_with_timeout={getfqdn_with_timeout()!r} "
+        f"get_machine_name={get_machine_name()!r} "
+        f"get_ip_address={get_ip_address()!r}"
+    )
+
     mock_get_data = MagicMock()
     mock_get_data.return_value = "0.2"
     monkeypatch.setattr("ert.gui.plotting.plot_api.PlotApi.api_version", mock_get_data)
