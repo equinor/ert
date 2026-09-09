@@ -122,10 +122,6 @@ def test_that_get_machine_name_falls_back_to_getfqdn_when_gethostbyname_stalls(
     stall_forever.set()
     get_machine_name.cache_clear()
 
-    # Let the still-running lookup thread finish so it doesn't leak into other tests
-    stall_forever.set()
-    get_machine_name.cache_clear()
-
 
 def test_find_available_socket(unused_tcp_port):
     port_range = range(unused_tcp_port, unused_tcp_port + 1)

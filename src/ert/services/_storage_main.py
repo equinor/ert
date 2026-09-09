@@ -82,10 +82,12 @@ def _get_host_list() -> list[str]:
     # "localhost" is included so a client can always reach the server even if
     # none of the other hostnames resolve, since _bind_socket() binds to all
     # interfaces (including loopback) whenever the host is not an IPv6
-    # address.
-    return list(
-        {"localhost", socket.gethostname(), getfqdn_with_timeout(), get_machine_name()}
-    )
+    # address. It is placed first since fetch_url() tries urls sequentially
+    # without a request timeout, so a stalling hostname lookup earlier in the
+    # list could otherwise block before the reliable loopback fallback is
+    # reached.
+    other_hosts = {socket.gethostname(), getfqdn_with_timeout(), get_machine_name()}
+    return ["localhost", *(other_hosts - {"localhost"})]
 
 
 def _create_connection_info(
