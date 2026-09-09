@@ -8,7 +8,7 @@ import pytest
 
 from ert.config import GenKwConfig, SurfaceConfig
 from ert.run_arg import create_run_arguments
-from ert.run_models._create_run_path import create_run_path
+from ert.run_models._create_runpath import create_runpath
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 
@@ -57,7 +57,7 @@ from ert.storage import open_storage
         ),
     ],
 )
-def test_create_run_path_load_scalar_keys_performance(
+def test_create_runpath_load_scalar_keys_performance(
     benchmark, tmp_path, distribution_settings
 ):
     reals = 100
@@ -106,7 +106,7 @@ def test_create_run_path_load_scalar_keys_performance(
             )
             run_args = create_run_arguments(runpaths, active, ensemble)
 
-            await create_run_path(
+            await create_runpath(
                 run_args=run_args,
                 ensemble=ensemble,
                 user_config_file="perf.ert",
@@ -122,7 +122,7 @@ def test_create_run_path_load_scalar_keys_performance(
         benchmark(lambda: asyncio.run(run()))
 
 
-def test_create_run_path_surface_performance(tmp_path, benchmark):
+def test_create_runpath_surface_performance(tmp_path, benchmark):
     storage_path = tmp_path / "storage"
     reals = 2
     num_surfaces = 2
@@ -182,7 +182,7 @@ def test_create_run_path_surface_performance(tmp_path, benchmark):
             )
             run_args = create_run_arguments(runpaths, active, ensemble)
 
-            await create_run_path(
+            await create_runpath(
                 run_args=run_args,
                 ensemble=ensemble,
                 user_config_file="perf.ert",

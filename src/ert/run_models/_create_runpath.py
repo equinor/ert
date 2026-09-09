@@ -63,11 +63,11 @@ def _backup_if_existing(path: Path) -> None:
 
 
 def _value_export_txt(
-    run_path: Path,
+    runpath: Path,
     export_base_name: str,
     values: Mapping[str, Mapping[str, float | str]],
 ) -> None:
-    path = run_path / f"{export_base_name}.txt"
+    path = runpath / f"{export_base_name}.txt"
     _backup_if_existing(path)
 
     if len(values) == 0:
@@ -90,11 +90,11 @@ def _value_export_txt(
 
 
 def _value_export_json(
-    run_path: Path,
+    runpath: Path,
     export_base_name: str,
     values: Mapping[str, Mapping[str, float | str]],
 ) -> None:
-    path = run_path / f"{export_base_name}.json"
+    path = runpath / f"{export_base_name}.json"
     _backup_if_existing(path)
 
     if len(values) == 0:
@@ -117,7 +117,7 @@ def _value_export_json(
 def _generate_parameter_files(
     parameter_configs: Iterable[ParameterConfig],
     export_base_name: str,
-    run_path: Path,
+    runpath: Path,
     iens: int,
     fs: Ensemble,
     iteration: int,
@@ -133,7 +133,7 @@ def _generate_parameter_files(
             ensemble run.
         export_base_name: Base name for the GEN_KW parameters file. Ie. the
             `parameters` in `parameters.json`.
-        run_path: Path to the runtime directory
+        runpath: Path to the directory where parameter files are to be generated
         iens: Realisation index
         fs: Ensemble from which to load parameter data
 
@@ -181,7 +181,7 @@ def _generate_parameter_files(
                         f"{scalar_value} as it is invalid"
                     )
         else:
-            export_values = param.write_to_runpath(run_path, iens, fs)
+            export_values = param.write_to_runpath(runpath, iens, fs)
 
         if export_values:
             for group, vals in export_values.items():
@@ -197,7 +197,7 @@ def _generate_parameter_files(
     # Write aggregated EverestControl JSON files
     start_time = time.perf_counter()
     for output_file, controls in everest_controls_by_file.items():
-        file_path: Path = run_path / substitute_runpath_name(
+        file_path: Path = runpath / substitute_runpath_name(
             output_file, iens, iteration
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
@@ -229,10 +229,10 @@ def _generate_parameter_files(
         export_timings["everest_parameters"] += time.perf_counter() - start_time
 
     start_time = time.perf_counter()
-    _value_export_txt(run_path, export_base_name, exports | log_exports)
+    _value_export_txt(runpath, export_base_name, exports | log_exports)
     export_timings["value_export_txt"] = time.perf_counter() - start_time
     start_time = time.perf_counter()
-    _value_export_json(run_path, export_base_name, exports)
+    _value_export_json(runpath, export_base_name, exports)
     export_timings["value_export_json"] = time.perf_counter() - start_time
     return (exports, dict(export_timings))
 
@@ -283,7 +283,7 @@ def _make_param_substituter(
     return param_substituter
 
 
-def _create_one_run_path(
+def _create_one_runpath(
     run_arg: RunArg,
     ensemble: Ensemble,
     user_config_file: str,
@@ -296,9 +296,9 @@ def _create_one_run_path(
     scalar_data_by_realization: dict[int, dict[str, float | str]],
     context_env: dict[str, str],
     end_event: threading.Event,
-    handle_run_path_creation_event: Callable[[StatusEvents], None] | None = None,
+    handle_runpath_creation_event: Callable[[StatusEvents], None] | None = None,
 ) -> dict[str, float]:
-    run_path = Path(run_arg.runpath)
+    runpath = Path(run_arg.runpath)
 
     if not run_arg.active:
         return {}
@@ -307,14 +307,14 @@ def _create_one_run_path(
 
     timings: dict[str, float] = defaultdict(float)
 
-    run_path.mkdir(parents=True, exist_ok=True)
+    runpath.mkdir(parents=True, exist_ok=True)
     start_time = time.perf_counter()
     scalar_data = scalar_data_by_realization.get(run_arg.iens, {})
 
     (param_data, detailed_parameter_timings) = _generate_parameter_files(
         ensemble.experiment.parameter_configuration.values(),
         parameters_file,
-        run_path,
+        runpath,
         run_arg.iens,
         ensemble,
         ensemble.iteration,
@@ -345,7 +345,7 @@ def _create_one_run_path(
         result = param_substituter.substitute(source_file_content)
         timings["substitute_parameters"] += time.perf_counter() - start_time
 
-        target = run_path / target_file
+        target = runpath / target_file
         if not target.parent.exists():
             os.makedirs(
                 target.parent,
@@ -356,7 +356,7 @@ def _create_one_run_path(
 
     _check_end_event(end_event)
 
-    path = run_path / "jobs.json"
+    path = runpath / "jobs.json"
     start_time = time.perf_counter()
     _backup_if_existing(path)
     timings["backup_if_existing"] = time.perf_counter() - start_time
@@ -371,7 +371,7 @@ def _create_one_run_path(
         iens=run_arg.iens,
         itr=ensemble.iteration,
     )
-    (run_path / "jobs.json").write_bytes(
+    (runpath / "jobs.json").write_bytes(
         orjson.dumps(
             forward_model_output,
             option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2,
@@ -382,20 +382,20 @@ def _create_one_run_path(
     # Write MANIFEST file to runpath use to avoid NFS sync issues
     start_time = time.perf_counter()
     data = _manifest_to_json(ensemble, run_arg.iens, run_arg.itr)
-    (run_path / "manifest.json").write_bytes(
+    (runpath / "manifest.json").write_bytes(
         orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2)
     )
     timings["manifest_to_json"] = time.perf_counter() - start_time
     # Let upstream code know which runpath we just created
-    if handle_run_path_creation_event:
+    if handle_runpath_creation_event:
         event = RunPathCreatedEvent(iens=run_arg.iens)
-        handle_run_path_creation_event(event)
+        handle_runpath_creation_event(event)
 
     return timings
 
 
 @log_duration(logger, logging.INFO)
-async def create_run_path(
+async def create_runpath(
     run_args: list[RunArg],
     ensemble: Ensemble,
     user_config_file: str,
@@ -407,7 +407,7 @@ async def create_run_path(
     runpaths: Runpaths,
     end_event: threading.Event,
     context_env: dict[str, str] | None = None,
-    handle_run_path_creation_event: Callable[[StatusEvents], None] | None = None,
+    handle_runpath_creation_event: Callable[[StatusEvents], None] | None = None,
 ) -> None:
     if context_env is None:
         context_env = {}
@@ -438,18 +438,18 @@ async def create_run_path(
         }
         timings["load_scalar_keys"] = time.perf_counter() - start_time
     total_active_realizations = [run_arg.active for run_arg in run_args].count(True)
-    if handle_run_path_creation_event:
+    if handle_runpath_creation_event:
         starting_event = StartingTotalRunPathCreationEvent(
             total_runpaths_to_create=total_active_realizations,
         )
-        handle_run_path_creation_event(starting_event)
+        handle_runpath_creation_event(starting_event)
 
     try:
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(
                     asyncio.to_thread(
-                        _create_one_run_path,
+                        _create_one_runpath,
                         run_arg,
                         ensemble,
                         user_config_file,
@@ -462,7 +462,7 @@ async def create_run_path(
                         scalar_data_by_realization,
                         context_env,
                         end_event,
-                        handle_run_path_creation_event,
+                        handle_runpath_creation_event,
                     )
                 )
                 for run_arg in run_args
@@ -472,9 +472,9 @@ async def create_run_path(
     except Exception as e:
         raise e
     finally:
-        if handle_run_path_creation_event:
+        if handle_runpath_creation_event:
             finished_event = FinishedTotalRunPathCreationEvent()
-            handle_run_path_creation_event(finished_event)
+            handle_runpath_creation_event(finished_event)
 
     task_timings = [task.result() for task in tasks]
 
@@ -482,6 +482,8 @@ async def create_run_path(
         for key, value in task_timing.items():
             timings[key] += value
 
+    logger.info(f"_create_runpath durations: {timings}")
+    # Kept for log analytics compatibility:
     logger.info(f"_create_run_path durations: {timings}")
 
     runpaths.write_runpath_list(

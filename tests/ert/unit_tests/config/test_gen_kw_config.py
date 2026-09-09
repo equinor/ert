@@ -13,7 +13,7 @@ from lark import Token
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
 from ert.config.parsing.file_context_token import FileContextToken
-from ert.run_models._create_run_path import create_run_path
+from ert.run_models._create_runpath import create_runpath
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 
@@ -238,7 +238,7 @@ async def test_gen_kw_is_log_or_not(
             experiment_id, name="prior", ensemble_size=1
         )
         sample_prior(prior_ensemble, [0], 123, 1)
-        await create_run_path(
+        await create_runpath(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,
             runpaths=Runpaths.from_config(ert_config),
@@ -1070,7 +1070,7 @@ async def test_that_gen_kw_substitutes_correctly(order, tmpdir, storage, run_arg
             experiment_id, name="prior", ensemble_size=1
         )
         sample_prior(prior_ensemble, [0], 123, 1)
-        await create_run_path(
+        await create_runpath(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,
             runpaths=Runpaths.from_config(ert_config),
