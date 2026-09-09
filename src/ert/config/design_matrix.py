@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -471,11 +472,11 @@ def read_default_values(
 
     defaults: dict[str, str | float | int | bool] = {}
     empty_cells: list[str] = []
-    duplicate_names = False
+    duplicate_names: set[str] = set()
     for row_number, row in enumerate(
         rows[int(has_header) :], start=1 + int(has_header)
     ):
-        if all(isinstance(cell, str) and not cell for cell in row):
+        if all(isinstance(cell, str) and not cell.strip() for cell in row):
             continue
         if len(row) < 2:
             raise ValueError("Defaults sheet must have at least two columns")
@@ -490,8 +491,10 @@ def read_default_values(
             f"Row {row_number}, column {column}"
             for column, cell in enumerate((name, value))
             if str(cell).lower() in DesignMatrix.DISALLOWED_CELL_VALUES
+            or (isinstance(cell, float) and not math.isfinite(cell))
         )
-        duplicate_names |= name in defaults
+        if name in defaults:
+            duplicate_names.add(name)
         defaults[name] = value
 
     if empty_cells:
@@ -500,7 +503,10 @@ def read_default_values(
             f"disallowed value {empty_cells}"
         )
     if duplicate_names:
-        raise ValueError("Default sheet contains duplicate parameter names")
+        raise ValueError(
+            f"Default sheet '{sheet_name}' contains duplicate parameter names: "
+            f"{', '.join(sorted(duplicate_names))}"
+        )
     return defaults
 
 
