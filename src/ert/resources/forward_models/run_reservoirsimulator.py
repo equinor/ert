@@ -29,7 +29,7 @@ class EclError(RuntimeError):
         if ecl_output_has_license_error(self.args[0]):
             return True
         if re.search(a_slave_failed_pattern, self.args[0]):
-            for match in re.finditer(slave_run_paths, self.args[0], re.MULTILINE):
+            for match in re.finditer(slave_runpaths, self.args[0], re.MULTILINE):
                 (ecl_case_starts_with, ecl_case_dir) = match.groups()
                 for prt_file in glob.glob(
                     f"{ecl_case_dir}/{ecl_case_starts_with}*.PRT"
@@ -59,8 +59,8 @@ slave_started_pattern = (
     rf"^\s@--MESSAGE{date_sub_pattern}\s^\s@\s+STARTING SLAVE.+${body_sub_pattern}"
 )
 a_slave_failed_pattern = r"\s@\s+SLAVE RUN.*HAS STOPPED WITH AN ERROR CONDITION.\s*"
-slave_run_paths = r"^\s@\s+STARTING SLAVE\s+[^ ]+RUNNING \([^ ]\)\s*$"
-slave_run_paths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DIRECTORY\s*^\s@\s+(.*)"  # ruff: ignore[line-too-long]
+slave_runpaths = r"^\s@\s+STARTING SLAVE\s+[^ ]+RUNNING \([^ ]\)\s*$"
+slave_runpaths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DIRECTORY\s*^\s@\s+(.*)"  # ruff: ignore[line-too-long]
 
 
 def find_unsmry(basepath: Path) -> Path | None:
@@ -188,13 +188,13 @@ class RunReservoirSimulator:
         if not Path(data_file).exists():
             raise OSError(f"No such file: {data_file}")
 
-        self.run_path: Path = Path(data_file).parent.absolute()
+        self.runpath: Path = Path(data_file).parent.absolute()
         self.data_file: str = Path(data_file).name
         self.base_name: str = Path(data_file).stem
 
     @property
     def prt_path(self) -> Path:
-        return self.run_path / (self.base_name + ".PRT")
+        return self.runpath / (self.base_name + ".PRT")
 
     @property
     def eclrun_command(self) -> list[str]:
@@ -203,7 +203,7 @@ class RunReservoirSimulator:
             self.simulator,
             "--version",
             str(self.version),
-            str(self.run_path / self.data_file),
+            str(self.runpath / self.data_file),
             "--summary-conversion",
             "yes" if self.summary_conversion else "no",
             *self.forwarded_args,
@@ -214,14 +214,14 @@ class RunReservoirSimulator:
         if self.bypass_flowrun:
             return [
                 self.runner_abspath,
-                str(self.run_path / self.data_file),
+                str(self.runpath / self.data_file),
                 *self.forwarded_args,
             ]
         return [
             self.runner_abspath,
             "--version",
             str(self.version or "default"),
-            str(self.run_path / self.data_file),
+            str(self.runpath / self.data_file),
             "--np",
             str(self.num_cpu),
             *self.forwarded_args,
@@ -242,7 +242,7 @@ class RunReservoirSimulator:
         )
         return_code = subprocess.run(self.eclrun_command, check=False).returncode
 
-        OK_file = self.run_path / f"{self.base_name}.OK"
+        OK_file = self.runpath / f"{self.base_name}.OK"
         if not self.check_status:
             OK_file.write_text(
                 "ECLIPSE simulation complete - NOT checked for errors.",
@@ -272,7 +272,7 @@ class RunReservoirSimulator:
                     return
                 raise err from None
             if self.num_cpu > 1:
-                smry_file = find_unsmry(self.run_path / self.base_name)
+                smry_file = find_unsmry(self.runpath / self.base_name)
                 if smry_file is not None:
                     await_completed_unsmry_file(smry_file)
 
@@ -280,7 +280,7 @@ class RunReservoirSimulator:
 
     def run_flow(self) -> None:
         return_code = subprocess.run(self.flowrun_command, check=False).returncode
-        OK_file = self.run_path / f"{self.base_name}.OK"
+        OK_file = self.runpath / f"{self.base_name}.OK"
         if not self.check_status:
             OK_file.write_text(
                 "FLOW simulation complete - NOT checked for errors.",
@@ -291,7 +291,7 @@ class RunReservoirSimulator:
                 raise subprocess.CalledProcessError(return_code, self.flowrun_command)
             self.assert_eclend()
             if self.num_cpu > 1:
-                smry_file = find_unsmry(self.run_path / self.base_name)
+                smry_file = find_unsmry(self.runpath / self.base_name)
                 if smry_file is not None:
                     await_completed_unsmry_file(smry_file)
 
@@ -330,7 +330,7 @@ class RunReservoirSimulator:
         error_regexp = re.compile(r"^\s*Errors\s+(\d+)\s*$")
         bug_regexp = re.compile(r"^\s*Bugs\s+(\d+)\s*$")
 
-        report_file = self.run_path / f"{self.base_name}.ECLEND"
+        report_file = self.runpath / f"{self.base_name}.ECLEND"
         if not report_file.is_file():
             report_file = self.prt_path
 
