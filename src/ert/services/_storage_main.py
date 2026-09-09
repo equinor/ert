@@ -79,7 +79,13 @@ def parse_args() -> argparse.Namespace:
 
 
 def _get_host_list() -> list[str]:
-    return list({socket.gethostname(), getfqdn_with_timeout(), get_machine_name()})
+    # "localhost" is included so a client can always reach the server even if
+    # none of the other hostnames resolve, since _bind_socket() binds to all
+    # interfaces (including loopback) whenever the host is not an IPv6
+    # address.
+    return list(
+        {"localhost", socket.gethostname(), getfqdn_with_timeout(), get_machine_name()}
+    )
 
 
 def _create_connection_info(
