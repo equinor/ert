@@ -27,6 +27,67 @@
 Highlighted changes
 ===================
 
+Version 25.1
+------------
+
+New distribution visualization
+##############################
+
+.. image:: images/v25/dist_plot_all_options.png
+
+The Distribution plot now combines histograms, estimated density curves and
+individual data points in a single figure. This makes it easier to compare
+parameter distributions across ensembles and see both the overall distribution
+and the individual realization values.
+
+.. image:: images/v25/dist_plot_dist_options.png
+
+All three views are enabled by default. You can show or hide each view
+independently in the **Distribution options** section of the right sidepanel.
+
+This replaces the standalone Gaussian KDE plot. The separate Histogram plot
+remains available for categorical data.
+
+Histogram
+~~~~~~~~~
+
+.. image:: images/v25/dist_plot_histogram.png
+
+Groups values into intervals, with bar heights showing the number of
+realizations in each interval. Histograms from different ensembles overlap
+in the same plot, rather than appearing in separate plots stacked vertically.
+
+Comparing too many ensembles at once can make the overlapping histograms
+difficult to distinguish. Select fewer ensembles or hide the histogram
+to make the comparison clearer.
+
+Estimated density
+~~~~~~~~~~~~~~~~~
+
+.. image:: images/v25/dist_plot_gkde.png
+
+Shows a smooth estimate of each ensemble's distribution using a Gaussian
+kernel density estimate (KDE). The curves help reveal the shape and spread
+of the parameter values.
+
+This is the same type of visualization as the previous Gaussian KDE plot,
+but it can now be shown alongside histograms and individual data points.
+When both histogram and density are enabled, estimated density is shown
+on the left vertical axis and histogram counts on the right.
+
+Individual data points
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. image:: images/v25/dist_plot_individual.png
+
+Shows each realization's value as a short vertical mark, with a separate
+row for each ensemble. This makes it easier to see clusters, gaps and
+outlying values. Marks may overlap where values are close together.
+
+The points appear below the histogram and density curves, sharing the
+same horizontal scale. If both other views are disabled, the individual
+data points are displayed on their own.
+
 Version 25.0
 ------------
 
