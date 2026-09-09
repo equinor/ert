@@ -14,6 +14,7 @@ from ert.config._observations import (
 )
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.config.parsing.observations_parser import ObservationDict, ObservationType
+from ert.config.rft_config import RFTConfig
 from ert.config.seismic_config import SeismicConfig
 
 
@@ -182,6 +183,60 @@ def create_rft_observation_dict(
         "ERROR": error,
         "ZONE": zone,
     }
+
+
+def create_rft_location_metadata(
+    east: float = 100.0,
+    north: float = 200.0,
+    tvd: float = 25.0,
+    actual_zones: tuple[str, ...] = (),
+    well_connection_cell: tuple[int, int, int] | None = (1, 2, 3),
+) -> pl.DataFrame:
+    return pl.DataFrame(
+        {
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "tvd": pl.Series([tvd], dtype=pl.Float32),
+            "actual_zones": pl.Series([actual_zones], dtype=pl.List(pl.String)),
+            "well_connection_cell": pl.Series(
+                [well_connection_cell], dtype=pl.Array(pl.Int64, 3)
+            ),
+            "well_connection_cell_center": pl.Series(
+                [(east, north, tvd)], dtype=pl.Array(pl.Float32, 3)
+            ),
+        },
+        schema=RFTConfig.location_metadata_schema(),
+    )
+
+
+def create_rft_response(
+    well: str = "WELL1",
+    date: str = "2020-01-01",
+    prop: str = "PRESSURE",
+    depth: float = 25.0,
+    value: float = 148.0,
+    i: int = 1,
+    j: int = 2,
+    k: int = 3,
+    cell_center: tuple[float, float, float] = (100.0, 200.0, 25.0),
+    cell_zones: tuple[str, ...] = (),
+) -> pl.DataFrame:
+    time = datetime.datetime.strptime(date, "%Y-%m-%d").date()  # ruff: ignore[call-datetime-strptime-without-zone]
+    return pl.DataFrame(
+        {
+            "response_key": [f"{well}:{date}:{prop}"],
+            "well": [well],
+            "date": [date],
+            "property": [prop],
+            "time": [time],
+            "depth": pl.Series([depth], dtype=pl.Float32),
+            "values": pl.Series([value], dtype=pl.Float32),
+            "well_connection_cell": pl.Series([(i, j, k)], dtype=pl.Array(pl.Int64, 3)),
+            "cell_center": pl.Series([cell_center], dtype=pl.Array(pl.Float32, 3)),
+            "cell_zones": pl.Series([cell_zones], dtype=pl.List(pl.String)),
+        },
+        schema=RFTConfig.response_schema(),
+    )
 
 
 def create_seismic_observation(
