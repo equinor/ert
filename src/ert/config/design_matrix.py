@@ -74,13 +74,10 @@ class DesignMatrix:
         default_sheet = options.get("DEFAULT_SHEET", None)
         priority_source = options.get("PRIORITY", DataSource.DESIGN_MATRIX)
         errors = []
-        if filename.suffix not in {
-            ".xlsx",
-            ".xls",
-        }:
+        if filename.suffix != ".xlsx":
             errors.append(
                 ErrorInfo(
-                    f"DESIGN_MATRIX must be of format .xls or .xlsx; is '{filename}'"
+                    f"DESIGN_MATRIX must have file extension .xlsx; is '{filename}'"
                 ).set_context(config_list)
             )
         if design_sheet is not None and design_sheet == default_sheet:
