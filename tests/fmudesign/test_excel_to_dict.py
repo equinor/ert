@@ -139,6 +139,22 @@ def test_that_excel_to_dict_strips_sensitivity_and_parameter_name_whitespace(
     }
 
 
+def test_that_excel_to_dict_rejects_duplicate_default_names_after_trimming(tmp_path):
+    input_path = _write_config_workbook(
+        tmp_path / "designinput.xlsx",
+        defaultvalues=pd.DataFrame(
+            [
+                ["parametername", "value"],
+                ["  a", 1],
+                ["a   ", 2],
+            ]
+        ),
+    )
+
+    with pytest.raises(ValueError, match="duplicate parameter names"):
+        excel_to_dict(input_path)
+
+
 def test_that_mixed_sensitivity_types_raise_value_error(tmp_path):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
