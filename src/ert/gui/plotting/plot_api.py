@@ -417,7 +417,8 @@ class PlotApi:
             )
             if not key_def:
                 raise httpx.RequestError(f"Response key {key_def} not found")
-            assert key_def.response is not None
+            if key_def.response is None:
+                raise httpx.RequestError(f"No response found for key {key_def.key}")
             actual_response_key = key
             if "@" in actual_response_key:
                 actual_response_key = key.split("@", maxsplit=1)[0]
