@@ -236,7 +236,11 @@ class PlotApi:
             return df
 
         if is_everest:
-            assert {"batch_id", "realization"}.issubset(df.columns)
+            if not {"batch_id", "realization"}.issubset(df.columns):
+                raise httpx.RequestError(
+                    "Everest response data must contain "
+                    "'batch_id' and 'realization' columns"
+                )
 
             float_columns = [
                 col for col in df.columns if col not in {"batch_id", "realization"}
@@ -254,7 +258,11 @@ class PlotApi:
             key_def is not None
             and key_def.metadata.get("data_origin") == "everest_batch_objectives"
         ):
-            assert {"batch_id", "accepted"}.issubset(df.columns)
+            if not {"batch_id", "accepted"}.issubset(df.columns):
+                raise httpx.RequestError(
+                    "Everest response data must contain "
+                    "'batch_id' and 'accepted' columns"
+                )
 
             float_columns_names = (
                 {"batch_id", "accepted", "constraint_violation_type"}
