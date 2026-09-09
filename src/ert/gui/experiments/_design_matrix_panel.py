@@ -65,7 +65,7 @@ class DesignMatrixPanel(QDialog):
     def show_dm_params(design_matrix: "DesignMatrix") -> None:
         viewer = DesignMatrixPanel(
             design_matrix.design_matrix_df,
-            design_matrix.xls_filename.name,
+            design_matrix.filename.name,
         )
         viewer.setMinimumHeight(500)
         viewer.setMinimumWidth(1000)
