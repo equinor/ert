@@ -32,7 +32,7 @@ from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
 from ert.services import ErtServerExit
 from ert.shared import __file__ as ert_shared_path
-from ert.shared import find_available_socket, get_machine_name
+from ert.shared import find_available_socket, get_machine_name, getfqdn_with_timeout
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 
@@ -79,7 +79,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def _get_host_list() -> list[str]:
-    return list({socket.gethostname(), socket.getfqdn(), get_machine_name()})
+    return list({socket.gethostname(), getfqdn_with_timeout(), get_machine_name()})
 
 
 def _create_connection_info(

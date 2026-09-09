@@ -6,7 +6,12 @@ except ImportError:
 import importlib.util
 from pathlib import Path
 
-from .net_utils import find_available_socket, get_ip_address, get_machine_name
+from .net_utils import (
+    find_available_socket,
+    get_ip_address,
+    get_machine_name,
+    getfqdn_with_timeout,
+)
 
 
 def ert_share_path() -> str:
@@ -24,4 +29,5 @@ __all__ = [
     "find_available_socket",
     "get_ip_address",
     "get_machine_name",
+    "getfqdn_with_timeout",
 ]

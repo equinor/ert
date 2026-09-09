@@ -1,6 +1,8 @@
 import logging
 import random
 import socket
+import threading
+from collections.abc import Callable
 from functools import lru_cache
 
 from dns import exception, resolver, reversename
@@ -20,7 +22,62 @@ class InvalidHostException(Exception):
     pass
 
 
+class ResolverStalled(Exception):
+    """Raised when a blocking OS resolver call exceeds our patience budget."""
+
+
 logger = logging.getLogger(__name__)
+
+# socket.gethostbyname()/socket.getfqdn() defer to the OS resolver and have no
+# built-in timeout. On some CI runners (observed on GitHub Actions macOS
+# runners) DNS resolution can stall for a long time without raising, which
+# risks stalling the storage server boot sequence beyond its own timeout
+# budget.
+GETHOSTBYNAME_TIMEOUT_SECONDS = 3.0
+GETFQDN_TIMEOUT_SECONDS = 3.0
+
+
+def _run_with_timeout[T](func: Callable[[], T], timeout: float) -> T:
+    """Runs `func` in a background thread and raises `ResolverStalled` if it
+    does not complete within `timeout` seconds. Otherwise returns its result,
+    or re-raises whatever exception `func` raised.
+
+    There is no way to cancel a blocked OS-level resolver call, so on a stall
+    the lookup thread is left running in the background (as a daemon).
+    """
+    result: list[T] = []
+    raised_exception: list[BaseException] = []
+
+    def _target() -> None:
+        try:
+            result.append(func())
+        except BaseException as exc:
+            raised_exception.append(exc)
+
+    lookup_thread = threading.Thread(target=_target, daemon=True)
+    lookup_thread.start()
+    lookup_thread.join(timeout)
+
+    if lookup_thread.is_alive():
+        raise ResolverStalled(f"{func} did not complete within {timeout}s")
+    if raised_exception:
+        raise raised_exception[0]
+    return result[0]
+
+
+def getfqdn_with_timeout(timeout: float = GETFQDN_TIMEOUT_SECONDS) -> str:
+    """Returns socket.getfqdn(), but never blocks longer than `timeout` seconds.
+
+    Falls back to socket.gethostname() if the lookup does not complete in time.
+    """
+    try:
+        return _run_with_timeout(socket.getfqdn, timeout)
+    except ResolverStalled:
+        logger.warning(
+            f"socket.getfqdn() did not resolve within {timeout}s, "
+            "falling back to socket.gethostname()"
+        )
+        return socket.gethostname()
 
 
 @lru_cache
@@ -33,7 +90,9 @@ def get_machine_name() -> str:
     try:
         # We need the ip-address to perform a reverse lookup to deal with
         # differences in how the clusters are getting their fqdn's
-        ip_addr = socket.gethostbyname(hostname)
+        ip_addr = _run_with_timeout(
+            lambda: socket.gethostbyname(hostname), GETHOSTBYNAME_TIMEOUT_SECONDS
+        )
         reverse_name = reversename.from_address(ip_addr)
         resolved_hosts = [
             str(ptr_record).rstrip(".")
@@ -41,10 +100,15 @@ def get_machine_name() -> str:
         ]
         resolved_hosts.sort()
         return resolved_hosts[0]
-    except (resolver.NXDOMAIN, exception.Timeout, resolver.NoResolverConfiguration):
+    except (
+        resolver.NXDOMAIN,
+        exception.Timeout,
+        resolver.NoResolverConfiguration,
+        ResolverStalled,
+    ):
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
-        return socket.getfqdn()
+        return getfqdn_with_timeout()
     except (socket.gaierror, exception.DNSException):
         return "localhost"
 
