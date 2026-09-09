@@ -360,17 +360,19 @@ def analysis_EnIF(
         seed=random_seed,
     )
 
-    # Kalman gain K = Prec_u^{-1} H^T Prec_r, where Prec_r accounts for both
-    # observation error and unexplained regression variance. Available after
-    # transport() which sets unexplained_variance on the EnIF object.
-    # Also, this avoids forming inv(Prec_u) explicitly by factorizing Prec_u with
-    # sparse LU and solving Prec_u K = H^T Prec_r.
+    # Kalman gain K = Prec_u_posterior^{-1} H^T Prec_r (eq. 66 in lunde2025),
+    # where Prec_r accounts for both observation error and unexplained
+    # regression variance, and Prec_u_posterior is Lambda_{t|t}, i.e. gtmap.Prec_u
+    # after transport() has updated it (eq. 47) — not the prior Prec_u used to
+    # construct gtmap. This avoids forming inv(Prec_u_posterior) explicitly by
+    # factorizing it with sparse LU and solving Prec_u_posterior K = H^T Prec_r.
     Prec_r = gtmap.Prec_residual_noisy()
     B = H.T @ Prec_r
     if sp.sparse.issparse(B):
         B = B.toarray()
 
-    lu = sp.sparse.linalg.splu(sp.sparse.csc_matrix(Prec_u))
+    assert gtmap.Prec_u is not None
+    lu = sp.sparse.linalg.splu(sp.sparse.csc_matrix(gtmap.Prec_u))
     K = lu.solve(B)
     k_buf = io.BytesIO()
     np.save(k_buf, K)
