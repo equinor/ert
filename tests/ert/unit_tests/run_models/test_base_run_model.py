@@ -28,6 +28,10 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
 from ert.ensemble_evaluator.evaluator import ParallelismViolation
 from ert.ensemble_evaluator.event import FullSnapshotEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
+from ert.ensemble_evaluator.state import (
+    REALIZATION_STATE_RUNNING,
+    REALIZATION_STATE_UNKNOWN,
+)
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models import create_model
@@ -300,6 +304,38 @@ def test_get_current_status(
     brm._iter_snapshot[0] = iter_snapshot
     brm.active_realizations = new_active_realizations
     assert dict(brm.get_current_status()) == expected_result
+
+
+def test_that_get_current_status_handles_realizations_missing_status(
+    use_tmpdir,
+):
+    """If the scheduler is unable to get any information from the queue system
+    on realization statuses but are receiving updates from fm_dispatch (or if
+    the messages from queue system and fm_dispatch are out of order), the
+    realization status should be regarded as Unknown
+    """
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2")
+    active_realizations = [True] * 2
+
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=active_realizations,
+    )
+
+    iter_snapshot = EnsembleSnapshot.from_nested_dict(
+        {"reals": {"0": {"status": REALIZATION_STATE_RUNNING}}}
+    )
+    # Simulate a realization entry that only received forward-model-step
+    # updates and never had its "status" field populated.
+    iter_snapshot.add_realization("1", {"fm_steps": {}})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = active_realizations
+
+    assert dict(brm.get_current_status()) == {
+        REALIZATION_STATE_RUNNING: 1,
+        REALIZATION_STATE_UNKNOWN: 1,
+    }
 
 
 @pytest.mark.parametrize(
