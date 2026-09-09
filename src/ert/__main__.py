@@ -41,6 +41,7 @@ from ert.services._storage_main import add_parser_options as ert_api_add_parser_
 from ert.shared.status.utils import get_ert_memory_usage
 from ert.storage import ErtStorageException, ErtStoragePermissionError
 from ert.trace import trace, tracer
+from ert.utils import ES_MDA_DELETE_RUNPATHS_HELP_TEXT
 from ert.validation import (
     IntegerArgument,
     NumberListStringArgument,
@@ -478,6 +479,12 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         default="es-mda",
         dest="experiment_name",
         help="Name of the experiment",
+    )
+    es_mda_parser.add_argument(
+        "--delete-intermediate-runpaths",
+        action="store_true",
+        dest="delete_intermediate_runpaths",
+        help=ES_MDA_DELETE_RUNPATHS_HELP_TEXT,
     )
 
     workflow_description = "Executes the workflow given"

@@ -598,5 +598,6 @@
       }
     }
   },
-  "prior_ensemble_id": null
+  "prior_ensemble_id": null,
+  "delete_intermediate_runpaths": false
 }

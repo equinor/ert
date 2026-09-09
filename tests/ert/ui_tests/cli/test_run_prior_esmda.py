@@ -227,6 +227,7 @@ def _build_esmda_run_prior_model(prior_ensemble_id: str):
             weights="1,1",
             prior_ensemble_id=prior_ensemble_id,
             experiment_name="restart-experiment",
+            delete_intermediate_runpaths=False,
         ),
         SimpleQueue(),
     )

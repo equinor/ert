@@ -878,6 +878,7 @@ def test_that_dumped_esmda_matches_snapshot(
             weights="4, 2, 1",
             prior_ensemble_id=None,
             experiment_name="es-mda",
+            delete_intermediate_runpaths=False,
         ),
         case=f"{config_dir}.{config_file}",
     )

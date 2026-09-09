@@ -225,6 +225,30 @@ def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_
     assert warning_icon.isHidden()
 
 
+def test_that_deleting_intermediate_iterations_is_opt_in(
+    qtbot: QtBot,
+) -> None:
+    active_realizations = [True] * 5
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=EnsembleConfig().parameter_configuration,
+        run_path="",
+        notifier=notifier,
+        active_realizations=active_realizations,
+        config_num_realization=len(active_realizations),
+    )
+    qtbot.addWidget(panel)
+
+    checkbox = panel.findChild(QCheckBox, "delete_intermediate_runpaths_checkbox_esmda")
+    assert not checkbox.isChecked(), (
+        "Deleting intermediate runpaths is irreversible, so the GUI must default "
+        "to keeping them, matching the CLI and MultipleDataAssimilationConfig"
+    )
+
+
 def _open_and_capture_threshold(panel, qtbot):
     captured_value = None
 

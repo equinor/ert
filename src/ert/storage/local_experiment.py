@@ -118,6 +118,7 @@ class ExperimentConfig(TypedDict, total=False):
 
     # ESMDA
     prior_ensemble_id: str | None
+    delete_intermediate_runpaths: bool
 
     # Everest
     optimization_output_dir: str
