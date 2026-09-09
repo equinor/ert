@@ -159,17 +159,21 @@ def test_invalid_min_realization_raises_config_validation_error():
         )
 
 
-def test_invalid_design_matrix_format_raises_validation_error():
+@pytest.mark.parametrize("extension", ["txt", "xls"])
+def test_that_design_matrix_rejects_non_xlsx_files(extension):
     with pytest.raises(
         ConfigValidationError,
-        match="DESIGN_MATRIX must be of format \\.xls or \\.xlsx; is 'my_matrix\\.txt'",
+        match=(
+            r"DESIGN_MATRIX must have file extension \.xlsx; "
+            rf"is 'my_matrix\.{extension}'"
+        ),
     ):
         AnalysisConfig.from_dict(
             {
                 ConfigKeys.NUM_REALIZATIONS: 1,
                 ConfigKeys.DESIGN_MATRIX: [
                     [
-                        "my_matrix.txt",
+                        f"my_matrix.{extension}",
                         {
                             "DESIGN_SHEET": "sheet1",
                             "DEFAULT_SHEET": "sheet2",
