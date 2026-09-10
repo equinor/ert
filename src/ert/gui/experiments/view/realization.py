@@ -6,7 +6,7 @@ from PyQt6.QtCore import (
     QItemSelectionModel,
     QModelIndex,
     QObject,
-    QPoint,
+    QRect,
     QSize,
     Qt,
 )
@@ -23,12 +23,17 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.ensemble_evaluator.state import (
+    REALIZATION_STATE_RUNNING,
+    REALIZATION_STATE_WAITING,
+)
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
     CallbackStatusMessageRole,
     FMStepColorHint,
     MemoryUsageRole,
     RealIens,
+    StatusRole,
 )
 from ert.shared.status.utils import byte_with_unit
 
@@ -40,7 +45,7 @@ class RealizationWidget(QWidget):
         super().__init__(parent)
 
         self._iter = it
-        self._delegate_size = QSize(90, 90)
+        self._delegate_size = QSize(70, 70)
 
         self._real_view = QListView(self)
         self._real_view.setViewMode(QListView.ViewMode.IconMode)
@@ -95,15 +100,18 @@ class RealizationWidget(QWidget):
 
 
 class RealizationDelegate(QStyledItemDelegate):
-    def __init__(self, size: QSize, parent: QObject) -> None:
+    _STATUS_DOT_DIAMETER = 32
+    _PROGRESS_RING_MARGIN = 4
+    _PROGRESS_RING_WIDTH = 5
+
+    def __init__(self, item_size: QSize, parent: QObject) -> None:
         super().__init__(parent)
-        self._size = size
+        self._item_size = item_size
         parent.installEventFilter(self)
-        self.adjustment_point_for_job_rect_margin = QPoint(-20, -20)
-        self._color_black = QColor(0, 0, 0, 180)
-        self._color_progress = QColor(50, 173, 230, 200)
-        self._color_lightgray = QColor("LightGray").lighter(120)
-        self._pen_black = QPen(self._color_black, 2, Qt.PenStyle.SolidLine)
+        self._progress_track_color = QColor(0, 0, 0, 35)
+        self._status_dot_outline_pen = QPen(
+            QColor(0, 0, 0, 45), 1, Qt.PenStyle.SolidLine
+        )
 
     @override
     def paint(
@@ -111,64 +119,77 @@ class RealizationDelegate(QStyledItemDelegate):
     ) -> None:
         if painter is None:
             return
-        text = index.data(RealIens)
-        selected_color, finished_count, total_count = tuple(index.data(FMStepColorHint))
+        realization_label = index.data(RealIens)
+        realization_status = index.data(StatusRole)
+        realization_status_color, completed_step_count, total_step_count = tuple(
+            index.data(FMStepColorHint)
+        )
 
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
-        percentage_done = (
-            100 if total_count < 1 else int((finished_count * 100.0) / total_count)
-        )
-
-        painter.setPen(self._pen_black)
-        adjusted_rect = option.rect.adjusted(2, 2, -2, -2)
-
-        painter.setBrush(
-            self._color_progress if percentage_done == 100 else self._color_lightgray
-        )
-        painter.drawEllipse(adjusted_rect)
-
-        if 0 < percentage_done < 100:
-            painter.setBrush(self._color_progress)
-            painter.drawPie(adjusted_rect, 1440, -int(percentage_done * 57.6))
-
         if option.state & QStyle.StateFlag.State_Selected:
-            factor: int = (
-                125
-                if selected_color.lighter(125).getRgb() != (255, 255, 255, 255)
-                else 110
+            selection_color = QColor(option.palette.color(QPalette.ColorRole.Highlight))
+            selection_color.setAlpha(60)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(selection_color)
+            painter.drawRoundedRect(option.rect.adjusted(2, 2, -2, -2), 6, 6)
+
+        status_dot_rect = QRect(
+            option.rect.center().x() - self._STATUS_DOT_DIAMETER // 2,
+            option.rect.top() + 8,
+            self._STATUS_DOT_DIAMETER,
+            self._STATUS_DOT_DIAMETER,
+        )
+
+        if realization_status == REALIZATION_STATE_RUNNING and total_step_count > 0:
+            progress_ring_rect = status_dot_rect.adjusted(
+                -self._PROGRESS_RING_MARGIN,
+                -self._PROGRESS_RING_MARGIN,
+                self._PROGRESS_RING_MARGIN,
+                self._PROGRESS_RING_MARGIN,
             )
-            selected_color = selected_color.lighter(factor)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setPen(QPen(self._progress_track_color, self._PROGRESS_RING_WIDTH))
+            painter.drawEllipse(progress_ring_rect)
+            progress_arc_pen = QPen(realization_status_color, self._PROGRESS_RING_WIDTH)
+            progress_arc_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            painter.setPen(progress_arc_pen)
+            painter.drawArc(
+                progress_ring_rect,
+                90 * 16,
+                -int(360 * 16 * completed_step_count / total_step_count),
+            )
 
-        painter.setBrush(selected_color)
-        adjusted_rect = option.rect.adjusted(7, 7, -7, -7)
-        painter.drawEllipse(adjusted_rect)
+        painter.setPen(self._status_dot_outline_pen)
+        if realization_status == REALIZATION_STATE_WAITING:
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setPen(QPen(realization_status_color, 2))
+            painter.drawEllipse(status_dot_rect.adjusted(1, 1, -1, -1))
+        else:
+            painter.setBrush(realization_status_color)
+            painter.drawEllipse(status_dot_rect)
 
-        font = painter.font()
-        font.setBold(True)
-        painter.setFont(font)
-
-        adj_rect = option.rect.adjusted(0, 20, 0, 0)
-        painter.drawText(adj_rect, Qt.AlignmentFlag.AlignHCenter, text)
-        adj_rect = option.rect.adjusted(0, 45, 0, 0)
+        painter.setPen(option.palette.color(QPalette.ColorRole.Text))
         painter.drawText(
-            adj_rect, Qt.AlignmentFlag.AlignHCenter, f"{finished_count} / {total_count}"
+            option.rect.adjusted(0, self._STATUS_DOT_DIAMETER + 14, 0, 0),
+            Qt.AlignmentFlag.AlignHCenter,
+            realization_label,
         )
 
         painter.restore()
 
     @override
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
-        return self._size
+        return self._item_size
 
     @override
     def eventFilter(self, object: QObject | None, event: QEvent | None) -> bool:
         if isinstance(event, QHelpEvent) and event.type() == QEvent.Type.ToolTip:
-            mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin
             parent: RealizationWidget = cast(RealizationWidget, self.parent())
             view = parent._real_view
+            mouse_pos = view.viewport().mapFrom(parent, event.pos())
             index = view.indexAt(mouse_pos)
             if index.isValid():
                 tooltip_text = ""
@@ -182,7 +203,9 @@ class RealizationDelegate(QStyledItemDelegate):
                     tooltip_text += callback_error_msg
                 if tooltip_text:
                     parent.triggeredTooltipTextDisplay.emit(tooltip_text)
-                    QToolTip.showText(view.mapToGlobal(mouse_pos), tooltip_text)
+                    QToolTip.showText(
+                        view.viewport().mapToGlobal(mouse_pos), tooltip_text
+                    )
                     return True
 
         return super().eventFilter(object, event)
