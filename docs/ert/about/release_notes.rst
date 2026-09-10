@@ -30,6 +30,16 @@ Highlighted changes
 Version 25.1
 ------------
 
+RFT QC Tool
+###########
+
+When using the :ref:`RFT_OBSERVATION <rft_observation>` keyword to condition on
+RFT data, and/or the :ref:`RFT <rft>` keyword to
+load data from RFT files, a quality control widget is available to inspect
+RFT observations and responses. See: :ref:`Inspecting RFT observations and responses <rft_qc_tool>`
+for details.
+
+
 New distribution visualization
 ##############################
 
