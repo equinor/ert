@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from httpx import RequestError
 from pandas import DataFrame
 from PyQt6.QtCore import Qt
@@ -28,6 +29,8 @@ from PyQt6.QtWidgets import (
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting, wait_cursor
+from ert.gui.plotting.ert_plots.misfits import wide_pandas_to_long_polars_with_misfits
+
 from ert.gui.plotting.utils.plot_maps import (
     CROSS_ENSEMBLE_STATISTICS,
     DISTRIBUTION,
@@ -630,6 +633,53 @@ class PlotWindow(QMainWindow):
                 key,
                 layer,
             )
+
+            if (
+                plot_widget.name == MISFIT_MAP
+                and ensemble_to_data_map
+                and not observations.empty
+            ):
+                selected = next(iter(ensemble_to_data_map))
+                initial_ensemble = min(
+                    (
+                        e
+                        for e in self._api.get_all_ensembles()
+                        if e.experiment_name == selected.experiment_name
+                        and not e.hidden
+                    ),
+                    key=lambda e: e.started_at,
+                    default=None,
+                )
+                if initial_ensemble is not None:
+                    try:  # ruff: ignore[too-many-statements-in-try-clause]
+                        if initial_ensemble.id == selected.id:
+                            initial_ensemble_data = ensemble_to_data_map[selected]
+                        else:
+                            initial_ensemble_data = self._api.data_for_response(
+                                ensemble_id=initial_ensemble.id,
+                                response_key=key,
+                                filter_on=key_def.filter_on,
+                            )
+                        misfits = wide_pandas_to_long_polars_with_misfits(
+                            {
+                                (
+                                    initial_ensemble.name,
+                                    initial_ensemble.id,
+                                ): initial_ensemble_data
+                            },
+                            observations,
+                            "seismic",
+                        )[initial_ensemble.name, initial_ensemble.id]
+                        if not misfits.is_empty():
+                            mean = misfits.group_by(["EAST", "NORTH"]).agg(
+                                pl.col("misfit").mean()
+                            )
+                            plot_context.colorbar_range = (
+                                cast(float, mean["misfit"].min()),
+                                cast(float, mean["misfit"].max()),
+                            )
+                    except BaseException as e:
+                        handle_exception(e)
 
             self._general_options.update_plot_context(
                 plot_context,
