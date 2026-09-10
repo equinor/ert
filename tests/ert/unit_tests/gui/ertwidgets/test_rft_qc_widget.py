@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import QAbstractItemView
 
 from ert.config import ErtConfig
 from ert.config._create_observation_dataframes import _rft_observation_schema
-from ert.config._observations import RFTObservation
 from ert.config.response_config import InvalidResponseFile
 from ert.config.rft_config import RFTConfig
 from ert.gui.tools.manage_experiments.rft_qc_widget import (
@@ -36,7 +35,7 @@ from ert.storage.local_ensemble import (
     LocalEnsemble,
     _write_observation_metadata,
 )
-from tests.ert.rft_generator import cell_start, create_egrid
+from tests.ert import rft_qc_example
 
 float_arr = partial(np.array, dtype=np.float32)
 
@@ -83,120 +82,19 @@ def _create_rft_ensemble(
         )
 
 
-def _rft_obs(
-    obs_name: str,
-    well: str,
-    east: float = 100.0,
-    north: float = 100.0,
-    tvd: float = 100.0,
-    md: float | None = 110.0,
-    value: float = 111.0,
-    *,
-    prop: str = "PRESSURE",
-    date: str = "2000-01-01",
-    zone: str | None = "zone2",
-    error: float = 5.0,
-) -> RFTObservation:
-    return RFTObservation(
-        name=obs_name,
-        well=well,
-        date=date,
-        property=prop,
-        value=value,
-        error=error,
-        north=north,
-        east=east,
-        tvd=tvd,
-        md=md,
-        zone=zone,
-    )
-
-
-def _rft_entry(
-    well_name: bytes,
-    date: tuple[int, int, int],
-    ijks: tuple[tuple[int, int, int]],
-    **kwargs,
-):
-
-    return [
-        *cell_start(well_name=well_name, date=date, ijks=ijks),
-        *[(k.ljust(8).upper(), float_arr(v)) for k, v in kwargs.items()],
-    ]
-
-
-def _list_of_tuples_to_dict(keys: list[str], tuples: list[tuple]) -> dict[str, Any]:
-    return dict(zip(keys, zip(*tuples, strict=True), strict=True))
-
-
 @contextmanager
 def _loaded_multi_well_rft_qc_widget(qtbot, mocked_files, mock_resfo_file):
-    # fmt: off
-    observations = [
-        #         name     well    east   north   tvd     md   value
-        _rft_obs("OBS1", "WELL_A", 100.0, 100.0, 100.0, 110.0, 111.0, zone="wrong_zone"),  # ruff: ignore[line-too-long]
-        _rft_obs("OBS2", "WELL_A", 100.0, 100.0, 200.0, 220.0, 222.0),
-        _rft_obs("OBS3", "WELL_A", 110.0, 100.0, 290.0, 330.0, 333.0),
-        _rft_obs("OBS4", "WELL_A", 100.0, 100.0, 400.0, 440.0, 444.0),
-        _rft_obs("OBS5", "WELL_B", 200.0, 251.0, 300.0, 330.0, 555.0, date="2001-01-01"),  # ruff: ignore[line-too-long]
-        _rft_obs("OBS6", "WELL_B", 240.0, 240.0, 420.0, 440.0, 556.0, date="2001-01-01"),  # ruff: ignore[line-too-long]
-        _rft_obs("OBS7", "WELL_B", 180.0, 180.0, 480.0, 500.0, 655.0, date="2001-01-01", zone="wrong_zone"),  # ruff: ignore[line-too-long]
-    ]
-
-    well_A_rft = [
-    #        ijks     pressure swat   depth
-        ( (1, 1, 1),   112.0,  0.4,   100.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( (1, 1, 2),   223.0,  0.5,   200.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( (1, 1, 3),   334.0,  0.6,   300.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( (1, 1, 5),   556.0,  0.7,   500.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-    ]
-    well_B_rft = [
-    #        ijks     pressure  depth
-        ( (2, 2, 5),   555.0,   500.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-    ]
-    well_C_rft = [
-    #        ijks     pressure   depth
-        ( (1, 2, 1),   110.0,    100.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( (1, 2, 2),   220.0,    200.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( (1, 2, 3),   330.0,    300.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( (1, 2, 4),   440.0,    400.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-    ]
-    well_A_typo_rft = [
-    #        ijks     pressure  depth
-        ( (1, 1, 4),   445.0,   400.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-    ]
-    # fmt: on
-
-    well_A = _list_of_tuples_to_dict(["ijks", "pressure", "swat", "depth"], well_A_rft)
-    well_B = _list_of_tuples_to_dict(["ijks", "pressure", "depth"], well_B_rft)
-    well_C = _list_of_tuples_to_dict(["ijks", "pressure", "depth"], well_C_rft)
-    well_A_typo = _list_of_tuples_to_dict(
-        ["ijks", "pressure", "depth"], well_A_typo_rft
-    )
     BASE_PATH = "path/does/not/exist"
-    mocked_files[f"{BASE_PATH}/zonemap.txt"] = (
-        "1 zone2\n2 zone2\n3 zone2\n4 zone2\n5 zone2\n"
-    )
-    mock_resfo_file(
-        f"{BASE_PATH}/BASE.EGRID",
-        create_egrid(2, 2, 5, 100, 100, 100, 50, 50, 50),
-    )
-    mock_resfo_file(
-        f"{BASE_PATH}/BASE.RFT",
-        [
-            *_rft_entry(date=(1, 1, 2000), well_name=b"WELL_A", **well_A),
-            *_rft_entry(date=(1, 1, 2001), well_name=b"WELL_B", **well_B),
-            *_rft_entry(date=(1, 1, 2000), well_name=b"WELL_C", **well_C),
-            *_rft_entry(date=(1, 1, 2000), well_name=b"WELL_A_TYPO", **well_A_typo),
-        ],
-    )
+    mocked_files[f"{BASE_PATH}/{rft_qc_example.ZONEMAP_FILE}"] = rft_qc_example.ZONEMAP
+    mock_resfo_file(f"{BASE_PATH}/BASE.EGRID", rft_qc_example.egrid())
+    mock_resfo_file(f"{BASE_PATH}/BASE.RFT", rft_qc_example.rft_file())
 
     realization = 0
     with _create_rft_ensemble(
         1,
-        observations,
+        rft_qc_example.OBSERVATIONS,
         data_to_read={"WELL_A": {"*": ["*"]}},
-        zonemap="zonemap.txt",
+        zonemap=rft_qc_example.ZONEMAP_FILE,
         approximate_missing_values=True,
     ) as ensemble:
         rft_config = cast(RFTConfig, ensemble.experiment.response_configuration["rft"])
