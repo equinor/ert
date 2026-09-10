@@ -45,6 +45,10 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/getting_started/updating_parameters/fig/prior_params.png",
     "docs/everest/images/*",
     "docs/ert/getting_started/howto/illustrating_influence_range.png",
+    "docs/ert/getting_started/howto/ensemble_mean.png",
+    "docs/ert/getting_started/howto/ensemble_stdev.png",
+    "docs/ert/getting_started/howto/diff_posterior_prior_ensemble_mean.png",
+    "docs/ert/getting_started/howto/diff_posterior_prior_ensemble_stdev.png",
 ]
 
 
