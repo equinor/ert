@@ -109,13 +109,13 @@ def _loaded_multi_well_rft_qc_widget(qtbot, mocked_files, mock_resfo_file):
         yield widget
 
 
-def _display_all_points(widget) -> None:
-    widget._on_toggle_file_rft(True)
+def display_all_points(widget: RftQcWidget) -> None:
+    widget._load_rft_file_toggle.setChecked(True)
     for list_widget in (
         widget._filter_panel._date_list,
         widget._filter_panel._property_list,
     ):
-        list_widget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+        widget._filter_panel._multiselect_toggles[list_widget].setChecked(True)
         list_widget.selectAll()
     widget._plot._fit_view_to_displayed_points()
 
@@ -1656,7 +1656,7 @@ def test_that_rft_qc_plot_in_grid_coordinates_is_unchanged(
     with _loaded_multi_well_rft_qc_widget(
         qtbot, mocked_files, mock_resfo_file
     ) as widget:
-        _display_all_points(widget)
+        display_all_points(widget)
         return widget._plot.canvas.figure
 
 
@@ -1668,7 +1668,7 @@ def test_that_rft_qc_plot_in_utm_coordinates_is_unchanged(
     with _loaded_multi_well_rft_qc_widget(
         qtbot, mocked_files, mock_resfo_file
     ) as widget:
-        _display_all_points(widget)
+        display_all_points(widget)
         assert widget._filter_panel._toggle_utm_coords.isEnabled()
         widget._filter_panel._toggle_utm_coords.setChecked(True)
         return widget._plot.canvas.figure
