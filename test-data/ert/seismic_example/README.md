@@ -46,6 +46,29 @@ under `share/results/tables`. Note that modelled data have the same structure as
 observation data, but `OBS` column is actually a `VALUE` column and `OBS_ERROR` should
 be ignored.
 
+### Drogon example
+While the original mock setup was created to minimize data and keep full control of the inputs,
+a more realistic case with a larger number of data points appeared to be useful too.
+
+`drogon` directory contains such files produced by `fmu-sim2seis` itself.
+
+Observation files in `obs` directory are:
+- `topvolantis--amplitude_full_mean_depth--20190701_20180101.csv`
+- `topvolantis--amplitude_full_min_depth--20190701_20180101.csv`
+
+`fake-realization-responses` directory contains modelled data. `fmu-sim2seis` produces
+just one realization per setup, but can do it for many dates. In this setup those files
+for different dates are used as if they were responses for different realizations. This
+is done to create diversity between realizations. There are in total 3 realizations
+available and iterations return data files for them in a different order.
+
+Note that because modelled responses do not depend on parameters chosen by ERT, update
+step will not lead to responses converging to observations.
+
+Run setup:
+```
+ert ensemble_experiment sim2seis_drogon.ert
+```
 
 ### Assumptions
 Assumptions in the script are taken from analyzing results of the fmu-sim2seis test-data
