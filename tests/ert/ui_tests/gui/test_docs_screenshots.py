@@ -45,6 +45,13 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/getting_started/updating_parameters/fig/prior_params.png",
     "docs/everest/images/*",
     "docs/ert/getting_started/howto/illustrating_influence_range.png",
+    "docs/ert/getting_started/howto/ensemble_mean_with_localization.png",
+    "docs/ert/getting_started/howto/ensemble_mean_with_localization1.png",
+    "docs/ert/getting_started/howto/ensemble_stdev_with_localization.png",
+    "docs/ert/getting_started/howto/ensemble_estimated_facies_probability_with_localization.png",
+    "docs/ert/getting_started/howto/ensemble_estimated_facies_probability_update_with_localization_vertical.png",
+    "docs/ert/getting_started/howto/ensemble_estimated_facies_probability_update_with_localization.png",
+    "docs/ert/getting_started/howto/ensemble_estimated_facies_probability_update_with_localization2.png",
 ]
 
 
