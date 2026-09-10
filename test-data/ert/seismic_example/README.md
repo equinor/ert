@@ -25,14 +25,14 @@ To be able to execute the setup file `mock_sim2seis.py` must be set as executabl
 If needed, run the following to regenerate observation data:
 
 ```
-python mock_sim2seis.py --observations
+python python/mock_sim2seis.py --observations
 ```
 
 The format for the output files of `mock_sim2seis.py` can be set via the `--format` flag.
 The default format is `.csv` and the supported formats are `.csv` and `.parquet`.
 The following example sets the format to `.parquet`.
 ````
-python mock_sim2seis.py --format parquet
+python python/mock_sim2seis.py --format parquet
 ````
 
 Run setup:
@@ -42,9 +42,9 @@ ert ensemble_experiment sim2seis.ert
 Note that setup expects observation data in both `.csv` and `.parquet` formats.
 
 Observation data is found under `share/preprocessed/tables`. Modelled data is found
-under `share/results/tables`. Note that modelled data have the same structure as
-observation data, but `OBS` column is actually a `VALUE` column and `OBS_ERROR` should
-be ignored.
+under `share/results/tables` in each realization directory. Note that modelled data have
+the same structure as observation data, but `OBS` column is actually a `VALUE` column
+and `OBS_ERROR` should be ignored.
 
 
 ### Assumptions
