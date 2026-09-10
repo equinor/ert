@@ -274,7 +274,9 @@ class AnalysisConfig:
             es_settings.weights = es_mda_weights
 
         design_matrices = [
-            DesignMatrix.from_config_list(design_matrix_config_list)
+            DesignMatrix.from_config_list(
+                design_matrix_config_list, parameter_type_update_strategies
+            )
             for design_matrix_config_list in design_matrix_config_lists
         ]
         design_matrix: DesignMatrix | None = None
