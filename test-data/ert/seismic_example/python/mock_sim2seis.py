@@ -231,10 +231,7 @@ def generate_file(
     return filepath
 
 
-def generate_many(
-    parameters: dict[str, dict[str, float]],
-    output_dir: Path,
-    output_format: OutputFormat,
+def generate_combos(
     horizons: list[HorizonName] | None = None,
     attributes: list[Attribute] | None = None,
     stacking_offsets: list[StackingOffset] | None = None,
@@ -242,10 +239,8 @@ def generate_many(
     vertical_domains: list[VerticalDomain] | None = None,
     bases: list[BaseDate] | None = None,
     monitors: list[MonitorDate] | None = None,
-) -> None:
-    """Generate output files for every combination of the supplied setup parameter
-    lists.
-    """
+) -> list[tuple]:
+    """Generate all combinations of the supplied setup parameter lists."""
     horizons = horizons or [HorizonName.HORIZON]
     attributes = attributes or [Attribute.AMPLITUDE]
     stacking_offsets = stacking_offsets or [StackingOffset.FULL]
@@ -254,21 +249,17 @@ def generate_many(
     bases = bases or [BaseDate.JAN2024]
     monitors = monitors or [MonitorDate.JAN2025]
 
-    for combo in itertools.product(
-        horizons,
-        attributes,
-        stacking_offsets,
-        calculations,
-        vertical_domains,
-        bases,
-        monitors,
-    ):
-        generate_file(
-            parameters,
-            output_dir,
-            output_format,
-            *combo,
+    return list(
+        itertools.product(
+            horizons,
+            attributes,
+            stacking_offsets,
+            calculations,
+            vertical_domains,
+            bases,
+            monitors,
         )
+    )
 
 
 if __name__ == "__main__":
@@ -299,10 +290,16 @@ if __name__ == "__main__":
         parameters = json.loads(Path("parameters.json").read_text(encoding="utf-8"))
         output_dir = Path("share/results/tables")
 
-    generate_many(
-        parameters,
-        output_dir,
-        output_format=args.format,
+    combos = generate_combos(
+        bases=[BaseDate.JAN2024],
         monitors=[MonitorDate.JAN2025, MonitorDate.JAN2026],
         calculations=[Calculation.MEAN, Calculation.MIN],
     )
+
+    for combo in combos:
+        generate_file(
+            parameters,
+            output_dir,
+            args.format,
+            *combo,
+        )
