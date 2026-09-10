@@ -67,8 +67,17 @@ class MisfitMapPlot:
         misfit_values = mean_misfits["misfit"].to_numpy()
         axes_misfit = figure.add_subplot(111)
 
+        vmin, vmax = (None, None)
+        if plot_context.colorbar_range is not None:
+            vmin, vmax = plot_context.colorbar_range
         misfit_tripcolor = axes_misfit.tripcolor(
-            east, north, misfit_values, shading="flat", cmap="viridis"
+            east,
+            north,
+            misfit_values,
+            shading="flat",
+            cmap="viridis",
+            vmin=vmin,
+            vmax=vmax,
         )
 
         cbar = figure.colorbar(

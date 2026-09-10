@@ -195,3 +195,43 @@ def test_that_misfit_map_shows_message_when_more_than_one_ensemble_is_provided(
         figure.axes[0].texts[0].get_text()
         == "Multiple ensembles selected; misfit map supports one at a time"
     )
+
+
+def test_that_misfit_map_pins_colorbar_range_when_plot_context_has_one(
+    make_plot_context,
+    make_key_def,
+    make_ensemble,
+) -> None:
+    ensemble = make_ensemble("ensemble")
+    plot_context = make_plot_context([ensemble], key="SEISMIC_KEY")
+    plot_context.colorbar_range = (-3.0, 7.0)
+
+    observation_data = pd.DataFrame(
+        data={
+            0: [1.0, 10.0, "0", 100.00, 200.00],
+            1: [1.0, 20.0, "5", 150.00, 250.00],
+            2: [1.0, 30.0, "8", 200.00, 100.00],
+        },
+        index=["STD", "OBS", "key_index", "EAST", "NORTH"],
+    )
+
+    ensemble_to_data_map = {
+        ensemble: pd.DataFrame(
+            data={"0": [1.0], "5": [2.0], "8": [3.0]},
+            index=pd.Index([0], name="Realization"),
+        )
+    }
+    figure = Figure()
+
+    MisfitMapPlot().plot(
+        figure=figure,
+        plot_context=plot_context,
+        ensemble_to_data_map=ensemble_to_data_map,
+        observation_data=observation_data,
+        key_def=make_key_def(key="SEISMIC_KEY"),
+        obs_loc=None,
+        std_dev_images={},
+    )
+
+    tripcolor = figure.axes[0].collections[0]
+    assert tripcolor.get_clim() == (-3.0, 7.0)
