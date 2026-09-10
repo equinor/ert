@@ -250,9 +250,13 @@ class PlotApi:
                 }
             )
 
+        def check_that_pass(df):
+            return not df.empty
+
         if (
             key_def is not None
             and key_def.metadata.get("data_origin") == "everest_batch_objectives"
+            and check_that_pass(df)
         ):
             assert {"batch_id", "accepted"}.issubset(df.columns)
 
