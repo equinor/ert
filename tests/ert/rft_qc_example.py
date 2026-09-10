@@ -100,3 +100,22 @@ def rft_file() -> list[tuple[str, Any]]:
         *rft_entry(well_name=b"WELL_C", date=(1, 1, 2000), **well_C),
         *rft_entry(well_name=b"WELL_A_TYPO", date=(1, 1, 2000), **well_A_typo),
     ]
+
+
+def observations_config() -> str:
+    """The observations rendered as an OBS_CONFIG file."""
+    return "\n".join(
+        f"RFT_OBSERVATION {o.name} {{\n"
+        f"    WELL={o.well};\n"
+        f"    DATE={o.date};\n"
+        f"    PROPERTY={o.property};\n"
+        f"    VALUE={o.value};\n"
+        f"    ERROR={o.error};\n"
+        f"    EAST={o.east};\n"
+        f"    NORTH={o.north};\n"
+        f"    TVD={o.tvd};\n"
+        f"    MD={o.md};\n"
+        f"    ZONE={o.zone};\n"
+        "};\n"
+        for o in OBSERVATIONS
+    )
