@@ -32,15 +32,21 @@ from .conftest import (
 )
 
 
-def test_that_configuration_is_invalid_when_no_updatable_parameters_exists(
-    qtbot: QtBot,
+@pytest.mark.parametrize(
+    ("update_strategy", "expected_valid"),
+    [
+        pytest.param(LocalizationType.GLOBAL, True, id="updatable"),
+        pytest.param(None, False, id="not_updatable"),
+    ],
+)
+def test_that_configuration_validity_reflects_updatable_parameters(
+    qtbot: QtBot, update_strategy, expected_valid
 ):
-
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
 
     param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL
+        spec=ParameterConfig, update_strategy=update_strategy
     )
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
@@ -52,21 +58,24 @@ def test_that_configuration_is_invalid_when_no_updatable_parameters_exists(
     )
     qtbot.addWidget(panel)
 
-    assert panel.isConfigurationValid()
-
-    param_mock_no_update: ParameterConfig = Mock(
-        spec=ParameterConfig, update_strategy=None
-    )
-    panel._parameter_configuration = [param_mock_no_update]
-    assert not panel.isConfigurationValid()
+    assert panel.isConfigurationValid() is expected_valid
 
 
-def test_that_configuration_is_valid_when_running_from_prior_ensemble_with_no_current_parameters_updatable(  # ruff: ignore[line-too-long]
-    qtbot: QtBot,
+@pytest.mark.parametrize(
+    ("prior_update_strategy", "expected_valid"),
+    [
+        pytest.param(None, False, id="prior_not_updatable"),
+        pytest.param(LocalizationType.GLOBAL, True, id="prior_updatable"),
+    ],
+)
+def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameters(
+    qtbot: QtBot, prior_update_strategy, expected_valid
 ):
-
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
+    prior_param_mock: ParameterConfig = Mock(
+        spec=ParameterConfig, update_strategy=prior_update_strategy
+    )
     notifier._storage._setup_mocked_run(
         "mock_ensemble",
         "mock_experiment",
@@ -75,6 +84,7 @@ def test_that_configuration_is_valid_when_running_from_prior_ensemble_with_no_cu
         ],
         experiment_type=ExperimentType.ES_MDA,
         iteration=0,
+        parameter_configuration={"PARAMETER": prior_param_mock},
     )
 
     param_mock: ParameterConfig = Mock(spec=ParameterConfig, update_strategy=None)
@@ -87,7 +97,7 @@ def test_that_configuration_is_valid_when_running_from_prior_ensemble_with_no_cu
         config_num_realization=1,
     )
     qtbot.addWidget(panel)
-    assert not panel.isConfigurationValid()
+    assert not panel._selected_param_configuration_is_valid
 
     select_prior_ensemble_checkbox = panel.findChild(
         QCheckBox, "select_prior_checkbox_esmda"
@@ -96,7 +106,8 @@ def test_that_configuration_is_valid_when_running_from_prior_ensemble_with_no_cu
     select_prior_ensemble_checkbox.click()
     assert select_prior_ensemble_checkbox.isChecked()
 
-    assert panel.isConfigurationValid()
+    assert panel._selected_param_configuration_is_valid is expected_valid
+    assert panel.isConfigurationValid() is expected_valid
 
 
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_config(
@@ -149,6 +160,9 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     active_realizations = [True] * config_num_realizations
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
+    prior_param_mock: ParameterConfig = Mock(
+        spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL
+    )
     notifier._storage._setup_mocked_run(
         "mock_ensemble",
         "mock_experiment",
@@ -162,6 +176,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
         ],
         experiment_type=ExperimentType.ES_MDA,
         iteration=0,
+        parameter_configuration={"PARAMETER": prior_param_mock},
     )
 
     param_mock: ParameterConfig = Mock(
