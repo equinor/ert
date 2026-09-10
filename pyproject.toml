@@ -215,6 +215,7 @@ line-length = 88
 select = [
     "A",     # flake8-builtins
     "AIR",
+    "ANN001",
     "missing-return-type-special-method",
     "ASYNC", # flake8-async
     "B",     # flake-8-bugbear
@@ -306,7 +307,7 @@ allowed-confusables = ["–"]
 "src/ert/storage/local_ensemble.py" = ["pandas-use-of-dot-pivot-or-unstack"] # polars .pivot, not pandas
 "*.ipynb" = ["module-import-not-at-top-of-file"]
 "!tests/**" = ["banned-api"]
-
+"test*/**" = ["ANN001"]
 
 [tool.ruff.lint.pylint]
 max-args = 20

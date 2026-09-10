@@ -70,7 +70,7 @@ def _configure_loggers(
         },
     }
 
-    def path_representer(dumper, data):
+    def path_representer(dumper: yaml.SafeDumper, data: pathlib.PurePath) -> yaml.Node:
         return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
 
     yaml.add_representer(pathlib.PosixPath, path_representer)
