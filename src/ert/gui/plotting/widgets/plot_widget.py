@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from matplotlib.backend_bases import Event, MouseEvent, PickEvent
-from matplotlib.backends.backend_qt5agg import (  # type: ignore
+from matplotlib.backends.backend_qtagg import (  # type: ignore
     FigureCanvas,
     NavigationToolbar2QT,
 )
