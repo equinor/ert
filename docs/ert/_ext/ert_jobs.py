@@ -1,10 +1,12 @@
+from sphinx.application import Sphinx
+
 from ert.shared._doc_utils.ert_jobs import (
     ErtForwardModelDocumentation,
     ErtWorkflowDocumentation,
 )
 
 
-def setup(app):
+def setup(app: Sphinx) -> dict:
     app.add_directive("ert_forward_model", ErtForwardModelDocumentation)
     app.add_directive("ert_workflow_jobs", ErtWorkflowDocumentation)
 

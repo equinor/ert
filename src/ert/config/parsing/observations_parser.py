@@ -181,7 +181,7 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
 
     @staticmethod
     @no_type_check
-    def observation(tree) -> ObservationDict:
+    def observation(tree) -> ObservationDict:  # ruff: ignore[missing-type-function-argument]
         context_token = tree[0].children[0]
         observation_type = ObservationType(context_token)
 
@@ -219,38 +219,38 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
 
     @staticmethod
     @no_type_check
-    def segment(tree):
+    def segment(tree):  # ruff: ignore[missing-type-function-argument]
         return (("SEGMENT", tree[0]), tree[1])
 
     @staticmethod
     @no_type_check
-    def localization(tree):
+    def localization(tree):  # ruff: ignore[missing-type-function-argument]
         return ("LOCALIZATION", tree[0])
 
     @staticmethod
     @no_type_check
-    def well(tree):
+    def well(tree):  # ruff: ignore[missing-type-function-argument]
         # Keys must be unique, therefore we append well name to WELL
         return (f"WELL {tree[0]}", tree[1])
 
     @staticmethod
     @no_type_check
-    def breakthrough(tree):
+    def breakthrough(tree):  # ruff: ignore[missing-type-function-argument]
         return ("BREAKTHROUGH", tree[0])
 
     @staticmethod
     @no_type_check
-    def object(tree):
+    def object(tree):  # ruff: ignore[missing-type-function-argument]
         return TreeToObservations._object(tree)
 
     @staticmethod
     @no_type_check
-    def summary_object(tree):
+    def summary_object(tree):  # ruff: ignore[missing-type-function-argument]
         return TreeToObservations._object(tree)
 
     @staticmethod
     @no_type_check
-    def _object(tree):
+    def _object(tree):  # ruff: ignore[missing-type-function-argument]
         keys = set()
         error_list: list[ErrorInfo] = []
         for key, *_ in tree:

@@ -3,7 +3,7 @@ import numpy as np
 rng = np.random.default_rng(12345)
 
 
-def p(x):
+def p(x: float) -> float:
     return 0.5 * x**2 + x + 3
 
 
