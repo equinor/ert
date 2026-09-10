@@ -521,7 +521,7 @@ the RFT file.
 
 
 Working with RFT observations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 RFT data is loaded into ERT automatically when you define :ref:`RFT_OBSERVATION <rft_observation>`
 entries in your observation configuration file. ERT reads the RFT files generated
@@ -553,6 +553,32 @@ Example observation configuration::
 
 For loading multiple RFT observations from a CSV file, see the
 :ref:`RFT_OBSERVATION <rft_observation>` documentation.
+
+
+.. _rft_qc_tool:
+
+Inspecting RFT observations and responses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using the :ref:`RFT_OBSERVATION <rft_observation>` keyword to condition on
+RFT data, and/or the :ref:`RFT <rft>` keyword to load data from RFT files,
+a quality control widget for inspecting RFT observations and responses is available in
+the *Manage experiments* panel, by selecting the "Inspect RFT" tab when a realization is selected.
+
+.. image:: fig/gui_at_rft_qc_widget.png
+
+The widget displays responses and observations as points in 3D space. It provides options to filter
+on Well name, Date, Property and Status of the response/observation.
+
+By selecting a point in the plot, details about RFT observations and responses found at that
+point are displayed in the Point details section to the right.
+
+Points are displayed either using cell index (ijk) coordinates by default, or UTM coordinates
+by clicking the "Show UTM coordinates" checkbox.
+
+By default the widget only shows RFT observations and responses read and stored by ERT.
+The user can check the "Load RFT file content into plot" option to show all RFT responses available
+in the RFT file.
 
 
 .. _exporting_rft_data_for_visualization:
