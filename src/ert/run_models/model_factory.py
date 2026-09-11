@@ -98,13 +98,23 @@ def create_model(
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
-def _merge_parameters(
+def _resolve_parameter_configs(
     design_matrix: DesignMatrix | None,
     parameter_configs: list[ParameterConfig],
     *,
-    require_updateable_param: bool = False,
+    require_updateable_param: bool = False,  # whether caller needs updatable parameters
+    prior_ensemble_selected: bool = False,  # design matrix should not influence if true
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
-    if design_matrix is None:
+    """
+    Merge design matrix parameters into the parameter configuration.
+
+    If no design matrix is given, or the prior ensemble is selected, the
+    parameter configs are returned unchanged. Otherwise, the design matrix
+    parameters are merged in, optionally validating that at least one
+    updatable parameter remains.
+    """
+
+    if design_matrix is None or prior_ensemble_selected:
         return parameter_configs, None
 
     merged_parameter_configs = design_matrix.merge_with_existing_parameters(
@@ -137,7 +147,7 @@ def _setup_single_test_run(
             "Cannot run single test run when the first realization is inactive."
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
@@ -197,7 +207,7 @@ def _setup_ensemble_experiment(
     experiment_name = args.experiment_name
     assert experiment_name is not None
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
@@ -372,7 +382,7 @@ def _setup_ensemble_smoother(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
@@ -420,7 +430,7 @@ def _setup_ensemble_information_filter(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
@@ -486,10 +496,11 @@ def _setup_multiple_data_assimilation(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
-        design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
+    parameter_configs, design_matrix = _resolve_parameter_configs(
+        design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
+        prior_ensemble_selected=bool(prior_ensemble),
     )
 
     runmodel_config = MultipleDataAssimilationConfig(
