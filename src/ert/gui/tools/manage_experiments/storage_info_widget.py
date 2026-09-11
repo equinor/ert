@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.experiments.view import WorkflowLogView
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 
 from .ensemble_widget import EnsembleWidget
@@ -37,6 +38,7 @@ class _ExperimentWidgetTabs(IntEnum):
     OBSERVATIONS_TAB = 1
     PARAMETERS_TAB = 2
     RESPONSES_TAB = 3
+    WORKFLOWS_TAB = 4
 
 
 class _RealizationWidgetTabs(IntEnum):
@@ -57,6 +59,8 @@ class _ExperimentWidget(QWidget):
 
         self._observations_text_edit = QTextEdit()
         self._observations_text_edit.setReadOnly(True)
+
+        self._workflow_log_view = WorkflowLogView()
 
         info_frame = QFrame()
         self._name_label = QLabel()
@@ -88,11 +92,23 @@ class _ExperimentWidget(QWidget):
         tab_widget.insertTab(
             _ExperimentWidgetTabs.RESPONSES_TAB, self._responses_text_edit, "Responses"
         )
+        tab_widget.insertTab(
+            _ExperimentWidgetTabs.WORKFLOWS_TAB, self._workflow_log_view, "Workflows"
+        )
+        tab_widget.currentChanged.connect(self._current_tab_changed)
+        self._tab_widget = tab_widget
 
         layout = QVBoxLayout()
         layout.addWidget(tab_widget)
 
         self.setLayout(layout)
+
+    def _current_tab_changed(self, index: int) -> None:
+        if (
+            index == _ExperimentWidgetTabs.WORKFLOWS_TAB
+            and self._experiment is not None
+        ):
+            self._workflow_log_view.load_events(self._experiment.workflow_events_path)
 
     @Slot(Experiment)
     def setExperiment(self, experiment: Experiment) -> None:
@@ -118,6 +134,8 @@ class _ExperimentWidget(QWidget):
             html += f"<tr><td>{obs_name}</td></tr>"
         html += "</table>"
         self._observations_text_edit.setHtml(html)
+
+        self._current_tab_changed(self._tab_widget.currentIndex())
 
 
 class _RealizationWidget(QWidget):

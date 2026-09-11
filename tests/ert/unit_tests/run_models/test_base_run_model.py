@@ -48,7 +48,7 @@ from ert.run_models.run_model import (
     UserCancelled,
 )
 from ert.warnings import PostExperimentWarning
-from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import WorkflowJobResult, WorkflowJobStatus, WorkflowRunner
 
 
 @pytest.fixture(autouse=True)
@@ -1025,6 +1025,55 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
     ]
 
 
+def test_that_cancelled_job_and_its_unstarted_siblings_carry_workflow_name(
+    use_tmpdir,
+):
+    """Regression test: a job interrupted by cancellation and the jobs after
+    it that never got a chance to start are both reported as cancelled, and
+    both kinds of result still carry the originating workflow's name once
+    turned into events.
+    """
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={},
+        status_queue=status_queue,
+    )
+
+    workflow_runner = MagicMock()
+    workflow_runner.workflow_job_results.return_value = [
+        WorkflowJobResult(
+            name="INTERRUPTED",
+            index=0,
+            arguments=[],
+            stdout="partial output",
+            stderr="",
+            status=WorkflowJobStatus.CANCELLED,
+        ),
+        WorkflowJobResult(
+            name="NEVER_STARTED",
+            index=1,
+            arguments=[],
+            stdout="",
+            stderr="",
+            status=WorkflowJobStatus.CANCELLED,
+        ),
+    ]
+
+    brm._send_workflow_events(
+        workflow_runner=workflow_runner,
+        hook=HookRuntime.PRE_SIMULATION,
+        workflow_name="my_workflow",
+        iteration=0,
+    )
+
+    interrupted_event, never_started_event = _drain(status_queue)
+    assert interrupted_event.workflow_name == "my_workflow"
+    assert interrupted_event.status is WorkflowJobStatus.CANCELLED
+
+    assert never_started_event.workflow_name == "my_workflow"
+    assert never_started_event.status is WorkflowJobStatus.CANCELLED
+
+
 def test_that_workflow_events_from_update_hook_carry_iteration(tmp_path, use_tmpdir):
     workflow = _printing_workflow(tmp_path, "hello", 'print("hello")')
     status_queue = SimpleQueue()
@@ -1146,6 +1195,34 @@ def test_that_failure_to_persist_workflow_events_does_not_stop_experiment(
 
     assert "Failed to persist workflow events to storage" in caplog.text
     assert _drain(status_queue), "the event should still be sent"
+
+
+def test_that_pre_experiment_output_is_persisted_when_no_later_hook_has_workflows(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_EXPERIMENT: [startup]},
+        status_queue=SimpleQueue(),
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="exp")
+    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
+        "before the experiment\n"
+    ]
 
 
 def test_that_starting_experiment_discards_workflow_output_from_previous_experiment(
