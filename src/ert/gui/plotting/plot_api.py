@@ -15,9 +15,7 @@ from pandas.errors import ParserError
 from resfo_utilities import history_key
 
 from ert.config import ParameterConfig
-from ert.config.known_response_types import (
-    KnownResponseTypes,
-)
+from ert.config.known_response_types import KnownResponseTypes
 from ert.config.response_config import ResponseConfig
 from ert.services.ert_client import ErtClient
 from ert.storage.local_experiment import _parameters_adapter as parameter_config_adapter
@@ -506,3 +504,16 @@ class PlotApi:
             return np.array([])
 
         return self._client.parameter_std_dev(ensemble.id, key, z)
+
+    def has_kalman_gain(self, ensemble_id: str) -> bool:
+        blobs = self._client.ensemble_blobs(ensemble_id)
+        return any(
+            blob.get("name") == "K"
+            and blob.get("blob_info", {}).get("blob_type") == "matrix"
+            for blob in blobs
+        )
+
+    def data_for_waterfall(
+        self, ensemble_id: str, parameter_key: str, nobservations: int = 10
+    ) -> pd.DataFrame:
+        return self._client.waterfall_data(ensemble_id, parameter_key, nobservations)
