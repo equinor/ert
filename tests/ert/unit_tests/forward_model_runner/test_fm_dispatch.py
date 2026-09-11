@@ -110,7 +110,7 @@ def _reap_zombies(timeout: float) -> None:
         except ChildProcessError:
             return
         if pid == 0:
-            return
+            time.sleep(0.01)
 
 
 @pytest.mark.slow
