@@ -48,6 +48,10 @@ class MisfitMapPlot:
             )
             return
 
+        if observation_data.empty:
+            self._show_no_data(figure, "No observation data available")
+            return
+
         ensemble, ensemble_data = next(iter(ensemble_to_data_map.items()))
         misfits_by_realization = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
             {(ensemble.name, ensemble.id): ensemble_data},

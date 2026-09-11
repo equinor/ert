@@ -111,6 +111,36 @@ def test_that_misfit_map_plot_show_no_misfit_data_message_when_no_misfit_rows_pr
     assert figure.axes[0].texts[0].get_text() == "No misfit data available"
 
 
+def test_that_misfit_map_plot_show_no_obs_data_message_when_obs_data_is_empty(
+    make_plot_context,
+    make_key_def,
+    make_ensemble,
+) -> None:
+    ensemble = make_ensemble("ensemble_1")
+    plot_context = make_plot_context([ensemble], key="SEISMIC_KEY")
+    key_def = make_key_def(key="SEISMIC_KEY")
+    figure = Figure()
+    observation_data = pd.DataFrame()  # Empty observation data
+
+    MisfitMapPlot().plot(
+        figure=figure,
+        plot_context=plot_context,
+        ensemble_to_data_map={
+            ensemble: pd.DataFrame(
+                data={"99": [1.0]},
+                index=pd.Index([0], name="Realization"),
+            )
+        },
+        observation_data=observation_data,
+        key_def=key_def,
+        obs_loc=None,
+        std_dev_images={},
+    )
+
+    assert len(figure.axes) == 1
+    assert figure.axes[0].texts[0].get_text() == "No observation data available"
+
+
 def test_that_misfit_map_uses_default_title_and_axis_labels_when_plot_config_is_unset(
     make_plot_context,
     make_key_def,
