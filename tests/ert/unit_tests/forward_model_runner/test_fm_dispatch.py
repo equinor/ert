@@ -106,10 +106,10 @@ def _kill_process_tree(proc: psutil.Process) -> None:
 
 
 def _reap_zombies(timeout: float) -> None:
-    # Non-blocking, time-bounded reap of children possibly reparented to us.
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
+            # -1: any child of ours; WNOHANG: return immediately, don't block
             pid, _ = os.waitpid(-1, os.WNOHANG)
         except ChildProcessError:
             return
