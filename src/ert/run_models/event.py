@@ -102,8 +102,8 @@ class WorkflowEvent(BaseModel, extra="forbid"):
     run_id: UUID
     hook: str
     workflow_name: str
-    job_name: str
-    job_index: int
+    job_name: str  # The name of the workflow job that produced this event
+    job_index: int  # The index of the job in the workflow command list
     arguments: list[str]
     stdout: str
     stderr: str
