@@ -30,6 +30,7 @@ from ert.run_models import (
     model_factory,
 )
 from ert.run_models.model_factory import (
+    _resolve_parameter_configs,
     _setup_ensemble_information_filter,
     _setup_ensemble_smoother,
     _setup_multiple_data_assimilation,
@@ -421,3 +422,73 @@ def test_that_setting_up_experiment_with_update_step_raises_config_validation_er
         match="Number of active realizations must be at least 2 for an update step",
     ):
         experiment_setup_method(config, args, MagicMock(), MagicMock())
+
+
+def test_that_resolve_parameter_configs_returns_parameters_unmerged_when_no_design_matrix():  # ruff: ignore[line-too-long]
+    parameter_configs = [_gen_kw_config()]
+
+    resolved_parameter_configs, design_matrix_data = _resolve_parameter_configs(
+        design_matrix=None,
+        parameter_configs=parameter_configs,
+    )
+
+    assert resolved_parameter_configs == parameter_configs
+    assert design_matrix_data is None
+
+
+@pytest.mark.parametrize("prior_ensemble_selected", [True, False])
+def test_that_resolve_parameter_configs_merges_only_without_prior_ensemble(
+    prior_ensemble_selected,
+):
+    parameter_configs = [_gen_kw_config()]
+    merged_parameter_configs = [_gen_kw_config(), _gen_kw_config("EXTRA")]
+    design_matrix = MagicMock()
+    design_matrix.merge_with_existing_parameters.return_value = merged_parameter_configs
+
+    resolved_parameter_configs, design_matrix_data = _resolve_parameter_configs(
+        design_matrix=design_matrix,
+        parameter_configs=parameter_configs,
+        prior_ensemble_selected=prior_ensemble_selected,
+    )
+
+    if prior_ensemble_selected:
+        assert resolved_parameter_configs == parameter_configs
+        assert design_matrix_data is None
+        design_matrix.merge_with_existing_parameters.assert_not_called()
+    else:
+        assert resolved_parameter_configs == merged_parameter_configs
+        design_matrix.merge_with_existing_parameters.assert_called_once_with(
+            parameter_configs
+        )
+
+
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
+@pytest.mark.parametrize(
+    "experiment_setup_method",
+    [
+        _setup_multiple_data_assimilation,
+        _setup_ensemble_smoother,
+        _setup_ensemble_information_filter,
+    ],
+)
+def test_that_setting_up_experiment_with_update_step_raises_config_validation_error_given_no_parameters_configured(  # ruff: ignore[line-too-long]
+    experiment_setup_method, tmp_path
+):
+    config = ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}")
+    args = Namespace(
+        realizations="0-4",
+        weights="2,3",
+        target_ensemble="test_case_%d",
+        prior_ensemble_id=None,
+        experiment_name="experiment",
+        starting_iteration=0,
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="No parameters to update as no GEN_KW, FIELD or SURFACE "
+        "parameters are configured!",
+    ):
+        experiment_setup_method(
+            config, args, ObservationSettings(), queue.SimpleQueue()
+        )
