@@ -133,8 +133,26 @@ def test_that_excel_to_dict_strips_sensitivity_and_parameter_name_whitespace(
 
     dict_design = excel_to_dict(input_path)
     assert next(iter(dict_design["sensitivities"].keys())) == "rms_seed"
-    def_params = list(dict_design["defaultvalues"].keys())
-    assert [par.strip() for par in def_params] == def_params
+    assert dict_design["defaultvalues"] == {
+        "spacious_multiplier": 1.2,
+        "spacious2": 3.3,
+    }
+
+
+def test_that_excel_to_dict_rejects_duplicate_default_names_after_trimming(tmp_path):
+    input_path = _write_config_workbook(
+        tmp_path / "designinput.xlsx",
+        defaultvalues=pd.DataFrame(
+            [
+                ["parametername", "value"],
+                ["  a", 1],
+                ["a   ", 2],
+            ]
+        ),
+    )
+
+    with pytest.raises(ValueError, match="duplicate parameter names"):
+        excel_to_dict(input_path)
 
 
 def test_that_mixed_sensitivity_types_raise_value_error(tmp_path):

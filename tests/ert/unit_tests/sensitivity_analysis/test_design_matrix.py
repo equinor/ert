@@ -11,7 +11,7 @@ from ert.config import (
     DesignMatrix,
     GenKwConfig,
 )
-from ert.config.design_matrix import DESIGN_MATRIX_GROUP
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP, read_default_values
 from ert.config.parsing.config_errors import ConfigWarning
 from tests.ert.conftest import _create_design_matrix
 
@@ -490,8 +490,20 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
             id="None entries",
         ),
         pytest.param(
-            [[" a", 1], ["a ", "some"], ["d", 6]],
-            r"Default sheet contains duplicate parameter names",
+            [["one", "1"], ["nonfinite", "inf"], ["d", "6"]],
+            r"Default sheet contains empty cells or cells with a disallowed value "
+            r"\['Row 2, column 1'\]",
+            id="infinite_numeric_string",
+        ),
+        pytest.param(
+            [["one", "1"], ["nonfinite", "1e309"], ["d", "6"]],
+            r"Default sheet contains empty cells or cells with a disallowed value "
+            r"\['Row 2, column 1'\]",
+            id="overflowing_numeric_string",
+        ),
+        pytest.param(
+            [["  b", 1], ["b   ", 2], [" a", 3], ["a ", 4]],
+            r"Default sheet 'DefaultSheet' contains duplicate parameter names: a, b",
             id="duplicate parameter names",
         ),
         pytest.param(
@@ -542,6 +554,30 @@ def test_default_values_used(tmp_path):
         df["d"],
         np.array(["case_name", "case_name", "case_name", "case_name"]),
     )
+
+
+def test_that_default_values_preserve_numeric_precision_and_scalar_types(tmp_path):
+    expected = {
+        "tiny": 1e-10,
+        "precise": 1.234567890123,
+        "enabled": True,
+        "disabled": False,
+        "boolean_text": "true",
+        "zero": 0,
+        "iterations": 42,
+        "offset": -3,
+    }
+    design_path = tmp_path / "defaults.xlsx"
+    with Workbook(design_path) as workbook:
+        sheet = workbook.add_worksheet("DefaultSheet")
+        for row, values in enumerate(expected.items()):
+            sheet.write_row(row, 0, values)
+
+    actual = read_default_values(design_path, "DefaultSheet", has_header=False)
+
+    assert actual == expected
+    for name, value in expected.items():
+        assert type(actual[name]) is type(value), name
 
 
 def test_whitespace_is_stripped_from_string_parameters(tmp_path):
@@ -669,6 +705,14 @@ def test_that_default_sheet_excel_error_cells_raise_config_validation_error(tmp_
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
 
 
+def test_that_missing_default_sheet_raises_config_validation_error(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _write_sheets(design_path, design_rows=[("REAL", "a"), (0, 1)])
+
+    with pytest.raises(ConfigValidationError, match="MissingDefaults"):
+        DesignMatrix(design_path, "DesignSheet", "MissingDefaults")
+
+
 def _write_sheets(
     design_path, design_rows, default_rows=(("dummy_default", 1),)
 ) -> None:
@@ -715,8 +759,8 @@ def test_that_blank_rows_do_not_shift_reported_default_sheet_row(tmp_path):
         default_rows=[
             ("one", 1),
             (None, None),
-            (None, None),
-            ("b", None),  # spreadsheet row 4, empty cell
+            ("  ", "\t "),
+            ("b", "   "),  # spreadsheet row 4, empty cell
             ("d", 6),
         ],
     )
@@ -729,7 +773,7 @@ def test_that_blank_rows_do_not_shift_reported_default_sheet_row(tmp_path):
         DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
 
 
-def test_that_blank_rows_are_dropped_without_error(tmp_path):
+def test_that_empty_and_whitespace_only_default_rows_are_ignored(tmp_path):
     design_path = tmp_path / "design_matrix.xlsx"
     _write_sheets(
         design_path,
@@ -740,7 +784,7 @@ def test_that_blank_rows_are_dropped_without_error(tmp_path):
             (1, 2),
             (None, None),
         ],
-        default_rows=[("one", 1), (None, None), ("d", 6)],
+        default_rows=[("one", 1), (None, None), ("  ", "\t "), ("d", 6)],
     )
 
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
@@ -748,15 +792,13 @@ def test_that_blank_rows_are_dropped_without_error(tmp_path):
     assert design_matrix.design_matrix_df["realization"].to_list() == [0, 1]
     assert design_matrix.design_matrix_df["a"].to_list() == [1, 2]
     assert design_matrix.design_matrix_df["one"].to_list() == [1, 1]
+    assert design_matrix.design_matrix_df["d"].to_list() == [6, 6]
 
 
 @pytest.mark.parametrize("leading_blank_rows", [0, 1, 2, 3])
 def test_that_blank_rows_above_the_data_do_not_shift_reported_rows_in_default_sheet(
     tmp_path, leading_blank_rows
 ):
-    """Both sheets anchor their read with ``skip_rows``, so the reported row
-    numbers stay correct even when the data does not start in row 1.
-    """
     design_path = tmp_path / "design_matrix.xlsx"
     blank = [(None, None)] * leading_blank_rows
     _write_sheets(
