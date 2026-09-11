@@ -842,8 +842,8 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
             and (
-                not is_observed_seismic
-                or widget.name in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP}
+                (is_observed_seismic and widget.name in {MISFITS, MISFIT_MAP})
+                or (not is_observed_seismic and widget.name != MISFIT_MAP)
             )
         ]
 
