@@ -35,6 +35,10 @@ from _ert.forward_model_runner.reporting.message import Finish, Init, Message
 from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
 
+# Keeps these tests off other workers while the heavy subprocess-forking
+# test below runs, since it has crashed unrelated workers under load.
+pytestmark = pytest.mark.xdist_group("fm_dispatch")
+
 
 @pytest.fixture
 def use_custom_setsid(use_tmpdir):
