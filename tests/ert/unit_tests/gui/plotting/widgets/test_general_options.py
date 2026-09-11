@@ -318,7 +318,7 @@ def test_that_palette_selector_child_can_be_found(qtbot):
 
 
 @pytest.mark.parametrize("show_color_palette", [True, False])
-def test_that_color_palette_container_visbility_follows_show_color_palette_flag(
+def test_that_color_palette_container_visibility_follows_show_color_palette_flag(
     qtbot, show_color_palette
 ):
     options = GeneralPlotOptions(Mock())
