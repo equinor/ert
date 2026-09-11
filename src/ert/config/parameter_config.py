@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from enum import StrEnum, auto
 from hashlib import sha256
 from pathlib import Path
@@ -171,3 +171,7 @@ class ParameterConfig(BaseModel, extra="forbid"):
         # Generate samples for all active realizations
         all_values = rng.standard_normal(num_realizations)
         return all_values[active_realizations]
+
+
+def has_updatable_parameters(parameter_configs: Iterable[ParameterConfig]) -> bool:
+    return any(p.update_strategy is not None for p in parameter_configs)
