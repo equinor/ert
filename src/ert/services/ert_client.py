@@ -2,27 +2,52 @@ from __future__ import annotations
 
 import io
 import json
+import logging
+import queue
+import ssl
 import threading
+import time
+import traceback
+from base64 import b64encode
 from collections import OrderedDict
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import suppress
 from copy import deepcopy
 from functools import wraps
 from os import PathLike
-from typing import Any, Concatenate, cast
+from typing import TYPE_CHECKING, Any, Concatenate, cast
 from urllib.parse import quote
 
 import httpx
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from pydantic import ValidationError
+from websockets.exceptions import (
+    ConnectionClosedError,
+    ConnectionClosedOK,
+    WebSocketException,
+)
+from websockets.sync.client import connect
+
+from _ert.threading import ErtThread
+from ert.dark_storage.common import EverEndpoints
 
 from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
+
+if TYPE_CHECKING:
+    from ert.run_models.event import StatusEvents
 
 DEFAULT_TIMEOUT = 120
 DEFAULT_CACHE_SIZE = 256
 
+# Specifies how many times to try a http request within the specified timeout.
+_HTTP_REQUEST_RETRY = 10
+
 _PARQUET = {"accept": "application/x-parquet"}
 _EXPERIMENT_SERVER = "/experiment_server"
+
+logger = logging.getLogger(__name__)
 
 
 def _escape(value: str) -> str:
@@ -132,6 +157,57 @@ class ErtClient:
         with self._cache_lock:
             self._cache.clear()
 
+    # <-------------- General ------------------->
+
+    def server_is_running(self, *, timeout: float | None = None) -> bool:
+        try:
+            response = self._request(
+                "GET",
+                f"{_EXPERIMENT_SERVER}/",
+                auth=self._auth,
+                timeout=timeout or self._timeout,
+            )
+        except Exception:
+            return False
+        return response.status_code == httpx.codes.OK
+
+    def wait_for_server(self, timeout: float) -> None:
+        """
+        Polls server availability until timeout (measured in seconds).
+
+        Raises an exception if no response within the timeout.
+        """
+        wait_start_time: float = time.monotonic()
+        while time.monotonic() - wait_start_time <= timeout:
+            if self.server_is_running(timeout=1):
+                return
+            until_timeout = max(0, timeout - (time.monotonic() - wait_start_time))
+            time.sleep(min(1, until_timeout))
+        raise RuntimeError(
+            "Failed to get reply from server "
+            f"within {time.monotonic() - wait_start_time:g} seconds"
+        )
+
+    def wait_for_server_to_stop(
+        self, timeout: float, attempts: int = _HTTP_REQUEST_RETRY
+    ) -> None:
+        """
+        Checks server has stopped `attempts` times. Waits
+        progressively longer between each check.
+
+        Raise an exception when the timeout is reached.
+        """
+        if self.server_is_running(timeout=1):
+            sleep_time_increment = float(timeout) / (2**attempts - 1)
+            for retry_count in range(attempts):
+                sleep_time = sleep_time_increment * (2**retry_count)
+                time.sleep(sleep_time)
+                if not self.server_is_running(timeout=1):
+                    return
+
+        if self.server_is_running(timeout=1):
+            raise Exception("Failed to stop server within configured timeout.")
+
     # <-------------- Dark Storage -------------->
 
     def healthcheck(self) -> str:
@@ -141,7 +217,7 @@ class ErtClient:
         return str(self._get("/version").json())
 
     def experiments(self) -> list[dict[str, Any]]:
-        return list(self._get("/experiments").json())
+        return self._get("/experiments").json()
 
     def ensemble(self, ensemble_id: str) -> dict[str, Any]:
         return dict(self._get(f"/ensembles/{ensemble_id}").json())
@@ -223,48 +299,181 @@ class ErtClient:
 
     # <------------- Experiment Server ------------->
 
-    def experiment_server_is_running(self) -> bool:
-        try:
-            response = self._request("GET", f"{_EXPERIMENT_SERVER}/", auth=self._auth)
-        except httpx.TransportError:
-            return False
-        return response.status_code == httpx.codes.OK
-
     def experiment_ids(self) -> list[str]:
-        response = self._experiment_server_get("experiments")
+        response = self._experiment_server_get(EverEndpoints.EXPERIMENTS)
         return list(response.json()["experiment_ids"])
 
     def experiment_status(self, experiment_id: str) -> dict[str, Any]:
-        return dict(self._experiment_server_get(f"status/{experiment_id}").json())
+        return dict(
+            self._experiment_server_get(
+                f"{EverEndpoints.STATUS}/{experiment_id}"
+            ).json()
+        )
 
-    def experiment_config_path(self, experiment_id: str) -> dict[str, Any]:
-        return dict(self._experiment_server_get(f"config_path/{experiment_id}").json())
+    def experiment_config(self, experiment_id: str) -> dict[str, str]:
+        return self._experiment_server_get(
+            f"{EverEndpoints.CONFIG_PATH}/{experiment_id}"
+        ).json()
 
     def experiment_start_time(self, experiment_id: str) -> int:
-        return int(self._experiment_server_get(f"start_time/{experiment_id}").text)
+        return int(
+            self._experiment_server_get(
+                f"{EverEndpoints.START_TIME}/{experiment_id}"
+            ).text
+        )
 
     def start_experiment(self, config: dict[str, Any]) -> str:
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_SERVER}/start_experiment",
+            f"{_EXPERIMENT_SERVER}/{EverEndpoints.START_EXPERIMENT}",
             auth=self._auth,
             json=config,
         )
         return str(_checked(response).json()["experiment_id"])
 
-    def stop_experiment_server(self) -> None:
-        _checked(self._request("POST", f"{_EXPERIMENT_SERVER}/stop", auth=self._auth))
+    def stop_experiment_server(self, retries: int = 5) -> bool:
+        status_code, sleep = 400, retries
+        while status_code != httpx.codes.OK and retries > 0:
+            status_code = self._request(
+                "POST",
+                f"{_EXPERIMENT_SERVER}/{EverEndpoints.STOP}",
+                auth=self._auth,
+            ).status_code
+            retries -= 1
+            time.sleep(sleep - retries)
+        return status_code == httpx.codes.OK
 
     def runpath_exists(self, paths: list[str]) -> bool:
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_SERVER}/runpath",
+            f"{_EXPERIMENT_SERVER}/{EverEndpoints.RUNPATH}",
             auth=self._auth,
             json={"paths": paths},
         )
         return response.status_code == httpx.codes.OK
 
+    # <-------------- WebSocket -------------->
+
+    def iter_events(
+        self,
+        experiment_id: str,
+        refresh_interval: float = 0.01,
+        open_timeout: float = 30.0,
+        websocket_recv_timeout: float = 1.0,
+    ) -> Generator[StatusEvents, None, None]:
+        """Yield events synchronously until the WebSocket disconnects.
+
+        Each iterator owns a separate connection and blocks only its consuming
+        thread. Close the iterator when stopping consumption early.
+        """
+        from ert.run_models.event import (  # ruff: ignore[import-outside-top-level]
+            status_event_from_json,
+        )
+
+        url = (
+            self.conn_info.base_url.replace("https://", "wss://")
+            + f"{_EXPERIMENT_SERVER}/{EverEndpoints.EVENTS}/{experiment_id}"
+        )
+        username, password = self._auth
+        credentials = b64encode(f"{username}:{password}".encode()).decode()
+
+        logger.info("Connecting to WebSocket event stream at %s", url)
+        try:
+            websocket = connect(
+                url,
+                ssl=self._ssl_context,
+                open_timeout=open_timeout,
+                additional_headers={"Authorization": f"Basic {credentials}"},
+            )
+        except Exception:
+            logger.error(traceback.format_exc())
+            return
+
+        event_count = 0
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            logger.info("Connected to WebSocket event stream at %s", url)
+            while True:
+                try:
+                    message = websocket.recv(timeout=websocket_recv_timeout)
+                except TimeoutError:
+                    message = None
+                if message:
+                    try:
+                        event = status_event_from_json(message)
+                    except ValidationError as e:
+                        logger.error("Error when processing event %s", exc_info=e)
+                    else:
+                        event_count += 1
+                        if event_count == 1:
+                            logger.info(
+                                "Received first WebSocket event for experiment %s: %s",
+                                experiment_id,
+                                type(event).__name__,
+                            )
+                        yield event
+
+                time.sleep(refresh_interval)
+        except ConnectionClosedOK:
+            logger.debug("Connection closed by server")
+        except ConnectionClosedError as error:
+            logger.error(
+                "WebSocket event stream for experiment %s at %s closed abnormally: %s",
+                experiment_id,
+                url,
+                error,
+            )
+        except Exception:
+            logger.error(traceback.format_exc())
+        finally:
+            # Interrupting the generator unwinds it mid closing-handshake, which
+            # makes close() raise InvalidState. That must not replace the
+            # KeyboardInterrupt or GeneratorExit that triggered the teardown.
+            with suppress(WebSocketException, OSError):
+                websocket.close()
+            logger.info(
+                "WebSocket event stream for experiment %s ended after %s events",
+                experiment_id,
+                event_count,
+            )
+
+    def setup_event_queue_from_ws_endpoint(
+        self,
+        experiment_id: str,
+        refresh_interval: float = 0.01,
+        open_timeout: float = 30,
+        websocket_recv_timeout: float = 1.0,
+    ) -> tuple[queue.SimpleQueue[StatusEvents], ErtThread]:
+        """Return a queue of experiment events and the thread that fills it.
+
+        The caller owns the thread and must start it.
+        """
+        event_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+
+        def passthrough_ws_events() -> None:
+            for event in self.iter_events(
+                experiment_id,
+                refresh_interval=refresh_interval,
+                open_timeout=open_timeout,
+                websocket_recv_timeout=websocket_recv_timeout,
+            ):
+                event_queue.put(event)
+
+        monitor_thread = ErtThread(
+            name="ert_storage_api_event_monitor",
+            target=passthrough_ws_events,
+            daemon=True,
+        )
+
+        return event_queue, monitor_thread
+
     # <-------------- Internals -------------->
+
+    @property
+    def _ssl_context(self) -> ssl.SSLContext | None:
+        cert = self._client.conn_info.cert
+        if not isinstance(cert, str):
+            return None
+        return ssl.create_default_context(cafile=cert)
 
     @property
     def _auth(self) -> tuple[str, str]:

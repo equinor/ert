@@ -32,6 +32,7 @@ from starlette.websockets import WebSocket
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, QueueSystem
+from ert.dark_storage.common import EverEndpoints
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
@@ -46,7 +47,6 @@ from everest.detached.everserver import (
 from everest.strings import (
     OPT_FAILURE_ALL_REALIZATIONS,
     OPT_FAILURE_REALIZATIONS,
-    EverEndpoints,
 )
 
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])

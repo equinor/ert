@@ -32,13 +32,9 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("everest.bin.everest_script.run_detached_monitor")
-@patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@patch("everest.bin.everest_script.start_experiment")
 def test_save_running_config(
-    mock_start_experiment,
     mock_start_server,
-    mock_wait_for_server,
     mock_run_detached_monitor,
     mock_get_server_context,
     mock_start_session,

@@ -1,10 +1,17 @@
 import io
+import logging
 from typing import Any
+from unittest.mock import MagicMock
 
+import httpx
 import pandas as pd
 import pytest
+from websockets.exceptions import ConnectionClosedError, InvalidState
+from websockets.frames import Close
 
+from ert.ensemble_evaluator import EndEvent
 from ert.services.ert_client import ErtClient
+from ert.services.shared_client import SharedClient
 
 
 class RecordingResponse:
@@ -126,3 +133,100 @@ def test_that_mutating_a_returned_parameter_frame_leaves_the_cache_intact(api, c
 
     # Assert that the cached value is not mutated.
     assert api.parameter("ens_1", "gen_kw")["0"].to_list() == [1.0, 2.0, 3.0]
+
+
+@pytest.fixture
+def event_client(monkeypatch):
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.base_url = "https://localhost:1234"
+    transport.conn_info.auth_token = "token"
+    transport.conn_info.cert = False
+    connect = MagicMock()
+    connection = connect.return_value
+    monkeypatch.setattr("ert.services.ert_client.connect", connect)
+    return ErtClient(transport), connection, connect
+
+
+def test_that_closing_event_iterator_releases_connection(event_client):
+    api, connection, _ = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.return_value = event.model_dump_json()
+    events = api.iter_events("experiment")
+
+    assert next(events) == event
+    connection.close.assert_not_called()
+    events.close()
+    connection.close.assert_called_once()
+
+
+def test_that_failure_to_close_websocket_does_not_mask_generator_exit(event_client):
+    api, connection, _ = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.return_value = event.model_dump_json()
+    connection.close.side_effect = InvalidState("connection is closing")
+    events = api.iter_events("experiment")
+
+    assert next(events) == event
+    events.close()
+
+
+def test_that_abnormal_event_stream_closure_logs_experiment_and_close_reason(
+    event_client, caplog
+):
+    caplog.set_level(logging.INFO, logger="ert.services.ert_client")
+    api, connection, _ = event_client
+    connection.recv.side_effect = ConnectionClosedError(
+        Close(1008, "unknown experiment"), Close(1008, "unknown experiment"), True
+    )
+
+    assert list(api.iter_events("experiment")) == []
+
+    assert "WebSocket event stream for experiment experiment" in caplog.text
+    assert "closed abnormally" in caplog.text
+    assert "1008" in caplog.text
+    assert "unknown experiment" in caplog.text
+    assert "Connected to WebSocket event stream" in caplog.text
+    assert "ended after 0 events" in caplog.text
+    connection.close.assert_called_once()
+
+
+def test_that_event_stream_logs_first_event_and_total_on_close(event_client, caplog):
+    caplog.set_level(logging.INFO, logger="ert.services.ert_client")
+    api, connection, _ = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.return_value = event.model_dump_json()
+    events = api.iter_events("experiment")
+
+    assert next(events) == event
+    events.close()
+
+    assert "Received first WebSocket event for experiment experiment: EndEvent" in (
+        caplog.text
+    )
+    assert "ended after 1 events" in caplog.text
+
+
+@pytest.mark.parametrize("status_code", [200, 401, 503])
+@pytest.mark.parametrize("timeout", [None, 1.0])
+def test_that_server_probe_checks_authenticated_endpoint_with_requested_timeout(
+    event_client, status_code, timeout
+):
+    api, _, _ = event_client
+    api.client.request.return_value.status_code = status_code
+
+    assert api.server_is_running(timeout=timeout) is (status_code == 200)
+
+    api.client.request.assert_called_once_with(
+        "GET",
+        "/experiment_server/",
+        auth=("username", "token"),
+        timeout=120 if timeout is None else timeout,
+    )
+
+
+@pytest.mark.parametrize("error_type", [httpx.ConnectError, httpx.ReadTimeout])
+def test_that_server_probe_returns_false_on_transport_error(event_client, error_type):
+    api, _, _ = event_client
+    api.client.request.side_effect = error_type("unavailable")
+
+    assert not api.server_is_running(timeout=1)
