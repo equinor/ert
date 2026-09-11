@@ -10,48 +10,22 @@ with fmu-sim2seis:
 
 import argparse
 import hashlib
-import itertools
 import json
 from enum import StrEnum
 from pathlib import Path
 
 import pandas as pd
-
-
-class HorizonName(StrEnum):
-    HORIZON = "horizon"
-    OTHER_HORIZON = "fantastic_horizon"
-
-
-class Attribute(StrEnum):
-    AMPLITUDE = "amplitude"
-    RELAI = "relai"
-
-
-class StackingOffset(StrEnum):
-    FULL = "full"
-    NEAR = "near"
-    FAR = "far"
-
-
-class Calculation(StrEnum):
-    MEAN = "mean"
-    MIN = "min"
-
-
-class VerticalDomain(StrEnum):
-    DEPTH = "depth"
-    TIME = "time"
-
-
-class BaseDate(StrEnum):
-    JAN2024 = "20240101"
-
-
-class MonitorDate(StrEnum):
-    JAN2025 = "20250101"
-    JAN2026 = "20260101"
-    JAN2030 = "20300101"
+from mock_sim2seis_common import (
+    Attribute,
+    BaseDate,
+    Calculation,
+    HorizonName,
+    MonitorDate,
+    StackingOffset,
+    VerticalDomain,
+    build_stem,
+    generate_combos,
+)
 
 
 class OutputFormat(StrEnum):
@@ -162,25 +136,6 @@ def _obs_error(obs_value: float) -> float:
     return default_error + small_perturbation
 
 
-def _build_stem(
-    horizon: HorizonName,
-    attribute: Attribute,
-    stacking_offset: StackingOffset,
-    calculation: Calculation,
-    vertical_domain: VerticalDomain,
-    base: BaseDate,
-    monitor: MonitorDate,
-) -> str:
-    """Constructs a filename stem (no extension) consistent with fmu-sim2seis naming
-    convention.
-    """
-    attr_part = (
-        f"{attribute.value}_{stacking_offset.value}"
-        f"_{calculation.value}_{vertical_domain.value}"
-    )
-    return f"{horizon.value}--{attr_part}--{monitor.value}_{base.value}"
-
-
 def generate_file(
     parameters: dict[str, dict[str, float]],
     output_dir: Path,
@@ -202,7 +157,7 @@ def generate_file(
     All the files in the example have the same number of rows, so we assume it is
     expected.
     """
-    stem = _build_stem(
+    stem = build_stem(
         horizon, attribute, stacking_offset, calculation, vertical_domain, base, monitor
     )
 
@@ -229,46 +184,6 @@ def generate_file(
         df.to_csv(filepath, index=False)
     print(f"Written: {filepath}")
     return filepath
-
-
-def generate_many(
-    parameters: dict[str, dict[str, float]],
-    output_dir: Path,
-    output_format: OutputFormat,
-    horizons: list[HorizonName] | None = None,
-    attributes: list[Attribute] | None = None,
-    stacking_offsets: list[StackingOffset] | None = None,
-    calculations: list[Calculation] | None = None,
-    vertical_domains: list[VerticalDomain] | None = None,
-    bases: list[BaseDate] | None = None,
-    monitors: list[MonitorDate] | None = None,
-) -> None:
-    """Generate output files for every combination of the supplied setup parameter
-    lists.
-    """
-    horizons = horizons or [HorizonName.HORIZON]
-    attributes = attributes or [Attribute.AMPLITUDE]
-    stacking_offsets = stacking_offsets or [StackingOffset.FULL]
-    calculations = calculations or [Calculation.MEAN]
-    vertical_domains = vertical_domains or [VerticalDomain.DEPTH]
-    bases = bases or [BaseDate.JAN2024]
-    monitors = monitors or [MonitorDate.JAN2025]
-
-    for combo in itertools.product(
-        horizons,
-        attributes,
-        stacking_offsets,
-        calculations,
-        vertical_domains,
-        bases,
-        monitors,
-    ):
-        generate_file(
-            parameters,
-            output_dir,
-            output_format,
-            *combo,
-        )
 
 
 if __name__ == "__main__":
@@ -299,10 +214,16 @@ if __name__ == "__main__":
         parameters = json.loads(Path("parameters.json").read_text(encoding="utf-8"))
         output_dir = Path("share/results/tables")
 
-    generate_many(
-        parameters,
-        output_dir,
-        output_format=args.format,
+    combos = generate_combos(
+        bases=[BaseDate.JAN2024],
         monitors=[MonitorDate.JAN2025, MonitorDate.JAN2026],
         calculations=[Calculation.MEAN, Calculation.MIN],
     )
+
+    for combo in combos:
+        generate_file(
+            parameters,
+            output_dir,
+            args.format,
+            *combo,
+        )
