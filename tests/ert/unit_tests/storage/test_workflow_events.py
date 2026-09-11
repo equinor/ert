@@ -5,7 +5,7 @@ from ert.storage import open_storage
 
 def test_that_appended_workflow_events_accumulate_as_one_line_each(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment(name="exp")
+        experiment = storage.create_experiment(name="experiment")
 
         experiment.append_workflow_events(['{"job": "first"}'])
         experiment.append_workflow_events(['{"job": "second"}', '{"job": "third"}'])
@@ -20,8 +20,8 @@ def test_that_appended_workflow_events_accumulate_as_one_line_each(tmp_path):
 
 def test_that_workflow_events_live_next_to_experiment_they_belong_to(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
-        first = storage.create_experiment(name="exp")
-        second = storage.create_experiment(name="exp")
+        first = storage.create_experiment(name="first")
+        second = storage.create_experiment(name="second")
 
         first.append_workflow_events(['{"job": "belongs to the first"}'])
         second.append_workflow_events(['{"job": "belongs to the second"}'])
