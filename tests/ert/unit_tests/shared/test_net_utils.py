@@ -10,7 +10,7 @@ from ert.shared import find_available_socket, get_machine_name
 from ert.shared.net_utils import (
     NoPortsInRangeException,
     get_family,
-    getfqdn_with_timeout,
+    get_fqdn_with_timeout,
 )
 
 
@@ -73,12 +73,12 @@ def test_that_get_machine_name_is_predictive(mocker):
     assert get_machine_name() == expected_resolved_name
 
 
-def test_that_getfqdn_with_timeout_returns_resolved_name_when_lookup_is_fast(mocker):
+def test_that_get_fqdn_with_timeout_returns_resolved_name_when_lookup_is_fast(mocker):
     mocker.patch("socket.getfqdn", return_value="resolved.example.com")
-    assert getfqdn_with_timeout(timeout=1) == "resolved.example.com"
+    assert get_fqdn_with_timeout(timeout=1) == "resolved.example.com"
 
 
-def test_that_getfqdn_with_timeout_falls_back_to_hostname_when_lookup_stalls(mocker):
+def test_that_get_fqdn_with_timeout_falls_back_to_hostname_when_lookup_stalls(mocker):
     """A hanging socket.getfqdn() (observed on some CI runners with unreliable
     DNS) must not stall the caller beyond the given timeout.
     """
@@ -87,11 +87,11 @@ def test_that_getfqdn_with_timeout_falls_back_to_hostname_when_lookup_stalls(moc
     mocker.patch("socket.gethostname", return_value="plain-hostname")
 
     start = time.monotonic()
-    resolved_name = getfqdn_with_timeout(timeout=0.1)
+    resolved_name = get_fqdn_with_timeout(timeout=0.1)
     elapsed = time.monotonic() - start
 
     assert resolved_name == "plain-hostname"
-    assert elapsed < 1, "getfqdn_with_timeout blocked far longer than its timeout"
+    assert elapsed < 1, "get_fqdn_with_timeout blocked far longer than its timeout"
 
     # Let the still-running lookup thread finish so it doesn't leak into other tests
     stall_forever.set()

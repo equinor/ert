@@ -32,7 +32,7 @@ from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
 from ert.services import ErtServerExit
 from ert.shared import __file__ as ert_shared_path
-from ert.shared import find_available_socket, get_machine_name, getfqdn_with_timeout
+from ert.shared import find_available_socket, get_fqdn_with_timeout, get_machine_name
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 
@@ -79,29 +79,19 @@ def parse_args() -> argparse.Namespace:
 
 
 def _get_host_list() -> list[str]:
-    # "localhost" is included so a client can always reach the server even if
-    # none of the other hostnames resolve, since _bind_socket() binds to all
-    # interfaces (including loopback) whenever the host is not an IPv6
-    # address. It is placed first since fetch_url() tries urls sequentially
-    # without a request timeout, so a stalling hostname lookup earlier in the
-    # list could otherwise block before the reliable loopback fallback is
-    # reached.
-    other_hosts = {socket.gethostname(), getfqdn_with_timeout(), get_machine_name()}
-    return ["localhost", *(other_hosts - {"localhost"})]
+    """Returns hostnames the storage server can be reached by, with
+    "localhost" always included and always first.
+    """
+    own_hostnames = {socket.gethostname(), get_fqdn_with_timeout(), get_machine_name()}
+    return ["localhost", *(own_hostnames - {"localhost"})]
 
 
 def _create_connection_info(
     sock: socket.socket,
     authtoken: str,
     cert: str | os.PathLike[str] | Path,
-    host_list: list[str] | None = None,
+    host_list: list[str],
 ) -> dict[str, Any]:
-    # host_list should be the same snapshot used for the certificate's SANs
-    # (see _generate_certificate), since getfqdn_with_timeout() is not cached
-    # and could otherwise resolve to a different hostname on a later call,
-    # causing TLS verification to fail for clients connecting by that name.
-    if host_list is None:
-        host_list = _get_host_list()
     connection_info = {
         "urls": [f"https://{host}:{sock.getsockname()[1]}" for host in host_list],
         "authtoken": authtoken,
@@ -119,7 +109,7 @@ def _create_connection_info(
 
 
 def _generate_certificate(
-    cert_folder: Path, host_list: list[str] | None = None
+    cert_folder: Path, host_list: list[str]
 ) -> tuple[Path, Path, bytes]:
     """Generate a private key and a certificate signed with it
 
@@ -147,11 +137,7 @@ def _generate_certificate(
         ]
     )
     dns_name = get_machine_name()
-    # Important that this matches the server's connection-info urls. The
-    # caller should pass the same host_list snapshot used for
-    # _create_connection_info(), since getfqdn_with_timeout() is not cached
-    # and could otherwise resolve differently between the two calls.
-    subject_alternative_names = host_list if host_list is not None else _get_host_list()
+    subject_alternative_names = host_list
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -292,10 +278,9 @@ def main() -> None:
     args = parse_args()
     authentication = _generate_authentication()
     os.environ["ERT_STORAGE_TOKEN"] = authentication
-    # Resolved once and reused for both the certificate SANs and the
-    # connection-info urls below, since getfqdn_with_timeout() is not cached
-    # and could otherwise resolve differently between the two calls, causing
-    # the advertised urls to diverge from what the certificate covers.
+    # _get_host_list() does a live DNS lookup and isn't cached, so resolve it
+    # once here and reuse the same list for the certificate and the
+    # connection-info urls (in run_server).
     host_list = _get_host_list()
     cert_path, key_path, key_pw = _generate_certificate(
         args.project / "cert", host_list

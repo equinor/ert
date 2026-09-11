@@ -8,9 +8,9 @@ from pathlib import Path
 
 from .net_utils import (
     find_available_socket,
+    get_fqdn_with_timeout,
     get_ip_address,
     get_machine_name,
-    getfqdn_with_timeout,
 )
 
 
@@ -27,7 +27,7 @@ __all__ = [
     "__version__",
     "ert_share_path",
     "find_available_socket",
+    "get_fqdn_with_timeout",
     "get_ip_address",
     "get_machine_name",
-    "getfqdn_with_timeout",
 ]

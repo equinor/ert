@@ -65,7 +65,7 @@ def _run_with_timeout[T](func: Callable[[], T], timeout: float) -> T:
     return result[0]
 
 
-def getfqdn_with_timeout(timeout: float = GETFQDN_TIMEOUT_SECONDS) -> str:
+def get_fqdn_with_timeout(timeout: float = GETFQDN_TIMEOUT_SECONDS) -> str:
     """Returns socket.getfqdn(), but never blocks longer than `timeout` seconds.
 
     Falls back to socket.gethostname() if the lookup does not complete in time.
@@ -108,7 +108,7 @@ def get_machine_name() -> str:
     ):
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
-        return getfqdn_with_timeout()
+        return get_fqdn_with_timeout()
     except (socket.gaierror, exception.DNSException):
         return "localhost"
 

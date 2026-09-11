@@ -25,7 +25,7 @@ def test_create_connection_string(monkeypatch):
     sock = find_available_socket()
     monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
 
-    _create_connection_info(sock, authtoken, Path("path/to/cert"))
+    _create_connection_info(sock, authtoken, Path("path/to/cert"), _get_host_list())
 
     assert "ERT_STORAGE_CONNECTION_STRING" in os.environ
     connection_string = json.loads(os.environ["ERT_STORAGE_CONNECTION_STRING"])
@@ -192,7 +192,7 @@ def test_storage_logging(change_to_tmpdir):
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_certificate_generation(change_to_tmpdir):
-    cert, key, pw = _generate_certificate(Path())
+    cert, key, pw = _generate_certificate(Path(), _get_host_list())
 
     # check that files are written
     assert cert.exists()
@@ -210,7 +210,7 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
         "ert.shared.get_machine_name",
         return_value="A" * 67,
     ):
-        cert, key, pw = _generate_certificate(Path())
+        cert, key, pw = _generate_certificate(Path(), _get_host_list())
 
     # check that files are written
     assert cert.exists()
@@ -226,10 +226,11 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
 def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkeypatch):
     auth_token = "very_secret_token"
     sock = find_available_socket()
-    cert_path, _, _ = _generate_certificate(Path())
+    host_list = _get_host_list()
+    cert_path, _, _ = _generate_certificate(Path(), host_list)
     monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
 
-    conn_info = _create_connection_info(sock, auth_token, cert_path)
+    conn_info = _create_connection_info(sock, auth_token, cert_path, host_list)
     # check certificate is readable
     x509 = ssl._ssl._test_decode_cert(conn_info["cert"])  # type: ignore[attr-defined]
     sans = [san[1] for san in x509["subjectAltName"]]
@@ -244,7 +245,7 @@ def test_that_server_hosts_still_match_san_when_host_list_changes_between_calls(
 ):
     """_generate_certificate() and _create_connection_info() must be given the
     same host_list snapshot by their caller, since re-resolving hostnames
-    separately for each call (e.g. via getfqdn_with_timeout(), which is not
+    separately for each call (e.g. via get_fqdn_with_timeout(), which is not
     cached) could return different results and make the advertised urls
     diverge from what the certificate covers.
     """
