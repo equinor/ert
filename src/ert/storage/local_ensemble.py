@@ -598,7 +598,7 @@ class LocalEnsemble(BaseMode):
 
     def load_parameters(
         self,
-        group: str,
+        groupname_or_parametername: str,
         realizations: int | npt.NDArray[np.int_] | None = None,
         *,
         transformed: bool = False,
@@ -609,22 +609,32 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        cfgs = [
-            p
-            for p in self.experiment.parameter_configuration.values()
-            if group in {p.name, p.group_name}
-        ]
+        parameter_config = self.experiment.parameter_configuration.get(
+            groupname_or_parametername
+        )
+        cfgs = (
+            [parameter_config]
+            if parameter_config is not None
+            else [
+                p
+                for p in self.experiment.parameter_configuration.values()
+                if groupname_or_parametername == p.group_name
+            ]
+        )
         if not cfgs:
-            raise KeyError(f"{group} is not registered to the experiment.")
+            raise KeyError(
+                f"{groupname_or_parametername} is not registered to the experiment."
+            )
 
-        # if group refers to a group name, we expect the same cardinality
+        # if groupname_or_parametername refers to a group name,
+        # we expect the same cardinality
         cardinality = next(cfg.cardinality for cfg in cfgs)
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
             return self.load_scalar_keys(
                 [cfg.name for cfg in cfgs], realizations, transformed=transformed
             )
         return self._load_dataset(
-            group,
+            groupname_or_parametername,
             (
                 realizations
                 if realizations is not None
@@ -947,6 +957,18 @@ class LocalEnsemble(BaseMode):
         ds_path = self._realization_dir(realization) / filename
         return pl.read_parquet(ds_path)
 
+    def add_rft_metadata_and_qc(
+        self, observations: pl.DataFrame, realization: int
+    ) -> pl.DataFrame:
+        observation_metadata_in_realization = self.load_observation_location_metadata(
+            realization
+        )
+        enriched_observations = RFTConfig.enrich_observations_with_metadata(
+            observations, observation_metadata_in_realization
+        )
+
+        return qc_rft_observations(enriched_observations)
+
     def get_observations_and_responses(
         self,
         selected_observations: Iterable[str],
@@ -999,19 +1021,11 @@ class LocalEnsemble(BaseMode):
             # Load and join one realization at a time to reduce peak memory usage
             first_columns: pl.DataFrame | None = None
             realization_columns: list[pl.DataFrame] = []
+
             for real in reals:
                 observations = ensure_qc_error_column(observations_for_type)
                 if response_type == "rft":
-                    observation_metadata_in_realization = (
-                        self.load_observation_location_metadata(real)
-                    )
-                    enriched_observations = RFTConfig.enrich_observations_with_metadata(
-                        observations, observation_metadata_in_realization
-                    )
-
-                    observations = qc_rft_observations(
-                        enriched_observations,
-                    )
+                    observations = self.add_rft_metadata_and_qc(observations, real)
 
                 observed_cols = {
                     k: observations[k].unique()
@@ -1892,7 +1906,7 @@ class LocalEnsemble(BaseMode):
 
 
 async def _read_parameters(
-    run_path: str,
+    runpath: str,
     realization: int,
     iteration: int,
     ensemble: LocalEnsemble,
@@ -1906,7 +1920,7 @@ async def _read_parameters(
         start_time = time.perf_counter()
         logger.debug(f"Starting to load parameter: {config.name}")
         try:  # ruff: ignore[too-many-statements-in-try-clause]
-            ds = config.read_from_runpath(Path(run_path), realization, iteration)
+            ds = config.read_from_runpath(Path(runpath), realization, iteration)
             await asyncio.sleep(0)
             logger.debug(
                 f"Loaded {config.name}",
@@ -1930,7 +1944,7 @@ async def _read_parameters(
 
 
 def _log_grid_contents(
-    run_path: str, summary_config: SummaryConfig, iens: int, iter_: int
+    runpath: str, summary_config: SummaryConfig, iens: int, iter_: int
 ) -> None:
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         filename = substitute_runpath_name(summary_config.input_files[0], iens, iter_)
@@ -1940,9 +1954,9 @@ def _log_grid_contents(
             filename = base
         for grid_file_components in filter(
             lambda fn: fn[0] == filename and fn[1].lower() in {".egrid", ".grid"},
-            map(os.path.splitext, os.listdir(run_path)),
+            map(os.path.splitext, os.listdir(runpath)),
         ):
-            grid_file = run_path + "/" + "".join(grid_file_components)
+            grid_file = runpath + "/" + "".join(grid_file_components)
             keywords: Counter[str] = Counter()
             for entry in resfo.lazy_read(grid_file):
                 kw = entry.read_keyword().strip()
@@ -1965,7 +1979,7 @@ def _log_grid_contents(
 
 
 async def _write_responses_to_storage(
-    run_path: str,
+    runpath: str,
     realization: int,
     ensemble: LocalEnsemble,
 ) -> LoadResult:
@@ -1977,10 +1991,8 @@ async def _write_responses_to_storage(
             logger.debug(f"Starting to load response: {config.type}")
             try:
                 if isinstance(config, SummaryConfig) and realization == 0:
-                    _log_grid_contents(
-                        run_path, config, realization, ensemble.iteration
-                    )
-                ds = config.read_from_file(run_path, realization, ensemble.iteration)
+                    _log_grid_contents(runpath, config, realization, ensemble.iteration)
+                ds = config.read_from_file(runpath, realization, ensemble.iteration)
             except (FileNotFoundError, InvalidResponseFile) as err:
                 errors.append(str(err))
                 logger.warning(
@@ -1995,7 +2007,7 @@ async def _write_responses_to_storage(
 
             if config.type == "rft":
                 try:
-                    _write_observation_metadata(run_path, realization, ensemble)
+                    _write_observation_metadata(runpath, realization, ensemble)
                     await asyncio.sleep(0)
                 except (FileNotFoundError, InvalidResponseFile) as err:
                     errors.append(str(err))
@@ -2038,7 +2050,7 @@ async def _write_responses_to_storage(
 
 
 def _write_observation_metadata(
-    run_path: str,
+    runpath: str,
     realization: int,
     ensemble: LocalEnsemble,
 ) -> None:
@@ -2054,7 +2066,7 @@ def _write_observation_metadata(
     if rft_observations is None or rft_observations.is_empty():
         return
     location_metadata = rft_config.obtain_location_metadata(
-        run_path, realization, ensemble.iteration, rft_observations
+        runpath, realization, ensemble.iteration, rft_observations
     )
     output_path = ensemble._realization_dir(realization)
     Path(output_path).mkdir(exist_ok=True)
@@ -2062,7 +2074,7 @@ def _write_observation_metadata(
 
 
 async def load_realization_parameters_and_responses(
-    run_path: str,
+    runpath: str,
     realization: int,
     iter_: int,
     ensemble: LocalEnsemble,
@@ -2073,7 +2085,7 @@ async def load_realization_parameters_and_responses(
     # handles parameters
     if iter_ == 0:
         parameters_result = await _read_parameters(
-            run_path,
+            runpath,
             realization,
             iter_,
             ensemble,
@@ -2081,7 +2093,7 @@ async def load_realization_parameters_and_responses(
     try:
         if parameters_result.successful:
             response_result = await _write_responses_to_storage(
-                run_path,
+                runpath,
                 realization,
                 ensemble,
             )
@@ -2122,7 +2134,7 @@ async def load_realization_parameters_and_responses(
 
 
 def load_parameters_and_responses_from_runpath(
-    run_path_format: str,
+    runpath_format: str,
     ensemble: LocalEnsemble,
     active_realizations: list[int],
 ) -> int:
@@ -2136,7 +2148,7 @@ def load_parameters_and_responses_from_runpath(
                     load_realization_parameters_and_responses(*args)
                 ),
                 (
-                    substitute_runpath_name(run_path_format, realization, 0),
+                    substitute_runpath_name(runpath_format, realization, 0),
                     realization,
                     0,
                     ensemble,

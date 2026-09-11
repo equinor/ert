@@ -11,6 +11,7 @@ import polars as pl
 from numpy import typing as npt
 
 from ert.config import ObservationGroups, OutlierSettings
+from ert.config.observation_quality_control import RFT_LOCATION_NOT_IN_GRID_ERROR
 from ert.storage import Ensemble
 
 from . import misfit_preprocessor
@@ -271,8 +272,36 @@ def _preprocess_observations_and_responses(
 
     if len(missing_observations) > 0:
         logger.warning(f"Deactivating observations: {missing_observations}")
+        _log_rft_observations_outside_grid(prior_ensemble, observations_and_responses)
 
     return observations_and_responses
+
+
+# We want to log occurrences of RFT observations outside the grid (e.g. due to gaps
+# between cells). The goal is to measure how common this is and decide whether to add a
+# fallback that matches responses to observations by UTM coordinates when
+# well_connection_cell is None, which would allow us to approximate responses for
+# observations in cell gaps. See https://github.com/equinor/ert/issues/14290 for details
+def _log_rft_observations_outside_grid(
+    prior: Ensemble, observations_and_responses: pl.DataFrame
+) -> None:
+    rft_observations = prior.experiment.observations.get("rft")
+    if rft_observations is None:
+        return
+
+    num_outside_grid = observations_and_responses.filter(
+        (pl.col("status") != ObservationStatus.ACTIVE)
+        & pl.col("missing_realizations").str.contains(
+            RFT_LOCATION_NOT_IN_GRID_ERROR, literal=True
+        )
+    ).height
+    logger.info(
+        "Update step %d: %d of %d RFT observations deactivated because their "
+        "location was outside the grid",
+        prior.iteration,
+        num_outside_grid,
+        rft_observations.height,
+    )
 
 
 def _missing_realizations_expr(active_realizations: list[str]) -> pl.Expr:

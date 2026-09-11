@@ -1,38 +1,25 @@
+from __future__ import annotations
+
 import asyncio
 import logging
-import re
-import ssl
-import time
-import traceback
-from base64 import b64encode
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import requests
-from pydantic import ValidationError
-from websockets import ConnectionClosedError, ConnectionClosedOK
-from websockets.sync.client import connect
-
-from ert.dark_storage.client import Client
-from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
+from ert.services import ErtClient
 from ert.trace import get_traceparent
-from everest.config import EverestConfig, ServerConfig
+from everest.config import EverestConfig
 from everest.strings import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
-    EverEndpoints,
 )
 
-# Specifies how many times to try a http request within the specified timeout.
-_HTTP_REQUEST_RETRY = 10
+if TYPE_CHECKING:
+    from ert.run_models.event import EverestBatchResultEvent
 
-# Proxy configuration for outgoing requests.
-# For internal LAN HTTP requests not using a proxy is recommended.
-PROXY = {"http": None, "https": None}
 
 # The methods in this file are typically called for the client side.
 # Information from the client side is relatively uninteresting, so we show it in
@@ -239,8 +226,8 @@ def get_opt_status_from_batch_result_event(
 
 
 def start_monitor(
-    server_context: tuple[str, str, tuple[str, str]],
-    callback: Callable[..., None],
+    client: ErtClient,
+    callback: Callable[[dict[str, Any]], None],
     experiment_id: str,
     polling_interval: float = 0.1,
 ) -> None:
@@ -249,46 +236,12 @@ def start_monitor(
 
     Monitoring stops when the server stops answering.
     """
-    url, cert, auth = server_context
-    ssl_context = ssl.create_default_context()
-    ssl_context.load_verify_locations(cafile=cert)
-    username, password = auth
-    credentials = b64encode(f"{username}:{password}".encode()).decode()
+    from ert.run_models.event import (  # ruff: ignore[import-outside-top-level]
+        EverestBatchResultEvent,
+    )
 
-    try:  # ruff: ignore[too-many-statements-in-try-clause]
-        with connect(
-            url.replace("https://", "wss://")
-            + f"/{EverEndpoints.EVENTS}/{experiment_id}",
-            ssl=ssl_context,
-            open_timeout=30,
-            additional_headers={"Authorization": f"Basic {credentials}"},
-        ) as websocket:
-            while True:
-                try:  # ruff: ignore[too-many-statements-in-try-clause]
-                    message = websocket.recv(timeout=1.0)
-                    event = status_event_from_json(message)
-                    if isinstance(event, EverestBatchResultEvent):
-                        callback(
-                            {
-                                OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
-                                    event
-                                )
-                            }
-                        )
-                    else:
-                        callback({SIM_PROGRESS_ID: event})
-                except TimeoutError:
-                    pass
-                except ConnectionClosedOK:
-                    logger.debug("Connection closed")
-                    break
-                except ConnectionClosedError:
-                    logger.debug("Connection closed")
-                    break
-                except ValidationError as e:
-                    logger.error("Error when processing event %s", exc_info=e)
-
-                time.sleep(polling_interval)
-
-    except Exception:
-        logger.exception(traceback.format_exc())
+    for event in client.iter_events(experiment_id, refresh_interval=polling_interval):
+        if isinstance(event, EverestBatchResultEvent):
+            callback({OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(event)})
+        else:
+            callback({SIM_PROGRESS_ID: event})

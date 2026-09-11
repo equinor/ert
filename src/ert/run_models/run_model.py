@@ -59,6 +59,7 @@ from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
+    REALIZATION_STATE_UNKNOWN,
 )
 from ert.mode_definitions import MODULE_MODE
 from ert.run_arg import RunArg
@@ -484,7 +485,7 @@ class RunModel(RunModelConfig, ABC):
 
             if all_realizations:
                 for real in all_realizations.values():
-                    status[str(real["status"])] += 1
+                    status[str(real.get("status", REALIZATION_STATE_UNKNOWN))] += 1
 
         if self._is_rerunning_failed_realizations:
             status["Finished"] += (
@@ -702,8 +703,6 @@ class RunModel(RunModelConfig, ABC):
             self._max_parallelism_violation, evaluator.max_parallelism_violation
         )
 
-        logger.debug("tasks complete")
-
         if self._end_event.is_set():
             logger.debug("Run model cancelled - post evaluation")
             try:
@@ -837,6 +836,7 @@ class RunModel(RunModelConfig, ABC):
             workflow_runner = WorkflowRunner(
                 workflow=workflow,
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                hook=str(fixtures.hook),
             )
             self._workflow_runner = workflow_runner
             try:

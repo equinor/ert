@@ -32,13 +32,16 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
 )
 from ert.config.rft_config import RFTConfig
+from ert.config.seismic_config import SeismicConfig
 from ert.gui.plotting.ert_plots.observations import _plotObservations
 from ert.gui.plotting.utils import PlotConfig
 from ert.observation_converters.history_to_summary import convert_history_to_summary
 from tests.ert.defaults_generator import (
     create_breakthrough_observation_dict,
     create_rft_observation_dict,
+    create_seismic_observation_dict,
     create_summary_observation_dict,
+    seismic_file_content,
 )
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
@@ -2501,3 +2504,70 @@ def test_that_seismic_observation_reports_missing_obs_file_key(file_context_toke
                 ),
             }
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_config_derives_seismic_response_when_no_response_entry_exists():
+    name1 = "horizon--amplitude_full_mean_depth--20250101_20240101.csv"
+    name2 = "horizon--amplitude_full_min_depth--20250101_20240101.parquet"
+    pattern2 = "*.parquet"
+
+    obs_dir = Path("share/preprocessed/tables")
+    obs_dir.mkdir(parents=True, exist_ok=True)
+
+    path1 = obs_dir / name1
+    seismic_file_content().write_csv(path1)
+    path2 = obs_dir / name2
+    seismic_file_content().write_parquet(path2)
+    pattern_path2 = obs_dir / pattern2
+
+    config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_seismic_observation_dict(obs_file=str(path1)),
+                    create_seismic_observation_dict(obs_file=str(pattern_path2)),
+                ],
+            ),
+        }
+    )
+
+    seismic_config = cast(
+        SeismicConfig, config.ensemble_config.response_configs["seismic"]
+    )
+    assert seismic_config.input_files == [
+        f"share/results/tables/{name1}",
+        f"share/results/tables/{name2}",
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_config_does_not_derive_seismic_response_when_response_entry_exists():
+    obs_path = "horizon--amplitude_full_mean_depth--20250101_20240101.parquet"
+    seismic_file_content().write_parquet(obs_path)
+
+    name1 = (
+        "share/results/tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv"
+    )
+    name2 = (
+        "share/results/tables/horizon--amplitude_full_min_depth--20250101_20240101.csv"
+    )
+
+    config = ErtConfig.from_dict(
+        {
+            "SEISMIC": [
+                name1,
+                name2,
+            ],
+            "OBS_CONFIG": (
+                "obsconf",
+                [create_seismic_observation_dict(obs_file=obs_path)],
+            ),
+        }
+    )
+
+    seismic_config = cast(
+        SeismicConfig, config.ensemble_config.response_configs["seismic"]
+    )
+    assert seismic_config.input_files == [name1, name2]

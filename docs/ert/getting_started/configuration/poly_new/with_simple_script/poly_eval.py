@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 from pathlib import Path
 
-coeffs = {"a": 1, "b": 2, "c": 3}
+coeffs = {"a": 1.0, "b": 2.0, "c": 3.0}
 
 
-def evaluate(coeffs, x):
+def evaluate(coeffs: dict[str, float], x: float) -> float:
     return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
 

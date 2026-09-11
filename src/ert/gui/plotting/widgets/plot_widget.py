@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from matplotlib.backend_bases import Event, MouseEvent, PickEvent
-from matplotlib.backends.backend_qt5agg import (  # type: ignore
+from matplotlib.backends.backend_qtagg import (  # type: ignore
     FigureCanvas,
     NavigationToolbar2QT,
 )
@@ -151,6 +151,11 @@ class PlotWidget(QWidget):
         self.resetPlot()
 
     def resetPlot(self) -> None:
+        # Some figures contain twinaxes
+        # Resetting the xscale to linear for all axes
+        # to avoid log scale issues when re-plotting after a log scale plot
+        for ax in self._figure.axes:
+            ax.set_xscale("linear")
         self._figure.clear()
 
     @property

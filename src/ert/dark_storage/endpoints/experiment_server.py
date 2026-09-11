@@ -34,6 +34,7 @@ from starlette.websockets import WebSocket
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, QueueSystem
+from ert.dark_storage.common import EverEndpoints
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
@@ -46,10 +47,8 @@ from everest.detached.everserver import (
     ExperimentStatus,
 )
 from everest.strings import (
-    EXPERIMENT_SERVER,
     OPT_FAILURE_ALL_REALIZATIONS,
     OPT_FAILURE_REALIZATIONS,
-    EverEndpoints,
 )
 
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
@@ -132,7 +131,7 @@ def _get_optimization_status(
             status_ = ExperimentState.failed
             messages = _failed_realizations_messages(events, exit_code)
             for msg in messages:
-                logging.getLogger(EXPERIMENT_SERVER).error(msg)
+                logging.getLogger(__name__).error(msg)
             return status_, "\n".join(messages)
         case EverestExitCode.COMPLETED:
             return ExperimentState.completed, "Optimization completed."
@@ -156,7 +155,7 @@ def verify_auth(
     request: Request,
     credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())],
 ) -> None:
-    logging.getLogger(EXPERIMENT_SERVER).debug(
+    logging.getLogger(__name__).debug(
         f"{request.scope['path']} entered from "
         f"{request.client.host if request.client else 'unknown host'} "
         f"with HTTP {request.method}"
@@ -230,15 +229,14 @@ async def start_experiment(
         experiment_state.storage_path = config.output_dir
         experiment_state.start_time_unix = int(time.time())
         return JSONResponse({"experiment_id": experiment_id})
-    except Exception as e:
+    except Exception:
+        error_message = "Could not start experiment due to an internal error."
         experiment_state.status = ExperimentStatus(
             status=ExperimentState.failed,
-            message=f"Could not start experiment: {e!s}",
+            message=error_message,
         )
-        logging.getLogger(EXPERIMENT_SERVER).exception(e)
-        return JSONResponse(
-            {"error": f"Could not start experiment: {e!s}"}, status_code=501
-        )
+        logging.getLogger(__name__).exception("Failed to start experiment")
+        return JSONResponse({"error": error_message}, status_code=501)
 
 
 @router.get(
@@ -315,9 +313,9 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
             if isinstance(event, EndEvent):
                 break
     except Exception as e:
-        logging.getLogger(EXPERIMENT_SERVER).exception(str(e))
+        logging.getLogger(__name__).exception(str(e))
     finally:
-        logging.getLogger(EXPERIMENT_SERVER).info(
+        logging.getLogger(__name__).info(
             f"Subscriber {subscriber_id} done. Closing websocket"
         )
         # Give some time for subscribers to get events
@@ -410,9 +408,9 @@ class ExperimentRunner:
                 status=exp_status,
             )
         except UserCancelled as e:
-            logging.getLogger(EXPERIMENT_SERVER).info(f"User cancelled: {e}")
+            logging.getLogger(__name__).info(f"User cancelled: {e}")
         except Exception as e:
-            logging.getLogger(EXPERIMENT_SERVER).exception(e)
+            logging.getLogger(__name__).exception(e)
             run.status = ExperimentStatus(
                 message=f"Exception: {e}\n{traceback.format_exc()}",
                 status=ExperimentState.failed,
@@ -421,7 +419,7 @@ class ExperimentRunner:
             if run_model and run_model._experiment:
                 run_model._experiment.status = run.status
 
-            logging.getLogger(EXPERIMENT_SERVER).info(
+            logging.getLogger(__name__).info(
                 f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
             )
 

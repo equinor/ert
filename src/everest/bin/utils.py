@@ -24,7 +24,7 @@ from ert.ensemble_evaluator import (
 from ert.ensemble_evaluator.event import EndEvent
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.services import create_ertserver_client
+from ert.services.ert_client import ErtClient
 from ert.storage import (
     ExperimentStatus,
     open_storage,
@@ -32,12 +32,7 @@ from ert.storage import (
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
-from everest.detached import (
-    server_is_running,
-    start_monitor,
-    stop_server,
-    wait_for_server_to_stop,
-)
+from everest.detached.client import start_monitor
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import format_list
 
@@ -106,15 +101,14 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
             "The optimization will be stopped and the program will exit..."
         )
         try:
-            client = create_ertserver_client(
-                Path(ServerConfig.get_session_dir(options.config.output_dir))
+            client = ErtClient.get_client(
+                Path(ServerConfig.get_session_dir(options.config.output_dir)),
+                connect_timeout=1,
             )
-            server_context = ServerConfig.get_server_context_from_conn_info(
-                client.conn_info
-            )
-            if server_is_running(*server_context):
-                stop_server(server_context)
-                wait_for_server_to_stop(server_context, timeout=10)
+            if client.server_is_running(timeout=1):
+                client.stop_experiment_server()
+                client.wait_for_server_to_stop(timeout=10)
+                print("Server stopped successfully.")
 
         except TimeoutError:
             print("No running server found.")
@@ -396,18 +390,18 @@ class _DetachedMonitor:
 
 
 def run_detached_monitor(
-    server_context: tuple[str, str, tuple[str, str]],
+    client: ErtClient,
     experiment_id: str,
 ) -> None:
     monitor = _DetachedMonitor()
-    start_monitor(server_context, callback=monitor.update, experiment_id=experiment_id)
+    start_monitor(client, callback=monitor.update, experiment_id=experiment_id)
 
 
 def run_empty_detached_monitor(
-    server_context: tuple[str, str, tuple[str, str]],
+    client: ErtClient,
     experiment_id: str,
 ) -> None:
-    start_monitor(server_context, callback=lambda _: None, experiment_id=experiment_id)
+    start_monitor(client, callback=lambda _: None, experiment_id=experiment_id)
 
 
 def remove_show_scaling_warning_setting() -> None:

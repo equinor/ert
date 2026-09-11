@@ -91,8 +91,8 @@ called ``flowrun``, depending on what is available in the user's environment (``
 
 You can check which binary is used by running ``which flowrun`` or ``which flow`` in your terminal.
 
-Single-threaded Flow example
-""""""""""""""""""""""""""""
+Single-process Flow example
+"""""""""""""""""""""""""""
 
 .. code-block:: yaml
 
@@ -102,20 +102,28 @@ Single-threaded Flow example
          file_name: r{{ eclbase }}
          type: summary
 
-Multi-process and multi-threaded Flow example
-"""""""""""""""""""""""""""""""""""""""""""""
+Multi-process Flow example
+""""""""""""""""""""""""""
 
 .. code-block:: yaml
 
    forward_model:
-     - job: flow r{{ eclbase }} --np 8 --threads 4 --version stable
+     - job: flow r{{ eclbase }} --np 4 --version stable
        results:
          file_name: r{{ eclbase }}
          type: summary
          keys: ["FOPR", "WOPR"]
 
-This runs Flow with 8 MPI ranks, each using 4 OpenMP threads. The version ``stable`` is selected
-(if supported by the wrapper). Additional Flow arguments can be passed as needed.
+This runs Flow over 4 CPU cores using MPI, which you can do if you have
+reserved sufficient CPU capacity in ``cores_per_node``. The version ``stable``
+is selected (if supported by the wrapper). Additional Flow arguments can be
+passed as needed.
+
+It is also possible to pass the option ``--threads 2`` to have Flow use an
+extra helper thread - which can make sense if there is more CPU capacity
+available on the computer. If there is no flowrun wrapper, use the native
+``--threads-per-process``  option to flow.
+
 
 Manual MPI launch (without flowrun wrapper)
 """""""""""""""""""""""""""""""""""""""""""
@@ -133,7 +141,7 @@ as a custom forward model job in EVEREST via the ``install_jobs`` section.
        executable: /usr/bin/mpirun
 
    forward_model:
-     - job: mpirun -np 8 flow r{{ eclbase }}.DATA --threads-per-process=4
+     - job: mpirun -np 4 flow --threads-per-process=1 r{{ eclbase }}.DATA
        results:
          file_name: r{{ eclbase }}
          type: summary
@@ -143,9 +151,12 @@ This example:
 
 - Installs ``mpirun`` as a custom job in EVEREST
   - NOTE: executable (path) should point to the ``mpirun`` binary in your environment (check ``which mpirun``)
-- Launches Flow with ``mpirun -np 8`` (8 MPI ranks)
-- Sets 4 OpenMP threads per rank using Flow's native flag ``--threads-per-process=4``
+- Launches Flow with ``mpirun -np 4`` (4 MPI ranks) and one thread per process.
 - Assumes ``mpirun`` and ``flow`` are available in the environment
+
+When running using MPI on a compute cluster, it is vital that the queue option
+``cores_per_node`` is set according to the number of MPI processes; otherwise
+the job may run slower than a single-process run.
 
 .. _eclipse100:
 .. _eclipse300:

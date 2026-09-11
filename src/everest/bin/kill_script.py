@@ -12,10 +12,9 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from ert.services import create_ertserver_client
+from ert.services.ert_client import ErtClient
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import stop_server, wait_for_server_to_stop
 from everest.util import version_info
 
 logger = logging.getLogger(__name__)
@@ -74,18 +73,15 @@ def _handle_keyboard_interrupt(signal: int, _: Any, *, after: bool = False) -> N
 
 def kill_everest(options: argparse.Namespace) -> None:
     try:
-        client = create_ertserver_client(
-            Path(ServerConfig.get_session_dir(options.config.output_dir)), timeout=1
+        client = ErtClient.get_client(
+            Path(ServerConfig.get_session_dir(options.config.output_dir)),
+            connect_timeout=1,
         )
-        server_context = ServerConfig.get_server_context_from_conn_info(
-            client.conn_info
-        )
-
     except TimeoutError:
         print("Server is not running.")
         return
 
-    stopping = stop_server(server_context)
+    stopping = client.stop_experiment_server()
     if threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, partial(_handle_keyboard_interrupt, after=True))
 
@@ -94,7 +90,7 @@ def kill_everest(options: argparse.Namespace) -> None:
         return
     try:
         print("Waiting for server to stop ...")
-        wait_for_server_to_stop(server_context, timeout=60)
+        client.wait_for_server_to_stop(timeout=60)
         print("Server stopped.")
     except Exception:
         logger.debug(traceback.format_exc())

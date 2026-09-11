@@ -462,6 +462,5 @@
   ],
   "shape_registry": {
     "shapes": {}
-  },
-  "experiment_type": "Ensemble Information Filter"
+  }
 }

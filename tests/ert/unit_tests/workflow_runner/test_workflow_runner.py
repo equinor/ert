@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -10,7 +11,7 @@ from ert.config.workflow_job import (
     UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
 )
-from ert.workflow_runner import WorkflowJobRunner, WorkflowRunner
+from ert.workflow_runner import WorkflowJobRunner, WorkflowJobStatus, WorkflowRunner
 from tests.ert.utils import wait_until
 
 from .workflow_common import WorkflowCommon
@@ -79,6 +80,37 @@ def test_error_handling_external_job():
     runner = WorkflowJobRunner(job)
     assert runner.run([]) is None
     assert runner.stderrdata().startswith("Traceback")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_stdout_printed_before_external_job_fails_is_captured():
+    WorkflowCommon.createExternalDumpJob()
+
+    job = workflow_job_from_file(
+        name="DUMP", config_file="dump_failing_job", origin="user"
+    )
+
+    runner = WorkflowJobRunner(job)
+    runner.run([])
+
+    assert runner.stdoutdata() == "Hello Failing\n"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_failing_external_job_reports_its_exit_code_without_ert_stack_trace():
+    WorkflowCommon.createExternalDumpJob()
+
+    job = workflow_job_from_file(
+        name="DUMP", config_file="dump_failing_job", origin="user"
+    )
+
+    runner = WorkflowJobRunner(job)
+    runner.run([])
+
+    stderr = runner.stderrdata()
+    assert stderr.endswith("dump_failing.py failed with exit code 1")
+    assert "ert_script.py" not in stderr
+    assert "external_ert_script.py" not in stderr
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -178,6 +210,121 @@ def test_workflow_run():
     assert Path("dump2").read_text(encoding="utf-8") == "dump_text_2"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_results_contain_one_entry_per_job_invocation():
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    runner = WorkflowRunner(workflow, fixtures={})
+    runner.run_blocking()
+
+    results = runner.workflow_job_results()
+    assert [(result.name, result.index, result.arguments) for result in results] == [
+        ("DUMP", 0, ["dump1", "dump_text_1"]),
+        ("DUMP", 1, ["dump2", "dump_text_2"]),
+    ]
+    assert [result.stdout for result in results] == ["Hello World\n", "Hello World\n"]
+    assert all(result.status is WorkflowJobStatus.SUCCESS for result in results)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_output_of_workflow_job_is_written_to_ert_log(caplog):
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
+        WorkflowRunner(workflow, fixtures={}).run_blocking()
+
+    assert "workflow=dump_workflow job=DUMP#0 status=success" in caplog.text
+    assert "--- arguments ---\ndump1 dump_text_1" in caplog.text
+    assert "--- stdout ---\nHello World" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hook_workflow_was_run_from_is_named_in_ert_log(caplog):
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
+        WorkflowRunner(workflow, fixtures={}, hook="POST_EXPERIMENT").run_blocking()
+
+    assert (
+        "Workflow job result; hook=POST_EXPERIMENT workflow=dump_workflow"
+        in caplog.text
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_run_outside_hook_is_logged_with_hook_none(caplog):
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
+        WorkflowRunner(workflow, fixtures={}).run_blocking()
+
+    assert "Workflow job result; hook=None workflow=dump_workflow" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_is_logged_as_starting_before_it_is_logged_as_finished(caplog):
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
+        WorkflowRunner(workflow, fixtures={}, hook="PRE_SIMULATION").run_blocking()
+
+    started = (
+        "Workflow job starting; hook=PRE_SIMULATION workflow=dump_workflow job=DUMP#0"
+    )
+    finished = (
+        "Workflow job result; hook=PRE_SIMULATION"
+        " workflow=dump_workflow job=DUMP#0 status=success"
+    )
+    assert started in caplog.text
+    assert finished in caplog.text
+    assert caplog.text.index(started) < caplog.text.index(finished)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_output_of_job_that_stops_workflow_is_still_logged(caplog):
+    WorkflowCommon.createExternalDumpJob()
+    with Path("dump_failing_job").open("a", encoding="utf-8") as f:
+        f.write("STOP_ON_FAIL True")
+    Path("dump_failing_workflow").write_text("DUMP", encoding="utf-8")
+
+    dump_job = workflow_job_from_file("dump_failing_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file("dump_failing_workflow", {}, {"DUMP": dump_job})
+
+    with (
+        caplog.at_level(logging.INFO, logger="ert.workflow_runner"),
+        pytest.raises(RuntimeError, match="failed with error"),
+    ):
+        WorkflowRunner(workflow, fixtures={}).run_blocking()
+
+    assert "status=failed" in caplog.text
+    assert "--- stdout ---\nHello Failing" in caplog.text
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
@@ -214,6 +361,17 @@ def test_workflow_thread_cancel_ert_script():
     assert not Path("wait_started_2").exists()
     assert not Path("wait_cancelled_2").exists()
     assert not Path("wait_finished_2").exists()
+
+    results = {
+        result.index: result for result in workflow_runner.workflow_job_results()
+    }
+    assert results[0].status is WorkflowJobStatus.SUCCESS
+    # The job that was interrupted by cancellation is reported as cancelled,
+    # not as failed.
+    assert results[1].status is WorkflowJobStatus.CANCELLED
+    # The remaining job never got a chance to start, so it is reported as
+    # cancelled rather than silently omitted.
+    assert results[2].status is WorkflowJobStatus.CANCELLED
 
 
 @pytest.mark.slow
@@ -344,3 +502,18 @@ def test_workflow_stops_with_stopping_job():
 
     # Expect no error raised
     WorkflowRunner(workflow, fixtures={}).run_blocking()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_job_runner_stops_reporting_it_is_running_when_arguments_are_rejected():
+    WorkflowCommon.createErtScriptsJob()
+    job = workflow_job_from_file(
+        name="SUBTRACT", config_file="subtract_script_job", origin="user"
+    )
+    runner = WorkflowJobRunner(job)
+
+    with pytest.raises(ValueError, match="requires at least 2 arguments"):
+        runner.run([1])
+
+    assert not runner.isRunning()

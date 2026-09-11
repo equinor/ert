@@ -329,3 +329,58 @@ def test_that_multiple_save_parameters_numpy_calls_overwrite_previous_values(tmp
         gen_kw_parameter.name
     ]
     assert saved_ens.to_list() == [2.2 for _ in range(num_reals)]
+
+
+def test_that_gen_kw_parameter_sharing_group_name_can_be_saved_to_posterior(tmp_path):
+    ensemble_size = 100
+    parameter_group = "GROUP"
+    parameter_names = [
+        parameter_group,
+        *(f"PARAMETER_{index}" for index in range(13)),
+    ]
+    parameter_configs = [
+        GenKwConfig(
+            name=name,
+            group=parameter_group,
+            distribution={"name": "normal", "mean": 0, "std": 1},
+        )
+        for name in parameter_names
+    ]
+    realizations = np.arange(ensemble_size)
+    expected = np.arange(ensemble_size, dtype=float)
+
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    config.model_dump(mode="json") for config in parameter_configs
+                ]
+            }
+        )
+        prior = experiment.create_ensemble(name="prior", ensemble_size=ensemble_size)
+        posterior = experiment.create_ensemble(
+            name="posterior", ensemble_size=ensemble_size
+        )
+        prior.save_parameters(
+            pl.DataFrame(
+                {
+                    "realization": realizations,
+                    **{
+                        name: expected + index
+                        for index, name in enumerate(parameter_names)
+                    },
+                }
+            )
+        )
+
+        parameters = prior.load_parameters_numpy(parameter_group, realizations)
+        posterior.save_parameters_numpy(
+            parameters,
+            parameter_group,
+            realizations,
+        )
+
+        np.testing.assert_array_equal(
+            posterior.load_scalar_keys([parameter_group])[parameter_group],
+            expected,
+        )

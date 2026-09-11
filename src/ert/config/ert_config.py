@@ -11,12 +11,13 @@ from dataclasses import dataclass
 from functools import cached_property
 from os import path
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self, cast, overload
 
 from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
+from ert.config.seismic_config import SeismicConfig
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -25,6 +26,7 @@ from ._observations import (
     GeneralObservation,
     Observation,
     RFTObservation,
+    SeismicObservation,
     SummaryObservation,
     make_observations,
 )
@@ -61,6 +63,7 @@ from .parsing import (
     parse_contents,
     read_file,
 )
+from .parsing.file_context_token import FileContextToken
 from .parsing.observations_parser import ObservationDict
 from .queue_config import KnownQueueOptions, QueueConfig
 from .rft_config import RFTConfig
@@ -464,6 +467,25 @@ def _validate_fixtures(
     return errors
 
 
+class _DeclaredHook(NamedTuple):
+    declaration_order: int
+    workflow: Workflow
+
+
+def _declaration_order_of(workflow_name: str) -> int:
+    """Position of the hook among all instructions in the fully resolved
+    config (after INCLUDE files are spliced in), used to order hooks by
+    where they were declared.
+    """
+    if (
+        isinstance(workflow_name, FileContextToken)
+        and workflow_name.declaration_order is not None
+    ):
+        return workflow_name.declaration_order
+    # return 0 for jobs not declared in the config file, e.g. site-installed jobs
+    return 0
+
+
 def create_and_hook_workflows(
     hook_workflow_info: list[tuple[str, HookRuntime]],
     hook_workflow_job_info: list[list[str]],
@@ -473,7 +495,7 @@ def create_and_hook_workflows(
     substitutions: dict[str, str],
 ) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
     workflows = {}
-    hooked_workflows = defaultdict(list)
+    declared_hooks: defaultdict[HookRuntime, list[_DeclaredHook]] = defaultdict(list)
 
     errors: list[ErrorInfo | ConfigValidationError] = []
 
@@ -485,6 +507,7 @@ def create_and_hook_workflows(
                 work[0],
                 substitutions,
                 workflow_jobs,
+                name=filename,
             )
             workflows[filename] = workflow
             if existed:
@@ -541,7 +564,9 @@ def create_and_hook_workflows(
         workflow = workflows[hook_name]
         errors.extend(_validate_fixtures(hook_name, workflow, mode))
 
-        hooked_workflows[mode].append(workflow)
+        declared_hooks[mode].append(
+            _DeclaredHook(_declaration_order_of(hook_name), workflow)
+        )
 
     for inline_workflow_hook in hook_workflow_job_info:
         inline_workflow = inline_workflow_hook[:-1]
@@ -560,12 +585,21 @@ def create_and_hook_workflows(
             wf_name, wf = _create_workflow_from_job(inline_workflow)
             _register_workflow(inline_workflow, wf_name, wf)
             errors.extend(_validate_fixtures(wf_name, wf, mode))
-            hooked_workflows[mode].append(wf)
+            declared_hooks[mode].append(
+                _DeclaredHook(_declaration_order_of(wf_name), wf)
+            )
         except ConfigValidationError as err:
             errors.append(err)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
+
+    hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = defaultdict(list)
+    for mode, hooks in declared_hooks.items():
+        hooks_in_declaration_order = sorted(
+            hooks, key=lambda hook: hook.declaration_order
+        )
+        hooked_workflows[mode] = [hook.workflow for hook in hooks_in_declaration_order]
 
     return workflows, hooked_workflows
 
@@ -1250,6 +1284,7 @@ class ErtConfig(BaseModel, extra="forbid"):
 
             cls_config.derive_rft_response_input_from_observations(config_dict)
             cls_config.derive_breakthrough_response_input_from_observations()
+            cls_config.derive_seismic_response_input_from_observations()
 
             cls_config.random_seed_generator.user_defined_seed = config_dict.get(
                 ConfigKeys.RANDOM_SEED
@@ -1311,6 +1346,23 @@ class ErtConfig(BaseModel, extra="forbid"):
                 thresholds=[o.threshold for o in bt_obs],
                 observed_dates=[o.date for o in bt_obs],
             )
+
+    def derive_seismic_response_input_from_observations(self) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        seismic_obs = [o for o in observations if isinstance(o, SeismicObservation)]
+
+        if "seismic" not in ensemble_config.response_configs and seismic_obs:
+            default_dir = Path("share/results/tables")
+            response_files = list(
+                dict.fromkeys(str(default_dir / o.filepath.name) for o in seismic_obs)
+            )
+            seismic_config = SeismicConfig.from_config_dict(
+                {ConfigKeys.SEISMIC: response_files}
+            )
+            assert seismic_config is not None
+            ensemble_config.response_configs["seismic"] = seismic_config
 
     @classmethod
     def _create_list_of_forward_model_steps_to_run(

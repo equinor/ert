@@ -30,7 +30,7 @@ class ContextBool:
         return "False"
 
     @no_type_check
-    def __deepcopy__(self, memo) -> ContextBool:
+    def __deepcopy__(self, memo) -> ContextBool:  # ruff: ignore[missing-type-function-argument]
         new_instance = ContextBool(bool(self), self.token)
         memo[id(self)] = new_instance
         return new_instance
@@ -43,7 +43,7 @@ class ContextInt(int):
         return obj
 
     @no_type_check
-    def __deepcopy__(self, memo) -> ContextInt:
+    def __deepcopy__(self, memo) -> ContextInt:  # ruff: ignore[missing-type-function-argument]
         new_instance = ContextInt(int(self), self.token)
         memo[id(self)] = new_instance
         return new_instance
@@ -56,7 +56,7 @@ class ContextFloat(float):
         return obj
 
     @no_type_check
-    def __deepcopy__(self, memo) -> ContextFloat:
+    def __deepcopy__(self, memo) -> ContextFloat:  # ruff: ignore[missing-type-function-argument]
         new_instance = ContextFloat(float(self), self.token)
         memo[id(self)] = new_instance
         return new_instance

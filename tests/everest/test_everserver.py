@@ -24,15 +24,13 @@ from ert.dark_storage.endpoints.experiment_server import (
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import StatusEvents
 from ert.scheduler.event import FinishedEvent
-from ert.services import create_ertserver_client
+from ert.services import ErtClient
 from ert.storage import ExperimentState
 from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     everserver,
-    start_experiment,
     start_server,
-    wait_for_server,
 )
 from everest.strings import (
     OPT_FAILURE_ALL_REALIZATIONS,
@@ -81,14 +79,9 @@ async def wait_for_server_to_complete(config):
                 return
 
     driver = await start_server(config, logging.DEBUG)
-    client = create_ertserver_client(
-        Path(ServerConfig.get_session_dir(config.output_dir))
-    )
-    wait_for_server(client, 120)
-    start_experiment(
-        server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
-        config=config,
-    )
+    api = ErtClient.get_client(Path(ServerConfig.get_session_dir(config.output_dir)))
+    api.wait_for_server(timeout=120)
+    api.start_experiment(config.to_dict())
     await server_running()
 
 

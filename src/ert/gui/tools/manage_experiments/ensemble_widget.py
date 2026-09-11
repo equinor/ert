@@ -5,7 +5,7 @@ from typing import cast
 
 import polars as pl
 import seaborn as sns
-from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
+from matplotlib.backends.backend_qtagg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
 from pandas.errors import PerformanceWarning
 from polars import DataFrame

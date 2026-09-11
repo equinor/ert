@@ -23,7 +23,6 @@ from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.storage.local_experiment import (
     ExperimentConfig,
-    ExperimentType,
     LocalExperiment,
 )
 from ert.trace import tracer
@@ -88,7 +87,7 @@ class MultipleDataAssimilation(
             "Running ES-MDA with relative weights: %s", self.analysis_settings.weights
         )
         if rerun_failed_realizations:
-            raise ErtRunError("ESMDA does not support restart")
+            raise ErtRunError("ESMDA does not support rerunning failed realizations")
 
         target_experiment = None
 
@@ -205,7 +204,3 @@ class MultipleDataAssimilation(
     @classmethod
     def group(cls) -> str | None:
         return MULTIPLE_DATA_ASSIMILATION_GROUP
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.ES_MDA

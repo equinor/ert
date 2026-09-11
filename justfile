@@ -82,6 +82,9 @@ everest-tests:
 build-everest-docs:
     sphinx-build -n -v -E -W ./docs/everest ./everest_docs
 
+fmudesign-tests:
+    pytest -n 4 --dist loadgroup {{pytest_args}} tests/fmudesign
+
 fetch-screenshot-baselines:
     rm -rf .tmp/ert-testdata
     git clone --depth 1 --filter=blob:none --sparse https://github.com/equinor/ert-testdata.git .tmp/ert-testdata
@@ -98,13 +101,13 @@ check-types:
     mypy src
 
 test-all:
-    parallel -j4 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just everest-tests'
+    parallel -j4 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just everest-tests' 'just fmudesign-tests'
 
 ert-tests:
     parallel -j4 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests'
 
 check-all:
-    parallel -j8 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just ert-doc-tests' 'just everest-tests' 'just check-types' 'just build-everest-docs' 'just build-ert-docs'
+    parallel -j8 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just ert-doc-tests' 'just everest-tests' 'just fmudesign-tests' 'just check-types' 'just build-everest-docs' 'just build-ert-docs'
 
 
 update-ert-snapshots:

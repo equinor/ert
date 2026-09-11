@@ -1,3 +1,4 @@
+import gc
 import os
 from unittest.mock import patch
 
@@ -89,6 +90,20 @@ def print_system_load_on_test_failure(request):
         )
 
 
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_protocol(item, nextitem):
+    if not item.get_closest_marker("requires_window_manager"):
+        return (yield)
+    # Reclaiming a Qt widget while Qt is dispatching events to it segfaults the
+    # worker, so the test's cycles are collected between tests instead.
+    gc.disable()
+    try:
+        return (yield)
+    finally:
+        gc.enable()
+        gc.collect(0)
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Make the result of an individual test available in an item"""
@@ -99,6 +114,11 @@ def pytest_runtest_makereport(item, call):
 
 @pytest.fixture
 def change_to_tmpdir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def use_tmpdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
 

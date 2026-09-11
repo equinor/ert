@@ -11,20 +11,24 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
+from importlib.metadata import version
 from pathlib import Path
 from typing import Literal
 
-import cwrap
 import hypothesis.strategies as st
 import numpy as np
 import pytest
 import xtgeo
 from hypothesis import given, note, settings
 from hypothesis.extra.numpy import arrays
+from packaging.version import Version
 from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
 from resfo_utilities.testing import egrids, summaries
+
+if Version(version("resdata")).major < 7:
+    import cwrap
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
 from ert.field_utils.field_file_format import ROFF_FORMATS
@@ -188,8 +192,12 @@ class IoProvider:
                 data = values.ravel(order="F")
                 for i in range(self.size):
                     kw[i] = data[i]
-                with cwrap.open(file_name, mode="w") as f:
-                    kw.write_grdecl(f)
+                if Version(version("resdata")).major < 7:
+                    with cwrap.open(file_name, mode="w") as f:
+                        kw.write_grdecl(f)
+                else:
+                    with Path(file_name).open(mode="w", encoding="utf-8") as f:
+                        kw.write_grdecl(f)
             else:
                 # resdata cannot write roff
                 save_field(np.ma.masked_array(values), field_name, file_name, fformat)

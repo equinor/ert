@@ -916,7 +916,7 @@ to read summary data from forward model, do:
     @field_validator("objective_functions")
     @no_type_check
     @classmethod
-    def validate_objective_function_weights_for_all_or_none(cls, functions):
+    def validate_objective_function_weights_for_all_or_none(cls, functions):  # ruff: ignore[missing-type-function-argument]
         objective_names = [function.name for function in functions]
         weights = [
             function.weight for function in functions if function.weight is not None
@@ -939,7 +939,7 @@ to read summary data from forward model, do:
     @field_validator("config_path")
     @no_type_check
     @classmethod
-    def validate_config_path_exists_and_is_writeable(cls, config_path):
+    def validate_config_path_exists_and_is_writeable(cls, config_path):  # ruff: ignore[missing-type-function-argument]
         """
         `os.path.exists()` swallows all OSErrors instead returning false.
         `Path.exists()` only shares this behavior for `>py-3.12`.

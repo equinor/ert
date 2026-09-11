@@ -20,7 +20,6 @@ from typing import Any, TypedDict, cast
 
 import requests
 
-from ert.dark_storage.client import Client, ErtClientConnectionInfo
 from ert.trace import get_traceparent
 
 logger = logging.getLogger(__name__)
@@ -417,19 +416,6 @@ class ErtServerController:
     def wait(self) -> None:
         if self._thread_that_starts_server_process is not None:
             self._thread_that_starts_server_process.join()
-
-
-def create_ertserver_client(project: Path, timeout: int | None = None) -> Client:
-    """Read connection info from file in path and create HTTP client."""
-    controller = create_ert_server_controller(timeout=timeout, project=project)
-    info = controller.fetch_connection_info()
-    return Client(
-        conn_info=ErtClientConnectionInfo(
-            base_url=controller.fetch_url(),
-            auth_token=controller.fetch_auth()[1],
-            cert=info["cert"],
-        )
-    )
 
 
 def create_ert_server_controller(

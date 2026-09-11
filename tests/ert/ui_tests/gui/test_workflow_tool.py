@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
@@ -79,7 +80,9 @@ def test_run_export_runpath_workflow(open_gui, qtbot, run_experiment):
     assert Path(".ert_runpath_list").is_file()
 
 
-def test_run_workflow_with_no_ensemble_selected(qtbot, tmp_path, capsys, monkeypatch):
+def test_run_workflow_with_no_ensemble_selected(
+    qtbot, tmp_path, capsys, caplog, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "config.ert").write_text(
         dedent("""
@@ -121,6 +124,9 @@ def test_run_workflow_with_no_ensemble_selected(qtbot, tmp_path, capsys, monkeyp
         qtbot.mouseClick(workflow_widget.run_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_run_workflow_tool)
-    gui.workflows_tool.trigger()
+    with caplog.at_level(logging.INFO, logger="ert.workflow_runner"):
+        gui.workflows_tool.trigger()
     assert capsys.readouterr().out == "Hello world\n"
+    assert "workflow=print_workflow job=PRINT#0 status=success" in caplog.text
+    assert "--- stdout ---\nHello world" in caplog.text
     gui.close()
