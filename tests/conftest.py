@@ -1,3 +1,4 @@
+import gc
 import os
 from unittest.mock import patch
 
@@ -87,6 +88,20 @@ def print_system_load_on_test_failure(request):
             "System load after test failure (1/5/15min): "
             f"{load1:.2f}, {load5:.2f}, {load15:.2f}, cpu_count={os.cpu_count()}"
         )
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_protocol(item, nextitem):
+    if not item.get_closest_marker("requires_window_manager"):
+        return (yield)
+    # Reclaiming a Qt widget while Qt is dispatching events to it segfaults the
+    # worker, so the test's cycles are collected between tests instead.
+    gc.disable()
+    try:
+        return (yield)
+    finally:
+        gc.enable()
+        gc.collect(0)
 
 
 @pytest.hookimpl(hookwrapper=True)
