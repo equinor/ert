@@ -13,7 +13,7 @@ from _ert.threading import ErtThread
 from ert.base_model_context import use_runtime_plugins
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
-from ert.config import ErtConfig, QueueSystem
+from ert.config import ErtConfig, QueueSystem, has_updatable_parameters
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -99,9 +99,8 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
                 f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are "
                 f"needed.\nPlease add to file {args.config}"
             )
-        if all(
-            p.update_strategy is None
-            for p in ert_config.ensemble_config.parameter_configs.values()
+        if not has_updatable_parameters(
+            ert_config.ensemble_config.parameter_configs.values()
         ):
             raise ErtCliError(
                 f"All parameters are set to UPDATE:FALSE in {args.config}"
