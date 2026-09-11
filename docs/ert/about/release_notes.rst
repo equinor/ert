@@ -184,10 +184,9 @@ choose your own colours.
 
 Edit title and axis labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-You can edit the title and axis labels from the right sidepanel with the edit
-button next to each one.
-
-You can also click the title or an axis label in the plot to edit it there.
+You can edit the title and axis labels only through the "Edit title",
+"Edit x-label" and "Edit y-label" buttons in "General options" in the right
+sidepanel. Clicking the title or axis labels in the plot does not edit them.
 
 .. image:: images/v25/change_label.png
 .. image:: images/v25/label_dialog.png
