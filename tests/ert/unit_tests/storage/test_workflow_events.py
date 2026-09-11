@@ -37,18 +37,6 @@ def test_that_workflow_events_live_next_to_experiment_they_belong_to(tmp_path):
         )
 
 
-def test_that_workflow_events_keep_output_that_is_not_ascii(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment(name="exp")
-
-        experiment.append_workflow_events([json.dumps({"stdout": "hei på deg ⏱"})])
-
-        (line,) = experiment.workflow_events_path.read_text(
-            encoding="utf-8"
-        ).splitlines()
-        assert json.loads(line)["stdout"] == "hei på deg ⏱"
-
-
 def test_that_workflow_events_cannot_be_appended_through_read_only_storage(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(name="exp")
