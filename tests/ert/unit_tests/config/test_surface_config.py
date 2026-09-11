@@ -13,7 +13,7 @@ from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, SurfaceC
 from ert.config.parameter_config import InvalidParameterFile
 from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE
 from ert.run_arg import create_run_arguments
-from ert.run_models._create_run_path import create_run_path
+from ert.run_models._create_runpath import create_runpath
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
@@ -63,11 +63,11 @@ def test_runpath_roundtrip(tmp_path, storage, surface, surface_format, caplog):
         tmp_path / "input_0",
         fformat="irap_ascii" if surface_format == "ascii" else "irap_binary",
     )
-    # run_path -> storage
+    # runpath -> storage
     ds = config.read_from_runpath(tmp_path, 0, 0)
     ensemble.save_parameters(ds, config.name, 0)
 
-    # storage -> run_path
+    # storage -> runpath
     config.forward_init_file = "output_%d"
     config.write_to_runpath(tmp_path, 0, ensemble)
 
@@ -497,7 +497,7 @@ async def test_that_ert_writes_surface_in_same_the_format_that_was_read(
                 num_realizations=1,
                 design_matrix_df=None,
             )
-            await create_run_path(
+            await create_runpath(
                 run_args=run_args,
                 ensemble=ensemble,
                 user_config_file="config.ert",

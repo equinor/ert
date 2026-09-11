@@ -63,7 +63,7 @@ EXPECTED_CALL_ORDER_WITHOUT_UPDATES = [
 
 @pytest.fixture
 def patch_run_model(monkeypatch):
-    monkeypatch.setattr(run_model, "create_run_path", AsyncMock())
+    monkeypatch.setattr(run_model, "create_runpath", AsyncMock())
     monkeypatch.setattr(RunModel, "validate_successful_realizations_count", MagicMock())
     monkeypatch.setattr(RunModel, "set_env_key", MagicMock())
 

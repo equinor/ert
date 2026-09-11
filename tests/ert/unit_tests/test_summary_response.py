@@ -8,7 +8,7 @@ import pytest
 from packaging import version
 
 from ert.config import ErtConfig
-from ert.run_models._create_run_path import create_run_path
+from ert.run_models._create_runpath import create_runpath
 from ert.runpaths import Runpaths
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
@@ -55,7 +55,7 @@ async def test_load_summary_response_restart_not_zero(
             ensemble_size=ert_config.runpath_config.num_realizations,
         )
 
-        await create_run_path(
+        await create_runpath(
             run_args=run_args(ert_config, ensemble),
             ensemble=ensemble,
             user_config_file=ert_config.user_config_file,

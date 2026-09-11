@@ -77,7 +77,7 @@ from ert.utils import log_duration
 from ert.warnings import PostExperimentWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
-from ._create_run_path import create_run_path
+from ._create_runpath import create_runpath
 from .event import (
     EndEvent,
     FullSnapshotEvent,
@@ -859,7 +859,7 @@ class RunModel(RunModelConfig, ABC):
     ) -> int:
         try:
             asyncio.run(
-                create_run_path(
+                create_runpath(
                     run_args=run_args,
                     ensemble=ensemble,
                     user_config_file=str(self.user_config_file),
@@ -871,7 +871,7 @@ class RunModel(RunModelConfig, ABC):
                     runpaths=self._run_paths,
                     context_env=self._context_env,
                     end_event=self._end_event,
-                    handle_run_path_creation_event=self.send_event,
+                    handle_runpath_creation_event=self.send_event,
                 )
             )
         except UserCancelled as e:

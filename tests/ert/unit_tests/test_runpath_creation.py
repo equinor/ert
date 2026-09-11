@@ -23,11 +23,11 @@ from ert.config.parsing import lark_parser
 from ert.ensemble_evaluator.evaluator import UserCancelled
 from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
-from ert.run_models import _create_run_path
-from ert.run_models._create_run_path import (
+from ert.run_models import _create_runpath
+from ert.run_models._create_runpath import (
     _generate_parameter_files,
     _make_param_substituter,
-    create_run_path,
+    create_runpath,
 )
 from ert.run_models.event import (
     FinishedTotalRunPathCreationEvent,
@@ -90,7 +90,7 @@ def test_that_job_name_in_run_arg_is_the_jobname_from_the_config_with_iens_subst
 @pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 @pytest.mark.filterwarnings("ignore:EGrid file given with numres")
-async def test_that_create_run_path_overwrites_symlinks_by_file(
+async def test_that_create_runpath_overwrites_symlinks_by_file(
     snake_oil_field_example, storage
 ):
     ert_config = snake_oil_field_example
@@ -122,7 +122,7 @@ async def test_that_create_run_path_overwrites_symlinks_by_file(
         random_seed=ert_config.random_seed,
         num_realizations=prior_ensemble.ensemble_size,
     )
-    await create_run_path(
+    await create_runpath(
         run_args=run_args,
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -143,7 +143,7 @@ async def test_that_create_run_path_overwrites_symlinks_by_file(
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure
-    await create_run_path(
+    await create_runpath(
         run_args=run_args,
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -169,7 +169,7 @@ ENSPATH storage
 
 
 @pytest.fixture
-async def make_run_path(run_args, storage):
+async def make_runpath(run_args, storage):
     async def func(ert_config):
         experiment_id = storage.create_experiment(
             experiment_config={
@@ -186,7 +186,7 @@ async def make_run_path(run_args, storage):
         sample_prior(prior_ensemble, [0], 123, 1)
         runargs = run_args(ert_config, prior_ensemble, 1)
         runpaths = Runpaths.from_config(ert_config)
-        await create_run_path(
+        await create_runpath(
             run_args=runargs,
             ensemble=prior_ensemble,
             user_config_file=ert_config.user_config_file,
@@ -205,13 +205,13 @@ async def make_run_path(run_args, storage):
 
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_that_when_gen_kw_is_in_the_config_then_parameters_txt_is_created(
-    make_run_path,
+    make_runpath,
 ):
     Path("genkw").write_text("genkw0 UNIFORM 0 1", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
         config_contents.format(parameters="GEN_KW GENKW genkw")
     )
-    await make_run_path(ert_config)
+    await make_runpath(ert_config)
     assert Path("simulations/realization-0/iter-0").exists()
     assert Path("simulations/realization-0/iter-0/parameters.txt").exists()
     assert len(os.listdir("simulations")) == 1
@@ -220,10 +220,10 @@ async def test_that_when_gen_kw_is_in_the_config_then_parameters_txt_is_created(
 
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_that_when_gen_kw_is_not_in_the_config_then_parameters_txt_is_not_created(
-    make_run_path,
+    make_runpath,
 ):
     ert_config = ErtConfig.from_file_contents(config_contents.format(parameters=""))
-    await make_run_path(ert_config)
+    await make_runpath(ert_config)
     assert Path("simulations/realization-0/iter-0").exists()
     assert not Path("simulations/realization-0/iter-0/parameters.txt").exists()
     assert len(os.listdir("simulations")) == 1
@@ -231,14 +231,14 @@ async def test_that_when_gen_kw_is_not_in_the_config_then_parameters_txt_is_not_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_jobs_json_is_backed_up_when_run_path_is_recreated(make_run_path):
+async def test_that_jobs_json_is_backed_up_when_runpath_is_recreated(make_runpath):
     Path("genkw").write_text("genkw0 UNIFORM 0 1", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
         config_contents.format(parameters="GEN_KW GENKW genkw")
     )
-    await make_run_path(ert_config)
+    await make_runpath(ert_config)
     assert Path("simulations/realization-0/iter-0/jobs.json").exists()
-    await make_run_path(ert_config)
+    await make_runpath(ert_config)
     iter0_output_files = os.listdir("simulations/realization-0/iter-0/")
     assert len([f for f in iter0_output_files if f.startswith("jobs.json")]) > 1, (
         "No backup created for jobs.json"
@@ -271,15 +271,15 @@ async def test_that_run_template_replace_symlink_does_not_write_to_source(
         experiment_config={"ert_templates": ert_config.ert_templates}
     )
     run_arg = run_args(ert_config, prior_ensemble)
-    run_path = Path(run_arg[0].runpath)
-    os.makedirs(run_path)
+    runpath = Path(run_arg[0].runpath)
+    os.makedirs(runpath)
     # Write a file that will be symlinked into the run run path with the
     # same name as the target_file
     Path("start.txt").write_text(
         "I don't want to replace in this file", encoding="utf-8"
     )
-    os.symlink("start.txt", run_path / "result.txt")
-    await create_run_path(
+    os.symlink("start.txt", runpath / "result.txt")
+    await create_runpath(
         run_args=run_arg,
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -291,7 +291,7 @@ async def test_that_run_template_replace_symlink_does_not_write_to_source(
         end_event=threading.Event(),
         runpaths=Runpaths.from_config(ert_config),
     )
-    assert (run_path / "result.txt").read_text(
+    assert (runpath / "result.txt").read_text(
         encoding="utf-8"
     ) == "I want to replace: 0"
     # Check that the source of the symlinked file is not updated
@@ -303,7 +303,7 @@ async def test_that_run_template_replace_symlink_does_not_write_to_source(
 
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_that_substitutions_created_with_the_define_keyword_is_substituted_in_template(  # ruff: ignore[line-too-long]
-    make_run_path,
+    make_runpath,
 ):
     Path("template.tmpl").write_text("I WANT TO REPLACE:<MY_VAR>", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
@@ -315,7 +315,7 @@ async def test_that_substitutions_created_with_the_define_keyword_is_substituted
             """
         )
     )
-    _, run_arg, _ = await make_run_path(ert_config)
+    _, run_arg, _ = await make_runpath(ert_config)
 
     assert (
         Path(run_arg[0].runpath) / "result.txt"
@@ -339,7 +339,7 @@ async def test_that_substitutions_created_with_the_define_keyword_is_substituted
     ],
 )
 async def test_that_pre_defines_are_substituted_templates(
-    key, expected: str, make_run_path, monkeypatch
+    key, expected: str, make_runpath, monkeypatch
 ):
     fixed_datetime = datetime.fromisoformat(EXPECTED_DATE)
     monkeypatch.setattr(
@@ -359,7 +359,7 @@ async def test_that_pre_defines_are_substituted_templates(
             """
         )
     )
-    _, run_arg, _ = await make_run_path(ert_config)
+    _, run_arg, _ = await make_runpath(ert_config)
 
     assert (Path(run_arg[0].runpath) / "result.txt").read_text(
         encoding="utf-8"
@@ -378,7 +378,7 @@ async def test_that_pre_defines_are_substituted_templates(
 )
 @pytest.mark.filterwarnings("ignore:Use DATA_FILE instead of RUN_TEMPLATE")
 async def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_runpath(
-    ecl_base, expected_file, make_run_path
+    ecl_base, expected_file, make_runpath
 ):
     Path("BASE_ECL_FILE.DATA").write_text(
         "I WANT TO REPLACE:<NUM_CPU>", encoding="utf-8"
@@ -392,7 +392,7 @@ async def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_
             """
         )
     )
-    _, run_arg, _ = await make_run_path(ert_config)
+    _, run_arg, _ = await make_runpath(ert_config)
     assert (
         Path(run_arg[0].runpath) / expected_file
     ).read_text() == "I WANT TO REPLACE:1"
@@ -415,7 +415,7 @@ async def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_
     ],
 )
 async def test_that_the_data_file_keyword_also_has_similar_behavior_to_run_template(
-    key, expected, make_run_path, monkeypatch
+    key, expected, make_runpath, monkeypatch
 ):
     """
     This test that we copy the DATA_FILE into the runpath,
@@ -441,14 +441,14 @@ async def test_that_the_data_file_keyword_also_has_similar_behavior_to_run_templ
         """
         )
     )
-    _, run_arg, _ = await make_run_path(ert_config)
+    _, run_arg, _ = await make_runpath(ert_config)
     assert (Path(run_arg[0].runpath) / "ECL_CASE0.DATA").read_text(
         encoding="utf-8"
     ) == f"I WANT TO REPLACE:{expected}"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_error_is_raised_when_data_file_is_badly_encoded(make_run_path):
+async def test_that_error_is_raised_when_data_file_is_badly_encoded(make_runpath):
     Path("MY_DATA_FILE.DATA").write_text("I WANT TO REPLACE:<DATE>", encoding="utf-8")
 
     ert_config = ErtConfig.from_file_contents(
@@ -471,12 +471,12 @@ async def test_that_error_is_raised_when_data_file_is_badly_encoded(make_run_pat
         ValueError,
         match=err_str,
     ):
-        await make_run_path(ert_config)
+        await make_runpath(ert_config)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_that_a_substitution_can_be_used_as_run_templates_target_file(
-    make_run_path,
+    make_runpath,
 ):
     Path("template.tmpl").write_text(
         "Not important, name of the file is important", encoding="utf-8"
@@ -490,7 +490,7 @@ async def test_that_a_substitution_can_be_used_as_run_templates_target_file(
         """
         )
     )
-    _, run_arg, _ = await make_run_path(ert_config)
+    _, run_arg, _ = await make_runpath(ert_config)
     assert (
         Path(run_arg[0].runpath) / "result.txt"
     ).read_text() == "Not important, name of the file is important"
@@ -593,7 +593,7 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     "placeholders.*:ert.config.ConfigWarning"
 )
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
+async def test_that_deprecated_runpath_substitution_remain_valid(make_runpath):
     """This checks that deprecated runpath substitution, using %d, remain intact."""
     site_plugins = get_site_plugins()
     ert_config = ErtConfig.with_plugins(site_plugins).from_file_contents(
@@ -606,7 +606,7 @@ async def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
         )
     )
 
-    _, run_arg, _ = await make_run_path(ert_config)
+    _, run_arg, _ = await make_runpath(ert_config)
 
     for realization in run_arg:
         assert str(Path().absolute()) + "/realization-" + str(
@@ -648,7 +648,7 @@ async def test_write_runpath_file(storage, itr):
     global_substitutions = ert_config.substitutions
     for i in range(num_realizations):
         global_substitutions[f"<REALIZATION_ID_{i}_{itr}>"] = str(10 * i)
-    run_path = Runpaths.from_config(ert_config)
+    runpath = Runpaths.from_config(ert_config)
     sample_prior(
         prior_ensemble,
         [i for i, active in enumerate(mask) if active],
@@ -656,11 +656,11 @@ async def test_write_runpath_file(storage, itr):
         num_realizations,
     )
     run_args = create_run_arguments(
-        run_path,
+        runpath,
         [True, True],
         prior_ensemble,
     )
-    await create_run_path(
+    await create_runpath(
         run_args=run_args,
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -670,7 +670,7 @@ async def test_write_runpath_file(storage, itr):
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
         end_event=threading.Event(),
-        runpaths=run_path,
+        runpaths=runpath,
     )
 
     for run_arg in run_args:
@@ -705,7 +705,7 @@ async def test_write_runpath_file(storage, itr):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_assert_export(make_run_path):
+async def test_assert_export(make_runpath):
     ert_config = ErtConfig.from_file_contents(
         dedent(
             """\
@@ -718,7 +718,7 @@ async def test_assert_export(make_run_path):
     runpath_list_file = ert_config.runpath_file
     assert not runpath_list_file.exists()
 
-    await make_run_path(ert_config)
+    await make_runpath(ert_config)
 
     assert runpath_list_file.exists()
     assert runpath_list_file.name == "test_runpath_list.txt"
@@ -738,7 +738,7 @@ async def test_assert_export(make_run_path):
         ("NUM_CPU 3\nDATA_FILE DATA\n", 3),  # Explicit NUM_CPU supersedes PARALLEL
     ],
 )
-async def test_num_cpu_subst(append, numcpu, make_run_path):
+async def test_num_cpu_subst(append, numcpu, make_runpath):
     """Make sure that <NUM_CPU> is substituted to the correct values"""
     Path("DATA").write_text("PARALLEL 8 /", encoding="utf-8")
     Path("DUMP").write_text("EXECUTABLE echo\nARGLIST <NUM_CPU>\n", encoding="utf-8")
@@ -746,7 +746,7 @@ async def test_num_cpu_subst(append, numcpu, make_run_path):
     config = ErtConfig.from_file_contents(
         "NUM_REALIZATIONS 1\nINSTALL_JOB dump DUMP\nFORWARD_MODEL dump\n" + append
     )
-    await make_run_path(config)
+    await make_runpath(config)
 
     jobs = orjson.loads(
         Path("simulations/realization-0/iter-0/jobs.json").read_text(encoding="utf-8")
@@ -771,8 +771,8 @@ def test_that_iens_and_iter_in_runpaths_are_substituted_with_corresponding_indic
             RUNPATH simulations/realization-{iens_placeholder}/ITER-{iter_placeholder}
             """
         )
-        run_paths = Runpaths.from_config(ert_config)
-        assert run_paths.get_paths([1, 2, 3], 0) == [
+        runpaths = Runpaths.from_config(ert_config)
+        assert runpaths.get_paths([1, 2, 3], 0) == [
             tmpdir + "/simulations/realization-1/ITER-0",
             tmpdir + "/simulations/realization-2/ITER-0",
             tmpdir + "/simulations/realization-3/ITER-0",
@@ -794,8 +794,8 @@ def test_that_runpaths_with_just_iens_will_be_substituted_with_just_iens_index(
             RUNPATH simulations/realization-{iens_placeholder}
             """
         )
-        run_paths = Runpaths.from_config(ert_config)
-        assert run_paths.get_paths([1, 2, 3], 0) == [
+        runpaths = Runpaths.from_config(ert_config)
+        assert runpaths.get_paths([1, 2, 3], 0) == [
             tmpdir + "/simulations/realization-1",
             tmpdir + "/simulations/realization-2",
             tmpdir + "/simulations/realization-3",
@@ -894,7 +894,7 @@ def test_that_whitespace_in_runpath_is_invalid(runpath):
     "placeholder",
     ["<ERTCASE>", "<ERT-CASE>"],
 )
-async def test_that_ertcase_is_replaced_in_runpath(placeholder, make_run_path):
+async def test_that_ertcase_is_replaced_in_runpath(placeholder, make_runpath):
     ert_config = ErtConfig.from_file_contents(
         dedent(
             f"""\
@@ -904,7 +904,7 @@ async def test_that_ertcase_is_replaced_in_runpath(placeholder, make_run_path):
             """
         )
     )
-    prior_ensemble, _, _ = await make_run_path(ert_config)
+    prior_ensemble, _, _ = await make_runpath(ert_config)
 
     runpath_file = (
         f"{Path.cwd()}/simulations/{prior_ensemble.name}/realization-0/iter-0"
@@ -1019,7 +1019,7 @@ async def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
         experiment_id, name="prior", ensemble_size=num_realizations, iteration=itr
     )
 
-    run_paths = Runpaths.from_config(config)
+    runpaths = Runpaths.from_config(config)
 
     if itr == 0:
         sample_prior(prior_ensemble, range(num_realizations), 123, num_realizations)
@@ -1027,12 +1027,12 @@ async def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
         save_zeros(prior_ensemble, num_realizations, dim_size=dim_size)
 
     run_args = create_run_arguments(
-        run_paths,
+        runpaths,
         [True, True],
         prior_ensemble,
     )
 
-    await create_run_path(
+    await create_runpath(
         run_args=run_args,
         ensemble=prior_ensemble,
         user_config_file=config.user_config_file,
@@ -1042,26 +1042,26 @@ async def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
         substitutions=config.substitutions,
         parameters_file="parameters",
         end_event=threading.Event(),
-        runpaths=run_paths,
+        runpaths=runpaths,
     )
 
-    for i, run_path in enumerate(run_paths.get_paths(range(num_realizations), itr)):
-        manifest_path = Path(run_path) / "manifest.json"
+    for i, runpath in enumerate(runpaths.get_paths(range(num_realizations), itr)):
+        manifest_path = Path(runpath) / "manifest.json"
         assert manifest_path.exists()
         expected_files = {
-            run_path + f"/CASE-{itr}-{i}.UNSMRY",
-            run_path + f"/CASE-{itr}-{i}.SMSPEC",
-            run_path + f"/gen_data-{itr}-{i}.txt",
+            runpath + f"/CASE-{itr}-{i}.UNSMRY",
+            runpath + f"/CASE-{itr}-{i}.SMSPEC",
+            runpath + f"/gen_data-{itr}-{i}.txt",
         }.union(
             {
-                run_path + f"/field1_init-{itr}-{i}.roff",
-                run_path + f"/surf1_init-{itr}-{i}.irap",
+                runpath + f"/field1_init-{itr}-{i}.roff",
+                runpath + f"/surf1_init-{itr}-{i}.irap",
             }
             if itr == 0
             else set()
         )
         manifest = orjson.loads(manifest_path.read_text(encoding="utf-8"))
-        assert {run_path + "/" + f for f in manifest.values()} == expected_files
+        assert {runpath + "/" + f for f in manifest.values()} == expected_files
 
         # write files in manifest
         for file in expected_files:
@@ -1121,15 +1121,15 @@ async def test_that_contents_of_gridfile_is_logged(storage, caplog):
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=num_realizations, iteration=0
     )
-    run_paths = Runpaths.from_config(config)
+    runpaths = Runpaths.from_config(config)
     sample_prior(prior_ensemble, range(num_realizations), 123, num_realizations)
     run_args = create_run_arguments(
-        run_paths,
+        runpaths,
         [True] * num_realizations,
         prior_ensemble,
     )
 
-    await create_run_path(
+    await create_runpath(
         run_args=run_args,
         ensemble=prior_ensemble,
         user_config_file=config.user_config_file,
@@ -1139,13 +1139,13 @@ async def test_that_contents_of_gridfile_is_logged(storage, caplog):
         substitutions=config.substitutions,
         parameters_file="parameters",
         end_event=threading.Event(),
-        runpaths=run_paths,
+        runpaths=runpaths,
     )
 
-    for run_path in run_paths.get_paths(range(num_realizations), 0):
-        simple_unsmry().to_file(run_path + "/" + "CASE.UNSMRY")
-        simple_smspec().to_file(run_path + "/" + "CASE.SMSPEC")
-        grid.to_file(run_path + "/" + "CASE.EGRID", fformat="egrid")
+    for runpath in runpaths.get_paths(range(num_realizations), 0):
+        simple_unsmry().to_file(runpath + "/" + "CASE.UNSMRY")
+        simple_smspec().to_file(runpath + "/" + "CASE.SMSPEC")
+        grid.to_file(runpath + "/" + "CASE.EGRID", fformat="egrid")
 
     caplog.set_level(logging.INFO)
     for run_arg in run_args:
@@ -1180,7 +1180,7 @@ def test_that_parameters_as_magic_strings_are_substituted():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_create_run_path_emits_expected_events(prior_ensemble) -> None:
+async def test_that_create_runpath_emits_expected_events(prior_ensemble) -> None:
     config = ErtConfig.from_dict({"NUM_REALIZATIONS": 5})
     runpaths = Runpaths.from_config(config)
     active_realizations = [False, True, False, False, True, True]
@@ -1190,7 +1190,7 @@ async def test_that_create_run_path_emits_expected_events(prior_ensemble) -> Non
     run_args = create_run_arguments(runpaths, active_realizations, prior_ensemble)
 
     events: list[RunPathCreationEvent] = []
-    await create_run_path(
+    await create_runpath(
         run_args=run_args,
         ensemble=prior_ensemble,
         user_config_file=str(config.user_config_file),
@@ -1201,7 +1201,7 @@ async def test_that_create_run_path_emits_expected_events(prior_ensemble) -> Non
         parameters_file="parameters",
         runpaths=runpaths,
         end_event=threading.Event(),
-        handle_run_path_creation_event=events.append,
+        handle_runpath_creation_event=events.append,
     )
 
     expected_count = len(active_iens)
@@ -1245,7 +1245,7 @@ def test_that_generate_parameter_files_raises_when_end_event_is_set(storage):
     timer.start()
 
     mock_write_to_runpath = MagicMock(
-        side_effect=lambda run_path, real_nr, ensemble: time.sleep(1)
+        side_effect=lambda runpath, real_nr, ensemble: time.sleep(1)
     )
 
     with pytest.raises(UserCancelled), pytest.MonkeyPatch.context() as mp:  # ruff: ignore[pytest-raises-with-multiple-statements]
@@ -1253,7 +1253,7 @@ def test_that_generate_parameter_files_raises_when_end_event_is_set(storage):
         _generate_parameter_files(
             parameter_configs=prior_ensemble.experiment.parameter_configuration.values(),
             export_base_name="parameters",
-            run_path=Path("simulations/realization-0/iter-0"),
+            runpath=Path("simulations/realization-0/iter-0"),
             iens=0,
             fs=prior_ensemble,
             iteration=0,
@@ -1266,7 +1266,7 @@ def test_that_generate_parameter_files_raises_when_end_event_is_set(storage):
 @pytest.mark.slow
 @pytest.mark.timeout(10)
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_create_run_path_raises_when_end_event_is_set(run_args, storage):
+async def test_that_create_runpath_raises_when_end_event_is_set(run_args, storage):
     num_realizations = 100
     Path("genkw").write_text("genkw0 UNIFORM 0 1", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
@@ -1297,11 +1297,11 @@ async def test_that_create_run_path_raises_when_end_event_is_set(run_args, stora
 
     with pytest.raises(UserCancelled), pytest.MonkeyPatch.context() as mp:  # ruff: ignore[pytest-raises-with-multiple-statements]
         mp.setattr(
-            _create_run_path,
+            _create_runpath,
             "_generate_parameter_files",
             mock_generate_parameter_files,
         )
-        await create_run_path(
+        await create_runpath(
             run_args=runargs,
             ensemble=prior_ensemble,
             user_config_file=ert_config.user_config_file,

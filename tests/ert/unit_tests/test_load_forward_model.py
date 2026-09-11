@@ -9,7 +9,7 @@ import pytest
 from resdata.summary import Summary
 
 from ert.config import ErtConfig
-from ert.run_models._create_run_path import create_run_path
+from ert.run_models._create_runpath import create_runpath
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from ert.storage.local_ensemble import (
@@ -34,7 +34,7 @@ async def setup_case(storage, use_tmpdir, run_args):
             name="prior",
             ensemble_size=ert_config.runpath_config.num_realizations,
         )
-        await create_run_path(
+        await create_runpath(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,
             user_config_file=ert_config.user_config_file,
@@ -147,7 +147,7 @@ async def test_load_forward_model_summary(
         experiment_id, name="prior", ensemble_size=100
     )
 
-    await create_run_path(
+    await create_runpath(
         run_args=run_args(ert_config, prior_ensemble),
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -176,12 +176,12 @@ async def test_load_forward_model_gen_data(setup_case):
         GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0,1
         """
     )
-    run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response_0.out").write_text("1\n2\n3", encoding="utf-8")
-    (run_path / "response_1.out").write_text("4\n5\n5", encoding="utf-8")
-    (run_path / "response_0.out_active").write_text("1\n0\n1", encoding="utf-8")
+    runpath = Path("simulations/realization-0/iter-0/")
+    (runpath / "response_0.out").write_text("1\n2\n3", encoding="utf-8")
+    (runpath / "response_1.out").write_text("4\n5\n5", encoding="utf-8")
+    (runpath / "response_0.out_active").write_text("1\n0\n1", encoding="utf-8")
 
-    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(runpath), prior_ensemble, [0])
     df = prior_ensemble.load_responses("gen_data", (0,))
     filter_cond = pl.col("report_step").eq(0), pl.col("values").is_not_nan()
     assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
@@ -195,11 +195,11 @@ async def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
         """
     )
 
-    run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response_0.out").write_text("1", encoding="utf-8")
-    (run_path / "response_0.out_active").write_text("1", encoding="utf-8")
+    runpath = Path("simulations/realization-0/iter-0/")
+    (runpath / "response_0.out").write_text("1", encoding="utf-8")
+    (runpath / "response_0.out_active").write_text("1", encoding="utf-8")
 
-    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(runpath), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     assert df["values"].to_list() == [1.0]
 
@@ -212,11 +212,11 @@ async def test_that_all_deactivated_values_are_loaded(setup_case):
         """
     )
 
-    run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response_0.out").write_text("-1", encoding="utf-8")
-    (run_path / "response_0.out_active").write_text("0", encoding="utf-8")
+    runpath = Path("simulations/realization-0/iter-0/")
+    (runpath / "response_0.out").write_text("-1", encoding="utf-8")
+    (runpath / "response_0.out_active").write_text("0", encoding="utf-8")
 
-    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(runpath), prior_ensemble, [0])
     response = prior_ensemble.load_responses("RESPONSE", (0,))
     assert np.isnan(response[0]["values"].to_list())
     assert len(response) == 1
@@ -243,7 +243,7 @@ async def test_loading_gen_data_without_restart(storage, run_args):
         ensemble_size=ert_config.runpath_config.num_realizations,
     )
 
-    await create_run_path(
+    await create_runpath(
         run_args=run_args(ert_config, prior_ensemble),
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -255,11 +255,11 @@ async def test_loading_gen_data_without_restart(storage, run_args):
         end_event=threading.Event(),
         runpaths=Runpaths.from_config(ert_config),
     )
-    run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response.out").write_text("1\n2\n3", encoding="utf-8")
-    (run_path / "response.out_active").write_text("1\n0\n1", encoding="utf-8")
+    runpath = Path("simulations/realization-0/iter-0/")
+    (runpath / "response.out").write_text("1\n2\n3", encoding="utf-8")
+    (runpath / "response.out_active").write_text("1\n0\n1", encoding="utf-8")
 
-    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(runpath), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
@@ -319,7 +319,7 @@ async def test_loading_from_any_available_iter(storage, run_args, itr):
         iteration=itr if itr is not None else 0,
     )
 
-    await create_run_path(
+    await create_runpath(
         run_args=run_args(ert_config, prior_ensemble),
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -331,16 +331,16 @@ async def test_loading_from_any_available_iter(storage, run_args, itr):
         end_event=threading.Event(),
         runpaths=Runpaths.from_config(ert_config),
     )
-    run_path = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")
-    (run_path / "response.out").write_text("1\n2\n3", encoding="utf-8")
-    (run_path / "response.out_active").write_text("1\n0\n1", encoding="utf-8")
+    runpath = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")
+    (runpath / "response.out").write_text("1\n2\n3", encoding="utf-8")
+    (runpath / "response.out_active").write_text("1\n0\n1", encoding="utf-8")
 
-    run_path_format = str(
+    runpath_format = str(
         Path(
             f"simulations/realization-<IENS>/iter-{itr if itr is not None else 0}"
         ).resolve()
     )
-    load_parameters_and_responses_from_runpath(run_path_format, prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(runpath_format, prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
