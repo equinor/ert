@@ -4,14 +4,11 @@ import shutil
 import string
 from collections import defaultdict
 from datetime import UTC, datetime
-from functools import partial
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.encoders import jsonable_encoder
-from websockets.sync.client import ClientConnection
 
-import everest
 from ert.ensemble_evaluator import (
     EndEvent,
     FullSnapshotEvent,
@@ -20,8 +17,11 @@ from ert.ensemble_evaluator import (
 )
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshotMetadata
 from ert.resources import all_shell_script_fm_steps
-from ert.run_models.event import EverestBatchResultEvent
-from everest.bin.utils import run_detached_monitor
+from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
+from ert.services import ErtClient
+from everest.bin.utils import run_detached_monitor, run_empty_detached_monitor
+from everest.detached.client import start_monitor
+from everest.strings import SIM_PROGRESS_ID
 from tests.ert.utils import SnapshotBuilder
 
 METADATA = EnsembleSnapshotMetadata(
@@ -37,6 +37,53 @@ def fixed_terminal_width(monkeypatch):
     monkeypatch.setattr(
         shutil, "get_terminal_size", lambda *args, **kwargs: os.terminal_size((60, 24))
     )
+
+
+@pytest.fixture
+def monitor_client():
+    return MagicMock(spec=ErtClient)
+
+
+def test_that_monitor_delivers_events_after_end_event(monitor_client):
+    events = [EndEvent(failed=False, msg="first"), EndEvent(failed=True, msg="last")]
+    monitor_client.iter_events.return_value = (event for event in events)
+    callback = MagicMock()
+
+    start_monitor(monitor_client, callback, "experiment", polling_interval=0.2)
+
+    monitor_client.iter_events.assert_called_once_with(
+        "experiment", refresh_interval=0.2
+    )
+    assert [call.args[0][SIM_PROGRESS_ID] for call in callback.call_args_list] == events
+
+
+def test_that_empty_monitor_consumes_all_events_without_output(monitor_client, capsys):
+    consumed = []
+
+    def iter_events():
+        for message in ["first", "last"]:
+            yield EndEvent(failed=False, msg=message)
+            consumed.append(message)
+
+    monitor_client.iter_events.return_value = iter_events()
+
+    run_empty_detached_monitor(monitor_client, "experiment")
+
+    assert consumed == ["first", "last"]
+    assert not capsys.readouterr().out
+
+
+@pytest.mark.parametrize("exception_type", [RuntimeError, KeyboardInterrupt])
+def test_that_callback_exception_propagates_from_monitor(
+    monitor_client, exception_type
+):
+    monitor_client.iter_events.return_value = iter(
+        [EndEvent(failed=False, msg="completed")]
+    )
+    callback = MagicMock(side_effect=exception_type)
+
+    with pytest.raises(exception_type):
+        start_monitor(monitor_client, callback, "experiment")
 
 
 @pytest.fixture
@@ -178,21 +225,18 @@ def snapshot_update_event_with_fm_message():
 
 @pytest.mark.slow
 def test_that_the_monitor_shows_failed_jobs(
-    monkeypatch, full_snapshot_event, snapshot_update_failure_event, capsys
+    monitor_client, full_snapshot_event, snapshot_update_failure_event, capsys
 ):
-    server_mock = MagicMock()
-    connection_mock = MagicMock(spec=ClientConnection)
-    connection_mock.recv.side_effect = [
-        full_snapshot_event,
-        snapshot_update_failure_event,
-        json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
-    ]
-    server_mock.return_value.__enter__.return_value = connection_mock
-    monkeypatch.setattr(everest.detached.client, "connect", server_mock)
-    monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
-    partial(everest.detached.start_monitor, polling_interval=0.1)
+    monitor_client.iter_events.return_value = (
+        status_event_from_json(message)
+        for message in [
+            full_snapshot_event,
+            snapshot_update_failure_event,
+            json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
+        ]
+    )
     run_detached_monitor(
-        ("some/url", "cert", ("username", "password")),
+        monitor_client,
         experiment_id="test-experiment-id",
     )
     captured = capsys.readouterr()
@@ -213,26 +257,19 @@ def test_that_the_monitor_shows_failed_jobs(
 
 @pytest.mark.slow
 def test_that_the_monitor_shows_running_jobs(
-    monkeypatch, full_snapshot_event, snapshot_update_event, capsys
+    monitor_client, full_snapshot_event, snapshot_update_event, capsys
 ):
-    server_mock = MagicMock()
-    connection_mock = MagicMock(spec=ClientConnection)
-    connection_mock.recv.side_effect = [
-        full_snapshot_event,
-        snapshot_update_event,
-        json.dumps(
-            jsonable_encoder(EndEvent(failed=False, msg="Experiment completed"))
-        ),
-    ]
-    server_mock.return_value.__enter__.return_value = connection_mock
-    monkeypatch.setattr(everest.detached.client, "connect", server_mock)
-    monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
-    patched = partial(everest.detached.start_monitor, polling_interval=0.1)
-    with patch("everest.bin.utils.start_monitor", patched):
-        run_detached_monitor(
-            ("some/url", "cert", ("username", "password")),
-            experiment_id="test-experiment-id",
-        )
+    monitor_client.iter_events.return_value = (
+        status_event_from_json(message)
+        for message in [
+            full_snapshot_event,
+            snapshot_update_event,
+            json.dumps(
+                jsonable_encoder(EndEvent(failed=False, msg="Experiment completed"))
+            ),
+        ]
+    )
+    run_detached_monitor(monitor_client, experiment_id="test-experiment-id")
     captured = capsys.readouterr()
     expected = [
         "============ Running forward models (Batch #0) =============\n",
@@ -248,21 +285,18 @@ def test_that_the_monitor_shows_running_jobs(
 
 @pytest.mark.slow
 def test_that_a_forward_model_message_reaches_the_cli(
-    monkeypatch, full_snapshot_event, snapshot_update_event_with_fm_message, capsys
+    monitor_client, full_snapshot_event, snapshot_update_event_with_fm_message, capsys
 ):
-    server_mock = MagicMock()
-    connection_mock = MagicMock(spec=ClientConnection)
-    connection_mock.recv.side_effect = [
-        full_snapshot_event,
-        snapshot_update_event_with_fm_message,
-        json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
-    ]
-    server_mock.return_value.__enter__.return_value = connection_mock
-    monkeypatch.setattr(everest.detached.client, "connect", server_mock)
-    monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
-    partial(everest.detached.start_monitor, polling_interval=0.1)
+    monitor_client.iter_events.return_value = (
+        status_event_from_json(message)
+        for message in [
+            full_snapshot_event,
+            snapshot_update_event_with_fm_message,
+            json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
+        ]
+    )
     run_detached_monitor(
-        ("some/url", "cert", ("username", "password")),
+        monitor_client,
         experiment_id="test-experiment-id",
     )
     captured = capsys.readouterr()
@@ -288,22 +322,16 @@ def test_that_a_forward_model_message_reaches_the_cli(
 
 @pytest.mark.slow
 def test_that_a_failed_everest_batch_result_event_is_shown(
-    monkeypatch, everest_batch_result_event, capsys
+    monitor_client, everest_batch_result_event, capsys
 ):
-    server_mock = MagicMock()
-    connection_mock = MagicMock(spec=ClientConnection)
-    connection_mock.recv.side_effect = [
-        everest_batch_result_event,
-        json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
-    ]
-    server_mock.return_value.__enter__.return_value = connection_mock
-    monkeypatch.setattr(everest.detached.client, "connect", server_mock)
-    monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
-    patched = partial(everest.detached.start_monitor, polling_interval=0.1)
-    with patch("everest.bin.utils.start_monitor", patched):
-        run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), experiment_id="test-run-id"
-        )
+    monitor_client.iter_events.return_value = (
+        status_event_from_json(message)
+        for message in [
+            everest_batch_result_event,
+            json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
+        ]
+    )
+    run_detached_monitor(monitor_client, experiment_id="test-run-id")
     captured = capsys.readouterr()
     expected = [
         "============= Optimization progress (Batch #0) =============\n",

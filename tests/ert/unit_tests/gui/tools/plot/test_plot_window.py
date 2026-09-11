@@ -188,23 +188,30 @@ def test_that_observation_legend_is_not_displayed_when_its_everest(
         assert not legend_label
 
 
-@pytest.mark.slow
 def test_warning_is_visible_on_incompatible_plot_api_version(
-    qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
+    qtbot: QtBot, tmp_path, monkeypatch
 ):
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
     mock_get_data = MagicMock()
     mock_get_data.return_value = "0.2"
-    monkeypatch.setattr("ert.gui.plotting.plot_api.PlotApi.api_version", mock_get_data)
 
-    with ErtServerController.init_service(project=tmp_path):
-        pw = PlotWindow("", tmp_path, None)
-        qtbot.addWidget(pw)
-        pw.show()
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        mock_get_data,
+    )
 
-        label = pw.findChild(QLabel, name="plot_api_warning_label")
-        assert label
-        assert label.isVisible()
-        assert label.text().startswith("<b>Plot API version mismatch detected")
+    pw = PlotWindow("", tmp_path, None)
+    qtbot.addWidget(pw)
+    pw.show()
+
+    label = pw.findChild(QLabel, name="plot_api_warning_label")
+    assert label
+    assert label.isVisible()
+    assert label.text().startswith("<b>Plot API version mismatch detected")
 
 
 @pytest.mark.slow

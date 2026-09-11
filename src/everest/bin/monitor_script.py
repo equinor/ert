@@ -10,7 +10,6 @@ from textwrap import dedent
 from ert.services.ert_client import ErtClient
 from ert.storage import ErtStorageException, ExperimentState
 from everest.config import EverestConfig, ServerConfig
-from everest.detached.client import get_experiments
 
 from .utils import (
     ArgParseFormatter,
@@ -30,10 +29,13 @@ def monitor_entry(args: list[str] | None = None) -> None:
         if threading.current_thread() is threading.main_thread():
             signal.signal(
                 signal.SIGINT,
-                partial(handle_keyboard_interrupt, options=options),
+                partial(signal.default_int_handler),
             )
 
-        monitor_everest(options)
+        try:
+            monitor_everest(options)
+        except KeyboardInterrupt:
+            handle_keyboard_interrupt(signal.SIGINT, None, options)
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
@@ -81,11 +83,8 @@ def monitor_everest(options: argparse.Namespace) -> None:
         client = ErtClient.get_client(
             Path(ServerConfig.get_session_dir(config.output_dir)), connect_timeout=1
         )
-        server_context = ServerConfig.get_server_context_from_conn_info(
-            client.conn_info
-        )
-        experiment_id = get_experiments(server_context)[-1]
-        run_detached_monitor(server_context=server_context, experiment_id=experiment_id)
+        experiment_id = client.experiment_ids()[-1]
+        run_detached_monitor(client=client, experiment_id=experiment_id)
 
         try:
             experiment_status = get_experiment_status(str(config.storage_dir))

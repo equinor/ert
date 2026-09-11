@@ -32,12 +32,7 @@ from everest.config.install_job_config import InstallForwardModelStepConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
-    PROXY,
-    server_is_running,
     start_server,
-    stop_server,
-    wait_for_server,
-    wait_for_server_to_stop,
 )
 from tests.everest.utils import everest_config_with_defaults
 
@@ -47,6 +42,7 @@ from tests.everest.utils import everest_config_with_defaults
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_https_requests(change_to_tmpdir):
+    proxies = {"http": None, "https": None}
     Path("./config.yml").touch()
     everest_config = everest_config_with_defaults(config_path="./config.yml")
     everest_config.forward_model.append(ForwardModelStepConfig(job="sleep 5"))
@@ -63,44 +59,99 @@ async def test_https_requests(change_to_tmpdir):
     client = ErtClient.get_client(
         Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
     )
-    wait_for_server(client, 240)
+    client.wait_for_server(240)
     url, cert, auth = ServerConfig.get_server_context_from_conn_info(client.conn_info)
-    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # ruff: ignore[blocking-http-call-in-async-function]
+    result = requests.get(url, verify=cert, auth=auth, proxies=proxies)  # ruff: ignore[blocking-http-call-in-async-function]
     assert result.status_code == 200  # Request has succeeded
 
     # Test http request fail
     http_url = url.replace("https", "http")
     with pytest.raises(Exception):  # ruff: ignore[assert-raises-exception, pytest-raises-too-broad, pytest-raises-with-multiple-statements] B017
-        response = requests.get(http_url, verify=cert, auth=auth, proxies=PROXY)  # ruff: ignore[blocking-http-call-in-async-function]
+        response = requests.get(http_url, verify=cert, auth=auth, proxies=proxies)  # ruff: ignore[blocking-http-call-in-async-function]
         response.raise_for_status()
 
     # Test request with wrong password fails
     auth = ("admin", "wrong_password")
-    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # ruff: ignore[blocking-http-call-in-async-function]
+    result = requests.get(url, verify=cert, auth=auth, proxies=proxies)  # ruff: ignore[blocking-http-call-in-async-function]
 
     assert result.status_code == 401  # Unauthorized
 
     # Test stopping server
-    assert server_is_running(
-        *ServerConfig.get_server_context_from_conn_info(client.conn_info)
-    )
-    server_context = ServerConfig.get_server_context_from_conn_info(client.conn_info)
-    if stop_server(server_context):
-        wait_for_server_to_stop(server_context, 240)
-        assert not server_is_running(*server_context)
+    assert client.server_is_running(timeout=1)
+    if client.stop_experiment_server():
+        client.wait_for_server_to_stop(240)
+        assert not client.server_is_running(timeout=1)
 
 
-@patch("everest.detached.server_is_running", return_value=False)
-@patch(
-    "everest.config.ServerConfig.get_server_context_from_conn_info",
-    return_value=("url", "cert", ("user", "token")),
-)
-def test_wait_for_server(mock_get_context, mock_is_running):
-    client = MagicMock()
+@pytest.fixture
+def polling_client(monkeypatch):
+    client = ErtClient(MagicMock())
+    monkeypatch.setattr(client, "server_is_running", MagicMock())
+    return client
+
+
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_raises_when_server_remains_unavailable(
+    clock, polling_client
+):
+    client = polling_client
+    client.server_is_running.return_value = False
+    clock.monotonic.side_effect = [0, 0, 0, 2, 2]
     with pytest.raises(
         RuntimeError, match=r"Failed to get reply from server within .* seconds"
     ):
-        wait_for_server(client, timeout=0.01)
+        client.wait_for_server(timeout=1)
+
+    client.server_is_running.assert_called_once_with(timeout=1)
+    clock.sleep.assert_called_once_with(1)
+
+
+@pytest.mark.parametrize("states", [[True], [False, True]])
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_returns_when_server_becomes_available(
+    clock, states, polling_client
+):
+    client = polling_client
+    client.server_is_running.side_effect = states
+    clock.monotonic.return_value = 0
+
+    client.wait_for_server(timeout=10)
+
+    assert client.server_is_running.call_args_list == [mock.call(timeout=1)] * len(
+        states
+    )
+    assert clock.sleep.call_count == len(states) - 1
+
+
+@pytest.mark.parametrize("states", [[False, False], [True, False], [True, True, False]])
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_to_stop_returns_when_server_is_unavailable(
+    clock, states, polling_client
+):
+    client = polling_client
+    client.server_is_running.side_effect = states
+
+    client.wait_for_server_to_stop(timeout=10)
+
+    assert client.server_is_running.call_args_list == [mock.call(timeout=1)] * len(
+        states
+    )
+    assert clock.sleep.call_count == (len(states) - 1 if states[0] else 0)
+
+
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_to_stop_raises_after_all_retries(clock, polling_client):
+    client = polling_client
+    client.server_is_running.return_value = True
+
+    with pytest.raises(
+        Exception, match="Failed to stop server within configured timeout"
+    ):
+        client.wait_for_server_to_stop(timeout=10)
+
+    assert client.server_is_running.call_args_list == [mock.call(timeout=1)] * 12
+    assert clock.sleep.call_count == 10
+    assert sum(call.args[0] for call in clock.sleep.call_args_list) == pytest.approx(10)
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
