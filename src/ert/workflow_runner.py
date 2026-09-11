@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import threading
 import types
 from concurrent import futures
 from concurrent.futures import Future
@@ -44,6 +45,8 @@ class WorkflowJobRunner:
         self.job = workflow_job
         self.__running = False
         self.__script: ErtScript | None = None
+        self.__cancel_requested = False
+        self._lock = threading.Lock()
         self.stop_on_fail = False
 
     def run(
@@ -68,17 +71,26 @@ class WorkflowJobRunner:
                     f"{self.job.max_args} arguments, {len(arguments)} given."
                 )
 
-            if isinstance(self.job, BaseErtScriptWorkflow):
-                ert_script_class = self.job.load_ert_script_class()
-                self.__script = ert_script_class()
-                # We let stop on fail either from class or config take precedence
-                self.stop_on_fail = self.job.stop_on_fail or self.__script.stop_on_fail
+            with self._lock:
+                if isinstance(self.job, BaseErtScriptWorkflow):
+                    ert_script_class = self.job.load_ert_script_class()
+                    self.__script = ert_script_class()
+                    # We let stop on fail either from class or config take
+                    # precedence
+                    self.stop_on_fail = (
+                        self.job.stop_on_fail or self.__script.stop_on_fail
+                    )
 
-            else:
-                self.__script = ExternalErtScript(
-                    self.job.executable,  # type: ignore
-                )
-                self.stop_on_fail = self.job.stop_on_fail
+                else:
+                    self.__script = ExternalErtScript(
+                        self.job.executable,  # type: ignore
+                    )
+                    self.stop_on_fail = self.job.stop_on_fail
+
+                # A cancellation requested before the script existed would
+                # be lost; apply it once there is a script to cancel.
+                if self.__cancel_requested:
+                    self.__script.cancel()
 
             return self.__script.initializeAndRun(
                 self.job.argument_types(), arguments, fixtures
@@ -97,8 +109,10 @@ class WorkflowJobRunner:
         return "external"
 
     def cancel(self) -> None:
-        if self.__script is not None:
-            self.__script.cancel()
+        with self._lock:
+            self.__cancel_requested = True
+            if self.__script is not None:
+                self.__script.cancel()
 
     def isRunning(self) -> bool:
         return self.__running
@@ -144,6 +158,7 @@ class WorkflowRunner:
         self.__current_job: WorkflowJobRunner | None = None
         self.__status: dict[str, dict[str, Any]] = {}
         self.__job_results: list[WorkflowJobResult] = []
+        self._current_job_lock = threading.Lock()
 
     def __enter__(self) -> Self:
         self.run()
@@ -173,22 +188,24 @@ class WorkflowRunner:
         self.__running = True
 
         for index, (job, args) in enumerate(self.__workflow):
-            if self.__cancelled:
-                # The workflow was cancelled before this job started
-                result = WorkflowJobResult(
-                    name=job.name,
-                    index=index,
-                    arguments=[str(arg) for arg in args],
-                    stdout="",
-                    stderr="",
-                    status=WorkflowJobStatus.CANCELLED,
-                )
-                self.__job_results.append(result)
-                logger.info(self._log_entry(result), extra=self._log_extra(result))
-                continue
+            with self._current_job_lock:
+                if self.__cancelled:
+                    # The workflow was cancelled before this job started
+                    result = WorkflowJobResult(
+                        name=job.name,
+                        index=index,
+                        arguments=[str(arg) for arg in args],
+                        stdout="",
+                        stderr="",
+                        status=WorkflowJobStatus.CANCELLED,
+                    )
+                    self.__job_results.append(result)
+                    logger.info(self._log_entry(result), extra=self._log_extra(result))
+                    continue
 
-            jobrunner = WorkflowJobRunner(job)
-            self.__current_job = jobrunner
+                jobrunner = WorkflowJobRunner(job)
+                self.__current_job = jobrunner
+
             logger.info(
                 f"Workflow job starting; {self._job_description(jobrunner.name, index)}"
             )
@@ -278,11 +295,11 @@ class WorkflowRunner:
         return self.__cancelled
 
     def cancel(self) -> None:
-        self.__cancelled = True
-        if self.__current_job is not None:
-            self.__current_job.cancel()
-        if self.isRunning() or self._workflow_job is not None:
-            self.wait()
+        with self._current_job_lock:
+            self.__cancelled = True
+            current_job = self.__current_job
+        if current_job is not None:
+            current_job.cancel()
 
     def exception(self) -> BaseException | None:
         if self._workflow_job is not None:
