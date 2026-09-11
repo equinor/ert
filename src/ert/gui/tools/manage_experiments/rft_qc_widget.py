@@ -509,6 +509,8 @@ class PlotControlPanel(QWidget):
             "status": self._status_list,
         }
 
+        self._multiselect_toggles: dict[QListWidget, _ToggleSwitch] = {}
+
         for title, widget, multiselect_toggle in [
             ("Well", self._well_list, False),
             ("Date", self._date_list, True),
@@ -635,6 +637,7 @@ class PlotControlPanel(QWidget):
             toggle.toggled.connect(buttons.setVisible)
             header.addWidget(toggle_label)
             header.addWidget(toggle)
+            self._multiselect_toggles[widget] = toggle
             # Reserve the buttons' space while hidden so toggling doesn't shift layout.
             size_policy = buttons.sizePolicy()
             size_policy.setRetainSizeWhenHidden(True)
