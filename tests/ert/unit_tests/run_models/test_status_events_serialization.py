@@ -20,10 +20,12 @@ from ert.run_models.event import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
     SnapshotUpdateEvent,
+    WorkflowEvent,
     load_status_snapshot_event,
     status_event_from_json,
     status_event_to_json,
 )
+from ert.workflow_runner import WorkflowJobStatus
 from tests.ert.utils import SnapshotBuilder
 
 METADATA = EnsembleSnapshotMetadata(
@@ -184,6 +186,22 @@ METADATA = EnsembleSnapshotMetadata(
                 ),
             ),
             id="RunModelUpdateEndEvent",
+        ),
+        pytest.param(
+            WorkflowEvent(
+                run_id=uuid.uuid1(),
+                hook="PRE_UPDATE",
+                workflow_name="my_workflow",
+                job_name="MY_JOB",
+                job_index=0,
+                arguments=["a", "b"],
+                stdout="some output\n",
+                stderr="",
+                status=WorkflowJobStatus.SUCCESS,
+                timestamp=dt(2020, 1, 1, tzinfo=UTC),
+                iteration=1,
+            ),
+            id="WorkflowEvent",
         ),
     ],
 )
