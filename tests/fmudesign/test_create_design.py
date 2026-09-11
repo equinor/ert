@@ -223,7 +223,10 @@ def test_that_generated_distributions_match_configured_statistics(
         assert np.sqrt(np.mean((obs_corr - corr_values) ** 2)) < 0.02
 
 
-def test_that_onebyone_design_contains_configured_cases_and_values(tmp_path):
+@pytest.mark.parametrize("output_filename", ["designmatrix.xlsx", "designmatrix"])
+def test_that_onebyone_design_contains_configured_cases_and_values(
+    tmp_path, capsys, output_filename
+):
     input_dict = onebyone_configuration()
 
     # Note that repeats are set to 10 in general_input sheet.
@@ -237,7 +240,16 @@ def test_that_onebyone_design_contains_configured_cases_and_values(tmp_path):
     assert design.designvalues.shape == (rows_in_design_matrix, 10)
 
     output_path = tmp_path / "designmatrix.xlsx"
-    design.to_xlsx(str(output_path))
+    capsys.readouterr()
+    design.to_xlsx(str(tmp_path / output_filename))
+    stdout = capsys.readouterr().out
+    warning = "Warning: Missing .xlsx suffix."
+    if output_filename.endswith(".xlsx"):
+        assert warning not in stdout
+    else:
+        assert stdout.count(warning) == 1
+        assert f"{warning} Changed to: {output_path}" in stdout
+
     diskdesign = pd.read_excel(output_path, engine="openpyxl")
 
     assert (

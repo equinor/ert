@@ -1,7 +1,9 @@
+from sphinx.application import Sphinx
+
 from ert.shared._doc_utils.everest_jobs import EverestForwardModelDocumentation
 
 
-def setup(app):
+def setup(app: Sphinx) -> dict:
     app.add_directive("everest_forward_model", EverestForwardModelDocumentation)
 
     return {

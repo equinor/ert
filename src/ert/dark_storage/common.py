@@ -4,6 +4,7 @@ import os
 import re
 from collections.abc import Iterator
 from contextlib import contextmanager
+from enum import StrEnum, auto
 from importlib import metadata
 
 import pandas as pd
@@ -23,6 +24,17 @@ logger = logging.getLogger(__name__)
 
 
 _storage: Storage | None = None
+
+
+class EverEndpoints(StrEnum):
+    STOP = auto()
+    START_EXPERIMENT = auto()
+    CONFIG_PATH = auto()
+    START_TIME = auto()
+    EXPERIMENTS = auto()
+    STATUS = auto()
+    EVENTS = auto()
+    RUNPATH = auto()
 
 
 def get_storage() -> Storage:

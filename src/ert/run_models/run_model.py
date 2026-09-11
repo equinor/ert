@@ -61,6 +61,7 @@ from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
+    REALIZATION_STATE_UNKNOWN,
 )
 from ert.mode_definitions import MODULE_MODE
 from ert.run_arg import RunArg
@@ -491,7 +492,7 @@ class RunModel(RunModelConfig, ABC):
 
             if all_realizations:
                 for real in all_realizations.values():
-                    status[str(real["status"])] += 1
+                    status[str(real.get("status", REALIZATION_STATE_UNKNOWN))] += 1
 
         if self._is_rerunning_failed_realizations:
             status["Finished"] += (

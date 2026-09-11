@@ -1,38 +1,25 @@
+from __future__ import annotations
+
 import asyncio
 import logging
-import re
-import ssl
-import time
-import traceback
-from base64 import b64encode
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import requests
-from pydantic import ValidationError
-from websockets import ConnectionClosedError, ConnectionClosedOK
-from websockets.sync.client import connect
-
-from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
-from ert.services.ert_client import ErtClient
+from ert.services import ErtClient
 from ert.trace import get_traceparent
-from everest.config import EverestConfig, ServerConfig
+from everest.config import EverestConfig
 from everest.strings import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
-    EverEndpoints,
 )
 
-# Specifies how many times to try a http request within the specified timeout.
-_HTTP_REQUEST_RETRY = 10
+if TYPE_CHECKING:
+    from ert.run_models.event import EverestBatchResultEvent
 
-# Proxy configuration for outgoing requests.
-# For internal LAN HTTP requests not using a proxy is recommended.
-PROXY = {"http": None, "https": None}
 
 # The methods in this file are typically called for the client side.
 # Information from the client side is relatively uninteresting, so we show it in
@@ -70,144 +57,6 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     return driver
 
 
-def stop_server(
-    server_context: tuple[str, str, tuple[str, str]], retries: int = 5
-) -> bool:
-    """Stop server if found and it is running."""
-    url, cert, auth = server_context
-    for retry in range(retries):
-        try:
-            stop_endpoint = f"{url}/{EverEndpoints.STOP}"
-            response = requests.post(
-                stop_endpoint,
-                verify=cert,
-                auth=auth,
-                proxies=PROXY,  # type: ignore
-            )
-            response.raise_for_status()
-        except Exception:
-            logger.debug(traceback.format_exc())
-            time.sleep(retry)
-        else:
-            return True
-    return False
-
-
-def get_experiments(
-    server_context: tuple[str, str, tuple[str, str]],
-    retries: int = 5,
-) -> list[str]:
-    url, cert, auth = server_context
-    for retry in range(retries):
-        try:
-            response = requests.get(
-                f"{url}/{EverEndpoints.EXPERIMENTS}",
-                verify=cert,
-                auth=auth,
-                proxies=PROXY,
-            )
-            response.raise_for_status()
-            return response.json()["experiment_ids"]
-        except Exception:
-            logger.debug(traceback.format_exc())
-            time.sleep(retry)
-    raise RuntimeError("Failed to get experiment_ids")
-
-
-def start_experiment(
-    server_context: tuple[str, str, tuple[str, str]],
-    config: EverestConfig,
-    retries: int = 5,
-) -> str:
-    url, cert, auth = server_context
-    for retry in range(retries):
-        try:
-            start_endpoint = f"{url}/{EverEndpoints.START_EXPERIMENT}"
-            response = requests.post(
-                start_endpoint,
-                verify=cert,
-                auth=auth,
-                proxies=PROXY,  # type: ignore
-                json=config.to_dict(),
-            )
-            response.raise_for_status()
-            return response.json()["experiment_id"]
-        except Exception:
-            logger.debug(traceback.format_exc())
-            time.sleep(retry)
-    raise RuntimeError("Failed to start experiment")
-
-
-def extract_errors_from_file(path: str) -> list[str]:
-    return re.findall(r"(Error \w+.*)", Path(path).read_text(encoding="utf-8"))
-
-
-def wait_for_server(api: ErtClient, timeout: float) -> None:
-    """
-    Waits until the everest server has started. Polls
-    for server availability until timeout (measured in seconds).
-
-    Timeout is not strict as the server status is polled periodically and
-    each underlying HTTP request has its own timeout, the wall-clock
-    duration may exceed the requested timeout slightly.
-
-    Raises an exception if no response within the timeout.
-    """
-    wait_start_time: float = time.monotonic()
-    while time.monotonic() - wait_start_time <= timeout:
-        if server_is_running(
-            *ServerConfig.get_server_context_from_conn_info(api.conn_info)
-        ):
-            return
-        until_timeout = max(0, timeout - (time.monotonic() - wait_start_time))
-        time.sleep(min(1, until_timeout))
-    raise RuntimeError(
-        "Failed to get reply from server "
-        f"within {time.monotonic() - wait_start_time:g} seconds"
-    )
-
-
-def wait_for_server_to_stop(
-    server_context: tuple[str, str, tuple[str, str]], timeout: int
-) -> None:
-    """
-    Checks everest server has stopped _HTTP_REQUEST_RETRY times. Waits
-    progressively longer between each check.
-
-    Raise an exception when the timeout is reached.
-    """
-    if server_is_running(*server_context):
-        sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
-        for retry_count in range(_HTTP_REQUEST_RETRY):
-            sleep_time = sleep_time_increment * (2**retry_count)
-            time.sleep(sleep_time)
-            if not server_is_running(*server_context):
-                return
-
-    # If number of retries reached and server still running - throw exception
-    if server_is_running(*server_context):
-        raise Exception("Failed to stop server within configured timeout.")
-
-
-def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
-    try:
-        logger.debug(f"Checking server status at {url} ")
-        if "None:None" in url:
-            return False
-        response = requests.get(
-            url,
-            verify=cert,
-            auth=auth,
-            timeout=1,
-            proxies=PROXY,  # type: ignore
-        )
-        response.raise_for_status()
-    except Exception:
-        logger.debug(traceback.format_exc())
-        return False
-    return True
-
-
 def get_opt_status_from_batch_result_event(
     event: EverestBatchResultEvent,
 ) -> dict[str, Any]:
@@ -228,8 +77,8 @@ def get_opt_status_from_batch_result_event(
 
 
 def start_monitor(
-    server_context: tuple[str, str, tuple[str, str]],
-    callback: Callable[..., None],
+    client: ErtClient,
+    callback: Callable[[dict[str, Any]], None],
     experiment_id: str,
     polling_interval: float = 0.1,
 ) -> None:
@@ -238,46 +87,12 @@ def start_monitor(
 
     Monitoring stops when the server stops answering.
     """
-    url, cert, auth = server_context
-    ssl_context = ssl.create_default_context()
-    ssl_context.load_verify_locations(cafile=cert)
-    username, password = auth
-    credentials = b64encode(f"{username}:{password}".encode()).decode()
+    from ert.run_models.event import (  # ruff: ignore[import-outside-top-level]
+        EverestBatchResultEvent,
+    )
 
-    try:  # ruff: ignore[too-many-statements-in-try-clause]
-        with connect(
-            url.replace("https://", "wss://")
-            + f"/{EverEndpoints.EVENTS}/{experiment_id}",
-            ssl=ssl_context,
-            open_timeout=30,
-            additional_headers={"Authorization": f"Basic {credentials}"},
-        ) as websocket:
-            while True:
-                try:  # ruff: ignore[too-many-statements-in-try-clause]
-                    message = websocket.recv(timeout=1.0)
-                    event = status_event_from_json(message)
-                    if isinstance(event, EverestBatchResultEvent):
-                        callback(
-                            {
-                                OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
-                                    event
-                                )
-                            }
-                        )
-                    else:
-                        callback({SIM_PROGRESS_ID: event})
-                except TimeoutError:
-                    pass
-                except ConnectionClosedOK:
-                    logger.debug("Connection closed")
-                    break
-                except ConnectionClosedError:
-                    logger.debug("Connection closed")
-                    break
-                except ValidationError as e:
-                    logger.error("Error when processing event %s", exc_info=e)
-
-                time.sleep(polling_interval)
-
-    except Exception:
-        logger.exception(traceback.format_exc())
+    for event in client.iter_events(experiment_id, refresh_interval=polling_interval):
+        if isinstance(event, EverestBatchResultEvent):
+            callback({OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(event)})
+        else:
+            callback({SIM_PROGRESS_ID: event})

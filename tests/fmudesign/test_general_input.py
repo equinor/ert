@@ -45,7 +45,7 @@ TEXT_STRIPPED_OR_NONE = st.one_of(TEXT_STRIPPED_NOT_NUMERIC, st.none())
 
 @pytest.mark.parametrize(
     "required_key",
-    (key for key, info in GeneralInput.model_fields.items() if info.is_required()),
+    [key for key, info in GeneralInput.model_fields.items() if info.is_required()],
 )
 def test_that_missing_required_key_raises_validation_error(required_key):
     general_input_dict = base_general_input_dict()
@@ -56,7 +56,7 @@ def test_that_missing_required_key_raises_validation_error(required_key):
 
 @pytest.mark.parametrize(
     "optional_key",
-    (key for key, info in GeneralInput.model_fields.items() if not info.is_required()),
+    [key for key, info in GeneralInput.model_fields.items() if not info.is_required()],
 )
 def test_that_missing_optional_key_does_not_raise_validation_error(optional_key):
     general_input_dict = base_general_input_dict()

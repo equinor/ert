@@ -368,7 +368,7 @@ class Job:
 
     async def _handle_finished_forward_model(self) -> None:
         result = await load_realization_parameters_and_responses(
-            run_path=self.real.run_arg.runpath,
+            runpath=self.real.run_arg.runpath,
             realization=self.real.run_arg.iens,
             iter_=self.real.run_arg.itr,
             ensemble=self.real.run_arg.ensemble_storage,

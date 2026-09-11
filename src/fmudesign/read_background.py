@@ -3,6 +3,7 @@ from typing import Any
 import pandas as pd
 
 from .read_correlations import parse_sensitivity_correlations
+from .read_distributions import parse_distribution_parameters
 from .utils import _has_value, _is_int, find_sheet
 
 
@@ -17,7 +18,6 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
         dict with parameter names and distributions
     """
     backdict: dict[str, Any] = {}
-    paramdict: dict[str, Any] = {}
     with pd.ExcelFile(inp_filename, engine="openpyxl") as workbook:
         sheet_names = [str(name) for name in workbook.sheet_names]
     try:
@@ -42,55 +42,9 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
             bck_input, inp_filename, group_description=f"background sheet {bck_sheet!r}"
         )
 
-    for col_name in ("dist_param1", "dist_param2", "dist_param3", "dist_param4"):
-        if col_name not in bck_input:
-            bck_input[col_name] = float("NaN")
-
-    for row in bck_input.itertuples():
-        if not _has_value(row.param_name):
-            raise ValueError(
-                "Background parameters specified "
-                "where one line has empty parameter "
-                "name "
-            )
-        if not _has_value(row.dist_param1):
-            raise ValueError(
-                f"Parameter {row.param_name} has been input "
-                "in background sheet but with empty "
-                "first distribution parameter "
-            )
-        if not _has_value(row.dist_param2) and _has_value(row.dist_param3):
-            raise ValueError(
-                f"Parameter {row.param_name} has been input in "
-                "background sheet with "
-                'value for "dist_param3" while '
-                '"dist_param2" is empty. This is not '
-                "allowed"
-            )
-        if not _has_value(row.dist_param3) and _has_value(row.dist_param4):
-            raise ValueError(
-                f"Parameter {row.param_name} has been input in "
-                "background sheet with "
-                'value for "dist_param4" while '
-                '"dist_param3" is empty. This is not '
-                "allowed"
-            )
-        distparams = [
-            item
-            for item in [
-                row.dist_param1,
-                row.dist_param2,
-                row.dist_param3,
-                row.dist_param4,
-            ]
-            if _has_value(item)
-        ]
-        if "corr_sheet" in bck_input:
-            corrsheet = None if not _has_value(row.corr_sheet) else row.corr_sheet
-        else:
-            corrsheet = None
-        paramdict[str(row.param_name)] = [str(row.dist_name), distparams, corrsheet]
-    backdict["parameters"] = paramdict
+    backdict["parameters"] = parse_distribution_parameters(
+        bck_input, source="background"
+    )
 
     if "decimals" in bck_input:
         decimals: dict[str, Any] = {}

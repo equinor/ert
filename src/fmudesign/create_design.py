@@ -46,6 +46,10 @@ if TYPE_CHECKING:
     CorrelationGroup = tuple[str, pd.DataFrame, list[str]]
 
 
+def _normalize_xlsx_filename(filename: str) -> str:
+    return filename if filename.endswith(".xlsx") else f"{filename}.xlsx"
+
+
 def _derive_rng(base_seed: int, *keys: str) -> np.random.Generator:
     """Return a numpy Generator seeded from ``base_seed`` and ``keys``.
 
@@ -298,12 +302,13 @@ class DesignMatrix:
             defaultsheet (str): name of excel sheet containing default
                 values (optional, defaults to 'DefaultValues')
         """
+        normalized_filename = _normalize_xlsx_filename(filename)
+        if normalized_filename != filename:
+            filename = normalized_filename
+            print(f"Warning: Missing .xlsx suffix. Changed to: {filename}")
+
         # Create folder for output file
         Path(filename).parent.mkdir(exist_ok=True, parents=True)
-
-        if not filename.endswith(".xlsx"):
-            filename += ".xlsx"
-            print(f"Warning: Missing .xlsx suffix. Changed to: {filename}")
 
         with pd.ExcelWriter(filename, engine="openpyxl") as writer:
             self.designvalues.to_excel(

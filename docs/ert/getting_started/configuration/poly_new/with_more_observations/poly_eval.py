@@ -6,7 +6,7 @@ with Path("parameters.json").open(encoding="utf-8") as f:
     coeffs = json.load(f)
 
 
-def evaluate(coeffs, x):
+def evaluate(coeffs: dict[str, dict[str, float]], x: float) -> float:
     return coeffs["a"]["value"] * x**2 + coeffs["b"]["value"] * x + coeffs["c"]["value"]
 
 

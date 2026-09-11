@@ -139,7 +139,7 @@ class LoadResultsPanel(QWidget):
                     self._ensemble_selector.selected_ensemble.id
                 )
                 loaded = load_parameters_and_responses_from_runpath(
-                    run_path_format=self._runpath_textbox.get_text,
+                    runpath_format=self._runpath_textbox.get_text,
                     ensemble=write_ensemble,
                     active_realizations=active_realizations,
                 )

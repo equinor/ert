@@ -513,7 +513,7 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_workflow_output_is_written_to_the_experiment_in_storage():
+def test_that_workflow_output_is_written_to_experiment_in_storage():
     Path("print_job").write_text("EXECUTABLE print_script.sh\n", encoding="utf-8")
     Path("print_script.sh").write_text(
         dedent(

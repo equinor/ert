@@ -11,7 +11,7 @@ import numpy as np
 import numpy.typing as npt
 import polars as pl
 from matplotlib.backend_bases import MouseEvent, PickEvent
-from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
+from matplotlib.backends.backend_qtagg import FigureCanvas  # type: ignore
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
