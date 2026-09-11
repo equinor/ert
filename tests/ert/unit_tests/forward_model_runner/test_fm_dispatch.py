@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import glob
 import json
 import os
 import signal
 import stat
 import sys
+import time
 from pathlib import Path
-from subprocess import Popen
+from subprocess import Popen, TimeoutExpired
 from textwrap import dedent
 from threading import Lock
 from typing import Any
@@ -32,6 +34,10 @@ from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
 from _ert.forward_model_runner.reporting.message import Finish, Init, Message
 from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
+
+# Keeps these tests off other workers while the heavy subprocess-forking
+# test below runs, since it has crashed unrelated workers under load.
+pytestmark = pytest.mark.xdist_group("fm_dispatch")
 
 
 @pytest.fixture
@@ -89,6 +95,30 @@ def job_dict(
     }
 
 
+def _kill_process_tree(proc: psutil.Process) -> None:
+    """Best-effort SIGKILL of a process and any still-living descendants."""
+    with contextlib.suppress(psutil.NoSuchProcess):
+        for child in proc.children(recursive=True):
+            with contextlib.suppress(psutil.NoSuchProcess):
+                child.kill()
+    with contextlib.suppress(psutil.NoSuchProcess):
+        proc.kill()
+
+
+def _reap_zombies(timeout: float) -> None:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            # -1: any child of ours; WNOHANG: return immediately, don't block
+            pid, _ = os.waitpid(-1, os.WNOHANG)
+        except ChildProcessError:
+            return
+        if pid == 0:
+            time.sleep(0.01)
+        else:
+            return
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_termination(
@@ -120,19 +150,28 @@ def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_terminatio
         }
     )
 
-    # (we wait for the process below)
     fm_dispatch_process = Popen([Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()])
-
     p = psutil.Process(fm_dispatch_process.pid)
 
-    # Three levels of processes should spawn 8 children in total
-    wait_until(lambda: len(p.children(recursive=True)) == 8)
+    try:
+        # Three levels of processes should spawn 8 children in total
+        wait_until(lambda: len(p.children(recursive=True)) == 8, timeout=30)
 
-    p.terminate()
+        p.terminate()
 
-    wait_until(lambda: len(p.children(recursive=True)) == 0)
+        wait_until(lambda: len(p.children(recursive=True)) == 0, timeout=30)
 
-    os.wait()  # allow os to clean up zombie processes
+        fm_dispatch_process.wait(timeout=10)
+    finally:
+        # A hung cleanup here would otherwise leave 100s-sleeping descendants
+        # behind, which can pile up and crash the test worker under load.
+        _kill_process_tree(p)
+        with contextlib.suppress(TimeoutExpired):
+            fm_dispatch_process.wait(timeout=10)
+        if fm_dispatch_process.poll() is None:
+            fm_dispatch_process.kill()
+            fm_dispatch_process.wait(timeout=10)
+        _reap_zombies(timeout=10)
 
 
 @pytest.mark.slow
