@@ -111,6 +111,8 @@ def _reap_zombies(timeout: float) -> None:
             return
         if pid == 0:
             time.sleep(0.01)
+        else:
+            return
 
 
 @pytest.mark.slow
