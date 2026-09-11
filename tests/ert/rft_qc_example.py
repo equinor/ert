@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import Any
 
 from ert.config._observations import RFTObservation
@@ -102,20 +103,24 @@ def rft_file() -> list[tuple[str, Any]]:
     ]
 
 
+OBSERVATION_CONF_TEMPLATE = dedent("""\
+    RFT_OBSERVATION {name} {{
+        WELL={well};
+        DATE={date};
+        PROPERTY={property};
+        VALUE={value};
+        ERROR={error};
+        EAST={east};
+        NORTH={north};
+        TVD={tvd};
+        MD={md};
+        ZONE={zone};
+    }};
+""")
+
+
 def observations_config() -> str:
     """The observations rendered as an OBS_CONFIG file."""
     return "\n".join(
-        f"RFT_OBSERVATION {o.name} {{\n"
-        f"    WELL={o.well};\n"
-        f"    DATE={o.date};\n"
-        f"    PROPERTY={o.property};\n"
-        f"    VALUE={o.value};\n"
-        f"    ERROR={o.error};\n"
-        f"    EAST={o.east};\n"
-        f"    NORTH={o.north};\n"
-        f"    TVD={o.tvd};\n"
-        f"    MD={o.md};\n"
-        f"    ZONE={o.zone};\n"
-        "};\n"
-        for o in OBSERVATIONS
+        OBSERVATION_CONF_TEMPLATE.format(**o.model_dump()) for o in OBSERVATIONS
     )
