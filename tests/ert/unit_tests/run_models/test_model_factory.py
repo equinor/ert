@@ -10,7 +10,9 @@ from ert.config import (
     AnalysisConfig,
     ConfigValidationError,
     ConfigWarning,
+    EnsembleConfig,
     ErtConfig,
+    GenKwConfig,
     ModelConfig,
     ObservationSettings,
 )
@@ -34,6 +36,19 @@ from ert.run_models.model_factory import (
 )
 
 
+def _gen_kw_config(name: str = "COEFFS") -> GenKwConfig:
+    return GenKwConfig(name=name, distribution={"name": "normal", "mean": 0, "std": 1})
+
+
+def _gen_kw_config_text(tmp_path, kw_name: str = "COEFFS") -> str:
+    """Writes a GEN_KW prior file to tmp_path and returns the corresponding
+    GEN_KW config line.
+    """
+    prior_file = tmp_path / "prior.txt"
+    prior_file.write_text(f"{kw_name} NORMAL 0 1", encoding="utf-8")
+    return f"GEN_KW KW_NAME {prior_file}"
+
+
 @pytest.mark.parametrize(
     "mode",
     [
@@ -43,6 +58,7 @@ from ert.run_models.model_factory import (
 )
 def test_that_the_model_warns_when_active_realizations_less_min_realizations(
     mode,
+    tmp_path,
     change_to_tmpdir,
 ):
     """
@@ -59,9 +75,10 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
     ):
         _ = model_factory.create_model(
             ErtConfig.from_file_contents(
-                """\
+                f"""\
                 NUM_REALIZATIONS 100
                 MIN_REALIZATIONS 10
+                {_gen_kw_config_text(tmp_path)}
                 """
             ),
             Namespace(
@@ -171,7 +188,9 @@ def test_setup_ensemble_experiment(tmp_path):
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 def test_setup_ensemble_smoother(tmp_path):
     model = model_factory._setup_ensemble_smoother(
-        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
+        ErtConfig.from_file_contents(
+            f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}\n{_gen_kw_config_text(tmp_path)}"
+        ),
         Namespace(
             realizations="0-4,7,8",
             current_ensemble="default",
@@ -193,7 +212,9 @@ def test_that_setup_multiple_data_assimilation_uses_the_arguments_from_the_cli(
     tmp_path,
 ):
     model = model_factory._setup_multiple_data_assimilation(
-        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
+        ErtConfig.from_file_contents(
+            f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}\n{_gen_kw_config_text(tmp_path)}"
+        ),
         Namespace(
             realizations="0-4,8",
             weights="6,4,2",
@@ -226,6 +247,7 @@ def test_that_setup_multiple_data_assimilation_uses_config_weights_when_cli_omit
             NUM_REALIZATIONS 100
             ENSPATH {tmp_path}
             ANALYSIS_SET_VAR STD_ENKF WEIGHTS 8, 4, 2, 1
+            {_gen_kw_config_text(tmp_path)}
             """
         ),
         Namespace(
@@ -288,7 +310,10 @@ def test_multiple_data_assimilation_restart_paths(
     )
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = restart_from_iteration
-    config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
+    config = ErtConfig(
+        runpath_config=ModelConfig(num_realizations=2),
+        ensemble_config=EnsembleConfig(parameter_configs={"COEFFS": _gen_kw_config()}),
+    )
 
     with patch(
         "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock

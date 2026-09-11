@@ -102,8 +102,6 @@ def create_model(
 def _resolve_param_configs(
     design_matrix: DesignMatrix | None,
     parameter_configs: list[ParameterConfig],
-    *,
-    require_updateable_param: bool = False,
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
     if design_matrix is None:
         return parameter_configs, None
@@ -111,10 +109,6 @@ def _resolve_param_configs(
     merged_parameter_configs = design_matrix.merge_with_existing_parameters(
         parameter_configs
     )
-
-    if require_updateable_param:
-        validate_has_updatable_parameter(parameter_configs)
-
     return merged_parameter_configs, DictEncodedDataFrame.from_polars(
         design_matrix.design_matrix_df
     )
@@ -372,8 +366,9 @@ def _setup_ensemble_smoother(
     parameter_configs, design_matrix = _resolve_param_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
-        require_updateable_param=True,
     )
+
+    validate_has_updatable_parameter(parameter_configs)
 
     runmodel_config = EnsembleSmootherConfig(
         target_ensemble=args.target_ensemble,
@@ -421,6 +416,8 @@ def _setup_ensemble_information_filter(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
+
+    validate_has_updatable_parameter(parameter_configs)
 
     runmodel_config = EnsembleInformationFilterConfig(
         target_ensemble=args.target_ensemble,
@@ -486,8 +483,9 @@ def _setup_multiple_data_assimilation(
     parameter_configs, design_matrix = _resolve_param_configs(
         design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
-        require_updateable_param=True,
     )
+
+    validate_has_updatable_parameter(parameter_configs)
 
     runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
