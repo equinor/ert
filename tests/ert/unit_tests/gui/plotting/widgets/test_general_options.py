@@ -33,6 +33,7 @@ def _apply_options_to_plot_context(
     has_observations: bool = False,
     show_observations: bool = False,
     log_scale_available: bool = False,
+    show_color_palette: bool = False,
 ) -> None:
     options.update_plot_context(
         plot_context,
@@ -40,6 +41,7 @@ def _apply_options_to_plot_context(
         has_observations=has_observations,
         show_observations=show_observations,
         log_scale_available=log_scale_available,
+        show_color_palette=show_color_palette,
     )
 
 
@@ -313,3 +315,18 @@ def test_that_palette_selector_child_can_be_found(qtbot):
         type(options._color_cycle_selector), "plot_color_palette_selector"
     )
     assert selector is not None
+
+
+@pytest.mark.parametrize("show_color_palette", [True, False])
+def test_that_color_palette_container_visibility_follows_show_color_palette_flag(
+    qtbot, show_color_palette
+):
+    options = GeneralPlotOptions(Mock())
+    qtbot.addWidget(options.get_widget())
+    options.get_widget().show()
+    _expand(options.get_widget())
+
+    _apply_options_to_plot_context(
+        options, _create_plot_context(), show_color_palette=show_color_palette
+    )
+    assert options._palette_container.isVisible() is show_color_palette
