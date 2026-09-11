@@ -297,6 +297,12 @@ class ManualUpdateConfig(UpdateRunModelConfig):
     ert_templates: list[tuple[str, str]]
     shape_registry: ShapeRegistry | None = None
     experiment_name: str
+    parameter_configuration: list[
+        Annotated[
+            (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
+            Field(discriminator="type"),
+        ]
+    ]
 
     def to_experiment_config(
         self, *, prior_experiment_config: ExperimentConfig
@@ -308,9 +314,9 @@ class ManualUpdateConfig(UpdateRunModelConfig):
             "ensemble_id": self.ensemble_id,
             "ert_templates": self.ert_templates,
             **self._update_experiment_config(),
-            "parameter_configuration": prior_experiment_config.get(
-                "parameter_configuration", []
-            ),
+            "parameter_configuration": [
+                param.model_dump(mode="json") for param in self.parameter_configuration
+            ],
             "response_configuration": prior_experiment_config.get(
                 "response_configuration", []
             ),

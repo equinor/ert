@@ -748,6 +748,7 @@ def test_that_dumped_manual_update_matches_snapshot(
             ensemble_id=str(prior.id),
             target_ensemble="posterior<ITER>",
             experiment_name="my_experiment",
+            parameter_configuration=[],
         ),
         case=f"{config_dir}.{config_file}",
     )
@@ -878,6 +879,7 @@ def test_that_dumped_esmda_matches_snapshot(
             weights="4, 2, 1",
             prior_ensemble_id=None,
             experiment_name="es-mda",
+            parameter_configuration=[],
         ),
         case=f"{config_dir}.{config_file}",
     )

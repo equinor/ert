@@ -95,14 +95,15 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings,
-            sum(
+            es_settings=analysis_config.es_settings,
+            parameter_config=parameter_configuration,
+            ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
-        layout.addRow("Analysis module:", self._analysis_module_edit)
 
+        layout.addRow("Update settings:", self._analysis_module_edit)
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/experiment/active_realizations",

@@ -53,6 +53,8 @@ if TYPE_CHECKING:
 
     from ert.config import AnalysisConfig
     from ert.storage import Ensemble
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,6 +66,7 @@ class Arguments:
     weights: str
     prior_ensemble_id: str | None  # UUID not serializable in json
     experiment_name: str
+    parameter_configuration: list[ParameterConfig]
 
 
 class MultipleDataAssimilationPanel(ExperimentConfigPanel):
@@ -77,6 +80,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         config_num_realization: int,
     ) -> None:
         super().__init__(MultipleDataAssimilation)
+
         self.notifier = notifier
         self._configured_weights = analysis_config.es_settings.weights
         self._weights_source = self._configured_weights
@@ -128,12 +132,14 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings,
-            sum(
+            es_settings=analysis_config.es_settings,
+            parameter_config=parameter_configuration,
+            ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
-        layout.addRow("Analysis module:", self._analysis_module_edit)
+        layout.addRow("Update settings:", self._analysis_module_edit)
+
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/experiment/active_realizations",
@@ -206,8 +212,15 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         layout.addRow("Select prior ensemble:", self._select_prior_ensemble_box)
 
         self._ensemble_selector.ensemble_populated.connect(self.select_prior_toggled)
+        self._ensemble_selector.ensemble_populated.connect(
+            self._parameter_configuration_changed
+        )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
+        self._ensemble_selector.currentIndexChanged.connect(
+            self._parameter_configuration_changed
+        )
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
+
         layout.addRow("Run from prior ensemble:", self._ensemble_selector)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
@@ -255,6 +268,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._experiment_name_field.setPlaceholderText(
             self.notifier.storage.get_unique_experiment_name(ES_MDA_MODE)
         )
+
+    def _parameter_configuration_changed(self) -> None:
+        if self._ensemble_selector.selected_ensemble is not None:
+            self._analysis_module_edit.parameter_config = list(
+                self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
+            )
 
     @Slot()
     def update_experiment_name(self) -> None:
@@ -428,6 +447,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 else None
             ),
             experiment_name=self._experiment_name_field.get_text,
+            parameter_configuration=self._analysis_module_edit.parameter_config,
         )
 
     def setWeights(self, weights: Any) -> None:

@@ -242,7 +242,12 @@ class ExperimentPanel(QWidget):
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
-            ManualUpdatePanel(run_path, notifier, analysis_config),
+            ManualUpdatePanel(
+                run_path,
+                notifier,
+                analysis_config,
+                config.ensemble_config.parameter_configuration,
+            ),
             experiment_type_valid,
         )
 

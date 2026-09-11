@@ -57,6 +57,7 @@ def test_that_manual_update_from_ensemble_experiment_supports_all_update_modes(
             ensemble_id=ensemble_id_to_update,
             target_ensemble="updated_ens%d",
             experiment_name="my manual update",
+            parameter_configuration=[],
         ),
         status_queue=queue.SimpleQueue(),
     )

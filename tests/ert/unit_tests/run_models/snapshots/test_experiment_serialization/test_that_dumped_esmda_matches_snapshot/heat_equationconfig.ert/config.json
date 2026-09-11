@@ -200,66 +200,7 @@
   },
   "experiment_name": "es-mda",
   "design_matrix": null,
-  "parameter_configuration": [
-    {
-      "type": "gen_kw",
-      "name": "t",
-      "forward_init": false,
-      "update_strategy": "adaptive",
-      "dimensionality": 1,
-      "distribution": {
-        "name": "uniform",
-        "min": 0.5,
-        "max": 1.5
-      },
-      "group": "INIT_TEMP_SCALE",
-      "input_source": "sampled"
-    },
-    {
-      "type": "gen_kw",
-      "name": "x",
-      "forward_init": false,
-      "update_strategy": "adaptive",
-      "dimensionality": 1,
-      "distribution": {
-        "name": "normal",
-        "mean": 0.8,
-        "std": 0.1
-      },
-      "group": "CORR_LENGTH",
-      "input_source": "sampled"
-    },
-    {
-      "type": "field",
-      "name": "COND",
-      "forward_init": true,
-      "update_strategy": "adaptive",
-      "dimensionality": 3,
-      "ertbox_params": {
-        "nx": 50,
-        "ny": 50,
-        "nz": 1,
-        "axis_orientation": 1,
-        "xlength": 50.0,
-        "ylength": 50.0,
-        "xinc": 1.0,
-        "yinc": 1.0,
-        "rotation_angle": 0.0,
-        "origin": [
-          0.0,
-          0.0
-        ]
-      },
-      "file_format": "bgrdecl",
-      "output_transformation": "EXP",
-      "input_transformation": "LN",
-      "truncation_min": null,
-      "truncation_max": null,
-      "forward_init_file": "cond.bgrdecl",
-      "output_file": "cond.bgrdecl",
-      "grid_file": "test-data/ert/heat_equation.config.ert/CASE.EGRID"
-    }
-  ],
+  "parameter_configuration": [],
   "response_configuration": [
     {
       "type": "summary",
