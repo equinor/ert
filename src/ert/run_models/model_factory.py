@@ -15,6 +15,7 @@ from ert.config import (
     ObservationSettings,
     ParameterConfig,
 )
+from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -98,7 +99,7 @@ def create_model(
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
-def _merge_parameters(
+def _resolve_param_configs(
     design_matrix: DesignMatrix | None,
     parameter_configs: list[ParameterConfig],
     *,
@@ -111,12 +112,8 @@ def _merge_parameters(
         parameter_configs
     )
 
-    if require_updateable_param and all(
-        p.update_strategy is None for p in merged_parameter_configs
-    ):
-        raise ConfigValidationError(
-            "No parameters to update as all parameters were set to update:false!"
-        )
+    if require_updateable_param:
+        validate_has_updatable_parameter(parameter_configs)
 
     return merged_parameter_configs, DictEncodedDataFrame.from_polars(
         design_matrix.design_matrix_df
@@ -137,7 +134,7 @@ def _setup_single_test_run(
             "Cannot run single test run when the first realization is inactive."
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_param_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
@@ -197,7 +194,7 @@ def _setup_ensemble_experiment(
     experiment_name = args.experiment_name
     assert experiment_name is not None
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_param_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
@@ -372,7 +369,7 @@ def _setup_ensemble_smoother(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_param_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
@@ -420,7 +417,7 @@ def _setup_ensemble_information_filter(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_param_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
@@ -486,7 +483,7 @@ def _setup_multiple_data_assimilation(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _resolve_param_configs(
         design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
