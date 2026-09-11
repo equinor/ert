@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
+from unittest.mock import Mock
 from uuid import uuid4
 
+from ert.config.parameter_config import LocalizationType, ParameterConfig
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_ensemble import _Index as _EnsembleIndex
 from ert.storage.local_experiment import ExperimentType, LocalExperiment
@@ -19,6 +21,12 @@ REALIZATION_FAILED_DURING_EVALUATION = {
     RealizationStorageState.PARAMETERS_LOADED,
     RealizationStorageState.FAILURE_IN_CURRENT,
 }
+
+
+def _default_parameter_configuration() -> dict[str, ParameterConfig]:
+    return {
+        "PARAMETER": Mock(spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL)
+    }
 
 
 class MockEnsemble(LocalEnsemble):
@@ -42,9 +50,16 @@ class MockEnsemble(LocalEnsemble):
 
 
 class MockExperiment(LocalExperiment):
-    def __init__(self, experiment_name, experiment_type) -> None:
+    def __init__(
+        self, experiment_name, experiment_type, parameter_configuration=None
+    ) -> None:
         self._index = _ExperimentIndex(id=uuid4(), name=experiment_name, ensembles=[])
         self._type = experiment_type
+        self._mocked_parameter_configuration = (
+            _default_parameter_configuration()
+            if parameter_configuration is None
+            else parameter_configuration
+        )
 
     @property
     def relative_weights(self) -> str:
@@ -55,6 +70,10 @@ class MockExperiment(LocalExperiment):
     @property
     def experiment_type(self) -> ExperimentType:
         return self._type
+
+    @property
+    def parameter_configuration(self):
+        return self._mocked_parameter_configuration
 
 
 class MockStorage(LocalStorage):
@@ -70,8 +89,11 @@ class MockStorage(LocalStorage):
         *,
         iteration=0,
         experiment_type=ExperimentType.UNDEFINED,
+        parameter_configuration=None,
     ) -> None:
-        mock_experiment = MockExperiment(experiment_name, experiment_type)
+        mock_experiment = MockExperiment(
+            experiment_name, experiment_type, parameter_configuration
+        )
         mock_ensemble2 = MockEnsemble(
             ensemble_name,
             experiment_id=mock_experiment.id,
