@@ -34,7 +34,12 @@ from .gen_kw_config import DataSource, GenKwConfig, PriorDict
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
 from .model_config import ModelConfig
-from .parameter_config import LocalizationType, ParameterCardinality, ParameterConfig
+from .parameter_config import (
+    LocalizationType,
+    ParameterCardinality,
+    ParameterConfig,
+    has_updatable_parameters,
+)
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -167,6 +172,7 @@ __all__ = [
     "field_transform",
     "fixtures_per_hook",
     "forward_model_step_from_config_contents",
+    "has_updatable_parameters",
     "lint_file",
     "make_summary_key_data",
     "workflow_job_from_file",
