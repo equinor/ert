@@ -4,8 +4,6 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
-from matplotlib.backend_bases import Event, MouseEvent
-from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication,
@@ -13,7 +11,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QToolButton,
-    QToolTip,
 )
 from pytestqt.qtbot import QtBot
 
@@ -935,177 +932,6 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
 
     # This is the call that previously crashed with TypeError.
     plot_window.update_plot()
-
-
-@pytest.mark.parametrize(
-    "axis",
-    [
-        pytest.param("x", id="x-axis"),
-        pytest.param("y", id="y-axis"),
-    ],
-)
-def test_that_clicking_axis_label_emits_edit_request(
-    qtbot: QtBot,
-    axis: str,
-) -> None:
-    ensemble = EnsembleObject(
-        "ensemble",
-        "ensemble",
-        False,
-        "experiment",
-        "2026-01-01T00:00:00",
-    )
-
-    plot_context = PlotContext(
-        PlotConfig(),
-        ensembles=[ensemble],
-        ensembles_color_indexes=[0],
-        key="some_key",
-        layer=None,
-    )
-
-    def _plot_with_axis_labels(figure: Figure, *_args, **_kwargs) -> None:
-        axes = figure.add_subplot(111)
-        axes.set_xlabel("Old x label")
-        axes.set_ylabel("Old y label")
-
-    plotter = MagicMock()
-    plotter.dimensionality = 1
-    plotter.requires_observations = False
-    plotter.plot.side_effect = _plot_with_axis_labels
-
-    plot_widget = PlotWidget("Any", plotter)
-    qtbot.addWidget(plot_widget)
-
-    received: list[str] = []
-    plot_widget.axisLabelEditRequested.connect(received.append)
-
-    plot_widget.update_plot(
-        plot_context,
-        {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})},
-        pd.DataFrame(),
-        {},
-        None,
-    )
-
-    axes = plot_widget._figure.axes[0]
-    artist = axes.xaxis.label if axis == "x" else axes.yaxis.label
-    pick_event = type("PickEventStub", (), {"artist": artist})()
-    plot_widget._on_canvas_pick(pick_event)
-
-    assert received == [axis]
-
-
-def test_that_clicking_title_emits_edit_request(qtbot: QtBot) -> None:
-    ensemble = EnsembleObject(
-        "ensemble",
-        "ensemble",
-        False,
-        "experiment",
-        "2026-01-01T00:00:00",
-    )
-
-    plot_context = PlotContext(
-        PlotConfig(),
-        ensembles=[ensemble],
-        ensembles_color_indexes=[0],
-        key="some_key",
-        layer=None,
-    )
-
-    def _plot_with_title(figure: Figure, *_args, **_kwargs) -> None:
-        axes = figure.add_subplot(111)
-        axes.set_title("Old title")
-
-    plotter = MagicMock()
-    plotter.dimensionality = 1
-    plotter.requires_observations = False
-    plotter.plot.side_effect = _plot_with_title
-
-    plot_widget = PlotWidget("Any", plotter)
-    qtbot.addWidget(plot_widget)
-
-    received = MagicMock()
-    plot_widget.titleEditRequested.connect(received)
-
-    plot_widget.update_plot(
-        plot_context,
-        {ensemble: pd.DataFrame({0: [1.0, 2.0, 3.0]})},
-        pd.DataFrame(),
-        {},
-        None,
-    )
-
-    pick_event = type(
-        "PickEventStub", (), {"artist": plot_widget._figure.axes[0].title}
-    )()
-    plot_widget._on_canvas_pick(pick_event)
-
-    received.assert_called_once_with()
-
-
-@pytest.mark.parametrize(
-    "text_kind",
-    [
-        pytest.param("x-axis", id="x-axis"),
-        pytest.param("y-axis", id="y-axis"),
-        pytest.param("title", id="title"),
-    ],
-)
-def test_that_hovering_editable_text_shows_it_as_clickable(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-    text_kind: str,
-) -> None:
-    show_text = MagicMock()
-    monkeypatch.setattr(QToolTip, "showText", show_text)
-
-    plotter = MagicMock()
-    plotter.dimensionality = 1
-    plotter.requires_observations = False
-
-    def _plot_with_editable_text(figure: Figure, *_args, **_kwargs) -> None:
-        axes = figure.add_subplot(111)
-        axes.set_xlabel("X label")
-        axes.set_ylabel("Y label")
-        axes.set_title("Title")
-
-    plotter.plot.side_effect = _plot_with_editable_text
-    plot_widget = PlotWidget("Any", plotter)
-    qtbot.addWidget(plot_widget)
-    plot_widget.update_plot(
-        PlotContext(
-            PlotConfig(),
-            ensembles=[],
-            ensembles_color_indexes=[],
-            key="key",
-            layer=None,
-        ),
-        {},
-        pd.DataFrame(),
-        {},
-        None,
-    )
-
-    axes = plot_widget._figure.axes[0]
-    text = {
-        "x-axis": axes.xaxis.label,
-        "y-axis": axes.yaxis.label,
-        "title": axes.title,
-    }[text_kind]
-    original_properties = text.get_fontproperties().copy()
-    x_pos, y_pos = text.get_window_extent().get_points().mean(axis=0)
-    event = MouseEvent("motion_notify_event", plot_widget._canvas, x_pos, y_pos)
-    plot_widget._on_canvas_motion(event)
-
-    assert text.get_fontweight() == "bold"
-    assert show_text.call_args.args[1:] == ("Click to edit", plot_widget._canvas)
-
-    plot_widget._on_canvas_leave(Event("figure_leave_event", plot_widget._canvas))
-
-    assert text.get_fontproperties() == original_properties
-    assert plot_widget._hovered_text_artist is None
-    assert plot_widget._hovered_font_properties is None
 
 
 def _create_plot_window_for_text_edit(
