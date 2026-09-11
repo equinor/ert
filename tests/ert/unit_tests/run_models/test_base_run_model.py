@@ -807,7 +807,7 @@ def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tm
     brm._iter_snapshot[0] = EnsembleSnapshot.from_nested_dict(
         {"reals": {"0": {"status": "Pending"}, "1": {"status": "Pending"}}}
     )
-    experiment = brm._storage.create_experiment(name="exp")
+    experiment = brm._storage.create_experiment(name="experiment")
 
     brm.forward_event_from_ee(
         EESnapshotUpdate(snapshot={"reals": {"0": {"status": "Finished"}}}),
@@ -1000,8 +1000,10 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
         hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
         status_queue=status_queue,
     )
-    experiment = brm._storage.create_experiment(name="exp")
-    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
 
     with pytest.raises(RuntimeError, match="failed with error"):
         brm.run_workflows(
@@ -1058,8 +1060,10 @@ def test_that_workflow_output_is_appended_to_experiment_in_storage(
         hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
         status_queue=SimpleQueue(),
     )
-    experiment = brm._storage.create_experiment(name="exp")
-    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
 
     brm.run_workflows(
         fixtures=PreSimulationFixtures(
@@ -1094,10 +1098,12 @@ def test_that_pre_experiment_output_is_persisted_once_experiment_exists(
 
     brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
 
-    experiment = brm._storage.create_experiment(name="exp")
+    experiment = brm._storage.create_experiment(name="experiment")
     assert not experiment.workflow_events_path.exists()
 
-    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
     brm.run_workflows(
         fixtures=PreSimulationFixtures(
             random_seed=1,
@@ -1172,8 +1178,10 @@ def test_that_workflow_output_is_persisted_when_user_cancels_experiment(
     )
     brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
 
-    experiment = brm._storage.create_experiment(name="exp")
-    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
     brm._end_event.set()
 
     with pytest.raises(UserCancelled):
@@ -1222,8 +1230,10 @@ def test_that_workflows_hooked_after_cancelled_workflow_still_appear_as_cancelle
         brm._end_event.set()
         return real_run_blocking(self)
 
-    experiment = brm._storage.create_experiment(name="exp")
-    ensemble = brm._storage.create_ensemble(experiment, ensemble_size=1, name="ens")
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
 
     with (
         patch.object(
