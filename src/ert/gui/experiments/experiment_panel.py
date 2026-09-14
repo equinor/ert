@@ -23,7 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from _ert.threading import ErtThread
-from ert.config import QueueSystem
+from ert.config import QueueSystem, parameter_config
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
@@ -203,10 +203,10 @@ class ExperimentPanel(QWidget):
             True,
         )
 
-        experiment_type_valid = any(
-            p.update_strategy is not None
-            for p in config.ensemble_config.parameter_configs.values()
-        ) and bool(config.observation_declarations)
+        is_observation_declarations = bool(config.observation_declarations)
+        is_updatable_parameters = parameter_config.has_updatable_parameters(
+            config.ensemble_config.parameter_configs.values()
+        )
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
@@ -217,7 +217,7 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_type_valid,
+            is_observation_declarations,
         )
         self.addExperimentConfigPanel(
             EnsembleSmootherPanel(
@@ -228,7 +228,7 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_type_valid,
+            is_observation_declarations and is_updatable_parameters,
         )
         self.addExperimentConfigPanel(
             EnsembleInformationFilterPanel(
@@ -239,11 +239,11 @@ class ExperimentPanel(QWidget):
                 active_realizations,
                 config_num_realization,
             ),
-            experiment_type_valid,
+            is_observation_declarations and is_updatable_parameters,
         )
         self.addExperimentConfigPanel(
             ManualUpdatePanel(run_path, notifier, analysis_config),
-            experiment_type_valid,
+            is_observation_declarations and is_updatable_parameters,
         )
 
         self.configuration_summary = SummaryPanel(config)
