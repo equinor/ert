@@ -105,6 +105,11 @@ def _parse_objectives(
             if auto_scale
             else objective_functions.scales
         ),
+        "offsets": (
+            [0.0] * len(objective_functions.offsets)
+            if auto_scale
+            else objective_functions.offsets
+        ),
         "auto_scale": auto_scale,
         # Objectives are maximized, but a stddev is minimized.
         "maximize": [

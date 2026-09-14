@@ -83,4 +83,5 @@ class EverestConstraintsConfig(EverestResponse):
 class EverestObjectivesConfig(EverestResponse):
     type: Literal["everest_objectives"] = "everest_objectives"
     weights: list[float]
+    offsets: list[float]
     objective_types: list[Literal["mean", "stddev"]]

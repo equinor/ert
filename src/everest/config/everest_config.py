@@ -533,6 +533,12 @@ class EverestConfig(BaseModelWithContextSupport):
                 )
                 if any(item.scale is not None for item in getattr(self, key))
             )
+            if any(o.offset is not None for o in self.objective_functions):
+                errors.append(
+                    "The auto_scale option in the optimization section and the "
+                    "offset options in the objective_functions section are "
+                    "mutually exclusive."
+                )
             if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
                 raise ValueError(errors)
         return self
@@ -1116,6 +1122,10 @@ to read summary data from forward model, do:
             ],
             scales=[
                 o.scale if o.scale is not None else 1.0
+                for o in self.objective_functions
+            ],
+            offsets=[
+                o.offset if o.offset is not None else 0.0
                 for o in self.objective_functions
             ],
             objective_types=[o.type for o in self.objective_functions],
