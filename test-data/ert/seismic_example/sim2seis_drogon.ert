@@ -1,0 +1,19 @@
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 50
+
+RUNPATH sim2seis_drogon_out/realization-<IENS>/iter-<ITER>
+
+NUM_REALIZATIONS 3
+MIN_REALIZATIONS 1
+
+RANDOM_SEED 1234
+
+GEN_KW COEFFS coeff_priors
+
+INSTALL_JOB mock_sim2seis_drogon drogon/MOCK_SIM2SEIS_DROGON
+FORWARD_MODEL mock_sim2seis_drogon
+
+SEISMIC share/results/tables/topvolantis--amplitude_full_min_depth--20190701_20180101.csv
+SEISMIC share/results/tables/topvolantis--amplitude_full_mean_depth--20190701_20180101.csv
+
+OBS_CONFIG drogon/obs_drogon.txt

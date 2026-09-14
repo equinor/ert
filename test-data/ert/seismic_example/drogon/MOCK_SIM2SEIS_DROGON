@@ -1,0 +1,2 @@
+EXECUTABLE ../python/mock_sim2seis_drogon.py
+ARGLIST "--config_dir" <CONFIG_PATH> "--iter" <ITER> "--iens" <IENS>
