@@ -1,15 +1,7 @@
 import pytest
 
-from ert.config import ConfigValidationError, GenKwConfig, LocalizationType
+from ert.config import ConfigValidationError, LocalizationType, ParameterConfig
 from ert.config.parsing.validators import validate_has_updatable_parameter
-
-
-def _gen_kw_config(name: str, update_strategy: LocalizationType | None) -> GenKwConfig:
-    return GenKwConfig(
-        name=name,
-        distribution={"name": "normal", "mean": 0, "std": 1},
-        update_strategy=update_strategy,
-    )
 
 
 def test_that_validate_has_updatable_parameter_raises_when_no_parameters_configured():
@@ -22,15 +14,17 @@ def test_that_validate_has_updatable_parameter_raises_when_no_parameters_configu
 
 
 @pytest.mark.parametrize(
-    "parameter_configs",
-    [
-        [_gen_kw_config("COEFFS", None)],
-        [_gen_kw_config("COEFFS_A", None), _gen_kw_config("COEFFS_B", None)],
-    ],
+    "parameter_indices",
+    [[0], [1], [2], [0, 1, 2]],
+    ids=["GEN_KW", "FIELD", "SURFACE", "mixed"],
 )
 def test_that_validate_has_updatable_parameter_raises_when_none_are_updatable(
-    parameter_configs,
+    non_updatable_parameter_configs: list[ParameterConfig],
+    parameter_indices: list[int],
 ):
+    parameter_configs = [
+        non_updatable_parameter_configs[index] for index in parameter_indices
+    ]
     with pytest.raises(
         ConfigValidationError,
         match="No parameters to update as all parameters were set to update:false!",
@@ -38,9 +32,24 @@ def test_that_validate_has_updatable_parameter_raises_when_none_are_updatable(
         validate_has_updatable_parameter(parameter_configs)
 
 
-def test_that_validate_has_updatable_parameter_does_not_raise_when_one_is_updatable():
-    parameter_configs = [
-        _gen_kw_config("COEFFS_A", None),
-        _gen_kw_config("COEFFS_B", LocalizationType.GLOBAL),
-    ]
+@pytest.mark.parametrize("update_strategy", list(LocalizationType))
+@pytest.mark.parametrize(
+    "updatable_index", [0, 1, 2], ids=["GEN_KW", "FIELD", "SURFACE"]
+)
+@pytest.mark.parametrize(
+    "include_non_updatable", [False, True], ids=["single", "mixed"]
+)
+def test_that_validate_has_updatable_parameter_does_not_raise_when_one_is_updatable(
+    non_updatable_parameter_configs: list[ParameterConfig],
+    updatable_index: int,
+    update_strategy: LocalizationType,
+    include_non_updatable: bool,
+):
+    updatable_parameter = non_updatable_parameter_configs[updatable_index]
+    updatable_parameter.update_strategy = update_strategy
+    parameter_configs = (
+        non_updatable_parameter_configs
+        if include_non_updatable
+        else [updatable_parameter]
+    )
     validate_has_updatable_parameter(parameter_configs)
