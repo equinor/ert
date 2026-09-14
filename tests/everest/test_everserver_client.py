@@ -35,7 +35,7 @@ from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.install_job_config import InstallForwardModelStepConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
-from everest.detached import (
+from everest.everserver import (
     start_server,
 )
 from tests.ert.utils import wait_until

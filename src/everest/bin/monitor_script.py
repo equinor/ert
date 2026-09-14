@@ -15,7 +15,7 @@ from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
-    run_detached_monitor,
+    run_server_monitor,
     setup_logging,
 )
 
@@ -84,7 +84,7 @@ def monitor_everest(options: argparse.Namespace) -> None:
             Path(ServerConfig.get_session_dir(config.output_dir)), connect_timeout=1
         )
         experiment_id = client.experiment_ids()[-1]
-        run_detached_monitor(client=client, experiment_id=experiment_id)
+        run_server_monitor(client=client, experiment_id=experiment_id)
 
         try:
             experiment_status = get_experiment_status(str(config.storage_dir))

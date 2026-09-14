@@ -19,8 +19,8 @@ from ert.ensemble_evaluator.snapshot import EnsembleSnapshotMetadata
 from ert.resources import all_shell_script_fm_steps
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.services import ErtClient
-from everest.bin.utils import run_detached_monitor, run_empty_detached_monitor
-from everest.detached.client import start_monitor
+from everest.bin.utils import run_empty_server_monitor, run_server_monitor
+from everest.everserver.client import start_monitor
 from everest.strings import SIM_PROGRESS_ID
 from tests.ert.utils import SnapshotBuilder
 
@@ -67,7 +67,7 @@ def test_that_empty_monitor_consumes_all_events_without_output(monitor_client, c
 
     monitor_client.iter_events.return_value = iter_events()
 
-    run_empty_detached_monitor(monitor_client, "experiment")
+    run_empty_server_monitor(monitor_client, "experiment")
 
     assert consumed == ["first", "last"]
     assert not capsys.readouterr().out
@@ -235,7 +235,7 @@ def test_that_the_monitor_shows_failed_jobs(
             json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
         ]
     )
-    run_detached_monitor(
+    run_server_monitor(
         monitor_client,
         experiment_id="test-experiment-id",
     )
@@ -269,7 +269,7 @@ def test_that_the_monitor_shows_running_jobs(
             ),
         ]
     )
-    run_detached_monitor(monitor_client, experiment_id="test-experiment-id")
+    run_server_monitor(monitor_client, experiment_id="test-experiment-id")
     captured = capsys.readouterr()
     expected = [
         "============ Running forward models (Batch #0) =============\n",
@@ -295,7 +295,7 @@ def test_that_a_forward_model_message_reaches_the_cli(
             json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
         ]
     )
-    run_detached_monitor(
+    run_server_monitor(
         monitor_client,
         experiment_id="test-experiment-id",
     )
@@ -331,7 +331,7 @@ def test_that_a_failed_everest_batch_result_event_is_shown(
             json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
         ]
     )
-    run_detached_monitor(monitor_client, experiment_id="test-run-id")
+    run_server_monitor(monitor_client, experiment_id="test-run-id")
     captured = capsys.readouterr()
     expected = [
         "============= Optimization progress (Batch #0) =============\n",
