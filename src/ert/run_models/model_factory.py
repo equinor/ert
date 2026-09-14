@@ -360,7 +360,11 @@ def _setup_manual_update_enif(
         ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
         experiment_name=args.experiment_name,
-        parameter_configuration=args.parameter_configuration,
+        parameter_configuration=getattr(
+            args,
+            "parameter_configuration",
+            config.ensemble_config.parameter_configuration,
+        ),
     )
     return ManualUpdateEnIF(**runmodel_config.model_dump(), status_queue=status_queue)
 
