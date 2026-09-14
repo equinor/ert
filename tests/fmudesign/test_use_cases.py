@@ -9,6 +9,7 @@ import pytest
 
 from fmudesign import DesignMatrix, excel_to_dict
 from fmudesign.fmudesignrunner import EXAMPLES
+from fmudesign.utils import map_dependencies
 
 EXAMPLE_FILES = [example.filename for example in EXAMPLES]
 
@@ -182,14 +183,14 @@ def test_that_advanced_examples_preserve_correlations_and_dependencies(
         "corr2",
         "corr3",
     ]
-    assert monte_carlo["dependencies"] == {
-        "DATO": {
-            "from_values": ["2018-11-02", "2018-11-03", "2018-11-04"],
-            "to_params": {
-                "DERIVED_PARAM1": ["1", "2", "3"],
-                "DERIVED_PARAM2": ["a", "b", "c"],
-            },
-        }
+    derived_values = map_dependencies(
+        pd.DataFrame({"DATO": ["2018-11-02", "2018-11-03", "2018-11-04"]}),
+        dependencies=monte_carlo["dependencies"],
+    )
+    assert derived_values.to_dict(orient="list") == {
+        "DATO": ["2018-11-02", "2018-11-03", "2018-11-04"],
+        "DERIVED_PARAM1": [1, 2, 3],
+        "DERIVED_PARAM2": ["a", "b", "c"],
     }
 
 

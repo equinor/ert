@@ -22,7 +22,6 @@ import probabilit
 
 from ert.shared import __version__ as ert_version
 
-from ._excel_to_dict import _raise_if_duplicates
 from .config_validation import SeedStrategy, validate_configuration
 from .design_distributions import (
     is_number,
@@ -32,6 +31,7 @@ from .design_distributions import (
 )
 from .quality_report import QualityReporter, print_corrmat
 from .utils import (
+    _raise_if_duplicates,
     find_max_realisations,
     map_dependencies,
     parameters_from_extern,

@@ -2,10 +2,11 @@ import string
 from pathlib import Path
 
 import hypothesis.strategies as st
+import pandas as pd
 import pytest
 from hypothesis import given
 
-from fmudesign.utils import resolve_path
+from fmudesign.utils import map_dependencies, resolve_path
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -29,3 +30,24 @@ def test_that_resolve_path_resolves_relative_path_to_base_file(use_tmpdir):
 
     resolved = resolve_path(relative_file, base_file=base_file)
     assert resolved == str((Path(folder) / relative_file).resolve())
+
+
+@pytest.mark.parametrize(
+    "from_values",
+    [
+        pytest.param(["C1", "C1"], id="repeated-text"),
+        pytest.param([1, "1.0"], id="equivalent-numeric-values"),
+    ],
+)
+def test_that_duplicate_normalized_dependency_keys_raise_value_error(from_values):
+    dependencies = {
+        "SOURCE": {
+            "from_values": from_values,
+            "to_params": {"TARGET": ["first", "second"]},
+        }
+    }
+
+    with pytest.raises(ValueError, match="Duplicate dependency keys for 'SOURCE'"):
+        map_dependencies(
+            pd.DataFrame({"SOURCE": from_values[:1]}), dependencies=dependencies
+        )
