@@ -9,6 +9,7 @@ import polars as pl
 from matplotlib.figure import Figure
 
 from ert.gui.plotting.ert_plots.misfits import MisfitsPlot
+from ert.gui.plotting.utils.plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
@@ -89,22 +90,17 @@ class MisfitMapPlot:
             ax=axes_misfit,
             label="Mean signed χ²",
             orientation="vertical",
-            pad=0.15,
             aspect=40,
         )
 
         cbar.ax.set_visible(plot_context.plotConfig().is_legend_enabled())
         cbar.ax.ticklabel_format(useOffset=False, style="plain")
-        config = plot_context.plotConfig()
-        axes_misfit.spines["top"].set_visible(False)
-        axes_misfit.spines["right"].set_visible(False)
-        axes_misfit.spines["left"].set_visible(False)
-        axes_misfit.spines["bottom"].set_visible(False)
-        axes_misfit.set_title(config.title())
         axes_misfit.ticklabel_format(useOffset=False, style="plain")
         axes_misfit.set_aspect("equal")
-        axes_misfit.set_xlabel(config.x_label() or "east coordinate")
-        axes_misfit.set_ylabel(config.y_label() or "north coordinate")
-        axes_misfit.grid(config.is_grid_enabled())
-        axes_misfit.set_xlim(east.min(), east.max())
-        axes_misfit.set_ylim(north.min(), north.max())
+        PlotTools.finalize_plot(
+            plot_context,
+            figure,
+            axes_misfit,
+            default_x_label="east coordinate",
+            default_y_label="north coordinate",
+        )
