@@ -32,7 +32,7 @@ from ert.storage import (
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
-from everest.detached.client import start_monitor
+from everest.everserver.client import start_monitor
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import format_list
 
@@ -163,7 +163,7 @@ class JobProgress:
         return "/".join(string)
 
 
-class _DetachedMonitor:
+class _ServerMonitor:
     INDENT = 2
     FLOAT_FMT = ".5g"
 
@@ -389,15 +389,15 @@ class _DetachedMonitor:
             print(ansi.CURSOR_UP, end=ansi.CLEAR_LINE)
 
 
-def run_detached_monitor(
+def run_server_monitor(
     client: ErtClient,
     experiment_id: str,
 ) -> None:
-    monitor = _DetachedMonitor()
+    monitor = _ServerMonitor()
     start_monitor(client, callback=monitor.update, experiment_id=experiment_id)
 
 
-def run_empty_detached_monitor(
+def run_empty_server_monitor(
     client: ErtClient,
     experiment_id: str,
 ) -> None:

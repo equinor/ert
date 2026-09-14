@@ -20,7 +20,7 @@ def raise_system_error(*args, **kwargs):
     raise SystemError("Reality was ripped to shreds!")
 
 
-@patch("everest.bin.everest_script.run_detached_monitor")
+@patch("everest.bin.everest_script.run_server_monitor")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
@@ -69,7 +69,7 @@ def test_everest_entry_debug(
     assert f'"config_path": "{Path.cwd()}/config.yml"' in logstream
 
 
-@patch("everest.bin.everest_script.run_detached_monitor")
+@patch("everest.bin.everest_script.run_server_monitor")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
@@ -104,7 +104,7 @@ def test_everest_entry(
     get_server_context_from_conn_info_mock.assert_not_called()
 
 
-@patch("everest.bin.everest_script.run_detached_monitor")
+@patch("everest.bin.everest_script.run_server_monitor")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
@@ -165,7 +165,7 @@ def test_everest_entry_detached_already_run(
     assert everest_script_api_mock.get_client.call_count == 4
 
 
-@patch("everest.bin.monitor_script.run_detached_monitor")
+@patch("everest.bin.monitor_script.run_server_monitor")
 @patch(
     "everest.bin.monitor_script.get_experiment_status",
     return_value=ExperimentStatus(status=ExperimentState.completed, message=""),
@@ -198,7 +198,7 @@ def test_everest_entry_detached_already_run_monitor(
 
 @patch("everest.bin.everest_script.ErtClient")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("everest.bin.everest_script.run_detached_monitor")
+@patch("everest.bin.everest_script.run_server_monitor")
 @patch("everest.bin.everest_script.start_server")
 @patch(
     "everest.bin.kill_script.ErtClient",
@@ -250,7 +250,7 @@ def test_everest_entry_detached_running(
     start_server_mock.assert_not_called()
 
 
-@patch("everest.bin.monitor_script.run_detached_monitor")
+@patch("everest.bin.monitor_script.run_server_monitor")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
     "everest.bin.monitor_script.ErtClient",
@@ -280,7 +280,7 @@ def test_everest_entry_detached_running_monitor(
     monitor_script_api_mock.get_client.return_value.experiment_ids.assert_called_once()
 
 
-@patch("everest.bin.monitor_script.run_detached_monitor")
+@patch("everest.bin.monitor_script.run_server_monitor")
 @patch(
     "everest.bin.monitor_script.get_experiment_status",
     return_value=ExperimentStatus(status=ExperimentState.completed),
@@ -311,7 +311,7 @@ def test_everest_entry_monitor_already_run(
 
 
 @patch(
-    "everest.bin.everest_script.run_detached_monitor",
+    "everest.bin.everest_script.run_server_monitor",
     side_effect=raise_system_error,
 )
 @patch("everest.bin.everest_script.start_server")
@@ -336,7 +336,7 @@ def test_exception_raised_when_server_run_fails(
 
 
 @patch(
-    "everest.bin.monitor_script.run_detached_monitor",
+    "everest.bin.monitor_script.run_server_monitor",
     side_effect=raise_system_error,
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")

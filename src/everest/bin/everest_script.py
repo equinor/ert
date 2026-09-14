@@ -21,7 +21,7 @@ from ert.storage.local_experiment import ExperimentState
 from ert.trace import trace
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import (
+from everest.everserver import (
     start_server,
 )
 from everest.strings import EVEREST
@@ -34,8 +34,8 @@ from .utils import (
     get_experiment_status,
     handle_keyboard_interrupt,
     remove_show_scaling_warning_setting,
-    run_detached_monitor,
-    run_empty_detached_monitor,
+    run_empty_server_monitor,
+    run_server_monitor,
     setup_logging,
 )
 
@@ -239,9 +239,9 @@ async def run_everest(options: argparse.Namespace) -> None:
         from everest.gui.main import run_gui  # ruff: ignore[import-outside-top-level]
 
         monitor_thread = ErtThread(
-            target=run_empty_detached_monitor
+            target=run_empty_server_monitor
             if options.disable_monitoring
-            else run_detached_monitor,
+            else run_server_monitor,
             name="EVEREST CLI monitor thread",
             args=[client, experiment_id],
             daemon=True,
@@ -250,12 +250,12 @@ async def run_everest(options: argparse.Namespace) -> None:
         run_gui(options.config.output_dir)
         monitor_thread.join()
     elif options.disable_monitoring:
-        run_empty_detached_monitor(
+        run_empty_server_monitor(
             client=client,
             experiment_id=experiment_id,
         )
     else:
-        run_detached_monitor(
+        run_server_monitor(
             client=client,
             experiment_id=experiment_id,
         )

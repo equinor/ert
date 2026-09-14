@@ -88,7 +88,7 @@ dependencies = [
 ert = "ert.__main__:main"
 "fm_dispatch.py" = "_ert.forward_model_runner.fm_dispatch:main"
 everest = "everest.bin.main:start_everest"
-everserver = "everest.detached.everserver:main"
+everserver = "everest.everserver.server:main"
 fmudesign = "fmudesign.fmudesignrunner:main"
 
 [project.urls]
@@ -160,7 +160,7 @@ ert = [
     "logging/logger.conf",
     "logging/storage_log.conf",
 ]
-everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
+everest = ["data/**/*", "*.tmpl", "everserver/jobs/everserver"]
 "fmudesign.examples" = ["*.xlsx", "*.yml", "*.yaml", "*.toml"]
 
 

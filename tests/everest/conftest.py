@@ -23,7 +23,7 @@ from everest.config import (
     EverestConfig,
 )
 from everest.config.control_config import ControlConfig
-from everest.detached import everserver
+from everest.everserver import server as everserver
 from tests.everest.utils import MIN_CONFIG, get_optimal_result, relpath
 
 

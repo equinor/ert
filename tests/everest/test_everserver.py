@@ -26,8 +26,8 @@ from ert.services import ErtClient
 from ert.storage import ExperimentState
 from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import (
-    everserver,
+from everest.everserver import server as everserver
+from everest.everserver import (
     start_server,
 )
 from everest.strings import (
@@ -88,14 +88,14 @@ def mock_server(monkeypatch):
         response_mock.json.return_value = {"status": status, "message": message}
         client_mock.get.return_value = response_mock
         server_patch.session.return_value.__enter__.return_value = client_mock
-        monkeypatch.setattr("everest.detached.everserver.ErtServer", server_patch)
+        monkeypatch.setattr("everest.everserver.server.ErtServer", server_patch)
 
     return func
 
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch(
-    "everest.detached.everserver._configure_loggers",
+    "everest.everserver.server._configure_loggers",
     side_effect=configure_everserver_logger,
 )
 def test_configure_logger_failure(mock_configure_loggers, change_to_tmpdir, caplog):
@@ -108,7 +108,7 @@ def test_configure_logger_failure(mock_configure_loggers, change_to_tmpdir, capl
 @pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
-@patch("everest.detached.everserver._configure_loggers")
+@patch("everest.everserver.server._configure_loggers")
 async def test_status_exception(mock_configure_loggers, change_to_tmpdir, min_config):
     min_config["simulator"] = {"queue_system": {"name": "local"}}
     config = EverestConfig(**min_config)

@@ -55,13 +55,13 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
 
     endpoint_logs = everserver_log_path.read_text(encoding="utf-8")
 
-    assert "everest.detached.everserver INFO: Output directory:" in endpoint_logs
+    assert "everest.everserver.server INFO: Output directory:" in endpoint_logs
     assert "Process exited with status code 1" in endpoint_logs
 
     # Avoid cases where optimization finished before we get a chance to check that
     # the everest server has started
     if endpoint_logs:
-        assert "everserver INFO: Everserver starting" in endpoint_logs
+        assert "everserver.server INFO: Everserver starting" in endpoint_logs
         assert "experiment_server INFO: ExperimentRunner done" in endpoint_logs
         assert "ert.scheduler.scheduler INFO: All tasks started" in endpoint_logs
         assert "httpx INFO" not in endpoint_logs

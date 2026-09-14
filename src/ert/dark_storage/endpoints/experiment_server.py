@@ -40,7 +40,7 @@ from ert.plugins import get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest.config import EverestConfig
-from everest.detached.everserver import (
+from everest.everserver.server import (
     ExperimentState,
     ExperimentStatus,
 )

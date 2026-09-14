@@ -7,11 +7,11 @@ try:
 except ImportError:
     __version__ = "0.0.0"
 
-from everest import detached, templates, util
+from everest import everserver, templates, util
 
 __author__ = "Equinor ASA and TNO"
 __all__ = [
-    "detached",
+    "everserver",
     "templates",
     "util",
 ]
