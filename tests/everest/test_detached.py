@@ -474,6 +474,11 @@ def test_that_multiple_ert_clients_can_connect_to_server(
     wait_until(everserver_is_running, interval=1, timeout=300)
 
     api = ErtClient.get_client(session_dir)
+
+    def experiment_is_registered() -> bool:
+        return bool(api.experiment_ids())
+
+    wait_until(experiment_is_registered, interval=0.5, timeout=60)
     experiment_id = api.experiment_ids()[-1]
 
     client_event_queues = []
