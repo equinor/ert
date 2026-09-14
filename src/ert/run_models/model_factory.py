@@ -111,8 +111,12 @@ def _merge_parameter_configs(
 
 
 def _resolve_parameter_configs(
-    config: ErtConfig,
+    config: ErtConfig, prior_ensemble: str | None = None
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
+    if prior_ensemble:
+        # Prior populated later: don't do anything with current state
+        return config.ensemble_config.parameter_configuration, None
+
     parameter_configs, design_matrix = _merge_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
@@ -477,7 +481,9 @@ def _setup_multiple_data_assimilation(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _resolve_parameter_configs(config)
+    parameter_configs, design_matrix = _resolve_parameter_configs(
+        config, prior_ensemble
+    )
 
     runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
