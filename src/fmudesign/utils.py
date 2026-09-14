@@ -1,6 +1,8 @@
 """Module for utility functions that do not belong elsewhere."""
 
 import math
+from collections import Counter
+from collections.abc import Hashable, Iterable
 from pathlib import Path
 from typing import Any
 
@@ -118,6 +120,13 @@ def to_numeric_safe(val: float | str) -> int | float | str:
         return val
 
 
+def _raise_if_duplicates(container: Iterable[Hashable]) -> None:
+    """Raises a descriptive error if there are duplicates in the container."""
+    duplicates = {k: v for (k, v) in Counter(container).items() if v > 1}
+    if duplicates:
+        raise ValueError(f"Duplicates with counts: {duplicates}")
+
+
 def map_dependencies(
     df: pd.DataFrame, *, dependencies: dict[str, Any], verbose: bool = False
 ) -> pd.DataFrame:
@@ -166,8 +175,13 @@ def map_dependencies(
         if from_param not in df.columns:
             continue
 
-        from_values = from_dict["from_values"]
-        from_values = [to_numeric_safe(value) for value in from_values]
+        from_values = [to_numeric_safe(value) for value in from_dict["from_values"]]
+        try:
+            _raise_if_duplicates(from_values)
+        except ValueError as err:
+            raise ValueError(
+                f"Duplicate dependency keys for {from_param!r}\n{err}"
+            ) from err
 
         for to_param, to_values_ in from_dict["to_params"].items():
             to_values = [to_numeric_safe(value) for value in to_values_]
