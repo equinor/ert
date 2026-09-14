@@ -1,6 +1,8 @@
 import logging
 import os
 import stat
+import sys
+import threading
 from functools import partial
 from pathlib import Path
 from shutil import which
@@ -22,10 +24,12 @@ from ert.config.queue_config import (
     activate_script,
 )
 from ert.plugins import ErtRuntimePlugins
+from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
 from ert.scheduler.event import FinishedEvent
-from ert.services import ErtClient
+from ert.services import ErtClient, SharedClient
 from ert.services.shared_client import ErtClientConnectionInfo
 from ert.utils import makedirs_if_needed
+from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.install_job_config import InstallForwardModelStepConfig
@@ -34,6 +38,7 @@ from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
     start_server,
 )
+from tests.ert.utils import wait_until
 from tests.everest.utils import everest_config_with_defaults
 
 
@@ -424,3 +429,94 @@ def test_that_get_server_context_from_conn_info_raises_on_wrong_input(
     with pytest.raises(expected_exception) as exc_info:
         ServerConfig.get_server_context_from_conn_info(conn_info)
     assert str(exc_info.value) == expected_message
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.flaky(rerun=3)
+@pytest.mark.skipif(
+    sys.version_info[0:3] == (3, 13, 6), reason="Fails on Python 3.13.6"
+)
+def test_that_multiple_ert_clients_can_connect_to_server(
+    cached_example, change_to_tmpdir
+):
+    # We use a cached run for the reference list of received events
+    path, config_file, _, server_events_list = cached_example(
+        "math_func/config_minimal.yml"
+    )
+    SharedClient.close_client()
+
+    config_path = Path(path) / config_file
+    config_content = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
+    config_path.write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+    )
+
+    ever_config = EverestConfig.load_file(config_path)
+
+    # Run the case through everserver
+    everest_main_thread = threading.Thread(
+        target=everest_entry, args=[[str(config_path)]]
+    )
+
+    everest_main_thread.start()
+    session_dir = Path(ServerConfig.get_session_dir(ever_config.output_dir))
+
+    def everserver_is_running() -> bool:
+        try:
+            api = ErtClient.get_client(session_dir, connect_timeout=1)
+        except TimeoutError:
+            return False
+        return api.server_is_running(timeout=1)
+
+    wait_until(everserver_is_running, interval=1, timeout=300)
+
+    api = ErtClient.get_client(session_dir)
+    experiment_id = api.experiment_ids()[-1]
+
+    client_event_queues = []
+    monitor_threads = []
+    for _ in range(5):
+        client = ErtClient.get_client(session_dir)
+        client_event_queue, monitor_thread = client.setup_event_queue_from_ws_endpoint(
+            experiment_id
+        )
+        client_event_queues.append(client_event_queue)
+        monitor_threads.append(monitor_thread)
+        monitor_thread.start()
+
+    # Wait until the server has finished running the simulation
+    everest_main_thread.join()
+    for _thread in monitor_threads:
+        if _thread.is_alive():
+            _thread.join(timeout=5)
+
+    # Expect all the clients to hold the same events
+    client_event_lists = []
+    for event_queue in client_event_queues:
+        event_list = []
+        while not event_queue.empty():
+            event_list.append(event_queue.get())
+
+        client_event_lists.append(event_list)
+
+    first = client_event_lists[0]
+    assert all(first == other for other in client_event_lists[1:])
+
+    everest_event_types = (EverestStatusEvent, EverestBatchResultEvent)
+
+    first_everevents = [
+        e.event_type for e in first if isinstance(e, everest_event_types)
+    ]
+    assert len(first_everevents) > 0
+
+    server_everevents = [
+        e.event_type for e in server_events_list if isinstance(e, everest_event_types)
+    ]
+    assert len(server_everevents) > 0
+
+    # Compare only everest events, as the events from the forward model
+    # are (at time of writing) not deterministic enough to expect equality
+    assert first_everevents == server_everevents
