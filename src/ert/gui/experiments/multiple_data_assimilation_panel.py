@@ -224,7 +224,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self.experiment_configuration_changed
         )
 
-        self._parameter_configuration = parameter_configuration
         design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
@@ -235,10 +234,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
+
+        self._parameter_configuration = parameter_configuration
+        if design_matrix and not self._prior_ensemble_selected:
             self._parameter_configuration = (
-                design_matrix.merge_with_existing_parameters(
-                    self._parameter_configuration
-                )
+                design_matrix.merge_with_existing_parameters(parameter_configuration)
             )
 
         if self._parameter_configuration:
@@ -330,6 +330,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._initial_active_realizations
             )
 
+        # If prior selected, running might become valid
+        self.experiment_configuration_changed.emit()
+
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
         weights_container = QWidget()
@@ -417,8 +420,36 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
             and self.weights_valid
-            and has_updatable_parameters(self._parameter_configuration)
+            and self._selected_param_configuration_is_valid
         )
+
+    @property
+    def _selected_param_configuration_is_valid(self) -> bool:
+        if not self._selected_prior_ensemble:
+            return has_updatable_parameters(self._parameter_configuration)
+
+        prior_param_config = list(
+            self._selected_prior_ensemble.experiment.parameter_configuration.values()
+        )
+
+        if prior_param_config is None:
+            return False
+
+        return has_updatable_parameters(prior_param_config)
+
+    @property
+    def _selected_prior_ensemble(self) -> Ensemble | None:
+        if not self._select_prior_ensemble_box.isChecked():
+            return None
+        return self._ensemble_selector.selected_ensemble
+
+    def _get_prior_ensemble_id(self) -> str | None:
+        prior_ensemble = self._selected_prior_ensemble
+        return str(prior_ensemble.id) if prior_ensemble is not None else None
+
+    @property
+    def _prior_ensemble_selected(self) -> bool:
+        return self._selected_prior_ensemble is not None
 
     @override
     def get_experiment_arguments(self) -> Arguments:
@@ -427,12 +458,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             target_ensemble=self._target_ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
-            prior_ensemble_id=(
-                str(self._ensemble_selector.selected_ensemble.id)
-                if self._ensemble_selector.selected_ensemble is not None
-                and self._select_prior_ensemble_box.isChecked()
-                else None
-            ),
+            prior_ensemble_id=self._get_prior_ensemble_id(),
             experiment_name=self._experiment_name_field.get_text,
         )
 
