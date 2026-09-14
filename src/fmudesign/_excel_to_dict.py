@@ -3,14 +3,13 @@ These are converted to a dict-of-dicts representation, then they are used
 by the DesignMatrix class to generate design matrices.
 """
 
-from collections import Counter
-from collections.abc import Hashable, Sequence
 from pathlib import Path
 from typing import Any, Literal, cast
 
 import openpyxl
 import pandas as pd
 import yaml
+from python_calamine import CalamineWorkbook
 
 from ert.config.design_matrix import read_default_values
 
@@ -20,6 +19,7 @@ from .read_correlations import parse_sensitivity_correlations
 from .read_distributions import parse_distribution_parameters
 from .utils import (
     _has_value,
+    _raise_if_duplicates,
     find_sheet,
     resolve_path,
     seeds_from_extern,
@@ -276,26 +276,53 @@ def _read_dependencies(
         dict with design parameter, dependent parameters
         and values
     """
-    depend_dict: dict[str, Any] = {}
-    depend_df = (
-        pd.read_excel(filename, sheetname, dtype=str, na_values="", engine="openpyxl")
-        .dropna(axis=0, how="all")
-        .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
-    )
+    with CalamineWorkbook.from_path(filename) as workbook:
+        if sheetname not in workbook.sheet_names:
+            raise ValueError(f"Worksheet {sheetname!r} not found")
+        rows = (
+            [value if value.strip() else "" for value in map(str, row)]
+            for row in workbook.get_sheet_by_name(sheetname).to_python(
+                skip_empty_area=False
+            )
+        )
 
-    if from_parameter in depend_df:
-        depend_dict["from_values"] = depend_df[from_parameter].tolist()
-        depend_dict["to_params"] = {}
-        for key in depend_df:
-            if key != from_parameter:
-                depend_dict["to_params"][key] = depend_df[key].tolist()
-    else:
+    headers = {
+        index: name
+        for index, name in enumerate(next(rows, []))
+        if name and not name.startswith("Unnamed")
+    }
+    if from_parameter not in headers.values():
         raise ValueError(
             f"Parameter {from_parameter} specified to have derived parameters, "
             f"but the sheet specifying the dependencies {sheetname} does "
             "not contain the input parameter. "
         )
-    return depend_dict
+
+    try:
+        _raise_if_duplicates(list(headers.values()))
+    except ValueError as err:
+        raise ValueError(
+            f"Duplicate parameter names in dependency sheet {sheetname!r}\n{err}"
+        ) from err
+
+    depend_values: dict[str, list[str]] = {name: [] for name in headers.values()}
+
+    for row_number, row in enumerate(rows, start=2):
+        values = [row[index] for index in headers]
+        if not any(values):
+            continue
+        for name, value in zip(headers.values(), values, strict=True):
+            if not value:
+                raise ValueError(
+                    f"Missing dependency value for parameter {name!r} "
+                    f"in sheet {sheetname!r}, row {row_number}"
+                )
+            depend_values[name].append(value)
+
+    return {
+        "from_values": depend_values.pop(from_parameter),
+        "to_params": depend_values,
+    }
 
 
 def _read_scenario_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
@@ -384,13 +411,6 @@ def _read_constants(sensgroup: pd.DataFrame) -> dict[str, Any]:
         distparams = row.dist_param1
         paramdict[str(row.param_name)] = [str(row.dist_name), distparams]
     return paramdict
-
-
-def _raise_if_duplicates(container: Sequence[Hashable]) -> None:
-    """Raises a descriptive error if there are duplicates in the container."""
-    duplicates = {k: v for (k, v) in Counter(container).items() if v > 1}
-    if duplicates:
-        raise ValueError(f"Duplicates with counts: {duplicates}")
 
 
 def _assert_no_merged_cells(input_filename: str) -> None:
