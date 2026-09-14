@@ -42,18 +42,21 @@ def _rename_ropt_df_columns(df: pl.DataFrame) -> pl.DataFrame:
     renames = {
         "objective": "objective_name",
         "target_objective": "total_objective_value",
+        "target_gradient": "total_objective_value",
         "variable": "control_name",
         "variables": "control_value",
-        "objectives": "objective_value",
-        "constraints": "constraint_value",
-        "bound_violation": "bound_constraint_violation",
-        "linear_violation": "input_constraint_violation",
-        "nonlinear_violation": "output_constraint_violation",
+        "functions.objectives": "objective_value",
+        "functions.constraints": "constraint_value",
+        "gradients.objectives": "objective_value",
+        "gradients.constraints": "constraint_value",
+        "constraint_info.bound_violation": "bound_constraint_violation",
+        "constraint_info.linear_violation": "input_constraint_violation",
+        "constraint_info.nonlinear_violation": "output_constraint_violation",
         "linear_constraint": "input_constraint_index",
         "nonlinear_constraint": "constraint_name",
         "perturbed_variables": "perturbed_control_value",
-        "perturbed_objectives": "perturbed_objective_value",
-        "perturbed_constraints": "perturbed_constraint_value",
+        "evaluations.perturbed_objectives": "perturbed_objective_value",
+        "evaluations.perturbed_constraints": "perturbed_constraint_value",
     }
     return df.rename({k: v for k, v in renames.items() if k in df.columns})
 
@@ -98,14 +101,11 @@ def _enforce_dtypes(df: pl.DataFrame) -> pl.DataFrame:
 
 def _ropt_to_df(
     results: FunctionResults | GradientResults,
-    field: str,
     *,
     values: list[str],
     select: list[str],
 ) -> pl.DataFrame:
-    df = pl.from_pandas(
-        results.to_dataframe(field, select=values).reset_index(),
-    ).select(select + values)
+    df = results.to_polars(values).select(select + values)
     df = _rename_ropt_df_columns(df)
     return _enforce_dtypes(df)
 
@@ -118,8 +118,7 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
     if results.functions is not None and results.functions.constraints is not None:
         batch_constraints = _ropt_to_df(
             results,
-            "functions",
-            values=["constraints"],
+            values=["functions.constraints"],
             select=["batch_id", "nonlinear_constraint"],
         )
 
@@ -134,8 +133,7 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
 
     batch_objectives = _ropt_to_df(
         results,
-        "functions",
-        values=["objectives", "target_objective"],
+        values=["functions.objectives", "target_objective"],
         select=["batch_id", "objective"],
     )
     batch_objectives = batch_objectives.pivot(
@@ -151,8 +149,7 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
         if results.constraint_info.bound_violation is not None:
             batch_bound_constraint_violations = _ropt_to_df(
                 results,
-                "constraint_info",
-                values=["bound_violation"],
+                values=["constraint_info.bound_violation"],
                 select=["batch_id", "variable"],
             )
             batch_bound_constraint_violations = batch_bound_constraint_violations.pivot(
@@ -163,8 +160,7 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
         if results.constraint_info.linear_violation is not None:
             batch_input_constraint_violations = _ropt_to_df(
                 results,
-                "constraint_info",
-                values=["linear_violation"],
+                values=["constraint_info.linear_violation"],
                 select=["batch_id", "linear_constraint"],
             )
             batch_input_constraint_violations = batch_input_constraint_violations.pivot(
@@ -175,8 +171,7 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
         if results.constraint_info.nonlinear_violation is not None:
             batch_output_constraint_violations = _ropt_to_df(
                 results,
-                "constraint_info",
-                values=["nonlinear_violation"],
+                values=["constraint_info.nonlinear_violation"],
                 select=["batch_id", "nonlinear_constraint"],
             )
             batch_output_constraint_violations = (
@@ -203,10 +198,9 @@ def _unpack_gradient_results(results: GradientResults) -> UnpackedGradientResult
         have_constraints = results.gradients.constraints is not None
         batch_objective_gradient = _ropt_to_df(
             results,
-            "gradients",
             values=(
-                ["target_objective", "objectives"]
-                + (["constraints"] if have_constraints else [])
+                ["target_gradient", "gradients.objectives"]
+                + (["gradients.constraints"] if have_constraints else [])
             ),
             select=(
                 ["batch_id", "variable", "objective"]
@@ -282,10 +276,10 @@ def unpack_ropt_results(
             results.append(item)
         if (
             isinstance(item, FunctionResults)
-            and item.functions is not None
-            and item.functions.target_objective < best_value
+            and item.target_objective is not None
+            and item.target_objective < best_value
         ):
-            best_value = float(item.functions.target_objective)
+            best_value = float(item.target_objective)
             best_results = item
 
     if best_results is not None:

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from ropt.workflow import find_backend_plugin
+from ropt.utils import get_plugin_name
 
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 
@@ -39,7 +39,7 @@ def test_all_repo_configs():
     ]
     config_files = filter(is_config, config_files)
 
-    if find_backend_plugin("scipy/default") is None:
+    if get_plugin_name("backend", "scipy/default") is None:
         config_files = [f for f in config_files if "scipy" not in str(f)]
 
     config_files = list(config_files)

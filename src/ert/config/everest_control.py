@@ -12,7 +12,7 @@ import numpy as np
 import polars as pl
 import xarray as xr
 from pydantic import BaseModel, Field, model_validator
-from ropt.workflow import find_sampler_plugin
+from ropt.utils import get_plugin_name
 
 from .parameter_config import LocalizationType, ParameterCardinality, ParameterConfig
 
@@ -116,7 +116,7 @@ class SamplerConfig(BaseModel, extra="forbid"):
             self.method = f"{self.backend}/{self.method}"
 
         try:
-            plugin = find_sampler_plugin(f"{self.method}")
+            plugin = get_plugin_name("sampler", f"{self.method}")
         except ValueError:
             raise
         except Exception as exc:
