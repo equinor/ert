@@ -148,7 +148,7 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(qapp):
+def test_that_esmda_remains_selectable_when_parameters_are_missing(qapp):
     with (
         Path("poly.ert").open(encoding="utf-8") as fin,
         Path("poly-no-gen-kw.ert").open("w", encoding="utf-8") as fout,
@@ -165,9 +165,10 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(qap
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         assert combo_box.count() == 9
 
-        for i in range(1, 4):
+        esmda_index = 5
+        for i in (*range(1, 4), esmda_index):
             assert combo_box.model().item(i).isEnabled()
-        for i in (0, *range(4, 9)):
+        for i in (0, 4, *range(esmda_index + 1, 9)):
             assert not combo_box.model().item(i).isEnabled()
 
         assert gui.windowTitle().startswith("ERT - poly-no-gen-kw.ert")

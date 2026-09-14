@@ -5,7 +5,6 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 import pytest
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QTextEdit
 
 from ert.gui.experiments import ExperimentPanel
@@ -13,6 +12,7 @@ from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.experiments.view.update import UpdateLogTable, UpdateWidget
 from ert.run_models import (
     EnsembleExperiment,
+    EnsembleInformationFilter,
     EnsembleSmoother,
     MultipleDataAssimilation,
 )
@@ -25,7 +25,8 @@ from tests.ert.ui_tests.gui.conftest import (
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_no_updateable_parameters(qtbot):
+# Prior should be selectable from es-mda even with invalid current config
+def test_that_esmda_remains_selectable_when_parameters_are_not_updatable(qtbot):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line in fin:
             if "GEN_KW COEFFS coeff_priors" in line:
@@ -36,18 +37,12 @@ def test_no_updateable_parameters(qtbot):
     with open_gui_with_config("poly.ert") as gui:
         experiment_panel = get_child(gui, ExperimentPanel)
         simulation_mode_combo = get_child(experiment_panel, QComboBox)
-        idx = simulation_mode_combo.findText(EnsembleSmoother.display_name())
-        assert not (
-            simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
-        )
-        idx = simulation_mode_combo.findText(MultipleDataAssimilation.display_name())
-        assert not (
-            simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
-        )
-        idx = simulation_mode_combo.findText(EnsembleExperiment.display_name())
-        assert (
-            simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
-        )
+        for run_model in (EnsembleSmoother, EnsembleInformationFilter, ManualUpdate):
+            idx = simulation_mode_combo.findText(run_model.display_name())
+            assert not simulation_mode_combo.model().item(idx).isEnabled()
+        for run_model in (MultipleDataAssimilation, EnsembleExperiment):
+            idx = simulation_mode_combo.findText(run_model.display_name())
+            assert simulation_mode_combo.model().item(idx).isEnabled()
 
 
 @pytest.fixture
