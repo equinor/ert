@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErrorInfo, ParameterConfig
+from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -416,6 +417,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
             and self.weights_valid
+            and has_updatable_parameters(self._parameter_configuration)
         )
 
     @override

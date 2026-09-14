@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
 
+from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -167,6 +168,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             self._experiment_name_field.isValid()
             and self._ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
+            and has_updatable_parameters(self._parameter_configuration)
         )
 
     @override
