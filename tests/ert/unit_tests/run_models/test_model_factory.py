@@ -30,7 +30,7 @@ from ert.run_models import (
     model_factory,
 )
 from ert.run_models.model_factory import (
-    _merge_parameter_configs,
+    _resolve_parameter_configs,
     _setup_ensemble_information_filter,
     _setup_ensemble_smoother,
     _setup_multiple_data_assimilation,
@@ -311,10 +311,7 @@ def test_multiple_data_assimilation_restart_paths(
     )
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = restart_from_iteration
-    config = ErtConfig(
-        runpath_config=ModelConfig(num_realizations=2),
-        ensemble_config=EnsembleConfig(parameter_configs={"COEFFS": _gen_kw_config()}),
-    )
+    config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
 
     with patch(
         "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock
@@ -424,16 +421,24 @@ def test_that_setting_up_experiment_with_update_step_raises_config_validation_er
         experiment_setup_method(config, args, MagicMock(), MagicMock())
 
 
-def test_that_merge_parameter_configs_returns_parameters_unmerged_when_no_design_matrix():  # ruff: ignore[line-too-long]
-    parameter_configs = [_gen_kw_config()]
-
-    resolved_parameter_configs, design_matrix_data = _merge_parameter_configs(
-        design_matrix=None,
-        parameter_configs=parameter_configs,
+@pytest.mark.parametrize("has_parameters", [False, True], ids=["empty", "all-disabled"])
+def test_that_prior_ensemble_allows_current_config_without_updatable_parameters(
+    has_parameters: bool,
+):
+    parameter = _gen_kw_config()
+    parameter.update_strategy = None
+    config = ErtConfig(
+        ensemble_config=EnsembleConfig(
+            parameter_configs={parameter.name: parameter} if has_parameters else {}
+        )
     )
 
-    assert resolved_parameter_configs == parameter_configs
-    assert design_matrix_data is None
+    parameter_configs, design_matrix_dict = _resolve_parameter_configs(
+        config, prior_ensemble=str(uuid1())
+    )
+
+    assert parameter_configs == config.ensemble_config.parameter_configuration
+    assert design_matrix_dict is None
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
