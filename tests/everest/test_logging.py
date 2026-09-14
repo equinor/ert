@@ -53,18 +53,18 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     assert everest_logs_dir_path.exists()
     assert everserver_log_path.exists()
 
-    endpoint_logs = everserver_log_path.read_text(encoding="utf-8")
+    everserver_logs = everserver_log_path.read_text(encoding="utf-8")
 
-    assert "everest.everserver.server INFO: Output directory:" in endpoint_logs
-    assert "Process exited with status code 1" in endpoint_logs
+    assert "everest.everserver.server INFO: Output directory:" in everserver_logs
+    assert "Process exited with status code 1" in everserver_logs
 
     # Avoid cases where optimization finished before we get a chance to check that
     # the everest server has started
-    if endpoint_logs:
-        assert "everserver.server INFO: Everserver starting" in endpoint_logs
-        assert "experiment_server INFO: ExperimentRunner done" in endpoint_logs
-        assert "ert.scheduler.scheduler INFO: All tasks started" in endpoint_logs
-        assert "httpx INFO" not in endpoint_logs
+    if everserver_logs:
+        assert "everserver.server INFO: Everserver starting" in everserver_logs
+        assert "experiment_server INFO: ExperimentRunner done" in everserver_logs
+        assert "ert.scheduler.scheduler INFO: All tasks started" in everserver_logs
+        assert "httpx INFO" not in everserver_logs
 
 
 def test_that_cleanup_logging_is_idempotent(monkeypatch):
