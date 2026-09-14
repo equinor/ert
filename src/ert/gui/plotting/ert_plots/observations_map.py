@@ -8,6 +8,8 @@ import pandas as pd
 import polars as pl
 from matplotlib.figure import Figure
 
+from ert.gui.plotting.utils.plot_tools import PlotTools
+
 if TYPE_CHECKING:
     from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
     from ert.gui.plotting.utils import PlotContext
@@ -57,22 +59,17 @@ class ObservationsMapPlot:
             ax=axes,
             label="Observation value",
             orientation="vertical",
-            pad=0.15,
             aspect=40,
         )
 
         cbar.ax.set_visible(plot_context.plotConfig().is_legend_enabled())
         cbar.ax.ticklabel_format(useOffset=False, style="plain")
-        config = plot_context.plotConfig()
-        axes.spines["top"].set_visible(False)
-        axes.spines["right"].set_visible(False)
-        axes.spines["left"].set_visible(False)
-        axes.spines["bottom"].set_visible(False)
-        axes.set_title(config.title())
         axes.ticklabel_format(useOffset=False, style="plain")
         axes.set_aspect("equal")
-        axes.set_xlabel(config.x_label() or "east coordinate")
-        axes.set_ylabel(config.y_label() or "north coordinate")
-        axes.set_xlim(east.min(), east.max())
-        axes.grid(config.is_grid_enabled())
-        axes.set_ylim(north.min(), north.max())
+        PlotTools.finalize_plot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label="east coordinate",
+            default_y_label="north coordinate",
+        )
