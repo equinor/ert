@@ -189,11 +189,11 @@ DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
         DESIGN_MATRIX poly_design.xlsx
 
 
-Additionally, there are three optional named arguments:
+Additionally, there are four optional named arguments:
 
 ::
 
-        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet> PRIORITY:<design_matrix|sampled>
+        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet> PRIORITY:<design_matrix|sampled> UPDATE:<TRUE|FALSE>
 
 where:
 
@@ -206,12 +206,18 @@ where:
    If set to `sampled`, parameters will be sampled normally overwriting values from :ref:`DESIGN_MATRIX  <design_matrix>`.
    Default is `design_matrix`.
 
+4. UPDATE:<TRUE|FALSE> - controls whether design matrix parameters are updated during the update step.
+   If set to `TRUE`, design matrix parameters participate in the update step and follow the update strategy configured for :ref:`GEN_KW <gen_kw>`.
+   If set to `FALSE` (default), design matrix parameters remain constant during the update step.
+   When a parameter name overlaps between DESIGN_MATRIX and GEN_KW, the PRIORITY setting determines which source's update behavior takes precedence.
+   Default is `FALSE`.
+
 
 *Example:*
 
 ::
 
-        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix UPDATE:FALSE
 
 
 The XLSX file must contain a design sheet, where in the columns represents different parameters and rows represent realizations.
@@ -1213,8 +1219,10 @@ history matching process. It must be set to either TRUE or FALSE. The parameters
 
         The ``INIT_FILES:`` named attribute that was used to provide externally sampled values has been removed from GEN_KW.
         To provide values sampled outside of ERT, please see :ref:`DESIGN_MATRIX <design_matrix>`.
-        Note that only parameters sampled internally in ERT will be updated during assisted history matching, and
-        parameters provided through ``DESIGN_MATRIX`` will be constant.
+        By default, parameters provided through ``DESIGN_MATRIX`` will be constant (UPDATE:FALSE).
+        To make design matrix parameters updatable during history matching, set UPDATE:TRUE.
+        When UPDATE:TRUE, design matrix parameters will follow the update strategy configured for :ref:`GEN_KW <gen_kw>`
+        (see :ref:`ANALYSIS_SET_VAR <analysis_set_var>`), unless they overlap with sampled parameters and PRIORITY:sampled is set.
 
 A configuration example is shown below:
 
