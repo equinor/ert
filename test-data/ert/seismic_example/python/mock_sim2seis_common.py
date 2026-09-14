@@ -5,6 +5,7 @@ from enum import StrEnum
 class HorizonName(StrEnum):
     HORIZON = "horizon"
     OTHER_HORIZON = "fantastic_horizon"
+    TOPVOLANTIS = "topvolantis"
 
 
 class Attribute(StrEnum):
@@ -29,10 +30,12 @@ class VerticalDomain(StrEnum):
 
 
 class BaseDate(StrEnum):
+    JAN2018 = "20180101"
     JAN2024 = "20240101"
 
 
 class MonitorDate(StrEnum):
+    JUL2019 = "20190701"
     JAN2025 = "20250101"
     JAN2026 = "20260101"
     JAN2030 = "20300101"
@@ -72,8 +75,8 @@ def generate_combos(
     stacking_offsets = stacking_offsets or [StackingOffset.FULL]
     calculations = calculations or [Calculation.MEAN]
     vertical_domains = vertical_domains or [VerticalDomain.DEPTH]
-    bases = bases or [BaseDate.JAN2024]
-    monitors = monitors or [MonitorDate.JAN2025]
+    bases = bases or [BaseDate.JAN2018]
+    monitors = monitors or [MonitorDate.JUL2019]
 
     return list(
         itertools.product(
