@@ -483,8 +483,6 @@ async def create_runpath(
             timings[key] += value
 
     logger.info(f"_create_runpath durations: {timings}")
-    # Kept for log analytics compatibility:
-    logger.info(f"_create_run_path durations: {timings}")
 
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
