@@ -187,6 +187,8 @@ def test_that_export_rft_stops_writing_files_once_cancelled(monkeypatch):
         job.cancel()
         return original_write_csv(self, path, *args, **kwargs)
 
+    # Patch the write_csv method to simulate cancellation
+    # after the first file is written
     monkeypatch.setattr(pl.DataFrame, "write_csv", cancel_after_first_write)
 
     with _create_rft_ensemble(ensemble_size=2) as ensemble:
