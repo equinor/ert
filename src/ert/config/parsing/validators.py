@@ -14,5 +14,6 @@ def validate_has_updatable_parameter(
         )
     if not has_updatable_parameters(parameter_configs):
         raise ConfigValidationError(
-            "No parameters to update as all parameters were set to update:false!"
+            "No parameters to update: all configured parameters have update "
+            "disabled (UPDATE:FALSE)."
         )
