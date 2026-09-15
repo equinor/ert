@@ -173,3 +173,24 @@ def test_that_non_update_configs_allow_no_parameters(config_kwargs, config_type)
     kwargs = config_kwargs(config_type)
     kwargs["parameter_configuration"] = []
     assert config_type(**kwargs).parameter_configuration == []
+
+
+@pytest.mark.parametrize("prior_ensemble_id", [None, ""])
+def test_that_non_restart_configs_require_an_experiment_name(
+    config_kwargs, prior_ensemble_id
+):
+    kwargs = config_kwargs(MultipleDataAssimilationConfig)
+    kwargs.update(prior_ensemble_id=prior_ensemble_id, experiment_name="")
+    with pytest.raises(
+        ValidationError, match="For non-restart run, experiment name must be set"
+    ):
+        MultipleDataAssimilationConfig(**kwargs)
+
+
+def test_that_restart_configs_allow_an_empty_experiment_name(config_kwargs):
+    kwargs = config_kwargs(MultipleDataAssimilationConfig)
+    kwargs.update(
+        prior_ensemble_id="00000000-0000-0000-0000-000000000001",
+        experiment_name="",
+    )
+    assert not MultipleDataAssimilationConfig(**kwargs).experiment_name
