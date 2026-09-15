@@ -32,7 +32,7 @@ from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
 from ert.services import ErtServerExit
 from ert.shared import __file__ as ert_shared_path
-from ert.shared import find_available_socket, get_machine_name
+from ert.shared import find_available_socket, get_fqdn_with_timeout, get_machine_name
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 
@@ -79,16 +79,21 @@ def parse_args() -> argparse.Namespace:
 
 
 def _get_host_list() -> list[str]:
-    return list({socket.gethostname(), socket.getfqdn(), get_machine_name()})
+    """Returns hostnames the storage server can be reached by, with
+    "localhost" always included and always first.
+    """
+    own_hostnames = {socket.gethostname(), get_fqdn_with_timeout(), get_machine_name()}
+    return ["localhost", *(own_hostnames - {"localhost"})]
 
 
 def _create_connection_info(
-    sock: socket.socket, authtoken: str, cert: str | os.PathLike[str] | Path
+    sock: socket.socket,
+    authtoken: str,
+    cert: str | os.PathLike[str] | Path,
+    host_list: list[str],
 ) -> dict[str, Any]:
     connection_info = {
-        "urls": [
-            f"https://{host}:{sock.getsockname()[1]}" for host in _get_host_list()
-        ],
+        "urls": [f"https://{host}:{sock.getsockname()[1]}" for host in host_list],
         "authtoken": authtoken,
         "host": get_machine_name(),
         "port": sock.getsockname()[1],
@@ -103,7 +108,9 @@ def _create_connection_info(
     return connection_info
 
 
-def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
+def _generate_certificate(
+    cert_folder: Path, host_list: list[str]
+) -> tuple[Path, Path, bytes]:
     """Generate a private key and a certificate signed with it
 
     Both the certificate and the key are written to files in the folder given
@@ -130,9 +137,7 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
         ]
     )
     dns_name = get_machine_name()
-    subject_alternative_names = (
-        _get_host_list()
-    )  # Important that this matches potential server url hosts
+    subject_alternative_names = host_list
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -179,9 +184,12 @@ def run_server(
     *,
     debug: bool = False,
     uvicorn_config: uvicorn.Config | None = None,
+    host_list: list[str] | None = None,
 ) -> None:
     if args is None:
         args = parse_args()
+    if host_list is None:
+        host_list = _get_host_list()
 
     if (authtoken := os.environ.get("ERT_STORAGE_TOKEN")) is None:
         authtoken = generate_authtoken()
@@ -208,7 +216,9 @@ def run_server(
         else uvicorn_config
     )
     assert config.ssl_certfile
-    connection_info = _create_connection_info(sock, authtoken, config.ssl_certfile)
+    connection_info = _create_connection_info(
+        sock, authtoken, config.ssl_certfile, host_list
+    )
     server = Server(config, json.dumps(connection_info))
 
     logger = logging.getLogger("ert.shared.storage.info")
@@ -268,7 +278,13 @@ def main() -> None:
     args = parse_args()
     authentication = _generate_authentication()
     os.environ["ERT_STORAGE_TOKEN"] = authentication
-    cert_path, key_path, key_pw = _generate_certificate(args.project / "cert")
+    # _get_host_list() does a live DNS lookup and isn't cached, so resolve it
+    # once here and reuse the same list for the certificate and the
+    # connection-info urls (in run_server).
+    host_list = _get_host_list()
+    cert_path, key_path, key_pw = _generate_certificate(
+        args.project / "cert", host_list
+    )
     config_args: dict[str, Any] = {
         "ssl_keyfile": key_path,
         "ssl_certfile": cert_path,
@@ -310,7 +326,9 @@ def main() -> None:
         try:
             logger.info("Starting dark storage")
             logger.info(f"Started dark storage with parent {args.parent_pid}")
-            run_server(args, debug=False, uvicorn_config=uvicorn_config)
+            run_server(
+                args, debug=False, uvicorn_config=uvicorn_config, host_list=host_list
+            )
         except (SystemExit, ErtServerExit):
             logger.info("Stopping dark storage")
         finally:

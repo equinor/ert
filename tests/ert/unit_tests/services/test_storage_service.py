@@ -9,7 +9,11 @@ from unittest.mock import patch
 import pytest
 
 from ert.services import ErtServerController
-from ert.services._storage_main import _create_connection_info, _generate_certificate
+from ert.services._storage_main import (
+    _create_connection_info,
+    _generate_certificate,
+    _get_host_list,
+)
 from ert.services.ert_server import create_ert_server_controller
 from ert.shared import find_available_socket
 
@@ -21,7 +25,7 @@ def test_create_connection_string(monkeypatch):
     sock = find_available_socket()
     monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
 
-    _create_connection_info(sock, authtoken, Path("path/to/cert"))
+    _create_connection_info(sock, authtoken, Path("path/to/cert"), _get_host_list())
 
     assert "ERT_STORAGE_CONNECTION_STRING" in os.environ
     connection_string = json.loads(os.environ["ERT_STORAGE_CONNECTION_STRING"])
@@ -188,7 +192,7 @@ def test_storage_logging(change_to_tmpdir):
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_certificate_generation(change_to_tmpdir):
-    cert, key, pw = _generate_certificate(Path())
+    cert, key, pw = _generate_certificate(Path(), _get_host_list())
 
     # check that files are written
     assert cert.exists()
@@ -206,7 +210,7 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
         "ert.shared.get_machine_name",
         return_value="A" * 67,
     ):
-        cert, key, pw = _generate_certificate(Path())
+        cert, key, pw = _generate_certificate(Path(), _get_host_list())
 
     # check that files are written
     assert cert.exists()
@@ -222,10 +226,11 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
 def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkeypatch):
     auth_token = "very_secret_token"
     sock = find_available_socket()
-    cert_path, _, _ = _generate_certificate(Path())
+    host_list = _get_host_list()
+    cert_path, _, _ = _generate_certificate(Path(), host_list)
     monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
 
-    conn_info = _create_connection_info(sock, auth_token, cert_path)
+    conn_info = _create_connection_info(sock, auth_token, cert_path, host_list)
     # check certificate is readable
     x509 = ssl._ssl._test_decode_cert(conn_info["cert"])  # type: ignore[attr-defined]
     sans = [san[1] for san in x509["subjectAltName"]]
@@ -233,6 +238,33 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkey
     # extract hostname from the url strings "https://<hostname>:<port>/..."
     hosts_from_urls = [u.split("https://")[1].split(":")[0] for u in conn_info["urls"]]
     assert set(sans) == set(hosts_from_urls)
+
+
+def test_that_server_hosts_still_match_san_when_host_list_changes_between_calls(
+    change_to_tmpdir, monkeypatch
+):
+    """_generate_certificate() and _create_connection_info() must be given the
+    same host_list snapshot by their caller, since re-resolving hostnames
+    separately for each call (e.g. via get_fqdn_with_timeout(), which is not
+    cached) could return different results and make the advertised urls
+    diverge from what the certificate covers.
+    """
+    auth_token = "very_secret_token"
+    sock = find_available_socket()
+    monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
+
+    # Simulate _get_host_list() resolving differently than it would if called
+    # again later, by passing an explicit snapshot that differs from a fresh
+    # call to _get_host_list().
+    stale_host_list = [*_get_host_list(), "stale-hostname-not-in-a-later-lookup"]
+
+    cert_path, _, _ = _generate_certificate(Path(), stale_host_list)
+    conn_info = _create_connection_info(sock, auth_token, cert_path, stale_host_list)
+
+    x509 = ssl._ssl._test_decode_cert(conn_info["cert"])  # type: ignore[attr-defined]
+    sans = [san[1] for san in x509["subjectAltName"]]
+    hosts_from_urls = [u.split("https://")[1].split(":")[0] for u in conn_info["urls"]]
+    assert set(sans) == set(hosts_from_urls) == set(stale_host_list)
 
 
 def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
