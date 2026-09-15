@@ -12,25 +12,5 @@ class ErtStorageError(RuntimeError):
         super().__init__(message, kwargs)
 
 
-class NotFoundError(ErtStorageError):
-    __status_code__ = status.HTTP_404_NOT_FOUND
-
-
-class ConflictError(ErtStorageError):
-    __status_code__ = status.HTTP_409_CONFLICT
-
-
-class ExpectationError(ErtStorageError):
-    __status_code__ = status.HTTP_417_EXPECTATION_FAILED
-
-
-class UnprocessableError(ErtStorageError):
-    try:
-        # Starlette 0.48.0 and onwards:
-        __status_code__ = status.HTTP_422_UNPROCESSABLE_CONTENT
-    except AttributeError:
-        __status_code__ = status.HTTP_422_UNPROCESSABLE_ENTITY
-
-
 class InternalServerError(ErtStorageError):
     __status_code__ = status.HTTP_500_INTERNAL_SERVER_ERROR

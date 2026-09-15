@@ -49,7 +49,7 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
 )
 
-router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
+router = APIRouter(prefix="/experiment_runner", tags=["experiment_runner"])
 
 
 class UserCancelled(Exception):

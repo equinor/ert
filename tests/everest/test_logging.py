@@ -62,7 +62,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     # the everest server has started
     if everserver_logs:
         assert "everserver.server INFO: Everserver starting" in everserver_logs
-        assert "experiment_server INFO: ExperimentRunner done" in everserver_logs
+        assert "experiment_runner INFO: ExperimentRunner done" in everserver_logs
         assert "ert.scheduler.scheduler INFO: All tasks started" in everserver_logs
         assert "httpx INFO" not in everserver_logs
 
