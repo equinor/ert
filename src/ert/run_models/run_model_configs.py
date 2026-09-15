@@ -191,6 +191,14 @@ class UpdateRunModelConfig(RunModelConfig):
     analysis_settings: ESSettings
     update_settings: ObservationSettings
 
+    @model_validator(mode="after")
+    def _check_min_active_realizations_for_update(self) -> Self:
+        if sum(self.active_realizations) < 2:
+            raise ValueError(
+                "Number of active realizations must be at least 2 for an update step"
+            )
+        return self
+
     def _update_experiment_config(self) -> ExperimentConfig:
         return {
             "target_ensemble": self.target_ensemble,
