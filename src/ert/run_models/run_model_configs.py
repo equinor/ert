@@ -346,6 +346,14 @@ class MultipleDataAssimilationConfig(InitialEnsembleUpdateRunModelConfig):
     arg_weights: str | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
+    def _check_experiment_name_for_new_run(self) -> Self:
+        if not self.prior_ensemble_id and not self.experiment_name:
+            raise ConfigValidationError(
+                "For non-restart run, experiment name must be set"
+            )
+        return self
+
+    @model_validator(mode="after")
     @override
     def _check_updatable_parameters(self) -> Self:
         if self.prior_ensemble_id:

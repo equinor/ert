@@ -419,6 +419,29 @@ def test_that_create_model_raises_config_validation_error_without_pydantic_noise
     assert "type=value_error" not in message
 
 
+def test_that_non_restart_setup_rejects_empty_experiment_name_before_opening_storage():
+    parameter = _gen_kw_config()
+    config = ErtConfig(
+        runpath_config=ModelConfig(num_realizations=2),
+        ensemble_config=EnsembleConfig(parameter_configs={parameter.name: parameter}),
+    )
+    args = Namespace(
+        realizations=None,
+        weights=None,
+        target_ensemble="ensemble_%d",
+        prior_ensemble_id=None,
+        experiment_name="",
+    )
+    with patch("ert.run_models.run_model.open_storage") as open_storage:
+        with pytest.raises(
+            ValidationError, match="For non-restart run, experiment name must be set"
+        ):
+            _setup_multiple_data_assimilation(
+                config, args, ObservationSettings(), queue.SimpleQueue()
+            )
+        open_storage.assert_not_called()
+
+
 @pytest.mark.parametrize(
     ("ensemble_iteration", "expected_path"),
     [
