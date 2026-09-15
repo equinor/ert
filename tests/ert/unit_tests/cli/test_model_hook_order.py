@@ -8,6 +8,7 @@ from pydantic import ConfigDict
 
 from ert.config import (
     ESSettings,
+    GenKwConfig,
     ModelConfig,
     ObservationSettings,
     PostExperimentFixtures,
@@ -128,7 +129,11 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         update_settings=ObservationSettings(),
         runpath_file=MagicMock(spec=Path),
         design_matrix=None,
-        parameter_configuration=[],
+        parameter_configuration=[
+            GenKwConfig(
+                name="PARAM", distribution={"name": "normal", "mean": 0, "std": 1}
+            )
+        ],
         response_configuration=[],
         ert_templates=MagicMock(),
         user_config_file=MagicMock(spec=Path),
