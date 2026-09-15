@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 from collections import defaultdict
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, Self
+from typing import Annotated, Any, ClassVar, Literal, Self, override
 
 import polars as pl
 from polars.datatypes import DataTypeClass
@@ -35,6 +35,7 @@ from ert.config.forward_model_step import (
     SiteOrUserForwardModelStep,
     UserInstalledForwardModelStep,
 )
+from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.storage.local_experiment import ExperimentConfig, ExperimentType
 from everest.config import InputConstraintConfig, OptimizationConfig
 from everest.config import ModelConfig as EverestModelConfig
@@ -191,6 +192,14 @@ class UpdateRunModelConfig(RunModelConfig):
     analysis_settings: ESSettings
     update_settings: ObservationSettings
 
+    @model_validator(mode="after")
+    def _check_min_active_realizations_for_update(self) -> Self:
+        if sum(self.active_realizations) < 2:
+            raise ValueError(
+                "Number of active realizations must be at least 2 for an update step"
+            )
+        return self
+
     def _update_experiment_config(self) -> ExperimentConfig:
         return {
             "target_ensemble": self.target_ensemble,
@@ -199,7 +208,16 @@ class UpdateRunModelConfig(RunModelConfig):
         }
 
 
-class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig):
+class InitialEnsembleUpdateRunModelConfig(
+    InitialEnsembleRunModelConfig, UpdateRunModelConfig
+):
+    @model_validator(mode="after")
+    def _check_updatable_parameters(self) -> Self:
+        validate_has_updatable_parameter(self.parameter_configuration)
+        return self
+
+
+class EnsembleSmootherConfig(InitialEnsembleUpdateRunModelConfig):
     def to_experiment_config(self) -> ExperimentConfig:
         return {
             **self._initial_ensemble_experiment_config(),
@@ -209,9 +227,7 @@ class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig
         }
 
 
-class EnsembleInformationFilterConfig(
-    InitialEnsembleRunModelConfig, UpdateRunModelConfig
-):
+class EnsembleInformationFilterConfig(InitialEnsembleUpdateRunModelConfig):
     def to_experiment_config(self) -> ExperimentConfig:
         return {
             **self._initial_ensemble_experiment_config(),
@@ -324,11 +340,24 @@ class ManualUpdateConfig(UpdateRunModelConfig):
         return experiment_config
 
 
-class MultipleDataAssimilationConfig(
-    InitialEnsembleRunModelConfig, UpdateRunModelConfig
-):
+class MultipleDataAssimilationConfig(InitialEnsembleUpdateRunModelConfig):
     prior_ensemble_id: str | None
     arg_weights: str | None = Field(default=None, exclude=True)
+
+    @model_validator(mode="after")
+    def _check_experiment_name_for_new_run(self) -> Self:
+        if not self.prior_ensemble_id and not self.experiment_name:
+            raise ValueError("For non-restart run, experiment name must be set")
+        return self
+
+    @model_validator(mode="after")
+    @override
+    def _check_updatable_parameters(self) -> Self:
+        if self.prior_ensemble_id:
+            # Restart parameters come from the stored experiment, not this config.
+            return self
+        validate_has_updatable_parameter(self.parameter_configuration)
+        return self
 
     @model_validator(mode="after")
     def _update_weights(self) -> Self:
@@ -354,3 +383,11 @@ class SingleTestRunConfig(InitialEnsembleRunModelConfig):
     supports_rerunning_failed_realizations: ClassVar[bool] = True
     active_realizations: list[bool] = Field(default_factory=lambda: [True])
     minimum_required_realizations: int = 1
+
+    @model_validator(mode="after")
+    def _check_first_realization_is_active(self) -> Self:
+        if not self.active_realizations or not self.active_realizations[0]:
+            raise ValueError(
+                "Cannot run single test run when the first realization is inactive."
+            )
+        return self

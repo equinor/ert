@@ -15,7 +15,6 @@ from ert.config import (
     ObservationSettings,
     ParameterConfig,
 )
-from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -117,12 +116,10 @@ def _resolve_parameter_configs(
         # Prior populated later: don't do anything with current state
         return config.ensemble_config.parameter_configuration, None
 
-    parameter_configs, design_matrix = _merge_parameter_configs(
+    return _merge_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
-    validate_has_updatable_parameter(parameter_configs)
-    return parameter_configs, design_matrix
 
 
 def _setup_single_test_run(
@@ -134,10 +131,6 @@ def _setup_single_test_run(
         "single-test-run" if args.experiment_name is None else args.experiment_name
     )
     active_realizations = _get_and_validate_active_realizations_list(args, config)
-    if not active_realizations[0]:
-        raise ConfigValidationError(
-            "Cannot run single test run when the first realization is inactive."
-        )
 
     parameter_configs, design_matrix = _merge_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
@@ -147,7 +140,7 @@ def _setup_single_test_run(
     runmodel_config = SingleTestRunConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
-        active_realizations=[True],
+        active_realizations=active_realizations[:1],
         target_ensemble=args.current_ensemble,
         minimum_required_realizations=1,
         experiment_name=experiment_name,
@@ -369,10 +362,6 @@ def _setup_ensemble_smoother(
 ) -> EnsembleSmoother:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    if sum(active_realizations) < 2:
-        raise ConfigValidationError(
-            "Number of active realizations must be at least 2 for an update step"
-        )
 
     parameter_configs, design_matrix = _resolve_parameter_configs(config)
 
@@ -413,10 +402,6 @@ def _setup_ensemble_information_filter(
 ) -> EnsembleInformationFilter:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    if sum(active_realizations) < 2:
-        raise ConfigValidationError(
-            "Number of active realizations must be at least 2 for an update step"
-        )
 
     parameter_configs, design_matrix = _resolve_parameter_configs(config)
 
@@ -476,10 +461,6 @@ def _setup_multiple_data_assimilation(
     prior_ensemble = _determine_previous_ensemble_id(args)
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    if sum(active_realizations) < 2:
-        raise ConfigValidationError(
-            "Number of active realizations must be at least 2 for an update step"
-        )
 
     parameter_configs, design_matrix = _resolve_parameter_configs(
         config, prior_ensemble

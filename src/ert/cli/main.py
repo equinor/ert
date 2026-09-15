@@ -13,12 +13,11 @@ from _ert.threading import ErtThread
 from ert.base_model_context import use_runtime_plugins
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
-from ert.config import ErtConfig, QueueSystem, has_updatable_parameters
+from ert.config import ErtConfig, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
@@ -60,11 +59,12 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
             f"Config contains forward model step {fm_step_name} {count} time(s)",
         )
 
-    if not ert_config.observation_declarations and args.mode not in {
-        ENSEMBLE_EXPERIMENT_MODE,
-        TEST_RUN_MODE,
-        WORKFLOW_MODE,
-    }:
+    is_esmda_restart = args.mode == ES_MDA_MODE and bool(args.restart_ensemble_id)
+    if (
+        not ert_config.observation_declarations
+        and not is_esmda_restart
+        and args.mode not in {ENSEMBLE_EXPERIMENT_MODE, TEST_RUN_MODE, WORKFLOW_MODE}
+    ):
         raise ErtCliError(
             f"To run {args.mode}, observations are needed.\n"
             f"Please add an observation file to {args.config}. Example:\n"
@@ -88,23 +88,6 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
             "in the configuration:\n"
             f"{strategies}"
         )
-
-    if args.mode in {
-        ENSEMBLE_SMOOTHER_MODE,
-        ENIF_MODE,
-        ES_MDA_MODE,
-    }:
-        if not ert_config.ensemble_config.parameter_configs:
-            raise ErtCliError(
-                f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are "
-                f"needed.\nPlease add to file {args.config}"
-            )
-        if not has_updatable_parameters(
-            ert_config.ensemble_config.parameter_configs.values()
-        ):
-            raise ErtCliError(
-                f"All parameters are set to UPDATE:FALSE in {args.config}"
-            )
 
     if args.mode == WORKFLOW_MODE:
         path = Path(ert_config.ens_path)
