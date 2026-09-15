@@ -93,3 +93,19 @@ def test_that_non_update_configs_accept_one_active_realization(
     kwargs = config_kwargs(config_type)
     kwargs["active_realizations"] = [True]
     assert config_type(**kwargs).active_realizations == [True]
+
+
+@pytest.mark.parametrize("active_realizations", [[], [False], [False, True]])
+def test_that_single_test_config_rejects_missing_or_inactive_first_realization(
+    config_kwargs, active_realizations
+):
+    kwargs = config_kwargs(SingleTestRunConfig)
+    kwargs["active_realizations"] = active_realizations
+    with pytest.raises(ValidationError, match="first realization is inactive"):
+        SingleTestRunConfig(**kwargs)
+
+
+def test_that_single_test_config_defaults_to_realization_zero(config_kwargs):
+    kwargs = config_kwargs(SingleTestRunConfig)
+    del kwargs["active_realizations"]
+    assert SingleTestRunConfig(**kwargs).active_realizations == [True]

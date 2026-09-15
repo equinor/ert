@@ -134,10 +134,6 @@ def _setup_single_test_run(
         "single-test-run" if args.experiment_name is None else args.experiment_name
     )
     active_realizations = _get_and_validate_active_realizations_list(args, config)
-    if not active_realizations[0]:
-        raise ConfigValidationError(
-            "Cannot run single test run when the first realization is inactive."
-        )
 
     parameter_configs, design_matrix = _merge_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
@@ -147,7 +143,7 @@ def _setup_single_test_run(
     runmodel_config = SingleTestRunConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
-        active_realizations=[True],
+        active_realizations=active_realizations[:1],
         target_ensemble=args.current_ensemble,
         minimum_required_realizations=1,
         experiment_name=experiment_name,

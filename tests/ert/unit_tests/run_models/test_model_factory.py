@@ -170,6 +170,24 @@ def test_setup_single_test_run_with_ensemble(tmp_path):
     assert model._storage.path == tmp_path
 
 
+@pytest.mark.parametrize("realizations", ["0", "0-2", "1-2"])
+def test_that_single_test_setup_requires_and_runs_only_realization_zero(
+    tmp_path, realizations
+):
+    config = ErtConfig.from_file_contents(f"NUM_REALIZATIONS 3\nENSPATH {tmp_path}")
+    args = Namespace(
+        realizations=realizations,
+        current_ensemble="ensemble",
+        experiment_name="experiment",
+    )
+    if realizations == "1-2":
+        with pytest.raises(ValidationError, match="first realization is inactive"):
+            model_factory._setup_single_test_run(config, args, queue.SimpleQueue())
+    else:
+        model = model_factory._setup_single_test_run(config, args, queue.SimpleQueue())
+        assert model.active_realizations == [True]
+
+
 def test_setup_ensemble_experiment(tmp_path):
     model = model_factory._setup_ensemble_experiment(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
