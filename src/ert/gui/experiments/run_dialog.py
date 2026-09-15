@@ -218,11 +218,11 @@ class RunDialog(QFrame):
         notifier: ErtNotifier,
         parent: QWidget | None = None,
         output_path: Path | None = None,
-        run_path: Path | None = None,
+        runpath: Path | None = None,
         storage_path: Path | None = None,
     ) -> None:
         super().__init__(parent)
-        self.run_path = run_path or Path()
+        self.runpath = runpath or Path()
         self.storage_path = storage_path or Path()
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -318,7 +318,7 @@ class RunDialog(QFrame):
         footer_layout.addWidget(self.memory_usage)
 
         self.disk_space_runpath = DiskSpaceWidget(
-            get_mount_directory(self.run_path),
+            get_mount_directory(self.runpath),
             MountType.RUNPATH,
         )
         footer_layout.addWidget(self.disk_space_runpath)

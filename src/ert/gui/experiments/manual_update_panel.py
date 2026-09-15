@@ -44,7 +44,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
     def __init__(
         self,
-        run_path: str,
+        runpath: str,
         notifier: ErtNotifier,
         analysis_config: AnalysisConfig,
     ) -> None:
@@ -75,7 +75,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         layout.addRow("Ensemble:", self._ensemble_selector)
 
-        runpath_label = CopyableLabel(text=run_path)
+        runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
 
         self._number_of_realizations_label = QLabel()

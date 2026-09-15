@@ -44,7 +44,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         parameter_configuration: list[ParameterConfig],
         active_realizations: list[bool],
         config_num_realization: int,
-        run_path: str,
+        runpath: str,
         notifier: ErtNotifier,
     ) -> None:
         super().__init__(EnsembleExperiment)
@@ -75,7 +75,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         layout.addRow("Ensemble name:", self._ensemble_name_field)
 
-        runpath_label = CopyableLabel(text=run_path)
+        runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_container = QWidget()

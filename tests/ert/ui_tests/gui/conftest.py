@@ -35,7 +35,7 @@ from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import SharedClient
 from ert.storage import Storage
-from tests.ert.handle_run_path_dialog import handle_run_path_dialog
+from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
 DEFAULT_NUM_REALIZATIONS = 10
 ENSEMBLE_NAME = "iter"
@@ -318,7 +318,7 @@ def run_experiment_fixture(request):
         def handle_dialog():
             QTimer.singleShot(
                 500,
-                lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
+                lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False),
             )
 
         if experiment_mode.name() not in {

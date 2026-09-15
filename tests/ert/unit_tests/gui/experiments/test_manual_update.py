@@ -51,7 +51,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_pri
     )
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        run_path="",
+        runpath="",
         notifier=notifier,
     )
     qtbot.addWidget(panel)
@@ -118,7 +118,7 @@ def test_that_manual_update_ensemble_selector_only_shows_ensembles_with_data(
 
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        run_path="",
+        runpath="",
         notifier=notifier,
     )
     qtbot.addWidget(panel)
@@ -152,7 +152,7 @@ def test_that_panel_does_not_crash_when_no_realization_has_parameters(
     )
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        run_path="",
+        runpath="",
         notifier=notifier,
     )
     qtbot.addWidget(panel)
@@ -186,7 +186,7 @@ def test_that_empty_experiment_name_field_defaults_to_manual_update_of_mock_ense
     )
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        run_path="",
+        runpath="",
         notifier=notifier,
     )
     qtbot.addWidget(panel)
@@ -209,7 +209,7 @@ def test_that_experiment_name_field_is_used_in_experiment_arguments(
     )
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        run_path="",
+        runpath="",
         notifier=notifier,
     )
     qtbot.addWidget(panel)

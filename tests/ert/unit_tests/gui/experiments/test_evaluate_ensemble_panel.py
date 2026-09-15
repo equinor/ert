@@ -64,7 +64,7 @@ def test_that_ensemble_select_contains_only_leaf_ensembles(
     notifier._storage._ensembles[keys[2]]._index.prior_ensemble_id = keys[1]
 
     panel = EvaluateEnsemblePanel(
-        run_path="",
+        runpath="",
         notifier=notifier,
     )
 

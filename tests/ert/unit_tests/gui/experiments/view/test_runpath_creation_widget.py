@@ -66,10 +66,10 @@ def test_that_widget_tracks_delete_progress_during_runpath_removal(
     removed_runpaths = []
 
     for iens in (0, 2):
-        run_path = Path(f"Case_Name/realization-{iens}/iter-0")
-        run_path.mkdir(parents=True)
-        (run_path / "dummy").touch()
-        removed_runpaths.append(run_path)
+        runpath = Path(f"Case_Name/realization-{iens}/iter-0")
+        runpath.mkdir(parents=True)
+        (runpath / "dummy").touch()
+        removed_runpaths.append(runpath)
 
     widget = RunpathProgressWidget(
         initial_status_text="Deleting runpaths...",
@@ -81,8 +81,8 @@ def test_that_widget_tracks_delete_progress_during_runpath_removal(
     qtbot.waitUntil(widget.isVisible)
     assert widget._label.text() == "Deleting runpaths..."
 
-    RunModel.rm_run_path(
-        SimpleNamespace(paths=[str(run_path) for run_path in removed_runpaths]),
+    RunModel.rm_runpath(
+        SimpleNamespace(paths=[str(runpath) for runpath in removed_runpaths]),
         progress_tracker=widget,
         progress_callback=QApplication.processEvents,
     )
@@ -90,4 +90,4 @@ def test_that_widget_tracks_delete_progress_during_runpath_removal(
     assert widget._bar.maximum() == 2
     assert widget._bar.value() == 2
     assert widget._label.text() == "2 / 2 runpaths deleted"
-    assert all(not run_path.exists() for run_path in removed_runpaths)
+    assert all(not runpath.exists() for runpath in removed_runpaths)

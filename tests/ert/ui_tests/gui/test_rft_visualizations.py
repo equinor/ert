@@ -43,7 +43,7 @@ def write_egrid(path: Path):
 def rft_config(tmp_path: Path):
     num_realizations = 2
     for i in range(num_realizations):
-        runpath = tmp_path / "run_path" / f"realization-{i}"
+        runpath = tmp_path / "runpath" / f"realization-{i}"
         runpath.mkdir(parents=True)
         rft_file = runpath / "BASE.RFT"
         offset = i / 2
@@ -65,7 +65,7 @@ def rft_config(tmp_path: Path):
         {
             "NUM_REALIZATIONS": num_realizations,
             "ENSPATH": str(tmp_path / "storage"),
-            "RUNPATH": str(tmp_path / "run_path/realization-<IENS>"),
+            "RUNPATH": str(tmp_path / "runpath" / "realization-<IENS>"),
             "ECLBASE": "BASE",
             "OBS_CONFIG": (
                 "obs_config",

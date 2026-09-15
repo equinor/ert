@@ -50,15 +50,15 @@ RFT WELL:WELL_B DATE:2001-01-01 PROPERTIES:PRESSURE
 
 
 def _write_runpath_files(
-    rft_config: RFTConfig, run_path: Path, realization: int, iteration: int
+    rft_config: RFTConfig, runpath: Path, realization: int, iteration: int
 ) -> None:
-    run_path.mkdir(parents=True, exist_ok=True)
-    (run_path / rft_qc_example.ZONEMAP_FILE).write_text(
+    runpath.mkdir(parents=True, exist_ok=True)
+    (runpath / rft_qc_example.ZONEMAP_FILE).write_text(
         rft_qc_example.ZONEMAP, encoding="utf-8"
     )
 
     base = rft_config._rft_filepath(
-        rft_config.input_files[0], str(run_path), realization, iteration
+        rft_config.input_files[0], str(runpath), realization, iteration
     )
     resfo.write(f"{base}.EGRID", rft_qc_example.egrid())
     resfo.write(f"{base}.RFT", rft_qc_example.rft_file())
@@ -98,11 +98,11 @@ def _create_storage(ert_config: ErtConfig) -> None:
         ensemble = ensembles[iteration]
         runpaths = Runpaths.from_config(ert_config)
 
-        run_path = Path(runpaths.get_paths([realization], iteration)[0])
-        _write_runpath_files(rft_config, run_path, realization, iteration)
+        runpath = Path(runpaths.get_paths([realization], iteration)[0])
+        _write_runpath_files(rft_config, runpath, realization, iteration)
 
-        responses = rft_config.read_from_file(str(run_path), realization, iteration)
-        _write_observation_metadata(str(run_path), realization, ensemble)
+        responses = rft_config.read_from_file(str(runpath), realization, iteration)
+        _write_observation_metadata(str(runpath), realization, ensemble)
         ensemble.save_response(rft_config.type, responses, realization)
 
 

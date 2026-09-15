@@ -242,7 +242,7 @@ def test_delete_run_path(run_path_format, active_realizations, use_tmpdir):
         active_realizations=active_realizations,
     )
 
-    brm.rm_run_path()
+    brm.rm_runpath()
     assert not any(path.exists() for path in expected_removed)
     assert all(path.parent.exists() for path in expected_removed)
     assert all(path.exists() for path in expected_remaining)

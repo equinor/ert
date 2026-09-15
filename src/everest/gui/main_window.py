@@ -79,7 +79,7 @@ class EverestMainWindow(QMainWindow):
             run_model_api=run_model_api,
             event_queue=event_queue,
             notifier=ErtNotifier(),
-            run_path=Path(config["run_path"]),
+            runpath=Path(config["run_path"]),
             storage_path=Path(config["storage_path"]),
         )
 

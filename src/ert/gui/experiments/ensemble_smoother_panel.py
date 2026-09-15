@@ -46,7 +46,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self,
         analysis_config: AnalysisConfig,
         parameter_configuration: list[ParameterConfig],
-        run_path: str,
+        runpath: str,
         notifier: ErtNotifier,
         active_realizations: list[bool],
         config_num_realization: int,
@@ -71,7 +71,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._experiment_name_field.setObjectName("experiment_field")
         layout.addRow("Experiment name:", self._experiment_name_field)
 
-        runpath_label = CopyableLabel(text=run_path)
+        runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_container = QWidget()

@@ -803,7 +803,7 @@ class RunModel(RunModelConfig, ABC):
         return self.active_realizations.count(True)
 
     @log_duration(logger, logging.INFO)
-    def rm_run_path(
+    def rm_runpath(
         self,
         progress_tracker: RunpathProgressWidget | None = None,
         progress_callback: Callable[[], None] | None = None,

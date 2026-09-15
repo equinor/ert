@@ -44,15 +44,15 @@ def unescape_string(string: str) -> str:
     )
 
 
-def strip_run_path_magic_keywords(run_path: str) -> str:
+def strip_runpath_magic_keywords(runpath: str) -> str:
     rp_stripped = ""
-    for s in run_path.split("/"):
+    for s in runpath.split("/"):
         if all(substring not in s for substring in ("<IENS>", "<ITER>")) and s:
             rp_stripped += "/" + s
     if not rp_stripped:
         rp_stripped = "/"
 
-    if run_path and not run_path.startswith("/"):
+    if runpath and not runpath.startswith("/"):
         rp_stripped = rp_stripped[1:]
 
     return rp_stripped
@@ -65,9 +65,7 @@ class _CopyButton(CopyButton):
 
     @override
     def copy(self) -> None:
-        self.copy_text(
-            strip_run_path_magic_keywords(unescape_string(self.label.text()))
-        )
+        self.copy_text(strip_runpath_magic_keywords(unescape_string(self.label.text())))
 
 
 class CopyableLabel(QHBoxLayout):

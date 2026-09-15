@@ -233,11 +233,11 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     )
 
 
-def handle_run_path_dialog(
+def handle_runpath_dialog(
     gui,
     qtbot,
 ):
-    mb = gui.findChildren(QMessageBox, "RUN_PATH_WARNING_BOX")
+    mb = gui.findChildren(QMessageBox, "RUNPATH_WARNING_BOX")
     mb = mb[-1] if mb else None
 
     if mb is not None:
@@ -307,7 +307,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     # Click start simulation and agree to the message
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
 
-    QTimer.singleShot(1000, lambda: handle_run_path_dialog(gui, qtbot))
+    QTimer.singleShot(1000, lambda: handle_runpath_dialog(gui, qtbot))
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     # The Run dialog opens, wait until restart appears and the tab is ready
     run_dialog = wait_for_child(gui, qtbot, RunDialog)

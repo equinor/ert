@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication, QWidget
 
 from ert.gui.ertwidgets.copyablelabel import (
     CopyableLabel,
-    strip_run_path_magic_keywords,
+    strip_runpath_magic_keywords,
 )
 
 
@@ -34,7 +34,7 @@ def test_copy_clickbtn(qtbot, label_testcase):
 
 
 @pytest.mark.parametrize(
-    ("run_path", "expected"),
+    ("runpath", "expected"),
     [
         ("", "/"),
         ("///", "/"),
@@ -45,5 +45,5 @@ def test_copy_clickbtn(qtbot, label_testcase):
         ("/local/reals/real-<IENS>", "/local/reals"),
     ],
 )
-def test_run_path_stripped(run_path, expected):
-    assert strip_run_path_magic_keywords(run_path) == expected
+def test_runpath_stripped(runpath, expected):
+    assert strip_runpath_magic_keywords(runpath) == expected

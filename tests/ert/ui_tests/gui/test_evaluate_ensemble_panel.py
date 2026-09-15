@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QComboBox, QWidget
 
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from tests.ert.handle_run_path_dialog import handle_run_path_dialog
+from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 from tests.ert.ui_tests.gui.conftest import (
     DEFAULT_NUM_REALIZATIONS,
     get_child,
@@ -24,7 +24,7 @@ def test_evaluate_ensemble_active_realizations_resets_to_all_realizations_with_p
     simulation_mode_combo.setCurrentText("Ensemble experiment")
 
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
-    QTimer.singleShot(1000, lambda: handle_run_path_dialog(gui, qtbot))
+    QTimer.singleShot(1000, lambda: handle_runpath_dialog(gui, qtbot))
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)

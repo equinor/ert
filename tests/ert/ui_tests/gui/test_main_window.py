@@ -58,7 +58,7 @@ from ert.run_models import (
 )
 from ert.services import ErtServerController
 from ert.storage import open_storage
-from tests.ert.handle_run_path_dialog import handle_run_path_dialog
+from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
 from .conftest import (
     add_experiment_manually,
@@ -881,7 +881,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         "button_Start_experiment", should_click=True, expected_enabled_state=True
     )
     QTimer.singleShot(
-        500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        500, lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=True)
     )
     run_experiment()
     wait_for_simulation_completed()
@@ -893,7 +893,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         "button_Start_experiment", should_click=True, expected_enabled_state=True
     )
     QTimer.singleShot(
-        500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        500, lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=True)
     )
     run_experiment()
     wait_for_simulation_completed()
@@ -1060,7 +1060,7 @@ warnings.warn('Foobar')"""
     assert run_dialog.fail_msg_box.isVisible()
 
 
-def test_denied_run_path_warning_dialog_releases_storage_lock(
+def test_denied_runpath_warning_dialog_releases_storage_lock(
     qtbot, opened_main_window_poly, use_tmpdir, monkeypatch
 ):
     # Populate runpath

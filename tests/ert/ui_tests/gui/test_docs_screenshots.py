@@ -21,7 +21,7 @@ from ert.gui.tools.load_results import LoadResultsPanel
 from ert.run_models import EnsembleExperiment, EnsembleSmoother, RunModel
 from ert.services import ErtServerController
 from ert.storage import open_storage
-from tests.ert.handle_run_path_dialog import handle_run_path_dialog
+from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
 
 from .conftest import get_child, wait_for_child
@@ -112,7 +112,7 @@ def run_experiment(
     def handle_dialog() -> None:
         QTimer.singleShot(
             500,
-            lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
+            lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False),
         )
 
     if experiment_mode.name() not in {"Ensemble experiment", "Evaluate ensemble"}:
@@ -380,10 +380,10 @@ def test_that_load_results_manually_screenshot_is_up_to_date(
         dialog = wait_for_child(gui, qtbot, ClosableDialog)
         panel = get_child(dialog, LoadResultsPanel)
 
-        run_path_edit = get_child(panel, TextBox, name="runpath_edit_lrm")
+        runpath_edit = get_child(panel, TextBox, name="runpath_edit_lrm")
         current_directory = str(Path.cwd())
-        run_path_edit.setText(run_path_edit.get_text.replace(current_directory, "."))
-        run_path_edit.clearFocus()
+        runpath_edit.setText(runpath_edit.get_text.replace(current_directory, "."))
+        runpath_edit.clearFocus()
 
         gui_evaluator.compare_img_with_gui(
             "load_results_manually.png",

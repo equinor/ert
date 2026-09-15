@@ -30,7 +30,7 @@ def _breakthrough_config() -> ErtConfig:
         {
             "NUM_REALIZATIONS": 8,
             "ENSPATH": "storage",
-            "RUNPATH": "run_path/realization-<IENS>",
+            "RUNPATH": "runpath/realization-<IENS>",
             "ECLBASE": "BASE",
             "OBS_CONFIG": (
                 "obs_config",
