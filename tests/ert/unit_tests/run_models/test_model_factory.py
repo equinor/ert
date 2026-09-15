@@ -374,6 +374,29 @@ def test_that_update_setup_rejects_one_active_realization(analysis_mode):
         analysis_mode(config, args, ObservationSettings(), queue.SimpleQueue())
 
 
+def test_that_non_restart_setup_rejects_empty_experiment_name_before_opening_storage():
+    parameter = _gen_kw_config()
+    config = ErtConfig(
+        runpath_config=ModelConfig(num_realizations=2),
+        ensemble_config=EnsembleConfig(parameter_configs={parameter.name: parameter}),
+    )
+    args = Namespace(
+        realizations=None,
+        weights=None,
+        target_ensemble="ensemble_%d",
+        prior_ensemble_id=None,
+        experiment_name="",
+    )
+    with patch("ert.run_models.run_model.open_storage") as open_storage:
+        with pytest.raises(
+            ValidationError, match="For non-restart run, experiment name must be set"
+        ):
+            _setup_multiple_data_assimilation(
+                config, args, ObservationSettings(), queue.SimpleQueue()
+            )
+        open_storage.assert_not_called()
+
+
 @pytest.mark.parametrize(
     ("ensemble_iteration", "expected_path"),
     [
