@@ -362,3 +362,11 @@ class SingleTestRunConfig(InitialEnsembleRunModelConfig):
     supports_rerunning_failed_realizations: ClassVar[bool] = True
     active_realizations: list[bool] = Field(default_factory=lambda: [True])
     minimum_required_realizations: int = 1
+
+    @model_validator(mode="after")
+    def _check_first_realization_is_active(self) -> Self:
+        if not self.active_realizations or not self.active_realizations[0]:
+            raise ValueError(
+                "Cannot run single test run when the first realization is inactive."
+            )
+        return self
