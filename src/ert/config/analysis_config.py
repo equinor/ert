@@ -275,7 +275,8 @@ class AnalysisConfig:
 
         design_matrices = [
             DesignMatrix.from_config_list(
-                design_matrix_config_list, parameter_type_update_strategies
+                design_matrix_config_list,
+                parameter_type_update_strategies.get("GEN_KW"),
             )
             for design_matrix_config_list in design_matrix_config_lists
         ]

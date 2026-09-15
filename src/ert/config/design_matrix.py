@@ -35,7 +35,7 @@ class DesignMatrix:
     default_sheet: str | None
     priority_source: str = "design_matrix"
     update: bool = False
-    parameter_type_update_strategies: dict[str, LocalizationType] | None = None
+    update_strategy: LocalizationType | None = None
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
@@ -61,7 +61,7 @@ class DesignMatrix:
     def from_config_list(
         cls,
         config_list: list[str | dict[str, str]],
-        parameter_type_update_strategies: dict[str, LocalizationType],
+        update_strategy: LocalizationType | None,
     ) -> DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
@@ -117,7 +117,7 @@ class DesignMatrix:
             default_sheet=default_sheet,
             priority_source=priority_source,
             update=update_value == "TRUE",
-            parameter_type_update_strategies=parameter_type_update_strategies,
+            update_strategy=update_strategy,
         )
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
@@ -222,9 +222,7 @@ class DesignMatrix:
                 if input_source == DataSource.SAMPLED:
                     update_strategy = param_cfg.update_strategy
                 elif self.update:
-                    update_strategy = (self.parameter_type_update_strategies or {}).get(
-                        param_cfg.type.upper(), LocalizationType.GLOBAL
-                    )
+                    update_strategy = self.update_strategy or LocalizationType.GLOBAL
                 else:
                     update_strategy = None
 
@@ -253,10 +251,7 @@ class DesignMatrix:
             if self.update:
                 for cfg in design_matrix_cfgs.values():
                     cfg.update_strategy = (
-                        self.parameter_type_update_strategies or {}
-                    ).get(
-                        cfg.type.upper(),
-                        LocalizationType.GLOBAL,  # ??
+                        self.update_strategy or LocalizationType.GLOBAL
                     )
             new_param_configs += list(design_matrix_cfgs.values())
 
@@ -424,7 +419,7 @@ class DesignMatrix:
                 update_strategy=None,
                 group=DESIGN_MATRIX_GROUP,
                 input_source=DataSource.DESIGN_MATRIX,
-                distribution={"name": "raw"},
+                distribution=RawSettings(name="raw"),
             )
             for col in design_matrix_df.columns
             if col != "realization"
