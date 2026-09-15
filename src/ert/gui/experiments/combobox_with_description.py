@@ -1,7 +1,7 @@
 from typing import Any, override
 
-from PyQt6.QtCore import QModelIndex, QPoint, QSize
-from PyQt6.QtGui import QColor, QRegion
+from PyQt6.QtCore import QEvent, QModelIndex, QObject, QPoint, QSignalBlocker, QSize, Qt
+from PyQt6.QtGui import QColor, QMouseEvent, QRegion, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QComboBox,
     QLabel,
@@ -20,6 +20,19 @@ COLOR_HIGHLIGHT_LIGHT = QColor(230, 230, 230, 255)
 COLOR_HIGHLIGHT_DARK = QColor(60, 60, 60, 255)
 
 
+class _ComboBoxGroupWidget(QLabel):
+    def __init__(self, title: str) -> None:
+        super().__init__(title)
+        self.setStyleSheet(
+            """
+            padding: 5px 5px 5px 5px;
+            background: rgba(0,0,0,0);
+            font-style: italic;
+            font-size: 14px;
+            """
+        )
+
+
 class _ComboBoxItemWidget(QWidget):
     def __init__(
         self,
@@ -28,7 +41,6 @@ class _ComboBoxItemWidget(QWidget):
         *,
         enabled: bool = True,
         parent: QWidget | None = None,
-        group: str | None = None,
     ) -> None:
         super().__init__(parent)
         layout = QVBoxLayout()
@@ -36,25 +48,10 @@ class _ComboBoxItemWidget(QWidget):
         self.setStyleSheet("background: rgba(0,0,0,1);")
         self.label = QLabel(label)
         color = "color: rgba(192,192,192,80);" if not enabled else ";"
-        pd_top = "0px" if group else "5px"
-        if group:
-            self.group = QLabel(group)
-            self.group.setStyleSheet(
-                f"""
-                {color}
-                padding-top: 5px;
-                padding-left: 2px;
-                background: rgba(0,0,0,0);
-                font-style: italic;
-                font-size: 14px;
-            """
-            )
-            layout.addWidget(self.group)
-
         self.label.setStyleSheet(
             f"""
             {color}
-            padding-top:{pd_top};
+            padding-top: 5px;
             padding-left: 10px;
             background: rgba(0,0,0,0);
             font-weight: bold;
@@ -88,17 +85,23 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
 
         is_enabled = option.state & QStyle.StateFlag.State_Enabled
 
-        if is_enabled and (
-            option.state & QStyle.StateFlag.State_Selected
-            or option.state & QStyle.StateFlag.State_MouseOver
+        if (
+            not group
+            and is_enabled
+            and (
+                option.state & QStyle.StateFlag.State_Selected
+                or option.state & QStyle.StateFlag.State_MouseOver
+            )
         ):
             color = COLOR_HIGHLIGHT_LIGHT
             if option.palette.text().color().value() > 150:
                 color = COLOR_HIGHLIGHT_DARK
             painter.fillRect(option.rect, color)
 
-        widget = _ComboBoxItemWidget(
-            label, description, enabled=is_enabled, group=group
+        widget = (
+            _ComboBoxGroupWidget(group)
+            if group
+            else _ComboBoxItemWidget(label, description, enabled=bool(is_enabled))
         )
         widget.setStyle(option.widget.style())
         widget.resize(option.rect.size())
@@ -112,27 +115,74 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
         group = index.data(GROUP_TITLE_ROLE)
-        adjustment = QSize(0, 20) if group else QSize(0, 0)
-
-        widget = _ComboBoxItemWidget(label, description, group=group)
-        return widget.sizeHint() + adjustment
+        widget = (
+            _ComboBoxGroupWidget(group)
+            if group
+            else _ComboBoxItemWidget(label, description)
+        )
+        return widget.sizeHint()
 
 
 class QComboBoxWithDescription(QComboBox):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
+        view = self.view()
+        assert view is not None
+        viewport = view.viewport()
+        assert viewport is not None
+        viewport.installEventFilter(self)
+
+    @override
+    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
+        view = self.view()
+        assert view is not None
+        if (
+            obj is view.viewport()
+            and event is not None
+            and event.type()
+            in {
+                QEvent.Type.MouseButtonPress,
+                QEvent.Type.MouseButtonRelease,
+                QEvent.Type.MouseButtonDblClick,
+            }
+        ):
+            assert isinstance(event, QMouseEvent)
+            index = view.indexAt(event.position().toPoint())
+            if index.data(GROUP_TITLE_ROLE):
+                # Qt otherwise closes the popup even when the row is disabled.
+                return True
+        return super().eventFilter(obj, event)
 
     def addDescriptionItem(
         self, label: str, description: Any, group: str | None = None
-    ) -> None:
-        super().addItem(label)
+    ) -> int:
         model = self.model()
-        assert model is not None
-        index = model.index(self.count() - 1, 0)
+        assert isinstance(model, QStandardItemModel)
+        row = self.count()
+        if group:
+            group_row = self.findData(group, GROUP_TITLE_ROLE)
+            if group_row == -1:
+                header = QStandardItem(group)
+                header.setData(group, GROUP_TITLE_ROLE)
+                header.setFlags(Qt.ItemFlag.NoItemFlags)
+                with QSignalBlocker(self):
+                    model.appendRow(header)
+                    if self.currentData(GROUP_TITLE_ROLE):
+                        self.setCurrentIndex(-1)
+                row = self.count()
+            else:
+                row = group_row + 1
+                while row < self.count() and not self.itemData(row, GROUP_TITLE_ROLE):
+                    row += 1
+
+        super().insertItem(row, label)
+        index = model.index(row, 0)
         model.setData(index, label, LABEL_ROLE)
         model.setData(index, description, DESCRIPTION_ROLE)
-        model.setData(index, group, GROUP_TITLE_ROLE)
+        if self.currentIndex() == -1:
+            self.setCurrentIndex(row)
+        return row
 
     @override
     def sizeHint(self) -> QSize:
