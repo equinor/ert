@@ -37,6 +37,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.experiments import ExperimentPanel, RunDialog
+from ert.gui.experiments.combobox_with_description import GROUP_TITLE_ROLE
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
 from ert.gui.plotting.plot_window import (
@@ -113,10 +114,13 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 7
+        assert combo_box.count() == 9
 
         for i in range(combo_box.count()):
-            assert combo_box.model().item(i).isEnabled()
+            assert combo_box.model().item(i).isEnabled() == (
+                combo_box.itemData(i, GROUP_TITLE_ROLE) is None
+            )
+        assert combo_box.currentText() == SingleTestRun.display_name()
 
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
@@ -133,11 +137,11 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 7
+        assert combo_box.count() == 9
 
-        for i in range(3):
+        for i in range(1, 4):
             assert combo_box.model().item(i).isEnabled()
-        for i in range(3, 5):
+        for i in (0, *range(4, 9)):
             assert not combo_box.model().item(i).isEnabled()
 
         assert gui.windowTitle().startswith("ERT - config.ert")
@@ -159,11 +163,11 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(qap
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 7
+        assert combo_box.count() == 9
 
-        for i in range(3):
+        for i in range(1, 4):
             assert combo_box.model().item(i).isEnabled()
-        for i in range(3, 5):
+        for i in (0, *range(4, 9)):
             assert not combo_box.model().item(i).isEnabled()
 
         assert gui.windowTitle().startswith("ERT - poly-no-gen-kw.ert")
@@ -239,7 +243,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        combo_box.setCurrentIndex(3)
+        combo_box.setCurrentText(MultipleDataAssimilation.display_name())
 
         assert combo_box.currentText() == MultipleDataAssimilation.display_name()
 
@@ -740,8 +744,8 @@ def test_that_es_mda_select_prior_run_box_is_disabled_when_there_are_no_valid_ca
 
     combo_box = get_child(gui, QComboBox, name="experiment_type")
     qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
-    assert combo_box.count() == 7
-    combo_box.setCurrentIndex(3)
+    assert combo_box.count() == 9
+    combo_box.setCurrentText(MultipleDataAssimilation.display_name())
 
     assert combo_box.currentText() == MultipleDataAssimilation.display_name()
 

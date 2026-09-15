@@ -258,17 +258,16 @@ class ExperimentPanel(QWidget):
         self._experiment_stack.addWidget(panel)
         experiment_type = panel.get_experiment_type()
         self._experiment_widgets[experiment_type] = panel
-        self._experiment_type_combo.addDescriptionItem(
+        item_index = self._experiment_type_combo.addDescriptionItem(
             experiment_type.display_name(),
             experiment_type.description(),
             experiment_type.group(),
         )
 
         if not mode_enabled:
-            item_count = self._experiment_type_combo.count() - 1
             model = self._experiment_type_combo.model()
             assert isinstance(model, QStandardItemModel)
-            sim_item = model.item(item_count)
+            sim_item = model.item(item_index)
             assert sim_item is not None
             sim_item.setEnabled(False)
             sim_item.setToolTip(
