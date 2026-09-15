@@ -9,7 +9,6 @@ from pydantic import ValidationError
 import ert
 from ert.config import (
     AnalysisConfig,
-    ConfigValidationError,
     ConfigWarning,
     EnsembleConfig,
     ErtConfig,
@@ -448,7 +447,7 @@ def test_that_prior_ensemble_allows_current_config_without_updatable_parameters(
         _setup_ensemble_information_filter,
     ],
 )
-def test_that_setting_up_experiment_with_update_step_raises_config_validation_error_given_no_parameters_configured(  # ruff: ignore[line-too-long]
+def test_that_update_setup_rejects_configs_without_parameters(
     experiment_setup_method, tmp_path
 ):
     config = ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}")
@@ -462,7 +461,7 @@ def test_that_setting_up_experiment_with_update_step_raises_config_validation_er
     )
 
     with pytest.raises(
-        ConfigValidationError,
+        ValidationError,
         match="No parameters to update as no GEN_KW, FIELD or SURFACE "
         "parameters are configured!",
     ):

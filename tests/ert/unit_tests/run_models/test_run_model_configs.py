@@ -109,3 +109,67 @@ def test_that_single_test_config_defaults_to_realization_zero(config_kwargs):
     kwargs = config_kwargs(SingleTestRunConfig)
     del kwargs["active_realizations"]
     assert SingleTestRunConfig(**kwargs).active_realizations == [True]
+
+
+@pytest.mark.parametrize(
+    "config_type",
+    [
+        EnsembleSmootherConfig,
+        EnsembleInformationFilterConfig,
+        MultipleDataAssimilationConfig,
+    ],
+)
+@pytest.mark.parametrize("has_parameters", [False, True], ids=["empty", "all-disabled"])
+def test_that_initial_update_configs_require_updatable_parameters(
+    config_kwargs, config_type, has_parameters
+):
+    kwargs = config_kwargs(config_type)
+    for parameter in kwargs["parameter_configuration"]:
+        parameter.update_strategy = None
+    if not has_parameters:
+        kwargs["parameter_configuration"] = []
+
+    with pytest.raises(ValidationError, match="No parameters to update"):
+        config_type(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "config_type",
+    [
+        EnsembleSmootherConfig,
+        EnsembleInformationFilterConfig,
+        MultipleDataAssimilationConfig,
+    ],
+)
+def test_that_initial_update_configs_accept_mix_of_fixed_and_updatable_parameters(
+    config_kwargs, config_type
+):
+    kwargs = config_kwargs(config_type)
+    fixed = GenKwConfig(
+        name="FIXED",
+        distribution={"name": "normal", "mean": 0, "std": 1},
+        update_strategy=None,
+    )
+    kwargs["parameter_configuration"].append(fixed)
+    assert len(config_type(**kwargs).parameter_configuration) == 2
+
+
+@pytest.mark.parametrize("has_parameters", [False, True], ids=["empty", "all-disabled"])
+def test_that_restart_configs_allow_current_parameters_without_updates(
+    config_kwargs, has_parameters
+):
+    kwargs = config_kwargs(MultipleDataAssimilationConfig)
+    kwargs["prior_ensemble_id"] = "00000000-0000-0000-0000-000000000001"
+    for parameter in kwargs["parameter_configuration"]:
+        parameter.update_strategy = None
+    if not has_parameters:
+        kwargs["parameter_configuration"] = []
+    config = MultipleDataAssimilationConfig(**kwargs)
+    assert config.parameter_configuration == kwargs["parameter_configuration"]
+
+
+@pytest.mark.parametrize("config_type", [EnsembleExperimentConfig, SingleTestRunConfig])
+def test_that_non_update_configs_allow_no_parameters(config_kwargs, config_type):
+    kwargs = config_kwargs(config_type)
+    kwargs["parameter_configuration"] = []
+    assert config_type(**kwargs).parameter_configuration == []
