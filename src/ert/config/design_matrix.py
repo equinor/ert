@@ -206,27 +206,27 @@ class DesignMatrix:
 
         new_param_configs: list[ParameterConfig] = []
 
-        design_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
+        design_matrix_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
 
         for param_cfg in existing_parameters:
-            if isinstance(param_cfg, GenKwConfig) and param_cfg.name in design_cfgs:
+            if (
+                isinstance(param_cfg, GenKwConfig)
+                and param_cfg.name in design_matrix_cfgs
+            ):
                 input_source = DataSource(
                     self.parameter_priority.get(
                         param_cfg.name, DataSource.DESIGN_MATRIX.value
                     )
                 )
 
-                update_strategy = None
-                if self.update:
-                    if input_source == DataSource.SAMPLED:
-                        update_strategy = param_cfg.update_strategy
-                    elif (
-                        input_source == DataSource.DESIGN_MATRIX
-                        and self.parameter_type_update_strategies is not None
-                    ):
-                        update_strategy = self.parameter_type_update_strategies.get(
-                            param_cfg.type.upper(), None
-                        )
+                if input_source == DataSource.SAMPLED:
+                    update_strategy = param_cfg.update_strategy
+                elif self.update:
+                    update_strategy = (self.parameter_type_update_strategies or {}).get(
+                        param_cfg.type.upper(), LocalizationType.GLOBAL
+                    )
+                else:
+                    update_strategy = None
 
                 new_param_configs += [
                     GenKwConfig(
@@ -245,20 +245,20 @@ class DesignMatrix:
                         input_source=input_source,
                     ),
                 ]
-                del design_cfgs[param_cfg.name]
+                del design_matrix_cfgs[param_cfg.name]
             else:
                 new_param_configs += [param_cfg]
 
-        if design_cfgs.values():
+        if design_matrix_cfgs.values():
             if self.update:
-                for cfg in design_cfgs.values():
+                for cfg in design_matrix_cfgs.values():
                     cfg.update_strategy = (
                         self.parameter_type_update_strategies or {}
                     ).get(
                         cfg.type.upper(),
                         LocalizationType.GLOBAL,  # ??
                     )
-            new_param_configs += list(design_cfgs.values())
+            new_param_configs += list(design_matrix_cfgs.values())
 
         return new_param_configs
 
