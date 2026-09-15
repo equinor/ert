@@ -122,6 +122,14 @@ The :code:`status` field is one of :code:`success`, :code:`failed` or
 jobs that were stopped because the workflow was cancelled are logged at
 :code:`INFO` level.
 
+Workflows hooked in with :code:`HOOK_WORKFLOW` are in addition recorded
+alongside the experiment they belong to, in
+:code:`<ENSPATH>/experiments/<experiment_id>/workflow_events.jsonl`. That file
+holds one JSON object per job invocation and exists so the output of a
+workflow can be shown again later; it is not meant to be read directly.
+Output from hooks that ran before the experiment is created, such as
+:code:`PRE_EXPERIMENT`, is held back and written once the storage is created.
+
 .. _runpath-file-workflows:
 
 Locating the realisations: <RUNPATH_FILE>
