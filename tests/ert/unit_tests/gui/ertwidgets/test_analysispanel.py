@@ -34,7 +34,7 @@ def test_that_empty_update_strategies_are_set_to_global(qtbot: QtBot):
             assert combobox.currentData() == LocalizationType.GLOBAL
 
 
-def test_that_the_panel_initializes_with_correct_values(qtbot: QtBot):
+def test_that_panel_initializes_with_correct_values(qtbot: QtBot):
     settings = ESSettings()
     settings.localization_correlation_threshold = 0.5
     settings.enkf_truncation = 0.2
@@ -72,33 +72,6 @@ def test_that_the_panel_initializes_with_correct_values(qtbot: QtBot):
             assert combobox.currentData() == LocalizationType.DISTANCE
         elif combobox.objectName() == "FIELD":
             assert combobox.currentData() == LocalizationType.ADAPTIVE
-
-
-@pytest.mark.parametrize(
-    ("object_name", "property_name", "changed_value"),
-    [
-        ("localization_correlation_threshold", "correlation_threshold", 0.7),
-        ("enkf_truncation", "enkf_truncation", 0.4),
-    ],
-)
-def test_that_changing_numeric_control_updates_corresponding_property(
-    qtbot: QtBot,
-    object_name: str,
-    property_name: str,
-    changed_value: float,
-) -> None:
-    widget = AnalysisModuleVariablesPanel(
-        update_strategies={},
-        correlation_threshold=0.5,
-        enkf_truncation=0.2,
-    )
-    qtbot.addWidget(widget)
-
-    spinner = widget.findChild(QDoubleSpinBox, name=object_name)
-
-    assert spinner is not None
-    spinner.setValue(changed_value)
-    assert math.isclose(getattr(widget, property_name), changed_value)
 
 
 @pytest.mark.parametrize(

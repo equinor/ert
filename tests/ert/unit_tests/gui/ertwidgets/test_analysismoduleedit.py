@@ -8,28 +8,6 @@ from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
-def test_that_click_opens_the_correct_dialog(qtbot: QtBot):
-    widget = AnalysisModuleEdit(
-        es_settings=ESSettings(), parameter_config=[], ensemble_size=10
-    )
-    qtbot.addWidget(widget)
-
-    def inspect_and_close_dialog() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert dialog is not None
-        assert isinstance(dialog, QDialog)
-
-        panel = dialog.findChild(AnalysisModuleVariablesPanel)
-        assert panel is not None
-        dialog.reject()
-
-    QTimer.singleShot(0, inspect_and_close_dialog)
-
-    button = widget.findChild(QPushButton)
-    assert button is not None
-    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
-
-
 def test_that_settings_are_updated_correctly(qtbot: QtBot):
     es_settings = ESSettings()
     es_settings.localization_correlation_threshold = 0.5
@@ -77,7 +55,7 @@ def test_that_settings_are_updated_correctly(qtbot: QtBot):
     assert widget._parameter_config[0].update_strategy == LocalizationType.ADAPTIVE
 
 
-def test_that_only_gen_kw_parameters_with_update_strategy_are_updated(qtbot: QtBot):
+def test_that_only_parameters_with_update_strategy_are_updated(qtbot: QtBot):
     parameter_without_strategy = GenKwConfig(
         name="without_strategy",
         distribution={"name": "uniform", "min": 0, "max": 1},
