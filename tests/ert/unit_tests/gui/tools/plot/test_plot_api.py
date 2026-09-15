@@ -2,7 +2,6 @@ import gc
 import unittest
 from datetime import date, datetime
 from textwrap import dedent
-from urllib.parse import quote
 
 import httpx
 import numpy as np
@@ -11,40 +10,17 @@ import polars as pl
 import pytest
 from pandas.testing import assert_frame_equal
 from resfo_utilities import history_key
-from starlette.testclient import TestClient
 
 from ert.config import EverestObjectivesConfig, GenKwConfig, SummaryConfig
 from ert.dark_storage import common
-from ert.dark_storage.app import app
 from ert.gui.plotting.plot_api import PlotApi, PlotApiKeyDefinition
-from ert.services import ErtClient, ert_client
 from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
 
 @pytest.fixture(autouse=True)
-def use_testclient(monkeypatch):
-    client = TestClient(app)
-
-    class TestClientAdapter:
-        def request(self, method, url, **kwargs):
-            kwargs.pop("timeout", None)
-            return client.request(method, url, **kwargs)
-
-    monkeypatch.setattr(
-        ErtClient,
-        "get_client",
-        classmethod(lambda cls, *args, **kwargs: cls(TestClientAdapter())),
-    )
-
-    def test_escape(s: str) -> str:
-        """
-        Workaround for issue with TestClient:
-        https://github.com/encode/starlette/issues/1060
-        """
-        return quote(quote(quote(s, safe="")))
-
-    monkeypatch.setattr(ert_client, "_escape", test_escape)
+def _autouse_patch_ertclient_to_testclient(patch_ertclient_to_testclient):
+    pass
 
 
 def test_key_def_structure(api: PlotApi):
