@@ -1,24 +1,20 @@
-import re
+import logging
+import sys
 from pathlib import Path
-from subprocess import CalledProcessError
 
 import pytest
 
-from .test_use_cases import _run_cli
+from fmudesign.fmudesignrunner import main
 
 
 @pytest.mark.slow
-def test_that_log_folder_is_instantiated_with_fmudesign_cli_entrypoint(
-    use_tmpdir, monkeypatch
+def test_that_log_fmudesign_logs_does_not_create_logs_folder(
+    use_tmpdir, monkeypatch, caplog
 ):
-    with pytest.raises(CalledProcessError):
-        _run_cli("run", "does_not_exist.xlsx")
-    assert Path("logs").exists()
-
-    file = next(Path("logs").iterdir())
-
-    # Implicitly test that underscores are replaced with dashes in the log file name
-    log_file_pattern = (
-        r"fmudesign-log-does-not-exist-xlsx-(\d{4})-(\d{2})-(\d{2})T\d{4}[+-]\d{4}\.txt"
-    )
-    assert re.match(log_file_pattern, file.name)
+    caplog.set_level(logging.INFO)
+    monkeypatch.setattr(sys, "argv", ["fmudesign", "run", "foo.xlsx"])
+    with pytest.raises(SystemExit):
+        main()
+    assert "Running fmudesign" in caplog.text
+    assert "Input file foo.xlsx does not exist" in caplog.text
+    assert not Path("logs").exists()

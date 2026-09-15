@@ -32,9 +32,10 @@ from pathlib import Path
 from packaging.version import Version
 from pydantic import ValidationError
 
+from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import tracer
-from fmudesign.logging import log_and_print, setup_logging
+from fmudesign.logging import log_and_print
 
 from ._excel_to_dict import excel_to_dict
 from .create_design import DesignMatrix, _normalize_xlsx_filename
@@ -342,9 +343,12 @@ def main() -> None:
 
     Wrapper for the fmudesign module
     """
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    setup_site_logging(root_logger)
+
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
-
     parser, _subparsers = get_parser()
 
     # Backwards compatibility. If not a known command, assume "run"
@@ -353,6 +357,8 @@ def main() -> None:
         sys.argv.insert(1, "run")
 
     args = parser.parse_args()
+    args_to_log = {k: v for k, v in vars(args).items() if k != "func"}
+    logger.info(f"Running fmudesign with args: {args_to_log}")
 
     # No subcommand was provided
     if not hasattr(args, "func"):
@@ -368,35 +374,31 @@ def main() -> None:
         "If you believe this error is a bug or are unable to fix it, create an issue or contact the scout team \n"  # ruff: ignore[line-too-long]
     )
 
-    with setup_logging(args):
-        args_to_log = {k: v for k, v in vars(args).items() if k != "func"}
-        logger.info(f"Running fmudesign with args: {args_to_log}")
+    try:
+        args.func(args)
+    except ValidationError as e:
+        for err in e.errors(include_url=False):
+            log_and_print(
+                f"Validation error for '{err['loc'][0]}': "
+                f"{err['msg']}, was '{err['input']}'",
+                logger=logger,
+                level=logging.ERROR,
+            )
+        print(err_guide_msg)
+        sys.exit(1)
+    except Exception as err:
+        logger.exception(err)
+        traceback.print_exc()
+        print(err_guide_msg)
+        sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)
 
-        try:
-            args.func(args)
-        except ValidationError as e:
-            for err in e.errors(include_url=False):
-                log_and_print(
-                    f"Validation error for '{err['loc'][0]}': "
-                    f"{err['msg']}, was '{err['input']}'",
-                    logger=logger,
-                    level=logging.ERROR,
-                )
-            print(err_guide_msg)
-            sys.exit(1)
-        except Exception as err:
-            logger.exception(err)
-            traceback.print_exc()
-            print(err_guide_msg)
-            sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)
-
-        print(
-            "\n",
-            f"Thank you for using fmudesign {Version(ert_version).base_version}\n",
-            " - Documentation:           https://equinor.github.io/fmu-tools/fmudesign.html\n",
-            " - Course docs:             https://fmu-docs.equinor.com/docs/fmu-coursedocs/fmu-howto/sensitivities/index.html\n",
-            " - Issues/feature requests: https://github.com/equinor/ert/issues\n",
-        )
+    print(
+        "\n",
+        f"Thank you for using fmudesign {Version(ert_version).base_version}\n",
+        " - Documentation:           https://equinor.github.io/fmu-tools/fmudesign.html\n",
+        " - Course docs:             https://fmu-docs.equinor.com/docs/fmu-coursedocs/fmu-howto/sensitivities/index.html\n",
+        " - Issues/feature requests: https://github.com/equinor/ert/issues\n",
+    )
 
 
 if __name__ == "__main__":
