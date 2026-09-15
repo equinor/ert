@@ -67,6 +67,8 @@ uv run pytest tests/everest/test_<file>.py::test_<name>
   - prefer `cast`/`assert` over blanket `# type: ignore`.
 - Pre-commit is the source of truth for formatting/lint hooks (`ruff-check --fix`, `ruff-format`, yaml/json checks, actionlint, lockfile checks).
 - Some test data requires LFS/submodules (`git lfs install` and `git submodule update --init --recursive`) for representative local runs.
+- Keep code comments minimal: prefer readable variable/function names and clear code structure over comments that explain what the code does. A comment should not argue for the current implementation over a previous one (e.g., "changed from X to Y because..."); that rationale belongs in the commit message body, not in the code.
+- Do not add a `Co-authored-by: Copilot` trailer (or similar) to git commit messages in this repository.
 
 ---
 
@@ -88,6 +90,8 @@ Focus on: correctness, clarity, reliability, and maintainability.
 - [ ] Commit messages follow the prescribed format and explain the *what* and *why*, not the detailed *how*.
 - [ ] Code does not contain trivial or redundant documentation.
 - [ ] There is no commented-out (dead) code.
+- [ ] Comments are minimal, and do not argue for the current code over an earlier version (that belongs in the commit body).
+- [ ] Commit messages do not contain a `Co-authored-by: Copilot` trailer.
 - [ ] User-facing changes include/update relevant `.rst` documentation under `docs/`.
 - [ ] New code should prefer the variant runpath over "run path" or run_path
 
@@ -184,6 +188,8 @@ Commit message format:
 
 Reject commits that bundle unrelated changes (e.g., test addition + API rename + lint fixes) unless explicitly justified.
 
+Commits MUST NOT include a `Co-authored-by: Copilot` trailer (or similar automated attribution trailer).
+
 ---
 
 ## 4. Documentation
@@ -191,6 +197,7 @@ Reject commits that bundle unrelated changes (e.g., test addition + API rename +
 - Avoid trivial docstrings that restate the obvious (`get_count()` does not need “Return count”).
 - Docstrings should follow the google style guide.
 - Remove commented-out code blocks; if something is temporarily disabled, use version control (or explain in commit message) rather than comments.
+- Keep code comments minimal: favor clear, self-explanatory variable/function names and code structure so comments are superfluous. A comment must not justify the current code versus an earlier version (e.g., "previously this did X, now it does Y"); such rationale belongs in the commit message body.
 - For user-facing changes (new features, changed behaviors, configuration adjustments), ensure an `.rst` file under `docs/` is added or updated:
   - Include usage examples.
   - State backward compatibility or migration notes if applicable.
@@ -217,8 +224,9 @@ Address in order:
 3. Flaky or slow unit tests not marked as integration.
 4. Incorrect or missing type hints.
 5. Poorly named tests (vague or non-spec style).
-6. Commit message policy violations.
-7. Documentation gaps.
+6. Commit message policy violations (including `Co-authored-by: Copilot` trailers).
+7. Excessive or comparative comments (arguing current vs. earlier code) instead of clear naming/structure.
+8. Documentation gaps.
 
 Provide concise, actionable suggestions—avoid generic praise or ungrounded criticism.
 
