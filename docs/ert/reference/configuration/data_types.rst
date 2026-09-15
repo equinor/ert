@@ -609,6 +609,32 @@ A custom filename can be specified as a parameter::
 
       RFT WELL:PROD DATE:2015-02-01 PROPERTIES:PRESSURE,SWAT,SGAS
 
+
+.. _seismic_datatype:
+
+Seismic data
+^^^^^^^^^^^^
+
+In the context of ERT, seismic data is seismic attribute maps created by
+`fmu-sim2seis <https://github.com/equinor/fmu-sim2seis>`_.  Each map is a spatial
+grid of UTM coordinates, where each location stores an observed or simulated value
+and its associated error. The filename indicates what attribute each value represents.
+
+Files contain one row per measurement location and the following columns relevant for
+ERT:
+
+- ``X_UTME``: Easting coordinate of the measurement location.
+- ``Y_UTMN``: Northing coordinate of the measurement location.
+- ``OBS``: The observed/simulated value at that location.
+- ``OBS_ERROR``: The observation error (absolute standard deviation).
+
+All coordinates within a single file are expected to be more than 0.2 m apart.
+
+ERT provides two keywords to work with seismic data: :ref:`SEISMIC <seismic>` and
+:ref:`SEISMIC_OBSERVATION <seismic_observation>`. See the corresponding sections for
+configuration details and usage examples.
+
+
 General data: ``GEN_DATA``
 --------------------------
 
