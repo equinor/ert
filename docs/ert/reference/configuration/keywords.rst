@@ -57,6 +57,7 @@ Keyword name                                                             Require
 :ref:`RUNPATH <runpath>`                                                 NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                       NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                       NO                                                                      Install arbitrary files in the runpath directory
+:ref:`SEISMIC <seismic>`                                                 NO                                                                      Specify which Seismic data to load from fmu-sim2seis simulator output
 :ref:`SETENV <setenv>`                                                   NO                                                                      You can modify the UNIX environment with SETENV calls
 :ref:`STD_CUTOFF <std_cutoff>`                                           NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`STOP_LONG_RUNNING <stop_long_running>`                             NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
@@ -1642,6 +1643,49 @@ located in a different zone than specified, it will be deactivated with a warnin
 .. note::
     Grid layers are 1-indexed in the ZONEMAP file. Multiple zone names can be
     specified for a single layer if it spans multiple geological zones.
+
+.. _seismic:
+
+SEISMIC
+-------
+
+The SEISMIC keyword is used to load seismic simulated results from `fmu-sim2seis
+<https://github.com/equinor/fmu-sim2seis>`_.
+
+The keyword requires a filepath to the simulation file. The filepath should be relative
+to the runpath and must have the extension ``.parquet`` or ``.csv``.
+
+All rows in the file will be loaded.
+
+The SEISMIC keyword can be repeated multiple times to load more than one file.
+
+*Example:*
+
+::
+
+        -- Load seismic results with two different monitor dates
+        SEISMIC share/results/tables/topvolantis--amplitude_full_min_depth--20190701_20180101.parquet
+        SEISMIC share/results/tables/topvolantis--amplitude_full_min_depth--20200701_20180101.parquet
+
+Loaded data can be compared with seismic observations. See: :ref:`SEISMIC_OBSERVATION
+<seismic_observation>`
+
+
+**Wildcard support:**
+
+The SEISMIC keyword supports wildcards (``*``) in the filenames (but not in the
+directory part of the filepath). This allows loading data from multiple paths at once:
+
+::
+
+        -- Load data from `.parquet` files with all monitor dates and calculations found in the directory:
+        SEISMIC share/results/tables/topvolantis--amplitude_full_*_depth--*_20180101.parquet
+
+        -- Load data from all `.parquet` files with provided base and monitor dates
+        SEISMIC share/results/tables/*20190701_20180101.parquet
+
+        -- Load files with literal * in the name, like top*volantis
+        SEISMIC my_data/top[*]volantis--amplitude_*.parquet
 
 
 .. _analysis_module:
