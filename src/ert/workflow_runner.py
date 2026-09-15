@@ -71,21 +71,24 @@ class WorkflowJobRunner:
                     f"{self.job.max_args} arguments, {len(arguments)} given."
                 )
 
-            with self._lock:
-                if isinstance(self.job, BaseErtScriptWorkflow):
-                    ert_script_class = self.job.load_ert_script_class()
-                    self.__script = ert_script_class()
-                    # We let stop on fail either from class or config take
-                    # precedence
-                    self.stop_on_fail = (
-                        self.job.stop_on_fail or self.__script.stop_on_fail
-                    )
+            # Built outside the lock: loading a user-installed job runs
+            # arbitrary module-level code and constructors, which must not
+            # make cancel() block waiting for this to finish.
+            if isinstance(self.job, BaseErtScriptWorkflow):
+                ert_script_class = self.job.load_ert_script_class()
+                script = ert_script_class()
+                # We let stop on fail either from class or config take
+                # precedence
+                stop_on_fail = self.job.stop_on_fail or script.stop_on_fail
+            else:
+                script = ExternalErtScript(
+                    self.job.executable,  # type: ignore
+                )
+                stop_on_fail = self.job.stop_on_fail
 
-                else:
-                    self.__script = ExternalErtScript(
-                        self.job.executable,  # type: ignore
-                    )
-                    self.stop_on_fail = self.job.stop_on_fail
+            with self._lock:
+                self.__script = script
+                self.stop_on_fail = stop_on_fail
 
                 # A cancellation requested before the script existed would
                 # be lost; apply it once there is a script to cancel.
