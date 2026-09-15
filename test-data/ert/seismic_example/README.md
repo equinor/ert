@@ -78,3 +78,23 @@ Run setup:
 ```
 ert ensemble_experiment sim2seis_drogon.ert
 ```
+
+
+## fmu-sim2seis
+We do not use [fmu-sim2seis](https://github.com/equinor/fmu-sim2seis) directly, but its
+run might be needed for comparing output with `mock_sim2seis` outputs and refreshing
+setup data if outdated.
+
+In the context of ERT development, easiest way to get `fmu-sim2seis` output is:
+- copy the [test data
+  directory](https://github.com/equinor/fmu-sim2seis/tree/main/tests/data) and `cd` into
+  it
+- create observed data with attributes by running
+  [sim2seis_observed_data](https://github.com/equinor/fmu-sim2seis/blob/main/Scripts/cli_run.sh)
+- run simulation via `ert test_run ert/model/run_sim2seis.ert`
+- directories where observed data and run results are created can be found in the
+  [documentation](https://equinor.github.io/fmu-sim2seis/input-output.html). We are
+  interested in `.csv`/`.parquet` output files ("Attribute maps export from
+  fmu-dataio").
+
+Note that package runs fine on Linux, but might not have built wheels for other systems.
