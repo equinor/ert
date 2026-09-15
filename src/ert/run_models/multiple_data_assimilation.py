@@ -13,6 +13,7 @@ from ert.config import (
 from ert.config.analysis_config import parse_es_mda_weights
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
+from ert.run_models.constants import PARAMETER_UPDATE
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
 )
@@ -30,8 +31,6 @@ from ert.trace import tracer
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
-
-MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
 
 
 class MultipleDataAssimilation(
@@ -203,4 +202,4 @@ class MultipleDataAssimilation(
 
     @classmethod
     def group(cls) -> str | None:
-        return MULTIPLE_DATA_ASSIMILATION_GROUP
+        return PARAMETER_UPDATE

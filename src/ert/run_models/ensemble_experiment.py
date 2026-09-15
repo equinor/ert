@@ -10,6 +10,7 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.constants import FORWARD_MODEL_EVALUATION
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
 )
@@ -82,3 +83,7 @@ class EnsembleExperiment(InitialEnsembleRunModel, EnsembleExperimentConfig):
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate all realizations"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return FORWARD_MODEL_EVALUATION
