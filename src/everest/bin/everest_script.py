@@ -41,6 +41,11 @@ from .utils import (
 
 logger = logging.getLogger(__name__)
 
+MAX_EVERSERVER_PENDING_TIME = 30 * 60  # 30 minutes
+
+# Measured from process startup to everserver is answering endpoints:
+MAX_EVERSERVER_READY_TIME = 10 * 60  # 10 minutes
+
 
 def everest_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
@@ -208,25 +213,44 @@ async def run_everest(options: argparse.Namespace) -> None:
 
     logging_level = logging.DEBUG if options.debug else options.config.logging_level
 
-    print("Adding everest server to queue ...")
-    logger.debug("Submitting everserver")
+    submit_msg = (
+        "Submitting Everest server to the "
+        f"{options.config.server.queue_system.name} queue ..."
+    )
+    print(submit_msg)
+    logger.info(submit_msg)
+    pend_start_time: float = time.monotonic()
     try:
         await asyncio.wait_for(
-            start_server(options.config, logging_level), timeout=1800
-        )  # 30 minutes
-        logger.debug("Everserver submitted and started")
+            start_server(options.config, logging_level),
+            timeout=MAX_EVERSERVER_PENDING_TIME,
+        )
     except TimeoutError as e:
-        logger.error("Everserver failed to start within timeout")
-        raise SystemExit("Failed to start the server") from e
+        timeout_msg = (
+            "Everserver failed to start within the timeout "
+            f"({MAX_EVERSERVER_PENDING_TIME / 60:g} minutes)"
+        )
+        logger.error(timeout_msg)
+        raise SystemExit(timeout_msg) from e
+    if options.config.server.queue_system.name != QueueSystem.LOCAL:
+        start_msg = (
+            "Everserver started, pending time was "
+            f"{time.monotonic() - pend_start_time:g} seconds"
+        )
+        logger.info(start_msg)
+        print(start_msg)
 
-    print("Waiting for server ...")
-    logger.debug("Waiting for response from everserver")
+    print("Waiting for server to be ready...")
+    logger.debug(
+        f"Waiting up to {MAX_EVERSERVER_READY_TIME} "
+        "seconds for response from everserver"
+    )
     wait_start_time: float = time.monotonic()
     client = ErtClient.get_client(
         Path(ServerConfig.get_session_dir(options.config.output_dir))
     )
-    client.wait_for_server(timeout=600)
-    print("EVEREST server found!")
+    client.wait_for_server(timeout=MAX_EVERSERVER_READY_TIME)
+    print("Everest server ready - starting experiment")
     logger.info(
         "Got response from everserver after "
         f"waiting for {time.monotonic() - wait_start_time:g} seconds. "
