@@ -16,7 +16,6 @@ from ert.config import (
     ObservationSettings,
     ParameterConfig,
 )
-from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -130,12 +129,10 @@ def _resolve_parameter_configs(
         # Prior populated later: don't do anything with current state
         return config.ensemble_config.parameter_configuration, None
 
-    parameter_configs, design_matrix = _merge_parameter_configs(
+    return _merge_parameter_configs(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
-    validate_has_updatable_parameter(parameter_configs)
-    return parameter_configs, design_matrix
 
 
 def _setup_single_test_run(

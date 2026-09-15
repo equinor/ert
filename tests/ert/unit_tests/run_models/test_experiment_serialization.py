@@ -35,6 +35,7 @@ from ert.config import (
     UserInstalledForwardModelStep,
     Workflow,
 )
+from ert.config.parameter_config import has_updatable_parameters
 from ert.config.parsing import SchemaItemType
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -347,7 +348,13 @@ def runmodel_args(draw, tmp_path_factory, min_active_realizations: int = 1):
 
 
 @st.composite
-def initial_ensemble_runmodels(draw, min_params: int = 1, max_params: int = 200):
+def initial_ensemble_runmodels(
+    draw,
+    min_params: int = 1,
+    max_params: int = 200,
+    *,
+    require_updatable_parameters: bool = False,
+):
     response_configs = []
 
     if draw(st.booleans()):
@@ -355,23 +362,21 @@ def initial_ensemble_runmodels(draw, min_params: int = 1, max_params: int = 200)
     if draw(st.booleans()):
         response_configs.append(draw(summary_configs()))
 
+    parameters = st.lists(
+        st.one_of(surface_configs, field_configs, gen_kw_configs),
+        min_size=min_params,
+        max_size=max_params,
+        unique_by=lambda config: config.name,
+    )
+    if require_updatable_parameters:
+        parameters = parameters.filter(has_updatable_parameters)
+
     return {
         "target_ensemble": draw(realistic_text()),
         "experiment_name": draw(realistic_text()),
         "design_matrix": None,
         "ert_templates": [],
-        "parameter_configuration": draw(
-            st.lists(
-                st.one_of(
-                    surface_configs,
-                    field_configs,
-                    gen_kw_configs,
-                ),
-                min_size=min_params,
-                max_size=max_params,
-                unique_by=lambda config: config.name,
-            )
-        ),
+        "parameter_configuration": draw(parameters),
         "response_configuration": response_configs,
         "observations": [],
     }
@@ -548,7 +553,11 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(initial_ensemble_runmodels(), update_runmodels(), st.data())
+@given(
+    initial_ensemble_runmodels(require_updatable_parameters=True),
+    update_runmodels(),
+    st.data(),
+)
 def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
@@ -588,7 +597,11 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(initial_ensemble_runmodels(), update_runmodels(), st.data())
+@given(
+    initial_ensemble_runmodels(require_updatable_parameters=True),
+    update_runmodels(),
+    st.data(),
+)
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
@@ -627,7 +640,12 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@given(initial_ensemble_runmodels(), update_runmodels(), multidass(), st.data())
+@given(
+    initial_ensemble_runmodels(require_updatable_parameters=True),
+    update_runmodels(),
+    multidass(),
+    st.data(),
+)
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],

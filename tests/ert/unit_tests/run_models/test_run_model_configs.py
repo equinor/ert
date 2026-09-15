@@ -23,12 +23,15 @@ from ert.run_models.run_model_configs import (
     UpdateRunModelConfig,
 )
 
-UPDATE_CONFIGS = [
-    UpdateRunModelConfig,
+INITIAL_UPDATE_CONFIGS = [
     EnsembleSmootherConfig,
     EnsembleInformationFilterConfig,
     MultipleDataAssimilationConfig,
+]
+UPDATE_CONFIGS = [
+    UpdateRunModelConfig,
     ManualUpdateConfig,
+    *INITIAL_UPDATE_CONFIGS,
 ]
 NON_UPDATE_CONFIGS = [EnsembleExperimentConfig, SingleTestRunConfig]
 
@@ -122,3 +125,54 @@ def test_that_single_test_config_defaults_to_realization_zero(config_kwargs):
     kwargs = config_kwargs(SingleTestRunConfig)
     del kwargs["active_realizations"]
     assert SingleTestRunConfig(**kwargs).active_realizations == [True]
+
+
+@pytest.mark.parametrize("config_type", INITIAL_UPDATE_CONFIGS)
+@pytest.mark.parametrize(
+    "num_fixed_parameters", [0, 1], ids=["no-parameters", "only-fixed-parameters"]
+)
+def test_that_initial_update_configs_require_updatable_parameters(
+    config_kwargs, config_type, num_fixed_parameters
+):
+    kwargs = config_kwargs(config_type)
+    kwargs["parameter_configuration"] = [
+        gen_kw_config(f"FIXED_{index}", update_strategy=None)
+        for index in range(num_fixed_parameters)
+    ]
+
+    with pytest.raises(ValidationError, match="No parameters to update"):
+        config_type(**kwargs)
+
+
+@pytest.mark.parametrize("config_type", INITIAL_UPDATE_CONFIGS)
+def test_that_initial_update_configs_accept_mix_of_fixed_and_updatable_parameters(
+    config_kwargs, config_type
+):
+    kwargs = config_kwargs(config_type)
+    kwargs["parameter_configuration"].append(
+        gen_kw_config("FIXED", update_strategy=None)
+    )
+    assert len(config_type(**kwargs).parameter_configuration) == 2
+
+
+@pytest.mark.parametrize(
+    "num_fixed_parameters", [0, 1], ids=["no-parameters", "only-fixed-parameters"]
+)
+def test_that_restart_configs_allow_current_parameters_without_updates(
+    config_kwargs, num_fixed_parameters
+):
+    kwargs = config_kwargs(MultipleDataAssimilationConfig)
+    kwargs["prior_ensemble_id"] = EXISTING_ENSEMBLE_ID
+    kwargs["parameter_configuration"] = [
+        gen_kw_config(f"FIXED_{index}", update_strategy=None)
+        for index in range(num_fixed_parameters)
+    ]
+    config = MultipleDataAssimilationConfig(**kwargs)
+    assert config.parameter_configuration == kwargs["parameter_configuration"]
+
+
+@pytest.mark.parametrize("config_type", NON_UPDATE_CONFIGS)
+def test_that_non_update_configs_allow_no_parameters(config_kwargs, config_type):
+    kwargs = config_kwargs(config_type)
+    kwargs["parameter_configuration"] = []
+    assert config_type(**kwargs).parameter_configuration == []
