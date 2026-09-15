@@ -11,6 +11,7 @@ from ert.config import (
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
+from ert.run_models.constants import PARAMETER_UPDATE
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
 )
@@ -87,3 +88,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → update → evaluate"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return PARAMETER_UPDATE

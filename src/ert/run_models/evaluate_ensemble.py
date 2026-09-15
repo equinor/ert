@@ -8,6 +8,7 @@ import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
+from ert.run_models.constants import FORWARD_MODEL_EVALUATION
 from ert.run_models.run_model_configs import EvaluateEnsembleConfig
 from ert.trace import tracer
 
@@ -66,3 +67,7 @@ class EvaluateEnsemble(RunModel, EvaluateEnsembleConfig):
     @classmethod
     def description(cls) -> str:
         return "Use existing parameters → evaluate"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return FORWARD_MODEL_EVALUATION

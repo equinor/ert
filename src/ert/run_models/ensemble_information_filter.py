@@ -4,6 +4,7 @@ import functools
 import logging
 
 from ert.analysis import enif_update
+from ert.run_models.constants import PARAMETER_UPDATE
 from ert.run_models.ensemble_smoother import EnsembleSmoother
 from ert.run_models.run_model_configs import EnsembleInformationFilterConfig
 from ert.storage import Ensemble
@@ -36,3 +37,7 @@ class EnsembleInformationFilter(EnsembleInformationFilterConfig, EnsembleSmoothe
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → EnIF update → evaluate"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return PARAMETER_UPDATE

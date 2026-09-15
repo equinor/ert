@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+from ert.run_models.constants import FORWARD_MODEL_EVALUATION
 from ert.run_models.ensemble_experiment import EnsembleExperiment
 from ert.run_models.run_model_configs import SingleTestRunConfig
-
-SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
 
 
 class SingleTestRun(SingleTestRunConfig, EnsembleExperiment):
@@ -24,4 +23,4 @@ class SingleTestRun(SingleTestRunConfig, EnsembleExperiment):
 
     @classmethod
     def group(cls) -> str | None:
-        return SINGLE_TEST_RUN_GROUP
+        return FORWARD_MODEL_EVALUATION
