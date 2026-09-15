@@ -46,7 +46,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
+        runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
         config_num_realization=config_num_realizations,
@@ -94,7 +94,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
+        runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
         config_num_realization=config_num_realizations,
@@ -136,7 +136,7 @@ def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initi
     mda_panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=MagicMock(),
-        run_path="",
+        runpath="",
         notifier=mock_notifier,
         active_realizations=active_realizations,
         config_num_realization=2,
@@ -159,7 +159,7 @@ def test_that_multiple_data_assimilation_panel_uses_config_weights(
             es_settings=ESSettings(weights="8, 4, 2, 1"),
         ),
         parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
+        runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
         config_num_realization=len(active_realizations),
@@ -180,7 +180,7 @@ def test_that_multiple_data_assimilation_panel_shows_weight_mismatch_warning(
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
+        runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
         config_num_realization=len(active_realizations),
@@ -208,7 +208,7 @@ def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
+        runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
         config_num_realization=len(active_realizations),
@@ -269,7 +269,7 @@ def test_that_analysis_module_edit_threshold_matches_expected_from_ensemble_size
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
+        runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
         config_num_realization=len(active_realizations),
@@ -368,7 +368,7 @@ def test_that_restart_ensemble_select_contains_elements(
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=EnsembleConfig().parameter_configuration,
-        run_path="",
+        runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
         config_num_realization=config_num_realizations,

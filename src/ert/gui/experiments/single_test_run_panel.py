@@ -26,7 +26,7 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         self,
         analysis_config: AnalysisConfig,
         parameter_configuration: list[ParameterConfig],
-        run_path: str,
+        runpath: str,
         notifier: ErtNotifier,
     ) -> None:
         ExperimentConfigPanel.__init__(self, SingleTestRun)
@@ -39,7 +39,7 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
 
-        runpath_label = CopyableLabel(text=run_path)
+        runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
         design_matrix = analysis_config.design_matrix
         merged_parameters = parameter_configuration

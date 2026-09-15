@@ -12,11 +12,11 @@ from ert.gui.experiments.ensemble_experiment_panel import EnsembleExperimentPane
 from ert.gui.main import _setup_main_window
 from ert.gui.tools.event_viewer.panel import GUILogHandler
 from ert.run_models.ensemble_experiment import EnsembleExperiment
-from tests.ert.handle_run_path_dialog import handle_run_path_dialog
+from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
 
 @pytest.mark.slow
-def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
+def test_runpath_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -39,16 +39,16 @@ def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot)
     assert isinstance(run_experiment, QToolButton)
 
     # Add something to the runpath
-    run_path = Path(
+    runpath = Path(
         snake_oil_case.runpath_config.runpath_format_string.replace(
             "<IENS>", "0"
         ).replace("<ITER>", "0")
     )
-    dummy_file = run_path / "dummy"
+    dummy_file = runpath / "dummy"
     dummy_file.touch()
 
     QTimer.singleShot(
-        1000, lambda: handle_run_path_dialog(gui, qtbot, expect_error=True)
+        1000, lambda: handle_runpath_dialog(gui, qtbot, expect_error=True)
     )
     with patch("shutil.rmtree", side_effect=PermissionError("Not allowed!")):
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
@@ -61,7 +61,7 @@ def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot)
 
 
 @pytest.mark.slow
-def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
+def test_runpath_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -83,16 +83,16 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     assert run_experiment
     assert isinstance(run_experiment, QToolButton)
 
-    run_path = Path(
+    runpath = Path(
         snake_oil_case.runpath_config.runpath_format_string.replace(
             "<IENS>", "0"
         ).replace("<ITER>", "0")
     )
-    dummy_file = run_path / "dummy"
+    dummy_file = runpath / "dummy"
     dummy_file.touch()
 
     QTimer.singleShot(
-        1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        1000, lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=True)
     )
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
@@ -104,7 +104,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
 
 
 @pytest.mark.slow
-def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
+def test_runpath_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -126,14 +126,14 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
     assert run_experiment
     assert isinstance(run_experiment, QToolButton)
 
-    run_path = Path(
+    runpath = Path(
         snake_oil_case.runpath_config.runpath_format_string.replace("<IENS>", "0")
     ).parent
-    dummy_file = run_path / "dummy"
+    dummy_file = runpath / "dummy"
     dummy_file.touch()
 
     QTimer.singleShot(
-        500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
+        500, lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False)
     )
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 

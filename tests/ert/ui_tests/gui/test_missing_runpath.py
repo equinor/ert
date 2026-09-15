@@ -109,9 +109,9 @@ def test_missing_runpath_does_not_show_waiting_bar(
     """
     monkeypatch.chdir(tmp_path)
     write_config(tmp_path, "LOCAL")
-    run_path = tmp_path / "simulations"
-    run_path.mkdir()
-    run_path.chmod(0x444)
+    runpath = tmp_path / "simulations"
+    runpath.mkdir()
+    runpath.chmod(0x444)
 
     def handle_message_box(dialog):
         def inner():

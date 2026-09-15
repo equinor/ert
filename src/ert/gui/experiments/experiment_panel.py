@@ -88,7 +88,7 @@ class ExperimentPanel(QWidget):
         QWidget.__init__(self)
         self._notifier = notifier
         self.config = config
-        run_path = config.runpath_config.runpath_format_string
+        runpath = config.runpath_config.runpath_format_string
         self._config_file = config_file
 
         self.setObjectName("experiment_panel")
@@ -179,7 +179,7 @@ class ExperimentPanel(QWidget):
             SingleTestRunPanel(
                 analysis_config,
                 config.ensemble_config.parameter_configuration,
-                run_path,
+                runpath,
                 notifier,
             ),
             True,
@@ -193,13 +193,13 @@ class ExperimentPanel(QWidget):
                 config.ensemble_config.parameter_configuration,
                 active_realizations,
                 config_num_realization,
-                run_path,
+                runpath,
                 notifier,
             ),
             True,
         )
         self.addExperimentConfigPanel(
-            EvaluateEnsemblePanel(run_path, notifier),
+            EvaluateEnsemblePanel(runpath, notifier),
             True,
         )
 
@@ -212,7 +212,7 @@ class ExperimentPanel(QWidget):
             MultipleDataAssimilationPanel(
                 analysis_config,
                 config.ensemble_config.parameter_configuration,
-                run_path,
+                runpath,
                 notifier,
                 active_realizations,
                 config_num_realization,
@@ -223,7 +223,7 @@ class ExperimentPanel(QWidget):
             EnsembleSmootherPanel(
                 analysis_config,
                 config.ensemble_config.parameter_configuration,
-                run_path,
+                runpath,
                 notifier,
                 active_realizations,
                 config_num_realization,
@@ -234,7 +234,7 @@ class ExperimentPanel(QWidget):
             EnsembleInformationFilterPanel(
                 analysis_config,
                 config.ensemble_config.parameter_configuration,
-                run_path,
+                runpath,
                 notifier,
                 active_realizations,
                 config_num_realization,
@@ -242,7 +242,7 @@ class ExperimentPanel(QWidget):
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
-            ManualUpdatePanel(run_path, notifier, analysis_config),
+            ManualUpdatePanel(runpath, notifier, analysis_config),
             experiment_type_valid,
         )
 
@@ -324,7 +324,7 @@ class ExperimentPanel(QWidget):
         QApplication.restoreOverrideCursor()
         if model.check_if_runpath_exists():
             msg_box = QMessageBox(self)
-            msg_box.setObjectName("RUN_PATH_WARNING_BOX")
+            msg_box.setObjectName("RUNPATH_WARNING_BOX")
 
             msg_box.setIcon(QMessageBox.Icon.Warning)
 
@@ -343,7 +343,7 @@ class ExperimentPanel(QWidget):
             )
 
             delete_runpath_checkbox = QCheckBox()
-            delete_runpath_checkbox.setText("Delete run_path")
+            delete_runpath_checkbox.setText("Delete runpath")
             msg_box.setCheckBox(delete_runpath_checkbox)
 
             msg_box.setStandardButtons(
@@ -360,7 +360,7 @@ class ExperimentPanel(QWidget):
 
             if delete_runpath_checkbox.checkState() == Qt.CheckState.Checked:
                 progress_dialog = QDialog(self)
-                progress_dialog.setObjectName("RUN_PATH_PROGRESS_DIALOG")
+                progress_dialog.setObjectName("RUNPATH_PROGRESS_DIALOG")
                 progress_dialog.setWindowTitle("Deleting runpaths")
                 progress_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
                 progress_layout = QVBoxLayout(progress_dialog)
@@ -377,7 +377,7 @@ class ExperimentPanel(QWidget):
                 QApplication.processEvents()
 
                 try:
-                    model.rm_run_path(
+                    model.rm_runpath(
                         progress_tracker=progress_widget,
                         # Force UI update during long deletion process
                         progress_callback=QApplication.processEvents,
@@ -386,7 +386,7 @@ class ExperimentPanel(QWidget):
                     progress_dialog.close()
                     progress_dialog.deleteLater()
                     msg_box = QMessageBox(self)
-                    msg_box.setObjectName("RUN_PATH_ERROR_BOX")
+                    msg_box.setObjectName("RUNPATH_ERROR_BOX")
                     msg_box.setIcon(QMessageBox.Icon.Warning)
                     msg_box.setText("ERT could not delete the existing runpath")
                     msg_box.setInformativeText(
@@ -415,7 +415,7 @@ class ExperimentPanel(QWidget):
             self._notifier,
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
-            run_path=Path(self.config.runpath_config.runpath_format_string),
+            runpath=Path(self.config.runpath_config.runpath_format_string),
             storage_path=self._notifier.storage.path,
         )
         self._dialog.queue_system.setText(

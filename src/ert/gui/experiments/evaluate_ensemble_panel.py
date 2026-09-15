@@ -34,7 +34,7 @@ class Arguments:
 
 
 class EvaluateEnsemblePanel(ExperimentConfigPanel):
-    def __init__(self, run_path: str, notifier: ErtNotifier) -> None:
+    def __init__(self, runpath: str, notifier: ErtNotifier) -> None:
         super().__init__(EvaluateEnsemble)
         self.setObjectName("Evaluate_parameters_panel")
 
@@ -57,7 +57,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         ]
         self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         layout.addRow("Ensemble:", self._ensemble_selector)
-        runpath_label = CopyableLabel(text=run_path)
+        runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
 
         ensemble_size = 0

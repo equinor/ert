@@ -54,7 +54,7 @@ from ert.run_models.event import (
 )
 from ert.run_models.run_model import RunModel
 from ert.scheduler.job import Job
-from tests.ert.handle_run_path_dialog import handle_run_path_dialog
+from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
 from tests.ert.utils import SnapshotBuilder
 
@@ -717,7 +717,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     assert run_experiment
 
     QTimer.singleShot(
-        1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        1000, lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=True)
     )
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
