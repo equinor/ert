@@ -12,15 +12,6 @@ from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource
 
 
-def _assert_parameter_configurations(list1, list2):
-    assert len(list1) == len(list2)
-    list1 = sorted(list1, key=lambda cfg: cfg.name)
-    list2 = sorted(list2, key=lambda cfg: cfg.name)
-    for cfg1, cfg2 in zip(list1, list2, strict=True):
-        assert cfg1.name == cfg2.name
-        assert cfg1.update_strategy == cfg2.update_strategy
-
-
 @pytest.mark.parametrize(
     ("update", "expected"),
     [("TRUE", True), ("FALSE", False), ("TrUe", True), ("FaLSE", False)],
@@ -240,7 +231,8 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_existing_para
     ]
 
     dm.parameter_priority = {
-        cfg.name: dm.priority_source for cfg in dm.parameter_configurations
+        "param1": DataSource.DESIGN_MATRIX.value,
+        "param2": DataSource.SAMPLED.value,
     }
 
     merged_params = dm.merge_with_existing_parameters(
@@ -248,37 +240,36 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_existing_para
             GenKwConfig(
                 name="param2",
                 distribution=RawSettings(name="raw"),
-                update_strategy=LocalizationType.ADAPTIVE,
+                update_strategy=LocalizationType.GLOBAL,
                 input_source=DataSource.SAMPLED,
             ),
             GenKwConfig(
                 name="param4",
                 distribution=RawSettings(name="raw"),
-                update_strategy=LocalizationType.ADAPTIVE,
+                update_strategy=LocalizationType.GLOBAL,
                 input_source=DataSource.SAMPLED,
             ),
         ]
     )
 
-    # should include all original parameters plus any new not
-    # overlapping ones from existing_parameters
-    _assert_parameter_configurations(
-        merged_params,
-        [
-            *dm.parameter_configurations,
-            GenKwConfig(
-                name="param4",
-                distribution=RawSettings(name="raw"),
-                update_strategy=LocalizationType.ADAPTIVE,
-                input_source=DataSource.SAMPLED,
-            ),
-        ],
+    assert len(merged_params) == 4
+    assert any(
+        cfg.name == "param1" and cfg.update_strategy is None for cfg in merged_params
+    )
+    assert any(
+        cfg.name == "param2" and cfg.update_strategy is LocalizationType.GLOBAL
+        for cfg in merged_params
+    )
+    assert any(
+        cfg.name == "param3" and cfg.update_strategy is None for cfg in merged_params
+    )
+    assert any(
+        cfg.name == "param4" and cfg.update_strategy is LocalizationType.GLOBAL
+        for cfg in merged_params
     )
 
 
-@pytest.mark.parametrize("priority", ["sampled", "design_matrix"])
 def test_that_merge_with_existing_parameters_merges_correctly_with_overlapping_names_and_priority(  # ruff: ignore[line-too-long]
-    priority,
 ):
     with patch.object(DesignMatrix, "__post_init__", return_value=None):
         dm = DesignMatrix.from_config_list(
@@ -287,11 +278,10 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_overlapping_n
                 {
                     "DESIGN_SHEET": "DesignSheet",
                     "DEFAULT_SHEET": "DefaultSheet",
-                    "PRIORITY": priority,
                     "UPDATE": "TRUE",
                 },
             ],
-            parameter_type_update_strategies={"GEN_KW": LocalizationType.ADAPTIVE},
+            parameter_type_update_strategies={"GEN_KW": LocalizationType.DISTANCE},
         )
 
     # state after loading design matrix
@@ -318,6 +308,12 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_overlapping_n
 
     gen_kw = [
         GenKwConfig(
+            name="param1",
+            distribution=RawSettings(name="raw"),
+            update_strategy=LocalizationType.ADAPTIVE,
+            input_source=DataSource.SAMPLED,
+        ),
+        GenKwConfig(
             name="param2",
             distribution=RawSettings(name="raw"),
             update_strategy=LocalizationType.ADAPTIVE,
@@ -332,58 +328,26 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_overlapping_n
     ]
 
     dm.parameter_priority = {
-        cfg.name: dm.priority_source for cfg in dm.parameter_configurations
+        "param1": DataSource.DESIGN_MATRIX.value,
+        "param2": DataSource.SAMPLED.value,
     }
 
     merged_params = dm.merge_with_existing_parameters(existing_parameters=gen_kw)
 
-    if priority == "sampled":
-        _assert_parameter_configurations(
-            merged_params,
-            [
-                *gen_kw,
-                GenKwConfig(
-                    name="param1",
-                    distribution=RawSettings(name="raw"),
-                    input_source=DataSource.DESIGN_MATRIX,
-                    update_strategy=LocalizationType.ADAPTIVE,
-                ),
-                GenKwConfig(
-                    name="param3",
-                    distribution=RawSettings(name="raw"),
-                    input_source=DataSource.DESIGN_MATRIX,
-                    update_strategy=LocalizationType.ADAPTIVE,
-                ),
-            ],
-        )
-
-    elif priority == "design_matrix":
-        _assert_parameter_configurations(
-            merged_params,
-            [
-                GenKwConfig(
-                    name="param1",
-                    distribution=RawSettings(name="raw"),
-                    update_strategy=LocalizationType.ADAPTIVE,
-                    input_source=DataSource.DESIGN_MATRIX,
-                ),
-                GenKwConfig(
-                    name="param2",
-                    distribution=RawSettings(name="raw"),
-                    update_strategy=LocalizationType.ADAPTIVE,
-                    input_source=DataSource.DESIGN_MATRIX,
-                ),
-                GenKwConfig(
-                    name="param3",
-                    distribution=RawSettings(name="raw"),
-                    update_strategy=LocalizationType.ADAPTIVE,
-                    input_source=DataSource.DESIGN_MATRIX,
-                ),
-                GenKwConfig(
-                    name="param4",
-                    distribution=RawSettings(name="raw"),
-                    update_strategy=LocalizationType.ADAPTIVE,
-                    input_source=DataSource.SAMPLED,
-                ),
-            ],
-        )
+    assert len(merged_params) == 4
+    assert any(
+        cfg.name == "param1" and cfg.update_strategy is LocalizationType.DISTANCE
+        for cfg in merged_params
+    )
+    assert any(
+        cfg.name == "param2" and cfg.update_strategy is LocalizationType.ADAPTIVE
+        for cfg in merged_params
+    )
+    assert any(
+        cfg.name == "param3" and cfg.update_strategy is LocalizationType.DISTANCE
+        for cfg in merged_params
+    )
+    assert any(
+        cfg.name == "param4" and cfg.update_strategy is LocalizationType.ADAPTIVE
+        for cfg in merged_params
+    )

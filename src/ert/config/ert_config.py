@@ -1205,11 +1205,19 @@ class ErtConfig(BaseModel, extra="forbid"):
                         " priority they will remain as such."
                     )
                 if param_design:
-                    ConfigWarning.warn(
-                        f"Parameters {param_design} "
-                        "will be overridden by design matrix. This will cause "
-                        "updates to be turned off for these parameters."
-                    )
+                    if dm.update:
+                        ConfigWarning.warn(
+                            f"Parameters {param_design} "
+                            "will be overridden by design matrix with UPDATE:TRUE. "
+                            "Updates will be enabled for these parameters "
+                            "following the GEN_KW update strategy."
+                        )
+                    else:
+                        ConfigWarning.warn(
+                            f"Parameters {param_design} "
+                            "will be overridden by design matrix. Updates will be "
+                            "turned off for these parameters."
+                        )
 
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)
