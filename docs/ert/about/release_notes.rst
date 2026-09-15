@@ -27,6 +27,21 @@
 Highlighted changes
 ===================
 
+Version xx
+------------
+
+Updated Analysis Panel
+######################
+
+The "Analysis module" entry in the experiment panel has been renamed to "Update settings". In the corresponding panel, you can now change
+the update strategies for each parameter type. Any changes will override the settings provided in the configuration file.
+
+
+.. image:: images/update_strategies_panel.png
+
+
+
+
 Version 25.1
 ------------
 
