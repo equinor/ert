@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Literal, Self
 
@@ -14,6 +15,8 @@ from pydantic import (
 
 from .config_validation import SeedStrategy
 from .utils import resolve_path
+
+logger = logging.getLogger(__name__)
 
 
 class GeneralInput(BaseModel):
@@ -69,6 +72,7 @@ class GeneralInput(BaseModel):
         cls, input_dict: dict[str, str | None], input_filename: str = ""
     ) -> Self:
         general_input: dict[str, str | Path | None] = dict(input_dict.items())
+        logger.info(f"Instantiating GeneralInput with dict: {general_input}")
 
         for key in ["seed_strategy", "correlation_iterations"]:
             if general_input.get(key) is None:

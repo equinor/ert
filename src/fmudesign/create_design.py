@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import logging
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -30,6 +32,7 @@ from .design_distributions import (
     read_correlations,
     to_probabilit,
 )
+from .logging import log_and_print
 from .quality_report import QualityReporter, print_corrmat
 from .utils import (
     find_max_realisations,
@@ -38,6 +41,9 @@ from .utils import (
     printwarning,
     to_numeric_safe,
 )
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from collections.abc import Hashable, Sequence
@@ -156,6 +162,13 @@ class DesignMatrix:
 
         self.designvalues["SENSNAME"] = None
         self.designvalues["SENSCASE"] = None
+
+        sensitivity_count = Counter(
+            sens["senstype"] for sens in inputdict["sensitivities"].values()
+        )
+        logger.info(
+            f"Generating design matrix with sensitivities: {sensitivity_count}",
+        )
 
         for key, sens in inputdict["sensitivities"].items():
             # Number of realisations (rows) to use for each sensitivity
@@ -305,7 +318,9 @@ class DesignMatrix:
         normalized_filename = _normalize_xlsx_filename(filename)
         if normalized_filename != filename:
             filename = normalized_filename
-            print(f"Warning: Missing .xlsx suffix. Changed to: {filename}")
+            log_and_print(
+                f"Warning: Missing .xlsx suffix. Changed to: {filename}", logger=logger
+            )
 
         # Create folder for output file
         Path(filename).parent.mkdir(exist_ok=True, parents=True)
@@ -336,8 +351,10 @@ class DesignMatrix:
             )
             version_info.to_excel(writer, sheet_name="Metadata", index=False)
 
-        print(
-            f"Design matrix of shape {self.designvalues.shape} written to: {filename!r}"
+        log_and_print(
+            f"Design matrix of shape {self.designvalues.shape} "
+            f"written to: {filename!r}",
+            logger=logger,
         )
 
     @staticmethod
@@ -429,7 +446,7 @@ class DesignMatrix:
             self.backgroundvalues.to_excel(
                 xlsxwriter, sheet_name=backgroundsheet, index=False, header=True
             )
-        print(f"Backgroundvalues written to {filename}")
+        log_and_print(f"Backgroundvalues written to {filename}", logger=logger)
 
     def _add_sensitivity(
         self,

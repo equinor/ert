@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import functools
+import logging
 import shutil
 import sys
 import traceback
@@ -31,10 +32,15 @@ from pathlib import Path
 from packaging.version import Version
 from pydantic import ValidationError
 
+from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
+from ert.trace import tracer
+from fmudesign.logging import log_and_print
 
 from ._excel_to_dict import excel_to_dict
 from .create_design import DesignMatrix, _normalize_xlsx_filename
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -246,7 +252,10 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
         default = parser.get_default(sheet)
         custom = getattr(args, sheet)
         if default != custom:
-            print(f"Worksheet changed from default: {default!r} -> {custom!r}")
+            log_and_print(
+                f"Worksheet changed from default: {default!r} -> {custom!r}",
+                logger=logger,
+            )
 
     # Check existence of config file
     if not Path(args.config).is_file():
@@ -260,7 +269,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
         )
 
     # Parse Excel config file to dict-of-dict configuration
-    print(f"Reading file: {args.config!r}")
+    log_and_print(f"Reading file: {args.config!r}", logger=logger)
     config = excel_to_dict(
         args.config,
         gen_input_sheet=args.general_input,
@@ -295,7 +304,11 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     filename = args.file.strip()
     examples_by_filename = {example.filename: example for example in EXAMPLES}
     if filename not in examples_by_filename:
-        print(f"Error on {filename!r}. Not found among: {set(examples_by_filename)}")
+        log_and_print(
+            f"Error on {filename!r}. Not found among: {set(examples_by_filename)}",
+            logger=logger,
+            level=logging.ERROR,
+        )
         sys.exit(1)
 
     example = examples_by_filename[filename]
@@ -305,30 +318,37 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     ]
     if existing_destinations:
         for destination in existing_destinations:
-            print(f"Error on {destination!r}. Already exists.")
+            log_and_print(
+                f"Error on {destination!r}. Already exists.",
+                level=logging.ERROR,
+                logger=logger,
+            )
         sys.exit(1)
 
     with as_file(EXAMPLES_DIR / filename) as source_path:
         shutil.copy(source_path, filename)
-        print(f"Created file {filename!r}.")
+        log_and_print(f"Created file {filename!r}.", logger=logger)
 
     for other_file in example.other_files:
         with as_file(EXAMPLES_DIR / other_file) as source_path:
             shutil.copy(source_path, other_file)
-            print(f"  Created auxiliary file {other_file!r}.")
+            log_and_print(f"  Created auxiliary file {other_file!r}.", logger=logger)
 
     sys.exit(0)
 
 
+@tracer.start_as_current_span("fmudesign.application.start")
 def main() -> None:
     """fmudesign is a command line utility for generating design matrices
 
     Wrapper for the fmudesign module
     """
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    setup_site_logging(root_logger)
 
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
-
     parser, _subparsers = get_parser()
 
     # Backwards compatibility. If not a known command, assume "run"
@@ -337,6 +357,8 @@ def main() -> None:
         sys.argv.insert(1, "run")
 
     args = parser.parse_args()
+    args_to_log = {k: v for k, v in vars(args).items() if k != "func"}
+    logger.info(f"Running fmudesign with args: {args_to_log}")
 
     # No subcommand was provided
     if not hasattr(args, "func"):
@@ -351,17 +373,21 @@ def main() -> None:
         " - Issues/feature requests: https://github.com/equinor/ert/issues\n"
         "If you believe this error is a bug or are unable to fix it, create an issue or contact the scout team \n"  # ruff: ignore[line-too-long]
     )
+
     try:
         args.func(args)
     except ValidationError as e:
         for err in e.errors(include_url=False):
-            print(
+            log_and_print(
                 f"Validation error for '{err['loc'][0]}': "
-                f"{err['msg']}, was '{err['input']}'"
+                f"{err['msg']}, was '{err['input']}'",
+                logger=logger,
+                level=logging.ERROR,
             )
         print(err_guide_msg)
         sys.exit(1)
-    except Exception:
+    except Exception as err:
+        logger.exception(err)
         traceback.print_exc()
         print(err_guide_msg)
         sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)
