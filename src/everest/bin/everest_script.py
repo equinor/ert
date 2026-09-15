@@ -65,7 +65,7 @@ def everest_entry(args: list[str] | None = None) -> None:
         )
 
         simulator_info_str = (
-            "The experiment server will submit the ERT forward model to run on "
+            "The experiment server will submit the forward model to run on "
         ) + (
             f"this machine ({client_machine_hostname})"
             if simulator_queue_system == QueueSystem.LOCAL

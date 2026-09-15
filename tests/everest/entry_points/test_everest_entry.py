@@ -434,7 +434,7 @@ def test_that_run_everest_prints_where_it_runs(
         )
 
         expected_simulator_str = (
-            "The experiment server will submit the ERT forward model to run on "
+            "The experiment server will submit the forward model to run on "
         ) + (
             "this machine"
             if simulator_queue_system == QueueSystem.LOCAL
