@@ -216,6 +216,49 @@ def poly_prior_ensemble_id(
         return str(ensemble.id)
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize("current_parameters", ["missing", "all-disabled"])
+@pytest.mark.parametrize("has_current_observations", [False, True])
+def test_that_cli_restart_uses_stored_parameters_and_observations(
+    poly_prior_ensemble_id, current_parameters, has_current_observations
+):
+    config_path = Path("config.ert")
+    config_text = config_path.read_text(encoding="utf-8")
+    config_text = config_text.replace(
+        "GEN_KW COEFFS coeff_priors",
+        ""
+        if current_parameters == "missing"
+        else "GEN_KW COEFFS coeff_priors UPDATE:FALSE",
+    )
+    if not has_current_observations:
+        config_text = config_text.replace("OBS_CONFIG observations", "")
+    config_path.write_text(config_text, encoding="utf-8")
+
+    run_cli(
+        ES_MDA_MODE,
+        "--disable-monitoring",
+        "--weights=1",
+        "--target-ensemble=restart_%d",
+        "--restart-ensemble-id",
+        poly_prior_ensemble_id,
+        "config.ert",
+    )
+
+    with open_storage("storage") as storage:
+        experiment = storage.get_experiment_by_name("Run from default")
+        assert set(experiment.parameter_keys) == {"a", "b", "c"}
+        assert all(
+            parameter.update_strategy is not None
+            for parameter in experiment.parameter_configuration.values()
+        )
+        assert_series_equal(
+            experiment.observations["gen_data"]["observations"],
+            Series("observations", [2.0, 9.0, 15.0, 30.0, 50.0], dtype=Float32),
+        )
+        posterior = experiment.get_ensemble_by_name("restart_1")
+        assert all(posterior.get_realization_mask_with_responses())
+
+
 def _build_esmda_run_prior_model(prior_ensemble_id: str):
     config = ErtConfig.from_file("config.ert")
     return create_model(
