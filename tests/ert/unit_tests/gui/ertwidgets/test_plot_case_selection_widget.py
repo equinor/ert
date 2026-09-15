@@ -215,3 +215,48 @@ def test_that_ensemble_selection_widget_with_invalid_limits():
         ),
     ):
         widget.set_maximum_ensemble_limit(2)
+
+
+def test_that_single_ensemble_selection_mode_swaps_selection_on_click(qtbot: QtBot):
+    _, list_widget = setup_ensemble_widget_with_ensembles(qtbot, 3)
+    list_widget.set_minimum_ensemble_limit(1)
+    list_widget.set_maximum_ensemble_limit(1)
+
+    target = list_widget.item(2)
+    qtbot.mouseClick(
+        list_widget.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=list_widget.visualItemRect(target).center(),
+    )
+
+    assert len(list_widget.get_checked_ensembles()) == 1
+
+    item0 = list_widget.item(0)
+    item1 = list_widget.item(1)
+    item2 = list_widget.item(2)
+    assert item0 is not None
+    assert item0.data(Qt.ItemDataRole.CheckStateRole) is False
+    assert item1 is not None
+    assert item1.data(Qt.ItemDataRole.CheckStateRole) is False
+    assert item2 is not None
+    assert item2.data(Qt.ItemDataRole.CheckStateRole) is True
+
+    assert len(list_widget.get_checked_color_indexes()) == 1
+    assert len(list_widget.available_colors) == list_widget._palette_size - 1
+
+
+def test_that_ensemble_item_tooltips_reflect_the_current_maximum_selection_limit(
+    qtbot: QtBot,
+):
+    _, list_widget = setup_ensemble_widget_with_ensembles(qtbot, 5)
+
+    for index in range(list_widget.count()):
+        item = list_widget.item(index)
+        assert item is not None
+        assert "Toggle up to 5 plot(s)" in item.toolTip()
+
+    list_widget.set_maximum_ensemble_limit(1)
+    for index in range(list_widget.count()):
+        item = list_widget.item(index)
+        assert item is not None
+        assert "Toggle up to 1 plot(s)" in item.toolTip()

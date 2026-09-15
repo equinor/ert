@@ -49,6 +49,7 @@ class PlotContext:
         self._plot_config = plot_config
         self.history_data: DataFrame | None = None
         self._layer: int | None = layer
+        self._colorbar_range: tuple[float, float] | None = None
 
         self._date_support_active = True
         self._x_axis: str | None = None
@@ -106,6 +107,14 @@ class PlotContext:
     @property
     def layer(self) -> int | None:
         return self._layer
+
+    @property
+    def colorbar_range(self) -> tuple[float, float] | None:
+        return self._colorbar_range
+
+    @colorbar_range.setter
+    def colorbar_range(self, value: tuple[float, float] | None) -> None:
+        self._colorbar_range = value
 
     @property
     def x_axis(self) -> str | None:
