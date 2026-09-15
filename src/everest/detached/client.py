@@ -57,6 +57,155 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     return driver
 
 
+def stop_server(
+    server_context: tuple[str, str, tuple[str, str]], retries: int = 5
+) -> bool:
+    """Stop server if found and it is running."""
+    url, cert, auth = server_context
+    for retry in range(retries):
+        try:
+            stop_endpoint = f"{url}/{EverEndpoints.STOP}"
+            response = requests.post(
+                stop_endpoint,
+                verify=cert,
+                auth=auth,
+                proxies=PROXY,  # type: ignore
+            )
+            response.raise_for_status()
+        except Exception:
+            logger.debug(traceback.format_exc())
+            time.sleep(retry)
+        else:
+            return True
+    return False
+
+
+def get_experiments(
+    server_context: tuple[str, str, tuple[str, str]],
+    retries: int = 5,
+) -> list[str]:
+    url, cert, auth = server_context
+    for retry in range(retries):
+        try:
+            response = requests.get(
+                f"{url}/{EverEndpoints.EXPERIMENTS}",
+                verify=cert,
+                auth=auth,
+                proxies=PROXY,
+            )
+            response.raise_for_status()
+            return response.json()["experiment_ids"]
+        except Exception:
+            logger.debug(traceback.format_exc())
+            time.sleep(retry)
+    raise RuntimeError("Failed to get experiment_ids")
+
+
+def start_experiment(
+    server_context: tuple[str, str, tuple[str, str]],
+    config: EverestConfig,
+    retries: int = 5,
+) -> str:
+    url, cert, auth = server_context
+    last_error: str | None = None
+    for retry in range(retries):
+        try:
+            start_endpoint = f"{url}/{EverEndpoints.START_EXPERIMENT}"
+            response = requests.post(
+                start_endpoint,
+                verify=cert,
+                auth=auth,
+                proxies=PROXY,  # type: ignore
+                json=config.to_dict(),
+            )
+            response.raise_for_status()
+            return response.json()["experiment_id"]
+        except requests.HTTPError:
+            last_error = response.text
+            logger.debug(traceback.format_exc())
+            if 400 <= response.status_code < 500:
+                break  # 4xx should not trigger retries
+            time.sleep(retry)
+        except Exception:
+            last_error = traceback.format_exc()
+            logger.debug(last_error)
+            time.sleep(retry)
+    message = "Failed to start experiment"
+    if last_error:
+        message += f": {last_error}"
+    raise RuntimeError(message)
+
+
+def extract_errors_from_file(path: str) -> list[str]:
+    return re.findall(r"(Error \w+.*)", Path(path).read_text(encoding="utf-8"))
+
+
+def wait_for_server(client: Client, timeout: float) -> None:
+    """
+    Waits until the everest server has started. Polls
+    for server availability until timeout (measured in seconds).
+
+    Timeout is not strict as the server status is polled periodically and
+    each underlying HTTP request has its own timeout, the wall-clock
+    duration may exceed the requested timeout slightly.
+
+    Raises an exception if no response within the timeout.
+    """
+    wait_start_time: float = time.monotonic()
+    while time.monotonic() - wait_start_time <= timeout:
+        if server_is_running(
+            *ServerConfig.get_server_context_from_conn_info(client.conn_info)
+        ):
+            return
+        until_timeout = max(0, timeout - (time.monotonic() - wait_start_time))
+        time.sleep(min(1, until_timeout))
+    raise RuntimeError(
+        "Failed to get reply from server "
+        f"within {time.monotonic() - wait_start_time:g} seconds"
+    )
+
+
+def wait_for_server_to_stop(
+    server_context: tuple[str, str, tuple[str, str]], timeout: int
+) -> None:
+    """
+    Checks everest server has stopped _HTTP_REQUEST_RETRY times. Waits
+    progressively longer between each check.
+
+    Raise an exception when the timeout is reached.
+    """
+    if server_is_running(*server_context):
+        sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
+        for retry_count in range(_HTTP_REQUEST_RETRY):
+            sleep_time = sleep_time_increment * (2**retry_count)
+            time.sleep(sleep_time)
+            if not server_is_running(*server_context):
+                return
+
+    # If number of retries reached and server still running - throw exception
+    if server_is_running(*server_context):
+        raise Exception("Failed to stop server within configured timeout.")
+
+
+def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
+    try:
+        logger.debug(f"Checking server status at {url} ")
+        if "None:None" in url:
+            return False
+        response = requests.get(
+            url,
+            verify=cert,
+            auth=auth,
+            timeout=1,
+            proxies=PROXY,  # type: ignore
+        )
+        response.raise_for_status()
+    except Exception:
+        logger.debug(traceback.format_exc())
+        return False
+    return True
+
+
 def get_opt_status_from_batch_result_event(
     event: EverestBatchResultEvent,
 ) -> dict[str, Any]:

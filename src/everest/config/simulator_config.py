@@ -10,7 +10,7 @@ from pydantic import (
 )
 from pydantic_core.core_schema import ValidationInfo
 
-from ert.base_model_context import BaseModelWithContextSupport
+from ert.base_model_context import BaseModelWithContextSupport, get_runtime_plugins
 from ert.config import ConfigValidationError
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -150,8 +150,9 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         queue_system = data.get("queue_system")
         if queue_system is None:
             options = None
-            if info.context:
-                options = info.context.queue_options
+            runtime_plugins = get_runtime_plugins(info)
+            if runtime_plugins:
+                options = runtime_plugins.queue_options
 
             defaulted_queue_options = (
                 options.model_dump()
