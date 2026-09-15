@@ -81,7 +81,7 @@ def kill_everest(options: argparse.Namespace) -> None:
         print("Server is not running.")
         return
 
-    stopping = client.stop_experiment_server()
+    stopping = client.stop_server()
     if threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, partial(_handle_keyboard_interrupt, after=True))
 

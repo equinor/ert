@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from .ensembles import router as ensembles_router
-from .experiment_server import router as experiment_server_router
+from .experiment_runs import router as experiment_runs_router
 from .experiments import router as experiments_router
 from .observations import router as observations_router
 from .parameters import router as parameters_router
@@ -14,5 +14,5 @@ router.include_router(ensembles_router)
 router.include_router(observations_router)
 router.include_router(parameters_router)
 router.include_router(responses_router)
-router.include_router(experiment_server_router)
+router.include_router(experiment_runs_router)
 router.include_router(version_router)
