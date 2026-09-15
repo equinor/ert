@@ -45,7 +45,7 @@ DEFAULT_CACHE_SIZE = 256
 _HTTP_REQUEST_RETRY = 10
 
 _PARQUET = {"accept": "application/x-parquet"}
-_EXPERIMENT_SERVER = "/experiment_server"
+_EXPERIMENT_RUNNER = "/experiment_runner"
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +163,7 @@ class ErtClient:
         try:
             response = self._request(
                 "GET",
-                f"{_EXPERIMENT_SERVER}/",
+                f"{_EXPERIMENT_RUNNER}/",
                 auth=self._auth,
                 timeout=timeout or self._timeout,
             )
@@ -300,24 +300,24 @@ class ErtClient:
     # <------------- Experiment Server ------------->
 
     def experiment_ids(self) -> list[str]:
-        response = self._experiment_server_get(EverEndpoints.EXPERIMENTS)
+        response = self._experiment_runner_get(EverEndpoints.EXPERIMENTS)
         return list(response.json()["experiment_ids"])
 
     def experiment_status(self, experiment_id: str) -> dict[str, Any]:
         return dict(
-            self._experiment_server_get(
+            self._experiment_runner_get(
                 f"{EverEndpoints.STATUS}/{experiment_id}"
             ).json()
         )
 
     def experiment_config(self, experiment_id: str) -> dict[str, str]:
-        return self._experiment_server_get(
+        return self._experiment_runner_get(
             f"{EverEndpoints.CONFIG_PATH}/{experiment_id}"
         ).json()
 
     def experiment_start_time(self, experiment_id: str) -> int:
         return int(
-            self._experiment_server_get(
+            self._experiment_runner_get(
                 f"{EverEndpoints.START_TIME}/{experiment_id}"
             ).text
         )
@@ -325,18 +325,18 @@ class ErtClient:
     def start_experiment(self, config: dict[str, Any]) -> str:
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_SERVER}/{EverEndpoints.START_EXPERIMENT}",
+            f"{_EXPERIMENT_RUNNER}/{EverEndpoints.START_EXPERIMENT}",
             auth=self._auth,
             json=config,
         )
         return str(_checked(response).json()["experiment_id"])
 
-    def stop_experiment_server(self, retries: int = 5) -> bool:
+    def stop_server(self, retries: int = 5) -> bool:
         status_code, sleep = 400, retries
         while status_code != httpx.codes.OK and retries > 0:
             status_code = self._request(
                 "POST",
-                f"{_EXPERIMENT_SERVER}/{EverEndpoints.STOP}",
+                f"{_EXPERIMENT_RUNNER}/{EverEndpoints.STOP}",
                 auth=self._auth,
             ).status_code
             retries -= 1
@@ -346,7 +346,7 @@ class ErtClient:
     def runpath_exists(self, paths: list[str]) -> bool:
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_SERVER}/{EverEndpoints.RUNPATH}",
+            f"{_EXPERIMENT_RUNNER}/{EverEndpoints.RUNPATH}",
             auth=self._auth,
             json={"paths": paths},
         )
@@ -372,7 +372,7 @@ class ErtClient:
 
         url = (
             self.conn_info.base_url.replace("https://", "wss://")
-            + f"{_EXPERIMENT_SERVER}/{EverEndpoints.EVENTS}/{experiment_id}"
+            + f"{_EXPERIMENT_RUNNER}/{EverEndpoints.EVENTS}/{experiment_id}"
         )
         username, password = self._auth
         credentials = b64encode(f"{username}:{password}".encode()).decode()
@@ -485,9 +485,9 @@ class ErtClient:
             raise RuntimeError("No authentication token found in storage session")
         return ("username", token)
 
-    def _experiment_server_get(self, path: str) -> httpx.Response:
+    def _experiment_runner_get(self, path: str) -> httpx.Response:
         return _checked(
-            self._request("GET", f"{_EXPERIMENT_SERVER}/{path}", auth=self._auth)
+            self._request("GET", f"{_EXPERIMENT_RUNNER}/{path}", auth=self._auth)
         )
 
     def _get(self, url: str, **kwargs: Any) -> httpx.Response:

@@ -64,7 +64,7 @@ class EverestMainWindow(QMainWindow):
             experiment_name=config_filename,
             supports_rerunning_failed_realizations=False,
             start_simulations_thread=start_fn,
-            cancel=client.stop_experiment_server,  # type: ignore
+            cancel=client.stop_server,  # type: ignore
             has_failed_realizations=lambda: False,
         )
         event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(

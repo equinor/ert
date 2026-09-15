@@ -218,7 +218,7 @@ def test_that_server_probe_checks_authenticated_endpoint_with_requested_timeout(
 
     api.client.request.assert_called_once_with(
         "GET",
-        "/experiment_server/",
+        "/experiment_runner/",
         auth=("username", "token"),
         timeout=120 if timeout is None else timeout,
     )

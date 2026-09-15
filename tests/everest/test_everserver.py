@@ -15,7 +15,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from ert.config import ConfigWarning
 from ert.dark_storage.app import app
-from ert.dark_storage.endpoints.experiment_server import (
+from ert.dark_storage.endpoints.experiment_runner import (
     ExperimentRunnerState,
     _experiments,
 )
@@ -239,7 +239,7 @@ def test_websocket_no_authentication(setup_client):
     client, _, experiment_id = setup_client()
     with (
         client.websocket_connect(
-            f"/experiment_server/events/{experiment_id}"
+            f"/experiment_runner/events/{experiment_id}"
         ) as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
     ):
@@ -252,7 +252,7 @@ def test_websocket_wrong_password(setup_client):
     credentials = b64encode(b"username:wrong_password").decode()
     with (
         client.websocket_connect(
-            f"/experiment_server/events/{experiment_id}",
+            f"/experiment_runner/events/{experiment_id}",
             headers={"Authorization": f"Basic {credentials}"},
         ) as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
@@ -266,13 +266,13 @@ def test_websocket_multiple_connections(setup_client):
     client, subscribers, experiment_id = setup_client()
     credentials = b64encode(b"username:password").decode()
     with client.websocket_connect(
-        f"/experiment_server/events/{experiment_id}",
+        f"/experiment_runner/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event = websocket.receive_json()
         websocket.close()
     with client.websocket_connect(
-        f"/experiment_server/events/{experiment_id}",
+        f"/experiment_runner/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event_2 = websocket.receive_json()
@@ -285,13 +285,13 @@ def test_websocket_multiple_connections_one_fails(setup_client):
     credentials = b64encode(b"username:password").decode()
     with (
         client.websocket_connect(
-            f"/experiment_server/events/{experiment_id}"
+            f"/experiment_runner/events/{experiment_id}"
         ) as websocket,
         pytest.raises(WebSocketDisconnect),
     ):
         websocket.receive_json()
     with client.websocket_connect(
-        f"/experiment_server/events/{experiment_id}",
+        f"/experiment_runner/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event = websocket.receive_json()
@@ -313,7 +313,7 @@ def test_websocket_multiple_events_in_queue(setup_client):
     credentials = b64encode(b"username:password").decode()
     event_msgs = []
     with client.websocket_connect(
-        f"/experiment_server/events/{experiment_id}",
+        f"/experiment_runner/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event_msgs.extend(websocket.receive_json() for _ in expected)
@@ -335,17 +335,17 @@ def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
         with (
             patch.object(EverestConfig, "with_plugins", return_value=MagicMock()),
             patch(
-                "ert.dark_storage.endpoints.experiment_server.ExperimentRunner",
+                "ert.dark_storage.endpoints.experiment_runner.ExperimentRunner",
                 return_value=mock_runner,
             ),
         ):
             r1 = client.post(
-                "/experiment_server/start_experiment",
+                "/experiment_runner/start_experiment",
                 json={"type": "everest_config"},
                 headers=auth_headers,
             )
             r2 = client.post(
-                "/experiment_server/start_experiment",
+                "/experiment_runner/start_experiment",
                 json={"type": "everest_config"},
                 headers=auth_headers,
             )
@@ -354,7 +354,7 @@ def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
         experiment_id_2 = r2.json()["experiment_id"]
         assert experiment_id_1 != experiment_id_2
         runs_response = client.get(
-            "/experiment_server/experiments", headers=auth_headers
+            "/experiment_runner/experiments", headers=auth_headers
         )
         assert runs_response.status_code == 200
         assert set(runs_response.json()["experiment_ids"]) >= {
@@ -374,7 +374,7 @@ async def test_websocket_no_events_on_connect(setup_client):
     expected_result = EndEvent(failed=False, msg="Test message")
 
     with client.websocket_connect(
-        f"/experiment_server/events/{experiment_id}",
+        f"/experiment_runner/events/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
 
@@ -397,7 +397,7 @@ def test_that_get_status_returns_successfully(setup_client):
     credentials = b64encode(b"username:password").decode()
 
     response = client.get(
-        "/experiment_server/",
+        "/experiment_runner/",
         headers={"Authorization": f"Basic {credentials}"},
     )
     assert response.status_code == 200
@@ -433,7 +433,7 @@ def test_that_get_status_by_experiment_id_endpoint_returns_expected_response(
     client, _, valid_experiment_id = setup_client()
 
     response = client.get(
-        f"/experiment_server/status/{experiment_id or valid_experiment_id}",
+        f"/experiment_runner/status/{experiment_id or valid_experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     )
     assert response.status_code == expected_status_code
@@ -447,7 +447,7 @@ def test_that_get_config_path_returns_not_found_for_pending_experiment_state(
     credentials = b64encode(b"username:password").decode()
 
     response = client.get(
-        f"/experiment_server/config_path/{experiment_id}",
+        f"/experiment_runner/config_path/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     )
     assert response.status_code == 404
@@ -463,7 +463,7 @@ def test_that_get_config_path_returns_successfully_for_running_experiment(
     assert experiment_id in _experiments
     _experiments[experiment_id].status.status = ExperimentState.running
     response = client.get(
-        f"/experiment_server/config_path/{experiment_id}",
+        f"/experiment_runner/config_path/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
     )
     assert response.status_code == 200
@@ -478,7 +478,7 @@ def test_that_experiment_stop_endpoint_returns_successfully(setup_client):
     credentials = b64encode(b"username:password").decode()
 
     response = client.post(
-        "/experiment_server/stop",
+        "/experiment_runner/stop",
         headers={"Authorization": f"Basic {credentials}"},
     )
 
@@ -503,7 +503,7 @@ def test_that_experiment_stop_endpoint_correctly_shuts_down_server(setup_client)
         signal(SIGTERM, handler)
 
         _ = client.post(
-            "/experiment_server/stop",
+            "/experiment_runner/stop",
             headers={"Authorization": f"Basic {credentials}"},
         )
 
