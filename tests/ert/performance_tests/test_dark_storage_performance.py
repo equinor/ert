@@ -7,7 +7,6 @@ import os
 import sys
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
-from urllib.parse import quote
 from uuid import UUID
 
 import memray
@@ -16,17 +15,13 @@ import pandas as pd
 import polars as pl
 import pytest
 from httpx import RequestError
-from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
 from ert.dark_storage import common
-from ert.dark_storage.app import app
 from ert.dark_storage.endpoints import ensembles, experiments
 from ert.dark_storage.endpoints.observations import get_observations_for_response
 from ert.dark_storage.endpoints.responses import get_response
 from ert.gui.plotting.plot_api import PlotApi
-from ert.services import ert_client
-from ert.services.ert_client import ErtClient
 from ert.storage import Storage, open_storage
 
 
@@ -53,28 +48,8 @@ def get_response_autofilter(
 
 
 @pytest.fixture(autouse=True)
-def use_testclient(monkeypatch):
-    client = TestClient(app)
-
-    class TestClientAdapter:
-        def request(self, method, url, **kwargs):
-            kwargs.pop("timeout", None)
-            return client.request(method, url, **kwargs)
-
-    monkeypatch.setattr(
-        ErtClient,
-        "get_client",
-        classmethod(lambda cls, *args, **kwargs: cls(TestClientAdapter())),
-    )
-
-    def test_escape(s: str) -> str:
-        """
-        Workaround for issue with TestClient:
-        https://github.com/encode/starlette/issues/1060
-        """
-        return quote(quote(quote(s, safe="")))
-
-    monkeypatch.setattr(ert_client, "_escape", test_escape)
+def _autouse_patch_ertclient_to_testclient(patch_ertclient_to_testclient):
+    pass
 
 
 def run_in_loop[T](coro: Awaitable[T]) -> T:

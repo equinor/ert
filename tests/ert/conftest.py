@@ -13,6 +13,7 @@ from importlib.resources import files
 from io import BytesIO, StringIO
 from pathlib import Path
 from textwrap import dedent
+from urllib.parse import quote
 
 import numpy as np
 import polars as pl
@@ -23,6 +24,7 @@ from hypothesis import strategies as st
 from lark import Token
 from PyQt6.QtCore import QDir
 from PyQt6.QtWidgets import QApplication
+from starlette.testclient import TestClient
 from xlsxwriter import Workbook
 
 import _ert.forward_model_runner.fm_dispatch
@@ -32,6 +34,7 @@ from ert.cli.main import run_cli
 from ert.config import ConfigWarning, ErtConfig
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.config.rft_config import _get_zonemap, _read_egrid
+from ert.dark_storage.app import app
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -39,11 +42,38 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
 )
+from ert.services import ert_client
+from ert.services.ert_client import ErtClient
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
 
 st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
+
+
+@pytest.fixture
+def patch_ertclient_to_testclient(monkeypatch):
+    client = TestClient(app)
+
+    class TestClientAdapter:
+        def request(self, method, url, **kwargs):
+            kwargs.pop("timeout", None)
+            return client.request(method, url, **kwargs)
+
+    monkeypatch.setattr(
+        ErtClient,
+        "get_client",
+        classmethod(lambda cls, *args, **kwargs: cls(TestClientAdapter())),
+    )
+
+    def test_escape(s: str) -> str:
+        """
+        Workaround for issue with TestClient:
+        https://github.com/encode/starlette/issues/1060
+        """
+        return quote(quote(quote(s, safe="")))
+
+    monkeypatch.setattr(ert_client, "_escape", test_escape)
 
 
 @pytest.fixture(autouse=True)
