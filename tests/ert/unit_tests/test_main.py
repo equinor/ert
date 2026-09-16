@@ -131,13 +131,32 @@ def test_argparse_exec_es_mda_valid_case():
     assert parsed.func.__name__ == "run_cli"
 
 
-def test_argparse_exec_ensemble_es_mda_restart_ensembler():
+def test_that_es_mda_parses_prior_ensemble_id():
     parsed = ert_parser(
-        None, [ES_MDA_MODE, "--restart-ensemble", "test_ensemble", "path/to/config.ert"]
+        None,
+        [ES_MDA_MODE, "--prior-ensemble-id", "test_ensemble", "path/to/config.ert"],
     )
     assert parsed.mode == ES_MDA_MODE
-    assert parsed.restart_ensemble_id == "test_ensemble"
+    assert parsed.prior_ensemble_id == "test_ensemble"
     assert parsed.func.__name__ == "run_cli"
+
+
+@pytest.mark.parametrize(
+    "deprecated_option",
+    ["--restart-case", "--restart-ensemble", "--restart-ensemble-id"],
+)
+def test_that_deprecated_es_mda_options_warn_and_set_prior_ensemble_id(
+    deprecated_option: str,
+):
+    with pytest.warns(
+        UserWarning,
+        match=rf"{deprecated_option} is deprecated.*Use --prior-ensemble-id instead\.",
+    ):
+        parsed = ert_parser(
+            None,
+            [ES_MDA_MODE, deprecated_option, "test_ensemble", "path/to/config.ert"],
+        )
+    assert parsed.prior_ensemble_id == "test_ensemble"
 
 
 def test_argparse_exec_workflow():
