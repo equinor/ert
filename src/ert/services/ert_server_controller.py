@@ -426,36 +426,37 @@ def create_ert_server_controller(
 ) -> ErtServerController:
     path = Path(project)
     # Wait for storage_server.json file to appear
-    try:  # ruff: ignore[too-many-statements-in-try-clause]
-        if timeout is None:
-            timeout = 240
-        t = -1
-        while t < timeout:
-            storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
-            try:
-                if storage_server_path.stat().st_size > 0:
-                    storage_server_content = json.loads(
-                        storage_server_path.read_text(encoding="utf-8")
-                    )
+    if timeout is None:
+        timeout = 240
+    if timeout < 0:
+        raise RuntimeError(f"timeout must be positive, was {timeout}")
+    t = -1
+    storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
+    while t < timeout:
+        try:
+            storage_server_size = storage_server_path.stat().st_size
+        except FileNotFoundError:
+            storage_server_size = 0
+        except PermissionError as pe:
+            logger.error(
+                f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
+                "due to permission issues.",
+            )
+            raise
+        if storage_server_size:
+            storage_server_content = json.loads(
+                storage_server_path.read_text(encoding="utf-8")
+            )
 
-                    return ErtServerController(
-                        storage_path=str(path),
-                        connection_info=storage_server_content,
-                        logging_config=logging_config,
-                    )
-            except FileNotFoundError:
-                pass
+            return ErtServerController(
+                storage_path=str(path),
+                connection_info=storage_server_content,
+                logging_config=logging_config,
+            )
+        sleep(1)
+        t += 1
 
-            sleep(1)
-            t += 1
-
-        raise TimeoutError(
-            f"Server not started. {storage_server_path} did "
-            f"not appear or remained empty within {timeout} seconds."
-        )
-    except PermissionError as pe:
-        logger.error(
-            f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
-            "due to permission issues.",
-        )
-        raise
+    raise TimeoutError(
+        f"Server not started. {storage_server_path} did "
+        f"not appear or remained empty within {timeout} seconds."
+    )
