@@ -285,7 +285,8 @@ def copy_poly_case_with_design_matrix(copy_case):
             encoding="utf-8",
         )
 
-        Path("poly_eval.py").write_text(
+        poly_py = Path("poly_eval.py")
+        poly_py.write_text(
             dedent(
                 """\
                     #!/usr/bin/env python
@@ -309,8 +310,8 @@ def copy_poly_case_with_design_matrix(copy_case):
             encoding="utf-8",
         )
 
-        Path("poly_eval.py").chmod(
-            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        poly_py.chmod(
+            poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     return _create_poly_design_case

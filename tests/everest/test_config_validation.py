@@ -880,10 +880,11 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
         """
         )
 
-    with Path("non_executable").open("w+", encoding="utf-8") as f:
+    non_executable = Path("non_executable")
+    with non_executable.open("w+", encoding="utf-8") as f:
         f.write("bla")
 
-    Path("non_executable").chmod(os.stat("non_executable").st_mode & ~0o111)
+    non_executable.chmod(non_executable.stat().st_mode & ~0o111)
     assert not os.access("non_executable", os.X_OK)
 
     with pytest.warns(
@@ -915,10 +916,11 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
 def test_that_existing_install_job_with_non_executable_executable_errors(
     install_keyword, change_to_tmpdir
 ):
-    with Path("non_executable").open("w+", encoding="utf-8") as f:
+    non_executable = Path("non_executable")
+    with non_executable.open("w+", encoding="utf-8") as f:
         f.write("bla")
 
-    Path("non_executable").chmod(os.stat("non_executable").st_mode & ~0o111)
+    non_executable.chmod(non_executable.stat().st_mode & ~0o111)
     assert not os.access("non_executable", os.X_OK)
 
     with pytest.raises(ValidationError, match="File not executable"):
@@ -946,10 +948,8 @@ def test_that_existing_install_job_with_non_existing_executable_errors_deprecate
     install_keyword, change_to_tmpdir
 ):
     with Path("exec.ert").open("w+", encoding="utf-8") as f:
-        f.write(
-            """EXECUTABLE non_existing
-        """
-        )
+        f.write("""EXECUTABLE non_existing
+        """)
 
     assert not os.access("non_executable", os.X_OK)
 

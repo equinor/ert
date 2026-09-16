@@ -151,11 +151,9 @@ def _generate_step(
         elif val is not None:
             config_contents += f"{key} {val}\n"
 
-    with Path(executable).open("w", encoding="utf-8"):
-        pass
-    mode = os.stat(executable).st_mode
-    mode |= stat.S_IXUSR | stat.S_IXGRP
-    Path(executable).chmod(stat.S_IMODE(mode))
+    exe = Path(executable)
+    exe.write_text("", encoding="utf-8")
+    exe.chmod(exe.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP)
 
     return forward_model_step_from_config_contents(config_contents, config_file, name)
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import os
-import pathlib
 import sys
+from pathlib import Path
 
 
 def delete_file(filename: str) -> None:
-    if pathlib.Path(filename).exists():
-        if pathlib.Path(filename).is_file():
-            stat_info = os.stat(filename)
-            uid = stat_info.st_uid
+    filepath = Path(filename)
+    if filepath.exists():
+        if filepath.is_file():
+            uid = filepath.stat().st_uid
             if uid == os.getuid():
                 os.unlink(filename)
                 print(f"Removing file:'{filename}'")

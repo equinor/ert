@@ -128,7 +128,8 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         f.write("category UNIFORM 0 1\n")
         f.write("big_numbers UNIFORM 0 1\n")
 
-    Path("poly_eval.py").write_text(
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
         dedent(
             """\
                 #!/usr/bin/env python
@@ -165,9 +166,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         encoding="utf-8",
     )
 
-    Path("poly_eval.py").chmod(
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    )
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
@@ -257,7 +256,8 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         encoding="utf-8",
     )
 
-    Path("poly_eval.py").write_text(
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
         dedent(
             """\
                 #!/usr/bin/env python
@@ -281,9 +281,7 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         encoding="utf-8",
     )
 
-    Path("poly_eval.py").chmod(
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    )
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     with warnings.catch_warnings(record=True) as all_warnings:
         run_cli(
@@ -380,7 +378,8 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
         encoding="utf-8",
     )
 
-    Path("poly_eval.py").write_text(
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
         dedent(
             """\
                 #!/usr/bin/env python3
@@ -404,9 +403,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
         encoding="utf-8",
     )
 
-    Path("poly_eval.py").chmod(
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    )
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     Path("coeff_priors_a").write_text("a UNIFORM 0 1", encoding="utf-8")
     Path("coeff_priors_b").write_text("b UNIFORM 0 2", encoding="utf-8")

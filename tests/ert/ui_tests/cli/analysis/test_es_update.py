@@ -1,4 +1,3 @@
-import os
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -185,7 +184,8 @@ def test_update_multiple_param():
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterior():
-    Path("poly_eval.py").write_text(
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
         dedent(
             """\
                 #!/usr/bin/env python
@@ -218,9 +218,7 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
         encoding="utf-8",
     )
 
-    Path("poly_eval.py").chmod(
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    )
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,

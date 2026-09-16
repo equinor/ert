@@ -1,4 +1,3 @@
-import os
 import stat
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -28,7 +27,8 @@ from .conftest import get_child
 def _open_main_window(
     path,
 ) -> Generator[tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
-    Path("forward_model.py").write_text(
+    fm_model = Path("forward_model.py")
+    fm_model.write_text(
         dedent(
             """\
                 #!/usr/bin/env python3
@@ -42,10 +42,8 @@ def _open_main_window(
         encoding="utf-8",
     )
 
-    Path("forward_model.py").chmod(
-        os.stat("forward_model.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    )
-    Path("FORWARD_MODEL").write_text("EXECUTABLE forward_model.py", encoding="utf-8")
+    fm_model.chmod(fm_model.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    Path("FORWARD_MODEL").write_text(f"EXECUTABLE {fm_model.name}", encoding="utf-8")
 
     config = dedent("""
     QUEUE_SYSTEM LOCAL

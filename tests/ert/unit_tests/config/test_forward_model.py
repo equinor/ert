@@ -35,11 +35,9 @@ from .config_dict_generator import config_generators
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model():
-    name = "script.sh"
-    Path(name).write_text("This is a script", encoding="utf-8")
-    mode = os.stat(name).st_mode
-    mode |= stat.S_IXUSR | stat.S_IXGRP
-    Path(name).chmod(stat.S_IMODE(mode))
+    script = Path("script.sh")
+    script.write_text("This is a script", encoding="utf-8")
+    script.chmod(script.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP)
     contents = """
         STDOUT null
         STDERR null
@@ -62,11 +60,9 @@ def test_load_forward_model():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_upgraded():
-    name = "script.sh"
-    Path(name).write_text("This is a script", encoding="utf-8")
-    mode = os.stat(name).st_mode
-    mode |= stat.S_IXUSR | stat.S_IXGRP
-    Path(name).chmod(stat.S_IMODE(mode))
+    script = Path("script.sh")
+    script.write_text("This is a script", encoding="utf-8")
+    script.chmod(script.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP)
     fm_step = forward_model_step_from_config_contents(
         """
         EXECUTABLE script.sh

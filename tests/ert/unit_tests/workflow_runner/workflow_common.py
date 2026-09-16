@@ -1,4 +1,3 @@
-import os
 import stat
 from pathlib import Path
 
@@ -29,12 +28,10 @@ class WorkflowCommon:
             '#!/usr/bin/env python\nprint("Hello Failing")\nraise Exception',
             encoding="utf-8",
         )
-        st = os.stat("dump.py")
-        Path("dump.py").chmod(
-            st.st_mode | stat.S_IEXEC
-        )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-        st = os.stat("dump_failing.py")
-        Path("dump_failing.py").chmod(st.st_mode | stat.S_IEXEC)
+        dump_py = Path("dump.py")
+        dump_py.chmod(dump_py.stat().st_mode | stat.S_IEXEC)
+        dump_failing = Path("dump_failing.py")
+        dump_failing.chmod(dump_failing.stat().st_mode | stat.S_IEXEC)
 
         Path("dump_workflow").write_text(
             "DUMP dump1 dump_text_1\nDUMP dump2 dump_<PARAM>_2\n", encoding="utf-8"
@@ -88,7 +85,8 @@ class WorkflowCommon:
             encoding="utf-8",
         )
 
-        Path("external_wait_job.sh").write_text(
+        external_wait_job_sh = Path("external_wait_job.sh")
+        external_wait_job_sh.write_text(
             "#!/usr/bin/env bash\n"
             'echo "text" > wait_started_$1\n'
             "sleep $2\n"
@@ -96,10 +94,7 @@ class WorkflowCommon:
             encoding="utf-8",
         )
 
-        st = os.stat("external_wait_job.sh")
-        Path("external_wait_job.sh").chmod(
-            st.st_mode | stat.S_IEXEC
-        )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        external_wait_job_sh.chmod(external_wait_job_sh.stat().st_mode | stat.S_IEXEC)
 
         Path("wait_job").write_text(
             "INTERNAL True\n"

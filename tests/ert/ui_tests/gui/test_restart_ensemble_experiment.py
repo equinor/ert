@@ -1,5 +1,4 @@
 import logging
-import os
 import random
 import stat
 from pathlib import Path
@@ -22,7 +21,8 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     gui = opened_main_window_poly
 
     def write_poly_eval(failing_reals: bool):
-        Path("poly_eval.py").write_text(
+        poly_py = Path("poly_eval.py")
+        poly_py.write_text(
             dedent(
                 f"""\
                     #!/usr/bin/env python
@@ -51,8 +51,8 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
             encoding="utf-8",
         )
 
-        Path("poly_eval.py").chmod(
-            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        poly_py.chmod(
+            poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     write_poly_eval(failing_reals=True)
@@ -98,7 +98,8 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     caplog.set_level(logging.INFO)
 
     def write_poly_eval(failing_reals: set[int]):
-        Path("poly_eval.py").write_text(
+        poly_py = Path("poly_eval.py")
+        poly_py.write_text(
             dedent(
                 f"""\
                     #!/usr/bin/env python
@@ -126,8 +127,8 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
             encoding="utf-8",
         )
 
-        Path("poly_eval.py").chmod(
-            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        poly_py.chmod(
+            poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     experiment_panel = gui.findChild(ExperimentPanel)
@@ -256,7 +257,8 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     gui = ensemble_experiment_has_run_no_failure
 
     def write_poly_eval(failing_reals: set[int]):
-        Path("poly_eval.py").write_text(
+        poly_py = Path("poly_eval.py")
+        poly_py.write_text(
             dedent(
                 f"""\
                     #!/usr/bin/env python
@@ -284,8 +286,8 @@ def test_rerun_failed_realizations_evaluate_ensemble(
             encoding="utf-8",
         )
 
-        Path("poly_eval.py").chmod(
-            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        poly_py.chmod(
+            poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     experiment_panel = gui.findChild(ExperimentPanel)

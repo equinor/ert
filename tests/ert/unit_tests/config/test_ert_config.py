@@ -129,9 +129,8 @@ def test_runpath_file_is_absolute(monkeypatch, tmp_path):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_workflow_run_modes_can_be_selected(run_mode):
     my_script = Path("my_script").resolve()
-    my_script.write_text("", encoding="utf-8")
-    st = os.stat(my_script)
-    Path(my_script).chmod(st.st_mode | stat.S_IEXEC)
+    my_script.touch()
+    my_script.chmod(my_script.stat().st_mode | stat.S_IEXEC)
     test_user_config = Path("user_config.ert")
     test_user_config.write_text(
         dedent(f"""JOBNAME Job%d
@@ -167,10 +166,9 @@ def test_logging_config(caplog, config_content, expected):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_custom_forward_models_are_logged(caplog):
-    localhack = "localhack.sh"
-    Path(localhack).write_text("", encoding="utf-8")
-    st = os.stat(localhack)
-    Path(localhack).chmod(st.st_mode | stat.S_IEXEC)
+    localhack = Path("localhack.sh")
+    localhack.write_text("", encoding="utf-8")
+    localhack.chmod(localhack.stat().st_mode | stat.S_IEXEC)
     Path("foo_fm").write_text(
         f"-- A comment\n   \nEXECUTABLE {localhack}\n\n\n", encoding="utf-8"
     )
