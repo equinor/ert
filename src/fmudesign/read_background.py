@@ -4,7 +4,7 @@ import pandas as pd
 
 from .read_correlations import parse_sensitivity_correlations
 from .read_distributions import parse_distribution_parameters
-from .utils import _has_value, _is_int, find_sheet
+from .utils import _has_value, _is_int, excel_sheet_names, find_sheet
 
 
 def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
@@ -18,8 +18,7 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
         dict with parameter names and distributions
     """
     backdict: dict[str, Any] = {}
-    with pd.ExcelFile(inp_filename, engine="openpyxl") as workbook:
-        sheet_names = [str(name) for name in workbook.sheet_names]
+    sheet_names = excel_sheet_names(inp_filename)
     try:
         bck_sheet = find_sheet(bck_sheet, names=sheet_names)
     except ValueError as err:

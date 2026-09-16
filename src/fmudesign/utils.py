@@ -9,6 +9,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import polars as pl
+from python_calamine import CalamineWorkbook
+
+
+def excel_sheet_names(filename: Path | str) -> list[str]:
+    with CalamineWorkbook.from_path(filename) as workbook:
+        return workbook.sheet_names
 
 
 def parameters_from_extern(filename: str) -> pd.DataFrame:
