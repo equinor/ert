@@ -93,7 +93,7 @@ Focus on: correctness, clarity, reliability, and maintainability.
 - [ ] Comments are minimal, and do not argue for the current code over an earlier version (that belongs in the commit body).
 - [ ] Commit messages do not contain a `Co-authored-by: Copilot` trailer.
 - [ ] User-facing changes include/update relevant `.rst` documentation under `docs/`.
-- [ ] New code should prefer the variant runpath over "run path" or run_path
+- [ ] New code should prefer the spelling "runpath" over "run path" or "run_path"
 
 ---
 
