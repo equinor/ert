@@ -53,7 +53,9 @@ class MultipleDataAssimilation(
             )
             total_iterations -= start_iteration
         elif not self.experiment_name:
-            raise ValueError("For non-restart run, experiment name must be set")
+            raise ValueError(
+                "For a run without a prior ensemble, experiment name must be set"
+            )
 
         self._start_iteration = start_iteration
         self._total_iterations = total_iterations
@@ -64,7 +66,7 @@ class MultipleDataAssimilation(
             name=self.experiment_name,
         )
 
-    def _create_experiment_for_restart(
+    def _create_experiment_from_prior(
         self, original_experiment: ExperimentConfig
     ) -> ExperimentConfig:
         new_experiment = self.to_experiment_config()
@@ -111,19 +113,19 @@ class MultipleDataAssimilation(
                 raise ErtRunError(
                     "Experiment misconfigured, got starting "
                     f"iteration: {self._start_iteration}, "
-                    f"restart iteration = {prior.iteration + 1}"
+                    f"expected iteration from prior ensemble: {prior.iteration + 1}"
                 )
 
             try:
                 target_experiment = self._storage.create_experiment(
-                    experiment_config=self._create_experiment_for_restart(
+                    experiment_config=self._create_experiment_from_prior(
                         experiment.experiment_config
                     ),
                     name=f"Run from {prior.name}",
                 )
             except Exception as err:
                 logger.exception(
-                    f"Failed to create restart experiment from prior ensemble "
+                    f"Failed to create experiment from prior ensemble "
                     f"'{prior.name}' (ID: {self.prior_ensemble_id})"
                 )
                 raise ErtRunError(
@@ -198,7 +200,9 @@ class MultipleDataAssimilation(
 
     @classmethod
     def description(cls) -> str:
-        return "[Sample|restart] → [evaluate → update] for each weight."
+        return (
+            "[Sample → evaluate] | select prior → [update → evaluate] for each weight."
+        )
 
     @classmethod
     def group(cls) -> str | None:
