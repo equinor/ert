@@ -18,7 +18,7 @@ def symlink(target: str, link_name: str) -> None:
     else:
         if not Path(link_path).is_dir():
             print(f"Creating directory for link: {link_path}")
-            os.makedirs(link_path)
+            Path(link_path).mkdir(parents=True)
         target_check = Path(link_path) / target
 
     if not target_check.exists():

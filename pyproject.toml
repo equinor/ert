@@ -254,6 +254,7 @@ select = [
     "os-getcwd",
     "os-path-abspath",
     "os-path-exists",
+    "os-makedirs",
     "os-path-isfile",
     "os-path-join",
     "os-path-isdir",

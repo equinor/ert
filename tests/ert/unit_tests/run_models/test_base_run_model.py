@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import math
-import os
 import stat
 import uuid
 import warnings
@@ -226,14 +225,14 @@ def test_delete_runpath(runpath_format, active_realizations, use_tmpdir):
             .replace("<ITER>", "0")
             .replace("<ERTCASE>", "Case_Name")
         )
-        os.makedirs(runpath)
+        runpath.mkdir(parents=True)
         assert runpath.exists()
         if not mask:
             expected_remaining.append(runpath)
         else:
             expected_removed.append(runpath)
     share_path = Path("share")
-    os.makedirs(share_path)
+    share_path.mkdir(parents=True)
     model_config = ModelConfig(runpath_format_string=runpath_format)
 
     brm = create_run_model(

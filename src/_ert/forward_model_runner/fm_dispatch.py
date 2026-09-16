@@ -77,7 +77,7 @@ def _setup_logging(directory: str = "logs") -> None:
     fm_runner_logger = logging.getLogger("_ert.forward_model_runner")
     memory_csv_logger = logging.getLogger("_ert.forward_model_memory_profiler")
 
-    os.makedirs(directory, exist_ok=True)
+    Path(directory).mkdir(exist_ok=True, parents=True)
 
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import polars as pl
@@ -9,7 +8,7 @@ from ert.storage.migration.to24 import migrate
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_migrating_storage_to_24_adds_zone_keyword_to_responses():
-    os.makedirs("ensembles/hash/realization-0")
+    Path("ensembles/hash/realization-0").mkdir(parents=True)
 
     pl.DataFrame(
         {
@@ -29,7 +28,7 @@ def test_that_migrating_storage_to_24_adds_zone_keyword_to_responses():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_migrating_storage_to_24_adds_zone_keyword_to_observations():
-    os.makedirs("experiments/hash/observations")
+    Path("experiments/hash/observations").mkdir(parents=True)
 
     pl.DataFrame(
         {

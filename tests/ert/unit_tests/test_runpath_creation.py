@@ -272,7 +272,7 @@ async def test_that_run_template_replace_symlink_does_not_write_to_source(
     )
     run_arg = run_args(ert_config, prior_ensemble)
     runpath = Path(run_arg[0].runpath)
-    os.makedirs(runpath)
+    runpath.mkdir(parents=True)
     # Write a file that will be symlinked into the run run path with the
     # same name as the target_file
     Path("start.txt").write_text(

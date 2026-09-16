@@ -17,7 +17,7 @@ def copy_file(src: str, target: str | None = None) -> None:
         else:
             target_path = os.path.dirname(target)
             if target_path and not Path(target_path).is_dir():
-                os.makedirs(target_path)
+                Path(target_path).mkdir(parents=True)
                 print(f"Creating directory '{target_path}' ")
             if Path(target).is_dir():
                 target_file = str(Path(target) / Path(src).name)

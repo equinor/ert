@@ -119,7 +119,7 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
 def _migrate_observations_to_grouped_parquet(path: Path) -> None:
     for experiment in path.glob("experiments/*"):
         if not (experiment / "observations").exists():
-            os.makedirs(experiment / "observations")
+            (experiment / "observations").mkdir(parents=True)
 
         obs_keys = os.listdir(Path(experiment) / "observations")
 
