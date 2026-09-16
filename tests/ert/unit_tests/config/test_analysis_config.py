@@ -1,5 +1,5 @@
 import logging
-import os.path
+from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.strategies as st
@@ -50,7 +50,7 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
             ],
             ConfigKeys.DESIGN_MATRIX: [
                 [
-                    os.path.abspath("my_design_matrix.xlsx"),
+                    str(Path("my_design_matrix.xlsx").resolve()),
                     {
                         "DESIGN_SHEET": "my_sheet",
                         "DEFAULT_SHEET": "my_default_sheet",

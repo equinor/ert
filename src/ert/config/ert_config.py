@@ -640,7 +640,7 @@ def installed_forward_model_steps_from_dict(
     for name, (fm_step_config_file, config_contents) in config_dict.get(
         ConfigKeys.INSTALL_JOB, []
     ):
-        fm_step_config_abspath = path.abspath(fm_step_config_file)
+        fm_step_config_abspath = str(Path(fm_step_config_file).resolve())
         try:
             new_fm_step = forward_model_step_from_config_contents(
                 config_contents, name=name, config_file=fm_step_config_abspath
@@ -885,7 +885,7 @@ class ErtConfig(BaseModel, extra="forbid"):
     @model_validator(mode="after")
     def set_fields(self) -> Self:
         self.config_path = (
-            path.dirname(path.abspath(self.user_config_file))
+            str(Path(self.user_config_file).resolve().parent)
             if self.user_config_file
             else str(Path.cwd())
         )
@@ -1030,8 +1030,8 @@ class ErtConfig(BaseModel, extra="forbid"):
         )
         cls._log_custom_forward_model_steps(user_config_dict)
 
-        config_dir = path.abspath(path.dirname(config_file_name))
-        cls.apply_config_content_defaults(user_config_dict, config_dir)
+        config_dir = Path(config_file_name).resolve().parent
+        cls.apply_config_content_defaults(user_config_dict, str(config_dir))
         return user_config_dict
 
     @classmethod

@@ -1,7 +1,6 @@
 import argparse
 import logging
 import logging.config
-import os
 import pathlib
 import time
 from pathlib import Path
@@ -142,12 +141,12 @@ def main() -> None:
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
             # Starting the server
-            server_path = os.path.abspath(ServerConfig.get_session_dir(output_dir))
+            server_path = Path(ServerConfig.get_session_dir(output_dir)).resolve()
             with ErtServerController.init_service(
-                timeout=240, project=Path(server_path), logging_config=log_file.name
+                timeout=240, project=server_path, logging_config=log_file.name
             ) as server:
                 server.fetch_connection_info()
-                client = ErtClient.get_client(Path(server_path))
+                client = ErtClient.get_client(server_path)
                 done = False
                 while not done:
                     experiment_ids = client.experiment_ids()

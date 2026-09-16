@@ -603,13 +603,13 @@ def main() -> None:
 
     args = ert_parser(None, sys.argv[1:])
 
-    log_dir = os.path.abspath(args.logdir)
+    log_dir = Path(args.logdir).resolve()
     try:
         os.makedirs(log_dir, exist_ok=True)
     except PermissionError as err:
         sys.exit(str(err))
 
-    os.environ["ERT_LOG_DIR"] = log_dir
+    os.environ["ERT_LOG_DIR"] = str(log_dir)
 
     config_dict = yaml.safe_load(Path(LOGGING_CONFIG).read_text(encoding="utf-8"))
     for handler_name, handler_config in config_dict["handlers"].items():

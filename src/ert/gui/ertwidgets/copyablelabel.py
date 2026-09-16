@@ -1,4 +1,4 @@
-from os import path
+from pathlib import Path
 from typing import override
 
 from PyQt6.QtCore import Qt
@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel
 from .copy_button import CopyButton
 
 # Get the absolute path of the directory that contains the current script
-current_dir = path.dirname(path.abspath(__file__))
+current_dir = Path(__file__).resolve().parent
 
 
 def escape_string(string: str) -> str:

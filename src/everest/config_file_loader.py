@@ -131,7 +131,7 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
 
     definitions = _get_definitions(
         configuration=configuration,
-        configpath=os.path.dirname(os.path.abspath(config_path)),
+        configpath=str(Path(config_path).resolve().parent),
     )
     definitions["os"] = _os()  # update definitions with os namespace
 

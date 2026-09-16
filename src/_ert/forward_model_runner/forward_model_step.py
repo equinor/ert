@@ -12,7 +12,6 @@ import time
 import uuid
 from collections.abc import Generator, Iterable, Sequence
 from dataclasses import dataclass, field
-from os import path
 from pathlib import Path
 from subprocess import Popen, run
 from typing import TYPE_CHECKING
@@ -164,13 +163,13 @@ class ForwardModelStep:
             stdin = None
 
         if self.std_err:
-            os.makedirs(path.dirname(path.abspath(self.std_err)), exist_ok=True)
+            Path(self.std_err).resolve().parent.mkdir(parents=True, exist_ok=True)
             stderr = open(self.std_err, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
         else:
             stderr = None
 
         if self.std_out:
-            os.makedirs(path.dirname(path.abspath(self.std_out)), exist_ok=True)
+            Path(self.std_out).resolve().parent.mkdir(parents=True, exist_ok=True)
             stdout = open(self.std_out, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
         else:
             stdout = None

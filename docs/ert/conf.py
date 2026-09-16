@@ -11,11 +11,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
 import sys
 from importlib import metadata
+from pathlib import Path
 
-sys.path.append(os.path.abspath("_ext"))
+sys.path.append(str(Path("_ext").resolve()))
 
 # -- Project information -----------------------------------------------------
 
