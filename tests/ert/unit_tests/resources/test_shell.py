@@ -79,9 +79,9 @@ def test_symlink():
     assert os.path.islink("link")
     assert os.readlink("link") == "target2"
 
-    os.makedirs("root1/sub1/sub2")
-    os.makedirs("root2/sub1/sub2")
-    os.makedirs("run")
+    Path("root1/sub1/sub2").mkdir(parents=True)
+    Path("root2/sub1/sub2").mkdir(parents=True)
+    Path("run").mkdir(parents=True)
 
     symlink("../target", "linkpath/link")
     assert Path("linkpath").is_dir()
@@ -94,7 +94,7 @@ def test_symlink():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_symlink2():
-    os.makedirs("path")
+    Path("path").mkdir(parents=True)
     Path("path/target").write_text("1234", encoding="utf-8")
 
     symlink("path/target", "link")

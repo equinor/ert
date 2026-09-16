@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import os
 import pathlib
 import sys
 
@@ -9,7 +8,7 @@ def mkdir(path: str) -> None:
         print(f"OK - directory: '{path}' already exists")
     else:
         try:
-            os.makedirs(path)
+            pathlib.Path(path).mkdir(parents=True)
             print(f"Created directory: '{path}'")
         except OSError as error:
             # Seems in many cases the directory just suddenly appears;

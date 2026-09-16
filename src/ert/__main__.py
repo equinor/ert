@@ -605,7 +605,7 @@ def main() -> None:
 
     log_dir = Path(args.logdir).resolve()
     try:
-        os.makedirs(log_dir, exist_ok=True)
+        log_dir.mkdir(exist_ok=True, parents=True)
     except PermissionError as err:
         sys.exit(str(err))
 

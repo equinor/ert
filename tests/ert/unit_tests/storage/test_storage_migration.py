@@ -288,7 +288,7 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path: Path, caplog):
         f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(storage_path)])
 
     for d in (storage_path, storage_ensembles, storage_experiments):
-        os.makedirs(d, exist_ok=True)
+        d.mkdir(exist_ok=True, parents=True)
 
     with (storage_path / "index.json").open("w+", encoding="utf-8") as f:
         f.write("""{"version": 0}""")

@@ -239,7 +239,7 @@ def save_field(
     file_format: FieldFileFormat,
 ) -> None:
     path = Path(output_path)
-    os.makedirs(path.parent, exist_ok=True)
+    path.parent.mkdir(exist_ok=True, parents=True)
     if file_format in ROFF_FORMATS:
         export_roff(
             field,

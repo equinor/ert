@@ -348,7 +348,7 @@ async def test_starting_not_in_folder(tmp_path, monkeypatch):
             if isinstance(event, FinishedEvent) and event.iens == 0:
                 return event
 
-    os.makedirs(tmp_path / "new_folder")
+    (tmp_path / "new_folder").mkdir(parents=True)
     monkeypatch.chdir(tmp_path / "new_folder")
     everest_config = everest_config_with_defaults()
     everest_config.write_to_file("minimal_config.yml")

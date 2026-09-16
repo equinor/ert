@@ -4,7 +4,6 @@ import asyncio
 import json
 import logging
 import math
-import os
 import threading
 import time
 from collections import defaultdict
@@ -347,10 +346,7 @@ def _create_one_runpath(
 
         target = runpath / target_file
         if not target.parent.exists():
-            os.makedirs(
-                target.parent,
-                exist_ok=True,
-            )
+            target.parent.mkdir(exist_ok=True, parents=True)
         target.write_text(result)
         timings["result_file_to_target"] += time.perf_counter() - start_time
 
