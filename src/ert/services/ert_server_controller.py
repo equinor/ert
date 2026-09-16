@@ -449,7 +449,10 @@ def create_ert_server_controller(
             sleep(1)
             t += 1
 
-        raise TimeoutError("Server not started")
+        raise TimeoutError(
+            f"Server not started. {storage_server_path} did "
+            f"not appear or remained empty within {timeout} seconds."
+        )
     except PermissionError as pe:
         logger.error(
             f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
