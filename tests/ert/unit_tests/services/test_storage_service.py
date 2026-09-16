@@ -10,7 +10,7 @@ import pytest
 
 from ert.services import ErtServerController
 from ert.services._storage_main import _create_connection_info, _generate_certificate
-from ert.services.ert_server import create_ert_server_controller
+from ert.services.ert_server_controller import create_ert_server_controller
 from ert.shared import find_available_socket
 
 
@@ -105,7 +105,7 @@ def test_that_service_can_be_started_with_empty_conn_info_json(
 
 
 @patch("ert.services.ErtServerController.start_server")
-@patch("ert.services.ert_server.ErtServerController.fetch_url")
+@patch("ert.services.ert_server_controller.ErtServerController.fetch_url")
 def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
     fetch_url_mock, start_server_mock, change_to_tmpdir
 ):

@@ -1,5 +1,5 @@
 from .ert_client import ErtClient
-from .ert_server import (
+from .ert_server_controller import (
     ErtServerController,
     ErtServerExit,
     ServerBootFail,

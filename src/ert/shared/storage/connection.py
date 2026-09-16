@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from ert.services.ert_server import create_ert_server_controller
+from ert.services.ert_server_controller import create_ert_server_controller
 
 
 def get_info(

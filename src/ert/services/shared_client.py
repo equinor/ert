@@ -14,7 +14,7 @@ import httpx
 from httpx_retries import Retry, RetryTransport
 from pydantic import BaseModel, ValidationError
 
-from ert.services.ert_server import create_ert_server_controller
+from ert.services.ert_server_controller import create_ert_server_controller
 
 logger = logging.getLogger(__name__)
 
