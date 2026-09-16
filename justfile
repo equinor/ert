@@ -67,8 +67,18 @@ ert-cli-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/cli
 
 ert-memory-tests:
+    #!/bin/bash
+    set -e
     pytest {{pytest_args}} tests/ert -m "memory_test"
-    pytest {{pytest_args}} tests/ert -m "limit_memory" --memray
+    # memray segfaults on Python 3.12 while tearing down its Tracker
+    # (bloomberg/memray#999). Fixed by bloomberg/memray#1000, but unreleased as
+    # of memray 1.20.0. Drop this gate once a newer memray is released and
+    # pinned in uv.lock: equinor/ert#14452.
+    if python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 13) else 1)'; then
+        pytest {{pytest_args}} tests/ert -m "limit_memory" --memray
+    else
+        echo "Skipping limit_memory tests: memray segfaults on Python 3.12 (equinor/ert#14452)"
+    fi
 
 ert-unit-tests:
     pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not (memory_test or limit_memory)"
