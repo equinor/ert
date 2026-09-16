@@ -451,29 +451,13 @@ def _setup_ensemble_information_filter(
     )
 
 
-def _determine_previous_ensemble_id(args: Namespace) -> str | None:
-    """Handles differences in configuration between CLI and GUI.
-
-    Returns
-    -------
-    The prior ensemble id to start from.
-    """
-    if hasattr(args, "restart_ensemble_id"):
-        # When running from CLI
-        prior_ensemble = args.restart_ensemble_id or None
-    else:
-        # When running from GUI
-        prior_ensemble = args.prior_ensemble_id
-    return prior_ensemble
-
-
 def _setup_multiple_data_assimilation(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> MultipleDataAssimilation:
-    prior_ensemble = _determine_previous_ensemble_id(args)
+    prior_ensemble = args.prior_ensemble_id or None
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
     if sum(active_realizations) < 2:
