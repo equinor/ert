@@ -60,7 +60,7 @@ def test_that_name_is_removed_from_responses_json_file_for_all_experiments(use_t
                 indent=2,
             )
 
-    migrate(Path("."))
+    migrate(Path())
 
     # Validate responses.json files no longer contain 'name' field
     for experiment_path in experiment_paths:

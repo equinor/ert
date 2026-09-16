@@ -58,7 +58,7 @@ def test_that_realization_storage_state_is_converted_to_strenum_for_all_reals(
                 encoding="utf-8",
             )
 
-    migrate(Path("."))
+    migrate(Path())
 
     for ensemble in ensembles:
         ensemble_path = Path(f"ensembles/{ensemble}")
@@ -113,7 +113,7 @@ def test_realizations_with_missing_error_json(use_tmpdir):
             if missing_file.exists():
                 missing_file.unlink()
 
-    migrate(Path("."))
+    migrate(Path())
 
     for ensemble in ensembles:
         ensemble_path = Path(f"ensembles/{ensemble}")
@@ -162,7 +162,7 @@ def test_that_realization_storage_state_migration_works_when_already_strenum(
                 encoding="utf-8",
             )
 
-    migrate(Path("."))
+    migrate(Path())
 
     for ensemble in ensembles:
         ensemble_path = Path(f"ensembles/{ensemble}")

@@ -59,7 +59,7 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
 
     with Path("storage_server.json").open(mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
-    create_ert_server_controller(project=Path(".").absolute())
+    create_ert_server_controller(project=Path().absolute())
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
@@ -88,7 +88,7 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
     }
     with Path("storage_server.json").open(mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
-    ErtServerController.init_service(project=Path(".").absolute())
+    ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
 
 
@@ -100,7 +100,7 @@ def test_that_service_can_be_started_with_empty_conn_info_json(
     ignore the file on disk and overwrite it by launching a new server
     """
     Path("storage_server.json").touch()
-    ErtServerController.init_service(project=Path(".").absolute())
+    ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
 
 
@@ -139,7 +139,7 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
 
     start_server_mock.side_effect = assert_stale_file_deleted
 
-    ErtServerController.init_service(project=Path(".").absolute())
+    ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
 
 
@@ -151,7 +151,7 @@ def test_that_service_can_be_started_with_empty_json_content(
     ignore the file on disk and overwrite it by launching a new server
     """
     Path("storage_server.json").write_text("{}", encoding="utf-8")
-    ErtServerController.init_service(project=Path(".").absolute())
+    ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
 
 
@@ -165,7 +165,7 @@ def test_storage_logging(change_to_tmpdir):
 
     with ErtServerController.start_server(
         verbose=True,
-        project=Path("."),
+        project=Path(),
         parent_pid=os.getpid(),
     ) as server:
         assert server.wait_until_ready(), "StorageService failed to start"
@@ -244,6 +244,6 @@ def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
     Path(file_path).chmod(0o000)  # no permissions
     try:
         with pytest.raises(PermissionError):
-            ErtServerController.init_service(project=Path(".").absolute())
+            ErtServerController.init_service(project=Path().absolute())
     finally:
         Path(file_path).chmod(mode)

@@ -22,7 +22,7 @@ def test_that_migrating_storage_to_24_adds_zone_keyword_to_responses():
             "tvd": [],
         }
     ).write_parquet("ensembles/hash/realization-0/rft.parquet")
-    migrate(Path("."))
+    migrate(Path())
 
     assert "zone" in pl.read_parquet("ensembles/hash/realization-0/rft.parquet").columns
 
@@ -42,6 +42,6 @@ def test_that_migrating_storage_to_24_adds_zone_keyword_to_observations():
             "tvd": [],
         }
     ).write_parquet("experiments/hash/observations/rft")
-    migrate(Path("."))
+    migrate(Path())
 
     assert "zone" in pl.read_parquet("experiments/hash/observations/rft").columns

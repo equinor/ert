@@ -793,7 +793,7 @@ def test_that_either_source_or_executable_is_provided(install_keyword):
     ):
         everest_config_with_defaults(
             model={"realizations": [1, 2, 3]},
-            config_path=Path("."),
+            config_path=Path(),
             **{install_keyword: [{"name": "test"}]},
         )
 
@@ -849,7 +849,7 @@ def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
             model={
                 "realizations": [1, 2, 3],
             },
-            config_path=Path("."),
+            config_path=Path(),
             **{
                 install_keyword: [
                     {"name": "test", "source": "malformed.ert"},
@@ -894,7 +894,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
             model={
                 "realizations": [1, 2, 3],
             },
-            config_path=Path("."),
+            config_path=Path(),
             **{
                 install_keyword: [
                     {"name": "test", "source": "exec.ert"},
@@ -928,7 +928,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
             model={
                 "realizations": [1, 2, 3],
             },
-            config_path=Path("."),
+            config_path=Path(),
             **{
                 install_keyword: [
                     {"name": "test", "executable": "non_executable"},
@@ -960,7 +960,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors_deprecate
             model={
                 "realizations": [1, 2, 3],
             },
-            config_path=Path("."),
+            config_path=Path(),
             **{
                 install_keyword: [
                     {"name": "test", "source": "exec.ert"},
@@ -989,7 +989,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
             model={
                 "realizations": [1, 2, 3],
             },
-            config_path=Path("."),
+            config_path=Path(),
             **{
                 install_keyword: [
                     {"name": "test", "executable": "non_executable"},

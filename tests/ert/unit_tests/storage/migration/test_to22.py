@@ -20,7 +20,7 @@ def migrate_old_summary_obs() -> pl.DataFrame:
     )
     summary_df.write_parquet(obs_path / "summary")
 
-    migrate(Path("."))
+    migrate(Path())
 
     return pl.read_parquet(obs_path / "summary")
 
@@ -59,7 +59,7 @@ def test_that_old_storage_with_some_location_keywords_gets_missing_ones_added(
     )
     summary_df.write_parquet(obs_path / "summary")
 
-    migrate(Path("."))
+    migrate(Path())
 
     migrated_df = pl.read_parquet(obs_path / "summary")
 
@@ -86,7 +86,7 @@ def test_that_new_storage_with_all_location_keywords_remains_unchanged(use_tmpdi
     summary_df = pl.DataFrame(original_data)
     summary_df.write_parquet(obs_path / "summary")
 
-    migrate(Path("."))
+    migrate(Path())
 
     migrated_df = pl.read_parquet(obs_path / "summary")
 
