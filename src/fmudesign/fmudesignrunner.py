@@ -343,10 +343,6 @@ def main() -> None:
 
     Wrapper for the fmudesign module
     """
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    setup_site_logging(root_logger)
-
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
     parser, _subparsers = get_parser()
@@ -357,13 +353,17 @@ def main() -> None:
         sys.argv.insert(1, "run")
 
     args = parser.parse_args()
-    args_to_log = {k: v for k, v in vars(args).items() if k != "func"}
-    logger.info(f"Running fmudesign with args: {args_to_log}")
 
     # No subcommand was provided
     if not hasattr(args, "func"):
         parser.print_help()
         sys.exit(0)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    setup_site_logging(root_logger)
+    args_to_log = {k: v for k, v in vars(args).items() if k != "func"}
+    logger.info(f"Running fmudesign with args: {args_to_log}")
 
     err_guide_msg = (
         "\n \n"
