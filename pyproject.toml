@@ -257,6 +257,7 @@ select = [
     "os-makedirs",
     "os-path-islink",
     "os-remove",
+    "os-rename",
     "os-mkdir",
     "os-path-isfile",
     "os-path-join",

@@ -20,7 +20,7 @@ def _write_transaction(filename: str | os.PathLike[str], data: bytes) -> None:
     with NamedTemporaryFile(dir="./swp", delete=False) as f:
         f.write(data)
         Path(f.name).chmod(0o660)
-        os.rename(f.name, filename)
+        Path(f.name).rename(filename)
 
 
 def migrate(path: Path) -> None:

@@ -389,7 +389,7 @@ class ErtServerController:
             with NamedTemporaryFile(dir=storage, delete=False) as f:
                 f.write(json.dumps(info, indent=4).encode("utf-8"))
                 f.flush()
-                os.rename(f.name, path)
+                Path(f.name).rename(path)
         except Exception as exc:
             self._connection_info_future.set_exception(exc)
             return
