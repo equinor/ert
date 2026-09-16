@@ -8,8 +8,8 @@ from textwrap import dedent
 
 import pytest
 
-from ert.services import ert_server
-from ert.services.ert_server import (
+from ert.services import ert_server_controller
+from ert.services.ert_server_controller import (
     _ERT_SERVER_CONNECTION_INFO_FILE,
     SERVICE_CONF_PATHS,
     ErtServerController,
@@ -94,7 +94,9 @@ def server_script(monkeypatch, tmp_path: Path, request):
 
 @pytest.fixture
 def server(monkeypatch, server_script):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    monkeypatch.setattr(
+        ert_server_controller, "_ERT_SERVER_EXECUTABLE_FILE", server_script
+    )
     proc = _DummyService()
     proc.start()
     yield proc
@@ -163,7 +165,9 @@ sys.exit(2)
 def test_that_fetch_connection_info_times_out_when_server_does_not_respond(
     monkeypatch, server_script
 ):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    monkeypatch.setattr(
+        ert_server_controller, "_ERT_SERVER_EXECUTABLE_FILE", server_script
+    )
     server = _DummyService(timeout=2)
     server.start()
     try:
@@ -223,7 +227,9 @@ time.sleep(10) # ensure "server" doesn't exit before test
 """
 )
 def test_singleton_start(monkeypatch, server_script, tmp_path):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    monkeypatch.setattr(
+        ert_server_controller, "_ERT_SERVER_EXECUTABLE_FILE", server_script
+    )
     with _DummyService.start_server(".", timeout=10) as service:
         assert service.wait_until_ready()
         assert (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
@@ -286,7 +292,9 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
     client_thread.start()
 
     start_event.wait()  # Client thread has started
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    monkeypatch.setattr(
+        ert_server_controller, "_ERT_SERVER_EXECUTABLE_FILE", server_script
+    )
     with _DummyService.start_server(".") as server:
         ready_event.wait()  # Client thread has connected to server
         assert not getattr(client_thread, "exception", None), (
@@ -316,7 +324,9 @@ sys.exit(2)
 """
 )
 def test_that_wait_until_ready_returns_false_on_timeout(monkeypatch, server_script):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    monkeypatch.setattr(
+        ert_server_controller, "_ERT_SERVER_EXECUTABLE_FILE", server_script
+    )
     server = _DummyService(timeout=2)
     server.start()
     try:
@@ -335,7 +345,9 @@ time.sleep(10)
 def test_that_fetch_connection_info_raises_when_storage_path_does_not_exist(
     monkeypatch, server_script, tmp_path
 ):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    monkeypatch.setattr(
+        ert_server_controller, "_ERT_SERVER_EXECUTABLE_FILE", server_script
+    )
     nonexistent = str(tmp_path / "does_not_exist")
     proc = _DummyService(storage_path=nonexistent)
     proc.start()
