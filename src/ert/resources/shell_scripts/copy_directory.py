@@ -8,16 +8,16 @@ from make_directory import mkdir  # type: ignore
 
 
 def copy_directory(src_path: str, target_path: str) -> None:
-    if os.path.isdir(src_path):
+    if Path(src_path).is_dir():
         src_basename = os.path.basename(src_path)
         target_root, _ = os.path.split(target_path)
 
-        if target_root and not os.path.isdir(target_root):
+        if target_root and not Path(target_root).is_dir():
             print(f"Creating empty folder structure {target_root}")
             mkdir(target_root)
 
         print(f"Copying directory structure {src_path} -> {target_path}")
-        if os.path.isdir(target_path):
+        if Path(target_path).is_dir():
             target_path = str(Path(target_path) / src_basename)
         try:
             shutil.copytree(src_path, target_path, dirs_exist_ok=True)

@@ -658,7 +658,7 @@ def config_generators(draw, use_eclbase=booleans):
             ]:
                 setattr(config_values, key, str(tmp / getattr(config_values, key)))
             for dirname in should_exist_directories:
-                if not os.path.isdir(dirname):
+                if not Path(dirname).is_dir():
                     os.mkdir(dirname)
 
             for filename in should_exist_files:
@@ -672,7 +672,7 @@ def config_generators(draw, use_eclbase=booleans):
 
             for job_file, executable_file in should_exist_job_configs:
                 path = Path(job_file).parent
-                if not os.path.isdir(path / "script"):
+                if not (path / "script").is_dir():
                     os.mkdir(path / "script")
                 exe = path / "script" / executable_file
                 exe.touch()

@@ -31,7 +31,7 @@ def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
             )
             raise ValueError(msg)
 
-        is_dir.append(os.path.isdir(model_source))
+        is_dir.append(Path(model_source).is_dir())
 
     if set(is_dir) == {True, False}:
         msg = f"Source: {source} represent both files and directories"

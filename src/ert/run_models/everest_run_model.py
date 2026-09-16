@@ -1170,7 +1170,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         if not self.keep_run_path:
             for i, real in self.get_current_snapshot().reals.items():
                 path_to_delete = run_args[int(i)].runpath
-                if real.get("status") == "Finished" and os.path.isdir(path_to_delete):
+                if real.get("status") == "Finished" and Path(path_to_delete).is_dir():
 
                     def onerror(
                         _: Callable[..., Any],

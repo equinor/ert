@@ -219,7 +219,7 @@ class SchemaItem:
                             f"Could not find executable {token.value!r}", token
                         )
 
-                if os.path.isdir(absolute_path):
+                if absolute_path.is_dir():
                     raise ConfigValidationError.with_context(
                         "Expected executable file, "
                         f"but {token.value!r} is a directory.",

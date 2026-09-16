@@ -84,11 +84,11 @@ def test_symlink():
     os.makedirs("run")
 
     symlink("../target", "linkpath/link")
-    assert os.path.isdir("linkpath")
+    assert Path("linkpath").is_dir()
     assert os.path.islink("linkpath/link")
 
     symlink("../target", "linkpath/link")
-    assert os.path.isdir("linkpath")
+    assert Path("linkpath").is_dir()
     assert os.path.islink("linkpath/link")
 
 
@@ -116,11 +116,11 @@ def test_mkdir():
         mkdir("file")
 
     mkdir("path")
-    assert os.path.isdir("path")
+    assert Path("path").is_dir()
     mkdir("path")
 
     mkdir("path/subpath")
-    assert os.path.isdir("path/subpath")
+    assert Path("path/subpath").is_dir()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

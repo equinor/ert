@@ -12,16 +12,16 @@ def careful_copy_file(src: str, target: str | None = None) -> None:
         print(f"File: {target} already present - not updated")
         return
     if Path(src).is_file():
-        if os.path.isdir(target):
+        if Path(target).is_dir():
             target_file = str(Path(target) / Path(src).name)
             shutil.copyfile(src, target_file)
             print(f"Copying file '{src}' -> '{target_file}'")
         else:
             target_path = os.path.dirname(target)
-            if target_path and not os.path.isdir(target_path):
+            if target_path and not Path(target_path).is_dir():
                 os.makedirs(target_path)
                 print(f"Creating directory '{target_path}' ")
-            if os.path.isdir(target):
+            if Path(target).is_dir():
                 target_file = str(Path(target) / Path(src).name)
             else:
                 target_file = target
