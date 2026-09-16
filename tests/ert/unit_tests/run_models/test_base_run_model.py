@@ -77,7 +77,7 @@ def create_run_model(**kwargs):
         "hooked_workflows": MagicMock(spec=dict),
         "active_realizations": MagicMock(spec=list),
         "random_seed": 123,
-        "log_path": Path(""),
+        "log_path": Path(),
         "shape_registry": ShapeRegistry(),
     }
 

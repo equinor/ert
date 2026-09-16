@@ -93,7 +93,7 @@ def test_memory_usage_counts_grandchildren():
 
     def max_memory_per_subprocess_layer(layers: int) -> int:
         # Remove stale synchronization files
-        for stale in Path(".").glob("ready_*"):
+        for stale in Path().glob("ready_*"):
             stale.unlink()
         Path("release").unlink(missing_ok=True)
 

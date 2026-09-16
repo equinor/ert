@@ -37,5 +37,5 @@ def test_that_field_migration_removes_mask_file(use_tmpdir: Path):
 
     migrated_field_param = migrate_field_param(original_field_param)
     assert "mask_file" not in migrated_field_param["COND"]
-    delete_mask_file(Path("."))  # Clean up the dummy mask file
+    delete_mask_file(Path())  # Clean up the dummy mask file
     assert not Path("grid_mask.npy").exists()

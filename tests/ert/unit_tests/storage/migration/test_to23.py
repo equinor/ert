@@ -21,7 +21,7 @@ def migrate_old_obs(obs_dict: dict, filename: ObsType) -> pl.DataFrame:
     df = pl.DataFrame(obs_dict)
     df.write_parquet(obs_path / filename)
 
-    migrate(Path("."))
+    migrate(Path())
     return pl.read_parquet(obs_path / filename)
 
 

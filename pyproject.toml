@@ -256,6 +256,7 @@ select = [
     "os-path-exists",
     "os-path-isfile",
     "os-path-join",
+    "path-constructor-current-directory",
     "builtin-open",
     "PYI",
     "Q",
