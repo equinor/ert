@@ -29,7 +29,7 @@ def symlink(target: str, link_name: str) -> None:
 
     if Path(link_name).is_symlink():
         os.unlink(link_name)
-    os.symlink(target, link_name)
+    Path(link_name).symlink_to(target)
     print(f"Linking '{link_name}' -> '{target}' [ cwd:{Path.cwd()} ]")
 
 
