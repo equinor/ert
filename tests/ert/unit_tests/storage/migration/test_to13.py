@@ -1,5 +1,4 @@
 import json
-import os
 import uuid
 from pathlib import Path
 
@@ -64,12 +63,12 @@ def setup_experiments_and_ensembles(
     with Path("index.json").open("w", encoding="utf-8") as f:
         json.dump({"version": 12, "migrations": []}, f, indent=2)
 
-    os.mkdir("experiments")
-    os.mkdir("ensembles")
+    Path("experiments").mkdir()
+    Path("ensembles").mkdir()
 
     for i, exp_id in enumerate(experiment_uuids):
         exp_path = Path("experiments", str(exp_id))
-        os.mkdir(exp_path)
+        exp_path.mkdir()
         with (exp_path / "index.json").open("w", encoding="utf-8") as f:
             json.dump(
                 {
@@ -89,7 +88,7 @@ def setup_experiments_and_ensembles(
                 continue
 
         ens_path = Path("ensembles", str(ens_id))
-        os.mkdir(ens_path)
+        ens_path.mkdir()
         with (ens_path / "index.json").open("w", encoding="utf-8") as f:
             json.dump(
                 {

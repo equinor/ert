@@ -1,4 +1,3 @@
-import os
 import re
 import stat
 import warnings
@@ -839,7 +838,7 @@ LOAD_WORKFLOW_JOB exists_but_not_runnable
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_non_readable_workflow_job_in_directory_is_localized():
-    os.mkdir("hello")
+    Path("hello").mkdir()
     assert_that_config_leads_to_error(
         config_file_contents=dedent(
             """

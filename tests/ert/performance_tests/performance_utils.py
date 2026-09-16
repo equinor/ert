@@ -1,6 +1,5 @@
 import contextlib
 import datetime
-import os
 import shutil
 import sys
 import tempfile
@@ -102,7 +101,7 @@ def make_poly_example(folder, source, **kwargs):
         )
 
     if not (folder / "refcase").exists():
-        os.mkdir(folder / "refcase")
+        (folder / "refcase").mkdir()
 
     use_resfo = True
 
