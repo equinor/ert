@@ -18,7 +18,7 @@ def delete_empty_directory(dirname: str) -> None:
     uid = Path(dirname).stat().st_uid
     if uid == os.getuid():
         if os.path.islink(dirname):
-            os.remove(dirname)
+            Path(dirname).unlink()
             print(f"Removing symbolic link:'{dirname}'")
         else:
             try:

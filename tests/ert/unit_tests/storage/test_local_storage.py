@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import shutil
 import stat
 from datetime import datetime, timedelta
@@ -209,7 +208,7 @@ def test_open_storage_nested_dirs(tmp_path):
 def test_open_storage_with_corrupted_storage(tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         storage.create_experiment().create_ensemble(name="prior", ensemble_size=1)
-    os.remove(tmp_path / "storage" / "index.json")
+    (tmp_path / "storage" / "index.json").unlink()
     with pytest.raises(ErtStorageException, match="No index\\.json"):
         open_storage(tmp_path / "storage", mode="w")
 

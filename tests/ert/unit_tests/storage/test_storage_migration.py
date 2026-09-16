@@ -238,14 +238,14 @@ def test_that_storage_works_with_missing_parameters_and_responses(
     for i, real_dir in enumerate(
         (storage_path / "ensembles" / ensemble_id).glob("realization-*")
     ):
-        os.remove(real_dir / "TOP.nc")
+        (real_dir / "TOP.nc").unlink()
         if i % 2 == 0:
-            os.remove(real_dir / "BPR.nc")
+            (real_dir / "BPR.nc").unlink()
 
         gen_data_file = next(
             file for file in os.listdir(real_dir) if "gen" in file.lower()
         )
-        os.remove(real_dir / gen_data_file)
+        (real_dir / gen_data_file).unlink()
 
     monkeypatch.chdir(tmp_path / "all_data_types")
     site_plugins = get_site_plugins()
@@ -461,13 +461,13 @@ def test_migrate_storage_with_no_responses(
             file for file in os.listdir(real_dir) if "gen" in file.lower()
         )
 
-        os.remove(real_dir / gen_data_file)
+        (real_dir / gen_data_file).unlink()
 
         summary_file = next(
             file for file in os.listdir(real_dir) if "summary" in file.lower()
         )
 
-        os.remove(real_dir / summary_file)
+        (real_dir / summary_file).unlink()
 
     monkeypatch.chdir(tmp_path / "all_data_types")
     site_plugins = get_site_plugins()
