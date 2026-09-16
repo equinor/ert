@@ -205,7 +205,7 @@ class Field(ParameterConfig):
         file_out = run_path.joinpath(
             substitute_runpath_name(str(self.output_file), real_nr, ensemble.iteration)
         )
-        if os.path.islink(file_out):
+        if file_out.is_symlink():
             os.unlink(file_out)
 
         save_field(

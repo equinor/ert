@@ -18,7 +18,7 @@ def delete_file(filename: str) -> None:
                 )
         else:
             raise OSError(f"Entry:'{filename}' is not a regular file")
-    elif os.path.islink(filename):
+    elif Path(filename).is_symlink():
         Path(filename).unlink()
     else:
         sys.stderr.write(f"File: '{filename}' does not exist - delete ignored\n")
