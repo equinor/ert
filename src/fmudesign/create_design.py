@@ -413,24 +413,6 @@ class DesignMatrix:
                 correlation_iterations=correlation_iterations,
             )
 
-    def background_to_excel(
-        self, filename: str, backgroundsheet: str = "Background"
-    ) -> None:
-        """Writing background values to an Excel spreadsheet
-
-        Args:
-            filename (str): output filename (extension .xlsx)
-            backgroundsheet (str): name of excel sheet
-        """
-        if self.backgroundvalues is None:
-            raise ValueError("No background values available to write to Excel")
-
-        with pd.ExcelWriter(filename, engine="openpyxl") as xlsxwriter:
-            self.backgroundvalues.to_excel(
-                xlsxwriter, sheet_name=backgroundsheet, index=False, header=True
-            )
-        print(f"Backgroundvalues written to {filename}")
-
     def _add_sensitivity(
         self,
         sensitivity: Sensitivity,
