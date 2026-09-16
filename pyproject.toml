@@ -255,6 +255,7 @@ select = [
     "os-path-abspath",
     "os-path-exists",
     "os-makedirs",
+    "os-mkdir",
     "os-path-isfile",
     "os-path-join",
     "os-path-isdir",

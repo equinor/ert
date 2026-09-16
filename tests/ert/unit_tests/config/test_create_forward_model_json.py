@@ -1,6 +1,5 @@
 import copy
 import logging
-import os
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -561,7 +560,7 @@ def test_forward_model_job(job, forward_model, expected_args):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_config_path_is_the_directory_of_the_main_ert_config():
-    os.mkdir("jobdir")
+    Path("jobdir").mkdir()
     Path("jobdir/job_file").write_text(
         dedent(
             """

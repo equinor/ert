@@ -1,6 +1,5 @@
 import contextlib
 import logging
-import os
 import shutil
 import stat
 from pathlib import Path
@@ -220,7 +219,7 @@ def test_that_the_run_workflow_tool_is_enabled_when_there_are_workflows(
         ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
         ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")
 
-    os.mkdir(tmp_path / "workflows")
+    (tmp_path / "workflows").mkdir()
 
     (tmp_path / "workflows/MAGIC_PRINT").write_text("print_uber\n", encoding="utf-8")
     (tmp_path / "workflows/UBER_PRINT").write_text("EXECUTABLE ls\n", encoding="utf-8")

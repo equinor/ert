@@ -1,7 +1,6 @@
 import datetime
 import json
 import logging
-import os
 import os.path
 import stat
 import warnings
@@ -237,7 +236,7 @@ def test_that_parsing_workflows_gives_expected():
         ConfigKeys.NUM_REALIZATIONS: 1,
     }
 
-    os.mkdir("workflows")
+    Path("workflows").mkdir()
 
     Path("workflows/MAGIC_PRINT").write_text("print_uber\n", encoding="utf-8")
     Path("workflows/NO_PRINT").write_text("print_uber\n", encoding="utf-8")
@@ -1239,7 +1238,7 @@ def test_that_included_files_uses_paths_relative_to_itself():
         FORWARD_MODEL FM
         """
     )
-    os.mkdir("includes")
+    Path("includes").mkdir()
     test_include_file_name = "includes/install_jobs.ert"
     test_include_contents = dedent(
         """
@@ -1297,7 +1296,7 @@ def test_that_include_take_into_account_path():
         """
     )
     # The old parser tries to find dir/job2
-    os.mkdir("dir")
+    Path("dir").mkdir()
     Path("dir/job1").write_text("EXECUTABLE echo\n", encoding="utf-8")
     Path("job2").write_text("EXECUTABLE ls\n", encoding="utf-8")
     Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
@@ -1326,7 +1325,7 @@ def test_that_substitution_happens_for_include():
         RUNPATH my_silly_runpath<ITER>-<IENS>
         """
     )
-    os.mkdir("dir")
+    Path("dir").mkdir()
     Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
     Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
@@ -1354,7 +1353,7 @@ def test_that_defines_in_included_files_has_immediate_effect():
         DEFINE <FOO> baz
         """
     )
-    os.mkdir("dir")
+    Path("dir").mkdir()
     Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
     Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 

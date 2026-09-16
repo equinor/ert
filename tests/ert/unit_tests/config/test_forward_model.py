@@ -427,7 +427,7 @@ def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterat
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_dir():
     test_config_file_name = "test.ert"
-    os.mkdir("jobs")
+    Path("jobs").mkdir()
     Path("jobs/job").write_text("EXECUTABLE echo\n", encoding="utf-8")
     Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")
     test_config_contents = dedent(
