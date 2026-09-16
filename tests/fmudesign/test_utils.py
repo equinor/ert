@@ -4,9 +4,49 @@ from pathlib import Path
 import hypothesis.strategies as st
 import pandas as pd
 import pytest
+import xlsxwriter
 from hypothesis import given
 
-from fmudesign.utils import map_dependencies, resolve_path
+from fmudesign.utils import map_dependencies, resolve_path, seeds_from_extern
+
+
+@pytest.mark.parametrize("suffix", ["xlsx", "csv", "txt"])
+def test_that_seeds_from_extern_reads_first_column_as_integers(tmp_path, suffix):
+    seeds_file = tmp_path / f"seeds.{suffix}"
+    if suffix == "xlsx":
+        with xlsxwriter.Workbook(seeds_file) as workbook:
+            worksheet = workbook.add_worksheet()
+            worksheet.write_string(0, 0, "2000")
+            worksheet.write_number(1, 0, 2001)
+            worksheet.write_number(3, 0, 2002)
+    else:
+        seeds_file.write_text("2000\n\n 2001\n2002 \n\n")
+
+    assert seeds_from_extern(seeds_file) == [2000, 2001, 2002]
+
+
+def test_that_seeds_from_extern_ignores_leading_empty_rows_and_columns(tmp_path):
+    seeds_file = tmp_path / "seeds.xlsx"
+    with xlsxwriter.Workbook(seeds_file) as workbook:
+        worksheet = workbook.add_worksheet()
+        worksheet.write_number(2, 1, 2000)
+        worksheet.write_number(3, 1, 2001)
+        worksheet.write_number(4, 1, 2002)
+
+    assert seeds_from_extern(seeds_file) == [2000, 2001, 2002]
+
+
+def test_that_non_integer_seed_values_raise_value_error(tmp_path):
+    seeds_file = tmp_path / "seeds.txt"
+    seeds_file.write_text("2000\n2000.5\n")
+
+    with pytest.raises(ValueError, match=r"2000\.5"):
+        seeds_from_extern(seeds_file)
+
+
+def test_that_seeds_from_extern_rejects_unsupported_file_extensions():
+    with pytest.raises(ValueError, match=r"end with \.xlsx \.csv or \.txt"):
+        seeds_from_extern("seeds.json")
 
 
 @pytest.mark.usefixtures("use_tmpdir")

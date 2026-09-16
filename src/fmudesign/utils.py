@@ -8,6 +8,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import polars as pl
 
 
 def parameters_from_extern(filename: str) -> pd.DataFrame:
@@ -39,30 +40,32 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
 
 
 def seeds_from_extern(filename: Path | str) -> list[int]:
-    """Read parameter values or background values
-    from specified file. Format either Excel ('xlsx')
-    or csv.
+    """Read integer seed values from the first column of an Excel ('xlsx')
+    or csv/txt file. Blank cells and lines are skipped.
 
     Args:
         filename (str): name of file
     """
     if str(filename).endswith(".xlsx"):
-        df_seeds = (
-            pd.read_excel(filename, header=None, engine="openpyxl")
-            .dropna(axis=0, how="all")
-            .dropna(axis=1, how="all")
+        seeds = pl.read_excel(
+            filename, has_header=False, read_options={"dtypes": "string"}
+        ).to_series(0)
+    elif str(filename).endswith((".csv", ".txt")):
+        seeds = pl.read_csv(filename, has_header=False, infer_schema=False).to_series(0)
+    else:
+        raise ValueError(
+            "External file with seed values should "
+            "be on Excel or csv format "
+            "and end with .xlsx .csv or .txt"
         )
-        return df_seeds.iloc[:, 0].tolist()
 
-    if str(filename).endswith(".csv") or str(filename).endswith(".txt"):
-        df_seeds = pd.read_csv(filename, header=None)
-        return df_seeds.iloc[:, 0].tolist()
-
-    raise ValueError(
-        "External file with seed values should "
-        "be on Excel or csv format "
-        "and end with .xlsx .csv or .txt"
-    )
+    seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
+    try:
+        return seeds.cast(pl.Int64).to_list()
+    except pl.exceptions.InvalidOperationError as err:
+        raise ValueError(
+            f"Seed values in {str(filename)!r} must be integers: {err}"
+        ) from err
 
 
 def find_max_realisations(config: dict[str, Any]) -> int:
