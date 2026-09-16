@@ -425,7 +425,7 @@ class EnsInfo:
         ),
     ],
 )
-def test_that_restart_ensemble_select_contains_elements(
+def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
     qtbot: QtBot, extra_ensembles, expected_ensembles
 ) -> None:
     config_num_realizations = 5

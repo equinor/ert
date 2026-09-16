@@ -154,7 +154,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ensembles: Iterable[Ensemble],
         ) -> Iterable[Ensemble]:
             """
-            Only non-leafs of ES-MDA experiment are eligible for restart.
+            Only non-leafs of ES-MDA experiments are eligible as prior ensembles.
             Easiest way to get those is to compare ensemble iteration with total
             number of ES-MDA iterations found via relative weights list length.
             """
@@ -169,7 +169,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ensembles: Iterable[Ensemble],
         ) -> Iterable[Ensemble]:
             """Ensemble experiment type, which consists just from one iteration,
-            is always eligible for MDA "restart". Used to spare some computing
+            is always eligible as an MDA prior ensemble. Used to spare some computing
             time if users decide to run ES-MDA based on Ensemble Experiment
             results.
             """
