@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from .config_errors import ConfigValidationError, ErrorInfo
@@ -6,11 +5,13 @@ from .file_context_token import FileContextToken
 
 
 def read_file(file: str, token: FileContextToken | None = None) -> str:
-    file = os.path.normpath(os.path.abspath(file))
+    filepath = Path(file).resolve()
     try:
-        return Path(file).read_text(encoding="utf-8")
+        return filepath.read_text(encoding="utf-8")
     except OSError as err:
-        raise ConfigValidationError.with_context(str(err), token or file) from err
+        raise ConfigValidationError.with_context(
+            str(err), token or str(filepath)
+        ) from err
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
@@ -21,7 +22,7 @@ def read_file(file: str, token: FileContextToken | None = None) -> str:
 
         # Find the first line in the file with decode error
         bad_byte_lines: list[int] = []
-        with Path(file).open("rb") as f:
+        with filepath.open("rb") as f:
             all_lines = list(f)
 
         for i, line in enumerate(all_lines):
@@ -40,9 +41,9 @@ def read_file(file: str, token: FileContextToken | None = None) -> str:
                 ErrorInfo(
                     message=(
                         f"Unsupported non UTF-8 character {unknown_char!r} "
-                        f"found in file: {file!r}"
+                        f"found in file: {filepath!r}"
                     ),
-                    filename=str(file),
+                    filename=str(filepath),
                     column=0,
                     line=bad_line,
                     end_column=-1,

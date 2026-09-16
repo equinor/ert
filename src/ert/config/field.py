@@ -166,7 +166,7 @@ class Field(ParameterConfig):
             forward_init=forward_init,
             forward_init_file=init_files,
             output_file=out_file,
-            grid_file=os.path.abspath(grid_file_path),
+            grid_file=str(Path(grid_file_path).resolve()),
             update_strategy=update_strategy,
         )
 

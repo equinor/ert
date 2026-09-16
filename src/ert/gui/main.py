@@ -160,8 +160,7 @@ def _start_initial_gui_window(
     ert_config = None
 
     with capture_validation() as validation_messages:
-        ert_dir = os.path.abspath(os.path.dirname(args.config))
-        os.chdir(ert_dir)
+        os.chdir(Path(args.config).resolve().parent)
         # Changing current working directory means we need to update
         # the config file to be the base name of the original config
         args.config = os.path.basename(args.config)

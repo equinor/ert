@@ -1,4 +1,3 @@
-import os
 import string
 from pathlib import Path
 from unittest.mock import patch
@@ -56,14 +55,14 @@ def test_get_definitions(tmp_path):
     config = loader.load_yaml(config_file)
     definitions = loader._get_definitions(
         configuration=config,
-        configpath=os.path.dirname(os.path.abspath(config_file)),
+        configpath=str(config_file.resolve().parent),
     )
 
     assert definitions is not None
 
     expected_definitions = {
         "case": "MOCKED_TEST_CASE",
-        "configpath": os.path.dirname(os.path.abspath(config_file)),
+        "configpath": str(config_file.resolve().parent),
         "runpath_file": "<RUNPATH_FILE>",
         "eclbase": "eclipse/ECL",
         "numeric_key": 1,

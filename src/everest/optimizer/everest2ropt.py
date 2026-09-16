@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import Any
 
 from ropt.enums import VariableType
@@ -180,7 +180,7 @@ def _parse_optimization(
 ]:
     ropt_backend: dict[str, Any] = {}
     ropt_optimizer: dict[str, Any] = {
-        "output_dir": os.path.abspath(optimization_output_dir),
+        "output_dir": str(Path(optimization_output_dir).resolve()),
         "stdout": "optimizer.stdout",
         "stderr": "optimizer.stderr",
     }

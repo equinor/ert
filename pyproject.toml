@@ -252,6 +252,7 @@ select = [
     "os-stat",
     "os-chmod",
     "os-getcwd",
+    "os-path-abspath",
     "os-path-exists",
     "os-path-isfile",
     "os-path-join",

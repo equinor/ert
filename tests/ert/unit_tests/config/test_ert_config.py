@@ -400,7 +400,7 @@ def test_that_the_date_magic_string_is_substituted_with_todays_date():
     ert_config = ErtConfig.from_file(test_config_file_name)
 
     date_string = datetime.datetime.now().astimezone().date().isoformat()
-    expected_storage = os.path.abspath(f"storage/{test_config_file_base}-{date_string}")
+    expected_storage = Path(f"storage/{test_config_file_base}-{date_string}").resolve()
     expected_run_path = f"{expected_storage}/runpath/realization-<IENS>/iter-<ITER>"
     expected_ens_path = f"{expected_storage}/ensemble"
     assert ert_config.ens_path == expected_ens_path
@@ -410,7 +410,7 @@ def test_that_the_date_magic_string_is_substituted_with_todays_date():
 def test_that_subst_list_is_given_default_runpath_file():
     assert ErtConfig.from_file_contents("NUM_REALIZATIONS 1").substitutions[
         "<RUNPATH_FILE>"
-    ] == os.path.abspath(ErtConfig.DEFAULT_RUNPATH_FILE)
+    ] == str(Path(ErtConfig.DEFAULT_RUNPATH_FILE).resolve())
 
 
 @pytest.mark.slow
@@ -468,10 +468,10 @@ def test_that_parsing_ert_config_result_in_expected_values(
         assert ert_config.ens_path == config_values.enspath
         assert ert_config.random_seed == config_values.random_seed
         assert ert_config.queue_config.max_submit == config_values.max_submit
-        assert ert_config.user_config_file == os.path.abspath(filename)
+        assert ert_config.user_config_file == str(Path(filename).resolve())
         assert ert_config.config_path == str(Path.cwd())
-        assert str(ert_config.runpath_file) == os.path.abspath(
-            config_values.runpath_file
+        assert str(ert_config.runpath_file) == str(
+            Path(config_values.runpath_file).resolve()
         )
         assert (
             ert_config.runpath_config.num_realizations == config_values.num_realizations
@@ -486,7 +486,7 @@ def test_default_ens_path():
         "NUM_REALIZATIONS 1\nENSPATH storage\n"
     ).ens_path
 
-    assert os.path.abspath(default_ens_path) == os.path.abspath(set_in_file_ens_path)
+    assert Path(default_ens_path).resolve() == Path(set_in_file_ens_path).resolve()
 
     dict_set_ens_path = ErtConfig.from_dict(
         {
@@ -495,7 +495,7 @@ def test_default_ens_path():
         }
     ).ens_path
 
-    assert os.path.abspath(dict_set_ens_path) == os.path.abspath(default_ens_path)
+    assert Path(dict_set_ens_path).resolve() == Path(default_ens_path).resolve()
 
 
 @pytest.mark.parametrize(
@@ -622,10 +622,10 @@ def test_that_loading_non_existent_workflow_job_gives_validation_error():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_job_definition_file_with_unexecutable_script_gives_validation_error():
     test_config_file_name = "test.ert"
-    job_definition_file = os.path.abspath("not_executable")
+    job_definition_file = Path("not_executable").resolve()
     job_name = "JOB_NAME"
     Path(job_name).write_text(f"EXECUTABLE {job_definition_file}\n", encoding="utf-8")
-    Path(job_definition_file).write_text("#!/bin/sh\n", encoding="utf-8")
+    job_definition_file.write_text("#!/bin/sh\n", encoding="utf-8")
 
     Path(test_config_file_name).write_text(
         dedent(

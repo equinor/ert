@@ -190,7 +190,7 @@ def _tree_to_dict(
     config_dict["DEFINE"] = defines
 
     errors = []
-    cwd = os.path.dirname(os.path.abspath(config_file))
+    cwd = str(Path(config_file).resolve().parent)
 
     for declaration_order, node in enumerate(tree.children):
         args: list[FileContextToken]
@@ -428,7 +428,7 @@ def _handle_includes(
 
 
 def _parse_contents(content: str, file: str) -> Tree[Instruction]:
-    file = os.path.normpath(os.path.abspath(file))
+    file = str(Path(file).resolve())
     try:
         tree = _parser.parse(content + "\n")
         return (
@@ -498,9 +498,9 @@ def _transform_tree(
     schema: SchemaItemDict,
     pre_defines: Defines | None = None,
 ) -> ConfigDict:
-    filepath = os.path.normpath(os.path.abspath(file))
-    config_dir = os.path.dirname(filepath)
-    config_file_name = os.path.basename(file)
+    filepath = Path(file).resolve()
+    config_dir = str(filepath.parent)
+    config_file_name = filepath.name
     config_file_base = config_file_name.split(".")[0]
 
     if pre_defines is None:
@@ -514,7 +514,7 @@ def _transform_tree(
 
     # need to copy pre_defines because _handle_includes will
     # add to this list
-    _handle_includes(tree, pre_defines.copy(), filepath)
+    _handle_includes(tree, pre_defines.copy(), str(filepath))
 
     return _tree_to_dict(
         config_file=file,

@@ -31,7 +31,7 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
         ConfigValidationError, match=r"DEFINE must have .* arguments"
     ) as err:
         _ = Workflow.from_file("workflow", None, {})
-    assert os.path.abspath(err.value.errors[0].filename) == os.path.abspath("workflow")
+    assert Path(err.value.errors[0].filename).resolve() == Path("workflow").resolve()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -38,8 +38,7 @@ class ErtCliError(Exception):
 
 
 def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -> None:
-    ert_dir = os.path.abspath(os.path.dirname(args.config))
-    os.chdir(ert_dir)
+    os.chdir(Path(args.config).resolve().parent)
     # Changing current working directory means we need to update
     # the config file to be the base name of the original config
     args.config = os.path.basename(args.config)
