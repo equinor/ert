@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -58,11 +57,10 @@ def convert_history_to_summary(
     logger.info(f"convert_observations trace: \n {convert_observations_trace}")
     print(convert_observations_trace)
 
-    os.rename(
-        changes.obs_config_path,
-        f"{changes.obs_config_path}-{datetime.now().astimezone().strftime('%Y-%m-%d-%H-%M-%S')}.old",
+    Path(changes.obs_config_path).rename(
+        f"{changes.obs_config_path}-{datetime.now().astimezone().strftime('%Y-%m-%d-%H-%M-%S')}.old"
     )
-    os.rename(obs_config_to_edit_path, changes.obs_config_path)
+    Path(obs_config_to_edit_path).rename(changes.obs_config_path)
     msg = (
         f"Observation changes applied to {changes.obs_config_path}. The old "
         f"observations file is now at {changes.obs_config_path}.old and can be "
