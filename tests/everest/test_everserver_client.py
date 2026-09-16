@@ -83,7 +83,7 @@ async def test_https_requests(change_to_tmpdir):
 
     # Test stopping server
     assert client.server_is_running(timeout=1)
-    if client.stop_experiment_server():
+    if client.stop_server():
         client.wait_for_server_to_stop(240)
         assert not client.server_is_running(timeout=1)
 
@@ -386,7 +386,7 @@ def test_get_that_get_server_info_from_conn_info_converts_values():
         auth_token="sometoken",
     )
     url, cert_file, auth = ServerConfig.get_server_context_from_conn_info(conn_info)
-    assert url == "https://example.com:1234/experiment_server"
+    assert url == "https://example.com:1234/experiment_runs"
     assert cert_file == "/path/to/cert.pem"
     assert auth == ("username", "sometoken")
 

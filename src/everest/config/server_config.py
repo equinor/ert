@@ -71,7 +71,7 @@ class ServerConfig(BaseModel, extra="forbid"):
                 - str: Path to the certificate file
                 - tuple[str, str]: Username and password for authentication
         """
-        url = conn_info.base_url + "/experiment_server"
+        url = conn_info.base_url + "/experiment_runs"
         cert_file = conn_info.cert
         auth_token = conn_info.auth_token
         if auth_token is None:

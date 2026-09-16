@@ -49,7 +49,7 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
 )
 
-router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
+router = APIRouter(prefix="/experiment_runs", tags=["experiment_runs"])
 
 
 class UserCancelled(Exception):
@@ -337,8 +337,6 @@ class ExperimentRunner:
         everest_config: EverestConfig,
         experiment_id: str,
     ) -> None:
-        super().__init__()
-
         self._everest_config = everest_config
         self._experiment_id = experiment_id
 

@@ -106,7 +106,7 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
                 connect_timeout=1,
             )
             if client.server_is_running(timeout=1):
-                client.stop_experiment_server()
+                client.stop_server()
                 client.wait_for_server_to_stop(timeout=10)
                 print("Server stopped successfully.")
 

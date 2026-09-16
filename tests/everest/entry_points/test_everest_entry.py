@@ -202,7 +202,7 @@ def test_everest_entry_detached_already_run_monitor(
 @patch("everest.bin.everest_script.start_server")
 @patch(
     "everest.bin.kill_script.ErtClient",
-    **{"get_client.return_value.stop_experiment_server.return_value": True},
+    **{"get_client.return_value.stop_server.return_value": True},
 )
 def test_everest_entry_detached_running(
     kill_api_mock,
@@ -217,7 +217,7 @@ def test_everest_entry_detached_running(
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
     config.write_to_file("config.yml")
-    stop_server_mock = kill_api_mock.get_client.return_value.stop_experiment_server
+    stop_server_mock = kill_api_mock.get_client.return_value.stop_server
 
     # can't start a new run if one is already running
     with capture_streams() as (out, _):
