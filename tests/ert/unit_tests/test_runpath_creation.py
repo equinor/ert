@@ -139,7 +139,7 @@ async def test_that_create_runpath_overwrites_symlinks_by_file(
     linkpath = f"{run_args[0].runpath}/permx.grdecl"
     targetpath = f"{run_args[0].runpath}/permx.grdecl.target"
     Path(targetpath).touch()
-    os.remove(linkpath)
+    Path(linkpath).unlink()
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure

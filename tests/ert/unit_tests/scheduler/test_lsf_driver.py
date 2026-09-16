@@ -1146,8 +1146,8 @@ async def test_lsf_cannot_retrieve_stdout_and_stderr(use_tmpdir, job_name):
     await driver.submit(0, "sh", "-c", f"echo {out} && echo {err} >&2", name=job_name)
     await poll(driver, {0})
     # let's remove the output files
-    os.remove(job_name + ".LSF-stderr")
-    os.remove(job_name + ".LSF-stdout")
+    Path(job_name + ".LSF-stderr").unlink()
+    Path(job_name + ".LSF-stdout").unlink()
     message = driver.read_stdout_and_stderr_files(
         runpath=".",
         job_name=job_name,

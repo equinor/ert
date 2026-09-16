@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 import polars as pl
@@ -70,4 +69,4 @@ def migrate(path: Path) -> None:
                         df.write_parquet(group_path)
                         for real_dir in real_dirs:
                             if (real_dir / f"{_escape_filename(group)}.nc").exists():
-                                os.remove(real_dir / f"{_escape_filename(group)}.nc")
+                                (real_dir / f"{_escape_filename(group)}.nc").unlink()

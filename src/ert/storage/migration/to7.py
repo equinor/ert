@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 import xarray as xr
@@ -126,7 +125,7 @@ def _migrate_response_datasets(path: Path) -> None:
                     )
 
                     for p in [ds_path for ds_path, _ in gen_data_datasets]:
-                        os.remove(p)
+                        p.unlink()
 
 
 def migrate(path: Path) -> None:

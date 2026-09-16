@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 from typing import Any
 
@@ -128,7 +127,7 @@ def migrate_genkw(path: Path) -> None:
                     group_path = ens / f"{_escape_filename(group)}.parquet"
                     if group_path.exists():
                         group_dfs.append(pl.read_parquet(group_path))
-                        os.remove(group_path)
+                        group_path.unlink()
             if group_dfs:
                 df = pl.concat(group_dfs, how="align")
                 df = df.unique(subset=["realization"], keep="first").sort("realization")

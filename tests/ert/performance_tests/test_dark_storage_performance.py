@@ -3,10 +3,10 @@ import contextlib
 import gc
 import io
 import json
-import os
 import sys
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
+from pathlib import Path
 from uuid import UUID
 
 import memray
@@ -307,7 +307,7 @@ def test_plot_api_big_summary_memory_usage(
             _ = data.T
 
     stats = memray._memray.compute_statistics("memray.bin")
-    os.remove("memray.bin")
+    Path("memray.bin").unlink()
     total_memory_usage = stats.total_memory_allocated / (1024**2)
     assert total_memory_usage < max_memory_mb
 
@@ -419,7 +419,7 @@ def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
                     )
 
     stats = memray._memray.compute_statistics("memray.bin")
-    os.remove("memray.bin")
+    Path("memray.bin").unlink()
     total_memory_mb = stats.total_memory_allocated / (1024**2)
     peak_memory_mb = stats.peak_memory_allocated / (1024**2)
 

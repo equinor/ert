@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import polars as pl
 import pytest
@@ -114,7 +112,7 @@ def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_stora
             # .save_responses() does not allow for saving directly with an empty ds
             ds_path = ensemble._realization_dir(real) / "summary.parquet"
             smry_df = pl.read_parquet(ds_path)
-            os.remove(ds_path)
+            ds_path.unlink()
             smry_df.clear().write_parquet(ds_path)
 
         with pytest.raises(

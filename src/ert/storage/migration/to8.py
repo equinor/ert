@@ -113,7 +113,7 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
                         )
                         polars_df.write_parquet(real_dir / f"{response_type}.parquet")
 
-                        os.remove(real_dir / f"{response_type}.nc")
+                        (real_dir / f"{response_type}.nc").unlink()
 
 
 def _migrate_observations_to_grouped_parquet(path: Path) -> None:
@@ -141,7 +141,7 @@ def _migrate_observations_to_grouped_parquet(path: Path) -> None:
                 concatd_df.write_parquet(experiment / "observations" / response_type)
 
                 for info_ in infos:
-                    os.remove(info_.original_ds_path)
+                    info_.original_ds_path.unlink()
 
 
 def migrate(path: Path) -> None:
