@@ -676,7 +676,7 @@ async def test_write_runpath_file(storage, itr):
     for run_arg in run_args:
         if not run_arg.active:
             continue
-        assert os.path.isdir(f"simulations/{10 * run_arg.iens}")
+        assert Path(f"simulations/{10 * run_arg.iens}").is_dir()
 
     assert Path(runpath_list_path).is_file()
 

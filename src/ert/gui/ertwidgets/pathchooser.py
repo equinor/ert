@@ -71,7 +71,7 @@ class PathChooser(QWidget):
         path = path.strip()
         path_exists = Path(path).exists()
         is_file = Path(path).is_file()
-        is_directory = os.path.isdir(path)
+        is_directory = Path(path).is_dir()
         is_executable = os.access(path, os.X_OK)
         is_absolute = os.path.isabs(path)
 
