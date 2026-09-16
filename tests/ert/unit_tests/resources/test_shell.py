@@ -1,6 +1,5 @@
 import contextlib
 import os
-import os.path
 import shutil
 import sys
 from contextlib import suppress
@@ -67,7 +66,7 @@ def test_symlink():
     Path("target").write_text("target ...", encoding="utf-8")
 
     symlink("target", "link")
-    assert os.path.islink("link")
+    assert Path("link").is_symlink()
     assert os.readlink("link") == "target"
 
     Path("target2").write_text("target ...", encoding="utf-8")
@@ -76,7 +75,7 @@ def test_symlink():
         symlink("target2", "target")
 
     symlink("target2", "link")
-    assert os.path.islink("link")
+    assert Path("link").is_symlink()
     assert os.readlink("link") == "target2"
 
     Path("root1/sub1/sub2").mkdir(parents=True)
@@ -85,11 +84,11 @@ def test_symlink():
 
     symlink("../target", "linkpath/link")
     assert Path("linkpath").is_dir()
-    assert os.path.islink("linkpath/link")
+    assert Path("linkpath/link").is_symlink()
 
     symlink("../target", "linkpath/link")
     assert Path("linkpath").is_dir()
-    assert os.path.islink("linkpath/link")
+    assert Path("linkpath/link").is_symlink()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -98,11 +97,11 @@ def test_symlink2():
     Path("path/target").write_text("1234", encoding="utf-8")
 
     symlink("path/target", "link")
-    assert os.path.islink("link")
+    assert Path("link").is_symlink()
     assert Path("path/target").is_file()
 
     symlink("path/target", "link")
-    assert os.path.islink("link")
+    assert Path("link").is_symlink()
     assert Path("path/target").is_file()
 
     assert Path("link").read_text(encoding="utf-8") == "1234"

@@ -157,7 +157,7 @@ async def test_that_create_runpath_overwrites_symlinks_by_file(
     )
 
     # ensure field symlink is replaced by file
-    assert not os.path.islink(linkpath)
+    assert not Path(linkpath).is_symlink()
 
 
 config_contents = """\
