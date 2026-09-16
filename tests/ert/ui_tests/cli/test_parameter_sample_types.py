@@ -1,4 +1,3 @@
-import os
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -43,7 +42,8 @@ FORWARD_MODEL poly_eval
         )
         base_surface.to_file("surf.irap", fformat="irap_binary")
 
-        Path("forward_model").write_text(
+        forward_model = Path("forward_model")
+        forward_model.write_text(
             """#!/usr/bin/env python
 import os
 from pathlib import Path
@@ -74,11 +74,8 @@ if __name__ == "__main__":
             encoding="utf-8",
         )
 
-        Path("forward_model").chmod(
-            os.stat("forward_model").st_mode
-            | stat.S_IXUSR
-            | stat.S_IXGRP
-            | stat.S_IXOTH
+        forward_model.chmod(
+            forward_model.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
         Path("POLY_EVAL").write_text("EXECUTABLE forward_model", encoding="utf-8")
         Path("observations").write_text(

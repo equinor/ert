@@ -579,7 +579,8 @@ def test_that_a_failing_job_shows_error_message_with_context(
     gui = opened_main_window_poly
 
     # break poly eval script so realz fail
-    Path("poly_eval.py").write_text(
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
         dedent(
             """\
                 #!/usr/bin/env python
@@ -590,9 +591,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
         ),
         encoding="utf-8",
     )
-    Path("poly_eval.py").chmod(
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    )
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     with contextlib.suppress(FileNotFoundError):
         shutil.rmtree("poly_out")
@@ -999,15 +998,15 @@ def test_warnings_from_forward_model_are_propagated_to_ert_main_window_post_simu
         encoding="utf-8",
     )
 
-    script_file = "warning.py"
+    script_file = Path("warning.py")
     script_file_content = """#!/usr/bin/env python
 import warnings
 warnings.warn('Foobar')"""
 
-    Path(script_file).write_text(dedent(script_file_content), encoding="utf-8")
+    script_file.write_text(dedent(script_file_content), encoding="utf-8")
 
-    Path(script_file).chmod(
-        os.stat(script_file).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    script_file.chmod(
+        script_file.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
 
     config_file = "config.ert"

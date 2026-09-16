@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import stat
 import warnings
 from pathlib import Path
@@ -172,8 +171,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
         Path("config.ert").write_text(contents, encoding="utf-8")
         py = Path("poly_eval.py")
         py.write_text(poly_eval.format(num_points=num_points), encoding="utf-8")
-        mode = os.stat(py)
-        Path(py).chmod(mode.st_mode | stat.S_IEXEC)
+        py.chmod(py.stat().st_mode | stat.S_IEXEC)
 
         for i in range(num_groups):
             with Path("observations").open(mode="a", encoding="utf-8") as f:

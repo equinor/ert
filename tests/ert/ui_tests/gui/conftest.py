@@ -1,6 +1,5 @@
 import contextlib
 import fileinput
-import os
 import shutil
 import stat
 from collections.abc import Iterator
@@ -171,7 +170,8 @@ def _ensemble_experiment_run(
     ):
         mp.chdir(path)
         if failing_reals:
-            Path("poly_eval.py").write_text(
+            poly_py = Path("poly_eval.py")
+            poly_py.write_text(
                 dedent(
                     """\
                         #!/usr/bin/env python3
@@ -199,11 +199,8 @@ def _ensemble_experiment_run(
                 encoding="utf-8",
             )
 
-            Path("poly_eval.py").chmod(
-                os.stat("poly_eval.py").st_mode
-                | stat.S_IXUSR
-                | stat.S_IXGRP
-                | stat.S_IXOTH
+            poly_py.chmod(
+                poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
             )
         run_experiment(EnsembleExperiment, gui)
 

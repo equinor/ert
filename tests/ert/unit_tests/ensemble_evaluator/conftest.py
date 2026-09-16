@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import stat
 from collections.abc import Callable
 from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
@@ -95,9 +94,9 @@ def make_ensemble(queue_config):
                     f"    with open('status.txt', 'a', encoding='utf-8'): pass\n",
                     encoding="utf-8",
                 )
-                mode = os.stat(forward_model_exec).st_mode
-                mode |= stat.S_IXUSR | stat.S_IXGRP
-                Path(forward_model_exec).chmod(stat.S_IMODE(mode))
+                forward_model_exec.chmod(
+                    forward_model_exec.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP
+                )
 
                 forward_model_list.append(
                     forward_model_step_from_config_contents(

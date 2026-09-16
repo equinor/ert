@@ -15,8 +15,7 @@ def delete_file(filename: str | Path) -> None:
 
 
 def delete_empty_directory(dirname: str) -> None:
-    stat_info = os.stat(dirname)
-    uid = stat_info.st_uid
+    uid = Path(dirname).stat().st_uid
     if uid == os.getuid():
         if os.path.islink(dirname):
             os.remove(dirname)

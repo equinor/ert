@@ -481,14 +481,14 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
     expect_stopped,
     monkeypatch,
 ):
-    script_name = f"failing_script.{file_extension}"
+    script = Path(f"failing_script.{file_extension}")
     monkeypatch.setattr(_ert.threading, "_can_raise", False)
 
     Path("failing_job").write_text(workflow_job_config_content, encoding="utf-8")
 
-    Path(script_name).write_text(script_content, encoding="utf-8")
+    script.write_text(script_content, encoding="utf-8")
 
-    Path(script_name).chmod(os.stat(script_name).st_mode | 0o111)
+    script.chmod(script.stat().st_mode | 0o111)
 
     Path("dump_failing_workflow").write_text("failjob", encoding="utf-8")
 
@@ -515,7 +515,8 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_workflow_output_is_written_to_experiment_in_storage():
     Path("print_job").write_text("EXECUTABLE print_script.sh\n", encoding="utf-8")
-    Path("print_script.sh").write_text(
+    print_sh = Path("print_script.sh")
+    print_sh.write_text(
         dedent(
             """\
                 #!/bin/bash
@@ -525,7 +526,7 @@ def test_that_workflow_output_is_written_to_experiment_in_storage():
         ),
         encoding="utf-8",
     )
-    Path("print_script.sh").chmod(os.stat("print_script.sh").st_mode | 0o111)
+    print_sh.chmod(print_sh.stat().st_mode | 0o111)
     Path("print_workflow").write_text("printjob\n", encoding="utf-8")
 
     with Path("poly.ert").open(mode="a", encoding="utf-8") as fh:
@@ -865,7 +866,7 @@ def test_that_a_custom_eclrun_can_be_activated_through_setenv():
         ).strip(),
         encoding="utf-8",
     )
-    Path(eclrun).chmod(os.stat(eclrun).st_mode | stat.S_IEXEC)
+    eclrun.chmod(eclrun.stat().st_mode | stat.S_IEXEC)
 
     Path("FOO.DATA").touch()
     config_file = Path("config.ert")
