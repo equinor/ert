@@ -140,7 +140,7 @@ async def test_that_create_runpath_overwrites_symlinks_by_file(
     targetpath = f"{run_args[0].runpath}/permx.grdecl.target"
     Path(targetpath).touch()
     Path(linkpath).unlink()
-    os.symlink(targetpath, linkpath)
+    Path(linkpath).symlink_to(targetpath)
 
     # recreate directory structure
     await create_runpath(
@@ -278,7 +278,7 @@ async def test_that_run_template_replace_symlink_does_not_write_to_source(
     Path("start.txt").write_text(
         "I don't want to replace in this file", encoding="utf-8"
     )
-    os.symlink("start.txt", runpath / "result.txt")
+    (runpath / "result.txt").symlink_to("start.txt")
     await create_runpath(
         run_args=run_arg,
         ensemble=prior_ensemble,

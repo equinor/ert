@@ -353,14 +353,14 @@ def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkey
 @pytest.fixture
 def symlink_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    os.symlink(_shared_snake_oil_case, "test_data")
+    Path("test_data").symlink_to(_shared_snake_oil_case)
     monkeypatch.chdir("test_data")
 
 
 @pytest.fixture
 def symlink_heat_equation_storage_es(_shared_heat_equation_es, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    os.symlink(_shared_heat_equation_es, "heat_equation")
+    Path("heat_equation").symlink_to(_shared_heat_equation_es)
     monkeypatch.chdir("heat_equation")
 
 
@@ -369,7 +369,7 @@ def symlink_heat_equation_storage_esmda(
     _shared_heat_equation_esmda, tmp_path, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
-    os.symlink(_shared_heat_equation_esmda, "heat_equation")
+    Path("heat_equation").symlink_to(_shared_heat_equation_esmda)
     monkeypatch.chdir("heat_equation")
 
 
@@ -378,7 +378,7 @@ def symlink_heat_equation_storage_enif(
     _shared_heat_equation_enif, tmp_path, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
-    os.symlink(_shared_heat_equation_enif, "heat_equation_enif")
+    Path("heat_equation_enif").symlink_to(_shared_heat_equation_enif)
     monkeypatch.chdir("heat_equation_enif")
 
 

@@ -404,7 +404,7 @@ def test_copy_directory_errors_when_symlinks_point_nowhere():
     somedir = "somedir"
     some_symlink = f"{somedir}/some_symlink"
     Path(somedir).mkdir()
-    os.symlink("/not_existing", some_symlink)
+    Path(some_symlink).symlink_to("/not_existing")
     with pytest.raises(OSError, match=f"No such file or directory: '{some_symlink}'"):
         copy_directory(somedir, "copydir")
 
@@ -416,8 +416,8 @@ def test_copy_directory_reports_multiple_errors():
     some_other_symlink = f"{somedir}/some_other_symlink"
 
     Path(somedir).mkdir()
-    os.symlink("/not_existing", some_symlink)
-    os.symlink("/not_existing", some_other_symlink)
+    Path(some_symlink).symlink_to("/not_existing")
+    Path(some_other_symlink).symlink_to("/not_existing")
     with pytest.raises(OSError, match="No such file or directory") as exc_info:
         copy_directory(somedir, "copydir")
 

@@ -261,6 +261,7 @@ select = [
     "os-path-isfile",
     "os-path-join",
     "os-path-isdir",
+    "os-symlink",
     "path-constructor-current-directory",
     "builtin-open",
     "PYI",
