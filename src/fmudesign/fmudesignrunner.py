@@ -362,8 +362,7 @@ def main() -> None:
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     setup_site_logging(root_logger)
-    args_to_log = {k: v for k, v in vars(args).items() if k != "func"}
-    logger.info(f"Running fmudesign with args: {args_to_log}")
+    logger.info(f"Running fmudesign with args: {sys.argv[1:]}")
 
     err_guide_msg = (
         "\n \n"
