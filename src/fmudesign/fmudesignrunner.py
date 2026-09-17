@@ -374,7 +374,7 @@ def main() -> None:
         print(err_guide_msg)
         sys.exit(1)
     except Exception as err:
-        logger.exception(err)
+        logger.exception(f"fmudesign crashed unexpectedly with '{err}'")
         traceback.print_exc()
         print(err_guide_msg)
         sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)
