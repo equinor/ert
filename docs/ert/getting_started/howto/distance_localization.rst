@@ -84,7 +84,7 @@ By multiplying with the scaling value for that pair of observation and parameter
 
 The method is very flexible in theory. In practice, how to define the values of the scaling factor for each pair of observation
 and parameter is simplified by using the lateral distance between the observation location and the parameter location
-and decrease the scaling factor as function of the distance. 
+and decrease the scaling factor as function of the distance.
 
 In ERT the current implementation specify an influence range as a circular disk around each observations location,
 and specified by a RADIUS value.
