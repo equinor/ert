@@ -116,9 +116,9 @@ class TooFewRealizationsSucceeded(ErtRunError):
         super().__init__(self.message)
 
 
-def delete_runpath(run_path: str) -> None:
-    if Path(run_path).exists():
-        shutil.rmtree(run_path)
+def delete_runpath(runpath: str) -> None:
+    if Path(runpath).exists():
+        shutil.rmtree(runpath)
 
 
 class _LogAggregration(logging.Handler):
@@ -179,7 +179,7 @@ class RunModel(RunModelConfig, ABC):
     _end_event: threading.Event = PrivateAttr(default_factory=threading.Event)
     _iter_snapshot: dict[int, EnsembleSnapshot] = PrivateAttr(default_factory=dict)
     _is_rerunning_failed_realizations: bool = PrivateAttr(False)
-    _run_paths: Runpaths = PrivateAttr()
+    _runpaths: Runpaths = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=1)
     _start_iteration: int = PrivateAttr(default=0)
     _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
@@ -209,7 +209,7 @@ class RunModel(RunModelConfig, ABC):
         self._rng = np.random.default_rng(self.random_seed)
         self._start_iteration = self.start_iteration
 
-        self._run_paths = Runpaths(
+        self._runpaths = Runpaths(
             jobname_format=self.runpath_config.jobname_format_string,
             runpath_format=self.runpath_config.runpath_format_string,
             filename=str(self.runpath_file),
@@ -237,7 +237,7 @@ class RunModel(RunModelConfig, ABC):
             "status_queue",
             "_storage",
             "rng",
-            "run_paths",
+            "runpaths",
             "substitutions",
         ]
         sensitive_keys = [
@@ -769,27 +769,27 @@ class RunModel(RunModelConfig, ABC):
 
     @property
     def paths(self) -> list[str]:
-        run_paths = []
+        runpaths = []
         active_realizations = np.where(self.active_realizations)[0]
         for iteration in range(
             self._start_iteration,
             self._total_iterations + self._start_iteration,
         ):
-            run_paths.extend(self._run_paths.get_paths(active_realizations, iteration))
-        return run_paths
+            runpaths.extend(self._runpaths.get_paths(active_realizations, iteration))
+        return runpaths
 
     def check_if_runpath_exists(self) -> bool:
         """
-        Determine if the run_path exists by checking if it contains
+        Determine if the runpath exists by checking if it contains
         at least one iteration directory for the realizations in the active mask.
-        The run_path can contain one or two %d specifiers ie:
+        The runpath can contain one or two %d specifiers ie:
             "realization-%d/iter-%d/"
             "realization-%d/"
         """
-        return any(Path(run_path).exists() for run_path in self.paths)
+        return any(Path(runpath).exists() for runpath in self.paths)
 
     def get_number_of_existing_runpaths(self) -> int:
-        realization_set = {Path(run_path).parent for run_path in self.paths}
+        realization_set = {Path(runpath).parent for runpath in self.paths}
         return [real_path.exists() for real_path in realization_set].count(True)
 
     def get_number_of_active_realizations(self) -> int:
@@ -808,16 +808,14 @@ class RunModel(RunModelConfig, ABC):
         progress_tracker: RunpathProgressWidget | None = None,
         progress_callback: Callable[[], None] | None = None,
     ) -> None:
-        run_paths = self.paths
+        runpaths = self.paths
         if progress_tracker is not None:
-            progress_tracker.start(len(run_paths))
+            progress_tracker.start(len(runpaths))
         if progress_callback is not None:
             progress_callback()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(delete_runpath, run_path) for run_path in run_paths
-            ]
+            futures = [executor.submit(delete_runpath, runpath) for runpath in runpaths]
             for future in concurrent.futures.as_completed(futures):
                 future.result()
                 if progress_tracker is not None:
@@ -961,7 +959,7 @@ class RunModel(RunModelConfig, ABC):
                     forward_model_steps=self.forward_model_steps,
                     substitutions=self.substitutions,
                     parameters_file=self.runpath_config.gen_kw_export_name,
-                    runpaths=self._run_paths,
+                    runpaths=self._runpaths,
                     context_env=self._context_env,
                     end_event=self._end_event,
                     handle_runpath_creation_event=self.send_event,
@@ -977,7 +975,7 @@ class RunModel(RunModelConfig, ABC):
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
                 random_seed=self.random_seed,
-                run_paths=self._run_paths,
+                run_paths=self._runpaths,
             ),
         )
 
@@ -1034,7 +1032,7 @@ class RunModel(RunModelConfig, ABC):
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
                 random_seed=self.random_seed,
-                run_paths=self._run_paths,
+                run_paths=self._runpaths,
             ),
         )
 

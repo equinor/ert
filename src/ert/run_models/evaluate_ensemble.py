@@ -48,7 +48,7 @@ class EvaluateEnsemble(RunModel, EvaluateEnsembleConfig):
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
         prior_args = create_run_arguments(
-            self._run_paths,
+            self._runpaths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=ensemble,
         )
