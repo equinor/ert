@@ -12,8 +12,11 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import logging
+from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -38,6 +41,9 @@ from .utils import (
     printwarning,
     to_numeric_safe,
 )
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from collections.abc import Hashable, Sequence
@@ -81,6 +87,8 @@ class DesignMatrix:
             or they are read from a file.
     """
 
+    START_COLUMNS = ("REAL", "SENSNAME", "SENSCASE", "RMS_SEED")
+
     def __init__(self, verbosity: int = 0, output_dir: Path | None = None) -> None:
         """
         Placeholders for:
@@ -108,6 +116,84 @@ class DesignMatrix:
         self.rng: np.random.Generator
         self.seed_strategy: SeedStrategy
         self.base_seed: int
+
+    def log_inputdict(self, inputdict: dict[str, Any]) -> None:
+        parameters: list[tuple[str, list[Any] | None]] = [
+            param
+            for sens_values in inputdict["sensitivities"].values()
+            for param in (
+                dict.fromkeys(sens_values.get("parameters") or [])
+                if isinstance(sens_values.get("parameters"), list)
+                else (sens_values.get("parameters") or {})
+            ).items()
+        ]
+        if isinstance(background := inputdict.get("background"), dict):
+            parameters.extend(background.get("parameters", {}).items())
+
+        unique_params_per_senstype: dict[str, set[str]] = defaultdict(set)
+        for sensvals in inputdict["sensitivities"].values():
+            if (senstype := sensvals["senstype"]) == "scenario":
+                params = {p for case in sensvals["cases"].values() for p in case}
+            else:
+                params = set(sensvals.get("parameters") or {})
+            unique_params_per_senstype[senstype] |= params
+        param_count_per_senstype: dict[str, int] = {
+            t: len(v) for t, v in unique_params_per_senstype.items()
+        }
+
+        summary_log = dedent(
+            f"""\
+            Fmudesign summary:
+            Designtype: {inputdict.get("designtype")}
+            Repeats: {inputdict.get("repeats")}
+            Number of sensitivities: {len(inputdict["sensitivities"])}
+            Number of background parameters: {
+                len(background.get("parameters", {}))
+                if isinstance(background, dict)
+                else 0
+            }
+            Distribution count: {
+                dict(Counter(v[0] for p, v in parameters if v is not None))
+            }
+            Parameters per sensitivity type in designinput: {param_count_per_senstype}
+            Parameters in designmatrix: {
+                len(
+                    set(self.designvalues.columns)
+                    - (set(self.START_COLUMNS) - {"RMS_SEED"})
+                )
+            }
+            Parameters in designmatrix defaultsheet: {len(self.defaultvalues)}
+            Number of parameters with correlations: {
+                len(
+                    {
+                        param
+                        for param, val in parameters
+                        if isinstance(val, list)
+                        and len(val) == 3
+                        and val[2] is not None
+                    }
+                )
+            }
+            Has background: {bool(inputdict.get("background"))}
+            RMS seeds: {
+                "file"
+                if isinstance(inputdict.get("seeds"), list)
+                else inputdict.get("seeds")
+            }
+            Number of parameters with decimals: {len(inputdict.get("decimals") or {})}
+            Distribution seed: {inputdict.get("distribution_seed") is not None}
+            Number of dependencies: {
+                sum(
+                    len(sens.get("dependencies", {}))
+                    for sens in inputdict["sensitivities"].values()
+                )
+            }
+            Number of realizations per sensitivity: {
+                self.designvalues["SENSNAME"].value_counts().to_list()
+            }
+            Total number of realizations: {len(self.designvalues)}"""
+        )
+        logger.info(summary_log)
 
     def reset(self) -> None:
         """Resets DesignMatrix to empty. Necessary in case method generate
@@ -140,7 +226,7 @@ class DesignMatrix:
             else int(self.rng.integers(2**63))
         )
 
-        # Reading or generating rms seed values
+        # Reading or generating rms seed value
         max_reals = find_max_realisations(inputdict)
         self.seedvalues = DesignMatrix.create_rms_seeds(inputdict["seeds"], max_reals)
 
@@ -162,7 +248,6 @@ class DesignMatrix:
             size = sens.get("numreal", inputdict["repeats"])
 
             print(f" Generating sensitivity : {key}")
-
             match sens["senstype"]:
                 case "ref":
                     sensitivity = SingleRealisationReference(
@@ -277,14 +362,15 @@ class DesignMatrix:
         self.designvalues = self.designvalues.assign(REAL=lambda df: np.arange(len(df)))
 
         # Re-order columns
-        start_cols = ["REAL", "SENSNAME", "SENSCASE", "RMS_SEED"]
         self.designvalues = self.designvalues[
-            [col for col in start_cols if col in self.designvalues]
-            + [col for col in self.designvalues if col not in start_cols]
+            [col for col in self.START_COLUMNS if col in self.designvalues]
+            + [col for col in self.designvalues if col not in self.START_COLUMNS]
         ]
 
         # Make all values numerical if possible
         self.designvalues = self.designvalues.map(to_numeric_safe)
+
+        self.log_inputdict(inputdict)
 
     def to_xlsx(
         self,
@@ -483,7 +569,7 @@ class DesignMatrix:
                 self.designvalues[key] = self.designvalues[key].fillna(
                     self.defaultvalues[key]
                 )
-            elif key not in {"REAL", "SENSNAME", "SENSCASE", "RMS_SEED"}:
+            elif key not in self.START_COLUMNS:
                 raise LookupError(f"No defaultvalues given for parameter {key} ")
 
     def _add_dist_background(

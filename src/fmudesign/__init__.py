@@ -10,7 +10,11 @@ from ._designsummary import summarize_design
 from ._excel_to_dict import excel_to_dict, inputdict_to_yaml
 from .create_design import DesignMatrix
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+logger.setLevel(logging.INFO)
+
+
 __all__ = [
     "DesignMatrix",
     "excel_to_dict",
