@@ -148,6 +148,24 @@ def test_that_objective_scales_are_passed_to_ropt(ever_config):
     assert not ropt_config["objectives"]["auto_scale"]
 
 
+def test_that_objective_offsets_default_to_zero(ever_config):
+    ropt_config = _ropt_config(ever_config)
+    assert ropt_config["objectives"]["offsets"] == [0.0, 0.0]
+
+
+def test_that_objective_offsets_are_passed_to_ropt(ever_config):
+    ever_config.objective_functions[0].offset = 2.0
+    ropt_config = _ropt_config(ever_config)
+    assert ropt_config["objectives"]["offsets"] == [2.0, 0.0]
+
+
+def test_that_auto_scale_removes_a_configured_objective_offset(ever_config):
+    ever_config.objective_functions[0].offset = 2.0
+    ever_config.optimization.auto_scale = True
+    ropt_config = _ropt_config(ever_config)
+    assert ropt_config["objectives"]["offsets"] == [0.0, 0.0]
+
+
 def test_that_mean_objectives_are_maximized(ever_config):
     ropt_config = _ropt_config(ever_config)
     assert ropt_config["objectives"]["maximize"] == [True, True]

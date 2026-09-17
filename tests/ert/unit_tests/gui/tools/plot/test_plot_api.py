@@ -598,6 +598,7 @@ def _create_gradient_only_ensemble(storage):
                     input_files=[f"{objective_key}.json"],
                     keys=[objective_key],
                     scales=[1.0],
+                    offsets=[0.0],
                     weights=[1.0],
                     objective_types=["mean"],
                 ).model_dump(mode="json")

@@ -1268,6 +1268,22 @@ def test_that_auto_scale_and_objective_scale_are_mutually_exclusive():
         )
 
 
+def test_that_auto_scale_and_objective_offset_are_mutually_exclusive():
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The auto_scale option in the optimization section and the offset "
+            "options in the objective_functions section are mutually exclusive"
+        ),
+    ):
+        everest_config_with_defaults(
+            optimization=OptimizationConfig(auto_scale=True),
+            objective_functions=[
+                ObjectiveFunctionConfig(name=f"f{i:03d}", offset=1.0) for i in range(2)
+            ],
+        )
+
+
 def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys):
     config = min_config
     config["install_data"] = [
