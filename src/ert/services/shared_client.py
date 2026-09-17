@@ -31,7 +31,7 @@ class ErtClientConnectionInfo(BaseModel, extra="forbid"):
 type Methods = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
 
 
-ENV_VAR = "ERT_STORAGE_CONNECTION_STRING"
+ENV_VAR = "ERT_SERVER_CONNECTION_STRING"
 
 # Avoid searching for the connection information on every request. We assume
 # that a single client process will only ever want to connect to a single ERT
@@ -155,7 +155,7 @@ def find_conn_info() -> ErtClientConnectionInfo:
     """
     The base url and auth token are read from either:
     The file `ert_server_connection.json`, starting from the current working
-    directory or the environment variable `ERT_STORAGE_CONNECTION_STRING`
+    directory or the environment variable `ERT_SERVER_CONNECTION_STRING`
 
     In both cases the configuration is represented by JSON representation of the
     `ConnInfo` pydantic model.
@@ -169,7 +169,7 @@ def find_conn_info() -> ErtClientConnectionInfo:
     conn_str = os.environ.get(ENV_VAR)
 
     # This could be an empty string rather than None, as by the shell
-    # invocation: env ERT_STORAGE_CONNECTION_STRING= python
+    # invocation: env ERT_SERVER_CONNECTION_STRING= python
     if not conn_str:
         # Look for the connection-info file from cwd up to root.
         root = Path("/")
