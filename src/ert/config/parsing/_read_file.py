@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from .config_errors import ConfigValidationError, ErrorInfo
@@ -5,7 +6,7 @@ from .file_context_token import FileContextToken
 
 
 def read_file(file: str, token: FileContextToken | None = None) -> str:
-    filepath = Path(file).resolve()
+    filepath = Path(os.path.abspath(file))  # ruff: ignore[os-path-abspath] -- avoid resolving symlinks
     try:
         return filepath.read_text(encoding="utf-8")
     except OSError as err:
