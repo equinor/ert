@@ -34,7 +34,6 @@ from ert.cli.main import run_cli
 from ert.config import ConfigWarning, ErtConfig
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.config.rft_config import _get_zonemap, _read_egrid
-from ert.dark_storage.app import app
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -42,6 +41,7 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
 )
+from ert.server.app import app
 from ert.services import ert_client
 from ert.services.ert_client import ErtClient
 from ert.storage import open_storage

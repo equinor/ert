@@ -21,7 +21,7 @@ ert-rapid-tests:
     OMP_NUM_THREADS=1 pytest --dist loadgroup tests/ert/unit_tests \
     --hypothesis-profile=fast \
     --ignore=tests/ert/unit_tests/gui \
-    --ignore=tests/ert/unit_tests/dark_storage \
+    --ignore=tests/ert/unit_tests/server \
     --ignore=tests/ert/unit_tests/config/test_transfer_functions.py \
     --ignore=tests/ert/unit_tests/ensemble_evaluator/test_ensemble_client.py \
     -m "not (slow or unreliable or high_utilization or creates_tmpdir)" \
@@ -84,7 +84,7 @@ ert-unit-tests:
     pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not (memory_test or limit_memory)"
 
 ert-doc-tests:
-    pytest {{pytest_args}} --doctest-modules src/ --ignore src/ert/dark_storage
+    pytest {{pytest_args}} --doctest-modules src/ --ignore src/ert/server
 
 everest-tests:
     pytest -n 4 --benchmark-disable --dist loadgroup {{pytest_args}} tests/everest

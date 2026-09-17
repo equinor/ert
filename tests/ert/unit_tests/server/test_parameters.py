@@ -1,7 +1,7 @@
 import pytest
 
 from ert.config import ErtConfig
-from ert.dark_storage.endpoints.parameters import data_for_parameter
+from ert.server.endpoints.parameters import data_for_parameter
 from ert.storage import open_storage
 
 

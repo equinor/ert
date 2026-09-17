@@ -17,11 +17,11 @@ import pytest
 from httpx import RequestError
 
 from ert.config import GenKwConfig, SummaryConfig
-from ert.dark_storage import common
-from ert.dark_storage.endpoints import ensembles, experiments
-from ert.dark_storage.endpoints.observations import get_observations_for_response
-from ert.dark_storage.endpoints.responses import get_response
 from ert.gui.plotting.plot_api import PlotApi
+from ert.server import common
+from ert.server.endpoints import ensembles, experiments
+from ert.server.endpoints.observations import get_observations_for_response
+from ert.server.endpoints.responses import get_response
 from ert.storage import Storage, open_storage
 
 

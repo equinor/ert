@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, Body, Depends
 
 from ert.config import SurfaceConfig
-from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_storage
+from ert.server import json_schema as js
+from ert.server.common import get_storage
 from ert.storage import Storage
 
 router = APIRouter(tags=["experiment"])

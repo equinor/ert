@@ -12,7 +12,7 @@ from jinja2 import Environment, FileSystemLoader
 from numpy import array
 from resdata.summary import Summary
 
-from ert.dark_storage.app import app
+from ert.server.app import app
 
 
 def source_dir() -> Path:
@@ -149,7 +149,7 @@ def make_poly_template(folder, source_folder, **kwargs):
 
 
 @contextlib.contextmanager
-def dark_storage_app(monkeypatch):
+def server_app(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
 

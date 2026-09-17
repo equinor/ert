@@ -31,7 +31,7 @@ from websockets.exceptions import (
 from websockets.sync.client import connect
 
 from _ert.threading import ErtThread
-from ert.dark_storage.common import EverEndpoints
+from ert.server.common import EverEndpoints
 
 from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
 

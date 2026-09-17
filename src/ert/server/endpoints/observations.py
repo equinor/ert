@@ -8,8 +8,8 @@ from uuid import UUID, uuid4
 import polars as pl
 from fastapi import APIRouter, Body, Depends, Query
 
-from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import (
+from ert.server import json_schema as js
+from ert.server.common import (
     get_storage,
     reraise_as_http_errors,
     seismic_distance_expression,

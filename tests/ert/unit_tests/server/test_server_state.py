@@ -12,8 +12,8 @@ from hypothesis import assume
 from hypothesis.stateful import rule
 from starlette.testclient import TestClient
 
-from ert.dark_storage import common
-from ert.dark_storage.app import app
+from ert.server import common
+from ert.server.app import app
 from tests.ert.unit_tests.storage.test_stateful_storage import StatefulStorageTest
 
 

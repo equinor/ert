@@ -18,9 +18,9 @@ from resfo_utilities.testing import (
 
 from ert.config import GenDataConfig, SummaryConfig
 from ert.config.seismic_config import SeismicConfig
-from ert.dark_storage.common import ErtStoragePermissionError, get_storage
-from ert.dark_storage.endpoints.responses import data_for_response
-from ert.dark_storage.exceptions import InternalServerError
+from ert.server.common import ErtStoragePermissionError, get_storage
+from ert.server.endpoints.responses import data_for_response
+from ert.server.exceptions import InternalServerError
 from ert.storage import ErtStorageException, open_storage
 
 
@@ -179,7 +179,7 @@ def test_that_seismic_response_has_distance_columns_and_values(
 
 
 @patch(
-    "ert.dark_storage.common.open_storage",
+    "ert.server.common.open_storage",
     side_effect=ErtStoragePermissionError("Great Permission Error"),
 )
 def test_get_storage_with_open_storage_permission_error(
@@ -196,7 +196,7 @@ def test_get_storage_with_open_storage_permission_error(
 
 
 @patch(
-    "ert.dark_storage.common.open_storage",
+    "ert.server.common.open_storage",
     side_effect=ErtStorageException("Great Exception"),
 )
 def test_get_storage_with_open_storage_exception(
