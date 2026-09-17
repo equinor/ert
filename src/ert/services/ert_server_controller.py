@@ -59,23 +59,21 @@ class ServerBootFail(RuntimeError):
 class _Proc(threading.Thread):
     def __init__(
         self,
-        service_name: str,
+        connection_info_path: Path,
         exec_args: Sequence[str],
         timeout: int,
         on_connection_info_received: Callable[
             [ErtServerConnectionInfo | Exception], None
         ],
-        project: Path,
     ) -> None:
         super().__init__()
 
         self._shutdown = threading.Event()
 
-        self._service_name = service_name
         self._exec_args = exec_args
         self._timeout = timeout
         self._propagate_connection_info_from_childproc = on_connection_info_received
-        self._service_config_path = project / f"{self._service_name}_server.json"
+        self._connection_info_path = connection_info_path
 
         fd_read, fd_write = os.pipe()
         self._comm_pipe = os.fdopen(fd_read)
@@ -83,7 +81,7 @@ class _Proc(threading.Thread):
         env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
 
-        SERVICE_CONF_PATHS.add(str(self._service_config_path))
+        SERVICE_CONF_PATHS.add(str(self._connection_info_path))
 
         # The process is waited for in _do_shutdown()
         self._childproc = Popen(
@@ -172,7 +170,7 @@ class _Proc(threading.Thread):
     def _ensure_connection_info_file_is_deleted(self) -> None:
         """Ensure that the JSON connection information file is deleted"""
         with contextlib.suppress(OSError):
-            self._service_config_path.unlink(missing_ok=True)
+            self._connection_info_path.unlink(missing_ok=True)
 
     @property
     def logger(self) -> logging.Logger:
@@ -246,11 +244,11 @@ class ErtServerController:
             run_ert_server_main_cmd.append("--verbose")
 
         self._thread_that_starts_server_process = _Proc(
-            service_name="storage",
+            connection_info_path=Path(self._storage_path)
+            / _ERT_SERVER_CONNECTION_INFO_FILE,
             exec_args=run_ert_server_main_cmd,
             timeout=timeout,
             on_connection_info_received=self.on_connection_info_received_from_server_process,
-            project=Path(self._storage_path),
         )
 
     def fetch_auth(self) -> tuple[str, Any]:
