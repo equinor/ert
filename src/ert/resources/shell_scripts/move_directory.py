@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-import pathlib
 import shutil
 import sys
+from pathlib import Path
 
 
 def move_directory(src_dir: str, target: str) -> None:
     """Will raise IOError if src_dir is not a folder."""
-    if pathlib.Path(src_dir).is_dir():
-        if pathlib.Path(target).exists():
+    if Path(src_dir).is_dir():
+        if Path(target).exists():
             shutil.rmtree(target)
         shutil.move(src_dir, target)
     else:
