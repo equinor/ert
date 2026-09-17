@@ -84,6 +84,9 @@ class CSVExportJob(ErtScript):
         data = pd.DataFrame()
 
         for ensemble in ensembles:
+            if self.isCancelled():
+                break
+
             if not ensemble.has_data():
                 raise UserWarning(
                     f"The ensemble '{ensemble.name}' does not have any data!"
