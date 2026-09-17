@@ -1,4 +1,4 @@
-import pathlib
+from pathlib import Path
 from unittest.mock import patch
 
 import polars as pl
@@ -99,7 +99,7 @@ def test_that_file_path_validation_succeeds_on_valid_paths(
     qtbot.addWidget(dialog)
     dialog.show()
 
-    pathlib.Path("subdir").mkdir()
+    Path("subdir").mkdir()
     dialog._file_path_edit.setText(valid_path)
     dialog.validate_file()
 
