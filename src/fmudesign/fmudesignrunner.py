@@ -35,7 +35,6 @@ from pydantic import ValidationError
 from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import tracer
-from fmudesign.logging import log_and_print
 
 from ._excel_to_dict import excel_to_dict
 from .create_design import DesignMatrix, _normalize_xlsx_filename
@@ -253,10 +252,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
         default = parser.get_default(sheet)
         custom = getattr(args, sheet)
         if default != custom:
-            log_and_print(
-                f"Worksheet changed from default: {default!r} -> {custom!r}",
-                logger=logger,
-            )
+            print(f"Worksheet changed from default: {default!r} -> {custom!r}")
 
     # Check existence of config file
     if not Path(args.config).is_file():
@@ -270,7 +266,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
         )
 
     # Parse Excel config file to dict-of-dict configuration
-    log_and_print(f"Reading file: {args.config!r}", logger=logger)
+    print(f"Reading file: {args.config!r}")
     config = excel_to_dict(
         args.config,
         gen_input_sheet=args.general_input,
@@ -305,11 +301,7 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     filename = args.file.strip()
     examples_by_filename = {example.filename: example for example in EXAMPLES}
     if filename not in examples_by_filename:
-        log_and_print(
-            f"Error on {filename!r}. Not found among: {set(examples_by_filename)}",
-            logger=logger,
-            level=logging.ERROR,
-        )
+        print(f"Error on {filename!r}. Not found among: {set(examples_by_filename)}")
         sys.exit(1)
 
     example = examples_by_filename[filename]
@@ -319,21 +311,17 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     ]
     if existing_destinations:
         for destination in existing_destinations:
-            log_and_print(
-                f"Error on {destination!r}. Already exists.",
-                level=logging.ERROR,
-                logger=logger,
-            )
+            print(f"Error on {destination!r}. Already exists.")
         sys.exit(1)
 
     with as_file(EXAMPLES_DIR / filename) as source_path:
         shutil.copy(source_path, filename)
-        log_and_print(f"Created file {filename!r}.", logger=logger)
+        print(f"Created file {filename!r}.")
 
     for other_file in example.other_files:
         with as_file(EXAMPLES_DIR / other_file) as source_path:
             shutil.copy(source_path, other_file)
-            log_and_print(f"  Created auxiliary file {other_file!r}.", logger=logger)
+            print(f"  Created auxiliary file {other_file!r}.")
 
     sys.exit(0)
 
@@ -377,12 +365,12 @@ def main() -> None:
         args.func(args)
     except ValidationError as e:
         for err in e.errors(include_url=False):
-            log_and_print(
+            msg = (
                 f"Validation error for '{err['loc'][0]}': "
-                f"{err['msg']}, was '{err['input']}'",
-                logger=logger,
-                level=logging.ERROR,
+                f"{err['msg']}, was '{err['input']}'"
             )
+            logger.error(msg)
+            print(msg)
         print(err_guide_msg)
         sys.exit(1)
     except Exception as err:
