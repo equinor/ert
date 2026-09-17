@@ -63,7 +63,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
         posterior = self.update(prior, self.target_ensemble % 1)
 
         posterior_args = create_run_arguments(
-            self._run_paths,
+            self._runpaths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=posterior,
         )

@@ -150,7 +150,7 @@ def test_failed_realizations(initials, completed, any_failed, failures, use_tmpd
 
 @pytest.mark.parametrize(
     (
-        "run_path",
+        "runpath",
         "number_of_iterations",
         "start_iteration",
         "active_realizations_mask",
@@ -167,15 +167,15 @@ def test_failed_realizations(initials, completed, any_failed, failures, use_tmpd
     ],
 )
 def test_check_if_runpath_exists_with_substitutions(
-    create_dummy_run_path,
-    run_path: str,
+    create_dummy_runpath,
+    runpath: str,
     number_of_iterations: int,
     start_iteration: int,
     active_realizations_mask: list,
     expected: bool,
     use_tmpdir,
 ):
-    model_config = ModelConfig(runpath_format_string=run_path)
+    model_config = ModelConfig(runpath_format_string=runpath)
     brm = create_run_model(
         runpath_config=model_config,
         substitutions={},
@@ -195,12 +195,12 @@ def test_check_if_runpath_exists_with_substitutions(
     ],
 )
 def test_get_number_of_existing_runpaths(
-    create_dummy_run_path,
+    create_dummy_runpath,
     active_realizations_mask,
     expected_number,
 ):
-    run_path = "out/realization-%d/iter-%d"
-    model_config = ModelConfig(runpath_format_string=run_path)
+    runpath = "out/realization-%d/iter-%d"
+    model_config = ModelConfig(runpath_format_string=runpath)
     brm = create_run_model(
         runpath_config=model_config,
         substitutions={},
@@ -211,30 +211,30 @@ def test_get_number_of_existing_runpaths(
 
 
 @pytest.mark.parametrize(
-    "run_path_format",
+    "runpath_format",
     ["<ERTCASE>/realization-<IENS>/iter-<ITER>", "<ERTCASE>/realization-<IENS>"],
 )
 @pytest.mark.parametrize(
     "active_realizations", [[True], [True, True], [True, False], [False], [False, True]]
 )
-def test_delete_run_path(run_path_format, active_realizations, use_tmpdir):
+def test_delete_runpath(runpath_format, active_realizations, use_tmpdir):
     expected_remaining = []
     expected_removed = []
     for iens, mask in enumerate(active_realizations):
-        run_path = Path(
-            run_path_format.replace("<IENS>", str(iens))
+        runpath = Path(
+            runpath_format.replace("<IENS>", str(iens))
             .replace("<ITER>", "0")
             .replace("<ERTCASE>", "Case_Name")
         )
-        os.makedirs(run_path)
-        assert run_path.exists()
+        os.makedirs(runpath)
+        assert runpath.exists()
         if not mask:
-            expected_remaining.append(run_path)
+            expected_remaining.append(runpath)
         else:
-            expected_removed.append(run_path)
+            expected_removed.append(runpath)
     share_path = Path("share")
     os.makedirs(share_path)
-    model_config = ModelConfig(runpath_format_string=run_path_format)
+    model_config = ModelConfig(runpath_format_string=runpath_format)
 
     brm = create_run_model(
         runpath_config=model_config,
@@ -670,12 +670,12 @@ def test_progress_calculations(
     ],
 )
 def test_check_if_runpath_exists(
-    create_dummy_run_path,
+    create_dummy_runpath,
     active_mask: list,
     expected: bool,
     use_tmpdir,
 ):
-    def get_run_path_mock(realizations, iteration=None):
+    def get_runpath_mock(realizations, iteration=None):
         if iteration is not None:
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
@@ -683,7 +683,7 @@ def test_check_if_runpath_exists(
     run_model = create_run_model(
         active_realizations=active_mask,
     )
-    run_model._run_paths.get_paths = get_run_path_mock
+    run_model._runpaths.get_paths = get_runpath_mock
     assert run_model.check_if_runpath_exists() == expected
 
 

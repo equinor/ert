@@ -160,7 +160,7 @@ class MultipleDataAssimilation(
                 target_experiment=target_experiment,
             )
             posterior_args = create_run_arguments(
-                self._run_paths,
+                self._runpaths,
                 self.active_realizations,
                 ensemble=posterior,
             )
