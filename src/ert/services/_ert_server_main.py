@@ -323,7 +323,7 @@ def add_parser_options(ap: ArgumentParser) -> None:
         "--project",
         "-p",
         type=Path,
-        help="Path to directory in which to create storage_server.json",
+        help="Path to directory in which to create ert_server_connection.json",
         default=Path.cwd(),
     )
     ap.add_argument(

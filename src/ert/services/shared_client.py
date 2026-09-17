@@ -14,7 +14,10 @@ import httpx
 from httpx_retries import Retry, RetryTransport
 from pydantic import BaseModel, ValidationError
 
-from ert.services.ert_server_controller import create_ert_server_controller
+from ert.services.ert_server_controller import (
+    _ERT_SERVER_CONNECTION_INFO_FILE,
+    create_ert_server_controller,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -151,8 +154,8 @@ def create_ertserver_client(project: Path, timeout: int | None = None) -> Client
 def find_conn_info() -> ErtClientConnectionInfo:
     """
     The base url and auth token are read from either:
-    The file `storage_server.json`, starting from the current working directory
-    or the environment variable `ERT_STORAGE_CONNECTION_STRING`
+    The file `ert_server_connection.json`, starting from the current working
+    directory or the environment variable `ERT_STORAGE_CONNECTION_STRING`
 
     In both cases the configuration is represented by JSON representation of the
     `ConnInfo` pydantic model.
@@ -168,12 +171,12 @@ def find_conn_info() -> ErtClientConnectionInfo:
     # This could be an empty string rather than None, as by the shell
     # invocation: env ERT_STORAGE_CONNECTION_STRING= python
     if not conn_str:
-        # Look for `storage_server.json` from cwd up to root.
+        # Look for the connection-info file from cwd up to root.
         root = Path("/")
         path = Path.cwd()
         while path != root:
             try:
-                conn_str = (path / "storage_server.json").read_text()
+                conn_str = (path / _ERT_SERVER_CONNECTION_INFO_FILE).read_text()
                 break
             except FileNotFoundError:
                 path = path.parent

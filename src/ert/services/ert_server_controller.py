@@ -177,7 +177,7 @@ class _Proc(threading.Thread):
         return logging.getLogger("ert.shared.storage")
 
 
-_ERT_SERVER_CONNECTION_INFO_FILE = "storage_server.json"
+_ERT_SERVER_CONNECTION_INFO_FILE = "ert_server_connection.json"
 _ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_ert_server_main.py")
 
 

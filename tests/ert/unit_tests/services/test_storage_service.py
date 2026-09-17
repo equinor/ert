@@ -57,7 +57,7 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
         "authtoken": "dummytoken",
     }
 
-    with Path("storage_server.json").open(mode="w", encoding="utf-8") as f:
+    with Path("ert_server_connection.json").open(mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
     create_ert_server_controller(project=Path().absolute())
 
@@ -73,7 +73,7 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
         1. run `ert gui poly.ert` with an ert 14.3
         2. kill that process, meaning `storage_service_server.json` is not cleaned up.
         3. run `ert gui poly.ert` with ert 14.4.0, which
-           looks for a 'cert' key present in storage_server.json
+           looks for a 'cert' key present in ert_server_connection.json
     """
     connection_info = {
         "urls": [
@@ -86,7 +86,7 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
         ],
         "authtoken": "dummytoken",
     }
-    with Path("storage_server.json").open(mode="w", encoding="utf-8") as f:
+    with Path("ert_server_connection.json").open(mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
     ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
@@ -99,7 +99,7 @@ def test_that_service_can_be_started_with_empty_conn_info_json(
     """An empty file on disk is an erroneous scenario in which we should
     ignore the file on disk and overwrite it by launching a new server
     """
-    Path("storage_server.json").touch()
+    Path("ert_server_connection.json").touch()
     ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
 
@@ -109,7 +109,7 @@ def test_that_service_can_be_started_with_empty_conn_info_json(
 def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
     fetch_url_mock, start_server_mock, change_to_tmpdir
 ):
-    """Regression test: when a storage_server.json is left behind from a
+    """Regression test: when an ert_server_connection.json is left behind from a
     previous process (e.g. Ctrl+C killed the plotter without cleanup),
     init_service must delete the stale file before starting a new server.
 
@@ -117,7 +117,7 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
     create_ert_server_controller will read the stale file and try to connect
     to a dead server, causing a TimeoutError.
     """
-    stale_file = Path("storage_server.json")
+    stale_file = Path("ert_server_connection.json")
     connection_info = {
         "urls": ["http://127.0.0.1:1"],
         "authtoken": "stale_token",
@@ -132,7 +132,7 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
 
     def assert_stale_file_deleted(**kwargs):
         assert not stale_file.exists(), (
-            "Stale storage_server.json must be deleted before starting a new "
+            "Stale ert_server_connection.json must be deleted before starting a new "
             "server, otherwise clients calling create_ert_server_controller "
             "will read dead connection info"
         )
@@ -150,7 +150,7 @@ def test_that_service_can_be_started_with_empty_json_content(
     """An empty JSON document on disk is an erroneous scenario in which we should
     ignore the file on disk and overwrite it by launching a new server
     """
-    Path("storage_server.json").write_text("{}", encoding="utf-8")
+    Path("ert_server_connection.json").write_text("{}", encoding="utf-8")
     ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
 
@@ -238,7 +238,7 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkey
 def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
     change_to_tmpdir,
 ):
-    file_path = Path("storage_server.json")
+    file_path = Path("ert_server_connection.json")
     file_path.write_text("{}", encoding="utf-8")
     mode = file_path.stat().st_mode
     Path(file_path).chmod(0o000)  # no permissions
