@@ -18,8 +18,6 @@ from ert.services.ert_server_controller import (
 
 
 class _DummyService(ErtServerController):
-    service_name = "dummy"
-
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **({"storage_path": ".", "timeout": 10} | kwargs))
 
