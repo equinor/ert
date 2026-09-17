@@ -41,6 +41,7 @@ from ._excel_to_dict import excel_to_dict
 from .create_design import DesignMatrix, _normalize_xlsx_filename
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 @dataclasses.dataclass
@@ -360,7 +361,6 @@ def main() -> None:
         sys.exit(0)
 
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
     setup_site_logging(root_logger)
     logger.info(f"Running fmudesign with args: {sys.argv[1:]}")
 
