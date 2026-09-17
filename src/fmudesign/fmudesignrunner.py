@@ -373,7 +373,7 @@ def main() -> None:
             print(msg)
         print(err_guide_msg)
         sys.exit(1)
-    except Exception as err:
+    except BaseException as err:
         logger.exception(f"fmudesign crashed unexpectedly with '{err}'")
         traceback.print_exc()
         print(err_guide_msg)
