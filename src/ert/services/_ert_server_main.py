@@ -96,7 +96,7 @@ def _create_connection_info(
         "auth": authtoken,
     }
 
-    os.environ["ERT_STORAGE_CONNECTION_STRING"] = json.dumps(
+    os.environ["ERT_SERVER_CONNECTION_STRING"] = json.dumps(
         connection_info, separators=(",", ":")
     )
 

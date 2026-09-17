@@ -19,12 +19,12 @@ from ert.shared import find_available_socket
 def test_create_connection_string(monkeypatch):
     authtoken = "very_secret_token"
     sock = find_available_socket()
-    monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
+    monkeypatch.setenv("ERT_SERVER_CONNECTION_STRING", "")
 
     _create_connection_info(sock, authtoken, Path("path/to/cert"))
 
-    assert "ERT_STORAGE_CONNECTION_STRING" in os.environ
-    connection_string = json.loads(os.environ["ERT_STORAGE_CONNECTION_STRING"])
+    assert "ERT_SERVER_CONNECTION_STRING" in os.environ
+    connection_string = json.loads(os.environ["ERT_SERVER_CONNECTION_STRING"])
     assert "urls" in connection_string
     assert "authtoken" in connection_string
     assert (
@@ -223,7 +223,7 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkey
     auth_token = "very_secret_token"
     sock = find_available_socket()
     cert_path, _, _ = _generate_certificate(Path())
-    monkeypatch.setenv("ERT_STORAGE_CONNECTION_STRING", "")
+    monkeypatch.setenv("ERT_SERVER_CONNECTION_STRING", "")
 
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable
