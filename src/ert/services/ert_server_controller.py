@@ -180,7 +180,7 @@ class _Proc(threading.Thread):
 
 
 _ERT_SERVER_CONNECTION_INFO_FILE = "storage_server.json"
-_ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_storage_main.py")
+_ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_ert_server_main.py")
 
 
 class ErtServerContext:
@@ -225,7 +225,7 @@ class ErtServerController:
             self._thread_that_starts_server_process = None
             return
 
-        run_storage_main_cmd = [
+        run_ert_server_main_cmd = [
             sys.executable,
             _ERT_SERVER_EXECUTABLE_FILE,
             "--project",
@@ -233,21 +233,21 @@ class ErtServerController:
         ]
 
         if logging_config is not None:
-            run_storage_main_cmd += ["--logging-config", logging_config]
+            run_ert_server_main_cmd += ["--logging-config", logging_config]
 
             traceparent = get_traceparent()
             if traceparent is not None:
-                run_storage_main_cmd += ["--traceparent", traceparent]
+                run_ert_server_main_cmd += ["--traceparent", traceparent]
 
         if parent_pid is not None:
-            run_storage_main_cmd += ["--parent_pid", str(parent_pid)]
+            run_ert_server_main_cmd += ["--parent_pid", str(parent_pid)]
 
         if verbose:
-            run_storage_main_cmd.append("--verbose")
+            run_ert_server_main_cmd.append("--verbose")
 
         self._thread_that_starts_server_process = _Proc(
             service_name="storage",
-            exec_args=run_storage_main_cmd,
+            exec_args=run_ert_server_main_cmd,
             timeout=timeout,
             on_connection_info_received=self.on_connection_info_received_from_server_process,
             project=Path(self._storage_path),

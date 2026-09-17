@@ -359,7 +359,7 @@ def test_that_fetch_connection_info_raises_when_storage_path_does_not_exist(
 
 
 @pytest.mark.parametrize(
-    ("script", "should_exist"), [("storage", True), ("foobar", False)]
+    ("script", "should_exist"), [("ert_server", True), ("foobar", False)]
 )
 def test_local_exec_args(script, should_exist):
     exec_args = local_exec_args(script)
@@ -369,7 +369,7 @@ def test_local_exec_args(script, should_exist):
 
 
 def test_local_exec_args_multi():
-    exec_args = local_exec_args(["storage", "foo", "-bar"])
+    exec_args = local_exec_args(["ert_server", "foo", "-bar"])
     assert len(exec_args) == 4
     assert exec_args[0] == sys.executable
     assert exec_args[2] == "foo"
