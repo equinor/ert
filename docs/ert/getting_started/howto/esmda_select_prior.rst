@@ -11,6 +11,11 @@ It is possible that too many realizations fail during the model evaluation in ``
 Various factors, for example license server issues or compute cluster downtime, can lead to such failures.
 One solution is to restart from ``default_2`` which is straightforward in ERT.
 
+The ES-MDA experiment can also be run from a valid prior ensemble when the current
+configuration does not contain updatable parameters. This makes it possible to
+restart from the prior ensemble even if the current configuration is not
+otherwise valid for an ES-MDA update.
+
 **Steps to Running from from `default_2`:**
 
 1. Check the "Select prior ensemble" checkbox.
