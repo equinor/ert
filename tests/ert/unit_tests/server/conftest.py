@@ -9,9 +9,9 @@ from starlette.testclient import TestClient
 
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
-from ert.dark_storage import common
-from ert.dark_storage.app import app
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.server import common
+from ert.server.app import app
 
 
 @pytest.fixture(scope="session")
@@ -49,18 +49,18 @@ def poly_example_tmp_dir(poly_example_tmp_dir_shared):
 
 
 @pytest.fixture
-def dark_storage_client(monkeypatch):
-    with dark_storage_app_(monkeypatch) as dark_app:
+def server_client(monkeypatch):
+    with server_app_(monkeypatch) as server_app_instance:
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage")
-        with TestClient(dark_app) as client:
+        with TestClient(server_app_instance) as client:
             yield client
 
 
 @pytest.fixture
-def dark_storage_client_snake_oil(monkeypatch):
-    with dark_storage_app_(monkeypatch) as dark_app:
+def server_client_snake_oil(monkeypatch):
+    with server_app_(monkeypatch) as server_app_instance:
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage/snake_oil/ensemble")
-        with TestClient(dark_app) as client:
+        with TestClient(server_app_instance) as client:
             yield client
 
 
@@ -69,7 +69,7 @@ def env(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
 
 
-def reset_dark_storage():
+def reset_server():
     if common._storage is not None:
         common._storage.close()
     common._storage = None
@@ -77,17 +77,17 @@ def reset_dark_storage():
 
 
 @contextlib.contextmanager
-def dark_storage_app_(monkeypatch):
+def server_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage")
 
     try:
         yield app
     finally:
-        reset_dark_storage()
+        reset_server()
 
 
 @pytest.fixture
-def dark_storage_app(monkeypatch):
-    with dark_storage_app_(monkeypatch) as app:
+def server_app(monkeypatch):
+    with server_app_(monkeypatch) as app:
         yield app

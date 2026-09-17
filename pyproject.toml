@@ -313,8 +313,8 @@ allowed-confusables = ["–"]
     "implicit-class-var-in-dataclass",
     "blocking-path-method-in-async-function",
 ]
-"src/ert/dark_storage/json_schema/__init__.py" = ["unused-import"]
-"src/ert/dark_storage/*" = ["unused-async"]
+"src/ert/server/json_schema/__init__.py" = ["unused-import"]
+"src/ert/server/*" = ["unused-async"]
 "src/ert/storage/local_ensemble.py" = ["pandas-use-of-dot-pivot-or-unstack"] # polars .pivot, not pandas
 "*.ipynb" = ["module-import-not-at-top-of-file"]
 "!tests/**" = ["banned-api"]

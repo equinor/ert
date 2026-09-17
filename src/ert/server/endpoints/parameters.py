@@ -9,7 +9,7 @@ import pandas as pd
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
 from fastapi.responses import Response
 
-from ert.dark_storage.common import (
+from ert.server.common import (
     get_storage,
     reraise_as_http_errors,
     serialize_dataframe_to_response,

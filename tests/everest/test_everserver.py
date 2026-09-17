@@ -16,14 +16,14 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from ert.config import ConfigWarning
-from ert.dark_storage.app import app
-from ert.dark_storage.endpoints.experiment_runs import (
-    ExperimentRunnerState,
-    _experiments,
-)
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import StatusEvents
 from ert.scheduler.event import FinishedEvent
+from ert.server.app import app
+from ert.server.endpoints.experiment_runs import (
+    ExperimentRunnerState,
+    _experiments,
+)
 from ert.services import ErtClient
 from ert.storage import ExperimentState
 from everest.bin.utils import get_experiment_status
@@ -342,7 +342,7 @@ def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
         mock_runner.run = AsyncMock()
         config_body = everest_config_with_defaults().to_dict()
         with patch(
-            "ert.dark_storage.endpoints.experiment_runs.ExperimentRunner",
+            "ert.server.endpoints.experiment_runs.ExperimentRunner",
             return_value=mock_runner,
         ):
             r1 = client.post(
@@ -432,7 +432,7 @@ def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypa
 
     with (
         patch(
-            "ert.dark_storage.endpoints.experiment_runs.ExperimentRunner",
+            "ert.server.endpoints.experiment_runs.ExperimentRunner",
             return_value=mock_runner,
         ),
         warnings.catch_warnings(record=True) as caught_warnings,

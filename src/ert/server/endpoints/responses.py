@@ -12,7 +12,7 @@ from fastapi import APIRouter, Body, Depends, Header, Query, status
 from fastapi.responses import Response
 from polars.exceptions import ColumnNotFoundError
 
-from ert.dark_storage.common import (
+from ert.server.common import (
     get_storage,
     reraise_as_http_errors,
     seismic_distance_expression,

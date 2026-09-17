@@ -22,7 +22,7 @@ from ert.config._observations import (
 )
 from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
 from ert.config.seismic_config import SeismicConfig
-from ert.dark_storage.common import ErtStoragePermissionError
+from ert.server.common import ErtStoragePermissionError
 from ert.storage import (
     ErtStorageException,
     LocalEnsemble,
