@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from ert.services import ErtServerController
-from ert.services._storage_main import _create_connection_info, _generate_certificate
+from ert.services._ert_server_main import _create_connection_info, _generate_certificate
 from ert.services.ert_server_controller import create_ert_server_controller
 from ert.shared import find_available_socket
 
