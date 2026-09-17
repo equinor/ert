@@ -12,7 +12,7 @@ import polars as pl
 from fastapi import HTTPException, status
 from fastapi.responses import Response
 
-from ert.dark_storage.exceptions import InternalServerError
+from ert.server.exceptions import InternalServerError
 from ert.storage import (
     ErtStorageException,
     ErtStoragePermissionError,

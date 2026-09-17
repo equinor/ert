@@ -19,7 +19,7 @@ If your test depends on the `poly_ran` fixture, each of the cases will become a 
 
 If you want to add another case, just add to the "cases_to_run" list in `conftest.py`.
 
-You can see an example of how to use this in combination with other parameters and  pytest-benchmark in `test_dark_storage_performance.py`.
+You can see an example of how to use this in combination with other parameters and  pytest-benchmark in `test_server_performance.py`.
 
 
 ### Using the fixture `template_config`

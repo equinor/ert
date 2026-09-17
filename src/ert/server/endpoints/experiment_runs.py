@@ -34,13 +34,13 @@ from starlette.websockets import WebSocket
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, QueueSystem
-from ert.dark_storage.common import EverEndpoints
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
+from ert.server.common import EverEndpoints
 from everest.config import EverestConfig
 from everest.everserver.server import (
     ExperimentState,

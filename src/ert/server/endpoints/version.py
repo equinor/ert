@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Body, Depends
 
-from ert.dark_storage.common import get_storage, get_storage_api_version
+from ert.server.common import get_storage, get_storage_api_version
 
 router = APIRouter(tags=["version"])
 logger = logging.getLogger(__name__)

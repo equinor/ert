@@ -7,9 +7,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Query, Response
 
-from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.gui.plotting.waterfall_data import compute_waterfall_data
+from ert.server import json_schema as js
+from ert.server.common import get_storage, reraise_as_http_errors
 from ert.storage import Storage
 from ert.storage.blob_data import BlobStorageData
 
