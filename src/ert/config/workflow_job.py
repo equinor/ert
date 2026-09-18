@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import builtins
 import logging
-import os
 import textwrap
 from abc import ABC, abstractmethod
 from dataclasses import field
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -60,7 +60,7 @@ def workflow_job_from_file(
     name: str | None = None,
 ) -> WorkflowJob:
     if not name:
-        name = os.path.basename(config_file)
+        name = Path(config_file).name
 
     content_dict = workflow_job_parser(config_file)
     arg_types_list = _WorkflowJob._make_arg_types_list(content_dict)

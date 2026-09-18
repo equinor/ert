@@ -500,7 +500,7 @@ def create_and_hook_workflows(
     errors: list[ErrorInfo | ConfigValidationError] = []
 
     for work in workflow_info:
-        filename = path.basename(work[0]) if len(work) == 1 else work[1]
+        filename = Path(work[0]).name if len(work) == 1 else work[1]
         try:
             existed = filename in workflows
             workflow = Workflow.from_file(
@@ -1634,7 +1634,7 @@ def forward_model_step_from_config_contents(
     name: str | None = None,
 ) -> UserInstalledForwardModelStep:
     if name is None:
-        name = os.path.basename(config_file)
+        name = Path(config_file).name
 
     schema = init_forward_model_schema()
 
