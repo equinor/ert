@@ -7,7 +7,7 @@ from pathlib import Path
 
 def careful_copy_file(src: str, target: str | None = None) -> None:
     if target is None:
-        target = os.path.basename(src)
+        target = Path(src).name
     if Path(target).exists():
         print(f"File: {target} already present - not updated")
         return

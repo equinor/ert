@@ -1,6 +1,5 @@
 import dataclasses
 import json
-import os
 from pathlib import Path
 
 import polars as pl
@@ -17,7 +16,7 @@ class ObservationDatasetInfo:
 
     @classmethod
     def from_path(cls, path: Path) -> "ObservationDatasetInfo":
-        observation_key = os.path.basename(path)
+        observation_key = path.name
         ds = xr.open_dataset(path, engine="scipy")
         response_key = ds.attrs["response"]
         response_type = "summary" if response_key == "summary" else "gen_data"

@@ -41,7 +41,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
     os.chdir(Path(args.config).resolve().parent)
     # Changing current working directory means we need to update
     # the config file to be the base name of the original config
-    args.config = os.path.basename(args.config)
+    args.config = Path(args.config).name
 
     active_plugins = (
         runtime_plugins if runtime_plugins is not None else get_site_plugins()

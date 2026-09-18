@@ -43,7 +43,7 @@ def _load_template(template_path: str) -> jinja2.Template:
 
 
 def _generate_file_namespace(filename: str) -> str:
-    return os.path.splitext(os.path.basename(filename))[0]
+    return os.path.splitext(Path(filename).name)[0]
 
 
 def _load_input(input_files: Sequence[str]) -> dict[str, Any]:

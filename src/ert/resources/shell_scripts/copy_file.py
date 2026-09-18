@@ -8,7 +8,7 @@ from pathlib import Path
 def copy_file(src: str, target: str | None = None) -> None:
     if Path(src).is_file():
         if target is None:
-            target = os.path.basename(src)
+            target = Path(src).name
 
         if Path(target).is_dir():
             target_file = str(Path(target) / Path(src).name)

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 
@@ -41,8 +41,8 @@ def test_report_with_successful_start_message_argument():
     assert event.ensemble == "ens_id"
     assert event.real == "0"
     assert event.fm_step == "0"
-    assert os.path.basename(event.std_out) == "stdout"
-    assert os.path.basename(event.std_err) == "stderr"
+    assert Path(event.std_out).name == "stdout"
+    assert Path(event.std_err).name == "stderr"
 
 
 def test_report_with_failed_start_message_argument():
