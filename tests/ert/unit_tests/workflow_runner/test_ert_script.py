@@ -1,3 +1,4 @@
+import stat
 import sys
 import threading
 from pathlib import Path
@@ -5,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from ert import ErtScript
+from ert.config import ExternalErtScript, external_ert_script
 
 from .workflow_common import WorkflowCommon
 
@@ -145,6 +147,56 @@ def test_that_output_captured_from_ert_script_is_still_written_to_stdout(capsys)
     captured = capsys.readouterr()
     assert captured.out == "to stdout\n"
     assert captured.err == "to stderr\n"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_external_ert_script_does_not_spawn_process_once_cancelled():
+    Path("touch_ran.sh").write_text(
+        "#!/usr/bin/env bash\ntouch ran\n", encoding="utf-8"
+    )
+    st = Path("touch_ran.sh").stat()
+    Path("touch_ran.sh").chmod(st.st_mode | stat.S_IEXEC)
+
+    script = ExternalErtScript("./touch_ran.sh")
+    # Cancellation arriving before the process is spawned - e.g. racing with
+    # WorkflowJobRunner publishing this script as the current job - must
+    # prevent the process from ever starting.
+    script.cancel()
+    script.initializeAndRun([], [])
+
+    assert not Path("ran").exists()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_cancel_call_racing_with_process_creation_still_terminates_it(
+    monkeypatch,
+):
+    """Regression test for a race between cancel() and Popen() being
+    assigned: cancel() arriving in that window sees no process to
+    terminate and must not be a silent no-op. run() has to recheck
+    isCancelled() once the process exists.
+    """
+    Path("sleep_long.sh").write_text(
+        "#!/usr/bin/env bash\nsleep 10\ntouch ran_to_completion\n", encoding="utf-8"
+    )
+    st = Path("sleep_long.sh").stat()
+    Path("sleep_long.sh").chmod(st.st_mode | stat.S_IEXEC)
+
+    script = ExternalErtScript("./sleep_long.sh")
+    original_popen = external_ert_script.Popen
+
+    def popen_then_cancel(*args, **kwargs):
+        # Simulates cancel() being called by another thread right after
+        # Popen() returns but before run() rechecks isCancelled().
+        process = original_popen(*args, **kwargs)
+        script.cancel()
+        return process
+
+    monkeypatch.setattr(external_ert_script, "Popen", popen_then_cancel)
+
+    script.initializeAndRun([], [])
+
+    assert not Path("ran_to_completion").exists()
 
 
 def _join(thread: threading.Thread) -> None:
