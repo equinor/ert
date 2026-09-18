@@ -52,7 +52,7 @@ dependencies = [
     "pandas",
     "pluggy>=1.3.0",
     "polars>=1.36.0",
-    "probabilit>=0.4.1",
+    "probabilit>=0.5.0",
     "progressbar2",
     "psutil",
     "pyarrow", # extra dependency for pandas (parquet)
@@ -356,7 +356,7 @@ carolina = false  # Developed by Equinor
 iterative_ensemble_smoother = false # Developed by Equinor
 graphite-maps = false # Developed by Equinor
 oil_reservoir_synthesizer = false # Developed by Equinor
-pyarrow = false # needed until 19.08.2026
+probabilit = false # Developed by Equinor
 resdata = false # Developed by Equinor
 resfo = false # Developed by Equinor
 resfo-utilities = false # Developed by Equinor

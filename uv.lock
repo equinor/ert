@@ -3,10 +3,10 @@ revision = 3
 requires-python = ">=3.12, <3.15"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_machine == 'ARM64' and sys_platform == 'win32'",
-    "python_full_version < '3.14' and platform_machine == 'ARM64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine != 'ARM64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.14' and platform_machine == 'ARM64' and sys_platform == 'win32'",
     "python_full_version < '3.14' and platform_machine != 'ARM64' and sys_platform == 'win32'",
     "python_full_version < '3.14' and sys_platform == 'emscripten'",
     "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
@@ -21,7 +21,7 @@ carolina = false
 graphite-maps = false
 iterative-ensemble-smoother = false
 oil-reservoir-synthesizer = false
-pyarrow = false
+probabilit = false
 resdata = false
 resfo = false
 resfo-utilities = false
@@ -1230,7 +1230,7 @@ requires-dist = [
     { name = "pandas" },
     { name = "pluggy", specifier = ">=1.3.0" },
     { name = "polars", specifier = ">=1.36.0" },
-    { name = "probabilit", specifier = ">=0.4.1" },
+    { name = "probabilit", specifier = ">=0.5.0" },
     { name = "progressbar2" },
     { name = "psutil" },
     { name = "pyarrow" },
@@ -3862,7 +3862,7 @@ wheels = [
 
 [[package]]
 name = "probabilit"
-version = "0.4.2"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cvxpy" },
@@ -3872,9 +3872,9 @@ dependencies = [
     { name = "scipy" },
     { name = "seaborn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/21/2fcad34174930358637b4a8311e5af459f1aba2f3698153595d8c3de01a4/probabilit-0.4.2.tar.gz", hash = "sha256:e3d4a0b5dd87a61f6dfc1836408fabbd3269a69366ce64238bed927523b57bff", size = 60611, upload-time = "2026-03-18T08:29:41.784Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/ea/5ac2c3a12b34576df5b85fe025aae027b151168833273a050b3da4785bab/probabilit-0.5.0.tar.gz", hash = "sha256:adcde734291e3276647716b2861d40aa8eb2f52172ab8157c3c17484489bf46b", size = 63810, upload-time = "2026-09-18T08:34:42.107Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/9c/bb72fd8d74e02b9850ed6e124b565e7be0bfdd2c9922e220a28c9e40f38a/probabilit-0.4.2-py3-none-any.whl", hash = "sha256:3e16f4e7a348da560c67804d7143e1d8d4395237f4d1201af26d86bae0d27170", size = 50023, upload-time = "2026-03-18T08:29:40.517Z" },
+    { url = "https://files.pythonhosted.org/packages/22/be/2f6e093df6112bd39de171a53c849a2d7e2f60af5af35c389ff1b0f9619a/probabilit-0.5.0-py3-none-any.whl", hash = "sha256:0be33d49cb2b21e7a8858bd8e51b5c885a23bb4bcaf78ce5ecae88a9b5650dc6", size = 51363, upload-time = "2026-09-18T08:34:40.909Z" },
 ]
 
 [[package]]
