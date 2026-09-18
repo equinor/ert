@@ -98,6 +98,14 @@ The points appear below the histogram and density curves, sharing the
 same horizontal scale. If both other views are disabled, the individual
 data points are displayed on their own.
 
+
+Seismic data support
+####################
+
+Initial support for seismic data type has been added. This feature is currently in early
+access and functionality is subject to change based on user feedback. See the
+:ref:`seismic data type documentation <seismic_datatype>` for details on usage.
+
 Version 25.0
 ------------
 
