@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import os
-import os.path
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any, Self
@@ -378,14 +377,14 @@ def _handle_includes(
                 # We need the chain of imports, fak
 
                 import_trace = [
-                    os.path.basename(f)
+                    Path(f).name
                     for f in [*current_included_file.path_from_root, file_to_include]
                 ]
 
                 errors.append(
                     ErrorInfo(
                         message=f"Cyclical import detected, {'->'.join(import_trace)}",
-                        filename=os.path.basename(master_ert_file),
+                        filename=Path(master_ert_file).name,
                     ).set_context(current_included_file.context)
                 )
                 continue
@@ -509,7 +508,7 @@ def _transform_tree(
             ["<CONFIG_FILE_BASE>", config_file_base],
             ["<DATE>", datetime.datetime.now().astimezone().date().isoformat()],
             ["<CWD>", config_dir],
-            ["<CONFIG_FILE>", os.path.basename(file)],
+            ["<CONFIG_FILE>", Path(file).name],
         ]
 
     # need to copy pre_defines because _handle_includes will

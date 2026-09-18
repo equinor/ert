@@ -1,4 +1,3 @@
-import os
 import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -16,14 +15,14 @@ from tests.everest.utils import everest_config_with_defaults
 def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
     _, config, _, _ = cached_example("math_func/config_minimal.yml")
     config = EverestConfig.load_file(config)
-    batches = os.listdir(config.simulation_dir)
+    batches = Path(config.simulation_dir).iterdir()
     with open_storage(config.storage_dir, mode="r") as storage:
         experiments = [*storage.experiments]
         assert len(experiments) == 1
         experiment = experiments[0]
 
         ensemble_names = {ens.name for ens in experiment.ensembles}
-        assert ensemble_names == set(batches)
+        assert ensemble_names == {batchpath.name for batchpath in batches}
 
 
 @patch(

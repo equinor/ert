@@ -6,7 +6,6 @@ import datetime
 import importlib.metadata
 import json
 import logging
-import os
 import queue
 import shutil
 import traceback
@@ -1228,7 +1227,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     def check_if_runpath_exists(self) -> bool:
         return Path(self.simulation_dir).exists() and any(
-            os.listdir(self.simulation_dir)
+            Path(self.simulation_dir).iterdir()
         )
 
 

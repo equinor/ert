@@ -2,7 +2,6 @@ import contextlib
 import datetime
 import operator
 import os
-import os.path
 import stat
 from collections import defaultdict
 from dataclasses import dataclass
@@ -358,7 +357,7 @@ class ErtConfigValues:
         etc. Therefore all file_names are upper case and define keys are prefixed
         with the lower case 'key'.
         """
-        config_file_name = os.path.basename(config_file)
+        config_file_name = Path(config_file).name
         result = [
             ("<CONFIG_PATH>", cwd),
             ("<CONFIG_FILE_BASE>", config_file_name.split(".")[0]),

@@ -1952,27 +1952,27 @@ def _log_grid_contents(
         # Cut of extensions ".data", ".smspec" or ".unsmry"
         if extension.lower() in {".data", ".smspec", ".unsmry"}:
             filename = base
-        for grid_file_components in filter(
-            lambda fn: fn[0] == filename and fn[1].lower() in {".egrid", ".grid"},
-            map(os.path.splitext, os.listdir(runpath)),
-        ):
-            grid_file = runpath + "/" + "".join(grid_file_components)
-            keywords: Counter[str] = Counter()
-            for entry in resfo.lazy_read(grid_file):
-                kw = entry.read_keyword().strip()
-                keywords[kw] += 1
-                match kw:
-                    case "FILEHEAD" | "GRIDHEAD":
-                        arr = entry.read_array()
-                        arr_len = 8 if kw == "FILEHEAD" else 33
-                        arr_printout = (
-                            "MESS"
-                            if isinstance(arr, resfo.MessType)
-                            else str(arr[0:arr_len])
-                        )
-                        logger.info(f"{grid_file} {kw} contains {arr_printout}")
+        for grid_file in Path(runpath).iterdir():
+            if grid_file.stem == filename and grid_file.suffix.lower() in {
+                ".egrid",
+                "grid",
+            }:
+                keywords: Counter[str] = Counter()
+                for entry in resfo.lazy_read(grid_file):
+                    kw = entry.read_keyword().strip()
+                    keywords[kw] += 1
+                    match kw:
+                        case "FILEHEAD" | "GRIDHEAD":
+                            arr = entry.read_array()
+                            arr_len = 8 if kw == "FILEHEAD" else 33
+                            arr_printout = (
+                                "MESS"
+                                if isinstance(arr, resfo.MessType)
+                                else str(arr[0:arr_len])
+                            )
+                            logger.info(f"{grid_file} {kw} contains {arr_printout}")
 
-            logger.info(f"{grid_file} contained keywords {sorted(keywords)}")
+                logger.info(f"{grid_file} contained keywords {sorted(keywords)}")
 
     except Exception as err:
         logger.error(f"Error while logging grid contents: {err}")
