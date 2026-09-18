@@ -659,8 +659,6 @@ class PlotWindow(QMainWindow):
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
-        plot_widget.axisLabelEditRequested.connect(self._edit_axis_label)
-        plot_widget.titleEditRequested.connect(self._edit_title)
         plot_widget.layer_index_changed.connect(self.layer_index_changed)
 
         index = self._central_tab.addTab(plot_widget, name)
