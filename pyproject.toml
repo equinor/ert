@@ -264,6 +264,7 @@ select = [
     "os-path-isdir",
     "os-symlink",
     "os-listdir",
+    "os-path-basename",
     "path-constructor-current-directory",
     "builtin-open",
     "PYI",

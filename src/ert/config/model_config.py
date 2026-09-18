@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import os.path
 import re
 import shutil
 from pathlib import Path
@@ -120,9 +119,7 @@ class ModelConfig(BaseModel, extra="forbid"):
             runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
             jobname_format_string=config_dict.get(
                 ConfigKeys.JOBNAME,
-                os.path.basename(
-                    config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT)
-                ),
+                Path(config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT)).name,
             ),
             summary_file_base_name=config_dict.get(
                 ConfigKeys.ECLBASE,

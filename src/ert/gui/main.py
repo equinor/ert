@@ -163,7 +163,7 @@ def _start_initial_gui_window(
         os.chdir(Path(args.config).resolve().parent)
         # Changing current working directory means we need to update
         # the config file to be the base name of the original config
-        args.config = os.path.basename(args.config)
+        args.config = Path(args.config).name
 
         if runtime_plugins is not None:
             ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
