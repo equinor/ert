@@ -25,7 +25,9 @@ REALIZATION_FAILED_DURING_EVALUATION = {
 
 def _default_parameter_configuration() -> dict[str, ParameterConfig]:
     return {
-        "PARAMETER": Mock(spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL)
+        "PARAMETER": Mock(
+            spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
+        )
     }
 
 
