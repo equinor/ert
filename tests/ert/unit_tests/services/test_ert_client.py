@@ -6,11 +6,16 @@ from unittest.mock import MagicMock
 import httpx
 import pandas as pd
 import pytest
-from websockets.exceptions import ConnectionClosedError, InvalidState
+from websockets.exceptions import (
+    ConnectionClosedError,
+    ConnectionClosedOK,
+    InvalidMessage,
+    InvalidState,
+)
 from websockets.frames import Close
 
 from ert.ensemble_evaluator import EndEvent
-from ert.services.ert_client import ErtClient
+from ert.services.ert_client import _WEBSOCKET_CONNECT_RETRIES, ErtClient
 from ert.services.shared_client import SharedClient
 
 
@@ -144,7 +149,22 @@ def event_client(monkeypatch):
     connect = MagicMock()
     connection = connect.return_value
     monkeypatch.setattr("ert.services.ert_client.connect", connect)
+    monkeypatch.setattr("ert.services.ert_client.time.sleep", lambda _: None)
     return ErtClient(transport), connection, connect
+
+
+def _invalid_message_from_eof() -> InvalidMessage:
+    """Build the exact exception websockets raises when a TCP connection is
+    reset before any handshake bytes are received, i.e. InvalidMessage caused
+    by an EOFError. This is a failure observed in production and is
+    to be treated as transient.
+    """
+    try:
+        raise EOFError("stream ends after 0 bytes, before end of line")
+    except EOFError as e:
+        exc = InvalidMessage("did not receive a valid HTTP response")
+        exc.__cause__ = e
+    return exc
 
 
 def test_that_closing_event_iterator_releases_connection(event_client):
@@ -168,6 +188,37 @@ def test_that_failure_to_close_websocket_does_not_mask_generator_exit(event_clie
 
     assert next(events) == event
     events.close()
+
+
+def test_that_a_transient_handshake_failure_is_retried_instead_of_ending_the_stream(
+    event_client,
+):
+    api, connection, connect = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.side_effect = [
+        event.model_dump_json(),
+        ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+    ]
+    connect.side_effect = [_invalid_message_from_eof(), connection]
+
+    assert list(api.iter_events("experiment")) == [event]
+    assert connect.call_count == 2
+
+
+def test_that_a_fatal_handshake_failure_is_not_retried(event_client):
+    api, _, connect = event_client
+    connect.side_effect = InvalidMessage("malformed handshake response")
+
+    assert list(api.iter_events("experiment")) == []
+    assert connect.call_count == 1
+
+
+def test_that_repeated_transient_handshake_failures_eventually_give_up(event_client):
+    api, _, connect = event_client
+    connect.side_effect = _invalid_message_from_eof()
+
+    assert list(api.iter_events("experiment")) == []
+    assert connect.call_count == _WEBSOCKET_CONNECT_RETRIES
 
 
 def test_that_abnormal_event_stream_closure_logs_experiment_and_close_reason(
