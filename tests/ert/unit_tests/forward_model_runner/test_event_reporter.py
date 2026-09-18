@@ -216,11 +216,16 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
         # prevent router from receiving messages
         mock_server.ack_messages = False
         mock_server.store_messages = False
+        mock_server.message_received.clear()
 
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
+
+        assert mock_server.message_received.wait(timeout=10), (
+            "server never received the first (dropped) event"
+        )
 
         # enable router receiving messages
         mock_server.ack_messages = True
