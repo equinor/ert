@@ -226,7 +226,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
                     or "Matrix is singular" in se
                     or "math domain error" in se
                     or "math range error" in se
-                    or "All parameters are set to UPDATE:FALSE" in se
+                    or "updates disabled (UPDATE:FALSE)" in se
                 )
 
         if any("Ill-conditioned matrix" not in str(w.message) for w in all_warnings):

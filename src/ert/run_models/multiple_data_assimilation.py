@@ -52,9 +52,6 @@ class MultipleDataAssimilation(
                 self._storage.get_ensemble(self.prior_ensemble_id).iteration + 1
             )
             total_iterations -= start_iteration
-        elif not self.experiment_name:
-            raise ValueError("For non-restart run, experiment name must be set")
-
         self._start_iteration = start_iteration
         self._total_iterations = total_iterations
 

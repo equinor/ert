@@ -35,6 +35,7 @@ from ert.config import (
     UserInstalledForwardModelStep,
     Workflow,
 )
+from ert.config.parameter_config import has_updatable_parameters
 from ert.config.parsing import SchemaItemType
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -217,14 +218,14 @@ def hooked_workflows(draw):
     return result
 
 
-def runmodel_args(draw, tmp_path_factory):
+def runmodel_args(draw, tmp_path_factory, min_active_realizations: int = 1):
     storage_path = draw(realistic_text())
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
     (runpath_file := tmp_path / "runpath_file").touch()
     (user_config_file := tmp_path / "config.ert").touch()
     (log_path := tmp_path / "log_path").mkdir()
 
-    n_realizations = draw(st.integers(min_value=1, max_value=200))
+    n_realizations = draw(st.integers(min_value=min_active_realizations, max_value=200))
 
     env_vars = draw(st.dictionaries(realistic_text(), realistic_text(), max_size=5))
     env_pr_fm_step = draw(
@@ -243,11 +244,10 @@ def runmodel_args(draw, tmp_path_factory):
         )
     )
 
-    # Ensure at least one True in the list of exactly n_realizations length
     true_indices = draw(
         st.lists(
             st.integers(min_value=0, max_value=n_realizations - 1),
-            min_size=1,
+            min_size=min_active_realizations,
             max_size=n_realizations,
             unique=True,
         )
@@ -348,7 +348,13 @@ def runmodel_args(draw, tmp_path_factory):
 
 
 @st.composite
-def initial_ensemble_runmodels(draw, min_params: int = 1, max_params: int = 200):
+def initial_ensemble_runmodels(
+    draw,
+    min_params: int = 1,
+    max_params: int = 200,
+    *,
+    require_updatable_parameters: bool = False,
+):
     response_configs = []
 
     if draw(st.booleans()):
@@ -356,23 +362,21 @@ def initial_ensemble_runmodels(draw, min_params: int = 1, max_params: int = 200)
     if draw(st.booleans()):
         response_configs.append(draw(summary_configs()))
 
+    parameters = st.lists(
+        st.one_of(surface_configs, field_configs, gen_kw_configs),
+        min_size=min_params,
+        max_size=max_params,
+        unique_by=lambda config: config.name,
+    )
+    if require_updatable_parameters:
+        parameters = parameters.filter(has_updatable_parameters)
+
     return {
         "target_ensemble": draw(realistic_text()),
         "experiment_name": draw(realistic_text()),
         "design_matrix": None,
         "ert_templates": [],
-        "parameter_configuration": draw(
-            st.lists(
-                st.one_of(
-                    surface_configs,
-                    field_configs,
-                    gen_kw_configs,
-                ),
-                min_size=min_params,
-                max_size=max_params,
-                unique_by=lambda config: config.name,
-            )
-        ),
+        "parameter_configuration": draw(parameters),
         "response_configuration": response_configs,
         "observations": [],
     }
@@ -549,7 +553,11 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(initial_ensemble_runmodels(), update_runmodels(), st.data())
+@given(
+    initial_ensemble_runmodels(require_updatable_parameters=True),
+    update_runmodels(),
+    st.data(),
+)
 def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
@@ -557,7 +565,9 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
-    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
+    baserunmodel_args, runtime_plugins = runmodel_args(
+        data.draw, tmp_path_factory, min_active_realizations=2
+    )
     note(f"Running in directory {tmp_path}")
     with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
@@ -587,7 +597,11 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(initial_ensemble_runmodels(), update_runmodels(), st.data())
+@given(
+    initial_ensemble_runmodels(require_updatable_parameters=True),
+    update_runmodels(),
+    st.data(),
+)
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
@@ -595,7 +609,9 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
-    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
+    baserunmodel_args, runtime_plugins = runmodel_args(
+        data.draw, tmp_path_factory, min_active_realizations=2
+    )
     note(f"Running in directory {tmp_path}")
     with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
@@ -624,7 +640,12 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@given(initial_ensemble_runmodels(), update_runmodels(), multidass(), st.data())
+@given(
+    initial_ensemble_runmodels(require_updatable_parameters=True),
+    update_runmodels(),
+    multidass(),
+    st.data(),
+)
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
@@ -633,7 +654,9 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
-    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
+    baserunmodel_args, runtime_plugins = runmodel_args(
+        data.draw, tmp_path_factory, min_active_realizations=2
+    )
     note(f"Running in directory {tmp_path}")
 
     with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
