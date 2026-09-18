@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import random
 import stat
 import warnings
@@ -466,7 +465,9 @@ def test_run_poly_example_with_design_matrix_selective_realizations(
     )
     config_path = ErtConfig.from_file("poly.ert").config_path
 
-    realizations_run = os.listdir(Path(config_path) / "poly_out")
+    realizations_run = [
+        path.name for path in (Path(config_path) / "poly_out").iterdir()
+    ]
     assert len(realizations_run) == 1
     assert "realization-0" in realizations_run
 
@@ -575,7 +576,7 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
         )
     config_path = ErtConfig.from_file("poly.ert").config_path
 
-    realizations_run = os.listdir(Path(config_path) / "poly_out")
+    realizations_run = list((Path(config_path) / "poly_out").iterdir())
     assert len(realizations_run) == min(
         realizations_in_design_matrix, num_realizations_in_user_config
     )
@@ -628,7 +629,7 @@ def test_run_poly_example_with_specified_realizations_finds_intersection_and_war
         ) in capsys.readouterr().out
 
         config_path = ErtConfig.from_file("poly.ert").config_path
-        realizations_run = os.listdir(Path(config_path) / "poly_out")
+        realizations_run = list((Path(config_path) / "poly_out").iterdir())
         assert len(realizations_run) == intersected_realizations_count
     else:
         with pytest.raises(
