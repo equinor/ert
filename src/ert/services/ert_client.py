@@ -23,12 +23,13 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from pydantic import ValidationError
+from websockets.asyncio.client import backoff, process_exception
 from websockets.exceptions import (
     ConnectionClosedError,
     ConnectionClosedOK,
     WebSocketException,
 )
-from websockets.sync.client import connect
+from websockets.sync.client import ClientConnection, connect
 
 from _ert.threading import ErtThread
 from ert.dark_storage.common import EverEndpoints
@@ -43,6 +44,8 @@ DEFAULT_CACHE_SIZE = 256
 
 # Specifies how many times to try a http request within the specified timeout.
 _HTTP_REQUEST_RETRY = 10
+
+_WEBSOCKET_CONNECT_RETRIES = 5
 
 _PARQUET = {"accept": "application/x-parquet"}
 _EXPERIMENT_RUNS = "/experiment_runs"
@@ -388,15 +391,8 @@ class ErtClient:
         credentials = b64encode(f"{username}:{password}".encode()).decode()
 
         logger.info("Connecting to WebSocket event stream at %s", url)
-        try:
-            websocket = connect(
-                url,
-                ssl=self._ssl_context,
-                open_timeout=open_timeout,
-                additional_headers={"Authorization": f"Basic {credentials}"},
-            )
-        except Exception:
-            logger.error(traceback.format_exc())
+        websocket = self._connect_with_retry(url, open_timeout, credentials)
+        if websocket is None:
             return
 
         event_count = 0
@@ -475,6 +471,41 @@ class ErtClient:
         )
 
         return event_queue, monitor_thread
+
+    def _connect_with_retry(
+        self, url: str, open_timeout: float, credentials: str
+    ) -> ClientConnection | None:
+        """Open a WebSocket connection, retrying transient handshake failures.
+
+        Uses websockets' own classification of which errors are worth
+        retrying (network hiccups, an EOF during the handshake, 5xx from a
+        proxy) so that a connection reset right as the everserver comes up
+        does not permanently end monitoring for the rest of the run.
+        """
+        delays: Generator[float] = backoff()
+        for attempt in range(1, _WEBSOCKET_CONNECT_RETRIES + 1):
+            try:
+                return connect(
+                    url,
+                    ssl=self._ssl_context,
+                    open_timeout=open_timeout,
+                    additional_headers={"Authorization": f"Basic {credentials}"},
+                )
+            except Exception as exc:
+                if (
+                    process_exception(exc) is not None
+                    or attempt == _WEBSOCKET_CONNECT_RETRIES
+                ):
+                    logger.error(traceback.format_exc())
+                    return None
+                delay: float = next(delays)
+                logger.warning(
+                    f"Transient error connecting to {url} "
+                    f"(attempt {attempt}/{_WEBSOCKET_CONNECT_RETRIES}), "
+                    f"retrying in {delay:.1f}s. Exception: {exc}",
+                )
+                time.sleep(delay)
+        return None
 
     # <-------------- Internals -------------->
 
