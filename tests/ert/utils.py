@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import threading
 import time
 import uuid
 from collections.abc import Callable
@@ -193,6 +194,10 @@ class MockZMQServer:
         self.no_dealers.set()
         self.uri = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
 
+        # Used to deterministically synchronize tests with the server
+        # avoiding race conditions:
+        self.message_received = threading.Event()
+
         self.filtered_message_types = filtered_message_types
         self.store_messages = store_messages
         self.no_response = no_response
@@ -252,6 +257,8 @@ class MockZMQServer:
         while True:
             try:  # ruff: ignore[too-many-statements-in-try-clause]
                 dealer, __, frame = await self.router_socket.recv_multipart()
+                if frame not in self.filtered_message_types:
+                    self.message_received.set()
                 if self.store_messages and frame not in self.filtered_message_types:
                     self.messages.append(frame.decode("utf-8"))
                 if self.no_response:
