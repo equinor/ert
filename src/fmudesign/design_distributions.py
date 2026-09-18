@@ -88,10 +88,35 @@ def quantiles_to_values(
     return values[bin_indices]
 
 
+class DiscreteViaUniform(probabilit.Distribution):
+    """A discrete distribution sampled as Uniform(0, 1) and mapped onto its
+    values afterwards with `to_values`.
+
+    probabilit induces correlations on the sampled values, so keeping the
+    latent uniform as the samples is what lets a discrete parameter take part
+    in a correlation group together with continuous parameters. A requested
+    correlation thus applies to the latent uniform, not to the values.
+    """
+
+    def __init__(
+        self, values: Sequence[str], probabilities: Sequence[float] | None = None
+    ) -> None:
+        super().__init__("uniform")
+        self.values = np.array(values)
+        self.probabilities = (
+            None if probabilities is None else np.array(probabilities, dtype=float)
+        )
+
+    def to_values(self, quantiles: npt.NDArray[Any]) -> npt.NDArray[Any]:
+        return quantiles_to_values(
+            quantiles=quantiles, values=self.values, probabilities=self.probabilities
+        )
+
+
 def to_probabilit(
     distname: str,
     dist_parameters: Sequence[str],
-) -> probabilit.modeling.AbstractDistribution:
+) -> probabilit.modeling.Node[npt.NDArray[Any]]:
     """
     Prepare scipy distributions with parameters
     Args:
@@ -99,27 +124,16 @@ def to_probabilit(
         'uniform', 'logunif', 'discrete', 'pert', 'beta'
         dist_parameters (list): list with parameters for distribution
     Returns:
-        array with sampled values
+        probabilit node to sample the distribution from
     """
 
     distname = distname.lower().strip()
-
-    # A discrete variable is a distribution over categoricals, e.g. ('A', 'B', 'C')
-    # with weights (0.5, 0.3, 0.2). The way we deal with them is that we sample uniform
-    # values, then assign the interval [0, 0.5) to A, [0.5, 0.8) to B and [0.8, 1) to C.
-    # This means that we can "correlate" these variables, in the sense that if their
-    # underlying Uniforms are correlated, then the categorical values will often match
-    # too. To accomplish all of this we assign _values and _probabilities to the
-    # distribution instances below. This "correlation" only exists in a narrow specific
-    # sense of course.
 
     if distname.startswith("disc"):
         if len(dist_parameters) == 1:
             values_str = str(dist_parameters[0])
             values = [v.strip() for v in values_str.split(",")]
-            distr = probabilit.Distribution("uniform")
-            distr._values = np.array(values)
-            return distr
+            return DiscreteViaUniform(values)
         values_str, probabilities_str = map(str, dist_parameters)
         values = [v.strip() for v in values_str.split(",")]
         probabilities = [float(v.strip()) for v in probabilities_str.split(",")]
@@ -131,10 +145,7 @@ def to_probabilit(
                 "dist_param1 and dist_param2 must have the same number of "
                 "entries for discrete distributions."
             )
-        distr = probabilit.Distribution("uniform")
-        distr._values = np.array(values)
-        distr._probabilities = np.array(probabilities)
-        return distr
+        return DiscreteViaUniform(values, probabilities)
 
     # Special case for constant
     if distname.startswith("const"):

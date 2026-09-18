@@ -24,8 +24,8 @@ from ert.shared import __version__ as ert_version
 
 from .config_validation import SeedStrategy, validate_configuration
 from .design_distributions import (
+    DiscreteViaUniform,
     is_number,
-    quantiles_to_values,
     read_correlations,
     to_probabilit,
 )
@@ -42,8 +42,11 @@ from .utils import (
 if TYPE_CHECKING:
     from collections.abc import Hashable, Sequence
 
+    import numpy.typing as npt
+
     # (group_name, correlation_matrix, member_params)
     CorrelationGroup = tuple[str, pd.DataFrame, list[str]]
+    ProbabilitNode = probabilit.modeling.Node[npt.NDArray[Any]]
 
 
 def _normalize_xlsx_filename(filename: str) -> str:
@@ -866,11 +869,11 @@ class MonteCarloSensitivity(Sensitivity):
         if size < 0:
             raise ValueError(f"Got < 0 samples ({size=})")
 
-        distr_by_name = {}
+        distr_by_name: dict[str, ProbabilitNode] = {}
         for param_name, (dist_name, dist_params, _) in parameters.items():
-            # Convert to a probabilit Distribution object
-            distr = to_probabilit(distname=dist_name, dist_parameters=dist_params)
-            distr_by_name[param_name] = distr
+            distr_by_name[param_name] = to_probabilit(
+                distname=dist_name, dist_parameters=dist_params
+            )
 
         # Read and validate the correlation groups once, up front. Both seed
         # strategies consume the same groups; only the seeding differs.
@@ -905,23 +908,14 @@ class MonteCarloSensitivity(Sensitivity):
         for distr_name, distr_obj in distr_by_name.items():
             samples = distr_obj.samples_
             is_numeric = issubclass(samples.dtype.type, np.number)
-            if is_numeric and not np.all(np.isfinite(distr_obj.samples_)):
+            if is_numeric and not np.all(np.isfinite(samples)):
                 raise ValueError(
                     f"Sampling produced non-finite values in {distr_name}={distr_obj}\n"
                     "Please review the parameters in the distribution."
                 )
 
-            # Discrete distributions are handled in a special way. We map them
-            # to Uniform distributions, sample in [0, 1), then map those samples
-            # back to the categorical values AFTER sampling. This is so that we
-            # can "induce correlations" between categorical values.
-            if hasattr(distr_obj, "_values"):
-                probabilities = getattr(distr_obj, "_probabilities", None)
-                samples = quantiles_to_values(
-                    quantiles=samples,
-                    values=distr_obj._values,
-                    probabilities=probabilities,
-                )
+            if isinstance(distr_obj, DiscreteViaUniform):
+                samples = distr_obj.to_values(samples)
 
             self.sensvalues = self.sensvalues.assign(**{distr_name: samples})
 
@@ -1063,7 +1057,7 @@ class MonteCarloSensitivity(Sensitivity):
         self,
         *,
         size: int,
-        distr_by_name: dict[str, Any],
+        distr_by_name: dict[str, ProbabilitNode],
         corr_groups: list[CorrelationGroup],
         correlation_iterations: int,
         rng: np.random.Generator,
@@ -1090,7 +1084,7 @@ class MonteCarloSensitivity(Sensitivity):
         self,
         *,
         size: int,
-        distr_by_name: dict[str, Any],
+        distr_by_name: dict[str, ProbabilitNode],
         corr_groups: list[CorrelationGroup],
         correlation_iterations: int,
         base_seed: int,

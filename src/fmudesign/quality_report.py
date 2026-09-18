@@ -12,6 +12,7 @@ import seaborn as sns
 from probabilit.correlation import (
     nearest_correlation_matrix,
 )
+from probabilit.modeling import Distribution
 
 from .design_distributions import to_probabilit
 
@@ -178,13 +179,13 @@ class QualityReporter:
 
         # Add plot of expected PDF
         dist_name, dist_parameters = var_description[:2]
+        dist = to_probabilit(dist_name, dist_parameters)
 
-        try:
-            dist = to_probabilit(dist_name, dist_parameters)
+        if isinstance(dist, Distribution):
             x = np.linspace(series.min(), series.max(), 1000)
             pdf = dist.to_scipy().pdf(x)
             ax.plot(x, pdf, color="red", lw=2, ls="--", label="expected PDF")
-        except AttributeError:
+        else:
             print(f" - Plot warning: PDF not plotted for {var_name}")
 
         # Add rugplot
