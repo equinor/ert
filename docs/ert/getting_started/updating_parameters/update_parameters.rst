@@ -60,3 +60,17 @@ While running, we get reports showing how the observations are matching the resp
 factors used in the update.
 
 .. image:: fig/update_report.png
+
+Parameter localizations
+=======================
+
+The **Parameter Localizations** field in the ES-MDA settings summarizes configuration
+counts by parameter type and strategy. For example, 1,200 GenKW configurations
+using adaptive localization appear as ``Adaptive: 1,200 GenKW``. Each Field or
+Surface counts as one configuration, not as its number of grid cells.
+``None`` is shown when there are no parameter configurations.
+
+When selecting a prior ensemble, the summary reflects the parameter
+configurations stored with that ensemble's experiment. Otherwise, it reflects
+the current configuration, including design matrix parameters. This field is
+read-only.
