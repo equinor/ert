@@ -12,8 +12,11 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import logging
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -38,6 +41,10 @@ from .utils import (
     printwarning,
     to_numeric_safe,
 )
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 if TYPE_CHECKING:
     from collections.abc import Hashable, Sequence
@@ -65,6 +72,45 @@ def _derive_rng(base_seed: int, *keys: str) -> np.random.Generator:
         hasher.update(len(data).to_bytes(4, "big"))
         hasher.update(data)
     return np.random.default_rng(int.from_bytes(hasher.digest(), "big"))
+
+
+def log_inputdict(inputdict: dict[str, Any]) -> None:
+    parameters = {
+        param: val
+        for sens_values in inputdict["sensitivities"].values()
+        for param, val in (sens_values.get("parameters") or {}).items()
+    }
+    parameters_with_default = list(inputdict["defaultvalues"])
+    parameters_with_correlations = [
+        param
+        for sens_values in inputdict["sensitivities"].values()
+        for param, val in (sens_values.get("parameters") or {}).items()
+        if val[2] is not None
+    ]
+    num_dependencies = sum(
+        len(sens["dependencies"]) for sens in inputdict["sensitivities"].values()
+    )
+    reals_per_sensitivity = {
+        sens: val["numreal"]
+        for sens, val in inputdict["sensitivities"].items()
+        if "numreal" in val
+    }
+    summary_log = dedent(
+        f"""\
+        Summary of the inputdict:
+        Sensitivities: {list(inputdict["sensitivities"].keys())}
+        Distribution count: {Counter(v[0] for v in parameters.values())}
+        Sampled parameter names ({len(parameters)}): {list(parameters.keys())}
+        Parameters with default values ({len(parameters_with_default)}): {parameters_with_default}
+        Parameters with correlations ({len(parameters_with_correlations)}): {parameters_with_correlations}
+        Decimal counts: {Counter(inputdict.get("decimals", {}).values())}
+        Background: {bool(inputdict["background"])}
+        RMS seeds file: {inputdict["seeds"] not in {"default", None}}
+        Distribution seed: {inputdict["distribution_seed"] is not None}
+        Number of dependencies: {num_dependencies}
+        Number of realizations per sensitivity: {reals_per_sensitivity}"""  # ruff: ignore[line-too-long]
+    )
+    logger.info(summary_log)
 
 
 class DesignMatrix:
@@ -157,12 +203,13 @@ class DesignMatrix:
         self.designvalues["SENSNAME"] = None
         self.designvalues["SENSCASE"] = None
 
+        log_inputdict(inputdict)
+
         for key, sens in inputdict["sensitivities"].items():
             # Number of realisations (rows) to use for each sensitivity
             size = sens.get("numreal", inputdict["repeats"])
 
             print(f" Generating sensitivity : {key}")
-
             match sens["senstype"]:
                 case "ref":
                     sensitivity = SingleRealisationReference(

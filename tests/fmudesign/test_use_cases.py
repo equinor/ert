@@ -27,7 +27,7 @@ def _run_cli(*args):
 
 
 def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
-    tmp_path,
+    use_tmpdir,
 ):
     general_input = pd.DataFrame(
         data=[
@@ -54,9 +54,9 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
             ["/scratch/foo/2020a_hm3/", 38, 3],
             ["/scratch/foo/2020a_hm3/", 54, 3],
         ],
-    ).to_excel(tmp_path / "hmrealizations.xlsx")
+    ).to_excel("hmrealizations.xlsx")
 
-    input_path = tmp_path / "designinput.xlsx"
+    input_path = "designinput.xlsx"
     with pd.ExcelWriter(input_path, engine="openpyxl") as writer:
         general_input.to_excel(
             writer, sheet_name="general_input", index=False, header=None
@@ -92,7 +92,7 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
     "gen_input_sheet", ["general_input", "General_Input", "GENERALINPUT"]
 )
 def test_that_constant_distribution_generates_identical_parameter_values(
-    tmp_path, gen_input_sheet
+    use_tmpdir, gen_input_sheet
 ):
     general_input = pd.DataFrame(
         data=[
@@ -117,7 +117,7 @@ def test_that_constant_distribution_generates_identical_parameter_values(
         data=[["montecarlo", 100, "dist", "a", "const", 1.0]],
     )
 
-    input_path = tmp_path / "designinput.xlsx"
+    input_path = "designinput.xlsx"
     with pd.ExcelWriter(input_path, engine="openpyxl") as writer:
         general_input.to_excel(
             writer, sheet_name=gen_input_sheet, index=False, header=None
@@ -136,20 +136,19 @@ def test_that_constant_distribution_generates_identical_parameter_values(
 @pytest.mark.slow
 @pytest.mark.parametrize("verbosity", [1, 2])
 def test_that_cli_verbosity_controls_sensitivity_plot_generation(
-    tmp_path, monkeypatch, verbosity
+    use_tmpdir, monkeypatch, verbosity
 ):
-    monkeypatch.chdir(tmp_path)
     designfile = "ex4_background_parameters.xlsx"
     _run_cli("init", designfile)
     result = _run_cli(
         "run", designfile, "analysis/design.v2", *(["--verbose"] * verbosity)
     )
 
-    assert (tmp_path / "analysis/design.v2.xlsx").is_file()
+    assert Path("analysis/design.v2.xlsx").is_file()
     assert "CONTINUOUS PARAMETERS" in result.stdout
     assert "CORRELATION_GROUP 'corr1'" in result.stdout
-    assert (tmp_path / "analysis/design.v2/background/PARAM17.png").is_file()
-    sensitivity_plot = tmp_path / "analysis/design.v2/sens7/PARAM9.png"
+    assert Path("analysis/design.v2/background/PARAM17.png").is_file()
+    sensitivity_plot = Path("analysis/design.v2/sens7/PARAM9.png")
     if verbosity == 2:
         assert sensitivity_plot.is_file()
     else:
@@ -158,9 +157,8 @@ def test_that_cli_verbosity_controls_sensitivity_plot_generation(
 
 @pytest.mark.slow
 def test_that_advanced_examples_preserve_correlations_and_dependencies(
-    tmp_path, monkeypatch
+    use_tmpdir, monkeypatch
 ):
-    monkeypatch.chdir(tmp_path)
     _run_cli("init", "ex2_correlations.xlsx")
     _run_cli("init", "ex8_mc_with_correls.xlsx")
 
@@ -197,9 +195,8 @@ def test_that_advanced_examples_preserve_correlations_and_dependencies(
 @pytest.mark.slow
 @pytest.mark.parametrize("designfile", EXAMPLE_FILES, ids=EXAMPLE_FILES)
 def test_that_each_example_initializes_and_generates_a_design_matrix(
-    tmp_path, monkeypatch, designfile
+    use_tmpdir, monkeypatch, designfile
 ):
-    monkeypatch.chdir(tmp_path)
     _run_cli("init", designfile)
     _run_cli("run", designfile)
 
