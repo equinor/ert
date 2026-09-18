@@ -14,6 +14,7 @@ from polars.exceptions import InvalidOperationError
 from python_calamine import CalamineError as PythonCalamineError
 from python_calamine import CalamineWorkbook
 
+from ert.config.parameter_config import LocalizationType
 from ert.config.parsing.config_errors import ConfigWarning
 
 from .distribution import RawSettings
@@ -33,6 +34,8 @@ class DesignMatrix:
     design_sheet: str
     default_sheet: str | None
     priority_source: str = "design_matrix"
+    update: bool = False
+    parameter_type_update_strategies: dict[str, LocalizationType] | None = None
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
@@ -55,10 +58,14 @@ class DesignMatrix:
             ) from exc
 
     @classmethod
-    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
+    def from_config_list(
+        cls,
+        config_list: list[str | dict[str, str]],
+        parameter_type_update_strategies: dict[str, LocalizationType],
+    ) -> DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
-        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET", "PRIORITY"]
+        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET", "PRIORITY", "UPDATE"]
         option_errors = [
             ErrorInfo(
                 f"Option {option} is not a valid DESIGN_MATRIX option. "
@@ -73,6 +80,7 @@ class DesignMatrix:
         design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
         default_sheet = options.get("DEFAULT_SHEET", None)
         priority_source = options.get("PRIORITY", DataSource.DESIGN_MATRIX)
+        update_value = options.get("UPDATE", "FALSE").upper()
         errors = []
         if filename.suffix != ".xlsx":
             errors.append(
@@ -93,14 +101,23 @@ class DesignMatrix:
                     f" or '{DataSource.SAMPLED}' priority is '{priority_source}'"
                 ).set_context(config_list)
             )
+        if update_value not in {"TRUE", "FALSE"}:
+            errors.append(
+                ErrorInfo(
+                    f"UPDATE must be either 'TRUE' or 'FALSE'; is '{update_value}'"
+                ).set_context(config_list)
+            )
         if errors:
             raise ConfigValidationError.from_collected(errors)
+
         assert design_sheet is not None
         return cls(
             filename=filename,
             design_sheet=design_sheet,
             default_sheet=default_sheet,
             priority_source=priority_source,
+            update=update_value == "TRUE",
+            parameter_type_update_strategies=parameter_type_update_strategies,
         )
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
@@ -189,24 +206,32 @@ class DesignMatrix:
 
         new_param_configs: list[ParameterConfig] = []
 
-        design_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
+        design_matrix_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
 
         for param_cfg in existing_parameters:
-            if isinstance(param_cfg, GenKwConfig) and param_cfg.name in design_cfgs:
-                del design_cfgs[param_cfg.name]
+            if (
+                isinstance(param_cfg, GenKwConfig)
+                and param_cfg.name in design_matrix_cfgs
+            ):
                 input_source = DataSource(
                     self.parameter_priority.get(
                         param_cfg.name, DataSource.DESIGN_MATRIX.value
                     )
                 )
+
+                if input_source == DataSource.SAMPLED:
+                    update_strategy = param_cfg.update_strategy
+                elif self.update:
+                    update_strategy = (self.parameter_type_update_strategies or {}).get(
+                        param_cfg.type.upper(), LocalizationType.GLOBAL
+                    )
+                else:
+                    update_strategy = None
+
                 new_param_configs += [
                     GenKwConfig(
                         name=param_cfg.name,
-                        update_strategy=(
-                            param_cfg.update_strategy
-                            if input_source == DataSource.SAMPLED
-                            else None
-                        ),
+                        update_strategy=update_strategy,
                         distribution=(
                             RawSettings()
                             if input_source == DataSource.DESIGN_MATRIX
@@ -220,10 +245,21 @@ class DesignMatrix:
                         input_source=input_source,
                     ),
                 ]
+                del design_matrix_cfgs[param_cfg.name]
             else:
                 new_param_configs += [param_cfg]
-        if design_cfgs.values():
-            new_param_configs += list(design_cfgs.values())
+
+        if design_matrix_cfgs.values():
+            if self.update:
+                for cfg in design_matrix_cfgs.values():
+                    cfg.update_strategy = (
+                        self.parameter_type_update_strategies or {}
+                    ).get(
+                        cfg.type.upper(),
+                        LocalizationType.GLOBAL,  # ??
+                    )
+            new_param_configs += list(design_matrix_cfgs.values())
+
         return new_param_configs
 
     def read_and_validate_design_matrix(
