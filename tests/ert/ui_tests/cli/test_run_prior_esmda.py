@@ -64,8 +64,8 @@ def poly_eval() -> str:
 
 @pytest.fixture
 def observations() -> Callable[[bool], str]:
-    def observations(*, restart: bool = False):
-        if restart:
+    def observations(*, include_extra_observation: bool = False):
+        if include_extra_observation:
             return dedent(
                 """
                 GENERAL_OBSERVATION POLY_OBS {
@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_that_running_esmda_from_restart_uses_previous_observations_and_parameters(
+def test_that_running_esmda_from_prior_uses_previous_observations_and_parameters(
     use_tmpdir,
     ert_config,
     parameters,
@@ -150,18 +150,19 @@ def test_that_running_esmda_from_restart_uses_previous_observations_and_paramete
     for param in experiment.parameter_keys:
         assert param in {"a", "b", "c"}
 
-    # Update parameters and observations and restart with es-mda.
     Path("coeff_priors").write_text(parameters + "d UNIFORM 0 5\n", encoding="utf-8")
     Path("obs_data.txt").write_text(
         observations_data + "100.0 24.0\n", encoding="utf-8"
     )
-    Path("observations").write_text(observations(restart=True), encoding="utf-8")
+    Path("observations").write_text(
+        observations(include_extra_observation=True), encoding="utf-8"
+    )
 
     run_cli(
         ES_MDA_MODE,
         "--disable-monitoring",
         "--weights=2,1",
-        "--restart-ensemble-id",
+        "--prior-ensemble-id",
         str(ensemble.id),
         "config.ert",
     )
@@ -226,7 +227,7 @@ def _build_esmda_run_prior_model(prior_ensemble_id: str):
             target_ensemble="iter-<ITER>",
             weights="1,1",
             prior_ensemble_id=prior_ensemble_id,
-            experiment_name="restart-experiment",
+            experiment_name="run-from-prior-experiment",
         ),
         SimpleQueue(),
     )

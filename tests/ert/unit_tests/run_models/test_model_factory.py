@@ -266,7 +266,7 @@ def test_that_setup_multiple_data_assimilation_uses_config_weights_when_cli_omit
 
 
 @pytest.mark.parametrize(
-    ("restart_from_iteration", "expected_path"),
+    ("prior_iteration", "expected_path"),
     [
         (
             0,
@@ -292,14 +292,14 @@ def test_that_setup_multiple_data_assimilation_uses_config_weights_when_cli_omit
         (3, []),
     ],
 )
-def test_multiple_data_assimilation_restart_paths(
-    tmp_path, monkeypatch, restart_from_iteration, expected_path
+def test_that_multiple_data_assimilation_runpaths_start_after_prior_iteration(
+    tmp_path, monkeypatch, prior_iteration, expected_path
 ):
     monkeypatch.chdir(tmp_path)
     args = Namespace(
         realizations="0,1",
         weights="6,4,2",
-        target_ensemble="restart_case_%d",
+        target_ensemble="from_prior_%d",
         prior_ensemble_id=str(uuid1()),
         experiment_name="just_assimilatin",
     )
@@ -310,7 +310,7 @@ def test_multiple_data_assimilation_restart_paths(
         MagicMock(),
     )
     ensemble_mock = MagicMock()
-    ensemble_mock.iteration = restart_from_iteration
+    ensemble_mock.iteration = prior_iteration
     config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
 
     with patch(
@@ -336,7 +336,7 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
     args = Namespace(
         realizations="0",
         weights="6,4,2",
-        target_ensemble="restart_case_%d",
+        target_ensemble="from_prior_%d",
         prior_ensemble_id=str(uuid1()),
         experiment_name=None,
     )

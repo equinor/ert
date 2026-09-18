@@ -405,7 +405,7 @@ def update_runmodels(draw):
 
 @st.composite
 def multidass(_):
-    # Note: this does not test restart runs, it may be
+    # Note: this does not test runs from prior ensembles, it may be
     # better to test that separately
     return {
         "prior_ensemble_id": None,
