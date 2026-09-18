@@ -25,6 +25,9 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import (
     AnalysisModuleVariablesPanel,
 )
 from ert.gui.ertwidgets.parameterviewer import ParametersViewer
+from ert.gui.experiments._update_strategy_summary_widget import (
+    UpdateStrategySummaryWidget,
+)
 from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
@@ -53,7 +56,7 @@ def test_that_configuration_validity_reflects_updatable_parameters(
     notifier._storage = MockStorage()
 
     param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, update_strategy=update_strategy
+        spec=ParameterConfig, type="gen_kw", update_strategy=update_strategy
     )
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
@@ -81,7 +84,7 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     prior_param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, update_strategy=prior_update_strategy
+        spec=ParameterConfig, type="gen_kw", update_strategy=prior_update_strategy
     )
     notifier._storage._setup_mocked_run(
         "mock_ensemble",
@@ -94,7 +97,9 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
         parameter_configuration={"PARAMETER": prior_param_mock},
     )
 
-    param_mock: ParameterConfig = Mock(spec=ParameterConfig, update_strategy=None)
+    param_mock: ParameterConfig = Mock(
+        spec=ParameterConfig, type="gen_kw", update_strategy=None
+    )
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=[param_mock],
@@ -117,6 +122,64 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
     assert panel.isConfigurationValid() is expected_valid
 
 
+def test_that_update_strategy_widget_tracks_selected_prior_config_counts(
+    qtbot: QtBot,
+) -> None:
+    parameter = GenKwConfig(
+        name="configured",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+    )
+    notifier = ErtNotifier()
+    storage = MockStorage()
+    notifier._storage = storage
+    for index, strategy in enumerate(["adaptive", "distance"]):
+        storage._setup_mocked_run(
+            f"prior_{index}",
+            f"experiment_{index}",
+            [REALIZATION_FINISHED_SUCCESSFULLY] * 3,
+            experiment_type=ExperimentType.ES_MDA,
+            parameter_configuration={
+                "stored": GenKwConfig(
+                    name="stored",
+                    distribution={"name": "uniform", "min": 0, "max": 1},
+                    update_strategy=strategy,
+                )
+            },
+        )
+
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=[parameter],
+        runpath="",
+        notifier=notifier,
+        active_realizations=[True] * 3,
+        config_num_realization=3,
+    )
+    qtbot.addWidget(panel)
+    panel.show()
+    localization_label = panel.findChild(QLabel, "update_strategy_label")
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert localization_label is not None
+    assert localization_label.text() == "Parameter Localizations"
+    assert localization_label.isVisible()
+    assert summary is not None
+    assert summary.height() == summary.sizeHint().height()
+    assert summary.item(0, 0).text() == "Global"
+
+    checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
+    selector = panel.findChild(EnsembleSelector)
+    assert checkbox is not None
+    assert selector is not None
+    checkbox.setChecked(True)
+    for index, strategy in enumerate(["Adaptive", "Distance"]):
+        selector.setCurrentIndex(
+            selector.findText(f"experiment_{index} : prior_{index}")
+        )
+        assert summary.item(0, 0).text() == strategy
+    checkbox.setChecked(False)
+    assert summary.item(0, 0).text() == "Global"
+
+
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_config(
     qtbot: QtBot,
 ) -> None:
@@ -131,7 +194,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
     notifier._storage = MockStorage()
 
     param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL
+        spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
     )
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
@@ -168,7 +231,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     prior_param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL
+        spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
     )
     notifier._storage._setup_mocked_run(
         "mock_ensemble",
@@ -187,7 +250,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     )
 
     param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL
+        spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
     )
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
@@ -450,9 +513,10 @@ def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
     "panel_type",
     [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
 )
+@pytest.mark.parametrize("design_parameter_name", ["design_parameter", "original"])
 @pytest.mark.timeout(10)
 def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
-    qtbot: QtBot, panel_type, tmp_path
+    qtbot: QtBot, panel_type, tmp_path, design_parameter_name: str
 ) -> None:
     original_parameter = GenKwConfig(
         name="original",
@@ -462,7 +526,7 @@ def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
     design_matrix_path = tmp_path / "design_matrix.xlsx"
     _create_design_matrix(
         design_matrix_path,
-        pl.DataFrame({"REAL": [0], "design_parameter": [1]}),
+        pl.DataFrame({"REAL": [0], design_parameter_name: [1]}),
     )
     design_matrix = DesignMatrix(
         filename=design_matrix_path,
@@ -502,6 +566,23 @@ def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
     )
     assert update_settings_button is not None
     qtbot.mouseClick(update_settings_button, Qt.MouseButton.LeftButton)
+
+    if isinstance(panel, MultipleDataAssimilationPanel):
+        summary = panel.findChild(UpdateStrategySummaryWidget)
+        assert summary is not None
+        parameter_configuration = (
+            panel.get_experiment_arguments().parameter_configuration
+        )
+        assert summary.rowCount() == 1
+        assert [summary.item(0, column).text() for column in range(3)] == [
+            "Adaptive",
+            "GenKW",
+            str(len(parameter_configuration)),
+        ]
+        assert all(
+            parameter.update_strategy == LocalizationType.ADAPTIVE
+            for parameter in parameter_configuration
+        )
 
     def verify_parameter_strategy() -> None:
         dialog = QApplication.activeModalWidget()
