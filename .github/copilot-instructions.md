@@ -46,8 +46,8 @@ uv run pytest tests/everest/test_<file>.py::test_<name>
 - `src/ert`: main application package (CLI + GUI + analysis workflows + storage integration).
   - Entry point: `ert` script -> `src/ert/__main__.py`.
   - `ert` subcommands include GUI, lint, API server, and running in CLI.
-  - `ert.services._storage_main` starts the storage server (uvicorn).
-  - `ert.dark_storage` contains the FastAPI app/endpoints used by the storage/API layer.
+  - `ert.services._ert_server_main` starts the server (uvicorn).
+  - `ert.server` contains the FastAPI app/endpoints for the storage/API layer, and is evolving to also orchestrate ERT and Everest experiments.
 - `src/everest`: optimization tool built on top of ERT.
   - Entry point for `everest`: `src/everest/bin/main.py`.
   - `everest/optimizer` converts the Everest model/configuration into `ropt`.

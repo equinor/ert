@@ -27,7 +27,6 @@ from PyQt6.QtWidgets import (
 
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
-from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.gui.plotting.utils.plot_maps import (
     CROSS_ENSEMBLE_STATISTICS,
@@ -49,6 +48,7 @@ from ert.gui.plotting.utils.plot_maps import (
 )
 from ert.gui.plotting.widgets.plot_side_panel import PlotSidePanel
 from ert.gui.utils import is_everest_application
+from ert.server.common import get_storage_api_version
 from ert.services import ServerBootFail
 from ert.utils import log_duration
 

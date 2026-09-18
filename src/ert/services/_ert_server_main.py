@@ -36,7 +36,7 @@ from ert.shared import find_available_socket, get_machine_name
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 
-DARK_STORAGE_APP = "ert.dark_storage.app:app"
+ERT_SERVER_APP = "ert.server.app:app"
 
 
 class Server(uvicorn.Server):
@@ -96,7 +96,7 @@ def _create_connection_info(
         "auth": authtoken,
     }
 
-    os.environ["ERT_STORAGE_CONNECTION_STRING"] = json.dumps(
+    os.environ["ERT_SERVER_CONNECTION_STRING"] = json.dumps(
         connection_info, separators=(",", ":")
     )
 
@@ -203,7 +203,7 @@ def run_server(
         # uvicorn.Config() resets the logging config (overriding additional
         # handlers added to loggers through the plugin system, e.g. log
         # handlers registered by external logging plugins)
-        uvicorn.Config(DARK_STORAGE_APP, **config_args)
+        uvicorn.Config(ERT_SERVER_APP, **config_args)
         if uvicorn_config is None
         else uvicorn_config
     )
@@ -289,7 +289,7 @@ def main() -> None:
     # Need to run uvicorn.Config before entering the ErtPluginContext because
     # uvicorn.Config overrides the configuration of existing loggers, thus removing
     # log handlers added by ErtPluginContext.
-    uvicorn_config = uvicorn.Config(DARK_STORAGE_APP, **config_args)
+    uvicorn_config = uvicorn.Config(ERT_SERVER_APP, **config_args)
 
     ctx = (
         TraceContextTextMapPropagator().extract(
@@ -323,7 +323,7 @@ def add_parser_options(ap: ArgumentParser) -> None:
         "--project",
         "-p",
         type=Path,
-        help="Path to directory in which to create storage_server.json",
+        help="Path to directory in which to create ert_server_connection.json",
         default=Path.cwd(),
     )
     ap.add_argument(

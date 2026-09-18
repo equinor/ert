@@ -12,8 +12,8 @@ from pandas.testing import assert_frame_equal
 from resfo_utilities import history_key
 
 from ert.config import EverestObjectivesConfig, GenKwConfig, SummaryConfig
-from ert.dark_storage import common
 from ert.gui.plotting.plot_api import PlotApi, PlotApiKeyDefinition
+from ert.server import common
 from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 

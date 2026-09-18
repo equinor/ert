@@ -1,6 +1,4 @@
-import importlib
 import signal
-import sys
 import threading
 import time
 from pathlib import Path
@@ -19,38 +17,7 @@ from ert.services.ert_server_controller import (
 )
 
 
-def local_exec_args(script_args: str | list[str]) -> list[str]:
-    """
-    Convenience function that returns the exec_args for executing a Python
-    script in the directory of old '_base_service.py'.
-
-    This is done instead of using 'python -m [module path]' due to the '-m' flag
-    adding the user's current working directory to sys.path. Executing a Python
-    script by itself will add the directory of the script rather than the
-    current working directory, thus we avoid accidentally importing user's
-    directories that just happen to have the same names as the ones we use.
-    """
-    if isinstance(script_args, str):
-        script = script_args
-        rest: list[str] = []
-    else:
-        script = script_args[0]
-        rest = script_args[1:]
-    script = f"_{script}_main.py"
-
-    services_spec = importlib.util.find_spec("ert.services")
-    if services_spec is None or services_spec.origin is None:
-        raise RuntimeError("Cannot find module ert.services")
-
-    # PS: origin points to the __init__.py file
-    services_folder = Path(services_spec.origin).parent
-
-    return [sys.executable, str(services_folder / script), *rest]
-
-
 class _DummyService(ErtServerController):
-    service_name = "dummy"
-
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **({"storage_path": ".", "timeout": 10} | kwargs))
 
@@ -356,24 +323,6 @@ def test_that_fetch_connection_info_raises_when_storage_path_does_not_exist(
             proc.fetch_connection_info()
     finally:
         proc.shutdown()
-
-
-@pytest.mark.parametrize(
-    ("script", "should_exist"), [("storage", True), ("foobar", False)]
-)
-def test_local_exec_args(script, should_exist):
-    exec_args = local_exec_args(script)
-    assert len(exec_args) == 2
-    assert exec_args[0] == sys.executable
-    assert Path(exec_args[1]).is_file() == should_exist
-
-
-def test_local_exec_args_multi():
-    exec_args = local_exec_args(["storage", "foo", "-bar"])
-    assert len(exec_args) == 4
-    assert exec_args[0] == sys.executable
-    assert exec_args[2] == "foo"
-    assert exec_args[3] == "-bar"
 
 
 def test_cleanup_service_files(tmpdir):

@@ -37,7 +37,9 @@ from ert.namespace import Namespace
 from ert.observation_converters import SupportedFormat, convert_observations
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
 from ert.services import ErtServerController
-from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
+from ert.services._ert_server_main import (
+    add_parser_options as ert_api_add_parser_options,
+)
 from ert.shared.status.utils import get_ert_memory_usage
 from ert.storage import ErtStorageException, ErtStoragePermissionError
 from ert.trace import trace, tracer
