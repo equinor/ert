@@ -1,0 +1,28 @@
+-- By default, NumPy utilizes multiple threads, which is beneficial for parallelizable computations.
+-- However, the heat equation implementation in this case does not benefit from parallel execution within a single realization.
+-- When ERT runs multiple realizations, each one by default uses multiple threads for NumPy operations,
+-- leading to resource contention and slower overall execution.
+-- Setting these thread counts to 1 ensures each realization uses minimal resources,
+-- allowing more realizations to run concurrently and significantly speeding up the entire experiment.
+SETENV  MKL_NUM_THREADS 1
+SETENV  NUMEXPR_NUM_THREADS 1
+SETENV  OMP_NUM_THREADS 1
+
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 10
+
+RANDOM_SEED 11223344
+
+NUM_REALIZATIONS 10
+GRID CASE.EGRID
+
+OBS_CONFIG observations_loc.txt
+ECLBASE HEAT
+
+FIELD COND PARAMETER cond.bgrdecl INIT_FILES:cond_<IENS>.bgrdecl FORWARD_INIT:False INIT_TRANSFORM:LN OUTPUT_TRANSFORM:EXP
+
+GEN_KW INIT_TEMP_SCALE init_temp_prior.txt
+GEN_KW CORR_LENGTH corr_length_prior.txt
+
+INSTALL_JOB heat_equation HEAT_EQUATION
+FORWARD_MODEL heat_equation(<ARG0>=<IENS>, <ARG1>=<ITER>)

@@ -1,0 +1,1059 @@
+from __future__ import annotations
+
+import asyncio
+import concurrent.futures
+import copy
+import datetime
+import functools
+import logging
+import os
+import queue
+import shutil
+import threading
+import traceback
+import uuid
+import warnings
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from collections.abc import Callable, Generator, MutableSequence
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Protocol, cast
+
+import numpy as np
+from pydantic import (
+    Field,
+    PrivateAttr,
+    field_validator,
+)
+from pydantic_core.core_schema import ValidationInfo
+
+from _ert.events import (
+    EEEvent,
+    EESnapshot,
+    EESnapshotUpdate,
+    EnsembleEvaluationWarning,
+)
+from ert.config import (
+    ConfigValidationError,
+    DesignMatrix,
+    HookedWorkflowFixtures,
+    HookRuntime,
+    ModelConfig,
+    ParameterConfig,
+    PostSimulationFixtures,
+    PreSimulationFixtures,
+    QueueConfig,
+    Workflow,
+    create_workflow_fixtures_from_hooked,
+)
+from ert.config.queue_config import KnownQueueOptionsAdapter
+from ert.ensemble_evaluator import Ensemble as EEEnsemble
+from ert.ensemble_evaluator import (
+    EnsembleEvaluator,
+    EvaluatorServerConfig,
+    Realization,
+    WarningEvent,
+)
+from ert.ensemble_evaluator.evaluator import ParallelismViolation, UserCancelled
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
+from ert.ensemble_evaluator.state import (
+    REALIZATION_STATE_FAILED,
+    REALIZATION_STATE_FINISHED,
+    REALIZATION_STATE_UNKNOWN,
+)
+from ert.mode_definitions import MODULE_MODE
+from ert.run_arg import RunArg
+from ert.run_models.run_model_configs import RunModelConfig
+from ert.runpaths import Runpaths
+from ert.storage import (
+    Ensemble,
+    Experiment,
+    LocalStorage,
+    Storage,
+    open_storage,
+)
+from ert.trace import tracer
+from ert.utils import log_duration
+from ert.warnings import PostExperimentWarning, capture_specific_warning
+from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+
+from ._create_runpath import create_runpath
+from .event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+    StartEvent,
+    StatusEvents,
+    WorkflowEvent,
+)
+
+if TYPE_CHECKING:
+    from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
+    from ert.plugins import ErtRuntimePlugins
+
+logger = logging.getLogger(__name__)
+
+
+class OutOfOrderSnapshotUpdateException(ValueError):
+    pass
+
+
+class ErtRunError(Exception):
+    pass
+
+
+class TooFewRealizationsSucceeded(ErtRunError):
+    def __init__(
+        self, successful_realizations: int, required_realizations: int
+    ) -> None:
+        self.message = (
+            f"Number of successful realizations ({successful_realizations}) is less "
+            "than the specified MIN_REALIZATIONS"
+            f"({required_realizations})"
+        )
+        super().__init__(self.message)
+
+
+def delete_runpath(runpath: str) -> None:
+    if Path(runpath).exists():
+        shutil.rmtree(runpath)
+
+
+class _LogAggregration(logging.Handler):
+    def __init__(self, messages: MutableSequence[str]) -> None:
+        self.messages = messages
+
+        # Contains list of record names that should be excluded from aggregated logs
+        self.exclude_logs: list[str] = []
+        super().__init__()
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if record.name not in self.exclude_logs:
+            self.messages.append(record.getMessage())
+
+
+@contextmanager
+def captured_logs(
+    messages: MutableSequence[str], level: int = logging.ERROR
+) -> Generator[None]:
+    handler = _LogAggregration(messages)
+    root_logger = logging.getLogger()
+    handler.setLevel(level)
+    root_logger.addHandler(handler)
+    try:
+        yield
+    finally:
+        root_logger.removeHandler(handler)
+
+
+class StartSimulationsThreadFn(Protocol):
+    def __call__(
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        *,
+        rerun_failed_realizations: bool = False,
+    ) -> None: ...
+
+
+@dataclass
+class RunModelAPI:
+    experiment_name: str
+    supports_rerunning_failed_realizations: bool
+    start_simulations_thread: StartSimulationsThreadFn
+    cancel: Callable[[], None]
+    has_failed_realizations: Callable[[], bool]
+
+
+class RunModel(RunModelConfig, ABC):
+    status_queue: queue.SimpleQueue[StatusEvents] = Field(exclude=True, repr=False)
+
+    # Private attributes initialized in model_post_init
+    _initial_realizations_mask: list[bool] = PrivateAttr()
+    _completed_realizations_mask: list[bool] = PrivateAttr(default_factory=list)
+    _storage: Storage = PrivateAttr()
+    _context_env: dict[str, str] = PrivateAttr(default_factory=dict)
+    _model_config: ModelConfig = PrivateAttr()
+    _rng: np.random.Generator = PrivateAttr()
+    _end_event: threading.Event = PrivateAttr(default_factory=threading.Event)
+    _iter_snapshot: dict[int, EnsembleSnapshot] = PrivateAttr(default_factory=dict)
+    _is_rerunning_failed_realizations: bool = PrivateAttr(False)
+    _runpaths: Runpaths = PrivateAttr()
+    _total_iterations: int = PrivateAttr(default=1)
+    _start_iteration: int = PrivateAttr(default=0)
+    _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
+    _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
+    _workflow_run_id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
+    _pending_workflow_events: list[WorkflowEvent] = PrivateAttr(default_factory=list)
+
+    def __init__(
+        self,
+        *,
+        _total_iterations: int | None = None,
+        **data: Any,
+    ) -> None:
+        super().__init__(**data)
+
+        if _total_iterations is not None:
+            self._total_iterations = _total_iterations
+
+    def model_post_init(self, ctx: Any) -> None:
+        self._initial_realizations_mask = self.active_realizations.copy()
+        self._completed_realizations_mask = [False] * len(self.active_realizations)
+
+        if LocalStorage.check_migration_needed(Path(self.storage_path)):
+            LocalStorage.perform_migration(Path(self.storage_path))
+
+        self._storage = open_storage(self.storage_path, mode="w")
+        self._rng = np.random.default_rng(self.random_seed)
+        self._start_iteration = self.start_iteration
+
+        self._runpaths = Runpaths(
+            jobname_format=self.runpath_config.jobname_format_string,
+            runpath_format=self.runpath_config.runpath_format_string,
+            filename=str(self.runpath_file),
+            substitutions=self.substitutions,
+            eclbase=self.runpath_config.summary_file_base_name,
+        )
+
+    @property
+    def api(self) -> RunModelAPI:
+        return RunModelAPI(
+            experiment_name=self.name(),
+            start_simulations_thread=self.start_simulations_thread,
+            has_failed_realizations=self.has_failed_realizations,
+            supports_rerunning_failed_realizations=self.supports_rerunning_failed_realizations,
+            cancel=self.cancel,
+        )
+
+    def reports_dir(self, experiment_name: str) -> str:
+        return str(self.log_path / experiment_name)
+
+    def log_at_startup(self) -> None:
+        keys_to_drop = [
+            "_end_event",
+            "_queue_config",
+            "status_queue",
+            "_storage",
+            "rng",
+            "runpaths",
+            "substitutions",
+        ]
+        sensitive_keys = [
+            "observations",
+            "shape_registry",
+        ]
+        settings_dict = {
+            k: (v if k not in sensitive_keys else "<REDACTED>")
+            for k, v in self.__dict__.items()
+            if k not in keys_to_drop
+        }
+
+        logger.info(f"Running '{self.name()}'\n\nSettings: {settings_dict}")
+
+    @field_validator("env_vars", mode="after")
+    @classmethod
+    def inject_site_configuration_env_vars(
+        cls, env_vars: dict[str, str], info: ValidationInfo
+    ) -> dict[str, str]:
+        if not info.context:
+            return env_vars
+
+        context = cast("ErtRuntimePlugins", info.context)
+        site_env_vars = dict(context.environment_variables or {})
+
+        return site_env_vars | env_vars
+
+    @field_validator("queue_config", mode="after")
+    @classmethod
+    def inject_site_configuration_queue_options(
+        cls, queue_config: QueueConfig, info: ValidationInfo
+    ) -> QueueConfig:
+        if not info.context or info.context.queue_options is None:
+            return queue_config
+
+        context = cast("ErtRuntimePlugins", info.context)
+        site_queue_options_dict = (
+            context.queue_options.model_dump(exclude_unset=True, exclude_defaults=True)
+            if context.queue_options
+            else {}
+        )
+        usr_queue_options_dict = queue_config.queue_options.model_dump(
+            exclude_unset=True
+        )
+
+        site_queue_system = str(
+            context.queue_options.name if context.queue_options is not None else "local"
+        )
+        usr_queue_system = queue_config.queue_options.name
+        queue_system = usr_queue_system or site_queue_system
+
+        queue_options = KnownQueueOptionsAdapter.validate_python(
+            {"name": queue_system}
+            | (site_queue_options_dict if site_queue_system == usr_queue_system else {})
+            | usr_queue_options_dict
+        )
+
+        queue_config.queue_system = queue_options.name
+        queue_config.queue_options = queue_options
+        return queue_config
+
+    @classmethod
+    @abstractmethod
+    def name(cls) -> str: ...
+
+    @classmethod
+    def display_name(cls) -> str:
+        return cls.name()
+
+    @classmethod
+    @abstractmethod
+    def description(cls) -> str: ...
+
+    @classmethod
+    def group(cls) -> str | None:
+        """Default value to prevent errors in children classes
+        since only EnsembleExperiment and EnsembleSmoother should
+        override it
+        """
+        return None
+
+    def send_event(self, event: StatusEvents) -> None:
+        self.status_queue.put(event)
+
+    @property
+    def ensemble_size(self) -> int:
+        return len(self._initial_realizations_mask)
+
+    def cancel(self) -> None:
+        self._end_event.set()
+        if self._workflow_runner is not None:
+            self._workflow_runner.cancel()
+
+    def has_failed_realizations(self) -> bool:
+        return any(self._create_mask_from_failed_realizations())
+
+    def _create_mask_from_failed_realizations(self) -> list[bool]:
+        """
+        Creates a list of bools representing the failed realizations,
+        i.e., a realization that has failed is assigned a True value.
+        """
+        return [
+            initial and not completed
+            for initial, completed in zip(
+                self._initial_realizations_mask,
+                self._completed_realizations_mask,
+                strict=False,
+            )
+        ]
+
+    def set_env_key(self, key: str, value: str) -> None:
+        """
+        Will set an environment variable that will be available until the
+        model run ends.
+        """
+        self._context_env[key] = value
+        os.environ[key] = value
+
+    def _set_default_env_context(self) -> None:
+        """
+        Set some default environment variables that need to be
+        available while the model is running
+        """
+        simulation_mode = MODULE_MODE.get(type(self).__name__, "")
+        self.set_env_key("_ERT_SIMULATION_MODE", simulation_mode)
+
+    def _clean_env_context(self) -> None:
+        """Clean all previously environment variables set using set_env_key"""
+        for key in list(self._context_env.keys()):
+            self._context_env.pop(key)
+            os.environ.pop(key, None)
+
+    @tracer.start_as_current_span(f"{__name__}.start_simulations_thread")
+    def start_simulations_thread(
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        *,
+        rerun_failed_realizations: bool = False,
+    ) -> None:
+        failed = False
+        exception: Exception | None = None
+        error_messages: MutableSequence[str] = []
+        traceback_str: str | None = None
+
+        def handle_captured_event(message: Warning | str) -> None:
+            self.send_event(WarningEvent(msg=str(message)))
+
+        start_timestamp = datetime.datetime.now(tz=datetime.UTC)
+        self._workflow_run_id = uuid.uuid4()
+        self._pending_workflow_events = []
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            self.send_event(StartEvent(timestamp=start_timestamp))
+            with (
+                capture_specific_warning(PostExperimentWarning, handle_captured_event),
+                captured_logs(error_messages),
+            ):
+                self._set_default_env_context()
+
+                if (
+                    rerun_failed_realizations
+                    and not self.supports_rerunning_failed_realizations
+                ):
+                    raise ErtRunError(
+                        f"Run model {self.name()} does not support "
+                        f"restart/rerun of failed simulations."
+                    )
+
+                if rerun_failed_realizations:
+                    self._storage = open_storage(self.storage_path, mode="w")
+                    self.active_realizations = (
+                        self._create_mask_from_failed_realizations()
+                    )
+                    logger.info(
+                        f"Rerunning failed simulations for run model '{self.name()}'"
+                    )
+
+                self.run_experiment(
+                    evaluator_server_config=evaluator_server_config,
+                    rerun_failed_realizations=rerun_failed_realizations,
+                )
+                if self._completed_realizations_mask:
+                    combined = np.logical_or(
+                        np.array(self._completed_realizations_mask),
+                        np.array(self.active_realizations),
+                    )
+                    self._completed_realizations_mask = list(combined)
+                else:
+                    self._completed_realizations_mask = copy.copy(
+                        self.active_realizations
+                    )
+                self._storage.close()
+        except ErtRunError as e:
+            failed = True
+            exception = e
+        except UserWarning as e:
+            logger.exception(e)
+        except UserCancelled as e:
+            failed = True
+            exception = e
+        except Exception as e:
+            failed = True
+            exception = e
+            traceback_str = traceback.format_exc()
+        finally:
+            self._storage.close()
+            self._clean_env_context()
+            self.send_event(
+                EndEvent(
+                    failed=failed,
+                    msg=(
+                        self.format_error(
+                            exception=exception,
+                            error_messages=error_messages,
+                            traceback=traceback_str,
+                        )
+                        if failed
+                        else "Experiment completed."
+                    ),
+                )
+            )
+            seconds_used = (
+                datetime.datetime.now(tz=datetime.UTC) - start_timestamp
+            ).total_seconds()
+            logger.info(f"Experiment run finished in: {seconds_used:g}s")
+
+    @abstractmethod
+    def run_experiment(
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        *,
+        rerun_failed_realizations: bool = False,
+    ) -> None: ...
+
+    @staticmethod
+    def format_error(
+        exception: Exception | None,
+        error_messages: MutableSequence[str],
+        traceback: str | None,
+    ) -> str:
+        msg = "\n".join(error_messages)
+        if exception is None:
+            return msg
+        if traceback is None:
+            return f"{exception}\n{msg}"
+        return f"{exception}\n{traceback}\n{msg}"
+
+    def get_current_status(self) -> dict[str, int]:
+        status: dict[str, int] = defaultdict(int)
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            all_realizations = self._iter_snapshot[current_iter].reals
+
+            if all_realizations:
+                for real in all_realizations.values():
+                    status[str(real.get("status", REALIZATION_STATE_UNKNOWN))] += 1
+
+        if self._is_rerunning_failed_realizations:
+            status["Finished"] += (
+                self._get_number_of_finished_realizations_from_reruns()
+            )
+        return dict(status)
+
+    def _get_number_of_finished_realizations_from_reruns(self) -> int:
+        return self.active_realizations.count(
+            False
+        ) - self._initial_realizations_mask.count(False)
+
+    def get_current_snapshot(self) -> EnsembleSnapshot:
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            return self._iter_snapshot[current_iter]
+        return EnsembleSnapshot()
+
+    def get_memory_consumption(self) -> int:
+        max_memory_consumption: int = 0
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            for fm in self._iter_snapshot[current_iter].get_all_fm_steps().values():
+                max_usage = fm.get("max_memory_usage", "0")
+                if max_usage:
+                    max_memory_consumption = max(int(max_usage), max_memory_consumption)
+
+        return max_memory_consumption
+
+    def calculate_current_progress(self) -> float:
+        current_iter = max(list(self._iter_snapshot.keys()))
+        all_realizations = self._iter_snapshot[current_iter].reals
+        current_progress = 0.0
+
+        filtered_active_realizations = [
+            active
+            for active, initial in zip(
+                self.active_realizations,
+                self._initial_realizations_mask,
+                strict=False,
+            )
+            if initial
+        ]
+
+        initial_active_indices = np.flatnonzero(self._initial_realizations_mask)
+        total_initial = len(initial_active_indices)
+        if total_initial == 0:
+            return current_progress
+
+        if all_realizations:
+            initial_id_str = {str(i) for i in initial_active_indices}
+            done_realizations = [
+                (real_id in initial_id_str)
+                and (
+                    real.get("status")
+                    in {REALIZATION_STATE_FINISHED, REALIZATION_STATE_FAILED}
+                )
+                for real_id, real in all_realizations.items()
+            ].count(True)
+
+            if self._total_iterations != 1:
+                start_iter = min(self._iter_snapshot)
+
+                completed_realizations = 0
+                for it in range(start_iter, current_iter):
+                    iter_reals = self._iter_snapshot[it].reals
+                    if iter_reals:
+                        completed_realizations += [
+                            (real_id in initial_id_str) for real_id in iter_reals
+                        ].count(True)
+                    else:
+                        completed_realizations += total_initial
+
+                current_iter_attempted = [
+                    (real_id in initial_id_str) for real_id in all_realizations
+                ].count(True)
+
+                current_iter_active = [
+                    (real_id in initial_id_str)
+                    and (real.get("status") != REALIZATION_STATE_FAILED)
+                    for real_id, real in all_realizations.items()
+                ].count(True)
+
+                remaining_iters = start_iter + self._total_iterations - current_iter - 1
+                total_realizations = (
+                    completed_realizations
+                    + current_iter_attempted
+                    + remaining_iters * current_iter_active
+                )
+
+                if total_realizations == 0:
+                    current_progress = 1.0
+                else:
+                    current_done = completed_realizations + done_realizations
+                    current_progress = float(current_done) / float(total_realizations)
+            else:
+                num_active = filtered_active_realizations.count(True)
+                if num_active > 0:
+                    current_progress = float(done_realizations) / float(num_active)
+
+        return current_progress
+
+    def forward_event_from_ee(
+        self,
+        event: EEEvent,
+        iteration: int,
+    ) -> None:
+        if type(event) is EESnapshot:
+            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+            self._iter_snapshot[iteration] = snapshot
+            current_progress = self.calculate_current_progress()
+            realization_count = self.get_number_of_active_realizations()
+            status = self.get_current_status()
+            self.send_event(
+                FullSnapshotEvent(
+                    iteration_label=f"Running forecast for iteration: {iteration}",
+                    total_iterations=self._total_iterations,
+                    progress=current_progress,
+                    realization_count=realization_count,
+                    status_count=status,
+                    iteration=iteration,
+                    snapshot=copy.deepcopy(snapshot),
+                )
+            )
+        elif type(event) is EESnapshotUpdate:
+            if iteration not in self._iter_snapshot:
+                raise OutOfOrderSnapshotUpdateException(
+                    f"got snapshot update message without having stored "
+                    f"snapshot for iter {iteration}"
+                )
+            snapshot = EnsembleSnapshot()
+            snapshot.update_from_event(
+                event, source_snapshot=self._iter_snapshot[iteration]
+            )
+            self._iter_snapshot[iteration].merge_snapshot(snapshot)
+            current_progress = self.calculate_current_progress()
+            realization_count = self.get_number_of_active_realizations()
+            status = self.get_current_status()
+            self.send_event(
+                SnapshotUpdateEvent(
+                    iteration_label=f"Running forecast for iteration: {iteration}",
+                    total_iterations=self._total_iterations,
+                    progress=current_progress,
+                    realization_count=realization_count,
+                    status_count=status,
+                    iteration=iteration,
+                    snapshot=copy.deepcopy(snapshot),
+                )
+            )
+        elif type(event) is EnsembleEvaluationWarning:
+            self.send_event(event)
+
+    def _persist_status_snapshot(self, experiment: Experiment, iteration: int) -> None:
+        snapshot = self._iter_snapshot.get(iteration)
+        if snapshot is None:
+            return
+        event = FullSnapshotEvent(
+            iteration_label=f"Running forecast for iteration: {iteration}",
+            total_iterations=self._total_iterations,
+            progress=self.calculate_current_progress(),
+            realization_count=self.get_number_of_active_realizations(),
+            status_count=self.get_current_status(),
+            iteration=iteration,
+            snapshot=snapshot,
+        )
+        experiment.write_status_snapshot(
+            iteration, event.model_dump_json(indent=2).encode("utf-8")
+        )
+
+    async def run_ensemble_evaluator_async(
+        self,
+        run_args: list[RunArg],
+        ensemble: Ensemble,
+        ee_config: EvaluatorServerConfig,
+    ) -> list[int]:
+        if self._end_event.is_set():
+            logger.debug("Run model cancelled - pre evaluation")
+            raise UserCancelled("Experiment cancelled by user in pre evaluation")
+
+        ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
+        evaluator = EnsembleEvaluator(
+            ee_ensemble,
+            ee_config,
+            end_event=self._end_event,
+            event_handler=functools.partial(
+                self.forward_event_from_ee,
+                iteration=ensemble.iteration,
+            ),
+        )
+        try:
+            return await self._run_evaluator(evaluator, ensemble)
+        finally:
+            try:
+                self._persist_status_snapshot(ensemble.experiment, ensemble.iteration)
+            except Exception:
+                logger.exception(
+                    f"Failed to persist status snapshot for "
+                    f"iteration {ensemble.iteration}"
+                )
+
+    async def _run_evaluator(
+        self, evaluator: EnsembleEvaluator, ensemble: Ensemble
+    ) -> list[int]:
+        evaluator_task = asyncio.create_task(
+            evaluator.run_and_get_successful_realizations()
+        )
+        try:
+            if (await evaluator.wait_for_evaluation_result()) is not True:
+                await evaluator_task
+                return []
+        finally:
+            await evaluator_task
+
+        self._max_parallelism_violation = max(
+            self._max_parallelism_violation, evaluator.max_parallelism_violation
+        )
+
+        if self._end_event.is_set():
+            logger.debug("Run model cancelled - post evaluation")
+            try:
+                await evaluator_task
+            except Exception as e:
+                raise Exception(
+                    "Exception occurred during user initiated termination of experiment"
+                ) from e
+            raise UserCancelled("Experiment cancelled by user in post evaluation")
+
+        await evaluator_task
+        try:
+            ensemble.refresh_ensemble_state()
+        except OSError as err:
+            logger.error(f"Got OSError when refreshing ensemble state: {err}")
+
+        return evaluator_task.result()
+
+    # This function needs to be there for the sake of testing that expects sync ee run
+    @tracer.start_as_current_span(f"{__name__}.run_ensemble_evaluator")
+    def run_ensemble_evaluator(
+        self,
+        run_args: list[RunArg],
+        ensemble: Ensemble,
+        ee_config: EvaluatorServerConfig,
+    ) -> list[int]:
+        return asyncio.run(
+            self.run_ensemble_evaluator_async(run_args, ensemble, ee_config)
+        )
+
+    def _build_ensemble(
+        self,
+        run_args: list[RunArg],
+        experiment_id: uuid.UUID,
+    ) -> EEEnsemble:
+        job_script = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+        realizations = [
+            Realization(
+                active=run_arg.active,
+                iens=run_arg.iens,
+                fm_steps=self.forward_model_steps,
+                max_runtime=self.queue_config.max_runtime,
+                run_arg=run_arg,
+                num_cpu=self.queue_config.queue_options.num_cpu,
+                job_script=job_script,
+                realization_memory=self.queue_config.queue_options.realization_memory,
+            )
+            for run_arg in run_args
+        ]
+        return EEEnsemble(
+            realizations,
+            {},
+            self.queue_config,
+            self.minimum_required_realizations,
+            str(experiment_id),
+        )
+
+    @property
+    def paths(self) -> list[str]:
+        runpaths = []
+        active_realizations = np.where(self.active_realizations)[0]
+        for iteration in range(
+            self._start_iteration,
+            self._total_iterations + self._start_iteration,
+        ):
+            runpaths.extend(self._runpaths.get_paths(active_realizations, iteration))
+        return runpaths
+
+    def check_if_runpath_exists(self) -> bool:
+        """
+        Determine if the runpath exists by checking if it contains
+        at least one iteration directory for the realizations in the active mask.
+        The runpath can contain one or two %d specifiers ie:
+            "realization-%d/iter-%d/"
+            "realization-%d/"
+        """
+        return any(Path(runpath).exists() for runpath in self.paths)
+
+    def get_number_of_existing_runpaths(self) -> int:
+        realization_set = {Path(runpath).parent for runpath in self.paths}
+        return [real_path.exists() for real_path in realization_set].count(True)
+
+    def get_number_of_active_realizations(self) -> int:
+        return (
+            self._initial_realizations_mask.count(True)
+            if self._is_rerunning_failed_realizations
+            else self.active_realizations.count(True)
+        )
+
+    def get_number_of_successful_realizations(self) -> int:
+        return self.active_realizations.count(True)
+
+    @log_duration(logger, logging.INFO)
+    def rm_runpath(
+        self,
+        progress_tracker: RunpathProgressWidget | None = None,
+        progress_callback: Callable[[], None] | None = None,
+    ) -> None:
+        runpaths = self.paths
+        if progress_tracker is not None:
+            progress_tracker.start(len(runpaths))
+        if progress_callback is not None:
+            progress_callback()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(delete_runpath, runpath) for runpath in runpaths]
+            for future in concurrent.futures.as_completed(futures):
+                future.result()
+                if progress_tracker is not None:
+                    progress_tracker.advance()
+                if progress_callback is not None:
+                    progress_callback()
+
+    def validate_successful_realizations_count(self) -> None:
+        successful_realizations_count = self.get_number_of_successful_realizations()
+        min_realization_count = self.minimum_required_realizations
+
+        if successful_realizations_count < min_realization_count:
+            raise TooFewRealizationsSucceeded(
+                successful_realizations_count, min_realization_count
+            )
+
+    @tracer.start_as_current_span(f"{__name__}.run_workflows")
+    def run_workflows(
+        self,
+        fixtures: HookedWorkflowFixtures,
+    ) -> None:
+        ensemble = getattr(fixtures, "ensemble", None)
+        experiment = ensemble.experiment if ensemble is not None else None
+        iteration = ensemble.iteration if ensemble is not None else None
+        try:
+            for workflow in self.hooked_workflows[fixtures.hook]:
+                if self._end_event.is_set():
+                    # Cancel all remaining workflows
+                    self._send_cancelled_workflow_events(
+                        workflow=workflow,
+                        hook=fixtures.hook,
+                        iteration=iteration,
+                    )
+                    continue
+
+                workflow_runner = WorkflowRunner(
+                    workflow=workflow,
+                    fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                    hook=str(fixtures.hook),
+                )
+                self._workflow_runner = workflow_runner
+                try:
+                    workflow_runner.run_blocking()
+                finally:
+                    self._workflow_runner = None
+                    self._send_workflow_events(
+                        workflow_runner=workflow_runner,
+                        hook=fixtures.hook,
+                        workflow_name=workflow.name,
+                        iteration=iteration,
+                    )
+        finally:
+            self._persist_workflow_events_to_storage(experiment)
+
+        if self._end_event.is_set():
+            raise UserCancelled("Experiment cancelled by user during workflows")
+
+    def _send_workflow_events(
+        self,
+        workflow_runner: WorkflowRunner,
+        hook: HookRuntime,
+        workflow_name: str,
+        iteration: int | None,
+    ) -> None:
+        events = [
+            WorkflowEvent(
+                run_id=self._workflow_run_id,
+                hook=str(hook),
+                workflow_name=workflow_name,
+                job_name=result.name,
+                job_index=result.index,
+                arguments=result.arguments,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                status=result.status,
+                timestamp=result.timestamp,
+                iteration=iteration,
+            )
+            for result in workflow_runner.workflow_job_results()
+        ]
+        for event in events:
+            self.send_event(event)
+        self._pending_workflow_events.extend(events)
+
+    def _send_cancelled_workflow_events(
+        self,
+        workflow: Workflow,
+        hook: HookRuntime,
+        iteration: int | None,
+    ) -> None:
+        # Report jobs not started due to cancellation
+        now = datetime.datetime.now(tz=datetime.UTC)
+        events = [
+            WorkflowEvent(
+                run_id=self._workflow_run_id,
+                hook=str(hook),
+                workflow_name=workflow.name,
+                job_name=job.name,
+                job_index=index,
+                arguments=[str(arg) for arg in args],
+                stdout="",
+                stderr="",
+                status=WorkflowJobStatus.CANCELLED,
+                timestamp=now,
+                iteration=iteration,
+            )
+            for index, (job, args) in enumerate(workflow)
+        ]
+        for event in events:
+            self.send_event(event)
+        self._pending_workflow_events.extend(events)
+
+    def _persist_workflow_events_to_storage(
+        self, experiment: Experiment | None
+    ) -> None:
+        # Hold back output until storage is created
+        if experiment is None or not self._pending_workflow_events:
+            return
+        try:
+            experiment.append_workflow_events(
+                event.model_dump_json() for event in self._pending_workflow_events
+            )
+        except Exception:
+            logger.exception("Failed to persist workflow events to storage")
+        self._pending_workflow_events = []
+
+    def _evaluate_and_postprocess(
+        self,
+        run_args: list[RunArg],
+        ensemble: Ensemble,
+        evaluator_server_config: EvaluatorServerConfig,
+    ) -> int:
+        try:
+            asyncio.run(
+                create_runpath(
+                    run_args=run_args,
+                    ensemble=ensemble,
+                    user_config_file=str(self.user_config_file),
+                    env_vars=self.env_vars,
+                    env_pr_fm_step=self.env_pr_fm_step,
+                    forward_model_steps=self.forward_model_steps,
+                    substitutions=self.substitutions,
+                    parameters_file=self.runpath_config.gen_kw_export_name,
+                    runpaths=self._runpaths,
+                    context_env=self._context_env,
+                    end_event=self._end_event,
+                    handle_runpath_creation_event=self.send_event,
+                )
+            )
+        except UserCancelled as e:
+            logger.debug("Run model cancelled - pre evaluation")
+            raise UserCancelled("Experiment cancelled by user in pre evaluation") from e
+
+        self.run_workflows(
+            fixtures=PreSimulationFixtures(
+                storage=self._storage,
+                ensemble=ensemble,
+                reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
+                random_seed=self.random_seed,
+                run_paths=self._runpaths,
+            ),
+        )
+
+        try:
+            successful_realizations = self.run_ensemble_evaluator(
+                run_args,
+                ensemble,
+                evaluator_server_config,
+            )
+        except UserCancelled:
+            self.active_realizations = [False for _ in self.active_realizations]
+            raise
+
+        starting_realizations = [real.iens for real in run_args if real.active]
+        failed_realizations = list(
+            set(starting_realizations) - set(successful_realizations)
+        )
+        for iens in failed_realizations:
+            self.active_realizations[iens] = False
+
+        num_successful_realizations = len(successful_realizations)
+        self.validate_successful_realizations_count()
+        logger.info(f"Experiment ran on QUEUESYSTEM: {self.queue_config.queue_system}")
+        logger.info(
+            f"Experiment ran with number of realizations: {len(starting_realizations)} "
+            f"out of a total {self.ensemble_size}"
+        )
+        logger.info(
+            f"Experiment run ended with number of realizations succeeding: "
+            f"{num_successful_realizations}"
+        )
+        logger.info(
+            f"Experiment run ended with number of realizations failing: "
+            f"{len(starting_realizations) - num_successful_realizations}"
+        )
+
+        # 0 means no violation
+        if self._max_parallelism_violation.amount > 0 and isinstance(
+            self._max_parallelism_violation.message, str
+        ):
+            logger.info(
+                "Warning displayed to user for NUM_CPU misconfiguration:\n"
+                f"{self._max_parallelism_violation.message}"
+            )
+            warnings.warn(
+                self._max_parallelism_violation.message,
+                PostExperimentWarning,
+                stacklevel=1,
+            )
+
+        self.run_workflows(
+            fixtures=PostSimulationFixtures(
+                storage=self._storage,
+                ensemble=ensemble,
+                reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
+                random_seed=self.random_seed,
+                run_paths=self._runpaths,
+            ),
+        )
+
+        return num_successful_realizations
+
+    @classmethod
+    def _merge_parameters_from_design_matrix(
+        cls,
+        parameters_config: list[ParameterConfig],
+        design_matrix: DesignMatrix | None,
+        rerun_failed_realizations: bool,
+    ) -> tuple[list[ParameterConfig], DesignMatrix | None]:
+        # If a design matrix is present, we try to merge design matrix parameters
+        # to the experiment parameters and set new active realizations
+        if design_matrix is not None and not rerun_failed_realizations:
+            try:
+                parameters_config = design_matrix.merge_with_existing_parameters(
+                    parameters_config
+                )
+
+            except ConfigValidationError as exc:
+                raise ErtRunError(str(exc)) from exc
+
+        return parameters_config, design_matrix

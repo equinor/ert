@@ -1,0 +1,306 @@
+"""Module for utility functions that do not belong elsewhere."""
+
+import math
+from collections import Counter
+from collections.abc import Hashable, Iterable
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
+import polars as pl
+from python_calamine import CalamineWorkbook
+
+
+def excel_sheet_names(filename: Path | str) -> list[str]:
+    with CalamineWorkbook.from_path(filename) as workbook:
+        return workbook.sheet_names
+
+
+def parameters_from_extern(filename: str) -> pd.DataFrame:
+    """Read parameter values or background values
+    from specified file. Format either Excel ('xlsx')
+    or csv.
+
+    Args:
+        filename (str): name of file
+    """
+    if not Path(filename).is_file():
+        raise ValueError(f"External file '{filename}' does not exist.")
+
+    if str(filename).endswith(".xlsx"):
+        return (
+            pd.read_excel(filename, engine="openpyxl")
+            .dropna(axis=0, how="all")
+            .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
+        )
+
+    if str(filename).endswith(".csv"):
+        return pd.read_csv(filename)
+
+    raise ValueError(
+        "External file with parameter values should "
+        "be on Excel or csv format "
+        "and end with .xlsx or .csv"
+    )
+
+
+def seeds_from_extern(filename: Path | str) -> list[int]:
+    """Read integer seed values from the first column of an Excel ('xlsx')
+    or csv/txt file. Blank cells and lines are skipped.
+
+    Args:
+        filename (str): name of file
+    """
+    if str(filename).endswith(".xlsx"):
+        seeds = pl.read_excel(
+            filename, has_header=False, read_options={"dtypes": "string"}
+        ).to_series(0)
+    elif str(filename).endswith((".csv", ".txt")):
+        seeds = pl.read_csv(filename, has_header=False, infer_schema=False).to_series(0)
+    else:
+        raise ValueError(
+            "External file with seed values should "
+            "be on Excel or csv format "
+            "and end with .xlsx .csv or .txt"
+        )
+
+    seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
+    try:
+        return seeds.cast(pl.Int64).to_list()
+    except pl.exceptions.InvalidOperationError as err:
+        raise ValueError(
+            f"Seed values in {str(filename)!r} must be integers: {err}"
+        ) from err
+
+
+def find_max_realisations(config: dict[str, Any]) -> int:
+    """Finds the maximum number of realisations over all sensitivity cases."""
+    max_reals = config.get("repeats", 0)
+    for sens_info in config["sensitivities"].values():
+        max_reals = max(sens_info.get("numreal", 0), max_reals)
+    assert max_reals > 0
+    return max_reals
+
+
+def printwarning(corr_group_name: str) -> None:
+    print(
+        "#######################################################\n"
+        "fmudesign Warning:                                     \n"
+        "Using designinput sheets where "
+        "corr_sheet is only specified for one parameter "
+        "will cause non-correlated parameters .\n"
+        f"ONLY ONE PARAMETER WAS SPECIFIED TO USE CORR_SHEET {corr_group_name}\n"
+        "\n"
+        "Note change in how correlated parameters are specified \n"
+        "from fmudesign version 1.0.1 in August 2019:\n"
+        "Name of correlation sheet must be specified for each "
+        "parameter in correlation matrix. \n"
+        "This to enable use of several correlation sheets. "
+        "This also means non-correlated parameters do not "
+        "have to be included in correlation matrix. \n "
+        "See documentation: \n"
+        "https://equinor.github.io/fmu-tools/"
+        "fmudesign.html#create-design-matrix-for-"
+        "one-by-one-sensitivities\n"
+        "\n"
+        "####################################################\n"
+    )
+
+
+def to_numeric_safe(val: float | str) -> int | float | str:
+    """Convert all values that CAN be converted to numeric. Retain the rest.
+    This used to be pd.to_numeric(..., errors='ignore'), but was deprecated.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': ['cat', '3.5', '-1', 0, 'dog']})
+    >>> df.map(to_numeric_safe).a.values
+    array(['cat', np.float64(3.5), np.int64(-1), 0, 'dog'], dtype=object)
+
+    >>> [to_numeric_safe(e) for e in [5, '3', 'dog']]
+    [5, np.int64(3), 'dog']
+
+    """
+    assert not isinstance(val, pd.Series | pd.DataFrame | list)
+    try:
+        return pd.to_numeric(val)  # noq
+    except (ValueError, TypeError):
+        return val
+
+
+def _raise_if_duplicates(container: Iterable[Hashable]) -> None:
+    """Raises a descriptive error if there are duplicates in the container."""
+    duplicates = {k: v for (k, v) in Counter(container).items() if v > 1}
+    if duplicates:
+        raise ValueError(f"Duplicates with counts: {duplicates}")
+
+
+def map_dependencies(
+    df: pd.DataFrame, *, dependencies: dict[str, Any], verbose: bool = False
+) -> pd.DataFrame:
+    """Return a new copy of `df` with dependencies mapped.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({'a': [1, 2, 3, 4], 'b': ['A', 'B', 'C', 'D']})
+    >>> dependencies = {'a': {'from_values': [1, 2, 3, 4],
+    ...                       'to_params':{'c': [1, 4, 9, 16]}}}
+    >>> map_dependencies(df, dependencies=dependencies)
+       a  b   c
+    0  1  A   1
+    1  2  B   4
+    2  3  C   9
+    3  4  D  16
+
+    A messy mix of numbers and strings:
+
+    >>> df = pd.DataFrame({'a': ['1', '2', 3, 4], 'b': ['A', 'B', 'C', 'D']})
+    >>> dependencies = {'a': {'from_values': ['1', 2, '3', 4],
+    ...                       'to_params':{'c': [1, 4, 9, '16']}}}
+    >>> map_dependencies(df, dependencies=dependencies)
+       a  b   c
+    0  1  A   1
+    1  2  B   4
+    2  3  C   9
+    3  4  D  16
+
+    If no `to_params` are given, then the `from` column is copied:
+
+    >>> dependencies = {'a': {'from_values': ['1', 2, '3', 4],
+    ...                       'to_params':{'c': [1, 4, 9, '16'],
+    ...                                    'd': []}}}
+    >>> map_dependencies(df, dependencies=dependencies)
+       a  b   c  d
+    0  1  A   1  1
+    1  2  B   4  2
+    2  3  C   9  3
+    3  4  D  16  4
+    """
+
+    df = df.copy()
+    for from_param, from_dict in dependencies.items():
+        # No column to map from
+        if from_param not in df.columns:
+            continue
+
+        from_values = [to_numeric_safe(value) for value in from_dict["from_values"]]
+        try:
+            _raise_if_duplicates(from_values)
+        except ValueError as err:
+            raise ValueError(
+                f"Duplicate dependency keys for {from_param!r}\n{err}"
+            ) from err
+
+        for to_param, to_values_ in from_dict["to_params"].items():
+            to_values = [to_numeric_safe(value) for value in to_values_]
+
+            # No values to map to => to_param = copy(from_param)
+            if not to_values:
+                df = df.assign(**{to_param: df[from_param].map(to_numeric_safe)})
+                if verbose:
+                    print(f"Copied {from_param!r} to {to_param!r}")
+                continue
+
+            if len(from_values) != len(to_values):
+                msg = (
+                    f"Mapping dependencies {from_param!r} to {to_param!r} failed.\n"
+                    f"Length mismatch.\nMapping from values: {from_values!r}"
+                    f"\nMapping to values: {to_values!r}"
+                )
+                raise ValueError(msg)
+
+            # At this point we have a mapping 'from_param' - > 'to_param'
+            # defined elementwise by values of 'from_values' -> 'to_values'
+            mapping = dict(zip(from_values, to_values, strict=False))
+
+            # Check that every value will be mapped
+            not_mapped = set(df[from_param].map(to_numeric_safe)) - set(from_values)
+            if not_mapped:
+                msg = (
+                    f"Mapping dependencies {from_param!r} to {to_param!r} using "
+                    f"mapping:\n{mapping!r}\n failed. The following values could "
+                    f"not be mapped:\n{not_mapped!r}"
+                )
+                raise ValueError(msg)
+
+            df = df.assign(
+                **{
+                    # Bind loop variables as default args to the lambda
+                    to_param: lambda df, from_param=from_param, mapping=mapping: (
+                        df[from_param].map(to_numeric_safe).map(mapping)
+                    )
+                }
+            )
+            if verbose:
+                print(
+                    f"Mapping dependency. From {from_param!r} "
+                    f"to {to_param!r} using map:"
+                )
+                for from_, to_ in mapping.items():
+                    print(f" {from_} => {to_}")
+
+    return df
+
+
+def find_sheet(name: str, names: list[str]) -> str:
+    """Search for Excel sheets with a soft matching. Raises ValueError if zero
+    or more than one match is found.
+
+    Examples:
+    >>> find_sheet('general_input', ['generalinput', 'designinput', 'defaultinput'])
+    'generalinput'
+    >>> find_sheet('variable_input', ['generalinput', 'designinput', 'defaultinput'])
+    Traceback (most recent call last):
+      ...
+    ValueError: No match for variable_input: ['generalinput', 'designinput', 'defaultinput']
+    """  # ruff: ignore[line-too-long]
+
+    def sanitize(inputstring: str) -> str:
+        return inputstring.lower().strip().replace("_", "")
+
+    found = [name_i for name_i in names if sanitize(name) == sanitize(name_i)]
+    if not found:
+        raise ValueError(f"No match for {name}: {names}")
+    if len(found) > 1:
+        raise ValueError(f"More than one match for {name}: {found}")
+    return found[0]
+
+
+def _has_value(value: Any) -> bool:
+    """Returns False only if the argument is np.nan"""
+    try:
+        return not np.isnan(value)
+    except TypeError:
+        return True
+
+
+def _is_int(teststring: str) -> bool:
+    """Test if string is a finite integer"""
+    try:
+        if not np.isnan(int(teststring)):
+            return math.isclose((float(teststring) % 1), 0, abs_tol=1e-14)
+    except ValueError:
+        return False
+    else:
+        return False  # It was a "number", but it was NaN.
+
+
+def resolve_path(target: str | None, *, base_file: str | None = None) -> str | None:
+    """Try to resolve the path of potential file 'target' either as relative to
+    'base_file' or cwd.
+    If not, return target.
+    """
+    if target is None:
+        return None
+
+    if (
+        base_file is not None
+        and (relative_path := Path(base_file).parent / target).is_file()
+    ):
+        return str(relative_path.resolve())
+
+    if (path := Path(target)).is_file():
+        return str(path.resolve())
+
+    return target

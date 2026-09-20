@@ -1,0 +1,532 @@
+import shutil
+from enum import StrEnum
+from pathlib import Path
+from textwrap import dedent
+
+import numpy as np
+import pytest
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
+from pytestqt.qtbot import QtBot
+from skimage import io, transform
+from skimage.metrics import structural_similarity as ssim
+
+from ert.gui.ertwidgets import ClosableDialog, CopyableLabel, TextBox
+from ert.gui.experiments import ExperimentPanel, RunDialog
+from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
+from ert.gui.experiments.view import RealizationWidget
+from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
+from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectionWidget
+from ert.gui.tools.load_results import LoadResultsPanel
+from ert.run_models import EnsembleExperiment, EnsembleSmoother, RunModel
+from ert.services import ErtServerController
+from ert.storage import open_storage
+from tests.ert.handle_runpath_dialog import handle_runpath_dialog
+from tests.ert.ui_tests.gui.conftest import open_gui_with_config
+
+from .conftest import get_child, wait_for_child
+
+# List of png files under docs that are either:
+#  - not screenshots of the gui
+# or:
+#  - screenshots of the gui tied to a specific version of ert that will not change
+# and are therefore not applicable for generation.
+# Not currently used, but left here as a convenience for future work on these tests
+# and in case we want to verify that all pngs under docs are tested for change unless
+# they are listed as not applicable
+PNGS_NOT_APPLICABLE_FOR_GENERATION = [
+    "docs/ert/theory/images/*",
+    "docs/ert/about/images/**/*.png",
+    "docs/ert/img/logo.png",
+    "docs/ert/reference/configuration/fig/*",
+    "docs/ert/getting_started/configuration/poly_new/minimal/warning.png",
+    "docs/ert/getting_started/configuration/poly_new/minimal/startdialog.png",
+    "docs/ert/getting_started/updating_parameters/fig/prior_response.png",
+    "docs/ert/getting_started/updating_parameters/fig/prior_params.png",
+    "docs/everest/images/*",
+    "docs/ert/getting_started/howto/illustrating_influence_range.png",
+]
+
+
+# List of png files under docs that could be tested for change
+# and generated, but that has not yet been added to a test.
+TODOS = [
+    "docs/ert/getting_started/configuration/poly_new/with_results/parameter_viewer.png",
+    "docs/ert/getting_started/updating_parameters/fig/update_report.png",
+    "docs/ert/getting_started/howto/select_prior_es-mda.png",
+    "docs/ert/getting_started/howto/ert_screenshot_adaptive_loc.png",
+]
+
+# List of png files under docs that have been added to a screenshot test
+PNGS_TESTED_FOR_CHANGE = [
+    "docs/ert/getting_started/configuration/poly_new/minimal/ert.png",
+    "docs/ert/getting_started/configuration/poly_new/minimal/simulations.png",
+    "docs/ert/getting_started/configuration/poly_new/with_simple_script/ert.png",
+    "docs/ert/getting_started/configuration/poly_new/with_results/poly_plot.png",
+    "docs/ert/getting_started/configuration/poly_new/with_results/plots.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/plot_obs.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_a.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_b.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_c.png",
+    "docs/ert/getting_started/configuration/poly_new/with_more_observations/coeff_b.png",
+    "docs/ert/getting_started/load_results_manually.png",
+]
+
+FIXED_RANDOM_SEED = 11223344
+
+COEFF_A_PNG_THRESHOLD = 0.9999
+COEFF_B_PNG_THRESHOLD = 0.9999
+COEFF_C_PNG_THRESHOLD = 0.9999
+ERT_PNG_THRESHOLD = 0.9999
+PLOT_OBS_PNG_THRESHOLD = 0.9999
+PLOTS_PNG_THRESHOLD = 0.9999
+POLY_PLOT_PNG_THRESHOLD = 0.9999
+SIMULATIONS_PNG_THRESHOLD = 0.9999
+LOAD_RESULTS_MANUALLY_PNG_THRESHOLD = 0.999
+
+
+class ExampleFolders(StrEnum):
+    MINIMAL = "minimal"
+    WITH_SIMPLE_SCRIPT = "with_simple_script"
+    WITH_RESULTS = "with_results"
+    WITH_OBSERVATIONS = "with_observations"
+    WITH_MORE_OBSERVATIONS = "with_more_observations"
+
+    @classmethod
+    def path(cls, example_folder: str) -> Path:
+        return Path("docs/ert/getting_started/configuration/poly_new") / example_folder
+
+
+def run_experiment(
+    qtbot: QtBot, experiment_mode: RunModel, gui: QWidget, *, click_done: bool = True
+) -> None:
+    # Select correct experiment in the simulation panel
+    experiment_panel = get_child(gui, ExperimentPanel)
+    simulation_mode_combo = get_child(experiment_panel, QComboBox)
+
+    simulation_mode_combo.setCurrentText(experiment_mode.display_name())
+
+    # Click start simulation and agree to the message
+    run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
+
+    def handle_dialog() -> None:
+        QTimer.singleShot(
+            500,
+            lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False),
+        )
+
+    if experiment_mode.name() not in {"Ensemble experiment", "Evaluate ensemble"}:
+        QTimer.singleShot(500, handle_dialog)
+
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+
+    if click_done:
+        # The Run dialog opens, click show details and wait until done appears
+        # then click it
+        run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
+        qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=600000)
+        qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+
+        # Assert that the number of boxes in the detailed view is
+        # equal to the number of realizations
+        realization_widget = run_dialog._tab_widget.currentWidget()
+        assert isinstance(realization_widget, RealizationWidget)
+
+        list_model = realization_widget._real_view.model()
+        assert (
+            list_model.rowCount()
+            == experiment_panel.config.runpath_config.num_realizations
+        )
+
+
+class GuiEvaluator:
+    def __init__(
+        self, source_root: Path, example_folder: str, gui: QWidget, qtbot
+    ) -> None:
+        self.gui_changed: list[str] = []
+        self.source_root: Path = source_root
+        self.example_folder: Path = Path(example_folder)
+        self.gui = gui
+        self.qtbot = qtbot
+
+    def compare_img_with_gui(
+        self, img_name: str, threshold: float = 0.99, widget: QWidget | None = None
+    ) -> None:
+        temp_image_path: Path = self.qtbot.screenshot(widget or self.gui)
+        new_img: np.ndarray = io.imread(temp_image_path, as_gray=True)
+
+        image_path = self.example_folder / img_name
+        baseline_path = self.source_root / image_path
+
+        # The ssim_score is a decimal value between -1 and 1, where:
+        #   1 indicates perfect similarity,
+        #   0 indicates no similarity,
+        #   and -1 indicates perfect anti-correlation.
+        ssim_score = (
+            self._get_ssim_score(new_img, io.imread(baseline_path, as_gray=True))
+            if baseline_path.is_file()
+            else 0
+        )
+
+        if ssim_score < threshold:
+            tmp_img_storage = Path("/tmp/test_docs_screenshots") / self.example_folder
+            tmp_img_storage.mkdir(exist_ok=True, parents=True)
+            generated_image_path = tmp_img_storage / img_name
+            shutil.copy(temp_image_path, generated_image_path)
+            self.gui_changed.append(
+                f"{image_path} SSIM:{ssim_score} < Threshold:{threshold} "
+                f"(generated image saved to {generated_image_path})"
+            )
+
+        temp_image_path.unlink()
+
+    def gui_change_detected(self) -> bool:
+        return len(self.gui_changed) > 0
+
+    @staticmethod
+    def _get_ssim_score(img1: np.ndarray, img2: np.ndarray) -> float:
+        # Images of different shape cannot be compared with ssim
+        if img1.shape != img2.shape:
+            img2 = transform.resize(img2, img1.shape, anti_aliasing=True)
+        return ssim(img1, img2, data_range=img1.max() - img1.min())
+
+    def change_report(self) -> str:
+        if not self.gui_change_detected():
+            return "No gui changes detected"
+
+        newline = "\n            - "
+        return dedent(
+            f"""
+            One or more auto-generated images differed from the baseline:
+
+            - {newline.join(self.gui_changed)}
+
+            If the new and old image(s) look the same and both are correct, the test
+            might simply need to lower the similarity threshold.
+
+            NB: Only update the repository with images that are generated in CI for
+            platform consistency. Use the artifact from Github actions.
+
+            If the updated image reflects an intended gui change it should be kept.
+            If the updated image seems incorrect the underlying code generating
+            the gui might need corrections or this test needs to be fixed.
+            """
+        )
+
+
+def set_data_type_selection_index(data_type_widget: QWidget, index: int) -> None:
+    data_type_widget.data_type_keys_widget.setCurrentIndex(
+        data_type_widget.filter_model.index(index, 0)
+    )
+
+
+def clean_up_diplayed_runpath(gui: QWidget):
+    experiment_panel = get_child(gui, ExperimentPanel)
+    single_test_run_panel = get_child(experiment_panel, SingleTestRunPanel)
+    runpath_label = get_child(single_test_run_panel, CopyableLabel)
+
+    current_directory = str(Path.cwd())
+    label_text = runpath_label.label.text()
+    runpath_label.label.setText(label_text.replace(current_directory, "&lt;cwd&gt;"))
+
+
+@pytest.fixture
+def open_gui_with_docs_example(monkeypatch, tmp_path, source_root: Path, request):
+    example_folder = request.param.get("example_folder")
+    config_file = request.param.get("config_file")
+    random_seed = request.param.get("random_seed")
+
+    monkeypatch.chdir(tmp_path)
+
+    def ignore_pngs(src, files: list[str]) -> list[str]:
+        return [f for f in files if f.endswith(".png")]
+
+    shutil.copytree(
+        source_root / example_folder,
+        tmp_path,
+        ignore=ignore_pngs,
+        dirs_exist_ok=True,
+    )
+
+    if random_seed is not None:
+        original_content = Path(config_file).read_text(encoding="utf-8")
+
+        combined_content = (
+            f"RANDOM_SEED {random_seed}\n" + original_content
+        )  # Add fixed random seed to make the plots reproducible
+
+        Path(config_file).write_text(combined_content, encoding="utf-8")
+
+    with open_gui_with_config(tmp_path / config_file) as gui:
+        yield gui
+
+
+@pytest.mark.screenshot_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.MINIMAL),
+            "config_file": "poly.ert",
+        }
+    ],
+    indirect=True,
+)
+def test_that_poly_new_minimal_screenshots_are_up_to_date(
+    monkeypatch, qtbot, source_root: Path, mocker, open_gui_with_docs_example
+):
+    # Set static values for disk space to not trigger false gui change detection
+    monkeypatch.setattr(DiskSpaceWidget, "_get_status", lambda self: (50, "100 GB"))
+    mocker.patch(
+        "ert.gui.experiments.run_dialog.get_mount_directory", return_value=Path("/")
+    )
+
+    example_folder = ExampleFolders.path(ExampleFolders.MINIMAL)
+    gui = open_gui_with_docs_example
+
+    gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
+    gui_evaluator.compare_img_with_gui("ert.png", ERT_PNG_THRESHOLD)
+
+    run_experiment(qtbot, EnsembleExperiment, gui)
+
+    # Set static values for dynamic labels to not trigger false gui change detection
+    run_dialog = get_child(gui, RunDialog)
+    run_dialog._on_ticker()
+    run_dialog._experiment_name_label.setText(
+        "Ensemble experiment : 2026-01-01T00:00:00+00:00"
+    )
+    run_dialog.running_time.setText("Running time:\n2 seconds")
+
+    gui_evaluator.compare_img_with_gui("simulations.png", SIMULATIONS_PNG_THRESHOLD)
+
+    assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+@pytest.mark.screenshot_test
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_SIMPLE_SCRIPT),
+            "config_file": "poly.ert",
+        }
+    ],
+    indirect=True,
+)
+def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
+    qtbot, source_root: Path, open_gui_with_docs_example
+):
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_SIMPLE_SCRIPT)
+    gui = open_gui_with_docs_example
+
+    clean_up_diplayed_runpath(gui)
+
+    gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
+    gui_evaluator.compare_img_with_gui("ert.png", ERT_PNG_THRESHOLD)
+
+    assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+@pytest.mark.screenshot_test
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_RESULTS),
+            "config_file": "poly.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
+def test_that_poly_new_with_results_screenshots_are_up_to_date(
+    qtbot, source_root: Path, open_gui_with_docs_example
+):
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_RESULTS)
+
+    gui = open_gui_with_docs_example
+
+    run_experiment(qtbot, EnsembleExperiment, gui)
+    open_storage(gui.ert_config.ens_path, mode="w")
+    gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
+
+    with ErtServerController.init_service(
+        project=Path(gui.ert_config.ens_path).absolute(),
+    ):
+        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+
+        gui_evaluator.compare_img_with_gui("poly_plot.png", POLY_PLOT_PNG_THRESHOLD)
+
+        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+        set_data_type_selection_index(data_type_widget, 1)
+
+        gui_evaluator.compare_img_with_gui("plots.png", PLOTS_PNG_THRESHOLD)
+
+    assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+@pytest.mark.screenshot_test
+def test_that_load_results_manually_screenshot_is_up_to_date(
+    qtbot, source_root: Path, ensemble_experiment_has_run_no_failure
+):
+    example_folder = Path("docs/ert/getting_started")
+    gui = ensemble_experiment_has_run_no_failure
+
+    gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
+
+    def handle_load_results_dialog() -> None:
+        dialog = wait_for_child(gui, qtbot, ClosableDialog)
+        panel = get_child(dialog, LoadResultsPanel)
+
+        runpath_edit = get_child(panel, TextBox, name="runpath_edit_lrm")
+        current_directory = str(Path.cwd())
+        runpath_edit.setText(runpath_edit.get_text.replace(current_directory, "."))
+        runpath_edit.clearFocus()
+
+        gui_evaluator.compare_img_with_gui(
+            "load_results_manually.png",
+            LOAD_RESULTS_MANUALLY_PNG_THRESHOLD,
+            widget=dialog,
+        )
+        dialog.close()
+
+    QTimer.singleShot(500, handle_load_results_dialog)
+    gui.load_results_tool.trigger()
+
+    assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+@pytest.mark.screenshot_test
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_OBSERVATIONS),
+            "config_file": "poly_final.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
+def test_that_poly_new_with_observations_screenshots_are_up_to_date(
+    qtbot, source_root: Path, open_gui_with_docs_example
+):
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_OBSERVATIONS)
+
+    gui = open_gui_with_docs_example
+
+    run_experiment(qtbot, EnsembleSmoother, gui)
+    open_storage(gui.ert_config.ens_path, mode="w")
+    gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
+
+    with ErtServerController.init_service(
+        project=Path(gui.ert_config.ens_path).absolute(),
+    ):
+        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+
+        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
+
+        selected_ensembles = ensemble_selector_widget._selected_ensembles
+
+        for index in range(selected_ensembles.count()):
+            item = selected_ensembles.item(index)
+            if not item.data(Qt.ItemDataRole.CheckStateRole):
+                selected_ensembles.slot_toggle_plot(item)
+        selected_ensembles.ensembleSelectionListChanged.emit()
+
+        gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
+
+        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+
+        for index, img, threshold in [
+            (1, "coeff_a.png", COEFF_A_PNG_THRESHOLD),
+            (2, "coeff_b.png", COEFF_B_PNG_THRESHOLD),
+            (3, "coeff_c.png", COEFF_C_PNG_THRESHOLD),
+        ]:
+            set_data_type_selection_index(data_type_widget, index)
+            gui_evaluator.compare_img_with_gui(img, threshold)
+
+    assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+@pytest.mark.screenshot_test
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(
+                ExampleFolders.WITH_MORE_OBSERVATIONS
+            ),
+            "config_file": "poly_final.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
+def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
+    qtbot, source_root: Path, open_gui_with_docs_example
+):
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_MORE_OBSERVATIONS)
+
+    gui = open_gui_with_docs_example
+
+    run_experiment(qtbot, EnsembleSmoother, gui)
+    open_storage(gui.ert_config.ens_path, mode="w")
+    gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
+
+    with ErtServerController.init_service(
+        project=Path(gui.ert_config.ens_path).absolute(),
+    ):
+        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+
+        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
+
+        selected_ensembles = ensemble_selector_widget._selected_ensembles
+        for index in range(selected_ensembles.count()):
+            item = selected_ensembles.item(index)
+            if not item.data(Qt.ItemDataRole.CheckStateRole):
+                selected_ensembles.slot_toggle_plot(item)
+        selected_ensembles.ensembleSelectionListChanged.emit()
+
+        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+        set_data_type_selection_index(data_type_widget, 2)
+
+        gui_evaluator.compare_img_with_gui("coeff_b.png", COEFF_B_PNG_THRESHOLD)
+
+    assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+def test_that_all_png_files_under_the_docs_folder_has_been_considered_for_testing(
+    source_root: Path,
+):
+    docs_folder = source_root / "docs"
+    pngs_files_in_docs = set(docs_folder.rglob("*.png"))
+
+    considered_pngs = {
+        file
+        for pattern in (
+            *PNGS_NOT_APPLICABLE_FOR_GENERATION,
+            *PNGS_TESTED_FOR_CHANGE,
+            *TODOS,
+        )
+        for file in source_root.glob(pattern)
+    }
+
+    uncategorized_png_files = {
+        str(file.relative_to(source_root))
+        for file in pngs_files_in_docs - considered_pngs
+    }
+
+    newline = "\n  - "
+    assert not uncategorized_png_files, (
+        "The following uncategorised png file(s) have been detected under the docs "
+        f"folder:\n  - {newline.join(uncategorized_png_files)}\n"
+        "If this is a screenshot of the gui consider adding a screenshot test for it\n"
+        "and add the filepath to PNGS_TESTED_FOR_CHANGE list.\n"
+        "Alternatively, add the filepath to either the TODOS or\n"
+        "PNGS_NOT_APPLICABLE_FOR_GENERATION lists"
+    )

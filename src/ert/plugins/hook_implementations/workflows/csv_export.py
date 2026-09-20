@@ -1,0 +1,151 @@
+import json
+from collections.abc import Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import pandas as pd
+import polars as pl
+
+from ert import ErtScript
+from ert.storage import Storage
+
+if TYPE_CHECKING:
+    from ert.storage import Ensemble
+
+
+def loadDesignMatrix(filename: Path) -> pd.DataFrame:
+    dm = pd.read_csv(filename, sep=r"\s+")
+    dm = dm.rename(columns={dm.columns[0]: "Realization"})
+    return dm.set_index(["Realization"])
+
+
+class CSVExportJob(ErtScript):
+    """Export of summary, misfit, design matrix data and gen kw into a single CSV file.
+
+    The script expects a single argument:
+
+        output_file: this is the path to the file to output the CSV data to
+
+    Optional arguments:
+
+        ensemble_list: a JSON string representation of a dictionary where keys are
+            UUID strings and values are ensemble names.
+            A single * can be used to export all ensembles
+
+        design_matrix: a path to a file containing the design matrix
+
+    The script also looks for default values for output path and design matrix
+    path to present in the GUI. These can be specified with DATA_KW keyword in
+    the config file:
+
+        DATA_KW <CSV_OUTPUT_PATH> {some path}
+        DATA_KW <DESIGN_MATRIX_PATH> {some path}
+    """
+
+    @staticmethod
+    def getName() -> str:
+        return "CSV Export"
+
+    @staticmethod
+    def getDescription() -> str:
+        return (
+            "Export GenKW, design matrix, misfit data "
+            "and summary data into a single CSV file."
+        )
+
+    def run(
+        self,
+        storage: Storage,
+        workflow_args: Sequence[str],
+    ) -> str:
+        output_file = workflow_args[0]
+        ensemble_data_as_json = None if len(workflow_args) < 2 else workflow_args[1]
+        design_matrix_path = None if len(workflow_args) < 3 else Path(workflow_args[2])
+        drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
+
+        ensemble_data_as_dict = (
+            json.loads(ensemble_data_as_json) if ensemble_data_as_json else {}
+        )
+
+        # Use the keys (UUIDs as strings) to get ensembles
+        ensembles: list[Ensemble] = []
+        for ensemble_id in ensemble_data_as_dict:
+            assert storage is not None
+            ensemble = storage.get_ensemble(ensemble_id)
+            ensembles.append(ensemble)
+
+        if design_matrix_path is not None:
+            if not design_matrix_path.exists():
+                raise UserWarning("The design matrix file does not exist!")
+
+            if not design_matrix_path.is_file():
+                raise UserWarning("The design matrix is not a file!")
+
+        data = pd.DataFrame()
+
+        for ensemble in ensembles:
+            if not ensemble.has_data():
+                raise UserWarning(
+                    f"The ensemble '{ensemble.name}' does not have any data!"
+                )
+
+            ensemble_data = ensemble.load_scalars().to_pandas().set_index("realization")
+            ensemble_data.columns.name = None
+            ensemble_data.index.name = "Realization"
+            ensemble_data = ensemble_data.sort_index(axis=1)
+
+            if design_matrix_path is not None:
+                design_matrix_data = loadDesignMatrix(design_matrix_path)
+                if not design_matrix_data.empty:
+                    ensemble_data = ensemble_data.join(design_matrix_data, how="outer")
+
+            misfit_data = ensemble.load_all_misfit_data()
+            if not misfit_data.is_empty():
+                misfit_data = misfit_data.to_pandas().set_index("Realization")
+                ensemble_data = ensemble_data.join(misfit_data, how="outer")
+            realizations = ensemble.get_realization_list_with_responses()
+
+            try:
+                summary_data = ensemble.load_responses("summary", tuple(realizations))
+            except (KeyError, ValueError):
+                summary_data = pl.DataFrame({})
+
+            if not summary_data.is_empty():
+                pivoted_summary = summary_data.pivot(  # ruff: ignore[pandas-use-of-dot-pivot-or-unstack]
+                    index=["realization", "time"], on="response_key", values="values"
+                ).to_pandas()
+
+                # Rename columns to match ensemble_data conventions before merge
+                pivoted_summary = pivoted_summary.rename(
+                    columns={"realization": "Realization", "time": "Date"}
+                )
+
+                # Reset index to make 'Realization' a regular column
+                ensemble_data = ensemble_data.reset_index()
+
+                ensemble_data = ensemble_data.merge(
+                    pivoted_summary,
+                    on="Realization",
+                    how="left",
+                )
+            else:
+                ensemble_data = ensemble_data.reset_index()
+                ensemble_data["Date"] = pd.NaT
+
+            ensemble_data["Iteration"] = ensemble.iteration
+            ensemble_data["Ensemble"] = ensemble.name
+            ensemble_data = ensemble_data.set_index(
+                ["Realization", "Iteration", "Date", "Ensemble"]
+            )
+
+            data = pd.concat([data, ensemble_data])
+
+        if drop_const_cols:
+            data = data.loc[:, (data != data.iloc[0]).any()]
+
+        data.to_csv(output_file, float_format="%.6f")
+
+        return (
+            f"Exported {len(data.index)} rows and {len(data.columns)} "
+            f"columns to {output_file}."
+        )

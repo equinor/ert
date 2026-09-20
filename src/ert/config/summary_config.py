@@ -1,0 +1,95 @@
+from __future__ import annotations
+
+import fnmatch
+import logging
+from typing import Any, Literal
+
+import polars as pl
+from pydantic import field_validator
+
+from ert.substitutions import substitute_runpath_name
+
+from ._read_summary import read_summary
+from .parsing import ConfigDict, ConfigKeys
+from .parsing.config_errors import ConfigValidationError, ConfigWarning
+from .response_config import SimulationResponseConfig, _warn_about_missing_responses
+
+logger = logging.getLogger(__name__)
+
+
+class SummaryConfig(SimulationResponseConfig):
+    type: Literal["summary"] = "summary"
+    has_finalized_keys: bool = False
+
+    @property
+    def expected_input_files(self) -> list[str]:
+        base = self.input_files[0]
+        return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
+
+    @field_validator("keys", mode="before")
+    @classmethod
+    def dedupe_and_sort_keys(cls, keys: list[str]) -> list[str]:
+        return sorted(set(keys))
+
+    def _warn_about_missing_summary_responses(
+        self, response_keys: list[str], filename: str
+    ) -> None:
+        keys_missing_responses = [
+            key for key in self.keys if not fnmatch.filter(response_keys, key)
+        ]
+        _warn_about_missing_responses(keys_missing_responses, "summary", filename)
+
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
+        filename = substitute_runpath_name(self.input_files[0], iens, iter_)
+        _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
+
+        self._warn_about_missing_summary_responses(keys, filename)
+        # Important: Pick lowest unit resolution to allow for using
+        # datetimes many years into the future
+        time_map_series = pl.Series(time_map).dt.cast_time_unit("ms")
+        df = pl.DataFrame(
+            {
+                "response_key": keys,
+                "time": [time_map_series for _ in data],
+                "values": [pl.Series(row, dtype=pl.Float32) for row in data],
+            }
+        )
+        df = df.explode("values", "time", empty_as_null=False)
+        return df.sort(by=["time"])
+
+    @property
+    def match_key(self) -> list[str]:
+        return ["time"]
+
+    @classmethod
+    def from_config_dict(cls, config_dict: ConfigDict) -> SummaryConfig | None:
+        if summary_keys := config_dict.get(ConfigKeys.SUMMARY, []):
+            eclbase: str | None = config_dict.get("ECLBASE")
+            if eclbase is None:
+                raise ConfigValidationError(
+                    "In order to use summary responses, ECLBASE has to be set."
+                )
+            fm_steps = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
+            names = [fm_step[0] for fm_step in fm_steps]
+            simulation_step_exists = any(
+                any(sim in name.lower() for sim in ["eclipse", "flow"])
+                for name in names
+            )
+            if not simulation_step_exists:
+                ConfigWarning.warn(
+                    "Config contains a SUMMARY key but no forward model "
+                    "steps known to generate summary files"
+                )
+            return cls(
+                input_files=[eclbase.replace("%d", "<IENS>")],
+                keys=[key for keys in summary_keys for key in keys],
+            )
+
+        return None
+
+    @classmethod
+    def display_column(cls, value: Any, column_name: str) -> str:
+        if column_name == "time":
+            return value.strftime("%Y-%m-%d")
+
+        return str(value)

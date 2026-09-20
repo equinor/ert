@@ -1,0 +1,370 @@
+import os
+import shutil
+from collections.abc import Callable, Mapping, Sequence
+from enum import EnumType
+from pathlib import Path
+from typing import Any, TypeVar
+
+from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
+from pydantic.dataclasses import dataclass
+
+from ._option_dict import option_dict, parse_variable_options
+from ._read_file import read_file
+from .config_errors import ConfigValidationError
+from .context_values import (
+    ContextBool,
+    ContextFloat,
+    ContextInt,
+    ContextList,
+    ContextValue,
+)
+from .deprecation_info import DeprecationInfo
+from .error_info import ErrorInfo
+from .file_context_token import FileContextToken
+from .schema_item_type import SchemaItemType
+
+T = TypeVar("T")
+
+
+@dataclass
+class Varies:
+    max_positionals: int
+
+
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class SchemaItem:
+    # The kw which identifies this item
+    kw: str
+
+    # The minimum number of arguments
+    argc_min: NonNegativeInt = 1
+
+    # The maximum number of arguments: None means no upper limit
+    argc_max: NonNegativeInt | None = 1
+
+    # A list of types for the items. Set along with argc_minmax()
+    type_map: list[SchemaItemType | EnumType | None] = Field(default_factory=list)
+
+    # A list of item's which must also be set (if this item is set). (can be NULL)
+    required_children: list[str] = Field(default_factory=list)
+
+    # Information about the deprecation if deprecated
+    deprecation_info: list[DeprecationInfo] = Field(default_factory=list)
+
+    # If positive, arguments after this count will be concatenated with a " " between
+    join_after: PositiveInt | None = None
+
+    # If positive, arguments after this count will be interpreted as options
+    options_after: NonNegativeInt | Varies | None = None
+
+    # If true, will accumulate many values set for key, otherwise each entry will
+    # overwrite any previous value set
+    multi_occurrence: bool = False
+
+    # Only applies to SchemaItemType.EXISTING_PATH_INLINE where
+    # the contents is then parsed
+    parser: Callable[[str, str], Any] = lambda x, y: y
+    expand_envvar: bool = True
+
+    # Index of tokens to do substitution from until end
+    substitute_from: NonNegativeInt = 1
+    required_set: bool = False
+    required_children_value: Mapping[str, list[str]] = Field(default_factory=dict)
+
+    @classmethod
+    def deprecated_dummy_keyword(cls, info: DeprecationInfo) -> "SchemaItem":
+        return SchemaItem(
+            kw=info.keyword,
+            deprecation_info=[info],
+            required_set=False,
+            argc_min=0,
+            argc_max=None,
+            multi_occurrence=True,
+        )
+
+    def token_to_value_with_context(
+        self, token: FileContextToken, index: int, keyword: FileContextToken, cwd: str
+    ) -> ContextValue | ContextList[ContextValue] | None:
+        """
+        Converts a FileContextToken to a value with context that
+        behaves like a value, but also contains its location in the file,
+        as well the keyword it pertains to and its location in the file.
+
+        :param token: the token to be converted
+        :param index: the index of the token
+        :param keyword: the keyword it pertains to
+        :param cwd: the current working directory of the file being parsed
+
+        :return: The token as a value with context of itself and its keyword
+        """
+
+        if not len(self.type_map) > index:
+            return token
+        val_type = self.type_map[index]
+        match val_type:
+            case None:
+                return token
+            case SchemaItemType.BOOL:
+                if token.lower() == "true":
+                    return ContextBool(True, token)
+                if token.lower() == "false":
+                    return ContextBool(False, token)
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a boolean value as argument {index + 1!r}",
+                    token,
+                )
+            case SchemaItemType.POSITIVE_INT:
+                try:
+                    val = int(token)
+                except ValueError as e:
+                    raise ConfigValidationError.with_context(
+                        f"{self.kw!r} must have an integer "
+                        f"value as argument {index + 1!r}",
+                        token,
+                    ) from e
+                if val > 0:
+                    return ContextInt(val, token)
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a positive integer "
+                    f"value as argument {index + 1!r}",
+                    token,
+                )
+            case SchemaItemType.INT:
+                try:
+                    return ContextInt(int(token), token)
+                except ValueError as e:
+                    raise ConfigValidationError.with_context(
+                        f"{self.kw!r} must have an integer "
+                        f"value as argument {index + 1!r}",
+                        token,
+                    ) from e
+            case SchemaItemType.FLOAT:
+                try:
+                    return ContextFloat(float(token), token)
+                except ValueError as e:
+                    raise ConfigValidationError.with_context(
+                        f"{self.kw!r} must have a number as argument {index + 1!r}",
+                        token,
+                    ) from e
+            case SchemaItemType.POSITIVE_FLOAT:
+                try:
+                    fval = float(token)
+                except ValueError as e:
+                    raise ConfigValidationError.with_context(
+                        f"{self.kw!r} must have a number as argument {index + 1!r}",
+                        token,
+                    ) from e
+                if fval > 0:
+                    return ContextFloat(fval, token)
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a positive float "
+                    f"value as argument {index + 1!r}",
+                    token,
+                )
+            case (
+                SchemaItemType.PATH
+                | SchemaItemType.EXISTING_FILE
+                | SchemaItemType.EXISTING_PATH
+                | SchemaItemType.EXISTING_PATH_INLINE
+            ):
+                path: str = str(token)
+                if not Path(token).is_absolute():
+                    path = str((Path(token.filename).parent / token).resolve())
+                if val_type != SchemaItemType.PATH:
+                    if (
+                        val_type == SchemaItemType.EXISTING_FILE
+                        and not Path(path).is_file()
+                    ):
+                        raise ConfigValidationError.with_context(
+                            f"{self.kw} {token} is not a file.",
+                            token,
+                        )
+                    if not Path(str(path)).exists():
+                        err = f'Cannot find file or directory "{token.value}". '
+                        if path != token:
+                            err += f"The configured value was {path!r} "
+                        raise ConfigValidationError.with_context(err, token)
+                    if not os.access(str(path), os.R_OK):
+                        raise ConfigValidationError.with_context(
+                            f'File "{path}" is not readable; please check read access.',
+                            token,
+                        )
+
+                assert isinstance(path, str)
+
+                if val_type == SchemaItemType.EXISTING_PATH_INLINE:
+                    return ContextList.with_values(
+                        token,
+                        [
+                            token.update(path),
+                            self.parser(path, read_file(path, token)),
+                        ],
+                    )
+                return token.update(path)
+            case SchemaItemType.EXECUTABLE:
+                absolute_path: Path | None
+                is_command = False
+                if not Path(token).is_absolute():
+                    # Try relative
+                    absolute_path = (Path(cwd) / token).resolve()
+                else:
+                    absolute_path = Path(token)
+                if not absolute_path.exists():
+                    potential_executable = shutil.which(token)
+                    if potential_executable is not None:
+                        absolute_path = Path(potential_executable)
+                        is_command = True
+                    else:
+                        raise ConfigValidationError.with_context(
+                            f"Could not find executable {token.value!r}", token
+                        )
+
+                if absolute_path.is_dir():
+                    raise ConfigValidationError.with_context(
+                        "Expected executable file, "
+                        f"but {token.value!r} is a directory.",
+                        token,
+                    )
+
+                if not os.access(absolute_path, os.X_OK):
+                    context = (
+                        f"{token.value!r} which was resolved to {absolute_path!r}"
+                        if token.value != str(absolute_path)
+                        else f"{token.value!r}"
+                    )
+                    raise ConfigValidationError.with_context(
+                        f"File not executable: {context}", token
+                    )
+                return token if is_command else token.update(value=str(absolute_path))
+            case SchemaItemType():
+                return token
+            case EnumType():
+                try:
+                    return val_type(str(token))
+                except ValueError:
+                    config_case = (
+                        val_type.ert_config_case()
+                        if hasattr(val_type, "ert_config_case")
+                        else None
+                    )
+                    match config_case:
+                        case "upper":
+                            valid_options = [v.value.upper() for v in val_type]  # type: ignore
+                        case "lower":
+                            valid_options = [v.value.lower() for v in val_type]  # type: ignore
+                        case _:
+                            valid_options = [v.value for v in val_type]  # type: ignore
+                    raise ConfigValidationError.with_context(
+                        (
+                            f"{self.kw!r} argument {index + 1!r} must be one of"
+                            f" {valid_options!r} was {token.value!r}"
+                        ),
+                        token,
+                    ) from None
+        raise ValueError(f"Unknown schema item {val_type}")
+
+    def apply_constraints(
+        self,
+        args: list[T],
+        keyword: FileContextToken,
+        cwd: str,
+    ) -> T | ContextValue | ContextList[T | ContextValue]:
+        errors: list[ErrorInfo | ConfigValidationError] = []
+        args_with_context: ContextList[T | Any] = ContextList(token=keyword)
+        for i, x in enumerate(args):
+            if isinstance(x, FileContextToken):
+                try:
+                    value_with_context = self.token_to_value_with_context(
+                        x, i, keyword, cwd
+                    )
+                    args_with_context.append(value_with_context)
+                except ConfigValidationError as err:
+                    errors.append(err)
+                    continue
+            else:
+                args_with_context.append(x)
+
+        if len(args) < self.argc_min:
+            errors.append(
+                ErrorInfo(
+                    message=f"{self.kw} must have at least {self.argc_min} arguments",
+                    filename=keyword.filename,
+                ).set_context(keyword)
+            )
+        elif self.argc_max is not None and len(args) > self.argc_max:
+            errors.append(
+                ErrorInfo(
+                    f"{self.kw} must have maximum {self.argc_max} arguments",
+                ).set_context(keyword)
+            )
+
+        if len(errors) > 0:
+            raise ConfigValidationError.from_collected(errors)
+
+        if self.argc_max == 1 and self.argc_min == 1:
+            return args_with_context[0]
+
+        return args_with_context
+
+    def join_args(self, line: list[FileContextToken]) -> list[FileContextToken]:
+        n = self.join_after
+        if n is not None and n < len(line):
+            joined = FileContextToken.join_tokens(line[n:], " ")
+            new_line = line[0:n]
+            if joined is not None:
+                new_line.append(joined)
+            return new_line
+        return line
+
+    def parse_options(
+        self, line: Sequence[FileContextToken]
+    ) -> Sequence[FileContextToken | dict[FileContextToken, FileContextToken]]:
+        n = self.options_after
+        if not line:
+            return []
+        if isinstance(n, Varies):
+            args, kwargs = parse_variable_options(list(line), n.max_positionals)
+            return [*args, kwargs]  # type: ignore
+        if n is not None:
+            return [*line[0:n], option_dict(line, n)]  # type: ignore
+        return line
+
+
+def float_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.FLOAT])
+
+
+def positive_float_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.POSITIVE_FLOAT])
+
+
+def int_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.INT])
+
+
+def positive_int_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.POSITIVE_INT])
+
+
+def string_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.STRING])
+
+
+def path_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.PATH])
+
+
+def existing_file_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_FILE])
+
+
+def existing_path_inline_keyword(
+    keyword: str, parser: Callable[[str, str], Any] = lambda _, y: y
+) -> SchemaItem:
+    return SchemaItem(
+        kw=keyword, type_map=[SchemaItemType.EXISTING_PATH_INLINE], parser=parser
+    )
+
+
+def single_arg_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, argc_max=1, argc_min=1)

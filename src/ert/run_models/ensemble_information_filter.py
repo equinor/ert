@@ -1,0 +1,43 @@
+from __future__ import annotations
+
+import functools
+import logging
+
+from ert.analysis import enif_update
+from ert.run_models.constants import PARAMETER_UPDATE
+from ert.run_models.ensemble_smoother import EnsembleSmoother
+from ert.run_models.run_model_configs import EnsembleInformationFilterConfig
+from ert.storage import Ensemble
+
+logger = logging.getLogger(__name__)
+
+
+class EnsembleInformationFilter(EnsembleInformationFilterConfig, EnsembleSmoother):
+    def update_ensemble_parameters(
+        self, prior: Ensemble, posterior: Ensemble, weight: float
+    ) -> None:
+        enif_update(
+            prior,
+            posterior,
+            parameters=prior.experiment.update_parameters,
+            observations=prior.experiment.observation_keys,
+            random_seed=self.random_seed,
+            progress_callback=functools.partial(
+                self.send_smoother_event,
+                prior.iteration,
+                prior.id,
+                posterior,
+            ),
+        )
+
+    @classmethod
+    def name(cls) -> str:
+        return "Ensemble Information Filter (Experimental)"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Sample parameters → evaluate → EnIF update → evaluate"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return PARAMETER_UPDATE

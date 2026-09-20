@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+import logging
+import math
+from typing import Annotated, Any, Literal
+
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+
+logger = logging.getLogger(__name__)
+
+
+DEFAULT_ENKF_TRUNCATION_EXACT = 1.0
+DEFAULT_ENKF_TRUNCATION_SUBSPACE = 0.98
+DEFAULT_LOCALIZATION = False
+DEFAULT_WEIGHTS = "4, 2, 1"
+
+
+def _upper(v: str) -> str:
+    return v.upper()
+
+
+InversionTypeES = Annotated[Literal["EXACT", "SUBSPACE"], BeforeValidator(_upper)]
+es_description = """
+    Deprecated. Use enkf_truncation instead.
+    truncation = 1.0 corresponds to EXACT inversion.
+    truncation < 1.0 corresponds to SUBSPACE inversion.
+    """
+
+loc_description = """
+    The default adaptive localization correlation threshold
+    is computed as 3/sqrt(ensemble_size), where ensemble_size
+    is the number of active realizations in the ensemble.
+
+    You can override this value by setting a custom threshold here or in the config.
+    """
+
+cust_loc_thresh_description = """
+    Adaptive localization correlation threshold:
+    """
+
+
+class ESSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    enkf_truncation: Annotated[
+        float,
+        Field(gt=0.0, le=1.0, title="Singular value truncation"),
+    ] = DEFAULT_ENKF_TRUNCATION_EXACT
+    inversion: Annotated[
+        InversionTypeES, Field(title="Inversion algorithm", description=es_description)
+    ] = "EXACT"
+    weights: str = DEFAULT_WEIGHTS
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_enkf_truncation_from_inversion(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "enkf_truncation" not in data:
+            inversion = str(data.get("inversion", "EXACT")).upper()
+            data["enkf_truncation"] = (
+                DEFAULT_ENKF_TRUNCATION_SUBSPACE
+                if inversion == "SUBSPACE"
+                else DEFAULT_ENKF_TRUNCATION_EXACT
+            )
+        return data
+
+    localization: Annotated[
+        bool, Field(title="Enable adaptive localization", description=loc_description)
+    ] = False
+    localization_correlation_threshold: Annotated[
+        float | None,
+        Field(
+            ge=0.0,
+            le=1.0,
+            title="Custom adaptive localization correlation threshold",
+            description=cust_loc_thresh_description,
+        ),
+    ] = None
+    distance_localization: Annotated[
+        bool, Field(title="Distance-based localization")
+    ] = False
+
+    def correlation_threshold(self, ensemble_size: int) -> float:
+        """Decides whether to use user-defined or default threshold.
+
+        Default threshold taken from luo2022,
+        Continuous Hyper-parameter Optimization (CHOP) in an ensemble Kalman filter
+        Section 2.3 - Localization in the CHOP problem
+        """
+        if self.localization_correlation_threshold is None:
+            return 3 / math.sqrt(ensemble_size)
+        return self.localization_correlation_threshold
+
+
+AnalysisModule = ESSettings

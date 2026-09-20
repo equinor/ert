@@ -1,0 +1,331 @@
+#!/usr/bin/env python
+import argparse
+import asyncio
+import json
+import logging
+import signal
+import socket
+import threading
+import time
+from functools import partial
+from pathlib import Path
+from textwrap import dedent
+
+import anyio
+from opentelemetry.trace import Status, StatusCode
+
+from _ert.threading import ErtThread
+from ert.config import QueueSystem
+from ert.services.ert_client import ErtClient
+from ert.storage.local_experiment import ExperimentState
+from ert.trace import trace
+from ert.utils import makedirs_if_needed
+from everest.config import EverestConfig, ServerConfig
+from everest.everserver import (
+    start_server,
+)
+from everest.strings import EVEREST
+from everest.util import (
+    version_info,
+)
+
+from .utils import (
+    ArgParseFormatter,
+    get_experiment_status,
+    handle_keyboard_interrupt,
+    remove_show_scaling_warning_setting,
+    run_empty_server_monitor,
+    run_server_monitor,
+    setup_logging,
+)
+
+logger = logging.getLogger(__name__)
+
+MAX_EVERSERVER_PENDING_TIME = 30 * 60  # 30 minutes
+
+# Measured from process startup to everserver is answering endpoints:
+MAX_EVERSERVER_READY_TIME = 10 * 60  # 10 minutes
+
+
+def everest_entry(args: list[str] | None = None) -> None:
+    """Entry point for running an optimization."""
+    parser = _build_args_parser()
+
+    options = parser.parse_args(args)
+
+    makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=True)
+    with setup_logging(options):
+        logger.info(version_info())
+        remove_show_scaling_warning_setting()
+
+        client_machine_hostname = socket.gethostname()
+        server_queue_system = options.config.server.queue_system.name
+        simulator_queue_system = options.config.simulator.queue_system.name
+
+        server_info_str = "The optimization will be run by an experiment server on " + (
+            f"this machine ({client_machine_hostname}). "
+            f"Pressing Ctrl+C will stop the optimization and exit."
+            if server_queue_system == QueueSystem.LOCAL
+            else f"the {server_queue_system} queue."
+        )
+
+        simulator_info_str = (
+            "The experiment server will submit the forward model to run on "
+        ) + (
+            f"this machine ({client_machine_hostname})"
+            if simulator_queue_system == QueueSystem.LOCAL
+            else f"the {simulator_queue_system} queue."
+        )
+
+        print(
+            "=======You are now running everest=======\n"
+            f"* Monitoring from this machine: {client_machine_hostname}.\n"
+            f"* {server_info_str}\n"
+            f"* {simulator_info_str}\n"
+            "=========================================\n"
+            + (
+                ""
+                if server_queue_system == QueueSystem.LOCAL
+                else "*Since the server is running on the queue, "
+                "pressing Ctrl+C will NOT stop the optimization, it will "
+                f"only shut down the monitoring on this "
+                f"machine ({client_machine_hostname}).\n"
+            ),
+        )
+
+        logger.info(
+            f"server runs on {server_queue_system}, "
+            f"simulator runs on {simulator_queue_system}"
+        )
+
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(
+                signal.SIGINT,
+                partial(signal.default_int_handler),
+            )
+
+        async def run_with_interrupt_handler() -> None:
+            try:
+                await run_everest(options)
+            except KeyboardInterrupt:
+                handle_keyboard_interrupt(signal.SIGINT, None, options)
+
+        asyncio.run(run_with_interrupt_handler())
+
+
+def _build_args_parser() -> argparse.ArgumentParser:
+    """Build arg parser"""
+
+    arg_parser = argparse.ArgumentParser(
+        description=dedent(
+            """
+            Start an optimization run.
+
+            Closing the console or interrupting the `everest run` process does
+            not terminate the optimization. To continue monitoring the running
+            optimization, use `everest monitor config_file.yml`. To stop a
+            running optimization, use `everest kill config_file.yml`.
+            """
+        ),
+        formatter_class=ArgParseFormatter,
+        usage="everest run <config_file> [arguments]",
+    )
+    arg_parser.add_argument(
+        "config",
+        type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
+        help="The path to the everest configuration file.",
+    )
+    arg_parser.add_argument(
+        "--new-run",
+        action="store_true",
+        help="DEPRECATED: This option is deprecated and has no effect. "
+        "Update your scripts accordingly.",
+    )
+    arg_parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Spawn a GUI monitoring simulation statuses.",
+    )
+    arg_parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Display debug information in the terminal.",
+    )
+    arg_parser.add_argument(
+        "--show-all-jobs",
+        action="store_true",
+        help=(
+            "DEPRECATED: This option no longer has an effect, "
+            "and will be removed in a future version."
+        ),
+    )
+    arg_parser.add_argument(
+        "--disable-monitoring",
+        action="store_true",
+        help=(
+            "Disable monitoring of the optimization run. "
+            "This will reduce the output to the terminal."
+        ),
+    )
+    return arg_parser
+
+
+async def run_everest(options: argparse.Namespace) -> None:
+
+    if experiment_already_running(options):
+        print(
+            "An optimization is currently running.\n"
+            "To monitor the running optimization use command:\n"
+            f"  `everest monitor {options.config.config_file}`\n"
+            "To kill the running optimization use command:\n"
+            f"  `everest kill {options.config.config_file}`"
+        )
+        return
+
+    config_dict = options.config.to_dict()
+    logger.info("Running everest with the following config:")
+    logger.info(json.dumps(config_dict, sort_keys=True, indent=2))
+    for fm_job in options.config.forward_model_step_commands:
+        job_name = fm_job.split()[0]
+        logger.info(f"EVEREST forward model contains job {job_name}")
+
+    async def directory_is_nonempty(path: Path) -> bool:
+        try:
+            async for _ in anyio.Path(path).iterdir():
+                return True
+        except OSError:  # Raised if the directory is empty
+            return False
+        else:
+            return False
+
+    if await anyio.Path(
+        options.config.simulation_dir
+    ).exists() and await directory_is_nonempty(options.config.simulation_dir):
+        warn_user_that_runpath_is_nonempty()
+
+    try:
+        output_dir = Path(options.config.output_dir)
+        options.config.write_to_file(
+            output_dir / options.config.config_file, drop_config_path=True
+        )
+    except (OSError, LookupError) as e:
+        logger.error(f"Failed to save optimization config: {e}")
+
+    logging_level = logging.DEBUG if options.debug else options.config.logging_level
+
+    submit_msg = (
+        "Submitting Everest server to the "
+        f"{options.config.server.queue_system.name} queue ..."
+    )
+    print(submit_msg)
+    logger.info(submit_msg)
+    pend_start_time: float = time.monotonic()
+    try:
+        await asyncio.wait_for(
+            start_server(options.config, logging_level),
+            timeout=MAX_EVERSERVER_PENDING_TIME,
+        )
+    except TimeoutError as e:
+        timeout_msg = (
+            "Everserver failed to start within the timeout "
+            f"({MAX_EVERSERVER_PENDING_TIME / 60:g} minutes)"
+        )
+        logger.error(timeout_msg)
+        raise SystemExit(timeout_msg) from e
+    if options.config.server.queue_system.name != QueueSystem.LOCAL:
+        start_msg = (
+            "Everserver started, pending time was "
+            f"{time.monotonic() - pend_start_time:g} seconds"
+        )
+        logger.info(start_msg)
+        print(start_msg)
+
+    print("Waiting for server to be ready...")
+    logger.debug(
+        f"Waiting up to {MAX_EVERSERVER_READY_TIME} "
+        "seconds for response from everserver"
+    )
+    wait_start_time: float = time.monotonic()
+    client = ErtClient.get_client(
+        Path(ServerConfig.get_session_dir(options.config.output_dir))
+    )
+    client.wait_for_server(timeout=MAX_EVERSERVER_READY_TIME)
+    print("Everest server ready - starting experiment")
+    logger.info(
+        "Got response from everserver after "
+        f"waiting for {time.monotonic() - wait_start_time:g} seconds. "
+        "Starting experiment"
+    )
+    experiment_id = client.start_experiment(config_dict)
+
+    # blocks until the run is finished
+    if options.gui:
+        from everest.gui.main import run_gui  # ruff: ignore[import-outside-top-level]
+
+        monitor_thread = ErtThread(
+            target=run_empty_server_monitor
+            if options.disable_monitoring
+            else run_server_monitor,
+            name="EVEREST CLI monitor thread",
+            args=[client, experiment_id],
+            daemon=True,
+        )
+        monitor_thread.start()
+        run_gui(options.config.output_dir)
+        monitor_thread.join()
+    elif options.disable_monitoring:
+        run_empty_server_monitor(
+            client=client,
+            experiment_id=experiment_id,
+        )
+    else:
+        run_server_monitor(
+            client=client,
+            experiment_id=experiment_id,
+        )
+
+    msg: str = ""
+    experiment_status = get_experiment_status(options.config.storage_dir)
+    if experiment_status and experiment_status.status == ExperimentState.failed:
+        msg = f"EVEREST run failed with: {experiment_status.message or 'Unknown error'}"
+        logger.error(msg)
+        err = SystemExit(msg)
+        span = trace.get_current_span()
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        raise err
+    if experiment_status:
+        msg = (
+            "EVEREST run finished with: "
+            f"{experiment_status.message or 'Experiment completed successfully'}"
+        )
+        logger.info(msg)
+        print(msg)
+
+
+def experiment_already_running(options: argparse.Namespace) -> bool:
+    try:
+        _ = ErtClient.get_client(
+            Path(ServerConfig.get_session_dir(options.config.output_dir)),
+            connect_timeout=1,
+        )
+    except TimeoutError:
+        return False
+    else:
+        return True
+
+
+def warn_user_that_runpath_is_nonempty() -> None:
+    print(
+        "EVEREST is running in an existing runpath.\n\n"
+        "Please be aware of the following:\n"
+        "- Previously generated results "
+        "might be overwritten.\n"
+        "- Previously generated files might "
+        "be used if not configured correctly.\n"
+    )
+    logging.getLogger(EVEREST).warning("EVEREST is running in an existing runpath")
+
+
+if __name__ == "__main__":
+    everest_entry()

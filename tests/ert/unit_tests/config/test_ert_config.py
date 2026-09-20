@@ -1,0 +1,3363 @@
+import datetime
+import json
+import logging
+import os.path
+import stat
+import warnings
+from pathlib import Path
+from textwrap import dedent
+from unittest.mock import MagicMock
+
+import polars as pl
+import pytest
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import strategies as st
+from lark import Token
+from pydantic import RootModel, TypeAdapter
+from xlsxwriter import Workbook
+
+from ert import ErtScript, ErtScriptWorkflow
+from ert.config import (
+    CircleShapeConfig,
+    ConfigValidationError,
+    ErtConfig,
+    ESSettings,
+    HookRuntime,
+    QueueSystem,
+    RFTConfig,
+    ShapeRegistry,
+)
+from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config.ert_config import (
+    RandomSeedGenerator,
+    _split_string_into_sections,
+    create_forward_model_json,
+    log_observation_keys,
+    log_shape_registry,
+)
+from ert.config.forward_model_step import (
+    ForwardModelStepPlugin,
+    SiteInstalledForwardModelStep,
+)
+from ert.config.parsing import ConfigKeys, ConfigWarning
+from ert.config.parsing.context_values import (
+    ContextBool,
+    ContextBoolEncoder,
+    ContextFloat,
+    ContextInt,
+    ContextList,
+    ContextString,
+)
+from ert.config.parsing.observations_parser import ObservationDict, ObservationType
+from ert.config.queue_config import LocalQueueOptions
+from ert.config.refcase import Refcase
+from ert.config.seismic_config import SeismicConfig
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
+from ert.shared import ert_share_path
+from ert.storage import LocalEnsemble, Storage
+from tests.ert.conftest import _create_design_matrix
+
+from .config_dict_generator import config_generators
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_config_can_include_existing_file():
+    config = dedent("""
+        INCLUDE include_me
+        NUM_REALIZATIONS 1
+        """)
+    rand_seed = 420
+    include_me_text = f"RANDOM_SEED {rand_seed}\n"
+
+    Path("config.ert").write_text(config, encoding="utf-8")
+    Path("include_me").write_text(include_me_text, encoding="utf-8")
+    ert_config = ErtConfig.from_file("config.ert")
+
+    assert ert_config.random_seed == rand_seed
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_config_path_substitution_is_the_name_of_the_configs_directory():
+    Path("minimal_config.ert").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
+    ert_config = ErtConfig.from_file("minimal_config.ert")
+
+    assert ert_config.config_path == str(Path.cwd())
+    assert ert_config.substitutions["<CONFIG_PATH>"] == str(Path.cwd())
+
+
+def test_runpath_file_is_absolute(monkeypatch, tmp_path):
+    """
+    There was an issue relating to `ErtConfig.runpath_file` returning a
+    relative path rather than an absolute path. This test simulates the
+    conditions that caused the original bug. That is, the user starts
+    somewhere else and points to the ERT config file using a relative
+    path.
+    """
+    config_path = tmp_path / "model/ert/config.ert"
+    workdir_path = tmp_path / "start/from/here"
+    runpath_path = tmp_path / "model/output/my_custom_runpath_path.foo"
+
+    config_path.parent.mkdir(parents=True)
+    workdir_path.mkdir(parents=True)
+    monkeypatch.chdir(workdir_path)
+
+    config_path.write_text(
+        dedent("""
+        DEFINE <FOO> foo
+        RUNPATH_FILE ../output/my_custom_runpath_path.<FOO>
+        -- Required for this to be a valid ErtConfig
+        NUM_REALIZATIONS 1
+        """),
+        encoding="utf-8",
+    )
+
+    config = ErtConfig.from_file(os.path.relpath(config_path, workdir_path))
+    assert config.runpath_file == runpath_path
+
+
+@pytest.mark.parametrize(
+    "run_mode",
+    [
+        HookRuntime.POST_SIMULATION,
+        HookRuntime.PRE_SIMULATION,
+        HookRuntime.PRE_FIRST_UPDATE,
+        HookRuntime.PRE_UPDATE,
+        HookRuntime.POST_UPDATE,
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_run_modes_can_be_selected(run_mode):
+    my_script = Path("my_script").resolve()
+    my_script.touch()
+    my_script.chmod(my_script.stat().st_mode | stat.S_IEXEC)
+    test_user_config = Path("user_config.ert")
+    test_user_config.write_text(
+        dedent(f"""JOBNAME Job%d
+        NUM_REALIZATIONS 10
+        LOAD_WORKFLOW {my_script} SCRIPT
+        HOOK_WORKFLOW SCRIPT {run_mode.name}
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file(test_user_config)
+    assert len(list(ert_config.hooked_workflows[run_mode])) == 1
+
+
+@pytest.mark.parametrize(
+    ("config_content", "expected"),
+    [
+        pytest.param("--Comment", "", id="Line comment"),
+        pytest.param(" --Comment", "", id="Line comment with whitespace"),
+        pytest.param("\t--Comment", "", id="Line comment with whitespace"),
+        pytest.param("KEY VALUE", "KEY VALUE\n", id="Config line"),
+        pytest.param("KEY VALUE --Comment", "KEY VALUE\n", id="Inline comment"),
+    ],
+)
+def test_logging_config(caplog, config_content, expected):
+    base_content = "Content of the configuration file (file_name):\n{}"
+    config_path = "file_name"
+
+    with caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file(config_path, config_content)
+    expected = base_content.format(expected)
+    assert expected in caplog.messages
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_custom_forward_models_are_logged(caplog):
+    localhack = Path("localhack.sh")
+    localhack.write_text("", encoding="utf-8")
+    localhack.chmod(localhack.stat().st_mode | stat.S_IEXEC)
+    Path("foo_fm").write_text(
+        f"-- A comment\n   \nEXECUTABLE {localhack}\n\n\n", encoding="utf-8"
+    )
+    Path("config.ert").write_text(
+        "NUM_REALIZATIONS 1\nINSTALL_JOB foo_fm foo_fm", encoding="utf-8"
+    )
+    with caplog.at_level(logging.INFO):
+        ErtConfig.from_file("config.ert")
+    assert (
+        "Custom forward_model_step foo_fm installed as: "
+        f"-- A comment\nEXECUTABLE {localhack}" in caplog.messages
+    )
+    assert (
+        sum("Custom forward_model_step" in logmessage for logmessage in caplog.messages)
+        == 1
+    ), "check if site-config fm were logged"
+
+
+def test_logging_with_comments(caplog):
+    """
+    Run logging on an actual config file with line comments
+    and inline comments to check the result
+    """
+
+    config = dedent(
+        """
+        NUM_REALIZATIONS 1 -- inline comment
+        -- Regular comment
+        ECLBASE PRED_RUN
+        SUMMARY *
+        """
+    )
+    with caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file("config.ert", config)
+    assert (
+        """
+NUM_REALIZATIONS 1
+ECLBASE PRED_RUN
+SUMMARY *"""
+        in caplog.text
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_parsing_workflows_gives_expected():
+    cwd = str(Path.cwd())
+
+    config_dict = {
+        ConfigKeys.LOAD_WORKFLOW_JOB: [
+            [cwd + "/workflows/UBER_PRINT", "print_uber"],
+            [cwd + "/workflows/HIDDEN_PRINT", "HIDDEN_PRINT"],
+        ],
+        ConfigKeys.LOAD_WORKFLOW: [
+            [cwd + "/workflows/MAGIC_PRINT", "magic_print"],
+            [cwd + "/workflows/NO_PRINT", "no_print"],
+            [cwd + "/workflows/SOME_PRINT", "some_print"],
+        ],
+        ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
+            ert_share_path() + "/workflows/jobs/shell",
+        ],
+        ConfigKeys.HOOK_WORKFLOW: [
+            ["magic_print", "POST_UPDATE"],
+            ["no_print", "PRE_UPDATE"],
+        ],
+        ConfigKeys.ENSPATH: "enspath",
+        ConfigKeys.NUM_REALIZATIONS: 1,
+    }
+
+    Path("workflows").mkdir()
+
+    Path("workflows/MAGIC_PRINT").write_text("print_uber\n", encoding="utf-8")
+    Path("workflows/NO_PRINT").write_text("print_uber\n", encoding="utf-8")
+    Path("workflows/SOME_PRINT").write_text("print_uber\n", encoding="utf-8")
+    Path("workflows/UBER_PRINT").write_text("EXECUTABLE ls\n", encoding="utf-8")
+    Path("workflows/HIDDEN_PRINT").write_text("EXECUTABLE ls\n", encoding="utf-8")
+
+    ert_config = ErtConfig.from_dict(config_dict)
+
+    # verify name generated from filename
+    assert "HIDDEN_PRINT" in ert_config.workflow_jobs
+    assert "print_uber" in ert_config.workflow_jobs
+
+    assert list(ert_config.workflows.keys()) == [
+        "magic_print",
+        "no_print",
+        "some_print",
+    ]
+
+    assert len(ert_config.hooked_workflows[HookRuntime.PRE_UPDATE]) == 1
+    assert len(ert_config.hooked_workflows[HookRuntime.POST_UPDATE]) == 1
+    assert len(ert_config.hooked_workflows[HookRuntime.PRE_FIRST_UPDATE]) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        INTERNAL True
+        """
+    )
+    plugin_file_contents = dedent(
+        """
+        SCRIPT plugin.py
+        INTERNAL True
+        """
+    )
+
+    script_file_path = Path.cwd() / "script"
+    plugin_file_path = Path.cwd() / "plugin"
+    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
+    Path(plugin_file_path).write_text(plugin_file_contents, encoding="utf-8")
+    Path("script.py").write_text(
+        dedent(
+            """
+            from ert import ErtScript
+
+            class Script(ErtScript):
+                def run(self, *args):
+                    pass
+            """
+        ),
+        encoding="utf-8",
+    )
+    Path("plugin.py").write_text(
+        dedent(
+            """
+            from ert.config import ErtPlugin
+
+            class Plugin(ErtPlugin):
+                def run(self, *args):
+                    pass
+            """
+        ),
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            LOAD_WORKFLOW_JOB {plugin_file_path} plugin
+            LOAD_WORKFLOW_JOB {script_file_path} script
+            """
+        ),
+        encoding="utf-8",
+    )
+    with pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"):
+        ert_config = ErtConfig.from_file("config.ert")
+
+    assert ert_config.workflow_jobs["plugin"].is_plugin()
+    assert not ert_config.workflow_jobs["script"].is_plugin()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_data_file_with_non_utf_8_character_gives_error_message():
+    data_file = "data_file.DATA"
+    Path("config.ert").write_text(
+        dedent("""
+            NUM_REALIZATIONS 1
+            DATA_FILE data_file.DATA
+            ECLBASE data_file_<ITER>
+            """),
+        encoding="utf-8",
+    )
+    Path(data_file).write_text(
+        dedent(
+            """
+            START
+            --  DAY   MONTH  YEAR
+            1    'JAN'  2017   /
+            """
+        ),
+        encoding="utf-8",
+    )
+    with Path(data_file).open("ab") as f:
+        f.write(b"\xff")
+    data_file_path = str(Path.cwd() / data_file)
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character "
+            f"'ÿ' found in file: {data_file_path!r}",
+        ),
+        pytest.warns(match="Failed to read NUM_CPU"),
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+def test_that_line_comments_are_ignored_in_the_config_file():
+    ert_config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1 -- foo -- bar -- 2
+        JOBNAME &SUM$VAR@12@#£¤< -- A comment
+        """
+    )
+    assert ert_config.runpath_config.num_realizations == 1
+    assert ert_config.runpath_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
+
+
+def test_that_strings_escape_comments():
+    ert_config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        JOBNAME " -- "
+        """
+    )
+    assert ert_config.runpath_config.jobname_format_string == " -- "
+
+
+@pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
+def test_that_num_realizations_is_a_required_keyword():
+    with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set"):
+        _ = ErtConfig.from_file_contents("NUM_REL 10\n")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_date_magic_string_is_substituted_with_todays_date():
+    test_config_file_base = "test"
+    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        """
+    )
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    ert_config = ErtConfig.from_file(test_config_file_name)
+
+    date_string = datetime.datetime.now().astimezone().date().isoformat()
+    expected_storage = Path(f"storage/{test_config_file_base}-{date_string}").resolve()
+    expected_run_path = f"{expected_storage}/runpath/realization-<IENS>/iter-<ITER>"
+    expected_ens_path = f"{expected_storage}/ensemble"
+    assert ert_config.ens_path == expected_ens_path
+    assert ert_config.runpath_config.runpath_format_string == expected_run_path
+
+
+def test_that_subst_list_is_given_default_runpath_file():
+    assert ErtConfig.from_file_contents("NUM_REALIZATIONS 1").substitutions[
+        "<RUNPATH_FILE>"
+    ] == str(Path(ErtConfig.DEFAULT_RUNPATH_FILE).resolve())
+
+
+@pytest.mark.slow
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@settings(max_examples=10)
+@given(config_generators())
+def test_that_creating_ert_config_from_dict_is_same_as_from_file(
+    tmp_path_factory, config_generator
+):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_values:
+        config_from_dict = ErtConfig.from_dict(
+            config_values.to_config_dict("config.ert", str(Path.cwd()))
+        )
+        config_from_file = ErtConfig.from_file(filename)
+
+        assert config_from_dict == config_from_file
+
+
+@pytest.mark.slow
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@settings(max_examples=20)
+@given(config_generators())
+def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_values:
+        ert_config = ErtConfig.from_dict(
+            config_values.to_config_dict("config.ert", str(Path.cwd()))
+        )
+        config_json = RootModel[ErtConfig](ert_config).model_dump(mode="json")
+        from_json = ErtConfig(**config_json)
+        assert from_json == ert_config
+
+
+def test_that_ert_config_has_valid_schema():
+    TypeAdapter(ErtConfig).json_schema()
+
+
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.slow
+@settings(max_examples=10)
+@given(config_generators())
+def test_that_parsing_ert_config_result_in_expected_values(
+    tmp_path_factory, config_generator
+):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_values:
+        ert_config = ErtConfig.from_file(filename)
+        assert ert_config.ens_path == config_values.enspath
+        assert ert_config.random_seed == config_values.random_seed
+        assert ert_config.queue_config.max_submit == config_values.max_submit
+        assert ert_config.user_config_file == str(Path(filename).resolve())
+        assert ert_config.config_path == str(Path.cwd())
+        assert str(ert_config.runpath_file) == str(
+            Path(config_values.runpath_file).resolve()
+        )
+        assert (
+            ert_config.runpath_config.num_realizations == config_values.num_realizations
+        )
+
+
+def test_default_ens_path():
+    # By default, the ensemble path is set to 'storage'
+    default_ens_path = ErtConfig.from_file_contents("NUM_REALIZATIONS 1\n").ens_path
+    # Set the ENSPATH in the config file
+    set_in_file_ens_path = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nENSPATH storage\n"
+    ).ens_path
+
+    assert Path(default_ens_path).resolve() == Path(set_in_file_ens_path).resolve()
+
+    dict_set_ens_path = ErtConfig.from_dict(
+        {
+            ConfigKeys.NUM_REALIZATIONS: 1,
+            "ENSPATH": str(Path.cwd() / "storage"),
+        }
+    ).ens_path
+
+    assert Path(dict_set_ens_path).resolve() == Path(default_ens_path).resolve()
+
+
+@pytest.mark.parametrize(
+    ("max_running_value", "expected_error"),
+    [
+        (100, None),
+        (-1, "Input should be greater than or equal to 0"),
+        ("not_an_integer", "Input should be a valid integer"),
+    ],
+)
+def test_queue_config_max_running_invalid_values(max_running_value, expected_error):
+    contents = dedent(
+        f"""
+        NUM_REALIZATIONS  1
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        QUEUE_SYSTEM LOCAL
+        QUEUE_OPTION LOCAL MAX_RUNNING {max_running_value}
+        """
+    )
+    if expected_error:
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match=expected_error,
+        ):
+            ErtConfig.from_file_contents(contents)
+    else:
+        ErtConfig.from_file_contents(contents)
+
+
+def test_negative_std_cutoff_raises_validation_error():
+    with pytest.raises(
+        ConfigValidationError, match="'STD_CUTOFF' must have a positive float"
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                STD_CUTOFF -1
+                """
+            )
+        )
+
+
+def test_that_non_existent_job_directory_gives_config_validation_error():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="Unable to locate job directory",
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                INSTALL_JOB_DIRECTORY does_not_exist
+                """
+            )
+        )
+
+
+def test_that_empty_job_directory_gives_warning(tmp_path):
+    (tmp_path / "empty").mkdir()
+    with pytest.warns(ConfigWarning, match="No files found in job directory"):
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  1
+                INSTALL_JOB_DIRECTORY {tmp_path / "empty"}
+                """
+            )
+        )
+
+
+def test_that_recursive_define_warns_when_early_liveness_detection_mechanism_triggers():
+    with pytest.warns(
+        ConfigWarning,
+        match="Gave up replacing in runpath/realization-<IENS>/iter-<ITER>/<A>."
+        "\nAfter replacing the value is now: "
+        "runpath/realization-<IENS>/iter-<ITER>/<A>.\n"
+        "This still contains the replacement value: <A>, "
+        "which would be replaced by <A>. Probably this causes a loop.",
+    ):
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <A> <A>
+                RUNPATH runpath/realization-<IENS>/iter-<ITER>/<A>
+                """
+            )
+        )
+
+
+def test_that_loading_non_existent_workflow_gives_validation_error():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match='Cannot find file or directory "does_not_exist"',
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                LOAD_WORKFLOW does_not_exist
+                """
+            )
+        )
+
+
+def test_that_loading_non_existent_workflow_job_gives_validation_error():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match='Cannot find file or directory "does_not_exist"',
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                LOAD_WORKFLOW_JOB does_not_exist
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_definition_file_with_unexecutable_script_gives_validation_error():
+    test_config_file_name = "test.ert"
+    job_definition_file = Path("not_executable").resolve()
+    job_name = "JOB_NAME"
+    Path(job_name).write_text(f"EXECUTABLE {job_definition_file}\n", encoding="utf-8")
+    job_definition_file.write_text("#!/bin/sh\n", encoding="utf-8")
+
+    Path(test_config_file_name).write_text(
+        dedent(
+            f"""
+                NUM_REALIZATIONS  1
+                LOAD_WORKFLOW_JOB {job_name}
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+    ):
+        _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.parametrize("c", ["\\", "?", "+", ":", "*"])
+@pytest.mark.filterwarnings("ignore:RUNPATH keyword contains no value placeholders")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_char_in_unquoted_is_allowed(c):
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            RUNPATH path{c}a/b
+            """
+        )
+    )
+    assert f"path{c}a/b" in ert_config.runpath_config.runpath_format_string
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*SCRIPT has no effect.*")
+def test_that_magic_strings_get_substituted_in_workflow():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        ARGLIST <A>
+        ARG_TYPE 0 INT
+        """
+    )
+    workflow_file_contents = dedent(
+        """
+        script <ZERO>
+        """
+    )
+    script_file_path = Path.cwd() / "script"
+    workflow_file_path = Path.cwd() / "workflow"
+    script_file_path.write_text(script_file_contents, encoding="utf-8")
+    workflow_file_path.write_text(workflow_file_contents, encoding="utf-8")
+
+    Path("script.py").write_text(
+        dedent(
+            """
+                from ert import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    Path("config.ert").write_text(
+        dedent(
+            f"""
+                NUM_REALIZATIONS 1
+                DEFINE <ZERO> 0
+                LOAD_WORKFLOW_JOB {script_file_path} script
+                LOAD_WORKFLOW {workflow_file_path}
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file("config.ert")
+
+    assert ert_config.workflows["workflow"].cmd_list[0][1] == ["0"]
+
+
+def test_that_unknown_job_gives_config_validation_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Could not find forward model step 'NO_SUCH_FORWARD_MODEL_STEP'",
+    ):
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                FORWARD_MODEL NO_SUCH_FORWARD_MODEL_STEP
+                """
+            )
+        )
+
+
+def test_that_unknown_hooked_job_gives_config_validation_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Cannot setup hook for non-existing job name 'NO_SUCH_JOB'",
+    ):
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                HOOK_WORKFLOW NO_SUCH_JOB PRE_SIMULATION
+                """
+            )
+        )
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
+@settings(max_examples=10)
+@given(config_generators())
+def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
+    tmp_path_factory, config_generator
+):
+    with config_generator(tmp_path_factory) as config_values:
+        config_dict = config_values.to_config_dict("test.ert", Path.cwd())
+        del config_dict[ConfigKeys.GRID]
+        assume(len(config_dict.get(ConfigKeys.FIELD, [])) > 0)
+        with pytest.raises(
+            ConfigValidationError,
+            match="In order to use the FIELD keyword, a GRID must be supplied",
+        ):
+            _ = ErtConfig.from_dict(config_dict)
+
+
+def test_that_include_statements_with_multiple_values_raises_error():
+    with pytest.raises(
+        ConfigValidationError, match="Keyword:INCLUDE must have exactly one argument"
+    ):
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                INCLUDE this and that and some-other
+                """
+            )
+        )
+
+
+@pytest.mark.slow
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@pytest.mark.usefixtures("use_tmpdir")
+@given(anystring=st.text())
+def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
+    assume(all(bracket not in anystring for bracket in "<>"))
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": anystring}}),
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
+    )
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert step_json["jobList"][0]["environment"]["FOO"] == anystring
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_dict(
+        {
+            "INSTALL_JOB": [
+                [
+                    "SOME_OTHER_STEP",
+                    ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py"),
+                ]
+            ],
+            "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
+        }
+    )
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+
+    assert "FOO" not in step_json["jobList"][0]["environment"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"foo": "bar"}}),
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
+    )
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+
+    assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": {"a_dict_as_value": 1}}}),
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
+    )
+
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert step_json["jobList"][0]["environment"]["FOO"] == "{'a_dict_as_value': 1}"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(
+            return_value={
+                "SOME_STEP": {
+                    "FOO": "bar_from_plugin",
+                    "STEP_LOCAL_VAR": "com_from_plugin",
+                }
+            }
+        ),
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "SETENV": [["FOO", "bar_from_setenv"]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
+    )
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert step_json["global_environment"]["FOO"] == "bar_from_setenv"
+    assert "FOO" not in step_json["jobList"][0]["environment"]
+    assert step_json["jobList"][0]["environment"]["STEP_LOCAL_VAR"] == "com_from_plugin"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_setenv_will_be_substituted_in_jobs_json():
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            SETENV FOO <NUM_CPU>
+            NUM_CPU 2
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert step_json["global_environment"]["FOO"] == "2"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"_ERT_RUNPATH": "0"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert (
+        step_json["jobList"][0]["environment"]["_ERT_RUNPATH"]
+        == "simulations/realization-0/iter-0"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_is_substituted_for_defines(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": "<SOME_ERT_DEFINE>"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            DEFINE <SOME_ERT_DEFINE> define_works
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert step_json["jobList"][0]["environment"]["FOO"] == "define_works"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_is_dropped_if_not_define_exists(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": "<WILL_NOT_BE_DEFINED>"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert "FOO" not in step_json["jobList"][0]["environment"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflows_with_errors_are_not_loaded():
+    """
+    The user may install several workflows with LOAD_WORKFLOW_DIRECTORY that
+    does not work with the current versions of plugins installed in the system,
+    but could have worked with an older or newer version of the packages installed.
+
+    Therefore the user should be warned about workflows that have issues, and not be
+    able to run those later. If a workflow with errors are hooked, then the user will
+    get an error indicating that there is no such workflow.
+    """
+    test_config_file_name = "test.ert"
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    # intentionally misspelled WFJOB as WFJAB
+    Path("wf").write_text("WFJAB hello world\n", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME JOOOOOB
+        LOAD_WORKFLOW_JOB WFJOB
+        LOAD_WORKFLOW wf
+        """
+    )
+
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+
+    with pytest.warns(
+        ConfigWarning,
+        match=r"Encountered the following error\(s\) while reading workflow 'wf'."
+        " It will not be loaded: .*WFJAB is not recognized",
+    ):
+        ert_config = ErtConfig.from_file(test_config_file_name)
+    assert "wf" not in ert_config.workflows
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_job_subdirectories_are_not_loaded():
+    test_config_file = Path("test.ert")
+    wfjob_dir = Path("WFJOBS")
+    wfjob_dir.mkdir()
+    (wfjob_dir / "wfjob").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    (wfjob_dir / "subdir").mkdir()
+    test_config_file.write_text(
+        dedent(
+            f"""
+            NUM_REALIZATIONS  1
+            JOBNAME JOOOOOB
+            WORKFLOW_JOB_DIRECTORY {wfjob_dir}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file(str(test_config_file))
+    assert "wfjob" in ert_config.workflow_jobs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_adding_a_workflow_twice_warns():
+    test_config_file_name = "test.ert"
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("wf").write_text("WFJOB hello world\n", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME JOOOOOB
+        LOAD_WORKFLOW_JOB WFJOB
+        LOAD_WORKFLOW wf
+        LOAD_WORKFLOW wf
+        """
+    )
+
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+
+    with pytest.warns(
+        ConfigWarning,
+        match=r"Workflow 'wf' was added twice",
+    ) as warnlog:
+        _ = ErtConfig.from_file(test_config_file_name)
+
+    assert any("test.ert: Line 6" in str(w.message) for w in warnlog)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "load_statement", ["LOAD_WORKFLOW_JOB wfs/WFJOB", "WORKFLOW_JOB_DIRECTORY wfs"]
+)
+def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_statement):
+    """
+    The user may install several workflow jobs with LOAD_WORKFLOW_JOB_DIRECTORY that
+    does not work with the current versions of plugins installed in the system,
+    but could have worked with an older or newer version of the packages installed.
+
+    Therefore the user should be warned about workflow jobs that have issues, and not be
+    able to run those later.
+    """
+    test_config_file_name = "test.ert"
+    Path("wfs").mkdir()
+    Path("wfs/WFJOB").write_text("SCRIPT wf_script.py\nINTERNAL True", encoding="utf-8")
+    Path("wf_script.py").write_text("", encoding="utf-8")
+    test_config_contents = dedent(
+        f"""
+        NUM_REALIZATIONS  1
+        {load_statement}
+        """
+    )
+
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+
+    with (
+        pytest.warns(
+            ConfigWarning, match="Loading workflow job.*failed.*It will not be loaded."
+        ),
+        pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"),
+    ):
+        ert_config = ErtConfig.from_file(test_config_file_name)
+    assert "wf" not in ert_config.workflows
+
+
+def test_that_define_statements_with_less_than_one_argument_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"DEFINE must have (two or more|at least 2) arguments",
+    ):
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <USER>
+                """
+            )
+        )
+
+
+def test_that_define_statements_with_more_than_one_argument_are_concatenated():
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS  1
+            DEFINE <TEST1> 111 222 333
+            DEFINE <TEST2> <TEST1> 444 555
+            """
+        )
+    )
+    assert ert_config.substitutions.get("<TEST1>") == "111 222 333"
+    assert ert_config.substitutions.get("<TEST2>") == "111 222 333 444 555"
+
+
+def test_that_define_can_set_substitutions_to_the_empty_string():
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS  1
+            DEFINE <TEST1> ""
+            """
+        )
+    )
+    assert ert_config.substitutions.get("<TEST1>") == ""  # ruff: ignore[compare-to-empty-string]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_quoted_arguments_to_define_escapes_spaces_and_comments():
+    ert_Config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            DEFINE <A> "A--string  "
+            NUM_REALIZATIONS 1
+            """
+        )
+    )
+    assert ert_Config.substitutions.get("<A>") == "A--string  "
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_include_statements_work():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE include.ert
+        """
+    )
+    test_include_file_name = "include.ert"
+    test_include_contents = dedent(
+        """
+        JOBNAME included
+        """
+    )
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.runpath_config.jobname_format_string == "included"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_included_files_uses_paths_relative_to_itself():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INCLUDE includes/install_jobs.ert
+        FORWARD_MODEL FM
+        """
+    )
+    Path("includes").mkdir()
+    test_include_file_name = "includes/install_jobs.ert"
+    test_include_contents = dedent(
+        """
+        INSTALL_JOB FM ../FM
+        """
+    )
+    test_fm_file_name = "FM"
+    test_fm_contents = dedent(
+        """
+        EXECUTABLE echo
+        """
+    )
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
+    Path(test_fm_file_name).write_text(test_fm_contents, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert ert_config.forward_model_steps[0].name == "FM"
+
+
+@pytest.mark.parametrize(("val", "expected"), [("TrUe", True), ("FaLsE", False)])
+def test_that_boolean_values_can_be_any_case(val, expected):
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            f"""
+            NUM_REALIZATIONS  1
+            STOP_LONG_RUNNING {val}
+            """
+        )
+    )
+    assert ert_config.queue_config.stop_long_running == expected
+
+
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
+def test_that_include_take_into_account_path():
+    """
+    Tests that use_new_parser resolves an issue
+    with the old parser where the first relative path
+    FORWARD_MODEL is chosen for all.
+    """
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE dir/include.ert
+        INSTALL_JOB job2 job2
+        FORWARD_MODEL job1
+        FORWARD_MODEL job2
+        """
+    )
+    test_include_file_name = "dir/include.ert"
+    test_include_contents = dedent(
+        """
+        INSTALL_JOB job1 job1
+        """
+    )
+    # The old parser tries to find dir/job2
+    Path("dir").mkdir()
+    Path("dir/job1").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("job2").write_text("EXECUTABLE ls\n", encoding="utf-8")
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert [i.name for i in ert_config.forward_model_steps] == [
+        "job1",
+        "job2",
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
+def test_that_substitution_happens_for_include():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <file> include.ert
+        INCLUDE dir/<file>
+        """
+    )
+    test_include_file_name = "dir/include.ert"
+    test_include_contents = dedent(
+        """
+        RUNPATH my_silly_runpath<ITER>-<IENS>
+        """
+    )
+    Path("dir").mkdir()
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert (
+        "my_silly_runpath<ITER>-<IENS>"
+        in ert_config.runpath_config.runpath_format_string
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
+def test_that_defines_in_included_files_has_immediate_effect():
+    test_config_file_name = "test.ert"
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS  1
+        INCLUDE dir/include.ert
+        RUNPATH <FOO>-<ITER>-<IENS>
+        DEFINE <FOO> bar
+        """
+    )
+    test_include_file_name = "dir/include.ert"
+    test_include_contents = dedent(
+        """
+        DEFINE <FOO> baz
+        """
+    )
+    Path("dir").mkdir()
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file(test_config_file_name)
+    assert "baz-<ITER>-<IENS>" in ert_config.runpath_config.runpath_format_string
+
+
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+def test_that_multiple_errors_are_shown_for_forward_model():
+    with pytest.raises(ConfigValidationError) as err:
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                FORWARD_MODEL does_not_exist
+                FORWARD_MODEL does_not_exist2
+                """
+            )
+        )
+
+    expected_nice_messages_list = [
+        (
+            "Line 3 (Column 15-29): "
+            "Could not find forward model step 'does_not_exist' "
+            "in list of installed forward model steps: []"
+        ),
+        (
+            "Line 4 (Column 15-30): "
+            "Could not find forward model step 'does_not_exist2' "
+            "in list of installed forward model steps: []"
+        ),
+    ]
+
+    cli_message = err.value.cli_message()
+
+    for msg in expected_nice_messages_list:
+        assert any(line.endswith(msg) for line in cli_message.splitlines())
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_redefine_behavior_is_consistent_with_setting_environment_variables():
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            DEFINE <X> 3
+            SETENV VAR <X>
+            DEFINE <X> 4
+            SETENV VAR2 <X>
+            """
+        )
+    )
+
+    assert ert_config.env_vars["VAR"] == "3"
+    assert ert_config.env_vars["VAR2"] == "4"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*SCRIPT has no effect.*")
+def test_parsing_workflow_with_multiple_args():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        ARGLIST <A> -r <B> -t <C>
+        """
+    )
+    workflow_file_contents = dedent(
+        """
+        script <ZERO>
+        """
+    )
+    script_file_path = Path.cwd() / "script"
+    workflow_file_path = Path.cwd() / "workflow"
+    script_file_path.write_text(script_file_contents, encoding="utf-8")
+    workflow_file_path.write_text(workflow_file_contents, encoding="utf-8")
+
+    Path("script.py").write_text(
+        dedent(
+            """
+                from ert import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+        ),
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        dedent(
+            f"""
+                NUM_REALIZATIONS 1
+                DEFINE <ZERO> 0
+                LOAD_WORKFLOW_JOB {script_file_path} script
+                LOAD_WORKFLOW {workflow_file_path}
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file("config.ert")
+
+    assert ert_config is not None
+
+
+@pytest.mark.parametrize("parameter", ["<ECLBASE>", "<RUNPATH>"])
+def test_no_warning_given_when_using_parameters_defined_by_ert_in_forward_model_steps(
+    caplog, recwarn, parameter
+):
+    """
+    This is a regression test for a bug where users would get a warning when
+    they used the parameters <ECLBASE> or <RUNPATH> as these were defined
+    after the arguments to the forward model step was checked.
+
+    """
+    caplog.set_level(logging.WARNING)
+    ErtConfig.from_dict(
+        {
+            "INSTALL_JOB": [
+                ["name", ("file", f"EXECUTABLE echo\nARGLIST {parameter}")]
+            ],
+            "FORWARD_MODEL": [["name", [(f"{parameter}=", f"A/{parameter}")]]],
+        }
+    )
+    for w in recwarn:
+        assert not issubclass(w.category, ConfigWarning)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_validate_no_logs_when_overwriting_with_same_value(caplog):
+    Path("step_file").write_text(
+        "EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n", encoding="utf-8"
+    )
+
+    with caplog.at_level(logging.INFO):
+        ert_config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            DEFINE <VAR1> 10
+            DEFINE <VAR2> 20
+            DEFINE <VAR3> 55
+            INSTALL_JOB step_name step_file
+            FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)
+            """
+        )
+        create_forward_model_json(
+            context=ert_config.substitutions,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            user_config_file=ert_config.user_config_file,
+            run_id="0",
+            iens=0,
+            itr=0,
+        )
+
+    assert (
+        "{'forward_model_step_name': 'step_name', 'key': {'<VAR3>': "
+        "{'private_arg': '5', 'global_arg': '55'}}}"
+    ) in caplog.text
+    assert ("'<VAR1>': {'private_arg':") not in caplog.text
+    assert ("'<VAR2>': {'private_arg':") not in caplog.text
+
+
+def test_that_unresolved_forward_model_placeholders_are_logged_at_startup(caplog):
+    class FM(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(name="FM", command=["something", "<arg1>", "<arg2>"])
+
+    with caplog.at_level(logging.INFO, logger="ert.config.ert_config"):
+        ert_config = ErtConfig.with_plugins(
+            ErtRuntimePlugins(installed_forward_model_steps={"FM": FM()})
+        ).from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.FORWARD_MODEL: [
+                    [
+                        "FM",
+                        [
+                            ["<arg1>", "<UNDEFINED_VARIABLE>"],
+                            ["<arg2>", "A/<ANOTHER_UNDEFINED_VARIABLE>"],
+                            "positional/<POSITIONAL_UNDEFINED>",
+                        ],
+                    ]
+                ],
+            }
+        )
+        fm_json = create_forward_model_json(
+            context=ert_config.substitutions,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            user_config_file=ert_config.user_config_file,
+            run_id="id",
+            iens=0,
+            itr=0,
+        )
+
+    assert ("Forward model step FM has unsubstituted variables: ") in caplog.text
+    assert "<UNDEFINED_VARIABLE>" in caplog.text
+    assert "<ANOTHER_UNDEFINED_VARIABLE>" in caplog.text
+    assert "<POSITIONAL_UNDEFINED>" in caplog.text
+    assert fm_json["jobList"][0]["argList"] == [
+        "<UNDEFINED_VARIABLE>",
+        "A/<ANOTHER_UNDEFINED_VARIABLE>",
+        "positional/<POSITIONAL_UNDEFINED>",
+    ]
+
+
+def test_that_successfully_substituted_forward_model_args_are_not_logged(caplog):
+    class FM(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(name="FM", command=["something", "<arg1>", "<arg2>"])
+
+    with caplog.at_level(logging.INFO, logger="ert.config.ert_config"):
+        ert_config = ErtConfig.with_plugins(
+            ErtRuntimePlugins(installed_forward_model_steps={"FM": FM()})
+        ).from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.DEFINE: [
+                    ["<ARG1>", "configured-value"],
+                    ["<ARG2>", "resolved"],
+                    ["<POSITIONAL>", "done"],
+                ],
+                ConfigKeys.FORWARD_MODEL: [
+                    [
+                        "FM",
+                        [
+                            ["<arg1>", "<ARG1>"],
+                            ["<arg2>", "A/<ARG2>"],
+                            "positional/<POSITIONAL>",
+                        ],
+                    ]
+                ],
+            }
+        )
+        fm_json = create_forward_model_json(
+            context=ert_config.substitutions,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            user_config_file=ert_config.user_config_file,
+            run_id="id",
+            iens=0,
+            itr=0,
+        )
+
+    assert "Forward model step FM has unsubstituted variables" not in caplog.text
+    assert fm_json["jobList"][0]["argList"] == [
+        "configured-value",
+        "A/resolved",
+        "positional/done",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("obsolete_analysis_keyword", "error_msg"),
+    [
+        ("ENKF_NCOMP", r"ENKF_NCOMP keyword\(s\) has been removed"),
+        (
+            "ENKF_SUBSPACE_DIMENSION",
+            r"ENKF_SUBSPACE_DIMENSION keyword\(s\) has been removed",
+        ),
+    ],
+)
+def test_that_removed_analysis_module_keywords_raises_error(
+    obsolete_analysis_keyword, error_msg
+):
+    with pytest.raises(
+        ConfigValidationError,
+        match=error_msg,
+    ):
+        _ = ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            f"ANALYSIS_SET_VAR STD_ENKF {obsolete_analysis_keyword} 1\n"
+        )
+
+
+def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(
+    caplog, tmp_path: Path
+):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("")
+    Path(config_file).chmod(0o000)
+    caplog.set_level(logging.WARNING)
+
+    with pytest.raises(ConfigValidationError, match="Permission"):
+        ErtConfig.from_file(config_file)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_context_types_are_json_serializable():
+    bf = ContextBool(val=False, token=None)
+    bt = ContextBool(val=True, token=None)
+    i = ContextInt(val=23, token=None)
+    s = ContextString(token=Token("typ", "hello", 1, 2, 3, 4, 5), filename="name")
+    fl = ContextFloat(val=4.2, token=None)
+    cl = ContextList.with_values(None, values=[bf, bt, i, s, fl])
+
+    payload = {
+        "context_bool_false": bf,
+        "context_bool_true": bt,
+        "context_int": i,
+        "context_str": s,
+        "context_float": fl,
+        "context_list": cl,
+    }
+
+    with Path("test.json").open("w", encoding="utf-8") as f:
+        json.dump(payload, f, cls=ContextBoolEncoder)
+
+    with Path("test.json").open(encoding="utf-8") as f:
+        r = json.load(f)
+
+    assert isinstance(r["context_bool_false"], bool)
+    assert isinstance(r["context_bool_true"], bool)
+    assert r["context_bool_false"] is False
+    assert r["context_bool_true"] is True
+    assert isinstance(r["context_int"], int)
+    assert isinstance(r["context_str"], str)
+    assert isinstance(r["context_float"], float)
+    assert isinstance(r["context_list"], list)
+
+
+def test_that_multiple_errors_are_shown_when_validating_observation_config(
+    file_context_token,
+):
+    with pytest.raises(ConfigValidationError) as err:
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
+                "OBS_CONFIG": (
+                    "obs_config",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SUMMARY,
+                                "name": "SUM1",
+                                "VALUE": "0.7",
+                                "ERROR": "0.07",
+                                "DATE": "2010-12-26",
+                            },
+                            context=file_context_token(),
+                        ),
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SUMMARY,
+                                "name": "SUM2",
+                                "ERROR": "0.05",
+                                "DATE": "2011-12-21",
+                                "KEY": "WOPR:OP1",
+                            },
+                            context=file_context_token(),
+                        ),
+                    ],
+                ),
+            }
+        )
+    expected_errors = [
+        'Missing item "KEY" in SUMMARY_OBSERVATION',
+        'Missing item "VALUE" in SUMMARY_OBSERVATION',
+    ]
+
+    for error in expected_errors:
+        assert error in str(err.value)
+
+
+def test_job_name_with_slash_fails_validation():
+    with pytest.raises(ConfigValidationError, match="JOBNAME cannot contain '/'"):
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\nJOBNAME dir/eclbase")
+
+
+def test_using_relative_path_to_eclbase_sets_jobname_to_basename():
+    assert (
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 100\nECLBASE dir/eclbase_%d"
+        ).runpath_config.jobname_format_string
+        == "eclbase_<IENS>"
+    )
+
+
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.parametrize(
+    "param_config", ["coeffs_priors", "template.txt output.txt coeffs_priors"]
+)
+def test_that_empty_params_file_gives_reasonable_error(tmpdir, param_config):
+    with tmpdir.as_cwd():
+        config = """
+        NUM_REALIZATIONS 1
+        GEN_KW COEFFS """
+        config += param_config
+
+        with Path("config.ert").open(mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        # Create an empty file named 'coeffs_priors'
+        with Path("coeffs_priors").open(mode="w", encoding="utf-8") as fh:
+            pass
+
+        # Create an empty file named 'template.txt'
+        with Path("template.txt").open(mode="w", encoding="utf-8") as fh:
+            pass
+
+        with pytest.raises(ConfigValidationError, match="No parameters specified in"):
+            ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.parametrize(
+    "max_running_queue_config_entry",
+    [
+        pytest.param(
+            """
+            MAX_RUNNING 6
+            QUEUE_OPTION LSF MAX_RUNNING 2
+            QUEUE_OPTION SLURM MAX_RUNNING 2
+            """,
+            id="general_keyword_max_running",
+        ),
+        pytest.param(
+            """
+            QUEUE_OPTION TORQUE MAX_RUNNING 6
+            MAX_RUNNING 2
+            """,
+            id="queue_option_max_running",
+        ),
+    ],
+)
+def test_queue_config_max_running_queue_option_has_priority_over_general_option(
+    max_running_queue_config_entry,
+):
+    assert (
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  100
+                DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+                RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+                ENSPATH <STORAGE>/ensemble
+                QUEUE_SYSTEM TORQUE
+                {max_running_queue_config_entry}
+                """
+            )
+        ).queue_config.max_running
+        == 6
+    )
+
+
+def test_that_local_config_overrides_site_config():
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            queue_options=LocalQueueOptions(max_running=6, submit_sleep=7)
+        )
+    ).from_file_contents(
+        """
+        NUM_REALIZATIONS  100
+        QUEUE_SYSTEM TORQUE
+        MAX_RUNNING 13
+        SUBMIT_SLEEP 14
+        """
+    )
+    assert config.queue_config.max_running == 13
+    assert config.queue_config.submit_sleep == 14
+    assert config.queue_config.queue_system == QueueSystem.TORQUE
+
+
+def test_warning_raised_when_summary_key_and_no_simulation_job_present():
+    with pytest.warns(
+        ConfigWarning,
+        match="Config contains a SUMMARY key but no forward model "
+        "steps known to generate summary files",
+    ):
+        ErtConfig.from_dict(
+            {
+                "SUMMARY": ["*"],
+                "ECLBASE": "RESULT_SUMMARY",
+                "INSTALL_JOB": [["name", ("file", "EXECUTABLE echo")]],
+                "FORWARD_MODEL": [["name"]],
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    "job_name",
+    [
+        "eclipse",
+        "eclipse100",
+        "flow",
+        "FLOW",
+        "ECLIPSE100",
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
+    # forward model step with <ECLBASE> and <RUNPATH> as arguments
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConfigWarning)
+        ErtConfig.from_dict(
+            {
+                "SUMMARY": ["*"],
+                "ECLBASE": "RESULT_SUMMARY",
+                "INSTALL_JOB": [[job_name, ("file", "EXECUTABLE echo")]],
+                "FORWARD_MODEL": [[job_name]],
+            }
+        )
+
+
+def test_warning_is_emitted_when_malformatted_runpath():
+    with warnings.catch_warnings(record=True, category=ConfigWarning) as all_warnings:
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 1
+                RUNPATH <STORAGE>/runpath/constant-realization-num/constant-iter-num
+                """
+            )
+        )
+    assert any(
+        ("RUNPATH keyword contains no value placeholders" in str(w.message))
+        for w in all_warnings
+    )
+
+
+@given(string=st.text(), section_length=st.integers())
+def test_split_string_into_sections(string, section_length):
+    split_string = _split_string_into_sections(string, section_length)
+    assert "".join(split_string) == string
+    if section_length > 0:
+        for section in split_string:
+            assert len(section) <= section_length
+    else:
+        split_string = [string]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "template_target",
+    ["<ECLBASE>.DATA", "foo/bar/ECLIPSEDECK-<IENS>.DATA"],
+)
+def test_warning_is_emitted_for_run_template(template_target):
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with pytest.warns(ConfigWarning, match="Use DATA_FILE instead of"):
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""\
+                NUM_REALIZATIONS 1
+                ECLBASE foo/bar/ECLIPSEDECK-<IENS>
+                RUN_TEMPLATE templates/ECLDECK.DATA {template_target}
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Use DATA_FILE instead of RUN_TEMPLATE.*")
+def test_warning_is_emitted_for_ecl_base_in_run_template():
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with pytest.warns(
+        ConfigWarning, match="Substitution template <ECL_BASE> is deprecated"
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 1
+                ECLBASE foo/bar/ECLIPSEDECK-<IENS>
+                RUN_TEMPLATE templates/ECLDECK.DATA <ECL_BASE>.DATA
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("eclbase_line", ["", "ECLBASE foo/bar/DECK"])
+def test_warning_is_not_emitted_for_random_run_template(eclbase_line):
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""\
+                NUM_REALIZATIONS 1
+                {eclbase_line}
+                RUN_TEMPLATE templates/ECLDECK.DATA foo/bar/OTHERDECK.DATA
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_warning_is_not_emitted_for_when_num_cpu_is_explicit():
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 1
+                NUM_CPU 8
+                ECLBASE foo/bar/ECLIPSEDECK-<IENS>
+                RUN_TEMPLATE templates/ECLDECK.DATA <ECLBASE>.DATA
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_parsing_define_within_workflow():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        ARGLIST one two
+        """
+    )
+    workflow_file_contents = dedent(
+        """
+        DEFINE <FOO> workflow_foo
+        DEFINE <FOO2> workflow_foo2
+        script <FOO> <FOO2>
+        """
+    )
+
+    workflow2_file_contents = dedent(
+        """
+        script <FOO2> <FOO>
+        """
+    )
+
+    script_file_path = Path.cwd() / "script"
+    workflow_file_path = Path.cwd() / "workflow"
+    workflow2_file_path = Path.cwd() / "workflow2"
+
+    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
+
+    Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
+
+    Path(workflow2_file_path).write_text(workflow2_file_contents, encoding="utf-8")
+
+    Path("script.py").write_text(
+        dedent(
+            """
+                from ert import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+        ),
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        dedent(
+            f"""
+                NUM_REALIZATIONS 1
+                DEFINE <FOO> ertconfig_foo
+                DEFINE <FOO2> ertconfig_foo2
+                LOAD_WORKFLOW_JOB {script_file_path} script
+                LOAD_WORKFLOW {workflow_file_path}
+                LOAD_WORKFLOW {workflow2_file_path}
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.warns(ConfigWarning, match="SCRIPT has no effect"):
+        ert_config = ErtConfig.from_file("config.ert")
+
+    # Expect overwritten defines within workflow scope
+    wf = ert_config.workflows["workflow"]
+    assert wf.cmd_list[0][1] == ["workflow_foo", "workflow_foo2"]
+
+    # Now expect the ertconfig ones, should not be overwritten
+    # by workflow 1's defines outside of its scope
+    wf2 = ert_config.workflows["workflow2"]
+    assert wf2.cmd_list[0][1] == ["ertconfig_foo2", "ertconfig_foo"]
+
+    assert ert_config.substitutions["<FOO>"] == "ertconfig_foo"
+    assert ert_config.substitutions["<FOO2>"] == "ertconfig_foo2"
+
+
+def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatch):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pl.DataFrame(
+            {
+                "REAL": ["not_a_valid_real"],
+                "a": [1],
+                "category": ["cat1"],
+            }
+        ),
+        pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
+    )
+    mock_design2params = SiteInstalledForwardModelStep(
+        name="DESIGN2PARAMS",
+        executable="/usr/bin/env",
+        arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
+    )
+    monkeypatch.setattr(
+        ErtConfig,
+        "PREINSTALLED_FORWARD_MODEL_STEPS",
+        {"DESIGN2PARAMS": mock_design2params},
+    )
+    with pytest.warns(
+        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                NUM_REALIZATIONS 1
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)"""
+        )
+    assert "DESIGN_MATRIX validation of DESIGN2PARAMS" in caplog.text
+
+
+def test_two_design2params_validates_design_matrix_merging(
+    tmp_path, caplog, monkeypatch
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    design_matrix_file2 = tmp_path / "my_design_matrix2.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pl.DataFrame(
+            {
+                "REAL": [0, 1],
+                "letters": ["x", "y"],
+            }
+        ),
+        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
+    )
+    _create_design_matrix(
+        design_matrix_file2,
+        pl.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
+        pl.DataFrame(),
+    )
+    mock_design2params = SiteInstalledForwardModelStep(
+        name="DESIGN2PARAMS",
+        executable="/usr/bin/env",
+        arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
+    )
+    monkeypatch.setattr(
+        ErtConfig,
+        "PREINSTALLED_FORWARD_MODEL_STEPS",
+        {"DESIGN2PARAMS": mock_design2params},
+    )
+    with pytest.warns(
+        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                NUM_REALIZATIONS 1
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                """
+        )
+
+
+def test_three_design2params_validates_design_matrix_merging(
+    tmp_path, caplog, monkeypatch
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    design_matrix_file2 = tmp_path / "my_design_matrix2.xlsx"
+    design_matrix_file3 = tmp_path / "my_design_matrix3.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pl.DataFrame(
+            {
+                "REAL": [0, 1],
+                "letters": ["x", "y"],
+            }
+        ),
+        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
+    )
+    _create_design_matrix(
+        design_matrix_file2,
+        pl.DataFrame(
+            {
+                "REAL": [0, 1],
+                "weirdly": ["x", "y"],
+            }
+        ),
+        pl.DataFrame([["b", 1], ["d", 2]], orient="row"),
+    )
+    _create_design_matrix(
+        design_matrix_file3,
+        pl.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
+        pl.DataFrame(),
+    )
+    mock_design2params = SiteInstalledForwardModelStep(
+        name="DESIGN2PARAMS",
+        executable="/usr/bin/env",
+        arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
+    )
+    monkeypatch.setattr(
+        ErtConfig,
+        "PREINSTALLED_FORWARD_MODEL_STEPS",
+        {"DESIGN2PARAMS": mock_design2params},
+    )
+    with pytest.warns(
+        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                NUM_REALIZATIONS 1
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                """
+        )
+
+
+def test_design_matrix_default_argument(tmp_path):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pl.DataFrame(
+            {
+                "REAL": [1],
+                "a": [1],
+                "category": ["cat1"],
+            }
+        ),
+        pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
+    )
+
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nDESIGN_MATRIX {design_matrix_file}"
+    )
+    assert config.analysis_config.design_matrix
+    assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
+    assert config.analysis_config.design_matrix.default_sheet is None
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_run_template_raises_configvalidationerror_with_more_than_two_arguments():
+    Path("template.txt").touch()
+    Path("input.txt").touch()
+    with pytest.raises(
+        ConfigValidationError, match="RUN_TEMPLATE must have maximum 2 arguments"
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+            NUM_REALIZATIONS 1
+            RUN_TEMPLATE template.txt input.txt excess_argument
+            """
+            )
+        )
+
+
+@pytest.fixture
+def setup_workflow_file():
+    workflow_file_path = Path.cwd() / "workflow"
+    workflow_file_path.write_text("TEST_SCRIPT", encoding="utf-8")
+
+    Path("config.ert").write_text(
+        dedent(
+            f"""
+                    NUM_REALIZATIONS 1
+
+                    LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                    HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
+                    """
+        ),
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
+def test_ert_script_hook_pre_experiment_but_asks_for_storage(monkeypatch):
+    class SomeScript(ErtScript):
+        def run(self, storage: Storage):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ert_script=SomeScript,
+    )
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Workflow job TEST_SCRIPT.*"
+        r"expected fixtures.*storage.*",
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
+def test_ert_script_hook_pre_experiment_but_asks_for_ensemble(monkeypatch):
+    class SomeScript(ErtScript):
+        def run(self, ensemble: LocalEnsemble):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ert_script=SomeScript,
+    )
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Workflow job TEST_SCRIPT.*"
+        r"expected fixtures.*ensemble.*",
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
+def test_ert_script_hook_pre_experiment_but_asks_for_random_seed(monkeypatch):
+    class SomeScript(ErtScript):
+        def run(self, random_seed: int):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ert_script=SomeScript,
+    )
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
+
+    ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
+def test_ert_script_hook_pre_experiment_essettings_fails(monkeypatch):
+    class SomeScript(ErtScript):
+        def run(self, es_settings: ESSettings):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ert_script=SomeScript,
+    )
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r".*It would work in these runtimes: "
+            r"PRE_UPDATE, POST_UPDATE, PRE_FIRST_UPDATE.*"
+        ),
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ert_script_hook_valid_essettings_succeed(monkeypatch):
+    workflow_file_path = Path.cwd() / "workflow"
+    workflow_file_path.write_text("TEST_SCRIPT", encoding="utf-8")
+
+    Path("config.ert").write_text(
+        dedent(
+            f"""
+                NUM_REALIZATIONS 1
+
+                LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                HOOK_WORKFLOW workflow_alias PRE_UPDATE
+                HOOK_WORKFLOW workflow_alias POST_UPDATE
+                HOOK_WORKFLOW workflow_alias PRE_FIRST_UPDATE
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    class SomeScript(ErtScript):
+        def run(self, es_settings: ESSettings):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ert_script=SomeScript,
+    )
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
+    ErtConfig.from_file("config.ert")
+
+
+def test_queue_options_are_joined_after_option_name():
+    assert (
+        ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            QUEUE_SYSTEM LSF
+            QUEUE_OPTION LSF LSF_RESOURCE select[bigmachine && Linux]
+            """
+        ).queue_config.queue_options.lsf_resource
+        == "select[bigmachine && Linux]"
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid_parameter_definition_name",
+    [
+        pytest.param("CWD UNIFORM 0 1", id="already_a_magic_string"),
+        pytest.param("realization UNIFORM 0 1", id="realization_is_reserved"),
+        pytest.param("ITER UNIFORM 0 1", id="ITER_is_reserved"),
+        pytest.param("IENS UNIFORM 0 1", id="IENS_is_reserved"),
+        pytest.param("a UNIFORM 0 1", id="already_defined_in_user_config"),
+    ],
+)
+def test_validation_error_on_invalid_parameter_name(
+    invalid_parameter_definition_name, tmp_path: Path
+):
+    (tmp_path / "coeffs_priors").write_text(
+        invalid_parameter_definition_name, encoding="utf-8"
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Found reserved parameter name\(s\): \w+. The names are already "
+            "in use as magic strings or defined in the user config."
+        ),
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                DEFINE <a> 3
+                NUM_REALIZATIONS 1
+                GEN_KW COEFFS {tmp_path}/coeffs_priors
+                """
+        )
+
+
+@pytest.mark.parametrize(
+    "invalid_parameter_name",
+    [
+        pytest.param("CWD", id="already_a_magic_string"),
+        pytest.param("ITER", id="ITER_is_reserved"),
+        pytest.param("IENS", id="IENS_is_reserved"),
+        pytest.param("RMS_SEED", id="already_defined_in_user_config"),
+    ],
+)
+def test_validation_error_on_invalid_design_matrix_parameter_name(
+    invalid_parameter_name, tmp_path
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pl.DataFrame(
+            {
+                invalid_parameter_name: [0.55, 0.80],
+            }
+        ),
+        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Found reserved parameter name\(s\): \w+. The names are already "
+            "in use as magic strings or defined in the user config."
+        ),
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                DEFINE <RMS_SEED> -20
+                NUM_REALIZATIONS 1
+                DESIGN_MATRIX {tmp_path}/my_design_matrix.xlsx
+                """
+        )
+
+
+@pytest.mark.filterwarnings("ignore:.*RUNPATH keyword contains no value placeholders.*")
+def test_that_the_runpath_keyword_sets_the_runpath_substitution():
+    assert (
+        ErtConfig.from_dict({"RUNPATH": "my/runpath"}).substitutions["<RUNPATH>"]
+        == "my/runpath"
+    )
+
+
+@pytest.mark.parametrize("eclbase_substitution", ["<ECLBASE>", "<ECL_BASE>"])
+def test_that_the_eclbase_keyword_sets_the_eclbase_substitution(eclbase_substitution):
+    datafile = "input.data"
+    assert (
+        ErtConfig.from_dict(
+            {
+                "ECLBASE": datafile,
+                "JOBNAME": "job<IENS>",
+            }
+        ).substitutions[eclbase_substitution]
+        == datafile
+    )
+
+
+def test_that_user_envvars_overrides_site_envvars():
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            environment_variables={
+                "A": "site_A",
+                "B": "site_B",
+                "C": "site_C",
+                "D": "site_D",
+            }
+        )
+    ).from_file_contents(
+        user_config_contents=dedent(
+            """
+            NUM_REALIZATIONS  100
+            SETENV A users_A
+            SETENV B users_B
+            SETENV C users_C
+            """
+        ),
+    )
+
+    assert config.env_vars == {
+        "A": "users_A",
+        "B": "users_B",
+        "C": "users_C",
+        "D": "site_D",
+    }
+
+
+def test_that_site_envvars_are_substituted():
+    """
+     Used from site configurations to set parallelization-related envvars
+     to the same as NUM_CPU.
+
+     Old behavior of ERT site config:
+
+    "SETENV OMP_NUM_THREADS <NUM_CPU>",  # OpenMP
+    "SETENV MKL_NUM_THREADS <NUM_CPU>",  # Intel Math Kernel Library
+    "SETENV NUMEXPR_NUM_THREADS <NUM_CPU>",  # NumExpr library in Python
+
+    """
+
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            environment_variables={
+                "A": "<NUM_CPU>",
+            }
+        )
+    ).from_file_contents(
+        user_config_contents=dedent(
+            """
+            NUM_REALIZATIONS  100
+
+            NUM_CPU 1337
+            """
+        ),
+    )
+
+    assert config.env_vars == {
+        "A": "1337",
+    }
+
+
+def test_that_rewriting_envvars_warn_distinctly_for_site_and_user(caplog):
+    with caplog.at_level(logging.WARNING):
+        ErtConfig.with_plugins(
+            ErtRuntimePlugins(
+                environment_variables={
+                    "A": "<NUM_CPU>",
+                }
+            )
+        ).from_file_contents(
+            user_config_contents=dedent(
+                """
+                NUM_REALIZATIONS  100
+
+                NUM_CPU 1337
+                SETENV A 999
+                SETENV A 998
+                """
+            ),
+        )
+
+    assert ([m for m in caplog.messages if "re-written by user" in m]) == [
+        "Site configured environment variable A re-written by user: 1337->999",
+        "User configured environment variable A re-written by user: 999->998",
+    ]
+
+
+def test_that_user_forward_models_overwrite_site_forward_models(
+    monkeypatch, tmp_path, caplog
+):
+    monkeypatch.chdir(tmp_path)
+
+    site_exec = Path("site_echo")
+    site_exec.write_text("echo site", encoding="utf-8")
+    site_exec.chmod(site_exec.stat().st_mode | stat.S_IXUSR)
+
+    user_exec = Path("user_echo")
+    user_exec.write_text("echo user", encoding="utf-8")
+    user_exec.chmod(user_exec.stat().st_mode | stat.S_IXUSR)
+
+    Path("deletor.txt").write_text("EXECUTABLE user_echo", encoding="utf-8")
+
+    class SiteDeleteDirectory(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORY",
+                command=["site_echo"],
+            )
+
+    class SiteDeleteDirectories(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORIES",
+                command=["site_echo"],
+            )
+
+    class SiteDeleteDirectoryz(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORYZ",
+                command=["site_echo"],
+            )
+
+    with caplog.at_level(logging.INFO):
+        config = ErtConfig.with_plugins(
+            ErtRuntimePlugins(
+                installed_forward_model_steps={
+                    "DELETE_DIRECTORY": SiteDeleteDirectory(),
+                    "DELETE_DIRECTORIES": SiteDeleteDirectories(),
+                    "DELETE_DIRECTORYZ": SiteDeleteDirectoryz(),
+                },
+            )
+        ).from_file_contents(
+            user_config_contents=dedent(
+                """
+                NUM_REALIZATIONS  100
+
+                INSTALL_JOB DELETE_DIRECTORY deletor.txt
+                INSTALL_JOB DELETE_DIRECTORIES deletor.txt
+                INSTALL_JOB DELETE_DIRECTORYZ deletor.txt
+                INSTALL_JOB DELETE_DIRECTORZ deletor.txt
+                FORWARD_MODEL DELETE_DIRECTORY
+                """
+            ),
+        )
+
+    assert len(config.forward_model_steps) == 1
+    fm_step = config.forward_model_steps[0]
+    assert "user_echo" in fm_step.executable
+
+    assert (
+        "The following forward model steps from site configurations have "
+        "been overwritten by user: "
+        "['DELETE_DIRECTORIES', 'DELETE_DIRECTORY', 'DELETE_DIRECTORYZ']"
+    ) in caplog.messages
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    ("existing_suffix", "expected_suffix"),
+    [
+        pytest.param(
+            "UNSMRY",
+            "SMSPEC",
+        ),
+        pytest.param(
+            "SMSPEC",
+            "UNSMRY",
+        ),
+    ],
+)
+def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
+    refcase_file = "missing_refcase_file"
+
+    with Path(refcase_file + "." + existing_suffix).open(
+        "w+", encoding="utf-8"
+    ) as refcase_writer:
+        refcase_writer.write("")
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"Could not find .* {refcase_file}",
+    ):
+        _ = Refcase.from_config_dict(
+            config_dict={
+                ConfigKeys.REFCASE: refcase_file,
+            },
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_refcase_fails_on_non_sensical_refcase_file():
+    refcase_file = "CEST_PAS_UNE_REFCASE"
+    refcase_file_content = """
+_________________________________________     _____    ____________________
+\\______   \\_   _____/\\_   _____/\\_   ___ \\   /  _  \\  /   _____/\\_   _____/
+ |       _/|    __)_  |    __)  /    \\  \\/  /  /_\\  \\ \\_____  \\  |    __)_
+ |    |   \\|        \\ |     \\   \\     \\____/    |    \\/        \\ |        \\
+ |____|_  /_______  / \\___  /    \\______  /\\____|__  /_______  //_______  /
+        \\/        \\/      \\/            \\/         \\/        \\/         \\/
+"""
+    with Path(refcase_file + ".UNSMRY").open(
+        "w+", encoding="utf-8"
+    ) as refcase_file_handler:
+        refcase_file_handler.write(refcase_file_content)
+    with Path(refcase_file + ".SMSPEC").open(
+        "w+", encoding="utf-8"
+    ) as refcase_file_handler:
+        refcase_file_handler.write(refcase_file_content)
+    with pytest.raises(expected_exception=ConfigValidationError, match=refcase_file):
+        Refcase.from_config_dict(config_dict={ConfigKeys.REFCASE: refcase_file})
+
+
+@pytest.mark.parametrize("misspelled_option", ["DESIGNSHEET", "DEFAULTSHEET"])
+def test_that_invalid_option_name_in_design_matrix_raises_validation_error(
+    misspelled_option,
+    tmp_path,
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    design_matrix_file.touch()
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            f"Option {misspelled_option} is not a valid DESIGN_MATRIX option. "
+            "Valid options are DESIGN_SHEET, DEFAULT_SHEET."
+        ),
+    ):
+        _ = ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            f"DESIGN_MATRIX {design_matrix_file} {misspelled_option}:SomeSheet"
+        )
+
+
+def test_that_single_rft_is_parsed():
+    with pytest.warns(
+        ConfigWarning, match="Config contains a RFT key but no forward model"
+    ):
+        config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASE
+
+            RFT WELL:NAME DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
+            """,
+        )
+    rft = config.ensemble_config.response_configs["rft"]
+    assert isinstance(rft, RFTConfig)
+    assert rft.type == "rft"
+    assert rft.name == "rft"
+    assert rft.response_type == "rft"
+    assert rft.input_files == ["BASE"]
+    assert rft.keys == ["NAME:2020-12-13:PRESSURE", "NAME:2020-12-13:SWAT"]
+    assert not rft.has_finalized_keys
+    assert rft.data_to_read == {"NAME": {"2020-12-13": ["PRESSURE", "SWAT"]}}
+
+
+def test_that_multiple_rfts_are_parsed():
+    with pytest.warns(
+        ConfigWarning, match="Config contains a RFT key but no forward model"
+    ):
+        config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASE
+
+            RFT WELL:NAME1 DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
+            RFT WELL:NAME2 DATE:2020-12-14 PROPERTIES:SOIL
+            """,
+        )
+    rft = config.ensemble_config.response_configs["rft"]
+    assert isinstance(rft, RFTConfig)
+    assert rft.type == "rft"
+    assert rft.name == "rft"
+    assert rft.response_type == "rft"
+    assert rft.input_files == ["BASE"]
+    assert set(rft.keys) == {
+        "NAME1:2020-12-13:PRESSURE",
+        "NAME1:2020-12-13:SWAT",
+        "NAME2:2020-12-14:SOIL",
+    }
+    assert not rft.has_finalized_keys
+    assert rft.data_to_read == {
+        "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
+        "NAME2": {"2020-12-14": ["SOIL"]},
+    }
+
+
+def test_that_rft_properties_can_be_given_with_spaces():
+    with pytest.warns(
+        ConfigWarning, match="Config contains a RFT key but no forward model"
+    ):
+        config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASE
+
+            RFT WELL:NAME1 DATE:2020-12-13 "PROPERTIES:PRESSURE, SWAT"
+            """,
+        )
+    rft = config.ensemble_config.response_configs["rft"]
+    assert isinstance(rft, RFTConfig)
+    assert rft.data_to_read == {
+        "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
+    }
+
+
+def test_that_seismics_are_parsed():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+
+        SEISMIC tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv
+        SEISMIC tables/horizon--amplitude_full_min_depth--20250101_20240101.csv
+        """,
+    )
+    seismic = config.ensemble_config.response_configs["seismic"]
+    assert isinstance(seismic, SeismicConfig)
+    assert seismic.type == "seismic"
+    assert seismic.name == "seismic"
+    assert seismic.response_type == "seismic"
+    assert seismic.input_files == [
+        "tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv",
+        "tables/horizon--amplitude_full_min_depth--20250101_20240101.csv",
+    ]
+    assert set(seismic.keys) == {
+        "horizon--amplitude_full_mean_depth--20250101_20240101",
+        "horizon--amplitude_full_min_depth--20250101_20240101",
+    }
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_history_observation_removal_error(caplog, monkeypatch):
+    config_path = Path("config.ert")
+    obs_path = Path("observations")
+
+    config_path.write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            OBS_CONFIG observations
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    obs_path.write_text(
+        dedent(
+            """
+            HISTORY_OBSERVATION FOPR {};
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="HISTORY_OBSERVATION is deprecated, and "
+        "must be specified as SUMMARY_OBSERVATION",
+    ):
+        ErtConfig.from_file(str(config_path))
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_zone_map_can_be_set_per_realization():
+    Path("zone_map.txt").write_text("1 zone1\n", encoding="utf-8")
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        RUNPATH /realizations-<REAL>/iter-<ITER>
+        ZONEMAP <RUNPATH>/rms/output/zone/layer_zone_table.txt
+        """,
+    )
+    assert (
+        str(config.zonemap)
+        == "/realizations-<REAL>/iter-<ITER>/rms/output/zone/layer_zone_table.txt"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
+def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
+    obs_path = Path("observations")
+
+    obs_path.write_text(
+        dedent(
+            """
+            BREAKTHROUGH_OBSERVATION BRT_OBS {
+              KEY=WWCT:OP_1;
+              DATE=2012-10-01;
+              ERROR=3; -- days
+              THRESHOLD=0.1;
+              LOCALIZATION {
+                EAST=10;
+                NORTH=20;
+                RADIUS=2500;
+              };
+            };
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE FOO
+        OBS_CONFIG observations
+        """,
+    )
+
+    breakthrough_observations = create_observation_dataframes(
+        config.observation_declarations,
+        config.shape_registry,
+    )["breakthrough"]
+    assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
+    assert breakthrough_observations["response_key"].to_list() == [
+        "BREAKTHROUGH:WWCT:OP_1"
+    ]
+    assert breakthrough_observations["observations"].to_list() == [0]
+    assert breakthrough_observations["std"].to_list() == [3]
+    assert breakthrough_observations["east"].to_list() == [10]
+    assert breakthrough_observations["north"].to_list() == [20]
+    assert breakthrough_observations["radius"].to_list() == [2500]
+
+
+def test_that_random_seed_generator_always_returns_user_defined_seed():
+    generator = RandomSeedGenerator(user_defined_seed=12345)
+    assert generator.seed == 12345
+    assert generator.seed == 12345
+
+
+def test_that_random_seed_generator_generates_new_seed_each_call():
+    generator = RandomSeedGenerator(user_defined_seed=None)
+    seed1 = generator.seed
+    seed2 = generator.seed
+    assert seed1 != seed2
+
+
+def test_that_random_seed_is_logged_with_reproduction_instructions(caplog):
+    generator = RandomSeedGenerator()
+
+    with caplog.at_level(logging.INFO):
+        seed = generator.seed
+
+    assert "To repeat this experiment" in caplog.text
+
+    seed_logs = [line for line in caplog.text.splitlines() if "RANDOM_SEED" in line]
+    latest_seed_message = seed_logs[-1]
+    expected_seed_message = f"RANDOM_SEED {seed}"
+    assert latest_seed_message == expected_seed_message
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_corrupt_xlsx_design_matrix_raises_config_validation_error():
+    dm_file = "corrupt_design_matrix.xlsx"
+    Path("config.ert").write_text(
+        dedent(f"""
+            NUM_REALIZATIONS 1
+            DESIGN_MATRIX {dm_file}
+            """),
+        encoding="utf-8",
+    )
+    Path(dm_file).write_text(
+        dedent(
+            """
+            THIS IS NOT A VALID DESIGN MATRIX FILE
+            """
+        ),
+        encoding="utf-8",
+    )
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match=r"File could not be loaded. "
+            "It seems to be either invalid or corrupted",
+        ),
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.fixture
+def ert_config_with_job() -> type[ErtConfig]:
+    class MyJob(ErtScript):
+        def run(self) -> None:
+            pass
+
+    plugins = ErtRuntimePlugins(
+        installed_workflow_jobs={
+            "MY_JOB": ErtScriptWorkflow(name="MY_JOB", ert_script=MyJob)
+        }
+    )
+
+    return ErtConfig.with_plugins(plugins)
+
+
+def test_that_create_workflow_from_job_creates_and_registers_workflow(
+    ert_config_with_job,
+):
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent("""
+        NUM_REALIZATIONS 1
+        CREATE_WORKFLOW_FROM_JOB my_wf MY_JOB foo bar
+        """),
+    )
+    assert "my_wf" in ert_config.workflows
+    wf = ert_config.workflows["my_wf"]
+    assert len(wf.cmd_list) == 1
+    job, args = wf.cmd_list[0]
+    assert job.name == "MY_JOB"
+    assert args == ["foo", "bar"]
+
+
+@pytest.mark.parametrize("mode", list(HookRuntime))
+def test_that_hook_workflow_job_registers_and_hooks_workflow(ert_config_with_job, mode):
+    """HOOK_WORKFLOW_JOB should both hook the workflow AND register it by name."""
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB my_wf MY_JOB foo bar {mode.name}
+        """),
+    )
+    assert "my_wf" in ert_config.workflows
+    assert ert_config.workflows["my_wf"] in ert_config.hooked_workflows[mode]
+
+
+@pytest.mark.parametrize(
+    ("hook_lines_in_config_order", "expected_hook_order"),
+    [
+        pytest.param(
+            [
+                "HOOK_WORKFLOW_JOB inline_wf MY_JOB PRE_SIMULATION",
+                "HOOK_WORKFLOW loaded_wf PRE_SIMULATION",
+            ],
+            ["inline_wf", "loaded_wf"],
+            id="hook_workflow_job_declared_before_hook_workflow",
+        ),
+        pytest.param(
+            [
+                "HOOK_WORKFLOW loaded_wf PRE_SIMULATION",
+                "HOOK_WORKFLOW_JOB inline_wf MY_JOB PRE_SIMULATION",
+            ],
+            ["loaded_wf", "inline_wf"],
+            id="hook_workflow_declared_before_hook_workflow_job",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hooked_workflows_are_ordered_by_position_in_config_file(
+    ert_config_with_job, hook_lines_in_config_order, expected_hook_order
+):
+    Path("loaded_wf").write_text("MY_JOB\n", encoding="utf-8")
+    hook_lines = "\n".join(hook_lines_in_config_order)
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        LOAD_WORKFLOW loaded_wf
+        {hook_lines}
+        """)
+    )
+
+    hooked_workflows = ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]
+    actual_hook_order = [Path(wf.src_file).name for wf in hooked_workflows]
+    assert actual_hook_order == expected_hook_order
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hooked_workflows_across_include_are_ordered_by_declaration(
+    ert_config_with_job,
+):
+    """A hook declared in an INCLUDE'd file must keep its position relative to
+    hooks declared directly in the including config file, not be reordered to
+    the position of the INCLUDE line itself or grouped by keyword.
+    """
+    Path("included.ert").write_text(
+        dedent("""
+        LOAD_WORKFLOW loaded_wf
+        HOOK_WORKFLOW loaded_wf PRE_SIMULATION
+        """),
+        encoding="utf-8",
+    )
+    Path("loaded_wf").write_text("MY_JOB\n", encoding="utf-8")
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent("""
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB inline_wf_before MY_JOB PRE_SIMULATION
+        INCLUDE included.ert
+        HOOK_WORKFLOW_JOB inline_wf_after MY_JOB PRE_SIMULATION
+        """)
+    )
+
+    hooked_workflows = ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]
+    actual_hook_order = [Path(wf.src_file).name for wf in hooked_workflows]
+    assert actual_hook_order == ["inline_wf_before", "loaded_wf", "inline_wf_after"]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hooked_workflows_are_ordered_when_name_uses_a_define(
+    ert_config_with_job,
+):
+    """A hook whose name is built from a DEFINE must keep its declared
+    position, not fall back to the front because the substitution replaced
+    its underlying token with a new one.
+    """
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent("""
+        DEFINE <WF_SUFFIX> substituted
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB before_wf MY_JOB PRE_SIMULATION
+        HOOK_WORKFLOW_JOB inline_wf_<WF_SUFFIX> MY_JOB PRE_SIMULATION
+        HOOK_WORKFLOW_JOB after_wf MY_JOB PRE_SIMULATION
+        """)
+    )
+
+    hooked_workflows = ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]
+    actual_hook_order = [Path(wf.src_file).name for wf in hooked_workflows]
+    assert actual_hook_order == [
+        "before_wf",
+        "inline_wf_substituted",
+        "after_wf",
+    ]
+
+
+def test_that_create_workflow_from_job_with_unknown_job_name_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Job with name: NO_SUCH_JOB is not recognized",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            CREATE_WORKFLOW_FROM_JOB my_wf NO_SUCH_JOB foo bar
+            """)
+        )
+
+
+def test_that_hook_workflow_job_with_unknown_job_name_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Job with name: NO_SUCH_JOB is not recognized",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            HOOK_WORKFLOW_JOB my_wf NO_SUCH_JOB foo bar PRE_SIMULATION
+            """)
+        )
+
+
+def test_that_hook_workflow_job_with_invalid_runtime_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Last argument of HOOK_WORKFLOW_JOB must be a known HookRuntime",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            HOOK_WORKFLOW_JOB my_wf SOME_JOB foo bar NOT_A_RUNTIME
+            """)
+        )
+
+
+HOOK = "HOOK_WORKFLOW_JOB my_wf MY_JOB foo bar PRE_SIMULATION"
+CREATE = "CREATE_WORKFLOW_FROM_JOB my_wf MY_JOB foo bar"
+LOAD = "LOAD_WORKFLOW my_wf"
+
+
+@pytest.mark.parametrize(
+    ("workflow1", "workflow2"),
+    [
+        pytest.param(
+            CREATE,
+            CREATE,
+            id="create_workflow_from_job_twice",
+        ),
+        pytest.param(
+            CREATE,
+            HOOK,
+            id="create_workflow_from_job_and_hook_workflow_job",
+        ),
+        pytest.param(
+            HOOK,
+            HOOK,
+            id="hook_workflow_job_and_hook_workflow_job",
+        ),
+        pytest.param(
+            LOAD,
+            CREATE,
+            id="load_workflow_and_create_workflow_from_job",
+        ),
+        pytest.param(
+            LOAD,
+            HOOK,
+            id="load_workflow_and_hook_workflow_job",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_reusing_workflow_name_warns(ert_config_with_job, workflow1, workflow2):
+    config = dedent(f"""
+    NUM_REALIZATIONS 1
+    {workflow1}
+    {workflow2}
+    """)
+    if "LOAD_WORKFLOW" in config:
+        Path("my_wf").write_text("MY_JOB\n", encoding="utf-8")
+    with pytest.warns(ConfigWarning, match=r"Workflow 'my_wf' was added twice"):
+        ert_config_with_job.from_file_contents(config)
+
+
+def test_that_using_too_long_sheetname_in_design_matrix_raises_validation_error(
+    tmp_path,
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    long_sheet_name = (
+        "A" * 35
+    )  # Excel sheet names have a max length of 31, so this is definitely too long
+    long_default_sheet_name = "B" * 35
+    design_matrix_df = pl.DataFrame()
+    with Workbook(design_matrix_file) as xl_write:
+        design_matrix_df.write_excel(xl_write)
+
+    expected_error = (
+        r"Excel sheet name error\(s\):\n"
+        f"Design sheet name '{long_sheet_name}' exceeds maximum length "
+        r"of 31 characters\.\n"
+        f"Default sheet name '{long_default_sheet_name}' exceeds maximum "
+        r"length of 31 characters\."
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=expected_error,
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+                DESIGN_MATRIX {design_matrix_file} \
+                DESIGN_SHEET:{long_sheet_name} \
+                DEFAULT_SHEET:{long_default_sheet_name}
+                """
+            )
+        )
+
+
+def test_that_analysis_set_var_parameters_do_not_update_strategy_when_update_is_false(
+    change_to_tmpdir,
+):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:FALSE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None
+
+
+def test_that_analysis_set_var_parameters_updates_update_strategy_when_update_is_true(
+    change_to_tmpdir,
+):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:TRUE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "adaptive"
+
+
+def test_that_analysis_set_var_parameters_do_not_override_const_gen_kw(
+    change_to_tmpdir,
+):
+    Path("prior.txt").write_text("MY_PARAM CONST 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None
+
+
+def test_that_gen_kw_defaults_to_global_without_analysis_set_var(change_to_tmpdir):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "global"
+
+
+def test_that_gen_kw_defaults_to_global_with_update_true(change_to_tmpdir):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:TRUE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "global"
+
+
+def test_that_gen_kw_defaults_to_none_with_update_false(change_to_tmpdir):
+    Path("prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:FALSE
+        """),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None
+
+
+def test_that_log_observation_keys_logs_count_of_summary_keys(caplog):
+    caplog.set_level(logging.INFO)
+    wopr_count = 5
+    bpr_count = 3
+    mock_type = MagicMock(value="summary")
+    observations = [
+        *[{"type": mock_type, "KEY": "WOPR:FOO"}] * wopr_count,
+        *[{"type": mock_type, "KEY": "BPR:1,1,1"}] * bpr_count,
+    ]
+    log_observation_keys(observations)
+    assert "Count of summary keywords:" in caplog.text
+    assert f"'WOPR': {wopr_count}" in caplog.text
+    assert f"'BPR': {bpr_count}" in caplog.text
+
+
+def test_that_log_observation_keys_doesnt_fail_given_misconfigured_summarykey():
+    well_summary_missing_well = "WOPR"
+    block_summary_missing_indices = "BPR"
+    observations = [
+        {"type": MagicMock(value="summary"), "KEY": well_summary_missing_well},
+        {"type": MagicMock(value="summary"), "KEY": block_summary_missing_indices},
+    ]
+    log_observation_keys(observations)
+
+
+def test_that_log_observation_keys_doesnt_fail_given_no_keys(caplog):
+    caplog.set_level(logging.INFO)
+    observations = [{"type": MagicMock(value="summary")}]
+    log_observation_keys(observations)
+    assert "Count of summary keywords: {}" in caplog.text
+
+
+def test_that_log_shape_registry_logs_count_of_shapes(caplog):
+    caplog.set_level(logging.INFO)
+    shape_registry = ShapeRegistry()
+    for i in range(10):
+        shape_registry.register(CircleShapeConfig(north=i, east=i, radius=i))
+    log_shape_registry(shape_registry)
+    assert "Count of shapes in ShapeRegistry: {'CircleShapeConfig': 10}" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_takes_name_given_to_load_workflow():
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("wf_file").write_text("WFJOB hello\n", encoding="utf-8")
+    Path("test.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            LOAD_WORKFLOW_JOB WFJOB
+            LOAD_WORKFLOW wf_file my_workflow_name
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file("test.ert")
+
+    assert ert_config.workflows["my_workflow_name"].name == "my_workflow_name"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_without_explicit_name_is_named_after_its_file():
+    Path("WFJOB").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("wf_file").write_text("WFJOB hello\n", encoding="utf-8")
+    Path("test.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            LOAD_WORKFLOW_JOB WFJOB
+            LOAD_WORKFLOW wf_file
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    ert_config = ErtConfig.from_file("test.ert")
+
+    assert ert_config.workflows["wf_file"].name == "wf_file"

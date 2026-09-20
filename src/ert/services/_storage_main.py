@@ -1,0 +1,352 @@
+import argparse
+import datetime
+import json
+import logging
+import logging.config
+import os
+import random
+import signal
+import socket
+import ssl
+import string
+import sys
+import threading
+import time
+import warnings
+from argparse import ArgumentParser
+from base64 import b64encode
+from pathlib import Path
+from typing import Any
+
+import uvicorn
+import yaml
+from cryptography import x509
+from cryptography.hazmat._oid import NameOID
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from uvicorn.supervisors import ChangeReload
+
+from ert.logging import STORAGE_LOG_CONFIG
+from ert.plugins import setup_site_logging
+from ert.services import ErtServerExit
+from ert.shared import __file__ as ert_shared_path
+from ert.shared import find_available_socket, get_machine_name
+from ert.trace import tracer
+from ert.utils import makedirs_if_needed
+
+DARK_STORAGE_APP = "ert.dark_storage.app:app"
+
+
+class Server(uvicorn.Server):
+    def __init__(
+        self,
+        config: uvicorn.Config,
+        connection_info: str | dict[str, Any],
+    ) -> None:
+        super().__init__(config)
+        self.connection_info = connection_info
+
+    async def startup(self, sockets: list[socket.socket] | None = None) -> None:
+        """Overridden startup that also sends connection information"""
+        await super().startup(sockets)
+        if not self.started:
+            return
+        write_to_pipe(self.connection_info)
+
+
+def generate_authtoken() -> str:
+    chars = string.ascii_letters + string.digits
+    return "".join([random.choice(chars) for _ in range(16)])
+
+
+def write_to_pipe(connection_info: str | dict[str, Any]) -> None:
+    """Write connection information directly to the calling program (ERT) via a
+    communication pipe.
+    """
+    fd = os.environ.get("ERT_COMM_FD")
+    if fd is None:
+        return
+    with os.fdopen(int(fd), "w") as f:
+        f.write(str(connection_info))
+
+
+def parse_args() -> argparse.Namespace:
+    ap = argparse.ArgumentParser()
+    add_parser_options(ap)
+    return ap.parse_args()
+
+
+def _get_host_list() -> list[str]:
+    return list({socket.gethostname(), socket.getfqdn(), get_machine_name()})
+
+
+def _create_connection_info(
+    sock: socket.socket, authtoken: str, cert: str | os.PathLike[str] | Path
+) -> dict[str, Any]:
+    connection_info = {
+        "urls": [
+            f"https://{host}:{sock.getsockname()[1]}" for host in _get_host_list()
+        ],
+        "authtoken": authtoken,
+        "host": get_machine_name(),
+        "port": sock.getsockname()[1],
+        "cert": str(cert),
+        "auth": authtoken,
+    }
+
+    os.environ["ERT_STORAGE_CONNECTION_STRING"] = json.dumps(
+        connection_info, separators=(",", ":")
+    )
+
+    return connection_info
+
+
+def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
+    """Generate a private key and a certificate signed with it
+
+    Both the certificate and the key are written to files in the folder given
+    by `get_certificate_dir(config)`. The key is encrypted before being
+    stored.
+
+    Returns a 3-tuple with
+        * Certificate file path
+        * Key file path
+        * Password used for encrypting the key
+    """
+    # Generate private key
+    key = rsa.generate_private_key(
+        public_exponent=65537, key_size=4096, backend=default_backend()
+    )
+
+    # Generate the certificate and sign it with the private key
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "NO"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Bergen"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Sandsli"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Equinor"),
+        ]
+    )
+    dns_name = get_machine_name()
+    subject_alternative_names = (
+        _get_host_list()
+    )  # Important that this matches potential server url hosts
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.datetime.now(datetime.UTC))
+        .not_valid_after(
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
+        )  # 1 year
+        .add_extension(
+            x509.SubjectAlternativeName(
+                [x509.DNSName(f"{san_name}") for san_name in subject_alternative_names]
+            ),
+            critical=False,
+        )
+        .sign(key, hashes.SHA256(), default_backend())
+    )
+
+    # Write certificate and key to disk
+    makedirs_if_needed(cert_folder)
+    cert_path = cert_folder / f"{dns_name}.crt"
+    cert_path.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+    key_path = cert_folder / f"{dns_name}.key"
+    pw = bytes(os.urandom(28))
+    key_path.write_bytes(
+        key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.BestAvailableEncryption(pw),
+        )
+    )
+    return cert_path, key_path, pw
+
+
+def _generate_authentication() -> str:
+    n_bytes = 128
+    random_bytes = bytes(os.urandom(n_bytes))
+    return b64encode(random_bytes).decode("utf-8")
+
+
+def run_server(
+    args: argparse.Namespace | None = None,
+    *,
+    debug: bool = False,
+    uvicorn_config: uvicorn.Config | None = None,
+) -> None:
+    if args is None:
+        args = parse_args()
+
+    if (authtoken := os.environ.get("ERT_STORAGE_TOKEN")) is None:
+        authtoken = generate_authtoken()
+        os.environ["ERT_STORAGE_TOKEN"] = authtoken
+
+    config_args: dict[str, Any] = {}
+    if args.debug or debug:
+        config_args.update(reload=True, reload_dirs=[Path(ert_shared_path).parent])
+        os.environ["ERT_STORAGE_DEBUG"] = "1"
+
+    sock: socket.socket = find_available_socket(
+        host=get_machine_name(), port_range=range(51850, 51870 + 1)
+    )
+
+    # Appropriated from uvicorn.main:run
+    os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
+    os.environ["ERT_STORAGE_ENS_PATH"] = str(args.project.absolute())
+    config = (
+        # uvicorn.Config() resets the logging config (overriding additional
+        # handlers added to loggers through the plugin system, e.g. log
+        # handlers registered by external logging plugins)
+        uvicorn.Config(DARK_STORAGE_APP, **config_args)
+        if uvicorn_config is None
+        else uvicorn_config
+    )
+    assert config.ssl_certfile
+    connection_info = _create_connection_info(sock, authtoken, config.ssl_certfile)
+    server = Server(config, json.dumps(connection_info))
+
+    logger = logging.getLogger("ert.shared.storage.info")
+    if args.verbose:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.INFO)
+        formatter = logging.Formatter("%(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        if logger.level > logging.INFO:
+            logger.setLevel(logging.INFO)
+    logger.info("Storage server is ready to accept requests. Listening on:")
+    for url in connection_info["urls"]:
+        logger.info(f"  {url}")
+        logger.info(f"\nOpenAPI Docs: {url}/docs")
+    if args.debug or debug:
+        logger.info("\tRunning in NON-SECURE debug mode.\n")
+        os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
+    logger.info(f"Serving storage directory: {os.environ['ERT_STORAGE_ENS_PATH']}")
+    if config.should_reload:
+        supervisor = ChangeReload(config, target=server.run, sockets=[sock])
+        supervisor.run()
+    else:
+        server.run(sockets=[sock])
+
+
+def terminate_on_parent_death(
+    stopped: threading.Event, parent: int, poll_interval: float = 1.0
+) -> None:
+    """Quit the server when the parent process is no longer running."""
+
+    def check_parent_alive() -> bool:
+        return os.getppid() == parent
+
+    while check_parent_alive():
+        if stopped.is_set():
+            return
+        time.sleep(poll_interval)
+
+    # Parent is no longer alive, terminate this process.
+    os.kill(os.getpid(), signal.SIGTERM)
+
+
+def _join_terminate_thread(terminate_on_parent_death_thread: threading.Thread) -> None:
+    """Join the terminate thread, handling ErtServerExit (which is used by EVEREST)"""
+    try:
+        terminate_on_parent_death_thread.join()
+    except ErtServerExit:
+        logger = logging.getLogger("ert.shared.storage.info")
+        logger.info(
+            "Got ErtServerExit while joining terminate thread, "
+            "as expected from ert_server_controller.py"
+        )
+
+
+def main() -> None:
+    args = parse_args()
+    authentication = _generate_authentication()
+    os.environ["ERT_STORAGE_TOKEN"] = authentication
+    cert_path, key_path, key_pw = _generate_certificate(args.project / "cert")
+    config_args: dict[str, Any] = {
+        "ssl_keyfile": key_path,
+        "ssl_certfile": cert_path,
+        "ssl_keyfile_password": key_pw,
+        "ssl_version": ssl.PROTOCOL_TLS_SERVER,
+    }
+
+    logging_conf = yaml.safe_load(
+        Path(args.logging_config or STORAGE_LOG_CONFIG).read_text(encoding="utf-8")
+    )
+    logging.config.dictConfig(logging_conf)
+    config_args.update(log_config=logging_conf)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+    if args.debug:
+        config_args.update(reload=True, reload_dirs=[Path(ert_shared_path).parent])
+
+    # Need to run uvicorn.Config before entering the ErtPluginContext because
+    # uvicorn.Config overrides the configuration of existing loggers, thus removing
+    # log handlers added by ErtPluginContext.
+    uvicorn_config = uvicorn.Config(DARK_STORAGE_APP, **config_args)
+
+    ctx = (
+        TraceContextTextMapPropagator().extract(
+            carrier={"traceparent": args.traceparent}
+        )
+        if args.traceparent
+        else None
+    )
+
+    stopped = threading.Event()
+    terminate_on_parent_death_thread = threading.Thread(
+        target=terminate_on_parent_death, args=[stopped, args.parent_pid, 1.0]
+    )
+    setup_site_logging(logging.getLogger())
+    terminate_on_parent_death_thread.start()
+    with tracer.start_as_current_span("run_storage_server", ctx):
+        logger = logging.getLogger("ert.shared.storage.info")
+        try:
+            logger.info("Starting dark storage")
+            logger.info(f"Started dark storage with parent {args.parent_pid}")
+            run_server(args, debug=False, uvicorn_config=uvicorn_config)
+        except (SystemExit, ErtServerExit):
+            logger.info("Stopping dark storage")
+        finally:
+            stopped.set()
+            _join_terminate_thread(terminate_on_parent_death_thread)
+
+
+def add_parser_options(ap: ArgumentParser) -> None:
+    ap.add_argument(
+        "--project",
+        "-p",
+        type=Path,
+        help="Path to directory in which to create storage_server.json",
+        default=Path.cwd(),
+    )
+    ap.add_argument(
+        "--traceparent",
+        type=str,
+        help="Trace parent id to be used by the storage root span",
+        default=None,
+    )
+    ap.add_argument(
+        "--parent_pid",
+        type=int,
+        help="The parent process id",
+        default=os.getppid(),
+    )
+    ap.add_argument(
+        "--host", type=str, default=os.environ.get("ERT_STORAGE_HOST", "127.0.0.1")
+    )
+    ap.add_argument("--logging-config", type=str, default=None)
+    ap.add_argument(
+        "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
+    ap.add_argument("--debug", action="store_true", default=False)
+
+
+if __name__ == "__main__":
+    main()

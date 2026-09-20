@@ -1,0 +1,133 @@
+{
+  "backend": {
+    "method": "optpp_q_newton",
+    "parallel": true
+  },
+  "function_estimators": [
+    {
+      "method": "mean"
+    }
+  ],
+  "gradient": {
+    "evaluation_policy": "speculative",
+    "merge_realizations": false,
+    "number_of_perturbations": 5,
+    "perturbation_min_success": 5
+  },
+  "linear_constraints": {
+    "coefficients": [
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "lower_bounds": [
+      null
+    ],
+    "upper_bounds": [
+      0.4
+    ]
+  },
+  "names": {
+    "nonlinear_constraint": [
+      "x-0_coord"
+    ],
+    "objective": [
+      "distance"
+    ],
+    "realization": [
+      0,
+      2
+    ],
+    "variable": [
+      "point.x.0",
+      "point.x.1",
+      "point.x.2"
+    ]
+  },
+  "nonlinear_constraint_transforms": [
+    null
+  ],
+  "nonlinear_constraints": {
+    "lower_bounds": [
+      0.1
+    ],
+    "transforms": [
+      0
+    ],
+    "upper_bounds": [
+      null
+    ]
+  },
+  "objective_transforms": [
+    null
+  ],
+  "objectives": {
+    "function_estimators": [
+      0
+    ],
+    "transforms": [
+      0
+    ],
+    "weights": [
+      1.0
+    ]
+  },
+  "optimizer": {
+    "max_batches": 5,
+    "output_dir": "not_relevant",
+    "stderr": "optimizer.stderr",
+    "stdout": "optimizer.stdout"
+  },
+  "realizations": {
+    "realization_min_success": 2,
+    "weights": [
+      0.25,
+      0.75
+    ]
+  },
+  "samplers": [
+    {}
+  ],
+  "variable_transforms": [
+    null
+  ],
+  "variables": {
+    "lower_bounds": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "mask": [
+      true,
+      true,
+      true
+    ],
+    "perturbation_magnitudes": [
+      0.005,
+      0.005,
+      0.005
+    ],
+    "samplers": [
+      0,
+      0,
+      0
+    ],
+    "seed": 999,
+    "transforms": [
+      0
+    ],
+    "types": [
+      1,
+      1,
+      1
+    ],
+    "upper_bounds": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "variable_count": 3
+  }
+}

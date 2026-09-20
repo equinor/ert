@@ -1,0 +1,33 @@
+# ruff: file-ignore[module-import-not-at-top-of-file]
+
+# At least for some combinations of pandas and matplotlib the numpy.datetime64
+# dates coming from pandas are not correctly recognized/converted by matplotlib.
+# Calling this converter.register() method seems to fix the problem.
+from pandas.plotting import register_matplotlib_converters
+
+register_matplotlib_converters()
+
+from .plot_config import PlotConfig
+from .plot_context import PlotContext
+from .plot_style import PlotStyle
+from .plot_tools import ConditionalAxisFormatter, PlotTools
+from .plot_types import ObservationPlotLocations
+from .tooltip_manager import (
+    BarTooltipManager,
+    LineTooltipManager,
+    ScatterTooltipManager,
+    ToolTipManager,
+)
+
+__all__ = [
+    "BarTooltipManager",
+    "ConditionalAxisFormatter",
+    "LineTooltipManager",
+    "ObservationPlotLocations",
+    "PlotConfig",
+    "PlotContext",
+    "PlotStyle",
+    "PlotTools",
+    "ScatterTooltipManager",
+    "ToolTipManager",
+]

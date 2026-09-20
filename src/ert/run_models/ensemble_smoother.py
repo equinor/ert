@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+import logging
+
+import numpy as np
+from pydantic import PrivateAttr
+
+from ert.config import (
+    PostExperimentFixtures,
+    PreExperimentFixtures,
+)
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_arg import create_run_arguments
+from ert.run_models.constants import PARAMETER_UPDATE
+from ert.run_models.initial_ensemble_run_model import (
+    InitialEnsembleRunModel,
+)
+from ert.run_models.run_model_configs import EnsembleSmootherConfig
+from ert.run_models.update_run_model import UpdateRunModel
+from ert.storage.local_experiment import LocalExperiment
+from ert.trace import tracer
+
+from .run_model import ErtRunError
+
+logger = logging.getLogger(__name__)
+
+
+class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
+    _total_iterations: int = PrivateAttr(default=2)
+
+    def _create_experiment_storage(self) -> LocalExperiment:
+        return self._storage.create_experiment(
+            experiment_config=self.to_experiment_config(),
+            name=self.experiment_name,
+        )
+
+    @tracer.start_as_current_span(f"{__name__}.run_experiment")
+    def run_experiment(
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        *,
+        rerun_failed_realizations: bool = False,
+    ) -> None:
+        self.log_at_startup()
+        if rerun_failed_realizations:
+            raise ErtRunError("Ensemble Information Filter does not support restart")
+
+        self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
+
+        experiment_storage = self._create_experiment_storage()
+
+        prior = self._storage.create_ensemble(
+            experiment_storage,
+            ensemble_size=self.ensemble_size,
+            name=self.target_ensemble % 0,
+        )
+
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(prior.experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+
+        self._sample_and_evaluate_ensemble(evaluator_server_config, prior)
+
+        posterior = self.update(prior, self.target_ensemble % 1)
+
+        posterior_args = create_run_arguments(
+            self._runpaths,
+            np.array(self.active_realizations, dtype=bool),
+            ensemble=posterior,
+        )
+
+        self._evaluate_and_postprocess(
+            posterior_args,
+            posterior,
+            evaluator_server_config,
+        )
+        self.run_workflows(
+            fixtures=PostExperimentFixtures(
+                random_seed=self.random_seed,
+                storage=self._storage,
+                ensemble=posterior,
+            ),
+        )
+
+    @classmethod
+    def name(cls) -> str:
+        return "Ensemble smoother"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Sample parameters → evaluate → update → evaluate"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return PARAMETER_UPDATE

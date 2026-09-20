@@ -1,0 +1,424 @@
+import numpy as np
+import pytest
+
+from ert.analysis._update_strategies._distance import DistanceLocalizationUpdate
+from ert.analysis._update_strategies._protocol import (
+    ObservationContext,
+    ObservationLocations,
+)
+from ert.analysis.event import AnalysisRhoMatrixEvent
+from ert.config import Field, LocalizationType, SurfaceConfig
+from ert.field_utils import AxisOrientation, ErtboxParameters, FieldFileFormat
+from ert.storage import open_storage
+from ert.storage.blob_data import BlobType, RhoStorageData
+
+
+def _noop_callback(_event: object) -> None:
+    pass
+
+
+def _field_config(nx: int, ny: int, nz: int) -> Field:
+    return Field(
+        name="TEST_FIELD",
+        ertbox_params=ErtboxParameters(
+            nx=nx,
+            ny=ny,
+            nz=nz,
+            xinc=1.0,
+            yinc=1.0,
+            origin=(0.0, 0.0),
+            rotation_angle=0.0,
+            axis_orientation=AxisOrientation.LEFT_HANDED,
+        ),
+        file_format=FieldFileFormat.ROFF,
+        forward_init_file="init_%d.roff",
+        forward_init=False,
+        update_strategy=LocalizationType.GLOBAL,
+        output_file="output.roff",
+        grid_file="dummy.grdecl",
+    )
+
+
+def _surface_config(ncol: int, nrow: int) -> SurfaceConfig:
+    return SurfaceConfig(
+        name="TEST_SURFACE",
+        forward_init=False,
+        update_strategy=LocalizationType.GLOBAL,
+        ncol=ncol,
+        nrow=nrow,
+        xori=0.0,
+        yori=0.0,
+        xinc=1.0,
+        yinc=1.0,
+        rotation=0.0,
+        yflip=1,
+        forward_init_file="init_%d.irap",
+        output_file="output.irap",
+        base_surface_path="base.irap",
+    )
+
+
+def test_that_distance_localization_updates_all_z_layers_at_observation_xy(
+    tmp_path,
+):
+    """
+    Places a single observation in the corner cell (0, 0) with a short correlation
+    range so only that xy cell gets rho ≈ 1. With correct z-expansion,
+    parameters at (0, 0, z) for ALL z should be updated while distant xy
+    cells are untouched.
+    """
+    nx, ny, nz = 4, 4, 3
+    n_params = nx * ny * nz
+    n_real = 50
+    xinc, yinc = 1.0, 1.0
+
+    field_config = _field_config(nx, ny, nz)
+
+    rng = np.random.default_rng(42)
+    raw_params = rng.standard_normal((n_params, n_real))
+
+    # Round-trip through real storage to get the actual parameter ordering
+    realizations = np.arange(n_real, dtype=np.int_)
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment_id = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [field_config.model_dump(mode="json")]
+            }
+        )
+        ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=n_real
+        )
+        ensemble.save_parameters_numpy(raw_params, "TEST_FIELD", realizations)
+        param_ensemble = ensemble.load_parameters_numpy("TEST_FIELD", realizations)
+
+    # Reshape flat arrays to (nx, ny, nz, n_real) using C-order to index by grid cell
+    prior_3d = param_ensemble.reshape(nx, ny, nz, n_real)
+
+    # Observation near cell (x=0, y=0) — centre of first cell
+    obs_x = np.array([0.5 * xinc])
+    obs_y = np.array([0.5 * yinc])
+    main_range = np.array([1.0])
+
+    # Responses correlated with parameters at (x=0, y=0) — average over all z-layers.
+    responses = prior_3d[0, 0, :, :].mean(axis=0, keepdims=True).astype(np.float64)
+
+    obs_values = np.array([5.0])
+    obs_errors = np.array([0.1])
+
+    obs_loc = ObservationLocations(
+        xpos=obs_x,
+        ypos=obs_y,
+        main_range=main_range,
+        location_mask=np.ones(responses.shape[0], dtype=bool),
+    )
+
+    rng = np.random.default_rng(42)
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=obs_values,
+        observation_errors=obs_errors,
+        observation_perturbations=rng.standard_normal(
+            size=(responses.shape[0], responses.shape[1])
+        ).astype(np.float64)
+        * obs_errors[:, np.newaxis],
+        observation_locations=obs_loc,
+    )
+
+    updater = DistanceLocalizationUpdate(
+        enkf_truncation=0.99,
+        param_type=Field,
+        progress_callback=_noop_callback,
+    )
+    updater.prepare(obs_context)
+
+    posterior = updater.update(
+        param_ensemble=param_ensemble.copy(),
+        param_config=field_config,
+        non_zero_variance_mask=np.ones(n_params, dtype=bool),
+    )
+
+    posterior_3d = posterior.reshape(nx, ny, nz, n_real)
+
+    # All z-layers at the observation cell (x=0, y=0) must be updated.
+    for iz in range(nz):
+        assert not np.allclose(posterior_3d[0, 0, iz, :], prior_3d[0, 0, iz, :]), (
+            f"z-layer {iz} at (x=0, y=0) was NOT updated -- "
+            f"rho z-expansion does not match parameter storage order."
+        )
+
+    # Distant xy cell should be untouched (localization weight near zero)
+    assert np.allclose(
+        posterior_3d[nx // 2, ny // 2, :, :], prior_3d[nx // 2, ny // 2, :, :]
+    ), "Distant xy cell was updated despite near-zero localization weight."
+
+    # Variance should be reduced at the observation cell
+    for iz in range(nz):
+        prior_var = np.var(prior_3d[0, 0, iz, :])
+        posterior_var = np.var(posterior_3d[0, 0, iz, :])
+        assert posterior_var < prior_var, (
+            f"Variance not reduced at z-layer {iz} of observation cell."
+        )
+
+
+def test_that_unlocated_observations_are_excluded_from_distance_update(
+    monkeypatch, caplog
+):
+    nx, ny, nz = 4, 4, 1
+    n_params = nx * ny * nz
+    n_real = 40
+    rng = np.random.default_rng(321)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+
+    prior_3d = param_ensemble.reshape(nx, ny, nz, n_real)
+    distant_x, distant_y = 3, 3
+    responses = np.vstack(
+        [
+            prior_3d[0, 0, 0, :],
+            prior_3d[distant_x, distant_y, 0, :],
+        ]
+    )
+    obs_values = np.array([2.0, -4.0])
+    obs_errors = np.array([0.1, 0.1])
+    observation_perturbations = (
+        rng.standard_normal(size=responses.shape) * obs_errors[:, np.newaxis]
+    )
+
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=obs_values,
+        observation_errors=obs_errors,
+        observation_perturbations=observation_perturbations,
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.5]),
+            ypos=np.array([0.5]),
+            main_range=np.array([1.0]),
+            location_mask=np.array([True, False]),
+        ),
+    )
+
+    forced_batch_size = 5
+    monkeypatch.setattr(
+        "ert.analysis._update_strategies._distance.calculate_localization_batch_size",
+        lambda _num_params, _num_obs: forced_batch_size,
+    )
+
+    updater = DistanceLocalizationUpdate(
+        enkf_truncation=0.99,
+        param_type=Field,
+        progress_callback=_noop_callback,
+    )
+    with caplog.at_level("INFO", logger="ert.analysis._update_strategies._distance"):
+        updater.prepare(obs_context)
+
+    assert "Distance localization excluded 1 observations without location data" in (
+        caplog.text
+    )
+
+    posterior = updater.update(
+        param_ensemble=param_ensemble.copy(),
+        param_config=_field_config(nx, ny, nz),
+        non_zero_variance_mask=np.ones(n_params, dtype=bool),
+    )
+
+    posterior_3d = posterior.reshape(nx, ny, nz, n_real)
+    assert np.allclose(
+        posterior_3d[distant_x, distant_y, 0, :], prior_3d[distant_x, distant_y, 0, :]
+    )
+    assert not np.allclose(posterior_3d[0, 0, 0, :], prior_3d[0, 0, 0, :])
+
+
+def test_that_distance_localization_batch_size_does_not_change_result(
+    monkeypatch,
+) -> None:
+    nx, ny, nz = 4, 4, 1
+    n_params = nx * ny * nz
+    n_real = 30
+    rng = np.random.default_rng(17)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+    field_config = _field_config(nx, ny, nz)
+    responses = np.vstack(
+        [
+            param_ensemble.reshape(nx, ny, nz, n_real)[0, 0, 0, :],
+            param_ensemble.reshape(nx, ny, nz, n_real)[2, 2, 0, :],
+        ]
+    )
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=np.array([2.0, -1.0]),
+        observation_errors=np.array([0.1, 0.2]),
+        observation_perturbations=rng.standard_normal((2, n_real))
+        * np.array([[0.1], [0.2]]),
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.5, 2.5]),
+            ypos=np.array([0.5, 2.5]),
+            main_range=np.array([2.0, 2.0]),
+            location_mask=np.ones(2, dtype=bool),
+        ),
+    )
+
+    def update_with_batch_size(batch_size: int) -> np.ndarray:
+        monkeypatch.setattr(
+            "ert.analysis._update_strategies._distance.calculate_localization_batch_size",
+            lambda _num_params, _num_obs: batch_size,
+        )
+        updater = DistanceLocalizationUpdate(
+            enkf_truncation=0.99,
+            param_type=Field,
+            progress_callback=_noop_callback,
+        )
+        updater.prepare(obs_context)
+        return updater.update(
+            param_ensemble=param_ensemble.copy(),
+            param_config=field_config,
+            non_zero_variance_mask=np.ones(n_params, dtype=bool),
+        )
+
+    np.testing.assert_allclose(
+        update_with_batch_size(1),
+        update_with_batch_size(4),
+    )
+
+
+def test_that_distance_localization_respects_non_zero_variance_mask(
+    monkeypatch,
+) -> None:
+    nx, ny, nz = 3, 3, 2
+    n_params = nx * ny * nz
+    n_real = 30
+    rng = np.random.default_rng(11)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+    prior = param_ensemble.copy()
+    field_config = _field_config(nx, ny, nz)
+    responses = param_ensemble[:1, :].copy()
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=np.array([3.0]),
+        observation_errors=np.array([0.1]),
+        observation_perturbations=rng.standard_normal((1, n_real)) * 0.1,
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.5]),
+            ypos=np.array([0.5]),
+            main_range=np.array([5.0]),
+            location_mask=np.ones(1, dtype=bool),
+        ),
+    )
+    non_zero_variance_mask = np.ones(n_params, dtype=bool)
+    non_zero_variance_mask[0] = False
+
+    forced_batch_size = 4
+    monkeypatch.setattr(
+        "ert.analysis._update_strategies._distance.calculate_localization_batch_size",
+        lambda _num_params, _num_obs: forced_batch_size,
+    )
+    updater = DistanceLocalizationUpdate(
+        enkf_truncation=0.99,
+        param_type=Field,
+        progress_callback=_noop_callback,
+    )
+    updater.prepare(obs_context)
+
+    posterior = updater.update(
+        param_ensemble=param_ensemble,
+        param_config=field_config,
+        non_zero_variance_mask=non_zero_variance_mask,
+    )
+
+    np.testing.assert_allclose(posterior[0, :], prior[0, :])
+    assert not np.allclose(posterior[1:, :], prior[1:, :])
+
+
+@pytest.mark.parametrize(
+    ("param_type", "param_config_fn", "n_params"),
+    [
+        (Field, lambda: _field_config(4, 4, 1), 16),
+        (SurfaceConfig, lambda: _surface_config(4, 4), 16),
+    ],
+)
+def test_that_distance_localization_stores_and_reuses_rho_blob(
+    tmp_path,
+    param_type,
+    param_config_fn,
+    n_params,
+):
+    param_config = param_config_fn()
+    n_real = 20
+    rng = np.random.default_rng(99)
+    param_ensemble = rng.standard_normal((n_params, n_real))
+
+    obs_keys = ["WOPR:OP1", "FOPR"]
+    obs_context = ObservationContext(
+        responses=np.vstack([param_ensemble[0], param_ensemble[-1]]),
+        observation_values=np.array([1.0, -1.0]),
+        observation_errors=np.array([0.1, 0.1]),
+        observation_perturbations=rng.standard_normal((2, n_real)) * 0.1,
+        observation_locations=ObservationLocations(
+            xpos=np.array([0.5, 2.5]),
+            ypos=np.array([0.5, 2.5]),
+            main_range=np.array([2.0, 2.0]),
+            location_mask=np.ones(2, dtype=bool),
+            observation_keys=obs_keys,
+        ),
+    )
+
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment = storage.create_experiment()
+
+        # First run: compute rho, emit event, save blob
+        iter0_events: list[AnalysisRhoMatrixEvent] = []
+
+        def save_callback(event):
+            if isinstance(event, AnalysisRhoMatrixEvent):
+                iter0_events.append(event)
+                experiment.save_blob(event)
+
+        updater1 = DistanceLocalizationUpdate(
+            enkf_truncation=0.99,
+            param_type=param_type,
+            progress_callback=save_callback,
+            experiment=experiment,
+        )
+        updater1.prepare(obs_context)
+        result1 = updater1.update(
+            param_ensemble=param_ensemble.copy(),
+            param_config=param_config,
+            non_zero_variance_mask=np.ones(n_params, dtype=bool),
+        )
+
+        assert len(iter0_events) == 1
+        assert iter0_events[0].param_name == param_config.name
+        assert iter0_events[0].observation_keys == obs_keys
+        assert iter0_events[0].data_type == "float32"
+
+        blobs = experiment._load_blob_metadata(BlobType.RHO_MATRIX)
+        assert len(blobs) == 1
+        assert isinstance(blobs[0].blob_info, RhoStorageData)
+        assert blobs[0].blob_info.param_name == param_config.name
+        assert blobs[0].blob_info.observation_keys == obs_keys
+
+        loaded_rho = experiment.load_rho_matrix(param_config.name)
+        assert loaded_rho is not None
+        assert loaded_rho.shape == iter0_events[0].shape
+        assert loaded_rho.dtype == np.float32
+
+        # Second run: should load from cache, no new events emitted
+        iter1_events: list[AnalysisRhoMatrixEvent] = []
+
+        def track_callback(event):
+            if isinstance(event, AnalysisRhoMatrixEvent):
+                iter1_events.append(event)
+
+        updater2 = DistanceLocalizationUpdate(
+            enkf_truncation=0.99,
+            param_type=param_type,
+            progress_callback=track_callback,
+            experiment=experiment,
+        )
+        updater2.prepare(obs_context)
+        result2 = updater2.update(
+            param_ensemble=param_ensemble.copy(),
+            param_config=param_config,
+            non_zero_variance_mask=np.ones(n_params, dtype=bool),
+        )
+
+        assert len(iter1_events) == 0, "Expected no new rho events on second run"
+        np.testing.assert_allclose(result1, result2)

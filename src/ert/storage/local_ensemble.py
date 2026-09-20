@@ -1,0 +1,2172 @@
+from __future__ import annotations
+
+import asyncio
+import contextlib
+import io
+import logging
+import os
+import time
+from collections import Counter
+from collections.abc import Iterable
+from datetime import UTC, datetime
+from functools import cache, cached_property, lru_cache
+from multiprocessing.pool import ThreadPool
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
+from uuid import UUID
+
+import numpy as np
+import polars as pl
+import resfo
+import xarray as xr
+from pydantic import BaseModel
+from typing_extensions import TypedDict
+
+from ert.config import (
+    InvalidResponseFile,
+    ParameterCardinality,
+    ParameterConfig,
+    SummaryConfig,
+)
+from ert.config._reservoir_data_utils import SeismicData
+from ert.config.field import Field, field_transform
+from ert.config.observation_quality_control import (
+    append_to_qc_error,
+    ensure_qc_error_column,
+    qc_rft_observations,
+    qc_seismic_observations,
+)
+from ert.config.rft_config import RFTConfig
+from ert.substitutions import substitute_runpath_name
+
+from .blob_data import (
+    BlobStorageData,
+    BlobType,
+    EverestBatchData,
+    MatrixStorageData,
+    ObservationReportData,
+    ScalingFactorsData,
+)
+from .load_status import LoadResult
+from .mode import BaseMode, Mode, require_write
+from .realization_storage_state import RealizationStorageState
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from ert.analysis.event import (
+        AnalysisCompleteEvent,
+        AnalysisMatrixEvent,
+        AnalysisScalingEvent,
+    )
+
+    from .local_experiment import LocalExperiment
+    from .local_storage import LocalStorage
+
+logger = logging.getLogger(__name__)
+
+
+class EverestRealizationInfo(TypedDict):
+    model_realization: int
+    perturbation: int  # -1 means it stems from unperturbed controls
+
+
+SCALAR_FILENAME = "SCALAR"
+BLOB_DATA_DIR = "blobs"
+
+
+class ResponseError(Exception):
+    pass
+
+
+class ObservationError(Exception):
+    pass
+
+
+class BatchDataframes(TypedDict, total=False):
+    batch_objectives: pl.DataFrame | None
+    batch_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
+    batch_objective_gradient: pl.DataFrame | None
+    batch_constraint_gradient: pl.DataFrame | None
+
+
+class _Index(BaseModel, extra="forbid"):
+    id: UUID
+    experiment_id: UUID
+    ensemble_size: int
+    iteration: int
+    name: str
+    prior_ensemble_id: UUID | None
+    started_at: datetime
+    everest_realization_info: dict[int, EverestRealizationInfo] | None = None
+
+
+class _Failure(BaseModel, extra="forbid"):
+    type: RealizationStorageState
+    message: str
+    time: datetime
+
+
+def _escape_filename(filename: str) -> str:
+    return filename.replace("%", "%25").replace("/", "%2F")
+
+
+class LocalEnsemble(BaseMode):
+    """
+    Represents an ensemble within the local storage system of ERT.
+
+    Manages multiple realizations of experiments, including different sets of
+    parameters and responses.
+    """
+
+    def __init__(
+        self,
+        storage: LocalStorage,
+        path: Path,
+        mode: Mode,
+    ) -> None:
+        """
+        Initialize a LocalEnsemble instance.
+
+        Parameters
+        ----------
+        storage : LocalStorage
+            Local storage instance.
+        path : Path
+            File system path to ensemble data.
+        mode : Mode
+            Access mode for the ensemble (read/write).
+        """
+
+        super().__init__(mode)
+        self._storage = storage
+        self._path = path
+        self._index = _Index.model_validate_json(
+            (path / "index.json").read_text(encoding="utf-8")
+        )
+        self._error_log_name = "error.json"
+
+        @cache
+        def create_realization_dir(realization: int) -> Path:
+            return self._path / f"realization-{realization}"
+
+        self._realization_dir = create_realization_dir
+
+    @classmethod
+    def create(
+        cls,
+        storage: LocalStorage,
+        path: Path,
+        uuid: UUID,
+        *,
+        ensemble_size: int,
+        experiment_id: UUID,
+        iteration: int = 0,
+        name: str,
+        prior_ensemble_id: UUID | None,
+    ) -> LocalEnsemble:
+        """
+        Create a new ensemble in local storage.
+
+        Parameters
+        ----------
+        storage : LocalStorage
+            Local storage instance.
+        path : Path
+            File system path for ensemble data.
+        uuid : UUID
+            Unique identifier for the new ensemble.
+        ensemble_size : int
+            Number of realizations.
+        experiment_id : UUID
+            Identifier of associated experiment.
+        iteration : int
+            Iteration number of ensemble.
+        name : str
+            Name of ensemble.
+        prior_ensemble_id : UUID, optional
+            Identifier of prior ensemble.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            Instance of the newly created ensemble.
+        """
+
+        index = _Index(
+            id=uuid,
+            ensemble_size=ensemble_size,
+            experiment_id=experiment_id,
+            iteration=iteration,
+            name=name,
+            prior_ensemble_id=prior_ensemble_id,
+            started_at=datetime.now(tz=UTC),
+        )
+
+        storage._write_transaction(
+            path / "index.json", index.model_dump_json(indent=2).encode("utf-8")
+        )
+
+        return cls(storage, path, Mode.WRITE)
+
+    @property
+    def mount_point(self) -> Path:
+        return self._path
+
+    @property
+    def name(self) -> str:
+        return self._index.name
+
+    @property
+    def id(self) -> UUID:
+        return self._index.id
+
+    @property
+    def experiment_id(self) -> UUID:
+        return self._index.experiment_id
+
+    @property
+    def ensemble_size(self) -> int:
+        return self._index.ensemble_size
+
+    @property
+    def started_at(self) -> datetime:
+        if self._index.started_at.tzinfo is None:
+            logger.warning(
+                "Assuming local timezone for 'started_at' "
+                f"property of ensemble named {self.name}"
+            )
+            return self._index.started_at.astimezone()
+        return self._index.started_at
+
+    @property
+    def iteration(self) -> int:
+        return self._index.iteration
+
+    @property
+    def parent(self) -> UUID | None:
+        return self._index.prior_ensemble_id
+
+    @property
+    def experiment(self) -> LocalExperiment:
+        return self._storage.get_experiment(self.experiment_id)
+
+    @property
+    def relative_weights(self) -> str:
+        return self._storage.get_experiment(self.experiment_id).relative_weights
+
+    def get_realization_mask_without_failure(self) -> npt.NDArray[np.bool_]:
+        """
+        Mask array indicating realizations without any failure.
+
+        Returns
+        -------
+        failures : ndarray of bool
+            Boolean array where True means no failure.
+        """
+
+        return np.array(
+            [
+                not {
+                    RealizationStorageState.FAILURE_IN_PARENT,
+                    RealizationStorageState.FAILURE_IN_CURRENT,
+                }.intersection(e)
+                for e in self.get_ensemble_state()
+            ]
+        )
+
+    def get_realization_mask_with_parameters(self) -> npt.NDArray[np.bool_]:
+        """
+        Mask array indicating realizations with associated parameters.
+
+        Returns
+        -------
+        parameters : ndarray of bool
+            Boolean array where True means parameters are associated.
+        """
+
+        return np.array(
+            [
+                bool({RealizationStorageState.PARAMETERS_LOADED}.intersection(state))
+                for state in self.get_ensemble_state()
+            ]
+        )
+
+    def get_realization_mask_with_responses(self) -> npt.NDArray[np.bool_]:
+        return np.array(
+            [
+                RealizationStorageState.RESPONSES_LOADED in state
+                for state in self.get_ensemble_state()
+            ]
+        )
+
+    @cached_property
+    def _existing_scalars(self) -> dict[str, list[int]]:
+        group_path = self.mount_point / f"{_escape_filename(SCALAR_FILENAME)}.parquet"
+        genkw_mask: dict[str, list[int]] = {
+            param_name: []
+            for param_name, param in self.experiment.parameter_configuration.items()
+            if param.cardinality
+            == ParameterCardinality.multiple_configs_per_ensemble_dataset
+        }
+        if not group_path.exists():
+            return genkw_mask
+        df = pl.scan_parquet(group_path)
+        cols = df.collect_schema().names()
+        real = (
+            df.select("realization")
+            .unique()
+            .collect()
+            .get_column("realization")
+            .to_list()
+        )
+        return {
+            param: real
+            for param in cols
+            if param != "realization" and param in genkw_mask
+        }
+
+    def has_data(self) -> bool:
+        """Returns True if at least one realization has response."""
+        return len(self.get_realization_list_with_responses()) > 0
+
+    def get_realization_list_with_responses(self) -> list[int]:
+        mask = self.get_realization_mask_with_responses()
+        return np.where(mask)[0].tolist()
+
+    def set_failure(
+        self,
+        realization: int,
+        failure_type: RealizationStorageState,
+        message: str | None = None,
+    ) -> None:
+        filename: Path = self._realization_dir(realization) / self._error_log_name
+        error = _Failure(
+            type=failure_type, message=message or "", time=datetime.now(tz=UTC)
+        )
+        if not filename.parent.parent.exists():
+            logger.warning(
+                f"Storage {filename.parent.parent} does not exist, "
+                f"skipping writing {error} to {filename}"
+            )
+            return
+        filename.parent.mkdir(exist_ok=True)
+        self._storage._write_transaction(
+            filename, error.model_dump_json(indent=2).encode("utf-8")
+        )
+
+    def unset_failure(
+        self,
+        realization: int,
+    ) -> None:
+        filename: Path = self._realization_dir(realization) / self._error_log_name
+        filename.unlink(missing_ok=True)
+
+    def has_failure(self, realization: int) -> bool:
+        """Returns True if the given realization has a recorded failure."""
+
+        return (self._realization_dir(realization) / self._error_log_name).exists()
+
+    def get_failure(self, realization: int) -> _Failure | None:
+        """Retrieve failure information for a given realization, if any."""
+
+        if self.has_failure(realization):
+            return _Failure.model_validate_json(
+                (self._realization_dir(realization) / self._error_log_name).read_text(
+                    encoding="utf-8"
+                )
+            )
+        return None
+
+    def refresh_ensemble_state(self) -> None:
+        self.get_ensemble_state.cache_clear()
+        if self._existing_scalars is not None:
+            del self._existing_scalars
+        self.get_ensemble_state()
+
+    @lru_cache  # ruff: ignore[cached-instance-method]
+    def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
+        response_configs = self.experiment.simulation_response_configuration
+        existing_scalars = self._existing_scalars
+
+        def _parameters_exist_for_realization(realization: int) -> bool:
+            """
+            Returns true if all parameters in the experiment have
+            all been saved in the ensemble. If no parameters, return True
+
+            Parameters
+            ----------
+            realization : int
+                Realization index.
+
+            Returns
+            -------
+            exists : bool
+                True if parameters exist for realization.
+            """
+            if not self.experiment.parameter_configuration:
+                return True
+            path = self._realization_dir(realization)
+            return all(
+                (
+                    parameter.name in existing_scalars
+                    and realization in existing_scalars[parameter.name]
+                )
+                or ((path / (_escape_filename(parameter.name) + ".nc")).exists())
+                for parameter in self.experiment.parameter_configuration.values()
+            )
+
+        def _responses_exist_for_realization(
+            realization: int, key: str | None = None
+        ) -> bool:
+            """
+            Returns true if there are responses in the experiment and they have
+            all been saved in the ensemble
+
+            Parameters
+            ----------
+            realization : int
+                Realization index.
+            key : str, optional
+                Response key to filter realizations. If None, all
+                responses are considered.
+
+            Returns
+            -------
+            exists : bool
+                True if responses exist for realization.
+            """
+
+            if not response_configs:
+                return True
+            path = self._realization_dir(realization)
+
+            def _has_response(key_: str) -> bool:
+                df_key = self.experiment.response_key_to_response_type.get(key_, key_)
+                return (path / f"{df_key}.parquet").exists()
+
+            if key:
+                return _has_response(key)
+
+            is_expecting_any_responses = any(
+                bool(config.response_keys()) for config in response_configs.values()
+            )
+
+            if not is_expecting_any_responses:
+                return True
+
+            non_empty_response_configs = [
+                response
+                for response, config in response_configs.items()
+                if bool(config.response_keys())
+            ]
+
+            return all(
+                _has_response(response) for response in non_empty_response_configs
+            )
+
+        def _find_state(realization: int) -> set[RealizationStorageState]:
+            state = set()
+            if self.has_failure(realization):
+                failure = self.get_failure(realization)
+                assert failure
+                state.add(failure.type)
+            if _responses_exist_for_realization(realization):
+                state.add(RealizationStorageState.RESPONSES_LOADED)
+            if _parameters_exist_for_realization(realization):
+                state.add(RealizationStorageState.PARAMETERS_LOADED)
+
+            if len(state) == 0:
+                state.add(RealizationStorageState.UNDEFINED)
+
+            return state
+
+        return [_find_state(i) for i in range(self.ensemble_size)]
+
+    def _load_single_dataset(
+        self,
+        group: str,
+        realization: int,
+    ) -> xr.Dataset:
+        try:
+            return xr.open_dataset(
+                self.mount_point
+                / f"realization-{realization}"
+                / f"{_escape_filename(group)}.nc",
+                engine="scipy",
+            )
+        except FileNotFoundError as e:
+            raise KeyError(
+                f"No dataset '{group}' in storage for realization {realization}"
+            ) from e
+
+    def _load_dataset(
+        self,
+        group: str,
+        realizations: int | np.int64 | npt.NDArray[np.int_],
+    ) -> xr.Dataset:
+        if isinstance(realizations, int | np.int64):
+            return self._load_single_dataset(group, int(realizations)).isel(
+                realizations=0, drop=True
+            )
+
+        datasets = [self._load_single_dataset(group, int(i)) for i in realizations]
+        return xr.combine_nested(datasets, concat_dim="realizations")
+
+    def _load_parameters_lazy(
+        self,
+        group: str,
+    ) -> pl.LazyFrame:
+        """
+        Lazy load genkw group with all realizations
+        Parameters
+        ----------
+        group : str
+            Name of parameter group to load.
+
+        Returns
+        -------
+        parameters : pl.LazyFrame
+            Loaded parameters.
+        """
+        group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+        if not group_path.exists():
+            raise KeyError(f"No {group} dataset in storage for ensemble {self.name}")
+        return pl.scan_parquet(group_path)
+
+    def load_scalar_keys(
+        self,
+        keys: list[str] | None = None,
+        realizations: int | npt.NDArray[np.int_] | None = None,
+        *,
+        transformed: bool = False,
+    ) -> pl.DataFrame:
+        if keys is None:
+            keys = self.experiment.parameter_keys
+
+        df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
+        names = df_lazy.collect_schema().names()
+        matches = [key for key in keys if any(key in item for item in names)]
+        if len(matches) != len(keys):
+            missing = set(keys) - set(matches)
+            raise KeyError(f"Parameters not registered to the experiment: {missing}")
+
+        parameter_keys = [
+            key
+            for e in keys
+            for key in self.experiment.parameter_configuration[e].parameter_keys
+        ]
+        df_lazy_filtered = df_lazy.select(["realization", *parameter_keys])
+
+        if realizations is not None:
+            if isinstance(realizations, int):
+                realizations = np.array([realizations])
+            df_lazy_filtered = df_lazy_filtered.filter(
+                pl.col("realization").is_in(realizations)
+            )
+        df = df_lazy_filtered.collect(engine="streaming")
+        if df.is_empty():
+            raise IndexError(
+                f"No matching realizations {realizations} found for {keys}"
+            )
+
+        if transformed:
+            tmp_configuration: dict[str, ParameterConfig] = {}
+            for key in keys:
+                for col in df.columns:
+                    if col == "realization":
+                        continue
+                    if col == key:
+                        tmp_configuration[col] = (
+                            self.experiment.parameter_configuration[key]
+                        )
+
+            df = df.with_columns(
+                [
+                    pl.col(col)
+                    .map_batches(tmp_configuration[col].transform_series)
+                    .cast(df[col].dtype)
+                    .alias(col)
+                    for col in df.columns
+                    if col != "realization"
+                ]
+            )
+        return df
+
+    def load_parameters(
+        self,
+        groupname_or_parametername: str,
+        realizations: int | npt.NDArray[np.int_] | None = None,
+        *,
+        transformed: bool = False,
+    ) -> xr.Dataset | pl.DataFrame:
+        """
+        Load parameters for group and realizations. If transformed is True,
+        the parameters will be transformed using the parameter transformation
+        otherwise it will return the raw values.
+
+        """
+        parameter_config = self.experiment.parameter_configuration.get(
+            groupname_or_parametername
+        )
+        cfgs = (
+            [parameter_config]
+            if parameter_config is not None
+            else [
+                p
+                for p in self.experiment.parameter_configuration.values()
+                if groupname_or_parametername == p.group_name
+            ]
+        )
+        if not cfgs:
+            raise KeyError(
+                f"{groupname_or_parametername} is not registered to the experiment."
+            )
+
+        # if groupname_or_parametername refers to a group name,
+        # we expect the same cardinality
+        cardinality = next(cfg.cardinality for cfg in cfgs)
+        if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
+            return self.load_scalar_keys(
+                [cfg.name for cfg in cfgs], realizations, transformed=transformed
+            )
+        return self._load_dataset(
+            groupname_or_parametername,
+            (
+                realizations
+                if realizations is not None
+                else np.flatnonzero(self.get_realization_mask_with_parameters())
+            ),
+        )
+
+    def load_parameters_numpy(
+        self, group: str, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.floating]:
+        if group in self.experiment.parameter_configuration:
+            config = self.experiment.parameter_configuration[group]
+            return config.load_parameters(self, realizations)
+        keys = [
+            p.name
+            for p in self.experiment.parameter_configuration.values()
+            if group == p.group_name
+            and p.cardinality
+            == ParameterCardinality.multiple_configs_per_ensemble_dataset
+        ]
+        if keys:
+            return (
+                self.load_scalar_keys(keys, realizations)
+                .drop("realization")
+                .to_numpy()
+                .T.copy()
+            )
+        raise KeyError(f"{group} is not registered to the experiment.")
+
+    def save_parameters_numpy(
+        self,
+        parameters: npt.NDArray[np.floating],
+        param_group: str,
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> None:
+        config_node = self.experiment.parameter_configuration[param_group]
+        complete_df: pl.DataFrame | None = None
+        with contextlib.suppress(KeyError):
+            complete_df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
+                engine="streaming"
+            )
+        for real, ds in config_node.create_storage_datasets(
+            parameters, iens_active_index
+        ):
+            if isinstance(ds, pl.DataFrame):
+                if complete_df is None:
+                    complete_df = ds
+                else:
+                    complete_df = complete_df.drop(
+                        [c for c in ds.columns if c != "realization"], strict=False
+                    )
+                    complete_df = (
+                        complete_df.join(ds, on="realization", how="left")
+                        .unique(subset=["realization"], keep="first")
+                        .sort("realization")
+                    )
+            else:
+                self.save_parameters(ds, config_node.name, real)
+
+        group_path = self.mount_point / f"{_escape_filename(SCALAR_FILENAME)}.parquet"
+        if complete_df is not None:
+            self._storage._to_parquet_transaction(group_path, complete_df)
+
+    def load_scalars(
+        self, realizations: npt.NDArray[np.int_] | None = None
+    ) -> pl.DataFrame:
+        gen_kws = [
+            p
+            for p in self.experiment.parameter_configuration.values()
+            if p.cardinality
+            == ParameterCardinality.multiple_configs_per_ensemble_dataset
+        ]
+
+        if not gen_kws:
+            return pl.DataFrame()
+
+        df = self.load_scalar_keys(
+            [config.name for config in gen_kws], realizations, transformed=True
+        )
+        return df.rename(
+            {config.name: f"{config.group_name}:{config.name}" for config in gen_kws}
+        )
+
+    @staticmethod
+    def sample_parameter(
+        parameter: ParameterConfig,
+        active_realizations: list[int],
+        random_seed: int,
+        num_realizations: int,
+    ) -> pl.DataFrame:
+        parameter_values = parameter.sample_values(
+            str(random_seed), active_realizations, num_realizations=num_realizations
+        )
+
+        parameters = pl.DataFrame(
+            {parameter.name: parameter_values},
+            schema={parameter.name: pl.Float64},
+        )
+        realizations_series = pl.Series("realization", active_realizations)
+
+        return parameters.with_columns(realizations_series)
+
+    def load_responses(
+        self, response_key: str, realizations: tuple[int, ...]
+    ) -> pl.DataFrame:
+        """Load responses for requested key and realizations.
+
+        For each given realization, response data is loaded from a parquet file that
+        matches the given response key.
+        """
+
+        return self._load_responses_lazy(response_key, realizations).collect(
+            engine="streaming"
+        )
+
+    def _load_responses_lazy(
+        self, response_key: str, realizations: tuple[int, ...]
+    ) -> pl.LazyFrame:
+        select_key = False
+        if response_key in self.experiment.response_configuration:
+            response_type = response_key
+        elif response_key not in self.experiment.response_key_to_response_type:
+            raise ValueError(f"{response_key} is not a response")
+        else:
+            response_type = self.experiment.response_key_to_response_type[response_key]
+            select_key = True
+
+        loaded = []
+        for realization in realizations:
+            input_path = self._realization_dir(realization) / f"{response_type}.parquet"
+            if not input_path.exists():
+                raise KeyError(
+                    f"No response for key {response_key}, realization: {realization}"
+                )
+            df = pl.scan_parquet(input_path)
+
+            if select_key:
+                df = df.filter(pl.col("response_key") == response_key)
+
+            loaded.append(df)
+
+        return pl.concat(loaded) if loaded else pl.DataFrame().lazy()
+
+    @require_write
+    def save_parameters(
+        self,
+        dataset: xr.Dataset | pl.DataFrame,
+        group: str | None = None,
+        realization: int | None = None,
+    ) -> None:
+        """Saves the provided dataset under a parameter group
+        and realization index(es).
+        """
+        assert isinstance(dataset, (xr.Dataset | pl.DataFrame)), (
+            f"Dataset must be either an xarray Dataset or polars Dataframe, "
+            f"was '{type(dataset).__name__}'"
+        )
+
+        if isinstance(dataset, pl.DataFrame):
+            if dataset.is_empty():
+                raise ValueError("Parameters dataframe is empty.")
+            allowed_cols = set(self.experiment.parameter_configuration) | {
+                "realization"
+            }
+            actual_cols = set(dataset.columns)
+            unexpected_cols = actual_cols - allowed_cols
+            if unexpected_cols:
+                raise KeyError(
+                    f"Columns {', '.join(sorted(unexpected_cols))}"
+                    " not in experiment parameters"
+                )
+            if "realization" not in dataset.columns:
+                raise KeyError(
+                    "DataFrame must contain a 'realization' column for"
+                    " saving scalar parameters"
+                )
+
+            try:
+                # since all realizations are saved in a single parquet file,
+                # this makes sure that we only add / replace new data.
+                df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
+                    engine="streaming"
+                )
+                df = df.drop(
+                    [c for c in dataset.columns if c != "realization"], strict=False
+                )
+                df_full = (
+                    df.join(dataset, on="realization", how="left")
+                    .unique(subset=["realization"], keep="first")
+                    .sort("realization")
+                )
+            except KeyError:
+                df_full = dataset
+
+            group_path = (
+                self.mount_point / f"{_escape_filename(SCALAR_FILENAME)}.parquet"
+            )
+            self._storage._to_parquet_transaction(group_path, df_full)
+            return
+
+        assert group is not None, "Group must be provided for xarray Dataset"
+
+        assert realization is not None, (
+            "Realization must be provided for xarray Dataset"
+        )
+        if "values" not in dataset.variables:
+            raise ValueError(
+                f"Dataset for parameter group '{group}' "
+                "must contain a 'values' variable"
+            )
+        if dataset["values"].size == 0:
+            raise ValueError(
+                f"Parameters {group} are empty. Cannot proceed with saving to storage."
+            )
+
+        path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
+        path.parent.mkdir(exist_ok=True)
+        if "realizations" in dataset.dims:
+            data_to_save = dataset.sel(realizations=[realization])
+        else:
+            data_to_save = dataset.expand_dims(realizations=[realization])
+        self._storage._to_netcdf_transaction(path, data_to_save)
+
+    @require_write
+    def save_response(
+        self, response_type: str, data: pl.DataFrame, realization: int
+    ) -> None:
+        """
+        Save dataset as response under group and realization index.
+
+        Parameters
+        ----------
+        response_type : str
+            A name for the type of response stored, e.g., "summary, or "gen_data".
+        realization : int
+            Realization index for saving group.
+        data : polars DataFrame
+            polars DataFrame to save.
+        """
+
+        if "values" not in data.columns:
+            raise ValueError(
+                f"Dataset for response group '{response_type}' "
+                f"must contain a 'values' variable"
+            )
+
+        if "realization" not in data.columns:
+            data.insert_column(
+                0,
+                pl.Series(
+                    "realization", np.full(len(data), realization), dtype=pl.UInt16
+                ),
+            )
+
+        output_path = self._realization_dir(realization)
+        Path(output_path).mkdir(exist_ok=True)
+
+        self._storage._to_parquet_transaction(
+            output_path / f"{response_type}.parquet", data
+        )
+
+        if not self.experiment._has_finalized_response_keys(response_type):
+            response_keys = data["response_key"].unique().to_list()
+            self.experiment._update_response_keys(response_type, response_keys)
+
+    def calculate_std_dev_for_parameter_group(
+        self, parameter_group: str
+    ) -> npt.NDArray[np.floating]:
+        data = self.load_parameters(parameter_group)
+        if isinstance(data, pl.DataFrame):
+            return data.drop("realization").std().to_numpy().reshape(-1)
+        param_config = self.experiment.parameter_configuration.get(parameter_group)
+        values = data["values"]
+        if isinstance(param_config, Field) and param_config.output_transformation:
+            values = cast(
+                xr.DataArray,
+                field_transform(values, param_config.output_transformation),
+            )
+        return values.std("realizations").to_numpy()
+
+    def get_parameter_state(
+        self, realization: int
+    ) -> dict[str, RealizationStorageState]:
+        path = self._realization_dir(realization)
+        existing_scalars = self._existing_scalars
+        return {
+            e: (
+                RealizationStorageState.PARAMETERS_LOADED
+                if (path / (_escape_filename(e) + ".nc")).exists()
+                or (e in existing_scalars and realization in existing_scalars[e])
+                else RealizationStorageState.UNDEFINED
+            )
+            for e in self.experiment.parameter_configuration
+        }
+
+    def get_response_state(
+        self, realization: int
+    ) -> dict[str, RealizationStorageState]:
+        response_configs = self.experiment.simulation_response_configuration
+        path = self._realization_dir(realization)
+        return {
+            e: (
+                RealizationStorageState.RESPONSES_LOADED
+                if (path / f"{e}.parquet").exists()
+                else RealizationStorageState.UNDEFINED
+            )
+            for e in response_configs
+        }
+
+    @require_write
+    def save_observation_location_metadata(
+        self, dataset: pl.DataFrame, realization: int
+    ) -> None:
+        filename = "rft_observation_location_metadata.parquet"
+        output_path = self._realization_dir(realization) / filename
+        self._storage._to_parquet_transaction(output_path, dataset)
+
+    def load_observation_location_metadata(self, realization: int) -> pl.DataFrame:
+        filename = "rft_observation_location_metadata.parquet"
+        ds_path = self._realization_dir(realization) / filename
+        return pl.read_parquet(ds_path)
+
+    def add_rft_metadata_and_qc(
+        self, observations: pl.DataFrame, realization: int
+    ) -> pl.DataFrame:
+        observation_metadata_in_realization = self.load_observation_location_metadata(
+            realization
+        )
+        enriched_observations = RFTConfig.enrich_observations_with_metadata(
+            observations, observation_metadata_in_realization
+        )
+
+        return qc_rft_observations(enriched_observations)
+
+    def get_observations_and_responses(
+        self,
+        selected_observations: Iterable[str],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> pl.DataFrame:
+        """Fetches and aligns selected observations with their
+        corresponding simulated responses from an ensemble.
+
+        The returned DataFrame includes an "index" column containing a
+        comma-separated string of the response type's index key values.
+        Missing components are rendered as the literal "None" so that
+        positional meaning is preserved:
+        - Summary: "2024-01-15 00:00:00" (time)
+        - GenData: "0, 42" (report_step, index)
+        - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
+                or "123.5, 456.7, 2500.0, None" when zone is missing
+        - Seismic "123.5, 456.7" (east, north)
+        """
+        known_observations = self.experiment.observation_keys
+
+        unknown_observations = set(selected_observations) - set(known_observations)
+
+        if unknown_observations:
+            raise KeyError(
+                f"Observations: {', '.join(unknown_observations)} not in experiment"
+            )
+
+        observations_by_type = self.experiment.observations
+
+        dfs_per_response_type = []
+        for (
+            response_type,
+            response_cls,
+        ) in self.experiment.response_configuration.items():
+            if response_type not in observations_by_type:
+                continue
+
+            observations_for_type = (
+                observations_by_type[response_type]
+                .filter(pl.col("observation_key").is_in(list(selected_observations)))
+                .with_columns([pl.col("response_key").cast(pl.Categorical)])
+            )
+            if response_type == "seismic":
+                observations_for_type = qc_seismic_observations(
+                    observations_for_type, self.experiment.shape_registry
+                )
+
+            reals = np.sort(iens_active_index).tolist()
+
+            # Load and join one realization at a time to reduce peak memory usage
+            first_columns: pl.DataFrame | None = None
+            realization_columns: list[pl.DataFrame] = []
+
+            for real in reals:
+                observations = ensure_qc_error_column(observations_for_type)
+                if response_type == "rft":
+                    observations = self.add_rft_metadata_and_qc(observations, real)
+
+                observed_cols = {
+                    k: observations[k].unique()
+                    for k in ["response_key", *response_cls.match_key]
+                }
+
+                responses = self._load_responses_lazy(
+                    response_type, (real,)
+                ).with_columns([pl.col("response_key").cast(pl.Categorical)])
+
+                if (
+                    response_type == "rft"
+                    and cast(
+                        RFTConfig, self.experiment.response_configuration["rft"]
+                    ).approximate_missing_values
+                ):
+                    responses = RFTConfig.approximate_missing_rft_responses(
+                        responses, observations
+                    )
+
+                # Filter out responses without observations
+                for col, observed_values in observed_cols.items():
+                    if col not in {"time", "east", "north"}:
+                        responses = responses.filter(
+                            pl.col(col).is_in(
+                                observed_values.implode(), nulls_equal=True
+                            )
+                        )
+
+                pivoted = responses.collect(engine="streaming").pivot(
+                    on="realization",
+                    index=["response_key", *response_cls.match_key],
+                    values="values",
+                    aggregate_function="mean",
+                )
+                if response_type == "seismic":
+                    pivoted = (
+                        SeismicData.use_observation_locations_in_respective_responses(
+                            pivoted, observations
+                        )
+                        # Due to performed validations, all match keys should be unique.
+                        # Calculating 'mean' anyway to assure no ugly error is raised if
+                        # validations are somehow bypassed
+                        .group_by(["response_key", "east", "north"])
+                        .agg(pl.col(str(real)).mean())
+                    )
+
+                if pivoted.is_empty():
+                    # There are no responses for this realization,
+                    # so we explicitly create a column of Nones
+                    # to represent this. We are basically saying that
+                    # for this realization, each observation points
+                    # to a None response.
+                    joined = observations.with_columns(
+                        pl.lit(None, dtype=pl.Float32).alias(str(real)),
+                    )
+                elif "time" in pivoted:
+                    by_cols = [
+                        "response_key",
+                        *[k for k in response_cls.match_key if k != "time"],
+                    ]
+                    joined = observations.sort(
+                        by=[*by_cols, "time"]
+                    ).join_asof(
+                        pivoted.sort(by=[*by_cols, "time"]),
+                        by=by_cols,
+                        on="time",
+                        check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
+                        strategy="nearest",
+                        tolerance="1s",
+                    )
+                else:
+                    joined = observations.join(
+                        pivoted,
+                        how="left",
+                        on=["response_key", *response_cls.match_key],
+                        nulls_equal=True,
+                    )
+
+                no_matched_response_condition = pl.col(str(real)).is_null()
+                no_matched_response_error = pl.concat_str(
+                    [
+                        pl.lit("no response matched observation data: "),
+                        pl.lit("response_key="),
+                        pl.col("response_key").cast(pl.String),
+                        pl.lit(", "),
+                        response_cls.match_key_dict_expr(),
+                    ],
+                    separator="",
+                )
+
+                joined = joined.with_columns(
+                    append_to_qc_error(
+                        no_matched_response_condition, no_matched_response_error
+                    ).alias(f"qc_error_{real}")
+                )
+
+                # Avoid potential collision with "index" column (it could be a part
+                # of the index_key)
+                joined = joined.with_columns(
+                    response_cls.index_column_expr().alias("__tmp_index_key__")
+                )
+                if "index" in joined.columns:
+                    joined = joined.drop("index")
+                joined = joined.rename({"__tmp_index_key__": "index"})
+
+                joined = joined.with_columns(
+                    pl.when(pl.col(f"qc_error_{real}").is_null())
+                    .then(pl.col(str(real)))
+                    .otherwise(pl.lit(None, dtype=pl.Float32))
+                    .alias(str(real))
+                )
+
+                if first_columns is None:
+                    # The "leftmost" index columns are not yet collected.
+                    # They are the same for all iterations, and indexed the same
+                    # because we do a left join for the observations.
+                    # Hence, we select these columns only once.
+                    first_columns = joined.select(
+                        [
+                            "response_key",
+                            "index",
+                            "observation_key",
+                            "observations",
+                            "std",
+                            "east",
+                            "north",
+                            "radius",
+                        ]
+                    )
+
+                realization_columns.append(joined.select(str(real), f"qc_error_{real}"))
+
+            if first_columns is None:
+                # Not a single realization had any responses to the
+                # observations. Hence, there is no need to include
+                # it in the dataset
+                continue
+
+            dfs_per_response_type.append(
+                pl.concat(
+                    [first_columns, *realization_columns],
+                    how="horizontal",
+                    strict=True,
+                )
+            )
+
+        return pl.concat(dfs_per_response_type, how="vertical").with_columns(
+            pl.col("response_key").cast(pl.String).alias("response_key")
+        )
+
+    def get_rft_observations_and_responses(
+        self,
+    ) -> pl.DataFrame:
+        """Fetches and aligns RFT observations with their corresponding
+        simulated responses from an ensemble.
+
+        Returns a DataFrame with observation/response data using
+        column names equal to the ones used by the subscript forward model
+        MERGE_RFT_ERTOBS, and compatible with the webviz-subsurface RftPlotter.
+        """
+        rft_observations = self.experiment.observations.get("rft")
+        if rft_observations is None or rft_observations.is_empty():
+            raise ValueError("No RFT observations found in experiment")
+
+        if "rft" not in self.experiment.response_configuration:
+            raise ValueError("No RFT response configuration found in experiment")
+
+        realizations = self.get_realization_list_with_responses()
+        if not realizations:
+            raise ValueError("No realizations with responses found")
+
+        # Build date-to-report_step mapping from summary responses if available
+        date_to_report_step: dict[str, int] = {}
+        if "summary" in self.experiment.response_configuration:
+            try:
+                summary_df = self.load_responses("summary", (realizations[0],))
+                times = summary_df["time"].unique().sort()
+                for report_step, time in enumerate(times):
+                    date_str = time.strftime("%Y-%m-%d")
+                    date_to_report_step[date_str] = report_step
+            except (KeyError, IndexError):
+                pass  # No summary data available, will use default
+
+        pure_observations = rft_observations.with_columns(
+            pl.int_range(pl.len()).over("well").alias("order"),
+        )
+
+        pivot_index = [
+            "well",
+            "date",
+            "realization",
+            "well_connection_cell",
+        ]
+
+        output_columns = [
+            "order",
+            "east",
+            "north",
+            "md",
+            "tvd",
+            "zone",
+            "pressure",
+            "swat",
+            "sgas",
+            "soil",
+            "valid_zone",
+            "is_active",
+            "i",
+            "j",
+            "k",
+            "well",
+            "date",
+            "realization",
+            "report_step",
+            "observations",
+            "std",
+        ]
+
+        result_frames: list[pl.DataFrame] = []
+
+        for real in sorted(realizations):
+            responses = self.load_responses("rft", (real,)).with_columns(
+                pl.col("property").str.to_lowercase(),
+            )
+            observation_metadata_in_realization = (
+                self.load_observation_location_metadata(real)
+            )
+            observations = RFTConfig.enrich_observations_with_metadata(
+                pure_observations,
+                observation_metadata_in_realization,
+            )
+            if cast(
+                RFTConfig, self.experiment.response_configuration["rft"]
+            ).approximate_missing_values:
+                responses = RFTConfig.approximate_missing_rft_responses(
+                    responses.lazy(), observations
+                ).collect()
+
+            join_keys = ["well", "date", "well_connection_cell"]
+            observed_values = {k: observations[k].unique() for k in join_keys}
+
+            for col, values in observed_values.items():
+                responses = responses.filter(
+                    pl.col(col).is_in(values.implode(), nulls_equal=True)
+                )
+
+            pivoted = responses.pivot(
+                on="property",
+                index=pivot_index,
+                values="values",
+            )
+
+            for col in ["pressure", "sgas", "swat"]:
+                if col not in pivoted.columns:
+                    pivoted = pivoted.with_columns(
+                        pl.lit(None).cast(pl.Float32).alias(col)
+                    )
+
+            pivoted = pivoted.with_columns(
+                pl.col("pressure").is_not_null().alias("is_active")
+            )
+
+            joined = (
+                observations.join(
+                    pivoted,
+                    how="left",
+                    on=join_keys,
+                    nulls_equal=True,
+                )
+                .with_columns(
+                    RFTConfig.is_zone_valid().alias("valid_zone"),
+                    (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
+                    pl.col("is_active").fill_null(False),
+                    pl.col("date")
+                    .replace_strict(date_to_report_step, default=0)
+                    .alias("report_step"),
+                    pl.col("well_connection_cell").arr.get(0).alias("i"),
+                    pl.col("well_connection_cell").arr.get(1).alias("j"),
+                    pl.col("well_connection_cell").arr.get(2).alias("k"),
+                )
+                .select(output_columns)
+            )
+
+            result_frames.append(joined)
+
+        return pl.concat(result_frames, how="vertical").rename(
+            {
+                "east": "utm_x",
+                "north": "utm_y",
+                "md": "measured_depth",
+                "tvd": "true_vertical_depth",
+                "date": "time",
+                "observations": "observed",
+                "std": "error",
+            }
+        )
+
+    @property
+    def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:
+        return self._index.everest_realization_info
+
+    def save_everest_realization_info(
+        self, realization_info: dict[int, EverestRealizationInfo]
+    ) -> None:
+        if len(realization_info) != self.ensemble_size:
+            raise ValueError(
+                "EVEREST realization info must describe "
+                "all realizations in the ensemble, got information "
+                f"for realizations [{', '.join(map(str, realization_info))}]"
+            )
+
+        errors = []
+        for ert_realization, info in realization_info.items():
+            pert = info.get("perturbation")
+            model_realization = info.get("model_realization")
+
+            if pert is None or (pert < 0 and pert != -1):
+                errors.append(
+                    f"Invalid perturbation for "
+                    f"ert realization: {ert_realization},"
+                    f"expected -1 or a positive int"
+                )
+
+            if model_realization is None:
+                errors.append(
+                    f"Invalid model realization for ert realization {ert_realization}"
+                )
+
+        if errors:
+            raise ValueError("Bad everest realization info: " + "\n".join(errors))
+
+        self._index.everest_realization_info = realization_info
+        self._storage._write_transaction(
+            self._path / "index.json", self._index.model_dump_json().encode("utf-8")
+        )
+
+    def load_blob_metadata(
+        self,
+        blob_type: BlobType | None = None,
+    ) -> list[BlobStorageData]:
+        """List blob metadata, filtered by type."""
+        return self._storage.load_blob_metadata(self._path / BLOB_DATA_DIR, blob_type)
+
+    def load_blob(self, uri: str) -> bytes:
+        """Load blob bytes by URI."""
+        return self._storage.load_blob(self._path / BLOB_DATA_DIR, uri)
+
+    @require_write
+    def save_blob(
+        self,
+        blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent | AnalysisScalingEvent,
+    ) -> None:
+        blob_dir = self._path / BLOB_DATA_DIR
+        if blob_event.event_type == "AnalysisMatrixEvent":
+            file_type = (
+                "application/x-npz" if blob_event.sparse else "application/x-npy"
+            )
+            self._storage.save_blob(
+                name=blob_event.name,
+                data=blob_event.matrix_bytes,
+                blob_info=MatrixStorageData(
+                    update_algorithm=blob_event.update_algorithm,
+                    sparse=blob_event.sparse,
+                    shape=blob_event.shape,
+                    data_type=blob_event.data_type,
+                    parameter_group_sizes=blob_event.parameter_group_sizes,
+                ),
+                file_type=file_type,
+                blob_dir=blob_dir,
+            )
+        elif blob_event.event_type == "AnalysisScalingEvent":
+            self._storage.save_blob(
+                name="scaling_factors",
+                data=blob_event.scaling_bytes,
+                blob_info=ScalingFactorsData(
+                    update_algorithm=blob_event.update_algorithm,
+                    num_observations=blob_event.num_observations,
+                    num_groups=blob_event.num_groups,
+                ),
+                file_type="application/parquet",
+                blob_dir=blob_dir,
+            )
+        else:
+            buf = io.BytesIO()
+            pl.DataFrame(
+                blob_event.data.data,
+                schema=blob_event.data.header,
+                orient="row",
+            ).write_parquet(buf)
+            self._storage.save_blob(
+                name="observation_report",
+                data=buf.getvalue(),
+                blob_info=ObservationReportData(
+                    update_algorithm=blob_event.update_algorithm,
+                ),
+                file_type="application/parquet",
+                blob_dir=blob_dir,
+            )
+
+    @require_write
+    def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
+        blob_dir = self._path / BLOB_DATA_DIR
+        for df_name, df in dataframes.items():
+            if not isinstance(df, pl.DataFrame):
+                continue
+            buf = io.BytesIO()
+            df.write_parquet(buf)
+            data = buf.getvalue()
+            self._storage.save_blob(
+                name=df_name,
+                data=data,
+                blob_info=EverestBatchData(dataframe_name=df_name),
+                file_type="application/parquet",
+                blob_dir=blob_dir,
+            )
+
+    @property
+    def has_function_results(self) -> bool:
+        for meta in self.load_blob_metadata(BlobType.EVEREST_BATCH_DATA):
+            if (
+                isinstance(meta.blob_info, EverestBatchData)
+                and meta.blob_info.dataframe_name == "batch_objectives"
+            ):
+                return meta.file_size > 0
+        return False
+
+    @property
+    def has_gradient_results(self) -> bool:
+        if self._index.everest_realization_info is None:
+            return False
+
+        return any(
+            info["perturbation"] != -1 for _, info in self.simulations_with_responses
+        )
+
+    def _read_batch_dataframe(self, dataframe_name: str) -> pl.DataFrame | None:
+        for meta in self.load_blob_metadata(BlobType.EVEREST_BATCH_DATA):
+            if (
+                isinstance(meta.blob_info, EverestBatchData)
+                and meta.blob_info.dataframe_name == dataframe_name
+            ):
+                return pl.read_parquet(io.BytesIO(self.load_blob(meta.uri)))
+        return None
+
+    @property
+    def realization_controls(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations
+            if info["perturbation"] == -1
+        ]
+
+        if not simulations:
+            return None
+
+        dfs: list[pl.DataFrame] = []
+        for param_group in self.experiment.parameter_configuration:
+            data = self.load_parameters(
+                param_group,
+                realizations=np.array(
+                    [ert_realization for ert_realization, _ in simulations]
+                ),
+            )
+            assert isinstance(data, pl.DataFrame)
+            dfs.append(data)
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for df in dfs[1:]:
+            result = result.join(df, on="realization", how="left")
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            result.rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def perturbation_controls(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations
+            if info["perturbation"] != -1
+        ]
+
+        if not simulations:
+            return None
+
+        dfs: list[pl.DataFrame] = []
+        for param_group in self.experiment.parameter_configuration:
+            data = self.load_parameters(
+                param_group,
+                realizations=np.array(
+                    [ert_realization for ert_realization, _, _ in simulations]
+                ),
+            )
+            assert isinstance(data, pl.DataFrame)
+            dfs.append(data)
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for df in dfs[1:]:
+            result = result.join(df, on="realization", how="left")
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            result.rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_objectives(self) -> pl.DataFrame | None:
+        return self._read_batch_dataframe("batch_objectives")
+
+    @property
+    def realization_objectives(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] == -1
+        ]
+
+        if not simulations:
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            self.load_responses(
+                "everest_objectives",
+                tuple(sorted([ert_realization for ert_realization, _ in simulations])),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_constraints(self) -> pl.DataFrame | None:
+        return self._read_batch_dataframe("batch_constraints")
+
+    @property
+    def realization_constraints(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] == -1
+        ]
+
+        if (
+            not simulations
+            or "everest_constraints" not in self.experiment.response_configuration
+        ):
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            self.load_responses(
+                "everest_constraints",
+                tuple(sorted([ert_realization for ert_realization, _ in simulations])),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_bound_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_batch_dataframe("batch_bound_constraint_violations")
+
+    @property
+    def batch_input_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_batch_dataframe("batch_input_constraint_violations")
+
+    @property
+    def batch_output_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_batch_dataframe("batch_output_constraint_violations")
+
+    @property
+    def batch_objective_gradient(self) -> pl.DataFrame | None:
+        return self._read_batch_dataframe("batch_objective_gradient")
+
+    @property
+    def simulations(self) -> list[tuple[int, EverestRealizationInfo]]:
+        everest_realization_info = self._index.everest_realization_info
+        assert everest_realization_info is not None
+
+        return [
+            (ert_realization, info)
+            for ert_realization, info in everest_realization_info.items()
+        ]
+
+    @property
+    def simulations_with_responses(self) -> list[tuple[int, EverestRealizationInfo]]:
+        realizations_with_responses = self.get_realization_list_with_responses()
+        return [
+            (sim_id, info)
+            for sim_id, info in self.simulations
+            if sim_id in realizations_with_responses
+        ]
+
+    @property
+    def perturbation_objectives(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] != -1
+        ]
+
+        if not simulations:
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            self.load_responses(
+                "everest_objectives",
+                tuple(
+                    sorted([ert_realization for ert_realization, _, _ in simulations])
+                ),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_constraint_gradient(self) -> pl.DataFrame | None:
+        return self._read_batch_dataframe("batch_constraint_gradient")
+
+    @property
+    def perturbation_constraints(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] != -1
+        ]
+
+        if (
+            not simulations
+            or "everest_constraints" not in self.experiment.response_configuration
+        ):
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            self.load_responses(
+                "everest_constraints",
+                tuple(
+                    sorted([ert_realization for ert_realization, _, _ in simulations])
+                ),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    def load_all_misfit_data(self) -> pl.DataFrame:
+        """Loads all misfit data for a given ensemble.
+
+        Retrieves all active realizations from the ensemble, and for each
+        realization, it gathers the observations and measured data. The
+        function then calculates the misfit, which is a measure of the
+        discrepancy between observed and simulated values, for each data
+        column. The misfit is calculated as the squared difference between the
+        observed and measured data, normalized by the standard deviation of the
+        observations.
+
+        The misfit data is then grouped by key, summed, and transposed to form
+        a DataFrame. The DataFrame has an additional column "MISFIT:TOTAL",
+        which is the sum of all misfits for each realization. The index of the
+        DataFrame is named "Realization".
+
+        Parameters:
+            ensemble: The ensemble from which to load the misfit data.
+
+        Returns:
+            DataFrame: A DataFrame containing the misfit data for all
+                realizations in the ensemble. Each column (except for "MISFIT:TOTAL")
+                corresponds to a key in the measured data, and each row corresponds
+                to a realization. The "MISFIT:TOTAL" column contains the total
+                misfit for each realization.
+        """
+        try:
+            measured_data = self._load_measured_data()
+        except (ResponseError, ObservationError):
+            return pl.DataFrame()
+
+        realization_columns = [
+            str(realization_column)
+            for realization_column in self.get_realization_list_with_responses()
+        ]
+
+        squared_difference = measured_data.select(
+            "observation_key",
+            *[
+                ((pl.col("OBS") - pl.col(realization_column)) / pl.col("STD"))
+                .pow(2)
+                .alias(realization_column)
+                for realization_column in realization_columns
+            ],
+        )
+
+        misfit_by_observation = squared_difference.group_by(
+            "observation_key", maintain_order=True
+        ).agg(
+            [
+                pl.col(realization_column).sum()
+                for realization_column in realization_columns
+            ]
+        )
+
+        observation_keys = misfit_by_observation["observation_key"].to_list()
+        misfit = misfit_by_observation.drop("observation_key").transpose(
+            include_header=True,
+            header_name="Realization",
+            column_names=[f"MISFIT:{key}" for key in observation_keys],
+        )
+
+        return misfit.with_columns(
+            pl.col("Realization").cast(pl.UInt32),
+            pl.sum_horizontal(pl.exclude("Realization")).alias("MISFIT:TOTAL"),
+        )
+
+    def _load_measured_data(
+        self, observed_response_keys: list[str] | None = None
+    ) -> pl.DataFrame:
+        """Loads the measured data for the ensemble.
+
+        Returns:
+            DataFrame: A DataFrame containing the measured data for all
+                realizations in the ensemble. Each column corresponds to a key
+                in the measured data, and each row corresponds to a realization.
+        """
+        if observed_response_keys is None:
+            observed_response_keys = sorted(self.experiment.observation_keys)
+        if not observed_response_keys:
+            raise ObservationError("No observation keys provided")
+        return self._validate_measured_data(
+            self._get_measured_data(observed_response_keys)
+        )
+
+    def _validate_measured_data(self, data: pl.DataFrame) -> pl.DataFrame:
+        expected_keys = {"OBS", "STD"}
+        if not isinstance(data, pl.DataFrame):
+            raise TypeError(
+                f"Invalid type: {type(data)}, should be type: {pl.DataFrame}"
+            )
+        if not expected_keys.issubset(data.columns):
+            missing = expected_keys - set(data.columns)
+            raise ValueError(
+                f"{expected_keys} should be present in DataFrame columns, "
+                f"missing: {missing}"
+            )
+        return data
+
+    def _get_measured_data(self, observed_response_keys: list[str]) -> pl.DataFrame:
+        """
+        Adds simulated and observed data and returns a dataframe where ensemble
+        members will have a data key, observed data will be named OBS and
+        observed standard deviation will be named STD.
+        """
+        resp_key_to_resp_type = self.experiment.response_key_to_response_type
+        selected_response_types = {
+            response_type
+            for response_key, response_type in resp_key_to_resp_type.items()
+            if response_key in observed_response_keys
+        }
+
+        active_realizations = self.get_realization_list_with_responses()
+
+        # Check if responses exist for all selected response types
+        for response_type in selected_response_types:
+            df = self.load_responses(response_type, tuple(active_realizations))
+            if df.is_empty():
+                raise ResponseError(
+                    f"No response loaded for observation type: {response_type}"
+                )
+
+        df = (
+            self.get_observations_and_responses(
+                observed_response_keys, np.array(active_realizations)
+            )
+            .rename(
+                {
+                    "index": "key_index",
+                    "observations": "OBS",
+                    "std": "STD",
+                }
+            )
+            .select(
+                "key_index",
+                "response_key",
+                "observation_key",
+                "OBS",
+                "STD",
+                *map(str, active_realizations),
+            )
+            .sort(by="observation_key")
+        )
+
+        return df.select(
+            "observation_key",
+            "key_index",
+            "OBS",
+            "STD",
+            *df.columns[5:],
+        )
+
+
+async def _read_parameters(
+    runpath: str,
+    realization: int,
+    iteration: int,
+    ensemble: LocalEnsemble,
+) -> LoadResult:
+    result = LoadResult.success()
+    error_msg = ""
+    parameter_configuration = ensemble.experiment.parameter_configuration.values()
+    for config in parameter_configuration:
+        if not config.forward_init:
+            continue
+        start_time = time.perf_counter()
+        logger.debug(f"Starting to load parameter: {config.name}")
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            ds = config.read_from_runpath(Path(runpath), realization, iteration)
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Loaded {config.name}",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+            start_time = time.perf_counter()
+            ensemble.save_parameters(ds, config.name, realization)
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Saved {config.name} to storage",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+        except Exception as err:
+            error_msg += str(err)
+            result = LoadResult.failure(error_msg)
+            logger.warning(
+                "Failed to load parameters in storage "
+                f"for realization {realization}: {err}"
+            )
+    return result
+
+
+def _log_grid_contents(
+    runpath: str, summary_config: SummaryConfig, iens: int, iter_: int
+) -> None:
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
+        filename = substitute_runpath_name(summary_config.input_files[0], iens, iter_)
+        base, extension = os.path.splitext(filename)
+        # Cut of extensions ".data", ".smspec" or ".unsmry"
+        if extension.lower() in {".data", ".smspec", ".unsmry"}:
+            filename = base
+        for grid_file_components in filter(
+            lambda fn: fn[0] == filename and fn[1].lower() in {".egrid", ".grid"},
+            map(os.path.splitext, os.listdir(runpath)),
+        ):
+            grid_file = runpath + "/" + "".join(grid_file_components)
+            keywords: Counter[str] = Counter()
+            for entry in resfo.lazy_read(grid_file):
+                kw = entry.read_keyword().strip()
+                keywords[kw] += 1
+                match kw:
+                    case "FILEHEAD" | "GRIDHEAD":
+                        arr = entry.read_array()
+                        arr_len = 8 if kw == "FILEHEAD" else 33
+                        arr_printout = (
+                            "MESS"
+                            if isinstance(arr, resfo.MessType)
+                            else str(arr[0:arr_len])
+                        )
+                        logger.info(f"{grid_file} {kw} contains {arr_printout}")
+
+            logger.info(f"{grid_file} contained keywords {sorted(keywords)}")
+
+    except Exception as err:
+        logger.error(f"Error while logging grid contents: {err}")
+
+
+async def _write_responses_to_storage(
+    runpath: str,
+    realization: int,
+    ensemble: LocalEnsemble,
+) -> LoadResult:
+    errors = []
+    response_configs = ensemble.experiment.simulation_response_configuration.values()
+    for config in response_configs:
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            start_time = time.perf_counter()
+            logger.debug(f"Starting to load response: {config.type}")
+            try:
+                if isinstance(config, SummaryConfig) and realization == 0:
+                    _log_grid_contents(runpath, config, realization, ensemble.iteration)
+                ds = config.read_from_file(runpath, realization, ensemble.iteration)
+            except (FileNotFoundError, InvalidResponseFile) as err:
+                errors.append(str(err))
+                logger.warning(
+                    f"Failed to read response from realization {realization}: {err}"
+                )
+                continue
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Loaded {config.type}",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+
+            if config.type == "rft":
+                try:
+                    _write_observation_metadata(runpath, realization, ensemble)
+                    await asyncio.sleep(0)
+                except (FileNotFoundError, InvalidResponseFile) as err:
+                    errors.append(str(err))
+                    logger.warning(
+                        "Failed to write observation metadata "
+                        f"for realization {realization}: {err}"
+                    )
+                    continue
+                except Exception as err:
+                    errors.append(str(err))
+                    logger.exception(
+                        "Unexpected exception while writing RFT observation metadata "
+                        f"for realization {realization}",
+                    )
+                    continue
+
+            start_time = time.perf_counter()
+            ensemble.save_response(config.type, ds, realization)
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Saved {config.type} to storage",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+        except Exception as err:
+            errors.append(str(err))
+            logger.exception(
+                "Unexpected exception while reading from runpath or "
+                "writing response to storage "
+                f"for realization {realization}",
+            )
+            continue
+
+    for config_ in ensemble.experiment.derived_response_configuration.values():
+        ds = config_.derive_from_storage(ensemble.iteration, realization, ensemble)
+        ensemble.save_response(config_.type, ds, realization)
+
+    if errors:
+        return LoadResult.failure("\n".join(errors))
+    return LoadResult.success()
+
+
+def _write_observation_metadata(
+    runpath: str,
+    realization: int,
+    ensemble: LocalEnsemble,
+) -> None:
+    """To quality control observations in the update step, additional
+    observation-related data from simulations must be obtained and saved in the storage.
+    As simulation files containing required information are not copied from runpath to
+    storage due to their size, extract of observation metadata must be stored
+    instead.
+    """
+
+    rft_config = cast(RFTConfig, ensemble.experiment.response_configuration["rft"])
+    rft_observations = ensemble.experiment.observations.get("rft")
+    if rft_observations is None or rft_observations.is_empty():
+        return
+    location_metadata = rft_config.obtain_location_metadata(
+        runpath, realization, ensemble.iteration, rft_observations
+    )
+    output_path = ensemble._realization_dir(realization)
+    Path(output_path).mkdir(exist_ok=True)
+    ensemble.save_observation_location_metadata(location_metadata, realization)
+
+
+async def load_realization_parameters_and_responses(
+    runpath: str,
+    realization: int,
+    iter_: int,
+    ensemble: LocalEnsemble,
+) -> LoadResult:
+    parameters_result = LoadResult.success()
+    response_result = LoadResult.success()
+    # We only read parameters after the prior, after that, ERT
+    # handles parameters
+    if iter_ == 0:
+        parameters_result = await _read_parameters(
+            runpath,
+            realization,
+            iter_,
+            ensemble,
+        )
+    try:
+        if parameters_result.successful:
+            response_result = await _write_responses_to_storage(
+                runpath,
+                realization,
+                ensemble,
+            )
+    except OSError as err:
+        msg = (
+            f"Failed to write responses to storage for realization {realization}, "
+            f"failed with {err}"
+        )
+        logger.error(msg)
+        parameters_result = LoadResult.failure(msg)
+    except Exception as err:
+        logger.exception(
+            f"Failed to load results for realization {realization}",
+            exc_info=err,
+        )
+        parameters_result = LoadResult.failure(
+            f"Failed to load results for realization {realization}, failed with: {err}",
+        )
+
+    final_result = parameters_result
+    try:
+        if not response_result.successful:
+            final_result = response_result
+            ensemble.set_failure(
+                realization,
+                RealizationStorageState.FAILURE_IN_CURRENT,
+                final_result.message,
+            )
+        elif ensemble.has_failure(realization):
+            ensemble.unset_failure(realization)
+    except OSError as err:
+        logger.error(
+            f"Failed to set realization state in storage for realization {realization},"
+            f" failed with {err}"
+        )
+
+    return final_result
+
+
+def load_parameters_and_responses_from_runpath(
+    runpath_format: str,
+    ensemble: LocalEnsemble,
+    active_realizations: list[int],
+) -> int:
+    """Returns the number of loaded realizations"""
+    pool = ThreadPool(processes=8)
+
+    async_result = [
+        (
+            pool.apply_async(
+                lambda *args: asyncio.run(
+                    load_realization_parameters_and_responses(*args)
+                ),
+                (
+                    substitute_runpath_name(runpath_format, realization, 0),
+                    realization,
+                    0,
+                    ensemble,
+                ),
+            ),
+            realization,
+        )
+        for realization in active_realizations
+    ]
+
+    loaded = 0
+    for t, iens in async_result:
+        (success, message) = t.get()
+
+        if success:
+            loaded += 1
+        else:
+            logger.error(f"Realization: {iens}, load failure: {message}")
+
+    ensemble.refresh_ensemble_state()
+    return loaded

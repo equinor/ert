@@ -1,0 +1,1676 @@
+from __future__ import annotations
+
+import copy
+import logging
+import os
+import pprint
+import re
+from collections import Counter, defaultdict
+from collections.abc import Mapping
+from dataclasses import dataclass
+from functools import cached_property
+from os import path
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self, cast, overload
+
+from numpy.random import SeedSequence
+from pydantic import BaseModel, Field, model_validator
+from pydantic import ValidationError as PydanticValidationError
+
+from ert.config.seismic_config import SeismicConfig
+from ert.substitutions import Substitutions
+
+from ._design_matrix_validator import DesignMatrixValidator
+from ._observations import (
+    BreakthroughObservation,
+    GeneralObservation,
+    Observation,
+    RFTObservation,
+    SeismicObservation,
+    SummaryObservation,
+    make_observations,
+)
+from ._shapes import ShapeRegistry
+from .analysis_config import AnalysisConfig
+from .breakthrough_config import BreakthroughConfig
+from .ensemble_config import EnsembleConfig
+from .forward_model_step import (
+    ForwardModelJSON,
+    ForwardModelStep,
+    ForwardModelStepJSON,
+    ForwardModelStepValidationError,
+    ForwardModelStepWarning,
+    SiteInstalledForwardModelStep,
+    SiteOrUserForwardModelStep,
+    UserInstalledForwardModelStep,
+)
+from .gen_data_config import GenDataConfig
+from .gen_kw_config import DataSource, GenKwConfig
+from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
+from .parameter_config import LocalizationType
+from .parse_arg_types_list import parse_arg_types_list
+from .parsing import (
+    ConfigDict,
+    ConfigKeys,
+    ConfigValidationError,
+    ConfigWarning,
+    ErrorInfo,
+    ForwardModelStepKeys,
+    HookRuntime,
+    ObservationConfigError,
+    init_forward_model_schema,
+    init_user_config_schema,
+    parse_contents,
+    read_file,
+)
+from .parsing.file_context_token import FileContextToken
+from .parsing.observations_parser import ObservationDict
+from .queue_config import KnownQueueOptions, QueueConfig
+from .rft_config import RFTConfig
+from .workflow import Workflow
+from .workflow_fixtures import fixtures_per_hook
+from .workflow_job import (
+    BaseErtScriptWorkflow,
+    ErtScriptLoadFailure,
+    WorkflowJob,
+    workflow_job_from_file,
+)
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
+
+    from .parameter_config import ParameterConfig
+
+logger = logging.getLogger(__name__)
+
+EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
+
+ECL_BASE_DEPRECATION_MSG = (
+    "Substitution template <ECL_BASE> is deprecated and "
+    "will be removed in the future. Please use <ECLBASE> instead."
+)
+
+PLACEHOLDER_PATTERN = re.compile(r"<[^<>]+>")
+
+
+@dataclass
+class RandomSeedGenerator:
+    user_defined_seed: int | None = None
+
+    @property
+    def seed(self) -> int:
+        if self.user_defined_seed is not None:
+            return self.user_defined_seed
+
+        int_seed = SeedSequence().entropy
+        logger.info(
+            "To repeat this experiment, "
+            "add the following random seed to your config file:\n"
+            f"RANDOM_SEED {int_seed}"
+        )
+        assert isinstance(int_seed, int)
+        return int_seed
+
+
+def _log_unsubstituted_forward_model_args(
+    step_name: str, substituted_arg_values: list[str]
+) -> None:
+    unresolved_values: set[str] = set()
+    for value in substituted_arg_values:
+        unresolved_values.update(PLACEHOLDER_PATTERN.findall(value))
+
+    if not unresolved_values:
+        return
+
+    logger.info(
+        "Forward model step %s has unsubstituted variables: %s",
+        step_name,
+        ", ".join(unresolved_values),
+    )
+
+
+def create_forward_model_json(
+    context: dict[str, str],
+    forward_model_steps: list[SiteOrUserForwardModelStep],
+    run_id: str | None,
+    *,
+    iens: int = 0,
+    itr: int = 0,
+    user_config_file: str | None = "",
+    env_vars: dict[str, str] | None = None,
+    env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
+    skip_pre_experiment_validation: bool = False,
+) -> ForwardModelJSON:
+    if env_vars is None:
+        env_vars = {}
+    if env_pr_fm_step is None:
+        env_pr_fm_step = {}
+
+    context_substitutions = Substitutions(context)
+    real_iter_substituter = context_substitutions.real_iter_substituter(iens, itr)
+
+    class Substituter:
+        def __init__(self, fm_step: ForwardModelStep) -> None:
+            fm_step_args = ",".join(
+                [f"{key}={value}" for key, value in fm_step.private_args.items()]
+            )
+            fm_step_description = f"{fm_step.name}({fm_step_args})"
+            self.substitution_context_hint = (
+                f"parsing forward model step `FORWARD_MODEL {fm_step_description}` - "
+                "reconstructed, with defines applied during parsing"
+            )
+            self.copy_private_args = Substitutions(
+                {
+                    key: real_iter_substituter.substitute(val)
+                    for key, val in fm_step.private_args.items()
+                }
+            )
+
+        @overload
+        def substitute(self, string: str) -> str: ...
+
+        @overload
+        def substitute(self, string: None) -> None: ...
+
+        def substitute(self, string: str | None) -> str | None:
+            if string is None:
+                return string
+            string = self.copy_private_args.substitute(
+                string, self.substitution_context_hint, 1, warn_max_iter=False
+            )
+            return real_iter_substituter.substitute(string)
+
+        def filter_env_dict(self, env_dict: dict[str, str]) -> dict[str, str] | None:
+            substituted_dict = {}
+            for key, value in env_dict.items():
+                substituted_key = self.substitute(key)
+                substituted_value = self.substitute(value)
+                if substituted_value is None:
+                    substituted_dict[substituted_key] = None
+                elif not substituted_value:
+                    substituted_dict[substituted_key] = ""
+                elif not (substituted_value[0] == "<" and substituted_value[-1] == ">"):
+                    # Remove values containing "<XXX>". These are expected to be
+                    # replaced by substitute, but were not.
+                    substituted_dict[substituted_key] = substituted_value
+                else:
+                    logger.warning(
+                        f"Environment variable {substituted_key} skipped due to"
+                        f" unmatched define {substituted_value}",
+                    )
+            # Its expected that empty dicts be replaced with "null"
+            # in jobs.json
+            if not substituted_dict:
+                return None
+            return substituted_dict
+
+    def handle_default(fm_step: ForwardModelStep, arg: str) -> str:
+        return fm_step.default_mapping.get(arg, arg)
+
+    fm_steps_with_overwritten_globals: list[dict[str, Any]] = []
+    for fm_step in forward_model_steps:
+        overwritten_keys = {
+            key: {"private_arg": val, "global_arg": context[key]}
+            for key, val in fm_step.private_args.items()
+            if key in context and key != val and context[key] != val
+        }
+        if overwritten_keys:
+            fm_steps_with_overwritten_globals.append(
+                {"forward_model_step_name": fm_step.name, "key": overwritten_keys}
+            )
+    if fm_steps_with_overwritten_globals:
+        logger.info(
+            "Private args chosen over global args for the following "
+            f"forward model steps and variables: {fm_steps_with_overwritten_globals}"
+        )
+    config_file_path = Path(user_config_file) if user_config_file is not None else None
+    config_path = str(config_file_path.parent) if config_file_path else ""
+    config_file = str(config_file_path.name) if config_file_path else ""
+
+    job_list_errors = []
+    job_list: list[ForwardModelStepJSON] = []
+    for idx, fm_step in enumerate(forward_model_steps):
+        substituter = Substituter(fm_step)
+        fm_step_json: ForwardModelStepJSON = {
+            "name": substituter.substitute(fm_step.name),
+            "executable": substituter.substitute(fm_step.executable),
+            "target_file": substituter.substitute(fm_step.target_file),
+            "error_file": substituter.substitute(fm_step.error_file),
+            "start_file": substituter.substitute(fm_step.start_file),
+            "stdout": (
+                substituter.substitute(fm_step.stdout_file) + f".{idx}"
+                if fm_step.stdout_file
+                else None
+            ),
+            "stderr": (
+                substituter.substitute(fm_step.stderr_file) + f".{idx}"
+                if fm_step.stderr_file
+                else None
+            ),
+            "stdin": substituter.substitute(fm_step.stdin_file),
+            "argList": [
+                handle_default(fm_step, substituter.substitute(arg))
+                for arg in fm_step.arglist
+            ],
+            "environment": substituter.filter_env_dict(
+                dict(
+                    **{
+                        key: value
+                        for key, value in env_pr_fm_step.get(fm_step.name, {}).items()
+                        # Plugin settings can not override anything:
+                        if key not in env_vars and key not in fm_step.environment
+                    },
+                    **fm_step.environment,
+                )
+            ),
+            "max_running_minutes": fm_step.max_running_minutes,
+        }
+
+        try:
+            if not skip_pre_experiment_validation:
+                fm_step_json = fm_step.validate_pre_realization_run(fm_step_json)
+        except ForwardModelStepValidationError as exc:
+            job_list_errors.append(
+                ErrorInfo(
+                    message=f"Validation failed for "
+                    f"forward model step {fm_step.name}: {exc!s}"
+                ).set_context(fm_step.name)
+            )
+
+        job_list.append(fm_step_json)
+
+    if job_list_errors:
+        raise ConfigValidationError.from_collected(job_list_errors)
+
+    return {
+        "global_environment": env_vars,
+        "config_path": config_path,
+        "config_file": config_file,
+        "jobList": job_list,
+        "run_id": run_id,
+        "ert_pid": str(os.getpid()),
+    }
+
+
+def check_non_utf_chars(file_path: str) -> None:
+    try:
+        Path(file_path).read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        error_words = str(e).split(" ")
+        hex_str = error_words[error_words.index("byte") + 1]
+        try:
+            unknown_char = chr(int(hex_str, 16))
+        except ValueError as ve:
+            unknown_char = f"hex:{hex_str}"
+            raise ConfigValidationError(
+                f"Unsupported non UTF-8 character {unknown_char!r} "
+                f"found in file: {file_path!r}",
+                config_file=file_path,
+            ) from ve
+        raise ConfigValidationError(
+            f"Unsupported non UTF-8 character {unknown_char!r} "
+            f"found in file: {file_path!r}",
+            config_file=file_path,
+        ) from e
+
+
+def read_templates(config_dict: ConfigDict) -> list[tuple[str, str]]:
+    templates: list[tuple[str, str]] = []
+    if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
+        source_file = config_dict[ConfigKeys.DATA_FILE]
+        target_file = config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
+        check_non_utf_chars(source_file)
+        templates.append((source_file, target_file))
+
+    for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
+        if template[1].startswith("<ECL_BASE>"):
+            ConfigWarning.warn(ECL_BASE_DEPRECATION_MSG)
+        if (
+            ConfigKeys.ECLBASE in config_dict
+            and (
+                template[1].startswith(config_dict[ConfigKeys.ECLBASE])
+                or template[1].startswith("<ECLBASE>")
+                or template[1].startswith("<ECL_BASE>")
+            )
+            and ConfigKeys.NUM_CPU not in config_dict
+        ):
+            ConfigWarning.warn(
+                "Use DATA_FILE instead of RUN_TEMPLATE for "
+                "templating the Eclipse/Flow DATA file. "
+                "This ensures correct parsing of NUM_CPU. "
+                "Alternatively set NUM_CPU explicitly and ensure "
+                "it is synced with your DATA file."
+            )
+        templates.append(template)
+    templates.extend(EnsembleConfig.get_gen_kw_templates(config_dict))
+    return templates
+
+
+def workflow_jobs_from_dict(
+    content_dict: ConfigDict,
+    site_installed_workflows_jobs: dict[str, WorkflowJob] | None = None,
+) -> dict[str, WorkflowJob]:
+    user_installed_workflow_job_info = content_dict.get(
+        ConfigKeys.LOAD_WORKFLOW_JOB, []
+    )
+    user_installed_workflow_job_dir_info = content_dict.get(
+        ConfigKeys.WORKFLOW_JOB_DIRECTORY, []
+    )
+
+    workflow_jobs = (
+        copy.copy(site_installed_workflows_jobs)
+        if site_installed_workflows_jobs
+        else {}
+    )
+
+    errors: list[ErrorInfo | ConfigValidationError] = []
+
+    for user_workflow_job in user_installed_workflow_job_info:
+        try:
+            # workflow_job_from_file only throws error if a
+            # non-readable file is provided.
+            # Non-existing files are caught by the new parser
+            user_job = workflow_job_from_file(
+                config_file=user_workflow_job[0],
+                name=None if len(user_workflow_job) == 1 else user_workflow_job[1],
+                origin="user",
+            )
+            name = user_job.name
+            if name in workflow_jobs:
+                ConfigWarning.warn(
+                    f"Duplicate workflow jobs with name {name!r}, choosing "
+                    f"{user_job.location()!r} over "
+                    f"{workflow_jobs[name].location()!r}",
+                    name,
+                )
+            workflow_jobs[name] = user_job
+        except ErtScriptLoadFailure as err:
+            ConfigWarning.warn(
+                f"Loading workflow job {user_workflow_job[0]!r}"
+                f" failed with '{err}'. It will not be loaded.",
+                user_workflow_job[0],
+            )
+        except ConfigValidationError as err:
+            errors.append(ErrorInfo(message=str(err)).set_context(user_workflow_job[0]))
+
+    for user_job_path in user_installed_workflow_job_dir_info:
+        for user_job_file in _get_files_in_directory(Path(user_job_path), errors):
+            try:
+                user_job = workflow_job_from_file(
+                    config_file=str(user_job_file), origin="user"
+                )
+                name = user_job.name
+                if name in workflow_jobs:
+                    ConfigWarning.warn(
+                        f"Duplicate workflow jobs with name {name!r}, choosing "
+                        f"{user_job.location()!r} over "
+                        f"{workflow_jobs[name].location()!r}",
+                        name,
+                    )
+                workflow_jobs[name] = user_job
+            except ErtScriptLoadFailure as err:
+                ConfigWarning.warn(
+                    f"Loading workflow job {user_job_file!r}"
+                    f" failed with '{err}'. It will not be loaded.",
+                    user_job_file,
+                )
+            except ConfigValidationError as err:
+                errors.append(ErrorInfo(message=str(err)).set_context(user_job_path))
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+
+    return workflow_jobs
+
+
+def _validate_fixtures(
+    hook_name: str, workflow: Workflow, mode: HookRuntime
+) -> list[ErrorInfo]:
+    errors = []
+    available_fixtures = fixtures_per_hook[mode]
+    for job, _ in workflow:
+        if isinstance(job, BaseErtScriptWorkflow):
+            ert_script_class = job.load_ert_script_class()
+            ert_script_instance = ert_script_class()
+            requested_fixtures = ert_script_instance.requested_fixtures
+
+            # Look for requested fixtures that are not available for the given
+            # mode
+            missing_fixtures = requested_fixtures - available_fixtures
+
+            if missing_fixtures:
+                ok_modes = [
+                    m
+                    for m in HookRuntime
+                    if not requested_fixtures - fixtures_per_hook[m]
+                ]
+
+                message_start = (
+                    f"Workflow job {job.name} .run function expected "
+                    f"fixtures: {missing_fixtures}, which are not available "
+                    f"in the fixtures for the runtime {mode}: "
+                    f"{available_fixtures}. "
+                )
+                message_end = (
+                    (
+                        f"It would work in these runtimes: "
+                        f"{', '.join(map(str, ok_modes))}"
+                    )
+                    if len(ok_modes) > 0
+                    else "This fixture is not available in any of the runtimes."
+                )
+
+                errors.append(
+                    ErrorInfo(message=message_start + message_end).set_context(
+                        hook_name
+                    )
+                )
+    return errors
+
+
+class _DeclaredHook(NamedTuple):
+    declaration_order: int
+    workflow: Workflow
+
+
+def _declaration_order_of(workflow_name: str) -> int:
+    """Position of the hook among all instructions in the fully resolved
+    config (after INCLUDE files are spliced in), used to order hooks by
+    where they were declared.
+    """
+    if (
+        isinstance(workflow_name, FileContextToken)
+        and workflow_name.declaration_order is not None
+    ):
+        return workflow_name.declaration_order
+    # return 0 for jobs not declared in the config file, e.g. site-installed jobs
+    return 0
+
+
+def create_and_hook_workflows(
+    hook_workflow_info: list[tuple[str, HookRuntime]],
+    hook_workflow_job_info: list[list[str]],
+    create_workflow_from_job_info: list[list[str]],
+    workflow_info: list[tuple[str, str]],
+    workflow_jobs: dict[str, WorkflowJob],
+    substitutions: dict[str, str],
+) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
+    workflows = {}
+    declared_hooks: defaultdict[HookRuntime, list[_DeclaredHook]] = defaultdict(list)
+
+    errors: list[ErrorInfo | ConfigValidationError] = []
+
+    for work in workflow_info:
+        filename = path.basename(work[0]) if len(work) == 1 else work[1]
+        try:
+            existed = filename in workflows
+            workflow = Workflow.from_file(
+                work[0],
+                substitutions,
+                workflow_jobs,
+                name=filename,
+            )
+            workflows[filename] = workflow
+            if existed:
+                ConfigWarning.warn(f"Workflow {filename!r} was added twice", work[0])
+        except ConfigValidationError as err:
+            ConfigWarning.warn(
+                f"Encountered the following error(s) while "
+                f"reading workflow {filename!r}. It will not be loaded: "
+                + err.cli_message(),
+                work[0],
+            )
+
+    def _create_workflow_from_job(
+        inline_workflow: list[str],
+    ) -> tuple[str, Workflow]:
+        workflow_name = inline_workflow[0]
+        job_name = inline_workflow[1]
+        job_args = inline_workflow[2:]
+        return (
+            workflow_name,
+            Workflow.from_instructions(
+                workflow_name, job_name, job_args, workflow_jobs
+            ),
+        )
+
+    def _register_workflow(
+        inline_workflow: list[str],
+        workflow_name: str,
+        workflow: Workflow,
+    ) -> None:
+        if workflow_name in workflows:
+            ConfigWarning.warn(
+                f"Workflow {workflow_name!r} was added twice", inline_workflow
+            )
+        workflows[workflow_name] = workflow
+
+    for inline_workflow in create_workflow_from_job_info:
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+        except ConfigValidationError as err:
+            errors.append(err)
+
+    for hook_name, mode in hook_workflow_info:
+        if hook_name not in workflows:
+            errors.append(
+                ErrorInfo(
+                    message="Cannot setup hook for non-existing"
+                    f" job name {hook_name!r}",
+                ).set_context(hook_name)
+            )
+            continue
+
+        workflow = workflows[hook_name]
+        errors.extend(_validate_fixtures(hook_name, workflow, mode))
+
+        declared_hooks[mode].append(
+            _DeclaredHook(_declaration_order_of(hook_name), workflow)
+        )
+
+    for inline_workflow_hook in hook_workflow_job_info:
+        inline_workflow = inline_workflow_hook[:-1]
+        raw_mode = inline_workflow_hook[-1]
+        try:
+            mode = HookRuntime(str(raw_mode))
+        except ValueError:
+            errors.append(
+                ErrorInfo(
+                    message=f"Last argument of HOOK_WORKFLOW_JOB must be a known "
+                    f"HookRuntime ({', '.join(list(HookRuntime))}), got {raw_mode}"
+                ).set_context(raw_mode)
+            )
+            continue
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+            errors.extend(_validate_fixtures(wf_name, wf, mode))
+            declared_hooks[mode].append(
+                _DeclaredHook(_declaration_order_of(wf_name), wf)
+            )
+        except ConfigValidationError as err:
+            errors.append(err)
+
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+
+    hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = defaultdict(list)
+    for mode, hooks in declared_hooks.items():
+        hooks_in_declaration_order = sorted(
+            hooks, key=lambda hook: hook.declaration_order
+        )
+        hooked_workflows[mode] = [hook.workflow for hook in hooks_in_declaration_order]
+
+    return workflows, hooked_workflows
+
+
+def workflows_from_dict(
+    content_dict: ConfigDict,
+    substitutions: dict[str, str],
+    site_installed_workflows_jobs: Mapping[str, WorkflowJob] | None = None,
+) -> tuple[
+    dict[str, WorkflowJob],
+    dict[str, Workflow],
+    defaultdict[HookRuntime, list[Workflow]],
+]:
+    workflow_jobs = workflow_jobs_from_dict(
+        content_dict,
+        (
+            dict(copy.copy(site_installed_workflows_jobs))
+            if site_installed_workflows_jobs
+            else {}
+        ),
+    )
+    workflows, hooked_workflows = create_and_hook_workflows(
+        content_dict.get(ConfigKeys.HOOK_WORKFLOW, []),
+        content_dict.get(ConfigKeys.HOOK_WORKFLOW_JOB, []),
+        content_dict.get(ConfigKeys.CREATE_WORKFLOW_FROM_JOB, []),
+        content_dict.get(ConfigKeys.LOAD_WORKFLOW, []),
+        workflow_jobs,
+        substitutions,
+    )
+    return workflow_jobs, workflows, hooked_workflows
+
+
+def installed_forward_model_steps_from_dict(
+    config_dict: ConfigDict,
+) -> dict[str, UserInstalledForwardModelStep]:
+    errors: list[ErrorInfo | ConfigValidationError] = []
+    fm_steps: dict[str, UserInstalledForwardModelStep] = {}
+    for name, (fm_step_config_file, config_contents) in config_dict.get(
+        ConfigKeys.INSTALL_JOB, []
+    ):
+        fm_step_config_abspath = str(Path(fm_step_config_file).resolve())
+        try:
+            new_fm_step = forward_model_step_from_config_contents(
+                config_contents, name=name, config_file=fm_step_config_abspath
+            )
+        except ConfigValidationError as e:
+            errors.append(e)
+            continue
+        if name in fm_steps:
+            ConfigWarning.warn(
+                f"Duplicate forward model step with name {name!r}, choosing "
+                f"{fm_step_config_abspath!r} over {fm_steps[name].executable!r}",
+                name,
+            )
+        fm_steps[name] = new_fm_step
+
+    for fm_step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
+        for file_name in _get_files_in_directory(Path(fm_step_path), errors):
+            if not file_name.is_file():
+                continue
+            try:
+                config_contents = read_file(str(file_name))
+                new_fm_step = forward_model_step_from_config_contents(
+                    config_contents, config_file=str(file_name)
+                )
+            except ConfigValidationError as e:
+                errors.append(e)
+                continue
+            name = new_fm_step.name
+            if name in fm_steps:
+                ConfigWarning.warn(
+                    f"Duplicate forward model step with name {name!r}, "
+                    f"choosing {file_name!r} over {fm_steps[name].executable!r}",
+                    name,
+                )
+            fm_steps[name] = new_fm_step
+
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+    return fm_steps
+
+
+def create_list_of_forward_model_steps_to_run(
+    installed_steps: dict[str, SiteOrUserForwardModelStep],
+    substitutions: dict[str, str],
+    config_dict: ConfigDict,
+    preinstalled_forward_model_steps: Mapping[str, SiteInstalledForwardModelStep],
+    env_pr_fm_step: dict[str, dict[str, Any]],
+) -> list[SiteOrUserForwardModelStep]:
+    errors = []
+    fm_steps: list[SiteOrUserForwardModelStep] = []
+
+    user_positional_args_by_step: dict[int, list[str]] = {}
+    substituter = Substitutions(substitutions)
+    env_vars = {}
+    for key, val in config_dict.get("SETENV", []):
+        env_vars[key] = substituter.substitute(val)
+
+    for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+        if len(fm_step_description) > 1:
+            unsubstituted_step_name, args = fm_step_description
+        else:
+            unsubstituted_step_name = fm_step_description[0]
+            args = []
+        fm_step_name = substituter.substitute(unsubstituted_step_name)
+        try:
+            fm_step: SiteOrUserForwardModelStep = copy.deepcopy(
+                installed_steps[fm_step_name]
+            )
+
+            # Preserve as ContextString
+            fm_step.name = fm_step_name
+        except KeyError:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"Could not find forward model step {fm_step_name!r} in list "
+                    "of installed forward model steps: "
+                    f"{list(installed_steps.keys())!r}",
+                    fm_step_name,
+                )
+            )
+            continue
+
+        fm_step.private_args = {}
+        user_positional_args: list[str] = []
+        for arg in args:
+            match arg:
+                case key, val:
+                    fm_step.private_args[key] = val
+                case val:
+                    fm_step.arglist.append(val)
+                    user_positional_args.append(val)
+
+        user_positional_args_by_step[id(fm_step)] = user_positional_args
+
+        keyword_errors: list[ConfigValidationError] = []
+        for check_keywords in (
+            fm_step.check_allowed_keywords,
+            fm_step.check_required_keywords,
+        ):
+            try:
+                check_keywords()
+            except ConfigValidationError as err:
+                keyword_errors.append(err)
+        if keyword_errors:
+            errors.extend(keyword_errors)
+            continue
+        fm_steps.append(fm_step)
+
+    dm_validator = DesignMatrixValidator()
+    for fm_step in fm_steps:
+        if fm_step.name == "DESIGN2PARAMS":
+            dm_validator.validate_design_matrix(fm_step.private_args)
+
+        real_iter_substituter = substituter.real_iter_substituter(0, 0)
+        substituted_arg_values = [
+            real_iter_substituter.substitute(value)
+            for value in fm_step.private_args.values()
+        ]
+        substituted_arg_values.extend(
+            real_iter_substituter.substitute(value)
+            for value in user_positional_args_by_step.get(id(fm_step), [])
+        )
+        _log_unsubstituted_forward_model_args(fm_step.name, substituted_arg_values)
+
+        if fm_step.name in preinstalled_forward_model_steps:
+            if "<ECL_BASE>" in str(fm_step):
+                ConfigWarning.warn(
+                    ECL_BASE_DEPRECATION_MSG,
+                    context=fm_step.name,
+                )
+            try:
+                substituted_json = create_forward_model_json(
+                    run_id=None,
+                    context=substitutions,
+                    forward_model_steps=[fm_step],
+                    skip_pre_experiment_validation=True,
+                    env_vars=env_vars,
+                    env_pr_fm_step=env_pr_fm_step,
+                )
+                fm_json_for_validation = substituted_json["jobList"][0]
+                fm_json_for_validation["environment"] = {
+                    **substituted_json["global_environment"],
+                    **(fm_json_for_validation["environment"] or {}),
+                }
+                fm_step.validate_pre_experiment(fm_json_for_validation)
+            except ForwardModelStepValidationError as err:
+                errors.append(
+                    ConfigValidationError.with_context(
+                        f"Forward model step pre-experiment validation failed: {err!s}",
+                        context=fm_step.name,
+                    ),
+                )
+            except ForwardModelStepWarning as err:
+                ConfigWarning.warn(
+                    f"Forward model step validation: {err!s}",
+                    context=fm_step.name,
+                )
+
+            except Exception as e:
+                ConfigWarning.warn(
+                    f"Unexpected plugin forward model exception: {e!s}",
+                    context=fm_step.name,
+                )
+    dm_validator.validate_design_matrix_merge()
+
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+
+    return fm_steps
+
+
+def log_shape_registry(shape_registry: ShapeRegistry) -> None:
+    shape_count = Counter(
+        type(shape).__name__ for shape in shape_registry.shapes.values()
+    )
+    logger.info(f"Count of shapes in ShapeRegistry: {dict(shape_count)}")
+
+
+def log_observation_keys(
+    observations: list[ObservationDict],
+) -> None:
+    observation_type_counts = Counter(o["type"].value for o in observations)
+    observation_keyword_counts = Counter(
+        "SEGMENT" if key == "segments" else str(key)
+        for o in observations
+        for key in o
+        if key not in {"name", "type"}
+    )
+    observation_summary_keys = Counter(
+        o["KEY"].split(":")[0] for o in observations if "KEY" in o
+    )
+
+    logger.info(f"Count of observation types: {dict(observation_type_counts)}")
+    logger.info(f"Count of observation keywords: {dict(observation_keyword_counts)}")
+    logger.info(f"Count of summary keywords: {dict(observation_summary_keys)}")
+
+
+RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
+
+USER_CONFIG_SCHEMA = init_user_config_schema()
+
+
+class ErtConfig(BaseModel, extra="forbid"):
+    DEFAULT_ENSPATH: ClassVar[str] = "storage"
+    DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
+    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
+        Mapping[str, SiteInstalledForwardModelStep]
+    ] = {}
+    PREINSTALLED_WORKFLOWS: ClassVar[dict[str, WorkflowJob]] = {}
+    ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
+    ENV_VARIABLES: ClassVar[dict[str, str]] = {}
+    QUEUE_OPTIONS: ClassVar[KnownQueueOptions | None] = None
+    RESERVED_KEYWORDS: ClassVar[list[str]] = RESERVED_KEYWORDS
+    ENV_VARS: ClassVar[dict[str, str]] = {}
+
+    substitutions: dict[str, str] = Field(default_factory=dict)
+    ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
+    ens_path: str = DEFAULT_ENSPATH
+    env_vars: dict[str, str] = Field(default_factory=dict)
+    analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
+    queue_config: QueueConfig = Field(default_factory=QueueConfig)
+    workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
+    workflows: dict[str, Workflow] = Field(default_factory=dict)
+    hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = Field(
+        default_factory=lambda: defaultdict(lambda: cast(list[Workflow], []))
+    )
+    runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
+
+    ert_templates: list[tuple[str, str]] = Field(default_factory=list)
+
+    forward_model_steps: list[SiteOrUserForwardModelStep] = Field(default_factory=list)
+    runpath_config: ModelConfig = Field(default_factory=ModelConfig)
+    user_config_file: str = "no_config"
+    config_path: str = Field(init=False, default="")
+    observation_declarations: list[Observation] = Field(default_factory=list)
+    zonemap: Path | None = None
+    random_seed_generator: RandomSeedGenerator = Field(
+        default_factory=RandomSeedGenerator
+    )
+    shape_registry: ShapeRegistry = Field(default_factory=ShapeRegistry)
+
+    @model_validator(mode="after")
+    def set_fields(self) -> Self:
+        self.config_path = (
+            str(Path(self.user_config_file).resolve().parent)
+            if self.user_config_file
+            else str(Path.cwd())
+        )
+        return self
+
+    @model_validator(mode="after")
+    def validate_genkw_parameter_name_overlap(self) -> Self:
+        overlapping_parameter_names = [
+            parameter_name
+            for parameter_name in self.ensemble_config.get_all_gen_kw_parameter_names()
+            if f"<{parameter_name}>" in self.substitutions
+            or parameter_name in ErtConfig.RESERVED_KEYWORDS
+        ]
+        if overlapping_parameter_names:
+            raise ConfigValidationError(
+                f"Found reserved parameter name(s): "
+                f"{', '.join(overlapping_parameter_names)}. The names are already in "
+                "use as magic strings or defined in the user config."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def validate_dm_parameter_name_overlap(self) -> Self:
+        if not self.analysis_config.design_matrix:
+            return self
+        dm_param_configs = self.analysis_config.design_matrix.parameter_configurations
+        overlapping_parameter_names = [
+            parameter_definition.name
+            for parameter_definition in dm_param_configs
+            if f"<{parameter_definition.name}>" in self.substitutions
+            or parameter_definition.name in ErtConfig.RESERVED_KEYWORDS
+        ]
+        if overlapping_parameter_names:
+            raise ConfigValidationError(
+                f"Found reserved parameter name(s): "
+                f"{', '.join(overlapping_parameter_names)}. The names are already in "
+                "use as magic strings or defined in the user config."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def log_ensemble_config_contents(self) -> Self:
+        all_parameters = self.parameter_configurations_with_design_matrix
+        parameter_type_count = Counter(parameter.type for parameter in all_parameters)
+        logger.info(
+            f"EnsembleConfig contains parameters of type {dict(parameter_type_count)}"
+        )
+        return self
+
+    @model_validator(mode="after")
+    def validate_observations_against_responses(self) -> Self:
+        gen_data_config = cast(
+            GenDataConfig | None,
+            self.ensemble_config.response_configs.get("gen_data", None),
+        )
+
+        errors: list[ErrorInfo] = []
+        for obs in self.observation_declarations:
+            if isinstance(obs, GeneralObservation):
+                response_key = obs.data
+                if gen_data_config is None or response_key not in gen_data_config.keys:
+                    errors.append(
+                        ErrorInfo(
+                            message=(
+                                f"Problem with GENERAL_OBSERVATION {obs.name}:"
+                                f" No GEN_DATA with name {response_key!r} found"
+                            )
+                        ).set_context(response_key)
+                    )
+                    continue
+                assert isinstance(gen_data_config, GenDataConfig)
+                _, report_steps = gen_data_config.get_args_for_key(response_key)
+                response_report_steps = [] if report_steps is None else report_steps
+                if response_report_steps and obs.restart not in response_report_steps:
+                    errors.append(
+                        ErrorInfo(
+                            message=(
+                                f"The GEN_DATA node:{response_key} is not configured "
+                                f"to load from report step:{obs.restart} for the "
+                                f"observation:{obs.name}"
+                            )
+                        ).set_context(response_key)
+                    )
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        return self
+
+    @staticmethod
+    def with_plugins(runtime_plugins: ErtRuntimePlugins) -> type[ErtConfig]:
+        class ErtConfigWithPlugins(ErtConfig):
+            PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
+                Mapping[str, SiteInstalledForwardModelStep]
+            ] = runtime_plugins.installed_forward_model_steps
+            PREINSTALLED_WORKFLOWS = dict(runtime_plugins.installed_workflow_jobs)
+            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = (
+                uppercase_subkeys_and_stringify_subvalues(
+                    {k: dict(v) for k, v in runtime_plugins.env_pr_fm_step.items()}
+                )
+            )
+            ENV_VARS = dict(runtime_plugins.environment_variables)
+            QUEUE_OPTIONS = runtime_plugins.queue_options
+
+        ErtConfigWithPlugins.model_rebuild()
+        assert issubclass(ErtConfigWithPlugins, ErtConfig)
+        return ErtConfigWithPlugins
+
+    @classmethod
+    def from_file(cls, user_config_file: str) -> Self:
+        """
+        Reads the given :ref:`User Config File<List of keywords>` and the
+        `Site wide configuration` and returns an ErtConfig containing the
+        configured values specified in those files.
+
+        Raises:
+            ConfigValidationError: Signals one or more incorrectly configured
+            value(s) that the user needs to fix before ert can run.
+
+
+        Warnings will be issued with :python:`warnings.warn(category=ConfigWarning)`
+        when the user should be notified with non-fatal configuration problems.
+        """
+        user_config_contents = read_file(user_config_file)
+        cls._log_config_file(user_config_file, user_config_contents)
+        user_config_dict = cls._config_dict_from_contents(
+            user_config_contents,
+            user_config_file,
+        )
+        cls._log_config_dict(user_config_dict)
+        return cls.from_dict(user_config_dict)
+
+    @classmethod
+    def _config_dict_from_contents(
+        cls,
+        user_config_contents: str,
+        config_file_name: str,
+    ) -> ConfigDict:
+        user_config_dict = cls._read_user_config_contents(
+            user_config_contents,
+            file_name=config_file_name,
+        )
+        cls._log_custom_forward_model_steps(user_config_dict)
+
+        config_dir = Path(config_file_name).resolve().parent
+        cls.apply_config_content_defaults(user_config_dict, str(config_dir))
+        return user_config_dict
+
+    @classmethod
+    def from_file_contents(
+        cls,
+        user_config_contents: str,
+        config_file_name: str = "./config.ert",
+    ) -> Self:
+        return cls.from_dict(
+            cls._config_dict_from_contents(
+                user_config_contents,
+                config_file_name,
+            )
+        )
+
+    @classmethod
+    def from_dict(cls, config_dict: ConfigDict) -> Self:
+        substitutions = _substitutions_from_dict(config_dict)
+        runpath_file = config_dict.get(
+            ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
+        )
+        substitutions["<RUNPATH_FILE>"] = runpath_file
+        config_dir = substitutions.get("<CONFIG_PATH>", "")
+        config_file = substitutions.get("<CONFIG_FILE>", "no_config")
+        config_file_path = Path(config_dir) / config_file
+
+        errors = cls._validate_dict(config_dict, config_file)
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        workflow_jobs: dict[str, WorkflowJob] = {}
+        workflows: dict[str, Workflow] = {}
+        hooked_workflows: dict[HookRuntime, list[Workflow]] = {}
+        installed_forward_model_steps = {}
+        model_config = None
+
+        try:
+            model_config = ModelConfig.from_dict(config_dict)
+
+        except ConfigValidationError as e:
+            errors.append(e)
+        except PydanticValidationError as err:
+            errors.append(ConfigValidationError.from_pydantic(err))
+
+        if model_config is not None:
+            runpath = model_config.runpath_format_string
+            summary_file_base_name = model_config.summary_file_base_name
+            substitutions["<RUNPATH>"] = runpath
+            if summary_file_base_name is not None:
+                substitutions["<ECL_BASE>"] = summary_file_base_name
+                substitutions["<ECLBASE>"] = summary_file_base_name
+            else:
+                substitutions["<ECL_BASE>"] = DEFAULT_ECLBASE_FORMAT
+                substitutions["<ECLBASE>"] = DEFAULT_ECLBASE_FORMAT
+
+        try:
+            workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
+                config_dict, substitutions, cls.PREINSTALLED_WORKFLOWS
+            )
+        except ConfigValidationError as e:
+            errors.append(e)
+
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            site_installed_forward_model_steps = dict(
+                copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
+            )
+            user_installed_forward_model_steps = (
+                installed_forward_model_steps_from_dict(config_dict)
+            )
+
+            overwritten_fm_steps = set(site_installed_forward_model_steps).intersection(
+                user_installed_forward_model_steps
+            )
+            if overwritten_fm_steps:
+                msg = (
+                    f"The following forward model steps from site configurations "
+                    f"have been overwritten by user: {sorted(overwritten_fm_steps)}"
+                )
+                logger.warning(msg)
+
+            installed_forward_model_steps = (
+                site_installed_forward_model_steps | user_installed_forward_model_steps
+            )
+
+        except ConfigValidationError as e:
+            errors.append(e)
+
+        try:
+            queue_config = QueueConfig.from_dict(
+                config_dict, site_queue_options=cls.QUEUE_OPTIONS
+            )
+
+            substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
+
+        except ConfigValidationError as err:
+            errors.append(err)
+
+        obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
+        obs_configs: list[Observation] = []
+        shape_registry = ShapeRegistry()
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            if obs_config_args:
+                obs_config_file, obs_config_input = obs_config_args
+                log_observation_keys(obs_config_input)
+                obs_configs = make_observations(
+                    os.path.dirname(obs_config_file),
+                    obs_config_input,
+                    shape_registry=shape_registry,
+                )
+                log_shape_registry(shape_registry)
+                if not obs_configs:
+                    raise ObservationConfigError.with_context(
+                        f"Empty observations file: {obs_config_file}",
+                        obs_config_file,
+                    )
+        except ObservationConfigError as err:
+            errors.append(err)
+
+        if obs_configs:
+            obs_summary_keys = {
+                obs.key
+                for obs in obs_configs
+                if isinstance(obs, SummaryObservation | BreakthroughObservation)
+            }
+            if obs_summary_keys:
+                summary_keys = ErtConfig._read_summary_keys(config_dict)
+                config_dict[ConfigKeys.SUMMARY] = [summary_keys] + [
+                    [key] for key in obs_summary_keys if key not in summary_keys
+                ]
+        try:
+            ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
+        except PydanticValidationError as err:
+            errors.append(ConfigValidationError.from_pydantic(err))
+
+        try:
+            analysis_config = AnalysisConfig.from_dict(config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        if dm := analysis_config.design_matrix:
+            dm_errors: list[ErrorInfo | ConfigValidationError] = []
+            dm_params = {x.name for x in dm.parameter_configurations}
+            overwrite_params = [
+                cfg.name
+                for cfg in ensemble_config.parameter_configs.values()
+                if isinstance(cfg, GenKwConfig) and cfg.name in dm_params
+            ]
+            if overwrite_params:
+                param_sampled = [
+                    k
+                    for k in overwrite_params
+                    if analysis_config.design_matrix.parameter_priority[k]
+                    == DataSource.SAMPLED
+                ]
+                param_design = [
+                    k
+                    for k in overwrite_params
+                    if analysis_config.design_matrix.parameter_priority[k]
+                    == DataSource.DESIGN_MATRIX
+                ]
+                if param_sampled:
+                    ConfigWarning.warn(
+                        f"Parameters {param_sampled} "
+                        "are also defined in design matrix, but due to the sampled"
+                        " priority they will remain as such."
+                    )
+                if param_design:
+                    ConfigWarning.warn(
+                        f"Parameters {param_design} "
+                        "will be overridden by design matrix. This will cause "
+                        "updates to be turned off for these parameters."
+                    )
+
+            if dm_errors:
+                raise ConfigValidationError.from_collected(dm_errors)
+
+        env_vars = {}
+        substituter = Substitutions(substitutions)
+
+        # Insert env vars from plugins/site config
+        for key, val in cls.ENV_VARS.items():
+            env_vars[key] = substituter.substitute(val)
+
+        user_configured_ = set()
+        for key, val in config_dict.get("SETENV", []):
+            if key in user_configured_:
+                logger.warning(
+                    f"User configured environment variable {key} re-written by user: "
+                    f"{env_vars[key]}->{val}"
+                )
+            elif key in cls.ENV_VARS:
+                logger.warning(
+                    f"Site configured environment variable {key} re-written by user: "
+                    f"{env_vars[key]}->{val}"
+                )
+
+            user_configured_.add(key)
+            env_vars[key] = substituter.substitute(val)
+
+        if errors:
+            raise ObservationConfigError.from_collected(errors)
+
+        # update strategies
+        for param_config in ensemble_config.parameter_configs.values():
+            if param_config.update_strategy is not None:
+                if (
+                    str(param_config.type).upper()
+                    in analysis_config.parameter_type_update_strategies
+                ):
+                    strategy = analysis_config.parameter_type_update_strategies[
+                        str(param_config.type).upper()
+                    ]
+                    param_config.update_strategy = strategy
+                else:
+                    param_config.update_strategy = LocalizationType.GLOBAL
+
+        zonemap = config_dict.get(ConfigKeys.ZONEMAP)
+        if zonemap:
+            zonemap = substituter.substitute(zonemap)
+        try:
+            cls_config = cls(
+                substitutions=substitutions,
+                ensemble_config=ensemble_config,
+                ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
+                env_vars=env_vars,
+                analysis_config=analysis_config,
+                queue_config=queue_config,
+                workflow_jobs=workflow_jobs,
+                workflows=workflows,
+                hooked_workflows=hooked_workflows,
+                runpath_file=Path(runpath_file),
+                ert_templates=read_templates(config_dict),
+                forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
+                    installed_forward_model_steps,
+                    substitutions,
+                    config_dict,
+                ),
+                runpath_config=model_config,
+                user_config_file=str(config_file_path),
+                observation_declarations=list(obs_configs),
+                zonemap=zonemap,
+                shape_registry=shape_registry,
+            )
+
+            cls_config.derive_rft_response_input_from_observations(config_dict)
+            cls_config.derive_breakthrough_response_input_from_observations()
+            cls_config.derive_seismic_response_input_from_observations()
+
+            cls_config.random_seed_generator.user_defined_seed = config_dict.get(
+                ConfigKeys.RANDOM_SEED
+            )
+
+        except PydanticValidationError as err:
+            raise ConfigValidationError.from_pydantic(err) from err
+        return cls_config
+
+    def derive_rft_response_input_from_observations(
+        self, config_dict: ConfigDict
+    ) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        rft_observations = [o for o in observations if isinstance(o, RFTObservation)]
+        if not rft_observations:
+            return
+
+        summary_file_base_name = self.runpath_config.summary_file_base_name
+        if "rft" not in ensemble_config.response_configs and summary_file_base_name:
+            ensemble_config.response_configs["rft"] = RFTConfig(
+                input_files=[summary_file_base_name],
+                data_to_read={},
+                zonemap=self.zonemap,
+                approximate_missing_values=bool(
+                    config_dict.get(ConfigKeys.APPROXIMATE_MISSING_RFT_VALUES, False)
+                ),
+            )
+
+        if "rft" not in ensemble_config.response_configs:
+            return
+
+        rft_config = cast(RFTConfig, ensemble_config.response_configs.get("rft"))
+        data_to_read = rft_config.data_to_read
+
+        for rft_observation in rft_observations:
+            if rft_observation.well not in data_to_read:
+                data_to_read[rft_observation.well] = {}
+
+            well_dict = data_to_read[rft_observation.well]
+            if rft_observation.date not in well_dict:
+                well_dict[rft_observation.date] = []
+
+            property_list = well_dict[rft_observation.date]
+            if rft_observation.property not in property_list:
+                property_list.append(rft_observation.property)
+
+    def derive_breakthrough_response_input_from_observations(self) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        bt_obs = [o for o in observations if isinstance(o, BreakthroughObservation)]
+
+        if "breakthrough" not in ensemble_config.response_configs and bt_obs:
+            ensemble_config.response_configs["breakthrough"] = BreakthroughConfig(
+                keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
+                summary_keys=[o.key for o in bt_obs],
+                thresholds=[o.threshold for o in bt_obs],
+                observed_dates=[o.date for o in bt_obs],
+            )
+
+    def derive_seismic_response_input_from_observations(self) -> None:
+        observations = self.observation_declarations
+        ensemble_config = self.ensemble_config
+
+        seismic_obs = [o for o in observations if isinstance(o, SeismicObservation)]
+
+        if "seismic" not in ensemble_config.response_configs and seismic_obs:
+            default_dir = Path("share/results/tables")
+            response_files = list(
+                dict.fromkeys(str(default_dir / o.filepath.name) for o in seismic_obs)
+            )
+            seismic_config = SeismicConfig.from_config_dict(
+                {ConfigKeys.SEISMIC: response_files}
+            )
+            assert seismic_config is not None
+            ensemble_config.response_configs["seismic"] = seismic_config
+
+    @classmethod
+    def _create_list_of_forward_model_steps_to_run(
+        cls,
+        installed_steps: dict[str, SiteOrUserForwardModelStep],
+        substitutions: dict[str, str],
+        config_dict: ConfigDict,
+    ) -> list[SiteOrUserForwardModelStep]:
+        return create_list_of_forward_model_steps_to_run(
+            installed_steps,
+            substitutions,
+            config_dict,
+            cls.PREINSTALLED_FORWARD_MODEL_STEPS,
+            cls.ENV_PR_FM_STEP,
+        )
+
+    @classmethod
+    def _read_summary_keys(cls, config_dict: ConfigDict) -> list[str]:
+        return [
+            item
+            for sublist in config_dict.get(ConfigKeys.SUMMARY, [])
+            for item in sublist
+        ]
+
+    @classmethod
+    def _log_config_file(cls, config_file: str, config_file_contents: str) -> None:
+        """
+        Logs what configuration was used to start ert. Because the config
+        parsing is quite convoluted we are not able to remove all the comments,
+        but the easy ones are filtered out.
+        """
+        config_context = ""
+        for unstripped_line in config_file_contents.split("\n"):
+            line = unstripped_line.strip()
+            if not line or line.startswith("--"):
+                continue
+            if "--" in line and not any(x in line for x in ['"', "'"]):
+                # There might be a comment in this line, but it could
+                # also be an argument to a job, so we do a quick check
+                line = line.split("--")[0].rstrip()
+            if any(
+                kw in line
+                for kw in [
+                    "FORWARD_MODEL",
+                    "LOAD_WORKFLOW",
+                    "LOAD_WORKFLOW_JOB",
+                    "HOOK_WORKFLOW",
+                    "WORKFLOW_JOB_DIRECTORY",
+                ]
+            ):
+                continue
+            config_context += line + "\n"
+        logger.info(
+            f"Content of the configuration file ({config_file}):\n{config_context}"
+        )
+
+    @classmethod
+    def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
+        # The content of the message is sanitized before being sendt to App Insights
+        # to make sure GDPR-rules are not violated. In doing so, the message length
+        # will typically increase a bit. To Avoid hitting the App Insights' hard limit
+        # of message length, the limit is set to 80% of
+        # MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
+        SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
+        sensitive_keys = ["OBS_CONFIG"]
+        content_dict_to_log = {
+            k: (v if k not in sensitive_keys else "<REDACTED>")
+            for k, v in content_dict.items()
+        }
+        try:
+            config_dict_content = pprint.pformat(content_dict_to_log)
+        except Exception as err:
+            config_dict_content = str(content_dict_to_log)
+            logger.warning(
+                "Logging of config dict could not be formatted for "
+                f"enhanced readability. {err}"
+            )
+        config_dict_content_length = len(config_dict_content)
+        if config_dict_content_length > SAFE_MESSAGE_LENGTH_LIMIT:
+            config_sections = _split_string_into_sections(
+                config_dict_content, SAFE_MESSAGE_LENGTH_LIMIT
+            )
+            section_count = len(config_sections)
+            for i, section in enumerate(config_sections):
+                logger.info(
+                    "Content of the config_dict "
+                    f"(part {i + 1}/{section_count}): {section}"
+                )
+        else:
+            logger.info(f"Content of the config_dict: {config_dict_content}")
+
+    @cached_property
+    def ensemble_size(self) -> int:
+        config_num_realizations = self.runpath_config.num_realizations
+        if (
+            self.analysis_config.design_matrix is not None
+            and (
+                dm_active_realizations
+                := self.analysis_config.design_matrix.active_realizations
+            )
+            is not None
+        ) and (
+            dm_num_realizations := len(dm_active_realizations)
+        ) != config_num_realizations:
+            msg = (
+                f"NUM_REALIZATIONS ({config_num_realizations}) is "
+                + (
+                    "greater "
+                    if dm_num_realizations < config_num_realizations
+                    else "less "
+                )
+                + f"than the number of realizations in DESIGN_MATRIX "
+                f"({dm_num_realizations}). Using the realizations from "
+                + (
+                    f"DESIGN_MATRIX ({dm_num_realizations})"
+                    if dm_num_realizations < config_num_realizations
+                    else f"NUM_REALIZATIONS ({config_num_realizations})"
+                )
+            )
+            ConfigWarning.warn(msg)
+            return min(config_num_realizations, dm_num_realizations)
+        return config_num_realizations
+
+    @property
+    def parameter_configurations_with_design_matrix(self) -> list[ParameterConfig]:
+        if self.analysis_config.design_matrix is not None:
+            return self.analysis_config.design_matrix.merge_with_existing_parameters(
+                self.ensemble_config.parameter_configuration
+            )
+        return self.ensemble_config.parameter_configuration
+
+    @cached_property
+    def active_realizations(self) -> list[bool]:
+        if (
+            self.analysis_config.design_matrix is not None
+            and (
+                dm_active_realizations
+                := self.analysis_config.design_matrix.active_realizations
+            )
+            is not None
+        ):
+            return dm_active_realizations[: self.ensemble_size]
+        return [True for _ in range(self.ensemble_size)]
+
+    @classmethod
+    def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
+        for fm_step, (fm_step_filename, _) in user_config.get(
+            ConfigKeys.INSTALL_JOB, []
+        ):
+            fm_configuration = EMPTY_LINES.sub(
+                "\n", (Path(fm_step_filename).read_text(encoding="utf-8").strip())
+            )
+            logger.info(
+                f"Custom forward_model_step {fm_step} installed as: {fm_configuration}"
+            )
+
+    @staticmethod
+    def apply_config_content_defaults(
+        content_dict: ConfigDict, config_dir: str
+    ) -> None:
+        if ConfigKeys.ENSPATH not in content_dict:
+            content_dict[ConfigKeys.ENSPATH] = str(
+                Path(config_dir) / ErtConfig.DEFAULT_ENSPATH
+            )
+
+        if ConfigKeys.RUNPATH_FILE not in content_dict:
+            content_dict[ConfigKeys.RUNPATH_FILE] = str(
+                Path(config_dir) / ErtConfig.DEFAULT_RUNPATH_FILE
+            )
+        elif not path.isabs(content_dict[ConfigKeys.RUNPATH_FILE]):
+            content_dict[ConfigKeys.RUNPATH_FILE] = str(
+                (Path(config_dir) / content_dict[ConfigKeys.RUNPATH_FILE]).resolve()
+            )
+
+    @classmethod
+    def _read_user_config_contents(cls, user_config: str, file_name: str) -> ConfigDict:
+        return parse_contents(
+            user_config, file_name=file_name, schema=USER_CONFIG_SCHEMA
+        )
+
+    @classmethod
+    def _validate_dict(
+        cls, config_dict: ConfigDict, config_file: str
+    ) -> list[ErrorInfo | ConfigValidationError]:
+        errors: list[ErrorInfo | ConfigValidationError] = []
+
+        if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
+            errors.append(
+                ErrorInfo(
+                    message="When using SUMMARY keyword, "
+                    "the config must also specify ECLBASE",
+                    filename=config_file,
+                ).set_context(config_dict[ConfigKeys.SUMMARY][0])
+            )
+        return errors
+
+    def forward_model_step_name_list(self) -> list[str]:
+        return [j.name for j in self.forward_model_steps]
+
+    @property
+    def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
+        return self.ENV_PR_FM_STEP
+
+    @property
+    def random_seed(self) -> int:
+        return self.random_seed_generator.seed
+
+    @random_seed.setter
+    def random_seed(self, value: int | None) -> None:
+        self.random_seed_generator.user_defined_seed = value
+
+
+def _split_string_into_sections(string: str, section_length: int) -> list[str]:
+    """
+    Splits a string into sections of length section_length and returns it as a list.
+
+    If section_length is set to 0 or less, no sectioning is performed and the entire
+    input string is returned as one section in a list
+    """
+    if section_length < 1:
+        return [string]
+    return [
+        string[i : i + section_length] for i in range(0, len(string), section_length)
+    ]
+
+
+def _get_files_in_directory(
+    job_path: Path, errors: list[ErrorInfo | ConfigValidationError]
+) -> list[Path]:
+    if not job_path.is_dir():
+        errors.append(
+            ConfigValidationError(
+                f"Unable to locate job directory {job_path}", str(job_path)
+            )
+        )
+        return []
+    files = [path.resolve() for path in job_path.iterdir() if path.is_file()]
+
+    if files == []:
+        ConfigWarning.warn(f"No files found in job directory {job_path}", str(job_path))
+    return files
+
+
+def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
+    substitutions = dict(config_dict.get("DEFINE", []))
+
+    if "<CONFIG_PATH>" not in substitutions:
+        substitutions["<CONFIG_PATH>"] = str(Path.cwd())
+
+    substitutions.update(dict(config_dict.get("DATA_KW", [])))
+
+    return substitutions
+
+
+def uppercase_subkeys_and_stringify_subvalues(
+    nested_dict: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, str]]:
+    fixed_dict: dict[str, dict[str, str]] = {}
+    for key, value in nested_dict.items():
+        fixed_dict[key] = {
+            subkey.upper(): str(subvalue) for subkey, subvalue in value.items()
+        }
+    return fixed_dict
+
+
+def forward_model_step_from_config_contents(
+    config_contents: str,
+    config_file: str,
+    name: str | None = None,
+) -> UserInstalledForwardModelStep:
+    if name is None:
+        name = os.path.basename(config_file)
+
+    schema = init_forward_model_schema()
+
+    content_dict = parse_contents(
+        config_contents, file_name=config_file, schema=schema, pre_defines=[]
+    )
+
+    specified_arg_types: list[tuple[int, str]] = content_dict.get(
+        ForwardModelStepKeys.ARG_TYPE, []
+    )
+
+    specified_max_args: int = content_dict.get("MAX_ARG", 0)
+    specified_min_args: int = content_dict.get("MIN_ARG", 0)
+
+    arg_types_list = parse_arg_types_list(
+        specified_arg_types, specified_min_args, specified_max_args
+    )
+
+    environment = {k: v for [k, v] in content_dict.get("ENV", [])}
+    default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
+
+    return UserInstalledForwardModelStep(
+        name=name,
+        executable=content_dict["EXECUTABLE"],
+        stdin_file=content_dict.get("STDIN"),
+        stdout_file=content_dict.get("STDOUT"),
+        stderr_file=content_dict.get("STDERR"),
+        start_file=content_dict.get("START_FILE"),
+        target_file=content_dict.get("TARGET_FILE"),
+        error_file=content_dict.get("ERROR_FILE"),
+        max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES"),
+        min_arg=content_dict.get("MIN_ARG"),
+        max_arg=content_dict.get("MAX_ARG"),
+        arglist=content_dict.get("ARGLIST", []),
+        arg_types=arg_types_list,
+        environment=environment,
+        required_keywords=content_dict.get("REQUIRED", []),
+        default_mapping=default_mapping,
+    )

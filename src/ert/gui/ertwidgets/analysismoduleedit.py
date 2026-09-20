@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from PyQt6.QtCore import QMargins, Qt
+from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
+
+from ert.gui.icon_utils import load_icon
+
+from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
+from .closabledialog import ClosableDialog
+
+if TYPE_CHECKING:
+    from ert.config import AnalysisModule
+
+
+class AnalysisModuleEdit(QWidget):
+    def __init__(
+        self,
+        analysis_module: AnalysisModule,
+        ensemble_size: int,
+    ) -> None:
+        self.analysis_module = analysis_module
+        self.ensemble_size = ensemble_size
+        QWidget.__init__(self)
+
+        layout = QHBoxLayout()
+
+        variables_popup_button = QPushButton("Edit")
+        variables_popup_button.setObjectName("analysis_variables_popup_button")
+        variables_popup_button.setIcon(load_icon("edit.svg"))
+        variables_popup_button.clicked.connect(self.showVariablesPopup)
+
+        layout.addWidget(variables_popup_button, 0, Qt.AlignmentFlag.AlignLeft)
+        layout.setContentsMargins(QMargins(0, 0, 0, 0))
+        layout.addStretch()
+
+        self.setLayout(layout)
+
+    def showVariablesPopup(self) -> None:
+        variable_dialog = AnalysisModuleVariablesPanel(
+            self.analysis_module, self.ensemble_size
+        )
+        dialog = ClosableDialog(
+            "Edit variables",
+            variable_dialog,
+            self.parent(),  # type: ignore
+        )
+        dialog.exec()

@@ -1,0 +1,98 @@
+import contextlib
+import sys
+from io import StringIO
+from pathlib import Path
+from textwrap import dedent
+
+import yaml
+
+from everest.config.everest_config import EverestConfig
+
+MIN_CONFIG = dedent(
+    """
+    model: {"realizations": [0]}
+    controls:
+      -
+        name: my_control
+        min: 0
+        max: 0.1
+        perturbation_magnitude: 0.01
+        variables:
+          - { name: test, initial_guess: 0.1 }
+    objective_functions:
+      - {name: my_objective}
+    config_path: .
+    """
+)
+
+
+def everest_config_with_defaults(**kwargs) -> EverestConfig:
+    """
+    Creates an EVEREST config with default values. Useful for initializing a config
+    without having to provide empty defaults.
+    """
+    return EverestConfig.with_plugins(yaml.safe_load(MIN_CONFIG) | {**kwargs})  # type: ignore
+
+
+def relpath(*path) -> Path:
+    return Path(__file__).resolve().parent.parent.joinpath(*path)
+
+
+@contextlib.contextmanager
+def capture_streams():
+    """Context that allows capturing text sent to stdout and stderr
+
+    Use as follow:
+    with capture_streams() as (out, err):
+        foo()
+    assert( 'output of foo' in out.getvalue())
+    """
+    new_out, new_err = StringIO(), StringIO()
+    old_out, old_err = sys.stdout, sys.stderr
+    try:
+        sys.stdout, sys.stderr = new_out, new_err
+        yield new_out, new_err
+    finally:
+        sys.stdout, sys.stderr = old_out, old_err
+
+
+def satisfy(predicate):
+    """Return a class that equals to an obj if predicate(obj) is True
+
+    This method is expected to be used with `assert_called_with()` on mocks.
+    An example can be found in `test_everest_entry.test_everest_run`
+    Inspired by
+    https://stackoverflow.com/questions/21611559/assert-that-a-method-was-called-with-one-argument-out-of-several
+    """
+
+    class _PredicateChecker:
+        def __eq__(self, obj) -> bool:
+            return predicate(obj)
+
+    return _PredicateChecker()
+
+
+def satisfy_type(the_type):
+    """Specialization of satisfy for checking object type"""
+    return satisfy(lambda obj: isinstance(obj, the_type))
+
+
+def satisfy_callable():
+    """Specialization of satisfy for checking that object is callable"""
+    return satisfy(callable)
+
+
+class MockParser:
+    """
+    Small class that contains the necessary functions in order to test custom
+    validation functions used with the argparse module
+    """
+
+    def __init__(self) -> None:
+        self.error_msg = None
+
+    def get_error(self):
+        return self.error_msg
+
+    def error(self, value=None):
+        self.error_msg = value

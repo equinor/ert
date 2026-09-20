@@ -1,0 +1,42 @@
+controls:
+  - name: point
+    min: -1.0
+    max: 1.0
+    scaled_range: [-1, 1]
+    initial_guess: 0.1
+    perturbation_magnitude: 0.001
+    variables:
+      - name: x
+      - name: y
+      - name: z
+
+
+objective_functions:
+  - name: distance
+
+
+optimization:
+  algorithm: optpp_q_newton
+  convergence_tolerance: 0.001
+  max_batch_num: 4  # Remove this to let EVEREST converge
+  constraint_tolerance: 0.1  # To test that it is ignored.
+
+
+install_jobs:
+  - name: distance3
+    executable: jobs/distance3.py
+
+model:
+  realizations: [0]
+
+forward_model:
+  - distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance
+
+simulator:
+  queue_system:
+    name: local
+
+environment:
+  simulation_folder: sim_output
+  log_level: info
+  random_seed: 123

@@ -1,0 +1,69 @@
+name: Run test-data
+
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+ workflow_call:
+ workflow_dispatch:
+
+permissions:
+   contents: read
+
+env:
+  ERT_SHOW_BACKTRACE: 1
+  UV_FROZEN: true
+  OMP_NUM_THREADS: 1
+
+jobs:
+  run-ert-test-data:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.14']
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        fetch-depth: 0
+        filter: tree:0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      with:
+        enable-cache: true
+        prune-cache: false
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install ERT and dependencies
+      run: |
+        uv sync
+
+    - name: Test poly example
+      run: |
+        pushd test-data/ert/poly_example
+        uv run ert test_run poly.ert
+        popd
+
+    - name: Test snake_oil
+      run: |
+        pushd test-data/ert/snake_oil
+        uv pip install oil_reservoir_synthesizer resdata
+        uv run ert test_run snake_oil.ert
+        popd
+
+    - name: Test snake_oil_field
+      run: |
+        pushd test-data/ert/snake_oil
+        uv run ert test_run snake_oil.ert
+        popd

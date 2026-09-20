@@ -1,0 +1,295 @@
+from __future__ import annotations
+
+import datetime
+from collections import defaultdict
+from collections.abc import Sequence
+from typing import Any, assert_never
+
+import polars as pl
+
+from ert.utils import assert_schema
+
+from ._observations import (
+    BreakthroughObservation,
+    GeneralObservation,
+    Observation,
+    RFTObservation,
+    SeismicObservation,
+    SummaryObservation,
+)
+from ._shapes import CircleShapeConfig, ShapeRegistry
+from .parsing import ErrorInfo, ObservationConfigError
+
+
+def create_observation_dataframes(
+    observations: Sequence[Observation],
+    shape_registry: ShapeRegistry | None = None,
+) -> dict[str, pl.DataFrame]:
+    if not observations:
+        return {}
+
+    config_errors: list[ErrorInfo] = []
+    grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
+    for obs in observations:
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            match obs:
+                case SummaryObservation():
+                    grouped["summary"].append(
+                        _handle_summary_observation(
+                            obs,
+                            obs.name,
+                            shape_registry,
+                        )
+                    )
+                case GeneralObservation():
+                    grouped["gen_data"].append(
+                        _handle_general_observation(
+                            obs,
+                            obs.name,
+                        )
+                    )
+                case RFTObservation():
+                    if shape_registry is None:
+                        raise TypeError(
+                            "create_observation_dataframes requires "
+                            "shape_registry is not None when using RFTObservation"
+                        )
+                    grouped["rft"].append(_handle_rft_observation(obs, shape_registry))
+                case BreakthroughObservation():
+                    grouped["breakthrough"].append(
+                        _handle_breakthrough_observation(
+                            obs,
+                            shape_registry,
+                        )
+                    )
+                case SeismicObservation():
+                    grouped["seismic"].append(
+                        _handle_seismic_observation(
+                            obs,
+                            shape_registry,
+                        )
+                    )
+                case default:
+                    assert_never(default)
+        except ObservationConfigError as err:
+            config_errors.extend(err.errors)
+
+    if config_errors:
+        raise ObservationConfigError.from_collected(config_errors)
+
+    datasets: dict[str, pl.DataFrame] = {}
+
+    for name, dfs in grouped.items():
+        non_empty_dfs = [df for df in dfs if not df.is_empty()]
+        if len(non_empty_dfs) > 0:
+            ds = pl.concat(non_empty_dfs).sort("observation_key")
+            if "time" in ds:
+                ds = ds.sort(by="time")
+
+            datasets[name] = ds
+    return datasets
+
+
+def _base_observation_schema() -> dict[str, Any]:
+    return {
+        "response_key": pl.String,
+        "observation_key": pl.String,
+        "observations": pl.Float32,
+        "std": pl.Float32,
+        "east": pl.Float32,
+        "north": pl.Float32,
+        "radius": pl.Float32,
+    }
+
+
+def _summary_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {
+        "time": pl.Datetime(time_unit="ms", time_zone=None)
+    }
+
+
+def _handle_summary_observation(
+    summary_dict: SummaryObservation,
+    obs_key: str,
+    shape_registry: ShapeRegistry | None = None,
+) -> pl.DataFrame:
+    summary_key = summary_dict.key
+    value = summary_dict.value
+    std_dev = summary_dict.error
+    date = datetime.datetime.fromisoformat(summary_dict.date)
+
+    east = None
+    north = None
+    radius = None
+    shape = summary_dict.shape(shape_registry) if shape_registry is not None else None
+    if shape is not None and isinstance(shape, CircleShapeConfig):
+        east = shape.east
+        north = shape.north
+        radius = shape.radius
+
+    return pl.DataFrame(
+        {
+            "response_key": [summary_key],
+            "observation_key": [obs_key],
+            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
+        }
+    ).pipe(assert_schema, _summary_observation_schema(), check_column_order=False)
+
+
+def _general_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {"report_step": pl.UInt16, "index": pl.UInt16}
+
+
+def _handle_general_observation(
+    general_observation: GeneralObservation,
+    obs_key: str,
+) -> pl.DataFrame:
+    response_key = general_observation.data
+    restart = general_observation.restart
+
+    east = None
+    north = None
+    radius = None
+    if general_observation.error <= 0:
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", obs_key
+        )
+
+    return pl.DataFrame(
+        {
+            "response_key": [response_key],
+            "observation_key": [general_observation.name],
+            "report_step": pl.Series([restart], dtype=pl.UInt16),
+            "index": pl.Series([general_observation.index], dtype=pl.UInt16),
+            "observations": pl.Series([general_observation.value], dtype=pl.Float32),
+            "std": pl.Series([general_observation.error], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
+        }
+    ).pipe(assert_schema, _general_observation_schema(), check_column_order=False)
+
+
+def _rft_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {
+        "well": pl.String,
+        "date": pl.String,
+        "tvd": pl.Float32,
+        "md": pl.Float32,
+        "zone": pl.String,
+    }
+
+
+def _handle_rft_observation(
+    rft_observation: RFTObservation,
+    shape_registry: ShapeRegistry,
+) -> pl.DataFrame:
+    localization_radius = None
+    shape = rft_observation.shape(shape_registry)
+    localization_radius = (
+        shape.radius
+        if shape is not None and isinstance(shape, CircleShapeConfig)
+        else None
+    )
+
+    if rft_observation.error <= 0.0:
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", rft_observation.well
+        )
+
+    return pl.DataFrame(
+        {
+            "response_key": (
+                f"{rft_observation.well}:"
+                f"{rft_observation.date}:"
+                f"{rft_observation.property}"
+            ),
+            "well": rft_observation.well,
+            "date": rft_observation.date,
+            "observation_key": rft_observation.name,
+            "east": pl.Series([rft_observation.east], dtype=pl.Float32),
+            "north": pl.Series([rft_observation.north], dtype=pl.Float32),
+            "tvd": pl.Series([rft_observation.tvd], dtype=pl.Float32),
+            "md": pl.Series([rft_observation.md], dtype=pl.Float32),
+            "zone": pl.Series([rft_observation.zone], dtype=pl.String),
+            "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
+            "std": pl.Series([rft_observation.error], dtype=pl.Float32),
+            "radius": pl.Series([localization_radius], dtype=pl.Float32),
+        }
+    ).pipe(assert_schema, _rft_observation_schema(), check_column_order=False)
+
+
+def _breakthrough_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {
+        "time": pl.Datetime(time_unit="ms", time_zone=None),
+        "threshold": pl.Float64,
+    }
+
+
+def _handle_breakthrough_observation(
+    obs_config: BreakthroughObservation,
+    shape_registry: ShapeRegistry | None = None,
+) -> pl.DataFrame:
+    east = None
+    north = None
+    radius = None
+    shape = obs_config.shape(shape_registry) if shape_registry is not None else None
+    if shape is not None and isinstance(shape, CircleShapeConfig):
+        east = shape.east
+        north = shape.north
+        radius = shape.radius
+    return pl.DataFrame(
+        {
+            "observation_key": obs_config.name,
+            "response_key": f"BREAKTHROUGH:{obs_config.key}",
+            "time": pl.Series([obs_config.date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([0], dtype=pl.Float32),
+            "threshold": pl.Series([obs_config.threshold], dtype=pl.Float64),
+            "std": pl.Series([obs_config.error], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
+        }
+    ).pipe(assert_schema, _breakthrough_observation_schema(), check_column_order=False)
+
+
+def _seismic_observation_schema() -> dict[str, Any]:
+    return _base_observation_schema() | {
+        "boundary_id": pl.UInt16,
+    }
+
+
+def _handle_seismic_observation(
+    seismic_observation: SeismicObservation,
+    shape_registry: ShapeRegistry | None = None,
+) -> pl.DataFrame:
+    response_key = seismic_observation.filepath.stem
+    obs_key = seismic_observation.name
+    value = seismic_observation.value
+    std_dev = seismic_observation.error
+    east = seismic_observation.east
+    north = seismic_observation.north
+    radius = None
+    if shape_registry is not None:
+        shape = seismic_observation.shape(shape_registry)
+        if shape is not None and isinstance(shape, CircleShapeConfig):
+            radius = shape.radius
+    boundary_id = seismic_observation.boundary_id
+
+    return pl.DataFrame(
+        {
+            "response_key": [response_key],
+            "observation_key": [obs_key],
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
+            "boundary_id": pl.Series([boundary_id], dtype=pl.UInt16),
+        }
+    ).pipe(assert_schema, _seismic_observation_schema(), check_column_order=False)

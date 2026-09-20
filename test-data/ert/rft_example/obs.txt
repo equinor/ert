@@ -1,0 +1,10 @@
+RFT_OBSERVATION rft_obs {
+    WELL=PROD;
+    DATE=2015-02-01;
+    PROPERTY=PRESSURE;
+    VALUE=3800;
+    ERROR=10;
+    TVD=8400;
+    EAST=9500;
+    NORTH=9500;
+};

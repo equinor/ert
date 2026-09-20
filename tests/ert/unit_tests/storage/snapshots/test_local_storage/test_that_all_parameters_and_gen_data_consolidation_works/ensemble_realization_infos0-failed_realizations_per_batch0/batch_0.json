@@ -1,0 +1,22 @@
+[
+  {
+    "R1": 0.0,
+    "R2": 0.0,
+    "batch": 0,
+    "model_realization": 0,
+    "perturbation": -1,
+    "point.P1": 0.0,
+    "point.P2": 0.0,
+    "realization": 0
+  },
+  {
+    "R1": 10.0,
+    "R2": 10.0,
+    "batch": 0,
+    "model_realization": 5,
+    "perturbation": -1,
+    "point.P1": 1.0,
+    "point.P2": 1.0,
+    "realization": 1
+  }
+]

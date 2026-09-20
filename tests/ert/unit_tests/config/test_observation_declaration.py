@@ -1,0 +1,1382 @@
+import math
+import os
+from contextlib import suppress
+from datetime import datetime
+from pathlib import Path
+from textwrap import dedent
+from typing import cast
+
+import hypothesis.extra.lark as stlark
+import polars as pl
+import pytest
+from hypothesis import given
+from resdata.summary import Summary
+
+from ert.config._observations import (
+    DEFAULT_LOCALIZATION_RADIUS,
+    BreakthroughObservation,
+    GeneralObservation,
+    RFTObservation,
+    SeismicObservation,
+    SummaryObservation,
+    make_observations,
+)
+from ert.config._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeRegistry
+from ert.config.observation_config_migrations import HistoryObservation
+from ert.config.parsing import parse_observations
+from ert.config.parsing.observations_parser import (
+    ObservationConfigError,
+    ObservationDict,
+    ObservationType,
+    observations_parser,
+)
+from ert.observation_converters.history_to_summary import convert_history_to_summary
+from tests.ert.defaults_generator import (
+    create_seismic_observation,
+    create_seismic_observation_dict,
+)
+
+observation_contents = stlark.from_lark(observations_parser)
+
+
+def make_and_parse_observations(contents, filename):
+    registry = ShapeRegistry()
+    return make_observations(
+        os.path.dirname(filename),
+        parse_observations(contents, filename),
+        shape_registry=registry,
+    )
+
+
+@pytest.mark.slow
+@given(observation_contents)
+def test_parsing_contents_succeeds_or_gives_config_error(contents):
+    with suppress(ObservationConfigError):
+        _ = make_and_parse_observations(contents, "observations.txt")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Segment SEG does not contain any time steps")
+def test_that_make_observations_migrates_observations():
+    Path("wpr_diff_idx.txt").write_text("400\n800\n1200\n1800\n", encoding="utf8")
+    Path("wpr_diff_obs.txt").write_text(
+        "1.1 0.1\n2.2 0.2\n3.3 0.3\n4.4 0.4\n", encoding="utf8"
+    )
+    obs_config_contents = dedent(
+        """
+        HISTORY_OBSERVATION FOPR {};
+
+        SUMMARY_OBSERVATION WOPR_OP1_9 {
+            VALUE = 0.1;
+            ERROR = 0.05;
+            RESTART = 0;
+            KEY = WOPR:OP1;
+        };
+
+        SUMMARY_OBSERVATION WOPR_OP2_7 {
+            VALUE = 0.2;
+            ERROR = 0.05;
+            RESTART = 1;
+            KEY = WOPR:OP2;
+        };
+
+        GENERAL_OBSERVATION WPR_DIFF_1 {
+            DATA = SNAKE_OIL_WPR_DIFF;
+            INDEX_LIST = 400,800,1200,1800;
+            DATE = 2015-06-13;
+            OBS_FILE = wpr_diff_obs.txt;
+        };
+
+        GENERAL_OBSERVATION WPR_DIFF_2 {
+            DATA = SNAKE_OIL_WPR_DIFF;
+            INDEX_FILE = wpr_diff_idx.txt;
+            DATE = 2015-06-13;
+            OBS_FILE = wpr_diff_obs.txt;
+        };
+
+        HISTORY_OBSERVATION FWPR {
+            ERROR = 0.1;
+            SEGMENT SEG {
+                START = 1;
+                STOP = 1;
+                ERROR = 0.25;
+            };
+        };
+        """
+    )
+
+    Path("obs_config").write_text(obs_config_contents, encoding="utf8")
+
+    # Create a simple refcase so the migration can read history values
+    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)  # ruff: ignore[call-datetime-without-tzinfo]
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    summary.add_variable("FOPRH", unit="SM3/DAY")
+    summary.add_variable("FWPR", unit="SM3/DAY")
+    summary.add_variable("FWPRH", unit="SM3/DAY")
+
+    # Create two timesteps: the explicit dates used in the test
+    start_date = datetime(2010, 3, 31)  # ruff: ignore[call-datetime-without-tzinfo]
+    # overwrite writer start date by recreating with desired start
+    summary = Summary.writer("MY_REFCASE", start_date, 10, 10, 10)
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    summary.add_variable("FOPRH", unit="SM3/DAY")
+    summary.add_variable("FWPR", unit="SM3/DAY")
+    summary.add_variable("FWPRH", unit="SM3/DAY")
+
+    # first step: start_date (2010-03-31)
+    t0 = summary.add_t_step(1, sim_days=0)
+    t0["FOPR"] = 1
+    t0["FOPRH"] = 2
+    t0["FWPR"] = 3
+    t0["FWPRH"] = 4
+
+    # second step: 2015-06-13
+    second_date = datetime(2015, 6, 13)  # ruff: ignore[call-datetime-without-tzinfo]
+    days_between = (second_date - start_date).days
+    t1 = summary.add_t_step(1, sim_days=days_between)
+    t1["FOPR"] = 1
+    t1["FOPRH"] = 2
+    t1["FWPR"] = 3
+    t1["FWPRH"] = 4
+
+    summary.fwrite()
+
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASEBASEBASE
+        REFCASE MY_REFCASE
+        SUMMARY *
+        GEN_DATA GEN RESULT_FILE:gen%%d.txt REPORT_STEPS:1
+        OBS_CONFIG obs_config
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf8")
+
+    convert_history_to_summary("config.ert")
+
+    # Re-parse the migrated obs_config and build the observation objects
+    migrated_contents = Path("obs_config").read_text(encoding="utf8")
+    parsed = parse_observations(migrated_contents, "obs_config")
+    observations = make_observations(
+        os.path.dirname("obs_config"), parsed, ShapeRegistry()
+    )
+
+    # Validate migrated observations contain expected entries and values
+    names = [getattr(o, "name", None) for o in observations]
+    assert "WOPR_OP1_9" in names
+    assert "WOPR_OP2_7" in names
+    assert "WPR_DIFF_1" in names
+    assert "WPR_DIFF_2" in names
+    assert "FOPR" in names
+    assert "FWPR" in names
+
+    # Check specific properties
+    wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP1_9")
+    assert isinstance(wopr, SummaryObservation)
+    assert math.isclose(wopr.value, 0.1)
+    assert wopr.key == "WOPR:OP1"
+    # Migration converts RESTART 0 -> start date
+    assert wopr.date == "2010-03-31T00:00:00"
+
+    wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP2_7")
+    assert isinstance(wopr, SummaryObservation)
+    assert math.isclose(wopr.value, 0.2)
+    assert wopr.key == "WOPR:OP2"
+    # Migration converts RESTART 1 -> second date
+    assert wopr.date == "2015-06-13T00:00:00"
+
+    wpr1 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_1")
+    assert isinstance(wpr1, GeneralObservation)
+    # Migration converts DATE -> RESTART, so accept either a date string or a restart
+    assert wpr1.restart == 1
+    assert wpr1.data == "SNAKE_OIL_WPR_DIFF"
+
+    wpr2 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_2")
+    assert isinstance(wpr2, GeneralObservation)
+    assert wpr2.restart == 1
+    assert wpr2.data == "SNAKE_OIL_WPR_DIFF"
+
+
+def test_rft_observation_declaration():
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "WELL": "well",
+                "VALUE": "700",
+                "ERROR": "0.1",
+                "DATE": "2013-03-31",
+                "PROPERTY": "PRESSURE",
+                "NORTH": 71.0,
+                "EAST": 30.0,
+                "TVD": 2000,
+            }
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        RFTObservation(
+            name="NAME",
+            well="well",
+            date="2013-03-31",
+            value=700.0,
+            error=0.1,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+            shape_id=0,  # the first registered shape gets id 0
+        )
+    ]
+    shape = obs[0].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert math.isclose(shape.east, 30.0)
+    assert math.isclose(shape.north, 71.0)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
+
+
+def test_that_rft_observations_defaults_name_to_key_combination():
+    assert make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": None,
+                "WELL": "well_name",
+                "VALUE": "700",
+                "ERROR": "0.1",
+                "DATE": "2020-01-01",
+                "PROPERTY": "PRESSURE",
+                "NORTH": 71.0,
+                "EAST": 30.0,
+                "TVD": 8600.0,
+            },
+        ],
+        shape_registry=ShapeRegistry(),
+    ) == [
+        RFTObservation(
+            name="well_name:2020-01-01:PRESSURE:30.0:71.0:8600.0",
+            well="well_name",
+            date="2020-01-01",
+            value=700.0,
+            error=0.1,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            shape_id=0,
+            tvd=8600.0,
+        )
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_rft_observation_csv_declaration():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "CSV": "rft_observations.csv",
+            }
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=294.0,
+            error=10.0,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+            md=2500.0,
+            zone="zone1",
+            shape_id=0,  # the first registered shape gets id 0
+        ),
+        RFTObservation(
+            name="NAME[1]",
+            well="WELL2",
+            date="2013-04-30",
+            value=295.0,
+            error=11.0,
+            property="PRESSURE",
+            north=72.0,
+            east=31.0,
+            tvd=2100.0,
+            md=2600.0,
+            zone="zone2",
+            shape_id=1,  # the second registered shape gets id 1
+        ),
+    ]
+    shape = obs[0].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert math.isclose(shape.east, 30.0)
+    assert math.isclose(shape.north, 71.0)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
+
+    shape = obs[1].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert math.isclose(shape.east, 31.0)
+    assert math.isclose(shape.north, 72.0)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_csv_without_radius_column_gets_defaulted():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "CSV": "rft_observations.csv",
+            }
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=294.0,
+            error=10.0,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+            md=2500.0,
+            zone="zone1",
+            shape_id=0,  # the first registered shape gets id 0
+        ),
+    ]
+    shape = obs[0].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_list():
+    Path("rft_observations.csv").write_text(
+        "WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str",
+        encoding="utf8",
+    )
+    assert (
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+        == []
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # ruff: ignore[line-too-long]
+    """A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
+    indicate missing data. If encountered in an rft observations csv file
+    it should be skipped and create a user warning.
+    """
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
+            WELL1,2013-04-30,2500,zone1,295,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2014-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+    assert dedent(
+        """
+            Invalid value=-1 and error=0 detected in rft_observations.csv for well(s):
+             - WELL1 at date 2013-03-31
+             - WELL2 at date 2014-03-31
+            The invalid observation(s) must be removed from the file.
+            """
+    ).strip() in str(err.value)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_numeric_values_in_rft_observations_csv_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,invalid_value,invalid_value,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        'Could not convert "invalid_value" to float for key "PRESSURE". '
+        'Failed to validate "invalid_value"' in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_rft_observations_csv_file_raises_error():
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "The CSV file (rft_observations.csv) does not exist or is not accessible."
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,SWAT,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,0.3,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "CSV": "rft_observations.csv",
+                "PROPERTY": "SWAT",
+            }
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=0.3,
+            error=10.0,
+            property="SWAT",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+            md=2500.0,
+            zone="zone1",
+            shape_id=0,  # the first registered shape gets id 0
+        )
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_user_specified_property_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,0.3,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                    "PROPERTY": "SWAT",
+                }
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "rft observations file rft_observations.csv is missing required column(s) SWAT"
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_columns_in_rft_observations_file_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL,DAY,MD,ZONE,PRESSURE,ERR,Z,X,Y,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "The rft observations file rft_observations.csv is missing required column(s)"
+        " DATE, EAST, ERROR, NORTH, TVD, WELL_NAME." in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_multiple_segments_are_collected():
+    obs_config_str = """
+      HISTORY_OBSERVATION GWIR:FIELD
+      {
+         ERROR       = 0.20;
+         ERROR_MODE  = RELMIN;
+         ERROR_MIN   = 100;
+
+         SEGMENT FIRST_YEAR
+         {
+            START = 0;
+            STOP  = 10;
+            ERROR = 0.50;
+            ERROR_MODE = REL;
+         };
+
+         SEGMENT SECOND_YEAR
+         {
+            START      = 11;
+            STOP       = 20;
+            ERROR      = 1000;
+            ERROR_MODE = ABS;
+         };
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    observations = HistoryObservation.from_obs_dict("", parsed_obs_dict[0])
+
+    assert len(observations[0].segments) == 2
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_can_be_instantiated_from_config():
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    shape_registry = ShapeRegistry()
+    brt_obs = BreakthroughObservation.from_obs_dict(
+        "", parsed_obs_dict[0], shape_registry=shape_registry
+    ).pop()
+    assert brt_obs.type == "breakthrough"
+    assert brt_obs.name == "name"
+    assert brt_obs.key == "WWCT:OP_1"
+    assert brt_obs.date == datetime.fromisoformat("2012-10-01")
+    assert brt_obs.error == 3
+    assert math.isclose(brt_obs.threshold, 0.1)
+    assert brt_obs.shape_id is None
+
+
+@pytest.mark.parametrize("missing_keyword", ["KEY", "DATE", "ERROR", "THRESHOLD"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_raises_error_when_missing_required_keyword(
+    missing_keyword,
+):
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION BRT_OBS {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+      };
+    """
+    obs_config_lines = obs_config_str.splitlines()
+    obs_config_lines.pop(
+        next(i for i, line in enumerate(obs_config_lines) if missing_keyword in line)
+    )
+    obs_config_str = "\n".join(obs_config_lines)
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    shape_registry = ShapeRegistry()
+
+    match = (
+        r"obs_config.txt: Line \d+ \(Column \d+-\d+\): "
+        f'Missing item "{missing_keyword}" in BREAKTHROUGH_OBSERVATION'
+    )
+    with pytest.raises(
+        ObservationConfigError,
+        match=match,
+    ):
+        BreakthroughObservation.from_obs_dict(
+            "", parsed_obs_dict[0], shape_registry=shape_registry
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_can_be_instantiated_with_localization():
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+        LOCALIZATION {
+           EAST=10;
+           NORTH=20;
+           RADIUS=2500;
+        };
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    shape_registry = ShapeRegistry()
+    brt_obs = BreakthroughObservation.from_obs_dict(
+        "", parsed_obs_dict[0], shape_registry=shape_registry
+    ).pop()
+    assert brt_obs.shape_id is not None
+    shape = brt_obs.shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert shape is not None
+    assert math.isclose(shape.east, 10)
+    assert math.isclose(shape.north, 20)
+    assert math.isclose(shape.radius, 2500)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config(
+    file_context_token,
+):
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(
+        ObservationConfigError,
+        match=(
+            r"observations.txt: Line 2 \(Column 5-13\): Invalid key: 'EAST' in "
+            r"LOCALIZATION for RFT_OBSERVATION. The 'EAST' "
+            r"keyword must be defined outside the LOCALIZATION section for RFT "
+            r"observations - or in the CSV RFT configuration file.;"
+            r"observations.txt: Line 2 \(Column 5-13\): Invalid key: 'NORTH' in "
+            r"LOCALIZATION for RFT_OBSERVATION. The 'NORTH' "
+            r"keyword must be defined outside the LOCALIZATION section for RFT "
+            r"observations - or in the CSV RFT configuration file."
+        ),
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "RFT_OBS",
+                        "CSV": "rft_observations.csv",
+                        "LOCALIZATION": {
+                            "NORTH": 30,
+                            "EAST": 10,
+                        },
+                    },
+                    context=file_context_token(obs_type="RFT_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observation_can_be_provided_radius_localization_keyword(
+    file_context_token,
+):
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+
+    shape_registry = ShapeRegistry()
+    obss = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.RFT,
+                    "name": "RFT_OBS",
+                    "CSV": "rft_observations.csv",
+                    "LOCALIZATION": {
+                        "RADIUS": 2500,
+                    },
+                },
+                context=file_context_token(obs_type="RFT_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    for obs in obss:
+        assert obs.shape_id is not None
+        shape = obs.shape(shape_registry)
+        assert shape is not None
+        assert isinstance(shape, CircleShapeConfig)
+        assert math.isclose(shape.radius, 2500)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_instantiates(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            461231.55375274725,5933187.729869121,-0.00035666953938864876,0.005,4.0
+            461156.9532936567,5933317.28138355,-0.0005293887515127136,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "NAME",
+                    "OBS_FILE": "obs.csv",
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        create_seismic_observation(
+            name="NAME",
+            filepath=Path("obs.csv"),
+            east=461231.55375274725,
+            north=5933187.729869121,
+            value=-0.00035666953938864876,
+            error=0.005,
+            shape_id=0,
+            boundary_id=None,
+        ),
+        create_seismic_observation(
+            name="NAME",
+            filepath=Path("obs.csv"),
+            east=461156.9532936567,
+            north=5933317.28138355,
+            value=-0.0005293887515127136,
+            error=0.005,
+            shape_id=1,
+            boundary_id=None,
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_seismic_observation_file_raises_error(file_context_token):
+    directory = "dir"
+    Path(directory).mkdir()
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            directory,
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.csv",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert "seismic_observations.csv' does not exist or is not accessible" in str(
+        err.value
+    )
+
+
+def test_that_missing_seismic_observation_filename_raises_error(file_context_token):
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert 'Missing item "OBS_FILE" in SEISMIC_OBSERVATION' in str(err.value)
+
+
+def test_that_unknown_seismic_key_raises_error(file_context_token):
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.csv",
+                        "UNKNOWN_KEY": "unexpected_value",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert "Unknown key 'UNKNOWN_KEY' in SEISMIC_OBSERVATION" in str(err.value)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_columns_in_seismic_observation_file_raises(file_context_token):
+    Path("seismic_observations.csv").write_text(
+        dedent(
+            """
+            OBS,OBS_ERROR,REGION,CAT
+            -0.00035666953938864876,0.005,3.0,Persian
+            0.0005293887515127136,0.005,1.0,Siamese
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.csv",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "The seismic observations file seismic_observations.csv "
+        "is missing required column(s) X_UTME, Y_UTMN." in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_columns_in_seismic_parquet_observation_file_raises(
+    file_context_token,
+):
+    pl.DataFrame(
+        {
+            "OBS": [-0.00035666953938864876, 0.0005293887515127136],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [3.0, 1.0],
+            "CAT": ["Persian", "Siamese"],
+        }
+    ).write_parquet("seismic_observations.parquet")
+
+    with pytest.raises(
+        ObservationConfigError,
+        match=(
+            r"The seismic observations file seismic_observations.parquet "
+            r"is missing required column\(s\) X_UTME, Y_UTMN."
+        ),
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.parquet",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_rejects_unsupported_file_suffix(file_context_token):
+    Path("seismic_observations.txt").write_text("dummy", encoding="utf8")
+
+    with pytest.raises(
+        ObservationConfigError,
+        match=(
+            r"The seismic observations file seismic_observations.txt "
+            r"must be a CSV or Parquet file"
+        ),
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "seismic_observations.txt",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_defaults_all_names_to_filename(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            1.0,1.0,1.0,0.005,1.0
+            1.0,2.0,1.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": None,
+                    "OBS_FILE": "obs.csv",
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        create_seismic_observation(
+            name="obs",
+            filepath=Path("obs.csv"),
+            east=1.0,
+            north=1.0,
+            value=1.0,
+            error=0.005,
+            shape_id=0,
+            boundary_id=None,
+        ),
+        create_seismic_observation(
+            name="obs",
+            filepath=Path("obs.csv"),
+            east=1.0,
+            north=2.0,
+            value=1.0,
+            error=0.005,
+            shape_id=1,
+            boundary_id=None,
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_value_type_in_seismic_observation_raises_error(
+    file_context_token,
+):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,REGION,OBS,OBS_ERROR
+            100,-100,1.0,unexpected_value,0.005
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "obs.csv",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        'Could not convert "unexpected_value" to float for key "OBS". '
+        'Failed to validate "unexpected_value"' in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_empty_seismic_observation_file_does_not_raise(file_context_token):
+    Path("obs.csv").write_text(
+        dedent(
+            """
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            """
+        ),
+        encoding="utf8",
+    )
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                create_seismic_observation_dict(
+                    obs_file="obs.csv",
+                ),
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=ShapeRegistry(),
+    )
+
+    assert obs == []
+
+
+@pytest.mark.parametrize(
+    ("east", "north"),
+    [
+        pytest.param([111.11, 111.11], [222.222, 222.222], id="same coordinates"),
+        pytest.param(
+            [0.0, 0.0],
+            [0.0, 0.19],
+            id="less than double tolerance",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_coordinate_distance_below_tolerance_raises(
+    file_context_token, east, north
+):
+
+    Path("obs.csv").write_text(
+        dedent(
+            f"""
+            X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+            {east[0]},{north[0]},1.0,0.005,1.0
+            {east[1]},{north[1]},2.0,0.005,1.0
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    create_seismic_observation_dict(
+                        obs_file="obs.csv",
+                    ),
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "Seismic observation coordinates with approximate locations "
+        f"[(({east[0]}, {north[0]}), ({east[1]}, {north[1]}))] "
+        "fall inside of a tolerance radius." in str(err.value)
+    )
+
+
+def default_seismic_file_content() -> str:
+    return dedent(
+        """
+        X_UTME,Y_UTMN,OBS,OBS_ERROR,REGION
+        1.0,1.0,1.0,0.005,1.0
+        """
+    )
+
+
+def write_default_seismic_file_content(
+    filename="horizon--amplitude_full_min_depth--20250101_20240101.csv",
+):
+    Path(filename).write_text(
+        default_seismic_file_content(),
+        encoding="utf8",
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_reads_boundary_file(file_context_token):
+    write_default_seismic_file_content("obs.csv")
+    Path("boundary.pol").write_text(
+        dedent(
+            """
+            0.000000 0.000000 0.000000
+            0.000000 1.000000 0.000000
+            1.000000 1.000000 0.000000
+            1.000000 0.000000 0.000000
+            999.000000 999.000000 999.000000
+            """
+        ),
+        encoding="utf8",
+    )
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "NAME",
+                    "OBS_FILE": "obs.csv",
+                    "BOUNDARY": "boundary.pol",
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            )
+        ],
+        shape_registry=shape_registry,
+    )
+    assert obs == [
+        create_seismic_observation(
+            name="NAME",
+            filepath=Path("obs.csv"),
+            east=1.0,
+            north=1.0,
+            value=1.0,
+            error=0.005,
+            shape_id=1,
+            boundary_id=0,
+        )
+    ]
+    boundary = shape_registry.get(0)
+    assert isinstance(boundary, PolygonShapeConfig)
+    expected = PolygonShapeConfig(wkt="MULTIPOLYGON (((0 0, 0 1, 1 1, 1 0, 0 0)))")
+    assert boundary == expected
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_boundary_seismic_observation_file_raises_error(
+    file_context_token,
+):
+    Path("directory/right/path").mkdir(exist_ok=True, parents=True)
+    Path("directory/wrong/path").mkdir(exist_ok=True, parents=True)
+
+    write_default_seismic_file_content("directory/obs.csv")
+
+    Path("directory/right/path/bound.pol").write_text(
+        "Unexpected file location",
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "directory",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "obs.csv",
+                        "BOUNDARY": "wrong/path/bound.pol",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=ShapeRegistry(),
+        )
+
+    assert (
+        "/directory/wrong/path/bound.pol) does not exist or is not accessible."
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_filenames_can_be_glob_pattern(file_context_token):
+    filename0 = "surface--amplitude_far_mean_depth--20190701_20180101.csv"
+    filename1 = "surface--amplitude_full_min_depth--20190901_20180101.csv"
+    filename2 = "surface--amplitude_full_min_depth--20180701_20180101.csv"
+    filename3 = ".surface--amplitude_full_mean_depth--20190701_20180101.csv.yml"
+
+    directory = "dir1/dir2/.."
+    Path(directory).mkdir(exist_ok=True, parents=True)
+
+    for filename in [filename0, filename1, filename2, filename3]:
+        write_default_seismic_file_content(f"{directory}/{filename}")
+
+    def make_observations_with_pattern(
+        pattern: str, directory: str = directory
+    ) -> list[SeismicObservation]:
+        shape_registry = ShapeRegistry()
+        obs = make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "OBS_FILE": f"{directory}/{pattern}",
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=shape_registry,
+        )
+        return [cast(SeismicObservation, o) for o in obs]
+
+    p1 = "surface--amplitude_*_*_depth--20190[1-9]01_20180101.csv"
+    obs = make_observations_with_pattern(p1)
+    assert len(obs) == 2
+    assert sorted([o.filepath for o in obs]) == sorted(
+        [
+            Path(f"{directory}/{filename0}"),
+            Path(f"{directory}/{filename1}"),
+        ]
+    )
+
+    p2 = "surface*"
+    obs = make_observations_with_pattern(p2)
+    assert len(obs) == 3
+    assert sorted([o.filepath for o in obs]) == sorted(
+        [
+            Path(f"{directory}/{filename0}"),
+            Path(f"{directory}/{filename1}"),
+            Path(f"{directory}/{filename2}"),
+        ]
+    )
+
+    p3 = p1[:-4]
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations_with_pattern(p3)
+    assert f"No files matching pattern '{p3}' found in '{directory}'" in str(err.value)
+
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations_with_pattern(p1, directory="ufo")
+    assert "ufo' does not exist or is not accessible" in str(err.value)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_filepath_can_have_literal_metacharacters(file_context_token):
+    def make_observations_with_pattern(pattern: str) -> list[SeismicObservation]:
+        shape_registry = ShapeRegistry()
+        obs = make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "OBS_FILE": pattern,
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=shape_registry,
+        )
+        return [cast(SeismicObservation, o) for o in obs]
+
+    path_with_literal_wildcard = r"test*.csv"
+    path_fitting_to_wildcard = "test123.csv"
+    write_default_seismic_file_content(path_with_literal_wildcard)
+    write_default_seismic_file_content(path_fitting_to_wildcard)
+
+    wildcard_pattern = "test**"
+    literal_pattern = "test[*]*"
+
+    assert len(make_observations_with_pattern(pattern=wildcard_pattern)) == 2
+    assert len(make_observations_with_pattern(pattern=literal_pattern)) == 1

@@ -1,0 +1,891 @@
+from __future__ import annotations
+
+import logging
+import re
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
+
+import numpy as np
+import pandas as pd
+from httpx import RequestError
+from pandas import DataFrame
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QStyle,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ert.config import BreakthroughConfig
+from ert.config.field import Field
+from ert.dark_storage.common import get_storage_api_version
+from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
+from ert.gui.plotting.utils.plot_maps import (
+    CROSS_ENSEMBLE_STATISTICS,
+    DISTRIBUTION,
+    ENSEMBLE,
+    ERT_PLOT_MAP,
+    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+    EVEREST_CONSTRAINT_PLOT,
+    EVEREST_CONTROLS_PLOT,
+    EVEREST_GRADIENTS_PLOT,
+    EVEREST_OBJECTIVE_FUNCTION_PLOT,
+    EVEREST_PLOT_MAP,
+    GAUSSIAN_KDE,
+    HISTOGRAM,
+    MISFITS,
+    SHARED_PLOT_MAP,
+    STATISTICS,
+    STD_DEV,
+    WATERFALL,
+)
+from ert.gui.plotting.widgets.plot_side_panel import PlotSidePanel
+from ert.gui.utils import is_everest_application
+from ert.services import ServerBootFail
+from ert.utils import log_duration
+
+from .plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
+from .utils import PlotConfig, PlotContext
+from .utils.observation_locations import transform_observation_locations
+from .utils.plot_color_palettes import TABLEAU_10_COLOR_CYCLE
+from .utils.plot_types import ObservationPlotLocations
+from .utils.qt_creator import create_group_layout
+from .widgets.collapsible_section import CollapsibleSection
+from .widgets.data_type_keys_widget import DataTypeKeysWidget
+from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
+from .widgets.plot_controls import (
+    BoxplotOptions,
+    DistributionOptions,
+    EverestControlsPlotOptions,
+    GeneralPlotOptions,
+    StatisticsOptions,
+)
+from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
+from .widgets.plot_widget import Plotter, PlotWidget
+
+EVEREST_UPPER_BATCH_LIMIT = 20
+RIGHT_SIDE_PANEL_MIN_WIDTH = 300
+LEFT_SIDE_PANEL_MIN_WIDTH = 250
+logger = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class SelectableControlsPlotter(Protocol):
+    def set_selected_controls(self, controls: list[str]) -> None: ...
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    import numpy.typing as npt
+
+
+class _CopyButton(CopyButton):
+    def __init__(self, text_edit: QTextEdit) -> None:
+        super().__init__()
+        self.text_edit = text_edit
+
+    def copy(self) -> None:
+        self.copy_text(self.text_edit.toPlainText())
+
+
+def create_error_dialog(title: str, content: str) -> QDialog:
+    qd = QDialog()
+    qd.setModal(True)
+    qd.setSizeGripEnabled(True)
+
+    layout = QVBoxLayout()
+    top_layout = QHBoxLayout()
+    top_layout.addWidget(QLabel(title))
+
+    text = QTextEdit()
+    text.setText(content)
+    text.setReadOnly(True)
+
+    copy_button = _CopyButton(text)
+    copy_button.setObjectName("copy_button")
+    top_layout.addWidget(copy_button)
+    top_layout.addStretch(-1)
+
+    layout.addLayout(top_layout)
+    layout.addWidget(text)
+
+    qd.setLayout(layout)
+    qd.resize(450, 150)
+    return qd
+
+
+def open_error_dialog(title: str, content: str) -> None:
+    qd = create_error_dialog(title, content)
+    QApplication.restoreOverrideCursor()
+    qd.exec()
+
+
+def handle_exception(e: BaseException) -> None:
+    if isinstance(e, TimeoutError):
+        e.args = (
+            "Plot API request timed out. Please check your connection ",
+            "or the storage server status",
+        )
+        logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]
+        open_error_dialog(type(e).__name__, str(e))
+    elif isinstance(e, RequestError):
+        e.args = (
+            "An error occurred while making a request to the Plot API. ",
+            "Please check your connection or the storage server status",
+        )
+        logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]
+        open_error_dialog(type(e).__name__, str(e))
+    elif isinstance(e, ServerBootFail):
+        e.args = ("The storage server failed to start",)
+        logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]
+        open_error_dialog(type(e).__name__, str(e))
+    else:
+        raise e
+
+
+class PlotWindow(QMainWindow):
+    @log_duration(logger, logging.INFO, "PlotWindow.__init__")
+    def __init__(
+        self, config_file: str, ens_path: Path, parent: QWidget | None
+    ) -> None:
+        super().__init__(parent)
+
+        logger.info("PlotWindow __init__")
+        self.setMinimumWidth(850)
+        self.setMinimumHeight(650)
+        self.setWindowTitle(f"Plotting - {config_file}")
+        self.activateWindow()
+        self._preferred_ensemble_x_axis_format = PlotContext.INDEX_AXIS
+        self._api = PlotApi(ens_path)
+
+        self.local_version = get_storage_api_version()
+
+        if self._api.api_version != self.local_version:
+            central_widget = QWidget()
+            central_layout = QVBoxLayout()
+            central_layout.setContentsMargins(20, 20, 20, 20)
+            central_widget.setLayout(central_layout)
+            label = QLabel(
+                f"<b>Plot API version mismatch detected</b><br>"
+                f"Runtime API version:<b>{self.local_version}</b><br>"
+                f"Plot API version:<b>{self._api.api_version}</b><br><br>"
+                "Unable to continue plotting operation"
+            )
+            label.setObjectName("plot_api_warning_label")
+            icon_label = QLabel()
+
+            style = QApplication.style()
+
+            if style:
+                warning_icon = style.standardIcon(
+                    QStyle.StandardPixmap.SP_MessageBoxWarning
+                )
+                icon_label.setPixmap(warning_icon.pixmap(64, 64))
+
+            central_layout.addWidget(icon_label)
+            central_layout.addWidget(label)
+            central_layout.addStretch(1)
+            self.setCentralWidget(central_widget)
+        else:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                self._key_definitions = (
+                    self._api.responses_api_key_defs + self._api.parameters_api_key_defs
+                )
+            except BaseException as e:
+                handle_exception(e)
+                self._key_definitions = []
+            QApplication.restoreOverrideCursor()
+
+            self._titles: dict[str, str] = {}
+            self._x_labels: dict[str, str | None] = {}
+            self._y_labels: dict[str, str | None] = {}
+            self._central_tab = QTabWidget()
+
+            central_widget = QWidget()
+            central_layout = QVBoxLayout()
+            central_layout.setContentsMargins(0, 0, 0, 0)
+            central_widget.setLayout(central_layout)
+
+            central_layout.addWidget(self._central_tab)
+
+            self.setCentralWidget(central_widget)
+
+            self._plot_widgets: list[PlotWidget] = []
+
+            self.is_everest = is_everest_application()
+
+            self.add_plot_widgets_from_plot_map(SHARED_PLOT_MAP)
+            if not self.is_everest:
+                self.add_plot_widgets_from_plot_map(ERT_PLOT_MAP)
+            else:
+                self.add_plot_widgets_from_plot_map(EVEREST_PLOT_MAP)
+
+            self._central_tab.currentChanged.connect(self.current_tab_changed)
+            self.log_plot_tab_usage(self._central_tab.tabText(0), default=True)
+
+            self._prev_key_dimensionality = -1
+            self._prev_key: str | None = None
+            self._prev_key_origin: str | None = None
+            if self.is_everest:
+                self._default_tab_for_dimensionality = {
+                    1: self._widget_by_name(ENSEMBLE),
+                    2: self._widget_by_name(EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT),
+                    3: self._widget_by_name(ENSEMBLE),  # Fallback
+                }
+            else:
+                self._default_tab_for_dimensionality = {
+                    1: self._widget_by_name(HISTOGRAM),
+                    2: self._widget_by_name(ENSEMBLE),
+                    3: self._widget_by_name(STD_DEV),
+                }
+
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                ensembles = self._api.get_all_ensembles()
+            except BaseException as e:
+                handle_exception(e)
+                ensembles = []
+            QApplication.restoreOverrideCursor()
+
+            plot_case_objects = [obj for obj in ensembles if not obj.hidden]
+
+            self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
+            self._data_type_keys_widget.setMinimumWidth(LEFT_SIDE_PANEL_MIN_WIDTH)
+            self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
+
+            self._ensemble_selection_widget = EnsembleSelectionWidget(
+                plot_case_objects,
+                len(TABLEAU_10_COLOR_CYCLE),
+            )
+
+            self._ensemble_selection_widget.ensembleSelectionChanged.connect(
+                self.keySelected
+            )
+
+            self._everest_parameters = [
+                kd.parameter.name
+                for kd in self._key_definitions
+                if kd.parameter and kd.parameter.type == "everest_parameters"
+            ]
+            self._everest_control_selection_widget = EverestControlSelectionWidget(
+                self._everest_parameters
+            )
+            self._everest_control_selection_widget.controlSelectionChanged.connect(
+                self.update_plot
+            )
+
+            self._everest_controls_group = CollapsibleSection(
+                "Select control(s):",
+                create_group_layout([self._everest_control_selection_widget]),
+                expanded=True,
+            )
+
+            self._ensemble_group = CollapsibleSection(
+                "Select ensemble(s)",
+                create_group_layout([self._ensemble_selection_widget]),
+                expanded=True,
+            )
+
+            self._everest_controls_plot_options = EverestControlsPlotOptions(
+                self.update_plot
+            )
+
+            self._general_options = GeneralPlotOptions(
+                connection_point=self.update_plot,
+            )
+            self._general_options.axisLabelEditRequested.connect(self._edit_axis_label)
+            self._general_options.titleEditRequested.connect(self._edit_title)
+            self._boxplot_options = BoxplotOptions(self.update_plot)
+            self._statistics_options = StatisticsOptions(self.update_plot)
+            self._distribution_options = DistributionOptions(self.update_plot)
+
+            right_container = QWidget()
+            right_layout = create_group_layout(
+                [
+                    self._ensemble_group,
+                    self._general_options.get_widget(),
+                    self._everest_controls_plot_options.get_widget(),
+                    self._everest_controls_group,
+                    self._boxplot_options.get_widget(),
+                    self._statistics_options.get_widget(),
+                    self._distribution_options.get_widget(),
+                ]
+            )
+            right_layout.addStretch(1)
+            right_container.setLayout(right_layout)
+            right_container.setMinimumWidth(RIGHT_SIDE_PANEL_MIN_WIDTH)
+
+            self._everest_controls_group.setVisible(False)
+            self._everest_controls_plot_options.get_widget().setVisible(False)
+            self._boxplot_options.get_widget().setVisible(False)
+            self._statistics_options.get_widget().setVisible(False)
+            self._distribution_options.get_widget().setVisible(False)
+            self._data_type_keys_widget.selectDefault()
+
+            self.setCentralWidget(self._central_tab)
+
+            self._keys_dock = PlotSidePanel(
+                "View data type",
+                self._data_type_keys_widget,
+                self,
+                LEFT_SIDE_PANEL_MIN_WIDTH,
+            )
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self._keys_dock)
+
+            self._plot_controls_dock = PlotSidePanel(
+                "Plot controls",
+                right_container,
+                self,
+                RIGHT_SIDE_PANEL_MIN_WIDTH,
+                on_right=True,
+            )
+            self.addDockWidget(
+                Qt.DockWidgetArea.RightDockWidgetArea, self._plot_controls_dock
+            )
+            # Removes the empty context menu that appears
+            # when right-clicking on the dock widgets
+            self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+
+            self.resizeDocks(
+                [self._keys_dock, self._plot_controls_dock],
+                [LEFT_SIDE_PANEL_MIN_WIDTH, RIGHT_SIDE_PANEL_MIN_WIDTH],
+                Qt.Orientation.Horizontal,
+            )
+
+            if self.getSelectedKey() is None:
+                self._show_no_data_message()
+
+    def _show_no_data_message(self) -> None:
+        current_widget = self._central_tab.currentWidget()
+        if not isinstance(current_widget, PlotWidget):
+            return
+
+        current_widget.resetPlot()
+        current_widget._figure.text(
+            0.5,
+            0.5,
+            "No data to visualize. Head over to 'Start experiment' to get started!",
+            ha="center",
+            va="center",
+        )
+        current_widget._canvas.draw()
+
+    def get_plot_api_version(self) -> str:
+        return self._api.api_version
+
+    @Slot(int)
+    def current_tab_changed(self, index: int) -> None:
+        self.update_plot()
+        self.log_plot_tab_usage(self._central_tab.tabText(index))
+
+    def log_plot_tab_usage(self, tab_name: str, *, default: bool = False) -> None:
+        msg = f"Plotwindow tab used: {tab_name}" + (" (default tab)" if default else "")
+        logger.info(msg)
+
+    @Slot(int)
+    def layer_index_changed(self, index: int | None) -> None:
+        self.update_plot(index)
+
+    def update_plot(self, layer: int | None = None) -> None:
+        key_def = self.getSelectedKey()
+        if key_def is None:
+            self._show_no_data_message()
+            return
+        key = key_def.key
+
+        plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
+
+        # For Breakthrough responses, we want to plot summary_key timeseries, but use
+        # derived breakthrough responses for misfits.
+        selected_tab = plot_widget.name
+        if (
+            isinstance(key_def.response, BreakthroughConfig)
+            and selected_tab != "Misfits"
+        ):
+            key = key.replace("BREAKTHROUGH:", "")
+
+        self._boxplot_options.get_widget().setVisible(
+            plot_widget.name in {MISFITS, CROSS_ENSEMBLE_STATISTICS}
+        )
+        self._statistics_options.get_widget().setVisible(plot_widget.name == STATISTICS)
+        self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
+        self._distribution_options.get_widget().setVisible(
+            plot_widget.name == DISTRIBUTION
+        )
+
+        if plot_widget.name == WATERFALL:
+            self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
+        elif not self.is_everest:
+            self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+
+        is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
+        is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
+        is_objective_plot = plot_widget.name in {
+            EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+            EVEREST_OBJECTIVE_FUNCTION_PLOT,
+        }
+
+        is_everest_ensemble = plot_widget.name == ENSEMBLE and self.is_everest
+        self._everest_controls_group.setVisible(is_gradient_plot or is_controls_plot)
+        self._everest_controls_plot_options.get_widget().setVisible(is_controls_plot)
+        self._ensemble_selection_widget.apply_ensemble_filtering(
+            require_func_eval=is_objective_plot
+            or is_everest_ensemble
+            or is_controls_plot,
+            require_gradient=is_gradient_plot,
+        )
+
+        if (
+            plot_widget._plotter.dimensionality == key_def.dimensionality
+            or (
+                plot_widget.name
+                in {
+                    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+                    EVEREST_OBJECTIVE_FUNCTION_PLOT,
+                    EVEREST_CONTROLS_PLOT,
+                    EVEREST_GRADIENTS_PLOT,
+                    EVEREST_CONSTRAINT_PLOT,
+                }
+            )
+            or (key_def.metadata.get("data_origin") == "everest_batch_objectives")
+        ):
+            selected_ensembles = (
+                self._ensemble_selection_widget.get_selected_ensembles()
+            )
+            ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
+
+            selected_controls: list[str] = []
+            if is_gradient_plot or is_controls_plot:
+                self._everest_control_selection_widget.set_pinned_control(
+                    key_def.parameter.name
+                    if is_controls_plot and key_def.parameter
+                    else None
+                )
+                selected_controls = (
+                    self._everest_control_selection_widget.get_selected_controls()
+                )
+                if isinstance(plot_widget._plotter, SelectableControlsPlotter):
+                    plot_widget._plotter.set_selected_controls(selected_controls)
+
+            is_waterfall_plot = plot_widget.name == WATERFALL
+
+            def fetch_data(
+                ensemble: EnsembleObject,
+            ) -> tuple[EnsembleObject, pd.DataFrame | BaseException | None]:
+                try:  # ruff: ignore[too-many-statements-in-try-clause]
+                    data = None
+                    if is_gradient_plot:
+                        data = self._api.data_for_gradient(ensemble.id, key)
+                    elif is_waterfall_plot and key_def.parameter is not None:
+                        data = self._api.data_for_waterfall(
+                            ensemble.id, key_def.parameter.name
+                        )
+                    elif (
+                        key_def.response is not None
+                        or key_def.metadata.get("data_origin")
+                        == "everest_batch_objectives"
+                    ):
+                        data = self._api.data_for_response(
+                            ensemble_id=ensemble.id,
+                            response_key=key,
+                            filter_on=key_def.filter_on,
+                        )
+                    elif is_controls_plot:
+                        data = self._api.data_for_controls(
+                            ensemble_id=ensemble.id,
+                            parameter_keys=tuple(selected_controls)
+                            or tuple(self._everest_parameters),
+                        )
+                    elif key_def.parameter is not None and (
+                        key_def.parameter.type
+                        in {"gen_kw", "everest_parameters", "everest_objective"}
+                    ):
+                        data = self._api.data_for_parameter(
+                            ensemble_id=ensemble.id,
+                            parameter_key=key_def.parameter.name,
+                        )
+                except BaseException as e:
+                    return ensemble, e
+
+                return ensemble, data
+
+            with ThreadPoolExecutor() as executor:
+                for ensemble, result in executor.map(fetch_data, selected_ensembles):
+                    if isinstance(result, BaseException):
+                        handle_exception(result)
+                    elif result is not None:
+                        ensemble_to_data_map[ensemble] = result
+
+            log_scale_valid_values = True
+            if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
+                for data in ensemble_to_data_map.values():
+                    numeric = data.select_dtypes(include=["number"])
+                    # Need non-unique check to disable log scale for
+                    # single realization runs, even though the
+                    # distribution is not set as CONSTANT
+                    if not numeric.empty and (
+                        numeric.le(0).any().any() or numeric.nunique().le(1).all()
+                    ):
+                        log_scale_valid_values = False
+                        break
+
+            plot_widget._log_scale_valid_values = log_scale_valid_values
+            observations = pd.DataFrame()
+            if key_def.observations and selected_ensembles:
+                try:
+                    observations = self._api.observations_for_key(
+                        [ensembles.id for ensembles in selected_ensembles],
+                        key_def.key,
+                    )
+                except BaseException as e:
+                    handle_exception(e)
+
+            std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
+            obs_loc: ObservationPlotLocations | None = None
+            if isinstance(key_def.parameter, Field):
+                plot_widget.showLayerWidget.emit(True)
+                layers = key_def.parameter.ertbox_params.nz
+                plot_widget.updateLayerWidget.emit(layers)
+                obs_loc = transform_observation_locations(
+                    self._api.observation_locations(), key_def.parameter.ertbox_params
+                )
+                if layer is None:
+                    plot_widget.resetLayerWidget.emit()
+                    layer = 0
+
+                for ensemble in selected_ensembles:
+                    try:
+                        std_dev_images[ensemble.id] = self._api.std_dev_for_parameter(
+                            key, ensemble.id, layer
+                        )
+                    except BaseException as e:
+                        handle_exception(e)
+            else:
+                plot_widget.showLayerWidget.emit(False)
+
+            is_history_key = str(key).endswith("H") or "H:" in str(key)
+            history_data_available = False
+
+            if not is_history_key:
+                try:
+                    history_data_available = self._api.has_history_data(key)
+                except BaseException as e:
+                    handle_exception(e)
+
+            plot_config = PlotConfig(title=key_def.key)
+            if selected_tab == STATISTICS:
+                self._statistics_options.update_plot_context(plot_config)
+            plot_config.set_title(self._titles.get(key_def.key, key_def.key))
+            plot_config.set_x_label(self._x_labels.get(key_def.key))
+            plot_config.set_y_label(self._y_labels.get(key_def.key))
+
+            plot_context = PlotContext(
+                plot_config,
+                selected_ensembles,
+                self._ensemble_selection_widget.get_selected_ensembles_color_indexes(),
+                key,
+                layer,
+            )
+
+            self._general_options.update_plot_context(
+                plot_context,
+                history_data_available=history_data_available,
+                has_observations=key_def.observations,
+                show_observations=key_def.observations and selected_tab != MISFITS,
+                log_scale_available=log_scale_valid_values
+                and selected_tab in {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE},
+            )
+            self._boxplot_options.update_plot_context(plot_context)
+            self._everest_controls_plot_options.update_plot_context(plot_context)
+            self._distribution_options.update_plot_context(plot_context)
+
+            # Check if key is a history key.
+            # If it is, it already has the data it needs.
+            if is_history_key:
+                plot_context.history_data = DataFrame()
+            elif history_data_available:
+                try:
+                    plot_context.history_data = self._api.history_data(
+                        key,
+                        [e.id for e in plot_context.ensembles()],
+                    )
+                except BaseException as e:
+                    handle_exception(e)
+                    plot_context.history_data = None
+            else:
+                plot_context.history_data = None
+
+            if key_def.response is not None and key_def.response.type == "rft":
+                plot_context.setXLabel(key.split(":")[-1])
+                plot_context.setYLabel("TVD")
+                plot_context.flip_response_axis = True
+                plot_context.flip_observation_axis = True
+                for ekey, data in list(ensemble_to_data_map.items()):
+                    ensemble_to_data_map[ekey] = data.interpolate(
+                        method="linear", axis="columns"
+                    )
+
+            if key_def.response is not None and key_def.response.type == "breakthrough":
+                plot_context.flip_observation_axis = True
+
+            if key_def.response is not None and key_def.response.type == "seismic":
+                plot_context.deactivate_date_support()
+
+            for untransposed_data in ensemble_to_data_map.values():
+                data = untransposed_data.T
+
+                if not data.empty and data.index.inferred_type == "datetime64":
+                    self._preferred_ensemble_x_axis_format = PlotContext.DATE_AXIS
+                    break
+
+            plot_widget.update_plot(
+                plot_context,
+                ensemble_to_data_map,
+                observations,
+                std_dev_images,
+                obs_loc,
+                key_def,
+            )
+
+    def getSelectedKey(self) -> PlotApiKeyDefinition | None:
+        return self._data_type_keys_widget.getSelectedItem()
+
+    def add_plot_widget(
+        self,
+        name: str,
+        plotter: Plotter,
+        *,
+        enabled: bool = True,
+    ) -> None:
+        plot_widget = PlotWidget(name, plotter)
+        plot_widget.axisLabelEditRequested.connect(self._edit_axis_label)
+        plot_widget.titleEditRequested.connect(self._edit_title)
+        plot_widget.layer_index_changed.connect(self.layer_index_changed)
+
+        index = self._central_tab.addTab(plot_widget, name)
+        self._plot_widgets.append(plot_widget)
+        self._central_tab.setTabEnabled(index, enabled)
+
+    def _find_widget_by_name(self, name: str) -> PlotWidget | None:
+        return next((w for w in self._plot_widgets if w.name == name), None)
+
+    def _widget_by_name(self, name: str) -> PlotWidget:
+        widget = self._find_widget_by_name(name)
+        if widget is None:
+            raise ValueError(f"No plot tab named '{name}'")
+        return widget
+
+    def _edit_axis_label(self, axis: str) -> None:
+        label_names = {"x": "x-label", "y": "y-label"}
+        if axis not in label_names:
+            raise ValueError(f"Unknown axis '{axis}'. Expected 'x' or 'y'.")
+        key_def = self.getSelectedKey()
+        if key_def is None:
+            return
+        label_name = label_names[axis]
+        title = f"Edit {label_name}"
+        prompt = f"New {label_name}:"
+        labels = self._x_labels if axis == "x" else self._y_labels
+        current_label = labels.get(key_def.key)
+        if current_label is None:
+            current_widget = self._central_tab.currentWidget()
+            if isinstance(current_widget, PlotWidget) and current_widget._figure.axes:
+                axis_object = current_widget._figure.axes[0]
+                current_label = (
+                    axis_object.get_xlabel()
+                    if axis == "x"
+                    else axis_object.get_ylabel()
+                )
+        new_label_text, accepted = self._general_options.get_text_input(
+            title, prompt, current_label
+        )
+        if not accepted:
+            return
+        new_label: str | None = new_label_text or None
+        labels[key_def.key] = new_label
+        self.update_plot()
+
+    def _edit_title(self) -> None:
+        key_def = self.getSelectedKey()
+        if key_def is None:
+            return
+        title = "Edit title"
+        new_title, accepted = self._general_options.get_text_input(
+            title,
+            "New title:",
+            self._titles.get(key_def.key, key_def.key),
+        )
+        if not accepted:
+            return
+        self._titles[key_def.key] = new_title or key_def.key
+        self.update_plot()
+
+    @showWaitCursorWhileWaiting
+    def keySelected(self) -> None:
+        key_def = self.getSelectedKey()
+        if key_def is None:
+            self._show_no_data_message()
+            return
+
+        is_everest_specific_widget = key_def.metadata.get("data_origin") in {
+            "everest_objectives",
+            "everest_constraints",
+            "everest_batch_objectives",
+        }
+        plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
+        if self.is_everest:
+            if key_def.response is not None and key_def.response.type in {
+                "summary",
+                "gen_data",
+            }:
+                if self._prev_key_origin and self._prev_key_origin not in {
+                    "summary",
+                    "gen_data",
+                }:
+                    self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+                    self._ensemble_selection_widget.set_minimum_ensemble_limit(0)
+                    self._ensemble_selection_widget.clear_ensemble_selection()
+            elif is_everest_specific_widget:
+                if key_def.key != self._prev_key:
+                    self._ensemble_selection_widget.set_maximum_ensemble_limit(
+                        EVEREST_UPPER_BATCH_LIMIT
+                    )
+                    self._ensemble_selection_widget.reset_minimum_ensemble_limit_to_default()
+                    self._ensemble_selection_widget.select_all_ensembles()
+            elif key_def.metadata.get("data_origin") == "everest_parameters":
+                if key_def.key != self._prev_key:
+                    self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
+                    self._ensemble_selection_widget.clear_ensemble_selection()
+            else:
+                self._ensemble_selection_widget.reset_maximum_and_minimum_ensemble_limits_to_default()
+
+        max_selected = self._ensemble_selection_widget.get_maximum_ensemble_limit()
+        str_num_of_ens = f" up to {max_selected}" if self.is_everest else ""
+        self._ensemble_group.set_title(
+            f"Select{str_num_of_ens} batches"
+            if self.is_everest
+            else f"Select up to {max_selected} ensembles"
+        )
+
+        is_observed_seismic = (
+            key_def.observations
+            and key_def.response is not None
+            and key_def.response.type == "seismic"
+        )
+        available_widgets = [
+            widget
+            for widget in self._plot_widgets
+            if widget._plotter.dimensionality == key_def.dimensionality
+            and (key_def.observations or not widget._plotter.requires_observations)
+            and not is_everest_specific_widget
+            and (not is_observed_seismic or widget.name == MISFITS)
+            and widget.name != WATERFALL
+        ]
+
+        # Waterfall tab is only available for scalar parameters when at
+        # least one selected ensemble carries Kalman-gain blob data.
+        if (
+            not self.is_everest
+            and key_def.dimensionality == 1
+            and key_def.parameter is not None
+            and key_def.metadata.get("data_origin") == "gen_kw"
+        ):
+            selected = self._ensemble_selection_widget.get_selected_ensembles()
+            if any(self._api.has_kalman_gain(e.id) for e in selected):
+                waterfall_widget = next(
+                    (w for w in self._plot_widgets if w.name == WATERFALL),
+                    None,
+                )
+                if waterfall_widget is not None:
+                    available_widgets.append(waterfall_widget)
+
+        def everest_data_origin_check(origin: list[str]) -> bool:
+            return key_def.metadata.get("data_origin") in origin
+
+        everest_plot_and_origin = [
+            (EVEREST_OBJECTIVE_FUNCTION_PLOT, ["everest_objectives"]),
+            (EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT, ["everest_batch_objectives"]),
+            (EVEREST_CONSTRAINT_PLOT, ["everest_constraints"]),
+            (EVEREST_CONTROLS_PLOT, ["everest_parameters"]),
+            (EVEREST_GRADIENTS_PLOT, ["everest_constraints", "everest_objectives"]),
+        ]
+
+        def everest_available_widget_selection(
+            widget_tuple_list: list[tuple[str, list[str]]],
+        ) -> None:
+            for widget_name, origin in widget_tuple_list:
+                widget = self._widget_by_name(widget_name)
+                if everest_data_origin_check(origin):
+                    if widget not in available_widgets:
+                        available_widgets.append(widget)
+                elif widget in available_widgets:
+                    available_widgets.remove(widget)
+
+        if self.is_everest:
+            everest_available_widget_selection(everest_plot_and_origin)
+
+        previous_widget = self._central_tab.currentWidget()
+
+        # Enabling/disabling tab triggers the
+        # current_tab_changed event which also triggers
+        # the update_plot, which is slow and redundant.
+        # Therefore, we disable this signal because this
+        # part is only supposed to set which tabs are
+        # enabled according to the available widgets.
+        self._central_tab.currentChanged.disconnect()
+        for plot_widget in self._plot_widgets:
+            self._central_tab.setTabEnabled(
+                self._central_tab.indexOf(plot_widget), plot_widget in available_widgets
+            )
+        current_widget = self._central_tab.currentWidget()
+
+        if 0 < self._prev_key_dimensionality != key_def.dimensionality:
+            if isinstance(previous_widget, PlotWidget):
+                self._default_tab_for_dimensionality[self._prev_key_dimensionality] = (
+                    previous_widget
+                )
+            current_widget = self._default_tab_for_dimensionality[
+                key_def.dimensionality
+            ]
+
+        if current_widget not in available_widgets and available_widgets:
+            current_widget = available_widgets[0]
+
+        self._central_tab.setCurrentWidget(current_widget)
+        self._central_tab.currentChanged.connect(self.current_tab_changed)
+        self._prev_key_dimensionality = key_def.dimensionality
+        self._prev_key = key_def.key
+        self._prev_key_origin = key_def.metadata.get("data_origin")
+        self.update_plot()
+
+    def add_plot_widgets_from_plot_map(
+        self, plot_map: dict[str, Callable[[], Plotter]]
+    ) -> None:
+        for name, plotter_factory in plot_map.items():
+            self.add_plot_widget(name, plotter_factory())
+
+
+def make_seismic_y_label(s: str) -> str:
+    pattern = (
+        r"^[a-zA-Z0-9]+"
+        r"--([a-zA-Z0-9]+)"
+        r"_[a-zA-Z0-9]+"
+        r"_([a-zA-Z0-9]+)"
+        r"_depth--[a-zA-Z0-9_]+$"
+    )
+    match = re.match(pattern, s)
+    if not match:
+        return "Value"
+    attribute, calc = match.group(1), match.group(2)
+    return f"{calc.capitalize()} {attribute.capitalize()}"

@@ -1,0 +1,210 @@
+import dataclasses
+import functools
+import uuid
+
+from ert.analysis import build_strategy_map, smoother_update
+from ert.analysis._update_commons import ErtAnalysisError
+from ert.analysis.event import (
+    AnalysisCompleteEvent,
+    AnalysisDataEvent,
+    AnalysisErrorEvent,
+    AnalysisEvent,
+    AnalysisMatrixEvent,
+    AnalysisRhoMatrixEvent,
+    AnalysisScalingEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+)
+from ert.config import (
+    HookRuntime,
+    PostUpdateFixtures,
+    PreFirstUpdateFixtures,
+    PreUpdateFixtures,
+)
+from ert.run_models.event import (
+    RunModelDataEvent,
+    RunModelErrorEvent,
+    RunModelStatusEvent,
+    RunModelTimeEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
+)
+from ert.run_models.run_model import ErtRunError, RunModel
+from ert.run_models.run_model_configs import UpdateRunModelConfig
+from ert.storage import Ensemble, LocalExperiment
+
+
+class UpdateRunModel(RunModel, UpdateRunModelConfig):
+    def update_ensemble_parameters(
+        self, prior: Ensemble, posterior: Ensemble, weight: float
+    ) -> None:
+        """
+        Updates parameters of prior ensemble assumed to already contain responses.
+        Writes resulting updated parameters into the posterior ensemble.
+
+        Parameters
+        ----------
+        prior : Ensemble
+            The prior ensemble, which must contain responses
+            for the observations of the experiment.
+
+        posterior : Ensemble
+            The (initially empty) posterior ensemble
+            where the updated parameters will be stored.
+
+        weight : float
+            The weight applied to this update step (only used in esmda).
+        """
+        progress_callback = functools.partial(
+            self.send_smoother_event,
+            prior.iteration,
+            prior.id,
+            posterior,
+        )
+
+        strategy_map = build_strategy_map(
+            parameters=prior.experiment.update_parameters,
+            param_configs=prior.experiment.parameter_configuration,
+            enkf_truncation=self.analysis_settings.enkf_truncation,
+            correlation_threshold=self.analysis_settings.correlation_threshold,
+            progress_callback=progress_callback,
+            experiment=prior.experiment,
+        )
+
+        smoother_update(
+            prior,
+            posterior,
+            update_settings=self.update_settings,
+            rng=self._rng,
+            strategy_map=strategy_map,
+            observations=prior.experiment.observation_keys,
+            global_scaling=weight,
+            progress_callback=progress_callback,
+            active_realizations=self.active_realizations,
+        )
+
+    def update(
+        self,
+        prior: Ensemble,
+        posterior_name: str,
+        weight: float = 1.0,
+        target_experiment: LocalExperiment | None = None,
+    ) -> Ensemble:
+        self.validate_successful_realizations_count()
+        self.send_event(
+            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
+        )
+        self.send_event(
+            RunModelStatusEvent(
+                iteration=prior.iteration,
+                run_id=prior.id,
+                msg="Creating posterior ensemble..",
+            )
+        )
+
+        pre_first_update_fixtures = PreFirstUpdateFixtures(
+            storage=self._storage,
+            ensemble=prior,
+            observation_settings=self.update_settings,
+            es_settings=self.analysis_settings,
+            random_seed=self.random_seed,
+            reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
+            run_paths=self._runpaths,
+        )
+
+        posterior = self._storage.create_ensemble(
+            target_experiment or prior.experiment,
+            ensemble_size=prior.ensemble_size,
+            iteration=prior.iteration + 1,
+            name=posterior_name,
+            prior_ensemble=prior,
+        )
+        if prior.iteration == 0:
+            self.run_workflows(
+                fixtures=pre_first_update_fixtures,
+            )
+
+        update_args_dict = {
+            field.name: getattr(pre_first_update_fixtures, field.name)
+            for field in dataclasses.fields(pre_first_update_fixtures)
+        }
+
+        self.run_workflows(
+            fixtures=PreUpdateFixtures(
+                **{**update_args_dict, "hook": HookRuntime.PRE_UPDATE}
+            ),
+        )
+        try:
+            self.update_ensemble_parameters(prior, posterior, weight)
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                "Update algorithm failed for iteration:"
+                f"{posterior.iteration}. The following error occurred: {e}"
+            ) from e
+
+        self.run_workflows(
+            fixtures=PostUpdateFixtures(
+                **{**update_args_dict, "hook": HookRuntime.POST_UPDATE}
+            ),
+        )
+        return posterior
+
+    def send_smoother_event(
+        self,
+        iteration: int,
+        run_id: uuid.UUID,
+        ensemble: Ensemble,
+        event: AnalysisEvent,
+    ) -> None:
+        match event:
+            case AnalysisStatusEvent():
+                self.send_event(
+                    RunModelStatusEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        msg=event.msg,
+                        detail=event.detail,
+                    )
+                )
+            case AnalysisTimeEvent():
+                self.send_event(
+                    RunModelTimeEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        elapsed_time=event.elapsed_time,
+                        remaining_time=event.remaining_time,
+                    )
+                )
+            case AnalysisErrorEvent():
+                self.send_event(
+                    RunModelErrorEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        error_msg=event.error_msg,
+                        data=event.data,
+                    )
+                )
+            case AnalysisDataEvent():
+                self.send_event(
+                    RunModelDataEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        name=event.name,
+                        data=event.data,
+                    )
+                )
+            case AnalysisMatrixEvent():
+                ensemble.save_blob(event)
+            case AnalysisScalingEvent():
+                ensemble.save_blob(event)
+            case AnalysisRhoMatrixEvent():
+                ensemble.experiment.save_blob(event)
+            case AnalysisCompleteEvent():
+                ensemble.save_blob(event)
+                self.send_event(
+                    RunModelUpdateEndEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        data=event.data,
+                    )
+                )

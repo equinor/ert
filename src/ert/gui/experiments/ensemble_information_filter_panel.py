@@ -1,0 +1,200 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, override
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
+
+from ert.config.parameter_config import has_updatable_parameters
+from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets import (
+    ActiveRealizationsModel,
+    CopyableLabel,
+    StringBox,
+    TargetEnsembleModel,
+    TextModel,
+    get_parameters_button,
+)
+from ert.mode_definitions import ENIF_MODE
+from ert.run_models import EnsembleInformationFilter
+from ert.validation import (
+    ExperimentValidation,
+    ProperNameFormatArgument,
+)
+from ert.validation.active_range import ActiveRange
+from ert.validation.range_string_argument import RangeSubsetStringArgument
+
+from ._design_matrix_panel import DesignMatrixPanel
+from .experiment_config_panel import ExperimentConfigPanel
+
+if TYPE_CHECKING:
+    from ert.config import AnalysisConfig, ParameterConfig
+
+
+@dataclass
+class Arguments:
+    mode: str
+    target_ensemble: str
+    realizations: str
+    experiment_name: str
+
+
+class EnsembleInformationFilterPanel(ExperimentConfigPanel):
+    def __init__(
+        self,
+        analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
+        runpath: str,
+        notifier: ErtNotifier,
+        active_realizations: list[bool],
+        config_num_realization: int,
+    ) -> None:
+        super().__init__(EnsembleInformationFilter)
+        self.notifier = notifier
+
+        layout = QFormLayout()
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.setObjectName("enif_panel")
+
+        if analysis_config.parameter_type_update_strategies:
+            strategies_html = "".join(
+                f"<li><b>{param_type}</b>: {strategy.name}</li>"
+                for param_type, strategy in (
+                    analysis_config.parameter_type_update_strategies.items()
+                )
+            )
+            warning_label = QLabel(
+                "<b>Warning:</b> Any given update strategy will be ignored "
+                "when running Ensemble Information Filter."
+                "<p>The following parameter update strategies were found "
+                "in the configuration:"
+                f"<ul>{strategies_html}</ul>"
+            )
+            warning_label.setObjectName("enif_warning_panel")
+            warning_label.setWordWrap(True)
+            warning_label.setTextFormat(Qt.TextFormat.RichText)
+            warning_label.setStyleSheet(
+                "QLabel#enif_warning_panel {"
+                " background-color: #fff3cd;"
+                " color: #664d03;"
+                " border: 1px solid #ffe69c;"
+                " border-radius: 4px;"
+                " padding: 8px;"
+                "}"
+            )
+            layout.addRow(warning_label)
+
+        self._experiment_name_field = StringBox(
+            TextModel(""),
+            placeholder_text=self.notifier.storage.get_unique_experiment_name(
+                ENIF_MODE
+            ),
+        )
+        self._experiment_name_field.setMinimumWidth(250)
+        self._experiment_name_field.setValidator(
+            ExperimentValidation(self.notifier.storage)
+        )
+        self._experiment_name_field.setObjectName("experiment_field")
+        layout.addRow("Experiment name:", self._experiment_name_field)
+
+        runpath_label = CopyableLabel(text=runpath)
+        layout.addRow("Runpath:", runpath_label)
+
+        number_of_realizations_container = QWidget()
+        number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
+        number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
+        number_of_realizations_label = QLabel(f"<b>{len(active_realizations)}</b>")
+        number_of_realizations_label.setObjectName("num_reals_label")
+        number_of_realizations_layout.addWidget(number_of_realizations_label)
+
+        layout.addRow(
+            QLabel("Number of realizations:"), number_of_realizations_container
+        )
+
+        self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
+        self._ensemble_format_field = StringBox(
+            self._ensemble_format_model,  # type: ignore
+            self._ensemble_format_model.getDefaultValue(),  # type: ignore
+            continuous_update=True,
+        )
+        self._ensemble_format_field.setValidator(ProperNameFormatArgument())
+        layout.addRow("Ensemble format:", self._ensemble_format_field)
+
+        self._active_realizations_field = StringBox(
+            ActiveRealizationsModel(len(active_realizations)),  # type: ignore
+            "config/experiment/active_realizations",
+        )
+        self._active_realizations_field.setValidator(
+            RangeSubsetStringArgument(ActiveRange(active_realizations)),
+        )
+        self._active_realizations_field.model.setValueFromMask(  # type: ignore
+            active_realizations
+        )
+        layout.addRow("Active realizations", self._active_realizations_field)
+
+        self._parameter_configuration = parameter_configuration
+        design_matrix = analysis_config.design_matrix
+        if design_matrix is not None:
+            layout.addRow(
+                "Design matrix",
+                DesignMatrixPanel.get_design_matrix_button(
+                    design_matrix,
+                    number_of_realizations_label,
+                    config_num_realization,
+                ),
+            )
+            self._parameter_configuration = (
+                design_matrix.merge_with_existing_parameters(
+                    self._parameter_configuration
+                )
+            )
+
+        if self._parameter_configuration:
+            layout.addRow(
+                "Parameters", get_parameters_button(self._parameter_configuration, self)
+            )
+
+        self.setLayout(layout)
+
+        self._experiment_name_field.getValidationSupport().validationChanged.connect(
+            self.experiment_configuration_changed
+        )
+        self._ensemble_format_field.getValidationSupport().validationChanged.connect(
+            self.experiment_configuration_changed
+        )
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+            self.experiment_configuration_changed
+        )
+
+        self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    @override
+    @Slot(QWidget)
+    def experimentTypeChanged(self, w: QWidget) -> None:
+        if isinstance(w, EnsembleInformationFilterPanel):
+            self._update_experiment_name_placeholder()
+
+    def _update_experiment_name_placeholder(self) -> None:
+        self._experiment_name_field.setPlaceholderText(
+            self.notifier.storage.get_unique_experiment_name(ENIF_MODE)
+        )
+
+    @override
+    def isConfigurationValid(self) -> bool:
+        return (
+            self._experiment_name_field.isValid()
+            and self._ensemble_format_field.isValid()
+            and self._active_realizations_field.isValid()
+            and has_updatable_parameters(self._parameter_configuration)
+        )
+
+    @override
+    def get_experiment_arguments(self) -> Arguments:
+        return Arguments(
+            mode=ENIF_MODE,
+            target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
+            realizations=self._active_realizations_field.text(),
+            experiment_name=self._experiment_name_field.get_text,
+        )

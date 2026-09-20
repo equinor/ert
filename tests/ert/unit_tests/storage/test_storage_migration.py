@@ -1,0 +1,576 @@
+import datetime
+import json
+import logging
+import os
+import shutil
+from pathlib import Path
+
+import numpy as np
+import orjson
+import polars as pl
+import pytest
+
+from ert.analysis import (
+    ErtAnalysisError,
+    smoother_update,
+)
+from ert.config import ErtConfig, ObservationSettings
+from ert.observation_converters.history_to_summary import convert_history_to_summary
+from ert.plugins import get_site_plugins
+from ert.storage import RealizationStorageState, open_storage
+from ert.storage.local_storage import (
+    _LOCAL_STORAGE_VERSION,
+    LocalStorage,
+    local_storage_set_ert_config,
+)
+from tests.ert.ui_tests.cli.run_cli import run_cli
+
+
+@pytest.fixture
+def copy_shared(tmp_path, block_storage_path):
+    for input_dir in ["data", "refcase"]:
+        shutil.copytree(
+            block_storage_path / "all_data_types" / f"{input_dir}",
+            tmp_path / "all_data_types" / f"{input_dir}",
+        )
+    for file in ["config.ert", "observations.txt", "params.txt", "template.txt"]:
+        shutil.copy(
+            block_storage_path / f"all_data_types/{file}",
+            tmp_path / "all_data_types" / file,
+        )
+
+
+@pytest.fixture
+def copy_shared_design(tmp_path, block_storage_path):
+    shutil.copytree(
+        block_storage_path / "design_poly",
+        tmp_path / "design_poly",
+    )
+    return tmp_path / "design_poly"
+
+
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "14.2",
+    ],
+)
+def test_migration_to_genkw_with_polars_and_design_matrix(
+    copy_shared_design, ert_version, snapshot
+):
+    # we need to make a dummy ert config to open storage
+    local_storage_set_ert_config(ErtConfig.from_file_contents("NUM_REALIZATIONS 1\n"))
+    storage_path = copy_shared_design / f"version-{ert_version}"
+
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    with open_storage(storage_path, "w") as storage:
+        experiments = list(storage.experiments)
+        assert len(experiments) == 1
+        experiment = experiments[0]
+        ensembles = list(experiment.ensembles)
+        assert len(ensembles) == 1
+        ensemble = ensembles[0]
+        df = ensemble.load_parameters("DESIGN_MATRIX")
+        assert isinstance(df, pl.DataFrame)
+        assert dict(df.schema) == dict(
+            pl.Schema(
+                {
+                    "a": pl.Int64,
+                    "category": pl.String,
+                    "b": pl.Int64,
+                    "c": pl.Int64,
+                    "realization": pl.Int64,
+                }
+            )
+        )
+        snapshot.assert_match(
+            orjson.dumps(df.to_dicts(), option=orjson.OPT_INDENT_2)
+            .decode("utf-8")
+            .strip()
+            + "\n",
+            "design_matrix_snapshot.json",
+        )
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
+        "11.1.8",
+        "11.0.8",
+        "10.3.1",
+        "10.2.8",
+        "10.1.3",
+        "10.0.3",
+        "9.0.17",
+    ],
+)
+def test_that_storage_matches(
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
+):
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        tmp_path / "all_data_types" / f"storage-{ert_version}",
+    )
+    monkeypatch.chdir(tmp_path / "all_data_types")
+    site_plugins = get_site_plugins()
+    convert_history_to_summary("config.ert")
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
+
+    local_storage_set_ert_config(ert_config)
+    # To make sure all tests run against the same snapshot
+    snapshot.snapshot_dir = snapshot.snapshot_dir.parent
+
+    storage_path = Path(f"storage-{ert_version}")
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    with open_storage(storage_path, "w") as storage:
+        experiments = list(storage.experiments)
+        assert len(experiments) == 1
+        experiment = experiments[0]
+        ensembles = list(experiment.ensembles)
+        assert len(ensembles) == 1
+        ensemble = ensembles[0]
+
+        assert all(
+            "has_finalized_keys" in config
+            for config in experiment.response_info.values()
+        )
+
+        assert experiment.parameter_configuration["PORO"].ertbox_params.nx == 2
+        assert experiment.parameter_configuration["PORO"].ertbox_params.ny == 3
+        assert experiment.parameter_configuration["PORO"].ertbox_params.nz == 4
+        assert experiment.parameter_configuration["PORO"].dimensionality == 3
+        assert experiment.parameter_configuration["BPR"].dimensionality == 1
+        assert experiment.parameter_configuration["TOP"].dimensionality == 2
+
+        assert experiment.templates_configuration == [("\nBPR:<BPR>\n", "params.txt")]
+        df = ensemble.load_parameters("BPR")
+        assert isinstance(df, pl.DataFrame)
+        assert dict(df.schema) == {"BPR": pl.Float64, "realization": pl.Int64}
+        assert df["realization"].to_list() == list(range(ensemble.ensemble_size))
+
+        summary_data = ensemble.load_responses(
+            "summary",
+            tuple(ensemble.get_realization_list_with_responses()),
+        )
+        snapshot.assert_match(
+            summary_data.sort("time", "response_key", "realization")
+            .to_pandas()
+            .set_index(["time", "response_key", "realization"])
+            .transform(np.sort)
+            .to_csv(),
+            "summary_data",
+        )
+        snapshot.assert_match_dir(
+            {
+                key: value.to_pandas().to_csv()
+                for key, value in experiment.observations.items()
+            },
+            "observations",
+        )
+        gen_data = ensemble.load_responses(
+            "gen_data", tuple(range(ensemble.ensemble_size))
+        )
+        snapshot.assert_match(
+            gen_data.sort(["realization", "response_key", "report_step", "index"])
+            .to_pandas()
+            .set_index(["realization", "response_key", "report_step", "index"])
+            .to_csv(),
+            "gen_data",
+        )
+
+        assert ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment._has_finalized_response_keys("gen_data")
+        ensemble.save_response("summary", ensemble.load_responses("summary", (0,)), 0)
+        assert ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment.response_type_to_response_keys["summary"] == ["FOPR"]
+
+        assert all(
+            "name" not in response for response in experiment.response_info.values()
+        )
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "11.1.8",
+        "11.0.8",
+        "10.3.1",
+        "10.2.8",
+        "10.1.3",
+        "10.0.3",
+        "9.0.17",
+    ],
+)
+def test_that_storage_works_with_missing_parameters_and_responses(
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
+):
+    storage_path = tmp_path / "all_data_types" / f"storage-{ert_version}"
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        storage_path,
+    )
+    [ensemble_id] = os.listdir(storage_path / "ensembles")
+
+    ensemble_path = storage_path / "ensembles" / ensemble_id
+
+    # Remove all realization-*/TOP.nc, and only some realization-*/BPC.nc
+    for i, real_dir in enumerate(
+        (storage_path / "ensembles" / ensemble_id).glob("realization-*")
+    ):
+        (real_dir / "TOP.nc").unlink()
+        if i % 2 == 0:
+            (real_dir / "BPR.nc").unlink()
+
+        gen_data_file = next(
+            file for file in os.listdir(real_dir) if "gen" in file.lower()
+        )
+        (real_dir / gen_data_file).unlink()
+
+    monkeypatch.chdir(tmp_path / "all_data_types")
+    site_plugins = get_site_plugins()
+    convert_history_to_summary("config.ert")
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
+
+    local_storage_set_ert_config(ert_config)
+    # To make sure all tests run against the same snapshot
+    snapshot.snapshot_dir = snapshot.snapshot_dir.parent
+
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    with open_storage(storage_path, "w") as storage:
+        experiments = list(storage.experiments)
+        assert len(experiments) == 1
+        experiment = experiments[0]
+        ensembles = list(experiment.ensembles)
+        assert len(ensembles) == 1
+
+        ens_dir_contents = set(os.listdir(ensemble_path))
+        assert {
+            "index.json",
+        }.issubset(ens_dir_contents)
+
+        assert "TOP.nc" not in ens_dir_contents
+
+        with pytest.raises(KeyError):
+            ensembles[0].load_responses("GEN", (0,))
+
+
+@pytest.mark.slow
+def test_that_migrate_blockfs_creates_backup_folder(tmp_path: Path, caplog):
+    storage_path = tmp_path / "storage"
+    storage_ensembles = storage_path / "ensembles"
+    storage_experiments = storage_path / "experiments"
+    storage_backup = storage_path / "_blockfs_backup"
+
+    with (tmp_path / "config.ert").open(mode="w", encoding="utf-8") as f:
+        f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(storage_path)])
+
+    for d in (storage_path, storage_ensembles, storage_experiments):
+        d.mkdir(exist_ok=True, parents=True)
+
+    with (storage_path / "index.json").open("w+", encoding="utf-8") as f:
+        f.write("""{"version": 0}""")
+
+    (storage_experiments / "exp_dummy.txt").write_text("", encoding="utf-8")
+    (storage_ensembles / "ens_dummy.txt").write_text("", encoding="utf-8")
+
+    with caplog.at_level(level=logging.INFO):
+        run_cli("test_run", str(tmp_path / "config.ert"))
+
+    assert storage_backup.exists()
+    assert "Blockfs storage backed up" in caplog.messages
+
+    with (storage_path / "index.json").open(encoding="utf-8") as f:
+        index = json.load(f)
+        assert index["version"] == _LOCAL_STORAGE_VERSION
+        assert index["migrations"] == []
+
+    with (storage_backup / "index.json").open(encoding="utf-8") as f:
+        index = json.load(f)
+        assert index["version"] == 0
+
+    assert (storage_backup / "experiments" / "exp_dummy.txt").exists()
+    assert (storage_backup / "ensembles" / "ens_dummy.txt").exists()
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
+        "10.3.1",
+    ],
+)
+def test_that_manual_update_from_migrated_storage_works(
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
+):
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        tmp_path / "all_data_types" / f"storage-{ert_version}",
+    )
+    monkeypatch.chdir(tmp_path / "all_data_types")
+    site_plugins = get_site_plugins()
+    convert_history_to_summary("config.ert")
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
+
+    local_storage_set_ert_config(ert_config)
+    # To make sure all tests run against the same snapshot
+    snapshot.snapshot_dir = snapshot.snapshot_dir.parent
+
+    storage_path = Path(f"storage-{ert_version}")
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    with open_storage(storage_path, "w") as storage:
+        experiments = list(storage.experiments)
+        assert len(experiments) == 1
+        experiment = experiments[0]
+        ensembles = list(experiment.ensembles)
+        assert len(ensembles) == 1
+        prior_ens = ensembles[0]
+
+        assert set(experiment.observations["gen_data"].schema.items()) == {
+            ("index", pl.UInt16),
+            ("observation_key", pl.String),
+            ("observations", pl.Float32),
+            ("report_step", pl.UInt16),
+            ("response_key", pl.String),
+            ("std", pl.Float32),
+            ("east", pl.Float32),
+            ("north", pl.Float32),
+            ("radius", pl.Float32),
+        }
+
+        assert set(experiment.observations["summary"].schema.items()) == {
+            ("observation_key", pl.String),
+            ("observations", pl.Float32),
+            ("response_key", pl.String),
+            ("std", pl.Float32),
+            ("time", pl.Datetime(time_unit="ms")),
+            ("east", pl.Float32),
+            ("north", pl.Float32),
+            ("radius", pl.Float32),
+        }
+
+        prior_gendata = prior_ens.load_responses(
+            "gen_data", tuple(range(prior_ens.ensemble_size))
+        )
+        prior_smry = prior_ens.load_responses(
+            "summary", tuple(range(prior_ens.ensemble_size))
+        )
+
+        assert set(prior_gendata.schema.items()) == {
+            ("response_key", pl.String),
+            ("index", pl.UInt16),
+            ("realization", pl.UInt16),
+            ("report_step", pl.UInt16),
+            ("values", pl.Float32),
+        }
+
+        assert set(prior_smry.schema.items()) == {
+            ("response_key", pl.String),
+            ("time", pl.Datetime(time_unit="ms")),
+            ("realization", pl.UInt16),
+            ("values", pl.Float32),
+        }
+
+        posterior_ens = storage.create_ensemble(
+            prior_ens.experiment_id,
+            ensemble_size=prior_ens.ensemble_size,
+            iteration=1,
+            name="posterior",
+            prior_ensemble=prior_ens,
+        )
+
+        with pytest.raises(
+            ErtAnalysisError, match="No active observations for update step"
+        ):
+            smoother_update(
+                prior_ens,
+                posterior_ens,
+                list(experiment.observation_keys),
+                ObservationSettings(),
+                rng=np.random.default_rng(42),
+                strategy_map={},
+            )
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
+        "11.1.8",
+        "10.3.1",
+        "10.0.3",
+        "9.0.17",
+    ],
+)
+def test_migrate_storage_with_no_responses(
+    tmp_path,
+    block_storage_path,
+    monkeypatch,
+    ert_version,
+):
+    storage_path = tmp_path / "all_data_types" / f"storage-{ert_version}"
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        storage_path,
+    )
+    [ensemble_id] = os.listdir(storage_path / "ensembles")
+
+    # Remove all realization-*/TOP.nc, and only some realization-*/BPC.nc
+    for real_dir in (storage_path / "ensembles" / ensemble_id).glob("realization-*"):
+        gen_data_file = next(
+            file for file in os.listdir(real_dir) if "gen" in file.lower()
+        )
+
+        (real_dir / gen_data_file).unlink()
+
+        summary_file = next(
+            file for file in os.listdir(real_dir) if "summary" in file.lower()
+        )
+
+        (real_dir / summary_file).unlink()
+
+    monkeypatch.chdir(tmp_path / "all_data_types")
+    site_plugins = get_site_plugins()
+    convert_history_to_summary("config.ert")
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
+
+    local_storage_set_ert_config(ert_config)
+
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    open_storage(storage_path, "w")
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
+        "11.1.8",
+        "10.3.1",
+        "10.0.3",
+        "9.0.17",
+    ],
+)
+def test_that_storages_with_failed_realizations_are_migrated_without_errors(
+    tmp_path,
+    block_storage_path,
+    monkeypatch,
+    ert_version,
+):
+    storage_path = tmp_path / "all_data_types" / f"storage-{ert_version}"
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        storage_path,
+    )
+    monkeypatch.chdir(tmp_path / "all_data_types")
+
+    # Inject a failed realization
+    ensembles_dir = Path(f"storage-{ert_version}/ensembles")
+    # There are no missing reals, so we assume the index corresponds
+    # to the real nr
+    realization_dirs = sorted(ensembles_dir.glob("*/realization-*"))
+
+    # Add failures to some of them
+    failures = [
+        (i, failure_json, realization_state)
+        for i, failure_json, realization_state in [
+            (
+                0,
+                {
+                    "type": 1,
+                    "message": "this is undefined",
+                    "time": datetime.datetime(
+                        2000, 1, 5, tzinfo=datetime.UTC
+                    ).isoformat(),
+                },
+                RealizationStorageState.UNDEFINED,
+            ),
+            (
+                3,
+                {
+                    "type": 8,
+                    "message": "this is failure",
+                    "time": datetime.datetime(
+                        2000, 1, 5, tzinfo=datetime.UTC
+                    ).isoformat(),
+                },
+                RealizationStorageState.FAILURE_IN_CURRENT,
+            ),
+            (
+                8,
+                {
+                    "type": 16,
+                    "message": "this is parent failure",
+                    "time": datetime.datetime(
+                        2000, 1, 5, tzinfo=datetime.UTC
+                    ).isoformat(),
+                },
+                RealizationStorageState.FAILURE_IN_PARENT,
+            ),
+        ]
+    ]
+
+    for i, failure_json, _ in failures:
+        (realization_dirs[i] / "error.json").write_text(json.dumps(failure_json))
+
+    convert_history_to_summary("config.ert")
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+
+    local_storage_set_ert_config(ert_config)
+
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    with open_storage(storage_path, "w") as storage:
+        ensemble = next(storage.ensembles)
+        realization_states = ensemble.get_ensemble_state()
+        for i, _, realization_state in failures:
+            assert realization_state in realization_states[i]
+            assert ensemble.get_failure(i).type == realization_state

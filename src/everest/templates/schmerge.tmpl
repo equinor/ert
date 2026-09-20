@@ -1,0 +1,3 @@
+{%- for well_entry in wells -%}
+INSERT {{ well_entry.completion_date }} misc/welopen_format SUB(__NAME__:{{ well_entry.name }})
+{% endfor -%}

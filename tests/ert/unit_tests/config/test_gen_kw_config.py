@@ -1,0 +1,1092 @@
+import json
+import math
+import re
+import threading
+from itertools import permutations
+from pathlib import Path
+from textwrap import dedent
+
+import networkx as nx
+import numpy as np
+import pytest
+from lark import Token
+
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
+from ert.config.parsing.file_context_token import FileContextToken
+from ert.run_models._create_runpath import create_runpath
+from ert.runpaths import Runpaths
+from ert.sample_prior import sample_prior
+
+
+def test_short_definition_raises_config_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("incorrect", encoding="utf-8")
+
+    with pytest.raises(ConfigValidationError, match="Too few values"):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+                {},
+            ]
+        )
+
+
+@pytest.mark.parametrize(
+    ("spec", "expected"),
+    [
+        (
+            {"name": "KEY1", "distribution": {"name": "normal", "mean": 0, "std": 1}},
+            {"key": "KEY1", "function": "NORMAL", "parameters": {"MEAN": 0, "STD": 1}},
+        ),
+        (
+            {
+                "name": "KEY2",
+                "distribution": {"name": "lognormal", "mean": 2, "std": 3},
+            },
+            {
+                "key": "KEY2",
+                "function": "LOGNORMAL",
+                "parameters": {"MEAN": 2, "STD": 3},
+            },
+        ),
+        (
+            {
+                "name": "KEY3",
+                "distribution": {
+                    "name": "truncated_normal",
+                    "mean": 4,
+                    "std": 5,
+                    "min": 6,
+                    "max": 7,
+                },
+            },
+            {
+                "key": "KEY3",
+                "function": "TRUNCATED_NORMAL",
+                "parameters": {"MEAN": 4, "STD": 5, "MIN": 6, "MAX": 7},
+            },
+        ),
+        (
+            {
+                "name": "KEY4",
+                "distribution": {"name": "triangular", "min": 0, "mode": 1, "max": 2},
+            },
+            {
+                "key": "KEY4",
+                "function": "TRIANGULAR",
+                "parameters": {"MIN": 0, "MODE": 1, "MAX": 2},
+            },
+        ),
+        (
+            {"name": "KEY5", "distribution": {"name": "uniform", "min": 2, "max": 3}},
+            {"key": "KEY5", "function": "UNIFORM", "parameters": {"MIN": 2, "MAX": 3}},
+        ),
+        (
+            {
+                "name": "KEY6",
+                "distribution": {"name": "dunif", "steps": 3, "min": 0, "max": 1},
+            },
+            {
+                "key": "KEY6",
+                "function": "DUNIF",
+                "parameters": {"STEPS": 3, "MIN": 0, "MAX": 1},
+            },
+        ),
+        (
+            {
+                "name": "KEY7",
+                "distribution": {
+                    "name": "errf",
+                    "min": 0,
+                    "max": 1,
+                    "skewness": 2,
+                    "width": 3,
+                },
+            },
+            {
+                "key": "KEY7",
+                "function": "ERRF",
+                "parameters": {"MIN": 0, "MAX": 1, "SKEWNESS": 2, "WIDTH": 3},
+            },
+        ),
+        (
+            {
+                "name": "KEY8",
+                "distribution": {
+                    "name": "derrf",
+                    "steps": 1,
+                    "min": 1,
+                    "max": 2,
+                    "skewness": 3,
+                    "width": 4,
+                },
+            },
+            {
+                "key": "KEY8",
+                "function": "DERRF",
+                "parameters": {
+                    "STEPS": 1,
+                    "MIN": 1,
+                    "MAX": 2,
+                    "SKEWNESS": 3,
+                    "WIDTH": 4,
+                },
+            },
+        ),
+        (
+            {"name": "KEY9", "distribution": {"name": "logunif", "min": 1, "max": 2}},
+            {"key": "KEY9", "function": "LOGUNIF", "parameters": {"MIN": 1, "MAX": 2}},
+        ),
+        (
+            {"name": "KEY10", "distribution": {"name": "const", "value": 10}},
+            {"key": "KEY10", "function": "CONST", "parameters": {"VALUE": 10}},
+        ),
+        (
+            {
+                "name": "KEY11",
+                "distribution": {
+                    "name": "pert",
+                    "min": 0,
+                    "mode": 1,
+                    "max": 2,
+                    "scale": 4,
+                },
+            },
+            {
+                "key": "KEY11",
+                "function": "PERT",
+                "parameters": {"MIN": 0, "MODE": 1, "MAX": 2, "SCALE": 4},
+            },
+        ),
+    ],
+    ids=[f"KEY{i}" for i in range(1, 12)],
+)
+def test_gen_kw_config_get_priors(spec, expected):
+    cfg = GenKwConfig(**spec)
+    assert expected in cfg.get_priors()
+
+
+number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
+
+
+@pytest.mark.parametrize(
+    ("distribution", "expect_log", "parameters_regex"),
+    [
+        ("NORMAL 0 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        (
+            "LOGNORMAL 0 1",
+            True,
+            r"KW_NAME:MY_KEYWORD "
+            + number_regex
+            + r"\n"
+            + r"LOG10_KW_NAME:MY_KEYWORD "
+            + number_regex,
+        ),
+        ("UNIFORM 0 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        (
+            "TRUNCATED_NORMAL 1 0.25 0 10",
+            False,
+            r"KW_NAME:MY_KEYWORD " + number_regex,
+        ),
+        (
+            "LOGUNIF 0.0001 1",
+            True,
+            r"KW_NAME:MY_KEYWORD "
+            + number_regex
+            + r"\n"
+            + r"LOG10_KW_NAME:MY_KEYWORD "
+            + number_regex,
+        ),
+        ("CONST 1.54", False, "KW_NAME:MY_KEYWORD 1.54\n"),
+        ("CONST 1.0", False, "KW_NAME:MY_KEYWORD 1\n"),
+        ("DUNIF 5 1 5", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("ERRF 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("DERRF 10 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("TRIANGULAR 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+        ("PERT 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
+    ],
+)
+async def test_gen_kw_is_log_or_not(
+    tmpdir, storage, distribution, expect_log, parameters_regex, run_args
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text(f"MY_KEYWORD {distribution}", encoding="utf-8")
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        gen_kw_config = ert_config.ensemble_config.parameter_configs["MY_KEYWORD"]
+        assert isinstance(gen_kw_config, GenKwConfig)
+        experiment_id = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ]
+            }
+        )
+        prior_ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=1
+        )
+        sample_prior(prior_ensemble, [0], 123, 1)
+        await create_runpath(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            runpaths=Runpaths.from_config(ert_config),
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            substitutions=ert_config.substitutions,
+            end_event=threading.Event(),
+            parameters_file="parameters",
+        )
+
+        assert re.match(
+            parameters_regex,
+            Path("simulations/realization-0/iter-0/parameters.txt").read_text(
+                encoding="utf-8"
+            ),
+        ), distribution
+
+
+@pytest.mark.parametrize(
+    ("distribution", "mean", "std", "error"),
+    [
+        ("LOGNORMAL", "0", "1", None),
+        ("LOGNORMAL", "-1", "1", None),
+        ("LOGNORMAL", "0", "-1", ["STD"]),
+        ("LOGNORMAL", "-10000", "-1", ["STD"]),
+        ("NORMAL", "0", "1", None),
+        ("NORMAL", "-1", "1", None),
+        ("NORMAL", "0", "-1", ["STD"]),
+        ("TRUNCATED_NORMAL", "-1", "1", None),
+        ("TRUNCATED_NORMAL", "0", "1", None),
+        ("TRUNCATED_NORMAL", "0", "-1", ["STD"]),
+    ],
+)
+def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
+    with tmpdir.as_cwd():
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+
+        if distribution == "TRUNCATED_NORMAL":
+            distribution_line = f"MY_KEYWORD {distribution} {mean} {std} -1 1"
+        else:
+            distribution_line = f"MY_KEYWORD {distribution} {mean} {std}"
+
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", distribution_line),
+            {},
+        ]
+
+        if error:
+            for e in error:
+                with pytest.raises(
+                    ConfigValidationError,
+                    match=f"Negative {e} {mean if e == 'MEAN' else std}",
+                ):
+                    GenKwConfig.from_config_list(config_list)
+        else:
+            GenKwConfig.from_config_list(config_list)
+
+
+def test_that_high_mean_stddev_lognormal_gives_warning():
+    mean_log = 4
+    stdev_log = 4
+    expected_warning = r"Expectation value of the lognormal distribution is.*"
+    with pytest.warns(
+        ConfigWarning,
+        match=expected_warning,
+    ) as _:
+        GenKwConfig(
+            name="KEY1",
+            distribution={"name": "lognormal", "mean": mean_log, "std": stdev_log},
+        )
+
+
+def test_that_very_high_mean_stddev_lognormal_gives_error():
+    mean_log = 3000
+    stdev_log = 10
+    expected_error = r"Expectation value of the lognormal distribution is too large!.*"
+    config_list = [
+        "COEFFS",
+        ["coeff_priors", f"MYVARIABLE LOGNORMAL {mean_log} {stdev_log}"],
+        {},
+    ]
+    with pytest.raises(
+        ConfigValidationError,
+        match=expected_error,
+    ):
+        GenKwConfig.from_config_list(config_list)
+
+
+@pytest.mark.parametrize(
+    ("params", "error"),
+    [
+        ("MYNAME NORMAL 0 1", None),
+        ("MYNAME LOGNORMAL 0 1", None),
+        (
+            "MYNAME TRUNCATED_NORMAL 0 1 3 2",
+            (
+                "Minimum 3.0 must be strictly less than the maximum"
+                " 2.0 for truncated_normal distribution"
+            ),
+        ),
+        ("MYNAME TRUNCATED_NORMAL 0 1 2 3", None),
+        ("MYNAME TRIANGULAR 0 1 2", None),
+        ("MYNAME UNIFORM 0 1", None),
+        ("MYNAME DUNIF 2 1 2", None),
+        (
+            "MYNAME DUNIF 0 1 2",
+            "Number of steps 0 must be larger than 1 for duniform distribution",
+        ),
+        (
+            "MYNAME DUNIF 0 2 1",
+            (
+                "Minimum 2.0 must be strictly less than the maximum"
+                " 1.0 for duniform distribution"
+            ),
+        ),
+        ("MYNAME ERRF 0 1 2 3", None),
+        (
+            "MYNAME ERRF 3 2 1 1",
+            (
+                "Minimum 3.0 must be strictly less than the maximum"
+                " 2.0 for errf distribution"
+            ),
+        ),
+        (
+            "MYNAME ERRF 3 2 1 -1",
+            "The width -1.0 must be greater than 0 for errf distribution",
+        ),
+        ("MYNAME DERRF 3 1 2 3 4", None),
+        (
+            "MYNAME LOGUNIF 0 1",
+            "Minimum 0.0 must be strictly greater than 0 for log uniform distribution",
+        ),
+        ("MYNAME CONST 0", None),
+        ("MYNAME RAW", None),
+        (
+            "MYNAME UNIFORM 0 1 2",
+            (
+                "Incorrect number of values: \\['0', '1', '2'\\], "
+                "provided for variable MYNAME with distribution UNIFORM."
+            ),
+        ),
+        (
+            "MYNAME RANDOM 0 1",
+            "Unknown distribution provided: RANDOM, for variable MYNAME",
+        ),
+        ("MYNAME DERRF 50 1.12345 2.3 3.14 10E-5", None),
+        ("MYNAME DERRF 100 -14 -2.544545 10E5 10E+5", None),
+        (
+            "MYNAME CONST no-number",
+            (
+                "Unable to convert 'no-number' to float number for "
+                "variable MYNAME with distribution CONST."
+            ),
+        ),
+        ("MYNAME      CONST    0", None),  # spaces
+        ("MYNAME\t\t\tCONST\t\t0", None),  # tabs
+    ],
+)
+def test_gen_kw_params_parsing(tmpdir, params, error):
+    with tmpdir.as_cwd():
+        parts = params.split()
+        name, dist_name, values = parts[0], parts[1], parts[2:]
+
+        if error:
+            with pytest.raises(ConfigValidationError, match=error):
+                GenKwConfig._parse_distribution(name, dist_name, values)
+        else:
+            dist = GenKwConfig._parse_distribution(name, dist_name, values)
+            GenKwConfig(
+                name=name,
+                forward_init=False,
+                update_strategy=None,
+                distribution=dist,
+            )
+
+
+@pytest.mark.parametrize(
+    ("values", "expected_scale"),
+    [
+        (["0", "0.5", "1"], 4.0),
+        (["0", "0.5", "1", "2"], 2.0),
+    ],
+)
+def test_that_pert_uses_default_or_explicit_scale(values, expected_scale):
+    distribution = GenKwConfig._parse_distribution("MYNAME", "PERT", values)
+
+    assert distribution.model_dump() == {
+        "name": "pert",
+        "min": 0.0,
+        "mode": 0.5,
+        "max": 1.0,
+        "scale": expected_scale,
+    }
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        ["0", "0.5"],
+        ["0", "0.5", "1", "4", "5"],
+    ],
+)
+def test_that_pert_rejects_parameter_counts_other_than_three_or_four(values):
+    with pytest.raises(ConfigValidationError, match="Incorrect number of values"):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", values)
+
+
+def test_that_pert_requires_minimum_strictly_less_than_maximum():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Minimum .* must be strictly less than the maximum",
+    ):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", ["1", "1", "1"])
+
+
+@pytest.mark.parametrize("mode", ["-1", "0", "1", "2"])
+def test_that_pert_requires_mode_strictly_between_bounds(mode):
+    with pytest.raises(ConfigValidationError, match="must be strictly between"):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", ["0", mode, "1"])
+
+
+@pytest.mark.parametrize(
+    "parameter_index",
+    range(4),
+    ids=["minimum", "mode", "maximum", "scale"],
+)
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_that_pert_requires_finite_parameters(parameter_index, value):
+    values = ["0", "0.5", "1", "4"]
+    values[parameter_index] = value
+
+    with pytest.raises(ConfigValidationError, match="finite"):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", values)
+
+
+@pytest.mark.parametrize("scale", ["0", "-1"])
+def test_that_pert_requires_positive_scale(scale):
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"strictly greater than 0",
+    ):
+        GenKwConfig._parse_distribution("MYNAME", "PERT", ["0", "0.5", "1", scale])
+
+
+@pytest.mark.parametrize(
+    ("params", "xinput", "expected"),
+    [
+        ("MYNAME TRIANGULAR 0 0.5 1.0", -1.0, 0.28165160565089725209),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 0.0, 0.50000000000000000000),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 0.3, 0.56291386557621880815),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 0.7, 0.65217558149040699700),
+        ("MYNAME TRIANGULAR 0 0.5 1.0", 1.0, 0.71834839434910269240),
+        ("MYNAME TRIANGULAR 0 1.0 4.0", -1.0, 0.7966310411513150456286),
+        ("MYNAME TRIANGULAR 0 1.0 4.0", 1.1, 2.72407181575270778882286),
+        ("MYNAME UNIFORM 0 1", -1.0, 0.15865525393145707422),
+        ("MYNAME UNIFORM 0 1", 0.0, 0.50000000000000000000),
+        ("MYNAME UNIFORM 0 1", 0.3, 0.61791142218895256377),
+        ("MYNAME UNIFORM 0 1", 0.7, 0.75803634777692696645),
+        ("MYNAME UNIFORM 0 1", 1.0, 0.84134474606854292578),
+        ("MYNAME DUNIF 5 1 5", -1.0, 1.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 0.0, 3.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 0.3, 4.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 0.7, 4.00000000000000000000),
+        ("MYNAME DUNIF 5 1 5", 1.0, 5.00000000000000000000),
+        ("MYNAME CONST 5", -1.0, 5.00000000000000000000),
+        ("MYNAME CONST 5", 0.0, 5.00000000000000000000),
+        ("MYNAME CONST 5", 0.3, 5.00000000000000000000),
+        ("MYNAME CONST 5", 0.7, 5.00000000000000000000),
+        ("MYNAME CONST 5", 1.0, 5.00000000000000000000),
+        ("MYNAME RAW", -1.0, -1.00000000000000000000),
+        ("MYNAME RAW", 0.0, 0.00000000000000000000),
+        ("MYNAME RAW", 0.3, 0.29999999999999998890),
+        ("MYNAME RAW", 0.7, 0.69999999999999995559),
+        ("MYNAME RAW", 1.0, 1.00000000000000000000),
+        ("MYNAME LOGUNIF 0.00001 1", -1.0, 0.00006212641160264609),
+        ("MYNAME LOGUNIF 0.00001 1", 0.0, 0.00316227766016837896),
+        ("MYNAME LOGUNIF 0.00001 1", 0.3, 0.01229014794851427186),
+        ("MYNAME LOGUNIF 0.00001 1", 0.7, 0.06168530819028691242),
+        ("MYNAME LOGUNIF 0.00001 1", 1.0, 0.16096213739108147789),
+        ("MYNAME NORMAL 0 1", -1.0, -1.00000000000000000000),
+        ("MYNAME NORMAL 0 1", 0.0, 0.00000000000000000000),
+        ("MYNAME NORMAL 0 1", 0.3, 0.29999999999999998890),
+        ("MYNAME NORMAL 0 1", 0.7, 0.69999999999999995559),
+        ("MYNAME NORMAL 0 1", 1.0, 1.00000000000000000000),
+        ("MYNAME LOGNORMAL 0 1", -1.0, 0.36787944117144233402),
+        ("MYNAME LOGNORMAL 0 1", 0.0, 1.00000000000000000000),
+        ("MYNAME LOGNORMAL 0 1", 0.3, 1.34985880757600318347),
+        ("MYNAME LOGNORMAL 0 1", 0.7, 2.01375270747047663278),
+        ("MYNAME LOGNORMAL 0 1", 1.0, math.e),
+        ("MYNAME ERRF 1 2 0.1 0.1", -1.0, 1.00000000000000000000),
+        ("MYNAME ERRF 1 2 0.1 0.1", 0.0, 1.84134474606854281475),
+        ("MYNAME ERRF 1 2 0.1 0.1", 0.3, 1.99996832875816688002),
+        ("MYNAME ERRF 1 2 0.1 0.1", 0.7, 1.99999999999999933387),
+        ("MYNAME ERRF 1 2 0.1 0.1", 1.0, 2.00000000000000000000),
+    ],
+)
+def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
+    name, dist_name, *values = params.split()
+    with tmpdir.as_cwd():
+        cfg = GenKwConfig(
+            name=name,
+            forward_init=False,
+            update_strategy=None,
+            distribution=GenKwConfig._parse_distribution(name, dist_name, values),
+        )
+        out = float(
+            cfg.distribution.transform_numpy(np.asarray([xinput], dtype=np.float64))[0]
+        )
+        assert abs(out - expected) < 10**-15
+
+
+def test_that_dunif_transform_does_not_exceed_max_for_extreme_input_values(tmpdir):
+    """ndtr(x) returns exactly 1.0 for x >= ~8.3 due to floating-point limits."""
+    with tmpdir.as_cwd():
+        cfg = GenKwConfig(
+            name="MYNAME",
+            forward_init=False,
+            update_strategy=None,
+            distribution=GenKwConfig._parse_distribution(
+                "MYNAME", "DUNIF", ["5", "1", "5"]
+            ),
+        )
+        for x in [8.3, 100]:
+            result = float(
+                cfg.distribution.transform_numpy(np.asarray([x], dtype=np.float64))[0]
+            )
+            assert result <= 5.0, f"DUNIF result {result} exceeds max=5.0 for x={x}"
+            assert result >= 5.0, (
+                f"DUNIF result {result} != 5.0 (max) for extreme x={x}"
+            )
+
+
+def test_gen_kw_objects_equal(tmpdir):
+    with tmpdir.as_cwd():
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+
+        g1 = GenKwConfig.from_config_list(
+            [
+                "KW_NAME",
+                ("prior.txt", "MY_KEYWORD UNIFORM 1 2"),
+                {},
+            ]
+        )[0]
+        assert g1.name == "MY_KEYWORD"
+        assert g1.group == "KW_NAME"
+
+        g2 = GenKwConfig(
+            name="MY_KEYWORD",
+            group="KW_NAME",
+            distribution={"name": "uniform", "min": 1, "max": 2},
+        )
+
+        assert g1.name == g2.name
+        assert g1.group == g2.group
+        assert g1.distribution == g2.distribution
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_kw_pred_special_suggested_removal():
+    with Path("coeff_priors.txt").open("a", encoding="utf-8") as f:
+        f.write("a NORMAL 0 1")
+    with Path("config.ert").open("a", encoding="utf-8") as f:
+        f.write(
+            "NUM_REALIZATIONS 1\n"
+            "GEN_KW PRED coeff_priors.txt coeff_priors.txt coeff_priors.txt\n"
+        )
+    with pytest.warns(
+        ConfigWarning,
+        match="GEN_KW PRED used to hold a special meaning and be excluded.*",
+    ) as warn_log:
+        ErtConfig.from_file("config.ert")
+    assert any("config.ert: Line 2" in str(w.message) for w in warn_log)
+
+
+def make_context_string(msg: str, filename: str) -> FileContextToken:
+    return FileContextToken(Token("UNQUOTED", msg), filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_kw_config_validation():
+    Path("template.txt").write_text("Hello", encoding="utf-8")
+
+    GenKwConfig.templates_from_config(
+        [
+            "KEY",
+            ("template.txt", "Hello"),
+            "nothing_here.txt",
+            ("parameters.txt", "KEY  UNIFORM 0 1 \n"),
+            {},
+        ]
+    )
+
+    GenKwConfig.templates_from_config(
+        [
+            "KEY",
+            ("template.txt", "hello.txt"),
+            "nothing_here.txt",
+            (
+                "parameters_with_comments.txt",
+                dedent(
+                    """\
+                        KEY1  UNIFORM 0 1 -- COMMENT
+
+
+                        KEY2  UNIFORM 0 1
+                        --KEY3
+                        ---KEY3
+                        ------------
+                        KEY3  UNIFORM 0 1
+                        """
+                ),
+            ),
+            {},
+        ],
+    )
+
+    with pytest.raises(
+        ConfigValidationError, match=r"config.ert.* No such template file"
+    ):
+        GenKwConfig.templates_from_config(
+            [
+                "KEY",
+                (make_context_string("no_template_here.txt", "config.ert"), ""),
+                "nothing_here.txt",
+                ("parameters.txt", "KEY UNIFORM 0 1"),
+                {},
+            ]
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_suggestion_on_empty_parameter_file():
+    Path("empty_template.txt").write_text("", encoding="utf-8")
+    with pytest.warns(UserWarning, match="GEN_KW KEY coeffs.txt"):
+        GenKwConfig.templates_from_config(
+            [
+                "KEY",
+                ("empty_template.txt", ""),
+                "output.txt",
+                (
+                    make_context_string("coeffs.txt", "config.ert"),
+                    "a UNIFORM 0 1",
+                ),
+                {},
+            ]
+        )
+
+
+@pytest.mark.parametrize(
+    ("distribution", "minimum", "maximum", "error"),
+    [
+        ("UNIFORM", "0", "1", None),
+        (
+            "UNIFORM",
+            "1.0",
+            "1.0",
+            "Minimum 1.0 must be strictly less than the maximum 1.0",
+        ),
+        (
+            "LOGUNIF",
+            "1.0",
+            "1.0",
+            "Minimum 1.0 must be strictly less than the maximum 1.0",
+        ),
+    ],
+)
+def test_validation_unif_distribution(tmpdir, distribution, minimum, maximum, error):
+    with tmpdir.as_cwd():
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", f"MY_KEYWORD {distribution} {minimum} {maximum}"),
+            {},
+        ]
+
+        if error:
+            with pytest.raises(
+                ConfigValidationError,
+                match=error,
+            ):
+                GenKwConfig.from_config_list(config_list)
+        else:
+            GenKwConfig.from_config_list(config_list)
+
+
+def test_that_logunif_rejects_non_positive_min():
+    with pytest.raises(ConfigValidationError, match="strictly greater than 0"):
+        GenKwConfig._parse_distribution("MYNAME", "LOGUNIF", ["0", "1"])
+
+    with pytest.raises(ConfigValidationError, match="strictly greater than 0"):
+        GenKwConfig._parse_distribution("MYNAME", "LOGUNIF", ["-1", "1"])
+
+
+@pytest.mark.parametrize(
+    ("distribution", "minimum", "mode", "maximum", "error"),
+    [
+        ("TRIANGULAR", "0", "2", "3", None),
+        (
+            "TRIANGULAR",
+            "3.0",
+            "3.0",
+            "3.0",
+            "Minimum 3.0 must be strictly less than the maximum 3.0",
+        ),
+        ("TRIANGULAR", "-1", "0", "1", None),
+        (
+            "TRIANGULAR",
+            "3.0",
+            "6.0",
+            "5.5",
+            "The mode 6.0 must be between the minimum 3.0 and maximum 5.5",
+        ),
+        (
+            "TRIANGULAR",
+            "3.0",
+            "-6.0",
+            "5.5",
+            "The mode -6.0 must be between the minimum 3.0 and maximum 5.5",
+        ),
+    ],
+)
+def test_validation_triangular_distribution(
+    tmpdir, distribution, minimum, mode, maximum, error
+):
+    with tmpdir.as_cwd():
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", f"MY_KEYWORD {distribution} {minimum} {mode} {maximum}"),
+            {},
+        ]
+
+        if error:
+            with pytest.raises(
+                ConfigValidationError,
+                match=error,
+            ):
+                GenKwConfig.from_config_list(config_list)
+        else:
+            GenKwConfig.from_config_list(config_list)
+
+
+@pytest.mark.parametrize(
+    ("distribution", "nbins", "minimum", "maximum", "skew", "width", "error"),
+    [
+        ("DERRF", "10", "-1", "3", "-1", "2", None),
+        ("DERRF", "100", "-10", "10", "0", "1", None),
+        ("DERRF", "2", "-0.5", "0.5", "1", "0.1", None),
+        (
+            "DERRF",
+            "0",
+            "-1",
+            "3",
+            "-1",
+            "2",
+            (
+                "NBINS 0.0 must be a positive integer larger than 1 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
+        ),
+        (
+            "DERRF",
+            "-5",
+            "-1",
+            "3",
+            "-1",
+            "2",
+            (
+                "NBINS -5.0 must be a positive integer larger than 1 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
+        ),
+        (
+            "DERRF",
+            "1.5",
+            "-1",
+            "3",
+            "-1",
+            "2",
+            (
+                "NBINS 1.5 must be a positive integer larger than 1 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
+        ),
+        (
+            "DERRF",
+            "10",
+            "3",
+            "-1",
+            "-1",
+            "2",
+            (
+                "The minimum 3.0 must be less than the maximum -1.0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
+        ),
+        (
+            "DERRF",
+            "10",
+            "1",
+            "1",
+            "-1",
+            "2",
+            (
+                "The minimum 1.0 must be less than the maximum 1.0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
+        ),
+        (
+            "DERRF",
+            "10",
+            "-1",
+            "3",
+            "-1",
+            "0",
+            (
+                "The width 0.0 must be greater than 0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
+        ),
+        (
+            "DERRF",
+            "10",
+            "-1",
+            "3",
+            "-1",
+            "-2",
+            (
+                "The width -2.0 must be greater than 0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
+        ),
+        (
+            "DERRF",
+            "2",
+            "-999999",
+            "999999",
+            "0",
+            "0.0001",
+            None,
+        ),
+        (
+            "DERRF",
+            "1000",
+            "-0.001",
+            "0.001",
+            "0",
+            "0.0001",
+            None,
+        ),
+    ],
+)
+def test_validation_derrf_distribution(
+    tmpdir, distribution, nbins, minimum, maximum, skew, width, error
+):
+    with tmpdir.as_cwd():
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            (
+                "prior.txt",
+                f"MY_KEYWORD {distribution} {nbins} {minimum} {maximum} {skew} {width}",
+            ),
+            {},
+        ]
+
+        if error:
+            with pytest.raises(
+                ConfigValidationError,
+                match=error,
+            ):
+                GenKwConfig.from_config_list(config_list)
+        else:
+            GenKwConfig.from_config_list(config_list)
+
+
+def test_genkw_paramgraph_transformfn_node_correspondence():
+    config = GenKwConfig(
+        name="param",
+        group="COEFFS",
+        distribution={"name": "uniform", "min": 1, "max": 2},
+    )
+
+    graph = config.load_parameter_graph()
+
+    data = nx.node_link_data(graph, edges="edges")
+    assert data["edges"] == []
+
+    assert data["nodes"] == [{"id": 0}]
+
+
+def test_genkw_raises_config_validation_error_from_pydantic_validation_error_given_invalid_model_input(  # ruff: ignore[line-too-long] E501
+    monkeypatch,
+):
+    # Bool is not a valid input to GenKwConfig's "distribution" attribute
+    monkeypatch.setattr(GenKwConfig, "_parse_distribution", lambda *args: False)
+
+    config_list = [
+        "KW_NAME",
+        ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+        "kw.txt",
+        ("prior.txt", "MY_KEYWORD DERFF 10 20"),
+        {},
+    ]
+    with pytest.raises(ConfigValidationError):
+        GenKwConfig.from_config_list(config_list)
+
+
+def test_that_const_keyword_sets_update_to_none(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 1
+        GEN_KW CONST_TEST prior.txt UPDATE:TRUE
+        """
+        )
+        with Path("config.ert").open("w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with Path("prior.txt").open("w", encoding="utf-8") as fh:
+            fh.writelines("CONST_TEST CONST 1")
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        gen_kw_config = ert_config.ensemble_config.parameter_configs["CONST_TEST"]
+        assert gen_kw_config.update_strategy is None
+
+
+def test_that_parameter_named_const_with_non_const_distribution_is_updatable(tmp_path):
+    """Regression: update flag should only check the distribution type,
+    not match "CONST" anywhere in the parameter definition.
+    """
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("CONST NORMAL 0 1", encoding="utf-8")
+
+    configs = GenKwConfig.from_config_list(
+        [
+            "MY_KW",
+            (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+            {},
+        ]
+    )
+    assert len(configs) == 1
+    assert configs[0].name == "CONST"
+    assert configs[0].update_strategy is not None
+
+
+def test_that_unexpected_positional_arg_count_raises_validation_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("KEY NORMAL 0 1", encoding="utf-8")
+
+    with pytest.raises(ConfigValidationError, match="Unexpected positional arguments"):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                ("template.txt", ""),
+                "output.txt",
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+                "extra_arg",
+                {},
+            ]
+        )
+
+
+def test_that_init_files_option_raises_removal_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("KEY NORMAL 0 1", encoding="utf-8")
+
+    with pytest.raises(
+        ConfigValidationError, match="INIT_FILES with GEN_KW has been removed"
+    ):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+                {"INIT_FILES": "init_%d"},
+            ]
+        )
+
+
+@pytest.mark.parametrize("order", list(permutations([("A", 1), ("AA", 2), ("AAA", 3)])))
+async def test_that_gen_kw_substitutes_correctly(order, tmpdir, storage, run_args):
+    """This is a regression test to check that the substitution mechanism
+    works correctly when there are multiple parameters with similar names.
+    """
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME prior.txt
+        """
+        )
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("prior.txt").write_text(
+            "\n".join(
+                f"{param_name} CONST {param_value}"
+                for (param_name, param_value) in order
+            ),
+            encoding="utf-8",
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        experiment_id = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ]
+            }
+        )
+        prior_ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=1
+        )
+        sample_prior(prior_ensemble, [0], 123, 1)
+        await create_runpath(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            runpaths=Runpaths.from_config(ert_config),
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            substitutions=ert_config.substitutions,
+            end_event=threading.Event(),
+            parameters_file="parameters",
+        )
+
+        param_json = json.loads(
+            Path("simulations/realization-0/iter-0/parameters.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for param_name, param_value in order:
+            assert int(param_json[f"{param_name}"]["value"]) == param_value

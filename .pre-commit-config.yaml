@@ -1,0 +1,40 @@
+default_install_hook_types: [pre-commit]
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: no-commit-to-branch
+    -   id: check-json
+    -   id: check-yaml
+        exclude: tests/everest/test_data/valid_config_file/invalid_yaml_config.yml # Invalid yml needed for testing
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+        exclude: test-data/ert/eclipse/parse/ERROR.PRT # exact format is needed for testing
+
+- repo: https://github.com/rhysd/actionlint
+  rev: v1.7.12
+  hooks:
+    - id: actionlint
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.4
+    hooks:
+    - id: ruff-check
+      args: [ --fix ]
+    - id: ruff-format
+
+-   repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.5
+    hooks:
+      - id: uv-lock
+
+- repo: local
+  hooks:
+  - id: pytest
+    name: pytest
+    entry: uv
+    args: [run, --all-groups, just, rapid-tests]
+    language: system
+    types: [python]
+    stages: [pre-push]
+    pass_filenames: false

@@ -1,0 +1,527 @@
+import logging
+import os
+import stat
+import sys
+import threading
+from functools import partial
+from pathlib import Path
+from shutil import which
+from unittest import mock
+from unittest.mock import MagicMock, patch
+
+import pytest
+import requests
+import yaml
+
+import ert
+from ert import plugin
+from ert.config import ConfigWarning
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+    activate_script,
+)
+from ert.plugins import ErtRuntimePlugins
+from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
+from ert.scheduler.event import FinishedEvent
+from ert.services import ErtClient, SharedClient
+from ert.services.shared_client import ErtClientConnectionInfo
+from ert.utils import makedirs_if_needed
+from everest.bin.everest_script import everest_entry
+from everest.config import EverestConfig
+from everest.config.forward_model_config import ForwardModelStepConfig
+from everest.config.install_job_config import InstallForwardModelStepConfig
+from everest.config.server_config import ServerConfig
+from everest.config.simulator_config import SimulatorConfig
+from everest.everserver import (
+    start_server,
+)
+from tests.ert.utils import wait_until
+from tests.everest.utils import everest_config_with_defaults
+
+
+@pytest.mark.slow
+@pytest.mark.skip_mac_ci
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_https_requests(change_to_tmpdir):
+    proxies = {"http": None, "https": None}
+    Path("./config.yml").touch()
+    everest_config = everest_config_with_defaults(config_path="./config.yml")
+    everest_config.forward_model.append(ForwardModelStepConfig(job="sleep 5"))
+    everest_config.install_jobs.append(
+        InstallForwardModelStepConfig(name="sleep", executable=f"{which('sleep')}")
+    )
+    # start_server() loads config based on config_path, so we need to actually
+    # overwrite it
+    everest_config.write_to_file("config.yml")
+
+    makedirs_if_needed(Path(everest_config.output_dir), roll_if_exists=True)
+    await start_server(everest_config, logging_level=logging.INFO)
+
+    client = ErtClient.get_client(
+        Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
+    )
+    client.wait_for_server(240)
+    url, cert, auth = ServerConfig.get_server_context_from_conn_info(client.conn_info)
+    result = requests.get(url, verify=cert, auth=auth, proxies=proxies)  # ruff: ignore[blocking-http-call-in-async-function]
+    assert result.status_code == 200  # Request has succeeded
+
+    # Test http request fail
+    http_url = url.replace("https", "http")
+    with pytest.raises(Exception):  # ruff: ignore[assert-raises-exception, pytest-raises-too-broad, pytest-raises-with-multiple-statements] B017
+        response = requests.get(http_url, verify=cert, auth=auth, proxies=proxies)  # ruff: ignore[blocking-http-call-in-async-function]
+        response.raise_for_status()
+
+    # Test request with wrong password fails
+    auth = ("admin", "wrong_password")
+    result = requests.get(url, verify=cert, auth=auth, proxies=proxies)  # ruff: ignore[blocking-http-call-in-async-function]
+
+    assert result.status_code == 401  # Unauthorized
+
+    # Test stopping server
+    assert client.server_is_running(timeout=1)
+    if client.stop_server():
+        client.wait_for_server_to_stop(240)
+        assert not client.server_is_running(timeout=1)
+
+
+@pytest.fixture
+def polling_client(monkeypatch):
+    client = ErtClient(MagicMock())
+    monkeypatch.setattr(client, "server_is_running", MagicMock())
+    return client
+
+
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_raises_when_server_remains_unavailable(
+    clock, polling_client
+):
+    client = polling_client
+    client.server_is_running.return_value = False
+    clock.monotonic.side_effect = [0, 0, 0, 2, 2]
+    with pytest.raises(
+        RuntimeError, match=r"Failed to get reply from server within .* seconds"
+    ):
+        client.wait_for_server(timeout=1)
+
+    client.server_is_running.assert_called_once_with(timeout=1)
+    clock.sleep.assert_called_once_with(1)
+
+
+@pytest.mark.parametrize("states", [[True], [False, True]])
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_returns_when_server_becomes_available(
+    clock, states, polling_client
+):
+    client = polling_client
+    client.server_is_running.side_effect = states
+    clock.monotonic.return_value = 0
+
+    client.wait_for_server(timeout=10)
+
+    assert client.server_is_running.call_args_list == [mock.call(timeout=1)] * len(
+        states
+    )
+    assert clock.sleep.call_count == len(states) - 1
+
+
+@pytest.mark.parametrize("states", [[False, False], [True, False], [True, True, False]])
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_to_stop_returns_when_server_is_unavailable(
+    clock, states, polling_client
+):
+    client = polling_client
+    client.server_is_running.side_effect = states
+
+    client.wait_for_server_to_stop(timeout=10)
+
+    assert client.server_is_running.call_args_list == [mock.call(timeout=1)] * len(
+        states
+    )
+    assert clock.sleep.call_count == (len(states) - 1 if states[0] else 0)
+
+
+@patch("ert.services.ert_client.time")
+def test_that_wait_for_server_to_stop_raises_after_all_retries(clock, polling_client):
+    client = polling_client
+    client.server_is_running.return_value = True
+
+    with pytest.raises(
+        Exception, match="Failed to stop server within configured timeout"
+    ):
+        client.wait_for_server_to_stop(timeout=10)
+
+    assert client.server_is_running.call_args_list == [mock.call(timeout=1)] * 12
+    assert clock.sleep.call_count == 10
+    assert sum(call.args[0] for call in clock.sleep.call_args_list) == pytest.approx(10)
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    with Path("config.yml").open("w", encoding="utf-8") as fout:
+        yaml.dump(min_config, fout)
+    everest_config = EverestConfig.load_file("config.yml")
+
+    # Expect it to take the default of the ERT QueueConfig
+    assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=8)
+
+
+@pytest.mark.parametrize(
+    ("queue_system", "cores"),
+    [
+        ("lsf", 2),
+        ("slurm", 4),
+        ("lsf", 3),
+        ("slurm", 5),
+        ("torque", 7),
+    ],
+)
+def test_everserver_queue_config_equal_to_run_config(queue_system, cores):
+    simulator_config = {"queue_system": {"name": queue_system, "max_running": cores}}
+    everest_config = everest_config_with_defaults(simulator=simulator_config)
+    everest_config.server.queue_system = SimulatorConfig(**simulator_config)
+
+
+def test_detached_mode_config_error():
+    """
+    We are not allowing the simulator queue to be local and at the
+    same time the everserver queue to be something other than local
+    """
+    with pytest.raises(ValueError, match="so must the everest server"):
+        everest_config_with_defaults(
+            simulator={"queue_system": {"name": "local"}},
+            server={"queue_system": {"name": "lsf"}},
+        )
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize(
+    ("config_kwargs", "expected_result"),
+    [
+        ({"simulator": {"queue_system": {"name": "lsf"}}}, "lsf"),
+        (
+            {
+                "simulator": {"queue_system": {"name": "lsf"}},
+                "server": {"queue_system": {"name": "lsf"}},
+            },
+            "lsf",
+        ),
+        ({}, "local"),
+        ({"simulator": {"queue_system": {"name": "local"}}}, "local"),
+    ],
+)
+def test_find_queue_system(config_kwargs, expected_result):
+    config = everest_config_with_defaults(**config_kwargs)
+
+    result = config.simulator
+    assert result.queue_system.name == expected_result
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_generate_queue_options_no_config():
+    config = everest_config_with_defaults()
+    assert config.server.queue_system == LocalQueueOptions(max_running=1)
+
+
+@pytest.mark.parametrize(
+    ("queue_class", "expected_queue_kwargs"),
+    [
+        (
+            SlurmQueueOptions,
+            {"name": "slurm", "partition": "ever_opt_1", "max_running": 1},
+        ),
+        (LsfQueueOptions, {"name": "lsf", "lsf_queue": "ever_opt_1", "max_running": 1}),
+        (
+            TorqueQueueOptions,
+            {"name": "torque", "keep_qsub_output": True, "max_running": 1},
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_that_server_queue_system_defaults_to_simulator_queue_options(
+    queue_class, expected_queue_kwargs
+):
+    config = everest_config_with_defaults(
+        simulator={"queue_system": expected_queue_kwargs}
+    )
+    expected_result = queue_class(**expected_queue_kwargs)
+    assert config.server.queue_system == expected_result
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize(
+    "use_plugin",
+    [
+        False,
+    ],
+)
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"name": "slurm", "activate_script": "From user"},
+        {"name": "slurm"},
+    ],
+)
+def test_queue_options_site_config(queue_options, use_plugin, min_config):
+    plugin_result = "From plugin"
+    if "activate_script" in queue_options:
+        expected_result = queue_options["activate_script"]
+    elif use_plugin:
+        expected_result = plugin_result
+    else:
+        expected_result = activate_script()
+
+    plugins = []
+    if use_plugin:
+
+        class ActivatePlugin:
+            @plugin(name="first")
+            def activate_script(self):
+                return plugin_result
+
+        plugins = [ActivatePlugin()]
+    patched_everest = partial(
+        ert.plugins.plugin_manager.ErtPluginManager, plugins=plugins
+    )
+    with (
+        patch("ert.plugins.ErtPluginManager", patched_everest),
+    ):
+        config = EverestConfig.with_plugins(
+            {"simulator": {"queue_system": queue_options}} | min_config
+        )
+    assert config.simulator.queue_system.activate_script == expected_result
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize("use_plugin", [True, False])
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"queue_system": {"name": "slurm"}},
+        {},
+    ],
+)
+def test_simulator_queue_system_site_config(queue_options, use_plugin, min_config):
+    if queue_options:
+        expected_result = SlurmQueueOptions  # User specified
+    elif use_plugin:
+        expected_result = LsfQueueOptions  # Mock site config
+    else:
+        expected_result = LocalQueueOptions  # Default value
+
+    if use_plugin:
+        runtime_plugins_with_lsfqueue = ErtRuntimePlugins(
+            queue_options=LsfQueueOptions()
+        )
+        with mock.patch(
+            "ert.plugins.plugin_manager.ErtRuntimePlugins",
+            return_value=runtime_plugins_with_lsfqueue,
+        ):
+            config = EverestConfig.with_plugins(
+                {"simulator": queue_options} | min_config
+            )
+    else:
+        config = EverestConfig.model_validate({"simulator": queue_options} | min_config)
+
+    assert isinstance(config.simulator.queue_system, expected_result)
+
+
+@pytest.mark.timeout(5)  # Simulation might not finish
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_starting_not_in_folder(tmp_path, monkeypatch):
+    """
+    This tests that the second argument to the everserver is the config
+    file, and that the config file exists. This is a regression test for
+    a bug that happened when everest was started from a different dir
+    than the config file was in.
+    """
+
+    async def server_running():
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, FinishedEvent) and event.iens == 0:
+                return event
+
+    (tmp_path / "new_folder").mkdir(parents=True)
+    monkeypatch.chdir(tmp_path / "new_folder")
+    everest_config = everest_config_with_defaults()
+    everest_config.write_to_file("minimal_config.yml")
+    config_dict = {
+        **everest_config.model_dump(exclude_none=True),
+        "config_path": str(Path("minimal_config.yml").absolute()),
+    }
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        everest_config = EverestConfig.model_validate(config_dict)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PATH", f".:{os.environ['PATH']}")
+    everserver_path = Path("everserver")
+    everserver_path.write_text(
+        """#!/usr/bin/env python
+import sys
+from pathlib import Path
+if __name__ == "__main__":
+    config_path = sys.argv[2]
+    if not Path(config_path).exists():
+        raise ValueError(f"config_path ({config_path}) does not exist")
+""",
+        encoding="utf-8",
+    )
+    everserver_path.chmod(everserver_path.stat().st_mode | stat.S_IEXEC)
+    makedirs_if_needed(Path(everest_config.output_dir), roll_if_exists=True)
+    driver = await start_server(everest_config, logging_level=logging.DEBUG)
+    final_state = await server_running()
+    assert final_state.returncode == 0
+
+
+def test_get_that_get_server_info_from_conn_info_converts_values():
+    conn_info = ErtClientConnectionInfo(
+        base_url="https://example.com:1234",
+        cert="/path/to/cert.pem",
+        auth_token="sometoken",
+    )
+    url, cert_file, auth = ServerConfig.get_server_context_from_conn_info(conn_info)
+    assert url == "https://example.com:1234/experiment_runs"
+    assert cert_file == "/path/to/cert.pem"
+    assert auth == ("username", "sometoken")
+
+
+@pytest.mark.parametrize(
+    ("conn_info", "expected_exception", "expected_message"),
+    [
+        (
+            ErtClientConnectionInfo(
+                base_url="https://example.com:1234",
+                cert="/path/to/cert.pem",
+                auth_token=None,
+            ),
+            RuntimeError,
+            "No authentication token found in storage session",
+        ),
+        (
+            ErtClientConnectionInfo(
+                base_url="https://example.com:1234",
+                cert=False,
+                auth_token="sometoken",
+            ),
+            RuntimeError,
+            "Invalid certificate file in storage session",
+        ),
+        (
+            ErtClientConnectionInfo(
+                base_url="https://example.com:1234",
+                cert=True,
+                auth_token="sometoken",
+            ),
+            RuntimeError,
+            "Invalid certificate file in storage session",
+        ),
+    ],
+)
+def test_that_get_server_context_from_conn_info_raises_on_wrong_input(
+    conn_info, expected_exception, expected_message
+):
+    with pytest.raises(expected_exception) as exc_info:
+        ServerConfig.get_server_context_from_conn_info(conn_info)
+    assert str(exc_info.value) == expected_message
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.flaky(rerun=3)
+@pytest.mark.skipif(
+    sys.version_info[0:3] == (3, 13, 6), reason="Fails on Python 3.13.6"
+)
+def test_that_multiple_ert_clients_can_connect_to_server(
+    cached_example, change_to_tmpdir
+):
+    # We use a cached run for the reference list of received events
+    path, config_file, _, server_events_list = cached_example(
+        "math_func/config_minimal.yml"
+    )
+    SharedClient.close_client()
+
+    config_path = Path(path) / config_file
+    config_content = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
+    config_path.write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+    )
+
+    ever_config = EverestConfig.load_file(config_path)
+
+    # Run the case through everserver
+    everest_main_thread = threading.Thread(
+        target=everest_entry, args=[[str(config_path)]]
+    )
+
+    everest_main_thread.start()
+    session_dir = Path(ServerConfig.get_session_dir(ever_config.output_dir))
+
+    def everserver_is_running() -> bool:
+        try:
+            api = ErtClient.get_client(session_dir, connect_timeout=1)
+        except TimeoutError:
+            return False
+        return api.server_is_running(timeout=1)
+
+    wait_until(everserver_is_running, interval=1, timeout=300)
+
+    api = ErtClient.get_client(session_dir)
+
+    def experiment_is_registered() -> bool:
+        return bool(api.experiment_ids())
+
+    wait_until(experiment_is_registered, interval=0.5, timeout=60)
+    experiment_id = api.experiment_ids()[-1]
+
+    client_event_queues = []
+    monitor_threads = []
+    for _ in range(5):
+        client = ErtClient.get_client(session_dir)
+        client_event_queue, monitor_thread = client.setup_event_queue_from_ws_endpoint(
+            experiment_id
+        )
+        client_event_queues.append(client_event_queue)
+        monitor_threads.append(monitor_thread)
+        monitor_thread.start()
+
+    # Wait until the server has finished running the simulation
+    everest_main_thread.join()
+    for _thread in monitor_threads:
+        if _thread.is_alive():
+            _thread.join(timeout=5)
+
+    # Expect all the clients to hold the same events
+    client_event_lists = []
+    for event_queue in client_event_queues:
+        event_list = []
+        while not event_queue.empty():
+            event_list.append(event_queue.get())
+
+        client_event_lists.append(event_list)
+
+    first = client_event_lists[0]
+    assert all(first == other for other in client_event_lists[1:])
+
+    everest_event_types = (EverestStatusEvent, EverestBatchResultEvent)
+
+    first_everevents = [
+        e.event_type for e in first if isinstance(e, everest_event_types)
+    ]
+    assert len(first_everevents) > 0
+
+    server_everevents = [
+        e.event_type for e in server_events_list if isinstance(e, everest_event_types)
+    ]
+    assert len(server_everevents) > 0
+
+    # Compare only everest events, as the events from the forward model
+    # are (at time of writing) not deterministic enough to expect equality
+    assert first_everevents == server_everevents

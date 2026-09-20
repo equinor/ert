@@ -1,0 +1,33 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from ert.gui.plotting.utils import PlotContext
+
+
+def plot_history(plot_context: "PlotContext", axes: "Axes") -> None:
+    plot_config = plot_context.plotConfig()
+
+    if (
+        not plot_config.is_history_enabled()
+        or plot_context.history_data is None
+        or plot_context.history_data.empty
+    ):
+        return
+
+    style = plot_config.history_style()
+
+    lines = axes.plot(
+        plot_context.history_data.index.values,
+        plot_context.history_data,
+        color=style.color,
+        alpha=style.alpha,
+        linewidth=style.width,
+        markersize=style.size,
+        marker=style.marker,
+        linestyle=style.line_style,
+    )
+
+    if len(lines) > 0 and style.is_visible():
+        plot_config.add_legend_item("History", lines[0])

@@ -1,0 +1,106 @@
+import logging
+import time
+from collections.abc import Callable
+from datetime import UTC, datetime
+from functools import wraps
+from inspect import signature
+from pathlib import Path
+from typing import Any, ParamSpec, TypeVar
+
+import polars as pl
+
+from _ert.utils import file_safe_timestamp
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def log_duration(
+    logger: logging.Logger,
+    logging_level: int = logging.DEBUG,
+    custom_name: str | None = None,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """This is a decorator that logs the time it takes for a function to execute"""
+
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            t = time.perf_counter()
+            result = func(*args, **kwargs)
+            elapsed_time = time.perf_counter() - t
+            name = custom_name or f"{func.__name__}()"
+            logger.log(logging_level, f"{name} time_used={elapsed_time:.4f}s")
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+def makedirs_if_needed(path: Path, *, roll_if_exists: bool = False) -> None:
+    if path.is_dir():
+        if not roll_if_exists:
+            return
+        _roll_dir(path)  # exists and should be rolled
+    path.mkdir(parents=True, exist_ok=False)
+
+
+def _roll_dir(old_name: Path) -> None:
+    old_name = old_name.resolve()
+    timestamp = file_safe_timestamp(datetime.now(UTC).isoformat())
+    new_name = f"{old_name}__{timestamp}"
+    old_name.rename(new_name)
+    logging.getLogger().info(f"renamed {old_name} to {new_name}")
+
+
+def assert_schema(
+    df: pl.DataFrame,
+    schema: dict[str, Any],
+    *,
+    check_column_order: bool = True,
+) -> pl.DataFrame:
+    """Asserts that a polars DataFrame has the expected schema."""
+    if check_column_order:
+        if df.schema != schema:
+            msg = f"Expected schema {schema}, got {df.schema}."
+            raise AssertionError(msg)
+    else:
+        actual = dict(sorted(df.schema.items()))
+        expected = dict(sorted(schema.items()))
+        if actual != expected:
+            msg = f"Expected schema {schema}, got {df.schema}."
+            raise AssertionError(msg)
+    return df
+
+
+def process_arg(
+    key: str,
+    process: Callable[[Any], Any],
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """
+    Returns a decorator that processes a function argument before calling it.
+    Useful in combination with caching,
+    where you want to normalize an argument before hashing.
+
+    Args:
+        key (str): Name of the argument to process.
+        process (Callable[[Any], Any]): Function to process the argument value.
+    """
+
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        sig = signature(func)
+
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            bound = sig.bind(*args, **kwargs)
+            value = bound.arguments.get(key)
+            bound.arguments[key] = process(value)
+            return func(*bound.args, **bound.kwargs)
+
+        for cache_attr in ("cache_info", "cache_clear", "cache_parameters"):
+            if (member := getattr(func, cache_attr, None)) is not None:
+                setattr(wrapper, cache_attr, member)
+
+        return wrapper
+
+    return decorator

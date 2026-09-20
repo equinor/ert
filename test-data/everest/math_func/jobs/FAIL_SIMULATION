@@ -1,0 +1,4 @@
+EXECUTABLE  fail_simulation.py
+
+MIN_ARG 0
+MAX_ARG 2

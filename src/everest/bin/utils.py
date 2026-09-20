@@ -1,0 +1,475 @@
+import argparse
+import json
+import logging.config
+import os
+import shutil
+import sys
+import traceback
+from collections import defaultdict
+from collections.abc import Generator, KeysView, Sequence
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, ClassVar
+
+import yaml
+
+from _ert import ansi
+from ert.config import QueueSystem
+from ert.ensemble_evaluator import (
+    EnsembleSnapshot,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
+from ert.ensemble_evaluator.event import EndEvent
+from ert.logging import LOGGING_CONFIG
+from ert.plugins.plugin_manager import ErtPluginManager
+from ert.services.ert_client import ErtClient
+from ert.storage import (
+    ExperimentStatus,
+    open_storage,
+)
+from ert.utils import makedirs_if_needed
+from everest.config import EverestConfig
+from everest.config.server_config import ServerConfig
+from everest.everserver.client import start_monitor
+from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
+from everest.util import format_list
+
+JOB_SUCCESS = "Finished"
+JOB_RUNNING = "Running"
+JOB_FAILURE = "Failed"
+
+
+def cleanup_logging() -> None:
+    os.environ.pop("ERT_LOG_DIR", None)
+
+
+@contextmanager
+def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
+    if isinstance(options.config, EverestConfig):
+        makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=False)
+        log_dir = Path(options.config.output_dir) / "logs"
+    else:
+        # `everest branch` gives a tuple object here.
+        log_dir = Path("logs")
+
+    try:
+        log_dir.mkdir(exist_ok=True)
+    except PermissionError as err:
+        sys.exit(str(err))
+    try:
+        os.environ["ERT_LOG_DIR"] = str(log_dir)
+
+        config_dict = yaml.safe_load(LOGGING_CONFIG.read_text(encoding="utf-8"))
+        if config_dict:
+            for handler_name, handler_config in config_dict["handlers"].items():
+                if handler_name == "file":
+                    handler_config["filename"] = "everest-log.txt"
+                if "ert.logging.TimestampedFileHandler" in handler_config.values():
+                    handler_config["config_filename"] = ""
+                    if isinstance(options.config, EverestConfig):
+                        handler_config["config_filename"] = (
+                            options.config.config_path.name
+                        )
+                    else:
+                        # `everest branch`
+                        handler_config["config_filename"] = options.config[0]
+            logging.config.dictConfig(config_dict)
+
+        if "debug" in options and options.debug:
+            root_logger = logging.getLogger()
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(logging.DEBUG)
+            root_logger.addHandler(handler)
+
+        plugin_manager = ErtPluginManager()
+        plugin_manager.add_logging_handle_to_root(logging.getLogger())
+        plugin_manager.add_span_processor_to_trace_provider()
+        yield
+    finally:
+        cleanup_logging()
+
+
+def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) -> None:
+    width = min(shutil.get_terminal_size(fallback=(78, 24)).columns, 100)
+    print("\n" + "=" * width)
+    if options.config.server_queue_system == QueueSystem.LOCAL:
+        print(
+            f"KeyboardInterrupt (ID: {signum}) has been caught. \n"
+            "You are running locally. \n"
+            "The optimization will be stopped and the program will exit..."
+        )
+        try:
+            client = ErtClient.get_client(
+                Path(ServerConfig.get_session_dir(options.config.output_dir)),
+                connect_timeout=1,
+            )
+            if client.server_is_running(timeout=1):
+                client.stop_server()
+                client.wait_for_server_to_stop(timeout=10)
+                print("Server stopped successfully.")
+
+        except TimeoutError:
+            print("No running server found.")
+
+    else:
+        print(f"KeyboardInterrupt (ID: {signum}) has been caught. Program will exit...")
+        config_file = options.config.config_file
+        print(
+            "You are running in detached mode.\n"
+            "To monitor the running optimization use command:\n"
+            f"  `everest monitor {config_file}`\n"
+            "To kill the running optimization use command:\n"
+            f"  `everest kill {config_file}`"
+        )
+    print("=" * width)
+    sys.tracebacklimit = 0
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler] SIM115
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler] SIM115
+    sys.exit()
+
+
+def _get_max_width(sequence: Sequence[str] | KeysView[str]) -> int:
+    return max(len(item) for item in sequence)
+
+
+@dataclass
+class JobProgress:
+    name: str
+    status: dict[str, list[int]] = field(
+        default_factory=lambda: {
+            JOB_RUNNING: [],  # contains running simulation numbers i.e [7,8,9]
+            JOB_SUCCESS: [],  # contains successful simulation numbers i.e [0,1,3,4]
+            JOB_FAILURE: [],  # contains failed simulation numbers i.e [5,6]
+        }
+    )
+    errors: defaultdict[str, list[int]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    STATUS_COLOR: ClassVar = {
+        JOB_RUNNING: ansi.BLUE,
+        JOB_SUCCESS: ansi.GREEN,
+        JOB_FAILURE: ansi.RED,
+    }
+
+    def progress_str(self, max_widths: dict[str, int]) -> str:
+        string = []
+        for state in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]:
+            number_of_simulations = len(self.status[state])
+            width = max_widths[state]
+            color = self.STATUS_COLOR[state] if number_of_simulations else ansi.BLACK
+            string.append(f"{color}{number_of_simulations:>{width}}{ansi.RESET}")
+        return "/".join(string)
+
+
+class _ServerMonitor:
+    INDENT = 2
+    FLOAT_FMT = ".5g"
+
+    def __init__(self) -> None:
+        self._clear_lines: int = 0
+        self._last_reported_batch: int = -1
+        self._last_reported_opt_progress: int = -1
+        self._snapshots: dict[int, EnsembleSnapshot] = {}
+        self._width = min(shutil.get_terminal_size(fallback=(78, 24)).columns, 100)
+
+    def update(self, status: dict[str, Any]) -> None:
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            if OPT_PROGRESS_ID in status:
+                opt_status = status[OPT_PROGRESS_ID]
+                if opt_status:
+                    msg = self._get_opt_progress_single_batch(opt_status)
+                    if msg:
+                        ansi.ansi_print(msg + "\n")
+                        self._clear_lines = 0
+            if SIM_PROGRESS_ID in status:
+                match status[SIM_PROGRESS_ID]:
+                    case EndEvent(msg=msg):
+                        return
+                    case FullSnapshotEvent(snapshot=snapshot, iteration=batch):
+                        if snapshot is not None:
+                            self._snapshots[batch] = snapshot
+                    case (
+                        SnapshotUpdateEvent(snapshot=snapshot, iteration=batch) as event
+                    ):
+                        if snapshot is not None:
+                            batch_number = event.iteration
+                            self._snapshots[batch_number].merge_snapshot(snapshot)
+                            header = self._make_header(
+                                f"Running forward models (Batch #{batch_number})",
+                                ansi.BLUE,
+                            )
+                            summary = self._get_progress_summary(event.status_count)
+                            job_states = self._get_job_states(
+                                self._snapshots[batch_number]
+                            )
+                            msg = (
+                                self._join_two_newlines_indent(
+                                    (header, summary, job_states)
+                                )
+                                + "\n"
+                            )
+                            if batch == self._last_reported_batch:
+                                self._clear()
+                            ansi.ansi_print(msg)
+                            self._clear_lines = len(msg.split("\n"))
+                            self._last_reported_batch = max(
+                                self._last_reported_batch, batch
+                            )
+        except Exception:
+            logging.getLogger(EVEREST).debug(traceback.format_exc())
+
+    def _get_opt_progress_batch(
+        self, cli_monitor_data: dict[str, Any], batch: int, idx: int
+    ) -> str:
+        header = self._make_header(f"Optimization progress (Batch #{batch})")
+        width = _get_max_width(cli_monitor_data["controls"][idx].keys())
+        controls = self._join_one_newline_indent(
+            [
+                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                for name, value in cli_monitor_data["controls"][idx].items()
+            ]
+        )
+        expected_objectives = cli_monitor_data["expected_objectives"]
+        width = _get_max_width(expected_objectives.keys())
+        objectives = self._join_one_newline_indent(
+            [
+                f"{name:>{width}}: {value[idx]:{self.FLOAT_FMT}}"
+                for name, value in expected_objectives.items()
+            ]
+        )
+        objective_value = cli_monitor_data["objective_value"][idx]
+        total_objective = (
+            f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
+        )
+        return self._join_two_newlines_indent(
+            (header, controls, objectives, total_objective)
+        )
+
+    def _get_opt_progress_single_batch(self, cli_monitor_data: dict[str, Any]) -> str:
+        batch: int = cli_monitor_data.get("batch", 0)
+        if batch == self._last_reported_opt_progress:
+            return ""
+
+        lines = [self._make_header(f"Optimization progress (Batch #{batch})")]
+
+        def mkline(data: dict[str, Any], width: int) -> str:
+            width = _get_max_width(data.keys())
+            return self._join_one_newline_indent(
+                [
+                    f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                    for name, value in data.items()
+                ]
+            )
+
+        if cli_monitor_data.get("result_type") == "FunctionResult":
+            if controls := cli_monitor_data.get("controls"):
+                width = _get_max_width(controls.keys())
+                lines.append(mkline(controls, width))
+            if expected_objectives := cli_monitor_data.get("expected_objectives"):
+                width = _get_max_width(expected_objectives.keys())
+                lines.append(mkline(expected_objectives, width))
+            if objective_value := cli_monitor_data.get("objective_value"):
+                lines.append(
+                    f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
+                )
+
+        if failures := cli_monitor_data["failures"]:
+            failed_lines = []
+            if failed_functions := [r for r, p in failures.items() if -1 in p]:
+                s = "s" if len(failed_functions) > 1 else ""
+                failed_lines.append(
+                    f"{ansi.RED}Failed function evaluation{s} for realization{s}: "
+                    f"{format_list(failed_functions)}{ansi.RESET}"
+                )
+            for k, v in failures.items():
+                if p := [item for item in v if item >= 0]:
+                    s = "s" if len(p) > 1 else ""
+                    failed_lines.append(
+                        f"{ansi.RED}Failed perturbation{s} for realization {k}: "
+                        f"{format_list(p)}{ansi.RESET}"
+                    )
+            if failed_lines:
+                lines.append(self._join_one_newline_indent(failed_lines))
+
+        self._last_reported_opt_progress = batch
+
+        return self._join_two_newlines_indent(lines)
+
+    @staticmethod
+    def _get_progress_summary(status: dict[str, int]) -> str:
+        colors = [
+            ansi.BLACK,
+            ansi.BLACK,
+            ansi.BLUE if status.get("Running", 0) > 0 else ansi.BLACK,
+            ansi.GREEN if status.get("Finished", 0) > 0 else ansi.BLACK,
+            ansi.RED if status.get("Failed", 0) > 0 else ansi.BLACK,
+        ]
+        labels = ("Waiting", "Pending", "Running", "Finished", "Failed")
+        values = [status.get(ls, 0) for ls in labels]
+        return " | ".join(
+            f"{color}{key}: {value}{ansi.RESET}"
+            for color, key, value in zip(colors, labels, values, strict=False)
+        )
+
+    @classmethod
+    def _get_job_states(cls, snapshot: EnsembleSnapshot) -> str:
+        print_lines = []
+        jobs_status = cls._get_jobs_status(snapshot)
+        forward_model_messages = [
+            v.get("message", "").replace(  # type: ignore[union-attr]
+                "status from done callback:", "Forward model error:"
+            )
+            for v in snapshot.reals.values()
+            if v.get("message")
+        ]
+        if jobs_status:
+            max_widths = {
+                state: _get_max_width(
+                    [str(len(item.status[state])) for item in jobs_status]
+                )
+                for state in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]
+            }
+            width = _get_max_width([item.name for item in jobs_status])
+            for job in jobs_status:
+                print_lines.append(
+                    f"{job.name:>{width}}: {job.progress_str(max_widths)}{ansi.RESET}"
+                )
+                if job.errors:
+                    print_lines.extend(
+                        [
+                            f"{ansi.RED}{job.name:>{width}}: {err}{ansi.RESET}"
+                            for err in job.errors
+                        ]
+                    )
+                if forward_model_messages:
+                    print_lines.extend(
+                        [f"{ansi.RED} {message}" for message in forward_model_messages]
+                    )
+        return cls._join_one_newline_indent(print_lines)
+
+    @staticmethod
+    def _get_jobs_status(snapshot: EnsembleSnapshot) -> list[JobProgress]:
+        job_progress = {}
+        for (realization, job_idx), job in snapshot.get_all_fm_steps().items():
+            assert "name" in job, "job name is missing"
+            assert job["name"] is not None, "job name is None"
+            name = job["name"]
+            if job_idx not in job_progress:
+                job_progress[job_idx] = JobProgress(name=name)
+            assert "status" in job
+            status = job["status"]
+            if status in {JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE}:
+                job_progress[job_idx].status[status].append(int(realization))
+            if error := job.get("error"):
+                job_progress[job_idx].errors[error].append(int(realization))
+        return list(job_progress.values())
+
+    @classmethod
+    def _join_one_newline_indent(cls, sequence: Sequence[str]) -> str:
+        return ("\n" + " " * cls.INDENT).join(sequence)
+
+    @classmethod
+    def _join_two_newlines_indent(cls, sequence: Sequence[str]) -> str:
+        return ("\n\n" + " " * cls.INDENT).join(sequence)
+
+    @classmethod
+    def _join_two_newlines(cls, sequence: Sequence[str]) -> str:
+        return "\n\n".join(sequence)
+
+    def _make_header(self, msg: str, color: str = ansi.BLACK) -> str:
+        header = msg.center(len(msg) + 2).center(self._width, "=")
+        return f"{color}{header}{ansi.RESET}"
+
+    def _clear(self) -> None:
+        if not sys.stdout.isatty():
+            return
+        for _ in range(self._clear_lines):
+            print(ansi.CURSOR_UP, end=ansi.CLEAR_LINE)
+
+
+def run_server_monitor(
+    client: ErtClient,
+    experiment_id: str,
+) -> None:
+    monitor = _ServerMonitor()
+    start_monitor(client, callback=monitor.update, experiment_id=experiment_id)
+
+
+def run_empty_server_monitor(
+    client: ErtClient,
+    experiment_id: str,
+) -> None:
+    start_monitor(client, callback=lambda _: None, experiment_id=experiment_id)
+
+
+def remove_show_scaling_warning_setting() -> None:
+    """Remove the now unused "show_scaling_warning" everest preference from
+    the legacy ~/.ert preferences file, if present. The whole file is
+    deleted if removing it leaves the file empty; otherwise the file is
+    rewritten without that key, preserving any other content.
+    """
+    user_info_path = Path(os.getenv("HOME", "")) / ".ert"
+    if not user_info_path.exists():
+        return
+
+    logger = logging.getLogger(EVEREST)
+    content = user_info_path.read_text(encoding="utf-8")
+
+    try:
+        user_info = json.loads(content)
+    except json.decoder.JSONDecodeError as e:
+        logger.info(
+            "Preserving preferences file %s, could not be parsed: %s",
+            user_info_path,
+            e,
+        )
+        return
+
+    everest_pref = user_info.get(EVEREST)
+    if not isinstance(everest_pref, dict) or "show_scaling_warning" not in everest_pref:
+        return
+
+    everest_pref.pop("show_scaling_warning")
+    if not everest_pref:
+        user_info.pop(EVEREST)
+
+    if not user_info:
+        user_info_path.unlink()
+        logger.info(
+            "Deleted preferences file %s, previously containing: %s",
+            user_info_path,
+            content,
+        )
+    else:
+        user_info_path.write_text(
+            json.dumps(user_info, ensure_ascii=False, indent=4), encoding="utf-8"
+        )
+        logger.info(
+            "Removed legacy show_scaling_warning preference from %s, "
+            "previous content: %s, remaining content: %s",
+            user_info_path,
+            content,
+            user_info,
+        )
+
+
+def get_experiment_status(storage_dir: str) -> ExperimentStatus | None:
+    """
+    Reads the experiment status from storage. We assume that there is
+    only one experiment for each everest run in storage.
+    """
+    with open_storage(storage_dir, "r") as storage:
+        experiments = list(storage.experiments)
+        return None if not experiments else experiments[0].status
+
+
+class ArgParseFormatter(argparse.HelpFormatter):
+    def _fill_text(self, text: str, width: int, indent: str) -> str:
+        return "\n\n".join(
+            [
+                argparse.HelpFormatter._fill_text(self, p, width, indent)
+                for p in text.split("\n\n")
+            ]
+        )

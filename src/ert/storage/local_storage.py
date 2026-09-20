@@ -1,0 +1,950 @@
+from __future__ import annotations
+
+import json
+import logging
+import os
+import re
+import shutil
+import types
+from collections.abc import Generator, MutableSequence
+from datetime import UTC, datetime
+from functools import cached_property
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from textwrap import dedent
+from typing import Self
+from uuid import UUID, uuid4
+
+import polars as pl
+import xarray as xr
+from filelock import FileLock, Timeout
+from pydantic import BaseModel, Field, TypeAdapter
+
+import ert.storage
+from ert.config import ErtConfig
+from ert.shared import __version__
+
+from .blob_data import BlobInfo, BlobStorageData, BlobType
+from .local_ensemble import LocalEnsemble
+from .local_experiment import ExperimentConfig, LocalExperiment
+from .mode import BaseMode, Mode, ModeLiteral, require_write
+from .realization_storage_state import RealizationStorageState
+
+logger = logging.getLogger(__name__)
+
+
+_LOCAL_STORAGE_VERSION = 40
+
+
+def open_storage(
+    path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
+) -> ert.storage.Storage:
+    """
+    Opens the local storage at the given path.
+
+    Parameters
+    ----------
+    path : {str, path-like}
+        The file system path to the storage.
+    mode : {ModeLiteral, Mode}
+        The access mode for the storage ("r" for read, "w" for write).
+        Defaults to read.
+
+    Returns
+    -------
+    storage : Storage
+        The opened storage.
+
+    Raises
+    ------
+    ErtStoragePermissionError
+        If the storage cannot be accessed due to insufficient permissions.
+    ErtStorageException
+        If the storage cannot be opened for any other reason.
+    """
+    _ = LocalStorage.check_migration_needed(Path(path))
+
+    try:
+        return LocalStorage(Path(path), Mode(mode))
+    except PermissionError as err:
+        raise ert.storage.ErtStoragePermissionError(
+            "Permission error when accessing storage at: "
+            f"{path} with mode: '{mode}'. Error: {err}"
+        ) from err
+    except Exception as err:
+        raise ert.storage.ErtStorageException(
+            f"Failed to open storage: {path} with error: {err}"
+        ) from err
+
+
+class _Migrations(BaseModel, extra="forbid"):
+    ert_version: str = __version__
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+    name: str
+    version_range: tuple[int, int]
+
+
+class _Index(BaseModel, extra="forbid"):
+    version: int = _LOCAL_STORAGE_VERSION
+    migrations: MutableSequence[_Migrations] = Field(default_factory=list)
+
+
+class LocalStorage(BaseMode):
+    """
+    A class representing the local storage for ERT experiments and ensembles.
+
+    This class manages the file-based storage system used by ERT to store
+    experiments and ensembles.
+    It includes functionality to handle versioning, migrations, and concurrency
+    through file locks.
+    """
+
+    LOCK_TIMEOUT = 5
+    EXPERIMENTS_PATH = "experiments"
+    ENSEMBLES_PATH = "ensembles"
+    SWAP_PATH = "swp"
+
+    def __init__(
+        self,
+        path: str | os.PathLike[str],
+        mode: Mode,
+        *,
+        stage_for_migration: bool = False,
+    ) -> None:
+        """
+        Initializes the LocalStorage instance.
+
+        Parameters
+        ----------
+        path : {str, path-like}
+            The file system path to the storage.
+        mode : Mode
+            The access mode for the storage (read/write).
+        stage_for_migration : bool
+            Whether to avoid reloading storage to allow migration
+
+        Raises
+        ------
+        TimeoutError
+            If the storage lock cannot be acquired in write mode.
+        ValueError
+            If no index.json is found but other storage components exist.
+        RuntimeError
+            If the storage is opened in read-only mode but its version is too
+            old and requires migration.
+        """
+
+        self.path = Path(path).absolute()
+        super().__init__(mode)
+
+        if mode.can_write:
+            self._acquire_lock()
+
+        self._experiments: dict[UUID, LocalExperiment] = {}
+        self._ensembles: dict[UUID, LocalEnsemble] = {}
+        self._index: _Index = _Index()
+
+        try:
+            self.version = _storage_version(self.path)
+        except FileNotFoundError as err:
+            # No index json, will have a problem if other components of storage exists
+            errors = []
+            if (self.path / self.EXPERIMENTS_PATH).exists():
+                errors.append(
+                    f"experiments path: {(self.path / self.EXPERIMENTS_PATH)}"
+                )
+            if (self.path / self.ENSEMBLES_PATH).exists():
+                errors.append(f"ensemble path: {self.path / self.ENSEMBLES_PATH}")
+            if errors:
+                raise ValueError(f"No index.json, but found: {errors}") from err
+            self.version = _LOCAL_STORAGE_VERSION
+
+        if self.check_migration_needed(Path(self.path)) and not self.can_write:
+            raise RuntimeError(
+                f"Cannot open storage '{self.path}' in read-only mode: "
+                f"Storage version {self.version} is too old. "
+                f"Run ert to initiate migration."
+            )
+
+        if not stage_for_migration:
+            self.reload()
+
+            if mode.can_write:
+                self._save_index()
+
+    @staticmethod
+    def check_migration_needed(storage_dir: Path) -> bool:
+        """
+        Checks whether the storage at the given path needs to be migrated.
+
+        Parameters
+        ----------
+        storage_dir : Path
+            The file system path to the storage.
+
+        Returns
+        -------
+        migration_needed : bool
+            True if the storage version is older than the current version and
+            must be migrated, False otherwise.
+
+        Raises
+        ------
+        ErtStorageException
+            If the storage version is newer than the current version.
+        """
+        try:
+            version = _storage_version(storage_dir)
+        except FileNotFoundError:
+            version = _LOCAL_STORAGE_VERSION
+
+        if version > _LOCAL_STORAGE_VERSION:
+            raise ert.storage.ErtStorageException(
+                f"Cannot open storage '{storage_dir.absolute()}': Storage version "
+                f"{version} is newer than the current version {_LOCAL_STORAGE_VERSION}"
+                f", upgrade ert to continue, or run with a different ENSPATH"
+            )
+
+        return version < _LOCAL_STORAGE_VERSION
+
+    @staticmethod
+    def perform_migration(path: Path) -> None:
+        """
+        Migrates the storage at the given path to the current version.
+
+        Does nothing if the storage is already up-to-date.
+
+        Parameters
+        ----------
+        path : Path
+            The file system path to the storage.
+
+        Raises
+        ------
+        ErtStorageException
+            If the storage version is newer than the current version.
+        """
+        if LocalStorage.check_migration_needed(path):
+            with LocalStorage(path, Mode("w"), stage_for_migration=True) as storage:
+                storage._migrate(storage.version)
+                storage.reload()
+
+    def reload(self) -> None:
+        """
+        Reloads the index, experiments, and ensembles from the storage.
+
+        This method is used to refresh the state of the storage to reflect any
+        changes made to the underlying file system since the storage was last
+        accessed.
+        """
+
+        self._index = self._load_index()
+        self._ensembles = self._load_ensembles()
+        self._experiments = self._load_experiments()
+
+        for ens in self._ensembles.values():
+            ens.refresh_ensemble_state()
+
+    def get_experiment(self, uuid: UUID) -> LocalExperiment:
+        """
+        Retrieves an experiment by UUID.
+
+        Parameters
+        ----------
+        uuid : UUID
+            The UUID of the experiment to retrieve.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The experiment associated with the given UUID.
+
+        Raises
+        ------
+        KeyError
+            If no experiment with the given UUID is found.
+        """
+
+        return self._experiments[uuid]
+
+    def get_experiment_by_name(self, name: str) -> LocalExperiment:
+        """
+        Retrieves an experiment by name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the experiment to retrieve.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The experiment associated with the given name.
+
+        Raises
+        ------
+        KeyError
+            If no experiment with the given name is found.
+        """
+        for exp in self._experiments.values():
+            if exp.name == name:
+                return exp
+        raise KeyError(f"Experiment with name '{name}' not found")
+
+    def get_ensemble(self, uuid: UUID | str) -> LocalEnsemble:
+        """
+        Retrieves an ensemble by UUID.
+
+        Parameters
+        ----------
+        uuid : {UUID, str}
+            The UUID of the ensemble to retrieve.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given UUID.
+
+        Raises
+        ------
+        ValueError
+            If uuid is a string that is not a valid UUID.
+        KeyError
+            If no ensemble with the given UUID is found.
+        """
+        if isinstance(uuid, str):
+            uuid = UUID(uuid)
+        return self._ensembles[uuid]
+
+    @property
+    def experiments(self) -> Generator[LocalExperiment]:
+        yield from self._experiments.values()
+
+    @property
+    def ensembles(self) -> Generator[LocalEnsemble]:
+        yield from self._ensembles.values()
+
+    def _load_index(self) -> _Index:
+        try:
+            return _Index.model_validate_json(
+                (self.path / "index.json").read_text(encoding="utf-8")
+            )
+        except PermissionError as e:
+            logger.error(
+                "Permission error when loading index from path: "
+                f"{self.path / 'index.json'}. Error: {e}",
+            )
+            raise e
+        except FileNotFoundError:
+            return _Index()
+
+    def _load_ensembles(self) -> dict[UUID, LocalEnsemble]:
+        if not (self.path / "ensembles").exists():
+            return {}
+        ensembles: list[LocalEnsemble] = []
+        for ensemble_path in (self.path / "ensembles").iterdir():
+            try:
+                ensemble = LocalEnsemble(self, ensemble_path, self.mode)
+                ensembles.append(ensemble)
+            except PermissionError as e:
+                logger.error(
+                    "Permission error when loading ensemble from path: "
+                    f"{ensemble_path}. Error: {e}",
+                )
+                raise e
+            except FileNotFoundError:
+                logger.exception(
+                    "Failed to load an ensemble from path: %s", ensemble_path
+                )
+                continue
+        # Make sure that the ensembles are sorted by name in reverse. Given
+        # multiple ensembles with a common name, iterating over the ensemble
+        # dictionary will yield the newest ensemble first.
+        return {
+            x.id: x for x in sorted(ensembles, key=lambda x: x.started_at, reverse=True)
+        }
+
+    def _load_experiments(self) -> dict[UUID, LocalExperiment]:
+        experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
+        return {
+            exp_id: LocalExperiment(self, self._experiment_path(exp_id), self.mode)
+            for exp_id in experiment_ids
+        }
+
+    def _ensemble_path(self, ensemble_id: UUID) -> Path:
+        return self.path / self.ENSEMBLES_PATH / str(ensemble_id)
+
+    def _experiment_path(self, experiment_id: UUID) -> Path:
+        return self.path / self.EXPERIMENTS_PATH / str(experiment_id)
+
+    @cached_property
+    def _swap_path(self) -> Path:
+        return self.path / self.SWAP_PATH
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exception: type[BaseException] | None,
+        exception_type: BaseException | None,
+        traceback: types.TracebackType | None,
+    ) -> None:
+        self.close()
+
+    @require_write
+    def _acquire_lock(self) -> None:
+        """
+        Acquires the exclusive file lock for the storage.
+
+        Raises
+        ------
+        TimeoutError
+            If the lock cannot be acquired within ``LOCK_TIMEOUT`` seconds,
+            typically because another ERT process is using the same ENSPATH.
+        """
+        self._lock = FileLock(self.path / "storage.lock")
+        try:
+            self._lock.acquire(timeout=self.LOCK_TIMEOUT)
+        except Timeout as e:
+            raise TimeoutError(
+                f"Not able to acquire lock for: {self.path}."
+                " You may already be running ERT,"
+                " or another user is using the same ENSPATH."
+            ) from e
+
+    def close(self) -> None:
+        """
+        Closes the storage, releasing any acquired locks and saving the index.
+        This method should be called to cleanly close the storage, especially
+        when it was opened in write mode. Failing to call this method may leave
+        a lock file behind, which would interfere with subsequent access to
+        the storage.
+        """
+        self._ensembles.clear()
+        self._experiments.clear()
+
+        if self.can_write:
+            self._save_index()
+            self._release_lock()
+
+    def _release_lock(self) -> None:
+        self._lock.release()
+        (self.path / "storage.lock").unlink(missing_ok=True)
+
+    @require_write
+    def create_experiment(
+        self,
+        experiment_config: ExperimentConfig | None = None,
+        name: str | None = None,
+    ) -> LocalExperiment:
+        """
+        Creates a new experiment in the storage.
+
+        Parameters
+        ----------
+        experiment_config : ExperimentConfig, optional
+            The configuration for the experiment, holding parameters,
+            responses, observations and other experiment settings. An empty
+            configuration is used if none is provided.
+        name : str, optional
+            The name of the experiment. If None, the current date in ISO
+            format (YYYY-MM-DD) is used.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The newly created experiment.
+
+        Raises
+        ------
+        FileExistsError
+            If an experiment directory with the generated id already exists.
+        """
+        if experiment_config is None:
+            experiment_config = ExperimentConfig()
+
+        exp_id = uuid4()
+        path = self._experiment_path(exp_id)
+        path.mkdir(parents=True, exist_ok=False)
+
+        exp = LocalExperiment.create(
+            self,
+            exp_id,
+            path,
+            experiment_config=experiment_config,
+            name=name,
+        )
+
+        self._experiments[exp.id] = exp
+        return exp
+
+    @require_write
+    def create_ensemble(
+        self,
+        experiment: LocalExperiment | UUID,
+        *,
+        ensemble_size: int,
+        iteration: int = 0,
+        name: str | None = None,
+        prior_ensemble: LocalEnsemble | UUID | None = None,
+    ) -> LocalEnsemble:
+        """
+        Creates a new ensemble in the storage.
+
+        Parameters
+        ----------
+        experiment : {LocalExperiment, UUID}
+            The experiment for which the ensemble is created.
+        ensemble_size : int
+            The number of realizations in the ensemble.
+        iteration : int, optional
+            The iteration index for the ensemble.
+        name : str, optional
+            The name of the ensemble.
+        prior_ensemble : {LocalEnsemble, UUID}, optional
+            An optional ensemble to use as a prior.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The newly created ensemble.
+
+        Raises
+        ------
+        ValueError
+            If the ensemble size is larger than the prior ensemble.
+        FileExistsError
+            If an ensemble directory with the generated id already exists.
+        """
+
+        experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
+
+        uuid = uuid4()
+        path = self._ensemble_path(uuid)
+        path.mkdir(parents=True, exist_ok=False)
+
+        prior_ensemble_id: UUID | None = None
+        if isinstance(prior_ensemble, UUID):
+            prior_ensemble_id = prior_ensemble
+        elif isinstance(prior_ensemble, LocalEnsemble):
+            prior_ensemble_id = prior_ensemble.id
+        prior_ensemble = (
+            self.get_ensemble(prior_ensemble_id) if prior_ensemble_id else None
+        )
+        if prior_ensemble and ensemble_size > prior_ensemble.ensemble_size:
+            raise ValueError(
+                f"New ensemble ({ensemble_size}) must be of equal or "
+                f"smaller size than parent ensemble ({prior_ensemble.ensemble_size})"
+            )
+        ens = LocalEnsemble.create(
+            self,
+            path,
+            uuid,
+            ensemble_size=ensemble_size,
+            experiment_id=experiment_id,
+            iteration=iteration,
+            name=str(name),
+            prior_ensemble_id=prior_ensemble_id,
+        )
+        if prior_ensemble:
+            for realization, state in enumerate(prior_ensemble.get_ensemble_state()):
+                if {
+                    RealizationStorageState.FAILURE_IN_CURRENT,
+                    RealizationStorageState.FAILURE_IN_PARENT,
+                    RealizationStorageState.UNDEFINED,
+                }.intersection(state):
+                    ens.set_failure(
+                        realization,
+                        RealizationStorageState.FAILURE_IN_PARENT,
+                        f"Failure from prior: {state}",
+                    )
+
+        self._ensembles[ens.id] = ens
+        return ens
+
+    @require_write
+    def _add_migration_information(
+        self, from_version: int, to_version: int, name: str
+    ) -> None:
+        self._index.migrations.append(
+            _Migrations(
+                version_range=(from_version, to_version),
+                name=name,
+            )
+        )
+        self._index.version = to_version
+        self._save_index()
+
+    @require_write
+    def _save_index(self) -> None:
+        self._write_transaction(
+            self.path / "index.json",
+            self._index.model_dump_json(indent=4).encode("utf-8"),
+        )
+
+    def _legacy_storage_migration_message(
+        self, backup_path: Path, ert_version_to_use: str
+    ) -> str:
+        return dedent(
+            f"""
+            Detected outdated storage, which is no longer supported
+            by ERT. Its contents are copied to:
+
+            {backup_path}
+
+            In order to migrate this storage, do the following:
+
+            (1) with ert version <= {ert_version_to_use}, open up
+            the same ert config with: ENSPATH={backup_path}
+
+            (2) with current ert version, open up the same storage again.
+            The contents of the storage should now be up-to-date, and you may
+            copy the ensembles and experiments into the original folder @
+             {self.path}.
+
+            This is not guaranteed to work. Other than setting the custom
+            ENSPATH, the ERT config should ideally be the same as it was
+            when the old storage was created.
+        """
+        )
+
+    @require_write
+    def _migrate(self, version: int) -> None:
+        from .migration import (  # ruff: ignore[import-outside-top-level]
+            to6,
+            to7,
+            to8,
+            to9,
+            to10,
+            to11,
+            to12,
+            to13,
+            to14,
+            to15,
+            to16,
+            to17,
+            to18,
+            to19,
+            to20,
+            to21,
+            to22,
+            to23,
+            to24,
+            to25,
+            to26,
+            to27,
+            to28,
+            to29,
+            to30,
+            to31,
+            to32,
+            to33,
+            to34,
+            to35,
+            to36,
+            to37,
+            to38,
+            to39,
+            to40,
+        )
+
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            self._index = self._load_index()
+            if version == 0:
+                # Make a backup of current storage,
+                # and initialize a new blank storage.
+                # And print a lengthy message explaining to the user how to
+                # migrate the blockfs storage
+                bkup_path = self.path / "_blockfs_backup"
+                dirs = set(os.listdir(self.path)) - {"storage.lock"}
+                bkup_path.mkdir()
+                for directory in dirs:
+                    shutil.move(self.path / directory, bkup_path / directory)
+
+                self._index = self._load_index()
+
+                logger.info("Blockfs storage backed up")
+                print(self._legacy_storage_migration_message(bkup_path, "10.3.*"))
+                return
+            if version < 5:
+                bkup_path = self.path / "_storage_backup_lt_5"
+                dirs = set(os.listdir(self.path)) - {"storage.lock"}
+                bkup_path.mkdir()
+                for directory in dirs:
+                    shutil.move(self.path / directory, bkup_path / directory)
+
+                self._index = self._load_index()
+
+                logger.info("Storage backed up for version less than 5")
+                print(self._legacy_storage_migration_message(bkup_path, "14.6.*"))
+                return
+            if version < _LOCAL_STORAGE_VERSION:
+                migrations = {
+                    5: to6,
+                    6: to7,
+                    7: to8,
+                    8: to9,
+                    9: to10,
+                    10: to11,
+                    11: to12,
+                    12: to13,
+                    13: to14,
+                    14: to15,
+                    15: to16,
+                    16: to17,
+                    17: to18,
+                    18: to19,
+                    19: to20,
+                    20: to21,
+                    21: to22,
+                    22: to23,
+                    23: to24,
+                    24: to25,
+                    25: to26,
+                    26: to27,
+                    27: to28,
+                    28: to29,
+                    29: to30,
+                    30: to31,
+                    31: to32,
+                    32: to33,
+                    33: to34,
+                    34: to35,
+                    35: to36,
+                    36: to37,
+                    37: to38,
+                    38: to39,
+                    39: to40,
+                }
+                for from_version in range(version, _LOCAL_STORAGE_VERSION):
+                    migrations[from_version].migrate(self.path)
+                    self._add_migration_information(
+                        from_version, from_version + 1, migrations[from_version].info
+                    )
+        except Exception as e:
+            logger.error(
+                f"Migrating storage at {self.path} failed with: {e}", stack_info=True
+            )
+            raise e
+
+    def get_unique_experiment_name(self, experiment_name: str) -> str:
+        """
+        Get a unique experiment name
+
+        If an experiment with the given name exists an _0 is appended
+        or _n+1 where n is the largest postfix found for the given experiment name
+        """
+        if not experiment_name:
+            return self.get_unique_experiment_name("default")
+
+        if experiment_name not in [e.name for e in self.experiments]:
+            return experiment_name
+
+        # Only match names that follow the pattern: experiment_name_<digits>
+        pattern = re.escape(experiment_name) + r"_(\d+)$"
+
+        numeric_suffixes = []
+        for e in self.experiments:
+            match = re.match(pattern, e.name)
+            if match:
+                numeric_suffixes.append(int(match.group(1)))
+
+        if numeric_suffixes:
+            return experiment_name + "_" + str(max(numeric_suffixes) + 1)
+        return experiment_name + "_0"
+
+    @require_write
+    def save_blob(
+        self,
+        *,
+        name: str,
+        data: bytes,
+        blob_info: BlobInfo,
+        file_type: str,
+        blob_dir: Path,
+    ) -> BlobStorageData:
+        """Create a blob record and persist its data and JSON sidecar."""
+        blob_id = uuid4().hex[:8]
+        uri = f"{blob_id}.blob"
+        instance = BlobStorageData(
+            uri=uri,
+            file_size=len(data),
+            file_type=file_type,
+            name=name,
+            blob_info=blob_info,
+        )
+        blob_dir.mkdir(parents=True, exist_ok=True)
+        self._write_transaction(blob_dir / uri, data)
+        self._write_transaction(
+            blob_dir / f"{uri}.json",
+            instance.model_dump_json(indent=2).encode("utf-8"),
+        )
+        return instance
+
+    def load_blob_metadata(
+        self,
+        blob_dir: Path,
+        blob_type: BlobType | None = None,
+    ) -> list[BlobStorageData]:
+        """Return metadata for every blob in *blob_dir*, optionally filtered by type."""
+        if not blob_dir.exists():
+            return []
+        adapter: TypeAdapter[BlobStorageData] = TypeAdapter(BlobStorageData)
+        results = []
+        for json_path in blob_dir.glob("*.json"):
+            meta = adapter.validate_json(json_path.read_bytes())
+            if blob_type is None or meta.blob_info.blob_type == blob_type:
+                results.append(meta)
+        return results
+
+    def load_blob(self, blob_dir: Path, uri: str) -> bytes:
+        """Return raw bytes for the blob identified by *uri* inside *blob_dir*."""
+        resolved_dir = blob_dir.resolve()
+        blob_path = (resolved_dir / uri).resolve()
+        try:
+            blob_path.relative_to(resolved_dir)
+        except ValueError:
+            logger.warning("Blob URI %s resolves outside of blob directory", uri)
+            raise FileNotFoundError(uri) from None
+        if not blob_path.exists():
+            logger.warning("Blob file %s not found", uri)
+            raise FileNotFoundError(uri)
+        return blob_path.read_bytes()
+
+    def _write_transaction(self, filename: str | os.PathLike[str], data: bytes) -> None:
+        """
+        Writes the data to the filename as a transaction.
+
+        Guarantees to not leave half-written or empty files on disk if the write
+        fails or the process is killed.
+        """
+        self._swap_path.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
+            f.write(data)
+            f.flush()
+            Path(f.name).chmod(0o660)
+            Path(f.name).rename(filename)
+
+    def _to_netcdf_transaction(
+        self, filename: str | os.PathLike[str], dataset: xr.Dataset
+    ) -> None:
+        """
+        Writes the dataset to the filename as a transaction.
+
+        Guarantees to not leave half-written or empty files on disk if the write
+        fails or the process is killed.
+        """
+        self._swap_path.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
+            dataset.to_netcdf(f, engine="scipy")
+            Path(f.name).chmod(0o660)
+            Path(f.name).rename(filename)
+
+    def _to_parquet_transaction(
+        self, filename: str | os.PathLike[str], dataframe: pl.DataFrame
+    ) -> None:
+        """
+        Writes the dataset to the filename as a transaction.
+
+        Guarantees to not leave half-written or empty files on disk if the write
+        fails or the process is killed.
+        """
+        self._swap_path.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
+            dataframe.write_parquet(f.name)
+            Path(f.name).chmod(0o660)
+            Path(f.name).rename(filename)
+
+
+def _storage_version(path: Path) -> int:
+    """
+    Determines the storage version at the given path.
+
+    Parameters
+    ----------
+    path : Path
+        The file system path to the storage.
+
+    Returns
+    -------
+    version : int
+        The storage version. Returns the current version if the path does not
+        exist, and 0 if the path holds legacy block storage.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the path exists but contains neither an index.json nor block storage.
+    NotImplementedError
+        If the index.json does not contain a version key.
+    """
+    if not path.exists():
+        return _LOCAL_STORAGE_VERSION
+    if not (path / "index.json").exists():
+        if _is_block_storage(path):
+            return 0
+        raise FileNotFoundError(path / "index.json")
+    try:
+        return int(
+            json.loads((path / "index.json").read_text(encoding="utf-8"))["version"]
+        )
+    except KeyError as exc:
+        raise NotImplementedError("Incompatible ERT Local Storage") from exc
+
+
+_migration_ert_config: ErtConfig | None = None
+
+
+def local_storage_set_ert_config(ert_config: ErtConfig | None) -> None:
+    """
+    Set the ErtConfig for migration hints.
+
+    This function sets a global ErtConfig instance which may be used by
+    migration scripts to access configuration details during the migration
+    process.
+
+    Parameters
+    ----------
+    ert_config : ErtConfig | None
+        The ErtConfig instance to be used for migrations.
+    """
+
+    global _migration_ert_config  # ruff: ignore[global-statement]
+    _migration_ert_config = ert_config
+
+
+def local_storage_get_ert_config() -> ErtConfig:
+    """
+    Retrieves the ErtConfig instance previously set for migrations.
+
+    This function should be called after `local_storage_set_ert_config` has
+    been used to set the ErtConfig instance.
+
+    Returns
+    -------
+    ert_config : ErtConfig
+        The ErtConfig instance.
+
+    Raises
+    ------
+    AssertionError
+        If the ErtConfig has not been set before calling this function.
+    """
+
+    assert _migration_ert_config is not None, (
+        "Use 'local_storage_set_ert_config' before retrieving the config"
+    )
+    return _migration_ert_config
+
+
+def _is_block_storage(path: Path) -> bool:
+    """Looks for ert_fstab in subdirectories"""
+    for subpath in path.iterdir():
+        if subpath.name.startswith("_"):
+            continue
+
+        if (subpath / "ert_fstab").exists():
+            return True
+
+    return False

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -e
+
+name="STDIN"
+
+while getopts "o:e:J:q:R:n:" opt
+do
+    case "$opt" in
+        o)
+            stdout=$OPTARG
+            ;;
+        e)
+            stderr=$OPTARG
+            ;;
+        J)
+            name=$OPTARG
+            ;;
+        q)
+            queue=$OPTARG
+            ;;
+        n)
+            num_cpu=$OPTARG
+            ;;
+        R)
+            resource_requirement=$OPTARG
+            ;;
+        *)
+            echo "Unprocessed option ${opt}"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
+jobid="${RANDOM}"
+job_env_file="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.env"
+
+mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
+echo $@ > "${jobdir}/${jobid}.script"
+echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
+echo "$resource_requirement" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.resource_requirement"
+touch $job_env_file
+
+[ -n $num_cpu ] && echo "export LSB_MAX_NUM_PROCESSORS=$num_cpu" >> $job_env_file
+
+[ -z $stdout ] && stdout="/dev/null"
+[ -z $stderr ] && stderr="/dev/null"
+
+bash "$(dirname $0)/lsfrunner" "${jobdir}/${jobid}" >$stdout 2>$stderr &
+disown
+
+echo "Job <$jobid> is submitted to default queue <normal>."

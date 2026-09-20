@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+job=$1
+
+function handle_sigterm {
+    # Torque uses (256 + SIGNAL) as the returncode
+    echo "271" > "${job}.returncode"
+    for grandchild in $(pgrep -P $child_pid); do
+        kill -s SIGTERM $grandchild
+    done
+    kill -s SIGTERM $child_pid
+    exit 1
+}
+
+trap handle_sigterm SIGTERM
+
+echo "$$" > "${job}.pid"
+source "${job}.env"
+bash "${job}.script" > "${job}.stdout" 2> "${job}.stderr" &
+child_pid=$!
+wait $child_pid
+echo $? > "${job}.returncode"
+
+cat ${job}.stdout
+
+cat ${job}.stderr >&2

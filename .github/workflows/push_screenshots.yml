@@ -1,0 +1,144 @@
+name: Push screenshots to ert-testdata
+
+on:
+  workflow_run:
+    workflows: ["Screenshot tests"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run-id:
+        description: 'Run ID of a Screenshot tests workflow run to use as artifact source'
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  push-screenshots:
+    name: Push updated screenshots to ert-testdata
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'pull_request'
+
+    steps:
+    - name: Download screenshot artifact
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: screenshot-results
+        path: artifact
+        run-id: ${{ inputs.run-id || github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Read metadata
+      id: metadata
+      run: |
+        echo "pr_number=$(jq -r '.pr_number' artifact/metadata.json)" >> "$GITHUB_OUTPUT"
+        echo "outcome=$(jq -r '.outcome' artifact/metadata.json)" >> "$GITHUB_OUTPUT"
+
+    - name: Check for updated screenshots
+      id: screenshots
+      run: |
+        if find artifact/updated-screenshots -type f -name '*.png' -print -quit | grep -q .; then
+          echo "has_new_screenshots=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_new_screenshots=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Get ert PR title
+      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true' && steps.metadata.outputs.pr_number != '0'
+      id: ert-pr-title
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+      run: |
+        ERT_PR_TITLE=$(gh pr view "${PR_NUMBER}" --repo equinor/ert --json title --jq '.title')
+        echo "ert_pr_title=${ERT_PR_TITLE}" >> "$GITHUB_OUTPUT"
+        ERT_PR_AUTHOR=$(gh pr view "${PR_NUMBER}" --repo equinor/ert --json author --jq '.author.login')
+        echo "ert_pr_author=${ERT_PR_AUTHOR}" >> "$GITHUB_OUTPUT"
+
+    - name: Checkout ert-testdata
+      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true'
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        repository: equinor/ert-testdata
+        ref: main
+        token: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
+        path: ert-testdata
+
+    - name: Copy updated screenshots into ert-testdata
+      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true'
+      run: cp -r artifact/updated-screenshots/. ert-testdata/screenshotbaselines/
+
+    - name: Push branch and open PR in ert-testdata
+      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true'
+      env:
+        GH_TOKEN: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
+        PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+        ERT_PR_TITLE: ${{ steps.ert-pr-title.outputs.ert_pr_title }}
+        ERT_PR_AUTHOR: ${{ steps.ert-pr-title.outputs.ert_pr_author }}
+      run: |
+        BRANCH="update-screenshots-ert-pr-${PR_NUMBER}"
+        cd ert-testdata
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/equinor/ert-testdata.git"
+        git checkout -b "$BRANCH"
+        git add --all screenshotbaselines/
+        git commit -m "Update screenshots for equinor/ert#${PR_NUMBER}"
+        git push --force origin "$BRANCH"
+        EXISTING=$(gh pr list \
+          --repo equinor/ert-testdata \
+          --head "$BRANCH" \
+          --state open \
+          --json number \
+          --jq '.[0].number // empty')
+        if [ -z "$EXISTING" ]; then
+          PR_URL=$(gh pr create \
+            --repo equinor/ert-testdata \
+            --base main \
+            --head "$BRANCH" \
+            --title "Update screenshots for ${ERT_PR_TITLE} (equinor/ert#${PR_NUMBER})" \
+            --body "Automatically updated screenshot baselines triggered by https://github.com/equinor/ert/pull/${PR_NUMBER} by @${ERT_PR_AUTHOR}")
+          TESTDATA_PR_NUMBER="${PR_URL##*/}"
+          set +e
+          ASSIGNEE_ERR=$(gh api --method POST "repos/equinor/ert-testdata/issues/${TESTDATA_PR_NUMBER}/assignees" \
+            -f "assignees[]=${ERT_PR_AUTHOR}" 2>&1 > /dev/null)
+          ASSIGNEE_STATUS=$?
+          REVIEWER_ERR=$(gh api --method POST "repos/equinor/ert-testdata/pulls/${TESTDATA_PR_NUMBER}/requested_reviewers" \
+            -f "reviewers[]=${ERT_PR_AUTHOR}" 2>&1 > /dev/null)
+          REVIEWER_STATUS=$?
+          set -e
+          if [ "$ASSIGNEE_STATUS" -ne 0 ]; then
+            echo "::warning::Could not assign @${ERT_PR_AUTHOR} on ert-testdata (exit code ${ASSIGNEE_STATUS}): ${ASSIGNEE_ERR}"
+          fi
+          if [ "$REVIEWER_STATUS" -ne 0 ]; then
+            echo "::warning::Could not request review from @${ERT_PR_AUTHOR} on ert-testdata (exit code ${REVIEWER_STATUS}): ${REVIEWER_ERR}"
+          fi
+          if [ "${PR_NUMBER}" != "0" ]; then
+            gh pr comment "${PR_NUMBER}" \
+              --repo equinor/ert \
+              --body "Screenshots differ from baselines. A baseline update PR has been prepared: ${PR_URL}"
+          fi
+        fi
+
+    - name: Close stale ert-testdata PR if screenshots now pass
+      if: steps.metadata.outputs.outcome == 'success'
+      env:
+        GH_TOKEN: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
+        PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+      run: |
+        BRANCH="update-screenshots-ert-pr-${PR_NUMBER}"
+        EXISTING=$(gh pr list \
+          --repo equinor/ert-testdata \
+          --head "$BRANCH" \
+          --state open \
+          --json number \
+          --jq '.[0].number // empty')
+        if [ -n "$EXISTING" ]; then
+          gh pr close "$EXISTING" --repo equinor/ert-testdata --delete-branch
+          if [ "${PR_NUMBER}" != "0" ]; then
+            gh pr comment "${PR_NUMBER}" \
+              --repo equinor/ert \
+              --body "Screenshot tests now pass. The baseline update PR equinor/ert-testdata#${EXISTING} has been closed."
+          fi
+        fi

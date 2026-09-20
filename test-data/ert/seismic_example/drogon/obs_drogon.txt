@@ -1,0 +1,3 @@
+SEISMIC_OBSERVATION {
+   OBS_FILE=obs/topvolantis--amplitude_full_*_depth--20190701_20180101.csv;
+};

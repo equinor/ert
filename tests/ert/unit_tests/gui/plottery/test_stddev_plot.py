@@ -1,0 +1,72 @@
+from unittest.mock import Mock
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+from matplotlib.figure import Figure
+
+from ert.gui.plotting.ert_plots import StdDevPlot
+from ert.gui.plotting.plot_api import EnsembleObject
+from ert.gui.plotting.utils import ObservationPlotLocations, PlotConfig, PlotContext
+
+
+@pytest.fixture
+def plot_context():
+    context = Mock(spec=PlotContext)
+    context.ensembles.return_value = [
+        EnsembleObject(
+            "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
+        )
+    ]
+    context.history_data = None
+    context.layer = 0
+    context.plotConfig.return_value = PlotConfig(title="StdDev Plot")
+    return context
+
+
+def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
+    rng = np.random.default_rng()
+    figure = Figure()
+    std_dev_data = rng.random((5, 5))
+    obs_loc = ObservationPlotLocations(
+        x=np.array([1, 3], dtype=np.float32),
+        y=np.array([2, 4], dtype=np.float32),
+    )
+    StdDevPlot().plot(
+        figure,
+        plot_context,
+        {},
+        {},
+        {"id": std_dev_data},
+        obs_loc,
+    )
+    ax = figure.axes
+    assert ax[0].get_title() == "experiment_1 : ensemble_1 layer=0"
+    assert ax[1].get_ylabel() == "Standard deviation"
+    annotation = [
+        child for child in ax[1].get_children() if isinstance(child, plt.Annotation)
+    ]
+    assert len(annotation) == 1
+    min_value = np.min(std_dev_data)
+    mean_value = np.mean(std_dev_data)
+    max_value = np.max(std_dev_data)
+    assert (
+        annotation[0].get_text()
+        == f"Min: {min_value:.2f}\nMean: {mean_value:.2f}\nMax: {max_value:.2f}"
+    )
+
+
+def test_that_stddev_plot_does_not_crash_and_returns_early_when_no_ensembles():
+    figure = Figure()
+    context = Mock(spec=PlotContext)
+    context.ensembles.return_value = []
+    context.layer = 0
+    StdDevPlot().plot(
+        figure,
+        context,
+        {},
+        {},
+        {},
+        None,
+    )
+    assert len(figure.axes) == 0

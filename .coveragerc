@@ -1,0 +1,8 @@
+[report]
+exclude_lines =
+    ; Don't complain about code for type checking only
+    if TYPE_CHECKING:
+    ; Don't complain about overload type specifications, they aren't run:
+    @(typing\.)?overload
+    assert_never
+    if sys.platform == "darwin":

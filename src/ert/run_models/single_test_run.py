@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+from ert.run_models.constants import FORWARD_MODEL_EVALUATION
+from ert.run_models.ensemble_experiment import EnsembleExperiment
+from ert.run_models.run_model_configs import SingleTestRunConfig
+
+
+class SingleTestRun(SingleTestRunConfig, EnsembleExperiment):
+    """
+    Single test is equivalent to EnsembleExperiment, in that it
+    samples the prior and evaluates it.<br>There are two key differences:<br>
+    1) Single test run always runs locally using the <b>local queue</b><br>
+    2) Only a <b>single realization</b> (realization-0) is run<br>
+    """
+
+    @classmethod
+    def name(cls) -> str:
+        return "Single realization test-run"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Sample parameters → evaluate single realization"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return FORWARD_MODEL_EVALUATION

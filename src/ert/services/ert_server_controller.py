@@ -1,0 +1,458 @@
+from __future__ import annotations
+
+import contextlib
+import io
+import json
+import logging
+import os
+import signal
+import sys
+import threading
+import types
+from collections.abc import Callable, Sequence
+from concurrent.futures import Future
+from pathlib import Path
+from select import PIPE_BUF, select
+from subprocess import Popen, TimeoutExpired
+from tempfile import NamedTemporaryFile
+from time import sleep
+from typing import Any, TypedDict, cast
+
+import requests
+
+from ert.trace import get_traceparent
+
+logger = logging.getLogger(__name__)
+
+SERVICE_CONF_PATHS: set[str] = set()
+
+
+class ErtServerConnectionInfo(TypedDict):
+    urls: list[str]
+    authtoken: str
+    host: str
+    port: str
+    cert: str
+    auth: str
+
+
+class ErtServerExit(OSError):
+    pass
+
+
+def cleanup_service_files(signum: int, frame: types.FrameType | None) -> None:
+    for file_path in SERVICE_CONF_PATHS:
+        file = Path(file_path)
+        file.unlink(missing_ok=True)
+    raise ErtServerExit(f"Signal {signum} received.")
+
+
+if threading.current_thread() is threading.main_thread():
+    signal.signal(signal.SIGTERM, cleanup_service_files)
+    signal.signal(signal.SIGINT, cleanup_service_files)
+
+
+class ServerBootFail(RuntimeError):
+    pass
+
+
+class _Proc(threading.Thread):
+    def __init__(
+        self,
+        service_name: str,
+        exec_args: Sequence[str],
+        timeout: int,
+        on_connection_info_received: Callable[
+            [ErtServerConnectionInfo | Exception], None
+        ],
+        project: Path,
+    ) -> None:
+        super().__init__()
+
+        self._shutdown = threading.Event()
+
+        self._service_name = service_name
+        self._exec_args = exec_args
+        self._timeout = timeout
+        self._propagate_connection_info_from_childproc = on_connection_info_received
+        self._service_config_path = project / f"{self._service_name}_server.json"
+
+        fd_read, fd_write = os.pipe()
+        self._comm_pipe = os.fdopen(fd_read)
+
+        env = os.environ.copy()
+        env["ERT_COMM_FD"] = str(fd_write)
+
+        SERVICE_CONF_PATHS.add(str(self._service_config_path))
+
+        # The process is waited for in _do_shutdown()
+        self._childproc = Popen(
+            self._exec_args,
+            pass_fds=(fd_write,),
+            env=env,
+            close_fds=True,
+        )
+        os.close(fd_write)
+
+    def run(self) -> None:
+        comm = self._read_connection_info_from_process(self._childproc)
+
+        if comm is None:
+            self._propagate_connection_info_from_childproc(TimeoutError())
+            return  # _read_conn_info() has already cleaned up in this case
+
+        conn_info: ErtServerConnectionInfo | Exception
+        try:
+            conn_info = json.loads(comm)
+            if not isinstance(conn_info, dict):
+                conn_info = ServerBootFail()
+        except json.JSONDecodeError:
+            conn_info = ServerBootFail()
+        except Exception as exc:
+            conn_info = exc
+
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            self._propagate_connection_info_from_childproc(conn_info)
+
+            while True:
+                if self._childproc.poll() is not None:
+                    break
+                if self._shutdown.wait(1):
+                    self._do_shutdown()
+                    break
+
+        except Exception as e:
+            print(str(e))
+            self.logger.exception(e)
+
+        finally:
+            self._ensure_connection_info_file_is_deleted()
+
+    def shutdown(self) -> int:
+        """Shutdown the server."""
+        self._shutdown.set()
+        self.join()
+
+        return self._childproc.returncode
+
+    def _read_connection_info_from_process(self, proc: Popen[bytes]) -> str | None:
+        comm_buf = io.StringIO()
+        first_iter = True
+        while first_iter or proc.poll() is None:
+            first_iter = False
+            ready = select([self._comm_pipe], [], [], self._timeout)
+
+            # Timeout reached, exit with a failure
+            if ready == ([], [], []):
+                self._do_shutdown()
+                self._ensure_connection_info_file_is_deleted()
+                return None
+
+            x = self._comm_pipe.read(PIPE_BUF)
+            if not x:  # EOF
+                break
+            comm_buf.write(x)
+        return comm_buf.getvalue()
+
+    def _do_shutdown(self) -> None:
+        if self._childproc is None:
+            return
+        try:
+            self._childproc.terminate()
+            self._childproc.wait(10)  # Give it 10s to shut down cleanly..
+        except TimeoutExpired:
+            try:
+                self._childproc.kill()  # ... then kick it harder...
+                self._childproc.wait(self._timeout)  # ... and wait again
+            except TimeoutExpired:
+                self.logger.error(
+                    f"waiting for child-process exceeded timeout {self._timeout}s"
+                )
+
+    def _ensure_connection_info_file_is_deleted(self) -> None:
+        """Ensure that the JSON connection information file is deleted"""
+        with contextlib.suppress(OSError):
+            self._service_config_path.unlink(missing_ok=True)
+
+    @property
+    def logger(self) -> logging.Logger:
+        return logging.getLogger("ert.shared.storage")
+
+
+_ERT_SERVER_CONNECTION_INFO_FILE = "storage_server.json"
+_ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_storage_main.py")
+
+
+class ErtServerContext:
+    def __init__(self, service: ErtServerController) -> None:
+        self._service = service
+
+    def __enter__(self) -> ErtServerController:
+        return self._service
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
+    ) -> bool:
+        self._service.shutdown()
+        return exc_type is None
+
+
+class ErtServerController:
+    _instance: ErtServerController | None = None
+
+    def __init__(
+        self,
+        storage_path: str,
+        *,
+        timeout: int = 120,
+        parent_pid: int | None = None,
+        connection_info: ErtServerConnectionInfo | None = None,
+        verbose: bool = False,
+        logging_config: str | None = None,  # Only used from everserver
+    ) -> None:
+        self._storage_path = storage_path
+        self._connection_info_future: Future[ErtServerConnectionInfo] = Future()
+        self._timeout = timeout
+        self._url: str | None = None
+
+        if connection_info is not None:
+            if "urls" not in connection_info:
+                raise KeyError("No URLs found in connection info")
+            self._connection_info_future.set_result(connection_info)
+            self._thread_that_starts_server_process = None
+            return
+
+        run_storage_main_cmd = [
+            sys.executable,
+            _ERT_SERVER_EXECUTABLE_FILE,
+            "--project",
+            storage_path,
+        ]
+
+        if logging_config is not None:
+            run_storage_main_cmd += ["--logging-config", logging_config]
+
+            traceparent = get_traceparent()
+            if traceparent is not None:
+                run_storage_main_cmd += ["--traceparent", traceparent]
+
+        if parent_pid is not None:
+            run_storage_main_cmd += ["--parent_pid", str(parent_pid)]
+
+        if verbose:
+            run_storage_main_cmd.append("--verbose")
+
+        self._thread_that_starts_server_process = _Proc(
+            service_name="storage",
+            exec_args=run_storage_main_cmd,
+            timeout=timeout,
+            on_connection_info_received=self.on_connection_info_received_from_server_process,
+            project=Path(self._storage_path),
+        )
+
+    def fetch_auth(self) -> tuple[str, Any]:
+        """
+        Returns a tuple of username and password, compatible with requests' `auth`
+        kwarg.
+
+        Blocks while the server is starting.
+        """
+        return (
+            "__token__",
+            cast(dict[str, Any], self.fetch_connection_info())["authtoken"],
+        )
+
+    @classmethod
+    def init_service(
+        cls,
+        project: Path,
+        timeout: int = 0,
+        logging_config: str | None = None,
+    ) -> ErtServerContext:
+        conn_info_path = project / _ERT_SERVER_CONNECTION_INFO_FILE
+
+        try:
+            if conn_info_path.stat().st_size > 0:
+                conn_info = json.loads(conn_info_path.read_text(encoding="utf-8"))
+                controller = ErtServerController(
+                    storage_path=str(project),
+                    connection_info=conn_info,
+                    logging_config=logging_config,
+                )
+                controller.fetch_url()
+                return ErtServerContext(controller)
+        except FileNotFoundError:
+            pass
+        except (json.JSONDecodeError, KeyError, TimeoutError) as e:
+            logger.warning(
+                "Failed connecting to existing storage service: "
+                f"{type(e).__name__}: {e}, starting new service"
+            )
+            conn_info_path.unlink(missing_ok=True)
+        except PermissionError as pe:
+            logger.error(
+                f"{type(pe).__name__}: {pe}, cannot connect to storage service "
+                "due to permission issues.",
+            )
+            raise
+
+        return cls.start_server(
+            project=project, timeout=timeout, logging_config=logging_config
+        )
+
+    def fetch_url(self) -> str:
+        """Returns the url. Blocks while the server is starting"""
+        if self._url is not None:
+            return self._url
+        logs: list[tuple[str | int, str]] = []
+
+        for url in self.fetch_connection_info()["urls"]:
+            con_info = self.fetch_connection_info()
+            try:
+                resp = requests.get(
+                    f"{url}/healthcheck",
+                    auth=self.fetch_auth(),
+                    verify=con_info["cert"],
+                )
+                if resp.status_code == 200:
+                    logger.info(f"Successfully connected to {url}")
+                    self._url = url
+                    return str(url)
+                logs.append((resp.status_code, f"{url}: {resp.reason}"))
+
+            except requests.ConnectionError as ce:
+                logs.append(("ConnectionError", f"{url}: {ce}"))
+
+        logger.info(f"Attempted urls: {logs}")
+
+        raise TimeoutError(
+            "None of the URLs provided for the ert storage server worked."
+        )
+
+    @property
+    def logger(self) -> logging.Logger:
+        return logging.getLogger("ert.shared.storage")
+
+    def shutdown(self) -> int:
+        """Shutdown the server."""
+        if self._thread_that_starts_server_process is None:
+            return -1
+
+        self.__class__._instance = None
+        error_code = self._thread_that_starts_server_process.shutdown()
+        self._thread_that_starts_server_process = None
+
+        return error_code
+
+    @classmethod
+    def start_server(
+        cls,
+        project: Path,
+        *,
+        parent_pid: int | None = None,
+        verbose: bool = False,
+        timeout: int | None = None,
+        logging_config: str | None = None,
+    ) -> ErtServerContext:
+        if cls._instance is not None:
+            raise RuntimeError("Server already running")
+        cls._instance = obj = cls(
+            storage_path=str(project),
+            parent_pid=parent_pid,
+            verbose=verbose,
+            timeout=timeout or 120,
+            logging_config=logging_config,
+        )
+        if obj._thread_that_starts_server_process is not None:
+            obj._thread_that_starts_server_process.start()
+        return ErtServerContext(obj)
+
+    def on_connection_info_received_from_server_process(
+        self, info: ErtServerConnectionInfo | Exception
+    ) -> None:
+        if self._connection_info_future.done():
+            raise ValueError("Connection information already set")
+
+        if isinstance(info, Exception):
+            self._connection_info_future.set_exception(info)
+            return
+
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            storage = Path(self._storage_path)
+            if not storage.exists():
+                raise RuntimeError(f"No storage exists at: {self._storage_path}")
+            path = str(storage / _ERT_SERVER_CONNECTION_INFO_FILE)
+
+            with NamedTemporaryFile(dir=storage, delete=False) as f:
+                f.write(json.dumps(info, indent=4).encode("utf-8"))
+                f.flush()
+                Path(f.name).rename(path)
+        except Exception as exc:
+            self._connection_info_future.set_exception(exc)
+            return
+
+        self._connection_info_future.set_result(info)
+
+    def wait_until_ready(self, timeout: int | None = None) -> bool:
+        if timeout is None:
+            timeout = self._timeout
+        try:
+            self._connection_info_future.result(timeout=timeout)
+        except TimeoutError:
+            self.logger.critical(f"startup exceeded defined timeout {timeout}s")
+            return False
+        except Exception as exc:
+            self.logger.critical(f"server startup failed: {exc}")
+            return False
+        else:
+            return True
+
+    def fetch_connection_info(self) -> ErtServerConnectionInfo:
+        return self._connection_info_future.result(timeout=self._timeout)
+
+    def wait(self) -> None:
+        if self._thread_that_starts_server_process is not None:
+            self._thread_that_starts_server_process.join()
+
+
+def create_ert_server_controller(
+    *,
+    project: os.PathLike[str],
+    timeout: int | None = None,
+    logging_config: str | None = None,
+) -> ErtServerController:
+    if timeout is None:
+        timeout = 240
+    if timeout < 0:
+        raise RuntimeError(f"timeout must be positive, was {timeout}")
+    t = -1
+    connection_info_path = Path(project) / _ERT_SERVER_CONNECTION_INFO_FILE
+    while t < timeout:
+        try:
+            connection_info_size = connection_info_path.stat().st_size
+        except FileNotFoundError:
+            connection_info_size = 0
+        except PermissionError as pe:
+            logger.error(
+                f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
+                "due to permission issues.",
+            )
+            raise
+        if connection_info_size:
+            return ErtServerController(
+                storage_path=str(project),
+                connection_info=json.loads(
+                    connection_info_path.read_text(encoding="utf-8")
+                ),
+                logging_config=logging_config,
+            )
+        sleep(1)
+        t += 1
+
+    raise TimeoutError(
+        f"Server not started. {connection_info_path} did "
+        f"not appear or remained empty within {timeout} seconds."
+    )

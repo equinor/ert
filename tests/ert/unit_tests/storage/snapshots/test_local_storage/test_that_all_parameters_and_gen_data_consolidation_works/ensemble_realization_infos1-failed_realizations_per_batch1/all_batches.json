@@ -1,0 +1,162 @@
+[
+  {
+    "R1": null,
+    "R2": null,
+    "batch": 0,
+    "model_realization": 0,
+    "perturbation": -1,
+    "point.P1": 0.0,
+    "point.P2": 0.0,
+    "realization": 0
+  },
+  {
+    "R1": 10.0,
+    "R2": 10.0,
+    "batch": 0,
+    "model_realization": 5,
+    "perturbation": -1,
+    "point.P1": 1.0,
+    "point.P2": 1.0,
+    "realization": 1
+  },
+  {
+    "R1": 0.1,
+    "R2": 0.1,
+    "batch": 1,
+    "model_realization": 0,
+    "perturbation": 0,
+    "point.P1": 0.1,
+    "point.P2": 0.1,
+    "realization": 0
+  },
+  {
+    "R1": 10.1,
+    "R2": 10.1,
+    "batch": 1,
+    "model_realization": 0,
+    "perturbation": 1,
+    "point.P1": 1.1,
+    "point.P2": 1.1,
+    "realization": 1
+  },
+  {
+    "R1": 20.1,
+    "R2": 20.1,
+    "batch": 1,
+    "model_realization": 0,
+    "perturbation": 2,
+    "point.P1": 2.1,
+    "point.P2": 2.1,
+    "realization": 2
+  },
+  {
+    "R1": null,
+    "R2": null,
+    "batch": 1,
+    "model_realization": 5,
+    "perturbation": 0,
+    "point.P1": 3.1,
+    "point.P2": 3.1,
+    "realization": 3
+  },
+  {
+    "R1": 40.1,
+    "R2": 40.1,
+    "batch": 1,
+    "model_realization": 5,
+    "perturbation": 1,
+    "point.P1": 4.1,
+    "point.P2": 4.1,
+    "realization": 4
+  },
+  {
+    "R1": 50.1,
+    "R2": 50.1,
+    "batch": 1,
+    "model_realization": 5,
+    "perturbation": 2,
+    "point.P1": 5.1,
+    "point.P2": 5.1,
+    "realization": 5
+  },
+  {
+    "R1": null,
+    "R2": null,
+    "batch": 2,
+    "model_realization": 0,
+    "perturbation": -1,
+    "point.P1": 0.2,
+    "point.P2": 0.2,
+    "realization": 0
+  },
+  {
+    "R1": null,
+    "R2": null,
+    "batch": 2,
+    "model_realization": 5,
+    "perturbation": -1,
+    "point.P1": 1.2,
+    "point.P2": 1.2,
+    "realization": 1
+  },
+  {
+    "R1": 20.2,
+    "R2": 20.2,
+    "batch": 2,
+    "model_realization": 0,
+    "perturbation": 0,
+    "point.P1": 2.2,
+    "point.P2": 2.2,
+    "realization": 2
+  },
+  {
+    "R1": 30.2,
+    "R2": 30.2,
+    "batch": 2,
+    "model_realization": 0,
+    "perturbation": 1,
+    "point.P1": 3.2,
+    "point.P2": 3.2,
+    "realization": 3
+  },
+  {
+    "R1": null,
+    "R2": null,
+    "batch": 2,
+    "model_realization": 0,
+    "perturbation": 2,
+    "point.P1": 4.2,
+    "point.P2": 4.2,
+    "realization": 4
+  },
+  {
+    "R1": 50.2,
+    "R2": 50.2,
+    "batch": 2,
+    "model_realization": 5,
+    "perturbation": 0,
+    "point.P1": 5.2,
+    "point.P2": 5.2,
+    "realization": 5
+  },
+  {
+    "R1": 60.2,
+    "R2": 60.2,
+    "batch": 2,
+    "model_realization": 5,
+    "perturbation": 1,
+    "point.P1": 6.2,
+    "point.P2": 6.2,
+    "realization": 6
+  },
+  {
+    "R1": 70.2,
+    "R2": 70.2,
+    "batch": 2,
+    "model_realization": 5,
+    "perturbation": 2,
+    "point.P1": 7.2,
+    "point.P2": 7.2,
+    "realization": 7
+  }
+]

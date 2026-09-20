@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -e
+
+jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
+found_error=false
+# Iterate over all provided job ids
+for jobid in "$@"; do
+    if ! [ -f "${jobdir}/${jobid}.name" ]
+    then
+        echo "No such job ${jobid}" >&2
+        found_error=true
+        continue
+    fi
+
+    timeout=2
+    elapsed=0
+    interval=0.1
+
+    while [ ! -f "${jobdir}/${jobid}.pid" ] && [ $elapsed -lt $timeout ]; do
+        sleep $interval
+        elapsed=$(echo "$elapsed + $interval" | bc)
+    done
+
+    if [ ! -f "${jobdir}/${jobid}.pid" ]; then
+            echo "No such job ${jobid}" >&2
+            found_error=true
+        continue
+    fi
+    pid=$(cat "${jobdir}/${jobid}.pid")
+    if kill -0 $pid 2>/dev/null; then
+        kill $pid
+    fi
+    done
+if [ "$found_error" = true ]; then
+    exit 1
+fi

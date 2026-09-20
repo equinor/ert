@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+import os
+import sys
+from pathlib import Path
+
+
+def symlink(target: str, link_name: str) -> None:
+    """Will create a symbol link 'link_name -> target'.
+
+    If the @link_name already exists as a symbolic link it will be
+    removed first; if the @link_name exists and is *not* a
+    symbolic link OSError will be raised. If the @target does not
+    exists IOError will be raised.
+    """
+    link_path, _ = os.path.split(link_name)
+    if len(link_path) == 0:
+        target_check = Path(target)
+    else:
+        if not Path(link_path).is_dir():
+            print(f"Creating directory for link: {link_path}")
+            Path(link_path).mkdir(parents=True)
+        target_check = Path(link_path) / target
+
+    if not target_check.exists():
+        raise OSError(
+            f"{target} (target) and {link_name} (link_name) requested, "
+            f"which implies that {target_check} must exist, but it does not."
+        )
+
+    if Path(link_name).is_symlink():
+        os.unlink(link_name)
+    Path(link_name).symlink_to(target)
+    print(f"Linking '{link_name}' -> '{target}' [ cwd:{Path.cwd()} ]")
+
+
+if __name__ == "__main__":
+    target = sys.argv[1]
+    link_name = sys.argv[2]
+    try:
+        symlink(target, link_name)
+    except OSError as e:
+        sys.exit(f"SYMLINK failed with the following error: {e}")

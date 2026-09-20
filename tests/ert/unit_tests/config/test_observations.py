@@ -1,0 +1,2573 @@
+import logging
+from contextlib import ExitStack as does_not_raise
+from datetime import datetime, timedelta
+from io import BytesIO
+from pathlib import Path
+from textwrap import dedent
+from typing import cast
+from unittest.mock import MagicMock
+
+import hypothesis.strategies as st
+import polars as pl
+import pytest
+from hypothesis import assume, given
+from pandas import DataFrame
+from polars.testing import assert_frame_equal
+from pydantic import ValidationError
+from resdata.summary import Summary
+from resfo_utilities.testing import summaries
+
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ShapeRegistry
+from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config._observations import (
+    DEFAULT_LOCALIZATION_RADIUS,
+    BaseObservation,
+    extract_localization_values,
+    make_observations,
+)
+from ert.config.breakthrough_config import BreakthroughConfig
+from ert.config.parsing import ObservationDict, parse_observations
+from ert.config.parsing.observations_parser import (
+    ObservationConfigError,
+    ObservationType,
+)
+from ert.config.rft_config import RFTConfig
+from ert.config.seismic_config import SeismicConfig
+from ert.gui.plotting.ert_plots.observations import _plotObservations
+from ert.gui.plotting.utils import PlotConfig
+from ert.observation_converters.history_to_summary import convert_history_to_summary
+from tests.ert.defaults_generator import (
+    create_breakthrough_observation_dict,
+    create_rft_observation_dict,
+    create_seismic_observation_dict,
+    create_summary_observation_dict,
+    seismic_file_content,
+)
+
+pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+
+
+def ert_config_from_parser(obs_config_contents):
+    obs_config_file = "obs_config"
+    return ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASEBASEBASE",
+            "SUMMARY": "*",
+            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": "1"}]],
+            "TIME_MAP": ("time_map.txt", "2020-01-01\n2020-01-02\n"),
+            "OBS_CONFIG": (
+                obs_config_file,
+                parse_observations(obs_config_contents, obs_config_file),
+            ),
+        }
+    )
+
+
+FOPR_VALUE = 1
+FOPRH_VALUE = 2
+SUMMARY_VALUES = {
+    "FOPR": FOPR_VALUE,
+    "FOPRH": FOPRH_VALUE,
+}
+
+
+def run_simulator(summary_values=SUMMARY_VALUES):
+    """
+    Create :term:`summary files` with one value for FOPR (1) and a different
+    for FOPRH (2) so we can assert on the difference.
+    """
+    summary = Summary.writer(
+        "MY_REFCASE",
+        datetime(2000, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
+        10,
+        10,
+        10,
+    )
+
+    for key in summary_values:
+        summary.add_variable(key, unit="SM3/DAY")
+
+    mini_step_count = 10
+
+    for mini_step in range(mini_step_count):
+        t_step = summary.add_t_step(1, sim_days=mini_step_count + mini_step)
+        for key, value in summary_values.items():
+            t_step[key] = value
+
+    summary.fwrite()
+
+
+def make_refcase_observations(
+    obs_config_contents, *, parse=True, extra_config=None, summary_values=SUMMARY_VALUES
+):
+    extra_config = extra_config or ""
+    run_simulator(summary_values=summary_values)
+
+    obs_config_file = "obs_config"
+    Path(obs_config_file).write_text(obs_config_contents, encoding="utf-8")
+
+    time_map_file = "time_map.txt"
+    Path(time_map_file).write_text("2020-01-01\n2020-01-02\n", encoding="utf-8")
+
+    config_content = (
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        ECLBASE BASEBASEBASE
+        REFCASE MY_REFCASE
+        SUMMARY *
+        GEN_DATA GEN RESULT_FILE:gen%%d.txt REPORT_STEPS:1
+        TIME_MAP {time_map_file}
+        OBS_CONFIG {obs_config_file}
+    """)
+        + extra_config
+    )
+    Path("config.ert").write_text(config_content, encoding="utf-8")
+    convert_history_to_summary("config.ert")
+
+    migrated_config = ErtConfig.from_file("config.ert")
+    return create_observation_dataframes(
+        migrated_config.observation_declarations, migrated_config.shape_registry
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_when_history_source_is_history_the_history_summary_vector_is_used():
+    obs_config_contents = "HISTORY_OBSERVATION FOPR {};"
+    observations = make_refcase_observations(
+        obs_config_contents, extra_config="HISTORY_SOURCE REFCASE_HISTORY"
+    )
+    assert list(observations["summary"]["observations"]) == [FOPRH_VALUE]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
+    with pytest.raises(
+        ConfigValidationError, match="Key 'MISSINGH' is not present in refcase"
+    ):
+        make_refcase_observations(
+            "HISTORY_OBSERVATION MISSING {};",
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
+    obs_config_contents = "HISTORY_OBSERVATION FOPR {};"
+    observations = make_refcase_observations(
+        obs_config_contents, extra_config="HISTORY_SOURCE REFCASE_SIMULATED"
+    )
+    assert list(observations["summary"]["observations"]) == [FOPR_VALUE]
+
+
+@pytest.mark.parametrize(
+    ("datestring", "errors"),
+    [
+        pytest.param("02.01.2020", True),
+        pytest.param("02.1.2020", True),
+        pytest.param("02-01-2020", True),
+        pytest.param("2026-06-28T15:03:57-12:00", True),
+        pytest.param("02/01/2020", False),
+    ],
+)
+@pytest.mark.parametrize(
+    "observation_dict",
+    [
+        pytest.param(create_summary_observation_dict()),
+        pytest.param(create_breakthrough_observation_dict()),
+    ],
+)
+def test_date_parsing_in_observations(datestring, errors, observation_dict):
+    obs_dict = {**observation_dict, "DATE": datestring}
+    obs = [obs_dict]
+    if errors:
+        with pytest.raises(ValueError, match="Please use ISO date format"):
+            make_observations("", obs, ShapeRegistry())
+    else:
+        with pytest.warns(ConfigWarning, match="Please use ISO date format"):
+            make_observations("", obs, ShapeRegistry())
+
+
+def test_that_using_summary_observations_without_eclbase_shows_user_error():
+    with pytest.raises(ConfigValidationError, match="ECLBASE has to be set"):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        {
+                            "type": ObservationType.SUMMARY,
+                            "name": "FOPR_1",
+                            "KEY": "FOPR",
+                            "VALUE": "1",
+                            "ERROR": "1",
+                            "DATE": "2023-03-15",
+                        }
+                    ],
+                )
+            }
+        )
+
+
+@given(
+    summary=summaries(summary_keys=st.just(["FOPR", "FOPRH"])),
+    value=st.floats(min_value=-1e9, max_value=1e9),
+    data=st.data(),
+)
+def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given(
+    tmp_path_factory: pytest.TempPathFactory, summary, value, data
+):
+    with pytest.MonkeyPatch.context() as patch:
+        tmp_dir = tmp_path_factory.mktemp("summary_obs_restart_migration")
+        patch.chdir(tmp_dir)
+
+        smspec, unsmry = summary
+        restart = data.draw(st.integers(min_value=1, max_value=len(unsmry.steps)))
+        smspec.to_file("ECLIPSE_CASE.SMSPEC")
+        unsmry.to_file("ECLIPSE_CASE.UNSMRY")
+
+        obs_config_content = dedent(
+            f"""
+            SUMMARY_OBSERVATION FOPR_1 {{
+                KEY = FOPR;
+                VALUE = {value};
+                ERROR = 1;
+                RESTART = {restart};
+            }};
+            """
+        )
+        (tmp_dir / "obs.conf").write_text(obs_config_content)
+
+        config_content = dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            REFCASE ECLIPSE_CASE
+            OBS_CONFIG obs.conf
+            """
+        )
+        config_file = tmp_dir / "config.ert"
+        config_file.write_text(config_content)
+
+        convert_history_to_summary(str(config_file))
+
+        migrated_config = ErtConfig.from_file("config.ert")
+        observations = create_observation_dataframes(
+            migrated_config.observation_declarations,
+            migrated_config.shape_registry,
+        )["summary"]
+
+        assert len(observations["time"]) == 1
+        assert list(observations["observations"]) == pytest.approx([value])
+
+        start_date = smspec.start_date.to_datetime()
+        time_index = smspec.keywords.index("TIME    ")
+        days = smspec.units[time_index] == "DAYS    "
+        restart_value = unsmry.steps[restart - 1].ministeps[-1].params[time_index]
+        restart_time = start_date + (
+            timedelta(days=float(restart_value))
+            if days
+            else timedelta(hours=float(restart_value))
+        )
+
+        assert abs(restart_time - observations["time"][0]) < timedelta(days=1.0)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_given():
+    restart = 1
+    time_map = ["2024-01-01", "2024-02-02"]
+
+    obs_config_content = dedent(
+        f"""
+        SUMMARY_OBSERVATION FOPR_1
+        {{
+            KEY = FOPR;
+            VALUE = 1;
+            ERROR = 1;
+            RESTART = {restart};
+        }};
+        """
+    )
+    Path("obs.conf").write_text(obs_config_content, encoding="utf-8")
+    Path("time_map.txt").write_text("\n".join(time_map), encoding="utf-8")
+
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE ECLIPSE_CASE
+        TIME_MAP time_map.txt
+        OBS_CONFIG obs.conf
+        """
+    )
+    config_file = Path("config.ert")
+    config_file.write_text(config_content, encoding="utf-8")
+
+    convert_history_to_summary(str(config_file))
+
+    migrated_config = ErtConfig.from_file("config.ert")
+    observations = create_observation_dataframes(
+        migrated_config.observation_declarations, migrated_config.shape_registry
+    )["summary"]
+
+    # RESTART is a 1-based index; Python lists are 0-based.
+    assert list(observations["time"]) == [datetime.fromisoformat(time_map[restart])]
+
+
+def test_that_rft_observation_dataframes_are_created():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "well",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2013-03-31",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 71.0,
+                        "EAST": 30.0,
+                        "TVD": 2000,
+                    }
+                ],
+            ),
+        }
+    )
+    observations = create_observation_dataframes(
+        ert_config.observation_declarations, ert_config.shape_registry
+    )["rft"]
+    assert_frame_equal(
+        observations,
+        pl.DataFrame(
+            {
+                "response_key": "well:2013-03-31:PRESSURE",
+                "well": "well",
+                "date": "2013-03-31",
+                "observation_key": "NAME",
+                "east": pl.Series([30.0], dtype=pl.Float32),
+                "north": pl.Series([71.0], dtype=pl.Float32),
+                "tvd": pl.Series([2000.0], dtype=pl.Float32),
+                "md": pl.Series([None], dtype=pl.Float32),
+                "zone": pl.Series([None], dtype=pl.String),
+                "observations": pl.Series([700.0], dtype=pl.Float32),
+                "std": pl.Series([0.1], dtype=pl.Float32),
+                "radius": pl.Series([DEFAULT_LOCALIZATION_RADIUS], dtype=pl.Float32),
+            }
+        ),
+    )
+
+
+def test_that_rft_config_is_created_from_observations():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well2", date="2013-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well", date="2015-03-31", prop="PRESSURE"
+                    ),
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="DEPTH"
+                    ),
+                ],
+            ),
+        }
+    )
+    assert "rft" in ert_config.ensemble_config.response_configs
+    rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
+    assert rft_config.data_to_read == {
+        "well": {"2013-03-31": ["PRESSURE", "DEPTH"], "2015-03-31": ["PRESSURE"]},
+        "well2": {"2013-03-31": ["PRESSURE"]},
+    }
+
+
+def test_that_rft_config_is_created_from_mix_of_observations_and_responses():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "RFT": [{"WELL": "well", "DATE": "2013-03-31", "PROPERTIES": "DEPTH"}],
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(
+                        well="well", date="2013-03-31", prop="PRESSURE"
+                    ),
+                ],
+            ),
+        }
+    )
+    rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
+    assert rft_config.data_to_read == {"well": {"2013-03-31": ["DEPTH", "PRESSURE"]}}
+
+
+def test_that_rft_config_requires_eclbase_to_be_created_from_observations():
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_rft_observation_dict(),
+                ],
+            ),
+        }
+    )
+    assert "rft" not in ert_config.ensemble_config.response_configs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcase():
+    date = "2020-01-01"
+
+    # Write a legacy obs config using DATE for SUMMARY_OBSERVATION and
+    # run the conversion to produce a migrated config on disk.
+    obsconf = dedent(
+        f"""
+        SUMMARY_OBSERVATION FOPR_1 {{
+            KEY = FOPR;
+            VALUE = 1;
+            ERROR = 1;
+            DATE = {date};
+        }};
+        """
+    )
+
+    Path("obs.conf").write_text(obsconf, encoding="utf-8")
+
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE ECLIPSE_CASE
+        OBS_CONFIG obs.conf
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf-8")
+
+    convert_history_to_summary("config.ert")
+
+    migrated = ErtConfig.from_file("config.ert")
+    observations = create_observation_dataframes(
+        migrated.observation_declarations, migrated.shape_registry
+    )["summary"]
+
+    assert list(observations["time"]) == [datetime.fromisoformat(date)]
+
+
+@given(
+    st.integers(min_value=0, max_value=10000), st.floats(min_value=-1e9, max_value=1e9)
+)
+def test_that_general_observations_can_use_restart_even_without_refcase_and_time_map(
+    restart, value
+):
+    ert_config: ErtConfig = ErtConfig.from_dict(
+        {
+            "GEN_DATA": [
+                ["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": str(restart)}]
+            ],
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "RESTART": str(restart),
+                        "VALUE": str(value),
+                        "ERROR": "1.0",
+                    }
+                ],
+            ),
+        }
+    )
+    observations = create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )
+
+    assert list(observations["gen_data"]["report_step"]) == [restart]
+    assert list(observations["gen_data"]["observations"]) == pytest.approx([value])
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
+    restart = 1
+    time_map = ["2024-01-01", "2024-02-02"]
+    # Write a legacy obs config using DATE for GENERAL_OBSERVATION and
+    # run the conversion to migrate DATE -> RESTART via the TIME_MAP.
+    Path("time_map.txt").write_text("\n".join(time_map), encoding="utf-8")
+    obsconf = dedent(f"""
+    GENERAL_OBSERVATION OBS {{
+        DATA = GEN;
+        DATE = {time_map[restart]};
+        VALUE = 1.0;
+        ERROR = 1.0;
+    }};
+    """)
+
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        TIME_MAP time_map.txt
+        GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+        OBS_CONFIG obsconf
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf-8")
+
+    convert_history_to_summary("config.ert")
+    ert_config = ErtConfig.from_file("config.ert")
+    observations = create_observation_dataframes(
+        ert_config.observation_declarations, ert_config.shape_registry
+    )
+    assert observations["gen_data"].to_dicts()[0]["report_step"] == restart
+
+
+@given(
+    data=st.data(),
+    summary=summaries(
+        time_deltas=st.lists(
+            st.floats(
+                min_value=0.25,
+                max_value=2**11,  # ~6.8 years in days
+                allow_nan=False,
+                allow_infinity=False,
+                width=32,
+            ),
+            min_size=2,
+            unique=True,
+        ),
+    ),
+)
+@pytest.mark.slow
+def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
+    tmp_path_factory: pytest.TempPathFactory, data, summary
+):
+    smspec, unsmry = summary
+    with pytest.MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
+        smspec.to_file("ECLIPSE_CASE.SMSPEC")
+        unsmry.to_file("ECLIPSE_CASE.UNSMRY")
+        start_date = smspec.start_date.to_datetime()
+        time_index = smspec.keywords.index("TIME    ")
+        days = smspec.units[time_index] == "DAYS    "
+        time_map = [s.ministeps[-1].params[time_index] for s in unsmry.steps]
+        time_map = [
+            start_date,
+            *[
+                start_date
+                + (timedelta(days=float(t)) if days else timedelta(hours=float(t)))
+                for t in time_map
+            ],
+        ]
+        assume(len(time_map) > 2)
+        restart = data.draw(st.integers(min_value=2, max_value=len(time_map) - 1))
+        # Write a legacy obs config using DATE for GENERAL_OBSERVATION and
+        # run the conversion to migrate DATE -> RESTART by looking up the REFCASE.
+        obsconf = dedent(f"""
+        GENERAL_OBSERVATION OBS {{
+            DATA = GEN;
+            DATE = {time_map[restart].isoformat()};
+            VALUE = 1.0;
+            ERROR = 1.0;
+        }};
+        """)
+
+        Path("obsconf").write_text(obsconf, encoding="utf-8")
+
+        config_content = dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            REFCASE ECLIPSE_CASE
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:{restart}
+            OBS_CONFIG obsconf
+            """
+        )
+        Path("config.ert").write_text(config_content, encoding="utf-8")
+        convert_history_to_summary("config.ert")
+        ert_config = ErtConfig.from_file("config.ert")
+        observations = create_observation_dataframes(
+            ert_config.observation_declarations, ert_config.shape_registry
+        )
+        assert observations["gen_data"].to_dicts()[0]["report_step"] == restart
+
+
+@pytest.mark.parametrize("std", [-1.0, 0, 0.0])
+def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a strictly positive value"
+    ):
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.SUMMARY,
+                    "name": "FOPR",
+                    "KEY": "FOPR",
+                    "VALUE": "1",
+                    "DATE": "2020-01-02",
+                    "ERROR": str(std),
+                }
+            ],
+            ShapeRegistry(),
+        )
+
+
+def test_that_computed_error_must_be_greater_than_zero_in_summary_observations():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"must be given a strictly positive value",
+    ):
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.SUMMARY,
+                    "name": "FOPR",
+                    "KEY": "FOPR",
+                    "VALUE": "0",  # ERROR becomes zero when mode is REL
+                    "DATE": "2020-01-02",
+                    "ERROR": "1.0",
+                    "ERROR_MODE": "REL",
+                }
+            ],
+            ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_absolute_error_must_be_greater_than_zero_in_history_observations():
+    run_simulator()
+
+    obsconf = dedent(
+        """
+        HISTORY_OBSERVATION FOPR {
+            ERROR = 0.0;
+            ERROR_MIN = 0.0;
+        };
+        """
+    )
+
+    Path("obs.conf").write_text(obsconf, encoding="utf-8")
+
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASEBASEBASE
+        REFCASE MY_REFCASE
+        SUMMARY *
+        GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+        OBS_CONFIG obs.conf
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf-8")
+
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a strictly positive value"
+    ):
+        convert_history_to_summary("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_computed_error_must_be_greater_than_zero_in_history_observations():
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a strictly positive value"
+    ):
+        make_refcase_observations(
+            """
+                HISTORY_OBSERVATION FOPR {
+                    ERROR=1.0;
+                    ERROR_MODE=REL;
+                };
+            """,
+            summary_values={
+                "FOPR": FOPR_VALUE,
+                "FOPRH": 0,  # ERROR becomes zero when mode is REL
+            },
+            parse=False,
+        )
+
+
+@pytest.mark.parametrize("std", [-1.0, 0, 0.0])
+def test_that_error_must_be_greater_than_zero_in_general_observations(std):
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a strictly positive value"
+    ):
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.GENERAL,
+                    "name": "OBS",
+                    "DATA": "GEN",
+                    "RESTART": "1",
+                    "INDEX_LIST": "1",
+                    "VALUE": "1.0",
+                    "ERROR": str(std),
+                }
+            ],
+            ShapeRegistry(),
+        )
+
+
+def test_that_all_errors_in_general_observations_must_be_greater_than_zero(
+    tmpdir, file_context_token
+):
+    with tmpdir.as_cwd():
+        # First error value will be 0
+        Path("obs_data.txt").write_text(
+            "\n".join(f"{float(i)} {float(i)}" for i in range(5)), encoding="utf-8"
+        )
+        with pytest.raises(
+            ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+        ):
+            make_observations(
+                "",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "GEN",
+                            "RESTART": 1,
+                            "OBS_FILE": "obs_data.txt",
+                        },
+                        context=file_context_token(),
+                    )
+                ],
+                ShapeRegistry(),
+            )
+
+
+@pytest.mark.parametrize(
+    "error_type",
+    ["ERROR_MODE = REL", "ERROR_MIN = 0.05"],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_error_types_are_not_allowed_in_general_observations(error_type):
+    obsconf = dedent(
+        f"""
+        GENERAL_OBSERVATION OBS {{
+            DATA = GEN;
+            DATE = 2020-01-02;
+            INDEX_LIST = 1;
+            VALUE = 1.0;
+            ERROR = 0.1;
+            {error_type};
+        }};
+        """
+    )
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigValidationError, match=r"Unknown key 'ERROR_(MODE|MIN)'"):
+        convert_history_to_summary("config.ert")
+
+
+def test_that_empty_observations_file_causes_exception():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="Empty observations file",
+    ):
+        ErtConfig.from_dict({"OBS_CONFIG": ("obs_conf", "")})
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_having_no_refcase_but_history_observations_causes_exception():
+    Path("obs.conf").write_text("HISTORY_OBSERVATION FOPR;", encoding="utf-8")
+
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE my_case
+        OBS_CONFIG obs.conf
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf-8")
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="REFCASE is required for HISTORY_OBSERVATION",
+    ):
+        convert_history_to_summary("config.ert")
+
+
+@pytest.mark.parametrize(
+    ("indices_type", "indices_value"),
+    [
+        ("INDEX_LIST", "0,2,4,6,8"),
+        ("INDEX_FILE", "obs_idx.txt"),
+    ],
+)
+def test_that_indices_from_file_and_list_are_read(
+    tmpdir, indices_type, indices_value, file_context_token
+):
+    with tmpdir.as_cwd():
+        if indices_type == "INDEX_FILE":
+            Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
+        Path("obs_data.txt").write_text(
+            "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
+        )
+        obs = make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        f"{indices_type}": f"{indices_value}",
+                        "RESTART": "1",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                    context=file_context_token(),
+                ),
+            ],
+            ShapeRegistry(),
+        )
+
+        observations = create_observation_dataframes(
+            observations=obs,
+            shape_registry=None,
+        )
+        assert list(observations["gen_data"]["index"]) == [0, 2, 4, 6, 8]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_time_map_file_raises_config_validation_error():
+    Path("time_map.txt").write_text("invalid content", encoding="utf-8")
+    Path("obs.conf").write_text(
+        dedent(
+            """
+        GENERAL_OBSERVATION GEN_OBS {
+            DATA = GEN_DATA_KEY;
+            OBS_FILE = obs_data.txt;
+            DATE = 2023-01-01;
+        };
+        """
+        ),
+        encoding="utf-8",
+    )
+    Path("obs_data.txt").write_text("1.0", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            TIME_MAP time_map.txt
+            OBS_CONFIG obs.conf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
+        convert_history_to_summary("config.ert")
+
+
+def test_that_non_existent_obs_file_is_invalid(file_context_token):
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="did not resolve to a valid path",
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "RES",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "RESTART": "0",
+                        "OBS_FILE": "does_not_exist/at_all",
+                    },
+                    context=file_context_token(),
+                )
+            ],
+            ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_time_map_file_is_invalid():
+    obsconf = dedent(
+        """
+        GENERAL_OBSERVATION OBS {
+            DATA = RES;
+            INDEX_LIST = 0;
+            DATE = 2017-11-09;
+            VALUE = 0.0;
+            ERROR = 0.0;
+        };
+        """
+    )
+
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        GEN_DATA RES RESULT_FILE:out
+        OBS_CONFIG obsconf
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf-8")
+
+    with pytest.raises(ObservationConfigError, match="TIME_MAP"):
+        convert_history_to_summary("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_general_observation_cannot_contain_both_value_and_obs_file(
+    file_context_token,
+):
+    Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
+    Path("obs_data.txt").write_text(
+        "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
+    )
+    with pytest.raises(
+        ConfigValidationError, match=r"cannot contain both VALUE.*OBS_FILE"
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "RESTART": "1",
+                        "INDEX_FILE": "obs_idx.txt",
+                        "OBS_FILE": "obs_data.txt",
+                        "VALUE": "1.0",
+                        "ERROR": "0.1",
+                    },
+                    context=file_context_token(),
+                )
+            ],
+            ShapeRegistry(),
+        )
+
+
+def test_that_general_observation_must_contain_either_value_or_obs_file(
+    file_context_token,
+):
+    with pytest.raises(
+        ConfigValidationError, match=r"must contain either VALUE.*OBS_FILE"
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "RESTART": "1",
+                    },
+                    context=file_context_token(),
+                ),
+            ],
+            ShapeRegistry(),
+        )
+
+
+def test_that_non_numbers_in_obs_file_shows_informative_error_message(
+    tmpdir, file_context_token
+):
+    with tmpdir.as_cwd():
+        Path("obs_data.txt").write_text("not_an_int 0.1\n", encoding="utf-8")
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match=r"Failed to read OBS_FILE obs_data.txt: could not convert"
+            " string 'not_an_int' to float64 at row 0, column 1",
+        ):
+            make_observations(
+                "",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "GEN",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "RESTART": 1,
+                            "OBS_FILE": "obs_data.txt",
+                        },
+                        context=file_context_token(),
+                    )
+                ],
+                ShapeRegistry(),
+            )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_number_of_columns_in_obs_file_cannot_change(file_context_token):
+    with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
+        fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+        fh.writelines("0.1\n")
+    with pytest.raises(
+        ConfigValidationError, match="the number of columns changed from 2 to 1"
+    ):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "RESTART": 1,
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                    context=file_context_token(),
+                )
+            ],
+            ShapeRegistry(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_number_of_values_in_obs_file_must_be_even(file_context_token):
+    with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
+        fh.writelines(f"{float(i)} 0.1 0.1\n" for i in range(5))
+    with pytest.raises(ConfigValidationError, match="Expected even number of values"):
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "RESTART": "1",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                    context=file_context_token(),
+                )
+            ],
+            ShapeRegistry(),
+        )
+
+
+def test_that_giving_both_index_file_and_index_list_raises_an_exception(
+    tmpdir, file_context_token
+):
+    with tmpdir.as_cwd():
+        Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match="both INDEX_FILE and INDEX_LIST",
+        ):
+            make_observations(
+                "",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "GEN",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "INDEX_FILE": "obs_idx.txt",
+                            "RESTART": "1",
+                            "VALUE": "0.0",
+                            "ERROR": "0.1",
+                        },
+                        context=file_context_token(),
+                    )
+                ],
+                ShapeRegistry(),
+            )
+
+
+def run_sim(start_date, keys=None, values=None, days=None):
+    """Create :term:`summary files`"""
+    keys = keys or [("FOPR", "SM3/DAY", None)]
+    values = {} if values is None else values
+    days = [1] if days is None else days
+    summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
+    for key, unit, wname in keys:
+        summary.add_variable(key, unit=unit, wgname=wname)
+    for i in days:
+        t_step = summary.add_t_step(i, sim_days=i)
+        for key, _, wname in keys:
+            if wname is None:
+                t_step[key] = values.get(key, 1)
+            else:
+                t_step[key + ":" + wname] = values.get(key, 1)
+    summary.fwrite()
+
+
+@pytest.mark.parametrize(
+    ("time_map_statement", "time_map_creator"),
+    [
+        (
+            {"REFCASE": "ECLIPSE_CASE"},
+            lambda: run_sim(
+                datetime(2014, 9, 10)  # ruff: ignore[call-datetime-without-tzinfo]
+            ),
+        ),
+        (
+            {"TIME_MAP": ("time_map.txt", "2014-09-10\n2014-09-11\n")},
+            lambda: None,
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("time_unit", "time_delta", "expectation"),
+    [
+        pytest.param(
+            "DAYS", 1.000347222, does_not_raise(), id="30 seconds offset from 1 day"
+        ),
+        pytest.param(
+            "DAYS", 0.999664355, does_not_raise(), id="~30 seconds offset from 1 day"
+        ),
+        pytest.param("DAYS", 1.0, does_not_raise(), id="1 day"),
+        pytest.param(
+            "DAYS",
+            "2.0",
+            pytest.raises(
+                ConfigValidationError,
+                match=r".*Could not find 2014-09-12 00:00:00 \(DAYS=2.0\)"
+                " in the time map for observations FOPR_1",
+            ),
+            id="Outside tolerance days",
+        ),
+        pytest.param("HOURS", 24.0, does_not_raise(), id="1 day in hours"),
+        # pytest.param( # Not migrated; no refcase/time_map provided.
+        #    "HOURS",
+        #    48.0,
+        #    pytest.raises(
+        #        ConfigValidationError,
+        #        match=r".*Could not find 2014-09-12 00:00:00 \(HOURS=48.0\)"
+        #        " in the time map for observations FOPR_1",
+        #    ),
+        #    id="Outside tolerance hours",
+        # ),
+        pytest.param("DATE", "2014-09-11", does_not_raise(), id="1 day in date"),
+        # pytest.param( # Not migrated; no refcase/time_map provided.
+        #    "DATE",
+        #    "2014-09-12",
+        #    pytest.raises(
+        #        ConfigValidationError,
+        #        match=r".*Could not find 2014-09-12 00:00:00 \(DATE=2014-09-12\)"
+        #        " in the time map for observations FOPR_1",
+        #    ),
+        #    id="Outside tolerance in date",
+        # ),
+    ],
+)
+def test_that_loading_summary_obs_with_days_is_within_tolerance(
+    tmpdir,
+    time_delta,
+    expectation,
+    time_unit,
+    time_map_statement,
+    time_map_creator,
+):
+    with tmpdir.as_cwd():
+        if time_map_creator:
+            time_map_creator()
+
+        obs_config_content = dedent(
+            f"""
+        SUMMARY_OBSERVATION FOPR_1
+        {{
+            VALUE   = 0.1;
+            ERROR   = 0.05;
+            {time_unit}    = {time_delta};
+            KEY     = FOPR;
+        }};
+        """
+        )
+        Path("obsconf").write_text(obs_config_content, encoding="utf-8")
+
+        config_lines = [
+            "NUM_REALIZATIONS 1",
+            "ECLBASE ECLIPSE_CASE",
+            "OBS_CONFIG obsconf",
+        ]
+        if "TIME_MAP" in time_map_statement:
+            time_map_file, time_map_data = time_map_statement["TIME_MAP"]
+            Path(time_map_file).write_text(time_map_data, encoding="utf-8")
+            config_lines.append(f"TIME_MAP {time_map_file}")
+        elif "REFCASE" in time_map_statement:
+            config_lines.append(f"REFCASE {time_map_statement['REFCASE']}")
+        Path("config.ert").write_text("\n".join(config_lines), encoding="utf-8")
+
+        with expectation:
+            convert_history_to_summary("config.ert")
+            ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings(
+    r"ignore:.*Segment [^\s]+ "
+    "((does not contain any time steps)|(out of bounds)|(start after stop)).*"
+    ":ert.config.ConfigWarning"
+)
+@pytest.mark.parametrize(
+    ("start", "stop", "message"),
+    [
+        (
+            100,
+            10,
+            "Segment FIRST_YEAR start after stop",
+        ),
+        (
+            50,
+            100,
+            "does not contain any time steps",
+        ),
+        (
+            -1,
+            1,
+            "Segment FIRST_YEAR out of bounds",
+        ),
+        (
+            1,
+            1000,
+            "Segment FIRST_YEAR out of bounds",
+        ),
+    ],
+)
+def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
+    with tmpdir.as_cwd():
+        run_sim(
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
+
+        obsconf = dedent(f"""
+        HISTORY_OBSERVATION FOPR {{
+            ERROR = 0.20;
+            ERROR_MODE = RELMIN;
+            ERROR_MIN = 100;
+            SEGMENT FIRST_YEAR {{
+                START = {start};
+                STOP  = {stop};
+                ERROR = 0.50;
+                ERROR_MODE = REL;
+            }};
+        }};
+        """)
+
+        Path("obsconf").write_text(obsconf, encoding="utf-8")
+
+        config_content = dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            REFCASE ECLIPSE_CASE
+            OBS_CONFIG obsconf
+            """
+        )
+        Path("config.ert").write_text(config_content, encoding="utf-8")
+
+        with pytest.warns(ConfigWarning, match=message):
+            convert_history_to_summary("config.ert")
+
+
+@given(
+    std=st.floats(min_value=0.1, max_value=1.0e3),
+    with_ext=st.booleans(),
+    summary=summaries(summary_keys=st.just(["FOPR", "FOPRH"])),
+)
+def test_that_history_observations_values_are_fetched_from_refcase(
+    tmp_path_factory: pytest.TempPathFactory, summary, with_ext, std
+):
+    with pytest.MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
+        smspec, unsmry = summary
+        smspec.to_file("ECLIPSE_CASE.SMSPEC")
+        unsmry.to_file("ECLIPSE_CASE.UNSMRY")
+
+        obsconf = dedent(
+            f"""
+            HISTORY_OBSERVATION FOPR {{
+                ERROR = {std};
+                ERROR_MODE = ABS;
+            }};
+            """
+        )
+
+        Path("obsconf").write_text(obsconf, encoding="utf-8")
+
+        config_content = dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            REFCASE {f"ECLIPSE_CASE{'.DATA'}" if with_ext else "ECLIPSE_CASE"}
+            OBS_CONFIG obsconf
+            """
+        )
+        Path("config.ert").write_text(config_content, encoding="utf-8")
+
+        convert_history_to_summary("config.ert")
+        ert_config = ErtConfig.from_file("config.ert")
+        observations = create_observation_dataframes(
+            ert_config.observation_declarations, ert_config.shape_registry
+        )["summary"]
+
+        steps = len(unsmry.steps)
+        assert list(observations["response_key"]) == ["FOPR"] * steps
+        assert list(observations["observations"]) == pytest.approx(
+            [
+                s.ministeps[-1].params[smspec.keywords.index("FOPRH")]
+                for s in unsmry.steps
+            ]
+        )
+        assert list(observations["std"]) == pytest.approx([std] * steps)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file(
+    file_context_token,
+):
+    Path("obs_idx.txt").write_text("0\n2\n4\n6", encoding="utf-8")
+    Path("obs_data.txt").write_text(
+        "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
+    )
+
+    with pytest.raises(ConfigValidationError, match="must be of equal length"):
+        ErtConfig.from_dict(
+            {
+                "NUM_REALIZATIONS": 2,
+                "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.GENERAL,
+                                "name": "OBS",
+                                "DATA": "RES",
+                                "INDEX_FILE": "obs_idx.txt",  # shorter than obs_file
+                                "OBS_FILE": "obs_data.txt",
+                            },
+                            context=file_context_token(),
+                        )
+                    ],
+                ),
+            }
+        )
+
+
+def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index_list(
+    tmpdir, file_context_token
+):
+    with tmpdir.as_cwd():
+        with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
+            fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+
+        with pytest.raises(ConfigValidationError, match="must be of equal length"):
+            ErtConfig.from_dict(
+                {
+                    "GEN_DATA": [
+                        [
+                            "RES",
+                            {"RESULT_FILE": "out"},
+                        ]
+                    ],
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        [
+                            ObservationDict(
+                                {
+                                    "type": ObservationType.GENERAL,
+                                    "name": "OBS",
+                                    "DATA": "RES",
+                                    "INDEX_LIST": "200",  # shorter than obs_file
+                                    "OBS_FILE": "obs_data.txt",
+                                },
+                                context=file_context_token(),
+                            )
+                        ],
+                    ),
+                }
+            )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_general_observations_data_must_match_a_gen_datas_name(file_context_token):
+    with pytest.raises(
+        ConfigValidationError,
+        match="No GEN_DATA with name 'RES' found",
+    ):
+        ErtConfig.from_dict(
+            {
+                "NUM_REALIZATIONS": 2,
+                "GEN_DATA": [["OTHER", {"RESULT_FILE": "out"}]],
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.GENERAL,
+                                "name": "OBS",
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "RESTART": "0",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                            },
+                            context=file_context_token(),
+                        )
+                    ],
+                ),
+            }
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_general_observation_restart_must_match_gen_data_report_step(
+    file_context_token,
+):
+    with pytest.raises(
+        ConfigValidationError,
+        match="is not configured to load from report step",
+    ):
+        ErtConfig.from_dict(
+            {
+                "NUM_REALIZATIONS": 2,
+                "GEN_DATA": [
+                    [
+                        "RES",
+                        {
+                            "REPORT_STEPS": "1",
+                            "RESULT_FILE": "file%d",
+                        },
+                    ]
+                ],
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.GENERAL,
+                                "name": "OBS",
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "RESTART": "0",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                            },
+                            context=file_context_token(),
+                        )
+                    ],
+                ),
+            }
+        )
+
+
+def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
+    with tmpdir.as_cwd():
+        run_sim(
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
+            [
+                (k, "SM3/DAY", None)
+                for k in ["FOPR", "FWPR", "FOPRH", "FWPRH", "FGPR", "FGPRH"]
+            ],
+            {"FOPRH": 20, "FGPRH": 15, "FWPRH": 25},
+        )
+
+        obsconf = dedent(
+            """
+            HISTORY_OBSERVATION FOPR {
+                ERROR = 0.20;
+                ERROR_MODE = ABS;
+            };
+            HISTORY_OBSERVATION FGPR {
+                ERROR = 0.1;
+                ERROR_MODE = REL;
+            };
+            HISTORY_OBSERVATION FWPR {
+                ERROR = 0.1;
+                ERROR_MODE = RELMIN;
+                ERROR_MIN = 10000;
+            };
+            """
+        )
+
+        Path("obsconf").write_text(obsconf, encoding="utf-8")
+
+        config_content = dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            REFCASE ECLIPSE_CASE
+            OBS_CONFIG obsconf
+            """
+        )
+        Path("config.ert").write_text(config_content, encoding="utf-8")
+
+        convert_history_to_summary("config.ert")
+        ert_config = ErtConfig.from_file("config.ert")
+        observations = create_observation_dataframes(
+            ert_config.observation_declarations, ert_config.shape_registry
+        )["summary"]
+
+        assert list(observations["response_key"]) == ["FGPR", "FOPR", "FWPR"]
+        assert list(observations["observations"]) == pytest.approx([15, 20, 25])
+        assert list(observations["std"]) == pytest.approx([1.5, 0.2, 10000])
+
+
+def test_that_segment_defaults_are_applied(tmpdir):
+    with tmpdir.as_cwd():
+        run_sim(
+            datetime(2014, 9, 10),  # ruff: ignore[call-datetime-without-tzinfo]
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+            days=range(10),
+        )
+
+        obsconf = dedent(
+            """
+            HISTORY_OBSERVATION FOPR {
+                ERROR = 1.0;
+                SEGMENT SEG {
+                    START = 5;
+                    STOP  = 10;
+                    ERROR = 0.05;
+                };
+            };
+            """
+        )
+
+        Path("obsconf").write_text(obsconf, encoding="utf-8")
+
+        config_content = dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            REFCASE ECLIPSE_CASE
+            OBS_CONFIG obsconf
+            """
+        )
+        Path("config.ert").write_text(config_content, encoding="utf-8")
+
+        convert_history_to_summary("config.ert")
+        ert_config = ErtConfig.from_file("config.ert")
+        observations = create_observation_dataframes(
+            ert_config.observation_declarations, ert_config.shape_registry
+        )["summary"]
+
+        # default error_min is 0.1
+        # default error method is RELMIN
+        # default error is 0.1
+        assert list(observations["std"]) == pytest.approx([1.0] * 5 + [0.1] * 5)
+
+
+def test_that_summary_default_error_min_is_applied():
+    obs = make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.SUMMARY,
+                "name": "FOPR",
+                "VALUE": "1",
+                "ERROR": "0.01",
+                "KEY": "FOPR",
+                "DATE": "2020-01-02",
+                "ERROR_MODE": "RELMIN",
+            }
+        ],
+        ShapeRegistry(),
+    )
+    observations = create_observation_dataframes(
+        obs,
+        shape_registry=None,
+    )
+
+    # default error_min is 0.1
+    assert list(observations["summary"]["std"]) == pytest.approx([0.1])
+
+
+@pytest.mark.parametrize(
+    ("segment_property", "value", "error_msg"),
+    [
+        ("ERROR", "-1", 'Failed to validate "-1"'),
+        ("ERROR_MIN", "-1", 'Failed to validate "-1"'),
+        ("START", "1.1", 'Could not convert "1.1" to int'),
+        ("STOP", "1.1", 'Could not convert "1.1" to int'),
+        ("START", "1", 'Missing item "STOP"'),
+        ("STOP", "1", 'Missing item "START"'),
+        ("SMERROR", "0.02", "Unknown key 'SMERROR'"),
+        ("name", "0.02", "Unknown key 'name'"),
+        ("type", "0.02", "Unknown key 'type'"),
+        ("segments", "0.02", "Unknown key 'segments'"),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_properties_are_valid_in_a_segment(segment_property, value, error_msg):
+    obsconf = dedent(
+        f"""
+        HISTORY_OBSERVATION FOPR {{
+           ERROR = 0.1;
+           SEGMENT SEG {{
+              {segment_property} = {value};
+           }};
+        }};
+    """
+    )
+
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigValidationError, match=error_msg):
+        convert_history_to_summary("config.ert")
+
+
+@pytest.mark.parametrize(
+    ("restart_value", "error_msg"),
+    [
+        ("minus_one", 'Failed to validate "minus_one"'),
+        ("-1", 'Failed to validate "-1"'),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_restart_cannot_be_non_positive_in_summary_observation(
+    restart_value, error_msg
+):
+    obsconf = dedent(
+        f"""
+        SUMMARY_OBSERVATION FOPR {{
+            RESTART = {restart_value};
+            KEY = FOPR;
+            VALUE = 1.0;
+            ERROR = 0.1;
+        }};
+        """
+    )
+    Path("obs.conf").write_text(obsconf, encoding="utf-8")
+    Path("time_map.txt").write_text("2020-01-01\n2020-01-02\n", encoding="utf-8")
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        TIME_MAP time_map.txt
+        OBS_CONFIG obs.conf
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf-8")
+
+    with pytest.raises(ConfigValidationError, match=error_msg):
+        convert_history_to_summary("config.ert")
+
+
+def test_that_value_must_be_set_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Missing item "VALUE"'):
+        ert_config_from_parser("SUMMARY_OBSERVATION FOPR {DATE = 2025-01-01;};")
+
+
+def test_that_key_must_be_set_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Missing item "KEY"'):
+        ert_config_from_parser("""
+            SUMMARY_OBSERVATION  FOPR {
+               VALUE = 1;
+               ERROR = 0.1;
+            };
+        """)
+
+
+def test_that_data_must_be_set_in_general_observation():
+    with pytest.raises(ConfigValidationError, match='Missing item "DATA"'):
+        ert_config_from_parser("""
+            GENERAL_OBSERVATION obs {
+               DATE       = 2023-02-01;
+               VALUE      = 1;
+               ERROR      = 0.01;
+               ERROR_MIN  = 0.1;
+            };
+        """)
+
+
+@pytest.mark.parametrize(
+    "error_variant",
+    ["ERROR", "ERROR_MIN"],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_error_variants_must_be_a_positive_number_in_history_observation(
+    error_variant,
+):
+    obsconf = f"""HISTORY_OBSERVATION FOPR {{ {error_variant} = -1; }};"""
+
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASEBASEBASE
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        convert_history_to_summary("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_history_observation():
+    obsconf = dedent(
+        """
+        HISTORY_OBSERVATION  FOPR {
+            ERROR_MODE = NOT_ABS;
+            ERROR=1.0;
+        };
+        """
+    )
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASEBASEBASE
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
+        convert_history_to_summary("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_history_observations_can_omit_body():
+    obs = make_refcase_observations("HISTORY_OBSERVATION  FOPR;")
+    assert list(obs["summary"]["response_key"]) == ["FOPR"]
+
+
+def test_that_error_min_must_be_a_positive_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        ert_config_from_parser("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                ERROR_MODE=RELMIN;
+                ERROR_MIN = -1;
+                ERROR = 1.0;
+                RESTART = 1;
+                VALUE=1.0;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
+        ert_config_from_parser("""
+            SUMMARY_OBSERVATION  FOPR
+            {
+                ERROR_MODE = NOT_ABS;
+                ERROR=1.0;
+                RESTART = 1;
+                VALUE=1.0;
+                KEY = FOPR;
+            };
+        """)
+
+
+@pytest.mark.parametrize(
+    "general_property",
+    ["DAYS", "HOURS"],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_property_must_be_a_positive_number_in_general_observation(
+    general_property,
+):
+    obsconf = dedent(
+        f"""
+        GENERAL_OBSERVATION FOPR {{
+            {general_property} = -1;
+            DATA = GEN;
+        }};
+        """
+    )
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        convert_history_to_summary("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_date_must_be_a_date_in_general_observation():
+    obsconf = dedent(
+        """
+        GENERAL_OBSERVATION FOPR
+        {
+            DATE = wednesday;
+            VALUE = 1.0;
+            ERROR = 0.1;
+            DATA = GEN;
+        };
+        """
+    )
+
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("time_map.txt").write_text("2014-09-10\n2014-09-11\n", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            TIME_MAP time_map.txt
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigValidationError, match="Please use ISO date format"):
+        convert_history_to_summary("config.ert")
+
+
+def test_that_value_must_be_a_number_in_general_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "exactly_1"'):
+        ert_config_from_parser("""
+            GENERAL_OBSERVATION FOPR
+            {
+                ERROR = 0;
+                VALUE = exactly_1;
+                DATA = GEN;
+            };
+        """)
+
+
+def test_that_error_must_be_set_in_general_observation():
+    with pytest.raises(ConfigValidationError, match="ERROR"):
+        ert_config_from_parser("""
+            GENERAL_OBSERVATION FOPR
+            {
+                VALUE = 1;
+                DATA = GEN;
+            };
+        """)
+
+
+@pytest.mark.parametrize(
+    "summary_property",
+    ["DAYS", "HOURS"],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_property_must_be_a_positive_number_in_summary_observation(
+    summary_property,
+):
+    obsconf = dedent(
+        f"""
+        SUMMARY_OBSERVATION FOPR {{
+            {summary_property} = -1;
+            KEY = FOPR;
+        }};
+        """
+    )
+    Path("obs.conf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            OBS_CONFIG obs.conf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        convert_history_to_summary("config.ert")
+
+
+def test_that_date_must_be_a_date_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match="Please use ISO date format"):
+        ert_config_from_parser("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                DATE = wednesday;
+                VALUE = 1.0;
+                ERROR = 0.1;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_value_must_be_a_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "exactly_1"'):
+        ert_config_from_parser("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                VALUE = exactly_1;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_error_must_be_set_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match="ERROR"):
+        ert_config_from_parser("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                VALUE = 1;
+                KEY = FOPR;
+            };
+        """)
+
+
+@pytest.mark.parametrize(
+    "observation_type",
+    ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
+)
+@pytest.mark.parametrize("unknown_key", ["SMERROR", "name", "type", "segments"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key):
+    if observation_type == "HISTORY_OBSERVATION":
+        # HISTORY_OBSERVATION is deprecated; write legacy obs file and run migration
+        obsconf = f"{observation_type} FOPR {{{unknown_key}=0.1;DATA=key;}};"
+        Path("obsconf").write_text(obsconf, encoding="utf-8")
+        Path("config.ert").write_text(
+            dedent(
+                """
+                NUM_REALIZATIONS 1
+                ECLBASE ECLIPSE_CASE
+                OBS_CONFIG obsconf
+                """
+            ),
+            encoding="utf-8",
+        )
+        with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
+            convert_history_to_summary("config.ert")
+    else:
+        with pytest.raises(ConfigValidationError, match=f"Unknown key '{unknown_key}'"):
+            ert_config_from_parser(
+                f"{observation_type} FOPR {{{unknown_key}=0.1;DATA=key;}};"
+            )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings(
+    r"ignore:.*((does not contain any time steps)|(out of bounds)|(start after stop)).*"
+)
+def test_ert_config_logs_observation_types_and_keywords(caplog):
+    obs_config_contents = """
+    GENERAL_OBSERVATION OBS1 {
+        VALUE = 1;
+        DATA = GEN;
+        ERROR = 0.1;
+        RESTART = 1;
+    };
+    HISTORY_OBSERVATION FWPR;
+    HISTORY_OBSERVATION FOPR {
+        SEGMENT FIRST_YEAR {
+            START = 1;
+            STOP = 2;
+            ERROR = 0.02;
+        };
+    };
+    SUMMARY_OBSERVATION SUMOP {
+        VALUE = 1;
+        ERROR = 0.1;
+        KEY = FGPR;
+        RESTART = 1;
+    };
+    """
+    with caplog.at_level(logging.INFO):
+        make_refcase_observations(
+            obs_config_contents,
+            summary_values={"FOPR": 1, "FOPRH": 2, "FWPR": 3, "FWPRH": 4},
+        )
+    assert "Count of observation types" in caplog.text
+    assert "GENERAL_OBSERVATION" in caplog.text
+    # HISTORY observations are converted; ensure migration trace is present
+    assert "History obs" in caplog.text
+    assert "SUMMARY_OBSERVATION" in caplog.text
+    assert "Count of observation keywords" in caplog.text
+    assert "VALUE" in caplog.text
+    assert "DATA" in caplog.text
+    assert "ERROR" in caplog.text
+    assert "RESTART" in caplog.text
+
+
+def test_that_general_observations_are_instantiated_with_localization_attributes():
+    obs_config_contents = """
+        GENERAL_OBSERVATION OBS1 {
+            VALUE = 1;
+            DATA = GEN;
+            ERROR = 0.1;
+            RESTART = 1;
+        };"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    gen_obs = create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )["gen_data"]
+    for loc_kw in ["east", "north", "radius"]:
+        assert loc_kw in gen_obs.columns
+        assert gen_obs[loc_kw].dtype == pl.Float32
+        assert gen_obs[loc_kw].to_list() == [None]
+
+
+def obs_config_with_breakthrough_obs():
+    return {"OBS_CONFIG": (None, [{"type": "BREAKTHROUGH_OBSERVATION"}])}
+
+
+def test_that_breakthrough_observations_df_have_obs_value_zero():
+    """This test ensures that the observed value is converted
+    from a datetime to 0 as this will be the relative value
+    to responses, which value will be hours from observed date.
+    """
+    obs_config_contents = """
+        BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3;
+        THRESHOLD=0.1;
+      };"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    brt_obs = create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )["breakthrough"]
+    assert brt_obs["observations"].to_list() == [0]
+
+
+def test_that_breakthrough_observations_appends_to_breakthrough_config_responses():
+    keys = ["WWCT:OP_1", "WWCT:OP_2"]
+    dates = ["2012-10-01", "2013-01-01"]
+    thresholds = [0.1, 0.2]
+    obs_config_contents = f"""
+        BREAKTHROUGH_OBSERVATION brt1 {{
+            KEY={keys[0]};
+            DATE={dates[0]};
+            ERROR=3;
+            THRESHOLD={thresholds[0]};
+          }};
+        BREAKTHROUGH_OBSERVATION brt2 {{
+            KEY={keys[1]};
+            DATE={dates[1]};
+            ERROR=3;
+            THRESHOLD={thresholds[1]};
+          }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
+    assert breakthrough_config.keys == [f"BREAKTHROUGH:{key}" for key in keys]
+    assert breakthrough_config.thresholds == thresholds
+    assert breakthrough_config.observed_dates == [
+        datetime.fromisoformat(date) for date in dates
+    ]
+
+
+def test_that_breakthrough_responses_are_derived_from_summary():
+    key = "WWCT:OP_1"
+    obs_date = "2012-12-01"
+    threshold = 0.2
+    obs_config_contents = f"""
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={key};
+                DATE={obs_date};
+                ERROR=3;
+                THRESHOLD={threshold};
+              }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )
+
+    ensemble_mock = MagicMock()
+    breakthrough_date = "2012-12-02T12:00"  # 1.5 days after observation
+    date_times = [
+        datetime.fromisoformat(date)
+        for date in ["2012-06-01", breakthrough_date, "2013-06-01"]
+    ]
+    summary_values = {
+        "time": date_times,
+        "values": [0.1, 0.2, 0.3],
+    }
+    ensemble_mock.load_responses.return_value = DataFrame(summary_values)
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
+    response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
+
+    assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
+    assert response_df["threshold"].to_list() == [threshold]
+    assert response_df["time"].to_list() == [datetime.fromisoformat(obs_date)]
+    assert response_df["values"].to_list() == [1.5]
+
+
+def test_that_unreachable_breakthrough_thresholds_has_none_response():
+    key = "WWCT:OP_1"
+    threshold = 0.8
+    obs_config_contents = f"""
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={key};
+                DATE=2012-12-01;
+                ERROR=3;
+                THRESHOLD={threshold};
+              }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )
+
+    ensemble_mock = MagicMock()
+    date_times = [
+        datetime.fromisoformat(date)
+        for date in ["2012-06-01", "2012-12-02", "2013-06-01"]
+    ]
+    summary_values = {
+        "time": date_times,
+        "values": [0.1, 0.2, 0.3],
+    }
+    ensemble_mock.load_responses.return_value = DataFrame(summary_values)
+    breakthrough_config = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    )
+    response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
+
+    assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
+    assert response_df["threshold"].to_list() == [threshold]
+    assert response_df["time"].to_list() == [None]
+    assert response_df["values"].to_list() == [None]
+
+
+def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_turned_into_responses():  # ruff: ignore[line-too-long]
+    keys = ["WWCT:OP_1", "WWCT:OP_2"]
+    obs_dates = ["2012-12-01", "2012-12-02"]
+    thresholds = [0.2, 0.8]
+    obs_config_contents = f"""
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={keys[0]};
+                DATE={obs_dates[0]};
+                ERROR=3;
+                THRESHOLD={thresholds[0]};
+              }};
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={keys[1]};
+                DATE={obs_dates[1]};
+                ERROR=3;
+                THRESHOLD={thresholds[1]};
+              }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        shape_registry=ert_config.shape_registry,
+    )
+
+    ensemble_mock = MagicMock()
+    breakthrough_date = "2012-12-02"
+    date_times = [
+        datetime.fromisoformat(date)
+        for date in ["2012-06-01", breakthrough_date, "2013-06-01"]
+    ]
+    summary_values = {
+        "time": date_times,
+        "values": [0.1, 0.2, 0.3],
+    }
+    ensemble_mock.load_responses.return_value = DataFrame(summary_values)
+    response_df = cast(
+        BreakthroughConfig, ert_config.ensemble_config.response_configs["breakthrough"]
+    ).derive_from_storage(0, 0, ensemble_mock)
+
+    assert response_df["response_key"].to_list() == [
+        f"BREAKTHROUGH:{key}" for key in keys
+    ]
+    assert response_df["threshold"].to_list() == thresholds
+    assert response_df["time"].to_list() == [
+        datetime.fromisoformat(obs_dates[0]),
+        None,
+    ]
+    assert response_df["values"].to_list() == [1, None]
+
+
+@pytest.mark.parametrize(
+    "missing_localization_keys",
+    [
+        {"EAST"},
+        {"NORTH"},
+        {"RADIUS"},
+        {"EAST", "RADIUS"},
+        {"EAST", "NORTH"},
+        {"NORTH", "RADIUS"},
+    ],
+)
+def test_that_extract_localization_values_extracts_partially_defined_values(
+    missing_localization_keys,
+):
+    localization_keys = {"EAST", "NORTH", "RADIUS"}
+    present_keys = localization_keys - missing_localization_keys
+    values = dict.fromkeys(present_keys, 10)
+    east, north, radius = extract_localization_values(values)
+    assert east == (10 if "EAST" in present_keys else None)
+    assert north == (10 if "NORTH" in present_keys else None)
+    assert radius == (10 if "RADIUS" in present_keys else None)
+
+
+def test_that_extract_localization_values_raises_error_given_non_float():
+    for key in ["EAST", "NORTH", "RADIUS"]:
+        values = {key: "Not a float"}
+        with pytest.raises(
+            ObservationConfigError,
+            match=rf'Could not convert "Not a float" to float for key "{key}". '
+            rf'Failed to validate "Not a float"',
+        ):
+            extract_localization_values(values)
+
+
+def test_that_hours_are_rounded_to_closest_int_in_plot_observations():
+    unrounded_days = 10.7 / 24  # 10.7 hours converted to days
+    expected_rounded_hours = 11
+
+    def assertion_mock(**kwargs):
+        assert kwargs["xerr"] == [expected_rounded_hours]
+
+    axes_mock = MagicMock()
+    axes_mock.errorbar = assertion_mock
+
+    config = PlotConfig()
+    config.flip_observation_axis = True
+
+    data = DataFrame(
+        [
+            [
+                datetime.fromisoformat("2025-01-02"),
+            ],
+            [unrounded_days],
+            [0],
+        ],
+        index=["key_index", "STD", "OBS"],
+    )
+
+    _plotObservations(
+        axes_mock,
+        config,
+        data=data,
+        value_column="foo",
+    )
+
+
+def test_that_base_observation_fails_validation_with_unknown_kwarg():
+
+    with pytest.raises(ValidationError):
+        BaseObservation(random_kwarg=42)
+
+
+def test_that_missing_rft_observations_name_is_defaulted_to_primary_keys():
+    well = "PROD"
+    date = "2015-02-01"
+    property_ = "PRESSURE"
+    east = "9500.0"
+    north = "10000.0"
+    tvd = "8400.0"
+    obs_config_contents = (
+        """
+        RFT_OBSERVATION {
+        VALUE=3800;
+        ERROR=10;"""
+        f"EAST={east};\n"
+        f"NORTH={north};\n"
+        f"WELL={well};\n"
+        f"DATE={date};\n"
+        f"PROPERTY={property_};\n"
+        f"TVD={tvd};\n"
+        "};"
+    )
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == f"{well}:{date}:{property_}:{east}:{north}:{tvd}"
+
+
+def test_that_missing_summary_observations_name_is_defaulted_to_primary_key():
+    key = "WOPR:OP1"
+    date = "2011-12-21"
+    obs_config_contents = (
+        """
+        SUMMARY_OBSERVATION
+        {
+            VALUE   = 0.5;
+            ERROR   = 0.05;
+            """
+        f"KEY={key};\n"
+        f"DATE={date};\n"
+        """
+        };"""
+    )
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == f"{key}:{date}"
+
+
+def test_that_missing_gen_obs_name_is_defaulted_to_primary_key_without_obs_file(
+    use_tmpdir,
+):
+    obs_config_contents = """
+        GENERAL_OBSERVATION {
+           DATA    = GEN;
+           VALUE   = 5;
+           ERROR   = 0.2;
+           RESTART = 1;
+        };
+        """
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == "GEN:1:0"
+
+
+def test_that_missing_gen_obs_name_is_defaulted_to_primary_key_with_obs_file(
+    use_tmpdir,
+):
+    obs_content = "1 0.1"
+    Path("foo.txt").write_text(obs_content, encoding="utf-8")
+    obs_config_contents = """
+        GENERAL_OBSERVATION {
+           DATA       = GEN;
+           INDEX_LIST = 0;
+           OBS_FILE   = foo.txt;
+           RESTART = 1;
+        };
+        """
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == "GEN:1:0"
+
+
+def test_that_missing_breakthrough_name_is_defaulted_to_primary_keys():
+    key = "WWCT:OP1"
+    threshold = 0.5
+    obs_config_contents = (
+        """
+        BREAKTHROUGH_OBSERVATION {
+            DATE=2012-10-01;
+            ERROR=3;
+            """
+        f"KEY={key};"
+        f"THRESHOLD={threshold};"
+        "};"
+    )
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == "BREAKTHROUGH:WWCT:OP1:0.5"
+
+
+@pytest.mark.parametrize(
+    "obs_content",
+    [
+        "SUMMARY_OBSERVATION;",
+        "BREAKTHROUGH_OBSERVATION;",
+        "RFT_OBSERVATION;",
+    ],
+)
+def test_that_providing_no_name_or_object_to_obs_raises_config_error(obs_content):
+    expected_error = r'Missing item "(.+)" in ' + obs_content.replace(";", "")
+    with pytest.raises(ConfigValidationError, match=expected_error):
+        ert_config_from_parser(obs_content)
+
+
+@pytest.mark.parametrize("file_format", ["parquet", "csv"])
+def test_that_seismic_observation_dataframes_are_created_from_obs_file(
+    mocked_files, file_context_token, file_format
+):
+    frame1 = pl.DataFrame(
+        {
+            "X_UTME": [100.25, 100.55],
+            "Y_UTMN": [200.25, 200.65],
+            "OBS": [1.1, 1.2],
+            "OBS_ERROR": [0.005, 0.005],
+            "REGION": [1.0, 1.0],
+        }
+    )
+    frame2 = pl.DataFrame(
+        {
+            "X_UTME": [100.85],
+            "Y_UTMN": [200.95],
+            "OBS": [1.3],
+            "OBS_ERROR": [0.005],
+            "REGION": [1.0],
+        }
+    )
+
+    if file_format == "parquet":
+        buf1, buf2 = BytesIO(), BytesIO()
+        frame1.write_parquet(buf1)
+        frame2.write_parquet(buf2)
+        mocked_files["obs1.parquet"] = buf1.getvalue()
+        mocked_files["obs2.parquet"] = buf2.getvalue()
+    else:
+        mocked_files["obs1.csv"] = frame1.write_csv()
+        mocked_files["obs2.csv"] = frame2.write_csv()
+
+    ert_config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": "NAME1",
+                            "OBS_FILE": f"obs1.{file_format}",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                    ObservationDict(
+                        {
+                            "type": ObservationType.SEISMIC,
+                            "name": None,
+                            "OBS_FILE": f"obs2.{file_format}",
+                        },
+                        context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                    ),
+                ],
+            ),
+        }
+    )
+    observations = create_observation_dataframes(
+        ert_config.observation_declarations, ert_config.shape_registry
+    )["seismic"]
+    assert_frame_equal(
+        observations,
+        pl.DataFrame(
+            {
+                "response_key": ["obs1", "obs1", "obs2"],
+                "observation_key": ["NAME1", "NAME1", "obs2"],
+                "observations": pl.Series([1.1, 1.2, 1.3], dtype=pl.Float32),
+                "std": pl.Series([0.005, 0.005, 0.005], dtype=pl.Float32),
+                "east": pl.Series([100.25, 100.55, 100.85], dtype=pl.Float32),
+                "north": pl.Series([200.25, 200.65, 200.95], dtype=pl.Float32),
+                "radius": pl.Series([3000.0, 3000.0, 3000.0], dtype=pl.Float32),
+                "boundary_id": pl.Series([None, None, None], dtype=pl.UInt16),
+            }
+        ),
+    )
+
+
+def test_that_seismic_observation_reports_missing_obs_file_key(file_context_token):
+    with pytest.raises(
+        ConfigValidationError, match='Missing item "OBS_FILE" in SEISMIC_OBSERVATION'
+    ):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SEISMIC,
+                                "name": "NAME1",
+                            },
+                            context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                        ),
+                    ],
+                ),
+            }
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_config_derives_seismic_response_when_no_response_entry_exists():
+    name1 = "horizon--amplitude_full_mean_depth--20250101_20240101.csv"
+    name2 = "horizon--amplitude_full_min_depth--20250101_20240101.parquet"
+    pattern2 = "*.parquet"
+
+    obs_dir = Path("share/preprocessed/tables")
+    obs_dir.mkdir(parents=True, exist_ok=True)
+
+    path1 = obs_dir / name1
+    seismic_file_content().write_csv(path1)
+    path2 = obs_dir / name2
+    seismic_file_content().write_parquet(path2)
+    pattern_path2 = obs_dir / pattern2
+
+    config = ErtConfig.from_dict(
+        {
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    create_seismic_observation_dict(obs_file=str(path1)),
+                    create_seismic_observation_dict(obs_file=str(pattern_path2)),
+                ],
+            ),
+        }
+    )
+
+    seismic_config = cast(
+        SeismicConfig, config.ensemble_config.response_configs["seismic"]
+    )
+    assert seismic_config.input_files == [
+        f"share/results/tables/{name1}",
+        f"share/results/tables/{name2}",
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_config_does_not_derive_seismic_response_when_response_entry_exists():
+    obs_path = "horizon--amplitude_full_mean_depth--20250101_20240101.parquet"
+    seismic_file_content().write_parquet(obs_path)
+
+    name1 = (
+        "share/results/tables/horizon--amplitude_full_mean_depth--20250101_20240101.csv"
+    )
+    name2 = (
+        "share/results/tables/horizon--amplitude_full_min_depth--20250101_20240101.csv"
+    )
+
+    config = ErtConfig.from_dict(
+        {
+            "SEISMIC": [
+                name1,
+                name2,
+            ],
+            "OBS_CONFIG": (
+                "obsconf",
+                [create_seismic_observation_dict(obs_file=obs_path)],
+            ),
+        }
+    )
+
+    seismic_config = cast(
+        SeismicConfig, config.ensemble_config.response_configs["seismic"]
+    )
+    assert seismic_config.input_files == [name1, name2]

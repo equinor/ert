@@ -1,0 +1,648 @@
+import json
+import logging
+import os
+import random
+import stat
+import warnings
+from pathlib import Path
+from textwrap import dedent
+
+import numpy as np
+import polars as pl
+import pytest
+
+from ert.cli.main import ErtCliError
+from ert.config import ConfigWarning, ErtConfig
+from ert.mode_definitions import (
+    ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+)
+from ert.storage import open_storage
+from tests.ert.conftest import _create_design_matrix
+from tests.ert.ui_tests.cli.run_cli import run_cli
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, caplog):
+    caplog.set_level(logging.INFO)
+    num_realizations = 10
+    a_values = list(range(num_realizations))
+    design_dict = {
+        "REAL": list(range(num_realizations)),
+        "a": a_values,
+        "category": 5 * ["cat1"] + 5 * ["cat2"],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+        "--experiment-name",
+        "test-experiment",
+    )
+    params = ["a", "b", "c", "category"]
+    assert (
+        "Getting parameters: a, category, b, c "
+        "from design matrix for realizations [0 1 2 3 4 5 6 7 8 9]"
+    ) in caplog.text
+
+    storage_path = ErtConfig.from_file("poly.ert").ens_path
+    config_path = ErtConfig.from_file("poly.ert").config_path
+    with open_storage(storage_path) as storage:
+        experiment = storage.get_experiment_by_name("test-experiment")
+        params = experiment.get_ensemble_by_name("default").load_parameters(
+            "DESIGN_MATRIX"
+        )
+        np.testing.assert_array_equal(params["a"].to_list(), a_values)
+        np.testing.assert_array_equal(
+            params["category"].to_list(), 5 * ["cat1"] + 5 * ["cat2"]
+        )
+        np.testing.assert_array_equal(params["b"].to_list(), 10 * [1])
+        np.testing.assert_array_equal(params["c"].to_list(), 10 * [2])
+
+    real_0_iter_0_parameters_json_path = (
+        Path(config_path) / "poly_out" / "realization-0" / "iter-0" / "parameters.json"
+    )
+    assert real_0_iter_0_parameters_json_path.exists()
+    with Path(real_0_iter_0_parameters_json_path).open(
+        mode="r+", encoding="utf-8"
+    ) as fs:
+        parameters_contents = json.load(fs)
+    assert isinstance(parameters_contents, dict)
+    for k, v in parameters_contents.items():
+        if k == "category":
+            assert isinstance(v["value"], str)
+        else:
+            assert isinstance(v["value"], float | int)
+
+
+@pytest.mark.usefixtures(
+    "copy_poly_case", "use_site_configurations_with_no_queue_options"
+)
+@pytest.mark.parametrize(
+    "default_values",
+    [
+        ([["b", 1], ["c", 2]]),
+    ],
+)
+def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
+    num_realizations = 10
+    a_values = list(range(num_realizations))
+    _create_design_matrix(
+        "poly_design.xlsx",
+        pl.DataFrame(
+            {
+                "REAL": list(range(num_realizations)),
+                "a": a_values,
+                "category": 5 * ["cat1"] + 5 * ["cat2"],
+                "big_integer": [1e10 + i for i in range(num_realizations)],
+            }
+        ),
+        pl.DataFrame(default_values, orient="row"),
+    )
+
+    Path("poly.ert").write_text(
+        dedent(
+            """\
+                QUEUE_OPTION LOCAL MAX_RUNNING 2
+                RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+                NUM_REALIZATIONS 10
+                MIN_REALIZATIONS 1
+                GEN_DATA POLY_RES RESULT_FILE:poly.out
+                GEN_KW COEFFS my_template my_output coeff_priors
+                DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet \
+                    DEFAULT_SHEET:DefaultSheet
+                INSTALL_JOB poly_eval POLY_EVAL
+                FORWARD_MODEL poly_eval
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    # This adds a dummy category and big_numbers parameter to COEFFS GENKW
+    # which will be overridden by the design matrix entries
+    with Path("coeff_priors").open("a", encoding="utf-8") as f:
+        f.write("category UNIFORM 0 1\n")
+        f.write("big_numbers UNIFORM 0 1\n")
+
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
+        dedent(
+            """\
+                #!/usr/bin/env python
+                import json
+
+                def _load_coeffs(filename):
+                    with open(filename, encoding="utf-8") as f:
+                        return json.load(f)
+
+                def _evaluate(coeffs, x):
+                    return (coeffs["a"]["value"] * x**2 +
+                            coeffs["b"]["value"] * x + coeffs["c"]["value"])
+
+                if __name__ == "__main__":
+                    coeffs = _load_coeffs("parameters.json")
+                    output = [_evaluate(coeffs, x) for x in range(10)]
+                    with open("poly.out", "w", encoding="utf-8") as f:
+                        f.write("\\n".join(map(str, output)))
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    Path("my_template").write_text(
+        dedent(
+            """\
+                a: <a>
+                b: <b>
+                c: <c>
+                category: <category>
+                big_integer: <big_integer>
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Expected warning:
+        # ConfigWarning: Parameters {'c', 'a', 'b', 'category'} from GEN_KW
+        # group 'COEFFS' will be overridden by design matrix.
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+    storage_path = ErtConfig.from_file("poly.ert").ens_path
+    with open_storage(storage_path) as storage:
+        experiment = storage.get_experiment_by_name("test-experiment")
+        params = experiment.get_ensemble_by_name("default").load_parameters(
+            "DESIGN_MATRIX"
+        )
+        np.testing.assert_array_equal(params["a"].to_list(), a_values)
+        np.testing.assert_array_equal(
+            params["category"].to_list(), 5 * ["cat1"] + 5 * ["cat2"]
+        )
+        np.testing.assert_array_equal(
+            params["big_integer"].to_list(), [1e10 + i for i in range(10)]
+        )
+        np.testing.assert_array_equal(params["b"].to_list(), 10 * [1])
+        np.testing.assert_array_equal(params["c"].to_list(), 10 * [2])
+    with Path("poly_out/realization-0/iter-0/my_output").open(encoding="utf-8") as f:
+        output = [line.strip() for line in f]
+        assert output[0] == "a: 0"
+        assert output[1] == "b: 1"
+        assert output[2] == "c: 2"
+        assert output[3] == "category: cat1"
+        assert output[4] == "big_integer: 10000000000"
+    with Path("poly_out/realization-5/iter-0/my_output").open(encoding="utf-8") as f:
+        output = [line.strip() for line in f]
+        assert output[0] == "a: 5"
+        assert output[1] == "b: 1"
+        assert output[2] == "c: 2"
+        assert output[3] == "category: cat2"
+        assert output[4] == "big_integer: 10000000005"
+
+
+@pytest.mark.usefixtures(
+    "copy_poly_case", "use_site_configurations_with_no_queue_options"
+)
+def test_run_poly_example_with_multiple_design_matrix_instances():
+    num_realizations = 10
+    expected_num_realizations_in_merged_design_matrix = 5
+    a_values = list(range(num_realizations))
+    _create_design_matrix(
+        "poly_design_1.xlsx",
+        pl.DataFrame(
+            {
+                "REAL": list(range(num_realizations)),
+                "a": a_values,
+            }
+        ),
+        pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
+    )
+    _create_design_matrix(
+        "poly_design_2.xlsx",
+        pl.DataFrame(
+            {
+                "REAL": list(range(expected_num_realizations_in_merged_design_matrix)),
+                "d": expected_num_realizations_in_merged_design_matrix * [3],
+            }
+        ),
+        pl.DataFrame([["g", 4]], orient="row"),
+    )
+
+    Path("poly.ert").write_text(
+        dedent(
+            """\
+                QUEUE_OPTION LOCAL MAX_RUNNING 2
+                RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+                NUM_REALIZATIONS 10
+                MIN_REALIZATIONS 1
+                GEN_DATA POLY_RES RESULT_FILE:poly.out
+                DESIGN_MATRIX poly_design_1.xlsx DEFAULT_SHEET:DefaultSheet
+                DESIGN_MATRIX poly_design_2.xlsx DEFAULT_SHEET:DefaultSheet
+                INSTALL_JOB poly_eval POLY_EVAL
+                FORWARD_MODEL poly_eval
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
+        dedent(
+            """\
+                #!/usr/bin/env python
+                import json
+
+                def _load_coeffs(filename):
+                    with open(filename, encoding="utf-8") as f:
+                        return json.load(f)
+
+                def _evaluate(coeffs, x):
+                    return (coeffs["a"]["value"] * x**2 +
+                            coeffs["b"]["value"] * x + coeffs["c"]["value"])
+
+                if __name__ == "__main__":
+                    coeffs = _load_coeffs("parameters.json")
+                    output = [_evaluate(coeffs, x) for x in range(10)]
+                    with open("poly.out", "w", encoding="utf-8") as f:
+                        f.write("\\n".join(map(str, output)))
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    with warnings.catch_warnings(record=True) as all_warnings:
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+    warning_messages = [
+        str(warning.message)
+        for warning in all_warnings
+        if not str(warning.message).startswith(
+            "Use of legacy_ertscript_workflow is deprecated"
+        )
+    ]
+    # there are two warnings, where one is about NUM_REALIZATIONS begin greater than
+    # the number of realizations in the design matrix
+    assert len(warning_messages) == 2
+    assert (
+        "Design Matrices 'poly_design_1.xlsx (DesignSheet DefaultSheet)' and "
+        "'poly_design_2.xlsx (DesignSheet DefaultSheet)' do not have the same active "
+        "realizations. The merged design matrix will only contain the "
+        "realizations that are active in all instances."
+    ) in warning_messages
+    storage_path = ErtConfig.from_file("poly.ert").ens_path
+    with open_storage(storage_path) as storage:
+        experiment = storage.get_experiment_by_name("test-experiment")
+        params = experiment.get_ensemble_by_name("default").load_parameters(
+            "DESIGN_MATRIX"
+        )
+        np.testing.assert_array_equal(
+            params["a"].to_list(),
+            a_values[:expected_num_realizations_in_merged_design_matrix],
+        )
+        np.testing.assert_array_equal(
+            params["b"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [1],
+        )
+        np.testing.assert_array_equal(
+            params["c"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [2],
+        )
+        np.testing.assert_array_equal(
+            params["d"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [3],
+        )
+        np.testing.assert_array_equal(
+            params["g"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [4],
+        )
+
+
+@pytest.mark.usefixtures(
+    "copy_poly_case", "use_site_configurations_with_no_queue_options"
+)
+@pytest.mark.parametrize(
+    ("experiment_mode", "ensemble_name", "iterations"),
+    [
+        (ES_MDA_MODE, "default_", 4),
+        (ENSEMBLE_SMOOTHER_MODE, "iter-", 2),
+    ],
+)
+def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
+    design_path = "design_matrix.xlsx"
+    reals = range(10)
+    values = [random.uniform(0, 2) for _ in reals]
+    _create_design_matrix(
+        design_path,
+        pl.DataFrame(
+            {
+                "REAL": list(range(10)),
+                "b": values,
+            }
+        ),
+    )
+
+    Path("poly.ert").write_text(
+        dedent(
+            """\
+                QUEUE_OPTION LOCAL MAX_RUNNING 2
+                RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+                OBS_CONFIG observations
+                NUM_REALIZATIONS 10
+                GEN_KW COEFFS_A coeff_priors_a
+                GEN_KW COEFFS_B coeff_priors_b
+                GEN_KW COEFFS_C coeff_priors_c
+                GEN_DATA POLY_RES RESULT_FILE:poly.out
+                DESIGN_MATRIX design_matrix.xlsx
+                INSTALL_JOB poly_eval POLY_EVAL
+                FORWARD_MODEL poly_eval
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    poly_py = Path("poly_eval.py")
+    poly_py.write_text(
+        dedent(
+            """\
+                #!/usr/bin/env python3
+                import json
+
+                def _load_coeffs(filename):
+                    with open(filename, encoding="utf-8") as f:
+                        params = json.load(f)
+                        return {k: v["value"] for k, v in params.items()}
+
+                def _evaluate(coeffs, x):
+                    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+
+                if __name__ == "__main__":
+                    coeffs = _load_coeffs("parameters.json")
+                    output = [_evaluate(coeffs, x) for x in range(10)]
+                    with open("poly.out", "w", encoding="utf-8") as f:
+                        f.write("\\n".join(map(str, output)))
+                """
+        ),
+        encoding="utf-8",
+    )
+
+    poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    Path("coeff_priors_a").write_text("a UNIFORM 0 1", encoding="utf-8")
+    Path("coeff_priors_b").write_text("b UNIFORM 0 2", encoding="utf-8")
+    Path("coeff_priors_c").write_text("c UNIFORM 0 5", encoding="utf-8")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Expected warning:
+        # ConfigWarning: Parameters {'b'} from GEN_KW group 'COEFFS_B'
+        # will be overridden by design matrix.
+        run_cli(
+            experiment_mode,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+    storage_path = ErtConfig.from_file("poly.ert").ens_path
+    coeffs_a_previous = None
+    with open_storage(storage_path) as storage:
+        experiment = storage.get_experiment_by_name("test-experiment")
+        for i in range(iterations):
+            ensemble = experiment.get_ensemble_by_name(f"{ensemble_name}{i}")
+
+            # coeffs_a should be different in all realizations
+            coeffs_a = ensemble.load_parameters("a")["a"].to_list()
+
+            if coeffs_a_previous is not None:
+                assert not np.array_equal(coeffs_a, coeffs_a_previous)
+            coeffs_a_previous = coeffs_a
+
+            # coeffs_b should be overridden by design matrix and be the
+            # same for all realizations
+            coeffs_b = ensemble.load_parameters("b")["b"].to_list()
+            assert values == pytest.approx(coeffs_b, 0.0001)
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_run_poly_example_with_design_matrix_selective_realizations(
+    copy_poly_case_with_design_matrix, capsys
+):
+    num_realizations = 5
+    a_values = list(range(num_realizations))
+    design_dict = {
+        "REAL": [0, 3, 5, 6, 10],
+        "a": a_values,
+        "category": 2 * ["cat1"] + 3 * ["cat2"],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+        "--experiment-name",
+        "test-experiment",
+        "--realizations",
+        "0,4",
+    )
+    config_path = ErtConfig.from_file("poly.ert").config_path
+
+    realizations_run = os.listdir(Path(config_path) / "poly_out")
+    assert len(realizations_run) == 1
+    assert "realization-0" in realizations_run
+
+    assert (
+        "Using realizations intersected between realizations specified "
+        "and DESIGN_MATRIX (1)" in capsys.readouterr().out
+    )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.parametrize(
+    "experiment_mode",
+    [
+        (ES_MDA_MODE),
+        (ENSEMBLE_SMOOTHER_MODE),
+    ],
+)
+def test_design_matrix_on_esmda_fail_without_updateable_parameters(
+    copy_poly_case_with_design_matrix, experiment_mode
+):
+    reals = range(10)
+    copy_poly_case_with_design_matrix(
+        {"REAL": list(reals), "a": [random.uniform(0, 2) for _ in reals]},
+        [["b", 1], ["c", 2]],
+    )
+
+    with Path("poly.ert").open("a", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """\
+                GEN_KW COEFFS coeff_priors
+                OBS_CONFIG observations
+                """
+            )
+        )
+
+    with (
+        pytest.raises(
+            ErtCliError,
+            match="No parameters to update as all parameters were set to update:false!",
+        ),
+        pytest.warns(ConfigWarning, match=r"Parameters .* will be overridden"),
+    ):
+        run_cli(
+            experiment_mode,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize(
+    ("realizations_in_design_matrix", "expected_message_format"),
+    [
+        pytest.param(
+            5,
+            (
+                r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
+                "greater than the number of realizations in DESIGN_MATRIX "
+                r"\({realizations_in_design_matrix}\)\. Using the realizations from "
+                r"DESIGN_MATRIX \({realizations_in_design_matrix}\)"
+            ),
+            id="num_reals_greater_than_design_matrix",
+        ),
+        pytest.param(
+            15,
+            (
+                r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
+                "less than the number of realizations in DESIGN_MATRIX "
+                r"\({realizations_in_design_matrix}\). Using the realizations from "
+                r"NUM_REALIZATIONS \({num_realizations_in_user_config}\)"
+            ),
+            id="num_reals_less_than_design_matrix",
+        ),
+    ],
+)
+def test_run_poly_example_with_different_realization_count_chooses_smaller_and_warns(
+    realizations_in_design_matrix,
+    expected_message_format,
+    copy_poly_case_with_design_matrix,
+):
+    num_realizations_in_user_config = 10
+    expected_message = expected_message_format.format(
+        num_realizations_in_user_config=num_realizations_in_user_config,
+        realizations_in_design_matrix=realizations_in_design_matrix,
+    )
+
+    realization_list = list(range(realizations_in_design_matrix))
+    design_dict = {
+        "REAL": realization_list,
+        "a": [2 * a for a in realization_list],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+    with Path("poly.ert").open("a+", encoding="utf-8") as f:
+        f.write(f"\nNUM_REALIZATIONS {num_realizations_in_user_config}")
+    with pytest.warns(ConfigWarning, match=expected_message):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+    config_path = ErtConfig.from_file("poly.ert").config_path
+
+    realizations_run = os.listdir(Path(config_path) / "poly_out")
+    assert len(realizations_run) == min(
+        realizations_in_design_matrix, num_realizations_in_user_config
+    )
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize(
+    ("specified_realizations", "intersected_realizations_count"),
+    [
+        pytest.param(
+            "--realizations=3-6",
+            2,
+            id="specified_realizations_finds_and_uses_intersect",
+        ),
+        pytest.param(
+            "--realizations=0-4",
+            0,
+            id="specified_realizations_are_not_intersecting_and_raises",
+        ),
+    ],
+)
+def test_run_poly_example_with_specified_realizations_finds_intersection_and_warns(
+    specified_realizations: str,
+    intersected_realizations_count: int,
+    copy_poly_case_with_design_matrix,
+    capsys,
+):
+    realization_list = [5, 6, 7, 9, 10]
+    design_dict = {
+        "REAL": realization_list,
+        "a": [2 * a for a in realization_list],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+    with Path("poly.ert").open("a+", encoding="utf-8") as f:
+        f.write("\nNUM_REALIZATIONS 20")
+    if intersected_realizations_count > 0:
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            specified_realizations,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+
+        assert (
+            "Using realizations intersected between realizations specified and "
+            f"DESIGN_MATRIX ({intersected_realizations_count})"
+        ) in capsys.readouterr().out
+
+        config_path = ErtConfig.from_file("poly.ert").config_path
+        realizations_run = os.listdir(Path(config_path) / "poly_out")
+        assert len(realizations_run) == intersected_realizations_count
+    else:
+        with pytest.raises(
+            ErtCliError,
+            match=(
+                "The specified realizations do not intersect with the active "
+                r"realizations in the design matrix."
+            ),
+        ):
+            run_cli(
+                ENSEMBLE_EXPERIMENT_MODE,
+                specified_realizations,
+                "--disable-monitoring",
+                "poly.ert",
+                "--experiment-name",
+                "test-experiment",
+            )

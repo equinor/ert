@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+import json
+from pathlib import Path
+
+with Path("parameters.json").open(encoding="utf-8") as f:
+    coeffs = json.load(f)
+
+
+def evaluate(coeffs: dict[str, dict[str, float]], x: float) -> float:
+    return coeffs["a"]["value"] * x**2 + coeffs["b"]["value"] * x + coeffs["c"]["value"]
+
+
+output = [evaluate(coeffs, x) for x in range(50)]
+Path("poly.out").write_text("\n".join(map(str, output)), encoding="utf-8")

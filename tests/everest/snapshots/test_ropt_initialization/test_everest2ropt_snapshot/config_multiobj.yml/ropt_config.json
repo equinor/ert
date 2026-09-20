@@ -1,0 +1,103 @@
+{
+  "backend": {
+    "convergence_tolerance": 0.005,
+    "method": "optpp_q_newton",
+    "parallel": true
+  },
+  "function_estimators": [
+    {
+      "method": "mean"
+    }
+  ],
+  "gradient": {
+    "merge_realizations": false,
+    "number_of_perturbations": 5,
+    "perturbation_min_success": 5
+  },
+  "names": {
+    "nonlinear_constraint": [],
+    "objective": [
+      "distance_p",
+      "distance_q"
+    ],
+    "realization": [
+      0
+    ],
+    "variable": [
+      "point.x",
+      "point.y",
+      "point.z"
+    ]
+  },
+  "objective_transforms": [
+    null
+  ],
+  "objectives": {
+    "function_estimators": [
+      0,
+      0
+    ],
+    "transforms": [
+      0
+    ],
+    "weights": [
+      0.5,
+      0.25
+    ]
+  },
+  "optimizer": {
+    "max_batches": 3,
+    "output_dir": "not_relevant",
+    "stderr": "optimizer.stderr",
+    "stdout": "optimizer.stdout"
+  },
+  "realizations": {
+    "realization_min_success": 1,
+    "weights": [
+      1.0
+    ]
+  },
+  "samplers": [
+    {}
+  ],
+  "variable_transforms": [
+    null
+  ],
+  "variables": {
+    "lower_bounds": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "mask": [
+      true,
+      true,
+      true
+    ],
+    "perturbation_magnitudes": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "samplers": [
+      0,
+      0,
+      0
+    ],
+    "seed": 999,
+    "transforms": [
+      0
+    ],
+    "types": [
+      1,
+      1,
+      1
+    ],
+    "upper_bounds": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "variable_count": 3
+  }
+}

@@ -1,0 +1,127 @@
+from pathlib import Path
+from unittest.mock import patch
+
+import polars as pl
+import pytest
+from polars import DataFrame
+from polars.testing import assert_frame_equal
+from PyQt6.QtGui import QColor
+
+from ert.gui.tools.manage_experiments.export_dialog import ExportDialog
+
+
+def test_that_exported_csv_contains_the_provided_dataframe_values(
+    qtbot, change_to_tmpdir
+):
+    parameter_df = DataFrame({"a": 1, "b": 2})
+    dialog = ExportDialog(parameter_df)
+    qtbot.addWidget(dialog)
+    dialog.show()
+
+    assert not dialog._file_path_edit.text()
+    assert dialog._export_button.isEnabled() is False
+    assert not dialog._export_text_area.toPlainText()
+
+    dialog._file_path_edit.setText("test_export.csv")
+    assert dialog._export_button.isEnabled() is True
+
+    dialog.export()
+    assert "Data exported to: test_export.csv" in dialog._export_text_area.toPlainText()
+
+    assert_frame_equal(
+        parameter_df,
+        pl.read_csv("test_export.csv"),
+        abs_tol=1e-6,
+    )
+
+
+def assert_invalidation_in_dialog(dialog: ExportDialog, expected_error: str):
+    assert dialog._export_button.isEnabled() is False
+    palette = dialog._file_path_edit.palette()
+    assert palette.color(palette.ColorRole.Text) == QColor("red")
+    assert dialog._file_path_edit.toolTip() == expected_error
+
+
+def test_that_file_path_is_invalidated_given_empty_path(qtbot):
+    dialog = ExportDialog(DataFrame())
+    qtbot.addWidget(dialog)
+
+    empty_path = ""
+    dialog._file_path_edit.setText(empty_path)
+    dialog.validate_file()
+
+    assert_invalidation_in_dialog(dialog, expected_error="No filename provided")
+
+    long_empty_path = "   "
+    dialog._file_path_edit.setText(long_empty_path)
+    dialog.validate_file()
+
+    assert_invalidation_in_dialog(dialog, expected_error="No filename provided")
+
+
+def test_that_file_path_validation_fails_on_non_existing_path(qtbot):
+    dialog = ExportDialog(DataFrame())
+    qtbot.addWidget(dialog)
+
+    non_existing_path = "/non/existent/path/export.csv"
+    dialog._file_path_edit.setText(non_existing_path)
+    dialog.validate_file()
+
+    assert_invalidation_in_dialog(dialog, expected_error="Invalid file path")
+
+
+def test_that_non_existent_directory_path_shows_invalid_file_path_error(qtbot):
+    dialog = ExportDialog(DataFrame())
+    qtbot.addWidget(dialog)
+
+    existing_directory = "/"
+    dialog._file_path_edit.setText(existing_directory)
+    dialog.validate_file()
+
+    assert_invalidation_in_dialog(
+        dialog, expected_error="'/' is an existing directory."
+    )
+
+
+@pytest.mark.parametrize(
+    "valid_path",
+    [
+        "valid_export.csv",
+        "   valid_export.csv   ",
+        "subdir/valid_export.csv",
+        "valid-export",
+    ],
+)
+def test_that_file_path_validation_succeeds_on_valid_paths(
+    qtbot, valid_path, change_to_tmpdir
+):
+    dialog = ExportDialog(DataFrame())
+    qtbot.addWidget(dialog)
+    dialog.show()
+
+    Path("subdir").mkdir()
+    dialog._file_path_edit.setText(valid_path)
+    dialog.validate_file()
+
+    assert dialog._export_button.isEnabled() is True
+    palette = dialog._file_path_edit.palette()
+    assert palette.color(palette.ColorRole.Text) == QColor("black")
+    assert not dialog._file_path_edit.toolTip()
+
+
+@patch("polars.DataFrame.write_csv")
+def test_that_export_shows_error_message_when_csv_write_raises_exception(
+    patched_write_csv, qtbot
+):
+    patched_write_csv.side_effect = Exception("i_am_an_exception")
+
+    dialog = ExportDialog(DataFrame())
+    qtbot.addWidget(dialog)
+    dialog.show()
+
+    dialog._file_path_edit.setText("test_export.csv")
+    dialog.export()
+    assert (
+        "Could not export data: i_am_an_exception"
+        in dialog._export_text_area.toPlainText()
+    )

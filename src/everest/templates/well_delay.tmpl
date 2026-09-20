@@ -1,0 +1,5 @@
+[
+{% for well_name, well_delay in well_delay.items() -%}
+{ "name": {{well_name}}, "drill_delay": {{well_delay}} },
+{% endfor -%}
+]

@@ -1,0 +1,50 @@
+name: update-lockfile
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 1"
+
+permissions:
+  contents: write # so it can comment
+  pull-requests: write # so it can create pull requests
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.14']
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - run: |
+          echo "\`\`\`" > uv_output.md
+          uv lock --upgrade 2>&1 | tee -a uv_output.md
+          echo "\`\`\`" >> uv_output.md
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.LOCKFILE_UPDATE_TOKEN }}
+          commit-message: Update uv lockfile
+          title: Update uv lockfile
+          body-path: uv_output.md
+          branch: update-uv-lockfile
+          base: main
+          labels: dependency_workflow
+          delete-branch: true
+          add-paths: uv.lock
+          author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          committer: github-actions[bot] <github-actions[bot]@users.noreply.github.com>

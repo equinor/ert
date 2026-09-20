@@ -1,0 +1,799 @@
+import shutil
+import time
+from pathlib import Path
+
+import numpy as np
+import pytest
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QFrame,
+    QPushButton,
+    QTableWidget,
+    QTextEdit,
+)
+
+from ert.config import ErtConfig, SummaryConfig
+from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
+from ert.gui.tools.manage_experiments.ensemble_widget import (
+    EnsembleWidget,
+    _EnsembleWidgetTabs,
+)
+from ert.gui.tools.manage_experiments.export_dialog import ExportDialog
+from ert.gui.tools.manage_experiments.storage_info_widget import (
+    _ExperimentWidget,
+    _RealizationWidget,
+    _WidgetType,
+)
+from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
+from ert.storage import (
+    RealizationStorageState,
+    Storage,
+    open_storage,
+)
+from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
+    run_cli_ES_with_case,
+)
+
+from .conftest import add_experiment_in_manage_experiment_dialog
+
+
+def test_design_matrix_in_manage_experiments_panel(
+    copy_poly_case_with_design_matrix, qtbot, use_tmpdir
+):
+    num_realizations = 10
+    a_values = list(range(num_realizations))
+    design_dict = {
+        "REAL": list(range(num_realizations)),
+        "a": a_values,
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(str(config.ens_path))
+    assert config.ensemble_config.parameter_configuration == []
+    assert config.analysis_config.design_matrix is not None
+
+    with notifier.write_storage() as storage:
+        storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in (
+                        config.analysis_config.design_matrix.parameter_configurations
+                    )
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
+            name="my-experiment",
+        ).create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations,
+            name="my-design",
+        )
+
+    # Notifier storage is persistent, read-storage is not,
+    # hence we get the ensemble from the read storage
+    ensemble = notifier.storage.get_experiment_by_name(
+        "my-experiment"
+    ).get_ensemble_by_name("my-design")
+    assert all(
+        RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
+    )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    qtbot.mouseClick(
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.MouseButton.LeftButton,
+    )
+    assert (
+        RealizationStorageState.PARAMETERS_LOADED in s
+        for s in ensemble.get_ensemble_state()
+    )
+
+    params = ensemble.load_parameters("DESIGN_MATRIX").drop("realization")
+    np.testing.assert_array_equal(params["a"].to_list(), a_values)
+    np.testing.assert_array_equal(params["b"].to_list(), np.ones(num_realizations))
+    np.testing.assert_array_equal(params["c"].to_list(), 2 * np.ones(num_realizations))
+
+    add_experiment_in_manage_experiment_dialog(
+        qtbot, tool, experiment_name="my-experiment-2", ensemble_name="my-design-2"
+    )
+
+    experiments = list(notifier.storage.experiments)
+    assert len(experiments) == 2
+
+    # The write-storage writes the experiments,
+    # and the read-storage refreshes itself.
+    # There is no guarantee that the experiment UUIDs are in order-of-creation
+    # hence, we do not assert the order here
+    assert {e.name for e in experiments} == {"my-experiment", "my-experiment-2"}
+    exp2 = notifier.storage.get_experiment_by_name("my-experiment-2")
+    ensemble = exp2.get_ensemble_by_name("my-design-2")
+    for param in exp2.parameter_configuration.values():
+        assert param.group_name == "DESIGN_MATRIX"
+    assert {p.name for p in exp2.parameter_configuration.values()} == {"a", "b", "c"}
+    assert all(
+        RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
+    )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_init_prior(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    config.random_seed = 1234
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        ensemble = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
+            name="my-experiment",
+        ).create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations,
+            name="prior",
+        )
+
+        assert all(
+            RealizationStorageState.UNDEFINED in s
+            for s in ensemble.get_ensemble_state()
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    qtbot.mouseClick(
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.MouseButton.LeftButton,
+    )
+    assert (
+        RealizationStorageState.PARAMETERS_LOADED in s
+        for s in notifier.current_ensemble.get_ensemble_state()
+    )
+    assert notifier.current_ensemble.load_parameters_numpy(
+        "COEFFS", np.arange(ensemble.ensemble_size)
+    ).mean() == pytest.approx(0.0458710649708845)
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_init_updates_the_info_tab(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+    ensemble_config = config.ensemble_config
+
+    with notifier.write_storage() as storage:
+        storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ensemble_config.response_configuration
+                ],
+                "observations": [
+                    od.model_dump(mode="json") for od in config.observation_declarations
+                ],
+                "ert_templates": config.ert_templates,
+            },
+            name="my-experiment",
+        ).create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="default"
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    html_edit = tool.findChild(QTextEdit, name="ensemble_state_text")
+    assert not html_edit.toPlainText()
+
+    # select the created ensemble
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+
+    # select the correct tab
+    ensemble_widget = tool.findChild(EnsembleWidget)
+    ensemble_widget._current_tab_changed(1)
+
+    assert "UNDEFINED" in html_edit.toPlainText()
+    assert "RealizationStorageState.UNDEFINED" not in html_edit.toPlainText()
+
+    # Change to the "initialize from scratch" tab
+    tool.setCurrentIndex(1)
+    qtbot.mouseClick(
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.MouseButton.LeftButton,
+    )
+
+    # Change back to first tab
+    tool.setCurrentIndex(0)
+    ensemble_widget._current_tab_changed(1)
+    assert "PARAMETERS_LOADED" in html_edit.toPlainText()
+    assert "RealizationStorageState.PARAMETERS_LOADED" not in html_edit.toPlainText()
+
+    # select the observation
+    storage_info_widget = tool._storage_info_widget
+    storage_info_widget._ensemble_widget._tab_widget.setCurrentIndex(
+        _EnsembleWidgetTabs.OBSERVATIONS_TAB
+    )
+    observation_tree = storage_info_widget._ensemble_widget._observations_tree_widget
+    model_index = observation_tree.model().index(
+        0, 0, observation_tree.model().index(0, 0)
+    )
+    observation_tree.setCurrentIndex(model_index)
+    assert (
+        storage_info_widget._ensemble_widget._figure.axes[0].title.get_text()
+        == "POLY_OBS"
+    )
+
+
+def test_experiment_view(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    # select the experiment
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(0, 0)
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.EXPERIMENT_WIDGET
+    )
+
+    experiment_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(experiment_widget, _ExperimentWidget)
+    assert experiment_widget._name_label.text()
+    assert experiment_widget._uuid_label.text()
+    assert experiment_widget._parameters_text_edit.toPlainText()
+    assert experiment_widget._responses_text_edit.toPlainText()
+    assert experiment_widget._observations_text_edit.toPlainText()
+
+
+def test_ensemble_view(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    # select the ensemble
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.ENSEMBLE_WIDGET
+    )
+
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(ensemble_widget, EnsembleWidget)
+    assert ensemble_widget._name_label.text()
+    assert ensemble_widget._uuid_label.text()
+    assert not ensemble_widget._state_text_edit.toPlainText()
+
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+    assert ensemble_widget._state_text_edit.toPlainText()
+
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+    ensemble_widget._observations_tree_widget.expandAll()
+    assert ensemble_widget._observations_tree_widget.topLevelItemCount() == 2
+    assert ensemble_widget._observations_tree_widget.topLevelItem(0).childCount() == 4
+    assert ensemble_widget._observations_tree_widget.topLevelItem(1).childCount() == 6
+
+    # simulate clicking some different entries in observation list
+    ensemble_widget._observations_tree_widget.currentItemChanged.emit(
+        ensemble_widget._observations_tree_widget.topLevelItem(0).child(10), None
+    )
+    assert ensemble_widget._figure.get_axes()[0].get_title() == "WPR_DIFF_1"
+
+    ensemble_widget._observations_tree_widget.currentItemChanged.emit(
+        ensemble_widget._observations_tree_widget.topLevelItem(1).child(2), None
+    )
+    assert ensemble_widget._figure.get_axes()[0].get_title() == "WOPR_OP1_72"
+
+    ensemble_widget._observations_tree_widget.currentItemChanged.emit(
+        ensemble_widget._observations_tree_widget.topLevelItem(1).child(3), None
+    )
+    assert ensemble_widget._figure.get_axes()[0].get_title() == "WOPR_OP1_108"
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_ensemble_observations_view(qtbot):
+    Path("observations").write_text(
+        """GENERAL_OBSERVATION POLY_OBS {
+        DATA       = POLY_RES;
+        INDEX_LIST = 0,1,2,3,4;
+        OBS_FILE   = poly_obs_data.txt;
+    };
+    GENERAL_OBSERVATION POLY_OBS1_1 {
+        DATA       = POLY_RES1;
+        INDEX_LIST = 0,1,2,3,4;
+        OBS_FILE   = poly_obs_data1.txt;
+    };
+    GENERAL_OBSERVATION POLY_OBS1_2 {
+        DATA       = POLY_RES2;
+        INDEX_LIST = 0,1,2,3,4;
+        OBS_FILE   = poly_obs_data2.txt;
+    };
+    """,
+        encoding="utf-8",
+    )
+
+    Path("poly_eval.py").write_text(
+        """#!/usr/bin/env python3
+import json
+
+
+def _load_coeffs(filename):
+    with open(filename, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _evaluate(coeffs, x):
+    return coeffs["a"]["value"] * x**2 + coeffs["b"]["value"] * x + coeffs["c"]["value"]
+
+
+if __name__ == "__main__":
+    coeffs = _load_coeffs("parameters.json")
+    output = [_evaluate(coeffs, x) for x in range(10)]
+    with open("poly.out", "w", encoding="utf-8") as f:
+        f.write("\\n".join(map(str, output)))
+
+    with open("poly.out1", "w", encoding="utf-8") as f:
+        f.write("\\n".join(map(str, [x*2 for x in output])))
+
+    with open("poly.out2", "w", encoding="utf-8") as f:
+        f.write("\\n".join(map(str, [x*3 for x in output])))
+""",
+        encoding="utf-8",
+    )
+
+    shutil.copy("poly_obs_data.txt", "poly_obs_data1.txt")
+    shutil.copy("poly_obs_data.txt", "poly_obs_data2.txt")
+
+    Path("poly_localization_0.ert").write_text(
+        """
+        QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 2
+
+RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+
+OBS_CONFIG observations
+REALIZATION_MEMORY 50mb
+
+NUM_REALIZATIONS 100
+MIN_REALIZATIONS 1
+
+GEN_KW COEFFS coeff_priors
+GEN_DATA POLY_RES RESULT_FILE:poly.out
+GEN_DATA POLY_RES1 RESULT_FILE:poly.out1
+GEN_DATA POLY_RES2 RESULT_FILE:poly.out2
+
+INSTALL_JOB poly_eval POLY_EVAL
+FORWARD_MODEL poly_eval
+
+ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
+
+ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
+ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
+""",
+        encoding="utf-8",
+    )
+
+    prior_ens_id, _, _ = run_cli_ES_with_case(
+        "poly_localization_0.ert", "test_experiment"
+    )
+    config = ErtConfig.from_file("poly_localization_0.ert")
+
+    notifier = ErtNotifier()
+    with open_storage(config.ens_path, mode="r") as storage:
+        notifier.set_storage(str(storage.path))
+
+        tool = ManageExperimentsPanel(
+            config, notifier, config.runpath_config.num_realizations
+        )
+
+        assert storage.get_ensemble(prior_ens_id).name
+
+        # select the ensemble
+        storage_widget = tool.findChild(StorageWidget)
+        storage_widget._tree_view.expandAll()
+
+        model = storage_widget._tree_view.model()
+        experiment_index = model.index(0, 0)
+
+        target_index = None
+        for r in range(model.rowCount(experiment_index)):
+            idx = model.index(r, 0, experiment_index)
+            if model.data(idx, Qt.ItemDataRole.DisplayRole) == "iter-1":
+                target_index = idx
+                break
+        assert target_index is not None
+        storage_widget._tree_view.setCurrentIndex(target_index)
+        assert (
+            tool._storage_info_widget._content_layout.currentIndex()
+            == _WidgetType.ENSEMBLE_WIDGET
+        )
+
+        ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+        assert isinstance(ensemble_widget, EnsembleWidget)
+        assert ensemble_widget._name_label.text()
+        assert ensemble_widget._uuid_label.text()
+        assert not ensemble_widget._state_text_edit.toPlainText()
+
+        ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+        assert ensemble_widget._state_text_edit.toPlainText()
+
+        ensemble_widget._tab_widget.setCurrentIndex(
+            _EnsembleWidgetTabs.OBSERVATIONS_TAB
+        )
+
+        # Check that a scaled observation is plotted
+        assert any(
+            line
+            for line in ensemble_widget._figure.get_axes()[0].get_lines()
+            if "Scaled observation" in line.get_xdata()
+        )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_ensemble_observations_view_on_empty_ensemble(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        notifier.set_storage(str(storage.path))
+        exp = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*"]).model_dump(mode="json")
+                ],
+                "observations": [
+                    {
+                        "type": "summary_observation",
+                        "name": "O4",
+                        "key": "FOPR",
+                        "date": "2000-01-01",
+                        "value": 10.2,
+                        "error": 0.1,
+                    }
+                ],
+            }
+        )
+
+        exp.create_ensemble(
+            name="test", ensemble_size=config.runpath_config.num_realizations
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    # select the ensemble
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.ENSEMBLE_WIDGET
+    )
+
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(ensemble_widget, EnsembleWidget)
+    assert ensemble_widget._name_label.text()
+    assert ensemble_widget._uuid_label.text()
+    assert not ensemble_widget._state_text_edit.toPlainText()
+
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+    assert ensemble_widget._state_text_edit.toPlainText()
+
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    # Expect only one figure, the one for the observation
+    assert len(ensemble_widget._figure.get_axes()) == 1
+
+
+def test_realization_view(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    # select the realization
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0,
+        0,
+        storage_widget._tree_view.model().index(
+            0, 0, storage_widget._tree_view.model().index(0, 0)
+        ),
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.REALIZATION_WIDGET
+    )
+
+    realization_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert type(realization_widget) is _RealizationWidget
+
+    assert (
+        realization_widget._state_label.text()
+        == "Realization state: PARAMETERS_LOADED, RESPONSES_LOADED"
+    )
+    assert {"gen_data - RESPONSES_LOADED", "summary - RESPONSES_LOADED"}.issubset(
+        set(realization_widget._response_text_edit.toPlainText().splitlines())
+    )
+
+    assert {
+        "OP1_PERSISTENCE - PARAMETERS_LOADED",
+        "OP1_OCTAVES - PARAMETERS_LOADED",
+        "OP1_DIVERGENCE_SCALE - PARAMETERS_LOADED",
+        "OP1_OFFSET - PARAMETERS_LOADED",
+        "OP2_PERSISTENCE - PARAMETERS_LOADED",
+        "OP2_OCTAVES - PARAMETERS_LOADED",
+        "OP2_DIVERGENCE_SCALE - PARAMETERS_LOADED",
+        "OP2_OFFSET - PARAMETERS_LOADED",
+        "BPR_555_PERSISTENCE - PARAMETERS_LOADED",
+        "BPR_138_PERSISTENCE - PARAMETERS_LOADED",
+    } == set(realization_widget._parameter_text_edit.toPlainText().strip().splitlines())
+
+
+def test_that_parameters_pane_is_populated_correctly(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.ENSEMBLE_WIDGET
+    )
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.PARAMETERS_TAB)
+
+    assert isinstance(ensemble_widget._tab_widget.currentWidget(), QFrame)
+
+    parameters_frame = ensemble_widget._tab_widget.currentWidget()
+    assert parameters_frame.findChild(QPushButton) is not None
+    assert parameters_frame.findChild(QTableWidget) is not None
+
+    model = parameters_frame.findChild(QTableWidget).model()
+    assert model.rowCount() == 5, "The Snake oil test case should have 5 realizations"
+    assert model.columnCount() == 11, (
+        "The Snake oil test case should have 11 parameters"
+    )
+
+    triggers = parameters_frame.findChild(QTableWidget).editTriggers()
+    assert triggers == QAbstractItemView.EditTrigger.NoEditTriggers
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_sub_tab_persists_when_switching_ensembles(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        exp = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
+            name="my-experiment",
+        )
+        exp.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="prior"
+        )
+        exp.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="posterior"
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    experiment_index = storage_widget._tree_view.model().index(0, 0)
+
+    # Select first ensemble
+    first_ensemble_index = storage_widget._tree_view.model().index(
+        0, 0, experiment_index
+    )
+    storage_widget._tree_view.setCurrentIndex(first_ensemble_index)
+
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(ensemble_widget, EnsembleWidget)
+
+    # Switch to STATE_TAB
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+    assert ensemble_widget._tab_widget.currentIndex() == _EnsembleWidgetTabs.STATE_TAB
+
+    # Select second ensemble
+    second_ensemble_index = storage_widget._tree_view.model().index(
+        1, 0, experiment_index
+    )
+    storage_widget._tree_view.setCurrentIndex(second_ensemble_index)
+
+    # Tab should remain on STATE_TAB, not reset to ENSEMBLE_TAB
+    assert ensemble_widget._tab_widget.currentIndex() == _EnsembleWidgetTabs.STATE_TAB
+
+
+def test_that_export_parameters_button_opens_the_export_dialog(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.ENSEMBLE_WIDGET
+    )
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.PARAMETERS_TAB)
+    assert isinstance(ensemble_widget._tab_widget.currentWidget(), QFrame)
+
+    parameters_frame = ensemble_widget._tab_widget.currentWidget()
+    parameters_frame.findChild(QPushButton).click()
+    assert isinstance(QApplication.activeModalWidget(), ExportDialog)
+
+
+def _child_names_under(model, parent_index):
+    return [
+        model.data(model.index(r, 0, parent_index), Qt.ItemDataRole.DisplayRole)
+        for r in range(model.rowCount(parent_index))
+    ]
+
+
+def _find_root_row_by_name(model, name: str):
+    for r in range(model.rowCount()):
+        idx = model.index(r, 0)
+        if model.data(idx, Qt.ItemDataRole.DisplayRole) == name:
+            return idx
+    return None
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_storage_widget_sorts_by_name_and_created(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        exp = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
+            name="exp-sort",
+        )
+
+        # Create two ensembles with a small delay to ensure distinct started_at
+        exp.create_ensemble(
+            name="a-ens", ensemble_size=config.runpath_config.num_realizations
+        )
+        time.sleep(1)
+        exp.create_ensemble(
+            name="b-ens", ensemble_size=config.runpath_config.num_realizations
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    storage_widget = tool.findChild(StorageWidget)
+    assert storage_widget is not None
+
+    tree_view = storage_widget._tree_view
+    tree_view.expandAll()
+    model = tree_view.model()
+    exp_index = _find_root_row_by_name(model, "exp-sort")
+    assert exp_index is not None
+
+    def current_child_names():
+        return _child_names_under(model, exp_index)
+
+    tree_view.sortByColumn(0, Qt.SortOrder.AscendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["a-ens", "b-ens"], timeout=500)
+
+    tree_view.sortByColumn(0, Qt.SortOrder.DescendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["b-ens", "a-ens"], timeout=500)
+
+    tree_view.sortByColumn(1, Qt.SortOrder.AscendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["a-ens", "b-ens"], timeout=500)
+
+    tree_view.sortByColumn(1, Qt.SortOrder.DescendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["b-ens", "a-ens"], timeout=500)

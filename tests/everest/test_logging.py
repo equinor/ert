@@ -1,0 +1,74 @@
+import os
+from pathlib import Path
+
+import pytest
+import yaml
+
+from everest.bin.main import start_everest
+from everest.bin.utils import cleanup_logging
+from everest.config import EverestConfig
+from everest.config.forward_model_config import ForwardModelStepConfig
+from everest.config.install_job_config import InstallForwardModelStepConfig
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.timeout(240)  # Simulation might not finish
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_logging_setup(copy_math_func_test_data_to_tmp):
+    # Ensure no interference with plugins which may set queue system
+    config_file = "config_minimal.yml"
+    config_content = yaml.safe_load(Path(config_file).read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local"}}
+    Path(config_file).write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+    )
+
+    everest_config = EverestConfig.load_file(config_file)
+    everest_config.forward_model.append(
+        ForwardModelStepConfig(job="toggle_failure --fail perturbation_1")
+    )
+    everest_config.install_jobs.append(
+        InstallForwardModelStepConfig(
+            name="toggle_failure", source="jobs/FAIL_SIMULATION"
+        )
+    )
+    everest_config.optimization.min_pert_success = 1
+    everest_config.optimization.max_iterations = 1
+    everest_config.optimization.max_batch_num = 1
+    everest_config.optimization.min_realizations_success = 1
+    everest_config.optimization.perturbation_num = 2
+
+    # start_server() loads config based on config_path, so we need to actually
+    # overwrite it
+    everest_config.write_to_file("config_minimal.yml")
+    start_everest(["everest", "run", "config_minimal.yml"])
+
+    everest_output_path = Path.cwd() / "everest_output"
+    everest_logs_dir_path = Path(everest_config.log_dir)
+    everserver_log_path = everest_logs_dir_path / "everserver.log"
+
+    assert everest_output_path.exists()
+    assert everest_logs_dir_path.exists()
+    assert everserver_log_path.exists()
+
+    everserver_logs = everserver_log_path.read_text(encoding="utf-8")
+
+    assert "everest.everserver.server INFO: Output directory:" in everserver_logs
+    assert "Process exited with status code 1" in everserver_logs
+
+    # Avoid cases where optimization finished before we get a chance to check that
+    # the everest server has started
+    if everserver_logs:
+        assert "everserver.server INFO: Everserver starting" in everserver_logs
+        assert "experiment_runs INFO: ExperimentRunner done" in everserver_logs
+        assert "ert.scheduler.scheduler INFO: All tasks started" in everserver_logs
+        assert "httpx INFO" not in everserver_logs
+
+
+def test_that_cleanup_logging_is_idempotent(monkeypatch):
+    monkeypatch.setenv("ERT_LOG_DIR", ".")
+    cleanup_logging()
+    assert os.environ.get("ERT_LOG_DIR", None) is None
+    cleanup_logging()

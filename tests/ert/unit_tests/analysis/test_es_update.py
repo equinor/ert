@@ -1,0 +1,1651 @@
+import io
+import logging
+import re
+from contextlib import ExitStack as does_not_raise
+from typing import Any
+from unittest.mock import Mock, patch
+
+import numpy as np
+import polars as pl
+import pytest
+import xarray as xr
+from tabulate import tabulate
+
+from ert.analysis import (
+    ErtAnalysisError,
+    ObservationStatus,
+    build_strategy_map,
+    smoother_update,
+)
+from ert.analysis._es_update import (
+    _create_combined_ensemble_mask,
+)
+from ert.analysis._update_commons import (
+    _compute_observation_statuses,
+    _missing_realizations_expr,
+    _OutlierColumns,
+    _preprocess_observations_and_responses,
+)
+from ert.analysis._update_strategies._adaptive import AdaptiveLocalizationUpdate
+from ert.analysis._update_strategies._protocol import ObservationContext
+from ert.analysis.event import AnalysisCompleteEvent, AnalysisScalingEvent
+from ert.config import (
+    ESSettings,
+    Field,
+    GenDataConfig,
+    GenKwConfig,
+    LocalizationType,
+    ObservationSettings,
+    OutlierSettings,
+)
+from ert.field_utils import AxisOrientation, ErtboxParameters, FieldFileFormat
+from ert.storage import Ensemble, open_storage
+from ert.storage.blob_data import BlobType
+
+
+@pytest.fixture
+def uniform_parameter():
+    return GenKwConfig(
+        name="KEY_1",
+        group="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+    ).model_dump(mode="json")
+
+
+@pytest.fixture
+def obs() -> list[dict[str, Any]]:
+    return [
+        {
+            "type": "general_observation",
+            "name": "OBSERVATION",
+            "data": "RESPONSE",
+            "restart": 0,
+            "index": index,
+            "value": value,
+            "error": error,
+        }
+        for index, value, error in [
+            (0, 1.0, 0.1),
+            (1, 1.0, 1.0),
+            (2, 1.0, 10.0),
+        ]
+    ]
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "misfit_preprocess", [[["*"]], [], [["FOPR"]], [["FOPR"], ["WOPR_OP1_1*"]]]
+)
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
+def test_update_report(
+    snake_oil_case_storage,
+    snake_oil_storage,
+    misfit_preprocess,
+    snapshot,
+):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    ert_config = snake_oil_case_storage
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.runpath_config.num_realizations,
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
+    events = []
+
+    es_settings = ert_config.analysis_config.es_settings
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ens.experiment.parameter_configuration,
+        enkf_truncation=es_settings.enkf_truncation,
+        progress_callback=events.append,
+        correlation_threshold=ert_config.analysis_config.es_settings.correlation_threshold,
+    )
+    smoother_update(
+        prior_ens,
+        posterior_ens,
+        experiment.observation_keys,
+        ObservationSettings(auto_scale_observations=misfit_preprocess),
+        rng=np.random.default_rng(42),
+        strategy_map=strategy_map,
+        progress_callback=events.append,
+    )
+
+    event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
+    snapshot.assert_match(
+        tabulate(event.data.data, floatfmt=".3f") + "\n", "update_log"
+    )
+
+
+@pytest.mark.slow
+@pytest.mark.snapshot_test
+@pytest.mark.parametrize(
+    ("update_settings", "num_overspread", "num_collapsed", "num_nan", "num_active"),
+    [
+        (
+            ObservationSettings(outlier_settings=OutlierSettings(alpha=0.1)),
+            9,
+            0,
+            0,
+            1,
+        ),
+        (
+            ObservationSettings(outlier_settings=OutlierSettings(std_cutoff=0.1)),
+            0,
+            6,
+            0,
+            4,
+        ),
+        (
+            ObservationSettings(
+                outlier_settings=OutlierSettings(alpha=0.7, std_cutoff=0.1)
+            ),
+            2,
+            6,
+            0,
+            2,
+        ),
+    ],
+)
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
+def test_update_report_with_different_observation_status_from_smoother_update(
+    update_settings,
+    num_overspread,
+    num_collapsed,
+    num_nan,
+    num_active,
+    snake_oil_case_storage,
+    snake_oil_storage,
+):
+    ert_config = snake_oil_case_storage
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
+
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.runpath_config.num_realizations,
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
+    events = []
+
+    es_settings = ert_config.analysis_config.es_settings
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ens.experiment.parameter_configuration,
+        enkf_truncation=es_settings.enkf_truncation,
+        progress_callback=events.append,
+        correlation_threshold=ert_config.analysis_config.es_settings.correlation_threshold,
+    )
+    ss = smoother_update(
+        prior_ens,
+        posterior_ens,
+        experiment.observation_keys,
+        update_settings,
+        rng=np.random.default_rng(42),
+        strategy_map=strategy_map,
+        progress_callback=events.append,
+    )
+
+    assert (
+        num_overspread
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.OUTLIER
+        ).height
+    )
+    assert (
+        num_collapsed
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.STD_CUTOFF
+        ).height
+    )
+    assert (
+        num_nan
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.MISSING_RESPONSE
+        ).height
+    )
+    assert (
+        num_active
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.ACTIVE
+        ).height
+    )
+
+
+def test_update_handles_precision_loss_in_std_dev(tmp_path):
+    """
+    This is a regression test for precision loss in calculating
+    standard deviation.
+    """
+    gen_kw = GenKwConfig(
+        name="coeff_0",
+        group="COEFFS",
+        distribution={"name": "const", "value": 0.1},
+    )
+    # The values given here are chosen so that when computing
+    # `ens_std = S.std(ddof=0, axis=1)`, ens_std[0] is not zero even though
+    # all responses have the same value: 5.08078746e07.
+    # This is due to precision loss.
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            name="ensemble_smoother",
+            experiment_config={
+                "parameter_configuration": [gen_kw.model_dump(mode="json")],
+                "response_configuration": [
+                    GenDataConfig(
+                        input_files=["poly.out"],
+                        keys=["RES"],
+                        has_finalized_keys=True,
+                        report_steps_list=[None],
+                    ).model_dump(mode="json")
+                ],
+                "observations": [
+                    {
+                        "type": "general_observation",
+                        "name": "OBS",
+                        "data": "RES",
+                        "restart": 0,
+                        "index": index,
+                        "value": value,
+                        "error": error,
+                    }
+                    for index, value, error in [
+                        (0, -218285263.28648496, 559437122.6211826),
+                        (1, -999999999.0, 999999999.9999999),
+                        (2, -107098474.0148249, 1.9),
+                    ]
+                ],
+            },
+        )
+        prior = storage.create_ensemble(experiment.id, ensemble_size=23, name="prior")
+        datasets = Ensemble.sample_parameter(
+            gen_kw,
+            list(range(prior.ensemble_size)),
+            random_seed=1234,
+            num_realizations=23,
+        )
+        prior.save_parameters(datasets)
+
+        prior.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RES",
+                    "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                    "index": pl.Series(np.arange(3), dtype=pl.UInt16),
+                    "values": pl.Series(
+                        np.array([5.08078746e07, 4.07677769e10, 2.28002538e12]),
+                        dtype=pl.Float32,
+                    ),
+                }
+            ),
+            0,
+        )
+        for i in range(1, prior.ensemble_size):
+            prior.save_response(
+                "gen_data",
+                pl.DataFrame(
+                    {
+                        "response_key": "RES",
+                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                        "index": pl.Series(np.arange(3), dtype=pl.UInt16),
+                        "values": pl.Series(
+                            np.array([5.08078744e07, 4.12422210e09, 1.26490794e10]),
+                            dtype=pl.Float32,
+                        ),
+                    }
+                ),
+                i,
+            )
+
+        posterior = storage.create_ensemble(
+            prior.experiment_id,
+            ensemble_size=prior.ensemble_size,
+            iteration=1,
+            name="posterior",
+            prior_ensemble=prior,
+        )
+        events = []
+
+        ss = smoother_update(
+            prior,
+            posterior,
+            experiment.observation_keys,
+            ObservationSettings(auto_scale_observations=[["OBS*"]]),
+            rng=np.random.default_rng(42),
+            strategy_map={},
+            progress_callback=events.append,
+        )
+
+        assert (
+            ss.observations_and_responses.filter(
+                pl.col("status") == ObservationStatus.STD_CUTOFF
+            ).height
+            == 1
+        )
+
+
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
+@pytest.mark.slow  # This test is slow when snake_oil is not in cache
+def test_that_posterior_gen_kw_values_match_expected_on_snake_oil(
+    snake_oil_case_storage,
+    snake_oil_storage,
+):
+    """
+    There is no guarantee that the expected GEN_KW values are correct,
+    they are just documenting the current behavior.
+    """
+    expected_gen_kw = [
+        1.070891415038797,
+        -0.6939789953658908,
+        0.48987403793464784,
+        -0.08438966696307404,
+        -0.1932598789932638,
+        0.5055441000935761,
+        -0.33051483699153983,
+        1.3601051184703006,
+        0.22172006473775288,
+        0.5768112245743706,
+    ]
+    ert_config = snake_oil_case_storage
+
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.runpath_config.num_realizations,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior_ens,
+    )
+
+    rng = np.random.default_rng(42)
+
+    es_settings = ert_config.analysis_config.es_settings
+    strategy_map = build_strategy_map(
+        parameters=list(ert_config.ensemble_config.parameters),
+        param_configs=prior_ens.experiment.parameter_configuration,
+        enkf_truncation=es_settings.enkf_truncation,
+        correlation_threshold=ert_config.analysis_config.es_settings.correlation_threshold,
+    )
+    smoother_update(
+        prior_ens,
+        posterior_ens,
+        experiment.observation_keys,
+        ObservationSettings(),
+        rng=rng,
+        strategy_map=strategy_map,
+    )
+
+    param_groups = ["SNAKE_OIL_PARAM_BPR", "SNAKE_OIL_PARAM_OP1", "SNAKE_OIL_PARAM_OP2"]
+
+    sim_gen_kw = list(
+        np.concatenate(
+            [
+                prior_ens.load_parameters_numpy(group, np.array([0])).flatten()
+                for group in param_groups
+            ]
+        )
+    )
+
+    target_gen_kw = list(
+        np.concatenate(
+            [
+                posterior_ens.load_parameters_numpy(group, np.array([0])).flatten()
+                for group in param_groups
+            ]
+        )
+    )
+
+    # Check that prior is not equal to posterior after updationg
+    assert sim_gen_kw != target_gen_kw
+
+    # Check that posterior is as expected
+    assert target_gen_kw == pytest.approx(expected_gen_kw, abs=1e-5)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    ("alpha", "expected", "expectation"),
+    [
+        pytest.param(
+            0.001,
+            [],
+            pytest.raises(ErtAnalysisError),
+            id="Low alpha, no active observations",
+        ),
+        (
+            0.1,
+            [
+                ObservationStatus.OUTLIER,
+                ObservationStatus.OUTLIER,
+                ObservationStatus.ACTIVE,
+            ],
+            does_not_raise(),
+        ),
+        (
+            0.5,
+            [
+                ObservationStatus.OUTLIER,
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+            ],
+            does_not_raise(),
+        ),
+        (
+            1,
+            [
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+                ObservationStatus.ACTIVE,
+            ],
+            does_not_raise(),
+        ),
+    ],
+)
+def test_that_alpha_can_be_used_for_outlier_detection(
+    alpha, expected, storage, uniform_parameter, obs, expectation
+):
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    experiment = storage.create_experiment(
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
+    )
+    prior_storage = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    dataset = []
+    for iens in range(prior_storage.ensemble_size):
+        data = rng.uniform(0, 1)
+        dataset.append(
+            pl.DataFrame(
+                {
+                    "KEY_1": [data],
+                    "realization": iens,
+                }
+            )
+        )
+        data = rng.uniform(0.8, 1, 3)
+        prior_storage.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series(np.full(len(data), 0), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
+                    "values": data,
+                }
+            ),
+            iens,
+        )
+    prior_storage.save_parameters(dataset=pl.concat(dataset, how="vertical"))
+
+    posterior_storage = storage.create_ensemble(
+        prior_storage.experiment_id,
+        ensemble_size=prior_storage.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior_storage,
+    )
+
+    with expectation:
+        es_settings = ESSettings()
+        strategy_map = build_strategy_map(
+            parameters=["KEY_1"],
+            param_configs=prior_storage.experiment.parameter_configuration,
+            enkf_truncation=es_settings.enkf_truncation,
+            correlation_threshold=lambda x: 1.0,
+        )
+        posterior_update = smoother_update(
+            prior_storage,
+            posterior_storage,
+            observations=["OBSERVATION"],
+            update_settings=ObservationSettings(
+                outlier_settings=OutlierSettings(alpha=alpha)
+            ),
+            rng=rng,
+            strategy_map=strategy_map,
+        )
+        assert posterior_update.alpha == alpha
+        assert (
+            posterior_update.observations_and_responses["status"].to_list() == expected
+        )
+
+
+@pytest.mark.parametrize("update_strategy", LocalizationType)
+def test_that_update_strategies_are_logged_in_clusters(caplog, update_strategy):
+    def make_param(strategy):
+        return GenKwConfig(
+            name="KEY",
+            group="GROUP",
+            update_strategy=strategy,
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        )
+
+    param_configs = {
+        "a": make_param(update_strategy),
+        "b": make_param(update_strategy),
+        "c": make_param(None),
+    }
+
+    with caplog.at_level(logging.INFO):
+        build_strategy_map(
+            parameters=["a", "b", "c"],
+            param_configs=param_configs,
+            enkf_truncation=0.5,
+            correlation_threshold=Mock(),
+        )
+
+    strategy_name = update_strategy.name.lower()
+
+    assert any(
+        re.search(rf"update strategy.*?{strategy_name}.*?'a, b'", msg, re.IGNORECASE)
+        for msg in caplog.messages
+    )
+
+    assert any(
+        re.search(r"update strategy.*?none.*?'c'", msg, re.IGNORECASE)
+        for msg in caplog.messages
+    )
+
+
+@pytest.mark.parametrize(
+    "update_strategy",
+    [LocalizationType.ADAPTIVE, LocalizationType.GLOBAL],
+)
+def test_that_constant_parameter_is_skipped_with_warning_and_carried_over(
+    storage, obs, caplog, update_strategy
+):
+    """A parameter that is constant across all realizations has zero variance, so
+    no parameters are selected for update. Regardless of the
+    update strategy, the group should now be skipped with a warning and carried
+    over to the posterior unchanged.
+    """
+    constant_parameter = GenKwConfig(
+        name="KEY_1",
+        group="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=update_strategy,
+    ).model_dump(mode="json")
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    experiment = storage.create_experiment(
+        name="constant_param",
+        experiment_config={
+            "parameter_configuration": [constant_parameter],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
+    )
+    prior_storage = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+
+    prior_storage.save_parameters(
+        dataset=pl.concat(
+            [
+                pl.DataFrame({"KEY_1": [0.5], "realization": iens})
+                for iens in range(prior_storage.ensemble_size)
+            ],
+            how="vertical",
+        )
+    )
+
+    for iens in range(prior_storage.ensemble_size):
+        values = rng.uniform(0.8, 1, 3)
+        prior_storage.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series(np.full(len(values), 0), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(values)), dtype=pl.UInt16),
+                    "values": values,
+                }
+            ),
+            iens,
+        )
+
+    posterior_storage = storage.create_ensemble(
+        prior_storage.experiment_id,
+        ensemble_size=prior_storage.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior_storage,
+    )
+
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=["KEY_1"],
+        param_configs=prior_storage.experiment.parameter_configuration,
+        enkf_truncation=es_settings.enkf_truncation,
+        correlation_threshold=es_settings.correlation_threshold,
+    )
+    with caplog.at_level(logging.WARNING):
+        smoother_update(
+            prior_storage,
+            posterior_storage,
+            observations=["OBSERVATION"],
+            update_settings=ObservationSettings(),
+            rng=rng,
+            strategy_map=strategy_map,
+        )
+
+    assert "have 0 variance across realizations and will not be updated" in caplog.text
+
+    prior_values = prior_storage.load_parameters_numpy(
+        "KEY_1", np.arange(prior_storage.ensemble_size)
+    )
+    posterior_values = posterior_storage.load_parameters_numpy(
+        "KEY_1", np.arange(prior_storage.ensemble_size)
+    )
+    assert np.array_equal(prior_values, posterior_values)
+
+
+def test_that_adaptive_localization_skips_batch_where_all_parameters_are_constant():
+    """When adaptive localization splits parameters into several batches and a
+    whole batch consists only of zero-variance parameters, that batch must be
+    skipped.
+    """
+    rng = np.random.default_rng(42)
+    num_obs = 2
+    ensemble_size = 50
+
+    responses = rng.standard_normal((num_obs, ensemble_size))
+    observation_values = np.array([0.0, 0.0])
+    observation_errors = np.array([1.0, 1.0])
+    observation_perturbations = (
+        rng.standard_normal((num_obs, ensemble_size)) * observation_errors[:, None]
+    )
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=observation_values,
+        observation_errors=observation_errors,
+        observation_perturbations=observation_perturbations,
+    )
+
+    # First batch is fully constant (zero variance), second batch has variance.
+    param_ensemble = np.vstack(
+        [
+            np.full(ensemble_size, 0.5),
+            np.full(ensemble_size, 1.5),
+            rng.standard_normal(ensemble_size),
+            rng.standard_normal(ensemble_size),
+        ]
+    )
+    non_zero_variance_mask = np.array([False, False, True, True])
+    prior = param_ensemble.copy()
+
+    strategy = AdaptiveLocalizationUpdate(
+        correlation_threshold=lambda _: 0.0,
+        enkf_truncation=1.0,
+        progress_callback=lambda _: None,
+    )
+    strategy.prepare(obs_context)
+
+    param_config = GenKwConfig(
+        name="KEY",
+        group="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=LocalizationType.ADAPTIVE,
+    )
+
+    with patch(
+        "ert.analysis._update_strategies._adaptive.calculate_localization_batch_size",
+        return_value=2,
+    ):
+        updated = strategy.update(param_ensemble, param_config, non_zero_variance_mask)
+
+    # Constant parameters in the skipped first batch are carried over unchanged.
+    assert np.array_equal(updated[:2], prior[:2])
+    # Parameters with variance in the second batch are updated.
+    assert not np.array_equal(updated[2:], prior[2:])
+
+
+@pytest.mark.slow
+def test_update_only_using_subset_observations(
+    snake_oil_case_storage, snake_oil_storage, snapshot
+):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    ert_config = snake_oil_case_storage
+
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
+    posterior_ens = snake_oil_storage.create_ensemble(
+        prior_ens.experiment_id,
+        ensemble_size=ert_config.runpath_config.num_realizations,
+        iteration=1,
+        name="new_ensemble",
+        prior_ensemble=prior_ens,
+    )
+    events = []
+
+    smoother_update(
+        prior_ens,
+        posterior_ens,
+        ["WPR_DIFF_1"],
+        ObservationSettings(),
+        rng=np.random.default_rng(42),
+        strategy_map={},
+        progress_callback=events.append,
+    )
+
+    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
+    snapshot.assert_match(
+        tabulate(update_event.data.data, floatfmt=".3f") + "\n", "update_log"
+    )
+
+
+def _mock_preprocess_observations_and_responses(
+    observations_and_responses,
+    observation_settings,
+    global_std_scaling,
+    progress_callback,
+    prior_ensemble,
+    posterior_ensemble,
+):
+    """
+    Runs through _preprocess_observations_and_responses with mocked values for
+     _get_observations_and_responses
+    """
+    with patch(
+        "ert.storage.LocalEnsemble.get_observations_and_responses"
+    ) as mock_obs_n_responses:
+        mock_obs_n_responses.return_value = observations_and_responses
+
+        return _preprocess_observations_and_responses(
+            prior_ensemble=prior_ensemble,
+            posterior_ensemble=posterior_ensemble,
+            outlier_settings=observation_settings.outlier_settings,
+            auto_scale_observations=observation_settings.auto_scale_observations,
+            global_std_scaling=global_std_scaling,
+            iens_active_index=np.array(
+                [int(c) for c in observations_and_responses.columns[5:]]
+            ),
+            selected_observations=observations_and_responses.select("observation_key"),
+            progress_callback=progress_callback,
+        )
+
+
+def test_that_autoscaling_applies_to_scaled_errors(storage):
+    with patch("ert.analysis.misfit_preprocessor.main") as misfit_main:
+        misfit_main.return_value = (
+            np.array([2, 3]),
+            np.array([1, 1]),  # corresponds to num obs keys in autoscaling group
+            np.array([1, 1]),
+        )
+
+        observations_and_responses = pl.DataFrame(
+            {
+                "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+                "index": ["rs00", "rs0", "rs0", "rs1"],
+                "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
+                "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+                "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+                "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+                "2": pl.Series([2, 5, 8, 11], dtype=pl.Float32),
+                "3": pl.Series([3, 6, 9, 12], dtype=pl.Float32),
+            }
+        )
+
+        outlier_settings = OutlierSettings(alpha=1, std_cutoff=0.05)
+        global_std_scaling = 1
+
+        def progress_callback(_):
+            return None
+
+        experiment = storage.create_experiment(name="dummyexp")
+        prior_ensemble = experiment.create_ensemble(
+            name="dummy_prior", ensemble_size=10
+        )
+        posterior_ensemble = experiment.create_ensemble(
+            name="dummy_posterior", ensemble_size=10
+        )
+
+        scaled_errors_with_autoscale = (
+            _mock_preprocess_observations_and_responses(
+                observations_and_responses,
+                observation_settings=ObservationSettings(
+                    outlier_settings=outlier_settings,
+                    auto_scale_observations=[["obs1*"]],
+                ),
+                global_std_scaling=global_std_scaling,
+                progress_callback=progress_callback,
+                prior_ensemble=prior_ensemble,
+                posterior_ensemble=posterior_ensemble,
+            )
+            .filter(pl.col("status") == ObservationStatus.ACTIVE)[
+                _OutlierColumns.scaled_std
+            ]
+            .to_list()
+        )
+
+        scaled_errors_without_autoscale = (
+            _mock_preprocess_observations_and_responses(
+                observations_and_responses,
+                observation_settings=ObservationSettings(
+                    outlier_settings=outlier_settings, auto_scale_observations=[]
+                ),
+                global_std_scaling=global_std_scaling,
+                progress_callback=progress_callback,
+                prior_ensemble=prior_ensemble,
+                posterior_ensemble=posterior_ensemble,
+            )
+            .filter(pl.col("status") == ObservationStatus.ACTIVE)[
+                _OutlierColumns.scaled_std
+            ]
+            .to_list()
+        )
+
+        assert scaled_errors_with_autoscale == [2, 6]
+        assert scaled_errors_without_autoscale == [1, 2]
+
+
+def test_that_autoscaling_saves_scaling_factors_to_posterior_ensemble(storage):
+    with patch("ert.analysis.misfit_preprocessor.main") as misfit_main:
+        misfit_main.return_value = (
+            np.array([2, 3]),
+            np.array([1, 1]),
+            np.array([1, 1]),
+        )
+
+        observations_and_responses = pl.DataFrame(
+            {
+                "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+                "index": ["rs00", "rs0", "rs0", "rs1"],
+                "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
+                "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+                "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+                "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+                "2": pl.Series([2, 5, 8, 11], dtype=pl.Float32),
+                "3": pl.Series([3, 6, 9, 12], dtype=pl.Float32),
+            }
+        )
+
+        experiment = storage.create_experiment(name="dummyexp")
+        prior_ensemble = experiment.create_ensemble(
+            name="dummy_prior", ensemble_size=10
+        )
+        posterior_ensemble = experiment.create_ensemble(
+            name="dummy_posterior", ensemble_size=10
+        )
+
+        def progress_callback(event):
+            if isinstance(event, AnalysisScalingEvent):
+                posterior_ensemble.save_blob(event)
+
+        _mock_preprocess_observations_and_responses(
+            observations_and_responses,
+            observation_settings=ObservationSettings(
+                outlier_settings=OutlierSettings(alpha=1, std_cutoff=0.05),
+                auto_scale_observations=[["obs1*"]],
+            ),
+            global_std_scaling=1,
+            progress_callback=progress_callback,
+            prior_ensemble=prior_ensemble,
+            posterior_ensemble=posterior_ensemble,
+        )
+
+        scaling_blobs = posterior_ensemble.load_blob_metadata(BlobType.SCALING_FACTORS)
+        assert len(scaling_blobs) == 1
+        raw = posterior_ensemble.load_blob(scaling_blobs[0].uri)
+        scaling_factors = pl.read_parquet(io.BytesIO(raw))
+        assert "input_group" in scaling_factors.columns
+        assert "obs_key" in scaling_factors.columns
+        assert "scaling_factor" in scaling_factors.columns
+        assert scaling_factors["obs_key"].to_list() == ["obs1_1", "obs1_2"]
+        assert scaling_factors["scaling_factor"].to_list() == [2.0, 3.0]
+
+        # Verify nothing was saved to the prior ensemble
+        assert prior_ensemble.load_blob_metadata(BlobType.SCALING_FACTORS) == []
+
+
+@pytest.mark.parametrize(
+    ("nan_responses", "deactivated_observations"),
+    [
+        pytest.param([], [], id="no realizations missing"),
+        pytest.param([(3, 8)], [3], id="one realization missing"),
+        pytest.param(
+            [(3, 8), (3, 9)], [3], id="two realizations missing in one response"
+        ),
+        pytest.param(
+            [(3, 8), (4, 9)],
+            [3, 4],
+            id="two realizations missing in different responses",
+        ),
+    ],
+)
+def test_that_missing_realizations_disable_observation_in_compute_observation_statuses(
+    nan_responses, deactivated_observations
+):
+    num_real = 12
+    num_observations = 10
+
+    expected_statuses = np.array(
+        [ObservationStatus.ACTIVE] * num_observations, dtype="U20"
+    )
+    expected_statuses[deactivated_observations] = str(
+        ObservationStatus.MISSING_RESPONSE
+    )
+    setup_dataframe_for_compute_observation_statuses(
+        num_real, num_observations, nan_responses, set(), set(), expected_statuses
+    )
+
+
+@pytest.mark.parametrize(
+    ("nan_responses", "overspread_responses", "collapsed_responses"),
+    [
+        pytest.param(set(), set(), set(), id="all ok"),
+        pytest.param({0}, set(), set(), id="one nan response"),
+        pytest.param(set(), {0}, set(), id="one overspread response"),
+        pytest.param(set(), set(), {0}, id="one collapsed response"),
+        pytest.param(set(range(10)), set(), set(), id="all nan responses"),
+        pytest.param(set(), set(range(10)), set(), id="all overspread responses"),
+        pytest.param(set(), set(), set(range(10)), id="all collapsed responses"),
+        pytest.param({0}, {1}, {2}, id="Mixed failures, one each"),
+        pytest.param({0, 2}, {1, 4}, {3, 8}, id="Mixed failures with some ok"),
+        pytest.param({0, 3, 6, 9}, {1, 4, 7}, {2, 5, 8}, id="All mixed failures"),
+    ],
+)
+def test_that_compute_observation_statuses_counts_various_statuses(
+    nan_responses, overspread_responses, collapsed_responses
+):
+    num_real = 10
+    num_observations = 10
+    nan_responses = [
+        (obs_index, realization_index)
+        for obs_index in nan_responses
+        for realization_index in range(num_real)
+    ]
+
+    expected_statuses = np.array(
+        [ObservationStatus.ACTIVE] * num_observations, dtype="U20"
+    )
+    expected_statuses[[obs_index for obs_index, _ in nan_responses]] = str(
+        ObservationStatus.MISSING_RESPONSE
+    )
+    expected_statuses[list(overspread_responses)] = str(ObservationStatus.OUTLIER)
+    expected_statuses[list(collapsed_responses)] = str(ObservationStatus.STD_CUTOFF)
+    setup_dataframe_for_compute_observation_statuses(
+        num_real,
+        num_observations,
+        nan_responses,
+        overspread_responses,
+        collapsed_responses,
+        expected_statuses,
+    )
+
+
+@pytest.mark.parametrize(
+    ("overspread_responses", "collapsed_responses"),
+    [
+        pytest.param(set(), set(), id="all ok"),
+        pytest.param({0}, set(), id="one overspread response"),
+        pytest.param(set(), {0}, id="one collapsed response"),
+    ],
+)
+def test_that_compute_observation_statuses_with_no_outlier_settings_ignores_outliers(
+    overspread_responses, collapsed_responses
+):
+    num_real = 12
+    num_observations = 10
+
+    missing_responses = [(9, 8), (6, 7)]
+    deactivated_observations = [6, 9]
+    expected_statuses = np.array(
+        [ObservationStatus.ACTIVE] * num_observations, dtype="U20"
+    )
+    expected_statuses[deactivated_observations] = str(
+        ObservationStatus.MISSING_RESPONSE
+    )
+    setup_dataframe_for_compute_observation_statuses(
+        num_real,
+        num_observations,
+        missing_responses,
+        overspread_responses,
+        collapsed_responses,
+        expected_statuses,
+        use_outlier_settings=False,
+    )
+
+
+def setup_dataframe_for_compute_observation_statuses(
+    num_reals: int,
+    num_observations: int,
+    nan_responses: list[tuple[int, int]],
+    overspread_responses: set[int],
+    collapsed_responses: set[int],
+    expected_statuses,
+    *,
+    use_outlier_settings=True,
+):
+    alpha = 0.1
+    global_std_scaling = 1
+    std_cutoff = 0.05
+
+    rng = np.random.default_rng(42)
+
+    responses_per_real = np.zeros((num_observations, num_reals), dtype=np.float32)
+    observations = np.array(range(num_observations))
+    observation_keys = [f"obs_{i}" for i in range(num_observations)]
+    observation_errors = np.array([1] * num_observations)
+
+    for obs_index in range(num_observations):
+        for real in range(num_reals):
+            responses_per_real[obs_index, real] = observations[obs_index] + 1.5 * (
+                -std_cutoff if real % 2 == 0 else std_cutoff
+            )
+
+    for obs_index, realization_index in nan_responses:
+        responses_per_real[obs_index, realization_index] = np.nan
+
+    for obs_index in overspread_responses:
+        for real in range(num_reals):
+            # Make the responses deviate A LOT from the observation
+            # (Approximating to JUST ABOVE the cutoff would require some more logic)
+            # Also ensure mean deviates from obs to avoid collapse
+            responses_per_real[obs_index, real] += 3333 if real % 2 == 0 else -6666
+
+    for obs_index in collapsed_responses:
+        responses = (
+            rng.standard_normal(num_reals) * (std_cutoff - 1e-6)
+            + observations[obs_index]
+        )
+        responses_per_real[obs_index, :] = responses
+
+    df = pl.DataFrame(
+        {
+            "observation_key": observation_keys,
+            "observations": pl.Series(observations, dtype=pl.Float32),
+            "std": pl.Series(observation_errors, dtype=pl.Float32),
+            **{
+                str(i): pl.Series(responses_per_real[:, i], dtype=pl.Float32)
+                for i in range(num_reals)
+            },
+        }
+    )
+    outlier_settings = None
+    if use_outlier_settings:
+        outlier_settings = OutlierSettings(alpha=alpha, std_cutoff=std_cutoff)
+
+    df_with_statuses = _compute_observation_statuses(
+        df,
+        global_std_scaling=global_std_scaling,
+        outlier_settings=outlier_settings,
+        active_realizations=[str(i) for i in range(num_reals)],
+    )
+
+    assert expected_statuses.tolist() == df_with_statuses["status"].to_list()
+
+
+def test_that_compute_observation_statuses_uses_qc_error_columns_when_available():
+    num_reals = 4
+    df = pl.DataFrame(
+        [
+            {
+                "observation_key": "OBS1",
+                "observations": 42.0,
+                "std": 1.0,
+                "0": None,
+                "1": 42.0,
+                "2": 12.0,
+                "3": 42.0,
+                "qc_error_2": "terror that flaps in the night",
+                "qc_error_3": None,
+            }
+        ]
+    )
+
+    df_with_statuses = _compute_observation_statuses(
+        df,
+        active_realizations=[str(i) for i in range(num_reals)],
+        global_std_scaling=1.0,
+    )
+
+    assert df_with_statuses["missing_realizations"].to_list() == [
+        "0: unknown\n\n2: terror that flaps in the night"
+    ]
+
+
+def test_that_missing_realizations_expr_populates_error_message() -> None:
+    active_realizations = ["0", "1", "2"]
+    df = pl.DataFrame(
+        {
+            "0": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "1": [1.0, np.nan, None, 4.0, 5.0],
+            "2": [1.0, 2.0, 3.0, 4.0, None],
+            "qc_error_0": [None, None, None, None, None],
+            "qc_error_1": [None, None, None, None, "new /error/"],
+            "qc_error_2": [None, None, None, "Houston, we have a problem", None],
+        }
+    )
+
+    result = df.select(_missing_realizations_expr(active_realizations))[
+        "missing_realizations"
+    ]
+
+    assert result.shape == (5,)
+    assert not result[0]
+    assert result[1] == "1: unknown"
+    assert result[2] == "1: unknown"
+    assert result[3] == "2: Houston, we have a problem"
+    assert result[4] == "1: new /error/\n\n2: unknown"
+
+
+def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
+    observations_and_responses = pl.DataFrame(
+        {
+            "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+            "index": ["rs00", "rs0", "rs0", "rs1"],
+            "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
+            "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+            "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+            "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+        }
+    )
+
+    experiment = storage.create_experiment(name="dummyexp")
+    prior_ensemble = experiment.create_ensemble(name="dummy_prior", ensemble_size=10)
+    posterior_ensemble = experiment.create_ensemble(
+        name="dummy_posterior", ensemble_size=10
+    )
+
+    _mock_preprocess_observations_and_responses(
+        observations_and_responses,
+        observation_settings=ObservationSettings(
+            outlier_settings=OutlierSettings(alpha=1, std_cutoff=0.05),
+            auto_scale_observations=[["OOOPS1*"]],
+        ),
+        global_std_scaling=1,
+        progress_callback=lambda _: None,
+        prior_ensemble=prior_ensemble,
+        posterior_ensemble=posterior_ensemble,
+    )
+    logged_messages = str(caplog.messages)  # NB: The code also prints to the terminal
+    assert "Could not auto-scale the observations" in logged_messages
+    assert "OOPS" in logged_messages
+    assert "obs1_1" in logged_messages
+
+
+def test_that_deactivated_observations_are_logged(storage, caplog):
+    observations_and_responses = pl.DataFrame(
+        {
+            "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+            "index": ["rs00", "rs0", "rs0", "rs1"],
+            "observation_key": ["obs1_1", "obs1_2", "obs2", "obs3"],
+            "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+            "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+            "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+        }
+    )
+
+    experiment = storage.create_experiment(name="dummyexp")
+    prior_ensemble = experiment.create_ensemble(name="dummy_prior", ensemble_size=10)
+    posterior_ensemble = experiment.create_ensemble(
+        name="dummy_posterior", ensemble_size=10
+    )
+
+    _mock_preprocess_observations_and_responses(
+        observations_and_responses,
+        observation_settings=ObservationSettings(
+            outlier_settings=OutlierSettings(alpha=1, std_cutoff=11111),
+            auto_scale_observations=None,
+        ),
+        global_std_scaling=1,
+        progress_callback=lambda _: None,
+        prior_ensemble=prior_ensemble,
+        posterior_ensemble=posterior_ensemble,
+    )
+    assert (
+        "Deactivating observations: ['obs1_1', 'obs1_2', 'obs2', 'obs3']"
+        in caplog.messages
+    )
+
+
+def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplog):
+    observations_and_responses = pl.DataFrame(
+        {
+            "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+            "index": ["rs00", "rs0", "rs0", "rs1"],
+            "observation_key": ["obs1_1", "obs1_2", "obs2", "obs3"],
+            "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+            "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+            "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+            "3": pl.Series([1.1, 4.2, 7.5, 8.1], dtype=pl.Float32),
+            "4": pl.Series([1.4, 4.3, 7.2, 7.4], dtype=pl.Float32),
+            "5": pl.Series([1.4, 3.9, 6.8, 7.2], dtype=pl.Float32),
+            "6": pl.Series([1.2, 4.1, 7.4, 9.1], dtype=pl.Float32),
+            "8": pl.Series([1.9, 4.9, 7.1, 8.3], dtype=pl.Float32),
+            "9": pl.Series([0.8, 3.5, 6.6, 7.9], dtype=pl.Float32),
+        }
+    )
+
+    experiment = storage.create_experiment(name="dummyexp")
+    prior_ensemble = experiment.create_ensemble(name="dummy_prior", ensemble_size=10)
+    posterior_ensemble = experiment.create_ensemble(
+        name="dummy_posterior", ensemble_size=10
+    )
+
+    _mock_preprocess_observations_and_responses(
+        observations_and_responses,
+        observation_settings=ObservationSettings(
+            outlier_settings=OutlierSettings(alpha=100, std_cutoff=0.000001),
+            auto_scale_observations=None,
+        ),
+        global_std_scaling=1,
+        progress_callback=lambda _: None,
+        prior_ensemble=prior_ensemble,
+        posterior_ensemble=posterior_ensemble,
+    )
+    assert not any("Deactivating observations" in m for m in caplog.messages)
+
+
+def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    gen_data_obs = [
+        {
+            "type": "general_observation",
+            "name": "OBSERVATION",
+            "data": "RESPONSE",
+            "restart": 0,
+            "index": 1000,
+            "value": 1.0,
+            "error": 0.1,
+        }
+    ]
+
+    experiment = storage.create_experiment(
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [response_config],
+            "observations": gen_data_obs,
+        },
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    dataset = []
+    for iens in range(prior.ensemble_size):
+        data = rng.uniform(0, 1)
+        dataset.append(
+            pl.DataFrame(
+                {
+                    "KEY_1": [data],
+                    "realization": iens,
+                }
+            )
+        )
+
+        data = rng.uniform(0.8, 1, 3)
+        prior.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series([0] * len(data), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
+                    "values": pl.Series(data, dtype=pl.Float32),
+                }
+            ),
+            iens,
+        )
+
+    prior.save_parameters(dataset=pl.concat(dataset, how="vertical"))
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    with pytest.raises(
+        ErtAnalysisError,
+        match="No active observations",
+    ):
+        smoother_update(
+            prior,
+            posterior_ens,
+            ["OBSERVATION"],
+            ObservationSettings(),
+            rng=np.random.default_rng(42),
+            strategy_map={},
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_data_missing(storage, uniform_parameter, obs):
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [response_config],
+            "observations": obs,
+        }
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    dataset = []
+    for iens in range(prior.ensemble_size):
+        data = rng.uniform(0, 1)
+        dataset.append(
+            pl.DataFrame(
+                {
+                    "KEY_1": [data],
+                    "realization": iens,
+                }
+            )
+        )
+        data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
+        prior.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series([0] * len(data), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
+                    "values": pl.Series(data, dtype=pl.Float32),
+                }
+            ),
+            iens,
+        )
+    prior.save_parameters(dataset=pl.concat(dataset, how="vertical"))
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    events = []
+
+    update_snapshot = smoother_update(
+        prior,
+        posterior_ens,
+        ["OBSERVATION"],
+        ObservationSettings(),
+        rng=np.random.default_rng(42),
+        progress_callback=events.append,
+        strategy_map={},
+    )
+
+    assert update_snapshot.observations_and_responses["status"].to_list() == [
+        ObservationStatus.ACTIVE,
+        ObservationStatus.ACTIVE,
+        ObservationStatus.MISSING_RESPONSE,
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_update_subset_parameters(storage, uniform_parameter, obs):
+    ensemble_size = 12  # We only want to update 0-9
+    active_realizations = [True] * 10 + [False] * 2
+    no_update_param = GenKwConfig(
+        name="KEY_2",
+        group="EXTRA_PARAMETER",
+        update_strategy=None,
+        distribution={"name": "uniform", "min": 0, "max": 1},
+    )
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    experiment = storage.create_experiment(
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [
+                uniform_parameter,
+                no_update_param.model_dump(mode="json"),
+            ],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=ensemble_size,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    dataset_key_1 = []
+    dataset_key_2 = []
+    for iens in range(prior.ensemble_size):
+        data = rng.uniform(0, 1)
+        dataset_key_1.append(
+            pl.DataFrame(
+                {
+                    "KEY_1": [data],
+                    "realization": iens,
+                }
+            )
+        )
+        dataset_key_2.append(
+            pl.DataFrame(
+                {
+                    "KEY_2": [data],
+                    "realization": iens,
+                }
+            )
+        )
+
+        data = rng.uniform(0.8, 1, 10)
+        prior.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series([0] * len(data), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
+                    "values": pl.Series(data, dtype=pl.Float32),
+                }
+            ),
+            iens,
+        )
+
+    prior.save_parameters(dataset=pl.concat(dataset_key_1, how="vertical"))
+    prior.save_parameters(dataset=pl.concat(dataset_key_2, how="vertical"))
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+
+    strategy_map = build_strategy_map(
+        parameters=["KEY_1", "KEY_2"],
+        param_configs=prior.experiment.parameter_configuration,
+        enkf_truncation=1.0,
+        correlation_threshold=lambda x: 1.0,
+    )
+
+    smoother_update(
+        prior,
+        posterior_ens,
+        ["OBSERVATION"],
+        ObservationSettings(),
+        rng=np.random.default_rng(42),
+        strategy_map=strategy_map,
+        active_realizations=active_realizations,
+    )
+
+    assert (
+        prior.load_parameters("EXTRA_PARAMETER", 0).rows()
+        == posterior_ens.load_parameters("EXTRA_PARAMETER", 0).rows()
+    )
+    assert (
+        prior.load_parameters("PARAMETER", 0).rows()
+        != posterior_ens.load_parameters("PARAMETER", 0).rows()
+    )
+    assert prior.ensemble_size == posterior_ens.ensemble_size
+    assert len(prior.load_parameters("PARAMETER")["realization"]) == ensemble_size
+    assert len(
+        posterior_ens.load_parameters("PARAMETER")["realization"]
+    ) == active_realizations.count(True)
+
+
+@pytest.mark.parametrize(
+    ("ens_mask", "active_realizations", "expected"),
+    [
+        pytest.param(
+            np.array([True, False, True, True]),
+            None,
+            np.array([True, False, True, True]),
+            id="no_active_realizations",
+        ),
+        pytest.param(
+            np.array([True, False, True, True]),
+            [True, True, False, True],
+            np.array([True, False, False, True]),
+            id="intersecting_masks_same_length",
+        ),
+        pytest.param(
+            np.array([True, False, False, True]),
+            [True, True],
+            np.array([True, False, False, False]),
+            id="intersecting_masks_different_length_ens_mask_longer",
+        ),
+        pytest.param(
+            np.array([True, False, False, True]),
+            [True, True, False, True, True, False, True],
+            np.array([True, False, False, True, False, False, False]),
+            id="intersecting_masks_different_length_active_realizations_longer",
+        ),
+        pytest.param(
+            np.array([True, False, True, False]),
+            [False, True, False, True],
+            np.array([False, False, False, False]),
+            id="no_intersection",
+        ),
+    ],
+)
+def test_that_create_combined_ensemble_mask_handles_different_length_masks(
+    ens_mask: np.ndarray,
+    active_realizations: list[bool] | None,
+    expected: np.ndarray,
+) -> None:
+    result = _create_combined_ensemble_mask(ens_mask, active_realizations)
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_that_field_parameter_with_update_false_is_copied_to_posterior(
+    storage, uniform_parameter, obs
+):
+    ensemble_size = 4
+    nx, ny, nz = 2, 2, 1
+    field_config = Field(
+        name="MY_FIELD",
+        forward_init=False,
+        update_strategy=None,
+        ertbox_params=ErtboxParameters(
+            nx=nx,
+            ny=ny,
+            nz=nz,
+            xinc=1.0,
+            yinc=1.0,
+            origin=(0.0, 0.0),
+            rotation_angle=0.0,
+            axis_orientation=AxisOrientation.LEFT_HANDED,
+        ),
+        file_format=FieldFileFormat.ROFF,
+        forward_init_file="init_%d.roff",
+        output_file="field.roff",
+        grid_file="grid.grdecl",
+    )
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    experiment = storage.create_experiment(
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [
+                uniform_parameter,
+                field_config.model_dump(mode="json"),
+            ],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=ensemble_size,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    genkw_frames = []
+    for iens in range(ensemble_size):
+        genkw_frames.append(
+            pl.DataFrame({"KEY_1": [rng.uniform(0, 1)], "realization": iens})
+        )
+        prior.save_parameters(
+            xr.DataArray(
+                rng.standard_normal((nx, ny, nz)).astype(np.float32),
+                name="values",
+                dims=["x", "y", "z"],
+            ).to_dataset(),
+            "MY_FIELD",
+            iens,
+        )
+        prior.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series([0] * 10, dtype=pl.UInt16),
+                    "index": pl.Series(range(10), dtype=pl.UInt16),
+                    "values": pl.Series(rng.uniform(0.8, 1, 10), dtype=pl.Float32),
+                }
+            ),
+            iens,
+        )
+    prior.save_parameters(pl.concat(genkw_frames, how="vertical"))
+
+    posterior = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    smoother_update(
+        prior,
+        posterior,
+        ["OBSERVATION"],
+        ObservationSettings(),
+        rng=np.random.default_rng(42),
+        strategy_map={},
+    )
+
+    for iens in range(ensemble_size):
+        xr.testing.assert_equal(
+            prior.load_parameters("MY_FIELD", iens),
+            posterior.load_parameters("MY_FIELD", iens),
+        )

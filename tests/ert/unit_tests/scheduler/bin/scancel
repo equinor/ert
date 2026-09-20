@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# This script partially mocks the Slurm provided scancel utility:
+# "Used to signal jobs or job steps that are under the control of Slurm."
+set -e
+
+jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
+jobid=$1
+
+if ! [ -f "${jobdir}/${jobid}.pid" ]
+then
+    echo "No such job ${jobid}" >&2
+    exit 1
+fi
+
+pid=$(cat "${jobdir}/${jobid}.pid")
+kill $pid
+echo "yes" > "${jobdir}/${jobid}.cancelled"

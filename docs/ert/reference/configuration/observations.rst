@@ -1,0 +1,837 @@
+.. _Configuring_observations_for_ERT:
+
+Observations
+============
+
+
+General overview
+----------------
+
+When using ert to condition on dynamic data, it is necessary to
+specify the data/observations to be used. For every piece of data
+ert needs to know:
+
+ - The measured value of the data.
+ - The uncertainty (standard deviation) of the measured data.
+ - The time of measurement.
+ - How to simulate a response of the data given a parameterized forward model.
+
+This information is configured in an observation file. The name/path
+to this observation file is declared in the main ert config file using the
+:ref:`OBS_CONFIG <obs_config>` keyword.
+
+The observation file is a plain text file, and is in essence built around four
+different classes of observations using the associated keywords:
+
+ - :ref:`SUMMARY_OBSERVATION <summary_observation>`: For explicitly giving
+   scalar observation values for responses that can be extracted from a
+   reservoir simulator :term:`summary files`. Examples are rates from separator
+   tests, water cut, GOR, shut in pressures, etc.
+
+ - :ref:`BREAKTHROUGH_OBSERVATION <breakthrough_observation>`: For defining observed dates
+   when a measured value surpassed a certain threshold. The observed value must
+   correspond to an existing response for a summary key which can be extracted from
+   :term:`summary files`.
+
+ - :ref:`GENERAL_OBSERVATION <general_observation>`: All other observations.
+   These observations are extracted from ascii files and allows for loading
+   of just about anything. Examples: 4D seismic, results from non ECLIPSE
+   compatible simulators, etc.
+
+ - :ref:`RFT_OBSERVATION <rft_observation>`: For loading RFT observations
+   from a reservoir simulator RFT file. Examples are pressure and saturation
+   values.
+
+ - :ref:`SEISMIC_OBSERVATION <seismic_observation>`: For loading spatially
+   distributed observations along a horizon, typically 4D seismic
+   attributes. Observations are loaded from a CSV or Parquet file with
+   one row per measurement location.
+
+
+Please note that observations and datatypes are quite tightly linked together.
+Before reading this you should have a firm grasp of the dynamic data types
+as described in :ref:`Data types available in ert <Data_types_available_in_ERT>`.
+
+
+.. _summary_observation:
+
+SUMMARY_OBSERVATION keyword
+---------------------------
+
+The keyword SUMMARY_OBSERVATION can be used to condition on any observation for
+which the simulated value is in the :term:`summary files` with basename
+:ref:`eclbase` produced by each :term:`realisation`, e.g. well rates, region properties, group and field rates etc.
+A typical usage of SUMMARY_OBSERVATION is to condition on results from
+separator tests.
+
+In order to create a summary observation, four pieces of information
+are needed: The observed value, the observation error, the time of
+observation and a summary key. A typical summary observation is
+created as follows:
+
+.. code-block:: none
+
+ SUMMARY_OBSERVATION SEP_TEST_2005
+ {
+    VALUE = 100.0;
+    ERROR =     5;
+    DATE  = 2005-08-21;
+    KEY   = GOPR:BRENT;
+ };
+
+This will create an observation of group oil production for the Brent
+group on 21th of august 2005. The observed value was 100 with a
+standard deviation of 5. The name SEP_TEST_2005 will be used as a
+label for the observation within ert and must be unique.
+
+Date format YYYY-MM-DD (ISO 8601) is required. Other time formats, like
+DD/MM/YYYY or DD.MM.YYYY, are deprecated and their support will be removed in a
+future release. The date format can also include hours and seconds:
+"YYYY-MM-DDTHH:mm:ss". When the :ref:`eclbase` :term:`summary files` are read
+from the realization, report times are rounded to seconds and matched to
+closest observations with 1 second tolerance.
+
+The item KEY is a :term:`summary key`, which is used to look up the simulated
+value from the :term:`summary files` with basename :ref:`eclbase` from each
+:term:`realisation`. To condition on the summary key VAR in a well, group or
+region WGRNAME, use::
+
+ KEY = VAR:WGRNAME;
+
+For example, to condition on ``RPPW`` in region 8, use::
+
+ KEY = RPPW:8;
+
+Use the keyword ``RESTART`` to specify observation time as a restart number.
+Use the keyword ``DAYS`` to specify observation time as the number of days relative
+to the start of the simulation, where the start point is taken from the `REFCASE` or `TIMEMAP`.
+
+Here are two examples:
+
+.. code-block:: none
+
+ -- Giving the observation time in terms of restart number.
+ SUMMARY_OBSERVATION SEP_TEST_2005
+ {
+    VALUE    = 100;
+    ERROR    =   5;
+    RESTART  =  42;
+    KEY      = GOPR:BRENT;
+ };
+
+ -- Giving the observation time in terms of days
+ -- from simulation start.
+ SUMMARY_OBSERVATION SEP_TEST_2008
+ {
+    VALUE    = 213;
+    ERROR    =  10;
+    DAYS     = 911;
+    KEY      = GOPR:NESS;
+ };
+
+.. _error_modes:
+
+Error modes for summary observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
+The default error mode for the :ref:`SUMMARY_OBSERVATION <summary_observation>`
+keyword is ABS.
+
+The default value for `ERROR_MIN` is 0.1.
+
+Ert will not load an observation if the total error associated with an observation is zero.
+A zero error is incompatible with the logic used in the history matching
+process. Therefore, setting a minimum error is particularly important for
+observations that could happen to be zero. For example, if an observation is the
+water production rate and, at a given time, its value is zero, the relative
+error will be zero, and the only error computed is the minimum error.
+
+The error explicitizes the degree of uncertainty associated to the given
+observation. It has an inverse effect on the weight that an observation
+will have during the history matching process: the higher the error
+specified for an observation, the smaller will be its weight during
+the updating process. Therefore, it is important to have consistency
+between setting up the errors and the degree of uncertainty in an
+observation.
+
+The default error mode and values can be changed as follows:
+
+.. code-block:: none
+
+  SUMMARY_OBSERVATION GOPR_FIELD_OBS_NAME
+ {
+    VALUE      = 0.9;
+    DATE       = 2014-09-10;
+    KEY        = GOPR:FIELD;
+    ERROR       = 1000;
+    ERROR_MODE  = ABS;
+ };
+
+This will set the observation error to an absolute value of 1000
+for all observations of GOPR:FIELD.
+
+Note that both the items ERROR and ERROR_MODE as well as
+the whole definition shall end with a semi-colon.
+
+If ERROR_MODE is set to REL, all observation errors will be set to the
+observed values multiplied by ERROR. Thus, the following will
+condition on water injection rate for the whole field with 20%
+observation uncertainty:
+
+.. code-block:: none
+
+ SUMMARY_OBSERVATION GWIR_FIELD_OBS_NAME
+ {
+    VALUE      = 0.9;
+    DATE       = 2014-09-10;
+    KEY        = GWIR:FIELD;
+    ERROR       = 0.20;
+    ERROR_MODE  = REL;
+ };
+
+If you do not want the observation error to drop below a given
+threshold, say 100, you can set ERROR_MODE to RELMIN and the
+keyword ERROR_MIN:
+
+.. code-block:: none
+
+ SUMMARY_OBSERVATION GWIR_FIELD_OBS_NAME
+ {
+    VALUE      = 0.9;
+    DATE       = 2014-09-10;
+    KEY        = GWIR:FIELD;
+    ERROR       = 0.20;
+    ERROR_MODE  = RELMIN;
+    ERROR_MIN   = 100;
+ };
+
+This error mode is also relevant for observations that may be zero,
+for example water production rates.
+
+.. _bulk_configuration_of_summary_observations:
+
+Bulk configuration of summary observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Summary observations can also be created in bulk by the "SUMMARY"
+keyword. This will generate multiple summary observations from the
+same declaration, but requires a csv-file containing the attribute
+values for each summary observation.
+
+A minimal configuration for the "SUMMARY" keyword looks like:
+
+.. code-block:: none
+
+ SUMMARY {
+    VALUES = some_file.csv;
+ };
+
+Where the provided csv file will contain one row for each observation.
+Required columns to create summary observations are: keyword, value,
+error, date.
+
+Without these columns, the configuration is invalid, and ert will raise
+an error.
+
+A csv file containing a single summary observation might look like:
+
+.. code-block:: none
+
+ keyword, value, error, date
+ FOPR, 1e6, 1e3, 2012-12-02
+
+
+It is also possible to provide optional columns: well, number, nx, ny,
+lgr_name, li, lj, lk - which may be required by certain keywords.
+
+The SUMMARY configuration can also configure WELLs. The WELL keyword
+inside a SUMMARY configuration is used to configure metadata about
+a well.
+
+The WELL keyword can contain two types of configuration: LOCALIZATION and
+BREAKTHROUGH.
+
+:ref:`LOCALIZATION <localization_keyword>` is defined like a regular
+:ref:`LOCALIZATION keyword <localization_keyword>` but will be applied to all observations
+in the csv file sharing the same well name as the WELL configuration.
+
+BREAKTHROUGH allows the user to define a
+:ref:`BREAKTHROUGH observation <breakthrough_observation>` for the given well.
+BREAKTHROUGH is configured like a regular
+:ref:`BREAKTHROUGH_OBSERVATION <breakthrough_observation>` - which requires the fields
+KEY, THRESHOLD, DATE and ERROR. BREAKTHROUGH will also inherit the LOCALIZATION values
+should they be defined for the well. Only one occurrence of BREAKTHROUGH can
+be configured per WELL.
+
+A SUMMARY configuration containing all of these elements may look like:
+
+.. code-block:: none
+
+ SUMMARY {
+    VALUES = some_file.csv;
+    WELL OP1 {
+        LOCALIZATION {
+            EAST   = 32.132;
+            NORTH  = 45.139;
+            RADIUS = 2500;
+        };
+        BREAKTHROUGH {
+            KEY       = WWCT;
+            THRESHOLD = 0.2;
+            DATE      = 2012-05-01;
+            ERROR     = 3;
+        };
+    };
+    WELL OP2 {
+        LOCALIZATION {
+            EAST   = 35.734;
+            NORTH  = 42.981;
+            RADIUS = 3000;
+        };
+    };
+ };
+
+.. code-block:: none
+
+ well,keyword, value, error, date, nx, ny, number
+ OP1, WOPR, 1e5, 1e3, 2012-01-03, , ,
+ OP1, BPR, 100, 7.5, 2012-01-07, 1, 2, 5
+ OP2, WOPR, 7e5, 1.2e3, 2012-02-05, , ,
+ ,FOPR, 1e6, 1e3, 2012-12-02, , ,
+
+.. _breakthrough_observation:
+
+BREAKTHROUGH_OBSERVATION keyword
+--------------------------------
+
+The ``BREAKTHROUGH_OBSERVATION`` keyword is used when the quantity of interest is the
+time at which a summary response first exceeds a threshold. A typical use case is water
+breakthrough in a producer. The response of a breakthrough observation in a simulator can
+be deduced from the response values across all simulated steps for a given summary key.
+
+The observed value is a time given by ``DATE``. The corresponding response is the first
+simulated time step where the summary key value exceeds the threshold.
+
+.. code-block:: none
+
+    BREAKTHROUGH_OBSERVATION OP1_BREAKTHROUGH
+    {
+        KEY       = WWCT:OP1;
+        DATE      = 2005-10-02;
+        THRESHOLD = 0.2;
+        ERROR     =   5;
+    };
+
+This defines an observation named ``OP1_BREAKTHROUGH`` where the response ``WWCT:OP1``
+is observed to cross the threshold ``0.2`` on ``2005-10-02`` with an uncertainty of
+``5`` days.
+
+Required items are:
+
+- ``KEY``: Summary key used to deduce breakthrough response (for example ``WWCT:OP1``).
+- ``DATE``: Observed breakthrough date in ISO 8601 format (``YYYY-MM-DD``).
+- ``THRESHOLD``: The value of the observed measurement on the observed date (same unit as the response).
+- ``ERROR``: Observation uncertainty associated with the breakthrough timing (days).
+
+The key must refer to an existing summary key available from the simulation output.
+
+Should the ``THRESHOLD`` value never be reached by the simulator, the observation
+will be deactivated for the update of that realization.
+
+.. _general_observation:
+
+GENERAL_OBSERVATION keyword
+---------------------------
+
+The GENERAL_OBSERVATION keyword is used together with the GEN_DATA
+type. This pair of observation and data types are typically
+used when you want to update something special which does not fit into
+any of the predefined types. Ert treats GENERAL_OBSERVATION (and also GEN_DATA)
+as a list of numbers with no particular structure.
+This is very flexible, but of course also a bit more complex to use:
+
+.. code-block:: none
+
+ GENERAL_OBSERVATION GEN_OBS1 {
+    DATA     = SOME_FIELD;
+    RESTART  = 20;
+    OBS_FILE = some_file.txt;
+ };
+
+This example shows a minimum GENERAL_OBSERVATION. The keyword DATA
+points to the GEN_DATA instance this observation is 'observing',
+RESTART gives the report step when this observation is active.
+OBS_FILE should be the name of a file with observation values,
+and the corresponding uncertainties. The file with observations should
+just be a plain text file with numbers in it, observations and
+corresponding uncertainties interleaved.
+
+An example of an ``OBS_FILE`` that defines three observations::
+
+ 1.46 0.26
+ 25.0 5.0
+ 5.00 1.00
+
+In the example above it is assumed that the DATA
+instance we are observing (i.e. comparing with) has the same number of
+elements as the observation, i.e. three in this case. By using the
+keyword INDEX_LIST you can select the elements of the
+GEN_DATA instance you are interested in. Each index in INDEX_LIST
+points to a line number in the GEN_DATA result file (which has one number per line).
+Consider for example:
+
+.. code-block:: none
+
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = SOME_FIELD;
+      INDEX_LIST = 0,3,9;
+      RESTART    = 20;
+      OBS_FILE   = some_file.txt;
+   };
+
+Here we use INDEX_LIST to indicate that we are interested in element
+0, 3 and 9 of the GEN_DATA instance::
+
+   GEN_DATA                     GEN_OBS1
+   ========                     ===========
+   1.56 <---------------------> 1.46  0.26
+   23.0        /--------------> 25.0   5.00
+   56.0        |    /---------> 5.00  1.00
+   27.0 <------/    |           ===========
+   0.2             |
+   1.56             |
+   1.78             |
+   6.78             |
+   9.00             |
+   4.50 <-----------/
+   ========
+
+
+If ``INDEX_LIST`` not defined, ert assumes that the observations point
+to the first ``n`` ``GEN_DATA`` points:
+
+.. code-block:: none
+
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = SOME_FIELD;
+      OBS_FILE   = some_file.txt;
+   };
+
+::
+
+   GEN_DATA                     GEN_OBS1
+   ========                     ===========
+   1.56 <---------------------> 1.46  0.26
+   23.0 <---------------------> 25.0   5.00
+   56.0 <---------------------> 5.00  1.00
+   27.0                         ===========
+   0.2
+   1.56
+   1.78
+   6.78
+   9.00
+   4.50
+   ========
+
+
+In addition to INDEX_LIST, it is possible to use INDEX_FILE which
+points to a plain text file with indices, one value per line.
+Finally, if your observation only has one value, you can
+embed it in the config object with VALUE and ERROR.
+
+Matching GEN_OBS and GEN_DATA
+-----------------------------
+
+It is important to match up the GEN_OBS observations with the
+corresponding GEN_DATA simulation data correctly. If no ``REPORT_STEP``
+and ``RESTART`` are provided to ``GEN_DATA`` and ``GENERAL_OBSERVATION``,
+respectively, they will be given a default ``REPORT_STEP``
+and ``RESTART`` of 0.
+
+As a concrete example, the ert configuration file could include this line:
+
+.. code-block:: none
+
+   GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67
+
+While the observation configuration file could include this:
+
+.. code-block:: none
+
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = RFT_BH67;
+      OBS_FILE   = some_file.txt;
+   };
+
+Before ert starts we expect there to be a file called ``some_file.txt``  with the
+observed values and the uncertainty. After the forward model has completed, ert
+will load the responses from a file called ``rft_BH67``.
+
+If ``REPORT_STEP`` and ``RESTART`` are provided,
+the ``GEN_DATA`` result files must have an embedded ``%d`` to indicate the
+report step in them. To ensure that GEN_OBS and corresponding
+GEN_DATA values match up correctly only the RESTART method is allowed
+for GEN_OBS when specifying the time.
+So consider a setup like this::
+
+   -- Config file:
+   GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
+   ...                                    /|\                /|\
+   ...                                     |                  |
+   -- Observation file:                    |                  |
+   GENERAL_OBSERVATION GEN_OBS1 {          +------------------/
+      DATA       = RFT_BH67;               |
+      RESTART    = 20;   <-----------------/
+      OBS_FILE   = some_file.txt;
+   };
+
+Here we see that the observation is active at report step 20, and we
+expect the forward model to create a file rft_BH67_20 in each
+realization directory.
+
+.. _OPM Flow manual: https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf
+
+
+.. _rft_observation:
+
+RFT_OBSERVATION keyword
+-----------------------
+
+The keyword RFT_OBSERVATION can be used to condition on observations for which simulated values are
+in the RFT files with basename defined by :ref:`eclbase` produced by each :term:`realisation`,
+e.g. pressure and saturation values.
+
+A typical RFT observation is created as follows:
+
+.. code-block:: none
+
+   RFT_OBSERVATION rft_obs {
+      WELL=PROD;
+      DATE=2015-02-01;
+      PROPERTY=PRESSURE;
+      VALUE=3800;
+      ERROR=10;
+      TVD=8400;
+      EAST=9500;
+      NORTH=9500;
+   };
+
+This will create an observation of pressure in well PROD on 1st of February 2015.
+The location of the measurement is given by the TVD, EAST and NORTH values,
+where TVD is the true vertical depth below sea level, and EAST and NORTH are the coordinates
+in the horizontal plane. The observed pressure value was 3800 with an observation error of 10.
+Any property available in the RFT file can be used, e.g. PRESSURE, SWAT, SGAS, etc.
+The error is given as an absolute value.
+
+An RFT_OBSERVATION can alternatively be created by referring to an observation csv file containing
+multiple observations.
+
+In its simplest form this will look as follows:
+
+.. code-block:: none
+
+   RFT_OBSERVATION rft_obs {
+      CSV=path/to/observation_file.csv;
+   };
+
+This will then default to look for PRESSURE values in the csv file.
+If another property is required, this can be specified by adding the PROPERTY keyword, e.g:
+
+.. code-block:: none
+
+   RFT_OBSERVATION rft_obs {
+      CSV=path/to/observation_file.csv;
+      PROPERTY=SWAT;
+   };
+
+The CSV file needs to have the following columns as a minimum:
+   - WELL_NAME
+   - DATE
+   - ERROR
+   - NORTH
+   - EAST
+   - TVD
+
+In addition the required property column needs to be present, e.g. PRESSURE (used by default) or SWAT, etc.
+
+An optional ZONE column can be included to validate that observations are in the expected geological zones
+when used with :ref:`ZONEMAP <zonemap>`.
+
+An example of such a CSV could look like this:
+
+.. code-block:: none
+
+   "WELL_NAME", "DATE", "ZONE", "PRESSURE", "ERROR", "TVD", "NORTH", "EAST"
+   "WELL1", "2013-03-31", "zone1", "3700", "10", "2000.0", "71.0", "30.0"
+   "WELL1", "2013-04-30", "zone1", "3800", "10", "2000.0", "71.0", "30.0"
+   "WELL2", "2014-03-31", "zone1", "3900", "10", "2000.0", "73.0", "33.0"
+
+.. note::
+   The `create_rft_ertobs <https://equinor.github.io/fmu-tools/create_rft_ertobs.html>`_
+   function from fmu-tools can generate CSV files in this format when run within RMS.
+   If your input data uses measured depth (MD) instead of TVD, NORTH, and EAST coordinates,
+   create_rft_ertobs will interpolate along well paths to produce the required coordinate columns.
+
+
+Using zones with RFT observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When an RFT observation includes a ZONE identifier (either in the CSV file or specified directly),
+ert will validate that the measurement location falls within the expected geological zone defined
+in the :ref:`ZONEMAP <zonemap>`. This provides an additional quality check to ensure observations
+are correctly associated with reservoir zones.
+
+If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
+the expected zone, the observation will be deactivated with a warning during the simulation.
+
+
+.. _seismic_observation:
+
+SEISMIC_OBSERVATION keyword
+---------------------------
+
+The keyword ``SEISMIC_OBSERVATION`` is used to condition on spatially
+distributed observations along a horizon, such as 4D seismic attributes
+(amplitude, time-shift, impedance change, etc.). Each observation
+represents a single measurement at a specific horizontal location, and a
+single ``SEISMIC_OBSERVATION`` declaration typically defines many
+individual measurements loaded from an external file.
+
+A minimal seismic observation is created as follows:
+
+.. code-block:: none
+
+   SEISMIC_OBSERVATION OBS_MEAN_2025 {
+      OBS_FILE = path/to/observations.csv;
+   };
+
+The name (``OBS_MEAN_2025`` above) is used as a label for the observation
+within ERT and must be unique. If the name is omitted, the stem of the
+observation file will be used.
+
+Observations are read from either a CSV file or a Parquet file. The file
+type is determined from the file extension (``.csv`` or ``.parquet``).
+Parquet is the preferred format for seismic observations as it is a typed,
+compressed binary format that is significantly smaller and faster to load
+than CSV. The file must contain one row per observation with the following
+required columns:
+
+- ``X_UTME``: Easting coordinate of the measurement location.
+- ``Y_UTMN``: Northing coordinate of the measurement location.
+- ``OBS``: The observed value at that location.
+- ``OBS_ERROR``: The observation error (absolute standard deviation).
+
+An example of such a CSV could look like this:
+
+.. code-block:: none
+
+   X_UTME,Y_UTMN,OBS,OBS_ERROR
+   463401.665023891,6929758.90312445,0.008602961,0.005
+   463312.374851203,6929712.58234601,-0.007062605,0.005
+   463245.488743621,6929689.04095157,0.009096828,0.005
+   463198.920134567,6929645.33178924,-0.007231411,0.005
+
+All observation coordinates within a single ``SEISMIC_OBSERVATION``
+declaration must be at least 0.2 m apart. Overlapping or duplicate
+coordinates will cause ERT to raise a configuration error.
+
+Limiting observations with a boundary polygon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An optional ``BOUNDARY`` file may be provided to restrict which
+observations are used during the update step. Observations located
+outside the polygon are deactivated. The boundary file must contain a
+closed polygon, given as ``X Y Z`` triplets, with the polygon terminated
+by a line containing ``999.0 999.0 999.0``:
+
+.. code-block:: none
+
+   SEISMIC_OBSERVATION OBS_MIN_2025 {
+      OBS_FILE = path/to/observations.csv;
+      BOUNDARY = path/to/boundary.pol;
+   };
+
+The boundary file is resolved relative to the directory containing the
+observation configuration file, the same as ``OBS_FILE``.
+
+.. _localization_keyword:
+
+The LOCALIZATION keyword - Configuring observations with location
+-----------------------------------------------------------------
+
+A prerequisite for using :ref:`distance based localization <distance_based_localization>`
+is to provide metadata regarding location for the observations.
+
+This can be configured for :ref:`summary observations <summary_observation>` and
+:ref:`breakthrough observations <breakthrough_observation>` by inserting a `LOCALIZATION`
+keyword into their declarations.
+
+The `LOCALIZATION` object has two required fields: `NORTH` and `EAST`. Additionally,
+`RADIUS` can be configured here, but will be defaulted to 3000m if absent.
+
+The `LOCALIZATION` object can be defined as follows:
+
+.. code-block:: none
+
+   LOCALIZATION {
+     EAST=70;
+     NORTH=80;
+     RADIUS=2500;
+   };
+
+And inserted into a summary observation like so:
+
+.. code-block:: none
+
+   SUMMARY_OBSERVATION WOPR_OP1_141 {
+     KEY   = WOPR;
+     VALUE = 1e6;
+     ERROR = 3e4;
+     DATE  = 2012-02-13;
+     LOCALIZATION {
+       EAST   = 70;
+       NORTH  = 80;
+       RADIUS = 2500;
+     };
+   };
+
+And similarily into a :ref:`breakthrough observation <breakthrough_observation>`
+
+The RFT observations already contains the keywords `NORTH` and `EAST` in its´ regular
+configuration. These observations are therefore already correctly configured for distance
+based localization.
+
+The radius for RFTs will be the default radius value of 3000m, but can be overwritten by
+providing a `LOCALIZATION` object containing just the `RADIUS` key, e.g.
+
+.. code-block::
+
+   LOCALIZATION {
+     RADIUS=2500;
+   };
+
+
+Observation converters
+----------------------
+
+Ert provides a command-line tool for converting observation configurations between
+formats.
+
+Usage:
+
+.. code-block:: none
+
+    ert convert_observations <config.ert> [--format <format>]
+
+The ``--format`` flag specifies which format to convert to. If omitted, the default
+is ``summary``. Valid formats are:
+
+``summary`` (default)
+    Converts deprecated and unsupported history observations to summary observations.
+
+    The tool replaces the history observation declarations within the observation
+    configuration file with equivalent summary observations.
+
+    The old configuration is renamed to ``<filename>-<timestamp>.old`` in case there is
+    a need to retrieve the old version.
+
+    When trying to open ert with a configuration containing history observations, ert will
+    open with an error and prompt the user to run this workflow - as history observations
+    are no longer supported.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations config.ert
+
+
+``bulk``
+    Converts summary observations to the
+    :ref:`bulk CSV format <bulk_configuration_of_summary_observations>`. This produces a
+    file called ``summary_observations.csv`` containing all summary observation data
+    (one row per observation) and instructions printed to the terminal explaining how
+    to replace the existing configuration of summary observations with a
+    ``SUMMARY { ... }`` bulk block in the observation configuration file.
+
+    This tooling does not edit any existing files, and the output must manually be
+    added to the observation configuration.
+
+    The tooling will not overwrite the file ``summary_observations.csv`` if it already
+    exists.
+
+    As explained in detail in the
+    :ref:`bulk CSV format section <bulk_configuration_of_summary_observations>`, any
+    existing breakthrough observations and localization values are configured within the
+    printed ``SUMMARY { ... }`` bulk block - not in the csv file.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations snake_oil.ert --format bulk
+
+    Example terminal output:
+
+    .. code-block:: none
+
+        6 observations can be replaced by:
+          1.  Copying the file 'summary_observations.csv' to the folder containing your observation configuration.
+          2.  Replacing the named observations below with the bulk configuration
+
+        Observation names (to replace):
+        ==============================
+            WOPR_OP1_9
+            WOPR_OP1_36
+            WOPR_OP1_72
+            WOPR_OP1_108
+            WOPR_OP1_144
+            WOPR_OP1_190
+
+        Bulk configuration (replace with):
+        =================================
+        SUMMARY {
+          VALUES = summary_observations.csv;
+        };
+
+
+``yaml``
+    Exports summary observations to a YAML file format. The produced file receives the
+    name ``summary_observations.yaml``. The tooling will not overwrite the file
+    ``summary_observations.yaml`` if it already exists.
+
+    The YAML format is compatible with Webviz and can be used in plugins like
+    ``SimulationTimeSeries`` and ``HistoryMatch`` among others.
+
+    Example:
+
+    .. code-block:: none
+
+        ert convert_observations snake_oil.ert --format yaml
+
+    Example of produced yaml file:
+
+    .. code-block:: none
+
+        smry:
+        - key: WOPR:OP1
+          observations:
+          - date: '2010-03-31'
+            value: 0.1
+            error: 0.05
+          - date: '2010-12-26'
+            value: 0.7
+            error: 0.07
+          - date: '2011-12-21'
+            value: 0.5
+            error: 0.05
+          - date: '2012-12-15'
+            value: 0.3
+            error: 0.075
+          - date: '2013-12-10'
+            value: 0.2
+            error: 0.035
+          - date: '2015-03-15'
+            value: 0.015
+            error: 0.01

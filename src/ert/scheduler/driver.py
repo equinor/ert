@@ -1,0 +1,222 @@
+from __future__ import annotations
+
+import asyncio
+import logging
+import shlex
+import time
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from pathlib import Path
+
+from _ert.events import EnsembleEvaluationWarning
+
+from .event import DriverEvent
+
+SIGNAL_OFFSET = 128
+"""Bash and other shells add an offset of 128 to the signal
+value when a process exited due to a signal"""
+
+_POLL_PERIOD = 2.0  # default poll period in seconds
+
+
+def create_submit_script(
+    runpath: Path, executable: str, args: tuple[str, ...], activate_script: str
+) -> str:
+    return (
+        "#!/usr/bin/env bash\n"
+        f"cd {shlex.quote(str(runpath))}\n"
+        f"{activate_script}\n"
+        f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
+    )
+
+
+class FailedSubmit(RuntimeError):
+    pass
+
+
+class Driver(ABC):
+    """Adapter for the HPC cluster."""
+
+    POLLING_TIMEOUT_PERIOD = 600
+    _MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS = 600
+
+    def __init__(self, activate_script: str = "") -> None:
+        self._event_queue: asyncio.Queue[DriverEvent] | None = None
+        self._job_error_message_by_iens: dict[int, str] = {}
+        self.activate_script = activate_script
+        self._poll_period = _POLL_PERIOD
+
+        self._polling_timeout_period = Driver.POLLING_TIMEOUT_PERIOD
+        self._last_successful_poll_monotonic = time.monotonic()
+        self._last_polling_error_message: str | None = None
+        self._has_warned_evaluator_of_polling_error = False
+
+    @property
+    def event_queue(self) -> asyncio.Queue[DriverEvent]:
+        if self._event_queue is None:
+            self._event_queue = asyncio.Queue()
+        return self._event_queue
+
+    @abstractmethod
+    async def submit(
+        self,
+        iens: int,
+        executable: str,
+        /,
+        *args: str,
+        name: str | None = None,
+        runpath: Path | None = None,
+        num_cpu: int | None = 1,
+        realization_memory: int | None = 0,
+    ) -> None:
+        """Submit a program to execute on the cluster.
+
+        Args:
+          iens: Realization number. (Unique for each job)
+          executable: Program to execute.
+          args: List of arguments to send to the program.
+          cwd: Working directory.
+          name: Name of job as submitted to compute cluster
+          num_cpu: Number of CPU-cores to allocate
+          realization_memory: Memory to book, in bytes. 0 means no booking. This should
+            be regareded as a hint to the queue system, not absolute limits.
+        """
+
+    @abstractmethod
+    async def kill(self, realizations: Iterable[int]) -> None:
+        """Terminate execution of a job associated with a realization.
+
+        Args:
+          realizations: An iterable of realization numbers to kill.
+        """
+
+    @abstractmethod
+    async def poll(self) -> None:
+        """Poll for new job events"""
+
+    @abstractmethod
+    async def finish(self) -> None:
+        """make sure that all the jobs / realizations are complete."""
+
+    def read_stdout_and_stderr_files(
+        self, runpath: str, job_name: str, num_characters_to_read_from_end: int = 300
+    ) -> str:
+        """Each driver should provide some output in case of failure."""
+        return ""
+
+    @staticmethod
+    async def _execute_with_retry(
+        cmd_with_args: list[str],
+        *,
+        retry_on_empty_stdout: bool | None = False,
+        retry_codes: Iterable[int] = (),
+        accept_codes: Iterable[int] = (),
+        stdin: bytes | None = None,
+        total_attempts: int = 1,
+        retry_interval: float = 1.0,
+        driverlogger: logging.Logger | None = None,
+        return_on_msgs: Iterable[str] = (),
+        error_on_msgs: Iterable[str] = (),
+        log_to_debug: bool | None = True,
+    ) -> tuple[bool, str]:
+        logger = driverlogger or logging.getLogger(__name__)
+        error_message: str | None = None
+
+        for i in range(total_attempts):
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    *cmd_with_args,
+                    stdin=asyncio.subprocess.PIPE if stdin else None,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            except FileNotFoundError as e:
+                return (False, str(e))
+
+            stdout, stderr = await process.communicate(stdin)
+
+            assert process.returncode is not None
+            outputs = (
+                f"exit code {process.returncode}, "
+                f'output: "{stdout.decode(errors="ignore").strip() or "<empty>"}", and '
+                f'error: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
+            )
+            if process.returncode == 0:
+                if retry_on_empty_stdout and not stdout:
+                    logger.warning(
+                        f'Command "{shlex.join(cmd_with_args)}" gave '
+                        "exit code 0 but empty stdout, "
+                        "will retry. stderr: "
+                        f'"{stderr.decode(errors="ignore").strip() or "<empty>"}"'
+                    )
+                else:
+                    if log_to_debug:
+                        logger.debug(
+                            f'Command "{shlex.join(cmd_with_args)}" '
+                            f"succeeded with {outputs}"
+                        )
+                    return True, stdout.decode(errors="ignore").strip()
+            elif return_on_msgs and any(
+                return_on_msg in stderr.decode(errors="ignore")
+                for return_on_msg in return_on_msgs
+            ):
+                return True, stderr.decode(errors="ignore").strip()
+            elif error_on_msgs and any(
+                error_on_msg in stderr.decode(errors="ignore")
+                for error_on_msg in error_on_msgs
+            ):
+                return False, stderr.decode(errors="ignore").strip()
+            elif process.returncode in retry_codes:
+                error_message = outputs
+            elif process.returncode in accept_codes:
+                if log_to_debug:
+                    logger.debug(
+                        f'Command "{shlex.join(cmd_with_args)}" '
+                        f"succeeded with {outputs}"
+                    )
+                return True, stderr.decode(errors="ignore").strip()
+            else:
+                error_message = (
+                    f'Command "{shlex.join(cmd_with_args)}" failed with {outputs}'
+                )
+                logger.error(error_message)
+                return False, error_message
+            if i < (total_attempts - 1):
+                await asyncio.sleep(retry_interval)
+        error_message = (
+            f'Command "{shlex.join(cmd_with_args)}" failed '
+            f"after {total_attempts} attempts "
+            f"with {outputs}"
+        )
+        logger.error(error_message)
+        return False, error_message
+
+    async def _warn_evaluator_if_polling_has_failed_for_some_time(self) -> None:
+        if (
+            (
+                self._last_successful_poll_monotonic
+                < time.monotonic() - self._polling_timeout_period
+            )
+            and self._last_polling_error_message
+            and not self._has_warned_evaluator_of_polling_error
+        ):
+            await self._warn_evaluator_about_polling_difficulties()
+            self._has_warned_evaluator_of_polling_error = True
+
+    async def _warn_evaluator_about_polling_difficulties(self) -> None:
+        last_polling_error_message = self._last_polling_error_message
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            "Driver has not successfully polled statuses for "
+            f"{self._polling_timeout_period}s. The previous error "
+            f"was due to '{last_polling_error_message}'"
+        )
+        formatted_msg = (
+            "ert has not been able to update the job status for some time. This might "
+            "be resolved by itself, and it does not mean that the run has crashed.\n"
+            "Please check the runpath if it seems to still be running.\n"
+            f"The last error message was '{last_polling_error_message}'"
+        )
+        await self.event_queue.put(
+            EnsembleEvaluationWarning(warning_message=formatted_msg)
+        )

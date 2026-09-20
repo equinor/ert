@@ -1,0 +1,175 @@
+import json
+import logging
+import operator
+from typing import Annotated, Any
+from urllib.parse import unquote
+from uuid import UUID, uuid4
+
+import polars as pl
+from fastapi import APIRouter, Body, Depends, Query
+
+from ert.dark_storage import json_schema as js
+from ert.dark_storage.common import (
+    get_storage,
+    reraise_as_http_errors,
+    seismic_distance_expression,
+)
+from ert.storage import Experiment, Storage
+
+router = APIRouter(tags=["ensemble"])
+logger = logging.getLogger(__name__)
+
+
+DEFAULT_STORAGE = Depends(get_storage)
+DEFAULT_BODY = Body(...)
+
+
+@router.get(
+    "/experiments/{experiment_id}/observations", response_model=list[js.ObservationOut]
+)
+def get_observations(
+    *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
+) -> list[js.ObservationOut]:
+    with reraise_as_http_errors(logger, {404: "Experiment not found"}):
+        experiment = storage.get_experiment(experiment_id)
+
+    return [
+        js.ObservationOut(
+            id=UUID(int=0),
+            userdata={},
+            errors=observation["errors"],
+            values=observation["values"],
+            x_axis=observation["x_axis"],
+            east=observation["east"],
+            north=observation["north"],
+            radius=observation["radius"],
+            name=observation["name"],
+        )
+        for observation in _get_observations(experiment)
+    ]
+
+
+@router.get("/ensembles/{ensemble_id}/responses/{response_key}/observations")
+async def get_observations_for_response(
+    *,
+    storage: Storage = DEFAULT_STORAGE,
+    ensemble_id: UUID,
+    response_key: str,
+    filter_on: Annotated[
+        str | None, Query(description="JSON string with filters")
+    ] = None,
+) -> list[js.ObservationOut]:
+    response_key = unquote(response_key)
+    with reraise_as_http_errors(logger):
+        ensemble = storage.get_ensemble(ensemble_id)
+
+    experiment = ensemble.experiment
+
+    response_type = experiment.response_key_to_response_type.get(response_key, "")
+    obs_keys = experiment.response_key_to_observation_key.get(response_type, {}).get(
+        response_key
+    )
+    if not obs_keys:
+        return []
+
+    obss = _get_observations(
+        ensemble.experiment,
+        obs_keys,
+        json.loads(filter_on) if filter_on is not None else None,
+        requested_response_type=response_type,
+    )
+    if not obss:
+        return []
+
+    obss.sort(key=operator.itemgetter("name"))
+
+    return [
+        js.ObservationOut(
+            id=uuid4(),
+            userdata={},
+            errors=obs["errors"],
+            values=obs["values"],
+            x_axis=obs["x_axis"],
+            east=obs["east"],
+            north=obs["north"],
+            radius=obs["radius"],
+            name=obs["name"],
+        )
+        for obs in obss
+    ]
+
+
+def _get_observations(
+    experiment: Experiment,
+    observation_keys: list[str] | None = None,
+    filter_on: dict[str, Any] | None = None,
+    requested_response_type: str | None = None,
+) -> list[dict[str, Any]]:
+    observations = []
+
+    for stored_response_type, stored_df in experiment.observations.items():
+        if (
+            requested_response_type is not None
+            and stored_response_type != requested_response_type
+        ):
+            continue
+
+        df = stored_df
+        if observation_keys is not None:
+            df = df.filter(pl.col("observation_key").is_in(observation_keys))
+
+        if df.is_empty():
+            continue
+
+        if filter_on is not None:
+            for response_key, selected_value in filter_on.items():
+                # For now we only filter on report_step
+                # When we filter on more, we should infer what type to cast
+                # the value to from the dtype of the polars column
+                df = df.filter(pl.col(response_key).eq(int(selected_value)))
+
+        if df.is_empty():
+            continue
+
+        df = df.rename(
+            {
+                "observation_key": "name",
+                "std": "errors",
+                "observations": "values",
+            }
+        )
+        match stored_response_type:
+            case "summary" | "breakthrough":
+                sort_expr = pl.col("time")
+                x_axis_expr = sort_expr.dt.to_string("iso:strict")
+            case "gen_data":
+                sort_expr = pl.col("index")
+                x_axis_expr = sort_expr.cast(pl.Utf8)
+            case "rft":
+                sort_expr = pl.col("tvd")
+                x_axis_expr = sort_expr.cast(pl.Utf8)
+            case "seismic":
+                sort_expr = seismic_distance_expression("name")
+                x_axis_expr = sort_expr.cast(pl.Utf8)
+            case _:
+                raise ValueError(f"Unknown response type {stored_response_type}")
+
+        df = df.with_columns(x_axis_expr.alias("x_axis")).sort(sort_expr)
+
+        for obs_key, obs_df in df.group_by("name"):
+            values = obs_df["values"].to_list()
+            if stored_response_type == "breakthrough":
+                values = obs_df["threshold"].to_list()
+            observations.append(
+                {
+                    "name": obs_key[0],
+                    "values": values,
+                    "errors": obs_df["errors"].to_list(),
+                    "x_axis": obs_df["x_axis"].to_list(),
+                    "east": obs_df["east"].to_list(),
+                    "north": obs_df["north"].to_list(),
+                    "radius": obs_df["radius"].to_list(),
+                }
+            )
+
+    return observations

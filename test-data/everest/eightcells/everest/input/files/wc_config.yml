@@ -1,0 +1,12 @@
+OP1:
+  1:
+    phase:
+      value: OIL
+    duration:
+      value: 50
+WI1:
+  1:
+    phase:
+      value: WATER
+    duration:
+      value: 50

@@ -1,0 +1,69 @@
+"""Update strategies for ensemble parameter updates.
+
+This package provides different update strategies for parameter updates,
+allowing different update methods (global ES, adaptive localization,
+distance-based localization) to be applied to different parameters.
+
+Strategy Lifecycle:
+    1. Create strategy instances with dependencies (settings, callback)
+    2. Call strategy.prepare(obs_context) to initialize with observation data
+    3. Call strategy.update() for each parameter group
+
+Example usage:
+    from ert.analysis._update_strategies import (
+        GlobalESUpdate,
+        AdaptiveLocalizationUpdate,
+        ObservationContext,
+    )
+
+    # Create strategies with dependencies
+    global_strategy = GlobalESUpdate(
+        settings.enkf_truncation, progress_callback,
+    )
+    adaptive_strategy = AdaptiveLocalizationUpdate(
+        settings.correlation_threshold, settings.enkf_truncation,
+        progress_callback,
+    )
+
+    # Build strategy map (parameter_name -> strategy)
+    strategy_map = {
+        "PORO": adaptive_strategy,
+        "PERM": global_strategy,
+    }
+
+    # Create observation context from preprocessed data
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=obs_values,
+        observation_errors=obs_errors,
+        observation_perturbations=observation_perturbations,
+    )
+
+    # Prepare strategies (called by perform_ensemble_update)
+    for strategy in dict.fromkeys(strategy_map.values()):
+        strategy.prepare(obs_context)
+
+    # Update each parameter group
+    for param_group, strategy in strategy_map.items():
+        param_array = strategy.update(param_array, param_config, mask)
+"""
+
+from ._adaptive import AdaptiveLocalizationUpdate
+from ._distance import DistanceLocalizationUpdate
+from ._global import GlobalESUpdate
+from ._protocol import (
+    ObservationContext,
+    ObservationLocations,
+    TimedIterator,
+    UpdateStrategy,
+)
+
+__all__ = [
+    "AdaptiveLocalizationUpdate",
+    "DistanceLocalizationUpdate",
+    "GlobalESUpdate",
+    "ObservationContext",
+    "ObservationLocations",
+    "TimedIterator",
+    "UpdateStrategy",
+]

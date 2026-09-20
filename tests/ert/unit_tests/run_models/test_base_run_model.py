@@ -1,0 +1,1260 @@
+import asyncio
+import logging
+import math
+import stat
+import uuid
+import warnings
+from pathlib import Path
+from queue import SimpleQueue
+from types import MethodType
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
+from pydantic import ConfigDict
+
+from _ert.events import EESnapshotUpdate
+from ert.config import (
+    CircleShapeConfig,
+    ErtConfig,
+    ExecutableWorkflow,
+    HookRuntime,
+    ModelConfig,
+    ObservationType,
+    PreSimulationFixtures,
+    PreUpdateFixtures,
+    QueueConfig,
+    QueueSystem,
+    ShapeRegistry,
+    Workflow,
+)
+from ert.config.parsing import ObservationDict
+from ert.config.queue_config import LsfQueueOptions
+from ert.config.workflow_fixtures import PostExperimentFixtures, PreExperimentFixtures
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
+from ert.ensemble_evaluator.evaluator import ParallelismViolation
+from ert.ensemble_evaluator.event import FullSnapshotEvent
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
+from ert.ensemble_evaluator.state import (
+    REALIZATION_STATE_RUNNING,
+    REALIZATION_STATE_UNKNOWN,
+)
+from ert.mode_definitions import TEST_RUN_MODE
+from ert.plugins import ErtRuntimePlugins
+from ert.run_models import create_model
+from ert.run_models.event import WorkflowEvent
+from ert.run_models.run_model import (
+    RunModel,
+    UserCancelled,
+)
+from ert.warnings import PostExperimentWarning
+from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+
+
+@pytest.fixture(autouse=True)
+def patch_abstractmethods(monkeypatch):
+    monkeypatch.setattr(RunModel, "__abstractmethods__", set())
+
+
+class MockJob:
+    def __init__(self, status) -> None:
+        self.status = status
+
+
+def create_run_model(**kwargs):
+    default_args = {
+        # Note: Will create a storage in cwd
+        "storage_path": "./storage",
+        "runpath_file": MagicMock(spec=Path),
+        "user_config_file": MagicMock(spec=Path),
+        "env_vars": MagicMock(spec=dict),
+        "env_pr_fm_step": MagicMock(spec=dict),
+        "runpath_config": ModelConfig(),
+        "queue_config": MagicMock(spec=QueueConfig),
+        "forward_model_steps": MagicMock(spec=list),
+        "status_queue": MagicMock(spec=SimpleQueue),
+        "substitutions": MagicMock(spec=dict),
+        "hooked_workflows": MagicMock(spec=dict),
+        "active_realizations": MagicMock(spec=list),
+        "random_seed": 123,
+        "log_path": Path(),
+        "shape_registry": ShapeRegistry(),
+    }
+
+    class RunModelWithMockSupport(RunModel):
+        model_config = ConfigDict(frozen=False, extra="allow")
+
+    return RunModelWithMockSupport(**(default_args | kwargs))
+
+
+def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
+    brm = create_run_model(
+        storage_path=minimum_case.ens_path,
+        queue_config=minimum_case.queue_config,
+        active_realizations=[True],
+        forward_model_steps=minimum_case.forward_model_steps,
+    )
+    assert not brm.supports_rerunning_failed_realizations
+
+
+def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
+    brm = create_run_model()
+    brm.status_queue = SimpleQueue()
+    brm.start_simulations_thread(
+        EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
+    )
+    assert isinstance(brm.status_queue.get(), StartEvent)
+    assert brm.status_queue.get() == EndEvent(
+        event_type="EndEvent",
+        failed=True,
+        msg="Run model None does not support restart/rerun of failed simulations.\n",
+    )
+
+
+@pytest.mark.parametrize(
+    "initials",
+    [
+        ([]),
+        ([True]),
+        ([False]),
+        ([False, True]),
+        ([True, True]),
+    ],
+)
+def test_active_realizations(initials, use_tmpdir):
+    brm = create_run_model(active_realizations=initials)
+    brm._initial_realizations_mask = initials
+    assert brm.ensemble_size == len(initials)
+
+
+@pytest.mark.parametrize(
+    ("initials", "completed", "any_failed", "failures"),
+    [
+        ([True], [False], True, [True]),
+        ([False], [False], False, [False]),
+        ([False, True], [True, False], True, [False, True]),
+        ([False, True], [False, True], False, [False, False]),
+        ([False, False], [False, False], False, [False, False]),
+        ([False, False], [True, True], False, [False, False]),
+        ([True, True], [False, True], True, [True, False]),
+    ],
+)
+def test_failed_realizations(initials, completed, any_failed, failures, use_tmpdir):
+    brm = create_run_model(active_realizations=initials)
+    brm._initial_realizations_mask = initials
+    brm._completed_realizations_mask = completed
+
+    assert brm._create_mask_from_failed_realizations() == failures
+    assert brm.has_failed_realizations() == any_failed
+
+
+@pytest.mark.parametrize(
+    (
+        "runpath",
+        "number_of_iterations",
+        "start_iteration",
+        "active_realizations_mask",
+        "expected",
+    ),
+    [
+        ("out/realization-%d/iter-%d", 4, 2, [True, True, True, True], False),
+        ("out/realization-%d/iter-%d", 4, 1, [True, True, True, True], True),
+        ("out/realization-%d/iter-%d", 4, 1, [False, False, True, False], False),
+        ("out/realization-%d/iter-%d", 4, 0, [False, False, False, False], False),
+        ("out/realization-%d/iter-%d", 4, 0, [], False),
+        ("out/realization-%d", 2, 1, [False, True, True], True),
+        ("out/realization-%d", 2, 0, [False, False, True], False),
+    ],
+)
+def test_check_if_runpath_exists_with_substitutions(
+    create_dummy_runpath,
+    runpath: str,
+    number_of_iterations: int,
+    start_iteration: int,
+    active_realizations_mask: list,
+    expected: bool,
+    use_tmpdir,
+):
+    model_config = ModelConfig(runpath_format_string=runpath)
+    brm = create_run_model(
+        runpath_config=model_config,
+        substitutions={},
+        active_realizations=active_realizations_mask,
+        start_iteration=start_iteration,
+        _total_iterations=number_of_iterations,
+    )
+    assert brm.check_if_runpath_exists() == expected
+
+
+@pytest.mark.parametrize(
+    ("active_realizations_mask", "expected_number"),
+    [
+        ([True, True, True, True], 2),
+        ([False, False, True, True], 0),
+        ([True, False, False, True], 1),
+    ],
+)
+def test_get_number_of_existing_runpaths(
+    create_dummy_runpath,
+    active_realizations_mask,
+    expected_number,
+):
+    runpath = "out/realization-%d/iter-%d"
+    model_config = ModelConfig(runpath_format_string=runpath)
+    brm = create_run_model(
+        runpath_config=model_config,
+        substitutions={},
+        active_realizations=active_realizations_mask,
+    )
+
+    assert brm.get_number_of_existing_runpaths() == expected_number
+
+
+@pytest.mark.parametrize(
+    "runpath_format",
+    ["<ERTCASE>/realization-<IENS>/iter-<ITER>", "<ERTCASE>/realization-<IENS>"],
+)
+@pytest.mark.parametrize(
+    "active_realizations", [[True], [True, True], [True, False], [False], [False, True]]
+)
+def test_delete_runpath(runpath_format, active_realizations, use_tmpdir):
+    expected_remaining = []
+    expected_removed = []
+    for iens, mask in enumerate(active_realizations):
+        runpath = Path(
+            runpath_format.replace("<IENS>", str(iens))
+            .replace("<ITER>", "0")
+            .replace("<ERTCASE>", "Case_Name")
+        )
+        runpath.mkdir(parents=True)
+        assert runpath.exists()
+        if not mask:
+            expected_remaining.append(runpath)
+        else:
+            expected_removed.append(runpath)
+    share_path = Path("share")
+    share_path.mkdir(parents=True)
+    model_config = ModelConfig(runpath_format_string=runpath_format)
+
+    brm = create_run_model(
+        runpath_config=model_config,
+        substitutions={"<ITER>": "0", "<ERTCASE>": "Case_Name"},
+        active_realizations=active_realizations,
+    )
+
+    brm.rm_runpath()
+    assert not any(path.exists() for path in expected_removed)
+    assert all(path.parent.exists() for path in expected_removed)
+    assert all(path.exists() for path in expected_remaining)
+    assert share_path.exists()
+
+
+def test_num_cpu_is_propagated_from_config_to_ensemble(run_args, use_tmpdir):
+    # Given NUM_CPU in the config file has a special value
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2\nNUM_CPU 42")
+    # Set up a RunModel object from the config above:
+
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=[True],
+    )
+
+    run_args = run_args(config, MagicMock())
+
+    # Instead of running the RunModel, we only test its implementation detail
+    # which is to use _build_ensemble() just prior to running
+    ensemble = brm._build_ensemble(run_args, uuid.uuid1())
+
+    # Assert the built ensemble has the correct NUM_CPU information
+    assert ensemble.reals[0].num_cpu == 42
+    assert ensemble.reals[1].num_cpu == 42
+
+
+@pytest.mark.parametrize(
+    ("real_status_dict", "expected_result"),
+    [
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Finished"},
+            {"Finished": 3},
+            id="ran_all_realizations_and_all_succeeded",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Failed"},
+            {"Finished": 2, "Failed": 1},
+            id="ran_all_realizations_and_some_failed",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Running", "2": "Failed"},
+            {"Finished": 1, "Failed": 1, "Running": 1},
+            id="ran_all_realizations_and_result_was_mixed",
+        ),
+    ],
+)
+def test_get_current_status(
+    real_status_dict,
+    expected_result,
+    use_tmpdir,
+):
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
+    initial_active_realizations = [True] * 3
+    new_active_realizations = [True] * 3
+
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=initial_active_realizations,
+    )
+
+    snapshot_dict_reals = {}
+    for index, realization_status in real_status_dict.items():
+        snapshot_dict_reals[index] = {"status": realization_status}
+    iter_snapshot = EnsembleSnapshot.from_nested_dict({"reals": snapshot_dict_reals})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = new_active_realizations
+    assert dict(brm.get_current_status()) == expected_result
+
+
+def test_that_get_current_status_handles_realizations_missing_status(
+    use_tmpdir,
+):
+    """If the scheduler is unable to get any information from the queue system
+    on realization statuses but are receiving updates from fm_dispatch (or if
+    the messages from queue system and fm_dispatch are out of order), the
+    realization status should be regarded as Unknown
+    """
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2")
+    active_realizations = [True] * 2
+
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=active_realizations,
+    )
+
+    iter_snapshot = EnsembleSnapshot.from_nested_dict(
+        {"reals": {"0": {"status": REALIZATION_STATE_RUNNING}}}
+    )
+    # Simulate a realization entry that only received forward-model-step
+    # updates and never had its "status" field populated.
+    iter_snapshot.add_realization("1", {"fm_steps": {}})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = active_realizations
+
+    assert dict(brm.get_current_status()) == {
+        REALIZATION_STATE_RUNNING: 1,
+        REALIZATION_STATE_UNKNOWN: 1,
+    }
+
+
+@pytest.mark.parametrize(
+    (
+        "initial_active_realizations",
+        "new_active_realizations",
+        "real_status_dict",
+        "expected_result",
+    ),
+    [
+        pytest.param(
+            [True, True, True],
+            [False, False, False],
+            {},
+            {"Finished": 3},
+            id="all_realizations_in_previous_run_succeeded",
+        ),
+        pytest.param(
+            [True, True, True],
+            [False, True, False],
+            {},
+            {"Finished": 2},
+            id="some_realizations_in_previous_run_succeeded",
+        ),
+        pytest.param(
+            [True, True, True],
+            [True, True, True],
+            {},
+            {"Finished": 0},
+            id="no_realizations_in_previous_run_succeeded",
+        ),
+        pytest.param(
+            [False, True, True],
+            [False, False, True],
+            {},
+            {"Finished": 1},
+            id="did_not_run_all_realizations_and_some_succeeded",
+        ),
+        pytest.param(
+            [False, True, True],
+            [False, True, True],
+            {},
+            {"Finished": 0},
+            id="did_not_run_all_realizations_and_none_succeeded",
+        ),
+        pytest.param(
+            [True, True, True],
+            [True, True, False],
+            {"0": "Finished", "1": "Finished"},
+            {"Finished": 3},
+            id="reran_some_realizations_and_all_finished",
+        ),
+        pytest.param(
+            [False, True, True],
+            [False, True, False],
+            {"1": "Finished"},
+            {"Finished": 2},
+            id="did_not_run_all_realizations_then_reran_and_the_realizations_finished",
+        ),
+    ],
+)
+def test_get_current_status_when_rerun(
+    initial_active_realizations,
+    new_active_realizations,
+    real_status_dict: dict[str, str],
+    expected_result,
+    use_tmpdir,
+):
+    """Active realizations gets changed when we choose to rerun, and the result from
+    the previous run should be included in the current_status.
+    """
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=initial_active_realizations,
+    )
+
+    brm._is_rerunning_failed_realizations = True
+    snapshot_dict_reals = {}
+    for index, realization_status in real_status_dict.items():
+        snapshot_dict_reals[index] = {"status": realization_status}
+    iter_snapshot = EnsembleSnapshot.from_nested_dict({"reals": snapshot_dict_reals})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = new_active_realizations
+    assert dict(brm.get_current_status()) == expected_result
+
+
+def test_get_current_status_for_new_iteration_when_realization_failed_in_previous_run(
+    use_tmpdir,
+):
+    """Active realizations gets changed when we run next iteration, and the failed
+    realizations from the previous run should not be present in the current_status.
+    """
+    initial_active_realizations = [True] * 5
+    # Realization 0,1, and 3 failed in the previous iteration
+    new_active_realizations = [False, False, True, False, True]
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
+
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=initial_active_realizations,
+    )
+
+    snapshot_dict_reals = {
+        "2": {"status": "Running"},
+        "4": {"status": "Finished"},
+    }
+    iter_snapshot = EnsembleSnapshot.from_nested_dict({"reals": snapshot_dict_reals})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = new_active_realizations
+
+    assert brm._is_rerunning_failed_realizations is False
+    assert dict(brm.get_current_status()) == {"Running": 1, "Finished": 1}
+
+
+@pytest.mark.parametrize(
+    ("new_active_realizations", "was_rerun", "expected_result"),
+    [
+        pytest.param(
+            [False, False, False, True, False],
+            True,
+            5,
+            id="rerun_so_total_realization_count_is_not_affected_by_previous_failed_realizations",
+        ),
+        pytest.param(
+            [True, True, False, False, False],
+            False,
+            2,
+            id="new_iteration_so_total_realization_count_is_only_previously_successful_realizations",
+        ),
+    ],
+)
+def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
+    new_active_realizations, was_rerun, expected_result, use_tmpdir
+):
+    """When rerunning, we include all realizations in the total amount of active
+    realization. When running a new iteration based on the result of the previous
+    iteration, we only include the successful realizations.
+    """
+    initial_active_realizations = [True] * 5
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
+
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=initial_active_realizations,
+    )
+
+    brm.active_realizations = new_active_realizations
+    brm._is_rerunning_failed_realizations = was_rerun
+    assert brm.get_number_of_active_realizations() == expected_result
+
+
+async def test_terminate_in_pre_evaluation(use_tmpdir):
+    brm = create_run_model()
+    brm._end_event.set()
+    with pytest.raises(
+        UserCancelled, match="Experiment cancelled by user in pre evaluation"
+    ):
+        await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
+    async def mocked_run_and_get_successful_realizations() -> list[int]:
+        return list(range(5))
+
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation()
+    evaluator().run_and_get_successful_realizations = (
+        mocked_run_and_get_successful_realizations
+    )
+    evaluator()._server_started = asyncio.Future()
+    evaluator()._server_started.set_result(None)
+
+    async def send_terminate(end_event) -> bool:
+        end_event.set()
+        return True
+
+    brm = create_run_model()
+    evaluator().wait_for_evaluation_result = MethodType(send_terminate, brm._end_event)
+    with pytest.raises(
+        UserCancelled,
+        match="Experiment cancelled by user in post evaluation",
+    ):
+        await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+
+
+@pytest.mark.parametrize(
+    (
+        "real_status_dict",
+        "current_iteration",
+        "start_iteration",
+        "total_iterations",
+        "expected_result",
+        "initial_active_mask",
+    ),
+    [
+        pytest.param(
+            {"0": "Finished", "1": "Running", "2": "Failed"},
+            1,
+            1,
+            1,
+            0.67,
+            None,
+            id="progress_with_single_offset_iteration",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Running", "2": "Running"},
+            0,
+            0,
+            1,
+            0.33,
+            None,
+            id="progress_with_partial_completed",
+        ),
+        pytest.param(
+            {"0": "Running", "1": "Running", "2": "Running"},
+            0,
+            0,
+            1,
+            0.0,
+            None,
+            id="progress_with_none_finished",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Failed", "2": "Finished"},
+            0,
+            0,
+            1,
+            1.0,
+            None,
+            id="progress_with_all_completed",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Running"},
+            2,
+            2,
+            3,
+            0.22,
+            None,
+            id="progress_with_extended_offset_iterations",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Running"},
+            3,
+            2,
+            3,
+            0.55,
+            None,
+            id="progress_with_extended_offset_iterations",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Running"},
+            5,
+            3,
+            7,
+            0.38,
+            None,
+            id="progress_with_another_extended_offset_iterations",
+        ),
+        pytest.param(
+            {"0": "Running", "1": "Finished", "2": "Finished", "3": "Finished"},
+            0,
+            0,
+            1,
+            0.5,
+            [True, True, False, False],
+            id="progress_uses_initial_active_mask_ignores_non_active_reals",
+        ),
+    ],
+)
+def test_progress_calculations(
+    real_status_dict: dict[str, str],
+    current_iteration: int,
+    start_iteration: int,
+    total_iterations: int,
+    expected_result: float,
+    initial_active_mask: list | None,
+    use_tmpdir,
+):
+    # If an explicit initial mask is provided, use it; otherwise, default to all-True
+    initial_mask = (
+        initial_active_mask
+        if initial_active_mask is not None
+        else [True] * len(real_status_dict)
+    )
+
+    brm = create_run_model(
+        start_iteration=start_iteration,
+        _total_iterations=total_iterations,
+        active_realizations=initial_mask,
+    )
+
+    for i in range(start_iteration, start_iteration + total_iterations):
+        snapshot_dict_reals = {}
+
+        for index, realization_status in real_status_dict.items():
+            status = realization_status if i == current_iteration else "Finished"
+            snapshot_dict_reals[index] = {"status": status}
+
+        iter_snapshot = EnsembleSnapshot.from_nested_dict(
+            {"reals": snapshot_dict_reals}
+        )
+        brm._iter_snapshot[i] = iter_snapshot
+
+        if i == current_iteration:
+            break
+
+    progress = brm.calculate_current_progress()
+    assert math.isclose(progress, expected_result, abs_tol=0.1)
+
+
+@pytest.mark.parametrize(
+    ("active_mask", "expected"),
+    [
+        ([True, True, True, True], True),
+        ([False, False, True, False], False),
+        ([], False),
+        ([False, True, True], True),
+        ([False, False, True], False),
+    ],
+)
+def test_check_if_runpath_exists(
+    create_dummy_runpath,
+    active_mask: list,
+    expected: bool,
+    use_tmpdir,
+):
+    def get_runpath_mock(realizations, iteration=None):
+        if iteration is not None:
+            return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
+        return [f"out/realization-{r}" for r in realizations]
+
+    run_model = create_run_model(
+        active_realizations=active_mask,
+    )
+    run_model._runpaths.get_paths = get_runpath_mock
+    assert run_model.check_if_runpath_exists() == expected
+
+
+def test_create_mask_from_failed_realizations_returns_initial_active_realizations_if_no_realization_succeeded(  # ruff: ignore[line-too-long]
+    use_tmpdir,
+):
+    initial_active_realizations = [True, False]
+    active_realizations = initial_active_realizations.copy()
+    completed_realizations = [False, False]
+
+    brm = create_run_model(
+        start_iteration=0,
+        _total_iterations=1,
+        active_realizations=active_realizations,
+    )
+    brm._initial_realizations_mask = initial_active_realizations
+    brm.active_realizations = active_realizations
+    brm._completed_realizations_mask = completed_realizations
+
+    failed_realization_mask = brm._create_mask_from_failed_realizations()
+
+    assert failed_realization_mask == initial_active_realizations
+
+
+def test_that_defaulted_user_queue_options_overrides_site_queue_options(use_tmpdir):
+    user_queue_options = LsfQueueOptions(
+        max_running=0,
+        submit_sleep=0,
+        num_cpu=1,
+        realization_memory=0,
+    )
+
+    class DummyValidationInfo:
+        @property
+        def context(self) -> ErtRuntimePlugins:
+            return ErtRuntimePlugins(
+                queue_options=LsfQueueOptions(
+                    max_running=2, submit_sleep=2, num_cpu=2, realization_memory=2
+                )
+            )
+
+    user_queue_config = QueueConfig(
+        queue_system=QueueSystem.LSF, queue_options=user_queue_options
+    )
+    RunModel.inject_site_configuration_queue_options(
+        user_queue_config, info=DummyValidationInfo()
+    )
+
+    assert user_queue_config.queue_options.max_running == 0
+    assert user_queue_config.queue_options.submit_sleep == 0
+    assert user_queue_config.queue_options.num_cpu == 1
+    assert user_queue_config.queue_options.realization_memory == 0
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+async def test_run_model_stores_largest_cpu_overspending_from_ensemble_evaluators(
+    evaluator, use_tmpdir
+):
+    async def mocked_run_and_get_successful_realizations() -> list[int]:
+        return list(range(5))
+
+    async def mocked_wait_for_evaluation_result() -> bool:
+        return True
+
+    evaluator().wait_for_evaluation_result = mocked_wait_for_evaluation_result
+    evaluator().run_and_get_successful_realizations = (
+        mocked_run_and_get_successful_realizations
+    )
+
+    brm = create_run_model()
+
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation(0, "")
+    await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
+    assert brm._max_parallelism_violation.amount == 0
+
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation(10, "")
+    await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
+    assert brm._max_parallelism_violation.amount == 10
+
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation(1, "")
+    await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
+    assert brm._max_parallelism_violation.amount == 10
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
+    evaluator, use_tmpdir, caplog
+):
+    async def mocked_run_and_get_successful_realizations() -> list[int]:
+        return list(range(5))
+
+    async def mocked_wait_for_evaluation_result() -> bool:
+        return True
+
+    evaluator().wait_for_evaluation_result = mocked_wait_for_evaluation_result
+    evaluator().run_and_get_successful_realizations = (
+        mocked_run_and_get_successful_realizations
+    )
+
+    brm = create_run_model()
+    brm.queue_config.queue_system = MagicMock()
+
+    expected_msg = "FooBar"
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation(
+        5, expected_msg
+    )
+
+    with warnings.catch_warnings(record=True) as W:
+        brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
+        assert any(isinstance(w.message, PostExperimentWarning) for w in W)
+        assert any(expected_msg in str(w.message) for w in W)
+
+
+def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tmpdir):
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2")
+    brm = create_run_model(
+        queue_config=config.queue_config,
+        substitutions=config.substitutions,
+        active_realizations=[True, True],
+    )
+    brm._iter_snapshot[0] = EnsembleSnapshot.from_nested_dict(
+        {"reals": {"0": {"status": "Pending"}, "1": {"status": "Pending"}}}
+    )
+    experiment = brm._storage.create_experiment(name="experiment")
+
+    brm.forward_event_from_ee(
+        EESnapshotUpdate(snapshot={"reals": {"0": {"status": "Finished"}}}),
+        iteration=0,
+    )
+    brm.forward_event_from_ee(
+        EESnapshotUpdate(snapshot={"reals": {"1": {"status": "Running"}}}),
+        iteration=0,
+    )
+
+    assert not experiment.status_snapshot_path(0).exists()
+
+    brm._persist_status_snapshot(experiment, 0)
+
+    snapshot_file = experiment.status_snapshot_path(0)
+    assert snapshot_file.exists()
+
+    persisted = FullSnapshotEvent.model_validate_json(
+        snapshot_file.read_text(encoding="utf-8")
+    )
+    assert persisted.event_type == "FullSnapshotEvent"
+    assert persisted.iteration == 0
+    assert persisted.snapshot is not None
+    assert persisted.snapshot.get_real("0")["status"] == "Finished"
+    assert persisted.snapshot.get_real("1")["status"] == "Running"
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+async def test_that_status_snapshot_write_failure_does_not_mask_evaluation_error(
+    evaluator, use_tmpdir, caplog, monkeypatch
+):
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation()
+    brm = create_run_model()
+
+    class EvaluationError(Exception):
+        pass
+
+    async def failing_run_evaluator(self, *args, **kwargs):
+        raise EvaluationError("primary failure")
+
+    def failing_persist(self, *args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(RunModel, "_run_evaluator", failing_run_evaluator)
+    monkeypatch.setattr(RunModel, "_persist_status_snapshot", failing_persist)
+
+    ensemble = Mock()
+    ensemble.iteration = 0
+
+    with (
+        caplog.at_level(logging.WARNING),
+        pytest.raises(EvaluationError, match="primary failure"),
+    ):
+        await brm.run_ensemble_evaluator_async(AsyncMock(), ensemble, AsyncMock())
+
+    assert "Failed to persist status snapshot" in caplog.text
+
+
+def _ert_config_dict():
+    summary_obs_dict = ObservationDict(
+        {
+            "type": ObservationType.SUMMARY,
+            "name": "FOPR_OBS",
+            "KEY": "FOPR",
+            "VALUE": "1.0",
+            "ERROR": "0.1",
+            "DATE": "2020-01-01",
+            "LOCALIZATION": {
+                "EAST": "100.0",
+                "NORTH": "200.0",
+                "RADIUS": "3000",
+            },
+        },
+        context=MagicMock(),
+    )
+    return {
+        "NUM_REALIZATIONS": 1,
+        "ECLBASE": "ECLIPSE_CASE",
+        "OBS_CONFIG": (
+            "obs_config",
+            [summary_obs_dict],
+        ),
+    }
+
+
+def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
+    caplog, use_tmpdir
+):
+    caplog.set_level(logging.INFO)
+    config_dict = _ert_config_dict()
+    ert_config = ErtConfig.from_dict(config_dict)
+    ert_config._log_config_dict(config_dict)
+    assert "'OBS_CONFIG': '<REDACTED>'" in caplog.text
+
+    args = MagicMock(
+        mode=TEST_RUN_MODE,
+        realizations="0",
+        experiment_name="foo",
+        current_ensemble="bar",
+    )
+    model = create_model(ert_config, args, SimpleQueue())
+    model.log_at_startup()
+    assert "'observations': '<REDACTED>'" in caplog.text
+    assert "'shape_registry': '<REDACTED>'" in caplog.text
+
+
+def test_that_ert_config_logs_insensitive_information_about_observations_and_shapes(
+    caplog,
+):
+    caplog.set_level(logging.INFO)
+    config_dict = _ert_config_dict()
+    ErtConfig.from_dict(config_dict)
+    assert "Count of summary keywords: {'FOPR': 1}" in caplog.text
+    assert (
+        f"Count of shapes in ShapeRegistry: {{'{CircleShapeConfig.__name__}': 1}}"
+        in caplog.text
+    )
+
+
+def _drain(status_queue):
+    events = []
+    while not status_queue.empty():
+        events.append(status_queue.get())
+    return events
+
+
+def _persisted_workflow_events(experiment):
+    """The workflow events persisted to storage for an experiment, oldest first."""
+    if not experiment.workflow_events_path.exists():
+        return []
+    return [
+        WorkflowEvent.model_validate_json(line)
+        for line in experiment.workflow_events_path.read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+
+
+def _printing_workflow(tmp_path, name, script, *, stop_on_fail=False):
+    executable = tmp_path / f"{name}.py"
+    executable.write_text(f"#!/usr/bin/env python\n{script}\n", encoding="utf-8")
+    executable.chmod(executable.stat().st_mode | stat.S_IEXEC)
+    return Workflow(
+        src_file=str(tmp_path / f"{name}_workflow"),
+        cmd_list=[
+            (
+                ExecutableWorkflow(
+                    name=name.upper(),
+                    executable=str(executable),
+                    stop_on_fail=stop_on_fail,
+                ),
+                [],
+            )
+        ],
+    )
+
+
+def test_that_run_workflows_sends_workflow_event_per_job(tmp_path, use_tmpdir):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    workflow.cmd_list.append(workflow.cmd_list[0])
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_EXPERIMENT: [workflow]},
+        status_queue=status_queue,
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    events = _drain(status_queue)
+    assert [(e.job_name, e.job_index, e.stdout) for e in events] == [
+        ("HELLO", 0, "hello from workflow\n"),
+        ("HELLO", 1, "hello from workflow\n"),
+    ]
+    assert all(e.hook == "PRE_EXPERIMENT" for e in events)
+    assert all(e.run_id == brm._workflow_run_id for e in events)
+    assert all(e.status is WorkflowJobStatus.SUCCESS for e in events)
+
+
+def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_workflow(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(
+        tmp_path,
+        "failing",
+        'import sys\nprint("printed before failing")\nsys.exit(1)',
+        stop_on_fail=True,
+    )
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=status_queue,
+    )
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
+
+    with pytest.raises(RuntimeError, match="failed with error"):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=brm._storage,
+                ensemble=ensemble,
+            )
+        )
+
+    (event,) = _drain(status_queue)
+    assert event.status is WorkflowJobStatus.FAILED
+    assert event.stdout == "printed before failing\n"
+
+    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
+        "printed before failing\n"
+    ]
+
+
+def test_that_workflow_events_from_update_hook_carry_iteration(tmp_path, use_tmpdir):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello")')
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_UPDATE: [workflow]},
+        status_queue=status_queue,
+    )
+    ensemble = MagicMock()
+    ensemble.iteration = 2
+
+    brm.run_workflows(
+        fixtures=PreUpdateFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=MagicMock(),
+            ensemble=ensemble,
+            es_settings=MagicMock(),
+            observation_settings=MagicMock(),
+        )
+    )
+
+    (event,) = _drain(status_queue)
+    assert event.iteration == 2
+    assert event.hook == "PRE_UPDATE"
+
+
+def test_that_workflow_output_is_appended_to_experiment_in_storage(
+    tmp_path, use_tmpdir
+):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=SimpleQueue(),
+    )
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
+
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    (event,) = _persisted_workflow_events(experiment)
+    assert event.hook == "PRE_SIMULATION"
+    assert event.workflow_name == "hello_workflow"
+    assert event.job_name == "HELLO"
+    assert event.job_index == 0
+    assert event.stdout == "hello from workflow\n"
+
+
+def test_that_pre_experiment_output_is_persisted_once_experiment_exists(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    later = _printing_workflow(tmp_path, "later", 'print("after the experiment")')
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.PRE_EXPERIMENT: [startup],
+            HookRuntime.PRE_SIMULATION: [later],
+        },
+        status_queue=SimpleQueue(),
+    )
+
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="experiment")
+    assert not experiment.workflow_events_path.exists()
+
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
+    brm.run_workflows(
+        fixtures=PreSimulationFixtures(
+            random_seed=1,
+            reports_dir="",
+            run_paths=MagicMock(),
+            storage=brm._storage,
+            ensemble=ensemble,
+        )
+    )
+
+    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
+        "before the experiment\n",
+        "after the experiment\n",
+    ]
+
+
+def test_that_failure_to_persist_workflow_events_does_not_stop_experiment(
+    tmp_path, use_tmpdir, caplog
+):
+    workflow = _printing_workflow(tmp_path, "hello", 'print("hello from workflow")')
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={HookRuntime.PRE_SIMULATION: [workflow]},
+        status_queue=status_queue,
+    )
+    ensemble = MagicMock()
+    ensemble.iteration = 0
+    ensemble.experiment.append_workflow_events.side_effect = OSError("disk on fire")
+
+    with caplog.at_level(logging.ERROR):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=MagicMock(),
+                ensemble=ensemble,
+            )
+        )
+
+    assert "Failed to persist workflow events to storage" in caplog.text
+    assert _drain(status_queue), "the event should still be sent"
+
+
+def test_that_starting_experiment_discards_workflow_output_from_previous_experiment(
+    use_tmpdir,
+):
+    brm = create_run_model()
+    brm._status_queue = SimpleQueue()
+    brm._pending_workflow_events = [MagicMock()]
+    previous_log_id = brm._workflow_run_id
+
+    brm.start_simulations_thread(
+        EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
+    )
+
+    assert brm._pending_workflow_events == []
+    assert brm._workflow_run_id != previous_log_id
+
+
+def test_that_workflow_output_is_persisted_when_user_cancels_experiment(
+    tmp_path, use_tmpdir
+):
+    startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
+    later = _printing_workflow(tmp_path, "later", 'print("never runs")')
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.PRE_EXPERIMENT: [startup],
+            HookRuntime.PRE_SIMULATION: [later],
+        },
+        status_queue=SimpleQueue(),
+    )
+    brm.run_workflows(fixtures=PreExperimentFixtures(random_seed=1))
+
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
+    brm._end_event.set()
+
+    with pytest.raises(UserCancelled):
+        brm.run_workflows(
+            fixtures=PreSimulationFixtures(
+                random_seed=1,
+                reports_dir="",
+                run_paths=MagicMock(),
+                storage=brm._storage,
+                ensemble=ensemble,
+            )
+        )
+
+    startup_event, skipped_event = _persisted_workflow_events(experiment)
+    assert startup_event.stdout == "before the experiment\n"
+    assert startup_event.status is not WorkflowJobStatus.CANCELLED
+    assert skipped_event.workflow_name == "later_workflow"
+    assert skipped_event.status is WorkflowJobStatus.CANCELLED
+    assert not skipped_event.stdout
+
+
+def test_that_workflows_hooked_after_cancelled_workflow_still_appear_as_cancelled(
+    tmp_path, use_tmpdir
+):
+    """Regression test: when several workflows are hooked to the same
+    runtime and cancellation happens while the first one is running, the
+    workflows that come after it in the hook's list must still be reported
+    (as cancelled) rather than silently disappearing from the workflow events.
+    """
+    first = _printing_workflow(tmp_path, "first", 'print("first workflow")')
+    second = _printing_workflow(tmp_path, "second", 'print("second workflow")')
+    third = _printing_workflow(tmp_path, "third", 'print("third workflow")')
+    status_queue = SimpleQueue()
+    brm = create_run_model(
+        hooked_workflows={
+            HookRuntime.POST_EXPERIMENT: [first, second, third],
+        },
+        status_queue=status_queue,
+    )
+
+    # Simulate cancellation happening while the first workflow is running,
+    # i.e. before the second and third ones get their turn.
+    real_run_blocking = WorkflowRunner.run_blocking
+
+    def _run_blocking_then_cancel(self):
+        brm._end_event.set()
+        return real_run_blocking(self)
+
+    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_ensemble(
+        experiment, ensemble_size=1, name="ensemble"
+    )
+
+    with (
+        patch.object(
+            WorkflowRunner, "run_blocking", _run_blocking_then_cancel, create=False
+        ),
+        pytest.raises(UserCancelled),
+    ):
+        brm.run_workflows(
+            fixtures=PostExperimentFixtures(
+                random_seed=1, storage=brm._storage, ensemble=ensemble
+            )
+        )
+
+    events = _drain(status_queue)
+    assert [e.workflow_name for e in events] == [
+        "first_workflow",
+        "second_workflow",
+        "third_workflow",
+    ]
+    first_event, second_event, third_event = events
+
+    assert first_event.status is WorkflowJobStatus.SUCCESS
+
+    for skipped_event in (second_event, third_event):
+        assert skipped_event.status is WorkflowJobStatus.CANCELLED

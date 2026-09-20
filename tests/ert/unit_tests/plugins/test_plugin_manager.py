@@ -1,0 +1,364 @@
+import json
+import logging
+from pathlib import Path
+
+import pytest
+
+import ert.plugins.hook_implementations
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
+from ert.trace import trace, tracer
+from tests.ert.unit_tests.plugins import dummy_plugins
+from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
+
+
+@pytest.fixture(autouse=True)
+def _cleanup_root_logger_handlers():
+    """Ensure handlers are detached and closed after each test so file
+    descriptors are not leaked and later tests don't unexpectedly write
+    to files opened by earlier tests.
+    """
+    root_logger = logging.getLogger()
+    pre_existing_handlers = list(root_logger.handlers)
+    yield
+    for handler in list(root_logger.handlers):
+        if handler not in pre_existing_handlers:
+            root_logger.removeHandler(handler)
+            handler.close()
+
+
+def test_no_plugins():
+    pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations])
+    assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
+    assert pm.get_forward_model_configuration() == {}
+
+    assert len(pm.forward_model_steps) > 0
+    assert len(pm._get_config_workflow_jobs()) > 0
+
+
+def test_with_plugins():
+    pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations, dummy_plugins])
+    assert pm.get_help_links() == {
+        "GitHub page": "https://github.com/equinor/ert",
+        "test": "test",
+        "test2": "test",
+    }
+    assert pm.get_forward_model_configuration() == {"FLOW": {"mpipath": "/foo"}}
+
+    assert pm._get_config_workflow_jobs()["wf_job1"] == "dummy/path/wf_job1"
+    assert pm._get_config_workflow_jobs()["wf_job2"] == "dummy/path/wf_job2"
+
+
+def test_fm_config_with_empty_config():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {}
+
+    assert (
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration() == {}
+    )
+
+
+def test_fm_config_with_empty_config_for_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {}}
+
+    assert (
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration() == {}
+    )
+
+
+def test_fm_config_with_empty_string_for_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {"com": ""}}
+
+    assert ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration() == {
+        "foo": {"com": ""}
+    }
+
+
+def test_fm_config_merges_data_for_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {"com": 3}}
+
+    class OtherPlugin:
+        @plugin(name="bar")
+        def forward_model_configuration():
+            return {"foo": {"bar": 2}}
+
+    assert ErtPluginManager(
+        plugins=[SomePlugin, OtherPlugin]
+    ).get_forward_model_configuration() == {"foo": {"com": 3, "bar": 2}}
+
+
+def test_fm_config_multiple_steps():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {"com": 3}}
+
+    class OtherPlugin:
+        @plugin(name="bar")
+        def forward_model_configuration():
+            return {"foo200": {"bar": 2}}
+
+    assert ErtPluginManager(
+        plugins=[SomePlugin, OtherPlugin]
+    ).get_forward_model_configuration() == {"foo100": {"com": 3}, "foo200": {"bar": 2}}
+
+
+def test_fm_config_conflicting_config():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {"com": "from_someplugin"}}
+
+    class OtherPlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {"com": "from_otherplugin"}}
+
+    with pytest.raises(RuntimeError, match="Duplicate configuration"):
+        ErtPluginManager(
+            plugins=[SomePlugin, OtherPlugin]
+        ).get_forward_model_configuration()
+
+
+def test_fm_config_with_repeated_keys_different_fm_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo1": {"bar": "1"}}
+
+    class OtherPlugin:
+        @plugin(name="foo2")
+        def forward_model_configuration():
+            return {"foo2": {"bar": "2"}}
+
+    assert ErtPluginManager(
+        plugins=[SomePlugin, OtherPlugin]
+    ).get_forward_model_configuration() == {"foo1": {"bar": "1"}, "foo2": {"bar": "2"}}
+
+
+def test_fm_config_with_repeated_keys_with_different_case():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {"bar": "lower", "BAR": "higher"}}
+
+    with pytest.raises(RuntimeError, match="Duplicate configuration"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_type():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return 1
+
+    with pytest.raises(TypeError, match="foo did not return a dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_steptype():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {1: {"bar": "1"}}
+
+    with pytest.raises(TypeError, match="foo did not provide dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_subtype():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": 1}
+
+    with pytest.raises(TypeError, match="foo did not provide dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_keytype():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {1: "bar"}}
+
+    with pytest.raises(TypeError, match="foo did not provide dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_workflows_merge():
+    expected_result = {
+        "wf_job1": "dummy/path/wf_job1",
+        "wf_job2": "dummy/path/wf_job2",
+    }
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    result = pm.get_installable_workflow_jobs()
+    assert result == expected_result
+
+
+def test_workflows_merge_duplicate(caplog):
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+
+    dict_1 = {"some_job": "/a/path"}
+    dict_2 = {"some_job": "/a/path"}
+
+    with caplog.at_level(logging.INFO):
+        result = pm._merge_internal_jobs(dict_1, dict_2)
+
+    assert result == {"some_job": "/a/path"}
+
+    assert (
+        "Duplicate key: some_job in workflow hook implementations, "
+        "config path 1: /a/path, config path 2: /a/path"
+    ) in caplog.text
+
+
+def test_add_logging_handle(tmpdir):
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        pm.add_logging_handle_to_root(logging.getLogger())
+        logging.critical("I should write this to spam.log")  # ruff: ignore[root-logger-call]
+        assert "I should write this to spam.log" in Path("spam.log").read_text(
+            encoding="utf-8"
+        )
+
+
+def test_that_add_logging_handle_returns_the_handles(tmpdir):
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        handles = pm.add_logging_handle_to_root(logging.getLogger())
+        assert len(handles) == 1
+        assert isinstance(handles[0], logging.FileHandler)
+
+
+def test_that_add_logging_handle_to_root_is_idempotent(tmpdir):
+    """Calling add_logging_handle_to_root more than once on the same plugin
+    manager instance must not create new handler instances or attach
+    duplicate handlers to the root logger.
+    """
+    with tmpdir.as_cwd():
+        root_logger = logging.getLogger()
+        pre_existing_handlers = list(root_logger.handlers)
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        first_handles = pm.add_logging_handle_to_root(root_logger)
+        second_handles = pm.add_logging_handle_to_root(root_logger)
+
+        assert first_handles == second_handles
+        added_handlers = [
+            handler
+            for handler in root_logger.handlers
+            if handler not in pre_existing_handlers
+        ]
+        assert added_handlers == first_handles
+
+
+def test_that_non_propagating_loggers_also_receive_plugin_log_handles(tmpdir):
+    """A logger configured with propagate=False never forwards its records to
+    the root logger's handlers. Since add_logging_handle_to_root is meant to
+    make plugin-provided handlers (e.g. a remote log exporter) see every log
+    record regardless of which logger emitted it, such loggers must have the
+    plugin handles attached directly.
+    """
+    with tmpdir.as_cwd():
+        non_propagating_logger = logging.getLogger(
+            "test_non_propagating_logger_receives_plugin_handles"
+        )
+        non_propagating_logger.propagate = False
+        non_propagating_logger.setLevel(logging.DEBUG)
+        try:
+            pm = ErtPluginManager(plugins=[dummy_plugins])
+            pm.add_logging_handle_to_root(logging.getLogger())
+            non_propagating_logger.critical("I should also end up in spam.log")
+            assert "I should also end up in spam.log" in Path("spam.log").read_text(
+                encoding="utf-8"
+            )
+        finally:
+            non_propagating_logger.handlers.clear()
+            non_propagating_logger.propagate = True
+
+
+def test_that_propagating_loggers_are_not_directly_attached_by_plugin_handles(tmpdir):
+    """Loggers with the default propagate=True already forward their records
+    to the root logger, so attaching plugin handles directly to them as well
+    would cause duplicate log entries.
+    """
+    with tmpdir.as_cwd():
+        propagating_logger = logging.getLogger(
+            "test_propagating_logger_is_not_directly_attached"
+        )
+        assert propagating_logger.propagate
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        pm.add_logging_handle_to_root(logging.getLogger())
+        assert propagating_logger.handlers == []
+
+
+def test_add_span_processor():
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    pm.add_span_processor_to_trace_provider()
+    with tracer.start_as_current_span("span_1"):
+        print("do_something")
+        with tracer.start_as_current_span("span_2"):
+            print("do_something_else")
+    trace.get_tracer_provider().force_flush()
+    span_info = "[" + dummy_plugins.span_output.getvalue().replace("}\n{", "},{") + "]"
+    span_info = json.loads(span_info)
+    span_info = {span["name"]: span for span in span_info}
+    assert span_info["span_2"]["parent_id"] == span_info["span_1"]["context"]["span_id"]
+
+
+def test_that_add_same_span_processor_twice_does_not_cause_duplicate_spans():
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    pm.add_span_processor_to_trace_provider()
+    pm.add_span_processor_to_trace_provider()
+    dummy_plugins.span_output.seek(0)
+    dummy_plugins.span_output.truncate(0)
+    with tracer.start_as_current_span("span_1"):
+        print("do_something")
+    trace.get_tracer_provider().force_flush()
+    span_info = "[" + dummy_plugins.span_output.getvalue().replace("}\n{", "},{") + "]"
+    span_info = json.loads(span_info)
+    assert len(span_info) == 1
+
+
+def test_that_forward_model_step_is_registered(tmpdir):
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        assert pm.forward_model_steps == [DummyFMStep]
+
+
+def test_that_plugin_manager_with_two_site_configurations_raises_error():
+    class SiteOne:
+        @plugin(name="foo")
+        def site_configurations():
+            return ErtRuntimePlugins(environment_variables={"a": "b"})
+
+    class SiteTwo:
+        @plugin(name="foo")
+        def site_configurations():
+            return ErtRuntimePlugins(environment_variables={"a": "c"})
+
+    with pytest.raises(ValueError, match="Only one site configuration is allowed"):
+        ErtPluginManager(plugins=[SiteOne, SiteTwo]).get_site_configurations()
+
+
+def test_get_ip_address(monkeypatch, tmpdir):
+    default_ip_address = "10.10.10.10"
+    monkeypatch.setattr(
+        "ert.shared.net_utils.get_ip_address", lambda: default_ip_address
+    )
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        default_plugin = ErtPluginManager(plugins=[])
+        assert default_plugin.get_ip_address() != pm.get_ip_address()
+        assert default_plugin.get_ip_address() == default_ip_address
+        assert pm.get_ip_address() == PLUGIN_IP_ADDRESS

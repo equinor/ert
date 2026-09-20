@@ -1,0 +1,109 @@
+name: fmudesign-run-tests
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+      python-version:
+        type: string
+
+env:
+  UV_FROZEN: true
+  OMP_NUM_THREADS: 1
+
+jobs:
+  tests:
+    name: Run fmudesign
+    timeout-minutes: 30
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - if: ${{ runner.os == 'macOS' }}
+        run: echo "ERT_TESTS_RUN_ON_MAC_CI=true" >> "$GITHUB_ENV"
+
+      - uses: ./.github/actions/install_dependencies_qt
+        with:
+          os: ${{ inputs.os }}
+
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          prune-cache: false
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install fmudesign and dependencies
+        run: |
+          uv sync --group dev
+
+      # Randomizes test ordering (and reseeds RNGs) to detect order-dependent
+      # flaky tests. The chosen seed is printed in
+      # the test output so failures can be reproduced with --randomly-seed=N.
+      - name: Enable randomized test ordering (Python 3.14)
+        if: inputs.python-version == '3.14'
+        run: |
+          uv pip install pytest-randomly
+
+      - name: Run Tests Linux
+        if: ${{ runner.os != 'macOS'}}
+        run: |
+          ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=fmudesign --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v' uv run just fmudesign-tests
+
+      - name: Run Tests macOS
+        if: ${{ runner.os == 'macOS'}}
+        run: |
+          ERT_PYTEST_ARGS='-n 3 --cov=ert --cov=everest --cov=fmudesign --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v' uv run just fmudesign-tests
+
+      - name: Run doctests on fmudesign
+        run: uv run --no-sync pytest ./src/fmudesign/ --doctest-modules -v
+
+      - name: Upload coverage to Codecov
+        id: codecov1
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: cov1.xml
+      - name: codecov retry sleep
+        run: |
+          sleep 30
+      - name: Codecov retry
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: cov1.xml
+          fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Upload test results to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
+          files: junit.xml
+
+      - name: Test for a clean repository
+        run: |
+          # Remove things we have generated on purpose:
+          ls -la
+          rm -rf .coverage
+          rm -f coverage.xml cov1.xml junit.xml
+          rm -f ert.*.whl
+          rm -f codecov.SHA*
+          rm -f codecov
+          rm -f .coverage.*
+          git status --porcelain
+          test -z "$(git status --porcelain)"

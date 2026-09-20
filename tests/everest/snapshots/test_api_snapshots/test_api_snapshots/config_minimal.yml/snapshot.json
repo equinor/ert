@@ -1,0 +1,150 @@
+{
+  "accepted_batches": [
+    0,
+    2
+  ],
+  "batches": [
+    0,
+    1,
+    2
+  ],
+  "control_names": [
+    "point.x",
+    "point.y",
+    "point.z"
+  ],
+  "control_values": [
+    {
+      "batch": 0,
+      "control": "point.x",
+      "value": 0.1
+    },
+    {
+      "batch": 0,
+      "control": "point.y",
+      "value": 0.1
+    },
+    {
+      "batch": 0,
+      "control": "point.z",
+      "value": 0.1
+    },
+    {
+      "batch": 1,
+      "control": "point.x",
+      "value": 0.90038639
+    },
+    {
+      "batch": 1,
+      "control": "point.y",
+      "value": 0.90054756
+    },
+    {
+      "batch": 1,
+      "control": "point.z",
+      "value": 0.89933796
+    },
+    {
+      "batch": 2,
+      "control": "point.x",
+      "value": 0.50014777
+    },
+    {
+      "batch": 2,
+      "control": "point.y",
+      "value": 0.50022835
+    },
+    {
+      "batch": 2,
+      "control": "point.z",
+      "value": 0.49962361
+    }
+  ],
+  "gradient_values": [
+    {
+      "batch": 0,
+      "control": "point.x",
+      "function": "distance",
+      "value": 0.80038641
+    },
+    {
+      "batch": 0,
+      "control": "point.y",
+      "function": "distance",
+      "value": 0.80054758
+    },
+    {
+      "batch": 0,
+      "control": "point.z",
+      "function": "distance",
+      "value": 0.79933798
+    }
+  ],
+  "objective_function_names": [
+    "distance"
+  ],
+  "objective_values": [
+    {
+      "batch": 0,
+      "function": "distance",
+      "realization": 0,
+      "scale": 1.0,
+      "simulation": 0,
+      "value": -0.47999999,
+      "weight": 1.0
+    },
+    {
+      "batch": 1,
+      "function": "distance",
+      "realization": 0,
+      "scale": 1.0,
+      "simulation": 0,
+      "value": -0.48021799,
+      "weight": 1.0
+    },
+    {
+      "batch": 2,
+      "function": "distance",
+      "realization": 0,
+      "scale": 1.0,
+      "simulation": 0,
+      "value": -2.2e-7,
+      "weight": 1.0
+    }
+  ],
+  "optimal_result_json": {
+    "batch": 2,
+    "controls": {
+      "point.x": 0.50014777,
+      "point.y": 0.50022835,
+      "point.z": 0.49962361
+    },
+    "objectives": {
+      "distance": -2.2e-7
+    }
+  },
+  "output_constraint_names": [],
+  "realizations": [
+    0
+  ],
+  "simulations": [
+    0
+  ],
+  "single_objective_values": [
+    {
+      "accepted": 1,
+      "batch": 0,
+      "objective": 0.47999999
+    },
+    {
+      "accepted": 0,
+      "batch": 1,
+      "objective": 0.48021799
+    },
+    {
+      "accepted": 1,
+      "batch": 2,
+      "objective": 2.2e-7
+    }
+  ]
+}

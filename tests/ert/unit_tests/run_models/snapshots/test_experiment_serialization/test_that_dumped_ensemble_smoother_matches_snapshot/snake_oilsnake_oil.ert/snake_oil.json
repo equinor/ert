@@ -1,0 +1,466 @@
+{
+  "storage_path": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/ensemble",
+  "runpath_file": "test-data/ert/snake_oil.snake_oil.ert/.ert_runpath_list",
+  "user_config_file": "test-data/ert/snake_oil.snake_oil.ert/snake_oil.ert",
+  "env_vars": {},
+  "env_pr_fm_step": {},
+  "runpath_config": {
+    "num_realizations": 25,
+    "runpath_format_string": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",
+    "jobname_format_string": "SNAKE_OIL_<IENS>",
+    "summary_file_base_name": "SNAKE_OIL_FIELD",
+    "gen_kw_export_name": "parameters"
+  },
+  "queue_config": {
+    "max_submit": 1,
+    "queue_system": "local",
+    "queue_options": {
+      "name": "local",
+      "max_running": 25,
+      "submit_sleep": 0.0,
+      "num_cpu": 1,
+      "realization_memory": 0,
+      "project_code": null,
+      "activate_script": "activate"
+    },
+    "stop_long_running": false,
+    "max_runtime": null
+  },
+  "forward_model_steps": [
+    {
+      "name": "SNAKE_OIL_SIMULATOR",
+      "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_simulator.py",
+      "stdin_file": null,
+      "stdout_file": "snake_oil.stdout",
+      "stderr_file": "snake_oil.stderr",
+      "start_file": null,
+      "target_file": null,
+      "error_file": null,
+      "max_running_minutes": null,
+      "min_arg": null,
+      "max_arg": null,
+      "arglist": [],
+      "required_keywords": [],
+      "allowed_keywords": null,
+      "arg_types": [],
+      "environment": {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>"
+      },
+      "default_mapping": {},
+      "private_args": {},
+      "type": "user_installed"
+    },
+    {
+      "name": "SNAKE_OIL_NPV",
+      "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_npv.py",
+      "stdin_file": null,
+      "stdout_file": "snake_oil_npv.stdout",
+      "stderr_file": "snake_oil_npv.stderr",
+      "start_file": null,
+      "target_file": null,
+      "error_file": null,
+      "max_running_minutes": null,
+      "min_arg": null,
+      "max_arg": null,
+      "arglist": [],
+      "required_keywords": [],
+      "allowed_keywords": null,
+      "arg_types": [],
+      "environment": {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>"
+      },
+      "default_mapping": {},
+      "private_args": {},
+      "type": "user_installed"
+    },
+    {
+      "name": "SNAKE_OIL_DIFF",
+      "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_diff.py",
+      "stdin_file": null,
+      "stdout_file": "snake_oil_diff.stdout",
+      "stderr_file": "snake_oil_diff.stderr",
+      "start_file": null,
+      "target_file": null,
+      "error_file": null,
+      "max_running_minutes": null,
+      "min_arg": null,
+      "max_arg": null,
+      "arglist": [],
+      "required_keywords": [],
+      "allowed_keywords": null,
+      "arg_types": [],
+      "environment": {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>"
+      },
+      "default_mapping": {},
+      "private_args": {},
+      "type": "user_installed"
+    }
+  ],
+  "substitutions": {
+    "<CONFIG_PATH>": "test-data/ert/snake_oil.snake_oil.ert",
+    "<CONFIG_FILE_BASE>": "snake_oil",
+    "<DATE>": "2000-01-01",
+    "<CWD>": "test-data/ert/snake_oil.snake_oil.ert",
+    "<CONFIG_FILE>": "snake_oil.ert",
+    "<STORAGE>": "storage/snake_oil",
+    "<RUNPATH_FILE>": "test-data/ert/snake_oil.snake_oil.ert/.ert_runpath_list",
+    "<RUNPATH>": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",
+    "<ECL_BASE>": "SNAKE_OIL_FIELD",
+    "<ECLBASE>": "SNAKE_OIL_FIELD",
+    "<NUM_CPU>": "1"
+  },
+  "hooked_workflows": {},
+  "active_realizations": [
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "log_path": "test-data/ert/snake_oil.snake_oil.ert/log/update",
+  "random_seed": 1,
+  "start_iteration": 0,
+  "minimum_required_realizations": 2,
+  "target_ensemble": "helloworld<ITER>",
+  "analysis_settings": {
+    "enkf_truncation": 0.98,
+    "inversion": "EXACT",
+    "weights": "4, 2, 1",
+    "localization": false,
+    "localization_correlation_threshold": null,
+    "distance_localization": false
+  },
+  "update_settings": {
+    "outlier_settings": {
+      "alpha": 3.0,
+      "std_cutoff": 1e-6
+    },
+    "auto_scale_observations": []
+  },
+  "experiment_name": "dummy",
+  "design_matrix": null,
+  "parameter_configuration": [
+    {
+      "type": "gen_kw",
+      "name": "BPR_555_PERSISTENCE",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.1,
+        "max": 0.5
+      },
+      "group": "SNAKE_OIL_PARAM_BPR",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "BPR_138_PERSISTENCE",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.2,
+        "max": 0.7
+      },
+      "group": "SNAKE_OIL_PARAM_BPR",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP1_PERSISTENCE",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.01,
+        "max": 0.4
+      },
+      "group": "SNAKE_OIL_PARAM_OP1",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP1_OCTAVES",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 3.0,
+        "max": 5.0
+      },
+      "group": "SNAKE_OIL_PARAM_OP1",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP1_DIVERGENCE_SCALE",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.25,
+        "max": 1.25
+      },
+      "group": "SNAKE_OIL_PARAM_OP1",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP1_OFFSET",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": -0.1,
+        "max": 0.1
+      },
+      "group": "SNAKE_OIL_PARAM_OP1",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_PERSISTENCE",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.1,
+        "max": 0.6
+      },
+      "group": "SNAKE_OIL_PARAM_OP2",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_OCTAVES",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 5.0,
+        "max": 12.0
+      },
+      "group": "SNAKE_OIL_PARAM_OP2",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_DIVERGENCE_SCALE",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.5,
+        "max": 1.5
+      },
+      "group": "SNAKE_OIL_PARAM_OP2",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_OFFSET",
+      "forward_init": false,
+      "update_strategy": "global",
+      "dimensionality": 1,
+      "distribution": {
+        "name": "uniform",
+        "min": -0.2,
+        "max": 0.2
+      },
+      "group": "SNAKE_OIL_PARAM_OP2",
+      "input_source": "sampled"
+    }
+  ],
+  "response_configuration": [
+    {
+      "type": "summary",
+      "input_files": [
+        "SNAKE_OIL_FIELD"
+      ],
+      "keys": [
+        "*",
+        "WOPR:OP1"
+      ],
+      "has_finalized_keys": false
+    },
+    {
+      "type": "gen_data",
+      "input_files": [
+        "snake_oil_opr_diff_%d.txt",
+        "snake_oil_wpr_diff_%d.txt",
+        "snake_oil_gpr_diff_%d.txt"
+      ],
+      "keys": [
+        "SNAKE_OIL_OPR_DIFF",
+        "SNAKE_OIL_WPR_DIFF",
+        "SNAKE_OIL_GPR_DIFF"
+      ],
+      "has_finalized_keys": true,
+      "report_steps_list": [
+        [
+          199
+        ],
+        [
+          199
+        ],
+        [
+          199
+        ]
+      ]
+    }
+  ],
+  "ert_templates": [
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/seed_template.txt",
+      "seed.txt"
+    ],
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
+      "snake_oil_params.txt"
+    ],
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
+      "snake_oil_params.txt"
+    ],
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
+      "snake_oil_params.txt"
+    ]
+  ],
+  "observations": [
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_9",
+      "value": 0.1,
+      "error": 0.05,
+      "key": "WOPR:OP1",
+      "date": "2010-03-31T00:00:00",
+      "shape_id": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_36",
+      "value": 0.7,
+      "error": 0.07,
+      "key": "WOPR:OP1",
+      "date": "2010-12-26T00:00:00",
+      "shape_id": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_72",
+      "value": 0.5,
+      "error": 0.05,
+      "key": "WOPR:OP1",
+      "date": "2011-12-21T00:00:00",
+      "shape_id": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_108",
+      "value": 0.3,
+      "error": 0.075,
+      "key": "WOPR:OP1",
+      "date": "2012-12-15T00:00:00",
+      "shape_id": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_144",
+      "value": 0.2,
+      "error": 0.035,
+      "key": "WOPR:OP1",
+      "date": "2013-12-10T00:00:00",
+      "shape_id": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_190",
+      "value": 0.015,
+      "error": 0.01,
+      "key": "WOPR:OP1",
+      "date": "2015-03-15T00:00:00",
+      "shape_id": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.0,
+      "error": 0.1,
+      "restart": 199,
+      "index": 400,
+      "shape_id": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.1,
+      "error": 0.2,
+      "restart": 199,
+      "index": 800,
+      "shape_id": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.2,
+      "error": 0.15,
+      "restart": 199,
+      "index": 1200,
+      "shape_id": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.0,
+      "error": 0.05,
+      "restart": 199,
+      "index": 1800,
+      "shape_id": null
+    }
+  ],
+  "shape_registry": {
+    "shapes": {}
+  }
+}

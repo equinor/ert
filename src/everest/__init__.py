@@ -1,0 +1,17 @@
+"""This is the main EVEREST module."""
+
+try:
+    from ert.shared.version import version
+
+    __version__ = version
+except ImportError:
+    __version__ = "0.0.0"
+
+from everest import everserver, templates, util
+
+__author__ = "Equinor ASA and TNO"
+__all__ = [
+    "everserver",
+    "templates",
+    "util",
+]

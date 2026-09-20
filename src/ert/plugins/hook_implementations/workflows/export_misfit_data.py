@@ -1,0 +1,42 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from ert import ErtScript
+
+if TYPE_CHECKING:
+    from ert.storage import Ensemble
+
+
+class ExportMisfitDataJob(ErtScript):
+    """
+    Will export misfit per observation and realization to a hdf file.
+    The hdf file has the observation as key, and the misfit as values.
+    The filename is "misfit.hdf" by default, but can be overridden by giving
+    the filename as the first parameter:
+
+        EXPORT_MISFIT_DATA path/to/output.hdf
+
+    The misfit its calculated as follows:
+
+        ((response_value - observation_data) / observation_std)**2
+
+    """
+
+    def run(self, ensemble: Ensemble, workflow_args: list[Any]) -> None:
+        target_file = "misfit.hdf" if not workflow_args else workflow_args[0]
+
+        realizations = ensemble.get_realization_list_with_responses()
+        if len(realizations) == 0:
+            raise UserWarning("No responses loaded")
+
+        misfit = ensemble.load_all_misfit_data()
+        if misfit.is_empty():
+            raise UserWarning("No responses loaded")
+
+        misfit = misfit.rename(
+            {column: column.removeprefix("MISFIT:") for column in misfit.columns}
+        ).drop("TOTAL")
+        misfit.to_pandas().set_index("Realization").to_hdf(
+            target_file, key="misfit", mode="w"
+        )

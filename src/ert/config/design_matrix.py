@@ -1,0 +1,579 @@
+from __future__ import annotations
+
+import math
+from collections import Counter
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar, cast
+
+import numpy as np
+import polars as pl
+from fastexcel import CalamineCellError, CalamineError
+from polars.exceptions import InvalidOperationError
+from python_calamine import CalamineError as PythonCalamineError
+from python_calamine import CalamineWorkbook
+
+from ert.config.parsing.config_errors import ConfigWarning
+
+from .distribution import RawSettings
+from .gen_kw_config import DataSource, GenKwConfig
+from .parsing import ConfigValidationError, ErrorInfo
+
+if TYPE_CHECKING:
+    from ert.config import ParameterConfig
+
+
+DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
+
+
+@dataclass
+class DesignMatrix:
+    filename: Path
+    design_sheet: str
+    default_sheet: str | None
+    priority_source: str = "design_matrix"
+
+    DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
+
+    def __post_init__(self) -> None:
+        try:
+            (
+                self.active_realizations,
+                self.design_matrix_df,
+                self.parameter_configurations,
+            ) = self.read_and_validate_design_matrix()
+            self.parameter_priority = {
+                cfg.name: self.priority_source for cfg in self.parameter_configurations
+            }
+        except (ValueError, AttributeError) as exc:
+            raise ConfigValidationError.with_context(
+                f"Error reading design matrix {self.filename}"
+                f" ({self.design_sheet} {self.default_sheet or ''}):"
+                f" {exc}",
+                str(self.filename),
+            ) from exc
+
+    @classmethod
+    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
+        filename = Path(cast(str, config_list[0]))
+        options = cast(dict[str, str], config_list[1])
+        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET", "PRIORITY"]
+        option_errors = [
+            ErrorInfo(
+                f"Option {option} is not a valid DESIGN_MATRIX option. "
+                f"Valid options are {', '.join(valid_options)}."
+            ).set_context(config_list)
+            for option in options
+            if option not in valid_options
+        ]
+
+        if option_errors:
+            raise ConfigValidationError.from_collected(option_errors)
+        design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
+        default_sheet = options.get("DEFAULT_SHEET", None)
+        priority_source = options.get("PRIORITY", DataSource.DESIGN_MATRIX)
+        errors = []
+        if filename.suffix != ".xlsx":
+            errors.append(
+                ErrorInfo(
+                    f"DESIGN_MATRIX must have file extension .xlsx; is '{filename}'"
+                ).set_context(config_list)
+            )
+        if design_sheet is not None and design_sheet == default_sheet:
+            errors.append(
+                ErrorInfo(
+                    "DESIGN_SHEET and DEFAULT_SHEET can not point to the same sheet."
+                ).set_context(config_list)
+            )
+        if priority_source not in {DataSource.DESIGN_MATRIX, DataSource.SAMPLED}:
+            errors.append(
+                ErrorInfo(
+                    f"PRIORITY must be either '{DataSource.DESIGN_MATRIX}'"
+                    f" or '{DataSource.SAMPLED}' priority is '{priority_source}'"
+                ).set_context(config_list)
+            )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+        assert design_sheet is not None
+        return cls(
+            filename=filename,
+            design_sheet=design_sheet,
+            default_sheet=default_sheet,
+            priority_source=priority_source,
+        )
+
+    def merge_with_other(self, dm_other: DesignMatrix) -> None:
+        errors = []
+        common_keys = set(
+            self.design_matrix_df.select(pl.exclude("realization")).columns
+        ) & set(dm_other.design_matrix_df.columns)
+        if common_keys:
+            errors.append(
+                ErrorInfo(
+                    f"Design Matrices '{self.filename.name} "
+                    f"({self.design_sheet} {self.default_sheet or ''})' and "
+                    f"'{dm_other.filename.name} ({dm_other.design_sheet} "
+                    f"{dm_other.default_sheet or ''})' "
+                    "contains columns with the same name: "
+                    f"{common_keys}!"
+                )
+            )
+        if self.active_realizations != dm_other.active_realizations:
+            real_intersection = [
+                real_a and real_b
+                for real_a, real_b in zip(
+                    self.active_realizations, dm_other.active_realizations, strict=False
+                )
+            ]
+            if not any(real_intersection):
+                errors.append(
+                    ErrorInfo(
+                        f"Design Matrices '{self.filename.name} "
+                        f"({self.design_sheet} {self.default_sheet or ''})' and "
+                        f"'{dm_other.filename.name} "
+                        f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                        "do not have any active realizations in common!"
+                    )
+                )
+            else:
+                ConfigWarning.warn(
+                    f"Design Matrices '{self.filename.name} ({self.design_sheet} "
+                    f"{self.default_sheet or ''})' and '{dm_other.filename.name} "
+                    f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                    "do not have the same active realizations. The merged design "
+                    "matrix will only contain the realizations that are active "
+                    "in all instances."
+                )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        try:
+            self.design_matrix_df = self.design_matrix_df.join(
+                dm_other.design_matrix_df,
+                on="realization",
+                how="inner",
+            )
+        except ValueError as exc:
+            raise ConfigValidationError(
+                f"Error when merging design matrices "
+                f"'{self.filename.name} ({self.design_sheet}"
+                f" {self.default_sheet or ''})'"
+                f" and '{dm_other.filename.name} ({dm_other.design_sheet} "
+                f"{dm_other.default_sheet or ''})': {exc}!"
+            ) from exc
+
+        reals = self.design_matrix_df.get_column("realization").to_list()
+        self.active_realizations = [x in reals for x in range(max(reals) + 1)]
+
+        self.parameter_configurations.extend(
+            cfg
+            for cfg in dm_other.parameter_configurations
+            if cfg.name not in common_keys
+        )
+        self.parameter_priority.update(dm_other.parameter_priority)
+
+    def merge_with_existing_parameters(
+        self, existing_parameters: list[ParameterConfig]
+    ) -> list[ParameterConfig]:
+        """
+        This method merges the design matrix parameters with the existing parameters and
+        returns the new list of existing parameters.
+
+        Args:
+            existing_parameters (List[ParameterConfig]): List of existing parameters
+
+        Returns:
+            List[ParameterConfig]: List of new parameters after merge
+        """
+
+        new_param_configs: list[ParameterConfig] = []
+
+        design_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
+
+        for param_cfg in existing_parameters:
+            if isinstance(param_cfg, GenKwConfig) and param_cfg.name in design_cfgs:
+                del design_cfgs[param_cfg.name]
+                input_source = DataSource(
+                    self.parameter_priority.get(
+                        param_cfg.name, DataSource.DESIGN_MATRIX.value
+                    )
+                )
+                new_param_configs += [
+                    GenKwConfig(
+                        name=param_cfg.name,
+                        update_strategy=(
+                            param_cfg.update_strategy
+                            if input_source == DataSource.SAMPLED
+                            else None
+                        ),
+                        distribution=(
+                            RawSettings()
+                            if input_source == DataSource.DESIGN_MATRIX
+                            else param_cfg.distribution
+                        ),
+                        group=(
+                            DESIGN_MATRIX_GROUP
+                            if input_source == DataSource.DESIGN_MATRIX
+                            else param_cfg.group
+                        ),
+                        input_source=input_source,
+                    ),
+                ]
+            else:
+                new_param_configs += [param_cfg]
+        if design_cfgs.values():
+            new_param_configs += list(design_cfgs.values())
+        return new_param_configs
+
+    def read_and_validate_design_matrix(
+        self,
+    ) -> tuple[list[bool], pl.DataFrame, list[GenKwConfig]]:
+        # Read the parameter names (first row) as strings to prevent polars from
+        # modifying them. This ensures that duplicate or empty column names are
+        # preserved exactly as they appear in the Excel sheet. By doing this, we
+        # can properly validate variable names, including detecting duplicates or
+        # missing names.
+        sheet_name_errors: list[str] = []
+        MAX_EXCEL_SHEET_NAME_LENGTH = 31
+        if len(self.design_sheet) > MAX_EXCEL_SHEET_NAME_LENGTH:
+            sheet_name_errors.append(
+                f"Design sheet name '{self.design_sheet}' exceeds maximum length of "
+                f"{MAX_EXCEL_SHEET_NAME_LENGTH} characters."
+            )
+        if (
+            self.default_sheet is not None
+            and len(self.default_sheet) > MAX_EXCEL_SHEET_NAME_LENGTH
+        ):
+            sheet_name_errors.append(
+                f"Default sheet name '{self.default_sheet}' exceeds maximum length of "
+                f"{MAX_EXCEL_SHEET_NAME_LENGTH} characters."
+            )
+        if sheet_name_errors:
+            error_msg = "\n".join(sheet_name_errors)
+            raise ValueError(f"Excel sheet name error(s):\n{error_msg}")
+
+        try:
+            param_names = (
+                _read_excel(
+                    lambda: pl.read_excel(
+                        self.filename,
+                        sheet_name=self.design_sheet,
+                        has_header=False,
+                        read_options={"n_rows": 1, "dtypes": "string"},
+                    ),
+                    f"Design sheet '{self.design_sheet}' header row",
+                )
+                .select(pl.all().str.strip_chars())
+                .row(0)
+            )
+        except pl.exceptions.NoDataError as err:
+            raise ValueError("Design sheet headers are empty.") from err
+        design_matrix_df = _read_excel(
+            lambda: pl.read_excel(
+                self.filename,
+                sheet_name=self.design_sheet,
+                has_header=False,
+                drop_empty_cols=False,
+                drop_empty_rows=False,
+                raise_if_empty=False,
+                infer_schema_length=None,
+                read_options={"skip_rows": 1},
+            ),
+            f"Design sheet '{self.design_sheet}'",
+        )
+        # The header row (row 1 in the Excel sheet) is skipped while reading
+        # due to `"skip_rows": 1`, so the first row read into the dataframe
+        # corresponds to row 2 in the spreadsheet.
+        design_matrix_df, excel_row_numbers = _drop_empty_rows(
+            design_matrix_df, first_excel_row=2
+        )
+        design_matrix_df = design_matrix_df.with_columns(
+            pl.col(pl.Float32, pl.Float64).fill_nan(None)
+        ).with_columns(pl.col(pl.String).str.strip_chars())
+        if design_matrix_df.is_empty():
+            raise ValueError("Design sheet body is empty.")
+
+        # Design matrix does not support datetime columns,
+        # so we convert them to strings and warn the user.
+        datetime_cols = design_matrix_df.select(pl.col(pl.Date, pl.Datetime)).columns
+        if len(datetime_cols) > 0:
+            datetime_col_indices = [
+                design_matrix_df.columns.index(col) for col in datetime_cols
+            ]
+            affected_param_names = [param_names[i] for i in datetime_col_indices]
+            ConfigWarning.warn(
+                "The design matrix contains date/datetime columns which are not "
+                "supported and will be converted to strings for internal use. "
+                "The following columns will be converted to strings: "
+                f"{', '.join(map(str, affected_param_names))}."
+            )
+            design_matrix_df = design_matrix_df.with_columns(
+                pl.col(pl.Date, pl.Datetime).cast(pl.String)
+            )
+
+        string_cols = [
+            col for col, dtype in design_matrix_df.schema.items() if dtype == pl.String
+        ]
+        design_matrix_df = design_matrix_df.with_columns(
+            [
+                pl.when(
+                    pl.col(col)
+                    .str.to_lowercase()
+                    .is_in(DesignMatrix.DISALLOWED_CELL_VALUES)
+                )
+                .then(None)
+                .otherwise(pl.col(col))
+                .alias(col)
+                for col in string_cols
+            ]
+        )
+        # We drop the columns that are empty and have an empty parameter name
+        columns_to_keep = [
+            i
+            for i, s in enumerate(design_matrix_df)
+            if s.null_count() != design_matrix_df.height or param_names[i]
+        ]
+
+        design_matrix_df = design_matrix_df.select(
+            design_matrix_df.columns[i] for i in columns_to_keep
+        )
+        param_names = tuple(param_names[i] for i in columns_to_keep)
+
+        if errors := DesignMatrix._validate_design_matrix(
+            design_matrix_df, param_names, excel_row_numbers
+        ):
+            error_msg = "\n".join(errors)
+            raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
+
+        design_matrix_df.columns = list(param_names)
+
+        if self.default_sheet is not None:
+            defaults = read_default_values(
+                self.filename, self.default_sheet, has_header=False
+            )
+            design_matrix_df = design_matrix_df.with_columns(
+                pl.lit(value).alias(name)
+                for name, value in defaults.items()
+                if name not in design_matrix_df.columns
+            )
+
+        if "realization" in design_matrix_df.schema:
+            raise ValueError(
+                "'realization' is a reserved internal keyword in ERT"
+                " and cannot be used as a parameter name."
+            )
+        if "REAL" in design_matrix_df.schema:
+            design_matrix_df = design_matrix_df.rename({"REAL": "realization"})
+            real_dt = design_matrix_df.schema.get("realization")
+            assert real_dt is not None
+            if (
+                not real_dt.is_integer()
+                or (
+                    design_matrix_df.get_column("realization").lt(0)
+                    | design_matrix_df.get_column("realization").is_duplicated()
+                ).any()
+            ):
+                raise ValueError(
+                    "REAL column must only contain unique positive integers"
+                )
+        else:
+            design_matrix_df = design_matrix_df.with_row_index(name="realization")
+
+        design_matrix_df = convert_numeric_string_columns(design_matrix_df)
+
+        parameter_configurations: list[GenKwConfig] = [
+            GenKwConfig(
+                name=col,
+                update_strategy=None,
+                group=DESIGN_MATRIX_GROUP,
+                input_source=DataSource.DESIGN_MATRIX,
+                distribution={"name": "raw"},
+            )
+            for col in design_matrix_df.columns
+            if col != "realization"
+        ]
+
+        reals = design_matrix_df.get_column("realization").to_list()
+        return (
+            [x in reals for x in range(max(reals) + 1)],
+            design_matrix_df,
+            parameter_configurations,
+        )
+
+    @staticmethod
+    def _validate_design_matrix(
+        design_matrix: pl.DataFrame,
+        param_names: tuple[str],
+        excel_row_numbers: list[int],
+    ) -> list[str]:
+        """
+        Validate user inputted design matrix
+        :raises: ValueError if design matrix contains empty headers, empty
+        cells, or cells with disallowed values
+        """
+        errors = []
+        param_name_count = Counter(p for p in param_names if p is not None)
+        duplicate_param_names = [(n, c) for n, c in param_name_count.items() if c > 1]
+        if duplicate_param_names:
+            duplicates_formatted = ", ".join(
+                f"{name}({count})" for name, count in duplicate_param_names
+            )
+            errors.append(
+                "Duplicate parameter names found in design sheet:"
+                f" {duplicates_formatted}"
+            )
+        empties = [
+            f"Row {excel_row_numbers[i]}, column {param_names[j]}"
+            for i, j in zip(
+                *np.where(design_matrix.select(pl.all().is_null())),
+                strict=False,
+            )
+        ]
+        if len(empties) > 0:
+            errors.append(
+                "Design matrix contains empty cells or cells with a "
+                f"disallowed value {empties}"
+            )
+
+        for column_num, param_name in enumerate(param_names):
+            if param_name is None or len(param_name.split()) == 0:
+                errors.append(f"Empty parameter name found in column {column_num}.")
+            elif len(param_name.split()) > 1:
+                errors.append(
+                    "Multiple words in parameter name found in column "
+                    f"{column_num} ({param_name})."
+                )
+            elif param_name.isnumeric():
+                errors.append(f"Numeric parameter name found in column {column_num}.")
+        return errors
+
+
+def read_default_values(
+    filename: Path, sheet_name: str, *, has_header: bool
+) -> dict[str, str | float | int | bool]:
+    """
+    Construct a dict of keys and values to be used as defaults from the
+    first two columns in a spreadsheet.
+    """
+    try:
+        with CalamineWorkbook.from_path(filename) as workbook:
+            rows = workbook.get_sheet_by_name(sheet_name).to_python(
+                skip_empty_area=False
+            )
+    except PythonCalamineError as err:
+        raise ValueError(
+            f"The default sheet '{sheet_name}' in '{filename}' could not be read: {err}"
+        ) from err
+
+    defaults: dict[str, str | float | int | bool] = {}
+    empty_cells: list[str] = []
+    duplicate_names: set[str] = set()
+    for row_number, row in enumerate(
+        rows[int(has_header) :], start=1 + int(has_header)
+    ):
+        if all(isinstance(cell, str) and not cell.strip() for cell in row):
+            continue
+        if len(row) < 2:
+            raise ValueError("Defaults sheet must have at least two columns")
+
+        name = str(row[0]).strip()
+        value = row[1]
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        elif not isinstance(value, (int, float)):
+            value = convert_to_numeric(str(value).strip())
+        empty_cells.extend(
+            f"Row {row_number}, column {column}"
+            for column, cell in enumerate((name, value))
+            if str(cell).lower() in DesignMatrix.DISALLOWED_CELL_VALUES
+            or (isinstance(cell, float) and not math.isfinite(cell))
+        )
+        if name in defaults:
+            duplicate_names.add(name)
+        defaults[name] = value
+
+    if empty_cells:
+        raise ValueError(
+            "Default sheet contains empty cells or cells with a "
+            f"disallowed value {empty_cells}"
+        )
+    if duplicate_names:
+        raise ValueError(
+            f"Default sheet '{sheet_name}' contains duplicate parameter names: "
+            f"{', '.join(sorted(duplicate_names))}"
+        )
+    return defaults
+
+
+def _drop_empty_rows(
+    df: pl.DataFrame, first_excel_row: int
+) -> tuple[pl.DataFrame, list[int]]:
+    """
+    Drop rows where every cell is empty, equivalently to polars'
+    ``drop_empty_rows`` read option, while keeping track of which spreadsheet
+    row each surviving row originated from.
+
+    Callers must anchor their read with the ``skip_rows`` read option, otherwise
+    the Excel reader trims blank rows above the first non-empty row and
+    ``first_excel_row`` no longer describes the first row of ``df``.
+
+    :param first_excel_row: spreadsheet row number of the first row in ``df``.
+    :returns: the filtered dataframe and the spreadsheet row number of each of
+        its rows.
+    """
+    if df.height == 0 or df.width == 0:
+        return df, []
+    keep_row = df.select(
+        ~pl.all_horizontal(pl.all().is_null()).alias("keep")
+    ).to_series()
+    excel_row_numbers = [
+        row_index + first_excel_row for row_index, keep in enumerate(keep_row) if keep
+    ]
+    return df.filter(keep_row), excel_row_numbers
+
+
+def _read_excel(
+    read_excel: Callable[[], pl.DataFrame], sheet_description: str
+) -> pl.DataFrame:
+    try:
+        return read_excel()
+    except CalamineCellError as err:
+        raise ValueError(
+            f"{sheet_description} contains invalid Excel cell values: {err}"
+        ) from err
+    except CalamineError as err:
+        raise ValueError(
+            "File could not be loaded. It seems to be either invalid or corrupted."
+        ) from err
+
+
+def convert_numeric_string_columns(df: pl.DataFrame) -> pl.DataFrame:
+    """Automatically convert string columns to numeric (int or float) where possible"""
+    for col, dtype in zip(df.columns, df.dtypes, strict=False):
+        if dtype == pl.String:
+            try:
+                df = df.with_columns(pl.col(col).cast(pl.Int64, strict=True).alias(col))
+                continue
+            except InvalidOperationError:
+                pass
+
+            try:  # ruff: ignore[suppressible-exception]
+                df = df.with_columns(
+                    pl.col(col).cast(pl.Float64, strict=True).alias(col)
+                )
+            except InvalidOperationError:
+                pass
+
+    return df
+
+
+def convert_to_numeric(x: str) -> str | float | int:
+    try:
+        return int(x)
+    except ValueError:
+        try:
+            return float(x)
+
+        except ValueError:
+            return x

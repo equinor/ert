@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+import ert
+
+from .csv_export import CSVExportJob
+from .disable_parameters import DisableParametersUpdate
+from .export_misfit_data import ExportMisfitDataJob
+from .export_rft import ExportRFTJob
+from .export_runpath import ExportRunpathJob
+from .misfit_preprocessor import MisfitPreprocessor
+
+if TYPE_CHECKING:
+    from ert.config import WorkflowConfigs
+
+
+@ert.plugin(name="ert")
+def ertscript_workflow(config: WorkflowConfigs) -> None:
+    config.add_workflow(
+        ExportMisfitDataJob, "EXPORT_MISFIT_DATA", category="observations.correlation"
+    )
+    config.add_workflow(ExportRunpathJob, "EXPORT_RUNPATH")
+    config.add_workflow(ExportRFTJob, "EXPORT_RFT")
+    config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
+    config.add_workflow(
+        MisfitPreprocessor, "MISFIT_PREPROCESSOR", category="observations.correlation"
+    )
+    config.add_workflow(CSVExportJob, "CSV_EXPORT")

@@ -1,0 +1,131 @@
+import io
+import logging
+import os
+import re
+from collections.abc import Iterator
+from contextlib import contextmanager
+from enum import StrEnum, auto
+from importlib import metadata
+
+import pandas as pd
+import polars as pl
+from fastapi import HTTPException, status
+from fastapi.responses import Response
+
+from ert.dark_storage.exceptions import InternalServerError
+from ert.storage import (
+    ErtStorageException,
+    ErtStoragePermissionError,
+    Storage,
+    open_storage,
+)
+
+logger = logging.getLogger(__name__)
+
+
+_storage: Storage | None = None
+
+
+class EverEndpoints(StrEnum):
+    STOP = auto()
+    START_EXPERIMENT = auto()
+    CONFIG_PATH = auto()
+    START_TIME = auto()
+    EXPERIMENTS = auto()
+    STATUS = auto()
+    EVENTS = auto()
+    RUNPATH = auto()
+
+
+def get_storage() -> Storage:
+    global _storage
+    if _storage is None:
+        try:
+            return (_storage := open_storage(os.environ["ERT_STORAGE_ENS_PATH"]))
+        except ErtStoragePermissionError as err:
+            logger.error(f"Permission error accessing storage: {err!s}")
+            raise InternalServerError("Permission error accessing storage") from None
+        except ErtStorageException as err:
+            logger.exception(f"Error accessing storage: {err!s}")
+            raise InternalServerError("Error accessing storage") from None
+    _storage.reload()
+    return _storage
+
+
+def get_storage_api_version() -> str:
+    major = minor = "0"
+    match = re.match(r"(\d+)\.(\d+)", metadata.version("ert"))
+    if match:
+        major, minor = match.groups()
+    return f"{major}.{minor}"
+
+
+@contextmanager
+def reraise_as_http_errors(
+    custom_logger: logging.Logger = logger, details: dict[int, str] | None = None
+) -> Iterator[None]:
+    error_details = {404: "Ensemble not found", 500: "Internal server error"} | (
+        details or {}
+    )
+    try:
+        yield
+    except KeyError as e:
+        custom_logger.error(e)
+        raise HTTPException(status_code=404, detail=error_details[404]) from e
+    except ValueError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Data not found") from e
+    except PermissionError as e:
+        custom_logger.error(e)
+        raise HTTPException(status_code=401, detail=str(e)) from e
+    except Exception as ex:
+        custom_logger.exception(ex)
+        raise HTTPException(status_code=500, detail=error_details[500]) from ex
+
+
+def serialize_dataframe_to_response(
+    dataframe: pd.DataFrame | pd.Series, media_type: str | None
+) -> Response:
+    match media_type:
+        case "application/x-parquet":
+            dataframe.columns = [str(s) for s in dataframe.columns]
+            stream = io.BytesIO()
+            dataframe.to_parquet(stream)
+            return Response(
+                content=stream.getvalue(),
+                media_type="application/x-parquet",
+            )
+        case "application/json":
+            return Response(dataframe.to_json(), media_type="application/json")
+        case "text/csv" | None:
+            return Response(
+                content=dataframe.to_csv().encode(),
+                media_type="text/csv",
+            )
+        case _:
+            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+
+def seismic_distance_expression(partition_by: str) -> pl.Expr:
+    """Cumulative distance for seismic points.
+
+    The order of the rows in the original dataframe determines the order of the distance
+    calculation. The first row in each partition (name of the observation, realization
+    number or anything else data must be grouped by) will have a distance of 0.0 and
+    each subsequent row will have the cumulative distance from the first row in the
+    partition.
+
+    Args:
+        partition_by: Column name to partition the calculation by
+            (e.g. "name" for observations, "Realization" for responses).
+    """
+    return (
+        (
+            pl.col("east").diff().over(partition_by) ** 2
+            + pl.col("north").diff().over(partition_by) ** 2
+        )
+        .sqrt()
+        .fill_null(0.0)
+        .cum_sum()
+        .over(partition_by)
+    )

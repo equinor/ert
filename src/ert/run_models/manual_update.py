@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+import logging
+from typing import Any
+from uuid import UUID
+
+from pydantic import PrivateAttr
+
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.constants import PARAMETER_UPDATE
+from ert.run_models.run_model_configs import ManualUpdateConfig
+from ert.run_models.update_run_model import UpdateRunModel
+from ert.storage import Ensemble
+from ert.storage.local_experiment import LocalExperiment
+
+from .run_model import ErtRunError
+
+logger = logging.getLogger(__name__)
+
+
+class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
+    _prior: Ensemble = PrivateAttr()
+
+    def model_post_init(self, ctx: Any) -> None:
+        super().model_post_init(ctx)
+
+        try:
+            self._prior = self._storage.get_ensemble(UUID(self.ensemble_id))
+        except (KeyError, ValueError) as err:
+            raise ErtRunError(
+                f"Prior ensemble with ID: {UUID(self.ensemble_id)} does not exist"
+            ) from err
+
+    def run_experiment(
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        *,
+        rerun_failed_realizations: bool = False,
+    ) -> None:
+        self.log_at_startup()
+        prior_experiment = self._prior.experiment
+
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
+
+        target_experiment = self._create_experiment_storage()
+        self.update(
+            self._prior,
+            self.target_ensemble % (self._prior.iteration + 1),
+            target_experiment=target_experiment,
+        )
+
+    @classmethod
+    def name(cls) -> str:
+        return "Manual update"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Load parameters and responses from existing → update"
+
+    @classmethod
+    def group(cls) -> str | None:
+        return PARAMETER_UPDATE
+
+    def _create_experiment_storage(self) -> LocalExperiment:
+        experiment_config = self.to_experiment_config(
+            prior_experiment_config=self._prior.experiment.experiment_config
+        )
+
+        return self._storage.create_experiment(
+            experiment_config=experiment_config,
+            name=self.experiment_name,
+        )
+
+    def check_if_runpath_exists(self) -> bool:
+        # Will not run a forward model, so does not create files on runpath
+        return False

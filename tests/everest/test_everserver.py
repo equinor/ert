@@ -1,0 +1,596 @@
+import asyncio
+import logging
+import warnings
+from base64 import b64encode
+from dataclasses import dataclass
+from pathlib import Path
+from shutil import which
+from signal import SIGTERM, getsignal, signal
+from typing import cast
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
+import yaml
+from fastapi.encoders import jsonable_encoder
+from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
+
+from ert.config import ConfigWarning
+from ert.dark_storage.app import app
+from ert.dark_storage.endpoints.experiment_runs import (
+    ExperimentRunnerState,
+    _experiments,
+)
+from ert.ensemble_evaluator import EndEvent
+from ert.run_models.event import StatusEvents
+from ert.scheduler.event import FinishedEvent
+from ert.services import ErtClient
+from ert.storage import ExperimentState
+from everest.bin.utils import get_experiment_status
+from everest.config import EverestConfig, ServerConfig
+from everest.everserver import server as everserver
+from everest.everserver import (
+    start_server,
+)
+from everest.strings import (
+    OPT_FAILURE_ALL_REALIZATIONS,
+    OPT_FAILURE_REALIZATIONS,
+)
+from everest.util._utils import get_everest_experiment
+from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
+
+
+@pytest.fixture
+def authorized_client(monkeypatch):
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    credentials = b64encode(b"username:password").decode()
+    auth_headers = {"Authorization": f"Basic {credentials}"}
+    return TestClient(app), auth_headers
+
+
+@pytest.fixture
+def setup_client(monkeypatch):
+    original = dict(_experiments)
+
+    def func(events=None):
+        events = [EndEvent(failed=False, msg="Complete")] if events is None else events
+
+        _experiments.clear()
+        experiment_id = "experiment_id"
+        state = ExperimentRunnerState()
+        state.events = cast(list[StatusEvents], events)
+        _experiments[experiment_id] = state
+
+        monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+        return TestClient(app), state.subscribers, experiment_id
+
+    yield func
+    _experiments.clear()
+    _experiments.update(original)
+
+
+async def wait_for_server_to_complete(config):
+    # Wait for the server to complete the optimization.
+    # There should be a @pytest.mark.timeout(x) for tests that call this function.
+    async def server_running():
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, FinishedEvent) and event.iens == 0:
+                return
+
+    driver = await start_server(config, logging.DEBUG)
+    api = ErtClient.get_client(Path(ServerConfig.get_session_dir(config.output_dir)))
+    api.wait_for_server(timeout=120)
+    api.start_experiment(config.to_dict())
+    await server_running()
+
+
+def configure_everserver_logger(*args, **kwargs):
+    """Mock exception raised"""
+    raise Exception("Configuring logger failed")
+
+
+@pytest.fixture
+def mock_server(monkeypatch):
+    def func(status: ExperimentState, message: str):
+        server_patch = MagicMock()
+        client_mock = MagicMock()
+        response_mock = MagicMock()
+        response_mock.json.return_value = {"status": status, "message": message}
+        client_mock.get.return_value = response_mock
+        server_patch.session.return_value.__enter__.return_value = client_mock
+        monkeypatch.setattr("everest.everserver.server.ErtServer", server_patch)
+
+    return func
+
+
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@patch(
+    "everest.everserver.server._configure_loggers",
+    side_effect=configure_everserver_logger,
+)
+def test_configure_logger_failure(mock_configure_loggers, change_to_tmpdir, caplog):
+    with caplog.at_level(logging.ERROR):
+        everserver.main()
+    assert "Configuring logger failed" in caplog.records[0].getMessage()
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@patch("everest.everserver.server._configure_loggers")
+async def test_status_exception(mock_configure_loggers, change_to_tmpdir, min_config):
+    min_config["simulator"] = {"queue_system": {"name": "local"}}
+    config = EverestConfig(**min_config)
+
+    await wait_for_server_to_complete(config)
+
+    status = get_experiment_status(str(config.storage_dir))
+
+    assert status is not None
+    assert status.status == ExperimentState.failed
+    assert "Optimization failed: all realizations failed" in status.message
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(240)
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file("config_minimal.yml")
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
+        "simulator": {"queue_system": {"name": "local", "max_running": 2}},
+    }
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
+
+    await wait_for_server_to_complete(config)
+
+    status = get_experiment_status(str(config.storage_dir))
+
+    # The server should complete without error.
+    assert status is not None
+    assert status.status == ExperimentState.completed
+    assert status.message == "Maximum number of batches reached."
+    experiment = get_everest_experiment(config.storage_dir)
+
+    # Check that there is only one batch.
+    assert {b.iteration for b in experiment.ensembles} == {0}
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(240)
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file("config_minimal.yml")
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
+        "simulator": {"queue_system": {"name": "local", "max_running": 2}},
+        "model": {"realizations": [0, 1]},
+    }
+    config_dict["install_jobs"].append(
+        {"name": "fail_simulation", "executable": "jobs/fail_simulation.py"}
+    )
+    config_dict["forward_model"].append("fail_simulation --fail realization-0")
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
+
+    await wait_for_server_to_complete(config)
+
+    status = get_experiment_status(str(config.storage_dir))
+
+    # The server should complete without error.
+    assert status is not None
+    assert status.status == ExperimentState.failed
+    assert OPT_FAILURE_REALIZATIONS in status.message
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(240)
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file("config_minimal.yml")
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
+        "simulator": {"queue_system": {"name": "local", "max_running": 2}},
+    }
+    config_dict["install_jobs"].append({"name": "fail", "executable": which("false")})
+    config_dict["forward_model"].append("fail")
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
+
+    await wait_for_server_to_complete(config)
+
+    status = get_experiment_status(str(config.storage_dir))
+
+    # The server should complete without error.
+    assert status is not None
+    assert status.status == ExperimentState.failed
+    assert OPT_FAILURE_ALL_REALIZATIONS in status.message
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(240)
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config):
+    min_config["simulator"] = {
+        "queue_system": {"name": "local", "max_running": 2},
+        "max_runtime": 1,
+    }
+    min_config["forward_model"] = ["sleep 5"]
+    min_config["install_jobs"] = [{"name": "sleep", "executable": which("sleep")}]
+
+    config = EverestConfig(**min_config)
+
+    await wait_for_server_to_complete(config)
+
+    status = get_experiment_status(str(config.storage_dir))
+
+    assert status is not None
+    assert status.status == ExperimentState.failed
+    assert "The run is cancelled due to reaching MAX_RUNTIME" in status.message
+
+
+def test_websocket_no_authentication(setup_client):
+    client, _, experiment_id = setup_client()
+    with (
+        client.websocket_connect(
+            f"/experiment_runs/events/{experiment_id}"
+        ) as websocket,
+        pytest.raises(WebSocketDisconnect) as exception,
+    ):
+        websocket.receive_json()
+    assert exception.value.reason == "No authentication"
+
+
+def test_websocket_wrong_password(setup_client):
+    client, _, experiment_id = setup_client()
+    credentials = b64encode(b"username:wrong_password").decode()
+    with (
+        client.websocket_connect(
+            f"/experiment_runs/events/{experiment_id}",
+            headers={"Authorization": f"Basic {credentials}"},
+        ) as websocket,
+        pytest.raises(WebSocketDisconnect) as exception,
+    ):
+        websocket.receive_json()
+    assert not exception.value.reason
+
+
+@pytest.mark.flaky(rerun=3)
+def test_websocket_multiple_connections(setup_client):
+    client, subscribers, experiment_id = setup_client()
+    credentials = b64encode(b"username:password").decode()
+    with client.websocket_connect(
+        f"/experiment_runs/events/{experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    ) as websocket:
+        event = websocket.receive_json()
+        websocket.close()
+    with client.websocket_connect(
+        f"/experiment_runs/events/{experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    ) as websocket:
+        event_2 = websocket.receive_json()
+    assert len(subscribers) == 2
+    assert event == event_2
+
+
+def test_websocket_multiple_connections_one_fails(setup_client):
+    client, subscribers, experiment_id = setup_client()
+    credentials = b64encode(b"username:password").decode()
+    with (
+        client.websocket_connect(
+            f"/experiment_runs/events/{experiment_id}"
+        ) as websocket,
+        pytest.raises(WebSocketDisconnect),
+    ):
+        websocket.receive_json()
+    with client.websocket_connect(
+        f"/experiment_runs/events/{experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    ) as websocket:
+        event = websocket.receive_json()
+    assert len(subscribers) == 1
+    assert event == {"event_type": "EndEvent", "failed": False, "msg": "Complete"}
+
+
+def test_websocket_multiple_events_in_queue(setup_client):
+    @dataclass
+    class TestEvent:
+        msg: str
+
+    expected = [
+        TestEvent("event_1"),
+        TestEvent("event_2"),
+        EndEvent(failed=False, msg="Done"),
+    ]
+    client, _, experiment_id = setup_client(expected)
+    credentials = b64encode(b"username:password").decode()
+    event_msgs = []
+    with client.websocket_connect(
+        f"/experiment_runs/events/{experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    ) as websocket:
+        event_msgs.extend(websocket.receive_json() for _ in expected)
+    assert event_msgs == [jsonable_encoder(e) for e in expected]
+
+
+def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
+    authorized_client,
+):
+    client, auth_headers = authorized_client
+    original = dict(_experiments)
+    _experiments.clear()
+    try:
+        mock_runner = MagicMock()
+        mock_runner.run = AsyncMock()
+        config_body = everest_config_with_defaults().to_dict()
+        with patch(
+            "ert.dark_storage.endpoints.experiment_runs.ExperimentRunner",
+            return_value=mock_runner,
+        ):
+            r1 = client.post(
+                "/experiment_runs/start_experiment",
+                json=config_body,
+                headers=auth_headers,
+            )
+            r2 = client.post(
+                "/experiment_runs/start_experiment",
+                json=config_body,
+                headers=auth_headers,
+            )
+        assert r1.status_code == r2.status_code == 200
+        experiment_id_1 = r1.json()["experiment_id"]
+        experiment_id_2 = r2.json()["experiment_id"]
+        assert experiment_id_1 != experiment_id_2
+        runs_response = client.get("/experiment_runs/experiments", headers=auth_headers)
+        assert runs_response.status_code == 200
+        assert set(runs_response.json()["experiment_ids"]) >= {
+            experiment_id_1,
+            experiment_id_2,
+        }
+    finally:
+        _experiments.clear()
+        _experiments.update(original)
+
+
+def test_that_start_experiment_with_incomplete_schema_returns_422(authorized_client):
+    client, auth_headers = authorized_client
+
+    # Missing all required fields (controls, objective_functions,
+    # config_path, model): schema validation should reject this before
+    # the endpoint body (and thus ExperimentRunner) is ever reached.
+    response = client.post(
+        "/experiment_runs/start_experiment",
+        json={},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+    missing_fields = {
+        tuple(error["loc"])
+        for error in response.json()["detail"]
+        if error["type"] == "missing"
+    }
+    assert missing_fields == {
+        ("body", "controls"),
+        ("body", "objective_functions"),
+        ("body", "config_path"),
+        ("body", "model"),
+    }
+
+
+def test_that_start_experiment_with_unknown_forward_model_job_returns_422(
+    authorized_client,
+):
+    client, auth_headers = authorized_client
+
+    config_body = yaml.safe_load(MIN_CONFIG) | {
+        "forward_model": ["totally_unknown_job_xyz"]
+    }
+
+    response = client.post(
+        "/experiment_runs/start_experiment",
+        json=config_body,
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+    assert "unknown job totally_unknown_job_xyz" in response.text
+
+
+def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypatch):
+    client, auth_headers = authorized_client
+    mock_runner = MagicMock()
+    mock_runner.run = AsyncMock()
+
+    config_body = yaml.safe_load(MIN_CONFIG)
+
+    def _raise_a_config_warning(*args, **kwargs):
+        warnings.warn("Forced test ConfigWarning", category=ConfigWarning, stacklevel=2)
+
+    monkeypatch.setattr(
+        "everest.config.everest_config.validate_forward_model_configs",
+        _raise_a_config_warning,
+    )
+
+    with (
+        patch(
+            "ert.dark_storage.endpoints.experiment_runs.ExperimentRunner",
+            return_value=mock_runner,
+        ),
+        warnings.catch_warnings(record=True) as caught_warnings,
+    ):
+        warnings.simplefilter("always")
+        response = client.post(
+            "/experiment_runs/start_experiment",
+            json=config_body,
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 200
+    assert not any(issubclass(w.category, ConfigWarning) for w in caught_warnings)
+
+
+async def test_websocket_no_events_on_connect(setup_client):
+    events = []
+    client, subs, experiment_id = setup_client(events)
+    credentials = b64encode(b"username:password").decode()
+    result = []
+    expected_result = EndEvent(failed=False, msg="Test message")
+
+    with client.websocket_connect(
+        f"/experiment_runs/events/{experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    ) as websocket:
+
+        def receive_event():
+            return websocket.receive_json()
+
+        receive_task = asyncio.to_thread(receive_event)
+
+        events.append(expected_result)
+        for sub in subs.values():
+            sub.notify()
+
+        result.append(await receive_task)
+
+    assert result == [jsonable_encoder(expected_result)]
+
+
+def test_that_get_status_returns_successfully(setup_client):
+    client, _, _ = setup_client()
+    credentials = b64encode(b"username:password").decode()
+
+    response = client.get(
+        "/experiment_runs/",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == 200
+    assert response.text == "EVEREST is running"
+
+
+@pytest.mark.parametrize(
+    ("experiment_id", "credentials", "expected_status_code", "expected_response"),
+    [
+        (
+            "1",
+            b64encode(b"username:password").decode(),
+            404,
+            {"detail": "Experiment '1' not found"},
+        ),
+        (
+            None,
+            b64encode(b"username:wrong_password").decode(),
+            401,
+            {"detail": "Invalid credentials"},
+        ),
+        (
+            None,
+            b64encode(b"username:password").decode(),
+            200,
+            {"status": "pending", "message": ""},
+        ),
+    ],
+)
+def test_that_get_status_by_experiment_id_endpoint_returns_expected_response(
+    setup_client, experiment_id, credentials, expected_status_code, expected_response
+):
+    client, _, valid_experiment_id = setup_client()
+
+    response = client.get(
+        f"/experiment_runs/status/{experiment_id or valid_experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == expected_status_code
+    assert response.json() == expected_response
+
+
+def test_that_get_config_path_returns_not_found_for_pending_experiment_state(
+    setup_client,
+):
+    client, _, experiment_id = setup_client()
+    credentials = b64encode(b"username:password").decode()
+
+    response = client.get(
+        f"/experiment_runs/config_path/{experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == 404
+    assert response.json() == "No experiment started"
+
+
+def test_that_get_config_path_returns_successfully_for_running_experiment(
+    setup_client,
+):
+    client, _, experiment_id = setup_client()
+    credentials = b64encode(b"username:password").decode()
+
+    assert experiment_id in _experiments
+    _experiments[experiment_id].status.status = ExperimentState.running
+    response = client.get(
+        f"/experiment_runs/config_path/{experiment_id}",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+    assert response.status_code == 200
+
+
+def test_that_experiment_stop_endpoint_returns_successfully(setup_client):
+    client, _, experiment_id = setup_client()
+
+    assert experiment_id in _experiments
+    assert _experiments[experiment_id].status.status == ExperimentState.pending
+
+    credentials = b64encode(b"username:password").decode()
+
+    response = client.post(
+        "/experiment_runs/stop",
+        headers={"Authorization": f"Basic {credentials}"},
+    )
+
+    assert response.status_code == 200
+    assert response.text == "Raise STOP flag succeeded. EVEREST initiates shutdown.."
+
+    # ExperimentState should be updated to 'stopped' after the stop endpoint is called
+    assert _experiments[experiment_id].status.status == ExperimentState.stopped
+    assert _experiments[experiment_id].status.message == "Server stopped by user"
+
+
+def test_that_experiment_stop_endpoint_correctly_shuts_down_server(setup_client):
+    client, _, _ = setup_client()
+
+    # Clear _experiments to force server shutdown when stop endpoint is called
+    _experiments.clear()
+
+    credentials = b64encode(b"username:password").decode()
+    previous_handler = getsignal(SIGTERM)
+    try:
+        handler = Mock(return_value=None)
+        signal(SIGTERM, handler)
+
+        _ = client.post(
+            "/experiment_runs/stop",
+            headers={"Authorization": f"Basic {credentials}"},
+        )
+
+        handler.assert_called_once()
+        assert len(handler.call_args_list) == 1
+        assert handler.call_args_list[0].args[0] == SIGTERM
+    finally:
+        signal(SIGTERM, previous_handler)
