@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid1
 
 import pytest
+from pydantic import ValidationError
 
 import ert
 from ert.config import (
@@ -329,23 +330,56 @@ def test_multiple_data_assimilation_restart_paths(
     [
         model_factory._setup_multiple_data_assimilation,
         model_factory._setup_ensemble_smoother,
+        model_factory._setup_ensemble_information_filter,
+        model_factory._setup_manual_update,
+        model_factory._setup_manual_update_enif,
     ],
 )
-def test_num_realizations_specified_incorrectly_raises(analysis_mode):
-    config = ErtConfig(runpath_config=ModelConfig(num_realizations=1))
+def test_that_update_setup_rejects_one_active_realization(analysis_mode):
+    parameter = _gen_kw_config()
+    config = ErtConfig(
+        runpath_config=ModelConfig(num_realizations=1),
+        ensemble_config=EnsembleConfig(parameter_configs={parameter.name: parameter}),
+    )
     args = Namespace(
         realizations="0",
         weights="6,4,2",
         target_ensemble="restart_case_%d",
         prior_ensemble_id=str(uuid1()),
-        experiment_name=None,
+        experiment_name="experiment",
+        ensemble_id=str(uuid1()),
     )
 
     with pytest.raises(
-        ConfigValidationError,
+        ValidationError,
         match="Number of active realizations must be at least 2 for an update step",
     ):
         analysis_mode(config, args, ObservationSettings(), queue.SimpleQueue())
+
+
+def test_that_create_model_raises_config_validation_error_without_pydantic_noise():
+    parameter = _gen_kw_config()
+    config = ErtConfig(
+        runpath_config=ModelConfig(num_realizations=1),
+        ensemble_config=EnsembleConfig(parameter_configs={parameter.name: parameter}),
+    )
+    args = Namespace(
+        mode=ENSEMBLE_SMOOTHER_MODE,
+        realizations="0",
+        target_ensemble="target",
+        experiment_name="experiment",
+        num_iterations=1,
+        prior_ensemble_id="",
+        weights="2,3",
+    )
+
+    with pytest.raises(ConfigValidationError) as exc_info:
+        create_model(config, args, queue.SimpleQueue())
+
+    message = str(exc_info.value)
+    assert "Number of active realizations must be at least 2" in message
+    assert "validation error for" not in message
+    assert "type=value_error" not in message
 
 
 @pytest.mark.parametrize(
@@ -390,35 +424,6 @@ def test_evaluate_ensemble_paths(
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
     assert set(model.paths) == set(expected_path)
-
-
-@pytest.mark.parametrize(
-    "experiment_setup_method",
-    [
-        _setup_multiple_data_assimilation,
-        _setup_ensemble_information_filter,
-        _setup_ensemble_smoother,
-    ],
-)
-def test_that_setting_up_experiment_with_update_step_raises_config_validation_error_given_less_than_two_active_realizations(  # ruff: ignore[line-too-long]
-    experiment_setup_method,
-):
-    """This test tests that specifying a single realization to run in an update
-    experiment is not allowed.
-    Though confusing, the active realizations are derived from args.realizations (the
-    ones specified in the gui) and all active realization in the 'config', meaning we
-    are referring to two different active realizations.
-    """
-    args = MagicMock(realizations="0", prior_ensemble_id="")
-    config = MagicMock()
-    config.active_realizations = [True] * 10
-    config.analysis_config = MagicMock(minimum_required_realizations=1)
-
-    with pytest.raises(
-        ConfigValidationError,
-        match="Number of active realizations must be at least 2 for an update step",
-    ):
-        experiment_setup_method(config, args, MagicMock(), MagicMock())
 
 
 @pytest.mark.parametrize("has_parameters", [False, True], ids=["empty", "all-disabled"])
