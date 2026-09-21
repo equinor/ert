@@ -51,6 +51,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
 )
 from ert.run_models.event import (
+    EverestBatchResultEvent,
     FinishedTotalRunPathCreationEvent,
     RunModelUpdateBeginEvent,
     RunPathCreatedEvent,
@@ -1395,6 +1396,69 @@ def test_that_further_workflow_log_events_reuse_the_same_workflows_tab(
     assert dialog._tab_widget.count() == 1
     assert widget._table.rowCount() == 1
     assert widget._table.item(0, 2).text() == "third"
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+
+def test_that_a_workflows_tab_does_not_shift_everest_batch_result_events_to_wrong_tab(
+    qtbot: QtBot, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "ert.gui.experiments.run_dialog.is_everest_application", lambda: True
+    )
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    queue.put(
+        FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label="Batch 0",
+            total_iterations=1,
+            progress=0.0,
+            realization_count=1,
+            status_count={"Unknown": 1},
+            iteration=0,
+        )
+    )
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    batch_widget = dialog._tab_widget.widget(0)
+    assert isinstance(batch_widget, RealizationWidget)
+
+    # A workflow event arriving after the batch tab was created inserts the
+    # Workflows tab in front of it, so the batch tab is no longer at index 0.
+    queue.put(_workflow_log_event())
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 2, timeout=2000)
+    assert dialog._tab_widget.indexOf(batch_widget) == 1
+
+    queue.put(
+        EverestBatchResultEvent(
+            batch=0,
+            everest_event="OPTIMIZATION_RESULT",
+            result_type="FunctionResult",
+        )
+    )
+    qtbot.waitUntil(
+        lambda: (
+            dialog._tab_widget.tabText(dialog._tab_widget.indexOf(batch_widget))
+            == "Batch 0: fn"
+        ),
+        timeout=2000,
+    )
+    assert dialog._tab_widget.tabText(0) == "Workflows"
 
     _stop_event_monitoring(qtbot, dialog, queue)
 

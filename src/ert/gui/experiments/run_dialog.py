@@ -653,8 +653,10 @@ class RunDialog(QFrame):
                 batch_types = self._batch_result_types[event.batch]
                 batch_types.add(event.result_type)
 
+                batch_widget = self._get_realization_widget(event.batch)
                 self._tab_widget.setTabText(
-                    event.batch, _batch_type_text(event.batch, batch_types)
+                    self._tab_widget.indexOf(batch_widget),
+                    _batch_type_text(event.batch, batch_types),
                 )
             case StartingTotalRunPathCreationEvent():
                 runpath_creation_progress_widget = RunpathProgressWidget(
@@ -686,6 +688,13 @@ class RunDialog(QFrame):
             if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
                 return widget
         raise ValueError("Could not find UpdateWidget")
+
+    def _get_realization_widget(self, iteration: int) -> RealizationWidget:
+        for i in range(self._tab_widget.count()):
+            widget = self._tab_widget.widget(i)
+            if isinstance(widget, RealizationWidget) and widget.iteration == iteration:
+                return widget
+        raise ValueError("Could not find RealizationWidget")
 
     def _get_or_create_workflow_log_widget(self) -> WorkflowLogWidget:
         for i in range(self._tab_widget.count()):
