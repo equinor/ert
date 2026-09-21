@@ -52,7 +52,7 @@ jobs:
       continue-on-error: true
 
     - name: Pack updated screenshots
-      if: steps.screenshot-tests.outcome == 'failure'
+      if: always()
       run: uv run just pack-updated-screenshots
 
     - name: Fail on non-screenshot test failures
