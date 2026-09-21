@@ -24,29 +24,55 @@ from ert.storage import open_storage
 from .conftest import get_child, wait_for_child
 
 
-# Use a fixture for the figure in order for the lifetime
-# of the c++ gui element to not go out before mpl_image_compare.
+# The tolerance is chosen by guess, in one bug we observed a
+# where locations of observations in the standard deviation plot
+# were off, we needed a tolerance of 5 to get tests to fail.
 # Note that the data is copied from test-data and all the existing storages
 # there will be copied too! They need to be removed!
 # Once the storage is created it its cached in .pytest_cache.
-@pytest.fixture(
-    params=[
-        ("FOPR", STATISTICS, "snake_oil"),
-        ("FOPR", ENSEMBLE, "snake_oil"),
-        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", CROSS_ENSEMBLE_STATISTICS, "snake_oil"),
-        ("COND", STD_DEV, "heat_equation"),
-        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", DISTRIBUTION, "snake_oil"),
-        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", HISTOGRAM, "snake_oil"),
-        ("SNAKE_OIL_WPR_DIFF@199", ENSEMBLE, "snake_oil"),
+@pytest.mark.mpl_image_compare(tolerance=5.0, style="default")
+@pytest.mark.skip_mac_ci  # test is slow
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
+@pytest.mark.parametrize(
+    ("key", "plot_name", "storage_type"),
+    [
+        pytest.param("FOPR", STATISTICS, "snake_oil", id="FOPT-statistics-snake_oil"),
+        pytest.param("FOPR", ENSEMBLE, "snake_oil", id="FOPR-ensemble-snake_oil"),
+        pytest.param(
+            "SNAKE_OIL_PARAM_OP1:OP1_OCTAVES",
+            CROSS_ENSEMBLE_STATISTICS,
+            "snake_oil",
+            id="OCTAVES-cross-snake_oil",
+        ),
+        pytest.param("COND", STD_DEV, "heat_equation", id="COND-stddev-heat"),
+        pytest.param(
+            "SNAKE_OIL_PARAM_OP1:OP1_OCTAVES",
+            DISTRIBUTION,
+            "snake_oil",
+            id="OCTAVES-dist-snake_oil",
+        ),
+        pytest.param(
+            "SNAKE_OIL_PARAM_OP1:OP1_OCTAVES",
+            HISTOGRAM,
+            "snake_oil",
+            id="OCTAVES-histogram-snake_oil",
+        ),
+        pytest.param(
+            "SNAKE_OIL_WPR_DIFF@199",
+            ENSEMBLE,
+            "snake_oil",
+            id="WPRDIFF-ensemble-snake_oil",
+        ),
     ],
 )
-def plot_figure(
+def test_that_plot_images_are_unchanged(
     qtbot,
     symlinked_heat_equation_storage_esmda,
     symlinked_snake_oil_case_storage,
-    request,
+    key,
+    plot_name,
+    storage_type,
 ):
-    key, plot_name, storage_type = request.param
     args_mock = Mock()
 
     if storage_type == "snake_oil":
@@ -90,6 +116,7 @@ def plot_figure(
                 case_selection.slot_toggle_plot(item)
 
         found_selected_key = False
+        figure = None
         for key_index in range(key_model.rowCount()):
             to_select = data_types.model.itemAt(data_types.model.index(key_index, 0))
             assert to_select is not None
@@ -112,27 +139,14 @@ def plot_figure(
                                     2000 / tab._figure.get_dpi(),
                                     1000 / tab._figure.get_dpi(),
                                 )
-                            yield tab._figure.figure
+                            figure = tab._figure.figure
                         else:
                             assert (
                                 selected_key.dimensionality
                                 != tab._plotter.dimensionality
                             )
         assert found_selected_key
-        plot_window.close()
-
-
-# We had an issue where the mpl_image_compare decorator
-# was put on an inner function. That makes any failure not
-# report so it has to be on a top level test.
-# The tolerance is chosen by guess, in one bug we observed a
-# where locations of observations in the standard deviation plot
-# were off, we needed a tolerance of 5 to get tests to fail.
-@pytest.mark.mpl_image_compare(tolerance=5.0, style="default")
-@pytest.mark.skip_mac_ci  # test is slow
-@pytest.mark.xdist_group(name="uses_heat_equation_storage")
-def test_that_plot_images_are_unchanged(plot_figure):
-    return plot_figure
+    return figure
 
 
 @pytest.mark.skip_mac_ci
