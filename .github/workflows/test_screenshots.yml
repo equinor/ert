@@ -52,8 +52,12 @@ jobs:
       continue-on-error: true
 
     - name: Pack updated screenshots
-      if: steps.screenshot-tests.outcome == 'failure'
+      if: always()
       run: uv run just pack-updated-screenshots
+
+    - name: Verify all mpl_image_compare tests produced a result image
+      if: always()
+      run: uv run just check-mpl-screenshot-completeness
 
     - name: Fail on non-screenshot test failures
       if: steps.screenshot-tests.outcome == 'failure'

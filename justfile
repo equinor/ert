@@ -60,6 +60,19 @@ pack-updated-screenshots:
     echo "Files staged for updated screenshots:"
     find "$staging" -type f -exec ls -l {} +
 
+check-mpl-screenshot-completeness:
+    #!/bin/bash
+    set -e
+    expected=$(pytest --collect-only -q -m "mpl_image_compare" tests | grep --count '::')
+    actual=$(find pytest-mpl_results -name result.png 2>/dev/null | wc -l)
+    echo "Collected mpl_image_compare tests: $expected, pytest-mpl result images: $actual"
+    if [ "$expected" -ne "$actual" ]; then
+      echo "::error::Mismatch between collected mpl_image_compare tests ($expected) and pytest-mpl result images ($actual)."
+      echo "::error::A test likely errored before it could compare images (bug, skip, setup failure, ...)."
+      rm -rf updated-screenshots
+      exit 1
+    fi
+
 ert-gui-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/gui -m "not (mpl_image_compare or screenshot_test)"
 
