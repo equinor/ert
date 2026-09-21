@@ -217,14 +217,14 @@ def hooked_workflows(draw):
     return result
 
 
-def runmodel_args(draw, tmp_path_factory):
+def runmodel_args(draw, tmp_path_factory, min_active_realizations: int = 1):
     storage_path = draw(realistic_text())
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
     (runpath_file := tmp_path / "runpath_file").touch()
     (user_config_file := tmp_path / "config.ert").touch()
     (log_path := tmp_path / "log_path").mkdir()
 
-    n_realizations = draw(st.integers(min_value=1, max_value=200))
+    n_realizations = draw(st.integers(min_value=min_active_realizations, max_value=200))
 
     env_vars = draw(st.dictionaries(realistic_text(), realistic_text(), max_size=5))
     env_pr_fm_step = draw(
@@ -243,11 +243,10 @@ def runmodel_args(draw, tmp_path_factory):
         )
     )
 
-    # Ensure at least one True in the list of exactly n_realizations length
     true_indices = draw(
         st.lists(
             st.integers(min_value=0, max_value=n_realizations - 1),
-            min_size=1,
+            min_size=min_active_realizations,
             max_size=n_realizations,
             unique=True,
         )
@@ -557,7 +556,9 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
-    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
+    baserunmodel_args, runtime_plugins = runmodel_args(
+        data.draw, tmp_path_factory, min_active_realizations=2
+    )
     note(f"Running in directory {tmp_path}")
     with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
@@ -595,7 +596,9 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
-    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
+    baserunmodel_args, runtime_plugins = runmodel_args(
+        data.draw, tmp_path_factory, min_active_realizations=2
+    )
     note(f"Running in directory {tmp_path}")
     with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
@@ -633,7 +636,9 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
-    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
+    baserunmodel_args, runtime_plugins = runmodel_args(
+        data.draw, tmp_path_factory, min_active_realizations=2
+    )
     note(f"Running in directory {tmp_path}")
 
     with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):

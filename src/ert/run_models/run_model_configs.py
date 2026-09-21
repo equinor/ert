@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 from ert.base_model_context import BaseModelWithContextSupport, init_context_var
 from ert.config import (
+    ConfigValidationError,
     ESSettings,
     EverestConstraintsConfig,
     EverestControl,
@@ -190,6 +191,14 @@ class UpdateRunModelConfig(RunModelConfig):
     target_ensemble: str
     analysis_settings: ESSettings
     update_settings: ObservationSettings
+
+    @model_validator(mode="after")
+    def _check_min_active_realizations_for_update(self) -> Self:
+        if sum(self.active_realizations) < 2:
+            raise ConfigValidationError(
+                "Number of active realizations must be at least 2 for an update step"
+            )
+        return self
 
     def _update_experiment_config(self) -> ExperimentConfig:
         return {
