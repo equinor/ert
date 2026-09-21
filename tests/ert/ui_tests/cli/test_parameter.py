@@ -5,11 +5,12 @@ import pytest
 
 from ert.__main__ import ert_parser
 from ert.cli.main import ErtCliError, run_cli
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ENIF_MODE, ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_running_smoother_raises_without_updateable_parameters():
+@pytest.mark.parametrize("mode", [ENSEMBLE_SMOOTHER_MODE, ENIF_MODE, ES_MDA_MODE])
+def test_that_cli_update_runs_reject_configs_without_updatable_parameters(mode):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line in fin:
             if "GEN_KW COEFFS coeff_priors" in line:
@@ -21,12 +22,14 @@ def test_running_smoother_raises_without_updateable_parameters():
     parsed = ert_parser(
         parser,
         [
-            ENSEMBLE_SMOOTHER_MODE,
+            mode,
             "--disable-monitoring",
             "poly.ert",
         ],
     )
 
-    with pytest.raises(ErtCliError) as e:
+    with pytest.raises(
+        ErtCliError,
+        match="No parameters to update as all parameters were set to update:false!",
+    ):
         run_cli(parsed)
-    assert "All parameters are set to UPDATE:FALSE in" in str(e)
