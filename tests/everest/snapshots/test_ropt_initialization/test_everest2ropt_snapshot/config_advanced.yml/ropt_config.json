@@ -1,7 +1,8 @@
 {
   "backend": {
     "method": "optpp_q_newton",
-    "parallel": true
+    "parallel": true,
+    "verbose": true
   },
   "function_estimators": [
     {
@@ -15,6 +16,7 @@
     "perturbation_min_success": 5
   },
   "linear_constraints": {
+    "auto_scale": false,
     "coefficients": [
       [
         0.0,
@@ -24,6 +26,9 @@
     ],
     "lower_bounds": [
       null
+    ],
+    "scales": [
+      1.0
     ],
     "upper_bounds": [
       0.4
@@ -46,29 +51,28 @@
       "point.x.2"
     ]
   },
-  "nonlinear_constraint_transforms": [
-    null
-  ],
   "nonlinear_constraints": {
+    "auto_scale": false,
     "lower_bounds": [
       0.1
     ],
-    "transforms": [
-      0
+    "scales": [
+      0.1
     ],
     "upper_bounds": [
       null
     ]
   },
-  "objective_transforms": [
-    null
-  ],
   "objectives": {
+    "auto_scale": false,
     "function_estimators": [
       0
     ],
-    "transforms": [
-      0
+    "maximize": [
+      true
+    ],
+    "scales": [
+      1.0
     ],
     "weights": [
       1.0
@@ -90,9 +94,6 @@
   "samplers": [
     {}
   ],
-  "variable_transforms": [
-    null
-  ],
   "variables": {
     "lower_bounds": [
       -1.0,
@@ -104,6 +105,11 @@
       true,
       true
     ],
+    "offsets": [
+      0.0,
+      0.0,
+      0.0
+    ],
     "perturbation_magnitudes": [
       0.005,
       0.005,
@@ -114,10 +120,12 @@
       0,
       0
     ],
-    "seed": 999,
-    "transforms": [
-      0
+    "scales": [
+      1.0,
+      1.0,
+      1.0
     ],
+    "seed": 999,
     "types": [
       1,
       1,
