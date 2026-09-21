@@ -31,7 +31,8 @@ def test_that_from_config_list_with_update_option_parses_boolean_value(
 
     with patch.object(DesignMatrix, "__post_init__", return_value=None):
         dm = DesignMatrix.from_config_list(
-            config_list, parameter_type_update_strategies={}
+            config_list,
+            update_strategy=None,
         )
         assert dm.update is expected
 
@@ -54,7 +55,7 @@ def test_that_from_config_list_with_invalid_update_option_throws():
             match="UPDATE must be either 'TRUE' or 'FALSE'; is 'INVALID'",
         ),
     ):
-        DesignMatrix.from_config_list(config_list, parameter_type_update_strategies={})
+        DesignMatrix.from_config_list(config_list, update_strategy=None)
 
 
 @pytest.mark.parametrize("priority", ["design_matrix", "sampled"])
@@ -72,7 +73,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
                     "PRIORITY": priority,
                 },
             ],
-            parameter_type_update_strategies={"GEN_KW": LocalizationType.ADAPTIVE},
+            update_strategy=LocalizationType.ADAPTIVE,
         )
 
     # state after loading design matrix
@@ -115,7 +116,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
                     "UPDATE": "TRUE",
                 },
             ],
-            parameter_type_update_strategies={"GEN_KW": LocalizationType.ADAPTIVE},
+            update_strategy=LocalizationType.ADAPTIVE,
         )
 
     # state after loading design matrix
@@ -158,7 +159,7 @@ def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_up
                     "UPDATE": "TRUE",
                 },
             ],
-            parameter_type_update_strategies={},
+            update_strategy=None,
         )
 
     # state after loading design matrix
@@ -205,7 +206,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_existing_para
                     "UPDATE": "FALSE",
                 },
             ],
-            parameter_type_update_strategies={"GEN_KW": LocalizationType.ADAPTIVE},
+            update_strategy=LocalizationType.ADAPTIVE,
         )
 
     # state after loading design matrix
@@ -281,7 +282,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_overlapping_n
                     "UPDATE": "TRUE",
                 },
             ],
-            parameter_type_update_strategies={"GEN_KW": LocalizationType.DISTANCE},
+            update_strategy=LocalizationType.DISTANCE,
         )
 
     # state after loading design matrix
