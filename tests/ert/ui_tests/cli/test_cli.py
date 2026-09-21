@@ -51,6 +51,7 @@ def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
     [
         pytest.param(ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
+        pytest.param(ENIF_MODE),
     ],
 )
 @pytest.mark.usefixtures("copy_poly_case")
@@ -65,7 +66,8 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
 
     with pytest.raises(
         ErtCliError,
-        match=f"To run {mode}, GEN_KW, FIELD or SURFACE parameters are needed.",
+        match="No parameters to update as no GEN_KW, FIELD or SURFACE "
+        "parameters are configured!",
     ):
         run_cli(
             mode,
