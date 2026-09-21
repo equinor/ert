@@ -33,19 +33,44 @@ jobs:
       id: metadata
       run: |
         echo "pr_number=$(jq -r '.pr_number' artifact/metadata.json)" >> "$GITHUB_OUTPUT"
-        echo "outcome=$(jq -r '.outcome' artifact/metadata.json)" >> "$GITHUB_OUTPUT"
 
     - name: Check for updated screenshots
       id: screenshots
       run: |
         if find artifact/updated-screenshots -type f -name '*.png' -print -quit | grep -q .; then
-          echo "has_new_screenshots=true" >> "$GITHUB_OUTPUT"
+          echo "has_screenshot_tree=true" >> "$GITHUB_OUTPUT"
         else
-          echo "has_new_screenshots=false" >> "$GITHUB_OUTPUT"
+          echo "has_screenshot_tree=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Checkout ert-testdata
+      if: steps.screenshots.outputs.has_screenshot_tree == 'true'
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        repository: equinor/ert-testdata
+        ref: main
+        token: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
+        path: ert-testdata
+
+    - name: Copy updated screenshots into ert-testdata
+      if: steps.screenshots.outputs.has_screenshot_tree == 'true'
+      run: |
+        mkdir -p ert-testdata/screenshotbaselines
+        rsync -av --delete artifact/updated-screenshots/. ert-testdata/screenshotbaselines/ --exclude .gitkeep
+
+    - name: Check for changes to ert-testdata baselines
+      if: steps.screenshots.outputs.has_screenshot_tree == 'true'
+      id: diff
+      working-directory: ert-testdata
+      run: |
+        if [ -n "$(git status --porcelain screenshotbaselines)" ]; then
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_changes=false" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Get ert PR title
-      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true' && steps.metadata.outputs.pr_number != '0'
+      if: steps.diff.outputs.has_changes == 'true' && steps.metadata.outputs.pr_number != '0'
       id: ert-pr-title
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,21 +81,8 @@ jobs:
         ERT_PR_AUTHOR=$(gh pr view "${PR_NUMBER}" --repo equinor/ert --json author --jq '.author.login')
         echo "ert_pr_author=${ERT_PR_AUTHOR}" >> "$GITHUB_OUTPUT"
 
-    - name: Checkout ert-testdata
-      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true'
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        repository: equinor/ert-testdata
-        ref: main
-        token: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
-        path: ert-testdata
-
-    - name: Copy updated screenshots into ert-testdata
-      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true'
-      run: cp -r artifact/updated-screenshots/. ert-testdata/screenshotbaselines/
-
     - name: Push branch and open PR in ert-testdata
-      if: steps.metadata.outputs.outcome == 'failure' && steps.screenshots.outputs.has_new_screenshots == 'true'
+      if: steps.diff.outputs.has_changes == 'true'
       env:
         GH_TOKEN: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
         PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
@@ -84,6 +96,7 @@ jobs:
         git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/equinor/ert-testdata.git"
         git checkout -b "$BRANCH"
         git add --all screenshotbaselines/
+        git status
         git commit -m "Update screenshots for equinor/ert#${PR_NUMBER}"
         git push --force origin "$BRANCH"
         EXISTING=$(gh pr list \
@@ -117,12 +130,12 @@ jobs:
           if [ "${PR_NUMBER}" != "0" ]; then
             gh pr comment "${PR_NUMBER}" \
               --repo equinor/ert \
-              --body "Screenshots differ from baselines. A baseline update PR has been prepared: ${PR_URL}"
+              --body "Screenshot baselines need updating (added, changed, or removed). A baseline update PR has been prepared: ${PR_URL}"
           fi
         fi
 
     - name: Close stale ert-testdata PR if screenshots now pass
-      if: steps.metadata.outputs.outcome == 'success'
+      if: steps.screenshots.outputs.has_screenshot_tree == 'true' && steps.diff.outputs.has_changes == 'false'
       env:
         GH_TOKEN: ${{ secrets.ERTOMATIC_ERT_TESTDATA_TOKEN }}
         PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
@@ -139,6 +152,6 @@ jobs:
           if [ "${PR_NUMBER}" != "0" ]; then
             gh pr comment "${PR_NUMBER}" \
               --repo equinor/ert \
-              --body "Screenshot tests now pass. The baseline update PR equinor/ert-testdata#${EXISTING} has been closed."
+              --body "Screenshot baselines are in sync. The baseline update PR equinor/ert-testdata#${EXISTING} has been closed."
           fi
         fi
