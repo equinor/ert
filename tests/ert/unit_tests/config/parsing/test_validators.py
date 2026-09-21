@@ -18,7 +18,8 @@ def test_that_validate_has_updatable_parameter_raises_when_none_are_updatable(
 ):
     with pytest.raises(
         ConfigValidationError,
-        match="No parameters to update as all parameters were set to update:false!",
+        match="No parameters to update: all configured parameters have updates "
+        r"disabled \(UPDATE:FALSE\)\.",
     ):
         validate_has_updatable_parameter(non_updatable_parameter_configs)
 
