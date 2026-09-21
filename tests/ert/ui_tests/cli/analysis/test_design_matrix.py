@@ -506,7 +506,8 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
     with (
         pytest.raises(
             ErtCliError,
-            match="No parameters to update as all parameters were set to update:false!",
+            match="No parameters to update: all configured parameters have updates "
+            r"disabled \(UPDATE:FALSE\)\.",
         ),
         pytest.warns(ConfigWarning, match=r"Parameters .* will be overridden"),
     ):

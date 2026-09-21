@@ -30,6 +30,7 @@ def test_that_cli_update_runs_reject_configs_without_updatable_parameters(mode):
 
     with pytest.raises(
         ErtCliError,
-        match="No parameters to update as all parameters were set to update:false!",
+        match="No parameters to update: all configured parameters have updates "
+        r"disabled \(UPDATE:FALSE\)\.",
     ):
         run_cli(parsed)
