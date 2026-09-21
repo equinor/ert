@@ -6,6 +6,7 @@ from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
 import numpy as np
+from pydantic import ValidationError as PydanticValidationError
 
 from ert.config import (
     ConfigValidationError,
@@ -62,20 +63,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def create_model(
+def _dispatch_create_model(
     config: ErtConfig,
     args: Namespace,
+    update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> RunModel:
-    logger.info(
-        "Initiating experiment",
-        extra={
-            "mode": args.mode,
-            "ensemble_size": config.runpath_config.num_realizations,
-        },
-    )
-    update_settings = config.analysis_config.observation_settings
-
     if args.mode == TEST_RUN_MODE:
         return _setup_single_test_run(config, args, status_queue)
     if args.mode == ENSEMBLE_EXPERIMENT_MODE:
@@ -97,6 +90,26 @@ def create_model(
     if args.mode == MANUAL_ENIF_UPDATE_MODE:
         return _setup_manual_update_enif(config, args, update_settings, status_queue)
     raise NotImplementedError(f"Run type not supported {args.mode}")
+
+
+def create_model(
+    config: ErtConfig,
+    args: Namespace,
+    status_queue: SimpleQueue[StatusEvents],
+) -> RunModel:
+    logger.info(
+        "Initiating experiment",
+        extra={
+            "mode": args.mode,
+            "ensemble_size": config.runpath_config.num_realizations,
+        },
+    )
+    update_settings = config.analysis_config.observation_settings
+
+    try:
+        return _dispatch_create_model(config, args, update_settings, status_queue)
+    except PydanticValidationError as err:
+        raise ConfigValidationError.from_pydantic(err) from err
 
 
 def _merge_parameter_configs(
