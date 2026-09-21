@@ -222,12 +222,16 @@ def test_that_single_ensemble_selection_mode_swaps_selection_on_click(qtbot: QtB
     list_widget.set_minimum_ensemble_limit(1)
     list_widget.set_maximum_ensemble_limit(1)
 
+    assert [e.name for e in list_widget.get_checked_ensembles()] == ["case0"]
+
     target = list_widget.item(2)
     qtbot.mouseClick(
         list_widget.viewport(),
         Qt.MouseButton.LeftButton,
         pos=list_widget.visualItemRect(target).center(),
     )
+
+    assert [e.name for e in list_widget.get_checked_ensembles()] == ["case2"]
 
     assert len(list_widget.get_checked_ensembles()) == 1
 
