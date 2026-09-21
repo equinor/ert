@@ -34,8 +34,8 @@ fuzz:
     OMP_NUM_THREADS=1 pytest {{pytest_args}} -m "fuzzing" --hypothesis-profile=fuzz tests/ert
 
 screenshot-comparison-test:
-    rm -rf /tmp/test_docs_screenshots
-    pytest --mpl --mpl-results-path=pytest-mpl_results -v -m "mpl_image_compare or screenshot_test" tests
+    rm -rf /tmp/test_docs_screenshots pytest-mpl_results
+    pytest --mpl --mpl-results-path=pytest-mpl_results --mpl-results-always -v -m "mpl_image_compare or screenshot_test" tests
 
 pack-updated-screenshots:
     #!/bin/bash
