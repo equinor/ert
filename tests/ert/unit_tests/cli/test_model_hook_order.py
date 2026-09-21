@@ -118,8 +118,8 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
 
     test_class = ModelWithMockSupport(
         experiment_name="exp",
-        active_realizations=MagicMock(),
-        minimum_required_realizations=MagicMock(),
+        active_realizations=[True, True],
+        minimum_required_realizations=2,
         random_seed=0,
         **extra_args,
         storage_path="some_storage",
@@ -134,7 +134,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         user_config_file=MagicMock(spec=Path),
         env_vars=MagicMock(spec=dict),
         env_pr_fm_step=MagicMock(spec=dict),
-        runpath_config=ModelConfig(),
+        runpath_config=ModelConfig(num_realizations=2),
         forward_model_steps=MagicMock(),
         substitutions={},
         hooked_workflows=MagicMock(spec=dict),
@@ -144,7 +144,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         shape_registry=ShapeRegistry(),
     )
 
-    test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
+    test_class.run_ensemble_evaluator = MagicMock(return_value=[0, 1])
     test_class._storage = storage_mock
     test_class.run_experiment(MagicMock())
 
