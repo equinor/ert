@@ -14,7 +14,6 @@ import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterator, MutableSequence
 from enum import IntEnum, auto
-from functools import cached_property
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
@@ -63,10 +62,6 @@ from everest.config import (
 )
 from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.optimizer.opt_model_transforms import (
-    EverestOptModelTransforms,
-    get_optimization_domain_transforms,
-)
 from everest.strings import EVEREST
 from everest.util.ropt_unpacker import unpack_ropt_results
 
@@ -529,17 +524,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             c for c in self.parameter_configuration if c.type == "everest_parameters"
         ]
 
-    @cached_property
-    def _transforms(self) -> EverestOptModelTransforms:
-        return get_optimization_domain_transforms(
-            self._everest_control_configs,
-            self.objectives_config,
-            self.input_constraints,
-            self.output_constraints_config,
-            self.model,
-            self.optimization.auto_scale,
-        )
-
     @classmethod
     def name(cls) -> str:
         return "Optimization run"
@@ -847,9 +831,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             self.model,
             self.random_seed,
             self.optimization_output_dir,
-            self._transforms["control_scaler"],
-            self._transforms["objective_scaler"],
-            self._transforms["constraint_scaler"],
         )
         try:
             optimizer = BasicOptimizer(
@@ -1045,21 +1026,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 )
             )
 
-            # Calculate auto-scales if necessary. Skip this if there are any
-            # objectives or constraints where all realizations failed. In that
-            # case the auto-scale calculations will fail, and the optimization
-            # will terminate afterwards in any case.
-            if not np.any(np.all(np.isnan(objectives), axis=0)):
-                self._calculate_objective_auto_scales(
-                    objectives, realization_indices, perturbation_indices
-                )
-            if constraints is not None and not np.any(
-                np.all(np.isnan(constraints), axis=0)
-            ):
-                self._calculate_constraint_auto_scales(
-                    constraints, realization_indices, perturbation_indices
-                )
-
             # This is the final step: insert zero results for inactive
             # control vectors. This is done by inserting zeros at each position
             # where the input control vectors are not active.
@@ -1082,6 +1048,11 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 else None
             )
 
+        # A non-finite result means the simulation failed; ropt marks failures with NaN.
+        objectives = np.where(np.isfinite(objectives), objectives, np.nan)
+        if constraints is not None:
+            constraints = np.where(np.isfinite(constraints), constraints, np.nan)
+
         evaluator_result = EvaluationBatchResult(
             objectives=objectives,
             constraints=constraints,
@@ -1092,37 +1063,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         self._batch_id += 1
 
         return evaluator_result
-
-    def _calculate_objective_auto_scales(
-        self,
-        objectives: NDArray[np.float64],
-        realization_indices: NDArray[np.intc],
-        perturbation_indices: NDArray[np.intc],
-    ) -> None:
-        objective_transform = self._transforms["objective_scaler"]
-        if objective_transform.needs_auto_scale_calculation:
-            mask = perturbation_indices < 0
-            if not np.any(mask):  # If we have only perturbations, just use those.
-                mask = np.ones(perturbation_indices.shape[0], dtype=np.bool_)
-            objective_transform.calculate_auto_scales(
-                objectives[mask, :], realization_indices[mask]
-            )
-
-    def _calculate_constraint_auto_scales(
-        self,
-        constraints: NDArray[np.float64],
-        realization_indices: NDArray[np.intc],
-        perturbation_indices: NDArray[np.intc],
-    ) -> None:
-        constraint_transform = self._transforms["constraint_scaler"]
-        assert constraint_transform is not None
-        if constraint_transform.needs_auto_scale_calculation:
-            mask = perturbation_indices < 0
-            if not np.any(mask):  # If we have only perturbations, just use those.
-                mask = np.ones(perturbation_indices.shape[0], dtype=np.bool_)
-            constraint_transform.calculate_auto_scales(
-                constraints[mask, :], realization_indices[mask]
-            )
 
     def _get_run_args(
         self,
