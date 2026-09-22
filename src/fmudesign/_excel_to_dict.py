@@ -217,11 +217,9 @@ def _excel_to_dict_onebyone(
             sensdict["parameters"] = parse_distribution_parameters(
                 group, source="sensitivity"
             )
-            sensdict["correlations"] = None
-            if "corr_sheet" in group:
-                sensdict["correlations"] = parse_sensitivity_correlations(
-                    group, input_filename
-                )
+            sensdict["correlations"] = parse_sensitivity_correlations(
+                group, input_filename
+            )
 
         elif sens_type == "extern":
             sensdict["extern_file"] = resolve_path(
