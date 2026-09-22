@@ -27,7 +27,7 @@
 Highlighted changes
 ===================
 
-Version 25.1
+Version 26.0
 ------------
 
 RFT QC Tool
