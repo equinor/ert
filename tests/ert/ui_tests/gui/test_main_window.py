@@ -56,7 +56,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
-from ert.services import ErtServerController
+from ert.services import ErtClient, ErtServerController
 from ert.storage import open_storage
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
@@ -65,6 +65,7 @@ from .conftest import (
     get_child,
     get_children,
     load_results_manually,
+    open_gui_with_config,
     wait_for_child,
 )
 
@@ -104,6 +105,24 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
         assert all(
             e in m for m, e in zip(shown_messages, expected_message_types, strict=False)
         )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_initial_window_does_not_wait_for_storage_server(qapp):
+    args = Mock()
+    args.config = "poly.ert"
+    with (
+        patch(
+            "ert.gui.experiments.experiment_panel.ErtClient.get_client",
+            side_effect=AssertionError(
+                "Server is not started during window construction"
+            ),
+        ) as get_client,
+        add_gui_log_handler() as log_handler,
+    ):
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert isinstance(gui, ErtMainWindow)
+        get_client.assert_not_called()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -1064,51 +1083,43 @@ warnings.warn('Foobar')"""
     assert run_dialog.fail_msg_box.isVisible()
 
 
-def test_denied_runpath_warning_dialog_releases_storage_lock(
-    qtbot, opened_main_window_poly, use_tmpdir, monkeypatch
+def test_that_declining_runpath_reuse_leaves_storage_unlocked(
+    qtbot, opened_main_window_poly
 ):
-    # Populate runpath
-    runpath = "poly_out/realization-0/iter-0"
-    Path(runpath).mkdir(parents=True, exist_ok=True)
-    Path(runpath).touch()
-
-    # Open main window
     gui = opened_main_window_poly
     run_experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
-
-    # Mock class for experiment arguments
-    class MockArgs:
-        def __init__(self) -> None:
-            self.mode = "ensemble_experiment"
-            self.current_ensemble = "ensemble"
-            self.experiment_name = "FooBar"
-
-    monkeypatch.setattr(
-        ExperimentPanel, "get_experiment_arguments", Mock(return_value=MockArgs())
+    get_child(run_experiment_panel, QComboBox).setCurrentText(
+        EnsembleExperiment.display_name()
+    )
+    runpath = gui.ert_config.runpath_config.runpath_format_string.replace(
+        "<IENS>", "0"
+    ).replace("<ITER>", "0")
+    Path(runpath).mkdir(parents=True, exist_ok=True)
+    assert run_experiment_panel._ert_client.runpath_exists(
+        gui.ert_config, run_experiment_panel.get_experiment_arguments()
     )
 
-    # Mock the runpath warning window
     def mock_exec():
-        # Assert the storage lock is initially locked
-        assert run_experiment_panel._model._storage._lock.is_locked
+        with open_storage(gui.ert_config.ens_path, mode="w"):
+            pass
         return QMessageBox.StandardButton.No
 
-    monkeypatch.setattr(
-        QMessageBox,
-        "exec",
-        lambda _: mock_exec(),
-    )
-
-    run_experiment_panel.run_experiment()
-
-    # Assert the storage lock has been unlocked
-    assert not run_experiment_panel._model._storage._lock.is_locked
+    with (
+        patch.object(QMessageBox, "exec", side_effect=mock_exec) as warning,
+        patch.object(ErtClient, "start_experiment_ert") as start,
+    ):
+        run_experiment_panel.run_experiment()
+        warning.assert_called_once()
+        start.assert_not_called()
+    with open_storage(gui.ert_config.ens_path, mode="w"):
+        pass
 
 
 def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_design_matrix(  # ruff: ignore[line-too-long]
     qtbot,
     copy_poly_case_with_design_matrix,
     caplog,
+    run_experiment,
 ):
     caplog.set_level(logging.INFO)
 
@@ -1121,33 +1132,12 @@ def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_des
     default_list = [["b", 1], ["c", 2]]
     copy_poly_case_with_design_matrix(design_dict, default_list)
 
-    args = Mock()
-    args.config = "poly.ert"
-
-    with add_gui_log_handler() as log_handler:
-        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+    with open_gui_with_config("poly.ert") as gui:
         qtbot.addWidget(gui)
+        run_experiment(SingleTestRun, gui)
 
-        experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
-        qtbot.wait_until(lambda: not experiment_panel.isHidden(), timeout=5000)
-
-        @contextlib.contextmanager
-        def mock_run_dialog():
-            """Mocking run dialog and catching exceptions shaves off 2 seconds for this
-            test, taking about 0.5 sec as a result
-            """
-            original_init = RunDialog.__init__
-            RunDialog.__init__ = Mock(return_value=None)
-            try:
-                yield
-            finally:
-                RunDialog.__init__ = original_init
-
-        with contextlib.suppress(Exception), mock_run_dialog():
-            experiment_panel.run_experiment()
-
-        assert "Experiment summary:" in caplog.text
-        assert "Runmodel: test_run" in caplog.text
-        assert "Realizations: 1" in caplog.text
-        assert "Parameters: 3" in caplog.text
-        assert "Observations: 5" in caplog.text
+    assert "Experiment summary:" in caplog.text
+    assert "Runmodel: test_run" in caplog.text
+    assert "Realizations: 1" in caplog.text
+    assert "Parameters: 3" in caplog.text
+    assert "Observations: 5" in caplog.text

@@ -23,6 +23,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from pydantic import ValidationError
+from pydantic_core import to_jsonable_python
 from websockets.asyncio.client import backoff, process_exception
 from websockets.exceptions import (
     ConnectionClosedError,
@@ -32,6 +33,7 @@ from websockets.exceptions import (
 from websockets.sync.client import ClientConnection, connect
 
 from _ert.threading import ErtThread
+from ert.config.ert_config import ErtConfig
 from ert.dark_storage.common import EverEndpoints
 
 from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
@@ -336,6 +338,7 @@ class ErtClient:
         )
 
     def start_experiment(self, config: dict[str, Any]) -> str:
+        """Starts an Everest experiment, returns the experiment ID."""
         response = self._request(
             "POST",
             f"{_EXPERIMENT_RUNS}/{EverEndpoints.START_EXPERIMENT}",
@@ -344,7 +347,21 @@ class ErtClient:
         )
         return str(_checked(response).json()["experiment_id"])
 
+    def start_experiment_ert(self, config: ErtConfig, args: Any) -> str:
+        """Starts an ERT experiment, returns the experiment ID."""
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/{EverEndpoints.START_EXPERIMENT_ERT}",
+            auth=self._auth,
+            json={
+                "config": config.model_dump(mode="json"),
+                "args": to_jsonable_python(args),
+            },
+        )
+        return str(_checked(response).json()["experiment_id"])
+
     def stop_server(self, retries: int = 5) -> bool:
+        """Stops the experiment server, returns True if successful."""
         status_code, sleep = 400, retries
         while status_code != httpx.codes.OK and retries > 0:
             status_code = self._request(
@@ -356,14 +373,50 @@ class ErtClient:
             time.sleep(sleep - retries)
         return status_code == httpx.codes.OK
 
-    def runpath_exists(self, paths: list[str]) -> bool:
+    def runpath_exists(self, config: ErtConfig, args: Any) -> bool:
+        """
+        Checks if the runpath for the given ERT experiment exists.
+        Returns True if it does.
+        """
         response = self._request(
             "POST",
             f"{_EXPERIMENT_RUNS}/{EverEndpoints.RUNPATH}",
             auth=self._auth,
-            json={"paths": paths},
+            json={
+                "config": config.model_dump(mode="json"),
+                "args": to_jsonable_python(args),
+            },
         )
         return response.status_code == httpx.codes.OK
+
+    def runpath_delete(self, config: ErtConfig, args: Any) -> bool:
+        """
+        Deletes the runpath for the given ERT experiment.
+        Returns True if successful.
+        """
+        response = self._request(
+            "DELETE",
+            f"{_EXPERIMENT_RUNS}/{EverEndpoints.RUNPATH}",
+            auth=self._auth,
+            json={
+                "config": config.model_dump(mode="json"),
+                "args": to_jsonable_python(args),
+            },
+        )
+        return response.status_code == httpx.codes.OK
+
+    def get_runmodel_data(self, config: ErtConfig, args: Any) -> dict[str, Any]:
+        """Retrieves the runmodel data for the given ERT experiment."""
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/runmodel",
+            auth=self._auth,
+            json={
+                "config": config.model_dump(mode="json"),
+                "args": to_jsonable_python(args),
+            },
+        )
+        return _checked(response).json()
 
     # <-------------- WebSocket -------------->
 
