@@ -30,6 +30,21 @@ Highlighted changes
 Version 26.0
 ------------
 
+Waterfall Plot for EnIF updated parameters
+##########################################
+
+The plot uses Kalman-gain blob data (blob files in storage) to show each observation's
+contribution from the prior to the posterior value for a selected parameter.
+The contributions are split into prior, top observation contributions, summation of the rest
+and residual contribution. In case of GEN_OBS it appends the index to the
+observation name to distinguish between them.
+
+The following example shows the Ensemble Information Filter Plot for parameters updated
+by EnIF on polynomial case.
+
+.. image:: images/v26/enif_plot_poly.png
+
+
 RFT QC Tool
 ###########
 
@@ -38,7 +53,6 @@ RFT data, and/or the :ref:`RFT <rft>` keyword to
 load data from RFT files, a quality control widget is available to inspect
 RFT observations and responses. See: :ref:`Inspecting RFT observations and responses <rft_qc_tool>`
 for details.
-
 
 New distribution visualization
 ##############################
