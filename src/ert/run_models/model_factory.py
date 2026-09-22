@@ -110,24 +110,6 @@ def _merge_parameter_configs(
     return merged, DictEncodedDataFrame.from_polars(design_matrix.design_matrix_df)
 
 
-def _merge_parameters(
-    design_matrix: DesignMatrix | None,
-    parameter_configs: list[ParameterConfig],
-) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
-    if design_matrix is None:
-        return parameter_configs, None
-
-    merged_parameter_configs = design_matrix.merge_with_existing_parameters(
-        parameter_configs
-    )
-
-    validate_has_updatable_parameter(merged_parameter_configs)
-
-    return merged_parameter_configs, DictEncodedDataFrame.from_polars(
-        design_matrix.design_matrix_df
-    )
-
-
 def _resolve_parameter_configs(
     config: ErtConfig, prior_ensemble: str | None = None
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
@@ -505,7 +487,7 @@ def _setup_multiple_data_assimilation(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _merge_parameters(
+    parameter_configs, design_matrix = _merge_parameter_configs(
         design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
         parameter_configs=getattr(
             args,
@@ -513,6 +495,8 @@ def _setup_multiple_data_assimilation(
             config.ensemble_config.parameter_configuration,
         ),
     )
+
+    validate_has_updatable_parameter(parameter_configs)
 
     runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
