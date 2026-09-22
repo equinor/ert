@@ -3,15 +3,16 @@
 import subprocess
 
 import pandas as pd
+import polars as pl
 import pytest
 
 from fmudesign import DesignMatrix
 
 
 def assert_valid_designmatrix(design_values):
-    assert design_values.columns[:3].tolist() == ["REAL", "SENSNAME", "SENSCASE"]
-    assert design_values["REAL"].tolist() == list(range(len(design_values)))
-    assert not design_values.isna().any().any()
+    assert design_values.columns[:3] == ["REAL", "SENSNAME", "SENSCASE"]
+    assert design_values["REAL"].to_list() == list(range(len(design_values)))
+    assert design_values.null_count().row(0) == (0,) * design_values.width
 
 
 def test_that_design_matrix_generates_seed_sensitivity_for_each_repeat():
@@ -69,7 +70,7 @@ def test_that_cli_accepts_relative_input_and_custom_output_paths(tmp_path, monke
     assert "Thank you for using fmudesign" in result.stdout
 
     assert output_path.is_file()
-    assert_valid_designmatrix(pd.read_excel(output_path, engine="openpyxl"))
+    assert_valid_designmatrix(pl.read_excel(output_path))
 
 
 @pytest.mark.slow
@@ -121,8 +122,8 @@ def test_that_cli_resolves_external_seeds_file_relative_to_input(tmp_path, monke
         text=True,
     )
 
-    design_values = pd.read_excel(output_path, engine="openpyxl")
+    design_values = pl.read_excel(output_path)
     assert_valid_designmatrix(design_values)
     # seeds.xlsx starts at 2000, unlike the 'default' 1000... sequence, so this
     # confirms the external file was actually read.
-    assert design_values["RMS_SEED"].iloc[0] == 2000
+    assert design_values["RMS_SEED"][0] == 2000

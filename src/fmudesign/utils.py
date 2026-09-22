@@ -1,15 +1,132 @@
 """Module for utility functions that do not belong elsewhere."""
 
+import csv
 import math
+import re
 from collections import Counter
-from collections.abc import Hashable, Iterable
+from collections.abc import Hashable, Iterable, Sequence
+from io import StringIO
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pandas as pd
 import polars as pl
 from python_calamine import CalamineWorkbook
+
+from ert.config.design_matrix import convert_to_numeric
+
+_NUMERIC_STRING = re.compile(
+    r"[+-]?(?:([0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?|inf(?:inity)?)",
+    re.IGNORECASE,
+)
+_NULL_VALUES = [
+    "",
+    "#N/A",
+    "#N/A N/A",
+    "#NA",
+    "-1.#IND",
+    "-1.#QNAN",
+    "-NaN",
+    "-nan",
+    "1.#IND",
+    "1.#QNAN",
+    "<NA>",
+    "N/A",
+    "NA",
+    "NULL",
+    "NaN",
+    "None",
+    "n/a",
+    "nan",
+    "null",
+]
+
+
+def parameter_series(name: str, values: Iterable[object]) -> pl.Series:
+    values = [
+        value.item() if isinstance(value, np.generic) else value for value in values
+    ]
+    values = [
+        None if isinstance(value, float) and math.isnan(value) else value
+        for value in values
+    ]
+    types = {type(value) for value in values if value is not None}
+    dtype = pl.Object if len(types) > 1 and not types <= {int, float} else None
+    return pl.Series(name, values, dtype=dtype, strict=False)
+
+
+def _compatible_series(columns: Sequence[pl.Series]) -> list[pl.Series]:
+    dtypes = {column.dtype for column in columns} - {pl.Null}
+    if len(dtypes) <= 1 or all(dtype.is_numeric() for dtype in dtypes):
+        return list(columns)
+    # A common string dtype would erase native numeric and Boolean cell types.
+    return [
+        pl.Series(column.name, column.to_list(), dtype=pl.Object) for column in columns
+    ]
+
+
+def concat_design_frames(frames: Sequence[pl.DataFrame]) -> pl.DataFrame:
+    frames = list(frames)
+    for name in dict.fromkeys(name for frame in frames for name in frame.columns):
+        indices = [index for index, frame in enumerate(frames) if name in frame]
+        columns = _compatible_series([frames[index][name] for index in indices])
+        for index, column in zip(indices, columns, strict=True):
+            frames[index] = frames[index].with_columns(column)
+    return pl.concat(frames, how="diagonal_relaxed")
+
+
+def fill_parameter_nulls(column: pl.Series, values: pl.Series) -> pl.Series:
+    if column.dtype.is_float():
+        column = column.fill_nan(None)
+    elif column.dtype == pl.Object:
+        column = parameter_series(column.name, column)
+    column, values = _compatible_series([column, values])
+    return column.fill_null(values)
+
+
+def numeric_parameter_series(column: pl.Series) -> pl.Series:
+    if column.dtype not in {pl.String, pl.Object}:
+        return column
+    return parameter_series(column.name, map(to_numeric_safe, column))
+
+
+def read_excel_values(filename: str, sheet_name: str | None = None) -> pl.DataFrame:
+    with CalamineWorkbook.from_path(filename) as workbook:
+        sheet = workbook.get_sheet_by_name(
+            workbook.sheet_names[0] if sheet_name is None else sheet_name
+        )
+        rows = sheet.to_python(skip_empty_area=False)
+    if not rows:
+        return pl.DataFrame()
+
+    original_names = [
+        str(value) if value else f"Unnamed: {index}"
+        for index, value in enumerate(rows[0])
+    ]
+    names: list[str] = []
+    for name in original_names:
+        adjusted_name = name
+        if name in names:
+            suffix = 1
+            while f"{name}.{suffix}" in names or f"{name}.{suffix}" in original_names:
+                suffix += 1
+            adjusted_name = f"{name}.{suffix}"
+        names.append(adjusted_name)
+    columns = (
+        [
+            parameter_series(
+                name,
+                (
+                    None if isinstance(value, str) and value in _NULL_VALUES else value
+                    for value in values
+                ),
+            )
+            for name, values in zip(names, zip(*rows[1:], strict=True), strict=True)
+        ]
+        if len(rows) > 1
+        else [pl.Series(name, [], dtype=pl.Null) for name in names]
+    )
+    return pl.DataFrame(columns).filter(~pl.all_horizontal(pl.all().is_null()))
 
 
 def excel_sheet_names(filename: Path | str) -> list[str]:
@@ -17,10 +134,10 @@ def excel_sheet_names(filename: Path | str) -> list[str]:
         return workbook.sheet_names
 
 
-def parameters_from_extern(filename: str) -> pd.DataFrame:
+def parameters_from_extern(filename: str) -> pl.DataFrame:
     """Read parameter values or background values
     from specified file. Format either Excel ('xlsx')
-    or csv.
+    or csv. Blank CSV records are skipped; explicit empty fields are retained.
 
     Args:
         filename (str): name of file
@@ -29,14 +146,28 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
         raise ValueError(f"External file '{filename}' does not exist.")
 
     if str(filename).endswith(".xlsx"):
-        return (
-            pd.read_excel(filename, engine="openpyxl")
-            .dropna(axis=0, how="all")
-            .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
+        values = read_excel_values(filename)
+        return values.select(
+            name for name in values.columns if not name.startswith("Unnamed")
         )
 
     if str(filename).endswith(".csv"):
-        return pd.read_csv(filename)
+        with Path(filename).open(encoding="utf-8-sig", newline="") as csv_file:
+            lines = csv_file.readlines()
+        reader = csv.reader(lines)
+        records = []
+        start_line = 0
+        # Record boundaries preserve blank lines inside quoted fields.
+        for _ in reader:
+            record = "".join(lines[start_line : reader.line_num])
+            if record.strip(" \t\r\n"):
+                records.append(record)
+            start_line = reader.line_num
+        return pl.read_csv(
+            StringIO("".join(records)),
+            infer_schema_length=None,
+            null_values=_NULL_VALUES,
+        )
 
     raise ValueError(
         "External file with parameter values should "
@@ -108,25 +239,21 @@ def printwarning(corr_group_name: str) -> None:
     )
 
 
-def to_numeric_safe(val: float | str) -> int | float | str:
-    """Convert all values that CAN be converted to numeric. Retain the rest.
-    This used to be pd.to_numeric(..., errors='ignore'), but was deprecated.
+def to_numeric_safe(val: object) -> object:
+    """Convert numeric strings without changing categorical values.
 
     Examples
     --------
-    >>> df = pd.DataFrame({'a': ['cat', '3.5', '-1', 0, 'dog']})
-    >>> df.map(to_numeric_safe).a.values
-    array(['cat', np.float64(3.5), np.int64(-1), 0, 'dog'], dtype=object)
-
     >>> [to_numeric_safe(e) for e in [5, '3', 'dog']]
-    [5, np.int64(3), 'dog']
+    [5, 3, 'dog']
 
     """
-    assert not isinstance(val, pd.Series | pd.DataFrame | list)
-    try:
-        return pd.to_numeric(val)  # noq
-    except (ValueError, TypeError):
-        return val
+    if isinstance(val, str):
+        if not val:
+            return None
+        if _NUMERIC_STRING.fullmatch(val.strip()):
+            return convert_to_numeric(val)
+    return val
 
 
 def _raise_if_duplicates(container: Iterable[Hashable]) -> None:
@@ -137,48 +264,42 @@ def _raise_if_duplicates(container: Iterable[Hashable]) -> None:
 
 
 def map_dependencies(
-    df: pd.DataFrame, *, dependencies: dict[str, Any], verbose: bool = False
-) -> pd.DataFrame:
+    df: pl.DataFrame, *, dependencies: dict[str, Any], verbose: bool = False
+) -> pl.DataFrame:
     """Return a new copy of `df` with dependencies mapped.
 
     Examples
     --------
-    >>> df = pd.DataFrame({'a': [1, 2, 3, 4], 'b': ['A', 'B', 'C', 'D']})
+    >>> df = pl.DataFrame({'a': [1, 2, 3, 4], 'b': ['A', 'B', 'C', 'D']})
     >>> dependencies = {'a': {'from_values': [1, 2, 3, 4],
     ...                       'to_params':{'c': [1, 4, 9, 16]}}}
-    >>> map_dependencies(df, dependencies=dependencies)
-       a  b   c
-    0  1  A   1
-    1  2  B   4
-    2  3  C   9
-    3  4  D  16
+    >>> map_dependencies(df, dependencies=dependencies).to_dict(as_series=False)
+    {'a': [1, 2, 3, 4], 'b': ['A', 'B', 'C', 'D'], 'c': [1, 4, 9, 16]}
 
     A messy mix of numbers and strings:
 
-    >>> df = pd.DataFrame({'a': ['1', '2', 3, 4], 'b': ['A', 'B', 'C', 'D']})
+    >>> df = pl.DataFrame([
+    ...     pl.Series('a', ['1', '2', 3, 4], dtype=pl.Object),
+    ...     pl.Series('b', ['A', 'B', 'C', 'D']),
+    ... ])
     >>> dependencies = {'a': {'from_values': ['1', 2, '3', 4],
     ...                       'to_params':{'c': [1, 4, 9, '16']}}}
-    >>> map_dependencies(df, dependencies=dependencies)
-       a  b   c
-    0  1  A   1
-    1  2  B   4
-    2  3  C   9
-    3  4  D  16
+    >>> map_dependencies(df, dependencies=dependencies).to_dict(as_series=False)
+    {'a': ['1', '2', 3, 4], 'b': ['A', 'B', 'C', 'D'], 'c': [1, 4, 9, 16]}
 
     If no `to_params` are given, then the `from` column is copied:
 
     >>> dependencies = {'a': {'from_values': ['1', 2, '3', 4],
     ...                       'to_params':{'c': [1, 4, 9, '16'],
     ...                                    'd': []}}}
-    >>> map_dependencies(df, dependencies=dependencies)
-       a  b   c  d
-    0  1  A   1  1
-    1  2  B   4  2
-    2  3  C   9  3
-    3  4  D  16  4
+    >>> map_dependencies(df, dependencies=dependencies).to_dict(
+    ...     as_series=False
+    ... )  # doctest: +NORMALIZE_WHITESPACE
+    {'a': ['1', '2', 3, 4], 'b': ['A', 'B', 'C', 'D'], 'c': [1, 4, 9, 16],
+     'd': [1, 2, 3, 4]}
     """
 
-    df = df.copy()
+    df = df.clone()
     for from_param, from_dict in dependencies.items():
         # No column to map from
         if from_param not in df.columns:
@@ -194,10 +315,11 @@ def map_dependencies(
 
         for to_param, to_values_ in from_dict["to_params"].items():
             to_values = [to_numeric_safe(value) for value in to_values_]
+            source = [to_numeric_safe(value) for value in df[from_param]]
 
             # No values to map to => to_param = copy(from_param)
             if not to_values:
-                df = df.assign(**{to_param: df[from_param].map(to_numeric_safe)})
+                df = df.with_columns(parameter_series(to_param, source))
                 if verbose:
                     print(f"Copied {from_param!r} to {to_param!r}")
                 continue
@@ -215,7 +337,7 @@ def map_dependencies(
             mapping = dict(zip(from_values, to_values, strict=False))
 
             # Check that every value will be mapped
-            not_mapped = set(df[from_param].map(to_numeric_safe)) - set(from_values)
+            not_mapped = set(source) - set(from_values)
             if not_mapped:
                 msg = (
                     f"Mapping dependencies {from_param!r} to {to_param!r} using "
@@ -224,13 +346,8 @@ def map_dependencies(
                 )
                 raise ValueError(msg)
 
-            df = df.assign(
-                **{
-                    # Bind loop variables as default args to the lambda
-                    to_param: lambda df, from_param=from_param, mapping=mapping: (
-                        df[from_param].map(to_numeric_safe).map(mapping)
-                    )
-                }
+            df = df.with_columns(
+                parameter_series(to_param, (mapping[value] for value in source))
             )
             if verbose:
                 print(

@@ -5,9 +5,13 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
+import polars as pl
 import probabilit
+import probabilit.distributions
+import probabilit.modeling
 from scipy import stats
+
+from .utils import read_excel_values
 
 
 def validate_params(distname: str, parameters: list[str]) -> list[float]:
@@ -319,7 +323,7 @@ def is_number(teststring: str) -> bool:
         return False
 
 
-def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
+def read_correlations(excel_filename: str, corr_sheet: str) -> pl.DataFrame:
     """Read a correlation matrix from an Excel sheet.
 
     The sheet must have rows/columns with variable names. They must match.
@@ -331,44 +335,47 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
         corr_sheet (str): name of sheet containing correlation matrix
 
     Returns:
-        pd.DataFrame: Dataframe with correlations, parameter names
-            as column and index
+        pl.DataFrame: Symmetric matrix with parameter names as columns.
+            Rows follow the same parameter order.
     """
     if not str(excel_filename).endswith(".xlsx"):
         raise ValueError(
             "Correlation matrix filename should be on Excel format and end with .xlsx"
         )
 
-    correlations = (
-        pd.read_excel(
-            excel_filename,
-            sheet_name=corr_sheet,
-            index_col=0,
-            # A user reported failures when a single space ' ' was present
-            # in the upper triangular part. Therefore we add spaces as NaN too.
-            na_values=[" " * i for i in range(10)],
-            engine="openpyxl",
+    sheet = read_excel_values(excel_filename, corr_sheet)
+    if not sheet.width:
+        raise ValueError(f"Correlation matrix sheet {corr_sheet!r} is empty.")
+    row_names = [str(value).strip() for value in sheet.to_series(0)]
+    correlations = sheet.select(
+        name for name in sheet.columns[1:] if not name.startswith("Unnamed")
+    ).rename(str.strip)
+    correlations = correlations.with_columns(
+        pl.Series(
+            column.name,
+            [
+                None
+                if value is None or (isinstance(value, str) and not value.strip())
+                else float(value)
+                for value in column
+            ],
+            dtype=pl.Float64,
         )
-        .dropna(axis=0, how="all")
-        # Remove any 'Unnamed' columns that Excel/pandas may have automatically added.
-        .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
-        # Remove whitespace
-        .rename(columns=str.strip)
-        .rename(index=str.strip)
+        for column in correlations
     )
 
-    if list(correlations.index) != list(correlations.columns):
+    if row_names != correlations.columns:
         msg = (
             "Mismatch between column and index in correlation "
             f"matrix sheet: {corr_sheet!r}\n"
-            f"Column: {correlations.columns.tolist()}\n"
-            f"Index : {correlations.index.tolist()}\n"
+            f"Column: {correlations.columns}\n"
+            f"Index : {row_names}\n"
             "These values must match exactly. Please fix sheet "
             f"{corr_sheet!r} in file {excel_filename!r}."
         )
         raise ValueError(msg)
 
-    arr = correlations.to_numpy(copy=True)
+    arr = correlations.to_numpy(writable=True)
     upper_idx = np.triu_indices_from(arr, k=1)
     lower_idx = np.tril_indices_from(arr, k=0)  # Include diag
     lower_entries = arr[lower_idx]
@@ -395,4 +402,4 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
     np.nan_to_num(arr, copy=False, nan=0.0)
     mat = arr + arr.T
     np.fill_diagonal(mat, 1.0)
-    return pd.DataFrame(mat, index=correlations.index, columns=correlations.columns)
+    return pl.DataFrame(mat, schema=correlations.columns, orient="row")

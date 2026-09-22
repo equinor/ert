@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 import pandas as pd
+import polars as pl
 import pytest
 
 from fmudesign import DesignMatrix, excel_to_dict
@@ -26,7 +27,7 @@ def _run_cli(*args):
     )
 
 
-def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
+def test_that_prediction_rejection_reuses_background_and_renumbers_realizations(
     tmp_path,
 ):
     general_input = pd.DataFrame(
@@ -48,11 +49,11 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
         ],
     )
     pd.DataFrame(
-        columns=["RESTARTPATH", "HMREAL", "HMITER"],
+        columns=["REAL", "RESTARTPATH", "HMREAL", "HMITER"],
         data=[
-            ["/scratch/foo/2020a_hm3/", 31, 3],
-            ["/scratch/foo/2020a_hm3/", 38, 3],
-            ["/scratch/foo/2020a_hm3/", 54, 3],
+            [31, "/scratch/foo/2020a_hm3/", 31, 3],
+            [38, "/scratch/foo/2020a_hm3/", 38, 3],
+            [54, "/scratch/foo/2020a_hm3/", 54, 3],
         ],
     ).to_excel(tmp_path / "hmrealizations.xlsx")
 
@@ -83,9 +84,9 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
 
     assert set(design.designvalues["RESTARTPATH"]) == {"/scratch/foo/2020a_hm3/"}
     assert set(design.designvalues["HMITER"]) == {3}
-    assert design.designvalues["REAL"].tolist() == list(range(6))
-    assert design.designvalues["SENSNAME"].tolist() == ["ref"] * 3 + ["oil_rate"] * 3
-    assert design.designvalues["HMREAL"].tolist() == [31, 38, 54] * 2
+    assert design.designvalues["REAL"].to_list() == list(range(6))
+    assert design.designvalues["SENSNAME"].to_list() == ["ref"] * 3 + ["oil_rate"] * 3
+    assert design.designvalues["HMREAL"].to_list() == [31, 38, 54] * 2
 
 
 @pytest.mark.parametrize(
@@ -184,10 +185,10 @@ def test_that_advanced_examples_preserve_correlations_and_dependencies(
         "corr3",
     ]
     derived_values = map_dependencies(
-        pd.DataFrame({"DATO": ["2018-11-02", "2018-11-03", "2018-11-04"]}),
+        pl.DataFrame({"DATO": ["2018-11-02", "2018-11-03", "2018-11-04"]}),
         dependencies=monte_carlo["dependencies"],
     )
-    assert derived_values.to_dict(orient="list") == {
+    assert derived_values.to_dict(as_series=False) == {
         "DATO": ["2018-11-02", "2018-11-03", "2018-11-04"],
         "DERIVED_PARAM1": [1, 2, 3],
         "DERIVED_PARAM2": ["a", "b", "c"],

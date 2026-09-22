@@ -2,12 +2,46 @@ import string
 from pathlib import Path
 
 import hypothesis.strategies as st
-import pandas as pd
+import polars as pl
 import pytest
 import xlsxwriter
 from hypothesis import given
 
-from fmudesign.utils import map_dependencies, resolve_path, seeds_from_extern
+from fmudesign.utils import (
+    map_dependencies,
+    parameters_from_extern,
+    resolve_path,
+    seeds_from_extern,
+)
+
+
+@pytest.mark.parametrize(
+    ("contents", "expected"),
+    [
+        pytest.param(
+            '\n \t\nVALUE\n1\n\n""\n2\n\n',
+            {"VALUE": [1, None, 2]},
+            id="quoted-empty-field",
+        ),
+        pytest.param(
+            "A,B\n\n1,first\n,\n \t\n2,last\n",
+            {"A": [1, None, 2], "B": ["first", None, "last"]},
+            id="empty-fields",
+        ),
+        pytest.param(
+            'VALUE\n\n"first\n\nlast"\n \t\n" \t "\n"quote ""inside"", comma"\n',
+            {"VALUE": ["first\n\nlast", " \t ", 'quote "inside", comma']},
+            id="quoted-newlines-and-whitespace",
+        ),
+    ],
+)
+def test_that_external_csv_skips_blank_lines_but_preserves_empty_and_quoted_fields(
+    tmp_path, contents, expected
+):
+    path = tmp_path / "parameters.csv"
+    path.write_text(contents)
+
+    assert parameters_from_extern(str(path)).to_dict(as_series=False) == expected
 
 
 @pytest.mark.parametrize("suffix", ["xlsx", "csv", "txt"])
@@ -89,5 +123,5 @@ def test_that_duplicate_normalized_dependency_keys_raise_value_error(from_values
 
     with pytest.raises(ValueError, match="Duplicate dependency keys for 'SOURCE'"):
         map_dependencies(
-            pd.DataFrame({"SOURCE": from_values[:1]}), dependencies=dependencies
+            pl.DataFrame({"SOURCE": from_values[:1]}), dependencies=dependencies
         )

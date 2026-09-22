@@ -2,10 +2,13 @@
 
 import json
 import math
+from contextlib import closing
 from datetime import datetime
 
 import numpy as np
+import openpyxl
 import pandas as pd
+import polars as pl
 import pytest
 from scipy import stats
 
@@ -218,7 +221,7 @@ def test_that_generated_distributions_match_configured_statistics(
 
     # Check that correlations are close
     if correlations:
-        obs_corr = df[design_input["param_name"]].corr().to_numpy()
+        obs_corr = df.select(design_input["param_name"].tolist()).corr().to_numpy()
         assert np.sqrt(np.mean((obs_corr - corr_values) ** 2)) < 0.02
 
 
@@ -389,14 +392,132 @@ def test_that_onebyone_design_contains_configured_cases_and_values(
     datetime.fromisoformat(diskmetadata["Value"].iloc[1])
 
 
-def _assert_design_snapshot(design, snapshot):
-    rounded_values = design.designvalues.map(
-        lambda value: value if isinstance(value, str) else float(f"{value:.6g}")
+def test_that_generated_workbook_preserves_numeric_and_boolean_scenario_values(
+    tmp_path,
+):
+    design = DesignMatrix()
+    design.generate(
+        {
+            "designtype": "onebyone",
+            "repeats": 1,
+            "distribution_seed": 42,
+            "seeds": None,
+            "defaultvalues": {"VALUE": 1e-10, "FLAG": True},
+            "sensitivities": {
+                "reference": {"senstype": "ref"},
+                "scenarios": {
+                    "senstype": "scenario",
+                    "cases": {
+                        "numeric": {"VALUE": "1.9999999999", "FLAG": False},
+                        "categorical": {"VALUE": "sand", "FLAG": True},
+                    },
+                },
+            },
+        }
     )
+    output_path = tmp_path / "design.xlsx"
+    design.to_xlsx(str(output_path))
+
+    with closing(openpyxl.load_workbook(output_path, read_only=True)) as workbook:
+        rows = list(workbook["DesignSheet01"].values)
+        values = dict(zip(rows[0], zip(*rows[1:], strict=True), strict=True))
+        assert values["VALUE"] == (1e-10, 1.9999999999, "sand")
+        assert values["FLAG"] == (True, False, True)
+        assert all(isinstance(value, bool) for value in values["FLAG"])
+        assert list(workbook["DefaultValues"].values) == [
+            ("VALUE", 1e-10),
+            ("FLAG", True),
+        ]
+
+
+@pytest.mark.parametrize("suffix", ["xlsx", "csv"])
+def test_that_background_fills_missing_external_values_before_defaults(
+    tmp_path, suffix
+):
+    external = pd.DataFrame({"ROW": [0, 1, 2], "VALUE": [1.9999999999, None, "sand"]})
+    background = pd.DataFrame({"VALUE": [2e-10, 0.123456789012345]})
+    external_path = tmp_path / f"external.{suffix}"
+    background_path = tmp_path / f"background.{suffix}"
+    for frame, path in [(external, external_path), (background, background_path)]:
+        if suffix == "xlsx":
+            frame.to_excel(path, index=False)
+        else:
+            path.write_text(frame.to_csv(index=False).replace("\n", "\n\n"))
+
+    design = DesignMatrix()
+    design.generate(
+        {
+            "designtype": "onebyone",
+            "repeats": 3,
+            "distribution_seed": 42,
+            "seeds": None,
+            "defaultvalues": {"VALUE": 1e-10},
+            "background": {"extern": str(background_path)},
+            "sensitivities": {
+                "external": {
+                    "senstype": "extern",
+                    "extern_file": str(external_path),
+                    "parameters": ["VALUE"],
+                },
+                "reference": {"senstype": "ref"},
+            },
+        }
+    )
+    output_path = tmp_path / "design.xlsx"
+    design.to_xlsx(str(output_path))
+
+    with closing(openpyxl.load_workbook(output_path, read_only=True)) as workbook:
+        rows = list(workbook["DesignSheet01"].values)
+        values = dict(zip(rows[0], zip(*rows[1:], strict=True), strict=True))
+        assert values["SENSNAME"] == ("external",) * 3 + ("reference",) * 3
+        assert values["VALUE"] == (
+            1.9999999999,
+            0.123456789012345,
+            "sand",
+            2e-10,
+            0.123456789012345,
+            1e-10,
+        )
+
+
+def test_that_numeric_scenario_text_with_whitespace_is_rounded():
+    design = DesignMatrix()
+    design.generate(
+        {
+            "designtype": "onebyone",
+            "repeats": 1,
+            "distribution_seed": 42,
+            "seeds": None,
+            "defaultvalues": {"VALUE": "0"},
+            "decimals": {"VALUE": 1},
+            "sensitivities": {
+                "scenarios": {
+                    "senstype": "scenario",
+                    "cases": {
+                        "first": {"VALUE": " 1.26 "},
+                        "second": {"VALUE": "2.34"},
+                    },
+                    "dependencies": {},
+                }
+            },
+        }
+    )
+
+    assert design.designvalues["VALUE"].to_list() == [1.3, 2.3]
+
+
+def _assert_design_snapshot(design, snapshot):
+    rounded_values = [
+        {
+            name: value if isinstance(value, str) else float(f"{value:.6g}")
+            for name, value in row.items()
+        }
+        for row in design.designvalues.to_dicts()
+    ]
     snapshot.assert_match(
         json.dumps(
             {
-                "designvalues": rounded_values.to_dict("records"),
+                "designvalues": rounded_values,
                 "defaultvalues": dict(design.defaultvalues),
             },
             indent=2,
@@ -466,11 +587,11 @@ def test_that_full_monte_carlo_design_applies_dependencies_and_correlations(tmp_
         "2018-11-03": "b",
         "2018-11-04": "c",
     }
-    assert design_values["DERIVED_PARAM1"].tolist() == (
-        design_values["DATO"].map(expected_derived_1).tolist()
+    assert design_values["DERIVED_PARAM1"].to_list() == (
+        design_values["DATO"].replace_strict(expected_derived_1).to_list()
     )
-    assert design_values["DERIVED_PARAM2"].tolist() == (
-        design_values["DATO"].map(expected_derived_2).tolist()
+    assert design_values["DERIVED_PARAM2"].to_list() == (
+        design_values["DATO"].replace_strict(expected_derived_2).to_list()
     )
 
     # Check that variables are correlated using Pearson correlation
@@ -505,15 +626,18 @@ def test_that_full_monte_carlo_design_applies_dependencies_and_correlations(tmp_
     # Check that we can add correlations to discrete variables.
     # DATO is stored as strings, so convert to ordinals: spearmanr needs
     # numeric input, otherwise scipy passes an object array to np.cov.
-    dato_ordinal = pd.to_datetime(design_values["DATO"]).astype("int64")
+    dato_ordinal = design_values["DATO"].str.to_date().cast(pl.Int32).to_numpy()
     assert np.isclose(
         stats.spearmanr(dato_ordinal, design_values["NTG1"])[0], 0.8, atol=0.1
     )
 
-    date_fractions = design_values["DATO"].value_counts(normalize=True)
-    assert math.isclose(date_fractions.loc["2018-11-02"], 0.3)
-    assert math.isclose(date_fractions.loc["2018-11-03"], 0.4)
-    assert math.isclose(date_fractions.loc["2018-11-04"], 0.3)
+    date_fractions = {
+        date: count / len(design_values)
+        for date, count in design_values["DATO"].value_counts().iter_rows()
+    }
+    assert math.isclose(date_fractions["2018-11-02"], 0.3)
+    assert math.isclose(date_fractions["2018-11-03"], 0.4)
+    assert math.isclose(date_fractions["2018-11-04"], 0.3)
 
 
 @pytest.mark.slow
@@ -559,21 +683,21 @@ def test_that_background_fills_inactive_parameters_without_overwriting_sensitivi
     design.generate(input_dict)
 
     background_params = ["PARAM17", "PARAM18", "PARAM19"]
-    background_vals = design.designvalues.loc[
-        design.designvalues["SENSNAME"] == "background", background_params
-    ]
-    velmodel_vals = design.designvalues.loc[
-        design.designvalues["SENSNAME"] == "velmodel", background_params
-    ]
+    background_vals = design.designvalues.filter(
+        pl.col("SENSNAME") == "background"
+    ).select(background_params)
+    velmodel_vals = design.designvalues.filter(pl.col("SENSNAME") == "velmodel").select(
+        background_params
+    )
     assert (background_vals.to_numpy() == velmodel_vals.to_numpy()).all()
 
     # Background samples fill inactive parameters, but must not replace values
     # explicitly sampled by a sensitivity using the same parameter names.
-    sens9_vals = design.designvalues.loc[
-        design.designvalues["SENSNAME"] == "sens9", background_params
-    ]
+    sens9_vals = design.designvalues.filter(pl.col("SENSNAME") == "sens9").select(
+        background_params
+    )
     assert design.backgroundvalues is not None
-    sampled_background = design.backgroundvalues[background_params]
+    sampled_background = design.backgroundvalues.select(background_params)
     assert sens9_vals.shape == sampled_background.shape
     for parameter in background_params:
         assert not np.array_equal(
@@ -581,21 +705,21 @@ def test_that_background_fills_inactive_parameters_without_overwriting_sensitivi
             sampled_background[parameter].to_numpy(),
         ), f"sens9 values for {parameter} were replaced by background samples"
 
-    faults_vals = design.designvalues.loc[
-        design.designvalues["SENSNAME"] == "faults", background_params
-    ]
-    contacts_vals = design.designvalues.loc[
-        design.designvalues["SENSNAME"] == "contacts", background_params
-    ]
+    faults_vals = design.designvalues.filter(pl.col("SENSNAME") == "faults").select(
+        background_params
+    )
+    contacts_vals = design.designvalues.filter(pl.col("SENSNAME") == "contacts").select(
+        background_params
+    )
     assert (faults_vals.to_numpy() == contacts_vals.to_numpy()).all()
 
-    sens6 = design.designvalues[design.designvalues["SENSNAME"] == "sens6"]
+    sens6 = design.designvalues.filter(pl.col("SENSNAME") == "sens6")
     assert np.isclose(
         stats.spearmanr(sens6["PARAM5"], sens6["PARAM6"])[0],
         0.8,
         atol=0.1,
     )
-    sens7 = design.designvalues[design.designvalues["SENSNAME"] == "sens7"]
+    sens7 = design.designvalues.filter(pl.col("SENSNAME") == "sens7")
     assert np.isclose(
         stats.spearmanr(sens7["PARAM9"], sens7["PARAM10"])[0],
         0.8,
@@ -627,8 +751,7 @@ def test_that_read_correlations_returns_labeled_symmetric_matrix(tmp_path):
     result = design_dist.read_correlations(str(filepath), corr_sheet="corr1")
     arr = result.to_numpy()
 
-    assert list(result.index) == names
-    assert list(result.columns) == names
+    assert result.columns == names
     np.testing.assert_array_almost_equal(arr, arr.T)
     np.testing.assert_array_almost_equal(np.diag(arr), [1.0, 1.0, 1.0])
     assert np.isclose(arr[1, 0], 0.5)
@@ -651,23 +774,23 @@ def test_that_print_corrmat_formats_without_mutating_input(capsys):
 
 def test_that_fill_with_background_values_replaces_missing_parameter_values():
     dm = DesignMatrix()
-    dm.designvalues = pd.DataFrame(
+    dm.designvalues = pl.DataFrame(
         {
             "SENSNAME": ["s1", "s1"],
             "SENSCASE": ["c1", "c1"],
             "param1": [np.nan, np.nan],
         }
     )
-    dm.backgroundvalues = pd.DataFrame({"param1": [10.0, 20.0]})
+    dm.backgroundvalues = pl.DataFrame({"param1": [10.0, 20.0]})
     dm._fill_with_background_values()
 
     assert "index" not in dm.designvalues.columns
-    assert dm.designvalues["param1"].tolist() == [10.0, 20.0]
+    assert dm.designvalues["param1"].to_list() == [10.0, 20.0]
 
 
 def test_that_set_decimals_propagates_zero_precision_to_dependency():
     design = DesignMatrix()
-    design.designvalues = pd.DataFrame({"SOURCE": [1.6], "TARGET": [1.6]})
+    design.designvalues = pl.DataFrame({"SOURCE": [1.6], "TARGET": [1.6]})
     config = {
         "decimals": {"SOURCE": 0},
         "sensitivities": {
@@ -681,7 +804,7 @@ def test_that_set_decimals_propagates_zero_precision_to_dependency():
 
     design._set_decimals(config)
 
-    assert design.designvalues["TARGET"].tolist() == [2.0]
+    assert design.designvalues["TARGET"].to_list() == [2.0]
 
 
 def _sample_mc(
@@ -710,7 +833,7 @@ def _sample_mc(
 
 
 def _col(df, name):
-    return df[name].to_numpy(dtype=float)
+    return df[name].cast(pl.Float64).to_numpy()
 
 
 def _write_correlation_sheets(path, sheets):
@@ -789,8 +912,8 @@ def test_that_sampling_strategies_reproduce_configured_marginal_distributions(
     design = DesignMatrix()
     design.generate(_design_dict(params, strategy, repeats=10000))
 
-    n = design.designvalues["N"].to_numpy(float)
-    u = design.designvalues["U"].to_numpy(float)
+    n = design.designvalues["N"].to_numpy()
+    u = design.designvalues["U"].to_numpy()
     assert np.isclose(n.mean(), 0.0, atol=0.1)
     assert np.isclose(n.std(), 2.0, atol=0.1)
     assert u.min() >= -5
@@ -907,10 +1030,10 @@ def test_that_independent_sampling_preserves_background_when_parameter_is_added(
     d2.generate(_design_dict(params, "independent", background=bg2))
     d3.generate(_design_dict(params, "independent", background=bg3))
     np.testing.assert_array_equal(
-        d2.designvalues["BG1"].to_numpy(float), d3.designvalues["BG1"].to_numpy(float)
+        d2.designvalues["BG1"].to_numpy(), d3.designvalues["BG1"].to_numpy()
     )
     np.testing.assert_array_equal(
-        d2.designvalues["BG2"].to_numpy(float), d3.designvalues["BG2"].to_numpy(float)
+        d2.designvalues["BG2"].to_numpy(), d3.designvalues["BG2"].to_numpy()
     )
 
 
@@ -922,8 +1045,8 @@ def test_that_independent_sampling_without_seed_is_finite_and_nonreproducible():
     d1, d2 = DesignMatrix(), DesignMatrix()
     d1.generate(_design_dict(params, "independent", distribution_seed=None))
     d2.generate(_design_dict(params, "independent", distribution_seed=None))
-    a1 = d1.designvalues["A"].to_numpy(float)
-    a2 = d2.designvalues["A"].to_numpy(float)
+    a1 = d1.designvalues["A"].to_numpy()
+    a2 = d2.designvalues["A"].to_numpy()
     assert not np.isnan(a1).any()
     assert not np.allclose(a1, a2)
 
@@ -1062,8 +1185,8 @@ def test_that_independent_sampling_preserves_correlated_background_when_extended
     )
     d2.generate(_design_dict(params, "independent", repeats=2000, background=extended))
 
-    bg1 = d1.designvalues["BG1"].to_numpy(float)
-    bg2 = d1.designvalues["BG2"].to_numpy(float)
+    bg1 = d1.designvalues["BG1"].to_numpy()
+    bg2 = d1.designvalues["BG2"].to_numpy()
     assert abs(np.corrcoef(bg1, bg2)[0, 1] - 0.6) < 0.05
-    np.testing.assert_array_equal(bg1, d2.designvalues["BG1"].to_numpy(float))
-    np.testing.assert_array_equal(bg2, d2.designvalues["BG2"].to_numpy(float))
+    np.testing.assert_array_equal(bg1, d2.designvalues["BG1"].to_numpy())
+    np.testing.assert_array_equal(bg2, d2.designvalues["BG2"].to_numpy())

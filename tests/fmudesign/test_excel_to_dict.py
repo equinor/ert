@@ -5,6 +5,7 @@ from datetime import date
 import numpy as np
 import openpyxl
 import pandas as pd
+import polars as pl
 import pytest
 
 from fmudesign import excel_to_dict, inputdict_to_yaml
@@ -481,11 +482,11 @@ def test_that_dependency_columns_map_by_parameter_name_and_exact_source_value(tm
     )
 
     result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["low", 2, " high "]}),
+        pl.DataFrame([pl.Series("SOURCE", ["low", 2, " high "], dtype=pl.Object)]),
         dependencies={"SOURCE": dependencies},
     )
 
-    assert result.to_dict(orient="list") == {
+    assert result.to_dict(as_series=False) == {
         "SOURCE": ["low", 2, " high "],
         "MULTIPLIER": [-3, 2.5, 1],
         "LABEL": ["shale", "mixed", " sand "],
@@ -507,11 +508,13 @@ def test_that_numeric_dependency_keys_and_targets_preserve_precision(tmp_path):
     )
 
     result = map_dependencies(
-        pd.DataFrame({"SOURCE": [2, "other", 1.9999999999]}),
+        pl.DataFrame(
+            [pl.Series("SOURCE", [2, "other", 1.9999999999], dtype=pl.Object)]
+        ),
         dependencies={"SOURCE": dependencies},
     )
 
-    assert result.to_dict(orient="list") == {
+    assert result.to_dict(as_series=False) == {
         "SOURCE": [2, "other", 1.9999999999],
         "TARGET": [0.123456789012345, -1e-10, 1e-10],
     }
@@ -531,11 +534,11 @@ def test_that_native_excel_dates_and_text_timestamps_map_to_distinct_values(tmp_
     )
 
     result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["2018-11-02 00:00:00", "2018-11-02"]}),
+        pl.DataFrame({"SOURCE": ["2018-11-02 00:00:00", "2018-11-02"]}),
         dependencies={"SOURCE": dependencies},
     )
 
-    assert result.to_dict(orient="list") == {
+    assert result.to_dict(as_series=False) == {
         "SOURCE": ["2018-11-02 00:00:00", "2018-11-02"],
         "TARGET": ["text-timestamp", "native-date"],
     }
@@ -556,11 +559,11 @@ def test_that_excel_booleans_match_title_case_dependency_categories(tmp_path):
     )
 
     result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["True", "true", "TRUE"]}),
+        pl.DataFrame({"SOURCE": ["True", "true", "TRUE"]}),
         dependencies={"SOURCE": dependencies},
     )
 
-    assert result.to_dict(orient="list") == {
+    assert result.to_dict(as_series=False) == {
         "SOURCE": ["True", "true", "TRUE"],
         "TARGET": ["False", "false", "FALSE"],
     }
@@ -625,11 +628,11 @@ def test_that_dependency_headers_without_rows_copy_source_values(tmp_path):
     )
 
     result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["C1", "C2"]}),
+        pl.DataFrame({"SOURCE": ["C1", "C2"]}),
         dependencies={"SOURCE": dependencies},
     )
 
-    assert result.to_dict(orient="list") == {
+    assert result.to_dict(as_series=False) == {
         "SOURCE": ["C1", "C2"],
         "COPY": ["C1", "C2"],
     }
