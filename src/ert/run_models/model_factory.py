@@ -110,6 +110,24 @@ def _merge_parameter_configs(
     return merged, DictEncodedDataFrame.from_polars(design_matrix.design_matrix_df)
 
 
+def _merge_parameters(
+    design_matrix: DesignMatrix | None,
+    parameter_configs: list[ParameterConfig],
+) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
+    if design_matrix is None:
+        return parameter_configs, None
+
+    merged_parameter_configs = design_matrix.merge_with_existing_parameters(
+        parameter_configs
+    )
+
+    validate_has_updatable_parameter(merged_parameter_configs)
+
+    return merged_parameter_configs, DictEncodedDataFrame.from_polars(
+        design_matrix.design_matrix_df
+    )
+
+
 def _resolve_parameter_configs(
     config: ErtConfig, prior_ensemble: str | None = None
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
@@ -321,6 +339,11 @@ def _setup_manual_update(
         ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
         experiment_name=args.experiment_name,
+        parameter_configuration=getattr(
+            args,
+            "parameter_configuration",
+            config.ensemble_config.parameter_configuration,
+        ),
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -357,6 +380,7 @@ def _setup_manual_update_enif(
         ert_templates=config.ert_templates,
         shape_registry=config.shape_registry,
         experiment_name=args.experiment_name,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
     )
     return ManualUpdateEnIF(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -451,13 +475,29 @@ def _setup_ensemble_information_filter(
     )
 
 
+def _determine_previous_ensemble_id(args: Namespace) -> str | None:
+    """Handles differences in configuration between CLI and GUI.
+
+    Returns
+    -------
+    The prior ensemble id to start from.
+    """
+    if hasattr(args, "restart_ensemble_id"):
+        # When running from CLI
+        prior_ensemble = args.restart_ensemble_id or None
+    else:
+        # When running from GUI
+        prior_ensemble = args.prior_ensemble_id
+    return prior_ensemble
+
+
 def _setup_multiple_data_assimilation(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> MultipleDataAssimilation:
-    prior_ensemble = args.prior_ensemble_id or None
+    prior_ensemble = _determine_previous_ensemble_id(args)
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
     if sum(active_realizations) < 2:
@@ -465,8 +505,13 @@ def _setup_multiple_data_assimilation(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    parameter_configs, design_matrix = _resolve_parameter_configs(
-        config, prior_ensemble
+    parameter_configs, design_matrix = _merge_parameters(
+        design_matrix=None if prior_ensemble else config.analysis_config.design_matrix,
+        parameter_configs=getattr(
+            args,
+            "parameter_configuration",
+            config.ensemble_config.parameter_configuration,
+        ),
     )
 
     runmodel_config = MultipleDataAssimilationConfig(
