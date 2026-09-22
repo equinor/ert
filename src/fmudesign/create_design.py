@@ -10,7 +10,6 @@ used to generate design matrices, including one or several Sensitivities.
 
 from __future__ import annotations
 
-import copy
 import hashlib
 from datetime import datetime
 from pathlib import Path
@@ -173,12 +172,10 @@ class DesignMatrix:
                     )
                     sensitivity.generate(size=size)
                     sensitivity.map_dependencies(sens.get("dependencies", {}))
-                    self._add_sensitivity(sensitivity)
                 case "background":
                     sensitivity = BackgroundSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(size=size)
                     sensitivity.map_dependencies(sens.get("dependencies", {}))
-                    self._add_sensitivity(sensitivity)
                 case "seed":
                     sensitivity = SeedSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -188,8 +185,6 @@ class DesignMatrix:
                         parameters=sens["parameters"],
                     )
                     sensitivity.map_dependencies(sens.get("dependencies", {}))
-
-                    self._add_sensitivity(sensitivity)
                 case "scenario":
                     sensitivity = ScenarioSensitivity(key, verbosity=self.verbosity)
                     for casekey, case in sens["cases"].items():
@@ -201,8 +196,6 @@ class DesignMatrix:
                         )
                         sensitivity.add_case(temp_case)
                         sensitivity.map_dependencies(sens.get("dependencies", {}))
-
-                    self._add_sensitivity(sensitivity)
                 case "dist":
                     sensitivity = MonteCarloSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -218,9 +211,6 @@ class DesignMatrix:
                         base_seed=self.base_seed,
                     )
                     sensitivity.map_dependencies(sens.get("dependencies", {}))
-
-                    self._add_sensitivity(sensitivity)
-
                 case "extern":
                     sensitivity = ExternSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -230,16 +220,13 @@ class DesignMatrix:
                         seedvalues=self.seedvalues,
                     )
                     sensitivity.map_dependencies(sens.get("dependencies", {}))
-
-                    self._add_sensitivity(sensitivity)
-
                 case unknown:
                     raise ValueError(f"Unknown sensitivity type: {unknown!r}")
 
+            self._add_sensitivity(sensitivity)
+
             # MonteCarloSensitivity is special - it can produce debugging outputs
-            is_montecarlo = isinstance(sensitivity, MonteCarloSensitivity)
-            if is_montecarlo and self.verbosity > 0:
-                sensitivity = cast("MonteCarloSensitivity", sensitivity)
+            if isinstance(sensitivity, MonteCarloSensitivity) and self.verbosity > 0:
                 quality_reporter = QualityReporter(
                     df=sensitivity.sensvalues, variables=sens["parameters"]
                 )
@@ -250,23 +237,22 @@ class DesignMatrix:
                 for corr_name, df_corr in sensitivity.correlation_dfs_.items():
                     quality_reporter.print_correlation(corr_name, df_corr)
 
-            if is_montecarlo and self.verbosity > 1 and self.output_dir is not None:
-                sensitivity = cast("MonteCarloSensitivity", sensitivity)
-                output_dir = self.output_dir / key
-                quality_reporter.plot_columns(output_dir=output_dir)
+                if self.verbosity > 1 and self.output_dir is not None:
+                    output_dir = self.output_dir / key
+                    quality_reporter.plot_columns(output_dir=output_dir)
 
-                # Correlations
-                for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-                    # Always plot heatmaps
-                    quality_reporter.plot_correlation_heatmap(
-                        corr_name, df_corr, output_dir=output_dir, show=False
-                    )
-
-                    # Only plot pairgrid for small correlations
-                    if len(df_corr) <= 6:
-                        quality_reporter.plot_correlation(
+                    # Correlations
+                    for corr_name, df_corr in sensitivity.correlation_dfs_.items():
+                        # Always plot heatmaps
+                        quality_reporter.plot_correlation_heatmap(
                             corr_name, df_corr, output_dir=output_dir, show=False
                         )
+
+                        # Only plot pairgrid for small correlations
+                        if len(df_corr) <= 6:
+                            quality_reporter.plot_correlation(
+                                corr_name, df_corr, output_dir=output_dir, show=False
+                            )
 
         # Once all sensitivities have been added, complete the work
         if "background" in inputdict:
@@ -437,7 +423,7 @@ class DesignMatrix:
         grouped = self.designvalues.groupby(["SENSNAME", "SENSCASE"], sort=False)
         result_values = pd.DataFrame()
         for sensname, case_ in grouped:
-            temp_df = case_.reset_index()
+            temp_df = case_.reset_index(drop=True)
             temp_df = temp_df.fillna(self.backgroundvalues)
             for key in self.backgroundvalues.columns:
                 if key not in case_:
@@ -458,7 +444,6 @@ class DesignMatrix:
                     )
             result_values = pd.concat([result_values, temp_df])
 
-        result_values = result_values.drop(["index"], axis=1)
         self.designvalues = result_values
 
     def _fill_with_defaultvalues(self) -> None:
@@ -543,11 +528,11 @@ class DesignMatrix:
                                     with key "decimals". This sub-dict has
                                     (key, value)s are (param, decimals)
         """
-        inputdict = copy.deepcopy(inputdict)
-
         # No decimal information => Nothing to do.
-        if not inputdict.get("decimals", {}):
+        if not inputdict.get("decimals"):
             return
+
+        dict_decimals = inputdict["decimals"].copy()
 
         # If there are dependencies (derived params) that are copies,
         # like TO := copy(FROM), then the new TO column must be rounded too.
@@ -556,12 +541,11 @@ class DesignMatrix:
                 continue
             for from_param, from_dict in sensdict["dependencies"].items():
                 for to_param in from_dict["to_params"]:
-                    if from_param not in inputdict["decimals"]:
+                    if from_param not in dict_decimals:
                         continue
-                    inputdict["decimals"][to_param] = inputdict["decimals"][from_param]
+                    dict_decimals[to_param] = dict_decimals[from_param]
 
         # Round each column
-        dict_decimals = inputdict["decimals"]
         for key in self.designvalues.columns:
             if key in dict_decimals:
                 if is_number(self.designvalues[key].iloc[0]):
