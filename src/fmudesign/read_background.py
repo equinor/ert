@@ -35,11 +35,9 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
         .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
     )
 
-    backdict["correlations"] = None
-    if "corr_sheet" in bck_input:
-        backdict["correlations"] = parse_sensitivity_correlations(
-            bck_input, inp_filename, group_description=f"background sheet {bck_sheet!r}"
-        )
+    backdict["correlations"] = parse_sensitivity_correlations(
+        bck_input, inp_filename, group_description=f"background sheet {bck_sheet!r}"
+    )
 
     backdict["parameters"] = parse_distribution_parameters(
         bck_input, source="background"
