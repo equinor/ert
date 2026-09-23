@@ -42,6 +42,9 @@ class ExportRFTJob(ErtScript):
         paths = run_paths.get_paths(realizations, iteration)
 
         for realization, runpath in zip(realizations, paths, strict=True):
+            if self.isCancelled():
+                return
+
             realization_data = observations_and_responses.filter(
                 observations_and_responses["realization"] == realization
             ).drop("realization")

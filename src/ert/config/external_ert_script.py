@@ -16,11 +16,24 @@ class ExternalErtScript(ErtScript):
         self.__job: Popen[bytes] | None = None
 
     def run(self, *args: Any) -> None:
+        if self.isCancelled():
+            # cancel() was called before the process was spawned; there is
+            # nothing running yet for it to terminate.
+            return
+
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 
         # we take care to terminate the process in cancel()
         self.__job = Popen(command, stdout=PIPE, stderr=PIPE)
+
+        if self.isCancelled():
+            # cancel() raced with the Popen() call above: it ran after the
+            # check at the top of this method but before self.__job was
+            # assigned, so it saw no process to terminate. Terminate it now
+            # instead of waiting for it to finish uncancelled.
+            self.__job.terminate()
+            self.__job.kill()
 
         # The job will complete before stdout and stderr is returned
         stdoutdata, stderrdata = self.__job.communicate()
