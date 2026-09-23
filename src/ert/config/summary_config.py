@@ -39,9 +39,9 @@ class SummaryConfig(SimulationResponseConfig):
         ]
         _warn_about_missing_responses(keys_missing_responses, "summary", filename)
 
-    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
+    def read_from_file(self, runpath: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
-        _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
+        _, keys, time_map, data = read_summary(f"{runpath}/{filename}", self.keys)
 
         self._warn_about_missing_summary_responses(keys, filename)
         # Important: Pick lowest unit resolution to allow for using
