@@ -90,7 +90,7 @@ def test_that_misfit_map_plot_show_no_obs_data_message_when_obs_data_is_empty(
     assert figure.axes[0].texts[0].get_text() == "No observation data available"
 
 
-def test_that_misfit_map_uses_default_title_and_axis_labels_when_plot_config_is_unset(
+def test_misfit_map_plot_uses_custom_title_and_axis_labels_when_plot_config_is_set(
     make_plot_context,
     make_key_def,
     make_ensemble,
@@ -99,7 +99,7 @@ def test_that_misfit_map_uses_default_title_and_axis_labels_when_plot_config_is_
     plot_context = make_plot_context(
         [ensemble],
         key="SEISMIC_KEY",
-        plot_config=PlotConfig(title="Costum map title"),
+        plot_config=PlotConfig(title="Custom map title"),
     )
     key_def = make_key_def(data_origin="seismic")
     figure = Figure()
@@ -130,7 +130,7 @@ def test_that_misfit_map_uses_default_title_and_axis_labels_when_plot_config_is_
     )
 
     assert len(figure.axes) == 2
-    assert figure.axes[0].get_title() == "Costum map title"
+    assert figure.axes[0].get_title() == "Custom map title"
     assert figure.axes[0].get_xlabel() == "east coordinate"
     assert figure.axes[0].get_ylabel() == "north coordinate"
 
