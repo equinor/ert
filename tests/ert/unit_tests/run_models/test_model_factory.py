@@ -309,6 +309,12 @@ def test_that_multiple_data_assimilation_runpaths_start_after_prior_iteration(
         "validate_successful_realizations_count",
         MagicMock(),
     )
+    monkeypatch.setattr(
+        ert.run_models.model_factory,
+        "validate_has_updatable_parameter",
+        lambda parameter_configs: None,
+    )
+
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = prior_iteration
     config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
