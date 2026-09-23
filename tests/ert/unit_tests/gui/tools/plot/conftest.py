@@ -123,7 +123,6 @@ def mocked_requests_get(*args, **kwargs):
                 "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
                 "east": [None, None],
                 "north": [None, None],
-                "radius": [None, None],
             }
         ],
     }
