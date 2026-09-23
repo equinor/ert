@@ -30,7 +30,7 @@ from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
-from ert.gui.plotting.ert_plots.misfits import MisfitsPlot
+from ert.gui.plotting.ert_plots.misfits import wide_pandas_to_long_polars_with_misfits
 from ert.gui.plotting.utils.plot_maps import (
     CROSS_ENSEMBLE_STATISTICS,
     DISTRIBUTION,
@@ -638,7 +638,7 @@ class PlotWindow(QMainWindow):
                                 response_key=key,
                                 filter_on=key_def.filter_on,
                             )
-                        misfits = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+                        misfits = wide_pandas_to_long_polars_with_misfits(
                             {
                                 (
                                     initial_ensemble.name,
