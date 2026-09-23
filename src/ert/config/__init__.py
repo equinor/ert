@@ -9,7 +9,7 @@ from .analysis_config import (
 from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
 from .breakthrough_config import BreakthroughConfig
 from .capture_validation import capture_validation
-from .design_matrix import DesignMatrix
+from .design_matrix import DesignMatrix, FmuDesignMatrix
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig, forward_model_step_from_config_contents
 from .ert_plugin import ErtPlugin
@@ -113,6 +113,7 @@ __all__ = [
     "ExecutableWorkflow",
     "ExternalErtScript",
     "Field",
+    "FmuDesignMatrix",
     "ForwardModelStep",
     "ForwardModelStepDocumentation",
     "ForwardModelStepJSON",

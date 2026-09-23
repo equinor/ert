@@ -306,6 +306,17 @@ def design_matrix_keyword() -> SchemaItem:
     )
 
 
+def fmudesign_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.FMUDESIGN,
+        argc_min=1,
+        argc_max=2,
+        type_map=[SchemaItemType.EXISTING_PATH],
+        options_after=1,
+        multi_occurrence=True,
+    )
+
+
 def seismic_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.SEISMIC,
@@ -380,6 +391,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         positive_int_keyword(ConfigKeys.MAX_RUNNING),
         string_keyword(ConfigKeys.REALIZATION_MEMORY),
         design_matrix_keyword(),
+        fmudesign_keyword(),
         queue_system_keyword(False),
         queue_option_keyword(),
         load_workflow_job_keyword(),

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import math
+import numbers
 from collections import Counter
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar, TypeGuard, cast, override
+from zipfile import BadZipFile
 
 import numpy as np
 import polars as pl
@@ -17,13 +20,16 @@ from python_calamine import CalamineWorkbook
 from ert.config.parameter_config import LocalizationType
 from ert.config.parsing.config_errors import ConfigWarning
 
+from ._capture_output import capturing
 from .distribution import RawSettings
 from .gen_kw_config import DataSource, GenKwConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
+    import fmudesign
     from ert.config import ParameterConfig
 
+logger = logging.getLogger(__name__)
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
@@ -502,6 +508,141 @@ class DesignMatrix:
             elif param_name.isnumeric():
                 errors.append(f"Numeric parameter name found in column {column_num}.")
         return errors
+
+
+@dataclass
+class FmuDesignMatrix(DesignMatrix):
+    """Design matrix generated in memory from an fmudesign input file."""
+
+    design_sheet: str = "designinput"
+    default_sheet: str = "defaultvalues"
+    general_input_sheet: str = "general_input"
+
+    @classmethod
+    @override
+    def from_config_list(
+        cls,
+        config_list: list[str | dict[str, str]],
+        update_strategy: LocalizationType | None,
+    ) -> FmuDesignMatrix:
+        filename = Path(cast(str, config_list[0]))
+        options = cast(dict[str, str], config_list[1])
+        valid_options = [
+            "GENERAL_INPUT_SHEET",
+            "DESIGN_INPUT_SHEET",
+            "DEFAULT_VALUES_SHEET",
+        ]
+        errors = [
+            ErrorInfo(
+                f"Option {option} is not a valid FMUDESIGN option. "
+                f"Valid options are {', '.join(valid_options)}."
+            ).set_context(config_list)
+            for option in options
+            if option not in valid_options
+        ]
+        if filename.suffix != ".xlsx":
+            errors.append(
+                ErrorInfo(
+                    f"FMUDESIGN must have file extension .xlsx; is '{filename}'"
+                ).set_context(config_list)
+            )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        return cls(
+            filename=filename,
+            design_sheet=options.get("DESIGN_INPUT_SHEET", "designinput"),
+            default_sheet=options.get("DEFAULT_VALUES_SHEET", "defaultvalues"),
+            general_input_sheet=options.get("GENERAL_INPUT_SHEET", "general_input"),
+            update_strategy=update_strategy,
+        )
+
+    @override
+    def read_and_validate_design_matrix(
+        self,
+    ) -> tuple[list[bool], pl.DataFrame, list[GenKwConfig]]:
+        design = self._generate_design()
+        design_values = design.designvalues
+        design_matrix_df = pl.DataFrame(
+            [
+                _as_design_column(
+                    f"column_{index}", design_values.iloc[:, index].tolist()
+                )
+                for index in range(design_values.shape[1])
+            ]
+        )
+        design_matrix_df = self._validate_design_values(
+            design_matrix_df,
+            tuple(str(name).strip() for name in design_values.columns),
+            # Row numbers of the design sheet that 'fmudesign run' would write
+            list(range(2, design_matrix_df.height + 2)),
+        )
+        return self._complete_design_matrix(
+            design_matrix_df,
+            {str(name): value for name, value in design.defaultvalues.items()},
+        )
+
+    def _generate_design(self) -> fmudesign.DesignMatrix:
+        # fmudesign imports this module, so it can not be imported at the top
+        import fmudesign  # ruff: ignore[import-outside-top-level]
+
+        with capturing("stdout") as fmudesign_output:
+            try:
+                config = fmudesign.excel_to_dict(
+                    str(self.filename),
+                    gen_input_sheet=self.general_input_sheet,
+                    design_input_sheet=self.design_sheet,
+                    default_val_sheet=self.default_sheet,
+                )
+                if config["distribution_seed"] is None:
+                    raise ValueError(
+                        "distribution_seed must be set in the general input, so that "
+                        "the same design is generated each time the configuration "
+                        "is read."
+                    )
+                design = fmudesign.DesignMatrix()
+                design.generate(config)
+            except BadZipFile as err:
+                raise ValueError(
+                    "File could not be loaded. It seems to be either invalid "
+                    "or corrupted."
+                ) from err
+            except (LookupError, OSError) as err:
+                raise ValueError(err) from err
+            finally:
+                logger.info(
+                    f"fmudesign output for {self.filename}:\n"
+                    f"{fmudesign_output.getvalue()}"
+                )
+        return design
+
+
+def _as_design_column(name: str, values: Sequence[object]) -> pl.Series:
+    """Type the values of a generated column as when read from an Excel file."""
+    if all(isinstance(value, bool | np.bool_) for value in values):
+        return pl.Series(name, values, dtype=pl.Boolean)
+    if all(_is_number(value) for value in values):
+        numeric_values = np.asarray(values, dtype=np.float64)
+        if np.all(np.mod(numeric_values, 1) == 0) and np.all(
+            np.abs(numeric_values) < 2**63
+        ):
+            return pl.Series(name, numeric_values.astype(np.int64))
+        return pl.Series(name, numeric_values)
+    return pl.Series(name, [_as_cell_text(value) for value in values], dtype=pl.String)
+
+
+def _is_number(value: object) -> TypeGuard[float]:
+    return isinstance(value, numbers.Real) and not isinstance(value, bool)
+
+
+def _as_cell_text(value: object) -> str | None:
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None
+    if isinstance(value, bool | np.bool_):
+        return str(value).lower()
+    if _is_number(value) and float(value).is_integer():
+        return str(int(value))
+    return str(value)
 
 
 def read_default_values(
