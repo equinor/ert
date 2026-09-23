@@ -162,10 +162,10 @@ class SurfaceConfig(ParameterConfig):
         return self.ncol * self.nrow
 
     def read_from_runpath(
-        self, run_path: Path, real_nr: int, iteration: int
+        self, runpath: Path, real_nr: int, iteration: int
     ) -> xr.Dataset:
         file_name = substitute_runpath_name(self.forward_init_file, real_nr, iteration)
-        file_path = run_path / file_name
+        file_path = runpath / file_name
         if not file_path.exists():
             raise ValueError(
                 "Failed to initialize parameter "
@@ -186,9 +186,7 @@ class SurfaceConfig(ParameterConfig):
 
         return da.to_dataset()
 
-    def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
-    ) -> None:
+    def write_to_runpath(self, runpath: Path, real_nr: int, ensemble: Ensemble) -> None:
         ds = ensemble.load_parameters(self.name, real_nr)
         assert isinstance(ds, xr.Dataset)
         data = ds["values"]
@@ -209,7 +207,7 @@ class SurfaceConfig(ParameterConfig):
             values=data.values,
         )
 
-        file_path = run_path / substitute_runpath_name(
+        file_path = runpath / substitute_runpath_name(
             str(self.output_file), real_nr, ensemble.iteration
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
