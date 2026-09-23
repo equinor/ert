@@ -30,6 +30,16 @@ Highlighted changes
 Version 26.0
 ------------
 
+Updated Analysis Panel
+######################
+
+The "Analysis module" entry in the experiment panel has been renamed to "Update settings". In the corresponding panel, you can now change
+the update strategies for each parameter type. Any changes will override the settings provided in the configuration file.
+
+
+.. image:: images/update_strategies_panel.png
+
+
 Waterfall Plot for EnIF updated parameters
 ##########################################
 
