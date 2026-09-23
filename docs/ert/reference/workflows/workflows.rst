@@ -80,3 +80,36 @@ state of the experiment that is running:
             print(f"Provided user arguments: {workflow_args}")
 
 For how to load internal workflow jobs into ERT, see: :ref:`installing workflows <legacy_ert_workflow_jobs>`
+
+Cancelling internal workflow jobs
+==================================
+
+A running workflow can be cancelled, either from the *Run workflow* tool in
+the GUI, or by terminating an experiment that is executing a hooked workflow.
+
+For an external workflow job this is straightforward: the invoked process is
+terminated.
+
+For an internal workflow job, cancellation is *cooperative*: it does not
+forcibly interrupt a running :code:`run()` method. Calling :code:`cancel()`
+records that cancellation was requested and immediately unblocks the caller
+(e.g. the GUI or CLI), but the job's :code:`run()` method keeps executing
+until the job itself notices the request and stops. A job that never checks
+for this will keep running to completion in the background, even though the
+UI already reports it as cancelled.
+
+To support cancellation, a job that loops over realizations or ensembles
+must implement cancellation handling itself, by checking
+:code:`self.isCancelled()` between iterations and returning once it is true:
+
+.. code-block:: python
+
+    class MyJob(ErtScript):
+        def run(self, ensemble: Ensemble):
+            for realization in ensemble.get_realization_list_with_responses():
+                if self.isCancelled():
+                    return
+                process(realization)
+
+A job that performs a single, indivisible piece of work has nothing
+meaningful to check between, and does not need to poll :code:`isCancelled()`.
