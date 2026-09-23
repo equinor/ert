@@ -133,7 +133,7 @@ class GenDataConfig(SimulationResponseConfig):
             report_steps_list=report_steps,
         )
 
-    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
+    def read_from_file(self, runpath: str, iens: int, iter_: int) -> pl.DataFrame:
         def _read_file(filename: Path, report_step: int) -> pl.DataFrame:
             try:
                 data = np.loadtxt(filename, ndmin=1)
@@ -158,7 +158,7 @@ class GenDataConfig(SimulationResponseConfig):
 
         errors = []
 
-        run_path_ = Path(run_path)
+        runpath_ = Path(runpath)
         datasets_per_name = []
 
         for name, input_file, report_steps in zip(
@@ -168,7 +168,7 @@ class GenDataConfig(SimulationResponseConfig):
             if report_steps is None:
                 try:
                     filename = substitute_runpath_name(input_file, iens, iter_)
-                    datasets_per_report_step.append(_read_file(run_path_ / filename, 0))
+                    datasets_per_report_step.append(_read_file(runpath_ / filename, 0))
                 except (InvalidResponseFile, FileNotFoundError) as err:
                     errors.append(err)
             else:
@@ -178,7 +178,7 @@ class GenDataConfig(SimulationResponseConfig):
                     )
                     try:
                         datasets_per_report_step.append(
-                            _read_file(run_path_ / filename, report_step)
+                            _read_file(runpath_ / filename, report_step)
                         )
                     except (InvalidResponseFile, FileNotFoundError) as err:
                         errors.append(err)

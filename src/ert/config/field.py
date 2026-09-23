@@ -175,7 +175,7 @@ class Field(ParameterConfig):
 
     @log_duration(_logger, custom_name="load_field")
     def read_from_runpath(
-        self, run_path: Path, real_nr: int, iteration: int
+        self, runpath: Path, real_nr: int, iteration: int
     ) -> xr.Dataset:
         file_name = substitute_runpath_name(self.forward_init_file, real_nr, iteration)
         return xr.Dataset(
@@ -184,7 +184,7 @@ class Field(ParameterConfig):
                     ["x", "y", "z"],
                     field_transform(
                         read_field(
-                            run_path / file_name,
+                            runpath / file_name,
                             self.name,
                             Shape(
                                 self.ertbox_params.nx,
@@ -199,10 +199,8 @@ class Field(ParameterConfig):
         )
 
     @log_duration(_logger, custom_name="save_field")
-    def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
-    ) -> None:
-        file_out = run_path.joinpath(
+    def write_to_runpath(self, runpath: Path, real_nr: int, ensemble: Ensemble) -> None:
+        file_out = runpath.joinpath(
             substitute_runpath_name(str(self.output_file), real_nr, ensemble.iteration)
         )
         if file_out.is_symlink():
