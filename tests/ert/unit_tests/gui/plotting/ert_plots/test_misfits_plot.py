@@ -7,7 +7,10 @@ import pytest
 from matplotlib.figure import Figure
 from polars.testing import assert_frame_equal
 
-from ert.gui.plotting.ert_plots.misfits import MisfitsPlot
+from ert.gui.plotting.ert_plots.misfits import (
+    MisfitsPlot,
+    wide_pandas_to_long_polars_with_misfits,
+)
 from ert.gui.plotting.utils import PlotConfig
 
 
@@ -53,7 +56,7 @@ def test_that_misfit_conversion_for_summary_casts_key_index_to_datetime():
         index=["STD", "OBS", "key_index"],
     )
 
-    result = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+    result = wide_pandas_to_long_polars_with_misfits(
         ensemble_to_data_map=ensemble_to_data_map,
         observation_data=observation_data,
         response_type="summary",
@@ -78,7 +81,7 @@ def test_that_misfit_conversion_for_summary_converts_to_equivalent_long_polars_d
         index=["STD", "OBS", "key_index"],
     )
 
-    result = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+    result = wide_pandas_to_long_polars_with_misfits(
         ensemble_to_data_map=ensemble_to_data_map,
         observation_data=observation_data,
         response_type="summary",
@@ -173,7 +176,7 @@ def test_that_misfit_conversion_for_gen_data_casts_key_index_to_uint16():
         index=["STD", "OBS", "key_index"],
     )
 
-    result = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+    result = wide_pandas_to_long_polars_with_misfits(
         ensemble_to_data_map=ensemble_to_data_map,
         observation_data=observation_data,
         response_type="gen_data",
@@ -197,7 +200,7 @@ def test_that_misfit_conversion_for_gen_data_converts_to_equivalent_long_polars_
         index=["STD", "OBS", "key_index"],
     )
 
-    result = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+    result = wide_pandas_to_long_polars_with_misfits(
         ensemble_to_data_map=ensemble_to_data_map,
         observation_data=observation_data,
         response_type="gen_data",
@@ -354,7 +357,7 @@ def test_that_misfit_conversion_for_seismic_casts_key_index_to_int32():
         index=["STD", "OBS", "key_index"],
     )
 
-    result = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+    result = wide_pandas_to_long_polars_with_misfits(
         ensemble_to_data_map=ensemble_to_data_map,
         observation_data=observation_data,
         response_type="seismic",

@@ -8,7 +8,7 @@ import pandas as pd
 import polars as pl
 from matplotlib.figure import Figure
 
-from ert.gui.plotting.ert_plots.misfits import MisfitsPlot
+from ert.gui.plotting.ert_plots.misfits import wide_pandas_to_long_polars_with_misfits
 from ert.gui.plotting.utils.plot_tools import PlotTools
 
 if TYPE_CHECKING:
@@ -54,7 +54,7 @@ class MisfitMapPlot:
             return
 
         ensemble, ensemble_data = next(iter(ensemble_to_data_map.items()))
-        misfits_by_realization = MisfitsPlot._wide_pandas_to_long_polars_with_misfits(
+        misfits_by_realization = wide_pandas_to_long_polars_with_misfits(
             {(ensemble.name, ensemble.id): ensemble_data},
             observation_data,
             "seismic",
