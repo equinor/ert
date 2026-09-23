@@ -25,7 +25,9 @@ REALIZATION_FAILED_DURING_EVALUATION = {
 
 def _default_parameter_configuration() -> dict[str, ParameterConfig]:
     return {
-        "PARAMETER": Mock(spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL)
+        "PARAMETER": Mock(
+            spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
+        )
     }
 
 
@@ -74,6 +76,10 @@ class MockExperiment(LocalExperiment):
     @property
     def parameter_configuration(self):
         return self._mocked_parameter_configuration
+
+    @parameter_configuration.setter
+    def parameter_configuration(self, value):
+        self._mocked_parameter_configuration = value
 
 
 class MockStorage(LocalStorage):
