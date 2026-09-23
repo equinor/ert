@@ -612,13 +612,18 @@ class PlotWindow(QMainWindow):
                 layer,
             )
 
-            if plot_widget.name == MISFIT_MAP and ensemble_to_data_map:
+            if (
+                plot_widget.name == MISFIT_MAP
+                and ensemble_to_data_map
+                and not observations.empty
+            ):
                 selected = next(iter(ensemble_to_data_map))
                 initial_ensemble = min(
                     (
                         e
                         for e in self._api.get_all_ensembles()
                         if e.experiment_name == selected.experiment_name
+                        and not e.hidden
                     ),
                     key=lambda e: e.started_at,
                     default=None,
