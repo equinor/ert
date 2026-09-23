@@ -307,7 +307,7 @@ class GenKwConfig(ParameterConfig):
 
     def read_from_runpath(
         self,
-        run_path: Path,
+        runpath: Path,
         real_nr: int,
         iteration: int,
     ) -> xr.Dataset:
@@ -315,7 +315,7 @@ class GenKwConfig(ParameterConfig):
 
     def write_to_runpath(
         self,
-        run_path: Path,
+        runpath: Path,
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
