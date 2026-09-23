@@ -1,4 +1,6 @@
 import logging
+import threading
+import time
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -517,3 +519,121 @@ def test_that_job_runner_stops_reporting_it_is_running_when_arguments_are_reject
         runner.run([1])
 
     assert not runner.isRunning()
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_cancel_does_not_block_on_an_uncooperative_internal_job():
+    WorkflowCommon.createUncancellableWaitJob()
+
+    wait_job = workflow_job_from_file(
+        "uncancellable_wait_job", name="UNCANCELLABLE_WAIT", origin="user"
+    )
+    workflow = Workflow.from_file(
+        "uncancellable_wait_workflow", {}, {"UNCANCELLABLE_WAIT": wait_job}
+    )
+
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
+
+    workflow_runner.run()
+    wait_until(lambda: Path("uncancellable_wait_started_0").exists())
+
+    start = time.time()
+    workflow_runner.cancel()
+    elapsed = time.time() - start
+
+    # cancel() must not block waiting for an uncooperative job to finish.
+    assert elapsed < 1
+    assert workflow_runner.isCancelled()
+
+    wait_until(lambda: Path("uncancellable_wait_finished_0").exists(), timeout=10)
+    workflow_runner.wait()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_a_cancel_call_racing_with_job_startup_still_cancels_the_job(
+    monkeypatch,
+):
+    """Regression test for a race between cancel() and a job publishing
+    itself as the current job but not yet having created its ErtScript.
+
+    cancel() reaching WorkflowJobRunner in that window must not be a
+    silent no-op: the cancellation has to be applied as soon as the
+    script is created.
+    """
+    WorkflowCommon.createWaitJob()
+    wait_job = workflow_job_from_file("wait_job", name="WAIT", origin="user")
+    workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
+
+    job_runner_published = threading.Event()
+    may_create_script = threading.Event()
+    original_run = WorkflowJobRunner.run
+
+    def delayed_run(self, *args, **kwargs):
+        job_runner_published.set()
+        assert may_create_script.wait(timeout=10)
+        return original_run(self, *args, **kwargs)
+
+    monkeypatch.setattr(WorkflowJobRunner, "run", delayed_run)
+
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
+    workflow_runner.run()
+
+    assert job_runner_published.wait(timeout=10)
+    workflow_runner.cancel()
+    may_create_script.set()
+
+    wait_until(lambda: Path("wait_cancelled_0").exists(), timeout=10)
+    workflow_runner.wait()
+
+    assert workflow_runner.isCancelled()
+    assert not Path("wait_started_1").exists()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_cancel_does_not_block_while_the_next_job_is_being_constructed(
+    monkeypatch,
+):
+    """Regression test: WorkflowJobRunner.run() used to hold its lock while
+    loading a user-installed job's module and constructing its ErtScript.
+    Since that can run arbitrary, slow code, cancel() must not be made to
+    wait for it - the lock should only guard publishing the finished script.
+    """
+    WorkflowCommon.createWaitJob()
+    wait_job = workflow_job_from_file("wait_job", name="WAIT", origin="user")
+    workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
+
+    construction_started = threading.Event()
+    may_finish_construction = threading.Event()
+    original_load_ert_script_class = (
+        UserInstalledErtScriptWorkflow.load_ert_script_class
+    )
+
+    def slow_load_ert_script_class(self):
+        construction_started.set()
+        assert may_finish_construction.wait(timeout=10)
+        return original_load_ert_script_class(self)
+
+    monkeypatch.setattr(
+        UserInstalledErtScriptWorkflow,
+        "load_ert_script_class",
+        slow_load_ert_script_class,
+    )
+
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
+    workflow_runner.run()
+
+    assert construction_started.wait(timeout=10)
+    start = time.time()
+    workflow_runner.cancel()
+    elapsed = time.time() - start
+
+    assert elapsed < 1, "cancel() waited for the job construction to finish"
+    assert workflow_runner.isCancelled()
+
+    may_finish_construction.set()
+    wait_until(lambda: Path("wait_cancelled_0").exists(), timeout=10)
+    workflow_runner.wait()
