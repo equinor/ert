@@ -543,9 +543,7 @@ def test_that_cancel_does_not_block_on_an_uncooperative_internal_job():
     workflow_runner.cancel()
     elapsed = time.time() - start
 
-    # cancel() cannot forcibly interrupt an internal job that never checks
-    # isCancelled(); it must return immediately regardless, rather than
-    # blocking until the uncooperative job finishes on its own (5 seconds).
+    # cancel() must not block waiting for an uncooperative job to finish.
     assert elapsed < 1
     assert workflow_runner.isCancelled()
 
@@ -574,9 +572,6 @@ def test_that_a_cancel_call_racing_with_job_startup_still_cancels_the_job(
     original_run = WorkflowJobRunner.run
 
     def delayed_run(self, *args, **kwargs):
-        # At this point the WorkflowRunner has already published this
-        # WorkflowJobRunner as its current job, but self.__script does
-        # not exist yet.
         job_runner_published.set()
         assert may_create_script.wait(timeout=10)
         return original_run(self, *args, **kwargs)

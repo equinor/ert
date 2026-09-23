@@ -158,9 +158,7 @@ def test_that_external_ert_script_does_not_spawn_process_once_cancelled():
     Path("touch_ran.sh").chmod(st.st_mode | stat.S_IEXEC)
 
     script = ExternalErtScript("./touch_ran.sh")
-    # Cancellation arriving before the process is spawned - e.g. racing with
-    # WorkflowJobRunner publishing this script as the current job - must
-    # prevent the process from ever starting.
+    # Cancellation before spawn must prevent the process from starting.
     script.cancel()
     script.initializeAndRun([], [])
 
@@ -186,8 +184,6 @@ def test_that_a_cancel_call_racing_with_process_creation_still_terminates_it(
     original_popen = external_ert_script.Popen
 
     def popen_then_cancel(*args, **kwargs):
-        # Simulates cancel() being called by another thread right after
-        # Popen() returns but before run() rechecks isCancelled().
         process = original_popen(*args, **kwargs)
         script.cancel()
         return process

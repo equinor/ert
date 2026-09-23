@@ -104,9 +104,8 @@ def test_that_csv_export_stops_processing_ensembles_once_cancelled(
 
     assert job.isCancelled()
 
-    # Cancellation is noticed at the top of the next iteration, so the
-    # ensemble being processed when cancel() was called still completes,
-    # but the one after it is skipped entirely.
+    # Cancellation is noticed at the top of the next iteration: the
+    # ensemble being processed completes, the next one is skipped.
     assert processed_ensembles == ["first"]
 
     df = pl.read_csv("the_export.csv")
