@@ -6,10 +6,10 @@ from ert.gui.plotting.ert_plots import (
     HistogramPlot,
     MisfitMapPlot,
     MisfitsPlot,
+    ObservationsMapPlot,
     StatisticsPlot,
     StdDevPlot,
 )
-from ert.gui.plotting.ert_plots.observations_map import ObservationsMapPlot
 from ert.gui.plotting.everest_plots import (
     EverestBatchObjectiveFunctionPlot,
     EverestConstraintsPlot,

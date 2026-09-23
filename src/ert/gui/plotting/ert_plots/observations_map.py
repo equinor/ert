@@ -41,10 +41,7 @@ class ObservationsMapPlot:
             self._show_no_data(figure, "No observation data available")
             return
 
-        observation = pl.from_pandas(observation_data.T).rename(
-            {"EAST": "EAST", "NORTH": "NORTH", "OBS": "OBS"}
-        )
-
+        observation = pl.from_pandas(observation_data.T)
         east = observation.get_column("EAST").to_numpy()
         north = observation.get_column("NORTH").to_numpy()
         observation_values = observation.get_column("OBS").to_numpy()

@@ -25,7 +25,7 @@ def test_that_observations_map_shows_no_data_message_when_observation_data_is_em
     assert figure.axes[0].texts[0].get_text() == "No observation data available"
 
 
-def test_that_observations_map_renders_tripcolor_with_default_axis_labels_and_title(
+def test_that_observations_map_renders_with_default_axis_labels_and_configured_title(
     make_plot_context, make_key_def
 ):
     figure = Figure()
