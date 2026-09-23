@@ -242,7 +242,12 @@ class ExperimentPanel(QWidget):
             has_observation_declarations and has_updatable_parameters,
         )
         self.addExperimentConfigPanel(
-            ManualUpdatePanel(runpath, notifier, analysis_config),
+            ManualUpdatePanel(
+                runpath,
+                notifier,
+                analysis_config,
+                config.ensemble_config.parameter_configuration,
+            ),
             has_observation_declarations and has_updatable_parameters,
         )
 
