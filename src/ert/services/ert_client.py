@@ -255,6 +255,18 @@ class ErtClient:
             return np.array([])
         return np.load(io.BytesIO(response.content))
 
+    def parameter_mean(
+        self, ensemble_id: str, parameter_key: str, z: int
+    ) -> npt.NDArray[np.float32]:
+        response = self._request(
+            "GET",
+            f"/ensembles/{ensemble_id}/parameters/{_escape(parameter_key)}/mean",
+            params={"z": z},
+        )
+        if response.status_code != httpx.codes.OK:
+            return np.array([])
+        return np.load(io.BytesIO(response.content))
+
     def ert_response(
         self,
         ensemble_id: str,

@@ -3,6 +3,7 @@ from collections.abc import Callable
 from ert.gui.plotting.ert_plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
+    FieldUpdatePlot,
     HistogramPlot,
     MisfitsPlot,
     StatisticsPlot,
@@ -21,6 +22,7 @@ from ert.gui.plotting.widgets.plot_widget import Plotter
 
 CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
 DISTRIBUTION = "Distribution"
+FIELD_UPDATE_PLOT = "Field update"
 GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
@@ -40,6 +42,7 @@ ERT_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     HISTOGRAM: HistogramPlot,
     DISTRIBUTION: DistributionPlot,
     CROSS_ENSEMBLE_STATISTICS: CrossEnsembleStatisticsPlot,
+    FIELD_UPDATE_PLOT: FieldUpdatePlot,
     STD_DEV: StdDevPlot,
     WATERFALL: WaterfallPlot,
 }
