@@ -4,8 +4,7 @@ from textwrap import dedent
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
-from ropt.plugins import get_plugin_name
-from ropt.utils import validate_backend_options
+from ropt.workflow import find_backend_plugin, validate_backend_options
 
 from everest.config.cvar_config import CVaRConfig
 from everest.strings import EVEREST
@@ -113,7 +112,10 @@ class OptimizationConfig(BaseModel, extra="forbid"):
             be used to minimize risk. Effectively this means that at each
             iteration the objective and constraint functions will be calculated
             as the mean over the sub-set of the realizations that perform worst.
-            The size of this set is specified by the `percentile` option.
+            The size of this set is specified as an absolute number or as a
+            percentile value. These options are selected by setting either the
+            `number_of_realizations` option, or the `percentile` option, which
+            are mutually exclusive.
             """
         ),
     )
@@ -350,7 +352,7 @@ class OptimizationConfig(BaseModel, extra="forbid"):
         )
 
         try:
-            plugin_name = get_plugin_name("backend", algorithm)
+            plugin_name = find_backend_plugin(algorithm)
         except ValueError:
             raise
         except Exception as exc:
