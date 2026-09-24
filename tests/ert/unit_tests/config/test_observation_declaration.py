@@ -659,7 +659,9 @@ def test_that_breakthrough_observation_can_be_instantiated_from_config():
     assert brt_obs.shape_id is None
 
 
-@pytest.mark.parametrize("missing_keyword", ["KEY", "DATE", "ERROR", "THRESHOLD"])
+@pytest.mark.parametrize(
+    "missing_keyword", ["KEY", "DATE", "ERROR", "THRESHOLD"], ids=str
+)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_breakthrough_observation_raises_error_when_missing_required_keyword(
     missing_keyword,

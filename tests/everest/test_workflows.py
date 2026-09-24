@@ -14,7 +14,7 @@ from everest.config import EverestConfig
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("test_deprecated", [True, False])
+@pytest.mark.parametrize("test_deprecated", [True, False], ids=str)
 def test_workflow_will_run_during_experiment(
     min_config, test_deprecated, tmp_path, monkeypatch
 ):

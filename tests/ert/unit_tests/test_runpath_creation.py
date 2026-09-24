@@ -617,7 +617,7 @@ async def test_that_deprecated_runpath_substitution_remain_valid(make_runpath):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("itr", [0, 1, 2, 17])
+@pytest.mark.parametrize("itr", [0, 1, 2, 17], ids=str)
 async def test_write_runpath_file(storage, itr):
     runpath_fmt = "simulations/<REALIZATION_ID>/realization-<IENS>/iter-<ITER>"
     runpath_list_path = "a_file_name"
@@ -783,7 +783,7 @@ def test_that_iens_and_iter_in_runpaths_are_substituted_with_corresponding_indic
     "ignore:.*RUNPATH keyword contains deprecated "
     "value placeholders.*:ert.config.ConfigWarning"
 )
-@pytest.mark.parametrize("iens_placeholder", [("%d"), ("<IENS>")])
+@pytest.mark.parametrize("iens_placeholder", [("%d"), ("<IENS>")], ids=str)
 def test_that_runpaths_with_just_iens_will_be_substituted_with_just_iens_index(
     tmpdir, iens_placeholder
 ):
@@ -947,7 +947,7 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("itr", [0, 1])
+@pytest.mark.parametrize("itr", [0, 1], ids=str)
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 @pytest.mark.filterwarnings("ignore:Number of maps nodes are None. Exporting regular")
 async def test_when_manifest_files_are_written_loading_succeeds(storage, itr):

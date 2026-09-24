@@ -18,7 +18,7 @@ def eightcells(use_tmpdir, source_root):
 
 
 @pytest.mark.usefixtures("eightcells")
-@pytest.mark.parametrize("num_cpu", [1, 2])
+@pytest.mark.parametrize("num_cpu", [1, 2], ids=str)
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_numcpu_maps_to_mpi_processes_with_flow(num_cpu):
     Path("flow.ert").write_text(

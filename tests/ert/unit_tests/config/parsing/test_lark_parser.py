@@ -314,7 +314,7 @@ def test_that_quotes_can_be_escaped():
     assert contents["FORWARD_MODEL"] == [["poly_eval", [["<FOO>", '\\"bar']]]]
 
 
-@pytest.mark.parametrize("empty_string", ["''", '""'])
+@pytest.mark.parametrize("empty_string", ["''", '""'], ids=str)
 def test_that_strings_can_be_empty(empty_string):
     contents = parse_contents(
         f"""

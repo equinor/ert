@@ -205,7 +205,7 @@ async def test_max_runtime_is_properly_formatted(max_runtime):
 
 
 @pytest.mark.usefixtures("capturing_sbatch")
-@pytest.mark.parametrize("float_seconds", [0.0, 0.1, 0.99])
+@pytest.mark.parametrize("float_seconds", [0.0, 0.1, 0.99], ids=str)
 async def test_driver_will_ignore_max_runtime_less_than_1_seconds(float_seconds):
     driver = SlurmDriver(max_runtime=float_seconds)
     await driver.submit(0, "sleep", name="skip_low_max_runtime")
@@ -328,7 +328,7 @@ def generate_random_text(size):
     return "".join(random.choice(letters) for _ in range(size))
 
 
-@pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
+@pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)], ids=str)
 @pytest.mark.slow
 async def test_slurm_can_retrieve_stdout_and_stderr(
     job_name, tail_chars_to_read, use_tmpdir

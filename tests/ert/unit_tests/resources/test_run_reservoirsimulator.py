@@ -154,7 +154,7 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("error_count", [0, 1])
+@pytest.mark.parametrize("error_count", [0, 1], ids=str)
 def test_encoding_errors_in_prt_are_ignored(monkeypatch, error_count):
     eclrun_bin = Path("bin/eclrun")
     eclrun_bin.parent.mkdir()
@@ -182,7 +182,7 @@ def test_encoding_errors_in_prt_are_ignored(monkeypatch, error_count):
     assert excinfo.value.code == -error_count
 
 
-@pytest.mark.parametrize("simulator", ["eclipse", "e300", "flow"])
+@pytest.mark.parametrize("simulator", ["eclipse", "e300", "flow"], ids=str)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_runner_will_forward_unknown_arguments(monkeypatch, simulator):
     eclrun_bin = Path("bin/eclrun")
@@ -209,7 +209,7 @@ def test_runner_will_forward_unknown_arguments(monkeypatch, simulator):
     )
 
 
-@pytest.mark.parametrize("simulator", ["eclipse", "e300", "flow"])
+@pytest.mark.parametrize("simulator", ["eclipse", "e300", "flow"], ids=str)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_runner_will_forward_multiple_unknown_arguments(monkeypatch, simulator):
     eclrun_bin = Path("bin/eclrun")

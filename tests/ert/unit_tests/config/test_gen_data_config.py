@@ -90,7 +90,9 @@ def test_that_gen_data_input_format_yields_deprecation_warning():
         )
 
 
-@pytest.mark.parametrize("not_a_range", ["H", "H,1-3", "invalid-range-argument"])
+@pytest.mark.parametrize(
+    "not_a_range", ["H", "H,1-3", "invalid-range-argument"], ids=str
+)
 def test_non_range_report_step_gives_validation_error(not_a_range):
     with pytest.raises(ConfigValidationError, match="must be a valid range string"):
         GenDataConfig.from_config_dict(

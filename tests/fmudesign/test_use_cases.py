@@ -134,7 +134,7 @@ def test_that_constant_distribution_generates_identical_parameter_values(
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("verbosity", [1, 2])
+@pytest.mark.parametrize("verbosity", [1, 2], ids=str)
 def test_that_cli_verbosity_controls_sensitivity_plot_generation(
     tmp_path, monkeypatch, verbosity
 ):

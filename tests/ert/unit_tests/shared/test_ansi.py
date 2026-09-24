@@ -4,7 +4,7 @@ from _ert import ansi
 
 
 @pytest.mark.parametrize("code", ansi.ALL_CODES)
-@pytest.mark.parametrize("isatty", [True, False])
+@pytest.mark.parametrize("isatty", [True, False], ids=str)
 def test_that_ansi_print_keeps_or_strips_each_known_code_depending_on_isatty(
     isatty, code, mocker, capsys
 ):

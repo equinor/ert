@@ -417,7 +417,7 @@ async def test_that_qdel_will_retry_and_succeed(
 
 
 @pytest.mark.usefixtures("capturing_qsub")
-@pytest.mark.parametrize("value", [True, False])
+@pytest.mark.parametrize("value", [True, False], ids=str)
 async def test_keep_qsub_output(value: bool):
     driver = OpenPBSDriver(keep_qsub_output=value)
     await driver.submit(0, "sleep")

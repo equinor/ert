@@ -296,7 +296,7 @@ def test_that_the_states_are_set_correctly():
     assert new_ensemble.has_data()
 
 
-@pytest.mark.parametrize("itr", [None, 0, 1, 2, 3])
+@pytest.mark.parametrize("itr", [None, 0, 1, 2, 3], ids=str)
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_loading_from_any_available_iter(storage, run_args, itr):
     ert_config = ErtConfig.from_file_contents(
