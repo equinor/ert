@@ -3,7 +3,7 @@ from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QPlainTextEdit
 from pytestqt.qtbot import QtBot
 
-from ert.gui.tools.search_bar import SearchBar
+from ert.gui.ertwidgets import SearchBar
 
 
 @pytest.mark.parametrize(

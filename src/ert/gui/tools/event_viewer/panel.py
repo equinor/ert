@@ -9,7 +9,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QDialog, QPlainTextEdit, QVBoxLayout
 
-from ert.gui.tools.search_bar import SearchBar
+from ert.gui.ertwidgets import SearchBar
 
 # Need to separate GUILogHandler into _Signaler & _GUILogHandler
 # to avoid a object lifetime issue where logging keeps around a reference

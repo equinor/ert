@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.tools.search_bar import SearchBar
+from ert.gui.ertwidgets import SearchBar
 
 from .file_update_worker import FileUpdateWorker
 
