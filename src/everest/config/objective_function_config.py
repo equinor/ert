@@ -49,7 +49,30 @@ class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
             multi-objective optimization, since scaling each objective
             differently will change their relative weights.
 
-            This option will be disabled if `auto_scale` is set in the
+            This option cannot be combined with `auto_scale` in the
+            `optimization` section.
+            """
+        ),
+    )
+    offset: float | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Optional offset of the objective function value.
+
+            This value is subtracted from the objective function before it is
+            divided by its scale. It is meant for objectives that are large but
+            vary little: an NPV around 1e9 that varies by 1e5 becomes, after
+            division by 1e9, a quantity that varies below the convergence
+            tolerance of many optimizers. Subtracting a baseline of 1e9 first
+            and scaling by 1e5 leaves the variation at order one.
+
+            The offset does not move the optimum, and the objective values
+            reported by EVEREST are unaffected. It does change the values the
+            optimizer tests against its tolerances, so it may change where a run
+            stops.
+
+            This option cannot be combined with `auto_scale` in the
             `optimization` section.
             """
         ),
