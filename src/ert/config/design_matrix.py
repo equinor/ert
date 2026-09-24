@@ -195,6 +195,7 @@ class DesignMatrix:
             if cfg.name not in common_keys
         )
         self.parameter_priority.update(dm_other.parameter_priority)
+        self.categorical_parameters |= dm_other.categorical_parameters - common_keys
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
