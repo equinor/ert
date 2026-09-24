@@ -35,10 +35,15 @@ from ert.gui.plotting.utils.plot_maps import (
     ERT_PLOT_MAP,
     HISTOGRAM,
     MISFIT_MAP,
+    MISFITS,
+    OBSERVATIONS_MAP,
     STATISTICS,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
+from ert.gui.plotting.widgets.plot_ensemble_selection_widget import (
+    EnsembleSelectListWidget,
+)
 from ert.gui.plotting.widgets.plot_widget import PlotWidget
 from ert.services import ErtServerController
 
@@ -1582,3 +1587,140 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
     ensemble_list.itemClicked.emit(ensemble_items[1])
     plot_artist = misfit_map_widget._figure.axes[0].collections[0]
     assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+
+
+def _plot_window_with_observed_seismic_and_gen_data_keys(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> PlotWindow:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    mock_plot_api.responses_api_key_defs = [
+        PlotApiKeyDefinition(
+            "SEISMIC",
+            index_type="VALUE",
+            observations=True,
+            dimensionality=2,
+            metadata={"data_origin": "seismic"},
+            response=MagicMock(type="seismic"),
+        ),
+        PlotApiKeyDefinition(
+            "POLY_RES",
+            index_type="VALUE",
+            observations=False,
+            dimensionality=1,
+            metadata={"data_origin": "gen_data"},
+            response=MagicMock(type="gen_data"),
+        ),
+    ]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.observations_for_key.return_value = pd.DataFrame()
+    mock_plot_api.data_for_response.return_value = pd.DataFrame()
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            f"ensemble_{index}",
+            f"ensemble-id-{index}",
+            False,
+            "experiment",
+            f"2026-01-0{index + 1}T00:00:00",
+        )
+        for index in range(3)
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+    return plot_window
+
+
+def _select_additional_ensemble(plot_window: PlotWindow, row: int) -> None:
+    ensemble_list = plot_window._ensemble_selection_widget._selected_ensembles
+    ensemble_list.itemClicked.emit(ensemble_list.item(row))
+
+
+@pytest.mark.parametrize("tab_name", [MISFIT_MAP, OBSERVATIONS_MAP])
+def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, tab_name: str
+) -> None:
+    plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
+        qtbot, monkeypatch
+    )
+    _select_data_type_key(plot_window, "SEISMIC")
+    selection_widget = plot_window._ensemble_selection_widget
+    _select_additional_ensemble(plot_window, 1)
+    assert len(selection_widget.get_selected_ensembles()) == 2
+
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(tab_name))
+
+    assert selection_widget.get_maximum_ensemble_limit() == 1
+    assert len(selection_widget.get_selected_ensembles()) == 1
+
+
+def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
+        qtbot, monkeypatch
+    )
+    _select_data_type_key(plot_window, "SEISMIC")
+    selection_widget = plot_window._ensemble_selection_widget
+
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    assert selection_widget.get_maximum_ensemble_limit() == 1
+
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFITS))
+
+    assert (
+        selection_widget.get_maximum_ensemble_limit()
+        == EnsembleSelectListWidget.DEFAULT_MAXIMUM_SELECTED
+    )
+
+
+def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_limit(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
+        qtbot, monkeypatch
+    )
+    _select_data_type_key(plot_window, "SEISMIC")
+    selection_widget = plot_window._ensemble_selection_widget
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    assert selection_widget.get_maximum_ensemble_limit() == 1
+
+    _select_data_type_key(plot_window, "POLY_RES")
+
+    assert _current_tab_name(plot_window) == HISTOGRAM
+    assert (
+        selection_widget.get_maximum_ensemble_limit()
+        == EnsembleSelectListWidget.DEFAULT_MAXIMUM_SELECTED
+    )
+
+
+def test_that_selecting_a_key_restoring_the_misfit_map_tab_narrows_selection_to_one(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
+        qtbot, monkeypatch
+    )
+    _select_data_type_key(plot_window, "SEISMIC")
+    selection_widget = plot_window._ensemble_selection_widget
+    # Remembered as the tab to return to for two-dimensional keys
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    _select_data_type_key(plot_window, "POLY_RES")
+    _select_additional_ensemble(plot_window, 1)
+    assert len(selection_widget.get_selected_ensembles()) == 2
+
+    _select_data_type_key(plot_window, "SEISMIC")
+
+    assert _current_tab_name(plot_window) == MISFIT_MAP
+    assert selection_widget.get_maximum_ensemble_limit() == 1
+    assert len(selection_widget.get_selected_ensembles()) == 1
