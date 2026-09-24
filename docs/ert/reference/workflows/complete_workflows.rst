@@ -124,7 +124,8 @@ jobs that were stopped because the workflow was cancelled are logged at
 
 While an experiment is running, the same information is also shown live
 in the *Workflows* tab of the run dialog, without having to read the ERT
-log.
+log. Select an iteration from the dropdown to see the workflow jobs that
+are associated with it.
 
 Workflows hooked in with :code:`HOOK_WORKFLOW` are in addition recorded
 alongside the experiment they belong to, in
