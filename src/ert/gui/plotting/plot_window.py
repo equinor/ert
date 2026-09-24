@@ -39,6 +39,7 @@ from ert.gui.plotting.utils.plot_maps import (
     EVEREST_GRADIENTS_PLOT,
     EVEREST_OBJECTIVE_FUNCTION_PLOT,
     EVEREST_PLOT_MAP,
+    FIELD_UPDATE_PLOT,
     GAUSSIAN_KDE,
     HISTOGRAM,
     MISFITS,
@@ -419,7 +420,9 @@ class PlotWindow(QMainWindow):
             plot_widget.name in {MISFITS, CROSS_ENSEMBLE_STATISTICS}
         )
         self._statistics_options.get_widget().setVisible(plot_widget.name == STATISTICS)
-        self._general_options.get_widget().setVisible(plot_widget.name != STD_DEV)
+        self._general_options.get_widget().setVisible(
+            plot_widget.name not in {STD_DEV, FIELD_UPDATE_PLOT}
+        )
         self._distribution_options.get_widget().setVisible(
             plot_widget.name == DISTRIBUTION
         )
@@ -464,6 +467,7 @@ class PlotWindow(QMainWindow):
                 self._ensemble_selection_widget.get_selected_ensembles()
             )
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
+            field_layer = layer if layer is not None else 0
 
             selected_controls: list[str] = []
             if is_gradient_plot or is_controls_plot:
@@ -506,6 +510,14 @@ class PlotWindow(QMainWindow):
                             ensemble_id=ensemble.id,
                             parameter_keys=tuple(selected_controls)
                             or tuple(self._everest_parameters),
+                        )
+                    elif plot_widget.name == FIELD_UPDATE_PLOT and isinstance(
+                        key_def.parameter, Field
+                    ):
+                        data = pd.DataFrame(
+                            self._api.mean_for_parameter(
+                                key_def.parameter.name, ensemble.id, field_layer
+                            )
                         )
                     elif key_def.parameter is not None and (
                         key_def.parameter.type
@@ -783,6 +795,7 @@ class PlotWindow(QMainWindow):
             and key_def.response is not None
             and key_def.response.type == "seismic"
         )
+        selected_ensembles = self._ensemble_selection_widget.get_selected_ensembles()
         available_widgets = [
             widget
             for widget in self._plot_widgets
@@ -791,6 +804,9 @@ class PlotWindow(QMainWindow):
             and not is_everest_specific_widget
             and (not is_observed_seismic or widget.name == MISFITS)
             and widget.name != WATERFALL
+            and (
+                widget.name != FIELD_UPDATE_PLOT or isinstance(key_def.parameter, Field)
+            )
         ]
 
         # Waterfall tab is only available for scalar parameters when at
@@ -800,15 +816,13 @@ class PlotWindow(QMainWindow):
             and key_def.dimensionality == 1
             and key_def.parameter is not None
             and key_def.metadata.get("data_origin") == "gen_kw"
-        ):
-            selected = self._ensemble_selection_widget.get_selected_ensembles()
-            if any(self._api.has_kalman_gain(e.id) for e in selected):
-                waterfall_widget = next(
-                    (w for w in self._plot_widgets if w.name == WATERFALL),
-                    None,
-                )
-                if waterfall_widget is not None:
-                    available_widgets.append(waterfall_widget)
+        ) and any(self._api.has_kalman_gain(e.id) for e in selected_ensembles):
+            waterfall_widget = next(
+                (w for w in self._plot_widgets if w.name == WATERFALL),
+                None,
+            )
+            if waterfall_widget is not None:
+                available_widgets.append(waterfall_widget)
 
         def everest_data_origin_check(origin: list[str]) -> bool:
             return key_def.metadata.get("data_origin") in origin
@@ -873,7 +887,11 @@ class PlotWindow(QMainWindow):
         self, plot_map: dict[str, Callable[[], Plotter]]
     ) -> None:
         for name, plotter_factory in plot_map.items():
-            self.add_plot_widget(name, plotter_factory())
+            self.add_plot_widget(
+                name,
+                plotter_factory(),
+                enabled=name != FIELD_UPDATE_PLOT,
+            )
 
 
 def make_seismic_y_label(s: str) -> str:
