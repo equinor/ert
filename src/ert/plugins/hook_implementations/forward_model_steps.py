@@ -351,6 +351,7 @@ class Flow(ForwardModelStepPlugin):
                 "<ECLBASE>",
                 "--version",
                 "<VERSION>",
+                "--mpi-args=<MPI_OPTS>",
                 "-n",
                 "<NUM_CPU>",
                 "<OPTS>",
@@ -358,9 +359,16 @@ class Flow(ForwardModelStepPlugin):
             default_mapping={
                 "<VERSION>": "default",
                 "<NUM_CPU>": "1",
+                "<MPI_OPTS>": "",
                 "<OPTS>": "",
             },
-            allowed_keywords=["<VERSION>", "<NUM_CPU>", "<OPTS>", "<ECLBASE>"],
+            allowed_keywords=[
+                "<VERSION>",
+                "<NUM_CPU>",
+                "<MPI_OPTS>",
+                "<OPTS>",
+                "<ECLBASE>",
+            ],
         )
 
     def validate_pre_experiment(self, fm_json: ForwardModelStepJSON) -> None:
@@ -402,16 +410,18 @@ will automatically be selected if :code:`flowrun` is found.
 
 Any options that should be forwarded to the simulator should be included
 in the :code:`<OPTS>` argument, multiple arguments can be supplied by
-separating them with a space.
+separating them with a space. Options that should be forwarded to the MPI
+runner used by :code:`flowrun` can be included in :code:`<MPI_OPTS>`.
 """,
             category="simulators.reservoir",
             examples="""
 .. code-block:: bash
 
     FORWARD_MODEL FLOW(<ECLBASE>, <VERSION>=rc46, <OPTS>="--ignore-errors")
+    FORWARD_MODEL FLOW(<ECLBASE>, <MPI_OPTS>="--bind-to core --map-by socket")
 
-The :code:`OPTS` argument is optional and can be skipped. :code:`ECLBASE` can
-also be defaulted.
+The :code:`OPTS` and :code:`MPI_OPTS` arguments are optional and can be skipped.
+:code:`ECLBASE` can also be defaulted.
 """,
         )
 

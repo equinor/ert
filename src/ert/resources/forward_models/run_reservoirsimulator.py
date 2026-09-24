@@ -148,6 +148,7 @@ class RunReservoirSimulator:
         num_cpu: int = 1,
         check_status: bool = True,
         summary_conversion: bool = False,
+        mpi_args: list[str] | None = None,
         forwarded_args: list[str] | None = None,
     ) -> None:
         if simulator not in get_args(Simulators):
@@ -162,6 +163,7 @@ class RunReservoirSimulator:
         self.summary_conversion: bool = summary_conversion
 
         self.bypass_flowrun: bool = False
+        self.mpi_args: list[str] = " ".join(mpi_args or []).split()
         self.forwarded_args: list[str] = " ".join(forwarded_args or []).split()
 
         runner_abspath: str | Path | None = None
@@ -219,6 +221,7 @@ class RunReservoirSimulator:
             ]
         return [
             self.runner_abspath,
+            *self.mpi_args,
             "--version",
             str(self.version or "default"),
             str(self.runpath / self.data_file),
@@ -393,6 +396,7 @@ def run_reservoirsimulator(args: list[str]) -> None:
     parser.add_argument("ecl_case", type=str)
     parser.add_argument("--version", type=str, default="")
     parser.add_argument("-n", "--num-cpu", dest="num_cpu", type=int, default=1)
+    parser.add_argument("--mpi-args", dest="mpi_args", type=str, default="")
     parser.add_argument(
         "-i", "--ignore-errors", dest="ignore_errors", action="store_true"
     )
@@ -427,6 +431,7 @@ def run_reservoirsimulator(args: list[str]) -> None:
                 options.ecl_case,
                 num_cpu=options.num_cpu,
                 check_status=not options.ignore_errors,
+                mpi_args=options.mpi_args.split(),
                 forwarded_args=forwarded_args,
             ).run_flow()
 
