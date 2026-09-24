@@ -6,9 +6,11 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
 from fastapi.responses import Response
 
+from ert.config.field import Field, field_transform
 from ert.server.common import (
     get_storage,
     reraise_as_http_errors,
@@ -74,6 +76,30 @@ def get_parameter_std_dev(
     buffer = io.BytesIO()
     np.save(buffer, data_2d)
 
+    return Response(content=buffer.getvalue(), media_type="application/octet-stream")
+
+
+@router.get("/ensembles/{ensemble_id}/parameters/{key}/mean")
+def get_parameter_mean(
+    *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str, z: int
+) -> Response:
+    key = unquote(key)
+    with reraise_as_http_errors(logger):
+        ensemble = storage.get_ensemble(ensemble_id)
+        parameter_config = ensemble.experiment.parameter_configuration.get(key)
+        if not isinstance(parameter_config, Field):
+            raise ValueError(f"Parameter '{key}' is not a FIELD parameter")
+        dataset = ensemble.load_parameters(key)
+        assert isinstance(dataset, xr.Dataset)
+        values = dataset["values"]
+        if parameter_config.output_transformation:
+            values = field_transform(values, parameter_config.output_transformation)
+        if not 0 <= z < values.sizes["z"]:
+            raise ValueError(f"Invalid layer index {z}")
+        data_2d = values.mean("realizations").isel(z=z).to_numpy()
+
+    buffer = io.BytesIO()
+    np.save(buffer, data_2d)
     return Response(content=buffer.getvalue(), media_type="application/octet-stream")
 
 
