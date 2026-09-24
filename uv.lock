@@ -1115,7 +1115,7 @@ dependencies = [
     { name = "requests" },
     { name = "resfo" },
     { name = "resfo-utilities" },
-    { name = "ropt" },
+    { name = "ropt", extra = ["pandas"] },
     { name = "ropt-dakota" },
     { name = "ruamel-yaml" },
     { name = "scipy" },
@@ -1235,7 +1235,7 @@ requires-dist = [
     { name = "requests" },
     { name = "resfo", specifier = ">=5.0.0" },
     { name = "resfo-utilities", specifier = ">=1.1.0" },
-    { name = "ropt", specifier = ">=0.29,<0.30" },
+    { name = "ropt", extras = ["pandas"], specifier = ">=0.29,<0.30" },
     { name = "ropt-dakota", specifier = ">=0.29,<0.30" },
     { name = "ruamel-yaml" },
     { name = "scipy", specifier = ">=1.10.1" },
@@ -4894,6 +4894,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7f/af/fd357562e923aafeb8c34472e0f22d350daa83926727019dfffe20feb905/ropt-0.29.0.tar.gz", hash = "sha256:8eaed52b510bbe0f648d7cb8ad6638af24b3514c7f1c445b42eaf5b350269d42", size = 515329, upload-time = "2026-09-21T07:48:32.998Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/14/45/c23d034d8237ced6c51ee1882f835c522222c3af1948ac3dcbe4b7b9ae35/ropt-0.29.0-py3-none-any.whl", hash = "sha256:2b78e1ed2b0c2d32f6efb441156bf1b0ab480a6e91b04a2f1e3747d8ec98642a", size = 218633, upload-time = "2026-09-21T07:48:31.546Z" },
+]
+
+[package.optional-dependencies]
+pandas = [
+    { name = "pandas" },
 ]
 
 [[package]]

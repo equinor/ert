@@ -105,7 +105,9 @@ def _ropt_to_df(
     values: list[str],
     select: list[str],
 ) -> pl.DataFrame:
-    df = results.to_polars(values).select(select + values)
+    df = pl.from_pandas(
+        results.to_pandas(values).reset_index(),
+    ).select(select + values)
     df = _rename_ropt_df_columns(df)
     return _enforce_dtypes(df)
 
