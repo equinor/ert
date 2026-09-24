@@ -23,6 +23,7 @@ from .models import (
 )
 from .parameterviewer import get_parameters_button
 from .pathchooser import PathChooser
+from .search_bar import SearchBar
 from .searchbox import SearchBox
 from .stringbox import StringBox
 from .suggestor import Suggestor
@@ -54,6 +55,7 @@ __all__ = [
     "ErtSummary",
     "PathChooser",
     "PathModel",
+    "SearchBar",
     "SearchBox",
     "SelectableListModel",
     "StringBox",
