@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, cast
 
@@ -36,6 +36,7 @@ class DesignMatrix:
     priority_source: str = "design_matrix"
     update: bool = False
     update_strategy: LocalizationType | None = None
+    categorical_parameters: frozenset[str] = field(default_factory=frozenset)
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
@@ -49,6 +50,11 @@ class DesignMatrix:
             self.parameter_priority = {
                 cfg.name: self.priority_source for cfg in self.parameter_configurations
             }
+            self.categorical_parameters = frozenset(
+                col
+                for col, dtype in self.design_matrix_df.schema.items()
+                if col != "realization" and not dtype.is_numeric()
+            )
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
                 f"Error reading design matrix {self.filename}"
@@ -208,6 +214,13 @@ class DesignMatrix:
 
         design_matrix_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
 
+        if self.update and self.categorical_parameters:
+            ConfigWarning.warn(
+                "Design matrix parameters with categorical values are not "
+                "supported by the update step and will not be updated: "
+                f"{', '.join(sorted(self.categorical_parameters))}."
+            )
+
         for param_cfg in existing_parameters:
             if (
                 isinstance(param_cfg, GenKwConfig)
@@ -221,7 +234,7 @@ class DesignMatrix:
 
                 if input_source == DataSource.SAMPLED:
                     update_strategy = param_cfg.update_strategy
-                elif self.update:
+                elif self.update and param_cfg.name not in self.categorical_parameters:
                     update_strategy = self.update_strategy or LocalizationType.GLOBAL
                 else:
                     update_strategy = None
@@ -250,9 +263,10 @@ class DesignMatrix:
         if design_matrix_cfgs.values():
             if self.update:
                 for cfg in design_matrix_cfgs.values():
-                    cfg.update_strategy = (
-                        self.update_strategy or LocalizationType.GLOBAL
-                    )
+                    if cfg.name not in self.categorical_parameters:
+                        cfg.update_strategy = (
+                            self.update_strategy or LocalizationType.GLOBAL
+                        )
             new_param_configs += list(design_matrix_cfgs.values())
 
         return new_param_configs

@@ -1,15 +1,45 @@
 from unittest.mock import patch
 
+import polars as pl
 import pytest
 
 from ert.config import (
     ConfigValidationError,
+    ConfigWarning,
     DesignMatrix,
     GenKwConfig,
     LocalizationType,
 )
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource
+from tests.ert.conftest import _create_design_matrix
+
+
+def test_that_categorical_design_matrix_parameters_are_excluded_from_update(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    design_matrix_df = pl.DataFrame(
+        {
+            "REAL": [0, 1, 2],
+            "a": [1.0, 2.0, 3.0],
+            "b": ["low", "medium", "high"],
+        }
+    )
+    _create_design_matrix(design_path, design_matrix_df)
+    dm = DesignMatrix(
+        filename=design_path,
+        design_sheet="DesignSheet",
+        default_sheet=None,
+        update=True,
+        update_strategy=LocalizationType.GLOBAL,
+    )
+
+    with pytest.warns(ConfigWarning, match="categorical values.*: b"):
+        merged_params = {
+            p.name: p for p in dm.merge_with_existing_parameters(existing_parameters=[])
+        }
+
+    assert merged_params["a"].update_strategy == LocalizationType.GLOBAL
+    assert merged_params["b"].update_strategy is None
 
 
 @pytest.mark.parametrize(
