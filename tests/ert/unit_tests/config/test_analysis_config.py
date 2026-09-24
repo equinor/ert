@@ -392,6 +392,10 @@ def test_that_invalid_inversion_value_gives_error(config):
         ([["OBSERVATIONS", "AUTO_SCALE", "OBS_*"]], [["OBS_*"]]),
         ([["OBSERVATIONS", "AUTO_SCALE", "ONE,TWO"]], [["ONE", "TWO"]]),
         (
+            [["OBSERVATIONS", "AUTO_SCALE", "ONE, TWO ,   THREE"]],
+            [["ONE", "TWO", "THREE"]],
+        ),
+        (
             [
                 ["OBSERVATIONS", "AUTO_SCALE", "OBS_*"],
                 ["OBSERVATIONS", "AUTO_SCALE", "SINGLE"],

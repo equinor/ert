@@ -1853,6 +1853,16 @@ you would like to only scale some observations, you can use wildcard matching:
 This will find correlations in all observations starting with: 'OBS_1' and scale those, then
 find correlations in all observations starting with: 'OBS_2', and scale those, independent of 'OBS_1*'
 
+If multiple observation patterns should be scaled together, list them on the same line separated
+by commas:
+
+.. code-block:: text
+
+    ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE OBS_1*, OBS_2*
+
+This will find correlations across observations matching either ``OBS_1*`` or ``OBS_2*`` and
+scale them together as one group.
+
 .. _enkf_truncation:
 
 ENKF_TRUNCATION
