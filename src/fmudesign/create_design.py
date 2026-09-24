@@ -146,6 +146,8 @@ class DesignMatrix:
             Fmudesign summary:
             Designtype: {inputdict.get("designtype")}
             Repeats: {inputdict.get("repeats")}
+            Seed strategy: {inputdict.get("seed_strategy")}
+            Correlation iterations: {inputdict.get("correlation_iterations")}
             Number of sensitivities: {len(inputdict["sensitivities"])}
             Number of background parameters: {
                 len(background.get("parameters", {}))
@@ -226,7 +228,7 @@ class DesignMatrix:
             else int(self.rng.integers(2**63))
         )
 
-        # Reading or generating rms seed value
+        # Reading or generating rms seed values
         max_reals = find_max_realisations(inputdict)
         self.seedvalues = DesignMatrix.create_rms_seeds(inputdict["seeds"], max_reals)
 
