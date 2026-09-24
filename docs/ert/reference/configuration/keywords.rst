@@ -214,9 +214,9 @@ where:
    When a parameter name overlaps between DESIGN_MATRIX and GEN_KW, the PRIORITY setting determines which source's update behavior takes precedence.
    Default is `FALSE`.
 
-   Columns containing non-numeric (categorical) values, e.g. text labels, cannot be updated and are always
-   excluded from the update step regardless of the ``UPDATE`` setting. When this happens, ERT emits a
-   ``ConfigWarning`` listing the excluded parameter names.
+  Columns containing non-numeric (categorical) values, e.g. text labels, cannot be updated
+  when they are sourced from the design matrix, even if ``UPDATE:TRUE`` is set. When
+  ``UPDATE:TRUE`` is set, ERT emits a ``ConfigWarning`` listing the excluded parameter names.
 
 
 *Example:*
