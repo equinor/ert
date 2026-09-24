@@ -13,15 +13,15 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
-    QToolButton,
     QWidget,
 )
 from pytestqt.qtbot import QtBot
 
 import ert.run_models
 from _ert.events import EnsembleEvaluationWarning
+from _ert.threading import ErtThread
 from ert.config import ErtConfig
-from ert.ensemble_evaluator import state
+from ert.ensemble_evaluator import EvaluatorServerConfig, state
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -54,7 +54,6 @@ from ert.run_models.event import (
 )
 from ert.run_models.run_model import RunModel
 from ert.scheduler.job import Job
-from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
 from tests.ert.utils import SnapshotBuilder
 
@@ -129,7 +128,64 @@ def mock_set_env_key():
 
 
 @pytest.fixture
-def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
+def start_run_dialog(qtbot: QtBot):
+    models = []
+    threads = []
+
+    def start(gui):
+        panel = gui.findChild(ExperimentPanel)
+        assert panel is not None
+        event_queue = SimpleQueue()
+        model = ert.run_models.create_model(
+            panel.config, panel.get_experiment_arguments(), event_queue
+        )
+        models.append(model)
+        dialog = RunDialog(
+            "Experiment",
+            model.api,
+            event_queue,
+            panel._notifier,
+            gui,
+            output_path=panel.config.analysis_config.log_path,
+            runpath=Path(panel.config.runpath_config.runpath_format_string),
+            storage_path=panel._notifier.storage.path,
+        )
+        qtbot.addWidget(dialog)
+
+        def start_simulations(*, rerun_failed_realizations=False):
+            dialog.setup_event_monitoring(
+                rerun_failed_realizations=rerun_failed_realizations
+            )
+            thread = ErtThread(
+                target=lambda: model.start_simulations_thread(
+                    EvaluatorServerConfig(use_ipc_protocol=True),
+                    rerun_failed_realizations=rerun_failed_realizations,
+                ),
+                daemon=True,
+            )
+            threads.append(thread)
+            panel._notifier.set_is_experiment_running(True)
+            thread.start()
+
+        dialog.rerun_failed_realizations_experiment.connect(
+            lambda: start_simulations(rerun_failed_realizations=True)
+        )
+        panel.experiment_started.emit(dialog)
+        start_simulations()
+        return dialog
+
+    yield start
+    for model in models:
+        model.cancel()
+    for thread in threads:
+        thread.join(timeout=10)
+        assert not thread.is_alive()
+
+
+@pytest.fixture
+def run_dialog(
+    qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch, start_run_dialog
+):
     config_file = "minimal_config.ert"
     monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
     monkeypatch.setattr(
@@ -150,12 +206,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
     simulation_settings = gui.findChild(EnsembleExperimentPanel)
     simulation_settings._experiment_name_field.setText("new_experiment_name")
-    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-    assert run_experiment
-    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-    run_dialog = gui.findChild(RunDialog)
-    assert run_dialog
+    run_dialog = start_run_dialog(gui)
     yield run_dialog
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=10000)
 
@@ -164,7 +215,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
 @pytest.mark.timeout(10)
 @pytest.mark.slow
 def test_that_terminating_experiment_shows_a_confirmation_dialog(
-    qtbot: QtBot, monkeypatch
+    qtbot: QtBot, monkeypatch, start_run_dialog
 ):
     config_file = "minimal_config.ert"
     monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
@@ -206,12 +257,7 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
     simulation_settings = gui.findChild(EnsembleExperimentPanel)
     simulation_settings._experiment_name_field.setText("new_experiment_name")
-    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-    assert run_experiment
-    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-    run_dialog = gui.findChild(RunDialog)
-    assert run_dialog
+    run_dialog = start_run_dialog(gui)
     kill_button = run_dialog.kill_button
     with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
         # Wait for ensemble to start evaluating before cancelling
@@ -643,7 +689,7 @@ def test_run_dialog_fm_label_show_correct_info(
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_simulation_fails(  # ruff: ignore[line-too-long] E501
-    qtbot: QtBot, use_tmpdir
+    qtbot: QtBot, use_tmpdir, start_run_dialog
 ):
     config_file = "minimal_config.ert"
     Path(config_file).write_text(
@@ -660,12 +706,10 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
     ):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
         qtbot.addWidget(gui)
-        run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
         simulation_mode_combo = gui.findChild(QComboBox)
         simulation_mode_combo.setCurrentText("Single realization test-run")
-        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-        run_dialog = wait_for_child(gui, qtbot, RunDialog)
+        run_dialog = start_run_dialog(gui)
 
         qtbot.waitUntil(lambda: run_dialog.fail_msg_box is not None, timeout=10000)
         suggestor_termination_window = run_dialog.fail_msg_box
@@ -696,7 +740,7 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
 
 @pytest.mark.slow
 def test_that_stdout_and_stderr_buttons_react_to_file_content(
-    snake_oil_case_storage: ErtConfig, qtbot: QtBot
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot, start_run_dialog
 ):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
@@ -713,15 +757,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     simulation_settings = gui.findChild(EnsembleExperimentPanel)
     simulation_settings._experiment_name_field.setText("new_experiment_name")
 
-    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-    assert run_experiment
-
-    QTimer.singleShot(
-        1000, lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=True)
-    )
-    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-    run_dialog = gui.findChild(RunDialog)
+    run_dialog = start_run_dialog(gui)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
 
@@ -1188,7 +1224,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
 @pytest.mark.timeout(20)
 @pytest.mark.slow
 def test_that_terminating_experiment_during_hooked_workflows_stops_run_dialog(
-    qtbot: QtBot, monkeypatch
+    qtbot: QtBot, monkeypatch, start_run_dialog
 ) -> None:
     config_file = "hooked_workflow_config.ert"
     monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
@@ -1267,12 +1303,7 @@ HOOK_WORKFLOW_JOB slow_workflow_02 TOUCH_WORKFLOW {file_c} PRE_SIMULATION
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
     simulation_settings = gui.findChild(EnsembleExperimentPanel)
     simulation_settings._experiment_name_field.setText("new_experiment_name")
-    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-    assert run_experiment
-    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-    run_dialog = gui.findChild(RunDialog)
-    assert run_dialog
+    run_dialog = start_run_dialog(gui)
     kill_button = run_dialog.kill_button
 
     qtbot.waitUntil(file_a.exists, timeout=10000)

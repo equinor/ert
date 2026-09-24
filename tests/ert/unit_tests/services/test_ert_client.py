@@ -1,5 +1,7 @@
 import io
+import json
 import logging
+from dataclasses import dataclass
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -14,6 +16,7 @@ from websockets.exceptions import (
 )
 from websockets.frames import Close
 
+from ert.config import ErtConfig, GenKwConfig
 from ert.ensemble_evaluator import EndEvent
 from ert.services.ert_client import _WEBSOCKET_CONNECT_RETRIES, ErtClient
 from ert.services.shared_client import SharedClient
@@ -68,6 +71,47 @@ def client() -> RecordingClient:
 @pytest.fixture
 def api(client: RecordingClient) -> ErtClient:
     return ErtClient(client)  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    [
+        "runpath_exists",
+        "runpath_delete",
+        "get_runmodel_data",
+        "start_experiment_ert",
+    ],
+)
+def test_that_experiment_requests_serialize_parameter_configs_in_arguments(
+    method_name: str,
+) -> None:
+    @dataclass
+    class Arguments:
+        mode: str
+        parameter_configuration: list[GenKwConfig]
+
+    parameter = GenKwConfig(
+        name="COEFF", distribution={"name": "normal", "mean": 0, "std": 1}
+    )
+    args = Arguments(mode="manual_update", parameter_configuration=[parameter])
+    config = MagicMock(spec=ErtConfig)
+    config.model_dump.return_value = {}
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+
+    def request(method: str, url: str, **kwargs: Any) -> httpx.Response:
+        encoded = httpx.Request(method, f"https://localhost{url}", json=kwargs["json"])
+        assert json.loads(encoded.content)["args"] == {
+            "mode": "manual_update",
+            "parameter_configuration": [parameter.model_dump(mode="json")],
+        }
+        return httpx.Response(
+            200, json={"experiment_id": "experiment"}, request=encoded
+        )
+
+    transport.request.side_effect = request
+    getattr(ErtClient(transport), method_name)(config, args)
+    transport.request.assert_called_once()
 
 
 def test_that_repeated_parameter_calls_issue_a_single_request(api, client):

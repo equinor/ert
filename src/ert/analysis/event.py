@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 from tabulate import tabulate
 
@@ -39,6 +40,8 @@ class DataSection:
     extra: dict[str, str] | None = None
 
     def __post_init__(self) -> None:
+        if isinstance(self.data, np.ndarray):
+            self.data = self.data.tolist()
         if len(self.data) > 0 and len(self.header) != len(self.data[0]):
             raise ValueError(
                 f"Header ({self.header}) must have same length as "

@@ -32,7 +32,7 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
-from ert.services import SharedClient
+from ert.services import ErtServerController, SharedClient
 from ert.storage import Storage
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
@@ -101,19 +101,24 @@ def _new_poly_example(
 
 @contextmanager
 def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
+    path = Path(path).resolve()
     args_mock = Mock()
     args_mock.config = str(path)
     site_plugins = get_site_plugins()
-    with use_runtime_plugins(site_plugins):
+    with use_runtime_plugins(site_plugins), pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.chdir(path.parent)
         config = ErtConfig.with_plugins(site_plugins).from_file(path)
+        SharedClient.close_client()
         with (
             add_gui_log_handler() as log_handler,
+            ErtServerController.init_service(project=Path(config.ens_path)),
         ):
             gui = _setup_main_window(config, args_mock, log_handler, config.ens_path)
             try:
                 yield gui, config.ens_path, config
             finally:
                 gui.close()
+                SharedClient.close_client()
 
 
 @pytest.fixture
