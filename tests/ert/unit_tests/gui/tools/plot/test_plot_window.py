@@ -34,6 +34,7 @@ from ert.gui.plotting.utils.plot_maps import (
     ENSEMBLE,
     ERT_PLOT_MAP,
     HISTOGRAM,
+    MISFIT_MAP,
     STATISTICS,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget
@@ -1499,3 +1500,85 @@ def test_that_datatype_separators_are_never_set_as_default(
 def test_that_seismic_y_label_is_created(key, expected_y_label):
     label = make_seismic_y_label(key)
     assert label == expected_y_label
+
+
+def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
+
+    first_ensemble = EnsembleObject(
+        "prior", "prior-id", False, "experiment", "2026-01-01T00:00:00"
+    )
+    later_ensemble = EnsembleObject(
+        "posterior", "posterior-id", False, "experiment", "2026-01-01T00:30:00"
+    )
+
+    mock_plot_api.responses_api_key_defs = [
+        PlotApiKeyDefinition(
+            "SEISMIC",
+            index_type="VALUE",
+            observations=True,
+            dimensionality=2,
+            metadata={"data_origin": "seismic"},
+            response=MagicMock(type="seismic"),
+        )
+    ]
+    mock_plot_api.parameters_api_key_defs = []
+    mock_plot_api.has_history_data.return_value = False
+
+    ensembles = [first_ensemble, later_ensemble]
+    mock_plot_api.get_all_ensembles.return_value = ensembles
+    mock_plot_api.observations_for_key.return_value = pd.DataFrame(
+        data={
+            0: [1.0, 10.0, "0", 100.0, 200.0],
+            1: [1.0, 20.0, "5", 150.0, 250.0],
+            2: [1.0, 30.0, "8", 200.0, 100.0],
+        },
+        index=["STD", "OBS", "key_index", "EAST", "NORTH"],
+    )
+
+    def _data_for_response(ensemble_id, **_):
+        if ensemble_id == first_ensemble.id:
+            return pd.DataFrame(
+                data={"0": [12.0], "5": [24.0], "8": [36.0]},
+                index=pd.Index([0], name="Realization"),
+            )
+        return pd.DataFrame(
+            data={"0": [11.0], "5": [22.0], "8": [33.0]},
+            index=pd.Index([0], name="Realization"),
+        )
+
+    mock_plot_api.data_for_response.side_effect = _data_for_response
+
+    plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
+    qtbot.addWidget(plot_window)
+
+    misfit_map_widget = plot_window._widget_by_name(MISFIT_MAP)
+    plot_window._central_tab.setCurrentWidget(misfit_map_widget)
+
+    ensemble_list = plot_window._ensemble_selection_widget._selected_ensembles
+    ensemble_items = [ensemble_list.item(i) for i in range(ensemble_list.count())]
+    assert len(ensemble_items) == 2
+
+    # Min and max of the signed chi-squared misfit for the first ensemble
+    expected_v_range = (4.0, 36.0)
+
+    # The plot color range (vmin and vmax) is the same for both ensembles:
+    ensemble_list.itemClicked.emit(ensemble_items[0])
+    plot_artist = misfit_map_widget._figure.axes[0].collections[0]
+    assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+
+    ensemble_list.itemClicked.emit(ensemble_items[1])
+    plot_artist = misfit_map_widget._figure.axes[0].collections[0]
+    assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
