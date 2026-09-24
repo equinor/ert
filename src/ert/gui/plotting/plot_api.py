@@ -505,6 +505,15 @@ class PlotApi:
 
         return self._client.parameter_std_dev(ensemble.id, key, z)
 
+    def mean_for_parameter(
+        self, key: str, ensemble_id: str, z: int
+    ) -> npt.NDArray[np.float32]:
+        ensemble = self._get_ensemble_by_id(ensemble_id)
+        if not ensemble:
+            return np.array([])
+
+        return self._client.parameter_mean(ensemble.id, key, z)
+
     def has_kalman_gain(self, ensemble_id: str) -> bool:
         blobs = self._client.ensemble_blobs(ensemble_id)
         return any(
