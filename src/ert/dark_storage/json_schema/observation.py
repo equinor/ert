@@ -27,6 +27,7 @@ class ObservationTransformationOut(_ObservationTransformation):
 @dataclass
 class _Observation:
     name: str
+    response_key: list[str]
     errors: list[float]
     values: list[float]
     x_axis: list[Any]
