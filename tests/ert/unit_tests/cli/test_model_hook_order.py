@@ -8,6 +8,7 @@ from pydantic import ConfigDict
 
 from ert.config import (
     ESSettings,
+    GenKwConfig,
     ModelConfig,
     ObservationSettings,
     PostExperimentFixtures,
@@ -110,6 +111,11 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
     ens_mock = MagicMock()
     ens_mock.iteration = 0
     ens_mock.id = uuid.uuid1()
+    ens_mock.experiment.parameter_configuration = {
+        "PARAMETER": GenKwConfig(
+            name="PARAMETER", distribution={"name": "normal", "mean": 0, "std": 1}
+        )
+    }
     storage_mock = MagicMock()
     storage_mock.create_ensemble.return_value = ens_mock
 

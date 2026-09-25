@@ -16,11 +16,13 @@ from ert.analysis.event import (
     AnalysisTimeEvent,
 )
 from ert.config import (
+    ConfigValidationError,
     HookRuntime,
     PostUpdateFixtures,
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
 )
+from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -90,6 +92,15 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         weight: float = 1.0,
         target_experiment: LocalExperiment | None = None,
     ) -> Ensemble:
+        try:
+            validate_has_updatable_parameter(
+                list(prior.experiment.parameter_configuration.values())
+            )
+        except ConfigValidationError as err:
+            raise ErtRunError(
+                f"Cannot update prior ensemble '{prior.name}' (ID: {prior.id}): {err}"
+            ) from err
+
         self.validate_successful_realizations_count()
         self.send_event(
             RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
