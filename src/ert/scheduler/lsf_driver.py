@@ -536,7 +536,7 @@ class LsfDriver(Driver):
                 await self._process_job_update(job_id, new_state=job)
 
             if missing_in_bhist_and_bjobs and self._bhist_cache is not None:
-                logger.debug(
+                logger.warning(
                     "bhist did not give status for job_ids "
                     f"{missing_in_bhist_and_bjobs}, giving up for now."
                 )
