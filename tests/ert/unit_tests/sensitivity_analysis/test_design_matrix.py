@@ -10,6 +10,7 @@ from ert.config import (
     DataSource,
     DesignMatrix,
     GenKwConfig,
+    LocalizationType,
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP, read_default_values
 from ert.config.parsing.config_errors import ConfigWarning
@@ -309,6 +310,41 @@ def test_read_and_merge_with_existing_parameters(
         assert config.group == res_group_name[config.name], (
             f"{config} mismatch in group name"
         )
+
+
+def test_that_merging_design_matrices_preserves_each_matrix_update_setting(tmp_path):
+    _create_design_matrix(
+        tmp_path / "design_matrix_1.xlsx",
+        pl.DataFrame({"REAL": [0, 1, 2], "a": [1, 2, 3]}),
+        pl.DataFrame(),
+    )
+    design_matrix_1 = DesignMatrix(
+        tmp_path / "design_matrix_1.xlsx",
+        "DesignSheet",
+        "DefaultSheet",
+        update=True,
+        gen_kw_update_strategy=LocalizationType.GLOBAL,
+    )
+    _create_design_matrix(
+        tmp_path / "design_matrix_2.xlsx",
+        pl.DataFrame({"REAL": [0, 1, 2], "b": [4, 5, 6]}),
+        pl.DataFrame(),
+    )
+    design_matrix_2 = DesignMatrix(
+        tmp_path / "design_matrix_2.xlsx",
+        "DesignSheet",
+        "DefaultSheet",
+        update=False,
+    )
+
+    design_matrix_1.merge_with_other(design_matrix_2)
+
+    new_config_parameters = design_matrix_1.merge_with_existing_parameters([])
+    update_strategies = {cfg.name: cfg.update_strategy for cfg in new_config_parameters}
+    assert update_strategies == {
+        "a": LocalizationType.GLOBAL,
+        "b": None,
+    }
 
 
 def test_reading_design_matrix(tmp_path):
