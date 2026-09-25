@@ -795,7 +795,7 @@ def test_that_empty_and_whitespace_only_default_rows_are_ignored(tmp_path):
     assert design_matrix.design_matrix_df["d"].to_list() == [6, 6]
 
 
-@pytest.mark.parametrize("leading_blank_rows", [0, 1, 2, 3])
+@pytest.mark.parametrize("leading_blank_rows", [0, 1, 2, 3], ids=str)
 def test_that_blank_rows_above_the_data_do_not_shift_reported_rows_in_default_sheet(
     tmp_path, leading_blank_rows
 ):

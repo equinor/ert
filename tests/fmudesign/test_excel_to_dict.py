@@ -250,7 +250,7 @@ def _write_background_workbook(path, background, corr_matrix, background_name):
     return path
 
 
-@pytest.mark.parametrize("sheet", ["designinput", "backgroundsheet"])
+@pytest.mark.parametrize("sheet", ["designinput", "backgroundsheet"], ids=str)
 @pytest.mark.parametrize(
     ("missing_field", "error"),
     [
@@ -635,7 +635,7 @@ def test_that_dependency_headers_without_rows_copy_source_values(tmp_path):
     }
 
 
-@pytest.mark.parametrize("duplicate_parameter", ["SOURCE", "TARGET"])
+@pytest.mark.parametrize("duplicate_parameter", ["SOURCE", "TARGET"], ids=str)
 def test_that_duplicate_dependency_parameter_names_raise_value_error(
     tmp_path, duplicate_parameter
 ):

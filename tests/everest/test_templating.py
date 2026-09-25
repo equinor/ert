@@ -200,7 +200,7 @@ def test_well_order_template(change_to_tmpdir):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("test", ["install_templates", "template_render"])
+@pytest.mark.parametrize("test", ["install_templates", "template_render"], ids=str)
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
     """

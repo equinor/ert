@@ -1112,7 +1112,7 @@ def generate_random_text(size):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
+@pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)], ids=str)
 async def test_lsf_can_retrieve_stdout_and_stderr(
     use_tmpdir, job_name, tail_chars_to_read
 ):
@@ -1158,7 +1158,7 @@ async def test_lsf_cannot_retrieve_stdout_and_stderr(use_tmpdir, job_name):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("explicit_runpath", [(True), (False)])
+@pytest.mark.parametrize("explicit_runpath", [(True), (False)], ids=str)
 async def test_lsf_info_file_in_runpath(
     explicit_runpath, tmp_path, job_name, monkeypatch
 ):

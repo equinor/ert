@@ -23,7 +23,7 @@ from ._configurations import (
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("correlations", [True, False])
+@pytest.mark.parametrize("correlations", [True, False], ids=str)
 def test_that_generated_distributions_match_configured_statistics(
     tmp_path, correlations
 ):
@@ -222,7 +222,9 @@ def test_that_generated_distributions_match_configured_statistics(
         assert np.sqrt(np.mean((obs_corr - corr_values) ** 2)) < 0.02
 
 
-@pytest.mark.parametrize("output_filename", ["designmatrix.xlsx", "designmatrix"])
+@pytest.mark.parametrize(
+    "output_filename", ["designmatrix.xlsx", "designmatrix"], ids=str
+)
 def test_that_onebyone_design_contains_configured_cases_and_values(
     tmp_path, capsys, output_filename
 ):
@@ -781,7 +783,7 @@ def _assert_stability(stable, before, after, columns):
             assert not np.array_equal(first, second), col
 
 
-@pytest.mark.parametrize("strategy", ["joint", "independent"])
+@pytest.mark.parametrize("strategy", ["joint", "independent"], ids=str)
 def test_that_sampling_strategies_reproduce_configured_marginal_distributions(
     strategy,
 ):
@@ -833,7 +835,7 @@ def test_that_independent_sampling_changes_values_when_base_seed_changes():
     )
 
 
-@pytest.mark.parametrize("strategy", ["joint", "independent"])
+@pytest.mark.parametrize("strategy", ["joint", "independent"], ids=str)
 def test_that_sampling_strategies_induce_configured_group_correlation(
     tmp_path, strategy
 ):
@@ -976,7 +978,7 @@ def test_that_independent_sampling_allows_shared_group_and_parameter_name(tmp_pa
     assert abs(np.corrcoef(x, poro)[0, 1]) < 0.05
 
 
-@pytest.mark.parametrize("strategy", ["joint", "independent"])
+@pytest.mark.parametrize("strategy", ["joint", "independent"], ids=str)
 def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strategy):
     """A parameter listed in two correlation matrices is ambiguous: only one of
     the two requested correlations can be honoured, so it must be rejected.

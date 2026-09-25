@@ -58,7 +58,7 @@ def test_that_from_config_list_with_invalid_update_option_throws():
         DesignMatrix.from_config_list(config_list, update_strategy=None)
 
 
-@pytest.mark.parametrize("priority", ["design_matrix", "sampled"])
+@pytest.mark.parametrize("priority", ["design_matrix", "sampled"], ids=str)
 def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_params_and_no_update(  # ruff: ignore[line-too-long]
     priority,
 ):
@@ -100,7 +100,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
     assert merged_params == dm.parameter_configurations
 
 
-@pytest.mark.parametrize("priority", ["design_matrix", "sampled"])
+@pytest.mark.parametrize("priority", ["design_matrix", "sampled"], ids=str)
 def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_params_and_update_true(  # ruff: ignore[line-too-long]
     priority,
 ):
@@ -144,7 +144,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
         assert param.update_strategy == LocalizationType.ADAPTIVE
 
 
-@pytest.mark.parametrize("priority", ["design_matrix", "sampled"])
+@pytest.mark.parametrize("priority", ["design_matrix", "sampled"], ids=str)
 def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_update_strategy_sets_update_to_global(  # ruff: ignore[line-too-long]
     priority,
 ):

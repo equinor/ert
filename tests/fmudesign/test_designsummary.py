@@ -34,7 +34,7 @@ EXPECTED_SUMMARY = pd.DataFrame(
 )
 
 
-@pytest.mark.parametrize("file_format", ["csv", "xlsx"])
+@pytest.mark.parametrize("file_format", ["csv", "xlsx"], ids=str)
 def test_that_summarize_design_groups_cases_into_realization_ranges(
     tmp_path: Path, file_format: str
 ):

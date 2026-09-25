@@ -30,7 +30,7 @@ def test_create_local_copy_is_a_copy_with_local_queue_system():
     assert isinstance(local_queue_config.queue_options, LocalQueueOptions)
 
 
-@pytest.mark.parametrize("value", [True, False])
+@pytest.mark.parametrize("value", [True, False], ids=str)
 def test_stop_long_running_is_set_from_corresponding_keyword(value):
     assert (
         QueueConfig.from_dict({ConfigKeys.STOP_LONG_RUNNING: value}).stop_long_running
@@ -39,7 +39,7 @@ def test_stop_long_running_is_set_from_corresponding_keyword(value):
     assert QueueConfig(stop_long_running=value).stop_long_running == value
 
 
-@pytest.mark.parametrize("queue_system", ["LSF", "TORQUE", "SLURM"])
+@pytest.mark.parametrize("queue_system", ["LSF", "TORQUE", "SLURM"], ids=str)
 def test_project_code_is_set_when_forward_model_contains_selected_simulator(
     queue_system,
 ):
@@ -72,7 +72,7 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
     assert queue_config.queue_options.project_code == "test_code"
 
 
-@pytest.mark.parametrize("invalid_queue_system", ["VOID", "BLABLA", "*"])
+@pytest.mark.parametrize("invalid_queue_system", ["VOID", "BLABLA", "*"], ids=str)
 def test_that_the_first_argument_to_queue_option_must_be_a_known_queue_system(
     invalid_queue_system,
 ):

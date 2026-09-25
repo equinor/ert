@@ -5,7 +5,7 @@ import pytest
 from fmudesign.quality_report import QualityReporter
 
 
-@pytest.mark.parametrize("var_name", ["category", "count", "proportion"])
+@pytest.mark.parametrize("var_name", ["category", "count", "proportion"], ids=str)
 def test_that_discrete_plot_counts_match_sorted_categories(var_name):
     series = pd.Series(["beta", "beta", "beta", "alpha"])
 

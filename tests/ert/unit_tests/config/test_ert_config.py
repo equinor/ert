@@ -642,7 +642,7 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
         _ = ErtConfig.from_file(test_config_file_name)
 
 
-@pytest.mark.parametrize("c", ["\\", "?", "+", ":", "*"])
+@pytest.mark.parametrize("c", ["\\", "?", "+", ":", "*"], ids=str)
 @pytest.mark.filterwarnings("ignore:RUNPATH keyword contains no value placeholders")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_char_in_unquoted_is_allowed(c):
@@ -1459,7 +1459,7 @@ def test_parsing_workflow_with_multiple_args():
     assert ert_config is not None
 
 
-@pytest.mark.parametrize("parameter", ["<ECLBASE>", "<RUNPATH>"])
+@pytest.mark.parametrize("parameter", ["<ECLBASE>", "<RUNPATH>"], ids=str)
 def test_no_warning_given_when_using_parameters_defined_by_ert_in_forward_model_steps(
     caplog, recwarn, parameter
 ):
@@ -1925,7 +1925,7 @@ def test_warning_is_emitted_for_ecl_base_in_run_template():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("eclbase_line", ["", "ECLBASE foo/bar/DECK"])
+@pytest.mark.parametrize("eclbase_line", ["", "ECLBASE foo/bar/DECK"], ids=str)
 def test_warning_is_not_emitted_for_random_run_template(eclbase_line):
     Path("templates").mkdir()
     Path("templates/ECLDECK.DATA").touch()
@@ -2426,7 +2426,7 @@ def test_that_the_runpath_keyword_sets_the_runpath_substitution():
     )
 
 
-@pytest.mark.parametrize("eclbase_substitution", ["<ECLBASE>", "<ECL_BASE>"])
+@pytest.mark.parametrize("eclbase_substitution", ["<ECLBASE>", "<ECL_BASE>"], ids=str)
 def test_that_the_eclbase_keyword_sets_the_eclbase_substitution(eclbase_substitution):
     datafile = "input.data"
     assert (
@@ -2655,7 +2655,7 @@ _________________________________________     _____    ____________________
         Refcase.from_config_dict(config_dict={ConfigKeys.REFCASE: refcase_file})
 
 
-@pytest.mark.parametrize("misspelled_option", ["DESIGNSHEET", "DEFAULTSHEET"])
+@pytest.mark.parametrize("misspelled_option", ["DESIGNSHEET", "DEFAULTSHEET"], ids=str)
 def test_that_invalid_option_name_in_design_matrix_raises_validation_error(
     misspelled_option,
     tmp_path,
