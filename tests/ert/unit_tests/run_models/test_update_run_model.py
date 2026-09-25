@@ -10,6 +10,7 @@ from ert.analysis.event import (
     AnalysisStatusEvent,
     DataSection,
 )
+from ert.run_models.event import RunModelErrorEvent
 from ert.run_models.update_run_model import UpdateRunModel
 
 _DATA_SECTION = DataSection(
@@ -69,3 +70,25 @@ def test_that_send_smoother_event_does_not_persist_status_messages():
     )
 
     mock_ensemble.save_blob.assert_not_called()
+
+
+def test_that_analysis_error_is_reported_even_if_its_report_cannot_be_stored():
+    model = MagicMock(spec=UpdateRunModel)
+    mock_ensemble = MagicMock()
+    mock_ensemble.save_blob.side_effect = OSError("No space left on device")
+
+    UpdateRunModel.send_smoother_event(
+        model,
+        iteration=0,
+        run_id=uuid.uuid4(),
+        ensemble=mock_ensemble,
+        event=AnalysisErrorEvent(
+            error_msg="No active observations left",
+            data=_DATA_SECTION,
+            update_algorithm="ensemble_smoother",
+        ),
+    )
+
+    (sent_event,) = model.send_event.call_args.args
+    assert isinstance(sent_event, RunModelErrorEvent)
+    assert sent_event.error_msg == "No active observations left"
