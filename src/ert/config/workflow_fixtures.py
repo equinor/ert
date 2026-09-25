@@ -36,7 +36,7 @@ class PostExperimentFixtures:
 class PreSimulationFixtures:
     random_seed: int
     reports_dir: str
-    runpaths: Runpaths
+    run_paths: Runpaths
     storage: Storage
     ensemble: Ensemble
     hook: HookRuntime = HookRuntime.PRE_SIMULATION
@@ -51,7 +51,7 @@ class PostSimulationFixtures(PreSimulationFixtures):
 class PreFirstUpdateFixtures:
     random_seed: int
     reports_dir: str
-    runpaths: Runpaths
+    run_paths: Runpaths
     storage: Storage
     ensemble: Ensemble
     es_settings: ESSettings
@@ -74,7 +74,7 @@ class WorkflowFixtures(TypedDict, total=False):
     parent: QWidget | None
     random_seed: int | None
     reports_dir: str
-    runpaths: Runpaths
+    run_paths: Runpaths
     storage: Storage
     ensemble: Ensemble | None
     es_settings: ESSettings

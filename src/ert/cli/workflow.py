@@ -30,7 +30,7 @@ def execute_workflow(
             "reports_dir": str(ert_config.analysis_config.log_path),
             "observation_settings": ert_config.analysis_config.observation_settings,
             "es_settings": ert_config.analysis_config.es_settings,
-            "runpaths": Runpaths.from_config(ert_config),
+            "run_paths": Runpaths.from_config(ert_config),
             "ensemble": None,
         },
     )

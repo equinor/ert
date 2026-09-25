@@ -176,7 +176,7 @@ class EverestControl(ParameterConfig):
         return ParameterCardinality.multiple_configs_per_ensemble_dataset
 
     def read_from_runpath(
-        self, runpath: Path, real_nr: int, iteration: int
+        self, run_path: Path, real_nr: int, iteration: int
     ) -> xr.Dataset:
         raise NotImplementedError
 
@@ -192,7 +192,7 @@ class EverestControl(ParameterConfig):
         return 1
 
     def write_to_runpath(
-        self, runpath: Path, real_nr: int, ensemble: Ensemble
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> dict[str, dict[str, float | str]] | None:
         raise NotImplementedError
 

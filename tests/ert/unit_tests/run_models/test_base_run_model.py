@@ -1009,7 +1009,7 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
             fixtures=PreSimulationFixtures(
                 random_seed=1,
                 reports_dir="",
-                runpaths=MagicMock(),
+                run_paths=MagicMock(),
                 storage=brm._storage,
                 ensemble=ensemble,
             )
@@ -1038,7 +1038,7 @@ def test_that_workflow_events_from_update_hook_carry_iteration(tmp_path, use_tmp
         fixtures=PreUpdateFixtures(
             random_seed=1,
             reports_dir="",
-            runpaths=MagicMock(),
+            run_paths=MagicMock(),
             storage=MagicMock(),
             ensemble=ensemble,
             es_settings=MagicMock(),
@@ -1068,7 +1068,7 @@ def test_that_workflow_output_is_appended_to_experiment_in_storage(
         fixtures=PreSimulationFixtures(
             random_seed=1,
             reports_dir="",
-            runpaths=MagicMock(),
+            run_paths=MagicMock(),
             storage=brm._storage,
             ensemble=ensemble,
         )
@@ -1107,7 +1107,7 @@ def test_that_pre_experiment_output_is_persisted_once_experiment_exists(
         fixtures=PreSimulationFixtures(
             random_seed=1,
             reports_dir="",
-            runpaths=MagicMock(),
+            run_paths=MagicMock(),
             storage=brm._storage,
             ensemble=ensemble,
         )
@@ -1137,7 +1137,7 @@ def test_that_failure_to_persist_workflow_events_does_not_stop_experiment(
             fixtures=PreSimulationFixtures(
                 random_seed=1,
                 reports_dir="",
-                runpaths=MagicMock(),
+                run_paths=MagicMock(),
                 storage=MagicMock(),
                 ensemble=ensemble,
             )
@@ -1188,7 +1188,7 @@ def test_that_workflow_output_is_persisted_when_user_cancels_experiment(
             fixtures=PreSimulationFixtures(
                 random_seed=1,
                 reports_dir="",
-                runpaths=MagicMock(),
+                run_paths=MagicMock(),
                 storage=brm._storage,
                 ensemble=ensemble,
             )

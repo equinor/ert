@@ -109,7 +109,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             es_settings=self.analysis_settings,
             random_seed=self.random_seed,
             reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
-            runpaths=self._runpaths,
+            run_paths=self._runpaths,
         )
 
         posterior = self._storage.create_ensemble(

@@ -135,7 +135,7 @@ class RunWorkflowWidget(QWidget):
                 ),
                 "observation_settings": self.config.analysis_config.observation_settings,  # ruff: ignore[line-too-long]
                 "es_settings": self.config.analysis_config.es_settings,
-                "runpaths": Runpaths.from_config(self.config),
+                "run_paths": Runpaths.from_config(self.config),
             },
         )
         self._workflow_runner.run()
