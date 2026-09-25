@@ -190,11 +190,11 @@ DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
         DESIGN_MATRIX poly_design.xlsx
 
 
-Additionally, there are four optional named arguments:
+Additionally, there are three optional named arguments:
 
 ::
 
-        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet> PRIORITY:<design_matrix|sampled> UPDATE:<TRUE|FALSE>
+        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet> PRIORITY:<design_matrix|sampled>
 
 where:
 
@@ -207,19 +207,12 @@ where:
    If set to `sampled`, parameters will be sampled normally overwriting values from :ref:`DESIGN_MATRIX  <design_matrix>`.
    Default is `design_matrix`.
 
-4. UPDATE:<TRUE|FALSE> - controls whether design matrix parameters are updated during the update step.
-   If set to `TRUE`, design matrix parameters participate in the update step and follow the update strategy configured for :ref:`GEN_KW <gen_kw>`.
-   If set to `FALSE` (default), design matrix parameters remain constant during the update step.
-
-   When a parameter name overlaps between DESIGN_MATRIX and GEN_KW, the PRIORITY setting determines which source's update behavior takes precedence.
-   Default is `FALSE`.
-
 
 *Example:*
 
 ::
 
-        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix UPDATE:FALSE
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix
 
 
 The XLSX file must contain a design sheet, where in the columns represents different parameters and rows represent realizations.
@@ -360,64 +353,6 @@ the final set of parameters (for example in parameters.txt in real==0) would be:
         COEFFS:d=7.8 <- sampled value
         e=1 <- design value
         COEFFS:f=5.7 <- sampled value
-
-
-*Example using UPDATE:TRUE and PRIORITY:*
-By default, design matrix parameters are held constant during the update step (``UPDATE:FALSE``).
-To make them participate in history matching, set ``UPDATE:TRUE`` on the :ref:`DESIGN_MATRIX <design_matrix>` keyword:
-
-::
-
-        GEN_KW COEFFS coeff_priors
-        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix UPDATE:TRUE
-
-With ``UPDATE:TRUE``, all design matrix parameters (a, b, c, d and e) will be updated during history matching,
-following the update strategy configured for :ref:`GEN_KW <gen_kw>` parameters, see :ref:`ANALYSIS_SET_VAR <analysis_set_var>`.
-The overlapping parameters b, c and d still take their values from the design matrix, since ``PRIORITY:design_matrix`` is set,
-but unlike the ``UPDATE:FALSE`` case above they are no longer held constant. In this case the final set of parameters
-(for example in parameters.txt in real==0) would be:
-::
-
-        a=1 <- design value, updated
-        b=1 <- design value, updated
-        c=2 <- design value, updated
-        d=0 <- design value, updated
-        e=1 <- design value, updated
-        COEFFS:f=5.7 <- sampled value, updated
-
-If ``PRIORITY:sampled`` is set instead, the overlapping parameters keep the ``UPDATE`` setting from their :ref:`GEN_KW <gen_kw>`
-distribution instead of the one set on ``DESIGN_MATRIX``:
-
-::
-
-        GEN_KW COEFFS coeff_priors
-        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:sampled UPDATE:TRUE
-
-wherein coeff_priors
-
-::
-
-        b UNIFORM 0 1
-        c UNIFORM 0 2
-        d UNIFORM 0 5 UPDATE:FALSE
-        f UNIFORM 0 10
-
-the final set of parameters (for example in parameters.txt in real==0) would be:
-::
-
-        a=1 <- design value, updated
-        COEFFS:b=0.2 <- sampled value, updated
-        COEFFS:c=1.3 <- sampled value, updated
-        COEFFS:d=7.8 <- sampled value, not updated
-        e=1 <- design value, updated
-        COEFFS:f=5.7 <- sampled value, updated
-
-here b and c are updated because they use the default ``UPDATE:TRUE`` of :ref:`GEN_KW <gen_kw>`, d is held constant because
-``UPDATE:FALSE`` is set explicitly on it, and the non-overlapping design matrix parameters a and e are updated because
-``UPDATE:TRUE`` is set on ``DESIGN_MATRIX``.
-
-
-
 
 .. _design_matrix_notes:
 .. note::
@@ -1279,10 +1214,8 @@ history matching process. It must be set to either TRUE or FALSE. The parameters
 
         The ``INIT_FILES:`` named attribute that was used to provide externally sampled values has been removed from GEN_KW.
         To provide values sampled outside of ERT, please see :ref:`DESIGN_MATRIX <design_matrix>`.
-        By default, parameters provided through ``DESIGN_MATRIX`` will be constant (UPDATE:FALSE).
-        To make design matrix parameters updatable during history matching, set UPDATE:TRUE.
-        When UPDATE:TRUE, design matrix parameters will follow the update strategy configured for :ref:`GEN_KW <gen_kw>`
-        (see :ref:`ANALYSIS_SET_VAR <analysis_set_var>`), unless they overlap with sampled parameters and PRIORITY:sampled is set.
+        Note that only parameters sampled internally in ERT will be updated during assisted history matching, and
+        parameters provided through ``DESIGN_MATRIX`` will be constant.
 
 A configuration example is shown below:
 
