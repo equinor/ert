@@ -214,8 +214,8 @@ async def test_that_when_gen_kw_is_in_the_config_then_parameters_txt_is_created(
     await make_runpath(ert_config)
     assert Path("simulations/realization-0/iter-0").exists()
     assert Path("simulations/realization-0/iter-0/parameters.txt").exists()
-    assert len(os.listdir("simulations")) == 1
-    assert len(os.listdir("simulations/realization-0")) == 1
+    assert len([Path("simulations").iterdir()]) == 1
+    assert len([Path("simulations/realization-0").iterdir()]) == 1
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -226,8 +226,8 @@ async def test_that_when_gen_kw_is_not_in_the_config_then_parameters_txt_is_not_
     await make_runpath(ert_config)
     assert Path("simulations/realization-0/iter-0").exists()
     assert not Path("simulations/realization-0/iter-0/parameters.txt").exists()
-    assert len(os.listdir("simulations")) == 1
-    assert len(os.listdir("simulations/realization-0")) == 1
+    assert len([Path("simulations").iterdir()]) == 1
+    assert len([Path("simulations/realization-0").iterdir()]) == 1
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -239,10 +239,16 @@ async def test_that_jobs_json_is_backed_up_when_runpath_is_recreated(make_runpat
     await make_runpath(ert_config)
     assert Path("simulations/realization-0/iter-0/jobs.json").exists()
     await make_runpath(ert_config)
-    iter0_output_files = os.listdir("simulations/realization-0/iter-0/")
-    assert len([f for f in iter0_output_files if f.startswith("jobs.json")]) > 1, (
-        "No backup created for jobs.json"
-    )
+    assert (
+        len(
+            [
+                f.name
+                for f in Path("simulations/realization-0/iter-0/").iterdir()
+                if f.name.startswith("jobs.json")
+            ]
+        )
+        > 1
+    ), "No backup created for jobs.json"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

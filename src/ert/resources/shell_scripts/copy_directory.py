@@ -9,7 +9,7 @@ from make_directory import mkdir  # type: ignore
 
 def copy_directory(src_path: str, target_path: str) -> None:
     if Path(src_path).is_dir():
-        src_basename = os.path.basename(src_path)
+        src_basename = Path(src_path).name
         target_root, _ = os.path.split(target_path)
 
         if target_root and not Path(target_root).is_dir():

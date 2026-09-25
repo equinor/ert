@@ -490,7 +490,7 @@ def _shared_heat_equation_es(request, monkeypatch, source_root: Path):
         "heat_equation_data_es" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
     monkeypatch.chdir(cache_path)
-    if not os.listdir(cache_path):
+    if not any(Path().iterdir()):
         _run_heat_equation(source_root, ENSEMBLE_SMOOTHER_MODE, monkeypatch)
     else:
         monkeypatch.chdir("test_data")
@@ -508,7 +508,7 @@ def _shared_heat_equation_esmda(request, monkeypatch, source_root: Path):
         "heat_equation_data_esmda" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
     monkeypatch.chdir(cache_path)
-    if not os.listdir(cache_path):
+    if not any(Path().iterdir()):
         _run_heat_equation(source_root, ES_MDA_MODE, monkeypatch)
     else:
         monkeypatch.chdir("test_data")
@@ -526,7 +526,7 @@ def _shared_heat_equation_enif(request, monkeypatch, source_root: Path):
         "heat_equation_data_enif" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
     monkeypatch.chdir(cache_path)
-    if not os.listdir(cache_path):
+    if not any(Path().iterdir()):
         _run_heat_equation(source_root, ENIF_MODE, monkeypatch)
     else:
         monkeypatch.chdir("test_data")

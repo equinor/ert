@@ -658,7 +658,7 @@ class LocalStorage(BaseMode):
                 # And print a lengthy message explaining to the user how to
                 # migrate the blockfs storage
                 bkup_path = self.path / "_blockfs_backup"
-                dirs = set(os.listdir(self.path)) - {"storage.lock"}
+                dirs = {file.name for file in self.path.iterdir()} - {"storage.lock"}
                 bkup_path.mkdir()
                 for directory in dirs:
                     shutil.move(self.path / directory, bkup_path / directory)
@@ -670,7 +670,7 @@ class LocalStorage(BaseMode):
                 return
             if version < 5:
                 bkup_path = self.path / "_storage_backup_lt_5"
-                dirs = set(os.listdir(self.path)) - {"storage.lock"}
+                dirs = {file.name for file in self.path.iterdir()} - {"storage.lock"}
                 bkup_path.mkdir()
                 for directory in dirs:
                     shutil.move(self.path / directory, bkup_path / directory)

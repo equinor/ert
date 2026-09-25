@@ -1,7 +1,6 @@
 import datetime
 import json
 import logging
-import os
 import shutil
 from pathlib import Path
 
@@ -230,20 +229,16 @@ def test_that_storage_works_with_missing_parameters_and_responses(
         block_storage_path / f"all_data_types/storage-{ert_version}",
         storage_path,
     )
-    [ensemble_id] = os.listdir(storage_path / "ensembles")
-
-    ensemble_path = storage_path / "ensembles" / ensemble_id
+    ensemble_dir = next((storage_path / "ensembles").iterdir())
 
     # Remove all realization-*/TOP.nc, and only some realization-*/BPC.nc
-    for i, real_dir in enumerate(
-        (storage_path / "ensembles" / ensemble_id).glob("realization-*")
-    ):
+    for i, real_dir in enumerate(ensemble_dir.glob("realization-*")):
         (real_dir / "TOP.nc").unlink()
         if i % 2 == 0:
             (real_dir / "BPR.nc").unlink()
 
         gen_data_file = next(
-            file for file in os.listdir(real_dir) if "gen" in file.lower()
+            file.name for file in real_dir.iterdir() if "gen" in file.name.lower()
         )
         (real_dir / gen_data_file).unlink()
 
@@ -266,7 +261,7 @@ def test_that_storage_works_with_missing_parameters_and_responses(
         ensembles = list(experiment.ensembles)
         assert len(ensembles) == 1
 
-        ens_dir_contents = set(os.listdir(ensemble_path))
+        ens_dir_contents = {file.name for file in ensemble_dir.iterdir()}
         assert {
             "index.json",
         }.issubset(ens_dir_contents)
@@ -453,18 +448,18 @@ def test_migrate_storage_with_no_responses(
         block_storage_path / f"all_data_types/storage-{ert_version}",
         storage_path,
     )
-    [ensemble_id] = os.listdir(storage_path / "ensembles")
+    ensemble_dir = next((storage_path / "ensembles").iterdir())
 
     # Remove all realization-*/TOP.nc, and only some realization-*/BPC.nc
-    for real_dir in (storage_path / "ensembles" / ensemble_id).glob("realization-*"):
+    for real_dir in ensemble_dir.glob("realization-*"):
         gen_data_file = next(
-            file for file in os.listdir(real_dir) if "gen" in file.lower()
+            file.name for file in real_dir.iterdir() if "gen" in file.name.lower()
         )
 
         (real_dir / gen_data_file).unlink()
 
         summary_file = next(
-            file for file in os.listdir(real_dir) if "summary" in file.lower()
+            file.name for file in real_dir.iterdir() if "summary" in file.name.lower()
         )
 
         (real_dir / summary_file).unlink()
