@@ -63,7 +63,7 @@ class ParameterConfig(BaseModel, extra="forbid"):
     @abstractmethod
     def read_from_runpath(
         self,
-        runpath: Path,
+        run_path: Path,
         real_nr: int,
         iteration: int,
     ) -> xr.Dataset:
@@ -74,7 +74,7 @@ class ParameterConfig(BaseModel, extra="forbid"):
 
     @abstractmethod
     def write_to_runpath(
-        self, runpath: Path, real_nr: int, ensemble: Ensemble
+        self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> dict[str, dict[str, float | str]] | None:
         """
         This function is responsible for converting the parameter

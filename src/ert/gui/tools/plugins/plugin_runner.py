@@ -47,7 +47,7 @@ class PluginRunner:
                     ),
                     "observation_settings": ert_config.analysis_config.observation_settings,  # ruff: ignore[line-too-long]
                     "es_settings": ert_config.analysis_config.es_settings,
-                    "runpaths": runpaths,
+                    "run_paths": runpaths,
                 }
             )
             dialog = ProcessJobDialog(plugin.getName(), plugin.getParentWindow())

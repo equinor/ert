@@ -28,7 +28,7 @@ class EverestResponse(SimulationResponseConfig):
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
         raise NotImplementedError("Should only be directly initialized")
 
-    def read_from_file(self, runpath: str, iens: int, iter_: int) -> pl.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         def _read_file(filename: Path) -> pl.DataFrame:
             try:
                 data = np.loadtxt(filename, ndmin=1)
@@ -41,14 +41,14 @@ class EverestResponse(SimulationResponseConfig):
             )
 
         errors = []
-        runpath_ = Path(runpath)
+        run_path_ = Path(run_path)
         datasets_per_name = []
 
         for name, input_file in zip(self.keys, self.input_files, strict=False):
             datasets = []
             try:
                 filename = substitute_runpath_name(input_file, iens, iter_)
-                datasets.append(_read_file(runpath_ / filename))
+                datasets.append(_read_file(run_path_ / filename))
             except (InvalidResponseFile, FileNotFoundError) as err:
                 errors.append(err)
 

@@ -975,7 +975,7 @@ class RunModel(RunModelConfig, ABC):
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
                 random_seed=self.random_seed,
-                runpaths=self._runpaths,
+                run_paths=self._runpaths,
             ),
         )
 
@@ -1032,7 +1032,7 @@ class RunModel(RunModelConfig, ABC):
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
                 random_seed=self.random_seed,
-                runpaths=self._runpaths,
+                run_paths=self._runpaths,
             ),
         )
 

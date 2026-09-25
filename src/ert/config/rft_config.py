@@ -117,7 +117,7 @@ class RFTConfig(SimulationResponseConfig):
         return [f"{base}.RFT"]
 
     @staticmethod
-    def _rft_filepath(base_name: str, runpath: str, iens: int, iter_: int) -> str:
+    def _rft_filepath(base_name: str, run_path: str, iens: int, iter_: int) -> str:
         base_name = substitute_runpath_name(base_name, iens, iter_)
         if base_name.upper().endswith(".DATA"):
             # For backwards compatibility, it is
@@ -125,7 +125,7 @@ class RFTConfig(SimulationResponseConfig):
             # with and without .DATA extensions
             base_name = base_name[:-5]
 
-        return f"{runpath}/{base_name}"
+        return f"{run_path}/{base_name}"
 
     @staticmethod
     def _ergrid_filepath(rft_filepath: str) -> str:
@@ -136,10 +136,12 @@ class RFTConfig(SimulationResponseConfig):
         return grid_filepath
 
     @staticmethod
-    def _zonemap_filepath(base_path: Path, runpath: str, iens: int, iter_: int) -> Path:
+    def _zonemap_filepath(
+        base_path: Path, run_path: str, iens: int, iter_: int
+    ) -> Path:
         zonemap_filepath = Path(substitute_runpath_name(str(base_path), iens, iter_))
         if not base_path.is_absolute():
-            zonemap_filepath = Path(runpath) / zonemap_filepath
+            zonemap_filepath = Path(run_path) / zonemap_filepath
         return zonemap_filepath
 
     @staticmethod
@@ -319,12 +321,12 @@ class RFTConfig(SimulationResponseConfig):
             sorted(formatted_missing_rft_responses), "RFT", rft_filename
         )
 
-    def read_from_file(self, runpath: str, iens: int, iter_: int) -> pl.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT"""
         if not self.data_to_read:
             return pl.DataFrame(schema=self.response_schema())
 
-        rft_filepath = self._rft_filepath(self.input_files[0], runpath, iens, iter_)
+        rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
         rft_data = self._scan_rft(rft_filepath)
 
@@ -360,7 +362,7 @@ class RFTConfig(SimulationResponseConfig):
         def _get_cell_zone() -> pl.Expr:
             if self.zonemap:
                 zonemap_path = self._zonemap_filepath(
-                    self.zonemap, runpath, iens, iter_
+                    self.zonemap, run_path, iens, iter_
                 )
                 zonemap = _get_zonemap(zonemap_path)
             else:
@@ -428,7 +430,7 @@ class RFTConfig(SimulationResponseConfig):
 
     def obtain_location_metadata(
         self,
-        runpath: str,
+        run_path: str,
         iens: int,
         iter_: int,
         observations: pl.DataFrame,
@@ -446,11 +448,11 @@ class RFTConfig(SimulationResponseConfig):
             if location not in locations:
                 locations.append(location)
 
-        rft_filepath = self._rft_filepath(self.input_files[0], runpath, iens, iter_)
+        rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         grid_filepath = self._ergrid_filepath(rft_filepath)
 
         if self.zonemap:
-            zonemap_path = self._zonemap_filepath(self.zonemap, runpath, iens, iter_)
+            zonemap_path = self._zonemap_filepath(self.zonemap, run_path, iens, iter_)
             zonemap = _get_zonemap(zonemap_path)
         else:
             zonemap = {}
