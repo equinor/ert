@@ -971,7 +971,7 @@ async def test_poll_once_by_bhist_requires_aged_data(
 
     driver = LsfDriver()
     driver._bhist_cache = parse_bhist("1 x x 0 x 0")
-    driver._bhist_cache_timestamp = time.time()
+    driver._bhist_cache_timestamp = time.monotonic()
     driver._bhist_required_cache_age = required_cache_age
     bhist_states = await driver._poll_once_by_bhist([""])
     # The argument to _poll_once_by_bhist is not relevant as bhist is mocked.
