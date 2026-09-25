@@ -214,6 +214,10 @@ where:
    When a parameter name overlaps between DESIGN_MATRIX and GEN_KW, the PRIORITY setting determines which source's update behavior takes precedence.
    Default is `FALSE`.
 
+  Columns containing non-numeric (categorical) values, e.g. text labels, cannot be updated
+  when they are sourced from the design matrix, even if ``UPDATE:TRUE`` is set. When
+  ``UPDATE:TRUE`` is set, ERT emits a ``ConfigWarning`` listing the excluded parameter names.
+
 
 *Example:*
 
@@ -371,7 +375,7 @@ To make them participate in history matching, set ``UPDATE:TRUE`` on the :ref:`D
         GEN_KW COEFFS coeff_priors
         DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix UPDATE:TRUE
 
-With ``UPDATE:TRUE``, all design matrix parameters (a, b, c, d and e) will be updated during history matching,
+With ``UPDATE:TRUE``, all numeric design matrix parameters (a, b, c, d and e) will be updated during history matching,
 following the update strategy configured for :ref:`GEN_KW <gen_kw>` parameters, see :ref:`ANALYSIS_SET_VAR <analysis_set_var>`.
 The overlapping parameters b, c and d still take their values from the design matrix, since ``PRIORITY:design_matrix`` is set,
 but unlike the ``UPDATE:FALSE`` case above they are no longer held constant. In this case the final set of parameters
@@ -415,6 +419,10 @@ the final set of parameters (for example in parameters.txt in real==0) would be:
 here b and c are updated because they use the default ``UPDATE:TRUE`` of :ref:`GEN_KW <gen_kw>`, d is held constant because
 ``UPDATE:FALSE`` is set explicitly on it, and the non-overlapping design matrix parameters a and e are updated because
 ``UPDATE:TRUE`` is set on ``DESIGN_MATRIX``.
+
+.. note::
+    If a design matrix column contains categorical (non-numeric) values, e.g. text labels such as `low`/`high`,
+    it cannot participate in the update step. Such columns are excluded from the update step even when ``UPDATE:TRUE`` is set.
 
 
 
