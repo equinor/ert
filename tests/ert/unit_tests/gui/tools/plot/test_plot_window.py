@@ -92,6 +92,20 @@ def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
     assert QApplication.clipboard().text() == "world"
 
 
+@pytest.fixture
+def mock_plot_api(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    api = MagicMock(spec=PlotApi)
+    storage_version = "0.0"
+    api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.get_storage_api_version", lambda: storage_version
+    )
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.PlotApi", MagicMock(return_value=api)
+    )
+    return api
+
+
 @pytest.mark.slow
 def test_that_no_data_message_is_displayed(
     qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
@@ -337,22 +351,11 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
 )
 def test_that_history_and_observations_checkboxes_match_data_availability(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
     key: str,
     history_data_available: bool,
     observations_available: bool,
+    mock_plot_api: MagicMock,
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     key_def = PlotApiKeyDefinition(
         key,
@@ -389,18 +392,8 @@ def test_that_history_and_observations_checkboxes_match_data_availability(
 def test_that_history_and_observations_checkbox_state_update_when_switching_keys(
     qtbot: QtBot,
     monkeypatch: pytest.MonkeyPatch,
+    mock_plot_api: MagicMock,
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     key_defs = [
         PlotApiKeyDefinition(
@@ -460,19 +453,10 @@ def test_that_history_and_observations_checkbox_state_update_when_switching_keys
 
 
 def test_that_general_option_checkboxes_change_rendered_plot(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+    mock_plot_api: MagicMock,
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     observations_enabled_states: list[bool] = []
     original_set_observations_enabled = PlotConfig.set_observations_enabled
@@ -616,22 +600,8 @@ def test_that_general_option_checkboxes_change_rendered_plot(
 
 
 def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, mock_plot_api: MagicMock
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.PlotApi",
-        mock_plot_api_cls,
-    )
 
     key_def = PlotApiKeyDefinition(
         "gen_kw",
@@ -703,19 +673,8 @@ def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
 
 
 def _plot_window_with_response_and_gen_kw_keys(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ) -> PlotWindow:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     mock_plot_api.responses_api_key_defs = [
         PlotApiKeyDefinition(
@@ -766,7 +725,7 @@ def _current_tab_name(plot_window: PlotWindow) -> str:
 
 
 def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, mock_plot_api: MagicMock
 ) -> None:
     # Reversing the plot map changes every tab position, so a default tab
     # resolved by position would land on the wrong plot type.
@@ -775,7 +734,7 @@ def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
         dict(reversed(list(ERT_PLOT_MAP.items()))),
     )
 
-    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, monkeypatch)
+    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, mock_plot_api)
 
     _select_data_type_key(plot_window, "POLY_RES")
     _select_data_type_key(plot_window, "gen_kw")
@@ -786,9 +745,9 @@ def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
 
 
 def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_it(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ) -> None:
-    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, monkeypatch)
+    plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, mock_plot_api)
 
     _select_data_type_key(plot_window, "gen_kw")
     plot_window._central_tab.setCurrentWidget(
@@ -811,22 +770,11 @@ def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_i
 )
 def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
     tab_name: str,
     values: list[float],
     expected_visible: bool,
+    mock_plot_api: MagicMock,
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     key_def = PlotApiKeyDefinition(
         "gen_kw",
@@ -877,24 +825,12 @@ def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
 
 @pytest.mark.slow
 def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
-    qtbot: QtBot, monkeypatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ):
     """Regression test: gen_kw data may include non-numeric columns if they are
     from design matrix. Those values should be ignored when checking for
     negative values to determine whether log scale is possible.
     """
-
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     plot_api_key_def = PlotApiKeyDefinition(
         "animal_type",
@@ -1116,23 +1052,13 @@ def test_that_hovering_editable_text_shows_it_as_clickable(
 
 def _create_plot_window_for_text_edit(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
+    mock_plot_api: MagicMock,
 ) -> PlotWindow:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
 
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
     mock_plot_api.responses_api_key_defs = []
     mock_plot_api.parameters_api_key_defs = []
     mock_plot_api.get_all_ensembles.return_value = []
 
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.getSelectedKey = MagicMock(
@@ -1182,13 +1108,13 @@ def _expand(section: CollapsibleSection) -> None:
 )
 def test_that_sidebar_axis_label_edit_uses_configured_or_visible_label(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
     axis: str,
     configured_label: str | None,
     visible_label: str | None,
     expected_label: str,
+    mock_plot_api: MagicMock,
 ) -> None:
-    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    plot_window = _create_plot_window_for_text_edit(qtbot, mock_plot_api)
     get_text_input = MagicMock(return_value=("", False))
     plot_window._general_options.get_text_input = get_text_input
     labels = plot_window._x_labels if axis == "x" else plot_window._y_labels
@@ -1232,13 +1158,13 @@ def test_that_sidebar_axis_label_edit_uses_configured_or_visible_label(
 )
 def test_that_axis_label_edit_updates_or_preserves_persistent_config(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
     axis: str,
     current_label: str,
     new_label: str,
     accepted: bool,
+    mock_plot_api: MagicMock,
 ) -> None:
-    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    plot_window = _create_plot_window_for_text_edit(qtbot, mock_plot_api)
     get_text_input = MagicMock(return_value=(new_label, accepted))
     plot_window._general_options.get_text_input = get_text_input
     plot_window.update_plot = MagicMock()
@@ -1269,12 +1195,12 @@ def test_that_axis_label_edit_updates_or_preserves_persistent_config(
 )
 def test_that_title_edit_updates_or_preserves_persistent_config(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
+    mock_plot_api: MagicMock,
     dialog_value: str,
     expected_title: str,
     accepted: bool,
 ) -> None:
-    plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
+    plot_window = _create_plot_window_for_text_edit(qtbot, mock_plot_api)
     get_text_input = MagicMock(return_value=(dialog_value, accepted))
     plot_window._general_options.get_text_input = get_text_input
     plot_window.update_plot = MagicMock()
@@ -1289,14 +1215,9 @@ def test_that_title_edit_updates_or_preserves_persistent_config(
 @pytest.mark.slow
 def test_that_clearing_custom_title_restores_key_title_when_rendering(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
+    mock_plot_api: MagicMock,
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
 
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
     mock_plot_api.responses_api_key_defs = []
     mock_plot_api.parameters_api_key_defs = [
         PlotApiKeyDefinition(
@@ -1325,12 +1246,6 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
     mock_plot_api.data_for_parameter.return_value = pd.DataFrame({0: [1.0, 2.0, 3.0]})
     mock_plot_api.has_history_data.return_value = False
 
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
-
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window._general_options.get_text_input = MagicMock(return_value=("", True))
@@ -1346,14 +1261,8 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
 @pytest.mark.slow
 def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
     qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
+    mock_plot_api: MagicMock,
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
     mock_plot_api.parameters_api_key_defs = []
     mock_plot_api.responses_api_key_defs = [
         PlotApiKeyDefinition(
@@ -1376,12 +1285,6 @@ def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
     ]
     mock_plot_api.data_for_response.return_value = pd.DataFrame({0: [1.0, 2.0, 3.0]})
     mock_plot_api.has_history_data.return_value = False
-
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
@@ -1508,19 +1411,8 @@ def test_that_seismic_y_label_is_created(key, expected_y_label):
 
 
 def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ) -> None:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     first_ensemble = EnsembleObject(
         "prior", "prior-id", False, "experiment", "2026-01-01T00:00:00"
@@ -1590,19 +1482,8 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
 
 
 def _plot_window_with_observed_seismic_and_gen_data_keys(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ) -> PlotWindow:
-    mock_plot_api_cls = MagicMock(spec=PlotApi)
-    mock_plot_api = MagicMock(spec=PlotApi)
-    mock_plot_api_cls.return_value = mock_plot_api
-
-    storage_version = "0.0"
-    mock_plot_api.api_version = storage_version
-    monkeypatch.setattr(
-        "ert.gui.plotting.plot_window.get_storage_api_version",
-        lambda: storage_version,
-    )
-    monkeypatch.setattr("ert.gui.plotting.plot_window.PlotApi", mock_plot_api_cls)
 
     mock_plot_api.responses_api_key_defs = [
         PlotApiKeyDefinition(
@@ -1649,10 +1530,10 @@ def _select_additional_ensemble(plot_window: PlotWindow, row: int) -> None:
 
 @pytest.mark.parametrize("tab_name", [MISFIT_MAP, OBSERVATIONS_MAP])
 def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, tab_name: str
+    qtbot: QtBot, tab_name: str, mock_plot_api: MagicMock
 ) -> None:
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
-        qtbot, monkeypatch
+        qtbot, mock_plot_api
     )
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
@@ -1666,10 +1547,10 @@ def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
 
 
 def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ) -> None:
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
-        qtbot, monkeypatch
+        qtbot, mock_plot_api
     )
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
@@ -1686,10 +1567,10 @@ def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit
 
 
 def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_limit(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ) -> None:
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
-        qtbot, monkeypatch
+        qtbot, mock_plot_api
     )
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
@@ -1706,10 +1587,10 @@ def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_lim
 
 
 def test_that_selecting_a_key_restoring_the_misfit_map_tab_narrows_selection_to_one(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot, mock_plot_api: MagicMock
 ) -> None:
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
-        qtbot, monkeypatch
+        qtbot, mock_plot_api
     )
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
