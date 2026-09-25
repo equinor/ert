@@ -1,3 +1,4 @@
+import json
 import shutil
 import time
 from pathlib import Path
@@ -14,8 +15,14 @@ from PyQt6.QtWidgets import (
     QTextEdit,
 )
 
+from ert.analysis.event import (
+    AnalysisCompleteEvent,
+    AnalysisDataEvent,
+    DataSection,
+)
 from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.experiments.view.update import ReportLogTable, UpdateLogTable
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.ensemble_widget import (
     EnsembleWidget,
@@ -692,6 +699,198 @@ def test_that_sub_tab_persists_when_switching_ensembles(qtbot):
 
     # Tab should remain on STATE_TAB, not reset to ENSEMBLE_TAB
     assert ensemble_widget._tab_widget.currentIndex() == _EnsembleWidgetTabs.STATE_TAB
+
+
+def _select_ensemble_named(storage_widget, experiment_index, name):
+    """Ensembles are not listed in a guaranteed order, so pick the row by name."""
+    model = storage_widget._tree_view.model()
+    for row in range(model.rowCount(experiment_index)):
+        index = model.index(row, 0, experiment_index)
+        if model.data(index) == name:
+            storage_widget._tree_view.setCurrentIndex(index)
+            return
+    raise AssertionError(f"No ensemble named {name} in the storage tree")
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_update_tab_shows_stored_update_of_prior_ensemble(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        experiment = storage.create_experiment(name="my-experiment")
+        prior = experiment.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="prior"
+        )
+        posterior = experiment.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations,
+            name="posterior",
+            iteration=1,
+            prior_ensemble=prior,
+        )
+        posterior.save_blob(
+            AnalysisDataEvent(
+                name="Auto scale: POLY_OBS",
+                data=DataSection(header=["Observation"], data=[("POLY_OBS",)]),
+            )
+        )
+        posterior.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(
+                    header=["observation_key", "status", "missing_realizations"],
+                    data=[("POLY_OBS", "Active", "")],
+                    extra={"Parent ensemble": "prior"},
+                ),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    qtbot.addWidget(tool)
+    tool.show()
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    experiment_index = storage_widget._tree_view.model().index(0, 0)
+
+    _select_ensemble_named(storage_widget, experiment_index, "prior")
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(ensemble_widget, EnsembleWidget)
+    assert ensemble_widget._tab_widget.isTabVisible(_EnsembleWidgetTabs.UPDATE_TAB)
+    assert (
+        ensemble_widget._tab_widget.tabText(_EnsembleWidgetTabs.UPDATE_TAB)
+        == "Update 0"
+    )
+
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.UPDATE_TAB)
+    update_view = ensemble_widget._update_view
+    assert update_view._status_label.text() == "Updated with ensemble_smoother"
+    assert [
+        update_view._tab_widget.tabText(index)
+        for index in range(update_view._tab_widget.count())
+    ] == ["Auto scale: POLY_OBS", "Report"]
+    assert [
+        type(update_view._tab_widget.widget(index).findChild(UpdateLogTable))
+        for index in range(update_view._tab_widget.count())
+    ] == [UpdateLogTable, ReportLogTable]
+    assert not update_view._target_selector.isVisible()
+
+    _select_ensemble_named(storage_widget, experiment_index, "posterior")
+    assert not ensemble_widget._tab_widget.isTabVisible(_EnsembleWidgetTabs.UPDATE_TAB)
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_update_tab_lets_user_choose_between_updates_started_from_same_ensemble(
+    qtbot,
+):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        experiment = storage.create_experiment(name="my-experiment")
+        prior = experiment.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="prior"
+        )
+        for posterior_name, update_algorithm in (
+            ("first", "ensemble_smoother"),
+            ("second", "enif"),
+        ):
+            posterior = experiment.create_ensemble(
+                ensemble_size=config.runpath_config.num_realizations,
+                name=posterior_name,
+                iteration=1,
+                prior_ensemble=prior,
+            )
+            posterior.save_blob(
+                AnalysisCompleteEvent(
+                    data=DataSection(
+                        header=["observation_key", "status", "missing_realizations"],
+                        data=[("POLY_OBS", "Active", "")],
+                    ),
+                    update_algorithm=update_algorithm,
+                )
+            )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    qtbot.addWidget(tool)
+    tool.show()
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    experiment_index = storage_widget._tree_view.model().index(0, 0)
+    _select_ensemble_named(storage_widget, experiment_index, "prior")
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.UPDATE_TAB)
+
+    update_view = ensemble_widget._update_view
+    target_selector = update_view._target_selector
+    assert target_selector.isVisible()
+    assert sorted(
+        target_selector.itemText(index) for index in range(target_selector.count())
+    ) == ["my-experiment / first", "my-experiment / second"]
+
+    target_selector.setCurrentIndex(target_selector.findText("my-experiment / first"))
+    assert update_view._status_label.text() == "Updated with ensemble_smoother"
+
+    target_selector.setCurrentIndex(target_selector.findText("my-experiment / second"))
+    assert update_view._status_label.text() == "Updated with enif"
+    assert len(update_view._tab_widget.findChildren(UpdateLogTable)) == 1
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_update_tab_is_hidden_when_stored_update_cannot_be_read(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        experiment = storage.create_experiment(name="my-experiment")
+        prior = experiment.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="prior"
+        )
+        posterior = experiment.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations,
+            name="posterior",
+            iteration=1,
+            prior_ensemble=prior,
+        )
+        posterior.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(header=["observation_key"], data=[("POLY_OBS",)]),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+        # A blob written by a newer version of ert, which this version cannot parse.
+        (posterior._path / "blobs" / "from_the_future.json").write_text(
+            json.dumps(
+                {
+                    "uri": "from_the_future",
+                    "file_size": 0,
+                    "file_type": "application/parquet",
+                    "name": "from_the_future",
+                    "blob_info": {"blob_type": "from_the_future"},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    experiment_index = storage_widget._tree_view.model().index(0, 0)
+    _select_ensemble_named(storage_widget, experiment_index, "prior")
+
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert not ensemble_widget._tab_widget.isTabVisible(_EnsembleWidgetTabs.UPDATE_TAB)
 
 
 def test_that_export_parameters_button_opens_the_export_dialog(
