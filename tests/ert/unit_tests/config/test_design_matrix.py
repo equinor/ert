@@ -32,7 +32,7 @@ def test_that_from_config_list_with_update_option_parses_boolean_value(
     with patch.object(DesignMatrix, "__post_init__", return_value=None):
         dm = DesignMatrix.from_config_list(
             config_list,
-            update_strategy=None,
+            gen_kw_update_strategy=None,
         )
         assert dm.update is expected
 
@@ -55,7 +55,7 @@ def test_that_from_config_list_with_invalid_update_option_throws():
             match="UPDATE must be either 'TRUE' or 'FALSE'; is 'INVALID'",
         ),
     ):
-        DesignMatrix.from_config_list(config_list, update_strategy=None)
+        DesignMatrix.from_config_list(config_list, gen_kw_update_strategy=None)
 
 
 @pytest.mark.parametrize("priority", ["design_matrix", "sampled"])
@@ -73,7 +73,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
                     "PRIORITY": priority,
                 },
             ],
-            update_strategy=LocalizationType.ADAPTIVE,
+            gen_kw_update_strategy=LocalizationType.ADAPTIVE,
         )
 
     # state after loading design matrix
@@ -116,7 +116,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
                     "UPDATE": "TRUE",
                 },
             ],
-            update_strategy=LocalizationType.ADAPTIVE,
+            gen_kw_update_strategy=LocalizationType.ADAPTIVE,
         )
 
     # state after loading design matrix
@@ -159,7 +159,7 @@ def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_up
                     "UPDATE": "TRUE",
                 },
             ],
-            update_strategy=None,
+            gen_kw_update_strategy=None,
         )
 
     # state after loading design matrix
@@ -268,7 +268,7 @@ def test_that_merge_with_existing_parameters_respects_update_flag_and_priority(
                     "UPDATE": update,
                 },
             ],
-            update_strategy=global_update_strategy,
+            gen_kw_update_strategy=global_update_strategy,
         )
 
     # state after loading design matrix
