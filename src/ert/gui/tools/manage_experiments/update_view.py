@@ -41,6 +41,19 @@ def _table_type(table: UpdateTable) -> type[UpdateLogTable]:
     return UpdateLogTable
 
 
+def _has_readable_update(ensemble: Ensemble) -> bool:
+    """Whether an update of *ensemble* was recorded and its metadata can be read.
+
+    An ensemble whose metadata this version of ert cannot parse is skipped
+    rather than hiding the updates of its siblings.
+    """
+    try:
+        return ensemble.has_stored_update
+    except Exception:
+        logger.exception("Could not read the blob metadata of ensemble %s", ensemble.id)
+        return False
+
+
 class UpdateView(QWidget):
     """Shows the update that an ensemble produced, as it was recorded in storage.
 
@@ -73,16 +86,10 @@ class UpdateView(QWidget):
 
     def set_ensemble(self, ensemble: Ensemble) -> None:
         """Find the updates started from this ensemble without reading their tables."""
-        try:
-            self._posteriors = sorted(
-                (child for child in ensemble.children if child.has_stored_update),
-                key=lambda child: child.started_at,
-            )
-        except Exception:
-            logger.exception(
-                "Could not look for stored updates of ensemble %s", ensemble.name
-            )
-            self._posteriors = []
+        self._posteriors = sorted(
+            (child for child in ensemble.children if _has_readable_update(child)),
+            key=lambda child: child.started_at,
+        )
 
         self._clear_tabs()
         self._status_label.clear()
