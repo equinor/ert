@@ -255,3 +255,58 @@ def test_that_switching_iteration_clears_the_previously_shown_output(widget):
     pick_iteration(widget, 1)
 
     assert widget._stdout_view.toPlainText() == NO_OUTPUT_PLACEHOLDER
+
+
+def test_that_loading_events_shows_one_row_per_event(widget):
+    widget.load_events(
+        [
+            make_event(job_name="FIRST", iteration=0),
+            make_event(job_name="SECOND", iteration=0),
+        ]
+    )
+
+    assert column_values(widget, 2) == ["FIRST", "SECOND"]
+
+
+def test_that_loading_events_replaces_the_events_shown_before(widget):
+    widget.load_events([make_event(job_name="FROM_THE_FIRST_LOAD", iteration=0)])
+
+    widget.load_events([make_event(job_name="FROM_THE_SECOND_LOAD", iteration=0)])
+
+    assert column_values(widget, 2) == ["FROM_THE_SECOND_LOAD"]
+
+
+def test_that_loaded_experiment_wide_events_are_grouped_apart_from_iterations(widget):
+    widget.load_events(
+        [
+            make_event(hook="PRE_EXPERIMENT", job_name="BEFORE", iteration=None),
+            make_event(hook="POST_SIMULATION", job_name="DURING", iteration=0),
+        ]
+    )
+
+    labels = [
+        widget._iteration_selector.itemText(index)
+        for index in range(widget._iteration_selector.count())
+    ]
+    assert labels == [NO_ITERATION_LABEL, "Iteration 0"]
+
+
+def test_that_loading_events_selects_the_newest_iteration(widget):
+    widget.load_events(
+        [
+            make_event(job_name="OLDER", iteration=0),
+            make_event(job_name="NEWER", iteration=1),
+        ]
+    )
+
+    assert widget._iteration_selector.currentText() == "Iteration 1"
+    assert column_values(widget, 2) == ["NEWER"]
+
+
+def test_that_loading_no_events_leaves_an_empty_table(widget):
+    widget.load_events([make_event(iteration=0)])
+
+    widget.load_events([])
+
+    assert widget._table.rowCount() == 0
+    assert widget._iteration_selector.count() == 0
