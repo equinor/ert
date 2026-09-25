@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Annotated, Literal
 
@@ -8,15 +10,31 @@ from pydantic import BaseModel, ConfigDict, Discriminator
 
 class BlobType(StrEnum):
     OBSERVATION_REPORT = "observation_report"
+    UPDATE_DATA_TABLE = "update_data_table"
     MATRIX = "matrix"
     SCALING_FACTORS = "scaling_factors"
     RHO_MATRIX = "rho_matrix"
     EVEREST_BATCH_DATA = "everest_batch_data"
 
 
+class UpdateStatus(StrEnum):
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class ObservationReportData(BaseModel):
     blob_type: Literal[BlobType.OBSERVATION_REPORT] = BlobType.OBSERVATION_REPORT
     update_algorithm: str
+    summary: dict[str, str] = {}
+    status: UpdateStatus = UpdateStatus.COMPLETED
+    error_message: str | None = None
+
+
+class UpdateDataTableData(BaseModel):
+    blob_type: Literal[BlobType.UPDATE_DATA_TABLE] = BlobType.UPDATE_DATA_TABLE
+    table_name: str
+    table_index: int
+    summary: dict[str, str] = {}
 
 
 class _MatrixBase(BaseModel):
@@ -52,6 +70,7 @@ class EverestBatchData(BaseModel):
 BlobInfo = (
     MatrixStorageData
     | ObservationReportData
+    | UpdateDataTableData
     | ScalingFactorsData
     | RhoStorageData
     | EverestBatchData
@@ -68,8 +87,30 @@ class BlobStorageData(BaseModel):
     blob_info: Annotated[
         MatrixStorageData
         | ObservationReportData
+        | UpdateDataTableData
         | ScalingFactorsData
         | RhoStorageData
         | EverestBatchData,
         Discriminator("blob_type"),
     ]
+
+
+@dataclass
+class UpdateTable:
+    """One tab of an update, as shown while the experiment was running."""
+
+    name: str
+    header: list[str]
+    rows: Sequence[Sequence[object]]
+    summary: dict[str, str] = field(default_factory=dict)
+    is_report: bool = False
+
+
+@dataclass
+class StoredUpdate:
+    """The update that produced an ensemble, as recorded in storage."""
+
+    update_algorithm: str
+    status: UpdateStatus
+    tables: list[UpdateTable]
+    error_message: str | None = None
