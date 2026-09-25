@@ -20,9 +20,7 @@ from fmudesign.fmudesignrunner import (
 )
 
 
-def test_that_given_unknown_command_run_is_inserted_at_position_one(
-    monkeypatch, use_tmpdir
-):
+def test_that_given_unknown_command_run_is_inserted_at_position_one(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["fmudesign", "foo"])
 
     assert sys.argv[1] == "foo"
@@ -52,9 +50,7 @@ def test_that_missing_func_raises_system_exit_with_descriptive_error(
     assert "usage: fmudesign [-v] [-h] {run,init}" in stdout
 
 
-def test_that_main_catches_and_formats_validation_errors(
-    monkeypatch, capsys, use_tmpdir
-):
+def test_that_main_catches_and_formats_validation_errors(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["fmudesign", "foo"])
 
     def validation_error(_):
@@ -78,7 +74,7 @@ def test_that_main_catches_and_formats_validation_errors(
 
 
 def test_that_main_catches_generic_exception_and_prints_traceback_with_message(
-    monkeypatch, capsys, use_tmpdir
+    monkeypatch, capsys
 ):
     monkeypatch.setattr(sys, "argv", ["fmudesign", "foo"])
 

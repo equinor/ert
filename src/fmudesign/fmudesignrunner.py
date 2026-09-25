@@ -331,8 +331,10 @@ def main() -> None:
 
     Wrapper for the fmudesign module
     """
+
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
+
     parser, _subparsers = get_parser()
 
     # Backwards compatibility. If not a known command, assume "run"
@@ -360,7 +362,6 @@ def main() -> None:
         " - Issues/feature requests: https://github.com/equinor/ert/issues\n"
         "If you believe this error is a bug or are unable to fix it, create an issue or contact the scout team \n"  # ruff: ignore[line-too-long]
     )
-
     try:
         args.func(args)
     except ValidationError as e:
@@ -374,7 +375,7 @@ def main() -> None:
         print(err_guide_msg)
         sys.exit(1)
     except Exception as err:
-        logger.exception(f"fmudesign crashed unexpectedly with '{err}'")
+        logger.exception(f"fmudesign crashed unexpectedly with: {err}")
         traceback.print_exc()
         print(err_guide_msg)
         sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)
