@@ -46,6 +46,10 @@ from .blob_data import (
     MatrixStorageData,
     ObservationReportData,
     ScalingFactorsData,
+    StoredUpdate,
+    UpdateDataTableData,
+    UpdateStatus,
+    UpdateTable,
 )
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
@@ -56,8 +60,11 @@ if TYPE_CHECKING:
 
     from ert.analysis.event import (
         AnalysisCompleteEvent,
+        AnalysisDataEvent,
+        AnalysisErrorEvent,
         AnalysisMatrixEvent,
         AnalysisScalingEvent,
+        DataSection,
     )
 
     from .local_experiment import LocalExperiment
@@ -112,6 +119,18 @@ class _Failure(BaseModel, extra="forbid"):
 
 def _escape_filename(filename: str) -> str:
     return filename.replace("%", "%25").replace("/", "%2F")
+
+
+def _data_section_as_parquet(data: DataSection | None) -> bytes:
+    buffer = io.BytesIO()
+    if data is None:
+        pl.DataFrame().write_parquet(buffer)
+    else:
+        # Rows backed by a numpy array must be turned into Python lists, or polars
+        # infers Object columns that parquet cannot write.
+        rows = [list(row) for row in data.data]
+        pl.DataFrame(rows, schema=data.header, orient="row").write_parquet(buffer)
+    return buffer.getvalue()
 
 
 class LocalEnsemble(BaseMode):
@@ -249,6 +268,20 @@ class LocalEnsemble(BaseMode):
     @property
     def parent(self) -> UUID | None:
         return self._index.prior_ensemble_id
+
+    @property
+    def children(self) -> list[LocalEnsemble]:
+        """Ensembles that were created from this ensemble by an update."""
+        return [
+            ensemble
+            for ensemble in self._storage.ensembles
+            if ensemble.parent == self.id
+        ]
+
+    @property
+    def has_stored_update(self) -> bool:
+        """Whether an update producing this ensemble was recorded in storage."""
+        return any(self.load_blob_metadata(BlobType.OBSERVATION_REPORT))
 
     @property
     def experiment(self) -> LocalExperiment:
@@ -1377,7 +1410,11 @@ class LocalEnsemble(BaseMode):
     @require_write
     def save_blob(
         self,
-        blob_event: AnalysisCompleteEvent | AnalysisMatrixEvent | AnalysisScalingEvent,
+        blob_event: AnalysisCompleteEvent
+        | AnalysisDataEvent
+        | AnalysisErrorEvent
+        | AnalysisMatrixEvent
+        | AnalysisScalingEvent,
     ) -> None:
         blob_dir = self._path / BLOB_DATA_DIR
         if blob_event.event_type == "AnalysisMatrixEvent":
@@ -1409,22 +1446,112 @@ class LocalEnsemble(BaseMode):
                 file_type="application/parquet",
                 blob_dir=blob_dir,
             )
-        else:
-            buf = io.BytesIO()
-            pl.DataFrame(
-                blob_event.data.data,
-                schema=blob_event.data.header,
-                orient="row",
-            ).write_parquet(buf)
+        elif blob_event.event_type == "AnalysisDataEvent":
             self._storage.save_blob(
-                name="observation_report",
-                data=buf.getvalue(),
-                blob_info=ObservationReportData(
-                    update_algorithm=blob_event.update_algorithm,
+                name=blob_event.name,
+                data=_data_section_as_parquet(blob_event.data),
+                blob_info=UpdateDataTableData(
+                    table_name=blob_event.name,
+                    table_index=len(
+                        self.load_blob_metadata(BlobType.UPDATE_DATA_TABLE)
+                    ),
+                    summary=blob_event.data.extra or {},
                 ),
                 file_type="application/parquet",
                 blob_dir=blob_dir,
             )
+        elif blob_event.event_type == "AnalysisErrorEvent":
+            self._storage.save_blob(
+                name="observation_report",
+                data=_data_section_as_parquet(blob_event.data),
+                blob_info=ObservationReportData(
+                    update_algorithm=blob_event.update_algorithm,
+                    summary=(blob_event.data.extra or {} if blob_event.data else {}),
+                    status=UpdateStatus.FAILED,
+                    error_message=blob_event.error_msg,
+                ),
+                file_type="application/parquet",
+                blob_dir=blob_dir,
+            )
+        else:
+            self._storage.save_blob(
+                name="observation_report",
+                data=_data_section_as_parquet(blob_event.data),
+                blob_info=ObservationReportData(
+                    update_algorithm=blob_event.update_algorithm,
+                    summary=blob_event.data.extra or {},
+                ),
+                file_type="application/parquet",
+                blob_dir=blob_dir,
+            )
+
+    def load_stored_update(self) -> StoredUpdate | None:
+        """Return the update that produced this ensemble, if one was recorded.
+
+        Tables are ordered the way they appeared while the experiment was
+        running: the data tables in the order they were produced, then the
+        report.
+        """
+        report_metadata = next(
+            (
+                metadata
+                for metadata in self.load_blob_metadata(BlobType.OBSERVATION_REPORT)
+                if isinstance(metadata.blob_info, ObservationReportData)
+            ),
+            None,
+        )
+        if report_metadata is None:
+            return None
+        report_info = report_metadata.blob_info
+        assert isinstance(report_info, ObservationReportData)
+
+        data_table_metadata = [
+            metadata
+            for metadata in self.load_blob_metadata(BlobType.UPDATE_DATA_TABLE)
+            if isinstance(metadata.blob_info, UpdateDataTableData)
+        ]
+        data_table_metadata.sort(
+            key=lambda metadata: (
+                cast(UpdateDataTableData, metadata.blob_info).table_index
+            )
+        )
+
+        tables = []
+        for metadata in data_table_metadata:
+            info = metadata.blob_info
+            assert isinstance(info, UpdateDataTableData)
+            tables.append(
+                self._load_update_table(metadata.uri, info.table_name, info.summary)
+            )
+        tables.append(
+            self._load_update_table(
+                report_metadata.uri, "Report", report_info.summary, is_report=True
+            )
+        )
+
+        return StoredUpdate(
+            update_algorithm=report_info.update_algorithm,
+            status=report_info.status,
+            tables=tables,
+            error_message=report_info.error_message,
+        )
+
+    def _load_update_table(
+        self,
+        uri: str,
+        name: str,
+        summary: dict[str, str],
+        *,
+        is_report: bool = False,
+    ) -> UpdateTable:
+        table = pl.read_parquet(io.BytesIO(self.load_blob(uri)))
+        return UpdateTable(
+            name=name,
+            header=table.columns,
+            rows=table.rows(),
+            summary=summary,
+            is_report=is_report,
+        )
 
     @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:

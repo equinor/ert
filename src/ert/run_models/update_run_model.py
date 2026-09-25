@@ -176,6 +176,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisErrorEvent():
+                ensemble.save_blob(event)
                 self.send_event(
                     RunModelErrorEvent(
                         iteration=iteration,
@@ -185,6 +186,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisDataEvent():
+                ensemble.save_blob(event)
                 self.send_event(
                     RunModelDataEvent(
                         iteration=iteration,
