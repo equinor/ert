@@ -4,9 +4,16 @@ setting up design matrix to run single sensitivities with ERT.
 Output of this module can be used in custom standalone applications.
 """
 
+import logging
+
 from ._designsummary import summarize_design
 from ._excel_to_dict import excel_to_dict, inputdict_to_yaml
 from .create_design import DesignMatrix
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+logger.setLevel(logging.INFO)
+
 
 __all__ = [
     "DesignMatrix",
