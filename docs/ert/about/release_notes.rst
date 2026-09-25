@@ -49,6 +49,16 @@ From the command line, use the ``--single-update`` flag:
 Version 26.0
 ------------
 
+Update reports in Manage experiments
+####################################
+
+The tables shown in the `Update` tabs while an experiment is running are now stored
+together with the ensemble they produced. Selecting an ensemble in `Manage experiments`
+shows an `Update <iteration>` tab with the report and any auto scaling tables from the
+update that was started from that ensemble, so the reports can be inspected long after
+the experiment has finished.
+
+
 Updated Analysis Panel
 ######################
 

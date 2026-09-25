@@ -36,6 +36,7 @@ from ert.storage.blob_data import BlobType
 from ert.warnings import capture_specific_warning
 
 from .export_dialog import ExportDialog
+from .update_view import UpdateView
 
 
 class _EnsembleWidgetTabs(IntEnum):
@@ -45,6 +46,7 @@ class _EnsembleWidgetTabs(IntEnum):
     PARAMETERS_TAB = 3
     MISFIT_TAB = 4
     RUN_STATUS_TAB = 5
+    UPDATE_TAB = 6
 
 
 class _ObservationTreeWidgetItem(QTreeWidgetItem):
@@ -181,6 +183,7 @@ class EnsembleWidget(QWidget):
         )
 
         self._run_status_view = RunStatusView()
+        self._update_view = UpdateView()
 
         self._tab_widget = QTabWidget()
         self._tab_widget.insertTab(
@@ -199,6 +202,10 @@ class EnsembleWidget(QWidget):
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.RUN_STATUS_TAB, self._run_status_view, "Run status"
         )
+        self._tab_widget.insertTab(
+            _EnsembleWidgetTabs.UPDATE_TAB, self._update_view, "Update"
+        )
+        self._tab_widget.setTabVisible(_EnsembleWidgetTabs.UPDATE_TAB, False)
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
 
         layout = QVBoxLayout()
@@ -471,6 +478,9 @@ class EnsembleWidget(QWidget):
                 self._ensemble.experiment.status_snapshot_path(self._ensemble.iteration)
             )
 
+        elif index == _EnsembleWidgetTabs.UPDATE_TAB:
+            self._update_view.load_update()
+
     def get_misfit_df(self) -> DataFrame:
         assert self._ensemble is not None
         with capture_specific_warning(PerformanceWarning):
@@ -483,6 +493,14 @@ class EnsembleWidget(QWidget):
         self._name_label.setText(f"Name: {ensemble.name!s}")
         self._uuid_label.setText(f"UUID: {ensemble.id!s}")
         self._iteration_label.setText(f"Iteration: {ensemble.iteration:d}")
+
+        self._update_view.set_ensemble(ensemble)
+        self._tab_widget.setTabText(
+            _EnsembleWidgetTabs.UPDATE_TAB, f"Update {ensemble.iteration:d}"
+        )
+        self._tab_widget.setTabVisible(
+            _EnsembleWidgetTabs.UPDATE_TAB, self._update_view.has_update
+        )
 
         current_index = self._tab_widget.currentIndex()
         if current_index > 0:
