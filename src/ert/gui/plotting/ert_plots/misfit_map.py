@@ -79,7 +79,7 @@ class MisfitMapPlot:
             east,
             north,
             misfit_values,
-            shading="flat",
+            shading="gouraud",
             cmap="viridis",
             vmin=vmin,
             vmax=vmax,
