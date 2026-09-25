@@ -60,3 +60,14 @@ While running, we get reports showing how the observations are matching the resp
 factors used in the update.
 
 .. image:: fig/update_report.png
+
+Revisit the update report later
+===============================
+
+The update reports are stored together with the ensemble they produced, so they remain
+available after the experiment has finished. Open `Manage experiments` and select the
+ensemble that was used as prior: every ensemble that an update was started from has an
+`Update <iteration>` tab showing the same tables as the running experiment did. If the
+same prior was used to start several updates, a drop down at the top of the tab selects
+which target ensemble to show the report for. Updates that failed are listed with their
+error message along with whatever tables were produced before the failure.

@@ -11,6 +11,7 @@ from xtgeo import RegularSurface, surface_from_file
 from ert.config import ErtConfig, GenKwConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import RealizationStorageState, open_storage
+from ert.storage.blob_data import UpdateStatus
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
@@ -69,6 +70,32 @@ def test_that_posterior_has_lower_variance_than_prior():
         < np.linalg.det(np.cov(df_target.to_numpy(), rowvar=False))
         < np.linalg.det(np.cov(df_default.to_numpy(), rowvar=False))
     )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_update_report_of_finished_run_can_be_read_back_from_prior_ensemble():
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitoring",
+        "--realizations",
+        "1-50",
+        "poly.ert",
+        "--experiment-name",
+        "es-test",
+    )
+    with open_storage("storage") as storage:
+        experiment = storage.get_experiment_by_name("es-test")
+        prior_ensemble = experiment.get_ensemble_by_name("iter-0")
+
+        (posterior_ensemble,) = prior_ensemble.children
+        update = posterior_ensemble.load_stored_update()
+
+        assert update.update_algorithm == "ensemble_smoother"
+        assert update.status == UpdateStatus.COMPLETED
+        assert [table.name for table in update.tables] == ["Report"]
+        assert "observation_key" in update.tables[0].header
+        assert update.tables[0].rows
+        assert update.tables[0].summary["Parent ensemble"] == "iter-0"
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
