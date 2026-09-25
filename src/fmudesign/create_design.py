@@ -118,9 +118,10 @@ class DesignMatrix:
         self.base_seed: int
 
     def log_inputdict(self, inputdict: dict[str, Any]) -> None:
+        sensitivities: dict[str, Any] = inputdict["sensitivities"]
         parameters: list[tuple[str, list[Any] | None]] = [
             param
-            for sens_values in inputdict["sensitivities"].values()
+            for sens_values in sensitivities.values()
             for param in (
                 dict.fromkeys(sens_values.get("parameters") or [])
                 if isinstance(sens_values.get("parameters"), list)
@@ -130,15 +131,19 @@ class DesignMatrix:
         if isinstance(background := inputdict.get("background"), dict):
             parameters.extend(background.get("parameters", {}).items())
 
-        unique_params_per_senstype: dict[str, set[str]] = defaultdict(set)
-        for sensvals in inputdict["sensitivities"].values():
+        senstype_to_unique_params: dict[str, set[str]] = defaultdict(set)
+        for sensvals in sensitivities.values():
             if (senstype := sensvals["senstype"]) == "scenario":
-                params = {p for case in sensvals["cases"].values() for p in case}
+                senstype_to_unique_params[senstype] |= {
+                    param for case in sensvals["cases"].values() for param in case
+                }
             else:
-                params = set(sensvals.get("parameters") or {})
-            unique_params_per_senstype[senstype] |= params
-        param_count_per_senstype: dict[str, int] = {
-            t: len(v) for t, v in unique_params_per_senstype.items()
+                senstype_to_unique_params[senstype] |= set(
+                    sensvals.get("parameters") or {}
+                )
+        senstype_to_param_count: dict[str, int] = {
+            senstype: len(params)
+            for senstype, params in senstype_to_unique_params.items()
         }
 
         summary_log = dedent(
@@ -148,7 +153,7 @@ class DesignMatrix:
             Repeats: {inputdict.get("repeats")}
             Seed strategy: {inputdict.get("seed_strategy")}
             Correlation iterations: {inputdict.get("correlation_iterations")}
-            Number of sensitivities: {len(inputdict["sensitivities"])}
+            Number of sensitivities: {len(sensitivities)}
             Number of background parameters: {
                 len(background.get("parameters", {}))
                 if isinstance(background, dict)
@@ -157,7 +162,7 @@ class DesignMatrix:
             Distribution count: {
                 dict(Counter(v[0] for p, v in parameters if v is not None))
             }
-            Parameters per sensitivity type in designinput: {param_count_per_senstype}
+            Parameters per sensitivity type in designinput: {senstype_to_param_count}
             Parameters in designmatrix: {
                 len(
                     set(self.designvalues.columns)
@@ -186,8 +191,7 @@ class DesignMatrix:
             Distribution seed: {inputdict.get("distribution_seed") is not None}
             Number of dependencies: {
                 sum(
-                    len(sens.get("dependencies", {}))
-                    for sens in inputdict["sensitivities"].values()
+                    len(sens.get("dependencies", {})) for sens in sensitivities.values()
                 )
             }
             Number of realizations per sensitivity: {
@@ -250,6 +254,7 @@ class DesignMatrix:
             size = sens.get("numreal", inputdict["repeats"])
 
             print(f" Generating sensitivity : {key}")
+
             match sens["senstype"]:
                 case "ref":
                     sensitivity = SingleRealisationReference(
