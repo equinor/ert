@@ -14,7 +14,7 @@ from pydantic.dataclasses import dataclass
 from ert.config.parameter_config import LocalizationType
 
 from .analysis_module import ESSettings
-from .design_matrix import DesignMatrix
+from .design_matrix import DesignMatrix, FmuDesignMatrix
 from .parsing import (
     ConfigDict,
     ConfigKeys,
@@ -281,6 +281,12 @@ class AnalysisConfig:
                 parameter_type_update_strategies.get("GEN_KW"),
             )
             for design_matrix_config_list in design_matrix_config_lists
+        ] + [
+            FmuDesignMatrix.from_config_list(
+                fmudesign_config_list,
+                parameter_type_update_strategies.get("GEN_KW"),
+            )
+            for fmudesign_config_list in config_dict.get(ConfigKeys.FMUDESIGN, [])
         ]
         design_matrix: DesignMatrix | None = None
 

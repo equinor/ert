@@ -28,6 +28,7 @@ Keyword name                                                             Require
 :ref:`ENKF_TRUNCATION <enkf_truncation>`                                 NO                                      0.98                            Cutoff used on singular value spectrum
 :ref:`ENSPATH <enspath>`                                                 NO                                      storage                         Folder used for storage of simulation results
 :ref:`FIELD <field>`                                                     NO                                                                      Adds grid parameters
+:ref:`FMUDESIGN <fmudesign>`                                             NO                                                                      Add design matrix parameters generated from an fmudesign input file
 :ref:`FORWARD_MODEL <forward_model>`                                     NO                                                                      Add the running of a job to the simulation forward model
 :ref:`GEN_DATA <gen_data>`                                               NO                                                                      Specify a general type of data created/updated by the forward model
 :ref:`GEN_KW <gen_kw>`                                                   NO                                                                      Add a scalar parameter
@@ -182,6 +183,7 @@ DESIGN_MATRIX
 
 DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
 :code:`DESIGN_MATRIX` supports 1 positional argument, which points to a XLSX file.
+To generate the design matrix from an fmudesign input file instead, see :ref:`FMUDESIGN <fmudesign>`.
 
 *Example:*
 
@@ -432,6 +434,49 @@ here b and c are updated because they use the default ``UPDATE:TRUE`` of :ref:`G
     sheet must hold a value. A cell is invalid if it is empty, contains only
     whitespace, holds a numeric ``NaN``, or holds the text ``NONE``, ``NULL``
     or ``NAN`` in any casing. Surrounding whitespaces are ignored.
+
+.. _fmudesign:
+
+FMUDESIGN
+---------
+
+FMUDESIGN generates a design matrix from an `fmudesign <https://equinor.github.io/fmu-tools/fmudesign.html>`_
+input file when the configuration is read, so there is no need to run ``fmudesign`` and point
+:ref:`DESIGN_MATRIX <design_matrix>` to the file it writes.
+:code:`FMUDESIGN` supports 1 positional argument, which points to the XLSX input file.
+
+*Example:*
+
+::
+
+        FMUDESIGN design_input.xlsx
+
+Additionally, there are three optional named arguments for the names of the input sheets:
+
+::
+
+        FMUDESIGN <file> GENERAL_INPUT_SHEET:<name> DESIGN_INPUT_SHEET:<name> DEFAULT_VALUES_SHEET:<name>
+
+which default to ``general_input``, ``designinput`` and ``defaultvalues``.
+
+The configuration above gives the same parameters as running ``fmudesign run design_input.xlsx design_matrix.xlsx`` and using
+
+::
+
+        DESIGN_MATRIX design_matrix.xlsx DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultValues
+
+The only difference is that numbers in a column that also contains text keep all their decimals,
+while :code:`DESIGN_MATRIX` rounds them to nine decimals.
+
+As with :ref:`DESIGN_MATRIX <design_matrix>`, the parameters override :ref:`GEN_KW <gen_kw>` parameters with the same
+name and are not updated. :code:`FMUDESIGN` can be combined with :ref:`DESIGN_MATRIX <design_matrix>` in the same way
+as multiple :code:`DESIGN_MATRIX` keywords. Only one :code:`FMUDESIGN` keyword can be used, since every generated design
+contains the columns ``SENSNAME`` and ``SENSCASE``.
+
+.. note::
+    The design is generated each time the configuration is read, so ``distribution_seed`` must be set in the
+    general input sheet to generate the same design every time. To keep a design fixed across versions of Ert,
+    run ``fmudesign`` and use :ref:`DESIGN_MATRIX <design_matrix>` instead.
 
 .. _eclbase:
 
