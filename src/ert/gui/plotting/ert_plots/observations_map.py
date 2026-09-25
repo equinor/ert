@@ -48,7 +48,7 @@ class ObservationsMapPlot:
 
         axes = figure.add_subplot(111)
         observation_tripcolor = axes.tripcolor(
-            east, north, observation_values, shading="flat", cmap="viridis"
+            east, north, observation_values, shading="gouraud", cmap="viridis"
         )
 
         cbar = figure.colorbar(
