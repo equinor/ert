@@ -7,7 +7,9 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QComboBox,
     QDialog,
+    QDialogButtonBox,
     QDoubleSpinBox,
     QLabel,
     QPushButton,
@@ -40,6 +42,15 @@ from .conftest import (
     REALIZATION_UNDEFINED,
     MockStorage,
 )
+
+
+def _summary_rows(summary: UpdateStrategySummaryWidget) -> list[tuple[str, str, str]]:
+    return [
+        tuple(
+            summary.item(row, column).text() for column in range(summary.columnCount())
+        )
+        for row in range(summary.rowCount())
+    ]
 
 
 @pytest.mark.parametrize(
@@ -164,20 +175,124 @@ def test_that_update_strategy_widget_tracks_selected_prior_config_counts(
     assert localization_label.isVisible()
     assert summary is not None
     assert summary.height() == summary.sizeHint().height()
-    assert summary.item(0, 0).text() == "Global"
+    assert _summary_rows(summary) == [("Global", "GenKW", "1")]
 
     checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
     selector = panel.findChild(EnsembleSelector)
     assert checkbox is not None
     assert selector is not None
     checkbox.setChecked(True)
-    for index, strategy in enumerate(["Adaptive", "Distance"]):
+    for index, expected_row in enumerate(
+        [("Adaptive", "GenKW", "1"), ("Distance", "GenKW", "1")]
+    ):
         selector.setCurrentIndex(
             selector.findText(f"experiment_{index} : prior_{index}")
         )
-        assert summary.item(0, 0).text() == strategy
+        assert _summary_rows(summary) == [expected_row]
     checkbox.setChecked(False)
-    assert summary.item(0, 0).text() == "Global"
+    assert _summary_rows(summary) == [("Global", "GenKW", "1")]
+
+
+@pytest.mark.parametrize(
+    ("dialog_button", "expected_strategy"),
+    [
+        (QDialogButtonBox.StandardButton.Save, LocalizationType.ADAPTIVE),
+        (QDialogButtonBox.StandardButton.Cancel, LocalizationType.GLOBAL),
+    ],
+)
+def test_that_strategy_summary_reflects_only_saved_update_settings(
+    qtbot: QtBot,
+    dialog_button: QDialogButtonBox.StandardButton,
+    expected_strategy: LocalizationType,
+) -> None:
+    parameter = GenKwConfig(
+        name="configured",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=[parameter],
+        runpath="",
+        notifier=notifier,
+        active_realizations=[True] * 3,
+        config_num_realization=3,
+    )
+    qtbot.addWidget(panel)
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+    assert _summary_rows(summary) == [("Global", "GenKW", "1")]
+
+    def edit_strategy_and_close_dialog() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        gen_kw_selector = dialog.findChildren(QComboBox)[0]
+        gen_kw_selector.setCurrentIndex(
+            gen_kw_selector.findData(
+                LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole
+            )
+        )
+        buttons = dialog.findChild(QDialogButtonBox)
+        assert buttons is not None
+        button = buttons.button(dialog_button)
+        assert button is not None
+        qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+
+    QTimer.singleShot(0, edit_strategy_and_close_dialog)
+    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
+    assert edit_button is not None
+    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
+
+    assert parameter.update_strategy == expected_strategy
+    assert _summary_rows(summary) == [
+        (expected_strategy.value.capitalize(), "GenKW", "1")
+    ]
+
+
+def test_that_update_strategy_summary_includes_design_matrix_parameters(
+    qtbot: QtBot,
+    tmp_path,
+) -> None:
+    design_matrix_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_path,
+        pl.DataFrame({"REAL": [0, 1], "matrix_parameter": [1.0, 2.0]}),
+    )
+    design_matrix = DesignMatrix(
+        filename=design_matrix_path,
+        design_sheet="DesignSheet",
+        default_sheet=None,
+        update=True,
+        gen_kw_update_strategy=LocalizationType.DISTANCE,
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(
+            minimum_required_realizations=1,
+            design_matrix=design_matrix,
+        ),
+        parameter_configuration=[
+            GenKwConfig(
+                name="configured",
+                distribution={"name": "uniform", "min": 0, "max": 1},
+                update_strategy=LocalizationType.ADAPTIVE,
+            )
+        ],
+        runpath="",
+        notifier=notifier,
+        active_realizations=[True] * 2,
+        config_num_realization=2,
+    )
+    qtbot.addWidget(panel)
+
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+    assert _summary_rows(summary) == [
+        ("Adaptive", "GenKW", "1"),
+        ("Distance", "GenKW", "1"),
+    ]
 
 
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_config(
