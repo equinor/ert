@@ -42,11 +42,6 @@ def _table_type(table: UpdateTable) -> type[UpdateLogTable]:
 
 
 def _has_readable_update(ensemble: Ensemble) -> bool:
-    """Whether an update of *ensemble* was recorded and its metadata can be read.
-
-    An ensemble whose metadata this version of ert cannot parse is skipped
-    rather than hiding the updates of its siblings.
-    """
     try:
         return ensemble.has_stored_update
     except Exception:
@@ -55,13 +50,6 @@ def _has_readable_update(ensemble: Ensemble) -> bool:
 
 
 class UpdateView(QWidget):
-    """Shows the update that an ensemble produced, as it was recorded in storage.
-
-    An ensemble can be the prior of several updates, for instance when the same
-    ensemble has been used to start runs in different experiments. The target
-    selector picks which of those updates to show.
-    """
-
     def __init__(self) -> None:
         super().__init__()
 
