@@ -828,7 +828,11 @@ class RFTObservation(BaseObservation):
                 case "MD":
                     md = validate_float(value, key)
                 case "LOCALIZATION":
-                    validate_rft_localization(value, observation_dict.context)
+                    _validate_localization_without_east_north(
+                        value,
+                        observation_dict.context,
+                        _invalid_rft_localization_key_error,
+                    )
                     east, north, radius = extract_localization_values(value)
                     radius = (
                         radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
@@ -1294,12 +1298,20 @@ def validate_positive_float(
     return v
 
 
-def validate_rft_localization(val: dict[str, Any], context: FileContextToken) -> None:
+def _validate_localization_without_east_north(
+    val: dict[str, Any],
+    context: FileContextToken,
+    key_error_func: Callable[[str, FileContextToken], ObservationConfigError | None],
+) -> None:
     errors = []
     if "EAST" in val:
-        errors.append(_invalid_rft_localization_key_error("EAST", context))
+        error = key_error_func("EAST", context)
+        if error is not None:
+            errors.append(error)
     if "NORTH" in val:
-        errors.append(_invalid_rft_localization_key_error("NORTH", context))
+        error = key_error_func("NORTH", context)
+        if error is not None:
+            errors.append(error)
     errors.extend(
         _unknown_key_error(key, context)
         for key in val
