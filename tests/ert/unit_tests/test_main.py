@@ -246,3 +246,22 @@ def test_argparse_no_port_range():
         ],
     )
     assert parsed.port_range is None
+
+
+def test_that_es_mda_single_update_flag_sets_weights_to_one():
+    parsed = ert_parser(None, [ES_MDA_MODE, "--single-update", "path/to/config.ert"])
+    assert parsed.weights == "1"
+
+
+def test_that_es_mda_single_update_flag_cannot_be_combined_with_weights():
+    with pytest.raises(SystemExit):
+        ert_parser(
+            None,
+            [
+                ES_MDA_MODE,
+                "--single-update",
+                "--weights",
+                "4,2,1",
+                "path/to/config.ert",
+            ],
+        )

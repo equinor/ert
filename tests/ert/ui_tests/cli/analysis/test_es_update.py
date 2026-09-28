@@ -268,8 +268,7 @@ def test_that_es_mda_with_single_unit_weight_equals_ensemble_smoother():
         "es_mda",
         "--target-ensemble",
         "iter-%d",
-        "--weights",
-        "1",
+        "--single-update",
     )
 
     realizations = tuple(range(10))
