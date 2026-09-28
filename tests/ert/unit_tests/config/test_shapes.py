@@ -35,6 +35,37 @@ def test_that_shape_registry_assigns_new_id_for_different_shapes():
     assert shape_id_1 != shape_id_2
 
 
+def test_that_circle_shape_can_be_relative_or_absolute():
+    absolute_shape = CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
+    assert absolute_shape.is_absolute()
+
+    relative_shape = CircleShapeConfig(radius=2500.0)
+    assert not relative_shape.is_absolute()
+
+    with pytest.raises(
+        ValueError,
+        match="Both 'east' and 'north' must be provided, or both must be absent",
+    ):
+        CircleShapeConfig(east=10.0, radius=2500.0)
+
+
+def test_that_circle_shape_equality_depends_on_shape_type():
+    absolute_shape1 = CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
+    absolute_shape2 = CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
+    absolute_shape3 = CircleShapeConfig(east=10.0, north=21.0, radius=2500.0)
+    assert absolute_shape1 == absolute_shape2
+    assert absolute_shape1 != absolute_shape3
+
+    relative_shape1 = CircleShapeConfig(radius=2500.0)
+    relative_shape2 = CircleShapeConfig(radius=2500.0)
+    relative_shape3 = CircleShapeConfig(radius=3000.0)
+    assert relative_shape1 == relative_shape2
+    assert relative_shape1 != relative_shape3
+
+    assert absolute_shape1 != relative_shape1
+    assert relative_shape1 != {"radius": 2500.0}
+
+
 def test_that_polygon_shape_is_read_from_file(mocked_files):
     mocked_files["polygon.pol"] = dedent(
         """
