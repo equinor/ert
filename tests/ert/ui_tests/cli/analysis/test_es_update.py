@@ -5,11 +5,12 @@ from textwrap import dedent
 import numpy as np
 import polars as pl
 import pytest
+from polars.testing import assert_frame_equal
 from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
 from ert.config import ErtConfig, GenKwConfig
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE
 from ert.storage import RealizationStorageState, open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
@@ -241,3 +242,48 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
             for idx, v in enumerate(prior.get_ensemble_state())
             if RealizationStorageState.FAILURE_IN_CURRENT in v
         )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_es_mda_with_single_unit_weight_equals_ensemble_smoother():
+    with Path("poly.ert").open("a", encoding="utf-8") as fout:
+        fout.write("\nRANDOM_SEED 1234\n")
+
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitoring",
+        "--realizations",
+        "0-9",
+        "poly.ert",
+        "--experiment-name",
+        "es",
+    )
+    run_cli(
+        ES_MDA_MODE,
+        "--disable-monitoring",
+        "--realizations",
+        "0-9",
+        "poly.ert",
+        "--experiment-name",
+        "es_mda",
+        "--target-ensemble",
+        "iter-%d",
+        "--weights",
+        "1",
+    )
+
+    realizations = tuple(range(10))
+    with open_storage("storage") as storage:
+        es = storage.get_experiment_by_name("es")
+        es_mda = storage.get_experiment_by_name("es_mda")
+        for ensemble_name in ("iter-0", "iter-1"):
+            es_ensemble = es.get_ensemble_by_name(ensemble_name)
+            es_mda_ensemble = es_mda.get_ensemble_by_name(ensemble_name)
+            assert_frame_equal(
+                es_ensemble.load_scalars(), es_mda_ensemble.load_scalars()
+            )
+            assert_frame_equal(
+                es_ensemble.load_responses("POLY_RES", realizations),
+                es_mda_ensemble.load_responses("POLY_RES", realizations),
+            )
+        assert len(list(es_mda.ensembles)) == 2
