@@ -336,8 +336,8 @@ Required items are:
 
 The key must refer to an existing summary key available from the simulation output.
 
-Should the ``THRESHOLD`` value never be reached by the simulator, the observation
-will be deactivated for the update of that realization.
+Breakthrough observations are deactivated if the simulator never reaches the ``THRESHOLD``
+value for the given summary key.
 
 .. _general_observation:
 
