@@ -219,6 +219,9 @@ where:
   ``UPDATE:TRUE`` is set, ERT emits a ``ConfigWarning`` listing the excluded parameter names.
 
 
+
+
+
 *Example:*
 
 ::
@@ -377,6 +380,11 @@ To make them participate in history matching, set ``UPDATE:TRUE`` on the :ref:`D
 
 With ``UPDATE:TRUE``, all numeric design matrix parameters (a, b, c, d and e) will be updated during history matching,
 following the update strategy configured for :ref:`GEN_KW <gen_kw>` parameters, see :ref:`ANALYSIS_SET_VAR <analysis_set_var>`.
+
+.. warning::
+        When using the UPDATE:TRUE setting for design matrix parameters, the values in the design matrix are assumend to be in the raw format.
+        No transformations will be applied automatically.
+
 The overlapping parameters b, c and d still take their values from the design matrix, since ``PRIORITY:design_matrix`` is set,
 but unlike the ``UPDATE:FALSE`` case above they are no longer held constant. In this case the final set of parameters
 (for example in parameters.txt in real==0) would be:
