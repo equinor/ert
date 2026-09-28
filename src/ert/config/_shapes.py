@@ -5,7 +5,7 @@ from typing import Annotated, ClassVar, Literal, Self, cast
 
 import shapely
 import xtgeo
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ShapeConfig(BaseModel, extra="forbid"):
@@ -17,22 +17,41 @@ class ShapeConfig(BaseModel, extra="forbid"):
 class CircleShapeConfig(ShapeConfig):
     """Configuration for a circular (point-based) shape.
 
+    A circle can be either absolute (with specific east and north coordinates) or
+    relative (without coordinates).
+
     Attributes:
         shape_id: Unique identifier for this shape, if registered.
-        east: X-coordinate of the circle center (meters).
-        north: Y-coordinate of the circle center (meters).
+        east: X-coordinate of the circle center (meters). None if shape is relative.
+        north: Y-coordinate of the circle center (meters). None if shape is relative.
         radius: Radius of localization in meters.
     """
 
     type: Literal["circle"] = "circle"
-    east: float
-    north: float
+    east: float | None = None
+    north: float | None = None
     radius: float
+
+    @model_validator(mode="after")
+    def validate_shape_relative_or_absolute(self) -> Self:
+        """Ensure east and north are both provided or both absent."""
+        if (self.east is None) != (self.north is None):
+            raise ValueError(
+                "Both 'east' and 'north' must be provided, or both must be absent"
+            )
+        return self
+
+    def is_absolute(self) -> bool:
+        return self.east is not None and self.north is not None
 
     def __eq__(self, other: object) -> bool:
         """Compare two CircleShapeConfig instances by geometry."""
         if not isinstance(other, CircleShapeConfig):
             return False
+        if self.is_absolute() != other.is_absolute():
+            return False
+        if not self.is_absolute():
+            return self.radius == other.radius
         return (
             self.east == other.east
             and self.north == other.north
