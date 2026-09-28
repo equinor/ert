@@ -52,11 +52,12 @@ Version 26.0
 Update reports in Manage experiments
 ####################################
 
-The tables shown in the `Update` tabs while an experiment is running are now stored
-together with the ensemble they produced. Selecting an ensemble in `Manage experiments`
-shows an `Update <iteration>` tab with the report and any auto scaling tables from the
-update that was started from that ensemble, so the reports can be inspected long after
-the experiment has finished.
+The tables shown in the `Update` tabs while an experiment is running are now kept, so
+they remain available after the run has finished. Selecting an ensemble in
+`Manage experiments` shows an `Update <iteration>` tab with the report and any auto
+scaling tables from the update that was started from that ensemble. The numbering
+follows the running experiment, so the update that turned `iter-0` into `iter-1` is
+`Update 0` and is found on `iter-0`.
 
 
 Updated Analysis Panel
