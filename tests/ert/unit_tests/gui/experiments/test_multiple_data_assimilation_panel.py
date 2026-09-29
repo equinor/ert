@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from unittest.mock import MagicMock, Mock
 
+import polars as pl
 import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -13,16 +14,23 @@ from PyQt6.QtWidgets import (
 )
 from pytestqt.qtbot import QtBot
 
-from ert.config import EnsembleConfig
+from ert.config import DesignMatrix, EnsembleConfig, GenKwConfig
 from ert.config.analysis_config import AnalysisConfig
 from ert.config.analysis_module import ESSettings
+from ert.config.distribution import RawSettings
 from ert.config.parameter_config import LocalizationType, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
+from ert.gui.ertwidgets.analysismodulevariablespanel import (
+    AnalysisModuleVariablesPanel,
+)
+from ert.gui.ertwidgets.parameterviewer import ParametersViewer
+from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
 from ert.storage.local_experiment import ExperimentType
+from tests.ert.conftest import _create_design_matrix
 
 from .conftest import (
     REALIZATION_FINISHED_SUCCESSFULLY,
@@ -436,3 +444,85 @@ def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
     assert ensemble_selector.count() == len(expected_ensembles)
     for i in range(ensemble_selector.count()):
         assert ensemble_selector.itemText(i) in expected_ensembles
+
+
+@pytest.mark.parametrize(
+    "panel_type",
+    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+)
+@pytest.mark.timeout(10)
+def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
+    qtbot: QtBot, panel_type, tmp_path
+) -> None:
+    original_parameter = GenKwConfig(
+        name="original",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.GLOBAL,
+    )
+    design_matrix_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_path,
+        pl.DataFrame({"REAL": [0], "design_parameter": [1]}),
+    )
+    design_matrix = DesignMatrix(
+        filename=design_matrix_path,
+        design_sheet="DesignSheet",
+        default_sheet=None,
+        update=True,
+    )
+
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = panel_type(
+        analysis_config=AnalysisConfig(design_matrix=design_matrix),
+        parameter_configuration=[original_parameter],
+        runpath="",
+        notifier=notifier,
+        active_realizations=[True],
+        config_num_realization=1,
+    )
+    qtbot.addWidget(panel)
+
+    # initially all parameters should have the global update strategy
+    for parameter in panel._analysis_module_edit.parameter_config:
+        assert parameter.update_strategy == LocalizationType.GLOBAL
+
+    # simulate selecting the adaptive strategy for GEN_KW
+    def select_adaptive_strategy() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        update_settings = dialog.findChild(AnalysisModuleVariablesPanel)
+        assert update_settings is not None
+        update_settings._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
+        dialog.accept()
+
+    QTimer.singleShot(0, select_adaptive_strategy)
+    update_settings_button = panel.findChild(
+        QPushButton, "analysis_variables_popup_button"
+    )
+    assert update_settings_button is not None
+    qtbot.mouseClick(update_settings_button, Qt.MouseButton.LeftButton)
+
+    def verify_parameter_strategy() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, ParametersViewer)
+        parameter_type_node = dialog.tree_widget.topLevelItem(0)
+        assert parameter_type_node is not None
+        for parameter_index in range(parameter_type_node.childCount()):
+            parameter_node = parameter_type_node.child(parameter_index)
+            assert parameter_node is not None
+            parameter_details = []
+            for detail_index in range(parameter_node.childCount()):
+                detail_node = parameter_node.child(detail_index)
+                assert detail_node is not None
+                parameter_details.append(detail_node.text(0))
+            assert f"Update: {LocalizationType.ADAPTIVE}" in parameter_details
+        dialog.accept()
+
+    QTimer.singleShot(0, verify_parameter_strategy)
+    show_parameters_button = next(
+        button
+        for button in panel.findChildren(QPushButton)
+        if button.text() == "Show parameters"
+    )
+    qtbot.mouseClick(show_parameters_button, Qt.MouseButton.LeftButton)

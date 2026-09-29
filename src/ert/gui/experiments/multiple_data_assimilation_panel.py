@@ -248,15 +248,17 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 ),
             )
 
-        self._parameter_configuration = parameter_configuration
         if design_matrix and not self._prior_ensemble_selected:
-            self._parameter_configuration = (
+            self._analysis_module_edit.parameter_config = (
                 design_matrix.merge_with_existing_parameters(parameter_configuration)
             )
 
-        if self._parameter_configuration:
+        if self._analysis_module_edit.parameter_config:
             layout.addRow(
-                "Parameters", get_parameters_button(self._parameter_configuration, self)
+                "Parameters",
+                get_parameters_button(
+                    self._analysis_module_edit.parameter_config, self
+                ),
             )
 
         self.setLayout(layout)
@@ -445,7 +447,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     @property
     def _selected_param_configuration_is_valid(self) -> bool:
         if not self._selected_prior_ensemble:
-            return has_updatable_parameters(self._parameter_configuration)
+            return has_updatable_parameters(self._analysis_module_edit.parameter_config)
 
         prior_param_config = list(
             self._selected_prior_ensemble.experiment.parameter_configuration.values()
