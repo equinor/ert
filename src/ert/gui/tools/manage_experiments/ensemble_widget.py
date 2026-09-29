@@ -496,7 +496,10 @@ class EnsembleWidget(QWidget):
 
         self._update_view.set_ensemble(ensemble)
         self._tab_widget.setTabText(
-            _EnsembleWidgetTabs.UPDATE_TAB, f"Update {ensemble.iteration:d}"
+            _EnsembleWidgetTabs.UPDATE_TAB,
+            f"Update {ensemble.iteration - 1}"
+            if self._update_view.has_update
+            else "Update",
         )
         self._tab_widget.setTabVisible(
             _EnsembleWidgetTabs.UPDATE_TAB, self._update_view.has_update
