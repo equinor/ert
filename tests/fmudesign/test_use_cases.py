@@ -78,8 +78,7 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
         ).to_excel(writer, sheet_name="design_input", index=False)
         defaultvalues.to_excel(writer, sheet_name="defaultvalues", index=False)
 
-    design = DesignMatrix()
-    design.generate(excel_to_dict(input_path))
+    design = DesignMatrix(excel_to_dict(input_path))
 
     assert set(design.designvalues["RESTARTPATH"]) == {"/scratch/foo/2020a_hm3/"}
     assert set(design.designvalues["HMITER"]) == {3}
@@ -125,8 +124,7 @@ def test_that_constant_distribution_generates_identical_parameter_values(
         design_input.to_excel(writer, sheet_name="designinput", index=False)
         defaultvalues.to_excel(writer, sheet_name="defaultvalues", index=False)
 
-    design = DesignMatrix()
-    design.generate(excel_to_dict(input_path, gen_input_sheet="generalinput"))
+    design = DesignMatrix(excel_to_dict(input_path, gen_input_sheet="generalinput"))
 
     assert len(design.designvalues) == 100
     assert set(design.designvalues["a"]) == {1.0}

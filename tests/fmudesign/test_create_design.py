@@ -18,6 +18,7 @@ from fmudesign.quality_report import print_corrmat
 from ._configurations import (
     background_configuration,
     full_mc_configuration,
+    minimal_configuration,
     onebyone_configuration,
 )
 
@@ -143,8 +144,7 @@ def test_that_generated_distributions_match_configured_statistics(
 
     # Read the file and draw samples
     input_dict = excel_to_dict(input_path)
-    design = DesignMatrix()
-    design.generate(input_dict)
+    design = DesignMatrix(input_dict)
     assert len(design.designvalues) == NUM_SAMPLES
     df = design.designvalues
 
@@ -233,8 +233,7 @@ def test_that_onebyone_design_contains_configured_cases_and_values(
     # However, there are 20 rows for multz because numreal is set to 20 in designinput.
     rows_in_design_matrix = 80
 
-    design = DesignMatrix()
-    design.generate(input_dict)
+    design = DesignMatrix(input_dict)
     # Checking dimensions of design matrix
     assert design.designvalues.shape == (rows_in_design_matrix, 10)
 
@@ -431,8 +430,7 @@ def _full_mc_input(tmp_path):
 
 def test_that_joint_full_monte_carlo_design_matches_snapshot(snapshot, tmp_path):
     input_dict = _full_mc_input(tmp_path)
-    design = DesignMatrix()
-    design.generate(input_dict)
+    design = DesignMatrix(input_dict)
 
     _assert_design_snapshot(design, snapshot)
 
@@ -440,8 +438,7 @@ def test_that_joint_full_monte_carlo_design_matches_snapshot(snapshot, tmp_path)
 def test_that_independent_full_monte_carlo_design_matches_snapshot(snapshot, tmp_path):
     input_dict = _full_mc_input(tmp_path)
     input_dict["seed_strategy"] = "independent"
-    design = DesignMatrix()
-    design.generate(input_dict)
+    design = DesignMatrix(input_dict)
 
     _assert_design_snapshot(design, snapshot)
 
@@ -449,8 +446,7 @@ def test_that_independent_full_monte_carlo_design_matches_snapshot(snapshot, tmp
 def test_that_full_monte_carlo_design_applies_dependencies_and_correlations(tmp_path):
     input_dict = _full_mc_input(tmp_path)
 
-    design = DesignMatrix()
-    design.generate(input_dict)
+    design = DesignMatrix(input_dict)
 
     design_values = design.designvalues
     assert design_values.shape == (500, 16)
@@ -555,8 +551,7 @@ def test_that_background_fills_inactive_parameters_without_overwriting_sensitivi
     input_dict = background_configuration(correlation_path, external_parameters)
     input_dict["distribution_seed"] = 42
 
-    design = DesignMatrix()
-    design.generate(input_dict)
+    design = DesignMatrix(input_dict)
 
     background_params = ["PARAM17", "PARAM18", "PARAM19"]
     background_vals = design.designvalues.loc[
@@ -650,7 +645,7 @@ def test_that_print_corrmat_formats_without_mutating_input(capsys):
 
 
 def test_that_fill_with_background_values_replaces_missing_parameter_values():
-    dm = DesignMatrix()
+    dm = DesignMatrix(config=minimal_configuration())
     dm.designvalues = pd.DataFrame(
         {
             "SENSNAME": ["s1", "s1"],
@@ -666,7 +661,7 @@ def test_that_fill_with_background_values_replaces_missing_parameter_values():
 
 
 def test_that_set_decimals_propagates_zero_precision_to_dependency():
-    design = DesignMatrix()
+    design = DesignMatrix(config=minimal_configuration())
     design.designvalues = pd.DataFrame({"SOURCE": [1.6], "TARGET": [1.6]})
     config = {
         "decimals": {"SOURCE": 0},
@@ -786,8 +781,7 @@ def test_that_sampling_strategies_reproduce_configured_marginal_distributions(
     strategy,
 ):
     params = {"N": ("normal", ["0", "2"], None), "U": ("uniform", ["-5", "0"], None)}
-    design = DesignMatrix()
-    design.generate(_design_dict(params, strategy, repeats=10000))
+    design = DesignMatrix(_design_dict(params, strategy, repeats=10000))
 
     n = design.designvalues["N"].to_numpy(float)
     u = design.designvalues["U"].to_numpy(float)
@@ -903,9 +897,8 @@ def test_that_independent_sampling_preserves_background_when_parameter_is_added(
         "correlations": None,
     }
     params = {"A": ("normal", ["0", "1"], None)}
-    d2, d3 = DesignMatrix(), DesignMatrix()
-    d2.generate(_design_dict(params, "independent", background=bg2))
-    d3.generate(_design_dict(params, "independent", background=bg3))
+    d2 = DesignMatrix(_design_dict(params, "independent", background=bg2))
+    d3 = DesignMatrix(_design_dict(params, "independent", background=bg3))
     np.testing.assert_array_equal(
         d2.designvalues["BG1"].to_numpy(float), d3.designvalues["BG1"].to_numpy(float)
     )
@@ -919,9 +912,8 @@ def test_that_independent_sampling_without_seed_is_finite_and_nonreproducible():
     be valid but differ between runs.
     """
     params = {"A": ("normal", ["0", "1"], None), "B": ("uniform", ["0", "1"], None)}
-    d1, d2 = DesignMatrix(), DesignMatrix()
-    d1.generate(_design_dict(params, "independent", distribution_seed=None))
-    d2.generate(_design_dict(params, "independent", distribution_seed=None))
+    d1 = DesignMatrix(_design_dict(params, "independent", distribution_seed=None))
+    d2 = DesignMatrix(_design_dict(params, "independent", distribution_seed=None))
     a1 = d1.designvalues["A"].to_numpy(float)
     a2 = d2.designvalues["A"].to_numpy(float)
     assert not np.isnan(a1).any()
@@ -936,9 +928,8 @@ def test_that_adding_parameter_preserves_values_only_with_independent_strategy(
 ):
     p2 = {"A": ("normal", ["0", "1"], None), "B": ("uniform", ["0", "1"], None)}
     p3 = {**p2, "C": ("triang", ["0", "1", "2"], None)}
-    d2, d3 = DesignMatrix(), DesignMatrix()
-    d2.generate(_design_dict(p2, strategy))
-    d3.generate(_design_dict(p3, strategy))
+    d2 = DesignMatrix(_design_dict(p2, strategy))
+    d3 = DesignMatrix(_design_dict(p3, strategy))
     _assert_stability(stable, d2.designvalues, d3.designvalues, ["A", "B"])
 
 
@@ -1056,14 +1047,35 @@ def test_that_independent_sampling_preserves_correlated_background_when_extended
     }
     params = {"A": ("normal", ["0", "1"], None)}
 
-    d1, d2 = DesignMatrix(), DesignMatrix()
-    d1.generate(
+    d1 = DesignMatrix(
         _design_dict(params, "independent", repeats=2000, background=background)
     )
-    d2.generate(_design_dict(params, "independent", repeats=2000, background=extended))
+    d2 = DesignMatrix(
+        _design_dict(params, "independent", repeats=2000, background=extended)
+    )
 
     bg1 = d1.designvalues["BG1"].to_numpy(float)
     bg2 = d1.designvalues["BG2"].to_numpy(float)
     assert abs(np.corrcoef(bg1, bg2)[0, 1] - 0.6) < 0.05
     np.testing.assert_array_equal(bg1, d2.designvalues["BG1"].to_numpy(float))
     np.testing.assert_array_equal(bg2, d2.designvalues["BG2"].to_numpy(float))
+
+
+def test_that_initializing_dm_without_background_populates_background_to_none():
+    design = DesignMatrix(config=minimal_configuration())
+    assert design.backgroundvalues is None
+
+
+@pytest.mark.parametrize("other_type", ["foo", 42, True, [], set()])
+def test_that_other_background_types_than_none_and_dict_raises_type_error(other_type):
+    config = minimal_configuration()
+    config["background"] = other_type
+    with pytest.raises(TypeError, match="must be 'None' or of type 'dict'"):
+        DesignMatrix(config=config)
+
+
+def test_that_missing_background_keys_in_background_dict_raises_key_error():
+    config = minimal_configuration()
+    config["background"] = {}
+    with pytest.raises(KeyError, match="'extern' or 'parameters'"):
+        DesignMatrix(config=config)

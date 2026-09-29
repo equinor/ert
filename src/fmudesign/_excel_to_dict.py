@@ -43,7 +43,7 @@ def excel_to_dict(
         default_val_sheet (str): Sheet name for default input
 
     Returns:
-        dict on format for DesignMatrix.generate
+        dict on format for DesignMatrix
     """
     # To be backwards compatible, we do not change the input arg names
     general_input_sheet = gen_input_sheet
@@ -131,7 +131,7 @@ def _excel_to_dict_onebyone(
         default_values_sheet (str): name of default value sheet
 
     Returns:
-        dict on format for DesignMatrix.generate
+        dict on format for DesignMatrix
     """
 
     if isinstance(seeds := general_input.rms_seeds, Path):
