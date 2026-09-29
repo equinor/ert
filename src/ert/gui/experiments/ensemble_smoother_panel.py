@@ -117,7 +117,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._parameter_configuration = parameter_configuration
         design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
@@ -128,15 +127,18 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
-            self._parameter_configuration = (
+            self._analysis_module_edit.parameter_config = (
                 design_matrix.merge_with_existing_parameters(
-                    self._parameter_configuration
+                    self._analysis_module_edit.parameter_config
                 )
             )
 
-        if self._parameter_configuration:
+        if self._analysis_module_edit.parameter_config:
             layout.addRow(
-                "Parameters", get_parameters_button(self._parameter_configuration, self)
+                "Parameters",
+                get_parameters_button(
+                    self._analysis_module_edit.parameter_config, self
+                ),
             )
         self.setLayout(layout)
 
@@ -169,7 +171,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             self._experiment_name_field.isValid()
             and self._ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
-            and has_updatable_parameters(self._parameter_configuration)
+            and has_updatable_parameters(self._analysis_module_edit.parameter_config)
         )
 
     @override
