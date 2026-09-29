@@ -1,8 +1,8 @@
 from typing import override
 
-from PyQt6.QtCore import QModelIndex, QSize
+from PyQt6.QtCore import QModelIndex, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QColor, QPainter, QPaintEvent
+from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -116,6 +116,26 @@ class _Legend(QWidget):
         self.setLayout(layout)
 
 
+class SelectionListView(QListView):
+    """A QListView that ignores mouse clicks on non-selectable rows."""
+
+    def _is_selectable(self, event: QMouseEvent) -> bool:
+        index = self.indexAt(event.pos())
+        return bool(index.flags() & Qt.ItemFlag.ItemIsSelectable)
+
+    @override
+    def mousePressEvent(self, e: QMouseEvent | None) -> None:
+        if e is not None and not self._is_selectable(e):
+            return
+        super().mousePressEvent(e)
+
+    @override
+    def mouseReleaseEvent(self, e: QMouseEvent | None) -> None:
+        if e is not None and not self._is_selectable(e):
+            return
+        super().mouseReleaseEvent(e)
+
+
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
@@ -148,7 +168,7 @@ class DataTypeKeysWidget(QWidget):
         filter_layout.addWidget(filter_popup_button)
         layout.addLayout(filter_layout)
 
-        self.data_type_keys_widget = QListView()
+        self.data_type_keys_widget = SelectionListView()
         self.data_type_keys_widget.setModel(self.filter_model)
         self._sel_model = self.data_type_keys_widget.selectionModel()
         if self._sel_model:
