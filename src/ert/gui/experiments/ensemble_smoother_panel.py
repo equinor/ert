@@ -5,7 +5,15 @@ from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 
 from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
@@ -20,6 +28,7 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
+from ert.run_models.ensemble_smoother import DEPRECATION_MESSAGE
 from ert.validation import (
     ExperimentValidation,
     ProperNameFormatArgument,
@@ -58,7 +67,30 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-
+        deprecation_banner = QWidget()
+        deprecation_layout = QHBoxLayout(deprecation_banner)
+        deprecation_layout.setContentsMargins(0, 0, 0, 0)
+        deprecation_icon = QLabel()
+        style = QApplication.style()
+        if style is not None:
+            deprecation_icon.setPixmap(
+                style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning).pixmap(
+                    16, 16
+                )
+            )
+        deprecation_warning = QLabel(
+            f"{DEPRECATION_MESSAGE} Select 'Multiple data assimilation' "
+            "and check 'Single update'."
+        )
+        deprecation_warning.setWordWrap(True)
+        deprecation_warning.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+        deprecation_warning.setObjectName("ensemble_smoother_deprecation_warning")
+        deprecation_layout.addWidget(
+            deprecation_icon, alignment=Qt.AlignmentFlag.AlignTop
+        )
+        deprecation_layout.addWidget(deprecation_warning, stretch=1)
         self._experiment_name_field = StringBox(
             TextModel(""),
             placeholder_text=self.notifier.storage.get_unique_experiment_name(
@@ -140,7 +172,11 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
                     self._analysis_module_edit.parameter_config, self
                 ),
             )
-        self.setLayout(layout)
+        panel_layout = QVBoxLayout()
+        panel_layout.addWidget(deprecation_banner)
+        panel_layout.addLayout(layout)
+        panel_layout.addStretch()
+        self.setLayout(panel_layout)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed

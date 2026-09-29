@@ -666,15 +666,13 @@ def test_cli_does_not_run_without_observations(mode, target):
         run_cli(mode, "--disable-monitoring", "--target-ensemble", target, "poly.ert")
 
 
-@pytest.mark.usefixtures("copy_poly_case")
-def test_ensemble_smoother():
-    run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitoring",
-        "--realizations",
-        "1,2,4,8,16,32,64",
-        "poly.ert",
-    )
+@pytest.mark.usefixtures("copy_poly_case", "mock_cli_run")
+def test_that_ensemble_smoother_prints_deprecation_warning(capsys):
+    run_cli(ENSEMBLE_SMOOTHER_MODE, "--disable-monitoring", "poly.ert")
+
+    captured = capsys.readouterr()
+    assert "Ensemble Smoother is deprecated" in captured.out
+    assert "es_mda --single-update" in captured.out
 
 
 @pytest.mark.usefixtures("copy_poly_case")
