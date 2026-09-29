@@ -1,1 +1,3 @@
-"""Dark Storage is an API towards data provided the `storage/` directory."""
+"""Ert server is an API towards controlling experiments and data provided
+from the `storage/` directory.
+"""

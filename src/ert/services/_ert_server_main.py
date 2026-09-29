@@ -308,11 +308,10 @@ def main() -> None:
     with tracer.start_as_current_span("run_storage_server", ctx):
         logger = logging.getLogger("ert.shared.storage.info")
         try:
-            logger.info("Starting dark storage")
-            logger.info(f"Started dark storage with parent {args.parent_pid}")
+            logger.info(f"Starting ert server, parent pid {args.parent_pid}")
             run_server(args, debug=False, uvicorn_config=uvicorn_config)
         except (SystemExit, ErtServerExit):
-            logger.info("Stopping dark storage")
+            logger.info("Stopping ert server")
         finally:
             stopped.set()
             _join_terminate_thread(terminate_on_parent_death_thread)

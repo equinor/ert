@@ -82,7 +82,7 @@ def test_that_plot_images_are_unchanged(
         storage_config = symlinked_heat_equation_storage_esmda
         args_mock.config = "config.ert"
 
-    # For dark storage not to hang
+    # For Ert server not to hang
     open_storage(storage_config.ens_path, mode="r")
     log_handler = GUILogHandler()
     with (

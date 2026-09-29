@@ -211,7 +211,7 @@ class ErtClient:
         if self.server_is_running(timeout=1):
             raise Exception("Failed to stop server within configured timeout.")
 
-    # <-------------- Dark Storage -------------->
+    # <-------------- Storage -------------->
 
     def healthcheck(self) -> str:
         return str(self._get("/healthcheck").json())
