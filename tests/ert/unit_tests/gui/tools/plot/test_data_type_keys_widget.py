@@ -87,20 +87,39 @@ def test_that_clicking_a_separator_does_not_clear_selection_highlight(
     widget.model._keys.insert(0, DataTypeSeparator(label="— group —"))
     widget.model.layoutChanged.emit()
 
-    widget.selectDefault()
-    selected_before = widget.getSelectedItem()
-    assert selected_before is not None
-    current_index_before = widget.data_type_keys_widget.currentIndex()
+    widget.show()
+    qtbot.waitExposed(widget)
 
+    view = widget.data_type_keys_widget
     separator_proxy_index = widget.filter_model.index(0, 0)
+    key_proxy_index = widget.filter_model.index(1, 0)
+    other_key_proxy_index = widget.filter_model.index(2, 0)
     assert (
         widget.model.itemAt(widget.filter_model.mapToSource(separator_proxy_index))
         is None
     )
 
-    view = widget.data_type_keys_widget
-    rect = view.visualRect(separator_proxy_index)
-    qtbot.mouseClick(view.viewport(), Qt.MouseButton.LeftButton, pos=rect.center())
+    qtbot.mouseClick(
+        view.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=view.visualRect(key_proxy_index).center(),
+    )
+    assert view.currentIndex() == key_proxy_index
+    selected_before = widget.getSelectedItem()
+    assert selected_before == key_defs[0]
 
-    assert widget.data_type_keys_widget.currentIndex() == current_index_before
+    qtbot.mouseClick(
+        view.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=view.visualRect(separator_proxy_index).center(),
+    )
+    assert view.currentIndex() == key_proxy_index
     assert widget.getSelectedItem() == selected_before
+
+    qtbot.mouseClick(
+        view.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=view.visualRect(other_key_proxy_index).center(),
+    )
+    assert view.currentIndex() == other_key_proxy_index
+    assert widget.getSelectedItem() == key_defs[1]
