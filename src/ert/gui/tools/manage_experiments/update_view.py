@@ -4,7 +4,6 @@ import logging
 from typing import cast
 
 from PyQt6.QtWidgets import (
-    QComboBox,
     QLabel,
     QTabWidget,
     QVBoxLayout,
@@ -53,11 +52,12 @@ class UpdateView(QWidget):
     def __init__(self) -> None:
         super().__init__()
 
-        self._posteriors: list[Ensemble] = []
+        self._ensemble: Ensemble | None = None
+        self._has_update = False
 
-        self._target_selector = QComboBox()
-        self._target_selector.setObjectName("update_target_selector")
-        self._target_selector.currentIndexChanged.connect(self._show_selected_update)
+        self._description_label = QLabel()
+        self._description_label.setObjectName("update_description_label")
+        self._description_label.setWordWrap(True)
 
         self._status_label = QLabel()
         self._status_label.setObjectName("update_status_label")
@@ -67,61 +67,47 @@ class UpdateView(QWidget):
         self._tab_widget.setObjectName("stored_update_tabs")
 
         layout = QVBoxLayout()
-        layout.addWidget(self._target_selector)
+        layout.addWidget(self._description_label)
         layout.addWidget(self._status_label)
         layout.addWidget(self._tab_widget)
         self.setLayout(layout)
 
     def set_ensemble(self, ensemble: Ensemble) -> None:
-        """Find the updates started from this ensemble without reading their tables."""
-        self._posteriors = sorted(
-            (child for child in ensemble.children if _has_readable_update(child)),
-            key=lambda child: child.started_at,
-        )
+        """Check for an update producing this ensemble without reading its tables."""
+        self._ensemble = ensemble
+        self._has_update = _has_readable_update(ensemble)
 
         self._clear_tabs()
+        self._description_label.clear()
         self._status_label.clear()
 
-        self._target_selector.blockSignals(True)
-        self._target_selector.clear()
-        for posterior in self._posteriors:
-            self._target_selector.addItem(
-                f"{posterior.experiment.name} / {posterior.name}"
+        if self.has_update:
+            update_iteration = ensemble.iteration - 1
+            self._description_label.setText(
+                f"Update {update_iteration}: input iteration {update_iteration}"
+                f" \u2192 output iteration {ensemble.iteration}"
             )
-        self._target_selector.blockSignals(False)
-        self._target_selector.setVisible(len(self._posteriors) > 1)
 
     @property
     def has_update(self) -> bool:
-        return bool(self._posteriors)
+        return self._has_update
 
     def load_update(self) -> None:
-        self._show_selected_update()
-
-    def _clear_tabs(self) -> None:
-        # QTabWidget.clear() only removes the tabs, it does not delete their pages.
-        while self._tab_widget.count():
-            page = self._tab_widget.widget(0)
-            self._tab_widget.removeTab(0)
-            assert page is not None
-            page.setParent(None)
-            page.deleteLater()
-
-    def _show_selected_update(self) -> None:
         self._clear_tabs()
         self._status_label.clear()
 
-        index = max(self._target_selector.currentIndex(), 0)
-        if index >= len(self._posteriors):
+        if not self.has_update:
             return
 
-        posterior = self._posteriors[index]
+        assert self._ensemble is not None
         try:
-            update = posterior.load_stored_update()
+            update = self._ensemble.load_stored_update()
         except Exception:
-            logger.exception("Could not read the stored update of %s", posterior.name)
+            logger.exception(
+                "Could not read the stored update of %s", self._ensemble.name
+            )
             self._status_label.setText(
-                f"The update that produced {posterior.name} could not be read "
+                f"The update that produced {self._ensemble.name} could not be read "
                 f"from storage."
             )
             return
@@ -139,6 +125,15 @@ class UpdateView(QWidget):
                 ),
                 table.name,
             )
+
+    def _clear_tabs(self) -> None:
+        # QTabWidget.clear() only removes the tabs, it does not delete their pages.
+        while self._tab_widget.count():
+            page = self._tab_widget.widget(0)
+            self._tab_widget.removeTab(0)
+            assert page is not None
+            page.setParent(None)
+            page.deleteLater()
 
 
 def _describe(update: StoredUpdate) -> str:

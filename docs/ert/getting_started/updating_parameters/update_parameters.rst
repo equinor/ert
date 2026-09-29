@@ -65,13 +65,17 @@ Revisit the update report later
 ===============================
 
 The update reports are kept after the experiment has finished. Open `Manage experiments`
-and select the ensemble that the update was started from: every such ensemble has an
-`Update <iteration>` tab showing the same tables as the running experiment did. The
-numbering follows the running experiment, so the update that turned `iter-0` into
-`iter-1` is `Update 0` and is found on `iter-0`. If the same prior was used to start
-several updates, a drop down at the top of the tab selects which target ensemble to show
-the report for. Updates that failed are listed with their error message along with
-whatever tables were produced before the failure.
+and select the ensemble produced by the update (the posterior). If a report was
+recorded, its `Update <iteration>` tab shows the same tables as the running experiment
+did. The numbering follows the running experiment, so the update that turned `iter-0`
+into `iter-1` is `Update 0` and is found on `iter-1`. A heading identifies the input
+and output iterations. The initial prior has no update tab; the final posterior
+still shows the update that produced it.
+
+If the same prior was used to start several updates, select each posterior to see
+its own report. Failed updates are also shown on their target ensemble, with their
+error message and whatever tables were produced before the failure. Existing stored
+reports remain available without rerunning the experiment.
 
 Parameter localizations
 =======================
