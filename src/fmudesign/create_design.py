@@ -109,7 +109,7 @@ class DesignMatrix:
             Unused under 'joint'
 
         """
-        self.designvalues: pd.DataFrame
+        self.designvalues = pd.DataFrame()
         self.defaultvalues: dict[Hashable, Any] = {}
         self.backgroundvalues: pd.DataFrame | None = None
         self.seedvalues: list[int] | None = None
@@ -203,15 +203,6 @@ class DesignMatrix:
         )
         logger.info(summary_log)
 
-    def reset(self) -> None:
-        """Resets DesignMatrix to empty. Necessary in case method generate
-        is used several times for same instance of DesignMatrix
-        """
-        self.designvalues = pd.DataFrame()
-        self.defaultvalues = {}
-        self.backgroundvalues = None
-        self.seedvalues = None
-
     def generate(self, inputdict: dict[str, Any]) -> None:
         """Generating design matrix from input dictionary in specific
         format. Adding default values and background values if existing.
@@ -222,7 +213,6 @@ class DesignMatrix:
         """
         inputdict = validate_configuration(inputdict, verbosity=self.verbosity)
 
-        self.reset()  # Emptying if regenerating matrix
         self.rng = np.random.default_rng(seed=inputdict.get("distribution_seed"))
         self.defaultvalues = inputdict["defaultvalues"]
 
