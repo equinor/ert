@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):  # type: ignore
 
 
 app = FastAPI(
-    title="Dark Storage API",
+    title="ERT server API",
     version="0.1.0",
     debug=True,
     default_response_class=JSONResponse,

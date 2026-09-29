@@ -178,8 +178,7 @@ def test_storage_logging(change_to_tmpdir):
     # check for duplicated log entries
     assert (
         sum(
-            "[INFO] ert.shared.storage.info: Starting dark storage" in e
-            for e in contents
+            "[INFO] ert.shared.storage.info: Starting ert server" in e for e in contents
         )
         == 1
     ), "Found duplicated log entries"

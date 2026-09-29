@@ -625,8 +625,8 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
-    # Open up storage to create it, so that dark storage can be mounted onto it
-    # Not creating will result in dark storage hanging/lagging
+    # Open up storage to create it, so that ert server can be mounted onto it
+    # Not creating will result in ert server hanging/lagging
     open_storage(ert_config.ens_path, mode="r")
 
     with ErtServerController.init_service(
@@ -657,8 +657,8 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
         "NUM_REALIZATIONS 1\nENSPATH storage\nQUEUE_SYSTEM LOCAL", encoding="utf-8"
     )
 
-    # Open up storage to create it, so that dark storage can be mounted onto it
-    # Not creating will result in dark storage hanging/lagging
+    # Open up storage to create it, so that ert server can be mounted onto it
+    # Not creating will result in ert server hanging/lagging
     open_storage("storage", mode="r")
 
     args_mock = Mock()
