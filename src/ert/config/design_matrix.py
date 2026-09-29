@@ -268,11 +268,12 @@ class DesignMatrix:
 
         if design_matrix_cfgs.values():
             for cfg in design_matrix_cfgs.values():
-                cfg.update_strategy = (
-                    fallback_update_strategy
-                    if self.updatable_parameters.get(cfg.name)
-                    else None
-                )
+                if cfg.name not in self.categorical_parameters:
+                    cfg.update_strategy = (
+                        fallback_update_strategy
+                        if self.updatable_parameters.get(cfg.name)
+                        else None
+                    )
             new_param_configs += list(design_matrix_cfgs.values())
 
         return new_param_configs
