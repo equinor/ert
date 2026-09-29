@@ -87,16 +87,6 @@ class DesignMatrix:
         backgroundvalues (pd.DataFrame): Used when background parameters are
             not constant. Either a set is sampled from specified distributions
             or they are read from a file.
-    """
-
-    START_COLUMNS = ("REAL", "SENSNAME", "SENSCASE", "RMS_SEED")
-
-    def __init__(self, verbosity: int = 0, output_dir: Path | None = None) -> None:
-        """
-        Placeholders for:
-        designvalues: dataframe with parameters that varies
-        defaultvalues: dictionary of default/base case values
-        backgroundvalues: dataframe with background parameters
         seedvalues: list of seed values
         verbosity: how much information to print
         output_dir: where to write debugging output and QC plots
@@ -107,17 +97,27 @@ class DesignMatrix:
             parameter and per correlation group from. Equals
             'distribution_seed', or a draw from rng when no seed is given.
             Unused under 'joint'
+    """
 
-        """
+    designvalues: pd.DataFrame
+    defaultvalues: dict[Hashable, Any]
+    backgroundvalues: pd.DataFrame | None
+    seedvalues: list[int] | None
+    verbosity: int
+    output_dir: Path | None
+    rng: np.random.Generator
+    seed_strategy: SeedStrategy
+    base_seed: int
+
+    START_COLUMNS = ("REAL", "SENSNAME", "SENSCASE", "RMS_SEED")
+
+    def __init__(
+        self, config: dict[str, Any], verbosity: int = 0, output_dir: Path | None = None
+    ) -> None:
         self.designvalues = pd.DataFrame()
-        self.defaultvalues: dict[Hashable, Any] = {}
-        self.backgroundvalues: pd.DataFrame | None = None
-        self.seedvalues: list[int] | None = None
         self.verbosity: int = verbosity
         self.output_dir: Path | None = output_dir
-        self.rng: np.random.Generator
-        self.seed_strategy: SeedStrategy
-        self.base_seed: int
+        self._generate(config)
 
     def log_inputdict(self, inputdict: dict[str, Any]) -> None:
         sensitivities: dict[str, Any] = inputdict["sensitivities"]
@@ -203,10 +203,9 @@ class DesignMatrix:
         )
         logger.info(summary_log)
 
-    def generate(self, inputdict: dict[str, Any]) -> None:
-        """Generating design matrix from input dictionary in specific
-        format. Adding default values and background values if existing.
-        Looping through sensitivities and adding them to designvalues.
+    def _generate(self, inputdict: dict[str, Any]) -> None:
+        """Adds default values and background values if they exist.
+        Loops through sensitivities and adds them to designvalues.
 
         Args:
             inputdict (dict): input parameters for design
@@ -228,13 +227,11 @@ class DesignMatrix:
         max_reals = find_max_realisations(inputdict)
         self.seedvalues = DesignMatrix.create_rms_seeds(inputdict["seeds"], max_reals)
 
-        # If background values used - read or generate
-        if "background" in inputdict:
-            self.add_background(
-                back_dict=inputdict["background"],
-                max_values=max_reals,
-                correlation_iterations=inputdict.get("correlation_iterations", 0),
-            )
+        self.add_background(
+            back_dict=inputdict.get("background"),
+            max_values=max_reals,
+            correlation_iterations=inputdict.get("correlation_iterations", 0),
+        )
 
         sensitivity: Sensitivity
 
@@ -462,11 +459,11 @@ class DesignMatrix:
         Either from external file or from distributions in background
         dictionary
 
-        Seeding follows ``self.seed_strategy`` / ``self.base_seed``, which are
-        set by :meth:`generate`.
+        Seeding follows ``self.seed_strategy`` / ``self.base_seed``.
 
         Args:
-            back_dict (dict): how to generate background values
+            back_dict (dict | None): how to generate background values. If set to
+              `None`, ``self.backgroundvalues`` will be set to `None`.
             max_values (int): number of background values to generate
             correlation_iterations (int): Number of permutations performed
               on samples after Iman-Conover in an attempt to match observed
@@ -474,15 +471,27 @@ class DesignMatrix:
         """
         if back_dict is None:
             self.backgroundvalues = None
-        elif "extern" in back_dict:
-            print(f"Reading background values from: {back_dict['extern']}")
-            self.backgroundvalues = parameters_from_extern(back_dict["extern"])
-        elif "parameters" in back_dict:
-            print("Generating background values from distributions.")
-            self._add_dist_background(
-                back_dict=back_dict,
-                size=max_values,
-                correlation_iterations=correlation_iterations,
+        elif isinstance(back_dict, dict):
+            if "extern" in back_dict:
+                print(f"Reading background values from: {back_dict['extern']}")
+                self.backgroundvalues = parameters_from_extern(back_dict["extern"])
+            elif "parameters" in back_dict:
+                print("Generating background values from distributions.")
+                self._add_dist_background(
+                    back_dict=back_dict,
+                    size=max_values,
+                    correlation_iterations=correlation_iterations,
+                )
+            else:
+                raise KeyError(
+                    "Neither keys 'extern' or 'parameters' were set in background "
+                    "dictionary - of which one is required. If no background values "
+                    "are to be used, set background to 'None'."
+                )
+        else:
+            raise TypeError(
+                "Background value in DesignMatrix config must be 'None' or of type "
+                "'dict'."
             )
 
     def _add_sensitivity(

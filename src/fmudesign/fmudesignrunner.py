@@ -276,9 +276,8 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
     # If destination is 'analysis/generateddesignmatrix.xlsx', then plots
     # will be saved to 'analysis/generateddesignmatrix/<SENSNAME>/<VARNAME>.png'
     output_dir = Path(destination).with_suffix("")
-    design = DesignMatrix(verbosity=args.verbose, output_dir=output_dir)
+    design = DesignMatrix(config=config, verbosity=args.verbose, output_dir=output_dir)
 
-    design.generate(config)
     design.to_xlsx(args.destination)
 
 
