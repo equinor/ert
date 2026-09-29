@@ -323,6 +323,131 @@ def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_
     assert warning_icon.isHidden()
 
 
+def _create_panel_with_weights(
+    qtbot: QtBot, notifier: ErtNotifier, weights: str
+) -> MultipleDataAssimilationPanel:
+    active_realizations = [True] * 5
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(
+            minimum_required_realizations=1,
+            es_settings=ESSettings(weights=weights),
+        ),
+        parameter_configuration=[
+            Mock(spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL)
+        ],
+        runpath="",
+        notifier=notifier,
+        active_realizations=active_realizations,
+        config_num_realization=len(active_realizations),
+    )
+    qtbot.addWidget(panel)
+    return panel
+
+
+def test_that_single_update_checkbox_locks_esmda_weights_to_one(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
+    weights_box = panel.findChild(StringBox, "weights_input_esmda")
+    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
+
+    single_update_checkbox.click()
+
+    assert weights_box.text() == "1"
+    assert not weights_box.isEnabled()
+    assert panel.get_experiment_arguments().weights == "1"
+    assert panel.isConfigurationValid()
+
+
+def test_that_unchecking_single_update_restores_previous_esmda_weights(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
+    weights_box = panel.findChild(StringBox, "weights_input_esmda")
+    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
+    weights_box.setText("3, 2, 1")
+
+    single_update_checkbox.click()
+    single_update_checkbox.click()
+
+    assert weights_box.text() == "3, 2, 1"
+    assert weights_box.isEnabled()
+    assert panel.get_experiment_arguments().weights == "3, 2, 1"
+
+
+def test_that_single_update_hides_esmda_weight_mismatch_warning(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
+    warning_icon = panel.findChild(QLabel, "warning_icon_weights_esmda")
+    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
+
+    single_update_checkbox.click()
+
+    assert warning_icon.isHidden()
+
+
+def test_that_selecting_prior_ensemble_unchecks_and_disables_single_update(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "mock_ensemble",
+        "mock_experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY],
+        experiment_type=ExperimentType.ES_MDA,
+        iteration=0,
+        parameter_configuration={
+            "PARAMETER": Mock(
+                spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL
+            )
+        },
+    )
+    panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
+    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
+    select_prior_checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
+
+    single_update_checkbox.click()
+    select_prior_checkbox.click()
+
+    assert not single_update_checkbox.isChecked()
+    assert not single_update_checkbox.isEnabled()
+
+    select_prior_checkbox.click()
+
+    assert single_update_checkbox.isEnabled()
+
+
+def test_that_single_update_is_kept_when_ensemble_list_refreshes_after_a_run(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
+    weights_box = panel.findChild(StringBox, "weights_input_esmda")
+    warning_icon = panel.findChild(QLabel, "warning_icon_weights_esmda")
+    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
+    single_update_checkbox.click()
+
+    notifier.ertChanged.emit()
+
+    assert single_update_checkbox.isChecked()
+    assert weights_box.text() == "1"
+    assert panel.get_experiment_arguments().weights == "1"
+
+    single_update_checkbox.click()
+
+    assert weights_box.text() == "4, 2, 1"
+    assert warning_icon.isHidden()
+
+
 def _open_and_capture_threshold(panel, qtbot):
     captured_value = None
 

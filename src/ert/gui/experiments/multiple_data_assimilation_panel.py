@@ -132,6 +132,19 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.weights_valid = True
         self._createInputForWeights(layout)
 
+        self._weights_before_single_update = self._configured_weights
+        single_update_tooltip = (
+            "Run a single update with weight 1, "
+            "equivalent to running the previous Ensemble Smoother."
+        )
+        self._single_update_box = QCheckBox("")
+        self._single_update_box.setObjectName("single_update_checkbox_esmda")
+        self._single_update_box.setToolTip(single_update_tooltip)
+        self._single_update_box.toggled.connect(self._single_update_toggled)
+        single_update_label = QLabel("Single update:")
+        single_update_label.setToolTip(single_update_tooltip)
+        layout.addRow(single_update_label, self._single_update_box)
+
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
             parameter_config=parameter_configuration,
@@ -313,20 +326,42 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def _evaluate_weights_box_enabled(self) -> None:
         self._relative_iteration_weights_box.setEnabled(
-            not self._select_prior_ensemble_box.isChecked()
-            or (
-                self._ensemble_selector.selected_ensemble is not None
-                and not self._ensemble_selector.selected_ensemble.relative_weights
+            not self._single_update_box.isChecked()
+            and (
+                not self._select_prior_ensemble_box.isChecked()
+                or (
+                    self._ensemble_selector.selected_ensemble is not None
+                    and not self._ensemble_selector.selected_ensemble.relative_weights
+                )
             )
         )
 
+    @Slot(bool)
+    def _single_update_toggled(self, checked: bool) -> None:
+        if checked:
+            self._weights_before_single_update = (
+                self._relative_iteration_weights_box.text()
+            )
+            self._relative_iteration_weights_box.setText("1")
+        else:
+            self._relative_iteration_weights_box.setText(
+                self._weights_before_single_update
+            )
+        self._evaluate_weights_box_enabled()
+        self._update_weights_mismatch_warning()
+
     def select_prior_toggled(self) -> None:
+        prior_selected = self._select_prior_ensemble_box.isChecked()
+        if prior_selected:
+            self._single_update_box.setChecked(False)
+        self._single_update_box.setEnabled(not prior_selected)
+
         self._select_prior_ensemble_box.setEnabled(
             bool(self._ensemble_selector._ensemble_list())
         )
         self._ensemble_selector.setEnabled(self._select_prior_ensemble_box.isChecked())
 
-        self._relative_iteration_weights_box.setText(
+        self._weights_source = (
             (
                 self._ensemble_selector.selected_ensemble is not None
                 and self._ensemble_selector.selected_ensemble.relative_weights
@@ -335,7 +370,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             if self._select_prior_ensemble_box.isChecked()
             else self._configured_weights
         )
-        self._weights_source = self._relative_iteration_weights_box.text()
+        if self._single_update_box.isChecked():
+            self._weights_before_single_update = self._weights_source
+            self._relative_iteration_weights_box.setText("1")
+        else:
+            self._relative_iteration_weights_box.setText(self._weights_source)
         self._update_weights_mismatch_warning()
         if self._select_prior_ensemble_box.isChecked():
             self._active_realizations_field.setValidator(
@@ -412,9 +451,14 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         updateVisualizationOfNormalizedWeights()  # To normalize the default weights
 
     def _update_weights_mismatch_warning(self) -> None:
-        if not hasattr(self, "_weights_mismatch_icon"):
+        if not hasattr(self, "_weights_mismatch_icon") or not hasattr(
+            self, "_single_update_box"
+        ):
             return
-        differs_from_source = self._weights_differ_from_source()
+        differs_from_source = (
+            not self._single_update_box.isChecked()
+            and self._weights_differ_from_source()
+        )
         self._weights_mismatch_icon.setVisible(differs_from_source)
         if not differs_from_source:
             self._weights_mismatch_icon.setToolTip("")
