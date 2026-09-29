@@ -4,7 +4,7 @@ from PyQt6.QtGui import QPainter, QPixmap
 from PyQt6.QtWidgets import QStyle, QStyleOptionViewItem
 from pytestqt.qtbot import QtBot
 
-from ert.gui.experiments.combobox_with_description import (
+from ert.gui.ertwidgets.combobox_with_description import (
     DESCRIPTION_ROLE,
     GROUP_TITLE_ROLE,
     QComboBoxWithDescription,
