@@ -321,8 +321,9 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
 
     # ensemble_smoother_parser
     ensemble_smoother_description = (
-        "Run experiments in cli while performing one update"
-        " on the parameters by using the ensemble smoother algorithm."
+        "[DEPRECATED: use 'es_mda --single-update'] Run experiments in cli "
+        "while performing one update on the parameters by using the ensemble "
+        "smoother algorithm."
     )
     ensemble_smoother_parser = subparsers.add_parser(
         ENSEMBLE_SMOOTHER_MODE,

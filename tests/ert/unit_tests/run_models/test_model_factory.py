@@ -25,6 +25,7 @@ from ert.mode_definitions import (
 )
 from ert.run_models import (
     EnsembleExperiment,
+    EnsembleInformationFilter,
     EnsembleSmoother,
     MultipleDataAssimilation,
     SingleTestRun,
@@ -244,6 +245,12 @@ def test_setup_ensemble_smoother(tmp_path):
         model.active_realizations
         == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
     )
+
+
+def test_that_only_ensemble_smoother_display_name_is_marked_deprecated():
+    assert EnsembleSmoother.name() == "Ensemble smoother"
+    assert "DEPRECATED" in EnsembleSmoother.display_name()
+    assert "DEPRECATED" not in EnsembleInformationFilter.display_name()
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")

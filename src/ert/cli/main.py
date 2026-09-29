@@ -18,12 +18,14 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
+from ert.run_models.ensemble_smoother import DEPRECATION_MESSAGE
 from ert.run_models.event import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.storage import LocalStorage, open_storage
@@ -86,6 +88,10 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
             "The following parameter update strategies were found "
             "in the configuration:\n"
             f"{strategies}"
+        )
+    if args.mode == ENSEMBLE_SMOOTHER_MODE:
+        print(
+            f"Warning: {DEPRECATION_MESSAGE}\nRun 'ert es_mda --single-update' instead."
         )
 
     if args.mode == WORKFLOW_MODE:
