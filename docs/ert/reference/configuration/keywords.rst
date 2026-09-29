@@ -215,6 +215,9 @@ where:
    Default is `FALSE`.
 
 
+
+
+
 *Example:*
 
 ::
@@ -373,6 +376,11 @@ To make them participate in history matching, set ``UPDATE:TRUE`` on the :ref:`D
 
 With ``UPDATE:TRUE``, all design matrix parameters (a, b, c, d and e) will be updated during history matching,
 following the update strategy configured for :ref:`GEN_KW <gen_kw>` parameters, see :ref:`ANALYSIS_SET_VAR <analysis_set_var>`.
+
+.. warning::
+        When using the UPDATE:TRUE setting for design matrix parameters, the values in the design matrix will not be transformed by ert; ie. internally defined as RAW transformation.
+        Note that for history match parameters we assume that the parameters are normally distributed N(0, 1). Therefore, for the design matrix with update-able parameters the user is responsible for making sure the parameters follow this assumption.
+
 The overlapping parameters b, c and d still take their values from the design matrix, since ``PRIORITY:design_matrix`` is set,
 but unlike the ``UPDATE:FALSE`` case above they are no longer held constant. In this case the final set of parameters
 (for example in parameters.txt in real==0) would be:
