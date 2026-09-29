@@ -91,9 +91,9 @@ def get_parameter_mean(
         values = ensemble.load_parameters(key)["values"]
         if parameter_config.output_transformation:
             values = field_transform(values, parameter_config.output_transformation)
-        if z >= int(values.shape[3]):
+        if not 0 <= z < values.sizes["z"]:
             raise ValueError(f"Invalid layer index {z}")
-        data_2d = values.mean("realizations").to_numpy()[:, :, z]
+        data_2d = values.mean("realizations").isel(z=z).to_numpy()
 
     buffer = io.BytesIO()
     np.save(buffer, data_2d)
