@@ -1,6 +1,8 @@
 import pytest
+from PyQt6.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
+from ert.gui.plotting.models import DataTypeSeparator
 from ert.gui.plotting.plot_api import PlotApiKeyDefinition
 from ert.gui.plotting.widgets import DataTypeKeysWidget
 
@@ -73,3 +75,32 @@ def test_that_metadata_filtering_current_key_does_not_emit_data_type_key_selecte
         widget.onItemChanged({"gen_data": False})
 
     assert widget.getSelectedItem() is None
+
+
+def test_that_clicking_a_separator_does_not_clear_selection_highlight(
+    qtbot: QtBot,
+    key_defs: list[PlotApiKeyDefinition],
+) -> None:
+    widget = DataTypeKeysWidget(key_defs)
+    qtbot.addWidget(widget)
+
+    widget.model._keys.insert(0, DataTypeSeparator(label="— group —"))
+    widget.model.layoutChanged.emit()
+
+    widget.selectDefault()
+    selected_before = widget.getSelectedItem()
+    assert selected_before is not None
+    current_index_before = widget.data_type_keys_widget.currentIndex()
+
+    separator_proxy_index = widget.filter_model.index(0, 0)
+    assert (
+        widget.model.itemAt(widget.filter_model.mapToSource(separator_proxy_index))
+        is None
+    )
+
+    view = widget.data_type_keys_widget
+    rect = view.visualRect(separator_proxy_index)
+    qtbot.mouseClick(view.viewport(), Qt.MouseButton.LeftButton, pos=rect.center())
+
+    assert widget.data_type_keys_widget.currentIndex() == current_index_before
+    assert widget.getSelectedItem() == selected_before
