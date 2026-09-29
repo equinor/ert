@@ -24,6 +24,11 @@ from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
+DEPRECATION_MESSAGE = (
+    "The Ensemble Smoother is deprecated and will be removed in a future "
+    "release. Use ES-MDA with single update instead, which gives the same result."
+)
+
 
 class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
     _total_iterations: int = PrivateAttr(default=2)
@@ -41,6 +46,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
         *,
         rerun_failed_realizations: bool = False,
     ) -> None:
+        logger.warning(DEPRECATION_MESSAGE)
         self.log_at_startup()
         if rerun_failed_realizations:
             raise ErtRunError("Ensemble Smoother does not support restart")
@@ -84,6 +90,10 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
     @classmethod
     def name(cls) -> str:
         return "Ensemble smoother"
+
+    @classmethod
+    def display_name(cls) -> str:
+        return cls.name() + " - DEPRECATED"
 
     @classmethod
     def description(cls) -> str:
