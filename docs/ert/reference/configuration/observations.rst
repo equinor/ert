@@ -666,10 +666,6 @@ Observations will be matched to responses according to the following rules:
   tolerance is 0.1m.
 - Only observations inside of the boundary polygon (if provided) will be considered.
 
-.. note::
-   Seismic observations support :ref:`localization <localization_keyword>` only with
-   default localization radius.
-
 
 .. _localization_keyword:
 
@@ -679,14 +675,17 @@ The LOCALIZATION keyword - Configuring observations with location
 A prerequisite for using :ref:`distance based localization <distance_based_localization>`
 is to provide metadata regarding location for the observations.
 
+SUMMARY and BREAKTHROUGH observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This can be configured for :ref:`summary observations <summary_observation>` and
 :ref:`breakthrough observations <breakthrough_observation>` by inserting a `LOCALIZATION`
 keyword into their declarations.
 
-The `LOCALIZATION` object has two required fields: `NORTH` and `EAST`. Additionally,
+The `LOCALIZATION` block has two required fields: `NORTH` and `EAST`. Additionally,
 `RADIUS` can be configured here, but will be defaulted to 3000m if absent.
 
-The `LOCALIZATION` object can be defined as follows:
+The `LOCALIZATION` block can be defined as follows:
 
 .. code-block:: none
 
@@ -712,14 +711,19 @@ And inserted into a summary observation like so:
      };
    };
 
-And similarily into a :ref:`breakthrough observation <breakthrough_observation>`
+And similarly into a :ref:`breakthrough observation <breakthrough_observation>`
 
-The RFT observations already contains the keywords `NORTH` and `EAST` in its´ regular
-configuration. These observations are therefore already correctly configured for distance
-based localization.
+RFT and SEISMIC observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The radius for RFTs will be the default radius value of 3000m, but can be overwritten by
-providing a `LOCALIZATION` object containing just the `RADIUS` key, e.g.
+The :ref:`RFT observations <rft_observation>` already contains the keywords `NORTH` and
+`EAST` in their regular configuration, while :ref:`seismic observations
+<seismic_observation>` read coordinates from the `X_UTME` and `Y_UTMN` columns in
+`OBS_FILE`. Therefore coordinates are not expected in order to use distance based
+localization for RFT observations and seismic observations.
+
+The radius for these observations will be the default radius value of 3000m, but can be
+overwritten by providing a `LOCALIZATION` block containing just the `RADIUS` key, e.g.
 
 .. code-block::
 
