@@ -179,8 +179,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisErrorEvent():
-                # The analysis is already failing, so keeping its report is less
-                # important than telling the user why the update failed.
                 try:
                     ensemble.save_blob(event)
                 except Exception:
