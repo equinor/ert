@@ -73,7 +73,7 @@ def test_that_posterior_has_lower_variance_than_prior():
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_update_report_of_finished_run_can_be_read_back_from_prior_ensemble():
+def test_that_update_report_of_finished_run_can_be_read_back_from_posterior_ensemble():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitoring",
@@ -85,9 +85,7 @@ def test_that_update_report_of_finished_run_can_be_read_back_from_prior_ensemble
     )
     with open_storage("storage") as storage:
         experiment = storage.get_experiment_by_name("es-test")
-        prior_ensemble = experiment.get_ensemble_by_name("iter-0")
-
-        (posterior_ensemble,) = prior_ensemble.children
+        posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
         update = posterior_ensemble.load_stored_update()
 
         assert update.update_algorithm == "ensemble_smoother"

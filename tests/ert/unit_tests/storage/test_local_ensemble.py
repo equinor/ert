@@ -464,40 +464,6 @@ def test_that_ensemble_without_recorded_update_has_no_stored_update(tmp_path):
         assert ensemble.load_stored_update() is None
 
 
-def test_that_children_lists_ensembles_updated_from_this_ensemble_across_experiments(
-    tmp_path,
-):
-    with open_storage(tmp_path, mode="w") as storage:
-        first = storage.create_experiment(name="first")
-        second = storage.create_experiment(name="second")
-        prior = storage.create_ensemble(
-            first, ensemble_size=1, iteration=0, name="prior"
-        )
-        same_experiment_posterior = storage.create_ensemble(
-            first,
-            ensemble_size=1,
-            iteration=1,
-            name="same_experiment_posterior",
-            prior_ensemble=prior,
-        )
-        other_experiment_posterior = storage.create_ensemble(
-            second,
-            ensemble_size=1,
-            iteration=1,
-            name="other_experiment_posterior",
-            prior_ensemble=prior,
-        )
-        storage.create_ensemble(
-            second, ensemble_size=1, iteration=0, name="unrelated_ensemble"
-        )
-
-        assert {child.name for child in prior.children} == {
-            same_experiment_posterior.name,
-            other_experiment_posterior.name,
-        }
-        assert same_experiment_posterior.children == []
-
-
 @pytest.mark.parametrize(
     ("blob_event", "expected_exception"),
     [
