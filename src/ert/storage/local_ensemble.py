@@ -270,15 +270,6 @@ class LocalEnsemble(BaseMode):
         return self._index.prior_ensemble_id
 
     @property
-    def children(self) -> list[LocalEnsemble]:
-        """Ensembles that were created from this ensemble by an update."""
-        return [
-            ensemble
-            for ensemble in self._storage.ensembles
-            if ensemble.parent == self.id
-        ]
-
-    @property
     def has_stored_update(self) -> bool:
         """Whether an update producing this ensemble was recorded in storage."""
         return any(self.load_blob_metadata(BlobType.OBSERVATION_REPORT))
