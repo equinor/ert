@@ -30,7 +30,7 @@ def test_that_categorical_design_matrix_parameters_are_excluded_from_update(tmp_
         design_sheet="DesignSheet",
         default_sheet=None,
         update=True,
-        update_strategy=LocalizationType.GLOBAL,
+        gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
 
     with pytest.warns(ConfigWarning, match="categorical values.*: b"):
@@ -59,7 +59,7 @@ def test_that_categorical_design_matrix_parameters_overlapping_gen_kw_are_exclud
         design_sheet="DesignSheet",
         default_sheet=None,
         update=True,
-        update_strategy=LocalizationType.GLOBAL,
+        gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
 
     # Existing GEN_KW parameters with the same names, overridden by the design
@@ -89,7 +89,7 @@ def test_that_categorical_design_matrix_parameters_overlapping_gen_kw_are_exclud
     assert merged_params["b"].update_strategy is None
 
 
-def test_that_categorical_parameters_from_a_merged_design_matrix_are_excluded_from_update(  # ruff: ignore[line-too-long]
+def test_that_categorical_parameters_from_merged_design_matrix_are_excluded_from_update(
     tmp_path,
 ):
     design_path_1 = tmp_path / "design_matrix_1.xlsx"
@@ -107,7 +107,7 @@ def test_that_categorical_parameters_from_a_merged_design_matrix_are_excluded_fr
         design_sheet="DesignSheet",
         default_sheet=None,
         update=True,
-        update_strategy=LocalizationType.GLOBAL,
+        gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
 
     design_path_2 = tmp_path / "design_matrix_2.xlsx"
@@ -158,7 +158,7 @@ def test_that_from_config_list_with_update_option_parses_boolean_value(
     with patch.object(DesignMatrix, "__post_init__", return_value=None):
         dm = DesignMatrix.from_config_list(
             config_list,
-            update_strategy=None,
+            gen_kw_update_strategy=None,
         )
         assert dm.update is expected
 
@@ -181,7 +181,7 @@ def test_that_from_config_list_with_invalid_update_option_throws():
             match="UPDATE must be either 'TRUE' or 'FALSE'; is 'INVALID'",
         ),
     ):
-        DesignMatrix.from_config_list(config_list, update_strategy=None)
+        DesignMatrix.from_config_list(config_list, gen_kw_update_strategy=None)
 
 
 @pytest.mark.parametrize("priority", ["design_matrix", "sampled"])
@@ -199,7 +199,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
                     "PRIORITY": priority,
                 },
             ],
-            update_strategy=LocalizationType.ADAPTIVE,
+            gen_kw_update_strategy=LocalizationType.ADAPTIVE,
         )
 
     # state after loading design matrix
@@ -230,7 +230,6 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
 def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_params_and_update_true(  # ruff: ignore[line-too-long]
     priority,
 ):
-
     with patch.object(DesignMatrix, "__post_init__", return_value=None):
         dm = DesignMatrix.from_config_list(
             [
@@ -242,7 +241,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
                     "UPDATE": "TRUE",
                 },
             ],
-            update_strategy=LocalizationType.ADAPTIVE,
+            gen_kw_update_strategy=LocalizationType.ADAPTIVE,
         )
 
     # state after loading design matrix
@@ -263,6 +262,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
             update_strategy=None,
         ),
     ]
+    dm.updatable_parameters = {cfg.name: True for cfg in dm.parameter_configurations}
 
     merged_params = dm.merge_with_existing_parameters(existing_parameters=[])
 
@@ -285,7 +285,7 @@ def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_up
                     "UPDATE": "TRUE",
                 },
             ],
-            update_strategy=None,
+            gen_kw_update_strategy=None,
         )
 
     # state after loading design matrix
@@ -309,7 +309,7 @@ def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_up
             update_strategy=None,
         ),
     ]
-
+    dm.updatable_parameters = {cfg.name: True for cfg in dm.parameter_configurations}
     dm.parameter_priority = {
         cfg.name: dm.priority_source for cfg in dm.parameter_configurations
     }
@@ -394,7 +394,7 @@ def test_that_merge_with_existing_parameters_respects_update_flag_and_priority(
                     "UPDATE": update,
                 },
             ],
-            update_strategy=global_update_strategy,
+            gen_kw_update_strategy=global_update_strategy,
         )
 
     # state after loading design matrix
@@ -418,7 +418,7 @@ def test_that_merge_with_existing_parameters_respects_update_flag_and_priority(
             update_strategy=None,
         ),
     ]
-
+    dm.updatable_parameters = {cfg.name: update for cfg in dm.parameter_configurations}
     dm.parameter_priority = {
         "param1": DataSource.DESIGN_MATRIX.value,
         "param2": DataSource.SAMPLED.value,
