@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, assert_never, cast
 from uuid import UUID
 
 import numpy as np
@@ -1461,7 +1461,7 @@ class LocalEnsemble(BaseMode):
                 file_type="application/parquet",
                 blob_dir=blob_dir,
             )
-        else:
+        elif blob_event.event_type == "AnalysisCompleteEvent":
             self._storage.save_blob(
                 name="observation_report",
                 data=_data_section_as_parquet(blob_event.data),
@@ -1472,6 +1472,8 @@ class LocalEnsemble(BaseMode):
                 file_type="application/parquet",
                 blob_dir=blob_dir,
             )
+        else:
+            assert_never(blob_event)
 
     def load_stored_update(self) -> StoredUpdate | None:
         """Return the update that produced this ensemble, if one was recorded.
