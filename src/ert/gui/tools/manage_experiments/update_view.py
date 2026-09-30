@@ -56,15 +56,12 @@ class UpdateView(QWidget):
         self._has_update = False
 
         self._description_label = QLabel()
-        self._description_label.setObjectName("update_description_label")
         self._description_label.setWordWrap(True)
 
         self._status_label = QLabel()
-        self._status_label.setObjectName("update_status_label")
         self._status_label.setWordWrap(True)
 
         self._tab_widget = QTabWidget()
-        self._tab_widget.setObjectName("stored_update_tabs")
 
         layout = QVBoxLayout()
         layout.addWidget(self._description_label)

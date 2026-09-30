@@ -70,10 +70,9 @@ recorded, its `Update <iteration>` tab shows the same tables as the running expe
 did. The numbering follows the running experiment, so the update that turned `iter-0`
 into `iter-1` is `Update 0` and is found on `iter-1`. A heading identifies the input
 and output iterations. The initial prior has no update tab; the final posterior
-still shows the update that produced it.
+shows the update that produced it.
 
-If the same prior was used to start several updates, select each posterior to see
-its own report. Failed updates are also shown on their target ensemble, with their
+Failed updates are also shown on their target ensemble, with their
 error message and whatever tables were produced before the failure. Existing stored
 reports remain available without rerunning the experiment.
 
