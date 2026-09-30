@@ -35,8 +35,9 @@ class DesignMatrix:
     default_sheet: str | None
     priority_source: str = "design_matrix"
     update: bool = False
-    update_strategy: LocalizationType | None = None
     categorical_parameters: frozenset[str] = field(default_factory=frozenset)
+    gen_kw_update_strategy: LocalizationType | None = None
+    updatable_parameters: dict[str, bool] = field(init=False, default_factory=dict)
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
@@ -55,6 +56,9 @@ class DesignMatrix:
                 for col, dtype in self.design_matrix_df.schema.items()
                 if col != "realization" and not dtype.is_numeric()
             )
+            self.updatable_parameters = {
+                cfg.name: self.update for cfg in self.parameter_configurations
+            }
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
                 f"Error reading design matrix {self.filename}"
@@ -67,7 +71,7 @@ class DesignMatrix:
     def from_config_list(
         cls,
         config_list: list[str | dict[str, str]],
-        update_strategy: LocalizationType | None,
+        gen_kw_update_strategy: LocalizationType | None,
     ) -> DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
@@ -123,7 +127,7 @@ class DesignMatrix:
             default_sheet=default_sheet,
             priority_source=priority_source,
             update=update_value == "TRUE",
-            update_strategy=update_strategy,
+            gen_kw_update_strategy=gen_kw_update_strategy,
         )
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
@@ -196,24 +200,22 @@ class DesignMatrix:
         )
         self.parameter_priority.update(dm_other.parameter_priority)
         self.categorical_parameters |= dm_other.categorical_parameters - common_keys
+        self.updatable_parameters.update(dm_other.updatable_parameters)
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
     ) -> list[ParameterConfig]:
         """
-        This method merges the design matrix parameters with the existing parameters and
-        returns the new list of existing parameters.
-
-        Args:
-            existing_parameters (List[ParameterConfig]): List of existing parameters
-
-        Returns:
-            List[ParameterConfig]: List of new parameters after merge
+        Resolve the update strategy for the design matrix parameters and
+        merge them with existing parameters.
         """
-
         new_param_configs: list[ParameterConfig] = []
-
         design_matrix_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
+        fallback_update_strategy = (
+            self.gen_kw_update_strategy or LocalizationType.GLOBAL
+            if self.update
+            else None
+        )
 
         if self.update and self.categorical_parameters:
             ConfigWarning.warn(
@@ -233,12 +235,15 @@ class DesignMatrix:
                     )
                 )
 
+                update_strategy: LocalizationType | None = None
                 if input_source == DataSource.SAMPLED:
                     update_strategy = param_cfg.update_strategy
                 elif self.update and param_cfg.name not in self.categorical_parameters:
-                    update_strategy = self.update_strategy or LocalizationType.GLOBAL
-                else:
-                    update_strategy = None
+                    update_strategy = (
+                        fallback_update_strategy
+                        if self.updatable_parameters.get(param_cfg.name)
+                        else None
+                    )
 
                 new_param_configs += [
                     GenKwConfig(
@@ -262,12 +267,13 @@ class DesignMatrix:
                 new_param_configs += [param_cfg]
 
         if design_matrix_cfgs.values():
-            if self.update:
-                for cfg in design_matrix_cfgs.values():
-                    if cfg.name not in self.categorical_parameters:
-                        cfg.update_strategy = (
-                            self.update_strategy or LocalizationType.GLOBAL
-                        )
+            for cfg in design_matrix_cfgs.values():
+                if cfg.name not in self.categorical_parameters:
+                    cfg.update_strategy = (
+                        fallback_update_strategy
+                        if self.updatable_parameters.get(cfg.name)
+                        else None
+                    )
             new_param_configs += list(design_matrix_cfgs.values())
 
         return new_param_configs
