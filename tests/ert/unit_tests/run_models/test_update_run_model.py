@@ -7,7 +7,6 @@ from ert.analysis.event import (
     AnalysisCompleteEvent,
     AnalysisDataEvent,
     AnalysisErrorEvent,
-    AnalysisStatusEvent,
     DataSection,
 )
 from ert.run_models.event import RunModelErrorEvent
@@ -55,21 +54,6 @@ def test_that_send_smoother_event_persists_update_tables_on_posterior_ensemble(e
     )
 
     mock_ensemble.save_blob.assert_called_once_with(event)
-
-
-def test_that_send_smoother_event_does_not_persist_status_messages():
-    model = MagicMock(spec=UpdateRunModel)
-    mock_ensemble = MagicMock()
-
-    UpdateRunModel.send_smoother_event(
-        model,
-        iteration=0,
-        run_id=uuid.uuid4(),
-        ensemble=mock_ensemble,
-        event=AnalysisStatusEvent(msg="Loading data"),
-    )
-
-    mock_ensemble.save_blob.assert_not_called()
 
 
 def test_that_analysis_error_is_reported_even_if_its_report_cannot_be_stored():

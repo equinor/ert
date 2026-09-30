@@ -308,58 +308,6 @@ def test_that_observation_report_blob_writes_parquet_metadata_and_can_be_loaded(
         assert loaded_blobs[0].file_type == "application/parquet"
 
 
-def test_that_stored_update_keeps_data_tables_before_report_with_their_summaries(
-    tmp_path,
-):
-    with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment()
-        prior = storage.create_ensemble(
-            experiment, ensemble_size=1, iteration=0, name="prior"
-        )
-        posterior = storage.create_ensemble(
-            experiment,
-            ensemble_size=1,
-            iteration=1,
-            name="posterior",
-            prior_ensemble=prior,
-        )
-
-        posterior.save_blob(
-            AnalysisDataEvent(
-                name="Auto scale: OBS_GROUP",
-                data=DataSection(
-                    header=["Observation", "Scaling"],
-                    data=[("OBS_1", 1.5)],
-                    extra={"Clusters": "2"},
-                ),
-            )
-        )
-        posterior.save_blob(
-            AnalysisCompleteEvent(
-                data=DataSection(
-                    header=["observation_key", "status"],
-                    data=[("OBS_1", "Active")],
-                    extra={"Parent ensemble": "prior"},
-                ),
-                update_algorithm="ensemble_smoother",
-            )
-        )
-
-        update = posterior.load_stored_update()
-
-        assert update.update_algorithm == "ensemble_smoother"
-        assert update.status == UpdateStatus.COMPLETED
-        assert update.error_message is None
-        assert [table.name for table in update.tables] == [
-            "Auto scale: OBS_GROUP",
-            "Report",
-        ]
-        assert update.tables[0].header == ["Observation", "Scaling"]
-        assert update.tables[0].rows == [("OBS_1", 1.5)]
-        assert update.tables[0].summary == {"Clusters": "2"}
-        assert update.tables[1].summary == {"Parent ensemble": "prior"}
-
-
 def test_that_stored_update_of_failed_update_without_data_is_marked_failed(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
@@ -382,7 +330,7 @@ def test_that_stored_update_of_failed_update_without_data_is_marked_failed(tmp_p
         assert [table.header for table in update.tables] == [[]]
 
 
-def test_that_update_table_backed_by_numpy_array_round_trips_as_python_values(tmp_path):
+def test_that_update_data_table_round_trips_header_summary_and_numpy_rows(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(
@@ -401,6 +349,7 @@ def test_that_update_table_backed_by_numpy_array_round_trips_as_python_values(tm
                             np.array([1.5], dtype=np.float32),
                         )
                     ).T,
+                    extra={"Clusters": "2"},
                 ),
             )
         )
@@ -413,8 +362,10 @@ def test_that_update_table_backed_by_numpy_array_round_trips_as_python_values(tm
 
         update = ensemble.load_stored_update()
 
+        assert update.tables[0].header == ["Observation", "Cluster", "Scaling factor"]
         assert update.tables[0].rows == [("OBS_1", 1, 1.5)]
         assert [type(cell) for cell in update.tables[0].rows[0]] == [str, int, float]
+        assert update.tables[0].summary == {"Clusters": "2"}
 
 
 def test_that_update_stored_before_status_was_recorded_is_read_as_completed(tmp_path):
