@@ -24,6 +24,7 @@ from ert.config._observations import (
 from ert.config._shapes import CircleShapeConfig, PolygonShapeConfig, ShapeRegistry
 from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
+from ert.config.parsing.config_errors import ConfigWarning
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationDict,
@@ -858,7 +859,7 @@ def test_that_seismic_observation_instantiates(file_context_token):
             north=5933317.28138355,
             value=-0.0005293887515127136,
             error=0.005,
-            shape_id=1,
+            shape_id=0,
             boundary_id=None,
         ),
     ]
@@ -1071,7 +1072,7 @@ def test_that_seismic_observation_defaults_all_names_to_filename(file_context_to
             north=2.0,
             value=1.0,
             error=0.005,
-            shape_id=1,
+            shape_id=0,
             boundary_id=None,
         ),
     ]
@@ -1380,3 +1381,88 @@ def test_that_filepath_can_have_literal_metacharacters(file_context_token):
 
     assert len(make_observations_with_pattern(pattern=wildcard_pattern)) == 2
     assert len(make_observations_with_pattern(pattern=literal_pattern)) == 1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_warns_given_north_or_east_keys_in_config(
+    file_context_token,
+):
+    write_default_seismic_file_content("obs.csv")
+    shape_registry = ShapeRegistry()
+
+    with pytest.warns(ConfigWarning) as warnings:
+        make_observations(
+            "",
+            [
+                ObservationDict(
+                    {
+                        "type": ObservationType.SEISMIC,
+                        "name": "NAME",
+                        "OBS_FILE": "obs.csv",
+                        "LOCALIZATION": {
+                            "NORTH": 30.0,
+                            "EAST": 10.0,
+                        },
+                    },
+                    context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+                )
+            ],
+            shape_registry=shape_registry,
+        )
+    shape = shape_registry.get(0)
+    assert isinstance(shape, CircleShapeConfig)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
+    assert shape.east is None
+    assert shape.north is None
+
+    expected_warning1 = "Invalid key: 'EAST' in LOCALIZATION for SEISMIC_OBSERVATION."
+    expected_warning2 = "Invalid key: 'NORTH' in LOCALIZATION for SEISMIC_OBSERVATION."
+    assert len(warnings) == 2
+    assert expected_warning1 in str(warnings[0].message)
+    assert expected_warning2 in str(warnings[1].message)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_seismic_observation_can_be_provided_radius_localization_keyword(
+    file_context_token,
+):
+    write_default_seismic_file_content("obs.csv")
+    shape_registry = ShapeRegistry()
+    radius = [2500, 3000]
+    observations = make_observations(
+        "",
+        [
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "NAME",
+                    "OBS_FILE": "obs.csv",
+                    "LOCALIZATION": {
+                        "RADIUS": radius[0],
+                    },
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            ),
+            ObservationDict(
+                {
+                    "type": ObservationType.SEISMIC,
+                    "name": "NAME",
+                    "OBS_FILE": "obs.csv",
+                    "LOCALIZATION": {
+                        "RADIUS": radius[1],
+                    },
+                },
+                context=file_context_token(obs_type="SEISMIC_OBSERVATION"),
+            ),
+        ],
+        shape_registry=shape_registry,
+    )
+
+    for obs in observations:
+        assert obs.shape_id is not None
+        shape = obs.shape(shape_registry)
+        assert shape is not None
+        assert isinstance(shape, CircleShapeConfig)
+        assert shape.radius == radius[obs.shape_id]
+        assert shape.east is None
+        assert shape.north is None
