@@ -427,6 +427,33 @@ def test_copy_directory_reports_multiple_errors():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(("from_trail", "to_trail"), [("/", "/"), ("/", "")])
+def test_that_copy_dir_with_trailing_slashes_copies_sourcedir_contents_to_destination(
+    from_trail: str, to_trail: str
+) -> None:
+    somedir = Path("somedir")
+    somedir.mkdir()
+    (somedir / "somefile").touch()
+
+    dest_dir = Path("dest_dir")
+    copy_directory(f"somedir{from_trail}", f"dest_dir{to_trail}")
+
+    assert (dest_dir / "somefile").exists()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_copy_directory_with_trailing_slash_on_destination_copies_sourcedir() -> None:
+    somedir = Path("somedir")
+    somedir.mkdir()
+    (somedir / "somefile").touch()
+
+    dest_dir = Path("dest_dir")
+    copy_directory("somedir", "dest_dir/")
+
+    assert (dest_dir / "somedir" / "somefile").exists()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_copy_file():
     with pytest.raises(OSError, match="existing file"):
         copy_file("does/not/exist", "target")
