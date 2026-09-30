@@ -1479,46 +1479,33 @@ class LocalEnsemble(BaseMode):
             assert_never(blob_event)
 
     def load_stored_update(self) -> StoredUpdate | None:
-        """Return the update that produced this ensemble, if one was recorded.
-
-        Tables are ordered the way they appeared while the experiment was
-        running: the data tables in the order they were produced, then the
-        report.
-        """
-        report_metadata = next(
+        report = next(
             (
-                metadata
+                (metadata.uri, metadata.blob_info)
                 for metadata in self.load_blob_metadata(BlobType.OBSERVATION_REPORT)
                 if isinstance(metadata.blob_info, ObservationReportData)
             ),
             None,
         )
-        if report_metadata is None:
+        if report is None:
             return None
-        report_info = report_metadata.blob_info
-        assert isinstance(report_info, ObservationReportData)
+        report_uri, report_info = report
 
-        data_table_metadata = [
-            metadata
-            for metadata in self.load_blob_metadata(BlobType.UPDATE_DATA_TABLE)
-            if isinstance(metadata.blob_info, UpdateDataTableData)
-        ]
-        data_table_metadata.sort(
-            key=lambda metadata: (
-                cast(UpdateDataTableData, metadata.blob_info).table_index
-            )
+        data_tables = sorted(
+            (
+                (metadata.uri, metadata.blob_info)
+                for metadata in self.load_blob_metadata(BlobType.UPDATE_DATA_TABLE)
+                if isinstance(metadata.blob_info, UpdateDataTableData)
+            ),
+            key=lambda table: table[1].table_index,
         )
-
-        tables = []
-        for metadata in data_table_metadata:
-            info = metadata.blob_info
-            assert isinstance(info, UpdateDataTableData)
-            tables.append(
-                self._load_update_table(metadata.uri, info.table_name, info.summary)
-            )
+        tables = [
+            self._load_update_table(uri, info.table_name, info.summary)
+            for uri, info in data_tables
+        ]
         tables.append(
             self._load_update_table(
-                report_metadata.uri, "Report", report_info.summary, is_report=True
+                report_uri, "Report", report_info.summary, is_report=True
             )
         )
 
