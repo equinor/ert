@@ -206,8 +206,8 @@ class DesignMatrix:
         self, existing_parameters: list[ParameterConfig]
     ) -> list[ParameterConfig]:
         """
-        Merge existing parameters with the design matrix parameters and
-        apply the design matrix localization
+        Resolve the update strategy for the design matrix parameters and
+        merge them with existing parameters.
         """
         new_param_configs: list[ParameterConfig] = []
         design_matrix_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
