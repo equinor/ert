@@ -3,12 +3,14 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 from ert.config.parameter_config import LocalizationType, ParameterConfig
+from ert.run_models.event import WorkflowEvent
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_ensemble import _Index as _EnsembleIndex
 from ert.storage.local_experiment import ExperimentType, LocalExperiment
 from ert.storage.local_experiment import _Index as _ExperimentIndex
 from ert.storage.local_storage import LocalStorage
 from ert.storage.realization_storage_state import RealizationStorageState
+from ert.workflow_runner import WorkflowJobStatus
 
 REALIZATION_FINISHED_SUCCESSFULLY = {
     RealizationStorageState.PARAMETERS_LOADED,
@@ -103,3 +105,30 @@ class MockStorage(LocalStorage):
         )
         self._ensembles[mock_ensemble2.id] = mock_ensemble2
         self._experiments[mock_experiment.id] = mock_experiment
+
+
+def make_workflow_event(
+    *,
+    hook: str = "POST_SIMULATION",
+    workflow_name: str = "my_workflow",
+    job_name: str = "my_job",
+    job_index: int = 0,
+    arguments: list[str] | None = None,
+    stdout: str = "hello",
+    stderr: str = "",
+    status: WorkflowJobStatus = WorkflowJobStatus.SUCCESS,
+    iteration: int | None = 0,
+) -> WorkflowEvent:
+    return WorkflowEvent(
+        run_id=uuid4(),
+        hook=hook,
+        workflow_name=workflow_name,
+        job_name=job_name,
+        job_index=job_index,
+        arguments=arguments or [],
+        stdout=stdout,
+        stderr=stderr,
+        status=status,
+        timestamp=datetime(2024, 1, 1, 12, 30, 45, tzinfo=UTC),
+        iteration=iteration,
+    )

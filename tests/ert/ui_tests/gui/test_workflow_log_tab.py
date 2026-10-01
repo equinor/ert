@@ -62,7 +62,7 @@ def _workflow_log_widget(run_dialog: RunDialog) -> WorkflowLogWidget | None:
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.timeout(120)
-def test_that_a_hooked_workflows_printed_output_is_shown_in_the_workflows_tab(
+def test_that_hooked_workflow_output_is_shown_in_workflows_tab(
     qtbot: QtBot,
 ) -> None:
     _write_common_config_files()
@@ -107,7 +107,7 @@ HOOK_WORKFLOW_JOB printing_job PRINTING_WORKFLOW POST_SIMULATION
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.timeout(120)
-def test_that_no_workflows_tab_is_added_when_the_experiment_has_no_workflows(
+def test_that_no_workflows_tab_is_added_when_experiment_has_no_workflows(
     qtbot: QtBot,
 ) -> None:
     _write_common_config_files()
