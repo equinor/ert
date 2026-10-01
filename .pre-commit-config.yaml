@@ -17,14 +17,14 @@ repos:
     - id: actionlint
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.4
+    rev: v0.16.8
     hooks:
     - id: ruff-check
       args: [ --fix ]
     - id: ruff-format
 
 -   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.5
+    rev: 0.12.18
     hooks:
       - id: uv-lock
 
