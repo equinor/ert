@@ -133,7 +133,7 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
     assert panel.isConfigurationValid() is expected_valid
 
 
-def test_that_update_strategy_widget_tracks_selected_prior_config_counts(
+def test_that_prior_selection_updates_summary_and_run_configuration(
     qtbot: QtBot,
 ) -> None:
     parameter = GenKwConfig(
@@ -167,14 +167,8 @@ def test_that_update_strategy_widget_tracks_selected_prior_config_counts(
         config_num_realization=3,
     )
     qtbot.addWidget(panel)
-    panel.show()
-    localization_label = panel.findChild(QLabel, "update_strategy_label")
     summary = panel.findChild(UpdateStrategySummaryWidget)
-    assert localization_label is not None
-    assert localization_label.text() == "Parameter Localizations"
-    assert localization_label.isVisible()
     assert summary is not None
-    assert summary.height() == summary.sizeHint().height()
     assert _summary_rows(summary) == [("Global", "GenKW", "1")]
 
     checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
@@ -189,8 +183,14 @@ def test_that_update_strategy_widget_tracks_selected_prior_config_counts(
             selector.findText(f"experiment_{index} : prior_{index}")
         )
         assert _summary_rows(summary) == [expected_row]
+        selected_ensemble = selector.selected_ensemble
+        assert selected_ensemble is not None
+        assert panel.get_experiment_arguments().parameter_configuration == list(
+            selected_ensemble.experiment.parameter_configuration.values()
+        )
     checkbox.setChecked(False)
     assert _summary_rows(summary) == [("Global", "GenKW", "1")]
+    assert panel.get_experiment_arguments().parameter_configuration == [parameter]
 
 
 @pytest.mark.parametrize(

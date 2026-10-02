@@ -313,9 +313,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
 
     def _parameter_configuration_changed(self) -> None:
-        if self._ensemble_selector.selected_ensemble is not None:
+        if (
+            self._select_prior_ensemble_box.isChecked()
+            and self._ensemble_selector.selected_ensemble is not None
+        ):
             self._analysis_module_edit.parameter_config = list(
                 self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
+            )
+        else:
+            self._analysis_module_edit.parameter_config = (
+                self._configured_parameter_config
             )
 
     @Slot()
@@ -373,15 +380,13 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
         self._weights_source = self._relative_iteration_weights_box.text()
         self._update_weights_mismatch_warning()
+        self._parameter_configuration_changed()
         if self._select_prior_ensemble_box.isChecked():
             self._active_realizations_field.setValidator(
                 self._previous_ensemble_realizations_validator
             )
             self._realizations_from_fs()
         else:
-            self._analysis_module_edit.parameter_config = (
-                self._configured_parameter_config
-            )
             # If box is unchecked we reset to the default mask
             self._active_realizations_field.setValidator(
                 self._new_ensemble_realizations_validator
