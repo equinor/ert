@@ -72,6 +72,39 @@ def test_flowrun_cannot_be_bypassed_for_parallel_runs(tmp_path: Path, monkeypatc
         )
 
 
+def test_flowrun_command_includes_mpi_args(tmp_path: Path, monkeypatch):
+    flowrun = tmp_path / "flowrun"
+    flowrun.write_text("", encoding="utf-8")
+    flowrun.chmod(flowrun.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("FLOWRUN_PATH", str(tmp_path))
+    monkeypatch.setenv("PATH", str(tmp_path))
+    data_file = tmp_path / "DUMMY.DATA"
+    data_file.write_text("", encoding="utf-8")
+
+    runner = run_reservoirsimulator.RunReservoirSimulator(
+        "flow",
+        "default",
+        data_file,
+        num_cpu=4,
+        mpi_args=["--bind-to core --map-by socket"],
+        forwarded_args=["--enable-tuning=true"],
+    )
+
+    assert runner.flowrun_command == [
+        str(flowrun),
+        "--bind-to",
+        "core",
+        "--map-by",
+        "socket",
+        "--version",
+        "default",
+        str(data_file),
+        "--np",
+        "4",
+        "--enable-tuning=true",
+    ]
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flow"), reason="flow not available")
