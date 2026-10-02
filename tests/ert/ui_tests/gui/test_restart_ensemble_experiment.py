@@ -97,7 +97,7 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     )
 
 
-def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
+def test_that_reruns_start_only_failed_realizations(opened_main_window_poly, qtbot):
     """This runs an ensemble experiment with some failing realizations, and then
     restarts two times, checking that only the failed realizations are started.
     Verifies that the number of successful and failed realizations is logged correctly
