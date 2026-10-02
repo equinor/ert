@@ -40,6 +40,7 @@ from ert.gui.experiments.multiple_data_assimilation_panel import (
 )
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
+from ert.gui.experiments.view.workflow_log import WorkflowLogWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
@@ -48,6 +49,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
 )
 from ert.run_models.event import (
+    EverestBatchResultEvent,
     FinishedTotalRunPathCreationEvent,
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
@@ -57,6 +59,8 @@ from ert.scheduler.job import Job
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
 from tests.ert.utils import SnapshotBuilder
+
+from .conftest import make_workflow_event
 
 _original_run_ensemble_evaluator_async = RunModel.run_ensemble_evaluator_async
 
@@ -1305,3 +1309,139 @@ HOOK_WORKFLOW_JOB slow_workflow_02 TOUCH_WORKFLOW {file_c} PRE_SIMULATION
         .findChild(QLabel)
         .text()
     )
+
+
+def _stop_event_monitoring(qtbot: QtBot, dialog: RunDialog, queue: SimpleQueue) -> None:
+    """Let the dialog's queue worker exit so it does not outlive the test."""
+    queue.put(EndEvent(failed=False, msg=""))
+    qtbot.waitUntil(dialog._worker_thread.isFinished, timeout=5000)
+
+
+@pytest.mark.timeout(10)
+def test_that_workflow_events_are_collected_in_single_workflows_tab(
+    qtbot: QtBot,
+) -> None:
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    assert dialog._tab_widget.count() == 0
+
+    queue.put(make_workflow_event(job_name="first"))
+    queue.put(make_workflow_event(job_name="second", job_index=1))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+
+    assert dialog._tab_widget.tabText(0) == "Workflows"
+    widget = dialog._tab_widget.widget(0)
+    assert isinstance(widget, WorkflowLogWidget)
+    qtbot.waitUntil(lambda: widget._table.rowCount() == 2, timeout=2000)
+    assert dialog._tab_widget.count() == 1
+    assert widget._table.item(0, 2).text() == "first"
+    assert widget._table.item(1, 2).text() == "second"
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+
+@pytest.mark.timeout(10)
+def test_that_workflows_tab_does_not_shift_everest_batch_result_events_to_wrong_tab(
+    qtbot: QtBot, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "ert.gui.experiments.run_dialog.is_everest_application", lambda: True
+    )
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    queue.put(
+        FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label="Batch 0",
+            total_iterations=1,
+            progress=0.0,
+            realization_count=1,
+            status_count={"Unknown": 1},
+            iteration=0,
+        )
+    )
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    batch_widget = dialog._tab_widget.widget(0)
+    assert isinstance(batch_widget, RealizationWidget)
+
+    # A workflow event arriving after the batch tab was created inserts the
+    # Workflows tab in front of it, so the batch tab is no longer at index 0.
+    queue.put(make_workflow_event())
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 2, timeout=2000)
+    assert dialog._tab_widget.indexOf(batch_widget) == 1
+
+    queue.put(
+        EverestBatchResultEvent(
+            batch=0,
+            everest_event="OPTIMIZATION_RESULT",
+            result_type="FunctionResult",
+        )
+    )
+    qtbot.waitUntil(
+        lambda: (
+            dialog._tab_widget.tabText(dialog._tab_widget.indexOf(batch_widget))
+            == "Batch 0: fn"
+        ),
+        timeout=2000,
+    )
+    assert dialog._tab_widget.tabText(0) == "Workflows"
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+
+@pytest.mark.timeout(10)
+def test_that_rerunning_failed_realizations_clears_workflows_tab(
+    qtbot: QtBot,
+) -> None:
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    queue.put(make_workflow_event(job_name="from_first_run"))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    workflows_widget = dialog._tab_widget.widget(0)
+    assert isinstance(workflows_widget, WorkflowLogWidget)
+    qtbot.waitUntil(lambda: workflows_widget._table.rowCount() == 1, timeout=2000)
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+    # Simulate the user clicking "Rerun failed simulations": the Workflows
+    # tab must not carry over rows from the previous run.
+    new_queue: SimpleQueue = SimpleQueue()
+    dialog._event_queue = new_queue
+    dialog.setup_event_monitoring(rerun_failed_realizations=True)
+
+    assert dialog._tab_widget.widget(0) is workflows_widget
+    assert workflows_widget._table.rowCount() == 0
+    assert workflows_widget._iteration_selector.count() == 0
+
+    new_queue.put(make_workflow_event(job_name="from_second_run"))
+    qtbot.waitUntil(lambda: workflows_widget._table.rowCount() == 1, timeout=2000)
+    assert workflows_widget._table.item(0, 2).text() == "from_second_run"
+
+    _stop_event_monitoring(qtbot, dialog, new_queue)

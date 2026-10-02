@@ -70,6 +70,10 @@ class RealizationWidget(QWidget):
     # Signal when the user selects another real
     itemClicked = Signal(QModelIndex)
 
+    @property
+    def iteration(self) -> int:
+        return self._iter
+
     def _item_clicked(self, item: QModelIndex) -> None:
         self.itemClicked.emit(item)
 
