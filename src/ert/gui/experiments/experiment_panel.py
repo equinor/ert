@@ -27,6 +27,7 @@ from ert.config import QueueSystem, parameter_config
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets import wait_cursor
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.icon_utils import load_icon
 from ert.gui.summarypanel import SummaryPanel
@@ -306,27 +307,25 @@ class ExperimentPanel(QWidget):
 
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-        try:
-            model = create_model(
-                self.config,
-                args,
-                event_queue,
-            )
-
-        except ValueError as e:
-            QMessageBox.warning(
-                self,
-                "ERROR: Failed to create experiment",
-                str(e),
-                QMessageBox.StandardButton.Ok,
-            )
-            return
+        with wait_cursor():
+            try:
+                model = create_model(
+                    self.config,
+                    args,
+                    event_queue,
+                )
+            except ValueError as e:
+                QMessageBox.warning(
+                    self,
+                    "ERROR: Failed to create experiment",
+                    str(e),
+                    QMessageBox.StandardButton.Ok,
+                )
+                return
 
         self._model = model
 
-        QApplication.restoreOverrideCursor()
         if model.check_if_runpath_exists():
             msg_box = QMessageBox(self)
             msg_box.setObjectName("RUNPATH_WARNING_BOX")

@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
-from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
+from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting, wait_cursor
 from ert.gui.plotting.utils.plot_maps import (
     CROSS_ENSEMBLE_STATISTICS,
     DISTRIBUTION,
@@ -197,15 +197,15 @@ class PlotWindow(QMainWindow):
             central_layout.addStretch(1)
             self.setCentralWidget(central_widget)
         else:
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            try:
-                self._key_definitions = (
-                    self._api.responses_api_key_defs + self._api.parameters_api_key_defs
-                )
-            except BaseException as e:
-                handle_exception(e)
-                self._key_definitions = []
-            QApplication.restoreOverrideCursor()
+            with wait_cursor():
+                try:
+                    self._key_definitions = (
+                        self._api.responses_api_key_defs
+                        + self._api.parameters_api_key_defs
+                    )
+                except BaseException as e:
+                    handle_exception(e)
+                    self._key_definitions = []
 
             self._titles: dict[str, str] = {}
             self._x_labels: dict[str, str | None] = {}
@@ -250,13 +250,12 @@ class PlotWindow(QMainWindow):
                     3: self._widget_by_name(STD_DEV),
                 }
 
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            try:
-                ensembles = self._api.get_all_ensembles()
-            except BaseException as e:
-                handle_exception(e)
-                ensembles = []
-            QApplication.restoreOverrideCursor()
+            with wait_cursor():
+                try:
+                    ensembles = self._api.get_all_ensembles()
+                except BaseException as e:
+                    handle_exception(e)
+                    ensembles = []
 
             plot_case_objects = [obj for obj in ensembles if not obj.hidden]
 
