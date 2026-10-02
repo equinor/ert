@@ -643,6 +643,12 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
     snapshot.assert_match(result.write_csv(float_precision=5), "enif_snapshot.csv")
 
 
+def _remove_linestartswith(file_name: str, startswith: str):
+    lines = Path(file_name).read_text(encoding="utf-8").split("\n")
+    lines = [line for line in lines if not line.startswith(startswith)]
+    Path(file_name).write_text("\n".join(lines), encoding="utf-8")
+
+
 @pytest.mark.parametrize(
     ("mode", "target"),
     [
@@ -650,20 +656,31 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
             ENSEMBLE_SMOOTHER_MODE, "target_%d", id=f"{ENSEMBLE_SMOOTHER_MODE}"
         ),
         pytest.param(ES_MDA_MODE, "iter-%d", id=f"{ES_MDA_MODE}"),
+        pytest.param(ENIF_MODE, "target_%d", id=f"{ENIF_MODE}"),
     ],
 )
 @pytest.mark.usefixtures("copy_poly_case")
-def test_cli_does_not_run_without_observations(mode, target):
-    def remove_linestartswith(file_name: str, startswith: str):
-        lines = Path(file_name).read_text(encoding="utf-8").split("\n")
-        lines = [line for line in lines if not line.startswith(startswith)]
-        Path(file_name).write_text("\n".join(lines), encoding="utf-8")
-
+def test_cli_does_not_run_update_modes_without_observations(mode, target):
     # Remove observations from config file
-    remove_linestartswith("poly.ert", "OBS_CONFIG")
+    _remove_linestartswith("poly.ert", "OBS_CONFIG")
 
     with pytest.raises(ErtCliError, match=f"To run {mode}, observations are needed."):
         run_cli(mode, "--disable-monitoring", "--target-ensemble", target, "poly.ert")
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(TEST_RUN_MODE),
+        pytest.param(ENSEMBLE_EXPERIMENT_MODE),
+    ],
+)
+@pytest.mark.usefixtures("copy_poly_case")
+def test_cli_runs_without_observations_for_non_update_modes(mode):
+    # Remove observations from config file
+    _remove_linestartswith("poly.ert", "OBS_CONFIG")
+
+    run_cli(mode, "--disable-monitoring", "poly.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case", "mock_cli_run")
