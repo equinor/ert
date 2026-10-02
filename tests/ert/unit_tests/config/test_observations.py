@@ -602,7 +602,7 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
         assert observations["gen_data"].to_dicts()[0]["report_step"] == restart
 
 
-@pytest.mark.parametrize("std", [-1.0, 0, 0.0])
+@pytest.mark.parametrize("std", [-1.0, 0, 0.0], ids=str)
 def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
     with pytest.raises(
         ConfigValidationError, match=r"must be given a strictly positive value"
@@ -698,7 +698,7 @@ def test_that_computed_error_must_be_greater_than_zero_in_history_observations()
         )
 
 
-@pytest.mark.parametrize("std", [-1.0, 0, 0.0])
+@pytest.mark.parametrize("std", [-1.0, 0, 0.0], ids=str)
 def test_that_error_must_be_greater_than_zero_in_general_observations(std):
     with pytest.raises(
         ConfigValidationError, match=r"must be given a strictly positive value"
@@ -1953,7 +1953,9 @@ def test_that_error_must_be_set_in_summary_observation():
     "observation_type",
     ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
 )
-@pytest.mark.parametrize("unknown_key", ["SMERROR", "name", "type", "segments"])
+@pytest.mark.parametrize(
+    "unknown_key", ["SMERROR", "name", "type", "segments"], ids=str
+)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key):
     if observation_type == "HISTORY_OBSERVATION":
@@ -2406,7 +2408,7 @@ def test_that_providing_no_name_or_object_to_obs_raises_config_error(obs_content
         ert_config_from_parser(obs_content)
 
 
-@pytest.mark.parametrize("file_format", ["parquet", "csv"])
+@pytest.mark.parametrize("file_format", ["parquet", "csv"], ids=str)
 def test_that_seismic_observation_dataframes_are_created_from_obs_file(
     mocked_files, file_context_token, file_format
 ):

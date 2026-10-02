@@ -37,7 +37,7 @@ def surface():
     )
 
 
-@pytest.mark.parametrize("surface_format", ["ascii", "binary"])
+@pytest.mark.parametrize("surface_format", ["ascii", "binary"], ids=str)
 def test_runpath_roundtrip(tmp_path, storage, surface, surface_format, caplog):
     config = SurfaceConfig(
         name="some_name",
@@ -393,7 +393,7 @@ def surface_for_dl():
     )
 
 
-@pytest.mark.parametrize("is_ascii_surface", [True, False])
+@pytest.mark.parametrize("is_ascii_surface", [True, False], ids=str)
 def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, caplog):
     base_surface_path = tmp_path / "basesurf.irap"
     surf = IrapSurface(
@@ -436,7 +436,7 @@ def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, cap
         assert "Loaded surface in binary format" in caplog.text
 
 
-@pytest.mark.parametrize("is_ascii_surface", [True, False])
+@pytest.mark.parametrize("is_ascii_surface", [True, False], ids=str)
 async def test_that_ert_writes_surface_in_same_the_format_that_was_read(
     is_ascii_surface, use_tmpdir
 ):

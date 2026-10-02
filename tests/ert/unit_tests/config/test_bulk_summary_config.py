@@ -352,7 +352,7 @@ def test_that_breakthrough_in_bulk_summary_config_doesnt_append_well_name_if_wel
     assert obs["breakthrough"]["response_key"].to_list() == ["BREAKTHROUGH:WWCT:OP1"]
 
 
-@pytest.mark.parametrize("error", [-100, -0.5, 0])
+@pytest.mark.parametrize("error", [-100, -0.5, 0], ids=str)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_error_value_raises_config_validation_error_if_not_strictly_positive(
     error,
@@ -379,7 +379,7 @@ def test_that_error_value_raises_config_validation_error_if_not_strictly_positiv
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("well_name", ["OP-1", "OP:1", "OP.1", "OP_1-A.B:C"])
+@pytest.mark.parametrize("well_name", ["OP-1", "OP:1", "OP.1", "OP_1-A.B:C"], ids=str)
 def test_that_summary_bulk_config_obs_receives_expected_name_given_special_characters(
     well_name,
 ):

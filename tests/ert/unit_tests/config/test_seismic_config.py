@@ -34,7 +34,7 @@ def _mock_seismic_response(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("suffix", [".csv", ".parquet"])
+@pytest.mark.parametrize("suffix", [".csv", ".parquet"], ids=str)
 def test_that_seismic_observation_response_key_matches_simulated_response_key(
     mocked_files, suffix
 ):
@@ -134,7 +134,7 @@ def test_that_seismic_config_raises_when_reading_from_non_existing_file(tmp_path
         seismic_config.read_from_file(tmp_path, 1, 1)
 
 
-@pytest.mark.parametrize("suffix", [".csv", ".parquet"])
+@pytest.mark.parametrize("suffix", [".csv", ".parquet"], ids=str)
 def test_that_seismic_config_reads_from_all_input_files(mocked_files, suffix):
     key1 = "horizon--amplitude_full_min_depth--20250101_20240101"
     key2 = "horizon--amplitude_full_mean_depth--20260101_20240101"
@@ -216,7 +216,7 @@ def test_that_seismic_config_supports_glob_pattern():
     assert sorted(data["response_key"].to_list()) == [key1, key2, key3]
 
 
-@pytest.mark.parametrize("suffix", [".csv", ".parquet"])
+@pytest.mark.parametrize("suffix", [".csv", ".parquet"], ids=str)
 def test_that_empty_seismic_response_file_does_not_raise(mocked_files, suffix):
     key = "horizon--amplitude_full_min_depth--20250101_20240101"
     name = f"{key}{suffix}"

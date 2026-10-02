@@ -297,7 +297,7 @@ def test_queue_options_site_config(queue_options, use_plugin, min_config):
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-@pytest.mark.parametrize("use_plugin", [True, False])
+@pytest.mark.parametrize("use_plugin", [True, False], ids=str)
 @pytest.mark.parametrize(
     "queue_options",
     [

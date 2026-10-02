@@ -26,7 +26,9 @@ def test_argparse_exec_gui():
     assert parsed.func.__name__ == "run_gui_wrapper"
 
 
-@pytest.mark.parametrize("input_path", ["a/path/config.ert", "another/path/config.ert"])
+@pytest.mark.parametrize(
+    "input_path", ["a/path/config.ert", "another/path/config.ert"], ids=str
+)
 def test_parsed_config(monkeypatch, input_path):
     monkeypatch.setattr(
         ert.__main__, "valid_file", Mock(side_effect=lambda x: input_path)

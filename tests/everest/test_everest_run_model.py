@@ -57,7 +57,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-@pytest.mark.parametrize("queue_system", ["lsf", "local", "torque", "slurm"])
+@pytest.mark.parametrize("queue_system", ["lsf", "local", "torque", "slurm"], ids=str)
 def test_that_queue_system_name_passes_through_create(
     create_runmodel: Callable, queue_system: str
 ) -> None:
@@ -183,7 +183,7 @@ def test_substitutions_from_everest_config(
     }
 
 
-@pytest.mark.parametrize("random_seed", [None, 1234])
+@pytest.mark.parametrize("random_seed", [None, 1234], ids=str)
 def test_that_random_seed_passes_through_create(
     create_runmodel: Callable, random_seed: int | None
 ) -> None:
