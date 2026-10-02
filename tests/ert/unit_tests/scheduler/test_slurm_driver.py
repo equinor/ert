@@ -456,7 +456,7 @@ async def test_kill_before_submit_is_finished(
 
 
 @pytest.mark.parametrize(("cmd", "exit_code"), [("true", 0), ("false", 1)])
-async def test_slurm_uses_sacct(
+async def test_that_sacct_reports_exit_code_when_scontrol_fails(
     monkeypatch, tmp_path, caplog, cmd, exit_code, pytestconfig
 ):
     # On a real SLURM system, sacct may not be configured, so we skip:
@@ -480,7 +480,12 @@ async def test_slurm_uses_sacct(
     driver = SlurmDriver()
     driver._poll_period = 0.01
     await driver.submit(0, cmd)
-    assert await driver._get_exit_code(driver._iens2jobid[0]) == exit_code
+
+    async def finished(iens: int, returncode: int) -> None:
+        assert iens == 0
+        assert returncode == exit_code
+
+    await poll(driver, {0}, finished=finished)
 
     # Make sure sacct was tried:
     assert "scontrol failed, trying sacct" in caplog.text

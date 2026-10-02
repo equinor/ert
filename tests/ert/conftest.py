@@ -45,6 +45,7 @@ from ert.server.app import app
 from ert.services import ert_client
 from ert.services.ert_client import ErtClient
 from ert.storage import open_storage
+from ert.storage.local_storage import LocalStorage
 
 from .utils import SOURCE_DIR
 
@@ -191,7 +192,9 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
         # Avoiding ConfigWarning on SUMMARY key with no known forward model
-        return ErtConfig.from_file("snake_oil.ert")
+        config = ErtConfig.from_file("snake_oil.ert")
+    LocalStorage.perform_migration(Path(config.ens_path))
+    return config
 
 
 @pytest.fixture

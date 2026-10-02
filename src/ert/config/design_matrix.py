@@ -37,7 +37,6 @@ class DesignMatrix:
     update: bool = False
     categorical_parameters: frozenset[str] = field(default_factory=frozenset)
     gen_kw_update_strategy: LocalizationType | None = None
-    updatable_parameters: dict[str, bool] = field(init=False, default_factory=dict)
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
@@ -56,7 +55,7 @@ class DesignMatrix:
                 for col, dtype in self.design_matrix_df.schema.items()
                 if col != "realization" and not dtype.is_numeric()
             )
-            self.updatable_parameters = {
+            self.updatable_parameters: dict[str, bool] = {
                 cfg.name: self.update for cfg in self.parameter_configurations
             }
         except (ValueError, AttributeError) as exc:

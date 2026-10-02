@@ -140,37 +140,42 @@ class LocalStorage(BaseMode):
         if mode.can_write:
             self._acquire_lock()
 
-        self._experiments: dict[UUID, LocalExperiment] = {}
-        self._ensembles: dict[UUID, LocalEnsemble] = {}
-        self._index: _Index = _Index()
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            self._experiments: dict[UUID, LocalExperiment] = {}
+            self._ensembles: dict[UUID, LocalEnsemble] = {}
+            self._index: _Index = _Index()
 
-        try:
-            self.version = _storage_version(self.path)
-        except FileNotFoundError as err:
-            # No index json, will have a problem if other components of storage exists
-            errors = []
-            if (self.path / self.EXPERIMENTS_PATH).exists():
-                errors.append(
-                    f"experiments path: {(self.path / self.EXPERIMENTS_PATH)}"
+            try:
+                self.version = _storage_version(self.path)
+            except FileNotFoundError as err:
+                # A missing index is only valid for empty storage.
+                errors = []
+                if (self.path / self.EXPERIMENTS_PATH).exists():
+                    errors.append(
+                        f"experiments path: {(self.path / self.EXPERIMENTS_PATH)}"
+                    )
+                if (self.path / self.ENSEMBLES_PATH).exists():
+                    errors.append(f"ensemble path: {self.path / self.ENSEMBLES_PATH}")
+                if errors:
+                    raise ValueError(f"No index.json, but found: {errors}") from err
+                self.version = _LOCAL_STORAGE_VERSION
+
+            if self.check_migration_needed(Path(self.path)) and not self.can_write:
+                raise RuntimeError(
+                    f"Cannot open storage '{self.path}' in read-only mode: "
+                    f"Storage version {self.version} is too old. "
+                    f"Run ert to initiate migration."
                 )
-            if (self.path / self.ENSEMBLES_PATH).exists():
-                errors.append(f"ensemble path: {self.path / self.ENSEMBLES_PATH}")
-            if errors:
-                raise ValueError(f"No index.json, but found: {errors}") from err
-            self.version = _LOCAL_STORAGE_VERSION
 
-        if self.check_migration_needed(Path(self.path)) and not self.can_write:
-            raise RuntimeError(
-                f"Cannot open storage '{self.path}' in read-only mode: "
-                f"Storage version {self.version} is too old. "
-                f"Run ert to initiate migration."
-            )
+            if not stage_for_migration:
+                self.reload()
 
-        if not stage_for_migration:
-            self.reload()
-
+                if mode.can_write:
+                    self._save_index()
+        except BaseException:
             if mode.can_write:
-                self._save_index()
+                self._release_lock()
+            raise
 
     @staticmethod
     def check_migration_needed(storage_dir: Path) -> bool:
