@@ -17,14 +17,14 @@ from ert.gui.ertwidgets import (
     EnsembleSelector,
     StringBox,
     Suggestor,
-    TargetEnsembleModel,
     TextModel,
 )
+from ert.gui.experiments._panel_utils import create_target_ensemble_format_field
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
 from ert.storage import Ensemble, RealizationStorageState
-from ert.validation import EnsembleRealizationsArgument, ProperNameFormatArgument
+from ert.validation import EnsembleRealizationsArgument
 
 from ._update_strategy_summary_widget import UpdateStrategySummaryWidget
 
@@ -89,13 +89,10 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             self._number_of_realizations_label,
         )
 
-        self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
-        self._ensemble_format_field = StringBox(
-            self._ensemble_format_model,  # type: ignore
-            self._ensemble_format_model.getDefaultValue(),  # type: ignore
-            continuous_update=True,
-        )
-        self._ensemble_format_field.setValidator(ProperNameFormatArgument())
+        (
+            self._ensemble_format_model,
+            self._ensemble_format_field,
+        ) = create_target_ensemble_format_field(analysis_config, notifier)
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
