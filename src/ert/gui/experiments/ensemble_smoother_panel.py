@@ -5,29 +5,25 @@ from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
 from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
-    ActiveRealizationsModel,
     AnalysisModuleEdit,
     CopyableLabel,
-    StringBox,
-    TargetEnsembleModel,
-    TextModel,
     get_parameters_button,
 )
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
-from ert.validation import (
-    ExperimentValidation,
-    ProperNameFormatArgument,
-)
-from ert.validation.active_range import ActiveRange
-from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
+from ._panel_helpers import (
+    create_active_realizations_field,
+    create_experiment_name_field,
+    create_number_of_realizations_container,
+    create_target_ensemble_format_field,
+)
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
@@ -59,40 +55,26 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
-        self._experiment_name_field = StringBox(
-            TextModel(""),
-            placeholder_text=self.notifier.storage.get_unique_experiment_name(
-                ENSEMBLE_SMOOTHER_MODE
-            ),
+        self._experiment_name_field = create_experiment_name_field(
+            self.notifier.storage, ENSEMBLE_SMOOTHER_MODE
         )
-        self._experiment_name_field.setMinimumWidth(250)
-        self._experiment_name_field.setValidator(
-            ExperimentValidation(self.notifier.storage)
-        )
-        self._experiment_name_field.setObjectName("experiment_field")
         layout.addRow("Experiment name:", self._experiment_name_field)
 
         runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_container = QWidget()
-        number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
-        number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
-        number_of_realizations_label = QLabel(f"<b>{len(active_realizations)}</b>")
-        number_of_realizations_label.setObjectName("num_reals_label")
-        number_of_realizations_layout.addWidget(number_of_realizations_label)
+        number_of_realizations_container, number_of_realizations_label = (
+            create_number_of_realizations_container(len(active_realizations))
+        )
 
         layout.addRow(
             QLabel("Number of realizations:"), number_of_realizations_container
         )
 
-        self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
-        self._ensemble_format_field = StringBox(
-            self._ensemble_format_model,  # type: ignore
-            self._ensemble_format_model.getDefaultValue(),  # type: ignore
-            continuous_update=True,
-        )
-        self._ensemble_format_field.setValidator(ProperNameFormatArgument())
+        (
+            self._ensemble_format_model,
+            self._ensemble_format_field,
+        ) = create_target_ensemble_format_field(analysis_config, notifier)
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
@@ -105,14 +87,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
 
         layout.addRow("Update settings:", self._analysis_module_edit)
-        self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(len(active_realizations)),  # type: ignore
-            "config/experiment/active_realizations",
-        )
-        self._active_realizations_field.setValidator(
-            RangeSubsetStringArgument(ActiveRange(active_realizations)),
-        )
-        self._active_realizations_field.model.setValueFromMask(  # type: ignore
+        self._active_realizations_field, _ = create_active_realizations_field(
             active_realizations
         )
         layout.addRow("Active realizations", self._active_realizations_field)

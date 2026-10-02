@@ -5,7 +5,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QFormLayout,
-    QHBoxLayout,
     QLabel,
     QWidget,
 )
@@ -13,7 +12,6 @@ from PyQt6.QtWidgets import (
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
-    ActiveRealizationsModel,
     CopyableLabel,
     StringBox,
     TextModel,
@@ -21,11 +19,14 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
-from ert.validation import ExperimentValidation, ProperNameArgument
-from ert.validation.active_range import ActiveRange
-from ert.validation.range_string_argument import RangeSubsetStringArgument
+from ert.validation import ProperNameArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
+from ._panel_helpers import (
+    create_active_realizations_field,
+    create_experiment_name_field,
+    create_number_of_realizations_container,
+)
 from .experiment_config_panel import ExperimentConfigPanel
 
 
@@ -54,17 +55,9 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
-        self._experiment_name_field = StringBox(
-            TextModel(""),
-            placeholder_text=self.notifier.storage.get_unique_experiment_name(
-                ENSEMBLE_EXPERIMENT_MODE
-            ),
+        self._experiment_name_field = create_experiment_name_field(
+            self.notifier.storage, ENSEMBLE_EXPERIMENT_MODE
         )
-        self._experiment_name_field.setMinimumWidth(250)
-        self._experiment_name_field.setValidator(
-            ExperimentValidation(self.notifier.storage)
-        )
-        self._experiment_name_field.setObjectName("experiment_field")
         layout.addRow("Experiment name:", self._experiment_name_field)
 
         self._ensemble_name_field = StringBox(
@@ -78,25 +71,15 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_container = QWidget()
-        number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
-        number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
-        number_of_realizations_label = QLabel(f"<b>{len(active_realizations)}</b>")
-        number_of_realizations_label.setObjectName("num_reals_label")
-        number_of_realizations_layout.addWidget(number_of_realizations_label)
+        number_of_realizations_container, number_of_realizations_label = (
+            create_number_of_realizations_container(len(active_realizations))
+        )
 
         layout.addRow(
             QLabel("Number of realizations:"), number_of_realizations_container
         )
 
-        self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(len(active_realizations)),  # type: ignore
-            "config/experiment/active_realizations",
-        )
-        self._active_realizations_field.setValidator(
-            RangeSubsetStringArgument(ActiveRange(active_realizations)),
-        )
-        self._active_realizations_field.model.setValueFromMask(  # type: ignore
+        self._active_realizations_field, _ = create_active_realizations_field(
             active_realizations
         )
         layout.addRow("Active realizations", self._active_realizations_field)
