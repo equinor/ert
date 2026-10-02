@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from ert.config import AnalysisConfig
-    from ert.storage import Ensemble
+    from ert.storage import Ensemble, Storage
 
 
 logger = logging.getLogger(__name__)
@@ -69,6 +69,93 @@ class Arguments:
     prior_ensemble_id: str | None  # UUID not serializable in json
     experiment_name: str
     parameter_configuration: list[ParameterConfig]
+
+
+def create_experiment_name_field(storage: Storage, mode: str) -> StringBox:
+    name_field = StringBox(
+        TextModel(""),
+        placeholder_text=storage.get_unique_experiment_name(mode),
+    )
+    name_field.setMinimumWidth(250)
+    name_field.setValidator(ExperimentValidation(storage))
+    name_field.setObjectName("experiment_field")
+    return name_field
+
+
+def create_number_of_realizations_container(
+    active_realizations_length: int,
+) -> tuple[QWidget, QLabel]:
+    number_of_realizations_container = QWidget()
+    number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
+    number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
+    number_of_realizations_label = QLabel(f"<b>{active_realizations_length}</b>")
+    number_of_realizations_label.setObjectName("num_reals_label")
+    number_of_realizations_layout.addWidget(number_of_realizations_label)
+    return number_of_realizations_container, number_of_realizations_label
+
+
+def create_target_ensemble_format_field(
+    analysis_config: AnalysisConfig, notifier: ErtNotifier
+) -> tuple[TargetEnsembleModel, StringBox]:
+    target_ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
+    target_ensemble_format_field = StringBox(
+        target_ensemble_format_model,  # type: ignore
+        target_ensemble_format_model.getDefaultValue(),  # type: ignore
+        continuous_update=True,
+    )
+    target_ensemble_format_field.setValidator(ProperNameFormatArgument())
+    return target_ensemble_format_model, target_ensemble_format_field
+
+
+def create_active_realizations_field(
+    active_realizations: list[bool],
+) -> tuple[StringBox, RangeSubsetStringArgument]:
+    model = ActiveRealizationsModel(len(active_realizations))
+    field = StringBox(
+        model,  # type: ignore
+        "config/experiment/active_realizations",
+    )
+    validator = RangeSubsetStringArgument(ActiveRange(active_realizations))
+    field.setValidator(validator)
+    model.setValueFromMask(active_realizations)
+    field.setObjectName("active_realizations_box")
+    return field, validator
+
+
+def create_prior_ensemble_selector(notifier: ErtNotifier) -> EnsembleSelector:
+    def get_ensembles_that_are_not_last_es_mda_iteration(
+        ensembles: Iterable[Ensemble],
+    ) -> Iterable[Ensemble]:
+        return (
+            ensemble
+            for ensemble in ensembles
+            if ensemble.relative_weights
+            and ensemble.iteration < ensemble.relative_weights.count(",") + 1
+        )
+
+    def get_ensembles_of_ensemble_experiment_type(
+        ensembles: Iterable[Ensemble],
+    ) -> Iterable[Ensemble]:
+        return (
+            ensemble
+            for ensemble in ensembles
+            if ensemble.experiment.experiment_type == ExperimentType.ENSEMBLE_EXPERIMENT
+        )
+
+    filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
+        get_ensembles_that_are_not_last_es_mda_iteration,
+        get_ensembles_of_ensemble_experiment_type,
+    ]
+    selector = EnsembleSelector(notifier, filters=filters)
+    selector.setEnabled(False)
+    return selector
+
+
+def create_select_prior_ensemble_box(selector: EnsembleSelector) -> QCheckBox:
+    checkbox = QCheckBox("")
+    checkbox.setObjectName("select_prior_checkbox_esmda")
+    checkbox.setEnabled(bool(selector._ensemble_list()))
+    return checkbox
 
 
 class MultipleDataAssimilationPanel(ExperimentConfigPanel):
@@ -91,43 +178,29 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.setObjectName("ES_MDA_panel")
 
-        self._experiment_name_field = StringBox(
-            TextModel(""),
-            placeholder_text=self.notifier.storage.get_unique_experiment_name(
-                ES_MDA_MODE
-            ),
+        self._experiment_name_field = create_experiment_name_field(
+            self.notifier.storage, ES_MDA_MODE
         )
-        self._experiment_name_field.setMinimumWidth(250)
-        self._experiment_name_field.setValidator(
-            ExperimentValidation(self.notifier.storage)
-        )
-        self._experiment_name_field.setObjectName("experiment_field")
         layout.addRow("Experiment name:", self._experiment_name_field)
 
-        runpath_label = CopyableLabel(text=runpath)
-        layout.addRow("Runpath:", runpath_label)
+        layout.addRow("Runpath:", CopyableLabel(text=runpath))
 
-        number_of_realizations_container = QWidget()
-        number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
-        number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
-        number_of_realizations_label = QLabel(f"<b>{len(active_realizations)}</b>")
-        number_of_realizations_label.setObjectName("num_reals_label")
-        number_of_realizations_layout.addWidget(number_of_realizations_label)
-
+        number_of_realizations_container, number_of_realizations_label = (
+            create_number_of_realizations_container(len(active_realizations))
+        )
         layout.addRow(
-            QLabel("Number of realizations:"), number_of_realizations_container
+            QLabel("Number of realizations:"),
+            number_of_realizations_container,
         )
 
-        self._target_ensemble_format_model = TargetEnsembleModel(
-            analysis_config, notifier
+        (
+            self._target_ensemble_format_model,
+            self._target_ensemble_format_field,
+        ) = create_target_ensemble_format_field(analysis_config, self.notifier)
+        layout.addRow(
+            "Target ensemble format:",
+            self._target_ensemble_format_field,
         )
-        self._target_ensemble_format_field = StringBox(
-            self._target_ensemble_format_model,  # type: ignore
-            self._target_ensemble_format_model.getDefaultValue(),  # type: ignore
-            continuous_update=True,
-        )
-        self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
-        layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
 
         self.weights = self._configured_weights
         self.weights_valid = True
@@ -165,85 +238,46 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
             self._analysis_module_edit.parameter_config, self
         )
-        self._analysis_module_edit.settings_changed.connect(
-            self._refresh_update_strategy_summary_widget
-        )
         self._update_strategy_label.setToolTip(
             self._update_strategy_summary_widget.toolTip()
         )
         layout.addRow(self._update_strategy_label, self._update_strategy_summary_widget)
 
-        self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(len(active_realizations)),  # type: ignore
-            "config/experiment/active_realizations",
-        )
-        self._new_ensemble_realizations_validator = RangeSubsetStringArgument(
-            ActiveRange(active_realizations)
-        )
-        self._active_realizations_field.setValidator(
-            self._new_ensemble_realizations_validator
-        )
-        self._active_realizations_field.model.setValueFromMask(  # type: ignore
-            active_realizations
-        )
+        (
+            self._active_realizations_field,
+            self._new_ensemble_realizations_validator,
+        ) = create_active_realizations_field(active_realizations)
         self._initial_active_realizations = active_realizations
+        layout.addRow("Active realizations:", self._active_realizations_field)
 
-        def get_ensembles_that_are_not_last_es_mda_iteration(
-            ensembles: Iterable[Ensemble],
-        ) -> Iterable[Ensemble]:
-            """
-            Only non-leafs of ES-MDA experiments are eligible as prior ensembles.
-            Easiest way to get those is to compare ensemble iteration with total
-            number of ES-MDA iterations found via relative weights list length.
-            """
-            return (
-                ensemble
-                for ensemble in ensembles
-                if ensemble.relative_weights
-                and ensemble.iteration < ensemble.relative_weights.count(",") + 1
-            )
-
-        def get_ensembles_of_ensemble_experiment_type(
-            ensembles: Iterable[Ensemble],
-        ) -> Iterable[Ensemble]:
-            """Ensemble experiment type, which consists just from one iteration,
-            is always eligible as an MDA prior ensemble. Used to spare some computing
-            time if users decide to run ES-MDA based on Ensemble Experiment
-            results.
-            """
-            return (
-                ensemble
-                for ensemble in ensembles
-                if ensemble.experiment.experiment_type
-                == ExperimentType.ENSEMBLE_EXPERIMENT
-            )
-
-        filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
-            get_ensembles_that_are_not_last_es_mda_iteration,
-            get_ensembles_of_ensemble_experiment_type,
-        ]
-
-        self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
+        self._ensemble_selector = create_prior_ensemble_selector(notifier)
         self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
             lambda: self._ensemble_selector.selected_ensemble,
             required_realization_storage_states=[
                 RealizationStorageState.RESPONSES_LOADED
             ],
         )
-        layout.addRow("Active realizations:", self._active_realizations_field)
-        self._active_realizations_field.setObjectName("active_realizations_box")
+        self._select_prior_ensemble_box = create_select_prior_ensemble_box(
+            self._ensemble_selector
+        )
+        layout.addRow("Select prior ensemble:", self._select_prior_ensemble_box)
+        layout.addRow("Run from prior ensemble:", self._ensemble_selector)
 
-        self._select_prior_ensemble_box = QCheckBox("")
-        self._select_prior_ensemble_box.setObjectName("select_prior_checkbox_esmda")
+        self._connect_signals()
+        self._add_parameter_configuration_rows(
+            layout,
+            analysis_config,
+            number_of_realizations_label,
+            config_num_realization,
+        )
+        self.setLayout(layout)
+
+    def _connect_signals(self) -> None:
+        self._analysis_module_edit.settings_changed.connect(
+            self._refresh_update_strategy_summary_widget
+        )
         self._select_prior_ensemble_box.toggled.connect(self.select_prior_toggled)
         self._select_prior_ensemble_box.toggled.connect(self.update_experiment_edit)
-
-        self._select_prior_ensemble_box.setEnabled(
-            bool(self._ensemble_selector._ensemble_list())
-        )
-        self._ensemble_selector.setEnabled(False)
-        layout.addRow("Select prior ensemble:", self._select_prior_ensemble_box)
-
         self._ensemble_selector.ensemble_populated.connect(self.select_prior_toggled)
         self._ensemble_selector.ensemble_populated.connect(
             self._parameter_configuration_changed
@@ -254,21 +288,35 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
 
-        layout.addRow("Run from prior ensemble:", self._ensemble_selector)
+        for field in (
+            self._experiment_name_field,
+            self._target_ensemble_format_field,
+            self._active_realizations_field,
+            self._relative_iteration_weights_box,
+        ):
+            field.getValidationSupport().validationChanged.connect(
+                self.experiment_configuration_changed
+            )
 
-        self._experiment_name_field.getValidationSupport().validationChanged.connect(
-            self.experiment_configuration_changed
+        self._select_prior_ensemble_box.toggled.connect(
+            self._refresh_update_strategy_summary_widget
         )
-        self._target_ensemble_format_field.getValidationSupport().validationChanged.connect(
-            self.experiment_configuration_changed
+        self._ensemble_selector.currentIndexChanged.connect(
+            self._refresh_update_strategy_summary_widget
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
-            self.experiment_configuration_changed
+        self._ensemble_selector.ensemble_populated.connect(
+            self._refresh_update_strategy_summary_widget
         )
-        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
-            self.experiment_configuration_changed
-        )
+        self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
+    def _add_parameter_configuration_rows(
+        self,
+        layout: QFormLayout,
+        analysis_config: AnalysisConfig,
+        number_of_realizations_label: QLabel,
+        config_num_realization: int,
+    ) -> None:
+        design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
                 "Design matrix",
@@ -286,10 +334,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                     self._analysis_module_edit.parameter_config, self
                 ),
             )
-
-        self.setLayout(layout)
-
-        self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
     def _refresh_update_strategy_summary_widget(self) -> None:
         self._update_strategy_summary_widget.set_parameters(
