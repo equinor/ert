@@ -411,7 +411,16 @@ class ExperimentPanel(QWidget):
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
         client = self._ert_client
-        config_id = client.register_ert(self.config, args)
+        try:
+            config_id = client.register_ert(self.config, args)
+        except httpx.RequestError as e:
+            QMessageBox.warning(
+                self,
+                "Experiment Registration Failed",
+                f"Failed to register the experiment: {e}",
+                QMessageBox.StandardButton.Ok,
+            )
+            return
         started = False
         try:
             model_data = client.get_runmodel_data(config_id)
