@@ -18,6 +18,7 @@ from resfo_utilities.testing import (
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
+from ert.config.parsing.observations_parser import ObservationConfigError
 from ert.observation_converters.history_to_summary import convert_history_to_summary
 
 
@@ -552,3 +553,39 @@ SUMMARY_OBSERVATION SUM_OBS_2 {
 };
 """
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_summary_observation_restart_without_time_map_raises_validation_error():
+    obs_config_path = Path("observations.txt")
+    obs_config_path.write_text(
+        dedent(
+            """\
+            SUMMARY_OBSERVATION WOPR_OP1_9 {
+                VALUE   = 0.1;
+                ERROR   = 0.05;
+                RESTART = 9;
+                KEY     = WOPR:OP1;
+            };
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_path = Path("config.ert")
+    config_path.write_text(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            ECLBASE ECLIPSE_CASE
+            OBS_CONFIG observations.txt
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ObservationConfigError,
+        match="Missing REFCASE or TIME_MAP for observations: WOPR_OP1_9",
+    ):
+        remove_refcase_and_time_map_dependence_from_obs_config(str(config_path))
