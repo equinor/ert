@@ -1,7 +1,10 @@
+import asyncio
 import io
+import json
 import logging
+from dataclasses import dataclass
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pandas as pd
@@ -14,8 +17,13 @@ from websockets.exceptions import (
 )
 from websockets.frames import Close
 
+from ert.config import ErtConfig, GenKwConfig
 from ert.ensemble_evaluator import EndEvent
-from ert.services.ert_client import _WEBSOCKET_CONNECT_RETRIES, ErtClient
+from ert.services.ert_client import (
+    _WEBSOCKET_CONNECT_RETRIES,
+    DEFAULT_TIMEOUT,
+    ErtClient,
+)
 from ert.services.shared_client import SharedClient
 
 
@@ -68,6 +76,106 @@ def client() -> RecordingClient:
 @pytest.fixture
 def api(client: RecordingClient) -> ErtClient:
     return ErtClient(client)  # type: ignore
+
+
+def test_that_registration_serializes_parameter_configs_in_arguments() -> None:
+    @dataclass
+    class Arguments:
+        mode: str
+        parameter_configuration: list[GenKwConfig]
+
+    parameter = GenKwConfig(
+        name="COEFF", distribution={"name": "normal", "mean": 0, "std": 1}
+    )
+    args = Arguments(mode="manual_update", parameter_configuration=[parameter])
+    config = MagicMock(spec=ErtConfig)
+    config.model_dump.return_value = {}
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+
+    def request(method: str, url: str, **kwargs: Any) -> httpx.Response:
+        assert method == "POST"
+        assert url == "/experiment_runs/register"
+        encoded = httpx.Request(method, f"https://localhost{url}", json=kwargs["json"])
+        assert json.loads(encoded.content)["config"] == {}
+        assert json.loads(encoded.content)["args"] == {
+            "mode": "manual_update",
+            "parameter_configuration": [parameter.model_dump(mode="json")],
+        }
+        return httpx.Response(
+            200, json={"config_id": "registered-config"}, request=encoded
+        )
+
+    transport.request.side_effect = request
+    assert ErtClient(transport).register_ert(config, args) == "registered-config"
+    config.model_dump.assert_called_once_with(mode="json")
+    transport.request.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("method_name", "http_method", "endpoint", "payload", "expected"),
+    [
+        ("start_experiment_ert", "POST", "start_experiment_ert", None, None),
+        ("discard_registration", "DELETE", "register", None, None),
+        ("runpath_exists", "POST", "runpath", {}, True),
+        ("runpath_delete", "DELETE", "runpath", {}, True),
+        (
+            "get_runmodel_data",
+            "POST",
+            "runmodel",
+            {"number_of_active_realizations": 2},
+            {"number_of_active_realizations": 2},
+        ),
+        (
+            "get_failed_realizations",
+            "GET",
+            "failed_realizations",
+            {"failed_realizations": [False, True]},
+            [False, True],
+        ),
+    ],
+)
+def test_that_registered_ert_requests_send_config_id_as_a_query_parameter(
+    method_name: str,
+    http_method: str,
+    endpoint: str,
+    payload: dict[str, object] | None,
+    expected: object,
+) -> None:
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(200, json=payload)
+    api = ErtClient(transport)
+
+    assert getattr(api, method_name)("registered-config") == expected
+
+    transport.request.assert_called_once_with(
+        http_method,
+        f"/experiment_runs/{endpoint}",
+        auth=api._auth,
+        params={"config_id": "registered-config"},
+        timeout=DEFAULT_TIMEOUT,
+    )
+
+
+def test_that_rerun_requests_send_the_flag_and_accept_an_empty_response() -> None:
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(200)
+    api = ErtClient(transport)
+
+    assert (
+        api.start_experiment_ert("registered-config", rerun_failed_realizations=True)
+        is None
+    )
+
+    transport.request.assert_called_once_with(
+        "POST",
+        "/experiment_runs/start_experiment_ert",
+        auth=api._auth,
+        params={"config_id": "registered-config", "rerun_failed_realizations": True},
+        timeout=DEFAULT_TIMEOUT,
+    )
 
 
 def test_that_repeated_parameter_calls_issue_a_single_request(api, client):
@@ -146,10 +254,10 @@ def event_client(monkeypatch):
     transport.conn_info.base_url = "https://localhost:1234"
     transport.conn_info.auth_token = "token"
     transport.conn_info.cert = False
-    connect = MagicMock()
+    connect = AsyncMock()
     connection = connect.return_value
     monkeypatch.setattr("ert.services.ert_client.connect", connect)
-    monkeypatch.setattr("ert.services.ert_client.time.sleep", lambda _: None)
+    monkeypatch.setattr("ert.services.ert_client.asyncio.sleep", AsyncMock())
     return ErtClient(transport), connection, connect
 
 
@@ -176,7 +284,7 @@ def test_that_closing_event_iterator_releases_connection(event_client):
     assert next(events) == event
     connection.close.assert_not_called()
     events.close()
-    connection.close.assert_called_once()
+    connection.close.assert_awaited_once()
 
 
 def test_that_failure_to_close_websocket_does_not_mask_generator_exit(event_client):
@@ -188,6 +296,61 @@ def test_that_failure_to_close_websocket_does_not_mask_generator_exit(event_clie
 
     assert next(events) == event
     events.close()
+
+
+def test_that_receive_timeout_does_not_end_the_event_stream(event_client):
+    api, connection, connect = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.side_effect = [
+        TimeoutError,
+        event.model_dump_json(),
+        ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+    ]
+
+    assert list(api.iter_events("experiment")) == [event]
+    connect.assert_awaited_once()
+    assert connection.recv.await_count == 3
+    connection.close.assert_awaited_once()
+
+
+def test_that_interrupting_event_iteration_closes_connection_and_event_loop(
+    event_client,
+):
+    api, connection, _ = event_client
+    event = EndEvent(failed=False, msg="completed")
+    loops = []
+
+    async def receive():
+        loops.append(asyncio.get_running_loop())
+        return event.model_dump_json()
+
+    connection.recv.side_effect = receive
+    events = api.iter_events("experiment")
+    assert next(events) == event
+
+    with pytest.raises(KeyboardInterrupt):
+        events.throw(KeyboardInterrupt)
+
+    connection.close.assert_awaited_once()
+    assert loops[0].is_closed()
+
+
+def test_that_monitor_thread_delivers_events_and_closes_connection(event_client):
+    api, connection, _ = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.side_effect = [
+        event.model_dump_json(),
+        ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+    ]
+    event_queue, monitor = api.setup_event_queue_from_ws_endpoint("experiment")
+
+    monitor.start()
+    monitor.join(timeout=5)
+
+    assert not monitor.is_alive()
+    assert event_queue.get_nowait() == event
+    assert event_queue.empty()
+    connection.close.assert_awaited_once()
 
 
 def test_that_transient_handshake_failure_is_retried_instead_of_ending_the_stream(
@@ -202,7 +365,7 @@ def test_that_transient_handshake_failure_is_retried_instead_of_ending_the_strea
     connect.side_effect = [_invalid_message_from_eof(), connection]
 
     assert list(api.iter_events("experiment")) == [event]
-    assert connect.call_count == 2
+    assert connect.await_count == 2
 
 
 def test_that_fatal_handshake_failure_is_not_retried(event_client):
@@ -210,7 +373,7 @@ def test_that_fatal_handshake_failure_is_not_retried(event_client):
     connect.side_effect = InvalidMessage("malformed handshake response")
 
     assert list(api.iter_events("experiment")) == []
-    assert connect.call_count == 1
+    assert connect.await_count == 1
 
 
 def test_that_repeated_transient_handshake_failures_eventually_give_up(event_client):
@@ -218,7 +381,7 @@ def test_that_repeated_transient_handshake_failures_eventually_give_up(event_cli
     connect.side_effect = _invalid_message_from_eof()
 
     assert list(api.iter_events("experiment")) == []
-    assert connect.call_count == _WEBSOCKET_CONNECT_RETRIES
+    assert connect.await_count == _WEBSOCKET_CONNECT_RETRIES
 
 
 def test_that_abnormal_event_stream_closure_logs_experiment_and_close_reason(
@@ -238,7 +401,7 @@ def test_that_abnormal_event_stream_closure_logs_experiment_and_close_reason(
     assert "unknown experiment" in caplog.text
     assert "Connected to WebSocket event stream" in caplog.text
     assert "ended after 0 events" in caplog.text
-    connection.close.assert_called_once()
+    connection.close.assert_awaited_once()
 
 
 def test_that_event_stream_logs_first_event_and_total_on_close(event_client, caplog):

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
-from queue import SimpleQueue
 from typing import TYPE_CHECKING, Any
 
+import httpx
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QAction, QStandardItemModel
@@ -23,14 +23,16 @@ from PyQt6.QtWidgets import (
 )
 
 from _ert.threading import ErtThread
-from ert.config import QueueSystem, parameter_config
+from ert.config import parameter_config
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.icon_utils import load_icon
 from ert.gui.summarypanel import SummaryPanel
-from ert.run_models import RunModel, StatusEvents, create_model
+from ert.run_models import RunModel
+from ert.run_models.run_model import RunModelAPI
+from ert.services.ert_client import ErtClient
 
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -42,7 +44,6 @@ from .manual_update_panel import ManualUpdatePanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
 from .single_test_run_panel import SingleTestRunPanel
-from .view.runpath_progress_widget import RunpathProgressWidget
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -288,6 +289,10 @@ class ExperimentPanel(QWidget):
         panel.experiment_configuration_changed.connect(self.validationStatusChanged)
         self.experiment_type_changed.connect(panel.experimentTypeChanged)
 
+    @property
+    def _ert_client(self) -> ErtClient:
+        return ErtClient.get_client(Path(self.config.ens_path))
+
     @staticmethod
     def getActions() -> list[QAction]:
         return []
@@ -304,30 +309,21 @@ class ExperimentPanel(QWidget):
         simulation_widget = self._experiment_widgets[self.get_current_experiment_type()]
         return simulation_widget.get_experiment_arguments()
 
-    def run_experiment(self) -> None:
-        args = self.get_experiment_arguments()
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+    def _confirm_runpath(
+        self, client: ErtClient, config_id: str, model_data: dict[str, Any]
+    ) -> bool:
+        delete = False
         try:
-            model = create_model(
-                self.config,
-                args,
-                event_queue,
-            )
-
-        except ValueError as e:
+            runpath_exists = client.runpath_exists(config_id)
+        except httpx.RequestError as e:
             QMessageBox.warning(
                 self,
-                "ERROR: Failed to create experiment",
+                "Runpath Check Failed",
                 str(e),
                 QMessageBox.StandardButton.Ok,
             )
-            return
-
-        self._model = model
-
-        QApplication.restoreOverrideCursor()
-        if model.check_if_runpath_exists():
+            return False
+        if runpath_exists:
             msg_box = QMessageBox(self)
             msg_box.setObjectName("RUNPATH_WARNING_BOX")
 
@@ -341,8 +337,8 @@ class ExperimentPanel(QWidget):
                 "might be overwritten.\n"
                 "- Previously generated files might "
                 "be used if not configured correctly.\n"
-                f"- {model.get_number_of_existing_runpaths()} out "
-                f"of {model.get_number_of_active_realizations()} realizations "
+                f"- {model_data['number_of_existing_runpaths']} out "
+                f"of {model_data['number_of_active_realizations']} realizations "
                 "are running in existing runpaths.\n"
                 "Are you sure you want to continue?"
             )
@@ -360,62 +356,111 @@ class ExperimentPanel(QWidget):
 
             msg_box_res = msg_box.exec()
             if msg_box_res == QMessageBox.StandardButton.No:
-                self._model._storage.close()
-                return
+                return False
 
             if delete_runpath_checkbox.checkState() == Qt.CheckState.Checked:
-                progress_dialog = QDialog(self)
-                progress_dialog.setObjectName("RUNPATH_PROGRESS_DIALOG")
-                progress_dialog.setWindowTitle("Deleting runpaths")
-                progress_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-                progress_layout = QVBoxLayout(progress_dialog)
-                progress_layout.setContentsMargins(0, 0, 0, 0)
+                delete = True
 
-                progress_widget = RunpathProgressWidget(
-                    progress_dialog,
-                    initial_status_text="Deleting runpaths...",
-                    completed_action="deleted",
+        if delete:
+            progress_dialog = QDialog(self)
+            progress_dialog.setObjectName("RUNPATH_PROGRESS_DIALOG")
+            progress_dialog.setWindowTitle("Deleting runpaths")
+            progress_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+            progress_layout = QVBoxLayout(progress_dialog)
+            progress_layout.setContentsMargins(0, 0, 0, 0)
+
+            progress_dialog.resize(420, 120)
+            progress_dialog.show()
+            QApplication.processEvents()
+
+            try:
+                successfully_removed = client.runpath_delete(config_id)
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    "Runpath Deletion Failed",
+                    f"Failed to delete the runpath: {e}",
+                    QMessageBox.StandardButton.Ok,
                 )
-                progress_layout.addWidget(progress_widget)
-                progress_dialog.resize(420, 120)
-                progress_dialog.show()
-                QApplication.processEvents()
+                successfully_removed = False
+            if not successfully_removed:
+                progress_dialog.close()
+                progress_dialog.deleteLater()
+                msg_box = QMessageBox(self)
+                msg_box.setObjectName("RUNPATH_ERROR_BOX")
+                msg_box.setIcon(QMessageBox.Icon.Warning)
+                msg_box.setText("ERT could not delete the existing runpath")
+                msg_box.setInformativeText(
+                    "Failed to delete the runpath.\n"
+                    "Continue without deleting the runpath?"
+                )
+                msg_box.setStandardButtons(
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                msg_box.setDefaultButton(QMessageBox.StandardButton.No)
+                msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
+                msg_box_res = msg_box.exec()
+                if msg_box_res == QMessageBox.StandardButton.No:
+                    return False
+            else:
+                progress_dialog.close()
+                progress_dialog.deleteLater()
 
-                try:
-                    model.rm_runpath(
-                        progress_tracker=progress_widget,
-                        # Force UI update during long deletion process
-                        progress_callback=QApplication.processEvents,
-                    )
-                except OSError as e:
-                    progress_dialog.close()
-                    progress_dialog.deleteLater()
-                    msg_box = QMessageBox(self)
-                    msg_box.setObjectName("RUNPATH_ERROR_BOX")
-                    msg_box.setIcon(QMessageBox.Icon.Warning)
-                    msg_box.setText("ERT could not delete the existing runpath")
-                    msg_box.setInformativeText(
-                        f"{e}\n\nContinue without deleting the runpath?"
-                    )
-                    msg_box.setStandardButtons(
-                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-                    )
-                    msg_box.setDefaultButton(QMessageBox.StandardButton.No)
-                    msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
-                    msg_box_res = msg_box.exec()
-                    if msg_box_res == QMessageBox.StandardButton.No:
-                        return
-                else:
-                    progress_dialog.close()
-                    progress_dialog.deleteLater()
+        return True
+
+    def run_experiment(self) -> None:
+        args = self.get_experiment_arguments()
+        client = self._ert_client
+        try:
+            config_id = client.register_ert(self.config, args)
+        except httpx.RequestError as e:
+            QMessageBox.warning(
+                self,
+                "Experiment Registration Failed",
+                f"Failed to register the experiment: {e}",
+                QMessageBox.StandardButton.Ok,
+            )
+            return
+        started = False
+        try:
+            model_data = client.get_runmodel_data(config_id)
+            if not self._confirm_runpath(client, config_id, model_data):
+                return
+            client.start_experiment_ert(config_id)
+            started = True
+        finally:
+            if not started:
+                client.discard_registration(config_id)
 
         self.configuration_summary.log_summary(
-            args.mode, model.get_number_of_active_realizations()
+            args.mode, model_data["number_of_active_realizations"]
         )
 
+        # Setup websocket for update
+        event_queue, thread = client.setup_event_queue_from_ws_endpoint(config_id)
+
+        # Dummy func
+        def dummy(
+            evaluator_server_config: EvaluatorServerConfig,
+            *,
+            rerun_failed_realizations: bool = False,
+        ) -> None: ...
+
+        # Dummy RunModelAPI for the RunDialog similar to how everest gui does it
+        dummy_run_model_api = RunModelAPI(
+            experiment_name=self._experiment_type_combo.currentText(),
+            supports_rerunning_failed_realizations=model_data[
+                "supports_rerunning_failed_realizations"
+            ],
+            start_simulations_thread=dummy,
+            cancel=client.stop_server,  # type: ignore
+            has_failed_realizations=lambda: any(
+                client.get_failed_realizations(config_id)
+            ),
+        )
         self._dialog = RunDialog(
             f"Experiment - {self._config_file} {find_ert_info()}",
-            model.api,
+            dummy_run_model_api,
             event_queue,
             self._notifier,
             self.parent(),  # type: ignore
@@ -424,32 +469,29 @@ class ExperimentPanel(QWidget):
             storage_path=self._notifier.storage.path,
         )
         self._dialog.queue_system.setText(
-            f"Queue system:\n{model.queue_config.queue_system.formatted_name}"
+            f"Queue system:\n{self.config.queue_config.queue_system.formatted_name}"
         )
         self.experiment_started.emit(self._dialog)
         self._experiment_done = False
         self.run_button.setEnabled(self._experiment_done)
+        self._dialog.setup_event_monitoring()
+        thread.start()
+        self._notifier.set_is_experiment_running(True)
 
-        def start_simulation_thread(*, rerun_failed_realizations: bool = False) -> None:
-            simulation_thread = get_simulation_thread(
-                self._model,
-                rerun_failed_realizations=rerun_failed_realizations,
-                use_ipc_protocol=self.config.queue_config.queue_system
-                == QueueSystem.LOCAL,
-            )
-            self._dialog.setup_event_monitoring(
-                rerun_failed_realizations=rerun_failed_realizations
-            )
-            simulation_thread.start()
-            self._notifier.set_is_experiment_running(True)
+        dialog = self._dialog
 
         def rerun_failed_realizations() -> None:
-            start_simulation_thread(rerun_failed_realizations=True)
+            client.start_experiment_ert(config_id, rerun_failed_realizations=True)
+            _, rerun_thread = client.setup_event_queue_from_ws_endpoint(
+                config_id, event_queue=event_queue
+            )
+            self._experiment_done = False
+            self.run_button.setEnabled(False)
+            self._notifier.set_is_experiment_running(True)
+            dialog.setup_event_monitoring(rerun_failed_realizations=True)
+            rerun_thread.start()
 
-        self._dialog.rerun_failed_realizations_experiment.connect(
-            rerun_failed_realizations
-        )
-        start_simulation_thread(rerun_failed_realizations=False)
+        dialog.rerun_failed_realizations_experiment.connect(rerun_failed_realizations)
 
         def simulation_done_handler() -> None:
             self._experiment_done = True

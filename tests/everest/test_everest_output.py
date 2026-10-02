@@ -30,7 +30,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
     **{"get_client.side_effect": [TimeoutError(), MagicMock()]},
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("everest.bin.everest_script.run_server_monitor")
+@patch("everest.bin.everest_script.run_server_monitor_async")
 @patch("everest.bin.everest_script.start_server")
 def test_save_running_config(
     mock_start_server,
@@ -48,6 +48,7 @@ def test_save_running_config(
     config.write_to_file("config.yml")
 
     everest_entry(["config.yml"])
+    mock_run_server_monitor.assert_awaited_once()
     saved_config_path = Path(config.output_dir) / "config.yml"
 
     assert saved_config_path.exists()

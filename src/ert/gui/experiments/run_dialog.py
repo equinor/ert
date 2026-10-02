@@ -718,8 +718,6 @@ class RunDialog(QFrame):
 def _stop_worker(worker_thread: QThread, worker: QueueEmitter) -> None:
     if worker_thread.isRunning():
         worker.stop()
-        worker_thread.wait(3000)
-    if worker_thread.isRunning():
         worker_thread.quit()
         worker_thread.wait(3000)
     if worker_thread.isRunning():

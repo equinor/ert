@@ -3,7 +3,6 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import Mock
 
 import pytest
 from PyQt6.QtCore import Qt
@@ -12,14 +11,13 @@ from PyQt6.QtWidgets import QComboBox
 from ert.config import ErtConfig
 from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.experiments.experiment_panel import ExperimentPanel
-from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
-from ert.gui.tools.event_viewer import GUILogHandler
 from ert.run_models import EnsembleExperiment
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.storage import Storage
 from ert.validation import rangestring_to_mask
 
+from .conftest import _open_main_window as open_main_window
 from .conftest import get_child
 
 
@@ -57,19 +55,8 @@ def _open_main_window(
     with Path("config.ert").open("w", encoding="utf-8") as fh:
         fh.writelines(config)
 
-    config = ErtConfig.from_file(path / "config.ert")
-
-    args_mock = Mock()
-    args_mock.config = "config.ert"
-    # handler defined here to ensure lifetime until end of function, if inlined
-    # it will cause the following error:
-    # RuntimeError: wrapped C/C++ object of type GUILogHandler
-    handler = GUILogHandler()
-    gui = _setup_main_window(config, args_mock, handler, config.ens_path)
-    try:
-        yield gui, config.ens_path, config
-    finally:
-        gui.close()
+    with open_main_window(path / "config.ert") as opened_window:
+        yield opened_window
 
 
 @pytest.fixture

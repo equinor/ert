@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import shutil
@@ -19,8 +20,12 @@ from ert.ensemble_evaluator.snapshot import EnsembleSnapshotMetadata
 from ert.resources import all_shell_script_fm_steps
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.services import ErtClient
-from everest.bin.utils import run_empty_server_monitor, run_server_monitor
-from everest.everserver.client import start_monitor
+from everest.bin.utils import (
+    run_empty_server_monitor,
+    run_server_monitor,
+    run_server_monitor_async,
+)
+from everest.everserver.client import start_monitor, start_monitor_async
 from everest.strings import SIM_PROGRESS_ID
 from tests.ert.utils import SnapshotBuilder
 
@@ -55,6 +60,76 @@ def test_that_monitor_delivers_events_after_end_event(monitor_client):
         "experiment", refresh_interval=0.2
     )
     assert [call.args[0][SIM_PROGRESS_ID] for call in callback.call_args_list] == events
+
+
+async def test_that_async_monitor_delivers_events_on_the_callers_event_loop(
+    monitor_client,
+):
+    loop = asyncio.get_running_loop()
+    events = [EndEvent(failed=False, msg="first"), EndEvent(failed=True, msg="last")]
+
+    async def event_stream():
+        assert asyncio.get_running_loop() is loop
+        for event in events:
+            yield event
+
+    monitor_client.iter_events_async.return_value = event_stream()
+    callback = MagicMock()
+
+    await start_monitor_async(monitor_client, callback, "experiment", 0.2)
+
+    monitor_client.iter_events.assert_not_called()
+    monitor_client.iter_events_async.assert_called_once_with(
+        "experiment", refresh_interval=0.2
+    )
+    assert [call.args[0][SIM_PROGRESS_ID] for call in callback.call_args_list] == events
+
+
+@pytest.mark.parametrize("exception_type", [RuntimeError, asyncio.CancelledError])
+async def test_that_async_monitor_closes_stream_when_callback_raises(
+    monitor_client, exception_type
+):
+    closed = MagicMock()
+
+    async def event_stream():
+        try:
+            yield EndEvent(failed=False, msg="completed")
+        finally:
+            closed()
+
+    monitor_client.iter_events_async.return_value = event_stream()
+    callback = MagicMock(side_effect=exception_type)
+
+    with pytest.raises(exception_type):
+        await start_monitor_async(monitor_client, callback, "experiment")
+
+    closed.assert_called_once()
+
+
+@pytest.mark.parametrize("disable_monitoring", [False, True])
+async def test_that_async_server_monitor_consumes_events_with_optional_display(
+    monitor_client, monkeypatch, disable_monitoring
+):
+    event = EndEvent(failed=False, msg="completed")
+    consumed = MagicMock()
+    update = MagicMock()
+    monkeypatch.setattr("everest.bin.utils._ServerMonitor.update", update)
+
+    async def event_stream():
+        yield event
+        consumed()
+
+    monitor_client.iter_events_async.return_value = event_stream()
+
+    await run_server_monitor_async(
+        monitor_client, "experiment", disable_monitoring=disable_monitoring
+    )
+
+    consumed.assert_called_once()
+    if disable_monitoring:
+        update.assert_not_called()
+    else:
+        update.assert_called_once_with({SIM_PROGRESS_ID: event})
 
 
 def test_that_empty_monitor_consumes_all_events_without_output(monitor_client, capsys):

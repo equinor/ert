@@ -10,7 +10,7 @@ from textwrap import dedent
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from PyQt6.QtCore import QDir, Qt, QTimer
+from PyQt6.QtCore import QDir, QEvent, Qt, QTimer
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -32,7 +32,7 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
-from ert.services import SharedClient
+from ert.services import ErtServerController, SharedClient
 from ert.storage import Storage
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
@@ -101,19 +101,26 @@ def _new_poly_example(
 
 @contextmanager
 def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
+    path = Path(path).resolve()
     args_mock = Mock()
     args_mock.config = str(path)
     site_plugins = get_site_plugins()
-    with use_runtime_plugins(site_plugins):
+    with use_runtime_plugins(site_plugins), pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.chdir(path.parent)
         config = ErtConfig.with_plugins(site_plugins).from_file(path)
+        SharedClient.close_client()
         with (
             add_gui_log_handler() as log_handler,
+            ErtServerController.init_service(project=Path(config.ens_path)),
         ):
             gui = _setup_main_window(config, args_mock, log_handler, config.ens_path)
             try:
                 yield gui, config.ens_path, config
             finally:
                 gui.close()
+                gui.deleteLater()
+                QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+                SharedClient.close_client()
 
 
 @pytest.fixture
@@ -137,12 +144,15 @@ def _esmda_run(run_experiment, source_root, tmp_path_factory):
         ),
     ):
         mp.chdir(path)
+        log_path = Path(config.analysis_config.log_path)
+        existing_log_paths = set(log_path.glob("*"))
         run_experiment(MultipleDataAssimilation, gui)
         # Check that we produce update log
-        log_paths = list(Path(config.analysis_config.log_path).iterdir())
+        log_paths = set(log_path.iterdir()) - existing_log_paths
         assert log_paths
-        assert (log_paths[0] / "Report.report").exists()
-        assert (log_paths[0] / "Report.csv").exists()
+        for report_path in log_paths:
+            assert (report_path / "Report.report").exists()
+            assert (report_path / "Report.csv").exists()
 
     return path
 
@@ -312,18 +322,21 @@ def run_experiment_fixture(request):
         # Click start simulation and agree to the message
         run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
-        def handle_dialog():
-            QTimer.singleShot(
-                500,
-                lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False),
-            )
-
+        dialog_timer = QTimer(gui)
+        dialog_timer.setSingleShot(True)
+        dialog_timer.timeout.connect(
+            lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False)
+        )
         if experiment_mode.name() not in {
             "Ensemble experiment",
             "Evaluate ensemble",
         }:
-            QTimer.singleShot(500, handle_dialog)
-        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+            dialog_timer.start(1000)
+        try:
+            qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+        finally:
+            dialog_timer.stop()
+            dialog_timer.deleteLater()
 
         if wait_done or check_realizations:
             qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
