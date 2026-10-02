@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
     QFormLayout,
@@ -18,11 +17,11 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     EnsembleSelector,
-    QApplication,
     StringBox,
     Suggestor,
     TextBox,
     TextModel,
+    wait_cursor,
 )
 from ert.run_models.run_model import captured_logs
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
@@ -130,10 +129,13 @@ class LoadResultsPanel(QWidget):
         active_realizations = [
             iens for iens, active in enumerate(realizations) if active
         ]
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         messages: list[str] = []
         loaded: int = 0
-        with captured_logs(messages), self._notifier.write_storage() as write_storage:
+        with (
+            wait_cursor(),
+            captured_logs(messages),
+            self._notifier.write_storage() as write_storage,
+        ):
             if self._ensemble_selector.selected_ensemble:
                 write_ensemble = write_storage.get_ensemble(
                     self._ensemble_selector.selected_ensemble.id
@@ -143,7 +145,6 @@ class LoadResultsPanel(QWidget):
                     ensemble=write_ensemble,
                     active_realizations=active_realizations,
                 )
-        QApplication.restoreOverrideCursor()
 
         if loaded == realizations.count(True):
             QMessageBox.information(

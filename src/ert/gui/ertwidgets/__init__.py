@@ -1,4 +1,5 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from PyQt6.QtCore import Qt
@@ -30,15 +31,22 @@ from .suggestor import Suggestor
 from .textbox import TextBox
 
 
+@contextmanager
+def wait_cursor() -> Iterator[None]:
+    """A context manager to show the wait cursor while the body is executing."""
+    QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
+    try:
+        yield
+    finally:
+        QApplication.restoreOverrideCursor()
+
+
 def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
     """A function decorator to show the wait cursor while the function is working."""
 
     def wrapper(*arg: Any) -> Any:
-        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
-        try:
+        with wait_cursor():
             return func(*arg)
-        finally:
-            QApplication.restoreOverrideCursor()
 
     return wrapper
 
@@ -66,4 +74,5 @@ __all__ = [
     "ValueModel",
     "get_parameters_button",
     "showWaitCursorWhileWaiting",
+    "wait_cursor",
 ]
