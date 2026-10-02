@@ -683,13 +683,20 @@ def _get_restart(
     time_map: list[datetime],
     has_refcase: bool,
 ) -> int:
-    if date_dict.restart is not None:
-        return date_dict.restart
     if not time_map:
         raise ObservationConfigError.with_context(
             f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
             obs_name,
         )
+    if date_dict.restart is not None:
+        if date_dict.restart >= len(time_map):
+            raise ObservationConfigError.with_context(
+                f"RESTART {date_dict.restart} for observation {obs_name} is "
+                "beyond the last report step of the REFCASE/TIME_MAP "
+                f"({len(time_map) - 1}).",
+                obs_name,
+            )
+        return date_dict.restart
 
     time, date_str = _get_time(date_dict, time_map[0], context=obs_name)
 
