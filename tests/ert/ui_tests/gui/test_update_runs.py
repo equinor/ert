@@ -122,7 +122,6 @@ def setup_poly_case_with_missing_response_for_each_observation(
 
             # removed indexes are all indexes poly example has observations for
             remove_responses_in_realization0(gui, indices_to_drop=[0, 2, 4, 6, 8])
-            yield gui
 
 
 @pytest.fixture

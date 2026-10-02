@@ -29,12 +29,21 @@ _storage: Storage | None = None
 class EverEndpoints(StrEnum):
     STOP = auto()
     START_EXPERIMENT = auto()
+    START_EXPERIMENT_ERT = auto()
     CONFIG_PATH = auto()
     START_TIME = auto()
     EXPERIMENTS = auto()
     STATUS = auto()
     EVENTS = auto()
     RUNPATH = auto()
+
+
+class ErtRunnerEndpoints(StrEnum):
+    REGISTER = auto()
+    START_EXPERIMENT_ERT = auto()
+    RUNPATH = auto()
+    RUNMODEL = auto()
+    FAILED_REALIZATIONS = auto()
 
 
 def get_storage() -> Storage:

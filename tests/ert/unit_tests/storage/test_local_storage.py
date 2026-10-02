@@ -205,12 +205,85 @@ def test_open_storage_nested_dirs(tmp_path):
         assert storage.path.exists()
 
 
-def test_open_storage_with_corrupted_storage(tmp_path):
+@pytest.mark.parametrize(
+    "failing_method",
+    ["_load_index", "_load_ensembles", "_load_experiments", "_save_index"],
+)
+@pytest.mark.parametrize(
+    "failure_type", [ValueError, PermissionError, KeyboardInterrupt]
+)
+def test_that_storage_initialization_error_releases_lock_and_preserves_index(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failing_method: str,
+    failure_type: type[BaseException],
+) -> None:
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
+    with open_storage(tmp_path, mode="w") as storage:
+        storage.create_experiment(name="existing").create_ensemble(
+            name="prior", ensemble_size=1
+        )
+    original_index = (tmp_path / "index.json").read_bytes()
+    failure = failure_type("Storage initialization failed")
+    expected_error = (
+        ErtStoragePermissionError
+        if failure_type is PermissionError
+        else ErtStorageException
+        if failure_type is ValueError
+        else KeyboardInterrupt
+    )
+
+    with (
+        patch.object(LocalStorage, failing_method, side_effect=failure),
+        pytest.raises(expected_error, match="Storage initialization failed") as error,
+    ):
+        open_storage(tmp_path, mode="w")
+
+    assert error.value is failure or error.value.__cause__ is failure
+    assert (tmp_path / "index.json").read_bytes() == original_index
+    with open_storage(tmp_path, mode="w") as storage:
+        assert storage.get_experiment_by_name("existing").name == "existing"
+
+
+@pytest.mark.parametrize("read_only", [True, False])
+def test_that_failed_storage_open_preserves_an_existing_writers_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, read_only: bool
+) -> None:
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
+    with open_storage(tmp_path, mode="w") as writer:
+        with (
+            patch.object(LocalStorage, "reload", side_effect=ValueError("Unreadable")),
+            pytest.raises(
+                ErtStorageException,
+                match="Unreadable" if read_only else "Not able to acquire lock",
+            ) as error,
+        ):
+            open_storage(tmp_path, mode="r" if read_only else "w")
+
+        assert error.value.__cause__ is not None
+        assert writer._lock.is_locked
+        assert (tmp_path / "storage.lock").exists()
+        with pytest.raises(ErtStorageException, match="Not able to acquire lock"):
+            open_storage(tmp_path, mode="w")
+
+
+def test_that_corrupted_storage_releases_lock_without_rewriting_index(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
     with open_storage(tmp_path / "storage", mode="w") as storage:
         storage.create_experiment().create_ensemble(name="prior", ensemble_size=1)
-    (tmp_path / "storage" / "index.json").unlink()
-    with pytest.raises(ErtStorageException, match="No index\\.json"):
+    index_path = tmp_path / "storage" / "index.json"
+    original_index = index_path.read_bytes()
+    index_path.unlink()
+    with pytest.raises(ErtStorageException, match="No index\\.json") as error:
         open_storage(tmp_path / "storage", mode="w")
+
+    assert error.value.__cause__ is not None
+    assert not index_path.exists()
+    index_path.write_bytes(original_index)
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        assert len(list(storage.ensembles)) == 1
 
 
 def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(tmp_path):
