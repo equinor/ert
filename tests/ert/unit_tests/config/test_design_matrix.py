@@ -36,6 +36,40 @@ def test_that_analysis_config_with_design_matrix_survives_json_round_trip(tmp_pa
     assert restored.design_matrix == analysis_config.design_matrix
 
 
+def test_that_merged_design_matrices_survive_json_round_trip(tmp_path):
+    _create_design_matrix(
+        tmp_path / "first.xlsx",
+        pl.DataFrame({"REAL": [0, 1, 2], "a": [1.0, 2.0, 3.0]}),
+    )
+    _create_design_matrix(
+        tmp_path / "second.xlsx",
+        pl.DataFrame({"REAL": [0, 1], "b": [4.0, 5.0]}),
+    )
+    analysis_config = AnalysisConfig.from_dict(
+        {
+            "DESIGN_MATRIX": [
+                [str(tmp_path / "first.xlsx"), {"UPDATE": "FALSE"}],
+                [str(tmp_path / "second.xlsx"), {"UPDATE": "TRUE"}],
+            ]
+        }
+    )
+    adapter = TypeAdapter(AnalysisConfig)
+
+    restored = adapter.validate_python(
+        adapter.dump_python(analysis_config, mode="json")
+    )
+
+    original_dm = analysis_config.design_matrix
+    restored_dm = restored.design_matrix
+    assert original_dm is not None
+    assert restored_dm is not None
+    assert [p.name for p in restored_dm.parameter_configurations] == ["a", "b"]
+    assert restored_dm.design_matrix_df.equals(original_dm.design_matrix_df)
+    assert restored_dm.active_realizations == original_dm.active_realizations
+    assert restored_dm.parameter_priority == original_dm.parameter_priority
+    assert restored_dm.updatable_parameters == {"a": False, "b": True}
+
+
 def test_that_categorical_design_matrix_parameters_are_excluded_from_update(tmp_path):
     design_path = tmp_path / "design_matrix.xlsx"
     design_matrix_df = pl.DataFrame(

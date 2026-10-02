@@ -37,10 +37,12 @@ class DesignMatrix:
     update: bool = False
     categorical_parameters: frozenset[str] = field(default_factory=frozenset)
     gen_kw_update_strategy: LocalizationType | None = None
+    additional_matrices: list[DesignMatrix] = field(default_factory=list, compare=False)
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
     def __post_init__(self) -> None:
+        pending_matrices, self.additional_matrices = self.additional_matrices, []
         try:
             (
                 self.active_realizations,
@@ -65,6 +67,8 @@ class DesignMatrix:
                 f" {exc}",
                 str(self.filename),
             ) from exc
+        for matrix in pending_matrices:
+            self.merge_with_other(matrix)
 
     @classmethod
     def from_config_list(
@@ -198,6 +202,7 @@ class DesignMatrix:
             if cfg.name not in common_keys
         )
         self.parameter_priority.update(dm_other.parameter_priority)
+        self.additional_matrices.append(dm_other)
         self.categorical_parameters |= dm_other.categorical_parameters - common_keys
         self.updatable_parameters.update(dm_other.updatable_parameters)
 
