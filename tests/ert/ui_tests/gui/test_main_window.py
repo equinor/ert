@@ -3,6 +3,7 @@ import logging
 import shutil
 import stat
 from pathlib import Path
+from queue import SimpleQueue
 from textwrap import dedent
 from unittest.mock import MagicMock, Mock, patch
 
@@ -26,6 +27,7 @@ from xtgeo import RegularSurface
 import ert.gui
 from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     CreateExperimentDialog,
     EnsembleSelector,
@@ -54,7 +56,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
-from ert.services import ErtServerController
+from ert.services import ErtClient, ErtServerController
 from ert.storage import open_storage
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
@@ -63,8 +65,41 @@ from .conftest import (
     get_child,
     get_children,
     load_results_manually,
+    open_gui_with_config,
     wait_for_child,
 )
+
+
+@pytest.mark.usefixtures("qtbot")
+def test_that_gui_context_destroys_the_window_before_returning(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.ert"
+    config_path.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+    destroyed = Mock()
+
+    with open_gui_with_config(config_path) as gui:
+        gui.destroyed.connect(destroyed)
+
+    destroyed.assert_called_once()
+
+
+def test_that_runpath_callback_is_cancelled_when_start_returns_without_a_dialog(
+    qtbot, tmp_path, run_experiment
+):
+    config_path = tmp_path / "config.ert"
+    config_path.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+
+    with (
+        patch.object(ExperimentPanel, "run_experiment") as start,
+        patch("tests.ert.ui_tests.gui.conftest.handle_runpath_dialog") as handle_dialog,
+    ):
+        with open_gui_with_config(config_path) as gui:
+            run_experiment(
+                SingleTestRun, gui, wait_done=False, check_realizations=False
+            )
+            start.assert_called_once()
+
+        qtbot.wait(1200)
+        handle_dialog.assert_not_called()
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
@@ -102,6 +137,24 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
         assert all(
             e in m for m, e in zip(shown_messages, expected_message_types, strict=False)
         )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_initial_window_does_not_wait_for_storage_server(qapp):
+    args = Mock()
+    args.config = "poly.ert"
+    with (
+        patch(
+            "ert.gui.experiments.experiment_panel.ErtClient.get_client",
+            side_effect=AssertionError(
+                "Server is not started during window construction"
+            ),
+        ) as get_client,
+        add_gui_log_handler() as log_handler,
+    ):
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        assert isinstance(gui, ErtMainWindow)
+        get_client.assert_not_called()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -292,10 +345,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run: ErtMainWindow, qtbot
 ):
     gui = esmda_has_run
-    open_storage(gui.ert_config.ens_path, mode="r")
-    with ErtServerController.init_service(
-        project=Path(gui.ert_config.ens_path).absolute(),
-    ):
+    with open_storage(gui.ert_config.ens_path, mode="r"):
         expected_ensembles = [
             "es_mda : iter-0",
             "es_mda : iter-1",
@@ -1039,51 +1089,165 @@ warnings.warn('Foobar')"""
     assert run_dialog.fail_msg_box.isVisible()
 
 
-def test_denied_runpath_warning_dialog_releases_storage_lock(
-    qtbot, opened_main_window_poly, use_tmpdir, monkeypatch
+@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.parametrize(
+    ("existing_runpath", "delete_runpath", "proceed", "deletion_succeeds"),
+    [
+        (False, False, True, True),
+        (True, False, True, True),
+        (True, True, True, True),
+        (True, False, False, True),
+        (True, True, False, False),
+        (True, True, True, False),
+    ],
+)
+def test_that_run_action_registers_once_and_reuses_config_id(
+    qtbot, existing_runpath, delete_runpath, proceed, deletion_succeeds
 ):
-    # Populate runpath
-    runpath = "poly_out/realization-0/iter-0"
-    Path(runpath).mkdir(parents=True, exist_ok=True)
-    Path(runpath).touch()
+    config = ErtConfig.from_file("poly.ert")
+    with open_storage(config.ens_path, mode="w"):
+        pass
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+    panel = ExperimentPanel(config, notifier, "poly.ert")
+    qtbot.addWidget(panel)
+    args = panel.get_experiment_arguments()
+    client = Mock(spec=ErtClient)
+    client.register_ert.return_value = "registered-config"
+    client.get_runmodel_data.return_value = {
+        "number_of_existing_runpaths": 1,
+        "number_of_active_realizations": 1,
+        "supports_rerunning_failed_realizations": False,
+    }
+    client.runpath_exists.return_value = existing_runpath
+    client.runpath_delete.return_value = deletion_succeeds
+    client.start_experiment_ert.return_value = None
+    event_queue = SimpleQueue()
+    event_thread = Mock()
+    client.setup_event_queue_from_ws_endpoint.return_value = event_queue, event_thread
 
-    # Open main window
+    def accept_runpath_warning():
+        if client.runpath_delete.called:
+            return (
+                QMessageBox.StandardButton.Yes
+                if proceed
+                else QMessageBox.StandardButton.No
+            )
+        message_box = get_child(panel, QMessageBox, name="RUNPATH_WARNING_BOX")
+        checkbox = message_box.checkBox()
+        assert checkbox is not None
+        checkbox.setChecked(delete_runpath)
+        return (
+            QMessageBox.StandardButton.Yes
+            if proceed or delete_runpath
+            else QMessageBox.StandardButton.No
+        )
+
+    try:
+        with (
+            patch.object(ErtClient, "get_client", return_value=client),
+            patch.object(panel, "get_experiment_arguments", return_value=args),
+            patch.object(
+                QMessageBox, "exec", side_effect=accept_runpath_warning
+            ) as warning,
+            patch.object(RunDialog, "setup_event_monitoring") as monitor,
+            (
+                qtbot.waitSignal(panel.experiment_started)
+                if proceed
+                else qtbot.assertNotEmitted(panel.experiment_started)
+            ),
+        ):
+            qtbot.mouseClick(panel.run_button, Qt.MouseButton.LeftButton)
+
+        client.register_ert.assert_called_once_with(config, args)
+        client.get_runmodel_data.assert_called_once_with("registered-config")
+        client.runpath_exists.assert_called_once_with("registered-config")
+        if existing_runpath:
+            assert warning.call_count == (2 if not deletion_succeeds else 1)
+        else:
+            warning.assert_not_called()
+        if not proceed:
+            client.discard_registration.assert_called_once_with("registered-config")
+            if delete_runpath:
+                client.runpath_delete.assert_called_once_with("registered-config")
+            else:
+                client.runpath_delete.assert_not_called()
+            client.start_experiment_ert.assert_not_called()
+            client.setup_event_queue_from_ws_endpoint.assert_not_called()
+            monitor.assert_not_called()
+            event_thread.start.assert_not_called()
+            assert panel.run_button.isEnabled()
+            assert not notifier.is_experiment_running
+            return
+        if delete_runpath:
+            client.runpath_delete.assert_called_once_with("registered-config")
+        else:
+            client.runpath_delete.assert_not_called()
+        client.start_experiment_ert.assert_called_once_with("registered-config")
+        client.discard_registration.assert_not_called()
+        client.setup_event_queue_from_ws_endpoint.assert_called_once_with(
+            "registered-config"
+        )
+        monitor.assert_called_once()
+        event_thread.start.assert_called_once()
+        assert not panel.run_button.isEnabled()
+        assert notifier.is_experiment_running
+        qtbot.addWidget(panel._dialog)
+    finally:
+        notifier.storage.close()
+
+
+@pytest.mark.parametrize("failing_method", ["get_runmodel_data", "runpath_exists"])
+def test_that_preflight_errors_discard_the_registration(
+    opened_main_window_poly, failing_method
+):
+    panel = get_child(opened_main_window_poly, ExperimentPanel)
+    client = Mock(spec=ErtClient)
+    client.register_ert.return_value = "registered-config"
+    getattr(client, failing_method).side_effect = RuntimeError("Preflight error")
+
+    with (
+        patch.object(ErtClient, "get_client", return_value=client),
+        pytest.raises(RuntimeError, match="Preflight error"),
+    ):
+        panel.run_experiment()
+
+    client.discard_registration.assert_called_once_with("registered-config")
+    client.start_experiment_ert.assert_not_called()
+    assert panel.run_button.isEnabled()
+
+
+def test_that_declining_runpath_reuse_leaves_storage_unlocked(
+    qtbot, opened_main_window_poly
+):
     gui = opened_main_window_poly
     run_experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
-
-    # Mock class for experiment arguments
-    class MockArgs:
-        def __init__(self) -> None:
-            self.mode = "ensemble_experiment"
-            self.current_ensemble = "ensemble"
-            self.experiment_name = "FooBar"
-
-    monkeypatch.setattr(
-        ExperimentPanel, "get_experiment_arguments", Mock(return_value=MockArgs())
+    get_child(run_experiment_panel, QComboBox).setCurrentText(
+        EnsembleExperiment.display_name()
     )
+    runpath = gui.ert_config.runpath_config.runpath_format_string.replace(
+        "<IENS>", "0"
+    ).replace("<ITER>", "0")
+    Path(runpath).mkdir(parents=True, exist_ok=True)
 
-    # Mock the runpath warning window
-    def mock_exec():
-        # Assert the storage lock is initially locked
-        assert run_experiment_panel._model._storage._lock.is_locked
-        return QMessageBox.StandardButton.No
-
-    monkeypatch.setattr(
-        QMessageBox,
-        "exec",
-        lambda _: mock_exec(),
-    )
-
-    run_experiment_panel.run_experiment()
-
-    # Assert the storage lock has been unlocked
-    assert not run_experiment_panel._model._storage._lock.is_locked
+    with (
+        patch.object(
+            QMessageBox, "exec", return_value=QMessageBox.StandardButton.No
+        ) as warning,
+        patch.object(ErtClient, "start_experiment_ert") as start,
+    ):
+        run_experiment_panel.run_experiment()
+        warning.assert_called_once()
+        start.assert_not_called()
+    with open_storage(gui.ert_config.ens_path, mode="w"):
+        pass
 
 
+@pytest.mark.usefixtures("qtbot")
 def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_design_matrix(  # ruff: ignore[line-too-long]
-    qtbot,
     copy_poly_case_with_design_matrix,
     caplog,
+    run_experiment,
 ):
     caplog.set_level(logging.INFO)
 
@@ -1096,33 +1260,11 @@ def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_des
     default_list = [["b", 1], ["c", 2]]
     copy_poly_case_with_design_matrix(design_dict, default_list)
 
-    args = Mock()
-    args.config = "poly.ert"
+    with open_gui_with_config("poly.ert") as gui:
+        run_experiment(SingleTestRun, gui)
 
-    with add_gui_log_handler() as log_handler:
-        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        qtbot.addWidget(gui)
-
-        experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
-        qtbot.wait_until(lambda: not experiment_panel.isHidden(), timeout=5000)
-
-        @contextlib.contextmanager
-        def mock_run_dialog():
-            """Mocking run dialog and catching exceptions shaves off 2 seconds for this
-            test, taking about 0.5 sec as a result
-            """
-            original_init = RunDialog.__init__
-            RunDialog.__init__ = Mock(return_value=None)
-            try:
-                yield
-            finally:
-                RunDialog.__init__ = original_init
-
-        with contextlib.suppress(Exception), mock_run_dialog():
-            experiment_panel.run_experiment()
-
-        assert "Experiment summary:" in caplog.text
-        assert "Runmodel: test_run" in caplog.text
-        assert "Realizations: 1" in caplog.text
-        assert "Parameters: 3" in caplog.text
-        assert "Observations: 5" in caplog.text
+    assert "Experiment summary:" in caplog.text
+    assert "Runmodel: test_run" in caplog.text
+    assert "Realizations: 1" in caplog.text
+    assert "Parameters: 3" in caplog.text
+    assert "Observations: 5" in caplog.text

@@ -32,7 +32,7 @@ from ert.storage import (
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
-from everest.everserver.client import start_monitor
+from everest.everserver.client import start_monitor, start_monitor_async
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import format_list
 
@@ -402,6 +402,16 @@ def run_empty_server_monitor(
     experiment_id: str,
 ) -> None:
     start_monitor(client, callback=lambda _: None, experiment_id=experiment_id)
+
+
+async def run_server_monitor_async(
+    client: ErtClient,
+    experiment_id: str,
+    *,
+    disable_monitoring: bool = False,
+) -> None:
+    callback = (lambda _: None) if disable_monitoring else _ServerMonitor().update
+    await start_monitor_async(client, callback=callback, experiment_id=experiment_id)
 
 
 def remove_show_scaling_warning_setting() -> None:

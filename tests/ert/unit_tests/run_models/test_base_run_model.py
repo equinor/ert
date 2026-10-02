@@ -10,7 +10,7 @@ from types import MethodType
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from pydantic import ConfigDict
+from pydantic import ConfigDict, ValidationError
 
 from _ert.events import EESnapshotUpdate
 from ert.config import (
@@ -46,6 +46,7 @@ from ert.run_models.run_model import (
     RunModel,
     UserCancelled,
 )
+from ert.storage import LocalStorage, open_storage
 from ert.warnings import PostExperimentWarning
 from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
 
@@ -84,6 +85,41 @@ def create_run_model(**kwargs):
         model_config = ConfigDict(frozen=False, extra="allow")
 
     return RunModelWithMockSupport(**(default_args | kwargs))
+
+
+@pytest.mark.parametrize("failure_type", [RuntimeError, ValueError, KeyboardInterrupt])
+def test_that_failed_model_initialization_releases_storage_lock(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure_type: type[BaseException],
+) -> None:
+    original_post_init = RunModel.model_post_init
+
+    def fail_after_opening_storage(self: RunModel, context: object) -> None:
+        original_post_init(self, context)
+        raise failure_type("Invalid prior ensemble")
+
+    monkeypatch.setattr(RunModel, "model_post_init", fail_after_opening_storage)
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
+    storage_path = tmp_path / "storage"
+
+    with pytest.raises(failure_type, match="Invalid prior ensemble") as error:
+        create_run_model(storage_path=str(storage_path))
+
+    assert error.value.__traceback__ is not None
+    with open_storage(storage_path, mode="w") as storage:
+        assert storage.can_write
+
+
+def test_that_validation_before_storage_opens_preserves_the_validation_error(
+    tmp_path: Path,
+) -> None:
+    storage_path = tmp_path / "storage"
+
+    with pytest.raises(ValidationError, match="random_seed"):
+        create_run_model(storage_path=str(storage_path), random_seed="not-an-integer")
+
+    assert not storage_path.exists()
 
 
 def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
