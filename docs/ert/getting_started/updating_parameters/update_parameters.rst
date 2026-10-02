@@ -60,3 +60,18 @@ While running, we get reports showing how the observations are matching the resp
 factors used in the update.
 
 .. image:: fig/update_report.png
+
+Revisit the update report later
+===============================
+
+The update reports are kept after the experiment has finished. Open `Manage experiments`
+and select the ensemble produced by the update (the posterior). If a report was
+recorded, its `Update <iteration>` tab shows the same tables as the running experiment
+did. The numbering follows the running experiment, so the update that turned `iter-0`
+into `iter-1` is `Update 0` and is found on `iter-1`. A heading identifies the input
+and output iterations. The initial prior has no update tab; the final posterior
+shows the update that produced it.
+
+Failed updates are also shown on their target ensemble, with their
+error message and whatever tables were produced before the failure. Existing stored
+reports remain available without rerunning the experiment.
