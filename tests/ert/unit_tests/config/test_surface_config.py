@@ -428,8 +428,9 @@ def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, cap
             ErtConfig.from_file_contents(config_contents)
     else:
         caplog.set_level(logging.INFO)
-        with warnings.catch_warnings(record=True) as caught_warnings:
-            warnings.simplefilter("always")
+        with warnings.catch_warnings(
+            record=True, action="always", category=ConfigWarning
+        ) as caught_warnings:
             ErtConfig.from_file_contents(config_contents)
             assert caught_warnings == []
 
