@@ -258,6 +258,26 @@ def test_that_breakthrough_observations_can_be_parsed_with_localization():
     assert breakthrough_obs["LOCALIZATION"]["RADIUS"] == "2500"
 
 
+def test_that_seismic_observation_can_be_parsed_with_localization():
+    seismic_obs = parse_observations(
+        content=dedent(
+            """\
+            SEISMIC_OBSERVATION OBS {
+                OBS_FILE=path/to/seismic_obs.csv;
+                LOCALIZATION {
+                    RADIUS=2500;
+                };
+            };
+        """
+        ),
+        filename="",
+    ).pop()
+    assert "LOCALIZATION" in seismic_obs
+    assert seismic_obs["LOCALIZATION"].get("EAST") is None
+    assert seismic_obs["LOCALIZATION"].get("NORTH") is None
+    assert seismic_obs["LOCALIZATION"]["RADIUS"] == "2500"
+
+
 def test_that_parser_sets_undefined_observation_names_to_none():
     all_observations = """
         GENERAL_OBSERVATION

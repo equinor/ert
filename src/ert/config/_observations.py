@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -828,7 +828,11 @@ class RFTObservation(BaseObservation):
                 case "MD":
                     md = validate_float(value, key)
                 case "LOCALIZATION":
-                    validate_rft_localization(value, observation_dict.context)
+                    validate_localization_without_east_north(
+                        value,
+                        observation_dict.context,
+                        _invalid_rft_localization_key_error,
+                    )
                     east, north, radius = extract_localization_values(value)
                     radius = (
                         radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
@@ -1078,6 +1082,7 @@ class SeismicObservation(BaseObservation):
         name = ""
         filepath: str | None = None
         boundary_filepath: str | Path | None = None
+        radius: float = DEFAULT_LOCALIZATION_RADIUS
 
         for key, value in observation_dict.items():
             match key:
@@ -1089,6 +1094,15 @@ class SeismicObservation(BaseObservation):
                     filepath = value
                 case "BOUNDARY":
                     boundary_filepath = value
+                case "LOCALIZATION":
+                    validate_localization_without_east_north(
+                        value,
+                        observation_dict.context,
+                        _invalid_seismic_localization_key_warning,
+                    )
+                    _, _, extracted_radius = extract_localization_values(value)
+                    if extracted_radius is not None:
+                        radius = extracted_radius
                 case _:
                     raise _unknown_key_error(str(key), observation_dict.context)
 
@@ -1119,6 +1133,7 @@ class SeismicObservation(BaseObservation):
                     name=name,
                     filepath=matching_filepath,
                     boundary_id=boundary_id,
+                    radius=radius,
                     shape_registry=shape_registry,
                 )
             )
@@ -1130,11 +1145,18 @@ class SeismicObservation(BaseObservation):
         name: str,
         filepath: Path,
         boundary_id: int | None,
+        radius: float,
         shape_registry: ShapeRegistry,
     ) -> list[Self]:
 
         if not name:
             name = filepath.stem
+
+        shape_id = shape_registry.register(
+            CircleShapeConfig(
+                radius=radius,
+            )
+        )
 
         df = cls._load_observations(filepath)
 
@@ -1144,20 +1166,6 @@ class SeismicObservation(BaseObservation):
             north = validate_float(str(row["Y_UTMN"]), "Y_UTMN")
             value = validate_float(str(row["OBS"]), "OBS")
             error = validate_float(str(row["OBS_ERROR"]), "OBS_ERROR")
-
-            # Currently supports only default localization radius as behavior of
-            # LOCALIZATION keyword is undefined. All shapes are being registered
-            # separately, even though it might make sense to introduce one relative
-            # shape for all observations which know their east/north and have a common
-            # radius
-            radius = DEFAULT_LOCALIZATION_RADIUS
-            shape_id = shape_registry.register(
-                CircleShapeConfig(
-                    east=east,
-                    north=north,
-                    radius=radius,
-                )
-            )
 
             seismic_observation = cls(
                 name=name,
@@ -1294,12 +1302,20 @@ def validate_positive_float(
     return v
 
 
-def validate_rft_localization(val: dict[str, Any], context: FileContextToken) -> None:
+def validate_localization_without_east_north(
+    val: dict[str, Any],
+    context: FileContextToken,
+    key_error_func: Callable[[str, FileContextToken], ObservationConfigError | None],
+) -> None:
     errors = []
     if "EAST" in val:
-        errors.append(_invalid_rft_localization_key_error("EAST", context))
+        error = key_error_func("EAST", context)
+        if error is not None:
+            errors.append(error)
     if "NORTH" in val:
-        errors.append(_invalid_rft_localization_key_error("NORTH", context))
+        error = key_error_func("NORTH", context)
+        if error is not None:
+            errors.append(error)
     errors.extend(
         _unknown_key_error(key, context)
         for key in val
@@ -1426,6 +1442,16 @@ def _invalid_rft_localization_key_error(
         f"Invalid key: '{key}' in LOCALIZATION for RFT_OBSERVATION. "
         f"The '{key}' keyword must be defined outside the LOCALIZATION section for "
         f"RFT observations - or in the CSV RFT configuration file.",
+        context,
+    )
+
+
+def _invalid_seismic_localization_key_warning(
+    key: str, context: FileContextToken
+) -> None:
+    ConfigWarning.warn(
+        f"Invalid key: '{key}' in LOCALIZATION for SEISMIC_OBSERVATION. "
+        f"The value of '{key}' is taken directly from OBS_FILE for each observation.",
         context,
     )
 
