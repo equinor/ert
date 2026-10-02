@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QApplication
 from .analysismoduleedit import AnalysisModuleEdit
 from .checklist import CheckList
 from .closabledialog import ClosableDialog
+from .combobox_with_description import QComboBoxWithDescription
 from .copy_button import CopyButton
 from .copyablelabel import CopyableLabel
 from .create_experiment_dialog import CreateExperimentDialog
@@ -55,6 +56,7 @@ __all__ = [
     "ErtSummary",
     "PathChooser",
     "PathModel",
+    "QComboBoxWithDescription",
     "SearchBar",
     "SearchBox",
     "SelectableListModel",
