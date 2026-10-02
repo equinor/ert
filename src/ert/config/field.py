@@ -303,9 +303,7 @@ TRANSFORM_FUNCTIONS: Final[dict[str, Callable[[Any], Any]]] = {
 
 
 @overload
-def field_transform(
-    data: xr.DataArray, transform_name: str | None
-) -> npt.NDArray[np.float32] | xr.DataArray:
+def field_transform(data: xr.DataArray, transform_name: str | None) -> xr.DataArray:
     pass
 
 
