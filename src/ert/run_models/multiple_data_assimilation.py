@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import PrivateAttr
 
 from ert.config import (
+    ConfigValidationError,
     PostExperimentFixtures,
     PreExperimentFixtures,
 )
@@ -48,9 +49,23 @@ class MultipleDataAssimilation(
         start_iteration = 0
         total_iterations = len(self._parsed_weights) + 1
         if self.prior_ensemble_id:
-            start_iteration = (
-                self._storage.get_ensemble(self.prior_ensemble_id).iteration + 1
-            )
+            prior_ensemble = self._storage.get_ensemble(self.prior_ensemble_id)
+            active_indices = [
+                i for i, active in enumerate(self.active_realizations) if active
+            ]
+            max_index = max(active_indices) if active_indices else -1
+            if max_index >= prior_ensemble.ensemble_size:
+                raise ConfigValidationError(
+                    f"Prior ensemble '{prior_ensemble.name}' "
+                    f"(ID: {self.prior_ensemble_id}) has "
+                    f"{prior_ensemble.ensemble_size} realizations, but "
+                    f"realization {max_index} was requested. "
+                    "Realizations beyond the size of the prior ensemble do "
+                    "not exist. Either reduce NUM_REALIZATIONS/the "
+                    "requested realizations, or restart from a prior "
+                    "ensemble with enough realizations."
+                )
+            start_iteration = prior_ensemble.iteration + 1
             total_iterations -= start_iteration
         elif not self.experiment_name:
             raise ValueError(

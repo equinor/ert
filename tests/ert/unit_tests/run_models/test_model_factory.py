@@ -189,7 +189,9 @@ def test_that_single_test_setup_requires_and_runs_only_realization_zero(
         assert model.active_realizations == [True]
 
 
-def test_that_create_model_raises_clean_error_for_inactive_first_realization(tmp_path):
+def test_that_create_model_raises_validation_error_for_inactive_first_realization(
+    tmp_path,
+):
     config = ErtConfig.from_file_contents(f"NUM_REALIZATIONS 3\nENSPATH {tmp_path}")
     args = Namespace(
         mode=TEST_RUN_MODE,
@@ -349,6 +351,7 @@ def test_that_multiple_data_assimilation_runpaths_start_after_prior_iteration(
     )
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = prior_iteration
+    ensemble_mock.ensemble_size = 2
     config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
 
     with patch(
@@ -360,6 +363,70 @@ def test_that_multiple_data_assimilation_runpaths_start_after_prior_iteration(
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
     assert set(model.paths) == set(expected_path)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_mismatched_prior_ensemble_size_raises_validation_error(monkeypatch):
+    args = Namespace(
+        realizations=None,
+        weights="6,4,2",
+        target_ensemble="from_prior_%d",
+        prior_ensemble_id=str(uuid1()),
+        experiment_name="just_assimilatin",
+    )
+
+    ensemble_mock = MagicMock()
+    ensemble_mock.name = "prior_ensemble"
+    ensemble_mock.iteration = 0
+    ensemble_mock.ensemble_size = 10
+    config = ErtConfig(runpath_config=ModelConfig(num_realizations=20))
+
+    with (
+        patch(
+            "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock
+        ),
+        pytest.raises(
+            ValidationError,
+            match=r"Prior ensemble 'prior_ensemble'.*has 10 realizations.*"
+            r"realization 19 was requested",
+        ),
+    ):
+        model_factory._setup_multiple_data_assimilation(
+            config, args, ObservationSettings(), queue.SimpleQueue()
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_subset_of_prior_ensemble_realizations_is_accepted(monkeypatch):
+    """Tests that we accept a subset of a [0, prior.ensemble_size)
+    despite prior.ensemble_size < posterior.ensemble_size.
+    """
+    args = Namespace(
+        realizations=None,
+        weights="6,4,2",
+        target_ensemble="from_prior_%d",
+        prior_ensemble_id=str(uuid1()),
+        experiment_name="just_assimilatin",
+    )
+
+    monkeypatch.setattr(
+        ert.run_models.run_model.RunModel,
+        "validate_successful_realizations_count",
+        MagicMock(),
+    )
+    ensemble_mock = MagicMock()
+    ensemble_mock.name = "prior_ensemble"
+    ensemble_mock.iteration = 0
+    ensemble_mock.ensemble_size = 20
+    config = ErtConfig(runpath_config=ModelConfig(num_realizations=10))
+
+    with patch(
+        "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock
+    ):
+        model = model_factory._setup_multiple_data_assimilation(
+            config, args, ObservationSettings(), queue.SimpleQueue()
+        )
+    assert model.ensemble_size == 10
 
 
 @pytest.mark.parametrize(
