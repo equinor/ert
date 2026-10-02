@@ -321,8 +321,9 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
 
     # ensemble_smoother_parser
     ensemble_smoother_description = (
-        "Run experiments in cli while performing one update"
-        " on the parameters by using the ensemble smoother algorithm."
+        "[DEPRECATED: use 'es_mda --single-update'] Run experiments in cli "
+        "while performing one update on the parameters by using the ensemble "
+        "smoother algorithm."
     )
     ensemble_smoother_parser = subparsers.add_parser(
         ENSEMBLE_SMOOTHER_MODE,
@@ -440,13 +441,23 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded.",
     )
-    es_mda_parser.add_argument(
+    es_mda_weights_group = es_mda_parser.add_mutually_exclusive_group()
+
+    es_mda_weights_group.add_argument(
         "--weights",
         type=valid_weights,
         default=None,
         help="Example custom relative weights: '8,4,2,1'. This means multiple data "
         "assimilation ensemble smoother will half the weight applied to the "
         "observation errors from one iteration to the next across 4 iterations.",
+    )
+    es_mda_weights_group.add_argument(
+        "--single-update",
+        action="store_const",
+        const="1",
+        dest="weights",
+        help="Run a single update with weight 1, "
+        "equivalent to running the previous Ensemble Smoother.",
     )
     es_mda_parser.add_argument(
         "--restart-case",

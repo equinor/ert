@@ -30,6 +30,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
     TEST_RUN_MODE,
 )
+from ert.run_models.ensemble_smoother import DEPRECATION_MESSAGE
 from ert.run_models.event import WorkflowEvent
 from ert.sample_prior import sample_prior
 from ert.scheduler.driver import Driver
@@ -667,14 +668,20 @@ def test_cli_does_not_run_without_observations(mode, target):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_ensemble_smoother():
-    run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitoring",
-        "--realizations",
-        "1,2,4,8,16,32,64",
-        "poly.ert",
-    )
+def test_that_ensemble_smoother_prints_deprecation_warning(capsys, caplog):
+    with caplog.at_level(logging.WARNING):
+        run_cli(
+            ENSEMBLE_SMOOTHER_MODE,
+            "--disable-monitoring",
+            "--realizations",
+            "1,2,4,8,16,32,64",
+            "poly.ert",
+        )
+
+    captured = capsys.readouterr()
+    assert "Ensemble Smoother is deprecated" in captured.out
+    assert "es_mda --single-update" in captured.out
+    assert DEPRECATION_MESSAGE in caplog.messages
 
 
 @pytest.mark.usefixtures("copy_poly_case")
