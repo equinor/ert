@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+from collections.abc import Iterable
+from pathlib import Path
 from typing import cast
 
 from PyQt6.QtCore import Qt
@@ -12,6 +15,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPlainTextEdit,
     QSplitter,
+    QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -19,14 +23,20 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.ensemble_evaluator.state import COLOR_CANCELLED, COLOR_FAILED, COLOR_FINISHED
-from ert.run_models.event import WorkflowEvent
+from ert.run_models.event import WorkflowEvent, load_workflow_events
 from ert.workflow_runner import WorkflowJobStatus
 
 NO_ITERATION_LABEL = "Pre/post experiment"
 NO_OUTPUT_PLACEHOLDER = "(no output)"
+NO_WORKFLOWS_PLACEHOLDER = "No workflow output was recorded for this experiment."
+UNREADABLE_WORKFLOWS_PLACEHOLDER = (
+    "Workflow output for this experiment could not be read. See the ERT log."
+)
 _EXPERIMENT_WIDE_HOOKS = frozenset({"PRE_EXPERIMENT", "POST_EXPERIMENT"})
 
 _COLUMNS = ("Hook", "Workflow", "Job", "Status", "Time")
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowLogWidget(QWidget):
@@ -110,6 +120,12 @@ class WorkflowLogWidget(QWidget):
             self._rebuild_iteration_selector()
         elif group == self._selected_iteration():
             self._append_row(event)
+
+    def load_events(self, events: Iterable[WorkflowEvent]) -> None:
+        self.clear()
+        for event in events:
+            self._events.setdefault(self._group_key(event), []).append(event)
+        self._rebuild_iteration_selector()
 
     def _group_key(self, event: WorkflowEvent) -> int | None:
         if event.hook in _EXPERIMENT_WIDE_HOOKS:
@@ -224,3 +240,43 @@ class WorkflowLogWidget(QWidget):
         self._table.clearContents()
         self._table.setRowCount(0)
         self._clear_detail()
+
+
+class WorkflowLogView(QWidget):
+    # Workflow output of a finished experiment, read back from storage.
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        self._stack = QStackedWidget(self)
+
+        self._placeholder = QLabel(NO_WORKFLOWS_PLACEHOLDER, self)
+        self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._stack.addWidget(self._placeholder)
+
+        self._workflow_log = WorkflowLogWidget(self)
+        self._stack.addWidget(self._workflow_log)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._stack)
+
+    def load_events(self, path: Path) -> None:
+        try:
+            events = load_workflow_events(path)
+        except OSError:
+            logger.warning(f"Could not read workflow events from {path}", exc_info=True)
+            self._show_placeholder(UNREADABLE_WORKFLOWS_PLACEHOLDER)
+            return
+
+        if not events:
+            self._show_placeholder(NO_WORKFLOWS_PLACEHOLDER)
+            return
+
+        self._workflow_log.load_events(events)
+        self._stack.setCurrentWidget(self._workflow_log)
+
+    def _show_placeholder(self, text: str) -> None:
+        self._workflow_log.clear()
+        self._placeholder.setText(text)
+        self._stack.setCurrentWidget(self._placeholder)
