@@ -1082,15 +1082,22 @@ def test_that_workflow_output_is_appended_to_experiment_in_storage(
     assert event.stdout == "hello from workflow\n"
 
 
+@pytest.mark.parametrize(
+    ("later_hook_has_workflow", "expected_stdout"),
+    [
+        (True, ["before the experiment\n", "after the experiment\n"]),
+        (False, ["before the experiment\n"]),
+    ],
+)
 def test_that_pre_experiment_output_is_persisted_once_experiment_exists(
-    tmp_path, use_tmpdir
+    tmp_path, use_tmpdir, later_hook_has_workflow, expected_stdout
 ):
     startup = _printing_workflow(tmp_path, "startup", 'print("before the experiment")')
     later = _printing_workflow(tmp_path, "later", 'print("after the experiment")')
     brm = create_run_model(
         hooked_workflows={
             HookRuntime.PRE_EXPERIMENT: [startup],
-            HookRuntime.PRE_SIMULATION: [later],
+            HookRuntime.PRE_SIMULATION: [later] if later_hook_has_workflow else [],
         },
         status_queue=SimpleQueue(),
     )
@@ -1113,10 +1120,9 @@ def test_that_pre_experiment_output_is_persisted_once_experiment_exists(
         )
     )
 
-    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
-        "before the experiment\n",
-        "after the experiment\n",
-    ]
+    assert [e.stdout for e in _persisted_workflow_events(experiment)] == (
+        expected_stdout
+    )
 
 
 def test_that_failure_to_persist_workflow_events_does_not_stop_experiment(
