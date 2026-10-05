@@ -27,7 +27,10 @@ def headless() -> bool:
     return "DISPLAY" not in os.environ
 
 
-mpl.use("Agg" if headless() else "QtAgg")
+try:
+    mpl.use("Agg" if headless() else "QtAgg")
+except ImportError:
+    mpl.use("Agg")
 
 from .main import run_gui  # ruff: ignore[module-import-not-at-top-of-file]
 
