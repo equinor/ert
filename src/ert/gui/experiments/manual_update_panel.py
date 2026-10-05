@@ -254,6 +254,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, ManualUpdatePanel):
             self._realizations_from_fs()
+            self._refresh_update_strategy_summary_widget()
 
             self._experiment_name_field.setPlaceholderText(
                 f"Manual update of {self._ensemble_selector.selected_ensemble.name}"

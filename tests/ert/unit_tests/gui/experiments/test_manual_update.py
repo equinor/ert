@@ -3,6 +3,7 @@ from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
 from ert.config.analysis_config import AnalysisConfig
+from ert.config.distribution import RawSettings
 from ert.config.parameter_config import LocalizationType
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
@@ -244,7 +245,7 @@ def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
             parameter_configuration={
                 "parameter": GenKwConfig(
                     name="parameter",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
+                    distribution=RawSettings(),
                     update_strategy=strategy,
                 )
             },
@@ -266,7 +267,9 @@ def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
         ensemble_selector.findText("experiment_1 : ensemble_1")
     )
     assert summary.rowCount() == 1
-    assert tuple(summary.item(0, column).text() for column in range(3)) == (
+    summary_items = [summary.item(0, column) for column in range(3)]
+    assert all(item is not None for item in summary_items)
+    assert tuple(item.text() for item in summary_items if item is not None) == (
         "Distance",
         "GenKW",
         "1",
@@ -279,3 +282,41 @@ def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
     panel._update_method_dropdown.setCurrentText("ES Update")
     assert not summary.isHidden()
     assert not panel._update_strategy_label.isHidden()
+
+
+def test_that_activating_manual_update_refreshes_externally_changed_strategy(
+    qtbot: QtBot,
+) -> None:
+    parameter = GenKwConfig(
+        name="parameter",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.ADAPTIVE,
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "ensemble",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY],
+        parameter_configuration={"parameter": parameter},
+    )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        runpath="",
+        notifier=notifier,
+        parameter_configuration=[],
+    )
+    qtbot.addWidget(panel)
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+    strategy_item = summary.item(0, 0)
+    assert strategy_item is not None
+    assert strategy_item.text() == "Adaptive"
+
+    parameter.update_strategy = LocalizationType.DISTANCE
+    assert strategy_item.text() == "Adaptive"
+    panel.experimentTypeChanged(panel)
+
+    strategy_item = summary.item(0, 0)
+    assert strategy_item is not None
+    assert strategy_item.text() == "Distance"
