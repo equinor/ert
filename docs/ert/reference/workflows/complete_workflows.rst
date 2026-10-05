@@ -130,10 +130,13 @@ are associated with it.
 Workflows hooked in with :code:`HOOK_WORKFLOW` are in addition recorded
 alongside the experiment they belong to, in
 :code:`<ENSPATH>/experiments/<experiment_id>/workflow_events.jsonl`. That file
-holds one JSON object per job invocation and exists so the output of a
-workflow can be shown again later; it is not meant to be read directly.
+holds one JSON object per job invocation and is not meant to be read directly.
 Output from hooks that ran before the experiment is created, such as
-:code:`PRE_EXPERIMENT`, is held back and written once the storage is created.
+:code:`PRE_EXPERIMENT`, is held back and written once the experiment exists.
+
+To see the output of an earlier run, open *Manage experiments*, select the
+experiment and open its *Workflows* tab. It lists every workflow job that has
+been run for that experiment, and selecting a job shows its output.
 
 .. _runpath-file-workflows:
 
