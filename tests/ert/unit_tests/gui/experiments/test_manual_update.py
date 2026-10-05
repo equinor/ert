@@ -177,7 +177,7 @@ def test_that_panel_does_not_crash_when_no_realization_has_parameters(
     assert not panel.isConfigurationValid()
 
 
-def test_that_empty_experiment_name_field_defaults_to_manual_update_of_mock_ensemble0(
+def test_that_empty_experiment_name_field_defaults_to_manual_update(
     qtbot: QtBot,
 ) -> None:
     notifier = ErtNotifier()
@@ -195,10 +195,7 @@ def test_that_empty_experiment_name_field_defaults_to_manual_update_of_mock_ense
     )
     qtbot.addWidget(panel)
 
-    assert (
-        panel.get_experiment_arguments().experiment_name
-        == "Manual update of mock_ensemble0"
-    )
+    assert panel.get_experiment_arguments().experiment_name == "manual_update"
 
 
 def test_that_experiment_name_field_is_used_in_experiment_arguments(

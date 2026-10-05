@@ -17,9 +17,11 @@ from ert.gui.ertwidgets import (
     EnsembleSelector,
     StringBox,
     Suggestor,
-    TextModel,
 )
-from ert.gui.experiments._panel_helpers import create_target_ensemble_format_field
+from ert.gui.experiments._panel_helpers import (
+    create_experiment_name_field,
+    create_target_ensemble_format_field,
+)
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
@@ -52,6 +54,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     ) -> None:
         super().__init__(ManualUpdate)
         self.setObjectName("Manual_update_panel")
+        self.notifier = notifier
         self._analysis_config = analysis_config
 
         layout = QFormLayout()
@@ -107,30 +110,21 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
-            self.experiment_configuration_changed
+        self._experiment_name_field = create_experiment_name_field(
+            notifier.storage, MANUAL_UPDATE_MODE
         )
-
-        self._experiment_name_field = StringBox(
-            TextModel(""),
-            placeholder_text="Manual update"
-            if notifier.current_ensemble is None
-            else f"Manual update of {notifier.current_ensemble.name}",
-        )
-
-        self._experiment_name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._experiment_name_field)
 
         self.setLayout(layout)
         self._connect_signals()
 
     def _connect_signals(self) -> None:
-        self._ensemble_selector.ensemble_selected.connect(
-            lambda ensemble: self._experiment_name_field.setPlaceholderText(
-                f"Manual update of {ensemble.name}"
-                if ensemble is not None
-                else "Manual update"
-            )
+        self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+        self._experiment_name_field.getValidationSupport().validationChanged.connect(
+            self.experiment_configuration_changed
+        )
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+            self.experiment_configuration_changed
         )
         self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
         self._ensemble_selector.ensemble_populated.connect(
@@ -145,6 +139,11 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(
             self._parameter_configuration_changed
+        )
+
+    def _update_experiment_name_placeholder(self) -> None:
+        self._experiment_name_field.setPlaceholderText(
+            self.notifier.storage.get_unique_experiment_name(MANUAL_UPDATE_MODE)
         )
 
     @property
@@ -167,7 +166,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     @override
     def isConfigurationValid(self) -> bool:
         return (
-            self._active_realizations_field.isValid()
+            self._experiment_name_field.isValid()
+            and self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
         )
 
@@ -230,9 +230,4 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, ManualUpdatePanel):
             self._realizations_from_fs()
-
-            self._experiment_name_field.setPlaceholderText(
-                f"Manual update of {self._ensemble_selector.selected_ensemble.name}"
-                if self._ensemble_selector.selected_ensemble is not None
-                else "Manual update"
-            )
+            self._update_experiment_name_placeholder()
