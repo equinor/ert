@@ -20,10 +20,14 @@ if TYPE_CHECKING:
     from ert.storage import Storage
 
 
-def create_experiment_name_field(storage: Storage, mode: str) -> StringBox:
+def create_experiment_name_field(
+    storage: Storage, mode: str, placeholder_text: str | None = None
+) -> StringBox:
     name_field = StringBox(
         TextModel(""),
-        placeholder_text=storage.get_unique_experiment_name(mode),
+        placeholder_text=storage.get_unique_experiment_name(mode)
+        if placeholder_text is None
+        else placeholder_text,
     )
     name_field.setMinimumWidth(250)
     name_field.setValidator(ExperimentValidation(storage))
