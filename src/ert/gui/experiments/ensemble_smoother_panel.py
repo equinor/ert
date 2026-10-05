@@ -92,6 +92,22 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        self._add_parameter_configuration_rows(
+            layout,
+            analysis_config,
+            number_of_realizations_label,
+            config_num_realization,
+        )
+        self.setLayout(layout)
+        self._connect_signals()
+
+    def _add_parameter_configuration_rows(
+        self,
+        layout: QFormLayout,
+        analysis_config: AnalysisConfig,
+        number_of_realizations_label: QLabel,
+        config_num_realization: int,
+    ) -> None:
         design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
@@ -115,8 +131,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
                     self._analysis_module_edit.parameter_config, self
                 ),
             )
-        self.setLayout(layout)
 
+    def _connect_signals(self) -> None:
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
@@ -126,7 +142,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
-
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
     @override
