@@ -43,6 +43,7 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
 
+        self._validate_has_updatable_parameter(self._prior)
         target_experiment = self._create_experiment_storage()
         self.update(
             self._prior,

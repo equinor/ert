@@ -1,9 +1,16 @@
 import math
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
+from ert.config import GenKwConfig
+from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import MultipleDataAssimilation as mda
+from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
+from ert.run_models.run_model import ErtRunError
+from ert.run_models.update_run_model import UpdateRunModel
+from ert.storage import Storage
 
 
 @pytest.mark.parametrize(
@@ -41,3 +48,38 @@ def test_that_zero_or_negative_weights_raise_value_error(weights):
         match=f"Invalid weights: {weights}. Weights must be positive non zero numbers.",
     ):
         mda.parse_weights(weights)
+
+
+def test_that_mda_rejects_non_updatable_prior_before_creating_experiment(
+    storage: Storage,
+) -> None:
+    parameter = GenKwConfig(
+        name="PARAMETER",
+        distribution={"name": "uniform", "min": 0.8, "max": 1.2},
+        update_strategy=None,
+    )
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [parameter.model_dump(mode="json")]
+        }
+    )
+    prior = storage.create_ensemble(experiment, name="prior", ensemble_size=1)
+
+    model = MagicMock(spec=MultipleDataAssimilation)
+    model.prior_ensemble_id = str(prior.id)
+    model._start_iteration = prior.iteration + 1
+    model.analysis_settings = MagicMock()
+    model.analysis_settings.weights = "1"
+    model._storage = MagicMock()
+    model._storage.get_ensemble.return_value = prior
+    model._validate_has_updatable_parameter = (
+        UpdateRunModel._validate_has_updatable_parameter
+    )
+
+    with pytest.raises(ErtRunError, match="No parameters to update"):
+        MultipleDataAssimilation.run_experiment(
+            model, MagicMock(spec=EvaluatorServerConfig)
+        )
+
+    model._storage.create_experiment.assert_not_called()
+    model.update.assert_not_called()

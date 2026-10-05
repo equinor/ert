@@ -1,10 +1,11 @@
 import queue
 from argparse import Namespace
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, GenKwConfig, LocalizationType
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -12,7 +13,11 @@ from ert.mode_definitions import (
     MANUAL_UPDATE_MODE,
 )
 from ert.run_models import create_model
-from ert.storage import open_storage
+from ert.run_models.manual_update import ManualUpdate
+from ert.run_models.manual_update_enif import ManualUpdateEnIF
+from ert.run_models.run_model import ErtRunError
+from ert.run_models.update_run_model import UpdateRunModel
+from ert.storage import Storage, open_storage
 
 
 @pytest.mark.slow
@@ -70,3 +75,46 @@ def test_that_manual_update_from_ensemble_experiment_supports_all_update_modes(
         manual_update_exp = storage.get_experiment_by_name("my manual update")
         posterior_ens = manual_update_exp.get_ensemble_by_name("updated_ens1")
         assert posterior_ens is not None
+
+
+@pytest.mark.parametrize(
+    ("update_strategy", "should_update"),
+    [(None, False), (LocalizationType.GLOBAL, True)],
+    ids=["disabled", "enabled"],
+)
+@pytest.mark.parametrize("model_cls", [ManualUpdate, ManualUpdateEnIF])
+def test_that_manual_update_validates_prior_for_updatable_parameters(
+    storage: Storage,
+    update_strategy: LocalizationType | None,
+    should_update: bool,
+    model_cls,
+):
+    parameter = GenKwConfig(
+        name="PARAMETER",
+        distribution={"name": "uniform", "min": 0.8, "max": 1.2},
+        update_strategy=update_strategy,
+    )
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [parameter.model_dump(mode="json")]
+        }
+    )
+    prior = storage.create_ensemble(experiment, name="prior", ensemble_size=1)
+
+    model = MagicMock(spec=model_cls)
+    model._prior = prior
+    model._validate_has_updatable_parameter = (
+        UpdateRunModel._validate_has_updatable_parameter
+    )
+    model.target_ensemble = "updated_ens%d"
+
+    if should_update:
+        model_cls.run_experiment(model, MagicMock(spec=EvaluatorServerConfig))
+        model._create_experiment_storage.assert_called_once()
+        model.update.assert_called_once()
+    else:
+        with pytest.raises(ErtRunError, match="No parameters to update"):
+            model_cls.run_experiment(model, MagicMock(spec=EvaluatorServerConfig))
+
+        model._create_experiment_storage.assert_not_called()
+        model.update.assert_not_called()
