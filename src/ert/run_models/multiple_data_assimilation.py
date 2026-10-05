@@ -116,6 +116,8 @@ class MultipleDataAssimilation(
                     f"expected iteration from prior ensemble: {prior.iteration + 1}"
                 )
 
+            self._validate_has_updatable_parameter(prior)
+
             try:
                 target_experiment = self._storage.create_experiment(
                     experiment_config=self._create_experiment_from_prior(

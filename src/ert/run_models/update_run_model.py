@@ -92,15 +92,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         weight: float = 1.0,
         target_experiment: LocalExperiment | None = None,
     ) -> Ensemble:
-        try:
-            validate_has_updatable_parameter(
-                list(prior.experiment.parameter_configuration.values())
-            )
-        except ConfigValidationError as err:
-            raise ErtRunError(
-                f"Cannot update prior ensemble '{prior.name}' (ID: {prior.id}): {err}"
-            ) from err
-
+        self._validate_has_updatable_parameter(prior)
         self.validate_successful_realizations_count()
         self.send_event(
             RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
@@ -219,3 +211,14 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         data=event.data,
                     )
                 )
+
+    @staticmethod
+    def _validate_has_updatable_parameter(prior: Ensemble) -> None:
+        try:
+            validate_has_updatable_parameter(
+                list(prior.experiment.parameter_configuration.values())
+            )
+        except ConfigValidationError as err:
+            raise ErtRunError(
+                f"Cannot update prior ensemble '{prior.name}' (ID: {prior.id}): {err}"
+            ) from err

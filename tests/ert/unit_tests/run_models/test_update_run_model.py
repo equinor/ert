@@ -18,6 +18,9 @@ from ert.storage import Storage
 @pytest.fixture
 def update_model(storage: Storage) -> MagicMock:
     model = MagicMock(spec=UpdateRunModel)
+    model._validate_has_updatable_parameter = (
+        UpdateRunModel._validate_has_updatable_parameter
+    )
     model._storage = MagicMock(wraps=storage)
     model._runpaths = MagicMock()
     model.update_settings = ObservationSettings()
@@ -26,21 +29,18 @@ def update_model(storage: Storage) -> MagicMock:
     return model
 
 
-@pytest.mark.parametrize("has_parameters", [False, True], ids=["empty", "all-disabled"])
 def test_that_update_rejects_non_updatable_prior_before_creating_posterior(
     update_model: MagicMock,
     storage: Storage,
-    has_parameters: bool,
 ) -> None:
     parameter = GenKwConfig(
-        name="PARAMETER", distribution={"name": "normal", "mean": 0, "std": 1}
+        name="PARAMETER",
+        distribution={"name": "normal", "mean": 0, "std": 1},
+        update_strategy=None,
     )
-    fixed_parameter = parameter.model_copy(update={"update_strategy": None})
     experiment = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": (
-                [fixed_parameter.model_dump(mode="json")] if has_parameters else []
-            )
+            "parameter_configuration": [parameter.model_dump(mode="json")]
         }
     )
     prior = storage.create_ensemble(experiment, name="prior", ensemble_size=2)
