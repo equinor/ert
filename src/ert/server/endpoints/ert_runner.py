@@ -3,16 +3,12 @@ import dataclasses
 import json
 import logging
 import queue
-import shutil
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from pathlib import Path
 from queue import SimpleQueue
 from typing import Annotated, Literal, Self, cast
 
-import anyio
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, TypeAdapter, model_validator
@@ -187,8 +183,7 @@ async def start_experiment_ert(
             run_ert, config, rerun_failed_realizations=rerun_failed_realizations
         )
         if rerun_failed_realizations:
-            config.events.clear()
-            config.status = ExperimentStatus()
+            config.reset_for_rerun()
         config.start_time_unix = int(time.time())
         return Response(status_code=200)
     except Exception:
@@ -212,27 +207,14 @@ async def check_runpath_exists(
     Check if runpath exists for a given experiment.
     Returns a 200 response if at least one path exists, 404 otherwise.
     """
-    exists = False
-    model = config.run_model
-    try:  # ruff: ignore[too-many-statements-in-try-clause]
-        async with anyio.create_task_group() as tg:
-
-            async def _check_path(path: str) -> None:
-                nonlocal exists
-                if await anyio.Path(path).exists():
-                    exists = True
-                    tg.cancel_scope.cancel()
-
-            for path in model.paths:
-                tg.start_soon(_check_path, path)
+    try:
+        if config.run_model.check_if_runpath_exists():
+            return Response("Runpath exists", status_code=200)
     except Exception as e:
         logging.getLogger(__name__).exception(str(e))
         raise HTTPException(
             status_code=500, detail="Error occurred while checking runpath existence"
         ) from e
-
-    if exists:
-        return Response("Runpath exists", status_code=200)
     return Response("Runpath does not exist", status_code=404)
 
 
@@ -247,17 +229,8 @@ def delete_runpath(
         raise HTTPException(
             status_code=409, detail="Cannot delete runpath while experiment is running"
         )
-    model = config.run_model
-
-    def delete_path(path: Path) -> None:
-        if path.exists():
-            shutil.rmtree(path)
-
     try:
-        with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(delete_path, Path(path)) for path in model.paths]
-            for future in futures:
-                future.result()
+        config.run_model.rm_runpath()
     except Exception as e:
         logging.getLogger(__name__).exception(str(e))
         return Response("Failed to delete runpaths", status_code=500)
@@ -305,6 +278,8 @@ async def run_ert(
 
     def publish(event: StatusEvents) -> None:
         run.events.append(event)
+        if isinstance(event, EndEvent):
+            run.finalized.set()
         for subscriber in run.subscribers.values():
             subscriber.notify()
 

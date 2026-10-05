@@ -23,6 +23,7 @@ from ert.server.app import app
 from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
     _experiments,
+    websocket_endpoint,
 )
 from ert.services import ErtClient
 from ert.storage import ExperimentState
@@ -59,6 +60,7 @@ def setup_client(monkeypatch):
         experiment_id = "experiment_id"
         state = ExperimentRunnerState()
         state.events = cast(list[StatusEvents], events)
+        state.finalized.set()
         _experiments[experiment_id] = state
 
         monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
@@ -322,6 +324,31 @@ def test_that_each_event_stream_closes_normally_after_end_event(setup_client):
             with pytest.raises(WebSocketDisconnect) as exception:
                 websocket.receive_json()
             assert exception.value.code == 1000
+
+
+async def test_that_event_stream_stays_open_until_experiment_is_finalized(
+    setup_client, monkeypatch
+):
+    _, _, experiment_id = setup_client()
+    state = _experiments[experiment_id]
+    state.finalized.clear()
+    credentials = b64encode(b"username:password").decode()
+    websocket = MagicMock()
+    websocket.headers = {"Authorization": f"Basic {credentials}"}
+    websocket.accept = AsyncMock()
+    websocket.send_json = AsyncMock()
+    websocket.close = AsyncMock()
+
+    stream = asyncio.create_task(websocket_endpoint(websocket, experiment_id))
+    await asyncio.sleep(0.1)
+
+    websocket.send_json.assert_awaited_once()
+    websocket.close.assert_not_called()
+
+    state.finalized.set()
+    await stream
+
+    websocket.close.assert_awaited_once_with(code=1000)
 
 
 def test_websocket_multiple_events_in_queue(setup_client):
