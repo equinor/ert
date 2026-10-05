@@ -60,3 +60,34 @@ While running, we get reports showing how the observations are matching the resp
 factors used in the update.
 
 .. image:: fig/update_report.png
+
+Parameter localizations
+=======================
+
+The **Parameter Localizations** table in the ES-MDA settings summarizes
+parameter configurations by localization strategy and parameter type.
+For example, 10 GenKW configurations using adaptive localization appear as:
+
+.. list-table::
+   :header-rows: 1
+
+   * - strategy
+     - parameter type
+     - count
+   * - Adaptive
+     - GenKW
+     - 10
+
+Each Field or Surface counts as one configuration, regardless of its number
+of grid cells. Parameters excluded from updating appear as
+``Non-updatable``. If there are no parameter configurations, the table
+contains only column headers.
+
+By default, the summary reflects the current configuration, including
+parameters added or overridden by a design matrix. When you select a prior
+ensemble, it instead reflects the parameter configurations stored with
+that ensemble's experiment.
+
+The table is read-only. It refreshes when you save changes in
+**Update settings**, change the prior ensemble selection, or return to
+the ES-MDA settings from another experiment type.

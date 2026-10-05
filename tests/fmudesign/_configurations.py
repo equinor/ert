@@ -1,6 +1,17 @@
 from pathlib import Path
 
 
+def minimal_configuration():
+    return {
+        "designtype": "onebyone",
+        "repeats": 1,
+        "distribution_seed": None,
+        "seeds": None,
+        "defaultvalues": {},
+        "sensitivities": {},
+    }
+
+
 def onebyone_configuration():
     return {
         "designtype": "onebyone",

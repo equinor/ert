@@ -122,7 +122,7 @@ def _mock_design_generation(monkeypatch):
         pass
 
     monkeypatch.setattr(fmudesignrunner, "excel_to_dict", noop)
-    monkeypatch.setattr(DesignMatrix, "generate", noop)
+    monkeypatch.setattr(DesignMatrix, "_generate", noop)
     monkeypatch.setattr(DesignMatrix, "to_xlsx", noop)
 
 

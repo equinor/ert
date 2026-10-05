@@ -15,8 +15,7 @@ def assert_valid_designmatrix(design_values):
 
 
 def test_that_design_matrix_generates_seed_sensitivity_for_each_repeat():
-    design = DesignMatrix()
-    design.generate(
+    design = DesignMatrix(
         {
             "designtype": "onebyone",
             "seeds": "default",

@@ -47,6 +47,7 @@ from ert.validation.ensemble_realizations_argument import EnsembleRealizationsAr
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
+from ._update_strategy_summary_widget import UpdateStrategySummaryWidget
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
@@ -132,14 +133,32 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.weights_valid = True
         self._createInputForWeights(layout)
 
+        design_matrix = analysis_config.design_matrix
+
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            parameter_config=parameter_configuration,
+            parameter_config=parameter_configuration
+            if design_matrix is None
+            else design_matrix.merge_with_existing_parameters(parameter_configuration),
             ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
+        self._configured_parameter_config = self._analysis_module_edit.parameter_config
         layout.addRow("Update settings:", self._analysis_module_edit)
+
+        self._update_strategy_label = QLabel("Parameter Localizations")
+        self._update_strategy_label.setObjectName("update_strategy_label")
+        self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
+            self._analysis_module_edit.parameter_config, self
+        )
+        self._analysis_module_edit.settings_changed.connect(
+            self._refresh_update_strategy_summary_widget
+        )
+        self._update_strategy_label.setToolTip(
+            self._update_strategy_summary_widget.toolTip()
+        )
+        layout.addRow(self._update_strategy_label, self._update_strategy_summary_widget)
 
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
@@ -236,8 +255,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
+        self._select_prior_ensemble_box.toggled.connect(
+            self._refresh_update_strategy_summary_widget
+        )
+        self._ensemble_selector.currentIndexChanged.connect(
+            self._refresh_update_strategy_summary_widget
+        )
+        self._ensemble_selector.ensemble_populated.connect(
+            self._refresh_update_strategy_summary_widget
+        )
 
-        design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
                 "Design matrix",
@@ -246,11 +273,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                     number_of_realizations_label,
                     config_num_realization,
                 ),
-            )
-
-        if design_matrix and not self._prior_ensemble_selected:
-            self._analysis_module_edit.parameter_config = (
-                design_matrix.merge_with_existing_parameters(parameter_configuration)
             )
 
         if self._analysis_module_edit.parameter_config:
@@ -265,9 +287,23 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
+    def _refresh_update_strategy_summary_widget(self) -> None:
+        if self._select_prior_ensemble_box.isChecked():
+            ensemble = self._ensemble_selector.selected_ensemble
+            self._update_strategy_summary_widget.set_parameters(
+                ensemble.experiment.parameter_configuration.values()
+                if ensemble is not None
+                else []
+            )
+        else:
+            self._update_strategy_summary_widget.set_parameters(
+                self._configured_parameter_config
+            )
+
     @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
+        self._refresh_update_strategy_summary_widget()
         if isinstance(w, MultipleDataAssimilationPanel):
             self._update_experiment_name_placeholder()
 
@@ -277,9 +313,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
 
     def _parameter_configuration_changed(self) -> None:
-        if self._ensemble_selector.selected_ensemble is not None:
+        if (
+            self._select_prior_ensemble_box.isChecked()
+            and self._ensemble_selector.selected_ensemble is not None
+        ):
             self._analysis_module_edit.parameter_config = list(
                 self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
+            )
+        else:
+            self._analysis_module_edit.parameter_config = (
+                self._configured_parameter_config
             )
 
     @Slot()
@@ -337,6 +380,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
         self._weights_source = self._relative_iteration_weights_box.text()
         self._update_weights_mismatch_warning()
+        self._parameter_configuration_changed()
         if self._select_prior_ensemble_box.isChecked():
             self._active_realizations_field.setValidator(
                 self._previous_ensemble_realizations_validator

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 from PyQt6.QtCore import QMargins, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -19,6 +20,8 @@ from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
 class AnalysisModuleEdit(QWidget):
+    settings_changed = Signal()
+
     def __init__(
         self,
         es_settings: ESSettings,
@@ -118,3 +121,4 @@ class AnalysisModuleEdit(QWidget):
                         and parameter_config.update_strategy is not None
                     ):
                         parameter_config.update_strategy = strategy
+            self.settings_changed.emit()
