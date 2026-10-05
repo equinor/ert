@@ -84,8 +84,25 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        self._add_parameter_configuration_rows(
+            layout,
+            analysis_config,
+            parameter_configuration,
+            number_of_realizations_label,
+            config_num_realization,
+        )
+        self.setLayout(layout)
+        self._connect_signals()
+
+    def _add_parameter_configuration_rows(
+        self,
+        layout: QFormLayout,
+        analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
+        number_of_realizations_label: QLabel,
+        config_num_realization: int,
+    ) -> None:
         design_matrix = analysis_config.design_matrix
-        merged_parameters = parameter_configuration
         if design_matrix is not None:
             layout.addRow(
                 "Design matrix",
@@ -95,15 +112,16 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
-            merged_parameters = design_matrix.merge_with_existing_parameters(
-                merged_parameters
+            parameter_configuration = design_matrix.merge_with_existing_parameters(
+                parameter_configuration
             )
 
-        if merged_parameters:
-            layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
+        if parameter_configuration:
+            layout.addRow(
+                "Parameters", get_parameters_button(parameter_configuration, self)
+            )
 
-        self.setLayout(layout)
-
+    def _connect_signals(self) -> None:
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
@@ -113,7 +131,6 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self._ensemble_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
-
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
     @override

@@ -41,6 +41,20 @@ class SingleTestRunPanel(ExperimentConfigPanel):
 
         runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
+
+        self._add_parameter_configuration_rows(
+            layout,
+            analysis_config,
+            parameter_configuration,
+        )
+        self.setLayout(layout)
+
+    def _add_parameter_configuration_rows(
+        self,
+        layout: QFormLayout,
+        analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
+    ) -> None:
         design_matrix = analysis_config.design_matrix
         merged_parameters = parameter_configuration
         if design_matrix is not None:
@@ -56,8 +70,6 @@ class SingleTestRunPanel(ExperimentConfigPanel):
 
         if merged_parameters:
             layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
-
-        self.setLayout(layout)
 
     @override
     def get_experiment_arguments(self) -> Arguments:
