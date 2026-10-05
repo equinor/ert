@@ -11,7 +11,7 @@ import yaml
 
 from ert.config.design_matrix import read_default_values
 
-from .design_input import extract_sensitivities
+from .design_input import DesignInput
 from .general_input import GeneralInput
 from .read_background import read_background
 from .utils import (
@@ -51,11 +51,12 @@ def excel_to_dict(
     default_values_sheet = find_sheet(default_values_sheet, names=sheet_names)
 
     general_input = GeneralInput.from_xlsx(input_filename, general_input_sheet)
+    design_input = DesignInput.from_xlsx(input_filename, design_input_sheet)
 
     return _excel_to_dict_onebyone(
         input_filename=input_filename,
         general_input=general_input,
-        design_input_sheet=design_input_sheet,
+        design_input=design_input,
         default_values_sheet=default_values_sheet,
     )
 
@@ -75,7 +76,7 @@ def _excel_to_dict_onebyone(
     input_filename: str,
     *,
     general_input: GeneralInput,
-    design_input_sheet: str,
+    design_input: DesignInput,
     default_values_sheet: str,
 ) -> dict[str, Any]:
     """Reads configuration from Excel file for a onebyone design matrix.
@@ -83,7 +84,7 @@ def _excel_to_dict_onebyone(
     Args:
         input_filename (str): Name of excel workbook
         general_input (GeneralInput): Validated general input
-        design_input_sheet (str): name of design input sheet
+        design_input (DesignInput): Validated design input
         default_values_sheet (str): name of default value sheet
 
     Returns:
@@ -102,8 +103,6 @@ def _excel_to_dict_onebyone(
     else:
         background = None
 
-    sensitivities, decimals = extract_sensitivities(input_filename, design_input_sheet)
-
     output: dict[str, Any] = {
         "input_file": input_filename,
         "designtype": general_input.designtype,
@@ -116,12 +115,11 @@ def _excel_to_dict_onebyone(
         "defaultvalues": read_default_values(
             Path(input_filename), default_values_sheet, has_header=True
         ),
-        "sensitivities": sensitivities,
+        "sensitivities": design_input.sensitivities,
     }  # This is the config that we read and return
 
-    if decimals is not None:
-        output["decimals"] = decimals
-
+    if design_input.decimals is not None:
+        output["decimals"] = design_input.decimals
     return output
 
 
