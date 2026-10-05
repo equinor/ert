@@ -1,4 +1,5 @@
 import json
+import shutil
 from collections.abc import Iterator
 from pathlib import Path
 from queue import SimpleQueue
@@ -265,7 +266,8 @@ def test_that_inspection_and_runpath_requests_reuse_the_registered_model(
     runpath = tmp_path / "realization-0"
     runpath.mkdir()
     model = Mock(spec=RunModel)
-    model.paths = [str(runpath)]
+    model.check_if_runpath_exists.side_effect = runpath.exists
+    model.rm_runpath.side_effect = lambda: shutil.rmtree(runpath)
     model._storage = Mock()
     model.get_number_of_existing_runpaths.return_value = 1
     model.get_number_of_active_realizations.return_value = 2
@@ -301,8 +303,38 @@ def test_that_inspection_and_runpath_requests_reuse_the_registered_model(
     assert not runpath.exists()
     response = runner_client.post("/experiment_runs/runpath", params=payload)
     assert response.status_code == 404
+    model.rm_runpath.assert_called_once_with()
     model._storage.close.assert_not_called()
     create_model.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("method", "model_method", "expected_status"),
+    [("POST", "check_if_runpath_exists", 500), ("DELETE", "rm_runpath", 500)],
+)
+def test_that_runpath_requests_report_run_model_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+    method: str,
+    model_method: str,
+    expected_status: int,
+) -> None:
+    model = Mock(spec=RunModel)
+    getattr(model, model_method).side_effect = OSError("Disk error")
+    config_id = str(uuid4())
+    monkeypatch.setitem(
+        _experiments,
+        config_id,
+        ert_runner.ErtExperimentRunnerState(
+            run_model=model, status_queue=SimpleQueue()
+        ),
+    )
+
+    response = runner_client.request(
+        method, "/experiment_runs/runpath", params={"config_id": config_id}
+    )
+
+    assert response.status_code == expected_status
 
 
 @pytest.mark.parametrize(
