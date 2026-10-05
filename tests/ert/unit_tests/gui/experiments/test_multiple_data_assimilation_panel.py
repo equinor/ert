@@ -300,6 +300,39 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
     ]
 
 
+@pytest.mark.parametrize(
+    "panel_type",
+    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+)
+def test_that_activating_panel_refreshes_strategy_changed_by_another_panel(
+    qtbot: QtBot,
+    panel_type,
+) -> None:
+    parameter = GenKwConfig(
+        name="parameter",
+        distribution=RawSettings(),
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = panel_type(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=[parameter],
+        runpath="",
+        notifier=notifier,
+        active_realizations=[True],
+        config_num_realization=1,
+    )
+    qtbot.addWidget(panel)
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+    assert _summary_rows(summary) == [("Global", "GenKW", "1")]
+
+    parameter.update_strategy = LocalizationType.ADAPTIVE
+    panel.experimentTypeChanged(panel)
+
+    assert _summary_rows(summary) == [("Adaptive", "GenKW", "1")]
+
+
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_config(
     qtbot: QtBot,
 ) -> None:

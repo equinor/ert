@@ -300,6 +300,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, MultipleDataAssimilationPanel):
+            self._refresh_update_strategy_summary_widget()
             self._update_experiment_name_placeholder()
 
     def _update_experiment_name_placeholder(self) -> None:
