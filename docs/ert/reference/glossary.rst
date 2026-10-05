@@ -28,6 +28,11 @@ It is not about being correct, it is about being relevant and coherent.
         realisations. The idea is that with a sufficiently large ensemble the
         uncertainty of the template model is represented by the ensemble.
 
+    ensemble end date
+        The maximum simulated time across all realisations in an ensemble. When using
+        reservoir simulators this means the latest time of the last reported step in
+        any realisation's :term:`summary files`.
+
     ensemble response
         By evaluating an ensemble you will obtain an ensemble response. An ensemble
         response contains the realisation responses for all of its realisations;

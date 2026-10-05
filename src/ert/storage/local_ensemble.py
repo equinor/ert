@@ -23,6 +23,7 @@ from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ert.config import (
+    DerivedResponseConfig,
     InvalidResponseFile,
     ParameterCardinality,
     ParameterConfig,
@@ -750,8 +751,29 @@ class LocalEnsemble(BaseMode):
             engine="streaming"
         )
 
+    def _compute_ensemble_end_date(self) -> datetime | None:
+        """Returns the last simulated time across all realizations with
+        responses.
+        All summary keys share the same time axis within a given
+        realization, guaranteed by the summary file format.
+        """
+        if "summary" not in self.experiment.response_configuration:
+            return None
+
+        available_realizations = self.get_realization_list_with_responses()
+        if not available_realizations:
+            return None
+
+        times = self.load_responses("summary", tuple(available_realizations))["time"]
+        if len(times) == 0:
+            return None
+        return times.max()  # type: ignore
+
     def _load_responses_lazy(
-        self, response_key: str, realizations: tuple[int, ...]
+        self,
+        response_key: str,
+        realizations: tuple[int, ...],
+        ensemble_end_date: datetime | None = None,
     ) -> pl.LazyFrame:
         select_key = False
         if response_key in self.experiment.response_configuration:
@@ -776,7 +798,13 @@ class LocalEnsemble(BaseMode):
 
             loaded.append(df)
 
-        return pl.concat(loaded) if loaded else pl.DataFrame().lazy()
+        result = pl.concat(loaded) if loaded else pl.DataFrame().lazy()
+        config = self.experiment.response_configuration.get(response_type)
+        if isinstance(config, DerivedResponseConfig):
+            if ensemble_end_date is None:
+                ensemble_end_date = self._compute_ensemble_end_date()
+            result = config.fill_missing_values(result, ensemble_end_date)
+        return result
 
     @require_write
     def save_parameters(
@@ -995,6 +1023,12 @@ class LocalEnsemble(BaseMode):
 
         observations_by_type = self.experiment.observations
 
+        ensemble_end_date = (
+            self._compute_ensemble_end_date()
+            if "breakthrough" in self.experiment.response_configuration
+            else None
+        )
+
         dfs_per_response_type = []
         for (
             response_type,
@@ -1030,7 +1064,7 @@ class LocalEnsemble(BaseMode):
                 }
 
                 responses = self._load_responses_lazy(
-                    response_type, (real,)
+                    response_type, (real,), ensemble_end_date=ensemble_end_date
                 ).with_columns([pl.col("response_key").cast(pl.Categorical)])
 
                 if (

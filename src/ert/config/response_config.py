@@ -1,5 +1,6 @@
 import warnings
 from abc import abstractmethod
+from datetime import datetime
 from typing import Any, Literal, Self
 
 import polars as pl
@@ -193,6 +194,12 @@ class DerivedResponseConfig(ResponseConfig):
     @abstractmethod
     def derive_from_storage(self, iter_: int, real: int, ensemble: Any) -> pl.DataFrame:
         """Derives response DataFrame from existing files in storage"""
+
+    def fill_missing_values(
+        self, response_df: pl.LazyFrame, ensemble_end_date: datetime | None
+    ) -> pl.LazyFrame:
+        """Fill missing (null) values in a loaded response at read time"""
+        return response_df
 
     def response_keys(self) -> list[str]:
         return self.keys
