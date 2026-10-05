@@ -1,4 +1,5 @@
-from typing import Any, cast
+from dataclasses import dataclass
+from typing import Any, Self, cast
 
 import pandas as pd
 from python_calamine import CalamineWorkbook
@@ -8,107 +9,114 @@ from fmudesign.read_distributions import parse_distribution_parameters
 from fmudesign.utils import _has_value, _raise_if_duplicates, resolve_path
 
 
-def extract_sensitivities(
-    input_filename: str, design_input_sheet: str
-) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    designinput = (
-        pd.read_excel(input_filename, design_input_sheet, engine="openpyxl")
-        .dropna(axis=0, how="all")
-        .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
-    )
+@dataclass
+class DesignInput:
+    sensitivities: dict[str, Any]
+    decimals: dict[str, int] | None = None
 
-    # Strip strings in column 'sensname' while preserving NaN values
-    designinput = designinput.assign(sensname=lambda df: df["sensname"].str.strip())
-
-    _check_designinput(designinput)
-
-    designinput["sensname"] = designinput["sensname"].ffill()
-
-    decimals = None
-    if "decimals" in designinput:
-        # Convert to numeric, then filter for integers
-        numeric_decimals = pd.to_numeric(designinput["decimals"], errors="coerce")
-        mask = numeric_decimals.notna() & (numeric_decimals % 1 == 0)
-
-        valid_decimals = designinput[mask]
-        decimals = {
-            row.param_name: int(cast("float", row.decimals))
-            for row in valid_decimals.itertuples()
-        }
-
-    grouped = designinput.groupby("sensname", sort=False)
-
-    sensitivities = {}
-    # Read each sensitivity
-    for sensname, group in grouped:
-        _check_for_mixed_sensitivities(
-            str(sensname),
-            group,
+    @classmethod
+    def from_xlsx(cls, input_filename: str, design_input_sheet: str) -> Self:
+        designinput = (
+            pd.read_excel(input_filename, design_input_sheet, engine="openpyxl")
+            .dropna(axis=0, how="all")
+            .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
         )
 
-        sensdict: dict[str, Any] = {}
+        return cls.from_dataframe(input_filename, designinput)
 
-        sens_type = group["type"].iloc[0]
-        if sens_type in {"ref", "background"}:
-            sensdict["senstype"] = sens_type
+    @classmethod
+    def from_dataframe(cls, input_filename: str, df: pd.DataFrame) -> Self:
+        # Strip strings in column 'sensname' while preserving NaN values
+        df = df.assign(sensname=lambda _df: _df["sensname"].str.strip())
+        _check_designinput(df)
+        df["sensname"] = df["sensname"].ffill()
 
-        elif sens_type == "seed":
-            sensdict["seedname"] = "RMS_SEED"
-            sensdict["senstype"] = sens_type
-            if _has_value(group["param_name"].iloc[0]):
-                sensdict["parameters"] = _read_constants(group)
-            else:
-                sensdict["parameters"] = None
+        decimals = None
+        if "decimals" in df:
+            # Convert to numeric, then filter for integers
+            numeric_decimals = pd.to_numeric(df["decimals"], errors="coerce")
+            mask = numeric_decimals.notna() & (numeric_decimals % 1 == 0)
 
-        elif sens_type == "scenario":
-            sensdict = _read_scenario_sensitivity(group)
-            sensdict["senstype"] = sens_type
+            valid_decimals = df[mask]
+            decimals = {
+                row.param_name: int(cast("float", row.decimals))
+                for row in valid_decimals.itertuples()
+            }
 
-        elif sens_type == "dist":
-            sensdict["senstype"] = sens_type
-            sensdict["parameters"] = parse_distribution_parameters(
-                group, source="sensitivity"
-            )
-            sensdict["correlations"] = parse_sensitivity_correlations(
-                group, input_filename
-            )
+        grouped = df.groupby("sensname", sort=False)
 
-        elif sens_type == "extern":
-            sensdict["extern_file"] = resolve_path(
-                str(group["extern_file"].iloc[0]), base_file=input_filename
-            )
-            sensdict["senstype"] = sens_type
-            sensdict["parameters"] = list(group["param_name"])
+        sensitivities: dict[str, Any] = {}
 
-        else:
-            raise ValueError(
-                f"Sensitivity {sensname} does not have a valid sensitivity type"
+        # Read each sensitivity
+        for sensname, group in grouped:
+            _check_for_mixed_sensitivities(
+                str(sensname),
+                group,
             )
 
-        if "numreal" in group and _has_value(group["numreal"].iloc[0]):
-            # Using default number of realisations:
-            # 'repeats' from general_input sheet
-            sensdict["numreal"] = int(group["numreal"].iloc[0])
+            sensdict: dict[str, Any] = {}
 
-        # If this sensitivity has dependencies, then get them from sheet
-        sensdict["dependencies"] = {}
-        if "dependencies" in group:
-            # Get all dependencies in this sensitivity
-            valid_deps = group[group["dependencies"].notna()]
-            dependencies_dict = {}
+            sens_type = group["type"].iloc[0]
+            if sens_type in {"ref", "background"}:
+                sensdict["senstype"] = sens_type
 
-            # For each dependency, get the mapping
-            for row in valid_deps.itertuples():
-                dependencies_dict[row.param_name] = _read_dependencies(
-                    filename=input_filename,
-                    sheetname=str(row.dependencies),
-                    from_parameter=str(row.param_name),
+            elif sens_type == "seed":
+                sensdict["seedname"] = "RMS_SEED"
+                sensdict["senstype"] = sens_type
+                if _has_value(group["param_name"].iloc[0]):
+                    sensdict["parameters"] = _read_constants(group)
+                else:
+                    sensdict["parameters"] = None
+
+            elif sens_type == "scenario":
+                sensdict = _read_scenario_sensitivity(group)
+                sensdict["senstype"] = sens_type
+
+            elif sens_type == "dist":
+                sensdict["senstype"] = sens_type
+                sensdict["parameters"] = parse_distribution_parameters(
+                    group, source="sensitivity"
                 )
-            sensdict["dependencies"] = dependencies_dict
+                sensdict["correlations"] = parse_sensitivity_correlations(
+                    group, input_filename
+                )
 
-        # Add this sensitivity to the sensitivities
-        sensitivities[str(sensname)] = sensdict
-    return sensitivities, decimals
+            elif sens_type == "extern":
+                sensdict["extern_file"] = resolve_path(
+                    str(group["extern_file"].iloc[0]), base_file=input_filename
+                )
+                sensdict["senstype"] = sens_type
+                sensdict["parameters"] = list(group["param_name"])
+
+            else:
+                raise ValueError(
+                    f"Sensitivity {sensname} does not have a valid sensitivity type"
+                )
+
+            if "numreal" in group and _has_value(group["numreal"].iloc[0]):
+                # Using default number of realisations:
+                # 'repeats' from general_input sheet
+                sensdict["numreal"] = int(group["numreal"].iloc[0])
+
+            # If this sensitivity has dependencies, then get them from sheet
+            sensdict["dependencies"] = {}
+            if "dependencies" in group:
+                # Get all dependencies in this sensitivity
+                valid_deps = group[group["dependencies"].notna()]
+                dependencies_dict = {}
+
+                # For each dependency, get the mapping
+                for row in valid_deps.itertuples():
+                    dependencies_dict[row.param_name] = _read_dependencies(
+                        filename=input_filename,
+                        sheetname=str(row.dependencies),
+                        from_parameter=str(row.param_name),
+                    )
+                sensdict["dependencies"] = dependencies_dict
+
+            # Add this sensitivity to the sensitivities
+            sensitivities[str(sensname)] = sensdict
+        return cls(sensitivities=sensitivities, decimals=decimals)
 
 
 def _check_designinput(dsgn_input: pd.DataFrame) -> None:
