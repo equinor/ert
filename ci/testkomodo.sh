@@ -75,6 +75,9 @@ run_everest_eightcells_test() {
     # shellcheck source=/dev/null
     source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
 
+    # Ensure everserver is robust towards stale DISPLAY variables
+    export DISPLAY=localhost:99.0
+
     everest run "$CONFIG" --debug --disable-monitoring
     STATUS=$?
     if [ $STATUS -ne 0 ]; then
