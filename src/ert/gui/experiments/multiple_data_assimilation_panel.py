@@ -268,15 +268,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
-        self._select_prior_ensemble_box.toggled.connect(
-            self._refresh_update_strategy_summary_widget
-        )
-        self._ensemble_selector.currentIndexChanged.connect(
-            self._refresh_update_strategy_summary_widget
-        )
-        self._ensemble_selector.ensemble_populated.connect(
-            self._refresh_update_strategy_summary_widget
-        )
 
         if design_matrix is not None:
             layout.addRow(
@@ -301,22 +292,13 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
     def _refresh_update_strategy_summary_widget(self) -> None:
-        if self._select_prior_ensemble_box.isChecked():
-            ensemble = self._ensemble_selector.selected_ensemble
-            self._update_strategy_summary_widget.set_parameters(
-                ensemble.experiment.parameter_configuration.values()
-                if ensemble is not None
-                else []
-            )
-        else:
-            self._update_strategy_summary_widget.set_parameters(
-                self._configured_parameter_config
-            )
+        self._update_strategy_summary_widget.set_parameters(
+            self._analysis_module_edit.parameter_config
+        )
 
     @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
-        self._refresh_update_strategy_summary_widget()
         if isinstance(w, MultipleDataAssimilationPanel):
             self._update_experiment_name_placeholder()
 
@@ -337,6 +319,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._analysis_module_edit.parameter_config = (
                 self._configured_parameter_config
             )
+        self._refresh_update_strategy_summary_widget()
 
     @Slot()
     def update_experiment_name(self) -> None:

@@ -26,6 +26,8 @@ from ert.run_models.manual_update import ManualUpdate
 from ert.storage import Ensemble, RealizationStorageState
 from ert.validation import EnsembleRealizationsArgument, ProperNameFormatArgument
 
+from ._update_strategy_summary_widget import UpdateStrategySummaryWidget
+
 logger = logging.getLogger(__name__)
 
 
@@ -105,6 +107,19 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._analysis_module_edit.setEnabled(False)
 
         layout.addRow("Update settings:", self._analysis_module_edit)
+        self._update_strategy_label = QLabel("Parameter Localizations")
+        self._update_strategy_label.setObjectName("update_strategy_label")
+        self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
+            self._analysis_module_edit.parameter_config, self
+        )
+        self._analysis_module_edit.settings_changed.connect(
+            self._refresh_update_strategy_summary_widget
+        )
+        self._update_strategy_label.setToolTip(
+            self._update_strategy_summary_widget.toolTip()
+        )
+        layout.addRow(self._update_strategy_label, self._update_strategy_summary_widget)
+
         self._active_realizations_model = ActiveRealizationsModel(0, show_default=False)
         self._active_realizations_field = StringBox(
             self._active_realizations_model,  # type: ignore
@@ -146,6 +161,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(
             self._parameter_configuration_changed
         )
+        self._parameter_configuration_changed()
 
         self.setLayout(layout)
 
@@ -158,13 +174,19 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             self._analysis_module_edit.parameter_config = list(
                 self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
             )
+            self._refresh_update_strategy_summary_widget()
+
+    def _refresh_update_strategy_summary_widget(self) -> None:
+        self._update_strategy_summary_widget.set_parameters(
+            self._analysis_module_edit.parameter_config
+        )
 
     @Slot(str)
     def _on_update_method_changed(self, new_method: str) -> None:
-        if new_method == "ES Update":
-            self._analysis_module_edit.show()
-        else:
-            self._analysis_module_edit.hide()
+        show_update_settings = new_method == "ES Update"
+        self._analysis_module_edit.setVisible(show_update_settings)
+        self._update_strategy_label.setVisible(show_update_settings)
+        self._update_strategy_summary_widget.setVisible(show_update_settings)
 
     @override
     def isConfigurationValid(self) -> bool:

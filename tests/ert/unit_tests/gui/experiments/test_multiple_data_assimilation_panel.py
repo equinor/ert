@@ -250,9 +250,14 @@ def test_that_strategy_summary_reflects_only_saved_update_settings(
     ]
 
 
+@pytest.mark.parametrize(
+    "panel_type",
+    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+)
 def test_that_update_strategy_summary_includes_design_matrix_parameters(
     qtbot: QtBot,
     tmp_path,
+    panel_type,
 ) -> None:
     design_matrix_path = tmp_path / "design_matrix.xlsx"
     _create_design_matrix(
@@ -268,7 +273,7 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
     )
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
-    panel = MultipleDataAssimilationPanel(
+    panel = panel_type(
         analysis_config=AnalysisConfig(
             minimum_required_realizations=1,
             design_matrix=design_matrix,

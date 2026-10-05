@@ -37,6 +37,7 @@ from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
+from ._update_strategy_summary_widget import UpdateStrategySummaryWidget
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
@@ -127,9 +128,12 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
+        design_matrix = analysis_config.design_matrix
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            parameter_config=parameter_configuration,
+            parameter_config=parameter_configuration
+            if design_matrix is None
+            else design_matrix.merge_with_existing_parameters(parameter_configuration),
             ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
@@ -137,6 +141,19 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
 
         layout.addRow("Update settings:", self._analysis_module_edit)
+        self._update_strategy_label = QLabel("Parameter Localizations")
+        self._update_strategy_label.setObjectName("update_strategy_label")
+        self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
+            self._analysis_module_edit.parameter_config, self
+        )
+        self._analysis_module_edit.settings_changed.connect(
+            self._refresh_update_strategy_summary_widget
+        )
+        self._update_strategy_label.setToolTip(
+            self._update_strategy_summary_widget.toolTip()
+        )
+        layout.addRow(self._update_strategy_label, self._update_strategy_summary_widget)
+
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/experiment/active_realizations",
@@ -149,7 +166,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
                 "Design matrix",
@@ -159,12 +175,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
-            self._analysis_module_edit.parameter_config = (
-                design_matrix.merge_with_existing_parameters(
-                    self._analysis_module_edit.parameter_config
-                )
-            )
-
         if self._analysis_module_edit.parameter_config:
             layout.addRow(
                 "Parameters",
@@ -189,6 +199,11 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         )
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    def _refresh_update_strategy_summary_widget(self) -> None:
+        self._update_strategy_summary_widget.set_parameters(
+            self._analysis_module_edit.parameter_config
+        )
 
     @override
     @Slot(QWidget)
