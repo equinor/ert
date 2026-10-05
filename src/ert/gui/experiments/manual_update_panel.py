@@ -60,9 +60,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._update_method_dropdown.addItems(
             ["ES Update", "EnIF Update (Experimental)"]
         )
-        self._update_method_dropdown.currentTextChanged.connect(
-            self._on_update_method_changed
-        )
         self._update_method_dropdown.setObjectName("manual_update_method_dropdown")
 
         layout.addRow("Update method:", self._update_method_dropdown)
@@ -123,6 +120,11 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
         self._experiment_name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._experiment_name_field)
+
+        self.setLayout(layout)
+        self._connect_signals()
+
+    def _connect_signals(self) -> None:
         self._ensemble_selector.ensemble_selected.connect(
             lambda ensemble: self._experiment_name_field.setPlaceholderText(
                 f"Manual update of {ensemble.name}"
@@ -130,7 +132,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 else "Manual update"
             )
         )
-
         self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
         self._ensemble_selector.ensemble_populated.connect(
             self.experiment_configuration_changed
@@ -138,13 +139,13 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_selector.ensemble_populated.connect(
             self._parameter_configuration_changed
         )
-
+        self._update_method_dropdown.currentTextChanged.connect(
+            self._on_update_method_changed
+        )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(
             self._parameter_configuration_changed
         )
-
-        self.setLayout(layout)
 
     @property
     def selected_update_method(self) -> str:
