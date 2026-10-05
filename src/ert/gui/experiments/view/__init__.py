@@ -3,7 +3,7 @@ from .progress_widget import ProgressWidget
 from .realization import RealizationWidget
 from .runpath_progress_widget import RunpathProgressWidget
 from .update import UpdateWidget
-from .workflow_log import WorkflowLogWidget
+from .workflow_log import WorkflowLogView, WorkflowLogWidget
 
 __all__ = [
     "DiskSpaceWidget",
@@ -11,5 +11,6 @@ __all__ = [
     "RealizationWidget",
     "RunpathProgressWidget",
     "UpdateWidget",
+    "WorkflowLogView",
     "WorkflowLogWidget",
 ]
