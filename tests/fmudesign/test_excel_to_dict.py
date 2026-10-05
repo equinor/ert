@@ -10,10 +10,9 @@ import pytest
 from fmudesign import excel_to_dict, inputdict_to_yaml
 from fmudesign._excel_to_dict import (
     _assert_no_merged_cells,
-    _has_value,
-    _read_dependencies,
 )
-from fmudesign.utils import map_dependencies
+from fmudesign.design_input import _read_dependencies
+from fmudesign.utils import _has_value, map_dependencies
 
 MOCK_GENERAL_INPUT = pd.DataFrame(
     data=[
