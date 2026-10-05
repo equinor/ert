@@ -24,6 +24,7 @@ from ert.gui.tools.manage_experiments.ensemble_widget import (
 from ert.gui.tools.manage_experiments.export_dialog import ExportDialog
 from ert.gui.tools.manage_experiments.storage_info_widget import (
     _ExperimentWidget,
+    _ExperimentWidgetTabs,
     _RealizationWidget,
     _WidgetType,
 )
@@ -36,6 +37,7 @@ from ert.storage import (
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
+from tests.ert.unit_tests.gui.experiments.conftest import make_workflow_event
 
 from .conftest import add_experiment_in_manage_experiment_dialog
 
@@ -797,3 +799,58 @@ def test_that_storage_widget_sorts_by_name_and_created(qtbot):
 
     tree_view.sortByColumn(1, Qt.SortOrder.DescendingOrder)
     qtbot.waitUntil(lambda: current_child_names() == ["b-ens", "a-ens"], timeout=500)
+
+
+def test_that_workflows_tab_shows_output_stored_for_experiment_when_tab_is_reselected(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    qtbot.addWidget(tool)
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    storage_widget._tree_view.setCurrentIndex(
+        storage_widget._tree_view.model().index(0, 0)
+    )
+
+    experiment_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(experiment_widget, _ExperimentWidget)
+    workflow_log_view = experiment_widget._workflow_log_view
+    tab_widget = experiment_widget._tab_widget
+
+    tab_widget.setCurrentIndex(_ExperimentWidgetTabs.WORKFLOWS_TAB)
+    assert workflow_log_view._stack.currentWidget() is workflow_log_view._placeholder
+
+    experiment = next(iter(storage.experiments))
+    experiment.append_workflow_events(
+        [
+            make_workflow_event(
+                job_name="FIRST_JOB", stdout="output of first job"
+            ).model_dump_json(),
+            make_workflow_event(
+                job_name="SECOND_JOB", stdout="output of second job"
+            ).model_dump_json(),
+        ]
+    )
+    tab_widget.setCurrentIndex(_ExperimentWidgetTabs.EXPERIMENT_TAB)
+    tab_widget.setCurrentIndex(_ExperimentWidgetTabs.WORKFLOWS_TAB)
+
+    table = workflow_log_view._workflow_log._table
+    assert [table.item(row, 2).text() for row in range(table.rowCount())] == [
+        "FIRST_JOB",
+        "SECOND_JOB",
+    ]
+
+    table.selectRow(0)
+    assert (
+        workflow_log_view._workflow_log._stdout_view.toPlainText()
+        == "output of first job"
+    )
