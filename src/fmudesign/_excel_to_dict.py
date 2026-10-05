@@ -4,25 +4,19 @@ by the DesignMatrix class to generate design matrices.
 """
 
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 import openpyxl
-import pandas as pd
 import yaml
-from python_calamine import CalamineWorkbook
 
 from ert.config.design_matrix import read_default_values
 
+from .design_input import extract_sensitivities
 from .general_input import GeneralInput
 from .read_background import read_background
-from .read_correlations import parse_sensitivity_correlations
-from .read_distributions import parse_distribution_parameters
 from .utils import (
-    _has_value,
-    _raise_if_duplicates,
     excel_sheet_names,
     find_sheet,
-    resolve_path,
     seeds_from_extern,
 )
 
@@ -77,44 +71,6 @@ def inputdict_to_yaml(inputdict: dict[str, Any], filename: str) -> None:
         yaml.dump(inputdict, stream)
 
 
-def _check_designinput(dsgn_input: pd.DataFrame) -> None:
-    """Checks for valid input in designinput sheet"""
-    # Filter out rows where sensname has no value
-    valid_sensnames = dsgn_input["sensname"].dropna()
-    duplicated_mask = valid_sensnames.duplicated()
-
-    if duplicated_mask.any():
-        # Find the first duplicate to include in error message
-        duplicate_name = valid_sensnames[duplicated_mask].iloc[0]
-        raise ValueError(
-            f"sensname '{duplicate_name}' was found on more than one row in "
-            "designinput sheet. Two sensitivities cannot share the same sensname. "
-            "Please correct this and rerun"
-        )
-
-    # Check for duplicate parameter names within each sensname
-    for sensname, df_sensname in dsgn_input.ffill().groupby("sensname"):
-        try:
-            _raise_if_duplicates(df_sensname["param_name"])
-        except ValueError as e:
-            raise ValueError(f"Duplicate param names in {sensname}\n{e}") from e
-
-
-def _check_for_mixed_sensitivities(sens_name: str, sens_group: pd.DataFrame) -> None:
-    """Checks for valid input in designinput sheet. A sensitivity cannot contain
-    two different sensitivity types
-    """
-
-    unique_types = sens_group["type"].dropna().unique()
-    if len(unique_types) > 1:
-        raise ValueError(
-            f"The sensitivity with sensname '{sens_name}' in designinput sheet "
-            "contains more than one sensitivity type. For each sensname all parameters "
-            "must be specified using the same type (seed, scenario, dist, ref, "
-            "background, extern)"
-        )
-
-
 def _excel_to_dict_onebyone(
     input_filename: str,
     *,
@@ -146,6 +102,8 @@ def _excel_to_dict_onebyone(
     else:
         background = None
 
+    sensitivities, decimals = extract_sensitivities(input_filename, design_input_sheet)
+
     output: dict[str, Any] = {
         "input_file": input_filename,
         "designtype": general_input.designtype,
@@ -158,251 +116,13 @@ def _excel_to_dict_onebyone(
         "defaultvalues": read_default_values(
             Path(input_filename), default_values_sheet, has_header=True
         ),
-        "sensitivities": {},
+        "sensitivities": sensitivities,
     }  # This is the config that we read and return
 
-    designinput = (
-        pd.read_excel(input_filename, design_input_sheet, engine="openpyxl")
-        .dropna(axis=0, how="all")
-        .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
-    )
-
-    # Strip strings in column 'sensname' while preserving NaN values
-    designinput = designinput.assign(sensname=lambda df: df["sensname"].str.strip())
-
-    _check_designinput(designinput)
-
-    designinput["sensname"] = designinput["sensname"].ffill()
-
-    if "decimals" in designinput:
-        # Convert to numeric, then filter for integers
-        numeric_decimals = pd.to_numeric(designinput["decimals"], errors="coerce")
-        mask = numeric_decimals.notna() & (numeric_decimals % 1 == 0)
-
-        valid_decimals = designinput[mask]
-        output["decimals"] = {
-            row.param_name: int(cast("float", row.decimals))
-            for row in valid_decimals.itertuples()
-        }
-
-    grouped = designinput.groupby("sensname", sort=False)
-
-    # Read each sensitivity
-    for sensname, group in grouped:
-        _check_for_mixed_sensitivities(
-            str(sensname),
-            group,
-        )
-
-        sensdict: dict[str, Any] = {}
-
-        sens_type = group["type"].iloc[0]
-        if sens_type in {"ref", "background"}:
-            sensdict["senstype"] = sens_type
-
-        elif sens_type == "seed":
-            sensdict["seedname"] = "RMS_SEED"
-            sensdict["senstype"] = sens_type
-            if _has_value(group["param_name"].iloc[0]):
-                sensdict["parameters"] = _read_constants(group)
-            else:
-                sensdict["parameters"] = None
-
-        elif sens_type == "scenario":
-            sensdict = _read_scenario_sensitivity(group)
-            sensdict["senstype"] = sens_type
-
-        elif sens_type == "dist":
-            sensdict["senstype"] = sens_type
-            sensdict["parameters"] = parse_distribution_parameters(
-                group, source="sensitivity"
-            )
-            sensdict["correlations"] = parse_sensitivity_correlations(
-                group, input_filename
-            )
-
-        elif sens_type == "extern":
-            sensdict["extern_file"] = resolve_path(
-                str(group["extern_file"].iloc[0]), base_file=input_filename
-            )
-            sensdict["senstype"] = sens_type
-            sensdict["parameters"] = list(group["param_name"])
-
-        else:
-            raise ValueError(
-                f"Sensitivity {sensname} does not have a valid sensitivity type"
-            )
-
-        if "numreal" in group and _has_value(group["numreal"].iloc[0]):
-            # Using default number of realisations:
-            # 'repeats' from general_input sheet
-            sensdict["numreal"] = int(group["numreal"].iloc[0])
-
-        # If this sensitivity has dependencies, then get them from sheet
-        sensdict["dependencies"] = {}
-        if "dependencies" in group:
-            # Get all dependencies in this sensitivity
-            valid_deps = group[group["dependencies"].notna()]
-            dependencies_dict = {}
-
-            # For each dependency, get the mapping
-            for row in valid_deps.itertuples():
-                dependencies_dict[row.param_name] = _read_dependencies(
-                    filename=input_filename,
-                    sheetname=str(row.dependencies),
-                    from_parameter=str(row.param_name),
-                )
-            sensdict["dependencies"] = dependencies_dict
-
-        # Add this sensitivity to the sensitivities
-        output["sensitivities"][str(sensname)] = sensdict
+    if decimals is not None:
+        output["decimals"] = decimals
 
     return output
-
-
-def _read_dependencies(
-    *, filename: str, sheetname: str, from_parameter: str
-) -> dict[str, Any]:
-    """Reads parameters that are set from other parameters
-
-    Args:
-        filename(str): name of excel file
-        sheetname (string): name of dependency sheet
-        from_parameter (string): parameter name to map from
-
-    Returns:
-        dict with design parameter, dependent parameters
-        and values
-    """
-    with CalamineWorkbook.from_path(filename) as workbook:
-        if sheetname not in workbook.sheet_names:
-            raise ValueError(f"Worksheet {sheetname!r} not found")
-        cells = workbook.get_sheet_by_name(sheetname).to_python(skip_empty_area=False)
-    rows = (
-        [value if value.strip() else "" for value in map(str, row)] for row in cells
-    )
-
-    headers = {index: name for index, name in enumerate(next(rows, [])) if name}
-    if from_parameter not in headers.values():
-        raise ValueError(
-            f"Parameter {from_parameter} specified to have derived parameters, "
-            f"but the sheet specifying the dependencies {sheetname} does "
-            "not contain the input parameter. "
-        )
-
-    try:
-        _raise_if_duplicates(list(headers.values()))
-    except ValueError as err:
-        raise ValueError(
-            f"Duplicate parameter names in dependency sheet {sheetname!r}\n{err}"
-        ) from err
-
-    depend_values: dict[str, list[str]] = {name: [] for name in headers.values()}
-
-    for row_number, row in enumerate(rows, start=2):
-        values = [row[index] for index in headers]
-        if not any(values):
-            continue
-        for name, value in zip(headers.values(), values, strict=True):
-            if not value:
-                raise ValueError(
-                    f"Missing dependency value for parameter {name!r} "
-                    f"in sheet {sheetname!r}, row {row_number}"
-                )
-            depend_values[name].append(value)
-
-    return {
-        "from_values": depend_values.pop(from_parameter),
-        "to_params": depend_values,
-    }
-
-
-def _read_scenario_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
-    """Reads parameters and values
-    for scenario sensitivities
-    """
-    sdict: dict[str, Any] = {}
-    sdict["cases"] = {}
-    casedict1: dict[str, Any] = {}
-    casedict2: dict[str, Any] = {}
-
-    if not _has_value(sensgroup["senscase1"].iloc[0]):
-        raise ValueError(
-            "Sensitivity {} has been input "
-            "as a scenario sensitivity, but "
-            "without a name in senscase1 column.".format(sensgroup["sensname"].iloc[0])
-        )
-
-    for row in sensgroup.itertuples():
-        if not _has_value(row.param_name):
-            raise ValueError(
-                f"Scenario sensitivity {row.sensname} specified "
-                "where one line has empty parameter "
-                "name "
-            )
-        if not _has_value(row.value1):
-            raise ValueError(
-                f"Parameter {row.param_name} has been input "
-                'as type "scenario" but with empty '
-                "value in value1 column "
-            )
-        casedict1[str(row.param_name)] = row.value1
-
-    if _has_value(sensgroup["senscase2"].iloc[0]):
-        for row in sensgroup.itertuples():
-            if not _has_value(row.value2):
-                raise ValueError(
-                    "Sensitivity {} has been input "
-                    "with a name in senscase2 column "
-                    "but without a value for parameter {} "
-                    "in value2 column.".format(
-                        sensgroup["sensname"].iloc[0], row.param_name
-                    )
-                )
-            casedict2[str(row.param_name)] = row.value2
-        sdict["cases"][str(sensgroup["senscase1"].iloc[0])] = casedict1
-        sdict["cases"][str(sensgroup["senscase2"].iloc[0])] = casedict2
-    else:
-        for row in sensgroup.itertuples():
-            if _has_value(row.value2):
-                raise ValueError(
-                    "Sensitivity {} has been input "
-                    "with a value for parameter {} "
-                    "in value2 column "
-                    "but without a name for the scenario "
-                    "in senscase2 column.".format(
-                        sensgroup["sensname"].iloc[0], row.param_name
-                    )
-                )
-        sdict["cases"][str(sensgroup["senscase1"].iloc[0])] = casedict1
-    return sdict
-
-
-def _read_constants(sensgroup: pd.DataFrame) -> dict[str, Any]:
-    """Reads constants to be used together with
-    seed sensitivity
-    """
-    if "dist_param1" not in sensgroup.columns.to_numpy():
-        sensgroup["dist_param1"] = float("NaN")
-    paramdict: dict[str, Any] = {}
-    for row in sensgroup.itertuples():
-        if not _has_value(row.dist_param1):
-            raise ValueError(
-                f"Parameter name {row.param_name} has been input "
-                'in a sensitivity of type "seed". \n'
-                f"If {row.param_name} was meant to be the name of "
-                "the seed parameter, this is "
-                "unfortunately not allowed. "
-                "The seed parameter name is standardised "
-                "to RMS_SEED and should not be specified.\n "
-                "If you instead meant to specify a constant "
-                "value for another parameter in the seed "
-                'sensitivity, please remember "const" in '
-                'dist_name and a value in "dist_param1". '
-            )
-        distparams = row.dist_param1
-        paramdict[str(row.param_name)] = [str(row.dist_name), distparams]
-    return paramdict
 
 
 def _assert_no_merged_cells(input_filename: str) -> None:
