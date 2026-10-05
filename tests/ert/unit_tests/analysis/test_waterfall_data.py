@@ -10,7 +10,7 @@ import polars as pl
 import polars.testing
 import pytest
 
-from ert.gui.plotting.waterfall_data import compute_waterfall_data
+from ert.analysis.waterfall_data import compute_waterfall_data
 from ert.storage.blob_data import BlobStorageData, MatrixStorageData
 
 
@@ -141,7 +141,7 @@ def test_that_k_row_width_and_observation_count_mismatch_returns_empty_dataframe
     ensemble.experiment.observation_keys = ["OBS_A", "OBS_B"]
     ensemble._storage.get_ensemble.return_value = prior
 
-    with caplog.at_level(logging.WARNING, logger="ert.gui.plotting.waterfall_data"):
+    with caplog.at_level(logging.WARNING, logger="ert.analysis.waterfall_data"):
         result = compute_waterfall_data(ensemble, "PARAM")
 
     assert result.is_empty()
