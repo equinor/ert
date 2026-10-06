@@ -1186,7 +1186,7 @@ def test_that_parameters_as_magic_strings_are_substituted():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_create_runpath_emits_expected_events(prior_ensemble) -> None:
+async def test_that_create_runpath_emits_expected_events(prior_ensemble):
     config = ErtConfig.from_dict({"NUM_REALIZATIONS": 5})
     runpaths = Runpaths.from_config(config)
     active_realizations = [False, True, False, False, True, True]

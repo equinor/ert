@@ -10,7 +10,7 @@ from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidg
 from ert.run_models.run_model import RunModel
 
 
-def test_that_widget_shows_correct_state_on_start(qtbot: QtBot) -> None:
+def test_that_widget_shows_correct_state_on_start(qtbot: QtBot):
     widget = RunpathProgressWidget(
         initial_status_text="Preparing runpaths...",
         completed_action="created",
@@ -24,7 +24,7 @@ def test_that_widget_shows_correct_state_on_start(qtbot: QtBot) -> None:
     assert widget._label.text() == "0 / 10 runpaths created"
 
 
-def test_that_widget_updates_label_and_bar_on_progress_events(qtbot: QtBot) -> None:
+def test_that_widget_updates_label_and_bar_on_progress_events(qtbot: QtBot):
     widget = RunpathProgressWidget(
         initial_status_text="Preparing runpaths...",
         completed_action="created",
@@ -42,7 +42,7 @@ def test_that_widget_updates_label_and_bar_on_progress_events(qtbot: QtBot) -> N
     assert widget._label.text() == "3 / 4 runpaths created"
 
 
-def test_that_start_resets_widget_state(qtbot: QtBot) -> None:
+def test_that_start_resets_widget_state(qtbot: QtBot):
     widget = RunpathProgressWidget(
         initial_status_text="Preparing runpaths...",
         completed_action="created",
@@ -62,7 +62,7 @@ def test_that_start_resets_widget_state(qtbot: QtBot) -> None:
 
 def test_that_widget_tracks_delete_progress_during_runpath_removal(
     qtbot: QtBot, use_tmpdir
-) -> None:
+):
     removed_runpaths = []
 
     for iens in (0, 2):

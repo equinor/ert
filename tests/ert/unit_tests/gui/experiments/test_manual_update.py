@@ -22,7 +22,7 @@ from .conftest import (
 
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_prior(
     qtbot: QtBot,
-) -> None:
+):
     """This is a test that makes sure that the active realizations field is
     validated against the ensemble size from the prior ensemble, and not
     the ensemble size from config.
@@ -110,7 +110,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_pri
 
 def test_that_manual_update_ensemble_selector_only_shows_ensembles_with_data(
     qtbot: QtBot,
-) -> None:
+):
     """This is a test that makes sure that ensembles without data are not available
     for selection in the ensemble_selector. This will be ensembles that were just
     created by ManageExperiment or by ManualUpdate.
@@ -142,9 +142,7 @@ def test_that_manual_update_ensemble_selector_only_shows_ensembles_with_data(
     assert not panel.isConfigurationValid()
 
 
-def test_that_panel_does_not_crash_when_no_realization_has_parameters(
-    qtbot: QtBot,
-) -> None:
+def test_that_panel_does_not_crash_when_no_realization_has_parameters(qtbot: QtBot):
     """Regression test for https://github.com/equinor/ert/issues/13194.
 
     When an ensemble has responses loaded but no parameters loaded, the active
@@ -185,7 +183,7 @@ def test_that_panel_does_not_crash_when_no_realization_has_parameters(
 
 def test_that_empty_experiment_name_field_defaults_to_manual_update_of_mock_ensemble0(
     qtbot: QtBot,
-) -> None:
+):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     notifier._storage._setup_mocked_run(
@@ -207,9 +205,7 @@ def test_that_empty_experiment_name_field_defaults_to_manual_update_of_mock_ense
     )
 
 
-def test_that_experiment_name_field_is_used_in_experiment_arguments(
-    qtbot: QtBot,
-) -> None:
+def test_that_experiment_name_field_is_used_in_experiment_arguments(qtbot: QtBot):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     notifier._storage._setup_mocked_run(
@@ -232,7 +228,7 @@ def test_that_experiment_name_field_is_used_in_experiment_arguments(
 
 def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
     qtbot: QtBot,
-) -> None:
+):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     for index, strategy in enumerate(
@@ -286,7 +282,7 @@ def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
 
 def test_that_activating_manual_update_refreshes_externally_changed_strategy(
     qtbot: QtBot,
-) -> None:
+):
     parameter = GenKwConfig(
         name="parameter",
         distribution=RawSettings(),

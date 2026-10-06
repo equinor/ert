@@ -44,7 +44,7 @@ from ert.gui.experiments._update_strategy_summary_widget import (
 def test_that_strategy_summary_orders_counts_lexicographically_by_strategy_and_type(
     entries: list[tuple[str, LocalizationType | None, int]],
     rows: list[tuple[str, str, str]],
-) -> None:
+):
     configs = []
     for param_type, strategy, count in entries:
         config = MagicMock(spec=ParameterConfig)
@@ -56,9 +56,7 @@ def test_that_strategy_summary_orders_counts_lexicographically_by_strategy_and_t
     assert _summarize_parameters(iter(configs)) == rows
 
 
-def test_that_strategy_summary_widget_displays_rows_with_headers(
-    qtbot: QtBot,
-) -> None:
+def test_that_strategy_summary_widget_displays_rows_with_headers(qtbot: QtBot):
     parameter = GenKwConfig(
         name="parameter",
         distribution={"name": "uniform", "min": 0, "max": 1},
@@ -77,7 +75,7 @@ def test_that_strategy_summary_widget_displays_rows_with_headers(
 
 def test_that_replacing_parameters_removes_old_strategy_counts_and_shows_empty_summary(
     qtbot: QtBot,
-) -> None:
+):
     parameter = GenKwConfig(
         name="parameter",
         distribution={"name": "uniform", "min": 0, "max": 1},

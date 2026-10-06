@@ -25,7 +25,7 @@ def migrate_old_obs(obs_dict: dict, filename: ObsType) -> pl.DataFrame:
     return pl.read_parquet(obs_path / filename)
 
 
-def test_that_old_populated_summary_obs_keep_their_values(use_tmpdir) -> None:
+def test_that_old_populated_summary_obs_keep_their_values(use_tmpdir):
     old_kw_values = {
         "location_x": [None, 1],
         "location_y": [None, 2],

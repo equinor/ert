@@ -112,7 +112,7 @@ def test_that_distribution_plot_renders_without_error_for_all_plot_option_combin
     gkde_plot: bool,
     rug_plot: bool,
     number_of_expected_axes: int,
-) -> None:
+):
     context = _make_context(
         [single_ensemble],
         histogram=histogram,
@@ -146,7 +146,7 @@ def test_that_distribution_plot_renders_without_error_for_all_plot_option_combin
         assert DEFAULT_GKDE_LABEL in y_labels
 
 
-def test_that_one_rug_axis_is_created_per_ensemble_for_two_ensembles() -> None:
+def test_that_one_rug_axis_is_created_per_ensemble_for_two_ensembles():
     ensembles = [_make_ensemble("ensemble_1"), _make_ensemble("ensemble_2")]
     data_map = {
         ensembles[0]: pd.DataFrame({0: [0.1, 0.2, 0.3, 0.4]}),
@@ -163,7 +163,7 @@ def test_that_one_rug_axis_is_created_per_ensemble_for_two_ensembles() -> None:
 def test_that_histogram_uses_log_x_scale_when_log_scale_enabled(
     single_ensemble: EnsembleObject,
     varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
+):
     context = _make_context(
         [single_ensemble],
         histogram=True,
@@ -177,9 +177,7 @@ def test_that_histogram_uses_log_x_scale_when_log_scale_enabled(
     assert figure.axes[0].get_xscale() == "log"
 
 
-def test_that_gkde_line_is_not_drawn_for_constant_data(
-    single_ensemble: EnsembleObject,
-) -> None:
+def test_that_gkde_line_is_not_drawn_for_constant_data(single_ensemble: EnsembleObject):
     context = _make_context(
         [single_ensemble], histogram=False, gkde_plot=True, rug_plot=False
     )
@@ -200,14 +198,14 @@ def test_that_gkde_line_is_not_drawn_for_constant_data(
 )
 def test_that_array_is_constant_detects_empty_constant_and_varying(
     data: pd.DataFrame, expected: bool
-) -> None:
+):
     assert bool(PlotTools.array_is_constant(data[0])) is expected
 
 
 def test_that_rug_only_plot_uses_log_x_scale_when_log_scale_enabled(
     single_ensemble: EnsembleObject,
     varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
+):
     context = _make_context(
         [single_ensemble],
         histogram=False,
@@ -224,7 +222,7 @@ def test_that_rug_only_plot_uses_log_x_scale_when_log_scale_enabled(
 def test_that_all_plots_uses_log_x_scale_when_log_scale_enabled(
     single_ensemble: EnsembleObject,
     varying_data_map: dict[EnsembleObject, pd.DataFrame],
-) -> None:
+):
     context = _make_context(
         [single_ensemble],
         histogram=True,

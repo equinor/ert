@@ -430,7 +430,7 @@ def test_copy_directory_reports_multiple_errors():
 @pytest.mark.parametrize(("from_trail", "to_trail"), [("/", "/"), ("/", "")])
 def test_that_copy_dir_with_trailing_slashes_copies_sourcedir_contents_to_destination(
     from_trail: str, to_trail: str
-) -> None:
+):
     somedir = Path("somedir")
     somedir.mkdir()
     (somedir / "somefile").touch()
@@ -442,7 +442,7 @@ def test_that_copy_dir_with_trailing_slashes_copies_sourcedir_contents_to_destin
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_copy_directory_with_trailing_slash_on_destination_copies_sourcedir() -> None:
+def test_copy_directory_with_trailing_slash_on_destination_copies_sourcedir():
     somedir = Path("somedir")
     somedir.mkdir()
     (somedir / "somefile").touch()

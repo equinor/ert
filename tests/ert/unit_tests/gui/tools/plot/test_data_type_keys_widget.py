@@ -24,9 +24,8 @@ def key_defs() -> list[PlotApiKeyDefinition]:
 
 
 def test_that_filtering_out_current_key_does_not_emit_data_type_key_selected(
-    qtbot: QtBot,
-    key_defs: list[PlotApiKeyDefinition],
-) -> None:
+    qtbot: QtBot, key_defs: list[PlotApiKeyDefinition]
+):
     widget = DataTypeKeysWidget(key_defs)
     qtbot.addWidget(widget)
 
@@ -40,9 +39,8 @@ def test_that_filtering_out_current_key_does_not_emit_data_type_key_selected(
 
 
 def test_that_filtering_keeps_current_key_when_still_visible(
-    qtbot: QtBot,
-    key_defs: list[PlotApiKeyDefinition],
-) -> None:
+    qtbot: QtBot, key_defs: list[PlotApiKeyDefinition]
+):
     widget = DataTypeKeysWidget(key_defs)
     qtbot.addWidget(widget)
 
@@ -57,9 +55,8 @@ def test_that_filtering_keeps_current_key_when_still_visible(
 
 
 def test_that_metadata_filtering_current_key_does_not_emit_data_type_key_selected(
-    qtbot: QtBot,
-    key_defs: list[PlotApiKeyDefinition],
-) -> None:
+    qtbot: QtBot, key_defs: list[PlotApiKeyDefinition]
+):
     widget = DataTypeKeysWidget(key_defs)
     qtbot.addWidget(widget)
 

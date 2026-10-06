@@ -33,7 +33,7 @@ def _autouse_patch_ertclient_to_testclient(patch_ertclient_to_testclient):
 )
 def test_that_has_kalman_gain_requires_a_matrix_k_blob(
     api: PlotApi, monkeypatch, status_code, blobs, expected
-) -> None:
+):
     monkeypatch.setattr(
         api._client,
         "ensemble_blobs",

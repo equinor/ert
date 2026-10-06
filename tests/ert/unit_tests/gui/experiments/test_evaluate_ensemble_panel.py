@@ -29,9 +29,7 @@ def test_that_the_run_experiments_button_is_disabled(qtbot):
     assert not evaluate_ensemble_panel.isConfigurationValid()
 
 
-def test_that_ensemble_select_contains_only_leaf_ensembles(
-    qtbot: QtBot,
-) -> None:
+def test_that_ensemble_select_contains_only_leaf_ensembles(qtbot: QtBot):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     notifier._storage._setup_mocked_run(

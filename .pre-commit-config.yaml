@@ -38,3 +38,8 @@ repos:
     types: [python]
     stages: [pre-push]
     pass_filenames: false
+  - id: pytest-no-none-return
+    name: tests must not declare '-> None'
+    entry: uv run python scripts/check_for_test_ret_annotations.py
+    language: python
+    files: ^tests/.*\.py$

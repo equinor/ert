@@ -58,9 +58,7 @@ def _surface_config(ncol: int, nrow: int) -> SurfaceConfig:
     )
 
 
-def test_that_distance_localization_updates_all_z_layers_at_observation_xy(
-    tmp_path,
-):
+def test_that_distance_localization_updates_all_z_layers_at_observation_xy(tmp_path):
     """
     Places a single observation in the corner cell (0, 0) with a short correlation
     range so only that xy cell gets rho ≈ 1. With correct z-expansion,
@@ -227,9 +225,7 @@ def test_that_unlocated_observations_are_excluded_from_distance_update(
     assert not np.allclose(posterior_3d[0, 0, 0, :], prior_3d[0, 0, 0, :])
 
 
-def test_that_distance_localization_batch_size_does_not_change_result(
-    monkeypatch,
-) -> None:
+def test_that_distance_localization_batch_size_does_not_change_result(monkeypatch):
     nx, ny, nz = 4, 4, 1
     n_params = nx * ny * nz
     n_real = 30
@@ -279,9 +275,7 @@ def test_that_distance_localization_batch_size_does_not_change_result(
     )
 
 
-def test_that_distance_localization_respects_non_zero_variance_mask(
-    monkeypatch,
-) -> None:
+def test_that_distance_localization_respects_non_zero_variance_mask(monkeypatch):
     nx, ny, nz = 3, 3, 2
     n_params = nx * ny * nz
     n_real = 30

@@ -1129,7 +1129,7 @@ def test_that_compute_observation_statuses_uses_qc_error_columns_when_available(
     ]
 
 
-def test_that_missing_realizations_expr_populates_error_message() -> None:
+def test_that_missing_realizations_expr_populates_error_message():
     active_realizations = ["0", "1", "2"]
     df = pl.DataFrame(
         {
@@ -1549,10 +1549,8 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     ],
 )
 def test_that_create_combined_ensemble_mask_handles_different_length_masks(
-    ens_mask: np.ndarray,
-    active_realizations: list[bool] | None,
-    expected: np.ndarray,
-) -> None:
+    ens_mask: np.ndarray, active_realizations: list[bool] | None, expected: np.ndarray
+):
     result = _create_combined_ensemble_mask(ens_mask, active_realizations)
     np.testing.assert_array_equal(result, expected)
 
