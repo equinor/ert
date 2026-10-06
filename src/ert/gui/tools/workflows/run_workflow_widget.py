@@ -22,7 +22,7 @@ from _ert.threading import ErtThread
 from ert.gui.ertwidgets import EnsembleSelector
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.runpaths import Runpaths
-from ert.workflow_runner import WorkflowRunner
+from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -157,17 +157,20 @@ class RunWorkflowWidget(QWidget):
             success = self._workflow_runner.workflowResult()
 
             if success:
-                report = self._workflow_runner.workflowReport()
-                failed_jobs = [k for k, v in report.items() if not v["completed"]]
-                self.workflowSucceeded.emit(failed_jobs)
+                failed_job_errors = [
+                    f"{result.name}: {result.error}"
+                    for result in self._workflow_runner.workflow_job_results()
+                    if result.status is WorkflowJobStatus.FAILED
+                ]
+                self.workflowSucceeded.emit(failed_job_errors)
             else:
                 self.workflowFailed.emit()
 
-    def workflowFinished(self, failed_jobs: Iterable[str]) -> None:
+    def workflowFinished(self, failed_job_errors: Iterable[str]) -> None:
         workflow_name = self.getCurrentWorkflowName()
         jobs_msg = "successfully!"
-        if failed_jobs:
-            jobs_msg = "\nThe following jobs failed: " + ", ".join(list(failed_jobs))
+        if failed_job_errors:
+            jobs_msg = "\nThe following jobs failed:\n" + "\n".join(failed_job_errors)
 
         QMessageBox.information(
             self,

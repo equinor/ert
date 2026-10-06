@@ -122,6 +122,18 @@ The :code:`status` field is one of :code:`success`, :code:`failed` or
 jobs that were stopped because the workflow was cancelled are logged at
 :code:`INFO` level.
 
+When an internal workflow job raises an exception, only the exception type and
+message are added to its stderr, for example
+:code:`ValueError: No RFT observations found in experiment`. The full traceback
+is written to the ERT log only, and not to the terminal. Each failed workflow
+job is reported with its error on the terminal, both for hooked workflows
+during :code:`ert <mode>` and for :code:`ert workflow`::
+
+    Workflow job EXPORT_RFT failed: ValueError: No RFT observations found in experiment
+
+The *Run workflow* tool and plugins in the GUI show the same error in their
+result dialog.
+
 While an experiment is running, the same information is also shown live
 in the *Workflows* tab of the run dialog, without having to read the ERT
 log. Select an iteration from the dropdown to see the workflow jobs that

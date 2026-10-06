@@ -110,6 +110,7 @@ class WorkflowEvent(BaseModel, extra="forbid"):
     status: WorkflowJobStatus
     timestamp: datetime
     iteration: int | None = None
+    error: str | None = None
 
 
 class RunPathCreationEvent(BaseModel, extra="forbid"):

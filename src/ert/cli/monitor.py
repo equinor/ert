@@ -29,7 +29,9 @@ from ert.run_models.event import (
     RunModelErrorEvent,
     RunModelUpdateEndEvent,
     StatusEvents,
+    WorkflowEvent,
 )
+from ert.workflow_runner import WorkflowJobStatus
 
 Color = tuple[int, int, int]
 
@@ -103,6 +105,17 @@ class Monitor:
                         self._colorize(msg, color=COLOR_WARNING),
                         file=self._out,
                     )
+                case WorkflowEvent(status=WorkflowJobStatus.FAILED) as event:
+                    self._print_workflow_failure(event)
+
+    def _print_workflow_failure(self, event: WorkflowEvent) -> None:
+        error = event.error or "no error message"
+        print(
+            self._colorize(
+                f"Workflow job {event.job_name} failed: {error}", color=COLOR_FAILED
+            ),
+            file=self._out,
+        )
 
     def _print_step_errors(self) -> None:
         failed_steps: dict[str | None, int] = {}
