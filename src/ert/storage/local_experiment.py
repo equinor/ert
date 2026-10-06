@@ -53,6 +53,35 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _rho_matrix_columns(
+    stored_keys: list[str], observation_keys: list[str] | None
+) -> list[int] | None:
+    """Columns of a cached rho matrix to use, or None if the cache cannot serve.
+
+    A cached rho matrix has one column per observation, labelled by observation
+    key alone; the columns represent `observation_keys`, in the order provided by
+    ert storage.
+
+    None means the cache cannot serve and the rho matrix has to be recomputed.
+    That is so when it lacks a key that is active now, and when its keys are not
+    unique: all rows of a SEISMIC_OBSERVATION share one observation key while each
+    row has its own position, so the key cannot say which of its columns belongs
+    to which row, and selecting columns by key would misalign the taper.
+    Recomputing is expensive, which makes this a temporary measure; #14617
+    proposes storing the observation locations and radius in the blob metadata
+    instead, which would disambiguate the columns and let the cache serve these
+    cases too.
+    """
+    if observation_keys is None or observation_keys == stored_keys:
+        return list(range(len(stored_keys)))
+    if len(set(stored_keys)) != len(stored_keys):
+        return None
+    column_of = {key: column for column, key in enumerate(stored_keys)}
+    if not set(observation_keys).issubset(column_of):
+        return None
+    return [column_of[key] for key in observation_keys]
+
+
 class ExperimentState(StrEnum):
     pending = auto()
     running = auto()
@@ -665,33 +694,41 @@ class LocalExperiment(BaseMode):
     ) -> npt.NDArray[np.floating] | None:
         """Load a cached rho matrix for the given parameter name.
 
-        When *observation_keys* is provided the stored blob's observation
-        keys must be a superset of the requested keys.  Some observations
-        may have been deactivated since the blob was created, so the blob
-        can legitimately contain *more* keys than the current active set.
-        However, if the current set contains keys absent from the blob the
-        matrix is invalid and ``None`` is returned so it is recomputed.
+        The returned matrix is filtered only to the given observation keys. Note
+        that the observations may have been deactivated in later iterations of
+        es-mda, so the blob matrix might contain extra observations columns.
+
+        ``None`` is returned, meaning there is no cached matrix to be had and the
+        rho matrix has to be recomputed, when it cannot be filtered safely: when it
+        is missing keys that are active now, and when its keys are not unique, as
+        for a SEISMIC_OBSERVATION whose rows all share one observation key while
+        each has its own position (ref #14617).
         """
         for blob in self._load_blob_metadata(BlobType.RHO_MATRIX):
             if (
                 isinstance(blob.blob_info, RhoStorageData)
                 and blob.blob_info.param_name == param_name
             ):
-                if observation_keys is not None and not set(observation_keys).issubset(
-                    blob.blob_info.observation_keys
-                ):
+                stored_keys = list(blob.blob_info.observation_keys)
+                columns = _rho_matrix_columns(stored_keys, observation_keys)
+                if columns is None:
                     logger.info(
-                        "Cached rho matrix for %r is missing observation keys "
-                        "%s, skipping",
+                        "Cached rho matrix for %r cannot be reused for the active "
+                        "observations (%d stored, %d active%s), so rho needs to be "
+                        "recomputed",
                         param_name,
-                        sorted(
-                            set(observation_keys) - set(blob.blob_info.observation_keys)
-                        ),
+                        len(stored_keys),
+                        len(observation_keys) if observation_keys else 0,
+                        ", stored keys are not unique"
+                        if len(set(stored_keys)) != len(stored_keys)
+                        else "",
                     )
                     return None
                 data = self.load_blob(blob.uri)
-                sparse_matrix = sp.sparse.load_npz(io.BytesIO(data))
-                return sparse_matrix.toarray()
+                matrix = sp.sparse.load_npz(io.BytesIO(data)).toarray()
+                if columns == list(range(matrix.shape[1])):
+                    return matrix
+                return matrix[:, columns]
         return None
 
     @require_write
