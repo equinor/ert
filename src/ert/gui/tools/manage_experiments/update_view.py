@@ -128,9 +128,8 @@ class UpdateView(QWidget):
         while self._tab_widget.count():
             page = self._tab_widget.widget(0)
             self._tab_widget.removeTab(0)
-            assert page is not None
-            page.setParent(None)
-            page.deleteLater()
+            if page is not None:
+                page.deleteLater()
 
 
 def _describe(update: StoredUpdate) -> str:
