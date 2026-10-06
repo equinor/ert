@@ -1,16 +1,17 @@
 import math
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
 import numpy as np
 import pytest
 
-from ert.config import GenKwConfig
+from ert.config import CircleShapeConfig, GenKwConfig, ShapeRegistry
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import MultipleDataAssimilation as mda
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.run_models.run_model import ErtRunError
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Storage
+from ert.storage.local_experiment import ExperimentConfig
 
 
 @pytest.mark.parametrize(
@@ -83,3 +84,18 @@ def test_that_mda_rejects_non_updatable_prior_before_creating_experiment(
 
     model._storage.create_experiment.assert_not_called()
     model.update.assert_not_called()
+
+
+def test_that_creating_experiment_from_prior_preserves_shape_registry():
+    shape_registry = ShapeRegistry()
+    shape_registry.register(CircleShapeConfig(east=1, north=2, radius=3))
+    original_experiment: ExperimentConfig = {
+        "observations": [],
+        "shape_registry": shape_registry.model_dump(mode="json"),
+    }
+    run_model = Mock()
+    run_model.to_experiment_config.return_value = {}
+
+    new_experiment = mda._create_experiment_from_prior(run_model, original_experiment)
+
+    assert new_experiment["shape_registry"] == original_experiment["shape_registry"]
