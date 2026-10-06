@@ -8,7 +8,13 @@ import pytest
 import scipy.sparse as sp
 from pydantic import ValidationError
 
-from ert.analysis.event import AnalysisCompleteEvent, AnalysisMatrixEvent, DataSection
+from ert.analysis.event import (
+    AnalysisCompleteEvent,
+    AnalysisDataEvent,
+    AnalysisErrorEvent,
+    AnalysisMatrixEvent,
+    DataSection,
+)
 from ert.config import GenKwConfig, SummaryConfig
 from ert.storage import LocalExperiment, open_storage
 from ert.storage.blob_data import (
@@ -16,6 +22,7 @@ from ert.storage.blob_data import (
     BlobType,
     MatrixStorageData,
     ObservationReportData,
+    UpdateStatus,
 )
 from ert.storage.local_ensemble import (
     _write_responses_to_storage,
@@ -299,6 +306,113 @@ def test_that_observation_report_blob_writes_parquet_metadata_and_can_be_loaded(
         assert loaded_blobs[0].blob_info.update_algorithm == "ensemble_smoother"
         assert loaded_blobs[0].name == "observation_report"
         assert loaded_blobs[0].file_type == "application/parquet"
+
+
+def test_that_stored_update_of_failed_update_without_data_is_marked_failed(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=1, name="posterior"
+        )
+
+        ensemble.save_blob(
+            AnalysisErrorEvent(
+                error_msg="No active observations left",
+                data=None,
+                update_algorithm="ensemble_smoother",
+            )
+        )
+
+        update = ensemble.load_stored_update()
+
+        assert update.status == UpdateStatus.FAILED
+        assert update.error_message == "No active observations left"
+        assert [table.header for table in update.tables] == [[]]
+
+
+def test_that_update_data_table_round_trips_header_summary_and_numpy_rows(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=1, name="posterior"
+        )
+
+        ensemble.save_blob(
+            AnalysisDataEvent(
+                name="Auto scale: OBS_GROUP",
+                data=DataSection(
+                    header=["Observation", "Cluster", "Scaling factor"],
+                    data=np.array(
+                        (
+                            np.array(["OBS_1"], dtype=object),
+                            np.array([1], dtype=np.int32),
+                            np.array([1.5], dtype=np.float32),
+                        )
+                    ).T,
+                    extra={"Clusters": "2"},
+                ),
+            )
+        )
+        ensemble.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(header=["observation_key"], data=[("OBS_1",)]),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+
+        update = ensemble.load_stored_update()
+
+        assert update.tables[0].header == ["Observation", "Cluster", "Scaling factor"]
+        assert update.tables[0].rows == [("OBS_1", 1, 1.5)]
+        assert [type(cell) for cell in update.tables[0].rows[0]] == [str, int, float]
+        assert update.tables[0].summary == {"Clusters": "2"}
+
+
+def test_that_update_stored_before_status_was_recorded_is_read_as_completed(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=1, name="posterior"
+        )
+
+        ensemble.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(
+                    header=["observation_key"],
+                    data=[("OBS_1",)],
+                    extra={"Parent ensemble": "prior"},
+                ),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+
+        (sidecar,) = (ensemble._path / "blobs").glob("*.json")
+        metadata = json.loads(sidecar.read_text(encoding="utf-8"))
+        for field_added_after_the_blob_type_existed in (
+            "summary",
+            "status",
+            "error_message",
+        ):
+            del metadata["blob_info"][field_added_after_the_blob_type_existed]
+        sidecar.write_text(json.dumps(metadata), encoding="utf-8")
+
+        update = ensemble.load_stored_update()
+
+        assert update.update_algorithm == "ensemble_smoother"
+        assert update.status == UpdateStatus.COMPLETED
+        assert update.error_message is None
+        assert update.tables[-1].summary == {}
+
+
+def test_that_ensemble_without_recorded_update_has_no_stored_update(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        assert not ensemble.has_stored_update
+        assert ensemble.load_stored_update() is None
 
 
 @pytest.mark.parametrize(
