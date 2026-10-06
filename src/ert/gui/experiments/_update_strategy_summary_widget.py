@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config.parameter_config import LocalizationType, ParameterConfig
+from ert.config.parameter_config import ParameterConfig
 
 _COLUMN_HEADERS = ("strategy", "parameter type", "count")
 _PARAMETER_TYPE_DISPLAY_NAMES = {
@@ -100,22 +100,11 @@ def _summarize_parameters(
 ) -> list[_SummaryRow]:
     counts = Counter((p.update_strategy, p.type) for p in parameter_configs)
 
-    rows: list[_SummaryRow] = []
-    for strategy in (*LocalizationType, None):
-        parameter_types = sorted(
-            parameter_type
-            for counted_strategy, parameter_type in counts
-            if counted_strategy == strategy
+    return sorted(
+        (
+            strategy.value.capitalize() if strategy is not None else "Non-updatable",
+            _PARAMETER_TYPE_DISPLAY_NAMES.get(parameter_type, parameter_type),
+            f"{count:,}",
         )
-        strategy_name = (
-            strategy.value.capitalize() if strategy is not None else "Non-updatable"
-        )
-        rows.extend(
-            (
-                strategy_name,
-                _PARAMETER_TYPE_DISPLAY_NAMES.get(parameter_type, parameter_type),
-                f"{counts[strategy, parameter_type]:,}",
-            )
-            for parameter_type in parameter_types
-        )
-    return rows
+        for (strategy, parameter_type), count in counts.items()
+    )

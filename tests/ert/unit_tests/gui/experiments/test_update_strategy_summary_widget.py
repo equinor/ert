@@ -24,9 +24,9 @@ from ert.gui.experiments._update_strategy_summary_widget import (
                 ("gen_kw", None, 1),
             ],
             [
-                ("Global", "GenKW", "3"),
                 ("Adaptive", "GenKW", "2"),
                 ("Distance", "Field", "1"),
+                ("Global", "GenKW", "3"),
                 ("Non-updatable", "GenKW", "1"),
                 ("Non-updatable", "Surface", "1"),
             ],
@@ -41,7 +41,7 @@ from ert.gui.experiments._update_strategy_summary_widget import (
         ),
     ],
 )
-def test_that_strategy_summary_counts_configs_by_strategy_and_type(
+def test_that_strategy_summary_orders_counts_lexicographically_by_strategy_and_type(
     entries: list[tuple[str, LocalizationType | None, int]],
     rows: list[tuple[str, str, str]],
 ) -> None:
