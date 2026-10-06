@@ -157,7 +157,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
-        self._configured_parameter_config = self._analysis_module_edit.parameter_config
+        self._initial_parameter_config = self._analysis_module_edit.parameter_config
         layout.addRow("Update settings:", self._analysis_module_edit)
 
         self._update_strategy_label = QLabel("Parameter Localizations")
@@ -317,9 +317,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
             )
         else:
-            self._analysis_module_edit.parameter_config = (
-                self._configured_parameter_config
-            )
+            self._analysis_module_edit.parameter_config = self._initial_parameter_config
         self._refresh_update_strategy_summary_widget()
 
     @Slot()
