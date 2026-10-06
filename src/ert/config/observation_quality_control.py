@@ -37,6 +37,39 @@ def append_to_qc_error(condition: pl.Expr, error_message: pl.Expr) -> pl.Expr:
     )
 
 
+def ensure_qc_warning_column(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Ensure the DataFrame has a 'qc_warning' column, initializing it to null if not
+    present.
+    """
+    if "qc_warning" not in df.columns:
+        return df.with_columns(pl.lit(None, dtype=pl.Utf8).alias("qc_warning"))
+    return df
+
+
+def append_to_qc_warning(condition: pl.Expr, warning_message: pl.Expr) -> pl.Expr:
+    """Append warning_message to qc_warning if condition.
+
+    Unlike qc_error, a non-null qc_warning does not deactivate the observation; it
+    only flags it as "active with warnings" in the analysis report.
+    """
+    return (
+        pl.when(condition)
+        .then(
+            pl.when(pl.col("qc_warning").is_not_null())
+            .then(
+                pl.concat_str(
+                    pl.col("qc_warning"),
+                    pl.lit(";\n"),
+                    warning_message,
+                )
+            )
+            .otherwise(warning_message)
+        )
+        .otherwise(pl.col("qc_warning"))
+    )
+
+
 def _qc_observation_zone_matches_simulated_zones(
     df: pl.DataFrame,
 ) -> pl.DataFrame:

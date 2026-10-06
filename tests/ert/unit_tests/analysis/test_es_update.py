@@ -23,6 +23,7 @@ from ert.analysis._es_update import (
 from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _missing_realizations_expr,
+    _observation_warnings_expr,
     _OutlierColumns,
     _preprocess_observations_and_responses,
 )
@@ -1129,6 +1130,33 @@ def test_that_compute_observation_statuses_uses_qc_error_columns_when_available(
     ]
 
 
+def test_that_compute_observation_statuses_keeps_active_status_with_qc_warning():
+    df_with_statuses = _compute_observation_statuses(
+        pl.DataFrame(
+            [
+                {
+                    "observation_key": "OBS1",
+                    "observations": 42.0,
+                    "std": 1.0,
+                    "0": 42.0,
+                    "1": 42.0,
+                    "2": 42.0,
+                    "3": 42.0,
+                    "qc_warning_2": "some properties were not found in the response",
+                    "qc_warning_3": None,
+                }
+            ]
+        ),
+        active_realizations=[str(i) for i in range(4)],
+        global_std_scaling=1.0,
+    )
+
+    assert df_with_statuses["status"].to_list() == [ObservationStatus.ACTIVE]
+    assert df_with_statuses["observation_warnings"].to_list() == [
+        "2: some properties were not found in the response"
+    ]
+
+
 def test_that_missing_realizations_expr_populates_error_message() -> None:
     active_realizations = ["0", "1", "2"]
     df = pl.DataFrame(
@@ -1152,6 +1180,25 @@ def test_that_missing_realizations_expr_populates_error_message() -> None:
     assert result[2] == "1: unknown"
     assert result[3] == "2: Houston, we have a problem"
     assert result[4] == "1: new /error/\n\n2: unknown"
+
+
+def test_that_observation_warnings_expr_combines_multiple_realization_warnings():
+    active_realizations = ["0", "1", "2"]
+    df = pl.DataFrame(
+        {
+            "qc_warning_0": [None, None],
+            "qc_warning_1": [None, "missing SOIL in response"],
+            "qc_warning_2": ["missing SGAS in response", None],
+        }
+    )
+
+    result = df.select(_observation_warnings_expr(active_realizations))[
+        "observation_warnings"
+    ]
+
+    assert result.shape == (2,)
+    assert result[0] == "2: missing SGAS in response"
+    assert result[1] == "1: missing SOIL in response"
 
 
 def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):

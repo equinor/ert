@@ -169,7 +169,91 @@ def test_that_report_log_table_only_shows_message_on_nan_status_click(qtbot: QtB
         verify_that_data_column_click_does_not_produce_dialog(row, data_column)
 
 
-def test_that_report_log_table_matches_data_on_sort(qtbot: QtBot):
+def test_that_report_log_table_underlines_and_prefixes_active_rows_with_warnings(
+    qtbot: QtBot,
+):
+    headers = ["missing_realizations", "value", "status", "observation_warnings"]
+    status_column = 2
+    observations = [
+        ["", 1, ObservationStatus.ACTIVE, "0: missing SOIL in response"],
+        ["", 2, ObservationStatus.ACTIVE, ""],
+        ["dummy", 3, ObservationStatus.MISSING_RESPONSE, ""],
+    ]
+
+    warning_row = 0
+    no_warning_row = 1
+    missing_response_row = 2
+
+    report_table = ReportLogTable(DataSection(header=headers, data=observations))
+    qtbot.addWidget(report_table)
+
+    warning_item = report_table.item(warning_row, status_column)
+    assert warning_item.font().underline()
+    assert warning_item.text() == f"\u26a0 {ObservationStatus.ACTIVE}"
+
+    no_warning_item = report_table.item(no_warning_row, status_column)
+    assert not no_warning_item.font().underline()
+    assert no_warning_item.text() == ObservationStatus.ACTIVE
+
+    missing_response_item = report_table.item(missing_response_row, status_column)
+    assert missing_response_item.font().underline()
+    assert missing_response_item.text() == ObservationStatus.MISSING_RESPONSE
+
+
+def test_that_report_log_table_shows_message_on_warning_status_click(qtbot: QtBot):
+    headers = ["status", "value", "missing_realizations", "observation_warnings"]
+    status_column = 0
+    warning_message = "0: missing SOIL in response"
+
+    observations = [
+        [ObservationStatus.ACTIVE, 10, "", warning_message],
+        [ObservationStatus.ACTIVE, 20, "", ""],
+    ]
+
+    report_table = ReportLogTable(DataSection(header=headers, data=observations))
+    qtbot.addWidget(report_table)
+
+    def handle_warning_dialog():
+        dialog = report_table.findChild(QDialog)
+        assert dialog is not None
+        try:
+            label = dialog.findChild(QLabel)
+            assert label is not None
+            assert label.text() == "Warnings reported for active realizations:"
+
+            text_edit = dialog.findChild(QTextEdit)
+            assert text_edit is not None
+            assert text_edit.toPlainText() == warning_message
+        finally:
+            button_box = dialog.findChild(QDialogButtonBox)
+            qtbot.mouseClick(
+                button_box.button(QDialogButtonBox.StandardButton.Ok),
+                Qt.MouseButton.LeftButton,
+            )
+
+    QTimer.singleShot(500, handle_warning_dialog)
+    click_on_table_cell(qtbot, report_table, 0, status_column)
+
+    click_on_table_cell(qtbot, report_table, 1, status_column)
+    dialog = report_table.findChild(QDialog)
+    assert dialog is None or not dialog.isVisible()
+
+
+def test_that_report_log_table_works_without_observation_warnings_column(
+    qtbot: QtBot,
+):
+    headers = ["status", "value", "missing_realizations"]
+    observations = [
+        [ObservationStatus.ACTIVE, 10, ""],
+        [ObservationStatus.MISSING_RESPONSE, 20, "1, 2"],
+    ]
+
+    report_table = ReportLogTable(DataSection(header=headers, data=observations))
+    qtbot.addWidget(report_table)
+
+    assert report_table.observation_warnings_col_index is None
+    assert not report_table.item(0, 0).font().underline()
+    assert report_table.item(0, 0).text() == ObservationStatus.ACTIVE
     headers = ["value", "status", "missing_realizations"]
     value_column = 0
     status_column = 1

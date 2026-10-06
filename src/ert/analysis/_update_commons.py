@@ -341,6 +341,36 @@ def _missing_realizations_expr(active_realizations: list[str]) -> pl.Expr:
     )
 
 
+def _observation_warnings_expr(active_realizations: list[str]) -> pl.Expr:
+    """
+    For each active realization column, check if the realization has a qc_warning
+    set. If so, include the realization name together with its warning message.
+    Combine all warnings from one observation into a string. Set empty string
+    for observations with no warnings.
+    """
+    return (
+        pl.concat_list(
+            [
+                pl.when(pl.col(f"qc_warning_{c}").is_not_null())
+                .then(
+                    pl.concat_str(
+                        [
+                            pl.lit(c),
+                            pl.lit(": "),
+                            pl.col(f"qc_warning_{c}").cast(pl.String),
+                        ]
+                    )
+                )
+                .otherwise(pl.lit(None))
+                for c in active_realizations
+            ]
+        )
+        .list.join("\n\n")
+        .fill_null("")
+        .alias("observation_warnings")
+    )
+
+
 def _compute_observation_statuses(
     observations_and_responses: pl.DataFrame,
     active_realizations: list[str],
@@ -356,6 +386,7 @@ def _compute_observation_statuses(
      * status of (the responses of) each observation,
        corresponding to ObservationStatus
      * missing realizations that lead to deactivation
+     * warnings reported for an active observation
     """
 
     df_with_status = observations_and_responses
@@ -368,7 +399,17 @@ def _compute_observation_statuses(
         ]
     ).select(_missing_realizations_expr(active_realizations))
 
-    df_with_status = df_with_status.hstack(df_with_missing_realizations)
+    df_with_observation_warnings = df_with_status.with_columns(
+        [
+            pl.lit(None, dtype=pl.String).alias(f"qc_warning_{realization}")
+            for realization in active_realizations
+            if f"qc_warning_{realization}" not in df_with_status.columns
+        ]
+    ).select(_observation_warnings_expr(active_realizations))
+
+    df_with_status = df_with_status.hstack(df_with_missing_realizations).hstack(
+        df_with_observation_warnings
+    )
 
     if outlier_settings is None:
         return df_with_status.with_columns(

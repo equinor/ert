@@ -6,6 +6,7 @@ import io
 import logging
 import os
 import time
+import warnings
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -19,6 +20,7 @@ import numpy as np
 import polars as pl
 import resfo
 import xarray as xr
+from filelock import FileLock
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
@@ -26,18 +28,22 @@ from ert.config import (
     InvalidResponseFile,
     ParameterCardinality,
     ParameterConfig,
+    SimulationResponseConfig,
     SummaryConfig,
 )
 from ert.config._reservoir_data_utils import SeismicData
 from ert.config.field import Field, field_transform
 from ert.config.observation_quality_control import (
     append_to_qc_error,
+    append_to_qc_warning,
     ensure_qc_error_column,
+    ensure_qc_warning_column,
     qc_rft_observations,
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
 from ert.substitutions import substitute_runpath_name
+from ert.warnings import ObservationReportWarning
 
 from .blob_data import (
     BlobStorageData,
@@ -954,6 +960,30 @@ class LocalEnsemble(BaseMode):
         ds_path = self._realization_dir(realization) / filename
         return pl.read_parquet(ds_path)
 
+    @require_write
+    def save_observation_report_warning(self, message: str, realization: int) -> None:
+        filename = "observation_report_warnings.parquet"
+        output_path = self._realization_dir(realization) / filename
+        output_path.parent.mkdir(exist_ok=True)
+        with FileLock(output_path.with_suffix(".lock")):
+            existing_messages = (
+                pl.read_parquet(output_path)["message"].to_list()
+                if output_path.exists()
+                else []
+            )
+            updated = pl.DataFrame({"message": [*existing_messages, message]})
+            self._storage._to_parquet_transaction(output_path, updated)
+
+    def load_observation_report_warning(self, realization: int) -> str | None:
+        filename = "observation_report_warnings.parquet"
+        ds_path = self._realization_dir(realization) / filename
+        if not ds_path.exists():
+            return None
+        messages = pl.read_parquet(ds_path)["message"].to_list()
+        if not messages:
+            return None
+        return "\n".join(messages)
+
     def add_rft_metadata_and_qc(
         self, observations: pl.DataFrame, realization: int
     ) -> pl.DataFrame:
@@ -964,7 +994,18 @@ class LocalEnsemble(BaseMode):
             observations, observation_metadata_in_realization
         )
 
-        return qc_rft_observations(enriched_observations)
+        qc_df = qc_rft_observations(enriched_observations)
+
+        observation_report_warning = self.load_observation_report_warning(realization)
+        qc_df = ensure_qc_warning_column(qc_df)
+        if observation_report_warning is not None:
+            qc_df = qc_df.with_columns(
+                append_to_qc_warning(
+                    pl.lit(True), pl.lit(observation_report_warning)
+                ).alias("qc_warning")
+            )
+
+        return qc_df
 
     def get_observations_and_responses(
         self,
@@ -1020,7 +1061,9 @@ class LocalEnsemble(BaseMode):
             realization_columns: list[pl.DataFrame] = []
 
             for real in reals:
-                observations = ensure_qc_error_column(observations_for_type)
+                observations = ensure_qc_warning_column(
+                    ensure_qc_error_column(observations_for_type)
+                )
                 if response_type == "rft":
                     observations = self.add_rft_metadata_and_qc(observations, real)
 
@@ -1117,7 +1160,8 @@ class LocalEnsemble(BaseMode):
                 joined = joined.with_columns(
                     append_to_qc_error(
                         no_matched_response_condition, no_matched_response_error
-                    ).alias(f"qc_error_{real}")
+                    ).alias(f"qc_error_{real}"),
+                    pl.col("qc_warning").alias(f"qc_warning_{real}"),
                 )
 
                 # Avoid potential collision with "index" column (it could be a part
@@ -1154,7 +1198,9 @@ class LocalEnsemble(BaseMode):
                         ]
                     )
 
-                realization_columns.append(joined.select(str(real), f"qc_error_{real}"))
+                realization_columns.append(
+                    joined.select(str(real), f"qc_error_{real}", f"qc_warning_{real}")
+                )
 
             if first_columns is None:
                 # Not a single realization had any responses to the
@@ -1976,6 +2022,26 @@ def _log_grid_contents(
         logger.error(f"Error while logging grid contents: {err}")
 
 
+def _read_response_capturing_observation_report_warnings(
+    config: SimulationResponseConfig,
+    runpath: str,
+    realization: int,
+    iteration: int,
+    ensemble: LocalEnsemble,
+) -> pl.DataFrame:
+    """Reads a response from file, persisting any ObservationReportWarning so it can
+    later be shown per-observation in the analysis report.
+    """
+    with warnings.catch_warnings(
+        record=True, action="always", category=ObservationReportWarning
+    ) as captured_warnings:
+        ds = config.read_from_file(runpath, realization, iteration)
+    for captured in captured_warnings:
+        if issubclass(captured.category, ObservationReportWarning):
+            ensemble.save_observation_report_warning(str(captured.message), realization)
+    return ds
+
+
 async def _write_responses_to_storage(
     runpath: str,
     realization: int,
@@ -1990,7 +2056,9 @@ async def _write_responses_to_storage(
             try:
                 if isinstance(config, SummaryConfig) and realization == 0:
                     _log_grid_contents(runpath, config, realization, ensemble.iteration)
-                ds = config.read_from_file(runpath, realization, ensemble.iteration)
+                ds = _read_response_capturing_observation_report_warnings(
+                    config, runpath, realization, ensemble.iteration, ensemble
+                )
             except (FileNotFoundError, InvalidResponseFile) as err:
                 errors.append(str(err))
                 logger.warning(

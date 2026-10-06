@@ -22,7 +22,7 @@ from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.config.response_config import _RESPONSE_WARNING_LIMIT
-from ert.warnings import PostExperimentWarning
+from ert.warnings import ObservationReportWarning
 from tests.ert.defaults_generator import create_rft_observation_dict
 from tests.ert.rft_generator import cell_start, create_egrid, float_arr
 
@@ -1437,7 +1437,7 @@ def test_that_many_missing_response_warnings_are_truncated(setup_mock_resfo_file
             for n in range(num_missing_responses)
         },
     )
-    with pytest.warns(PostExperimentWarning) as warnings:
+    with pytest.warns(ObservationReportWarning) as warnings:
         rft_config.read_from_file(_MOCK_RESFO_DIR, 1, 1)
     warning_msg = next(
         str(w.message) for w in warnings if "Could not find responses" in str(w.message)
@@ -1457,7 +1457,7 @@ def _collect_rft_response_warnings(
 ) -> list[WarningMessage]:
     """Sets up data_to_read with all possible combinations of wells, times and
     property_lists, runs RFTConfig.read_from_file, and returns all captures
-    PostExperimentWarnings
+    ObservationReportWarnings
     """
     data_to_read = {}
     for well in wells:
@@ -1477,7 +1477,7 @@ def _collect_rft_response_warnings(
     return [
         w
         for w in ws
-        if issubclass(w.category, PostExperimentWarning)
+        if issubclass(w.category, ObservationReportWarning)
         and "Could not find response" in str(w.message)
     ]
 

@@ -6,7 +6,7 @@ import polars as pl
 from pydantic import BaseModel, Field
 
 from ert.utils import assert_schema
-from ert.warnings import PostExperimentWarning
+from ert.warnings import ObservationReportWarning
 
 from .parsing import ConfigDict
 
@@ -30,7 +30,7 @@ def _warn_about_missing_responses(
     )
     warnings.warn(
         warning,
-        PostExperimentWarning,
+        ObservationReportWarning,
         stacklevel=1,
     )
 

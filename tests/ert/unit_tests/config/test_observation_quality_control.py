@@ -3,6 +3,7 @@ import pytest
 
 from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
 from ert.config.observation_quality_control import (
+    ensure_qc_warning_column,
     qc_rft_observations,
     qc_seismic_observations,
 )
@@ -211,3 +212,22 @@ def test_that_observations_within_boundary_stay_while_outside_are_removed():
 
     qc = qc_seismic_observations(observations, shape_registry)
     assert qc["east"].to_list() == [0.5, 2.5, 3.5]
+
+
+def test_that_ensure_qc_warning_column_initializes_null_column_when_absent():
+    assert ensure_qc_warning_column(
+        pl.DataFrame(
+            {"value": [1, 2]},
+        )
+    )["qc_warning"].to_list() == [None, None]
+
+
+def test_that_ensure_qc_warning_column_leaves_existing_column_untouched():
+    assert ensure_qc_warning_column(
+        pl.DataFrame(
+            {
+                "value": [1, 2],
+                "qc_warning": ["existing warning", None],
+            }
+        )
+    )["qc_warning"].to_list() == ["existing warning", None]

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
@@ -19,6 +20,7 @@ from ert.storage import open_storage
 from ert.storage.local_ensemble import (
     _write_responses_to_storage,
 )
+from ert.warnings import ObservationReportWarning
 from tests.ert.defaults_generator import create_rft_observation
 from tests.ert.rft_generator import create_egrid, rft_entry
 
@@ -390,6 +392,74 @@ def test_that_get_observations_and_responses_combines_error_messages(tmp_path):
         assert obs_and_responses["1"].to_list() == [None, 300.0]
         assert obs_and_responses["qc_error_0"].to_list() == [msg_real0, None]
         assert obs_and_responses["qc_error_1"].to_list() == [msg_real1, None]
+
+
+def test_that_get_observations_and_responses_adds_qc_warning_without_disabling(
+    tmp_path,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        rft_config = RFTConfig(
+            input_files=["BASE.RFT"],
+            data_to_read={"WELL": {"2000-01-01": ["SWAT"]}},
+        )
+
+        obs1 = rft_observation1()
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [obs1.model_dump(mode="json")],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=2, iteration=0, name="prior"
+        )
+
+        ensemble.save_response("rft", rft_response(values=(200.0,)), 0)
+        ensemble.save_observation_location_metadata(location_metadata(), 0)
+
+        ensemble.save_response("rft", rft_response(values=(300.0,)), 1)
+        ensemble.save_observation_location_metadata(location_metadata(), 1)
+
+        warning_message = "missing properties SOIL in response for WELL:2000-01-01"
+        ensemble.save_observation_report_warning(warning_message, 0)
+
+        iens_active_index = np.array([0, 1])
+        active_observations = ["RFT_OBS1"]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["observation_key"].to_list() == active_observations
+        assert obs_and_responses["0"].to_list() == [200.0]
+        assert obs_and_responses["1"].to_list() == [300.0]
+        assert obs_and_responses["qc_warning_0"].to_list() == [warning_message]
+        assert obs_and_responses["qc_warning_1"].to_list() == [None]
+
+
+def test_that_save_observation_report_warning_appends_across_calls(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            experiment_config={"response_configuration": [], "observations": []}
+        )
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        assert ensemble.load_observation_report_warning(0) is None
+
+        ensemble.save_observation_report_warning("first warning", 0)
+        assert ensemble.load_observation_report_warning(0) == "first warning"
+
+        ensemble.save_observation_report_warning("second warning", 0)
+        assert (
+            ensemble.load_observation_report_warning(0)
+            == "first warning\nsecond warning"
+        )
+
+        assert ensemble.load_observation_report_warning(1) is None
 
 
 @pytest.mark.parametrize(
@@ -1035,5 +1105,43 @@ def test_that_location_metadata_file_is_not_created_when_no_observations():
                 with pytest.raises(FileNotFoundError):
                     ensemble.load_observation_location_metadata(0)
                 assert ensemble.get_realization_list_with_responses() == [0]
+
+    asyncio.run(run_test())
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_write_responses_to_storage_persists_observation_report_warning():
+    warning_message = "missing properties SOIL in response for WELL:2000-01-01"
+
+    def read_from_file_mock(run_path, iens, iter_):
+        warnings.warn(warning_message, ObservationReportWarning, stacklevel=1)
+        return _create_rft_response_df()
+
+    async def run_test():
+        with (
+            patch.object(RFTConfig, "read_from_file", side_effect=read_from_file_mock),
+            _create_rft_ensemble(1, []) as ensemble,
+        ):
+            await _write_responses_to_storage("", 0, ensemble)
+
+            assert ensemble.load_observation_report_warning(0) == warning_message
+
+    asyncio.run(run_test())
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_write_responses_to_storage_does_not_persist_other_warning_categories():
+    def read_from_file_mock(run_path, iens, iter_):
+        warnings.warn("unrelated warning", UserWarning, stacklevel=1)
+        return _create_rft_response_df()
+
+    async def run_test():
+        with (
+            patch.object(RFTConfig, "read_from_file", side_effect=read_from_file_mock),
+            _create_rft_ensemble(1, []) as ensemble,
+        ):
+            await _write_responses_to_storage("", 0, ensemble)
+
+            assert ensemble.load_observation_report_warning(0) is None
 
     asyncio.run(run_test())
