@@ -310,7 +310,7 @@ class ExperimentPanel(QWidget):
         simulation_widget = self._experiment_widgets[self.get_current_experiment_type()]
         return simulation_widget.get_experiment_arguments()
 
-    def _confirm_runpath(
+    def _prepare_runpath(
         self, client: ErtClient, config_id: str, model_data: dict[str, Any]
     ) -> bool:
         delete = False
@@ -418,7 +418,7 @@ class ExperimentPanel(QWidget):
         except httpx.RequestError as e:
             QMessageBox.warning(
                 self,
-                "Experiment Registration Failed",
+                "Experiment registration failed",
                 f"Failed to register the experiment: {e}",
                 QMessageBox.StandardButton.Ok,
             )
@@ -426,7 +426,7 @@ class ExperimentPanel(QWidget):
         started = False
         try:
             model_data = client.get_runmodel_data(config_id)
-            if not self._confirm_runpath(client, config_id, model_data):
+            if not self._prepare_runpath(client, config_id, model_data):
                 return
             client.start_experiment_ert(config_id)
             started = True
@@ -438,7 +438,6 @@ class ExperimentPanel(QWidget):
             args.mode, model_data["number_of_active_realizations"]
         )
 
-        # Setup websocket for update
         event_queue, thread = client.setup_event_queue_from_ws_endpoint(config_id)
 
         # Dummy func
