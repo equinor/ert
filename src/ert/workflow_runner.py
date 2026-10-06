@@ -21,6 +21,10 @@ from ert.config import (
 )
 
 
+class WorkflowJobFailedError(RuntimeError):
+    """Raised when a workflow job configured with STOP_ON_FAIL fails."""
+
+
 class WorkflowJobStatus(StrEnum):
     SUCCESS = "success"
     FAILED = "failed"
@@ -35,6 +39,7 @@ class WorkflowJobResult:
     stdout: str
     stderr: str
     status: WorkflowJobStatus
+    error: str | None = None
     timestamp: datetime.datetime = field(
         default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
     )
@@ -138,6 +143,11 @@ class WorkflowJobRunner:
             raise ValueError("The job must be run before getting stderrdata")
         return self.__script.stderrdata
 
+    def error(self) -> str | None:
+        if self.__script is None:
+            raise ValueError("The job must be run before getting error")
+        return self.__script.error
+
 
 class WorkflowRunner:
     def __init__(
@@ -231,6 +241,7 @@ class WorkflowRunner:
                 stdout=jobrunner.stdoutdata(),
                 stderr=jobrunner.stderrdata(),
                 status=status,
+                error=jobrunner.error(),
             )
             self.__job_results.append(result)
 
@@ -242,8 +253,8 @@ class WorkflowRunner:
 
             if jobrunner.hasFailed() and jobrunner.stop_on_fail:
                 self.__running = False
-                raise RuntimeError(
-                    f"Workflow job {result.name} failed with error: {result.stderr}"
+                raise WorkflowJobFailedError(
+                    f"Workflow job {result.name} failed with error: {result.error}"
                 )
 
         self.__current_job = None

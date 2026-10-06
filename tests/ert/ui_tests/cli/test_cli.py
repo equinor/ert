@@ -508,8 +508,11 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
         if expect_stopped:
-            with pytest.raises(Exception, match=r"Workflow job .* failed with error"):
+            with pytest.raises(
+                Exception, match=r"Workflow job .* failed with error"
+            ) as exc_info:
                 run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+            assert "Traceback" not in str(exc_info.value)
         else:
             run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
 

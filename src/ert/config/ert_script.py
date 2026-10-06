@@ -3,8 +3,6 @@ from __future__ import annotations
 import importlib.util
 import inspect
 import logging
-import sys
-import traceback
 from abc import abstractmethod
 from types import MappingProxyType, ModuleType
 from typing import Any
@@ -43,6 +41,7 @@ class ErtScript:
         self.__failed = False
         self._stdoutdata = ""
         self._stderrdata = ""
+        self._error: str | None = None
 
     @abstractmethod
     def run(self, *arg: Any, **kwarg: Any) -> Any:
@@ -70,6 +69,10 @@ class ErtScript:
         if isinstance(self._stderrdata, bytes):
             self._stderrdata = self._stderrdata.decode()
         return self._stderrdata
+
+    @property
+    def error(self) -> str | None:
+        return self._error
 
     def isCancelled(self) -> bool:
         return self.__is_cancelled
@@ -123,19 +126,9 @@ class ErtScript:
                     )
 
             return self._run_capturing_output(arguments)
-        except AttributeError as e:
-            error_msg = str(e)
-            if not hasattr(self, "run"):
-                error_msg = "No 'run' function implemented"
-            self.output_stack_trace(error=error_msg)
-            logger.error(
-                f"Attribute error in workflow script {self.__class__.__name__}:"
-                f" {error_msg}"
-            )
-            return None
         except KeyboardInterrupt:
             error_msg = "Script cancelled (CTRL+C)"
-            self.output_stack_trace(error=error_msg)
+            self._record_error(error_msg)
             logger.info(
                 f"Script cancelled in workflow script {self.__class__.__name__}:"
                 f" {error_msg}"
@@ -143,21 +136,19 @@ class ErtScript:
             return None
         except UserWarning as uw:
             self.__failed = True
-            self.output_stack_trace(error=str(uw))
+            self._record_error(str(uw))
             logger.warning(
                 f"User warning in workflow script {self.__class__.__name__}: {uw}"
             )
             return uw.args[0]
         except ExternalScriptError as e:
-            self.output_stack_trace(error=str(e))
+            self._record_error(str(e))
             logger.error(f"Workflow job failed: {e!s}")
             return None
         except BaseException as e:
-            full_trace = "".join(traceback.format_exception(*sys.exc_info()))
-            self.output_stack_trace(f"{e!s}\n{full_trace}")
+            self._record_error(f"{type(e).__name__}: {e!s}")
             logger.exception(
-                f"Exception in workflow script {self.__class__.__name__}:"
-                f" {e!s}\n{full_trace}"
+                f"Exception in workflow script {self.__class__.__name__}: {e!s}"
             )
             return None
         finally:
@@ -193,17 +184,12 @@ class ErtScript:
             )
         return arguments
 
-    def output_stack_trace(self, error: str = "") -> None:
-        stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
-        sys.stderr.write(
-            f"The script '{self.__class__.__name__}' caused an "
-            f"error while running:\n{str(stack_trace).strip()}\n"
-        )
-
+    def _record_error(self, error: str) -> None:
         existing_stderr = self.stderrdata
         if existing_stderr and not existing_stderr.endswith("\n"):
             existing_stderr += "\n"
         self._stderrdata = existing_stderr + error
+        self._error = error
         self.__failed = True
 
     @staticmethod
