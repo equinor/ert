@@ -56,11 +56,21 @@ class SharedClient:
     ) -> SharedClient:
         key = Path(project).resolve()
         with cls._instance_lock:
-            if cls._instance and not cls._instance._client.is_closed:
-                return cls._instance
+            cached = cls._instance
+            if cached is not None and not cached._client.is_closed:
+                if cached._project == key and cached._is_reachable(timeout=timeout):
+                    return cached
+                cached._client.close()  # Stale cache
             client = create_ertserver_client(key, timeout=timeout)
             cls._instance = cls(key, client)
         return cls._instance
+
+    def _is_reachable(self, timeout: int | None) -> bool:
+        try:
+            self._client.request("GET", "/healthcheck", timeout=timeout or 2)
+        except httpx.HTTPError:
+            return False
+        return True
 
     @classmethod
     def close_client(cls) -> None:

@@ -19,6 +19,13 @@ from ert.services.ert_client import _WEBSOCKET_CONNECT_RETRIES, ErtClient
 from ert.services.shared_client import SharedClient
 
 
+@pytest.fixture(autouse=True)
+def _reset_shared_client_singleton():
+    SharedClient._instance = None
+    yield
+    SharedClient._instance = None
+
+
 class RecordingResponse:
     def __init__(self, payload: Any) -> None:
         self._payload = payload
@@ -281,3 +288,104 @@ def test_that_server_probe_returns_false_on_transport_error(event_client, error_
     api.client.request.side_effect = error_type("unavailable")
 
     assert not api.server_is_running(timeout=1)
+
+
+def test_that_get_client_does_not_reuse_a_client_for_a_different_project(
+    monkeypatch, tmp_path
+):
+    def fake_create_ertserver_client(project, timeout=None):
+        return MagicMock(is_closed=False)
+
+    monkeypatch.setattr(
+        "ert.services.shared_client.create_ertserver_client",
+        fake_create_ertserver_client,
+    )
+
+    project_a = tmp_path / "a"
+    project_b = tmp_path / "b"
+    project_a.mkdir()
+    project_b.mkdir()
+
+    client_a = SharedClient.get_client(project_a)
+    client_b = SharedClient.get_client(project_b)
+
+    assert client_a.project == project_a.resolve()
+    assert client_b.project == project_b.resolve()
+
+
+def test_that_get_client_reuses_the_cached_client_for_the_same_project(
+    monkeypatch, tmp_path
+):
+    created_clients: list[MagicMock] = []
+
+    def fake_create_ertserver_client(project, timeout=None):
+        client = MagicMock(is_closed=False)
+        created_clients.append(client)
+        return client
+
+    monkeypatch.setattr(
+        "ert.services.shared_client.create_ertserver_client",
+        fake_create_ertserver_client,
+    )
+
+    project = tmp_path / "project"
+    project.mkdir()
+
+    first_client = SharedClient.get_client(project)
+    second_client = SharedClient.get_client(project)
+
+    assert second_client is first_client
+    assert len(created_clients) == 1
+    first_client._client.request.assert_called_with("GET", "/healthcheck", timeout=2)
+
+
+def test_that_get_client_closes_the_displaced_client_for_a_different_project(
+    monkeypatch, tmp_path
+):
+    def fake_create_ertserver_client(project, timeout=None):
+        return MagicMock(is_closed=False)
+
+    monkeypatch.setattr(
+        "ert.services.shared_client.create_ertserver_client",
+        fake_create_ertserver_client,
+    )
+
+    project_a = tmp_path / "a"
+    project_b = tmp_path / "b"
+    project_a.mkdir()
+    project_b.mkdir()
+
+    first_client = SharedClient.get_client(project_a)
+    SharedClient.get_client(project_b)
+
+    first_client._client.close.assert_called_once()
+
+
+def test_that_get_client_creates_a_new_client_when_the_cached_server_is_dead(
+    monkeypatch, tmp_path
+):
+    created_clients: list[MagicMock] = []
+
+    def fake_create_ertserver_client(project, timeout=None):
+        client = MagicMock(is_closed=False)
+        created_clients.append(client)
+        return client
+
+    monkeypatch.setattr(
+        "ert.services.shared_client.create_ertserver_client",
+        fake_create_ertserver_client,
+    )
+
+    project = tmp_path / "project"
+    project.mkdir()
+
+    first_client = SharedClient.get_client(project)
+    # Simulate the server behind the cached client having died, without the
+    # client ever being explicitly closed:
+    first_client._client.request.side_effect = httpx.ConnectError("refused")
+
+    second_client = SharedClient.get_client(project)
+
+    assert second_client is not first_client
+    assert second_client.project == project.resolve()
+    assert len(created_clients) == 2
