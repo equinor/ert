@@ -129,28 +129,33 @@ class ReportLogTable(UpdateLogTable):
                 "all items in the table should have been initialized"
             )
 
-            missing_realizations = hidden_item.text()
+            self._show_message_dialog(
+                "Observation deactivated",
+                "Missing responses from active realizations:",
+                hidden_item.text(),
+            )
 
-            dialog = QDialog(self)
-            dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            dialog.setWindowTitle("Observation deactivated")
-            dialog.resize(500, 500)
-            dialog.setSizeGripEnabled(True)
+    def _show_message_dialog(self, title: str, label: str, message: str) -> None:
+        dialog = QDialog(self)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        dialog.setWindowTitle(title)
+        dialog.resize(500, 500)
+        dialog.setSizeGripEnabled(True)
 
-            layout = QVBoxLayout(dialog)
-            layout.addWidget(QLabel("Missing responses from active realizations:"))
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel(label))
 
-            text_edit = QTextEdit()
-            text_edit.setReadOnly(True)
-            text_edit.setPlainText(missing_realizations)
-            text_edit.setViewportMargins(15, 0, 0, 0)
-            layout.addWidget(text_edit)
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(message)
+        text_edit.setViewportMargins(15, 0, 0, 0)
+        layout.addWidget(text_edit)
 
-            buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-            buttons.accepted.connect(dialog.accept)
-            layout.addWidget(buttons)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(dialog.accept)
+        layout.addWidget(buttons)
 
-            dialog.exec()
+        dialog.exec()
 
 
 class UpdateWidget(QWidget):
