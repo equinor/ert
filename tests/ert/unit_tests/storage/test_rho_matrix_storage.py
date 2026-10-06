@@ -116,10 +116,10 @@ def test_that_load_rho_matrix_validates_observation_keys(tmp_path):
         assert result is not None
         np.testing.assert_array_equal(result, dense)
 
-        # subset of observation keys — should return cached matrix
+        # subset of observation keys — should return those columns, and only those
         result = experiment.load_rho_matrix("PORO", observation_keys=["OBS_A", "OBS_C"])
         assert result is not None
-        np.testing.assert_array_equal(result, dense)
+        np.testing.assert_array_equal(result, dense[:, [0, 2]])
 
         # no observation keys specified — should return cached matrix
         result = experiment.load_rho_matrix("PORO", observation_keys=None)
@@ -131,3 +131,61 @@ def test_that_load_rho_matrix_validates_observation_keys(tmp_path):
             "PORO", observation_keys=["OBS_A", "OBS_NEW"]
         )
         assert result is None
+
+
+def test_that_load_rho_matrix_is_cut_down_to_the_active_observations(tmp_path):
+    """One column per active observation, in the order they are assimilated.
+
+    Observations are deactivated between the assimilations of an ES-MDA, so a
+    rho matrix cached during the first one describes more observations than the
+    later ones use. It is multiplied elementwise with a Kalman gain that has one
+    column per active observation, so the columns have to line up.
+    """
+    event, dense = _make_rho_event(
+        param_name="PORO", shape=(4, 3), observation_keys=["OBS_A", "OBS_B", "OBS_C"]
+    )
+
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        experiment.save_blob(event)
+
+        for active, columns in [
+            (["OBS_A", "OBS_B", "OBS_C"], [0, 1, 2]),
+            (["OBS_B", "OBS_C"], [1, 2]),
+            (["OBS_B"], [1]),
+            (["OBS_C", "OBS_A"], [2, 0]),
+        ]:
+            result = experiment.load_rho_matrix("PORO", observation_keys=active)
+            assert result is not None
+            assert result.shape == (4, len(active))
+            np.testing.assert_array_equal(result, dense[:, columns])
+
+
+def test_that_load_rho_matrix_is_recomputed_when_stored_keys_are_not_unique(tmp_path):
+    """A repeated key gives no way to tell its columns apart, so do not guess.
+
+    An observation of several indices contributes one key per index, each with
+    its own position and so its own column. Subsetting by key would pick columns
+    arbitrarily, which is worse than recomputing, so None is returned.
+    """
+    event, dense = _make_rho_event(
+        param_name="PORO", shape=(4, 3), observation_keys=["OBS_A", "OBS_A", "OBS_B"]
+    )
+
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        experiment.save_blob(event)
+
+        # The stored set, unchanged, is still served: the columns line up as they are
+        result = experiment.load_rho_matrix(
+            "PORO", observation_keys=["OBS_A", "OBS_A", "OBS_B"]
+        )
+        assert result is not None
+        np.testing.assert_array_equal(result, dense)
+
+        # Anything else is refused rather than guessed at
+        assert experiment.load_rho_matrix("PORO", observation_keys=["OBS_A"]) is None
+        assert (
+            experiment.load_rho_matrix("PORO", observation_keys=["OBS_A", "OBS_B"])
+            is None
+        )
