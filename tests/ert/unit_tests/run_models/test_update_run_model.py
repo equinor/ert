@@ -30,9 +30,8 @@ def update_model(storage: Storage) -> MagicMock:
 
 
 def test_that_update_rejects_non_updatable_prior_before_creating_posterior(
-    update_model: MagicMock,
-    storage: Storage,
-) -> None:
+    update_model: MagicMock, storage: Storage
+):
     parameter = GenKwConfig(
         name="PARAMETER",
         distribution={"name": "normal", "mean": 0, "std": 1},
@@ -58,9 +57,8 @@ def test_that_update_rejects_non_updatable_prior_before_creating_posterior(
 
 
 def test_that_update_creates_next_iteration_from_updatable_prior(
-    update_model: MagicMock,
-    storage: Storage,
-) -> None:
+    update_model: MagicMock, storage: Storage
+):
     parameter = GenKwConfig(
         name="PARAMETER", distribution={"name": "normal", "mean": 0, "std": 1}
     )

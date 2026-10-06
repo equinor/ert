@@ -72,9 +72,8 @@ def _expand(section: CollapsibleSection) -> None:
     ],
 )
 def test_that_toggling_a_general_option_invokes_the_connection_point(
-    qtbot,
-    checkbox_name,
-) -> None:
+    qtbot, checkbox_name
+):
     connection_point = Mock()
     options = GeneralPlotOptions(connection_point)
     widget = options.get_widget()
@@ -104,11 +103,8 @@ def test_that_toggling_a_general_option_invokes_the_connection_point(
     ],
 )
 def test_that_toggling_a_general_option_logs_sidebar_usage_once(
-    qtbot,
-    caplog,
-    checkbox_name,
-    option_name,
-) -> None:
+    qtbot, caplog, checkbox_name, option_name
+):
     options = GeneralPlotOptions(Mock())
     widget = options.get_widget()
     qtbot.addWidget(widget)
@@ -138,11 +134,7 @@ def test_that_toggling_a_general_option_logs_sidebar_usage_once(
         ("change_y_label_button", "y"),
     ],
 )
-def test_that_axis_label_button_requests_edit_for_its_axis(
-    qtbot,
-    button_name,
-    axis,
-) -> None:
+def test_that_axis_label_button_requests_edit_for_its_axis(qtbot, button_name, axis):
     options = GeneralPlotOptions(Mock())
     widget = options.get_widget()
     qtbot.addWidget(widget)
@@ -158,7 +150,7 @@ def test_that_axis_label_button_requests_edit_for_its_axis(
     requested_axis.assert_called_once_with(axis)
 
 
-def test_that_title_button_requests_title_edit(qtbot) -> None:
+def test_that_title_button_requests_title_edit(qtbot):
     options = GeneralPlotOptions(Mock())
     widget = options.get_widget()
     qtbot.addWidget(widget)
@@ -184,9 +176,7 @@ def test_that_title_button_requests_title_edit(qtbot) -> None:
     ],
 )
 def test_that_history_and_observations_visibility_can_be_set(
-    qtbot,
-    history_visible,
-    observations_visible,
+    qtbot, history_visible, observations_visible
 ):
     options = GeneralPlotOptions(Mock())
     qtbot.addWidget(options.get_widget())

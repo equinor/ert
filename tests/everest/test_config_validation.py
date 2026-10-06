@@ -667,7 +667,7 @@ def test_that_install_data_source_exists(change_to_tmpdir):
 
 def test_that_repeated_install_elements_to_same_location_will_fail(
     change_to_tmpdir: None,
-) -> None:
+):
     Path("config_dir").mkdir()
     Path("config_dir/test.yml").touch()
     Path("config_dir/foo").mkdir()
@@ -683,7 +683,7 @@ def test_that_repeated_install_elements_to_same_location_will_fail(
 
 def test_that_install_elements_cannot_install_over_previously_installed_folder(
     change_to_tmpdir: None,
-) -> None:
+):
     Path("config_dir").mkdir()
     Path("config_dir/test.yml").touch()
     Path("config_dir/foo/bar").mkdir(parents=True)
@@ -699,7 +699,7 @@ def test_that_install_elements_cannot_install_over_previously_installed_folder(
 
 def test_that_install_elements_cannot_install_into_previously_installed_folders(
     change_to_tmpdir: None,
-) -> None:
+):
     Path("config_dir").mkdir()
     Path("config_dir/test.yml").touch()
     Path("config_dir/foo").mkdir()
@@ -1456,7 +1456,7 @@ def test_ambiguous_max_memory_vs_realization_memory_is_detected():
 )
 def test_that_max_memory_propagates_to_realization_memory(
     max_memory, realization_memory, expected
-) -> None:
+):
     """Also testing that 0 for realization_memory means not set"""
     config = everest_config_with_defaults(
         simulator={
@@ -1475,7 +1475,7 @@ def test_that_max_memory_propagates_to_realization_memory(
         (999, 999),
     ],
 )
-def test_parsing_of_realization_memory(realization_memory, expected) -> None:
+def test_parsing_of_realization_memory(realization_memory, expected):
     config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local", "realization_memory": realization_memory},
@@ -1501,7 +1501,7 @@ def test_parsing_of_realization_memory(realization_memory, expected) -> None:
         ("foo", "Invalid memory string: foo"),
     ],
 )
-def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message) -> None:
+def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message):
     with pytest.raises(ValidationError, match=error_message):
         everest_config_with_defaults(
             simulator={
@@ -1515,7 +1515,7 @@ def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message) -> N
         everest_config_with_defaults(simulator={"max_memory": invalid_memory_spec})
 
 
-def test_parsing_of_unset_realization_memory() -> None:
+def test_parsing_of_unset_realization_memory():
     config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local"},
@@ -1545,7 +1545,7 @@ def test_parsing_of_unset_realization_memory() -> None:
         "1 Gb",
     ],
 )
-def test_that_max_memory_is_valid(max_memory) -> None:
+def test_that_max_memory_is_valid(max_memory):
     everest_config_with_defaults(simulator={"max_memory": max_memory})
 
 
@@ -1554,7 +1554,7 @@ def test_that_max_memory_is_valid(max_memory) -> None:
     "max_memory",
     [-1, "-1", "-1G", "-1 G", "-1Gb"],
 )
-def test_that_negative_max_memory_fails(max_memory) -> None:
+def test_that_negative_max_memory_fails(max_memory):
     with pytest.raises(
         ValidationError, match=f"Negative memory does not make sense in {max_memory}"
     ):

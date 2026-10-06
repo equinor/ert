@@ -46,7 +46,7 @@ def _make_context(
     )
 
 
-def test_that_global_es_prepare_does_not_mutate_obs_context_responses() -> None:
+def test_that_global_es_prepare_does_not_mutate_obs_context_responses():
     ctx = _make_context()
     original = ctx.responses.copy()
 
@@ -59,9 +59,7 @@ def test_that_global_es_prepare_does_not_mutate_obs_context_responses() -> None:
     np.testing.assert_array_equal(ctx.responses, original)
 
 
-def test_that_adaptive_localization_prepare_does_not_mutate_obs_context_responses() -> (
-    None
-):
+def test_that_adaptive_localization_prepare_does_not_mutate_obs_context_responses():
     ctx = _make_context()
     original = ctx.responses.copy()
 
@@ -75,9 +73,7 @@ def test_that_adaptive_localization_prepare_does_not_mutate_obs_context_response
     np.testing.assert_array_equal(ctx.responses, original)
 
 
-def test_that_distance_localization_prepare_does_not_mutate_obs_context_responses() -> (
-    None
-):
+def test_that_distance_localization_prepare_does_not_mutate_obs_context_responses():
     ctx = _make_context()
     original = ctx.responses.copy()
 
@@ -91,9 +87,7 @@ def test_that_distance_localization_prepare_does_not_mutate_obs_context_response
     np.testing.assert_array_equal(ctx.responses, original)
 
 
-def test_that_distance_localization_innovation_is_independent_of_prepare_order() -> (
-    None
-):
+def test_that_distance_localization_innovation_is_independent_of_prepare_order():
     """
     The distance smoother's internal D_obs_minus_D must not depend on whether
     GlobalESUpdate.prepare ran before or after DistanceLocalizationUpdate.prepare.
@@ -141,7 +135,7 @@ def test_that_distance_localization_innovation_is_independent_of_prepare_order()
 )
 def test_that_obs_context_responses_survive_two_strategy_prepares(
     first_strategy_cls: type, second_strategy_cls: type
-) -> None:
+):
     ctx = _make_context()
     original = ctx.responses.copy()
 

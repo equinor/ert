@@ -1123,7 +1123,7 @@ def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
     assert run_dialog is not None
 
 
-def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) -> None:
+def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot):
     """After runpath creation is done the progress tab is removed and a subsequent
     snapshot event must still produce a RealizationWidget tab as normal.
     """
@@ -1193,7 +1193,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
 @pytest.mark.slow
 def test_that_terminating_experiment_during_hooked_workflows_stops_run_dialog(
     qtbot: QtBot, monkeypatch
-) -> None:
+):
     config_file = "hooked_workflow_config.ert"
     monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
     monkeypatch.setattr(
@@ -1318,9 +1318,7 @@ def _stop_event_monitoring(qtbot: QtBot, dialog: RunDialog, queue: SimpleQueue) 
 
 
 @pytest.mark.timeout(10)
-def test_that_workflow_events_are_collected_in_single_workflows_tab(
-    qtbot: QtBot,
-) -> None:
+def test_that_workflow_events_are_collected_in_single_workflows_tab(qtbot: QtBot):
     queue: SimpleQueue = SimpleQueue()
     mock_api = MagicMock()
     mock_api.experiment_name = "test"
@@ -1349,7 +1347,7 @@ def test_that_workflow_events_are_collected_in_single_workflows_tab(
 @pytest.mark.timeout(10)
 def test_that_workflows_tab_does_not_shift_everest_batch_result_events_to_wrong_tab(
     qtbot: QtBot, monkeypatch
-) -> None:
+):
     monkeypatch.setattr(
         "ert.gui.experiments.run_dialog.is_everest_application", lambda: True
     )
@@ -1411,9 +1409,7 @@ def test_that_workflows_tab_does_not_shift_everest_batch_result_events_to_wrong_
 
 
 @pytest.mark.timeout(10)
-def test_that_rerunning_failed_realizations_clears_workflows_tab(
-    qtbot: QtBot,
-) -> None:
+def test_that_rerunning_failed_realizations_clears_workflows_tab(qtbot: QtBot):
     queue: SimpleQueue = SimpleQueue()
     mock_api = MagicMock()
     mock_api.experiment_name = "test"

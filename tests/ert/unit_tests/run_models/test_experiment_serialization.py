@@ -518,7 +518,7 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     ensemble_experiment_args: dict[str, Any],
     data,
-) -> None:
+):
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
     baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
@@ -563,7 +563,7 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     data,
-) -> None:
+):
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
     baserunmodel_args, runtime_plugins = runmodel_args(
         data.draw, tmp_path_factory, min_active_realizations=2
@@ -607,7 +607,7 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     data,
-) -> None:
+):
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
     baserunmodel_args, runtime_plugins = runmodel_args(
         data.draw, tmp_path_factory, min_active_realizations=2
@@ -652,7 +652,7 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     update_runmodel_args: dict[str, Any],
     multidass_args: dict[str, Any],
     data,
-) -> None:
+):
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
     baserunmodel_args, runtime_plugins = runmodel_args(
         data.draw, tmp_path_factory, min_active_realizations=2

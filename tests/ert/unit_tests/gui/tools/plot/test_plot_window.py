@@ -342,7 +342,7 @@ def test_that_history_and_observations_checkboxes_match_data_availability(
     key: str,
     history_data_available: bool,
     observations_available: bool,
-) -> None:
+):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api
@@ -388,9 +388,8 @@ def test_that_history_and_observations_checkboxes_match_data_availability(
 
 
 def test_that_history_and_observations_checkbox_state_update_when_switching_keys(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api
@@ -462,7 +461,7 @@ def test_that_history_and_observations_checkbox_state_update_when_switching_keys
 
 def test_that_general_option_checkboxes_change_rendered_plot(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
-) -> None:
+):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api
@@ -618,7 +617,7 @@ def test_that_general_option_checkboxes_change_rendered_plot(
 
 def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
-) -> None:
+):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api
@@ -768,7 +767,7 @@ def _current_tab_name(plot_window: PlotWindow) -> str:
 
 def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
-) -> None:
+):
     # Reversing the plot map changes every tab position, so a default tab
     # resolved by position would land on the wrong plot type.
     monkeypatch.setattr(
@@ -788,7 +787,7 @@ def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
 
 def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_it(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
-) -> None:
+):
     plot_window = _plot_window_with_response_and_gen_kw_keys(qtbot, monkeypatch)
 
     _select_data_type_key(plot_window, "gen_kw")
@@ -816,7 +815,7 @@ def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
     tab_name: str,
     values: list[float],
     expected_visible: bool,
-) -> None:
+):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api
@@ -951,10 +950,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
         pytest.param("y", id="y-axis"),
     ],
 )
-def test_that_clicking_axis_label_emits_edit_request(
-    qtbot: QtBot,
-    axis: str,
-) -> None:
+def test_that_clicking_axis_label_emits_edit_request(qtbot: QtBot, axis: str):
     ensemble = EnsembleObject(
         "ensemble",
         "ensemble",
@@ -1003,7 +999,7 @@ def test_that_clicking_axis_label_emits_edit_request(
     assert received == [axis]
 
 
-def test_that_clicking_title_emits_edit_request(qtbot: QtBot) -> None:
+def test_that_clicking_title_emits_edit_request(qtbot: QtBot):
     ensemble = EnsembleObject(
         "ensemble",
         "ensemble",
@@ -1060,10 +1056,8 @@ def test_that_clicking_title_emits_edit_request(qtbot: QtBot) -> None:
     ],
 )
 def test_that_hovering_editable_text_shows_it_as_clickable(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-    text_kind: str,
-) -> None:
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, text_kind: str
+):
     show_text = MagicMock()
     monkeypatch.setattr(QToolTip, "showText", show_text)
 
@@ -1188,7 +1182,7 @@ def test_that_sidebar_axis_label_edit_uses_configured_or_visible_label(
     configured_label: str | None,
     visible_label: str | None,
     expected_label: str,
-) -> None:
+):
     plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
     get_text_input = MagicMock(return_value=("", False))
     plot_window._general_options.get_text_input = get_text_input
@@ -1238,7 +1232,7 @@ def test_that_axis_label_edit_updates_or_preserves_persistent_config(
     current_label: str,
     new_label: str,
     accepted: bool,
-) -> None:
+):
     plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
     get_text_input = MagicMock(return_value=(new_label, accepted))
     plot_window._general_options.get_text_input = get_text_input
@@ -1274,7 +1268,7 @@ def test_that_title_edit_updates_or_preserves_persistent_config(
     dialog_value: str,
     expected_title: str,
     accepted: bool,
-) -> None:
+):
     plot_window = _create_plot_window_for_text_edit(qtbot, monkeypatch)
     get_text_input = MagicMock(return_value=(dialog_value, accepted))
     plot_window._general_options.get_text_input = get_text_input
@@ -1289,9 +1283,8 @@ def test_that_title_edit_updates_or_preserves_persistent_config(
 
 @pytest.mark.slow
 def test_that_clearing_custom_title_restores_key_title_when_rendering(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api
@@ -1346,9 +1339,8 @@ def test_that_clearing_custom_title_restores_key_title_when_rendering(
 
 @pytest.mark.slow
 def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
     mock_plot_api = MagicMock(spec=PlotApi)
     mock_plot_api_cls.return_value = mock_plot_api
@@ -1392,9 +1384,7 @@ def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
     assert plot_widget._figure.axes[0].get_title() == "BREAKTHROUGH:WWCT:OP1"
 
 
-def test_that_resetting_axis_label_restores_histogram_default_label(
-    qtbot: QtBot,
-) -> None:
+def test_that_resetting_axis_label_restores_histogram_default_label(qtbot: QtBot):
     ensemble = EnsembleObject(
         "ensemble",
         "ensemble",
@@ -1444,9 +1434,8 @@ def test_that_resetting_axis_label_restores_histogram_default_label(
 
 
 def test_that_separators_are_included_in_everest(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
@@ -1459,9 +1448,8 @@ def test_that_separators_are_included_in_everest(
 
 
 def test_that_datatype_separators_are_not_selectable(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,
@@ -1477,9 +1465,8 @@ def test_that_datatype_separators_are_not_selectable(
 
 
 def test_that_datatype_separators_are_never_set_as_default(
-    qtbot: QtBot,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         "ert.gui.plotting.widgets.data_type_keys_widget.is_everest_application",
         lambda: True,

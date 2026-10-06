@@ -53,7 +53,7 @@ def test_that_zero_or_negative_weights_raise_value_error(weights):
 
 def test_that_mda_rejects_non_updatable_prior_before_creating_experiment(
     storage: Storage,
-) -> None:
+):
     parameter = GenKwConfig(
         name="PARAMETER",
         distribution={"name": "uniform", "min": 0.8, "max": 1.2},

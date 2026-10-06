@@ -133,9 +133,7 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
     assert panel.isConfigurationValid() is expected_valid
 
 
-def test_that_prior_selection_updates_summary_and_run_configuration(
-    qtbot: QtBot,
-) -> None:
+def test_that_prior_selection_updates_summary_and_run_configuration(qtbot: QtBot):
     parameter = GenKwConfig(
         name="configured",
         distribution={"name": "uniform", "min": 0, "max": 1},
@@ -204,7 +202,7 @@ def test_that_strategy_summary_reflects_only_saved_update_settings(
     qtbot: QtBot,
     dialog_button: QDialogButtonBox.StandardButton,
     expected_strategy: LocalizationType,
-) -> None:
+):
     parameter = GenKwConfig(
         name="configured",
         distribution={"name": "uniform", "min": 0, "max": 1},
@@ -255,10 +253,8 @@ def test_that_strategy_summary_reflects_only_saved_update_settings(
     [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
 )
 def test_that_update_strategy_summary_includes_design_matrix_parameters(
-    qtbot: QtBot,
-    tmp_path,
-    panel_type,
-) -> None:
+    qtbot: QtBot, tmp_path, panel_type
+):
     design_matrix_path = tmp_path / "design_matrix.xlsx"
     _create_design_matrix(
         design_matrix_path,
@@ -305,9 +301,8 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
     [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
 )
 def test_that_activating_panel_refreshes_strategy_changed_by_another_panel(
-    qtbot: QtBot,
-    panel_type,
-) -> None:
+    qtbot: QtBot, panel_type
+):
     parameter = GenKwConfig(
         name="parameter",
         distribution=RawSettings(),
@@ -335,7 +330,7 @@ def test_that_activating_panel_refreshes_strategy_changed_by_another_panel(
 
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_config(
     qtbot: QtBot,
-) -> None:
+):
     """This is a test that makes sure the realization selector autofills and
     validates with the num_realizations from config/designmatrix, and the autofilled
     configuration is valid. It also makes sure the "Select prior ensemble" button is
@@ -372,7 +367,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
 
 def test_that_active_realizations_selector_validates_with_with_realizations_from_storage_on_rerun_from(  # ruff: ignore[line-too-long]
     qtbot: QtBot,
-) -> None:
+):
     """This is a test that makes sure that the active realizations field is
     validated against the num_realizations from config/designmatrix on default,
     but swaps to the realizations found in storage if the
@@ -460,9 +455,7 @@ def test_that_multiple_data_assimilation_panel_sets_active_realizations_to_initi
     assert mda_panel._active_realizations_field.text() == active_realizations_string
 
 
-def test_that_multiple_data_assimilation_panel_uses_config_weights(
-    qtbot: QtBot,
-) -> None:
+def test_that_multiple_data_assimilation_panel_uses_config_weights(qtbot: QtBot):
     active_realizations = [True] * 5
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
@@ -486,7 +479,7 @@ def test_that_multiple_data_assimilation_panel_uses_config_weights(
 
 def test_that_multiple_data_assimilation_panel_shows_weight_mismatch_warning(
     qtbot: QtBot,
-) -> None:
+):
     active_realizations = [True] * 5
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
@@ -514,7 +507,7 @@ def test_that_multiple_data_assimilation_panel_shows_weight_mismatch_warning(
 
 def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_formatting(  # ruff: ignore[line-too-long]
     qtbot: QtBot,
-) -> None:
+):
     active_realizations = [True] * 5
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
@@ -564,9 +557,7 @@ def _create_panel_with_weights(
     return panel
 
 
-def test_that_single_update_checkbox_locks_esmda_weights_to_one(
-    qtbot: QtBot,
-) -> None:
+def test_that_single_update_checkbox_locks_esmda_weights_to_one(qtbot: QtBot):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
@@ -581,9 +572,7 @@ def test_that_single_update_checkbox_locks_esmda_weights_to_one(
     assert panel.isConfigurationValid()
 
 
-def test_that_unchecking_single_update_restores_previous_esmda_weights(
-    qtbot: QtBot,
-) -> None:
+def test_that_unchecking_single_update_restores_previous_esmda_weights(qtbot: QtBot):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
@@ -599,9 +588,7 @@ def test_that_unchecking_single_update_restores_previous_esmda_weights(
     assert panel.get_experiment_arguments().weights == "3, 2, 1"
 
 
-def test_that_single_update_hides_esmda_weight_mismatch_warning(
-    qtbot: QtBot,
-) -> None:
+def test_that_single_update_hides_esmda_weight_mismatch_warning(qtbot: QtBot):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
@@ -615,7 +602,7 @@ def test_that_single_update_hides_esmda_weight_mismatch_warning(
 
 def test_that_selecting_prior_ensemble_unchecks_and_disables_single_update(
     qtbot: QtBot,
-) -> None:
+):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     notifier._storage._setup_mocked_run(
@@ -649,7 +636,7 @@ def test_that_selecting_prior_ensemble_unchecks_and_disables_single_update(
 
 def test_that_single_update_is_kept_when_ensemble_list_refreshes_after_a_run(
     qtbot: QtBot,
-) -> None:
+):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
@@ -748,7 +735,7 @@ class EnsInfo:
 )
 def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
     qtbot: QtBot, extra_ensembles, expected_ensembles
-) -> None:
+):
     config_num_realizations = 5
     active_realizations = [True] * config_num_realizations
     notifier = ErtNotifier()
@@ -801,7 +788,7 @@ def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
 @pytest.mark.timeout(10)
 def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
     qtbot: QtBot, panel_type, tmp_path, design_parameter_name: str
-) -> None:
+):
     original_parameter = GenKwConfig(
         name="original",
         distribution=RawSettings(),

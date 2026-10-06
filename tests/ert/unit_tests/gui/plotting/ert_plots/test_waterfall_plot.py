@@ -21,7 +21,7 @@ def _plot_context(ensemble: EnsembleObject) -> PlotContext:
     )
 
 
-def test_that_waterfall_plot_works_when_data_is_unavailable() -> None:
+def test_that_waterfall_plot_works_when_data_is_unavailable():
     figure = Figure()
 
     WaterfallPlot().plot(
@@ -36,7 +36,7 @@ def test_that_waterfall_plot_works_when_data_is_unavailable() -> None:
     assert len(figure.axes) == 0
 
 
-def test_that_waterfall_plot_stacks_positive_and_negative_contributions() -> None:
+def test_that_waterfall_plot_stacks_positive_and_negative_contributions():
     ensemble = EnsembleObject("ensemble", "id", False, "experiment", "")
     figure = Figure()
 

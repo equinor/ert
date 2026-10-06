@@ -87,7 +87,7 @@ def test_that_changing_localization_control_updates_parameter_strategy_property(
     parameter_type: str,
     initial_strategy: LocalizationType,
     changed_strategy: LocalizationType,
-) -> None:
+):
     update_strategies = {
         "GEN_KW": LocalizationType.GLOBAL,
         "FIELD": LocalizationType.ADAPTIVE,

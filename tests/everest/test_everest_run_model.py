@@ -60,7 +60,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
 @pytest.mark.parametrize("queue_system", ["lsf", "local", "torque", "slurm"])
 def test_that_queue_system_name_passes_through_create(
     create_runmodel: Callable, queue_system: str
-) -> None:
+):
     runmodel = create_runmodel(simulator={"queue_system": {"name": queue_system}})
     assert runmodel.queue_config.queue_system == queue_system
 
@@ -68,7 +68,7 @@ def test_that_queue_system_name_passes_through_create(
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_general_queue_options_properties_pass_through_create(
     create_runmodel: Callable,
-) -> None:
+):
     properties = {
         "name": "lsf",
         "max_running": 11,
@@ -145,14 +145,14 @@ def test_queue_options_properties_pass_through_create(
     create_runmodel: Callable,
     config: dict[str, str | int | float | bool],
     config_class: QueueOptions,
-) -> None:
+):
     runmodel = create_runmodel(simulator={"queue_system": config})
     assert runmodel.queue_config.queue_options == config_class(**config)
 
 
 def test_substitutions_from_everest_config(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, create_runmodel: Callable
-) -> None:
+):
     monkeypatch.chdir(tmp_path)
     config_path = Path("./hello/world/strong_optimizer.yml")
     config_dir = config_path.parent
@@ -186,7 +186,7 @@ def test_substitutions_from_everest_config(
 @pytest.mark.parametrize("random_seed", [None, 1234])
 def test_that_random_seed_passes_through_create(
     create_runmodel: Callable, random_seed: int | None
-) -> None:
+):
     runmodel = create_runmodel(
         environment={"random_seed": random_seed} if random_seed is not None else None
     )
@@ -197,17 +197,13 @@ def test_that_random_seed_passes_through_create(
         assert runmodel.random_seed == random_seed
 
 
-def test_cores_per_node_is_used_over_defaulted_num_cpu(
-    create_runmodel: Callable,
-) -> None:
+def test_cores_per_node_is_used_over_defaulted_num_cpu(create_runmodel: Callable):
     with pytest.warns(UserWarning, match="Ignoring cores_per_node as num_cpu was set"):
         runmodel = create_runmodel(config={"simulator": {"cores_per_node": 88}})
     assert runmodel.queue_config.queue_options.num_cpu == 88
 
 
-def test_cores_per_node_is_ignored_num_cpu_is_set(
-    create_runmodel: Callable,
-) -> None:
+def test_cores_per_node_is_ignored_num_cpu_is_set(create_runmodel: Callable):
     with pytest.warns(UserWarning, match="Ignoring cores_per_node.*"):
         runmodel = create_runmodel(
             config={
@@ -337,9 +333,7 @@ def test_that_queue_settings_are_taken_from_site_config(
     "max_memory",
     [0, 1, "0", "1", "1b", "1k", "1m", "1g", "1t", "1p", "1G", "1 G", "1Gb", "1 Gb"],
 )
-def test_that_max_memory_is_passed_to_ert_unchanged(
-    create_runmodel, max_memory
-) -> None:
+def test_that_max_memory_is_passed_to_ert_unchanged(create_runmodel, max_memory):
     runmodel = create_runmodel(simulator={"max_memory": max_memory})
 
     assert runmodel.queue_config.queue_options.realization_memory == (
@@ -348,13 +342,13 @@ def test_that_max_memory_is_passed_to_ert_unchanged(
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_that_max_memory_none_is_not_passed_to_ert(create_runmodel) -> None:
+def test_that_max_memory_none_is_not_passed_to_ert(create_runmodel):
     runmodel = create_runmodel()
     assert runmodel.queue_config.queue_options.realization_memory == 0
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_that_resubmit_limit_is_set(create_runmodel) -> None:
+def test_that_resubmit_limit_is_set(create_runmodel):
     runmodel = create_runmodel(simulator={"resubmit_limit": 2})
     assert runmodel.queue_config.max_submit == 3
 

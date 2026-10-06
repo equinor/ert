@@ -62,7 +62,7 @@ def test_that_expanding_restores_minimum_width_and_unbounded_maximum(main_window
 
 def test_that_expanding_restores_the_width_the_side_panel_had_before_collapsing(
     qtbot: QtBot, main_window: QMainWindow
-) -> None:
+):
     main_window.setCentralWidget(QLabel("plot area"))
     side_panel = make_side_panel(main_window)
     main_window.resize(1000, 600)

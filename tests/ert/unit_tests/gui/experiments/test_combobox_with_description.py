@@ -11,7 +11,7 @@ from ert.gui.experiments.combobox_with_description import (
 )
 
 
-def test_that_models_are_inserted_under_one_header_per_group(qtbot: QtBot) -> None:
+def test_that_models_are_inserted_under_one_header_per_group(qtbot: QtBot):
     combo = QComboBoxWithDescription()
     qtbot.addWidget(combo)
     selections = []
@@ -37,7 +37,7 @@ def test_that_models_are_inserted_under_one_header_per_group(qtbot: QtBot) -> No
         assert combo.model().index(row, 0).flags() == Qt.ItemFlag.NoItemFlags
 
 
-def test_that_ungrouped_models_have_no_header(qtbot: QtBot) -> None:
+def test_that_ungrouped_models_have_no_header(qtbot: QtBot):
     combo = QComboBoxWithDescription()
     qtbot.addWidget(combo)
     combo.addDescriptionItem("First", "Description")
@@ -48,7 +48,7 @@ def test_that_ungrouped_models_have_no_header(qtbot: QtBot) -> None:
     assert all(combo.itemData(i, GROUP_TITLE_ROLE) is None for i in range(2))
 
 
-def test_that_keyboard_navigation_skips_group_headers(qtbot: QtBot) -> None:
+def test_that_keyboard_navigation_skips_group_headers(qtbot: QtBot):
     combo = QComboBoxWithDescription()
     qtbot.addWidget(combo)
     combo.addDescriptionItem("First", "Description", "Evaluation")
@@ -63,7 +63,7 @@ def test_that_keyboard_navigation_skips_group_headers(qtbot: QtBot) -> None:
     assert combo.currentText() == "First"
 
 
-def test_that_clicking_a_header_does_not_select_it(qtbot: QtBot) -> None:
+def test_that_clicking_a_header_does_not_select_it(qtbot: QtBot):
     combo = QComboBoxWithDescription()
     qtbot.addWidget(combo)
     combo.addDescriptionItem("First", "Description", "Evaluation")
@@ -89,9 +89,7 @@ def test_that_clicking_a_header_does_not_select_it(qtbot: QtBot) -> None:
 @pytest.mark.parametrize(
     "state", [QStyle.StateFlag.State_MouseOver, QStyle.StateFlag.State_Selected]
 )
-def test_that_headers_are_not_highlighted(
-    qtbot: QtBot, state: QStyle.StateFlag
-) -> None:
+def test_that_headers_are_not_highlighted(qtbot: QtBot, state: QStyle.StateFlag):
     combo = QComboBoxWithDescription()
     qtbot.addWidget(combo)
     combo.addDescriptionItem("First", "Description", "Evaluation")
