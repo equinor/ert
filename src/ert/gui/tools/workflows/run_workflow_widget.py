@@ -157,14 +157,17 @@ class RunWorkflowWidget(QWidget):
             success = self._workflow_runner.workflowResult()
 
             if success:
-                failed_job_errors = [
-                    f"{result.name}: {result.error}"
-                    for result in self._workflow_runner.workflow_job_results()
-                    if result.status is WorkflowJobStatus.FAILED
-                ]
-                self.workflowSucceeded.emit(failed_job_errors)
+                self.workflowSucceeded.emit(self._failed_job_errors())
             else:
                 self.workflowFailed.emit()
+
+    def _failed_job_errors(self) -> list[str]:
+        assert self._workflow_runner is not None
+        return [
+            f"{result.name}: {result.error}"
+            for result in self._workflow_runner.workflow_job_results()
+            if result.status is WorkflowJobStatus.FAILED
+        ]
 
     def workflowFinished(self, failed_job_errors: Iterable[str]) -> None:
         workflow_name = self.getCurrentWorkflowName()
@@ -182,21 +185,13 @@ class RunWorkflowWidget(QWidget):
             self._running_workflow_dialog = None
 
     def workflowFinishedWithFail(self) -> None:
-        assert self._workflow_runner is not None
-        report = self._workflow_runner.workflowReport()
-        failing_workflows = [
-            (wfname, info) for wfname, info in report.items() if not info["completed"]
-        ]
-
-        title_text = f"Workflow{'s' if len(failing_workflows) > 1 else ''} failed"
-        content_text = "\n\n".join(
-            [
-                f"{wfname} failed: \n {info['stderr'].strip()}"
-                for wfname, info in failing_workflows
-            ]
+        workflow_name = self.getCurrentWorkflowName()
+        QMessageBox.critical(
+            self,
+            "Workflow failed",
+            f"The workflow '{workflow_name}' was stopped. "
+            "The following jobs failed:\n" + "\n".join(self._failed_job_errors()),
         )
-
-        QMessageBox.critical(self, title_text, content_text)
         if self._running_workflow_dialog is not None:
             self._running_workflow_dialog.reject()
             self._running_workflow_dialog = None

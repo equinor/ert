@@ -1,16 +1,12 @@
 from __future__ import annotations
 
-import contextlib
 import logging
 import sys
 from typing import TYPE_CHECKING
 
+from ert.cli.monitor import format_workflow_job_failure
 from ert.runpaths import Runpaths
-from ert.workflow_runner import (
-    WorkflowJobFailedError,
-    WorkflowJobStatus,
-    WorkflowRunner,
-)
+from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -40,12 +36,18 @@ def execute_workflow(
             "ensemble": None,
         },
     )
-    with contextlib.suppress(WorkflowJobFailedError):
+    try:
         runner.run_blocking()
-
-    for result in runner.workflow_job_results():
-        if result.status is WorkflowJobStatus.FAILED:
-            print(f"Workflow job {result.name} failed: {result.error}", file=sys.stderr)
+    finally:
+        for result in runner.workflow_job_results():
+            if (
+                result.status is WorkflowJobStatus.FAILED
+                and not result.stopped_workflow
+            ):
+                print(
+                    format_workflow_job_failure(result.name, result.error),
+                    file=sys.stderr,
+                )
 
     if not all(v["completed"] for v in runner.workflowReport().values()):
         logger.error(f"Workflow {workflow_name} failed!")

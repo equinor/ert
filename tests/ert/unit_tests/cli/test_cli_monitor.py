@@ -67,8 +67,14 @@ def test_result_failure():
     assert out.getvalue() == "Experiment failed with the following error: fail\n"
 
 
-def test_that_monitor_prints_full_error_of_failed_workflow_jobs_only():
-    def workflow_event(job_name: str, error: str | None, status: WorkflowJobStatus):
+def test_that_monitor_prints_indented_workflow_errors_except_for_stopping_job():
+    def workflow_event(
+        job_name: str,
+        error: str | None,
+        status: WorkflowJobStatus,
+        *,
+        stopped_workflow: bool = False,
+    ):
         return WorkflowEvent(
             run_id=uuid4(),
             hook="POST_SIMULATION",
@@ -81,6 +87,7 @@ def test_that_monitor_prints_full_error_of_failed_workflow_jobs_only():
             status=status,
             timestamp=datetime.now(tz=UTC),
             error=error,
+            stopped_workflow=stopped_workflow,
         )
 
     events = SimpleQueue()
@@ -92,14 +99,29 @@ def test_that_monitor_prints_full_error_of_failed_workflow_jobs_only():
         )
     )
     events.put(workflow_event("SUCCEEDING_JOB", None, WorkflowJobStatus.SUCCESS))
-    events.put(EndEvent(failed=False, msg=""))
+    events.put(
+        workflow_event(
+            "STOPPING_JOB",
+            "ValueError: boom",
+            WorkflowJobStatus.FAILED,
+            stopped_workflow=True,
+        )
+    )
+    events.put(
+        EndEvent(
+            failed=True,
+            msg="Workflow job STOPPING_JOB failed with error: ValueError: boom",
+        )
+    )
     out = StringIO()
 
     Monitor(out=out).monitor(events)
 
     assert out.getvalue() == (
-        "Workflow job FAILING_JOB failed: ValueError: first line\nsecond line\n"
-        "Experiment completed.\n"
+        "Workflow job FAILING_JOB failed: ValueError: first line\n"
+        "    second line\n"
+        "Experiment failed with the following error: "
+        "Workflow job STOPPING_JOB failed with error: ValueError: boom\n"
     )
 
 
