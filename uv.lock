@@ -3,10 +3,10 @@ revision = 5
 requires-python = ">=3.12, <3.15"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_machine == 'ARM64' and sys_platform == 'win32'",
-    "python_full_version < '3.14' and platform_machine == 'ARM64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine != 'ARM64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.14' and platform_machine == 'ARM64' and sys_platform == 'win32'",
     "python_full_version < '3.14' and platform_machine != 'ARM64' and sys_platform == 'win32'",
     "python_full_version < '3.14' and sys_platform == 'emscripten'",
     "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
@@ -1144,6 +1144,7 @@ dev = [
     { name = "jsonpath-ng" },
     { name = "jupyter" },
     { name = "jupytext" },
+    { name = "minires" },
     { name = "nbsphinx" },
     { name = "oil-reservoir-synthesizer" },
     { name = "pytest" },
@@ -1264,6 +1265,7 @@ dev = [
     { name = "jsonpath-ng" },
     { name = "jupyter" },
     { name = "jupytext" },
+    { name = "minires" },
     { name = "nbsphinx" },
     { name = "oil-reservoir-synthesizer" },
     { name = "pytest", specifier = ">6" },
@@ -2937,6 +2939,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/20/1e/caa4f15c020de3e3486b4133ca689236bd3863a3d6dd0f58e97ce86a296a/meshio-5.3.5.tar.gz", hash = "sha256:f21f01abd9f29ba06ea119304b3d39e610421cfe93b9dd23362834919f87586d", size = 490922, upload-time = "2024-01-31T15:09:41.731Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/89/5f/39cbadc320cd78f4834b0a9f7a2fa3c980dca942bf193f315837eacb8870/meshio-5.3.5-py3-none-any.whl", hash = "sha256:0736c6e34ecc768f62f2cde5d8233a3529512a9399b25c68ea2ca0d5900cdc10", size = 166162, upload-time = "2024-01-31T15:09:36.691Z" },
+]
+
+[[package]]
+name = "minires"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "scipy" },
+    { name = "struct-tools" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/21/84/e05069b4077a7ccfe433b7ccd5bc9264fbc8fc436739b10b66e875b50e2a/minires-0.3.2.tar.gz", hash = "sha256:37936c5bd85be2225dec4e80765b955939529680ce9965d100bb30fac77f07de", size = 63652, upload-time = "2026-09-15T13:09:39.926Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/39/1d407df21e73c3e81deeffa9b028931cf78d9bb25ac434b5a8397f54ff4b/minires-0.3.2-py3-none-any.whl", hash = "sha256:b9da275ce8b5a51e7f578832c737db99d56de80c0c52d4cd80bac34f8b4cf540", size = 67634, upload-time = "2026-09-15T13:09:38.787Z" },
 ]
 
 [[package]]
@@ -5565,6 +5582,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7b/2b/3850dc6bf7ef71b088962eba31dafc6cffd2f96e577ebb0bb316df96da3e/starlette-1.7.0.tar.gz", hash = "sha256:c79f74ea63cff761804fbbfb182f1e0b440c2d07b164d24700c5a1bab5d6ff5d", size = 2736246, upload-time = "2026-09-23T07:30:26.35Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/d6/1ec1b290f9e0fb067899b61e1d37a30c923068bad260b216dbe37a7d2967/starlette-1.7.0-py3-none-any.whl", hash = "sha256:67f8e99895493dd2911a03f11314af6ceebeae4e704bb9f43dfc6a9db151c93e", size = 78980, upload-time = "2026-09-23T07:30:24.567Z" },
+]
+
+[[package]]
+name = "struct-tools"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/9c/1f4cbf78133841d8b3c4a8dcf05bd07a3a49d7a108de86d81eebd0a1679e/struct_tools-0.3.0.tar.gz", hash = "sha256:c5a8cd299194b4d5e2d2a34945e213c9dfebdc0dfd023b8c56e32e084b996b8b", size = 4571, upload-time = "2026-09-11T13:30:59.254Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6d/fa/19b8b52485183eaa5458071de377a5f0e4a3f2e29d217ad3dff328e9ce7d/struct_tools-0.3.0-py3-none-any.whl", hash = "sha256:92ce7f4f8828e4b96f233b9b3521f98e3e69f3212d85e9c61625ed15998ddeec", size = 5007, upload-time = "2026-09-11T13:30:58.316Z" },
 ]
 
 [[package]]
