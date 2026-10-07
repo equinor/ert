@@ -143,7 +143,7 @@ def test_missing_runpath_does_not_show_waiting_bar(
             )
             assert not run_dialog._progress_widget._waiting_progress_bar.isVisible()
             assert (
-                run_dialog._progress_widget._progress_label_map[
+                run_dialog._progress_widget._progress_segments[
                     ENSEMBLE_STATE_FAILED
                 ].width()
                 == run_dialog._progress_widget.width()
