@@ -180,6 +180,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             "To kill the running optimization use command:\n"
             f"  `everest kill {options.config.config_file}`"
         )
+        logger.error("Exiting everest as an experiment is already running")
         return
 
     config_dict = options.config.to_dict()
