@@ -4,9 +4,12 @@ import logging
 import sys
 from typing import TYPE_CHECKING
 
-from ert.cli.monitor import format_workflow_job_failure
 from ert.runpaths import Runpaths
-from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobStatus,
+    WorkflowRunner,
+    format_workflow_job_failure,
+)
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig

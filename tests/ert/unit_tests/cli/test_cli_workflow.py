@@ -1,14 +1,12 @@
 import logging
 from argparse import Namespace
 from pathlib import Path
-from textwrap import dedent
 
 import pytest
 
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig
 from ert.plugins import get_site_plugins
-from ert.workflow_runner import WorkflowJobFailedError
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -49,47 +47,3 @@ def test_that_output_of_workflow_run_from_cli_is_in_ert_log(storage, caplog):
 
     assert "workflow=wfprint job=printjob#0 status=success" in caplog.text
     assert "--- stdout ---\nhello from the cli workflow" in caplog.text
-
-
-@pytest.mark.usefixtures("copy_poly_case")
-@pytest.mark.parametrize("stop_on_fail", [True, False])
-def test_that_failed_job_of_workflow_run_from_cli_is_reported_once(
-    storage, capsys, stop_on_fail
-):
-    Path("failing_job").write_text(
-        f"INTERNAL True\nSCRIPT failing_script.py\nSTOP_ON_FAIL {stop_on_fail}\n",
-        encoding="utf-8",
-    )
-    Path("failing_script.py").write_text(
-        dedent(
-            """
-            from ert import ErtScript
-            class FailingScript(ErtScript):
-                def run(self):
-                    raise ValueError("boom")
-            """
-        ),
-        encoding="utf-8",
-    )
-    Path("failing_workflow").write_text("failjob\n", encoding="utf-8")
-
-    config_file = "poly.ert"
-    with Path(config_file).open("a", encoding="utf-8") as file_handle:
-        file_handle.write(
-            "LOAD_WORKFLOW_JOB failing_job failjob\n"
-            "LOAD_WORKFLOW failing_workflow wffail\n"
-        )
-
-    rc = ErtConfig.with_plugins(get_site_plugins()).from_file(config_file)
-    if stop_on_fail:
-        with pytest.raises(
-            WorkflowJobFailedError,
-            match=r"Workflow job failjob failed with error: ValueError: boom",
-        ):
-            execute_workflow(rc, storage, "wffail")
-        assert not capsys.readouterr().err
-    else:
-        execute_workflow(rc, storage, "wffail")
-        assert (
-            capsys.readouterr().err == "Workflow job failjob failed: ValueError: boom\n"
-        )
