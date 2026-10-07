@@ -18,7 +18,11 @@ def test_that_ensemble_smoother_panel_shows_deprecation_warning(qtbot: QtBot):
     panel = EnsembleSmootherPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=[
-            Mock(spec=ParameterConfig, update_strategy=LocalizationType.GLOBAL)
+            Mock(
+                spec=ParameterConfig,
+                update_strategy=LocalizationType.GLOBAL,
+                type="gen_kw",
+            )
         ],
         runpath="",
         notifier=notifier,

@@ -1,9 +1,15 @@
 from PyQt6.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
+from ert.config import GenKwConfig
 from ert.config.analysis_config import AnalysisConfig
+from ert.config.distribution import RawSettings
+from ert.config.parameter_config import LocalizationType
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
+from ert.gui.experiments._update_strategy_summary_widget import (
+    UpdateStrategySummaryWidget,
+)
 from ert.gui.experiments.manual_update_panel import ManualUpdatePanel
 
 from .conftest import (
@@ -222,3 +228,95 @@ def test_that_experiment_name_field_is_used_in_experiment_arguments(
     panel._experiment_name_field.setText("my custom experiment")
 
     assert panel.get_experiment_arguments().experiment_name == "my custom experiment"
+
+
+def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
+    qtbot: QtBot,
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    for index, strategy in enumerate(
+        [LocalizationType.ADAPTIVE, LocalizationType.DISTANCE]
+    ):
+        notifier._storage._setup_mocked_run(
+            f"ensemble_{index}",
+            f"experiment_{index}",
+            [REALIZATION_FINISHED_SUCCESSFULLY],
+            parameter_configuration={
+                "parameter": GenKwConfig(
+                    name="parameter",
+                    distribution=RawSettings(),
+                    update_strategy=strategy,
+                )
+            },
+        )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        runpath="",
+        notifier=notifier,
+        parameter_configuration=[],
+    )
+    qtbot.addWidget(panel)
+
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    ensemble_selector = panel.findChild(EnsembleSelector)
+    assert summary is not None
+    assert ensemble_selector is not None
+
+    ensemble_selector.setCurrentIndex(
+        ensemble_selector.findText("experiment_1 : ensemble_1")
+    )
+    assert summary.rowCount() == 1
+    summary_items = [summary.item(0, column) for column in range(3)]
+    assert all(item is not None for item in summary_items)
+    assert tuple(item.text() for item in summary_items if item is not None) == (
+        "Distance",
+        "GenKW",
+        "1",
+    )
+
+    panel._update_method_dropdown.setCurrentText("EnIF Update (Experimental)")
+    assert summary.isHidden()
+    assert panel._update_strategy_label.isHidden()
+
+    panel._update_method_dropdown.setCurrentText("ES Update")
+    assert not summary.isHidden()
+    assert not panel._update_strategy_label.isHidden()
+
+
+def test_that_activating_manual_update_refreshes_externally_changed_strategy(
+    qtbot: QtBot,
+) -> None:
+    parameter = GenKwConfig(
+        name="parameter",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.ADAPTIVE,
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "ensemble",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY],
+        parameter_configuration={"parameter": parameter},
+    )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        runpath="",
+        notifier=notifier,
+        parameter_configuration=[],
+    )
+    qtbot.addWidget(panel)
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+    strategy_item = summary.item(0, 0)
+    assert strategy_item is not None
+    assert strategy_item.text() == "Adaptive"
+
+    parameter.update_strategy = LocalizationType.DISTANCE
+    assert strategy_item.text() == "Adaptive"
+    panel.experimentTypeChanged(panel)
+
+    strategy_item = summary.item(0, 0)
+    assert strategy_item is not None
+    assert strategy_item.text() == "Distance"
