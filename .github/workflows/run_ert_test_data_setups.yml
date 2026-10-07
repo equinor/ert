@@ -67,3 +67,9 @@ jobs:
         pushd test-data/ert/snake_oil
         uv run ert test_run snake_oil.ert
         popd
+
+    - name: Test waterflood
+      run: |
+        pushd test-data/ert/waterflood
+        uv run ert test_run config.ert
+        popd
