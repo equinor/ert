@@ -2,20 +2,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
 
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     StringBox,
     TargetEnsembleModel,
     TextModel,
+    get_parameters_button,
 )
 from ert.validation import ExperimentValidation, ProperNameFormatArgument
 from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
+from ._design_matrix_panel import DesignMatrixPanel
+
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig
+    from ert.config import AnalysisConfig, ParameterConfig
     from ert.gui.ertnotifier import ErtNotifier
     from ert.storage import Storage
 
@@ -68,3 +71,40 @@ def create_active_realizations_field(
     field.setValidator(validator)
     model.setValueFromMask(active_realizations)
     return field, validator
+
+
+def merge_design_matrix_parameters(
+    analysis_config: AnalysisConfig,
+    parameter_configuration: list[ParameterConfig],
+) -> list[ParameterConfig]:
+    if analysis_config.design_matrix is None:
+        return parameter_configuration
+
+    return analysis_config.design_matrix.merge_with_existing_parameters(
+        parameter_configuration
+    )
+
+
+def add_parameter_configuration_rows(
+    parent: QWidget,
+    layout: QFormLayout,
+    analysis_config: AnalysisConfig,
+    parameter_configuration: list[ParameterConfig],
+    *,
+    number_of_realizations_label: QLabel | None = None,
+    config_num_realization: int | None = None,
+) -> None:
+    if analysis_config.design_matrix is not None:
+        layout.addRow(
+            "Design matrix",
+            DesignMatrixPanel.get_design_matrix_button(
+                analysis_config.design_matrix,
+                number_of_realizations_label,
+                config_num_realization,
+            ),
+        )
+
+    if parameter_configuration:
+        layout.addRow(
+            "Parameters", get_parameters_button(parameter_configuration, parent)
+        )

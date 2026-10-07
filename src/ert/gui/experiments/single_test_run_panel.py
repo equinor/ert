@@ -6,11 +6,14 @@ from PyQt6.QtWidgets import QFormLayout, QLabel
 
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import CopyableLabel, get_parameters_button
+from ert.gui.ertwidgets import CopyableLabel
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.run_models import SingleTestRun
 
-from ._design_matrix_panel import DesignMatrixPanel
+from ._panel_utils import (
+    add_parameter_configuration_rows,
+    merge_design_matrix_parameters,
+)
 from .experiment_config_panel import ExperimentConfigPanel
 
 
@@ -42,34 +45,16 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
 
-        self._add_parameter_configuration_rows(
+        parameter_configuration = merge_design_matrix_parameters(
+            analysis_config, parameter_configuration
+        )
+        add_parameter_configuration_rows(
+            self,
             layout,
             analysis_config,
             parameter_configuration,
         )
         self.setLayout(layout)
-
-    def _add_parameter_configuration_rows(
-        self,
-        layout: QFormLayout,
-        analysis_config: AnalysisConfig,
-        parameter_configuration: list[ParameterConfig],
-    ) -> None:
-        design_matrix = analysis_config.design_matrix
-        merged_parameters = parameter_configuration
-        if design_matrix is not None:
-            layout.addRow(
-                "Design matrix",
-                DesignMatrixPanel.get_design_matrix_button(
-                    design_matrix,
-                ),
-            )
-            merged_parameters = design_matrix.merge_with_existing_parameters(
-                merged_parameters
-            )
-
-        if merged_parameters:
-            layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
 
     @override
     def get_experiment_arguments(self) -> Arguments:
