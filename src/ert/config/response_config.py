@@ -44,15 +44,11 @@ class InvalidResponseFile(Exception):
 
 
 class ResponseConfig(BaseModel, extra="forbid"):
-    """Represents an abstract response configuration in the ERT config.
-
-    Some attributes are the same for all children classes, yet moving them to the base
-    class causes troubles with pydantic serialization. When fields order changes, it
-    changes fields serialization, breaking many tests. So instead getter and setter-like
-    abstract methods are used as of now.
-    """
+    """Represents an abstract response configuration in the ERT config."""
 
     type: str
+    keys: list[str] = Field(default_factory=list)
+    has_finalized_keys: bool = False
 
     @property
     @abstractmethod
@@ -106,7 +102,6 @@ class ResponseConfig(BaseModel, extra="forbid"):
         """Optional filters for this response."""
         return None
 
-    @abstractmethod
     def response_keys(self) -> list[str]:
         """Identifiers for response datasets this config implicitly produces.
 
@@ -117,20 +112,22 @@ class ResponseConfig(BaseModel, extra="forbid"):
         be independently loaded or be matched against observations "dataset" with the
         same key.
         """
+        return self.keys
 
-    @abstractmethod
     def are_keys_finalized(self) -> bool:
         """
         True if keys are finalized, False otherwise (for example, keys were declared
         with wildcard and have not been resolved yet).
         """
+        return self.has_finalized_keys
 
-    @abstractmethod
     def finalize_keys(self, keys: list[str]) -> None:
         """
         Finalizes the keys for this response config. This is called when the keys are
         resolved (for example, when wildcards are expanded).
         """
+        self.keys = keys
+        self.has_finalized_keys = True
 
     @abstractmethod
     def is_derived(self) -> bool:
@@ -146,8 +143,6 @@ class ResponseConfig(BaseModel, extra="forbid"):
 
 class SimulationResponseConfig(ResponseConfig):
     input_files: list[str] = Field(default_factory=list)
-    keys: list[str] = Field(default_factory=list)
-    has_finalized_keys: bool = False
 
     @abstractmethod
     def read_from_file(self, runpath: str, iens: int, iter_: int) -> pl.DataFrame:
@@ -173,24 +168,11 @@ class SimulationResponseConfig(ResponseConfig):
         for summary.
         """
 
-    def response_keys(self) -> list[str]:
-        return self.keys
-
-    def are_keys_finalized(self) -> bool:
-        return self.has_finalized_keys
-
-    def finalize_keys(self, keys: list[str]) -> None:
-        self.keys = keys
-        self.has_finalized_keys = True
-
     def is_derived(self) -> bool:
         return False
 
 
 class DerivedResponseConfig(ResponseConfig):
-    keys: list[str] = Field(default_factory=list)
-    has_finalized_keys: bool = False
-
     @abstractmethod
     def derive_from_storage(self, iter_: int, real: int, ensemble: Any) -> pl.DataFrame:
         """Derives response DataFrame from existing files in storage"""
@@ -200,16 +182,6 @@ class DerivedResponseConfig(ResponseConfig):
     ) -> pl.LazyFrame:
         """Fill missing (null) values in a loaded response at read time"""
         return response_df
-
-    def response_keys(self) -> list[str]:
-        return self.keys
-
-    def are_keys_finalized(self) -> bool:
-        return self.has_finalized_keys
-
-    def finalize_keys(self, keys: list[str]) -> None:
-        self.keys = keys
-        self.has_finalized_keys = True
 
     def is_derived(self) -> bool:
         return True

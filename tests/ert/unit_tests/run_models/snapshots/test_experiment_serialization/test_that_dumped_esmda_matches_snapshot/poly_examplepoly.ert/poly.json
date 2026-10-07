@@ -237,13 +237,13 @@
   "response_configuration": [
     {
       "type": "gen_data",
-      "input_files": [
-        "poly.out"
-      ],
       "keys": [
         "POLY_RES"
       ],
       "has_finalized_keys": true,
+      "input_files": [
+        "poly.out"
+      ],
       "report_steps_list": [
         null
       ]
