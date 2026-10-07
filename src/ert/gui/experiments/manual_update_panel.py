@@ -122,9 +122,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
-            self.experiment_configuration_changed
-        )
 
         self._experiment_name_field = StringBox(
             TextModel(""),
@@ -140,6 +137,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._connect_signals()
 
     def _connect_signals(self) -> None:
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+            self.experiment_configuration_changed
+        )
         self._ensemble_selector.ensemble_selected.connect(
             lambda ensemble: self._experiment_name_field.setPlaceholderText(
                 f"Manual update of {ensemble.name}"
