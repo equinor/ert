@@ -160,7 +160,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._single_update_box = QCheckBox("")
         self._single_update_box.setObjectName("single_update_checkbox_esmda")
         self._single_update_box.setToolTip(single_update_tooltip)
-        self._single_update_box.toggled.connect(self._single_update_toggled)
         single_update_label = QLabel("Single update:")
         single_update_label.setToolTip(single_update_tooltip)
         layout.addRow(single_update_label, self._single_update_box)
@@ -220,6 +219,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.setLayout(layout)
 
     def _connect_signals(self) -> None:
+        self._single_update_box.toggled.connect(self._single_update_toggled)
         self._analysis_module_edit.settings_changed.connect(
             self._refresh_update_strategy_summary_widget
         )
