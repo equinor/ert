@@ -13,7 +13,12 @@ from ert.config.workflow_job import (
     UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
 )
-from ert.workflow_runner import WorkflowJobRunner, WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobFailedError,
+    WorkflowJobRunner,
+    WorkflowJobStatus,
+    WorkflowRunner,
+)
 from tests.ert.utils import wait_until
 
 from .workflow_common import WorkflowCommon
@@ -337,7 +342,7 @@ def test_that_output_of_job_that_stops_workflow_is_still_logged(caplog):
 
     with (
         caplog.at_level(logging.INFO, logger="ert.workflow_runner"),
-        pytest.raises(RuntimeError, match="failed with error"),
+        pytest.raises(WorkflowJobFailedError, match="failed with error"),
     ):
         WorkflowRunner(workflow, fixtures={}).run_blocking()
 

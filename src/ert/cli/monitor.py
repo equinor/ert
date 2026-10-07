@@ -36,6 +36,12 @@ from ert.workflow_runner import WorkflowJobStatus
 Color = tuple[int, int, int]
 
 
+def format_workflow_job_failure(job_name: str, error: str | None) -> str:
+    error_lines = (error or "no error message").splitlines()
+    indented_error = "\n    ".join(error_lines)
+    return f"Workflow job {job_name} failed: {indented_error}"
+
+
 def _no_color(text: str, color: Color) -> str:
     """Alternate color method when no coloring is wanted"""
     return text
@@ -105,14 +111,18 @@ class Monitor:
                         self._colorize(msg, color=COLOR_WARNING),
                         file=self._out,
                     )
-                case WorkflowEvent(status=WorkflowJobStatus.FAILED) as event:
+                case (
+                    WorkflowEvent(
+                        status=WorkflowJobStatus.FAILED, stopped_workflow=False
+                    ) as event
+                ):
                     self._print_workflow_failure(event)
 
     def _print_workflow_failure(self, event: WorkflowEvent) -> None:
-        error = event.error or "no error message"
         print(
             self._colorize(
-                f"Workflow job {event.job_name} failed: {error}", color=COLOR_FAILED
+                format_workflow_job_failure(event.job_name, event.error),
+                color=COLOR_FAILED,
             ),
             file=self._out,
         )

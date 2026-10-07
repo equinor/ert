@@ -7,6 +7,7 @@ from unittest.mock import Mock
 
 import pytest
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QMessageBox
 
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog
@@ -129,4 +130,65 @@ def test_run_workflow_with_no_ensemble_selected(
     assert capsys.readouterr().out == "Hello world\n"
     assert "workflow=print_workflow job=PRINT#0 status=success" in caplog.text
     assert "--- stdout ---\nHello world" in caplog.text
+    gui.close()
+
+
+@pytest.mark.parametrize(
+    ("stop_on_fail", "expected_message"),
+    [
+        (False, "completed \nThe following jobs failed:\nFAIL: ValueError: boom"),
+        (True, "was stopped. The following jobs failed:\nFAIL: ValueError: boom"),
+    ],
+)
+def test_that_workflow_tool_dialog_shows_error_of_failed_job_without_traceback(
+    qtbot, tmp_path, monkeypatch, stop_on_fail, expected_message
+):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config.ert").write_text(
+        dedent("""
+            NUM_REALIZATIONS 1
+            LOAD_WORKFLOW_JOB failing_job FAIL
+            LOAD_WORKFLOW failing_workflow
+            """)
+    )
+    (tmp_path / "failing_job").write_text(
+        f"INTERNAL True\nSCRIPT failing_script.py\nSTOP_ON_FAIL {stop_on_fail}\n"
+    )
+    (tmp_path / "failing_script.py").write_text(
+        dedent("""
+            from ert import ErtScript
+            class FailingScript(ErtScript):
+                def run(self):
+                    raise ValueError("boom")
+            """)
+    )
+    (tmp_path / "failing_workflow").write_text("FAIL\n")
+
+    shown_messages: list[str] = []
+
+    def record_message(_parent, _title, text):
+        shown_messages.append(text)
+
+    monkeypatch.setattr(QMessageBox, "information", record_message)
+    monkeypatch.setattr(QMessageBox, "critical", record_message)
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+    args_mock = Mock()
+    args_mock.config = "config.ert"
+    handler = GUILogHandler()
+    gui = _setup_main_window(ert_config, args_mock, handler, ert_config.ens_path)
+
+    def handle_run_workflow_tool():
+        dialog = wait_for_child(gui, qtbot, ClosableDialog)
+        workflow_widget = get_child(dialog, RunWorkflowWidget)
+        workflow_widget.workflowSucceeded.connect(dialog.close)
+        workflow_widget.workflowFailed.connect(dialog.close)
+        qtbot.mouseClick(workflow_widget.run_button, Qt.MouseButton.LeftButton)
+
+    QTimer.singleShot(1000, handle_run_workflow_tool)
+    gui.workflows_tool.trigger()
+
+    [message] = shown_messages
+    assert expected_message in message
+    assert "Traceback" not in message
     gui.close()

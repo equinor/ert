@@ -40,6 +40,7 @@ class WorkflowJobResult:
     stderr: str
     status: WorkflowJobStatus
     error: str | None = None
+    stopped_workflow: bool = False
     timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now(tz=dt.UTC))
 
 
@@ -226,6 +227,7 @@ class WorkflowRunner:
                 status = WorkflowJobStatus.FAILED
             else:
                 status = WorkflowJobStatus.SUCCESS
+            stops_workflow = jobrunner.hasFailed() and jobrunner.stop_on_fail
 
             self.__status[jobrunner.name] = {
                 "stdout": jobrunner.stdoutdata(),
@@ -240,6 +242,7 @@ class WorkflowRunner:
                 stderr=jobrunner.stderrdata(),
                 status=status,
                 error=jobrunner.error(),
+                stopped_workflow=stops_workflow,
             )
             self.__job_results.append(result)
 
@@ -249,7 +252,7 @@ class WorkflowRunner:
             else:
                 logger.info(self._log_entry(result), extra=extra)
 
-            if jobrunner.hasFailed() and jobrunner.stop_on_fail:
+            if stops_workflow:
                 self.__running = False
                 raise WorkflowJobFailedError(
                     f"Workflow job {result.name} failed with error: {result.error}"
