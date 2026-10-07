@@ -110,7 +110,7 @@ def score(config_file: Path) -> dict[str, tuple[float, ...]]:
     out = {}
     with open_storage(config.ens_path, mode="r") as storage:
         experiment = max(storage.experiments, key=lambda e: e.name)
-        observations = experiment.observations["summary"]
+        observations = experiment.observations
         ensembles = sorted(experiment.ensembles, key=lambda e: e.iteration)
         for label, ensemble in [("prior", ensembles[0]), ("posterior", ensembles[-1])]:
             error, correlation, spread = parameter_scores(ensemble, truth_log_perm)

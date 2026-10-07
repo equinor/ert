@@ -20,6 +20,12 @@ SUMMARY {
             NORTH = 150.0;
             RADIUS = 250.0;
         };
+        BREAKTHROUGH {
+            KEY       = WWCT;
+            THRESHOLD = 0.2;
+            DATE      = 2021-12-03;
+            ERROR     = 30.0;
+        };
     };
     WELL PROD3 {
         LOCALIZATION {
@@ -27,12 +33,24 @@ SUMMARY {
             NORTH = 850.0;
             RADIUS = 250.0;
         };
+        BREAKTHROUGH {
+            KEY       = WWCT;
+            THRESHOLD = 0.01;
+            DATE      = 2023-01-18;
+            ERROR     = 30.0;
+        };
     };
     WELL PROD4 {
         LOCALIZATION {
             EAST = 850.0;
             NORTH = 850.0;
             RADIUS = 250.0;
+        };
+        BREAKTHROUGH {
+            KEY       = WWCT;
+            THRESHOLD = 0.5;
+            DATE      = 2021-04-04;
+            ERROR     = 30.0;
         };
     };
 };

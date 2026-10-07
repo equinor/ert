@@ -43,13 +43,16 @@ def forecast_dates() -> list[datetime.datetime]:
     ]
 
 
-def misfit(ensemble, observations: pl.DataFrame) -> float:
+def misfit(ensemble, observations: dict[str, pl.DataFrame]) -> float:
     """Mean squared normalized data misfit, over realizations and observations."""
-    responses = ensemble.load_responses(
-        "summary", tuple(ensemble.get_realization_list_with_responses())
-    )
-    joined = observations.join(responses, on=["response_key", "time"], how="inner")
-    residual = (joined["values"] - joined["observations"]) / joined["std"]
+    residuals = []
+    for response_type, obs in observations.items():
+        responses = ensemble.load_responses(
+            response_type, tuple(ensemble.get_realization_list_with_responses())
+        )
+        joined = obs.join(responses, on=["response_key", "time"], how="inner")
+        residuals.append((joined["values"] - joined["observations"]) / joined["std"])
+    residual = pl.concat(residuals)
     return float((residual**2).mean())
 
 
@@ -92,7 +95,7 @@ if __name__ == "__main__":
 
     with open_storage(config.ens_path, mode="r") as storage:
         experiment = max(storage.experiments, key=lambda e: e.name)
-        observations = experiment.observations["summary"]
+        observations = experiment.observations
 
         header = (
             "ensemble",

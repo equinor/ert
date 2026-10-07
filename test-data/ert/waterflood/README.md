@@ -30,85 +30,65 @@ Uncertain: the `PERMX` field (log-normal about 200 mD, ~300 m correlation length
 `FIELD` + `FORWARD_INIT`, updated in log-space), the range of its variogram, and the
 residual oil saturation of the Corey curves (both `GEN_KW`).
 
-**The wells are observed over the first 16 report steps only** (960 days) and simulated
-to the end. In the truth, PROD4 and PROD2 water during that history; **PROD3 breaks
-through after it ends** (step 18); and **PROD1 never waters at all**, its corner being
-poorly connected. `observations.txt` holds the 36 observations that history affords —
-water cut and oil rate at each producer, and the injector's bottom-hole pressure, at
-every fourth step — and `truth_permx.bgrdecl` / `truth_forecast.txt` carry the answers
-the update is scored against.
+**The wells are observed over the first 18 report steps only** (1080 days) and simulated
+to the end. In the truth, PROD4 and PROD2 water well within that history; **PROD3 only
+breaks through right at its end** (step 18); and **PROD1 never waters at all**, its
+corner being poorly connected. `observations.txt` holds the 27 observations that history affords —
+oil rate at each producer and the injector's bottom-hole pressure, every fourth step;
+PROD1's water cut, which never rises; and PROD2, PROD3 and PROD4's water cut
+breakthrough, a crossing of 20%, 1% and 50% respectively, each dated from the truth at
+full (every report step) resolution — and `truth_permx.bgrdecl` / `truth_forecast.txt`
+carry the answers the update is scored against.
 
 ## What the case is for
 
 Four breakthrough times cannot determine 2500 cells. That is not a defect of the case:
 it is the situation every real history match is in, and it is what localization exists
 for. Because the truth is shipped, an update can be scored on where it *put* the field
-and on what it predicts, not only on how well it fits. `compare.py` on the shipped
-configuration, 50 realizations:
+and on what it predicts, not only on how well it fits.
 
+
+20 realizations, assimilating the first 18 report steps:
 ```
                            misfit  RMSE logK  corr logK   spread  RMSE forecast
-                   prior    255.6      0.868     -0.093    0.782          0.335
-
-     ES, no localization     21.1      0.908      0.364    0.509          0.146
-            ES, adaptive     27.5      0.778      0.450    0.633          0.160
-            ES, distance     18.1      0.779      0.401    0.697          0.078
-
- ES-MDA, no localization      1.7      1.036      0.085    0.452          0.113
-        ES-MDA, adaptive      3.9      0.794      0.413    0.600          0.037
-        ES-MDA, distance        (crashes -- see below)
-
-                    EnIF     32.9      0.695      0.572    0.707          0.109
+                   prior    302.6      0.859     -0.027    0.790          0.335
+     ES, no localization     18.6      0.724      0.552    0.599          0.083
+            ES, adaptive     28.1      0.780      0.407    0.644          0.150
+            ES, distance     22.3      0.845      0.250    0.706          0.130
+ ES-MDA, no localization      1.7      1.467     -0.001    0.222          0.194
+        ES-MDA, adaptive      4.6      0.724      0.509    0.660          0.046
+        ES-MDA, distance     13.7      0.834      0.298    0.651          0.093
+                    EnIF     41.8      0.708      0.548    0.712          0.137
 ```
 
-- **The best fit to the data has the worst field.** ES-MDA without localization reaches
-  a misfit of 1.7, the lowest of any row, and an RMSE logK of 1.036, the highest of any
-  row — *further from the truth than the prior's 0.868* — while its spread contracts
-  from 0.790 to 0.452. Confidently wrong, and no misfit would say so.
-- **Localization works.** RMSE logK after one ES: 0.908 unlocalized against 0.778
-  (adaptive) and 0.779 (distance). Under ES-MDA: 1.036 against 0.794 (adaptive).
-- **EnIF gets the best field**: RMSE logK 0.695 and correlation 0.572, with the spread
-  largely intact, from a misfit an order above ES-MDA's.
-- **Iterating buys the forecast, not the field.** Against plain ES with the same
-  localization, ES-MDA cuts the forecast error 0.160 → 0.037 on the 24 report steps
-  nobody assimilated, while RMSE logK goes 0.778 → 0.794, i.e. nowhere.
 
-## On distance based localization
-
-Both strategies are configured: the observations carry `LOCALIZATION` blocks with their
-well's position and a radius, so `ANALYSIS_SET_VAR PARAMETERS FIELD DISTANCE` is the
-whole switch. Two things to know.
-
-**It crashes under ES-MDA.** `ert es_mda` with `FIELD DISTANCE` dies at the third
-assimilation in `_update_strategies/_distance.py`, at `K *= rho`:
-
+50 realizations, assimilating the first 18 report steps
 ```
-ValueError: operands could not be broadcast together with shapes (2500,31) (2500,33) (2500,31)
+                           misfit  RMSE logK  corr logK   spread  RMSE forecast
+                   prior    327.3      0.868     -0.093    0.782          0.336
+     ES, no localization     16.5      0.869      0.309    0.530          0.054
+            ES, adaptive     33.8      0.892      0.261    0.524          0.224
+            ES, distance     22.3      0.845      0.250    0.706          0.130
+ ES-MDA, no localization      1.7      1.467     -0.001    0.222          0.194
+        ES-MDA, adaptive      4.0      0.774      0.434    0.603          0.023
+        ES-MDA, distance     13.7      0.834      0.298    0.651          0.093
+                    EnIF     41.8      0.708      0.548    0.712          0.137
 ```
 
-All 36 observations carry positions, and ES (a single assimilation) is unaffected: the
-taper and the assimilated set stop agreeing in number once observations are dropped
-between iterations. `test_waterflood.py` carries this as a non-strict `xfail`.
+100 realizations, assimilating the first 18 report steps
+```
 
-**Its radius has an optimum.** Sweeping it at 20 realizations (RMSE logK after one ES,
-against a prior of 0.885): 400 m → 0.901, **250 m → 0.840**, 150 m → 0.841,
-100 m → 0.854, 60 m → 0.868 — by which point the taper is narrow enough that little
-survives it. The observations ship with the 250 m optimum.
+                           misfit  RMSE logK  corr logK   spread  RMSE forecast
+                   prior    327.3      0.868     -0.093    0.782          0.336
+     ES, no localization     16.5      0.869      0.309    0.530          0.054
+            ES, adaptive     33.8      0.892      0.261    0.524          0.224
+            ES, distance     22.3      0.845      0.250    0.706          0.130
+ ES-MDA, no localization      1.7      1.467     -0.001    0.222          0.194
+        ES-MDA, adaptive      4.6      0.724      0.509    0.660          0.046
+        ES-MDA, distance     17.7      0.793      0.367    0.692          0.043
+                    EnIF     40.1      0.721      0.548    0.745          0.126
+```
 
-Neither the case nor its tests claims a winner between the two tapers, because tuned
-they are hard to separate here, and untuned the comparison says more about the tuning
-than about the method (RMSE logK after one ES):
-
-| realizations | no localization | adaptive | distance | prior |
-|---|---|---|---|---|
-| 20 | 1.490 | 0.945 | **0.840** | 0.885 |
-| 50 | 0.908 | **0.778** | 0.779 | 0.868 |
-
-At 50 that is a dead heat; at 20 the radius wins comfortably, because an adaptive
-threshold has to track the noise floor of a correlation, ~1/sqrt(N), and the 0.3 in
-`config.ert` suits 50 realizations and is too permissive at 20 — a radius has no such
-dependence. What both rows agree on, and what the tests assert, is that either taper
-beats none.
 
 ## Running it
 

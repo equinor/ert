@@ -167,7 +167,7 @@ def test_that_distance_localization_survives_several_assimilations():
     """ES-MDA with DISTANCE dies in `_distance.py` at `K *= rho`.
 
     On this case: ValueError, operands could not be broadcast together with shapes
-    (2500, 31) (2500, 33) (2500, 31), at the third assimilation, with all 36
+    (2500, 31) (2500, 33) (2500, 31), at the third assimilation, with all 27
     observations carrying positions. ES (one assimilation) is unaffected.
     """
     config_file = write_config("mda-distance", "DISTANCE")

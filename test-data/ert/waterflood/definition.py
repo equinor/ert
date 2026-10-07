@@ -72,11 +72,15 @@ summary_keys = (
 
 # History and forecast: the case is observed over its first `nsteps_history` steps
 # only, and simulated to the end, so that what the update did to the *prediction*
-# can be scored on the steps that were not assimilated. In the truth, PROD1 breaks
-# history match is run to answer: when does the last producer water out?
-nsteps_history = 16
+# can be scored on the steps that were not assimilated.
+nsteps_history = 18
 obs_steps = np.arange(4, nsteps_history + 1, 4)  # every fourth step of the history
 forecast_steps = np.arange(nsteps_history + 1, nsteps + 1)
+
+# Every step of the whole simulation, used to locate breakthrough in the truth
+# precisely -- `obs_steps`' quarterly resolution is too coarse to tell when a
+# water cut first crosses a threshold.
+breakthrough_steps = np.arange(1, nsteps + 1)
 
 # The truth: a realization of the prior, at the mean correlation length, which
 # `generate_files.py` perturbs into the observations and also writes out whole.
