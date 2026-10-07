@@ -235,9 +235,9 @@ class ErtServerController:
         if logging_config is not None:
             run_storage_main_cmd += ["--logging-config", logging_config]
 
-            traceparent = get_traceparent()
-            if traceparent is not None:
-                run_storage_main_cmd += ["--traceparent", traceparent]
+        traceparent = get_traceparent()
+        if traceparent is not None:
+            run_storage_main_cmd += ["--traceparent", traceparent]
 
         if parent_pid is not None:
             run_storage_main_cmd += ["--parent_pid", str(parent_pid)]
