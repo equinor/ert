@@ -31,15 +31,9 @@ from ert.run_models.event import (
     StatusEvents,
     WorkflowEvent,
 )
-from ert.workflow_runner import WorkflowJobStatus
+from ert.workflow_runner import WorkflowJobStatus, format_workflow_job_failure
 
 Color = tuple[int, int, int]
-
-
-def format_workflow_job_failure(job_name: str, error: str | None) -> str:
-    error_lines = (error or "no error message").splitlines()
-    indented_error = "\n    ".join(error_lines)
-    return f"Workflow job {job_name} failed: {indented_error}"
 
 
 def _no_color(text: str, color: Color) -> str:

@@ -110,7 +110,7 @@ def test_that_monitor_prints_indented_workflow_errors_except_for_stopping_job():
     events.put(
         EndEvent(
             failed=True,
-            msg="Workflow job STOPPING_JOB failed with error: ValueError: boom",
+            msg="Workflow job STOPPING_JOB failed: ValueError: boom",
         )
     )
     out = StringIO()
@@ -121,7 +121,7 @@ def test_that_monitor_prints_indented_workflow_errors_except_for_stopping_job():
         "Workflow job FAILING_JOB failed: ValueError: first line\n"
         "    second line\n"
         "Experiment failed with the following error: "
-        "Workflow job STOPPING_JOB failed with error: ValueError: boom\n"
+        "Workflow job STOPPING_JOB failed: ValueError: boom\n"
     )
 
 

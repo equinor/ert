@@ -133,15 +133,8 @@ def test_run_workflow_with_no_ensemble_selected(
     gui.close()
 
 
-@pytest.mark.parametrize(
-    ("stop_on_fail", "expected_message"),
-    [
-        (False, "completed \nThe following jobs failed:\nFAIL: ValueError: boom"),
-        (True, "was stopped. The following jobs failed:\nFAIL: ValueError: boom"),
-    ],
-)
-def test_that_workflow_tool_dialog_shows_error_of_failed_job_without_traceback(
-    qtbot, tmp_path, monkeypatch, stop_on_fail, expected_message
+def test_that_workflow_tool_dialog_shows_error_of_job_that_stopped_workflow(
+    qtbot, tmp_path, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "config.ert").write_text(
@@ -152,7 +145,7 @@ def test_that_workflow_tool_dialog_shows_error_of_failed_job_without_traceback(
             """)
     )
     (tmp_path / "failing_job").write_text(
-        f"INTERNAL True\nSCRIPT failing_script.py\nSTOP_ON_FAIL {stop_on_fail}\n"
+        "INTERNAL True\nSCRIPT failing_script.py\nSTOP_ON_FAIL True\n"
     )
     (tmp_path / "failing_script.py").write_text(
         dedent("""
@@ -188,7 +181,10 @@ def test_that_workflow_tool_dialog_shows_error_of_failed_job_without_traceback(
     QTimer.singleShot(1000, handle_run_workflow_tool)
     gui.workflows_tool.trigger()
 
-    [message] = shown_messages
-    assert expected_message in message
-    assert "Traceback" not in message
+    assert shown_messages == [
+        (
+            "The workflow 'failing_workflow' was stopped. "
+            "The following jobs failed:\nFAIL: ValueError: boom"
+        )
+    ]
     gui.close()

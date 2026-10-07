@@ -342,7 +342,7 @@ def test_that_output_of_job_that_stops_workflow_is_still_logged(caplog):
 
     with (
         caplog.at_level(logging.INFO, logger="ert.workflow_runner"),
-        pytest.raises(WorkflowJobFailedError, match="failed with error"),
+        pytest.raises(WorkflowJobFailedError, match=r"Workflow job .* failed: "),
     ):
         WorkflowRunner(workflow, fixtures={}).run_blocking()
 
