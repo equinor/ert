@@ -21,10 +21,10 @@ properties that hold whatever the numbers, on a smaller ensemble.
 """
 
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
+from uuid import UUID
 
 import numpy as np
 from definition import nsteps_history
@@ -71,7 +71,11 @@ def write_observations(tag: str, radius: float) -> str:
 def write_config(
     tag: str, localization: str | None, realizations: int, tuning: dict
 ) -> Path:
-    """`config.ert` with one localization strategy, its own storage and runpath."""
+    """`config.ert` with one localization strategy and its own runpath.
+
+    The storage is left at its default (`ENSPATH`), shared by every run below, so
+    that each can be told apart only by its own experiment and ensemble names.
+    """
     lines = []
     for original in Path("config.ert").read_text(encoding="utf-8").splitlines():
         line = original
@@ -92,24 +96,28 @@ def write_config(
         elif original.startswith("OBS_CONFIG") and "radius" in tuning:
             line = f"OBS_CONFIG {write_observations(tag, tuning['radius'])}"
         lines.append(line)
-    lines += [
-        f"ENSPATH storage-{tag}",
-        f"RUNPATH simulations-{tag}/real-<IENS>/iter-<ITER>",
-    ]
+    lines.append(f"RUNPATH simulations-{tag}/real-<IENS>/iter-<ITER>")
     path = Path(f"compare-{tag}.ert")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
 
-def score(config_file: Path) -> dict[str, tuple[float, ...]]:
+def experiment_ids(ens_path: Path) -> set[UUID]:
+    """The experiments already in storage, to spot the one a run just added."""
+    if not ens_path.exists():
+        return set()
+    with open_storage(ens_path, mode="r") as storage:
+        return {experiment.id for experiment in storage.experiments}
+
+
+def score(ens_path: Path, experiment_id: UUID) -> dict[str, tuple[float, ...]]:
     """The prior's and the last posterior's scores, as `evaluate.py` computes them."""
     truth_water_cut = np.loadtxt("truth_forecast.txt")
     truth_log_perm = truth_log_permeability()
-    config = ErtConfig.from_file(str(config_file))
 
     out = {}
-    with open_storage(config.ens_path, mode="r") as storage:
-        experiment = max(storage.experiments, key=lambda e: e.name)
+    with open_storage(ens_path, mode="r") as storage:
+        experiment = storage.get_experiment(experiment_id)
         observations = experiment.observations
         ensembles = sorted(experiment.ensembles, key=lambda e: e.iteration)
         for label, ensemble in [("prior", ensembles[0]), ("posterior", ensembles[-1])]:
@@ -136,10 +144,22 @@ if __name__ == "__main__":
 
     prior_printed = False
     for label, mode, localization, tuning in RUNS:
-        tag = label.replace(", ", "-").replace(" ", "").lower()
+        tag = f"{label.replace(', ', '-').replace(' ', '').lower()}-{realizations}"
         config_file = write_config(tag, localization, realizations, tuning)
+        ens_path = Path(ErtConfig.from_file(str(config_file)).ens_path)
+
+        before = experiment_ids(ens_path)
         result = subprocess.run(
-            ["ert", mode, "--disable-monitoring", str(config_file)],
+            [
+                "ert",
+                mode,
+                "--disable-monitoring",
+                "--target-ensemble",
+                f"{tag}-%d",
+                "--experiment-name",
+                tag,
+                str(config_file),
+            ],
             capture_output=True,
             text=True,
             check=False,
@@ -148,9 +168,12 @@ if __name__ == "__main__":
             print(
                 f"{label:>24}   failed: {result.stderr.strip().splitlines()[-1][:60]}"
             )
+            config_file.unlink()
+            Path(f"observations-{tag}.txt").unlink(missing_ok=True)
             continue
 
-        scores = score(config_file)
+        (experiment_id,) = experiment_ids(ens_path) - before
+        scores = score(ens_path, experiment_id)
         if not prior_printed:
             print(
                 "{:>24} {:8.1f} {:10.3f} {:10.3f} {:8.3f} {:14.3f}".format(
@@ -166,4 +189,3 @@ if __name__ == "__main__":
 
         config_file.unlink()
         Path(f"observations-{tag}.txt").unlink(missing_ok=True)
-        shutil.rmtree(f"simulations-{tag}", ignore_errors=True)
