@@ -271,28 +271,28 @@
   "response_configuration": [
     {
       "type": "summary",
-      "input_files": [
-        "SNAKE_OIL_FIELD"
-      ],
       "keys": [
         "*",
         "WOPR:OP1"
       ],
-      "has_finalized_keys": false
+      "has_finalized_keys": false,
+      "input_files": [
+        "SNAKE_OIL_FIELD"
+      ]
     },
     {
       "type": "gen_data",
-      "input_files": [
-        "snake_oil_opr_diff_%d.txt",
-        "snake_oil_wpr_diff_%d.txt",
-        "snake_oil_gpr_diff_%d.txt"
-      ],
       "keys": [
         "SNAKE_OIL_OPR_DIFF",
         "SNAKE_OIL_WPR_DIFF",
         "SNAKE_OIL_GPR_DIFF"
       ],
       "has_finalized_keys": true,
+      "input_files": [
+        "snake_oil_opr_diff_%d.txt",
+        "snake_oil_wpr_diff_%d.txt",
+        "snake_oil_gpr_diff_%d.txt"
+      ],
       "report_steps_list": [
         [
           199

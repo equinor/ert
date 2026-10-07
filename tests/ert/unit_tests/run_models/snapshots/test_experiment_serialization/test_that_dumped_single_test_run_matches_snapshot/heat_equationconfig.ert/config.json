@@ -148,16 +148,16 @@
   "response_configuration": [
     {
       "type": "summary",
-      "input_files": [
-        "HEAT"
-      ],
       "keys": [
         "HEAT_10_25",
         "HEAT_25_10",
         "HEAT_25_40",
         "HEAT_40_25"
       ],
-      "has_finalized_keys": false
+      "has_finalized_keys": false,
+      "input_files": [
+        "HEAT"
+      ]
     }
   ],
   "ert_templates": [],
