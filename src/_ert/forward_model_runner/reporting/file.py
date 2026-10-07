@@ -55,7 +55,6 @@ class File(Reporter):
         fm_step_status: StepDict = {}
 
         if msg.step:
-            logger.debug("Adding message step to status dictionary.")
             fm_step_status = self.status_dict["steps"][msg.step.index]
 
         if isinstance(msg, Init):
