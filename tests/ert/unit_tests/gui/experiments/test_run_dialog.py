@@ -30,10 +30,8 @@ from ert.ensemble_evaluator.event import (
 )
 from ert.gui.ertwidgets.suggestor.suggestor import Suggestor
 from ert.gui.experiments import ExperimentPanel, RunDialog
-from ert.gui.experiments.ensemble_experiment_panel import (
-    DesignMatrixPanel,
-    EnsembleExperimentPanel,
-)
+from ert.gui.experiments._design_matrix_panel import DesignMatrixPanel
+from ert.gui.experiments.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,

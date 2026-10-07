@@ -11,17 +11,17 @@ from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     CopyableLabel,
-    get_parameters_button,
 )
 from ert.mode_definitions import ENIF_MODE
 from ert.run_models import EnsembleInformationFilter
 
-from ._design_matrix_panel import DesignMatrixPanel
 from ._panel_utils import (
+    add_parameter_configuration_rows,
     create_active_realizations_field,
     create_experiment_name_field,
     create_number_of_realizations_container,
     create_target_ensemble_format_field,
+    merge_design_matrix_parameters,
 )
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -109,43 +109,19 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._parameter_configuration = parameter_configuration
-        self._add_parameter_configuration_rows(
+        self._parameter_configuration = merge_design_matrix_parameters(
+            analysis_config, parameter_configuration
+        )
+        add_parameter_configuration_rows(
+            self,
             layout,
             analysis_config,
-            number_of_realizations_label,
-            config_num_realization,
+            self._parameter_configuration,
+            number_of_realizations_label=number_of_realizations_label,
+            config_num_realization=config_num_realization,
         )
         self.setLayout(layout)
         self._connect_signals()
-
-    def _add_parameter_configuration_rows(
-        self,
-        layout: QFormLayout,
-        analysis_config: AnalysisConfig,
-        number_of_realizations_label: QLabel,
-        config_num_realization: int,
-    ) -> None:
-        design_matrix = analysis_config.design_matrix
-        if design_matrix is not None:
-            layout.addRow(
-                "Design matrix",
-                DesignMatrixPanel.get_design_matrix_button(
-                    design_matrix,
-                    number_of_realizations_label,
-                    config_num_realization,
-                ),
-            )
-            self._parameter_configuration = (
-                design_matrix.merge_with_existing_parameters(
-                    self._parameter_configuration
-                )
-            )
-
-        if self._parameter_configuration:
-            layout.addRow(
-                "Parameters", get_parameters_button(self._parameter_configuration, self)
-            )
 
     def _connect_signals(self) -> None:
         self._experiment_name_field.getValidationSupport().validationChanged.connect(

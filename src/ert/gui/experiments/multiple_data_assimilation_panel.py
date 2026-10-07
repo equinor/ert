@@ -28,7 +28,6 @@ from ert.gui.ertwidgets import (
     StringBox,
     Suggestor,
     ValueModel,
-    get_parameters_button,
 )
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
@@ -37,8 +36,8 @@ from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import NumberListStringArgument
 from ert.validation.ensemble_realizations_argument import EnsembleRealizationsArgument
 
-from ._design_matrix_panel import DesignMatrixPanel
 from ._panel_utils import (
+    add_parameter_configuration_rows,
     create_active_realizations_field,
     create_experiment_name_field,
     create_number_of_realizations_container,
@@ -221,11 +220,13 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         layout.addRow("Run from prior ensemble:", self._ensemble_selector)
 
         self._connect_signals()
-        self._add_parameter_configuration_rows(
+        add_parameter_configuration_rows(
+            self,
             layout,
             analysis_config,
-            number_of_realizations_label,
-            config_num_realization,
+            self._analysis_module_edit.parameter_config,
+            number_of_realizations_label=number_of_realizations_label,
+            config_num_realization=config_num_realization,
         )
         self.setLayout(layout)
 
@@ -266,32 +267,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._refresh_update_strategy_summary_widget
         )
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
-
-    def _add_parameter_configuration_rows(
-        self,
-        layout: QFormLayout,
-        analysis_config: AnalysisConfig,
-        number_of_realizations_label: QLabel,
-        config_num_realization: int,
-    ) -> None:
-        design_matrix = analysis_config.design_matrix
-        if design_matrix is not None:
-            layout.addRow(
-                "Design matrix",
-                DesignMatrixPanel.get_design_matrix_button(
-                    design_matrix,
-                    number_of_realizations_label,
-                    config_num_realization,
-                ),
-            )
-
-        if self._analysis_module_edit.parameter_config:
-            layout.addRow(
-                "Parameters",
-                get_parameters_button(
-                    self._analysis_module_edit.parameter_config, self
-                ),
-            )
 
     def _refresh_update_strategy_summary_widget(self) -> None:
         self._update_strategy_summary_widget.set_parameters(
