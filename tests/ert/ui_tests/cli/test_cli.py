@@ -514,6 +514,7 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
             ) as exc_info:
                 run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
             assert "Traceback" not in str(exc_info.value)
+            assert len(str(exc_info.value).strip().splitlines()) == 1
             with pytest.raises(ErtCliError, match=r"Workflow job .* failed with error"):
                 run_cli(WORKFLOW_MODE, "wffail", "poly.ert")
         else:

@@ -433,9 +433,13 @@ class RunModel(RunModelConfig, ABC):
                         self.active_realizations
                     )
                 self._storage.close()
-        except (ErtRunError, WorkflowJobFailedError) as e:
+        except ErtRunError as e:
             failed = True
             exception = e
+        except WorkflowJobFailedError as e:
+            failed = True
+            exception = e
+            error_messages.clear()
         except UserWarning as e:
             logger.exception(e)
         except UserCancelled as e:
