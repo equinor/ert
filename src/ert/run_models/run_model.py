@@ -898,6 +898,7 @@ class RunModel(RunModelConfig, ABC):
                 timestamp=result.timestamp,
                 iteration=iteration,
                 error=result.error,
+                stopped_workflow=result.stopped_workflow,
             )
             for result in workflow_runner.workflow_job_results()
         ]

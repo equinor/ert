@@ -111,6 +111,7 @@ class WorkflowEvent(BaseModel, extra="forbid"):
     timestamp: datetime
     iteration: int | None = None
     error: str | None = None
+    stopped_workflow: bool = False
 
 
 class RunPathCreationEvent(BaseModel, extra="forbid"):

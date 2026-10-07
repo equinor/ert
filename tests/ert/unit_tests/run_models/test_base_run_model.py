@@ -47,7 +47,11 @@ from ert.run_models.run_model import (
     UserCancelled,
 )
 from ert.warnings import PostExperimentWarning
-from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobFailedError,
+    WorkflowJobStatus,
+    WorkflowRunner,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -1004,7 +1008,7 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
         experiment, ensemble_size=1, name="ensemble"
     )
 
-    with pytest.raises(RuntimeError, match="failed with error"):
+    with pytest.raises(WorkflowJobFailedError, match="failed with error"):
         brm.run_workflows(
             fixtures=PreSimulationFixtures(
                 random_seed=1,

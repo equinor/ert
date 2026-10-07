@@ -131,6 +131,13 @@ during :code:`ert <mode>` and for :code:`ert workflow`::
 
     Workflow job EXPORT_RFT failed: ValueError: No RFT observations found in experiment
 
+If the error message spans several lines, the following lines are indented
+below the first. With :code:`--disable-monitoring`, these lines are not shown.
+
+A failed job configured with :code:`STOP_ON_FAIL` stops the experiment or
+:code:`ert workflow`, and its error is reported once, as the reason ERT
+stopped. :code:`ert workflow` then exits with a non-zero exit code.
+
 The *Run workflow* tool and plugins in the GUI show the same error in their
 result dialog.
 

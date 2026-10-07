@@ -29,6 +29,7 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
+    WORKFLOW_MODE,
 )
 from ert.run_models.event import WorkflowEvent
 from ert.sample_prior import sample_prior
@@ -513,8 +514,11 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
             ) as exc_info:
                 run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
             assert "Traceback" not in str(exc_info.value)
+            with pytest.raises(ErtCliError, match=r"Workflow job .* failed with error"):
+                run_cli(WORKFLOW_MODE, "wffail", "poly.ert")
         else:
             run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+            run_cli(WORKFLOW_MODE, "wffail", "poly.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case")
