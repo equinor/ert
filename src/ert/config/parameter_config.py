@@ -175,3 +175,28 @@ class ParameterConfig(BaseModel, extra="forbid"):
 
 def has_updatable_parameters(parameter_configs: Iterable[ParameterConfig]) -> bool:
     return any(p.update_strategy is not None for p in parameter_configs)
+
+
+def apply_parameter_update_overrides[P: ParameterConfig](
+    parameters: Iterable[P], overrides: dict[str, LocalizationType]
+) -> list[P]:
+    result = [parameter.model_copy(deep=True) for parameter in parameters]
+    unknown = overrides.keys() - {parameter.name for parameter in result}
+    if unknown:
+        raise ValueError(
+            f"Unknown parameters in localization overrides: {sorted(unknown)}"
+        )
+    for parameter in result:
+        if parameter.name not in overrides:
+            continue
+        strategy = overrides[parameter.name]
+        if parameter.update_strategy is None:
+            raise ValueError(
+                f"Cannot update non-updatable parameter '{parameter.name}'"
+            )
+        if parameter.type == "gen_kw" and strategy == LocalizationType.DISTANCE:
+            raise ValueError(
+                f"Distance localization is not supported for GenKW '{parameter.name}'"
+            )
+        parameter.update_strategy = strategy
+    return result

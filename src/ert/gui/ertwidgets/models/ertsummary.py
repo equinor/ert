@@ -2,7 +2,7 @@ from collections import Counter, defaultdict
 
 from typing_extensions import TypedDict
 
-from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
+from ert.config import ErtConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
 
 
 class ObservationCount(TypedDict):
@@ -17,13 +17,19 @@ class ErtSummary:
     def getForwardModels(self) -> list[str]:
         return self.ert_config.forward_model_step_name_list()
 
-    def get_parameters(self) -> tuple[list[str], list[str], int]:
+    def get_parameters(
+        self, parameters: list[ParameterConfig] | None = None
+    ) -> tuple[list[str], list[str], int]:
         parameters_updatable = []
         parameters_not_updatable = []
         genkw_groups_updadatable: dict[str, int] = defaultdict(int)
         genkw_groups_not_updadatable: dict[str, int] = defaultdict(int)
         count = 0
-        for config in self.ert_config.parameter_configurations_with_design_matrix:
+        for config in (
+            self.ert_config.parameter_configurations_with_design_matrix
+            if parameters is None
+            else parameters
+        ):
             match config:
                 case GenKwConfig(name=key):
                     if config.update_strategy is not None:

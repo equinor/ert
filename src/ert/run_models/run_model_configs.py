@@ -21,6 +21,7 @@ from ert.config import (
     GenKwConfig,
     HookRuntime,
     KnownResponseTypes,
+    LocalizationType,
     ModelConfig,
     Observation,
     ObservationSettings,
@@ -36,6 +37,7 @@ from ert.config.forward_model_step import (
     SiteOrUserForwardModelStep,
     UserInstalledForwardModelStep,
 )
+from ert.config.parameter_config import apply_parameter_update_overrides
 from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.storage.local_experiment import ExperimentConfig, ExperimentType
 from everest.config import InputConstraintConfig, OptimizationConfig
@@ -192,6 +194,7 @@ class UpdateRunModelConfig(RunModelConfig):
     target_ensemble: str
     analysis_settings: ESSettings
     update_settings: ObservationSettings
+    parameter_update_overrides: dict[str, LocalizationType] | None = None
 
     @model_validator(mode="after")
     def _check_min_active_realizations_for_update(self) -> Self:
@@ -212,6 +215,16 @@ class UpdateRunModelConfig(RunModelConfig):
 class InitialEnsembleUpdateRunModelConfig(
     InitialEnsembleRunModelConfig, UpdateRunModelConfig
 ):
+    @model_validator(mode="after")
+    def _apply_parameter_update_overrides(self) -> Self:
+        if isinstance(self, MultipleDataAssimilationConfig) and self.prior_ensemble_id:
+            return self
+        if self.parameter_update_overrides:
+            self.parameter_configuration = apply_parameter_update_overrides(
+                self.parameter_configuration, self.parameter_update_overrides
+            )
+        return self
+
     @model_validator(mode="after")
     def _check_updatable_parameters(self) -> Self:
         validate_has_updatable_parameter(self.parameter_configuration)

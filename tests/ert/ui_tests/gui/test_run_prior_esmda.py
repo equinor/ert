@@ -1,14 +1,27 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QWidget
+import pytest
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QPushButton,
+    QWidget,
+)
 
+from ert.config import LocalizationType
 from ert.gui.ertwidgets import StringBox
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
+from ert.storage import open_storage
 
 from .conftest import get_child
 
 
-def test_run_prior_esmda(ensemble_experiment_has_run_no_failure, qtbot):
+@pytest.mark.parametrize("edit_localization", [False, True])
+def test_that_running_from_a_prior_persists_only_run_local_parameter_edits(
+    ensemble_experiment_has_run_no_failure, qtbot, edit_localization
+):
     """This runs an es-mda run from an ensemble created from an ensemble_experiment
     run, via the run prior feature for es-mda.
     Regression test for several issues where this failed only in the gui.
@@ -30,6 +43,31 @@ def test_run_prior_esmda(ensemble_experiment_has_run_no_failure, qtbot):
 
     es_mda_panel._ensemble_selector.setCurrentText("iter-0")
     assert es_mda_panel._ensemble_selector.selected_ensemble.name == "iter-0"
+    prior = es_mda_panel._ensemble_selector.selected_ensemble
+    original_parameters = {
+        name: parameter.model_dump(mode="json")
+        for name, parameter in prior.experiment.parameter_configuration.items()
+    }
+    prior_experiment_id = prior.experiment.id
+    if edit_localization:
+
+        def edit_parameters():
+            dialog = QApplication.activeModalWidget()
+            assert isinstance(dialog, QDialog)
+            selector = dialog.findChildren(QComboBox)[0]
+            selector.setCurrentIndex(selector.findData(LocalizationType.ADAPTIVE))
+            dialog.accept()
+
+        QTimer.singleShot(0, edit_parameters)
+        es_mda_panel.findChild(QPushButton, "analysis_variables_popup_button").click()
+        assert all(
+            parameter.update_strategy == LocalizationType.ADAPTIVE
+            for parameter in es_mda_panel.active_parameters
+        )
+    assert original_parameters == {
+        name: parameter.model_dump(mode="json")
+        for name, parameter in prior.experiment.parameter_configuration.items()
+    }
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
@@ -39,6 +77,23 @@ def test_run_prior_esmda(ensemble_experiment_has_run_no_failure, qtbot):
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."
     )
+    with open_storage(gui.notifier.storage.path) as storage:
+        assert original_parameters == {
+            name: parameter.model_dump(mode="json")
+            for name, parameter in storage.get_experiment(
+                prior_experiment_id
+            ).parameter_configuration.items()
+        }
+        target = storage.get_experiment_by_name("Run from iter-0")
+        assert all(
+            parameter.update_strategy
+            == (
+                LocalizationType.ADAPTIVE
+                if edit_localization
+                else LocalizationType.GLOBAL
+            )
+            for parameter in target.parameter_configuration.values()
+        )
 
 
 def test_that_esmda_active_realizations_are_set_only_when_select_prior_is_checked(

@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config import ParameterConfig
 from ert.gui.ertwidgets import ErtSummary
 
 if TYPE_CHECKING:
@@ -80,6 +81,9 @@ class SummaryTemplate:
 class SummaryPanel(QFrame):
     def __init__(self, config: ErtConfig) -> None:
         self.config = config
+        self._parameters: list[ParameterConfig] | None = (
+            config.parameter_configurations_with_design_matrix
+        )
         QFrame.__init__(self)
 
         self.setMinimumWidth(250)
@@ -119,7 +123,7 @@ class SummaryPanel(QFrame):
         self.addColumn(text.getText())
 
         parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
-            summary.get_parameters()
+            summary.get_parameters(self._parameters or [])
         )
         text = SummaryTemplate(f"Parameters ({parameter_count:,})", width=320)
 
@@ -128,7 +132,7 @@ class SummaryPanel(QFrame):
         text.addColumn("Non-updatable", parameter_list_not_updatable)
         text.endColumns()
 
-        self.addColumn(text.getText())
+        self._parameter_label = self.addColumn(text.getText())
 
         observation_counts = summary.getObservations()
         text = SummaryTemplate(
@@ -139,7 +143,22 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-    def addColumn(self, text: str) -> None:
+    def set_parameters(self, parameters: list[ParameterConfig] | None) -> None:
+        self._parameters = parameters
+        if parameters is None:
+            self._parameter_label.setText("Parameters (no ensemble selected)")
+            return
+        updatable, non_updatable, count = ErtSummary(self.config).get_parameters(
+            parameters
+        )
+        text = SummaryTemplate(f"Parameters ({count:,})", width=320)
+        text.startColumns()
+        text.addColumn("Updatable", updatable)
+        text.addColumn("Non-updatable", non_updatable)
+        text.endColumns()
+        self._parameter_label.setText(text.getText())
+
+    def addColumn(self, text: str) -> QLabel:
         layout = QVBoxLayout()
         text_widget = QLabel(text)
         text_widget.setWordWrap(True)
@@ -148,6 +167,7 @@ class SummaryPanel(QFrame):
         layout.addStretch(1)
 
         self._layout.addLayout(layout)
+        return text_widget
 
     def log_summary(self, run_model: str, num_realizations: int) -> None:
         summary = ErtSummary(self.config)
@@ -155,7 +175,7 @@ class SummaryPanel(QFrame):
         observations = summary.getObservations()
         observations_count = sum(e["count"] for e in observations)
 
-        _, _, parameter_count = summary.get_parameters()
+        _, _, parameter_count = summary.get_parameters(self._parameters or [])
 
         logger.info(
             f"Experiment summary:\n"

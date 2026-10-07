@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import PrivateAttr
 
+from ert.config.parameter_config import apply_parameter_update_overrides
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.constants import PARAMETER_UPDATE
 from ert.run_models.run_model_configs import ManualUpdateConfig
@@ -67,6 +68,14 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
         experiment_config = self.to_experiment_config(
             prior_experiment_config=self._prior.experiment.experiment_config
         )
+        if self.parameter_update_overrides is not None:
+            experiment_config["parameter_configuration"] = [
+                p.model_dump(mode="json")
+                for p in apply_parameter_update_overrides(
+                    self._prior.experiment.parameter_configuration.values(),
+                    self.parameter_update_overrides,
+                )
+            ]
 
         return self._storage.create_experiment(
             experiment_config=experiment_config,

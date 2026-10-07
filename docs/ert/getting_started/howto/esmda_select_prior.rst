@@ -16,6 +16,18 @@ configuration does not contain updatable parameters. This makes it possible to
 restart from the prior ensemble even if the current configuration is not
 otherwise valid for an ES-MDA update.
 
+You can change the selected prior's localizations in **Update settings** before
+running. These changes apply from the first update of the new run and are saved
+with the new experiment, without changing the original prior experiment.
+For example, select a prior, choose Adaptive for GenKW, and save: the parameter
+viewer and summaries show Adaptive, and the new run uses that choice.
+
+Selecting a different prior or turning off prior selection discards the prior's
+localization edits. **Reset parameter changes** restores both configured and
+selected-prior parameters to their original localizations. See
+:ref:`manual-prior-guide` for editing and summary behavior. CLI runs without GUI
+overrides continue to use the stored prior's parameter configuration.
+
 **Steps to run from** ``default_2``:
 
 1. Check the "Select prior ensemble" checkbox.

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
-from unittest.mock import Mock
 from uuid import uuid4
 
+from ert.config import GenKwConfig
 from ert.config.parameter_config import LocalizationType, ParameterConfig
 from ert.run_models.event import WorkflowEvent
 from ert.storage.local_ensemble import LocalEnsemble
@@ -27,8 +27,10 @@ REALIZATION_FAILED_DURING_EVALUATION = {
 
 def _default_parameter_configuration() -> dict[str, ParameterConfig]:
     return {
-        "PARAMETER": Mock(
-            spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
+        "PARAMETER": GenKwConfig(
+            name="PARAMETER",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+            update_strategy=LocalizationType.GLOBAL,
         )
     }
 

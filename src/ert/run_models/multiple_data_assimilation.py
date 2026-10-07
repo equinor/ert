@@ -11,6 +11,7 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.config.analysis_config import parse_es_mda_weights
+from ert.config.parameter_config import apply_parameter_update_overrides
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.constants import PARAMETER_UPDATE
@@ -67,13 +68,23 @@ class MultipleDataAssimilation(
         )
 
     def _create_experiment_from_prior(
-        self, original_experiment: ExperimentConfig
+        self, original_experiment: LocalExperiment
     ) -> ExperimentConfig:
         new_experiment = self.to_experiment_config()
-        new_experiment["parameter_configuration"] = original_experiment.get(
-            "parameter_configuration", []
+        new_experiment["parameter_configuration"] = (
+            original_experiment.experiment_config.get("parameter_configuration", [])
         )
-        new_experiment["observations"] = original_experiment.get("observations", [])
+        if self.parameter_update_overrides:
+            new_experiment["parameter_configuration"] = [
+                p.model_dump(mode="json")
+                for p in apply_parameter_update_overrides(
+                    original_experiment.parameter_configuration.values(),
+                    self.parameter_update_overrides,
+                )
+            ]
+        new_experiment["observations"] = original_experiment.experiment_config.get(
+            "observations", []
+        )
         return new_experiment
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
@@ -120,9 +131,7 @@ class MultipleDataAssimilation(
 
             try:
                 target_experiment = self._storage.create_experiment(
-                    experiment_config=self._create_experiment_from_prior(
-                        experiment.experiment_config
-                    ),
+                    experiment_config=self._create_experiment_from_prior(experiment),
                     name=f"Run from {prior.name}",
                 )
             except Exception as err:

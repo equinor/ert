@@ -86,8 +86,40 @@ contains only column headers.
 By default, the summary reflects the current configuration, including
 parameters added or overridden by a design matrix. When you select a prior
 ensemble, it instead reflects the parameter configurations stored with
-that ensemble's experiment.
+that ensemble's experiment, including localization changes saved for this run.
 
 The table is read-only. It refreshes when you save changes in
 **Update settings**, change the prior ensemble selection, or return to
 the ES-MDA settings from another experiment type.
+
+Editing and resetting parameter localizations
+--------------------------------------------
+
+Parameter localization changes saved in **Update settings** belong to the
+current experiment panel.
+They do not modify the configuration file, another panel's settings, or an
+existing experiment. **Show parameters**, **Parameter Localizations**, and the
+parameter section of the bottom summary all reflect the active parameter
+configuration. The bottom summary's forward-model and observation sections still
+describe the configuration file.
+
+If updatable parameters of one type use different localization methods, the
+existing dropdown displays **Mixed**. Saving without choosing a replacement
+preserves those individual methods. For example, if two GenKW parameters use
+Global and Adaptive, respectively, selecting Adaptive applies Adaptive to both.
+Parameters marked non-updatable remain non-updatable.
+
+**Cancel** discards unsaved dialog edits. **Reset parameter changes** restores
+both the configured-parameter draft and the selected prior's draft to their
+original localizations. It does not reset weights, active realizations, or
+general analysis settings.
+
+Configured-parameter edits are retained when selecting and then deselecting a
+prior. Prior edits are discarded when selecting a different prior or turning
+off **Select prior ensemble**. A storage refresh keeps the selected prior and its
+edits while the same source remains available. If it disappears, select an
+available prior or turn off prior selection before running.
+
+Saved localizations are used by the run, including parameters provided by a
+design matrix. Unlike shared in-memory edits, they do not affect other experiment
+panels. No configuration-file migration is required.

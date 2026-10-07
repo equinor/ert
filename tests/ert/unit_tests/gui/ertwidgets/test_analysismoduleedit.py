@@ -1,6 +1,6 @@
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QApplication, QDialog, QPushButton
+from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QMessageBox, QPushButton
 from pytestqt.qtbot import QtBot
 
 from ert.config import ESSettings, GenKwConfig, LocalizationType
@@ -8,7 +8,81 @@ from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
-def test_that_settings_are_updated_correctly(qtbot: QtBot):
+@pytest.mark.timeout(10)
+def test_that_saving_mixed_strategies_without_changes_preserves_each_parameter(qtbot):
+    parameters = [
+        GenKwConfig(
+            name=str(index),
+            distribution={"name": "uniform", "min": 0, "max": 1},
+            update_strategy=strategy,
+        )
+        for index, strategy in enumerate(
+            [LocalizationType.GLOBAL, LocalizationType.ADAPTIVE, None]
+        )
+    ]
+    widget = AnalysisModuleEdit(ESSettings(), parameters, 3)
+    qtbot.addWidget(widget)
+
+    def accept_without_changes():
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        assert dialog.findChildren(QComboBox)[0].currentText() == "Mixed"
+        dialog.accept()
+
+    QTimer.singleShot(0, accept_without_changes)
+    widget._show_update_settings_dialog()
+    assert [p.update_strategy for p in widget.parameter_config] == [
+        LocalizationType.GLOBAL,
+        LocalizationType.ADAPTIVE,
+        None,
+    ]
+
+
+@pytest.mark.timeout(10)
+def test_that_a_changed_parameter_source_rejects_pending_dialog_edits(
+    qtbot, monkeypatch
+):
+    parameter = GenKwConfig(
+        name="configured", distribution={"name": "uniform", "min": 0, "max": 1}
+    )
+    widget = AnalysisModuleEdit(ESSettings(), [parameter], 3)
+    qtbot.addWidget(widget)
+    warnings = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: warnings.append(args))
+
+    def change_source_and_accept():
+        dialog = QApplication.activeModalWidget()
+        panel = dialog.findChild(AnalysisModuleVariablesPanel)
+        panel._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
+        widget.parameter_state.select_prior(True, "prior", [parameter])
+        dialog.accept()
+
+    QTimer.singleShot(0, change_source_and_accept)
+    widget._show_update_settings_dialog()
+    assert widget.parameter_config[0].update_strategy == LocalizationType.GLOBAL
+    assert len(warnings) == 1
+
+
+def test_that_reset_button_restores_configured_and_prior_drafts(qtbot):
+    parameter = GenKwConfig(
+        name="configured", distribution={"name": "uniform", "min": 0, "max": 1}
+    )
+    widget = AnalysisModuleEdit(ESSettings(), [parameter], 3)
+    qtbot.addWidget(widget)
+    state = widget.parameter_state
+    state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    state.select_prior(True, "prior", [parameter])
+    state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    reset = widget.findChild(QPushButton, "reset_parameter_changes")
+    assert reset.isEnabled()
+    reset.click()
+    assert not reset.isEnabled()
+    assert state.overrides == {}
+    state.select_prior(False)
+    assert state.overrides == {}
+
+
+def test_that_saving_settings_updates_the_draft_and_general_settings(qtbot: QtBot):
     es_settings = ESSettings()
     es_settings.localization_correlation_threshold = 0.5
     es_settings.enkf_truncation = 0.2
@@ -52,7 +126,8 @@ def test_that_settings_are_updated_correctly(qtbot: QtBot):
     # After the dialog is accepted, check that the settings are updated
     assert pytest.approx(es_settings.localization_correlation_threshold) == 0.7
     assert pytest.approx(es_settings.enkf_truncation) == 0.3
-    assert widget._parameter_config[0].update_strategy == LocalizationType.ADAPTIVE
+    assert widget.parameter_config[0].update_strategy == LocalizationType.ADAPTIVE
+    assert parameter.update_strategy == LocalizationType.GLOBAL
 
 
 def test_that_only_parameters_with_update_strategy_are_updated(qtbot: QtBot):
@@ -90,7 +165,11 @@ def test_that_only_parameters_with_update_strategy_are_updated(qtbot: QtBot):
     qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
     assert parameter_without_strategy.update_strategy is None
-    assert parameter_with_strategy.update_strategy == LocalizationType.ADAPTIVE
+    assert parameter_with_strategy.update_strategy == LocalizationType.GLOBAL
+    assert [p.update_strategy for p in widget.parameter_config] == [
+        None,
+        LocalizationType.ADAPTIVE,
+    ]
 
 
 def test_that_settings_are_not_updated_on_cancel(qtbot: QtBot):
@@ -136,4 +215,4 @@ def test_that_settings_are_not_updated_on_cancel(qtbot: QtBot):
     # After the dialog is rejected, check that the settings are not updated
     assert pytest.approx(es_settings.localization_correlation_threshold) == 0.5
     assert pytest.approx(es_settings.enkf_truncation) == 0.2
-    assert widget._parameter_config[0].update_strategy == LocalizationType.GLOBAL
+    assert widget.parameter_config[0].update_strategy == LocalizationType.GLOBAL

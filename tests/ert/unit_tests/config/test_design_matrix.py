@@ -15,6 +15,29 @@ from ert.config.gen_kw_config import DataSource
 from tests.ert.conftest import _create_design_matrix
 
 
+def test_that_resolving_design_matrix_parameters_does_not_mutate_either_source(
+    tmp_path,
+):
+    filename = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(filename, pl.DataFrame({"REAL": [0], "matrix": [1]}))
+    matrix = DesignMatrix(
+        filename=filename, design_sheet="DesignSheet", default_sheet=None, update=True
+    )
+    configured = GenKwConfig(
+        name="configured", distribution={"name": "uniform", "min": 0, "max": 1}
+    )
+    merged = matrix.merge_with_existing_parameters([configured])
+    for parameter in merged:
+        parameter.update_strategy = LocalizationType.ADAPTIVE
+
+    assert configured.update_strategy == LocalizationType.GLOBAL
+    assert matrix.parameter_configurations[0].update_strategy is None
+    assert all(
+        p.update_strategy == LocalizationType.GLOBAL
+        for p in matrix.merge_with_existing_parameters([configured])
+    )
+
+
 def test_that_categorical_design_matrix_parameters_are_excluded_from_update(tmp_path):
     design_path = tmp_path / "design_matrix.xlsx"
     design_matrix_df = pl.DataFrame(

@@ -15,13 +15,14 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config.parameter_config import has_updatable_parameters
+from ert.config.parameter_config import LocalizationType, has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     AnalysisModuleEdit,
     CopyableLabel,
     get_parameters_button,
 )
+from ert.gui.ertwidgets.models.parameter_configuration import ParameterConfiguration
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
 from ert.run_models.ensemble_smoother import DEPRECATION_MESSAGE
@@ -45,6 +46,7 @@ class Arguments:
     target_ensemble: str
     realizations: str
     experiment_name: str
+    parameter_update_overrides: dict[str, LocalizationType]
 
 
 def _create_deprecation_banner() -> QWidget:
@@ -112,9 +114,15 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         ) = create_target_ensemble_format_field(analysis_config, notifier)
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
+        design_matrix = analysis_config.design_matrix
+        self._parameter_state = ParameterConfiguration(
+            parameter_configuration
+            if design_matrix is None
+            else design_matrix.merge_with_existing_parameters(parameter_configuration)
+        )
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            parameter_config=parameter_configuration,
+            parameter_config=self._parameter_state,
             ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
@@ -157,21 +165,16 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
-            self._analysis_module_edit.parameter_config = (
-                design_matrix.merge_with_existing_parameters(
-                    self._analysis_module_edit.parameter_config
-                )
-            )
 
         if self._analysis_module_edit.parameter_config:
             layout.addRow(
                 "Parameters",
-                get_parameters_button(
-                    self._analysis_module_edit.parameter_config, self
-                ),
+                get_parameters_button(self._parameter_state, self),
             )
 
     def _connect_signals(self) -> None:
+        self._parameter_state.changed.connect(self.parameter_configuration_changed)
+        self._parameter_state.changed.connect(self.experiment_configuration_changed)
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
@@ -210,4 +213,10 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             experiment_name=self._experiment_name_field.get_text,
+            parameter_update_overrides=self._parameter_state.overrides,
         )
+
+    @property
+    @override
+    def active_parameters(self) -> list[ParameterConfig]:
+        return self._parameter_state.parameters

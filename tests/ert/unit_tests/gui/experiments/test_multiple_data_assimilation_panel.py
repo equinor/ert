@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 import polars as pl
 import pytest
@@ -16,11 +16,11 @@ from PyQt6.QtWidgets import (
 )
 from pytestqt.qtbot import QtBot
 
-from ert.config import DesignMatrix, EnsembleConfig, GenKwConfig
+from ert.config import DesignMatrix, EnsembleConfig, ErtConfig, GenKwConfig, ModelConfig
 from ert.config.analysis_config import AnalysisConfig
 from ert.config.analysis_module import ESSettings
 from ert.config.distribution import RawSettings
-from ert.config.parameter_config import LocalizationType, ParameterConfig
+from ert.config.parameter_config import LocalizationType
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
 from ert.gui.ertwidgets.analysismodulevariablespanel import (
@@ -31,9 +31,11 @@ from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
 )
 from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
+from ert.gui.experiments.experiment_panel import ExperimentPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
+from ert.run_models import MultipleDataAssimilation
 from ert.storage.local_experiment import ExperimentType
 from tests.ert.conftest import _create_design_matrix
 
@@ -53,6 +55,156 @@ def _summary_rows(summary: UpdateStrategySummaryWidget) -> list[tuple[str, str, 
     ]
 
 
+def _parameter(
+    strategy: LocalizationType | None = LocalizationType.GLOBAL,
+) -> GenKwConfig:
+    return GenKwConfig(
+        name="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=strategy,
+    )
+
+
+@pytest.mark.timeout(10)
+def test_that_prior_viewer_summary_and_reset_use_the_same_isolated_draft(qtbot):
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    stored = _parameter()
+    stored.name = "stored"
+    notifier._storage._setup_mocked_run(
+        "prior",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 3,
+        experiment_type=ExperimentType.ES_MDA,
+        parameter_configuration={"stored": stored},
+    )
+    panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
+    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    panel._select_prior_ensemble_box.setChecked(True)
+    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+
+    notifier.ertChanged.emit()
+    assert panel.get_experiment_arguments().parameter_update_overrides == {
+        "stored": LocalizationType.ADAPTIVE
+    }
+    assert stored.update_strategy == LocalizationType.GLOBAL
+    assert _summary_rows(panel._update_strategy_summary_widget) == [
+        ("Adaptive", "GenKW", "1")
+    ]
+
+    def inspect_and_reset():
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, ParametersViewer)
+        node = dialog.tree_widget.topLevelItem(0).child(0)
+        assert node.text(0) == "stored"
+        assert node.child(0).text(0) == "Update: adaptive"
+        panel._parameter_state.reset()
+        node = dialog.tree_widget.topLevelItem(0).child(0)
+        assert node.child(0).text(0) == "Update: global"
+        dialog.accept()
+
+    QTimer.singleShot(0, inspect_and_reset)
+    next(
+        b for b in panel.findChildren(QPushButton) if b.text() == "Show parameters"
+    ).click()
+    assert _summary_rows(panel._update_strategy_summary_widget) == [
+        ("Global", "GenKW", "1")
+    ]
+    panel._select_prior_ensemble_box.setChecked(False)
+    assert panel.get_experiment_arguments().parameter_update_overrides == {}
+    assert panel.active_parameters[0].update_strategy == LocalizationType.GLOBAL
+
+
+def test_that_removing_a_selected_prior_disables_running_without_configured_fallback(
+    qtbot,
+):
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "prior",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 3,
+        experiment_type=ExperimentType.ES_MDA,
+    )
+    panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
+    panel._select_prior_ensemble_box.setChecked(True)
+    prior_id = panel.get_experiment_arguments().prior_ensemble_id
+    notifier._storage._ensembles.clear()
+    assert panel.get_experiment_arguments().prior_ensemble_id == prior_id
+    notifier.ertChanged.emit()
+
+    assert panel.active_parameters is None
+    assert not panel.isConfigurationValid()
+    assert panel._update_strategy_summary_widget.rowCount() == 0
+    with pytest.raises(ValueError, match="available prior ensemble"):
+        panel.get_experiment_arguments()
+    panel._select_prior_ensemble_box.setChecked(False)
+    assert panel.isConfigurationValid()
+
+
+def test_that_bottom_parameter_summary_follows_only_the_active_panel(qtbot):
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    prior_parameter = _parameter()
+    prior_parameter.group = "stored_group"
+    notifier._storage._setup_mocked_run(
+        "prior",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 3,
+        experiment_type=ExperimentType.ES_MDA,
+        parameter_configuration={prior_parameter.name: prior_parameter},
+    )
+    config = ErtConfig(
+        runpath_config=ModelConfig(num_realizations=3),
+        ensemble_config=EnsembleConfig(parameter_configs={"PARAMETER": _parameter()}),
+    )
+    experiment_panel = ExperimentPanel(config, notifier, "")
+    qtbot.addWidget(experiment_panel)
+    experiment_panel._experiment_type_combo.setCurrentText(
+        MultipleDataAssimilation.display_name()
+    )
+    panel = experiment_panel.findChild(MultipleDataAssimilationPanel)
+    panel._select_prior_ensemble_box.setChecked(True)
+    summary = experiment_panel.configuration_summary
+    assert "stored_group" in summary._parameter_label.text()
+    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    assert summary._parameters == panel.active_parameters
+
+    smoother = experiment_panel.findChild(EnsembleSmootherPanel)
+    smoother._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    assert summary._parameters == panel.active_parameters
+    panel._select_prior_ensemble_box.setChecked(False)
+    assert "stored_group" not in summary._parameter_label.text()
+    assert summary._parameters[0].update_strategy == LocalizationType.GLOBAL
+
+
+def test_that_an_initially_empty_configuration_can_show_prior_parameters(qtbot):
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "prior",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 3,
+        experiment_type=ExperimentType.ES_MDA,
+    )
+    panel = MultipleDataAssimilationPanel(
+        AnalysisConfig(minimum_required_realizations=1),
+        [],
+        "",
+        notifier,
+        [True] * 3,
+        3,
+    )
+    qtbot.addWidget(panel)
+    button = next(
+        b for b in panel.findChildren(QPushButton) if b.text() == "Show parameters"
+    )
+    assert not button.isEnabled()
+    panel._select_prior_ensemble_box.setChecked(True)
+    assert button.isEnabled()
+    assert panel.isConfigurationValid()
+
+
 @pytest.mark.parametrize(
     ("update_strategy", "expected_valid"),
     [
@@ -66,9 +218,7 @@ def test_that_configuration_validity_reflects_updatable_parameters(
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
 
-    param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, type="gen_kw", update_strategy=update_strategy
-    )
+    param_mock = _parameter(update_strategy)
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=[param_mock],
@@ -94,9 +244,7 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
 ):
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
-    prior_param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, type="gen_kw", update_strategy=prior_update_strategy
-    )
+    prior_param_mock = _parameter(prior_update_strategy)
     notifier._storage._setup_mocked_run(
         "mock_ensemble",
         "mock_experiment",
@@ -108,9 +256,7 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
         parameter_configuration={"PARAMETER": prior_param_mock},
     )
 
-    param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, type="gen_kw", update_strategy=None
-    )
+    param_mock = _parameter(None)
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=[param_mock],
@@ -244,7 +390,8 @@ def test_that_strategy_summary_reflects_only_saved_update_settings(
     assert edit_button is not None
     qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
 
-    assert parameter.update_strategy == expected_strategy
+    assert parameter.update_strategy == LocalizationType.GLOBAL
+    assert panel.active_parameters[0].update_strategy == expected_strategy
     assert _summary_rows(summary) == [
         (expected_strategy.value.capitalize(), "GenKW", "1")
     ]
@@ -308,9 +455,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
 
-    param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
-    )
+    param_mock = _parameter()
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=[param_mock],
@@ -345,9 +490,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     active_realizations = [True] * config_num_realizations
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
-    prior_param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
-    )
+    prior_param_mock = _parameter()
     notifier._storage._setup_mocked_run(
         "mock_ensemble",
         "mock_experiment",
@@ -364,9 +507,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
         parameter_configuration={"PARAMETER": prior_param_mock},
     )
 
-    param_mock: ParameterConfig = Mock(
-        spec=ParameterConfig, type="gen_kw", update_strategy=LocalizationType.GLOBAL
-    )
+    param_mock = _parameter()
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         parameter_configuration=[param_mock],
@@ -510,13 +651,7 @@ def _create_panel_with_weights(
             minimum_required_realizations=1,
             es_settings=ESSettings(weights=weights),
         ),
-        parameter_configuration=[
-            Mock(
-                spec=ParameterConfig,
-                type="gen_kw",
-                update_strategy=LocalizationType.GLOBAL,
-            )
-        ],
+        parameter_configuration=[_parameter()],
         runpath="",
         notifier=notifier,
         active_realizations=active_realizations,
@@ -586,13 +721,7 @@ def test_that_selecting_prior_ensemble_unchecks_and_disables_single_update(
         [REALIZATION_FINISHED_SUCCESSFULLY],
         experiment_type=ExperimentType.ES_MDA,
         iteration=0,
-        parameter_configuration={
-            "PARAMETER": Mock(
-                spec=ParameterConfig,
-                type="gen_kw",
-                update_strategy=LocalizationType.GLOBAL,
-            )
-        },
+        parameter_configuration={"PARAMETER": _parameter()},
     )
     panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
     single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")

@@ -264,17 +264,18 @@ class DesignMatrix:
                 ]
                 del design_matrix_cfgs[param_cfg.name]
             else:
-                new_param_configs += [param_cfg]
+                new_param_configs += [param_cfg.model_copy(deep=True)]
 
         if design_matrix_cfgs.values():
-            for cfg in design_matrix_cfgs.values():
+            for source_cfg in design_matrix_cfgs.values():
+                cfg = source_cfg.model_copy(deep=True)
                 if cfg.name not in self.categorical_parameters:
                     cfg.update_strategy = (
                         fallback_update_strategy
                         if self.updatable_parameters.get(cfg.name)
                         else None
                     )
-            new_param_configs += list(design_matrix_cfgs.values())
+                new_param_configs.append(cfg)
 
         return new_param_configs
 

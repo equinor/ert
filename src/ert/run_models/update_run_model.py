@@ -22,6 +22,7 @@ from ert.config import (
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
 )
+from ert.config.parameter_config import apply_parameter_update_overrides
 from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.run_models.event import (
     RunModelDataEvent,
@@ -64,9 +65,17 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             posterior,
         )
 
+        parameter_configs = prior.experiment.parameter_configuration
+        if self.parameter_update_overrides:
+            parameter_configs = {
+                p.name: p
+                for p in apply_parameter_update_overrides(
+                    parameter_configs.values(), self.parameter_update_overrides
+                )
+            }
         strategy_map = build_strategy_map(
             parameters=prior.experiment.update_parameters,
-            param_configs=prior.experiment.parameter_configuration,
+            param_configs=parameter_configs,
             enkf_truncation=self.analysis_settings.enkf_truncation,
             correlation_threshold=self.analysis_settings.correlation_threshold,
             progress_callback=progress_callback,

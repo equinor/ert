@@ -33,7 +33,7 @@ class _LocalizationTypeModel(QStandardItemModel):
 class AnalysisModuleVariablesPanel(QWidget):
     def __init__(
         self,
-        update_strategies: dict[str, LocalizationType],
+        update_strategies: dict[str, LocalizationType | None],
         correlation_threshold: float,
         enkf_truncation: float,
     ) -> None:
@@ -131,7 +131,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.blockSignals(False)
 
     @property
-    def update_strategies(self) -> dict[str, LocalizationType]:
+    def update_strategies(self) -> dict[str, LocalizationType | None]:
         return self._update_strategies
 
     @property
@@ -143,12 +143,25 @@ class AnalysisModuleVariablesPanel(QWidget):
         return self._enkf_truncation
 
     def _find_correct_index(self, combobox: QComboBox, type_name: str) -> int:
+        combobox.setEnabled(type_name in self._update_strategies)
         if type_name in self._update_strategies:
             localization_type = self._update_strategies[type_name]
+            if localization_type is None:
+                combobox.addItem("Mixed", None)
+                return combobox.count() - 1
             if (
                 index := combobox.findData(localization_type, Qt.ItemDataRole.UserRole)
             ) != -1:
                 return index
+            combobox.addItem(
+                f"Keep existing ({localization_type.value})", localization_type
+            )
+            model = combobox.model()
+            assert isinstance(model, QStandardItemModel)
+            item = model.item(combobox.count() - 1)
+            assert item is not None
+            item.setEnabled(False)
+            return combobox.count() - 1
         return combobox.findData(LocalizationType.GLOBAL, Qt.ItemDataRole.UserRole)
 
     def _create_double_spinbox(

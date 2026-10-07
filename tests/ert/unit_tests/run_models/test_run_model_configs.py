@@ -85,6 +85,48 @@ def config_kwargs():
     return kwargs_for
 
 
+@pytest.mark.parametrize(
+    "config_type", [EnsembleSmootherConfig, MultipleDataAssimilationConfig]
+)
+def test_that_localization_overrides_survive_serialization_without_mutating_inputs(
+    config_kwargs, config_type
+):
+    kwargs = config_kwargs(config_type)
+    source = kwargs["parameter_configuration"][0]
+    model = config_type(
+        **kwargs, parameter_update_overrides={"PARAM": LocalizationType.ADAPTIVE}
+    )
+    restored = config_type.model_validate_json(model.model_dump_json())
+    assert (
+        restored.parameter_configuration[0].update_strategy == LocalizationType.ADAPTIVE
+    )
+    assert restored.parameter_update_overrides == {"PARAM": LocalizationType.ADAPTIVE}
+    assert source.update_strategy == LocalizationType.GLOBAL
+    assert (
+        restored.to_experiment_config()["parameter_configuration"][0]["update_strategy"]
+        == "adaptive"
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "strategy", "error"),
+    [
+        ("missing", LocalizationType.ADAPTIVE, "Unknown parameters"),
+        ("fixed", LocalizationType.ADAPTIVE, "non-updatable parameter"),
+        ("PARAM", LocalizationType.DISTANCE, "not supported for GenKW"),
+    ],
+)
+def test_that_invalid_localization_overrides_are_rejected(
+    config_kwargs, name, strategy, error
+):
+    kwargs = config_kwargs(MultipleDataAssimilationConfig)
+    kwargs["parameter_configuration"].append(gen_kw_config("fixed", None))
+    with pytest.raises(ValidationError, match=error):
+        MultipleDataAssimilationConfig(
+            **kwargs, parameter_update_overrides={name: strategy}
+        )
+
+
 @pytest.mark.parametrize("config_type", UPDATE_CONFIGS)
 @pytest.mark.parametrize("active_realizations", [[], [False, False], [False, True]])
 def test_that_update_configs_reject_fewer_than_two_active_realizations(

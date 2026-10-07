@@ -1,14 +1,15 @@
 import logging
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import cast, override
+from typing import override
 
 import numpy as np
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 
-from ert.config import AnalysisConfig, ErrorInfo, ParameterConfig
+from ert.config import AnalysisConfig, ErrorInfo, LocalizationType, ParameterConfig
+from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -19,6 +20,7 @@ from ert.gui.ertwidgets import (
     Suggestor,
     TextModel,
 )
+from ert.gui.ertwidgets.models.parameter_configuration import ParameterConfiguration
 from ert.gui.experiments._panel_utils import create_target_ensemble_format_field
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
@@ -38,6 +40,7 @@ class Arguments:
     ensemble_size: int
     experiment_name: str
     parameter_configuration: list[ParameterConfig]
+    parameter_update_overrides: dict[str, LocalizationType]
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -90,9 +93,10 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         ) = create_target_ensemble_format_field(analysis_config, notifier)
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
+        self._parameter_state = ParameterConfiguration(parameter_configuration)
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            parameter_config=parameter_configuration,
+            parameter_config=self._parameter_state,
             ensemble_size=0,
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
@@ -105,7 +109,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             continuous_update=True,
         )
         self._active_realizations_field.setObjectName("active_realizations_box")
-        self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
@@ -123,39 +126,66 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
         self._connect_signals()
+        self._synchronize_source()
 
     def _connect_signals(self) -> None:
-        self._ensemble_selector.ensemble_selected.connect(
-            lambda ensemble: self._experiment_name_field.setPlaceholderText(
+        self._parameter_state.changed.connect(self.parameter_configuration_changed)
+        self._parameter_state.changed.connect(self.experiment_configuration_changed)
+        self._ensemble_selector.ensemble_populated.connect(self._synchronize_source)
+        self._update_method_dropdown.currentTextChanged.connect(
+            self._on_update_method_changed
+        )
+        self._ensemble_selector.currentIndexChanged.connect(self._synchronize_source)
+
+    def _synchronize_source(self) -> None:
+        with QSignalBlocker(self):
+            self._realizations_from_fs()
+            self._parameter_configuration_changed()
+            ensemble = self._ensemble_selector.selected_ensemble
+            self._experiment_name_field.setPlaceholderText(
                 f"Manual update of {ensemble.name}"
                 if ensemble is not None
                 else "Manual update"
             )
-        )
-        self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
-        self._ensemble_selector.ensemble_populated.connect(
-            self.experiment_configuration_changed
-        )
-        self._ensemble_selector.ensemble_populated.connect(
-            self._parameter_configuration_changed
-        )
-        self._update_method_dropdown.currentTextChanged.connect(
-            self._on_update_method_changed
-        )
-        self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
-        self._ensemble_selector.currentIndexChanged.connect(
-            self._parameter_configuration_changed
-        )
+        self.parameter_configuration_changed.emit()
+        self.experiment_configuration_changed.emit()
 
     @property
     def selected_update_method(self) -> str:
         return self._update_method_dropdown.currentText()
 
     def _parameter_configuration_changed(self) -> None:
-        if self._ensemble_selector.selected_ensemble is not None:
-            self._analysis_module_edit.parameter_config = list(
-                self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
+        ensemble = self._ensemble_selector.selected_ensemble
+        try:
+            self._parameter_state.select_prior(
+                True,
+                str(ensemble.id) if ensemble is not None else None,
+                ensemble.experiment.parameter_configuration.values()
+                if ensemble is not None
+                else (),
             )
+        except OSError as err:
+            self._parameter_state.select_prior(True)
+            logger.error(str(err))
+            Suggestor(
+                errors=[ErrorInfo(str(err))],
+                widget_info='<p style="font-size: 28px;">Error reading storage</p>',
+                parent=self,
+            ).show()
+
+    @property
+    @override
+    def active_parameters(self) -> list[ParameterConfig] | None:
+        if not self._parameter_state.available:
+            return None
+        if self.selected_update_method != "ES Update":
+            ensemble = self._ensemble_selector.selected_ensemble
+            return (
+                list(ensemble.experiment.parameter_configuration.values())
+                if ensemble
+                else None
+            )
+        return self._parameter_state.parameters
 
     @Slot(str)
     def _on_update_method_changed(self, new_method: str) -> None:
@@ -163,33 +193,42 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             self._analysis_module_edit.show()
         else:
             self._analysis_module_edit.hide()
+        self.parameter_configuration_changed.emit()
+        self.experiment_configuration_changed.emit()
 
     @override
     def isConfigurationValid(self) -> bool:
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
+            and self._parameter_state.available
+            and has_updatable_parameters(self.active_parameters or [])
         )
 
     @override
     def get_experiment_arguments(self) -> Arguments:
+        prior_id = self._parameter_state.prior_id
+        if not self._parameter_state.available or prior_id is None:
+            raise ValueError("Select an available ensemble before running")
         return Arguments(
             mode=MANUAL_UPDATE_MODE
             if self.selected_update_method == "ES Update"
             else MANUAL_ENIF_UPDATE_MODE,
-            ensemble_id=str(
-                cast(Ensemble, self._ensemble_selector.selected_ensemble).id
-            ),
+            ensemble_id=prior_id,
             realizations=self._active_realizations_field.text(),
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
             experiment_name=self._experiment_name_field.get_text,
-            parameter_configuration=self._analysis_module_edit.parameter_config,
+            parameter_configuration=self.active_parameters or [],
+            parameter_update_overrides=self._parameter_state.overrides
+            if self.selected_update_method == "ES Update"
+            else {},
         )
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
+        self._analysis_module_edit.setEnabled(ensemble is not None)
         if ensemble:
             try:  # ruff: ignore[too-many-statements-in-try-clause]
                 parameters = ensemble.get_realization_mask_with_parameters()

@@ -306,6 +306,7 @@ def _setup_manual_update(
     validate_minimum_realizations(config, active_realizations.tolist())
 
     runmodel_config = ManualUpdateConfig(
+        parameter_update_overrides=getattr(args, "parameter_update_overrides", None),
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         ensemble_id=args.ensemble_id,
@@ -385,6 +386,7 @@ def _setup_ensemble_smoother(
     parameter_configs, design_matrix = _resolve_parameter_configs(config)
 
     runmodel_config = EnsembleSmootherConfig(
+        parameter_update_overrides=getattr(args, "parameter_update_overrides", None),
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,
@@ -468,7 +470,10 @@ def _setup_multiple_data_assimilation(
         design_matrix=None
         if args.prior_ensemble_id
         else config.analysis_config.design_matrix,
-        parameter_configs=getattr(
+        parameter_configs=config.ensemble_config.parameter_configuration
+        if getattr(args, "parameter_update_overrides", None) is not None
+        and not args.prior_ensemble_id
+        else getattr(
             args,
             "parameter_configuration",
             config.ensemble_config.parameter_configuration,
@@ -476,6 +481,7 @@ def _setup_multiple_data_assimilation(
     )
 
     runmodel_config = MultipleDataAssimilationConfig(
+        parameter_update_overrides=getattr(args, "parameter_update_overrides", None),
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         target_ensemble=_iterative_ensemble_format(args),

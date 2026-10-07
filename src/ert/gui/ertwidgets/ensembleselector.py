@@ -41,6 +41,7 @@ class EnsembleSelector(QComboBox):
 
         self.notifier = notifier
         self._or_filters = filters
+        self._selected_id: str | None = None
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.setEnabled(False)
 
@@ -60,6 +61,7 @@ class EnsembleSelector(QComboBox):
             return None
 
     def _on_current_index_changed(self, _: int) -> None:
+        self._selected_id = self.currentData()
         ensemble = self.selected_ensemble
         if ensemble:
             self.ensemble_selected.emit(ensemble)
@@ -68,11 +70,9 @@ class EnsembleSelector(QComboBox):
         block = self.blockSignals(True)
 
         self.clear()
-        ensemble_list: list[Ensemble] = list(self._ensemble_list())
-
-        if ensemble_list:
-            self.setEnabled(True)
-        try:
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            ensemble_list: list[Ensemble] = list(self._ensemble_list())
+            self.setEnabled(bool(ensemble_list))
             for ensemble in ensemble_list:
                 self.addItem(
                     f"{truncate_dropdown_item(ensemble.experiment.name)}"
@@ -80,16 +80,20 @@ class EnsembleSelector(QComboBox):
                     userData=str(ensemble.id),
                 )
             if ensemble_list:
-                first_ensemble_id = str(ensemble_list[0].id)
                 current_index = self.findData(
-                    first_ensemble_id, Qt.ItemDataRole.UserRole
+                    self._selected_id or str(ensemble_list[0].id),
+                    Qt.ItemDataRole.UserRole,
                 )
-                self.setCurrentIndex(max(current_index, 0))
+                self.setCurrentIndex(current_index)
+                if current_index != -1:
+                    self._selected_id = self.currentData()
         except OSError as err:
+            self.clear()
+            self.setEnabled(False)
             logger.error(str(err))
             Suggestor(
                 errors=[ErrorInfo(str(err))],
-                widget_info='<p style="font-size: 28px;">Error writing to storage</p>',
+                widget_info='<p style="font-size: 28px;">Error reading storage</p>',
                 parent=self,
             ).show()
             return

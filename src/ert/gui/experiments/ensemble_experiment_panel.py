@@ -116,6 +116,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
                 parameter_configuration
             )
 
+        self._parameter_snapshot = parameter_configuration
         if parameter_configuration:
             layout.addRow(
                 "Parameters", get_parameters_button(parameter_configuration, self)

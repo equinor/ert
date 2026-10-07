@@ -4,6 +4,10 @@ from ert.config import GenDataConfig, GenKwConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector
 from ert.storage.realization_storage_state import RealizationStorageState
+from tests.ert.unit_tests.gui.experiments.conftest import (
+    REALIZATION_FINISHED_SUCCESSFULLY,
+    MockStorage,
+)
 
 
 @pytest.fixture
@@ -42,6 +46,28 @@ def test_that_ensemble_selector_is_empty_when_no_storage_is_set(qtbot, notifier)
     qtbot.addWidget(widget)
 
     assert widget.count() == 0
+
+
+def test_that_repopulation_preserves_selection_and_does_not_replace_a_missing_prior(
+    qtbot,
+):
+    notifier = ErtNotifier()
+    storage = MockStorage()
+    notifier._storage = storage
+    for name in ["a", "b"]:
+        storage._setup_mocked_run(name, name, [REALIZATION_FINISHED_SUCCESSFULLY])
+    widget = EnsembleSelector(notifier)
+    qtbot.addWidget(widget)
+    widget.setCurrentIndex(1)
+    selected = widget.currentData()
+    widget.populate()
+    assert widget.currentData() == selected
+
+    del storage._ensembles[widget.selected_ensemble.id]
+    widget.populate()
+    assert widget.currentIndex() == -1
+    widget.populate()
+    assert widget.currentIndex() == -1
 
 
 def test_that_ensemble_selector_is_populated_regardless_of_storage_creation_order(

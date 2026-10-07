@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
+from ert.config import GenKwConfig, LocalizationType
 from ert.config.analysis_config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
@@ -12,6 +13,38 @@ from .conftest import (
     REALIZATION_UNDEFINED,
     MockStorage,
 )
+
+
+def test_that_manual_update_initializes_from_prior_and_hides_es_edits_from_enif(qtbot):
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    prior_parameter = GenKwConfig(
+        name="prior", distribution={"name": "uniform", "min": 0, "max": 1}
+    )
+    notifier._storage._setup_mocked_run(
+        "prior",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 3,
+        parameter_configuration={"prior": prior_parameter},
+    )
+    panel = ManualUpdatePanel(
+        "", notifier, AnalysisConfig(minimum_required_realizations=1), []
+    )
+    qtbot.addWidget(panel)
+    assert panel.active_parameters == [prior_parameter]
+    assert panel.isConfigurationValid()
+    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    assert panel.get_experiment_arguments().parameter_update_overrides == {
+        "prior": LocalizationType.ADAPTIVE
+    }
+    panel._update_method_dropdown.setCurrentIndex(1)
+    assert panel.get_experiment_arguments().parameter_update_overrides == {}
+    assert panel.active_parameters == [prior_parameter]
+    assert prior_parameter.update_strategy == LocalizationType.GLOBAL
+    notifier._storage._ensembles.clear()
+    notifier.ertChanged.emit()
+    assert panel.active_parameters is None
+    assert not panel.isConfigurationValid()
 
 
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_prior(

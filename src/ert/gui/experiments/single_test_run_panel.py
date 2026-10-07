@@ -68,6 +68,7 @@ class SingleTestRunPanel(ExperimentConfigPanel):
                 merged_parameters
             )
 
+        self._parameter_snapshot = merged_parameters
         if merged_parameters:
             layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
 

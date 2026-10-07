@@ -3,6 +3,7 @@ from argparse import Namespace
 from unittest.mock import MagicMock, patch
 from uuid import uuid1
 
+import polars as pl
 import pytest
 from pydantic import ValidationError
 
@@ -11,9 +12,11 @@ from ert.config import (
     AnalysisConfig,
     ConfigValidationError,
     ConfigWarning,
+    DesignMatrix,
     EnsembleConfig,
     ErtConfig,
     GenKwConfig,
+    LocalizationType,
     ModelConfig,
     ObservationSettings,
 )
@@ -38,6 +41,47 @@ from ert.run_models.model_factory import (
     _setup_ensemble_smoother,
     _setup_multiple_data_assimilation,
 )
+from tests.ert.conftest import _create_design_matrix
+
+
+@pytest.mark.parametrize(
+    "factory", [_setup_multiple_data_assimilation, _setup_ensemble_smoother]
+)
+@pytest.mark.parametrize("design_name", ["COEFFS", "new"])
+def test_that_factory_applies_localization_edits_after_design_matrix_resolution(
+    tmp_path, monkeypatch, factory, design_name
+):
+    monkeypatch.chdir(tmp_path)
+    filename = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        filename, pl.DataFrame({"REAL": [0, 1, 2], design_name: [1, 2, 3]})
+    )
+    matrix = DesignMatrix(
+        filename=filename, design_sheet="DesignSheet", default_sheet=None, update=True
+    )
+    source = _gen_kw_config()
+    config = ErtConfig(
+        runpath_config=ModelConfig(num_realizations=3),
+        ensemble_config=EnsembleConfig(parameter_configs={source.name: source}),
+        analysis_config=AnalysisConfig(design_matrix=matrix),
+    )
+    args = Namespace(
+        target_ensemble="ensemble_%d",
+        experiment_name="edited",
+        prior_ensemble_id=None,
+        weights="1",
+        realizations="0-2",
+        parameter_update_overrides={design_name: LocalizationType.ADAPTIVE},
+    )
+    model = factory(config, args, ObservationSettings(), queue.SimpleQueue())
+    try:
+        parameters = {p.name: p for p in model.parameter_configuration}
+        assert parameters[design_name].update_strategy == LocalizationType.ADAPTIVE
+        assert model.design_matrix is not None
+        assert source.update_strategy == LocalizationType.GLOBAL
+        assert matrix.parameter_configurations[0].update_strategy is None
+    finally:
+        model._storage.close()
 
 
 def _gen_kw_config(name: str = "COEFFS") -> GenKwConfig:

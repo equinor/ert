@@ -253,6 +253,7 @@ class ExperimentPanel(QWidget):
 
         self.configuration_summary = SummaryPanel(config)
         layout.addWidget(self.configuration_summary)
+        self._refresh_parameter_summary()
 
         self.setLayout(layout)
 
@@ -286,7 +287,17 @@ class ExperimentPanel(QWidget):
             )
 
         panel.experiment_configuration_changed.connect(self.validationStatusChanged)
+        panel.parameter_configuration_changed.connect(
+            lambda: self._refresh_parameter_summary(panel)
+        )
         self.experiment_type_changed.connect(panel.experimentTypeChanged)
+
+    def _refresh_parameter_summary(
+        self, changed_panel: ExperimentConfigPanel | None = None
+    ) -> None:
+        active_panel = self._experiment_widgets[self.get_current_experiment_type()]
+        if changed_panel is None or changed_panel is active_panel:
+            self.configuration_summary.set_parameters(active_panel.active_parameters)
 
     @staticmethod
     def getActions() -> list[QAction]:
@@ -466,6 +477,8 @@ class ExperimentPanel(QWidget):
             self._experiment_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
             self.experiment_type_changed.emit(widget)
+            if hasattr(self, "configuration_summary"):
+                self._refresh_parameter_summary()
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]

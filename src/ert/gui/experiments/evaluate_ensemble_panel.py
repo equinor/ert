@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
-from ert.config import ErrorInfo
+from ert.config import ErrorInfo, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -104,6 +104,16 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             and self._ensemble_selector.currentIndex() != -1
         )
 
+    @property
+    @override
+    def active_parameters(self) -> list[ParameterConfig] | None:
+        ensemble = self._ensemble_selector.selected_ensemble
+        return (
+            list(ensemble.experiment.parameter_configuration.values())
+            if ensemble
+            else None
+        )
+
     @override
     def get_experiment_arguments(self) -> Arguments:
         assert self._ensemble_selector.selected_ensemble is not None
@@ -115,6 +125,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
+        self.parameter_configuration_changed.emit()
         self._active_realizations_field.setEnabled(ensemble is not None)
         if ensemble:
             try:

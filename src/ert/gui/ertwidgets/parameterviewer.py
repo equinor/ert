@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ParameterConfig
+from ert.gui.ertwidgets.models.parameter_configuration import ParameterConfiguration
 
 
 class ParametersViewer(QDialog):
@@ -58,6 +59,19 @@ class ParametersViewer(QDialog):
     def _create_parameter_tree(self) -> QTreeWidget:
         """Create a tree widget showing parameters grouped by their type."""
         tree = QTreeWidget()
+        self._populate_parameter_tree(tree)
+        return tree
+
+    def set_parameters(self, parameters: list[ParameterConfig]) -> None:
+        self._parameter_configurations = parameters
+        self.tree_widget.clear()
+        self._populate_parameter_tree(self.tree_widget)
+        if self.parameters_collapsed:
+            self.parameters_collapsed = False
+            self.toggle_parameters()
+        self.filter_parameters()
+
+    def _populate_parameter_tree(self, tree: QTreeWidget) -> None:
         tree.setHeaderLabel("Parameters")
 
         self.type_nodes: dict[
@@ -87,7 +101,6 @@ class ParametersViewer(QDialog):
                 QTreeWidgetItem(parameter_node, [f"Source: {parameter.input_source}"])
 
         tree.expandAll()
-        return tree
 
     def toggle_parameters(self) -> None:
         """Toggle collapse/expand details of parameter nodes."""
@@ -124,13 +137,24 @@ class ParametersViewer(QDialog):
 
 
 def get_parameters_button(
-    parameter_configurations: list[ParameterConfig], parent: QWidget
+    parameter_configurations: list[ParameterConfig] | ParameterConfiguration,
+    parent: QWidget,
 ) -> QHBoxLayout:
     parameter_viewer_button = QPushButton("Show parameters")
     parameter_viewer_button.setMinimumWidth(50)
     parameter_viewer_button.clicked.connect(
         lambda: _show_parameter_viewer(parameter_configurations, parent)
     )
+    if isinstance(parameter_configurations, ParameterConfiguration):
+
+        def refresh_button() -> None:
+            parameter_viewer_button.setEnabled(
+                parameter_configurations.available
+                and bool(parameter_configurations.parameters)
+            )
+
+        parameter_configurations.changed.connect(refresh_button)
+        refresh_button()
 
     button_layout = QHBoxLayout()
     button_layout.addWidget(parameter_viewer_button)
@@ -139,7 +163,22 @@ def get_parameters_button(
 
 
 def _show_parameter_viewer(
-    parameter_configurations: list[ParameterConfig], parent: QWidget
+    parameter_configurations: list[ParameterConfig] | ParameterConfiguration,
+    parent: QWidget,
 ) -> None:
-    parameter_dialog = ParametersViewer(parameter_configurations, parent)
-    parameter_dialog.exec()
+    if isinstance(parameter_configurations, ParameterConfiguration):
+        parameter_dialog = ParametersViewer(parameter_configurations.parameters, parent)
+
+        def refresh_dialog() -> None:
+            parameter_dialog.set_parameters(parameter_configurations.parameters)
+
+        parameter_configurations.changed.connect(refresh_dialog)
+        try:
+            parameter_dialog.exec()
+        finally:
+            parameter_configurations.changed.disconnect(refresh_dialog)
+            parameter_dialog.deleteLater()
+    else:
+        parameter_dialog = ParametersViewer(parameter_configurations, parent)
+        parameter_dialog.exec()
+        parameter_dialog.deleteLater()

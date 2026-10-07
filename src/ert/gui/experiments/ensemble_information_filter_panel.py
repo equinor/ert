@@ -142,6 +142,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
                 )
             )
 
+        self._parameter_snapshot = self._parameter_configuration
         if self._parameter_configuration:
             layout.addRow(
                 "Parameters", get_parameters_button(self._parameter_configuration, self)

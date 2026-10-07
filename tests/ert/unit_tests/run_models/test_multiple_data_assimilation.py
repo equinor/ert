@@ -1,16 +1,95 @@
 import math
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
-from ert.config import GenKwConfig
+from ert.analysis import build_strategy_map
+from ert.config import ESSettings, GenKwConfig, LocalizationType
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import MultipleDataAssimilation as mda
+from ert.run_models.manual_update import ManualUpdate
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.run_models.run_model import ErtRunError
 from ert.run_models.update_run_model import UpdateRunModel
-from ert.storage import Storage
+from ert.storage import Storage, open_storage
+
+
+@pytest.mark.parametrize("model_type", [MultipleDataAssimilation, ManualUpdate])
+@pytest.mark.parametrize("prior_iteration", [0, 1])
+def test_that_prior_overrides_apply_to_each_update_and_only_persist_in_the_target(
+    storage: Storage, model_type, prior_iteration
+):
+    parameter = GenKwConfig(
+        name="stored", distribution={"name": "uniform", "min": 0, "max": 1}
+    )
+    original = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [parameter.model_dump(mode="json")]
+        }
+    )
+    prior = original.create_ensemble(
+        name="prior", ensemble_size=3, iteration=prior_iteration
+    )
+    model = MagicMock(spec=model_type)
+    model.parameter_update_overrides = {"stored": LocalizationType.ADAPTIVE}
+    model.to_experiment_config.return_value = {}
+    model.analysis_settings = ESSettings()
+    model.update_settings = MagicMock()
+    model.active_realizations = [True] * 3
+    model._rng = np.random.default_rng(0)
+    model._prior = prior
+    model._storage = storage
+    model.experiment_name = "edited"
+
+    if model_type is MultipleDataAssimilation:
+        target_config = MultipleDataAssimilation._create_experiment_from_prior(
+            model, original
+        )
+        target = storage.create_experiment(experiment_config=target_config)
+    else:
+        target = ManualUpdate._create_experiment_storage(model)
+    posterior = target.create_ensemble(
+        name="posterior",
+        ensemble_size=3,
+        iteration=prior.iteration + 1,
+        prior_ensemble=prior,
+    )
+    with (
+        patch(
+            "ert.run_models.update_run_model.build_strategy_map",
+            wraps=build_strategy_map,
+        ) as builder,
+        patch("ert.run_models.update_run_model.smoother_update") as update,
+    ):
+        for source in [prior, posterior]:
+            UpdateRunModel.update_ensemble_parameters(model, source, posterior, 1.0)
+            assert (
+                builder.call_args.kwargs["param_configs"]["stored"].update_strategy
+                == LocalizationType.ADAPTIVE
+            )
+            assert builder.call_args.kwargs["experiment"] is source.experiment
+            assert "stored" in update.call_args.kwargs["strategy_map"]
+
+    assert (
+        original.parameter_configuration["stored"].update_strategy
+        == LocalizationType.GLOBAL
+    )
+    path, original_id, target_id = storage.path, original.id, target.id
+    storage.close()
+    with open_storage(path) as reopened:
+        assert (
+            reopened.get_experiment(original_id)
+            .parameter_configuration["stored"]
+            .update_strategy
+            == LocalizationType.GLOBAL
+        )
+        assert (
+            reopened.get_experiment(target_id)
+            .parameter_configuration["stored"]
+            .update_strategy
+            == LocalizationType.ADAPTIVE
+        )
 
 
 @pytest.mark.parametrize(
