@@ -74,6 +74,9 @@ class MultipleDataAssimilation(
             "parameter_configuration", []
         )
         new_experiment["observations"] = original_experiment.get("observations", [])
+        new_experiment["shape_registry"] = original_experiment.get(
+            "shape_registry", {"shapes": {}}
+        )
         return new_experiment
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
