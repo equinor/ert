@@ -56,7 +56,12 @@ state of the experiment that is running:
 .. autoclass:: ert.config.workflow_fixtures.WorkflowFixtures
     :members:
     :undoc-members:
-    :exclude-members: parent, random_seed, reports_dir, observation_settings, es_setting, run_paths
+    :exclude-members: parent, random_seed, reports_dir, observation_settings, es_settings, runpaths
+
+.. note::
+    The ``run_paths`` argument name is deprecated in favor of ``runpaths``.
+    Workflows requesting ``run_paths`` still work, but emit a deprecation
+    warning. Rename the argument to ``runpaths``.
 
 
 .. note::

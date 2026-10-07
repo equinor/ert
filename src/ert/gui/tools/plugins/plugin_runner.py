@@ -47,14 +47,14 @@ class PluginRunner:
                     ),
                     "observation_settings": ert_config.analysis_config.observation_settings,  # ruff: ignore[line-too-long]
                     "es_settings": ert_config.analysis_config.es_settings,
-                    "run_paths": runpaths,
+                    "runpaths": runpaths,
                 }
             )
             dialog = ProcessJobDialog(plugin.getName(), plugin.getParentWindow())
             dialog.setObjectName("process_job_dialog")
 
             dialog.cancelConfirmed.connect(self.cancel)
-            fixtures = {"storage": self.storage, "run_paths": runpaths}
+            fixtures = {"storage": self.storage, "runpaths": runpaths}
             workflow_job_thread = ErtThread(
                 name="ert_gui_workflow_job_thread",
                 target=self.__runWorkflowJob,

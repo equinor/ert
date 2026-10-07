@@ -68,7 +68,7 @@ from .parsing.observations_parser import ObservationDict
 from .queue_config import KnownQueueOptions, QueueConfig
 from .rft_config import RFTConfig
 from .workflow import Workflow
-from .workflow_fixtures import fixtures_per_hook
+from .workflow_fixtures import deprecated_fixture_aliases, fixtures_per_hook
 from .workflow_job import (
     BaseErtScriptWorkflow,
     ErtScriptLoadFailure,
@@ -432,6 +432,14 @@ def _validate_fixtures(
             ert_script_class = job.load_ert_script_class()
             ert_script_instance = ert_script_class()
             requested_fixtures = ert_script_instance.requested_fixtures
+
+            for deprecated in sorted(ert_script_instance.requested_deprecated_fixtures):
+                ConfigWarning.deprecation_warn(
+                    f"Workflow job {job.name} uses deprecated fixture "
+                    f"'{deprecated}', rename the argument to "
+                    f"'{deprecated_fixture_aliases[deprecated]}'",
+                    hook_name,
+                )
 
             # Look for requested fixtures that are not available for the given
             # mode
