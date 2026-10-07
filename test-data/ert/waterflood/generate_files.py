@@ -57,15 +57,18 @@ def create_egrid_file():
 
 
 def create_observations(vectors: dict[str, list[float]], rng: np.random.Generator):
-    """Perturb the truth, and write it as summary observations at the wells.
+    """Perturb the truth, and write it as bulk summary observations at the wells.
 
-    Each observation carries the position of its well, so that the case can be
-    run with distance based localization as well as with adaptive localization.
+    The observations are written to a csv file referenced by a single SUMMARY
+    configuration, with the position of each well given once, in a WELL block,
+    so that the case can be run with distance based localization as well as
+    with adaptive localization.
     """
     positions = {well.name: well for well in [*injectors, *producers]}
     start = datetime.date.fromisoformat(start_date)
 
-    with Path("observations.txt").open("w", encoding="utf-8") as f:
+    with Path("observations.csv").open("w", encoding="utf-8") as f:
+        f.write("well,keyword,value,error,date\n")
         for step in obs_steps:
             date = start + datetime.timedelta(days=float(step * dt))
             for key, values in vectors.items():
@@ -73,7 +76,6 @@ def create_observations(vectors: dict[str, list[float]], rng: np.random.Generato
                 relative, absolute = OBS_ERROR[keyword]
                 truth = values[step - 1]
                 error = max(relative * abs(truth), absolute)
-                well = positions[well_name]
                 # A water cut outside [0, 1] would be unphysical, so the noise is
                 # confined to what the measurement could have reported
                 value = np.clip(
@@ -81,21 +83,27 @@ def create_observations(vectors: dict[str, list[float]], rng: np.random.Generato
                 )
 
                 f.write(
-                    f"""SUMMARY_OBSERVATION {keyword}_{well_name}_{step}
-{{
-    VALUE   = {value:.16e};
-    ERROR   = {error:.16e};
-    DATE    = {date:%Y-%m-%d};
-    KEY     = {key};
-    LOCALIZATION {{
-        EAST = {well.east};
-        NORTH = {well.north};
-        RADIUS = {localization_radius};
-    }};
-}};
-
-"""
+                    f"{well_name},{keyword},{value:.16e},{error:.16e},{date:%Y-%m-%d}\n"
                 )
+
+    with Path("observations.txt").open("w", encoding="utf-8") as f:
+        f.write(
+            """SUMMARY {
+    VALUES = observations.csv;
+"""
+        )
+        for well_name, well in positions.items():
+            f.write(
+                f"""    WELL {well_name} {{
+        LOCALIZATION {{
+            EAST = {well.east};
+            NORTH = {well.north};
+            RADIUS = {localization_radius};
+        }};
+    }};
+"""
+            )
+        f.write("};\n")
 
 
 if __name__ == "__main__":
