@@ -1008,7 +1008,7 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
         experiment, ensemble_size=1, name="ensemble"
     )
 
-    with pytest.raises(WorkflowJobFailedError, match="failed with error"):
+    with pytest.raises(WorkflowJobFailedError, match=r"Workflow job .* failed: "):
         brm.run_workflows(
             fixtures=PreSimulationFixtures(
                 random_seed=1,

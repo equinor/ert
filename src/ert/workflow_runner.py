@@ -21,6 +21,12 @@ from ert.config import (
 )
 
 
+def format_workflow_job_failure(job_name: str, error: str | None) -> str:
+    error_lines = (error or "no error message").splitlines()
+    indented_error = "\n    ".join(error_lines)
+    return f"Workflow job {job_name} failed: {indented_error}"
+
+
 class WorkflowJobFailedError(RuntimeError):
     """Raised when a workflow job configured with STOP_ON_FAIL fails."""
 
@@ -257,7 +263,7 @@ class WorkflowRunner:
             if stops_workflow:
                 self.__running = False
                 raise WorkflowJobFailedError(
-                    f"Workflow job {result.name} failed with error: {result.error}"
+                    format_workflow_job_failure(result.name, result.error)
                 )
 
         self.__current_job = None

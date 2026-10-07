@@ -112,18 +112,19 @@ def test_that_output_printed_before_ert_script_raises_is_captured():
     assert script.stdoutdata == "printed before failing\n"
 
 
+@pytest.mark.parametrize("printed_stderr", ["printed to stderr\n", "partial"])
 def test_that_error_of_failing_script_is_appended_to_captured_stderr_without_traceback(
-    caplog,
+    caplog, printed_stderr
 ):
     class PrintingAndFailingScript(ErtScript):
         def run(self):
-            print("printed to stderr", file=sys.stderr)
+            print(printed_stderr, end="", file=sys.stderr)
             raise ValueError("boom")
 
     script = PrintingAndFailingScript()
     script.initializeAndRun([], [])
 
-    assert script.stderrdata == "printed to stderr\nValueError: boom"
+    assert script.stderrdata == f"{printed_stderr.rstrip()}\nValueError: boom"
     assert "Traceback" in caplog.text
 
 
@@ -149,18 +150,6 @@ def test_that_failing_ert_script_writes_nothing_of_its_own_to_terminal(
     assert script.stderrdata == expected_stderr
     assert script.error == expected_stderr
     assert not capsys.readouterr().err
-
-
-def test_that_stderr_without_trailing_newline_is_separated_from_error_message():
-    class PrintingAndFailingScript(ErtScript):
-        def run(self):
-            print("partial", end="", file=sys.stderr)
-            raise ValueError("boom")
-
-    script = PrintingAndFailingScript()
-    script.initializeAndRun([], [])
-
-    assert script.stderrdata == "partial\nValueError: boom"
 
 
 def test_that_output_captured_from_ert_script_is_still_written_to_stdout(capsys):
