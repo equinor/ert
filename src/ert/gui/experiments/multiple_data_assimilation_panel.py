@@ -72,6 +72,11 @@ def create_prior_ensemble_selector(notifier: ErtNotifier) -> EnsembleSelector:
     def get_ensembles_that_are_not_last_es_mda_iteration(
         ensembles: Iterable[Ensemble],
     ) -> Iterable[Ensemble]:
+        """
+        Only non-leafs of ES-MDA experiments are eligible as prior ensembles.
+        Easiest way to get those is to compare ensemble iteration with total
+        number of ES-MDA iterations found via relative weights list length.
+        """
         return (
             ensemble
             for ensemble in ensembles
@@ -82,6 +87,12 @@ def create_prior_ensemble_selector(notifier: ErtNotifier) -> EnsembleSelector:
     def get_ensembles_of_ensemble_experiment_type(
         ensembles: Iterable[Ensemble],
     ) -> Iterable[Ensemble]:
+        """
+        Ensemble experiment type, which consists just from one iteration,
+        is always eligible as an MDA prior ensemble. Used to spare some computing
+        time if users decide to run ES-MDA based on Ensemble Experiment
+        results.
+        """
         return (
             ensemble
             for ensemble in ensembles
