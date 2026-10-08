@@ -16,14 +16,14 @@ from opentelemetry.trace import Status, StatusCode
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
+from ert.scheduler import create_driver
+from ert.scheduler.driver import Driver, FailedSubmit
+from ert.scheduler.event import StartedEvent
 from ert.services.ert_client import ErtClient
 from ert.storage.local_experiment import ExperimentState
-from ert.trace import trace
+from ert.trace import get_traceparent, trace
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
-from everest.everserver import (
-    start_server,
-)
 from everest.strings import EVEREST
 from everest.util import (
     version_info,
@@ -45,6 +45,35 @@ MAX_EVERSERVER_PENDING_TIME = 30 * 60  # 30 minutes
 
 # Measured from process startup to everserver is answering endpoints:
 MAX_EVERSERVER_READY_TIME = 10 * 60  # 10 minutes
+
+
+async def start_server(config: EverestConfig, logging_level: int) -> Driver:
+    """Start an EVEREST server running the optimization defined in the config"""
+    driver = create_driver(config.server.queue_system, poll_period=0.1)  # type: ignore
+    try:
+        args = [
+            "--output-dir",
+            str(config.output_dir),
+            "--logging-level",
+            str(logging_level),
+            "--traceparent",
+            str(get_traceparent()),
+        ]
+        poll_task = asyncio.create_task(driver.poll(), name="poll_task")
+        await driver.submit(
+            0, "everserver", *args, name=f"{Path(config.config_file).stem}-server"
+        )
+    except FailedSubmit as err:
+        raise ValueError(f"Failed to submit Everserver with error: {err}") from err
+    status = await driver.event_queue.get()
+    if not isinstance(status, StartedEvent):
+        poll_task.cancel()
+        raise ValueError(f"Everserver not started as expected, got status: {status}")
+    poll_task.cancel()
+    logger.debug(
+        f"Everserver started. Events left in driver queue: {driver.event_queue.qsize()}"
+    )
+    return driver
 
 
 def everest_entry(args: list[str] | None = None) -> None:
