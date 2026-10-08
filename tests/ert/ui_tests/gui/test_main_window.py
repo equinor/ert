@@ -32,9 +32,9 @@ from ert.gui.ertwidgets import (
     StringBox,
     Suggestor,
 )
+from ert.gui.ertwidgets.combobox_with_description import GROUP_TITLE_ROLE
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.experiments import ExperimentPanel, RunDialog
-from ert.gui.experiments.combobox_with_description import GROUP_TITLE_ROLE
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
 from ert.gui.plotting.plot_window import (
