@@ -53,6 +53,27 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _rho_matrix_columns(
+    stored_keys: list[str], observation_keys: list[str] | None
+) -> list[int] | None:
+    """Columns of a cached rho matrix to use, or None if the cache cannot serve.
+
+    The columns are those of `observation_keys`, in that order. None means the
+    cache cannot serve, and rho needs to be recomputed: it lacks a key that is
+    active now, or its keys repeat while the active set is not exactly the stored
+    one -- one key then covers several columns, a multi-index observation having
+    one row, and one position, per index, and nothing in the key says which.
+    """
+    if observation_keys is None or observation_keys == stored_keys:
+        return list(range(len(stored_keys)))
+    if len(set(stored_keys)) != len(stored_keys):
+        return None
+    column_of = {key: column for column, key in enumerate(stored_keys)}
+    if not set(observation_keys).issubset(column_of):
+        return None
+    return [column_of[key] for key in observation_keys]
+
+
 class ExperimentState(StrEnum):
     pending = auto()
     running = auto()
@@ -665,33 +686,45 @@ class LocalExperiment(BaseMode):
     ) -> npt.NDArray[np.floating] | None:
         """Load a cached rho matrix for the given parameter name.
 
-        When *observation_keys* is provided the stored blob's observation
-        keys must be a superset of the requested keys.  Some observations
-        may have been deactivated since the blob was created, so the blob
-        can legitimately contain *more* keys than the current active set.
-        However, if the current set contains keys absent from the blob the
-        matrix is invalid and ``None`` is returned so it is recomputed.
+        The matrix has one column per observation it was built for. When
+        *observation_keys* is given, the returned matrix is cut down to those
+        columns, in that order: observations may have been deactivated since the
+        blob was written, so the blob can legitimately describe *more* of them
+        than are being assimilated now, and the caller multiplies the result
+        elementwise with a Kalman gain that has one column per active
+        observation.
+
+        ``None`` is returned, meaning there is no cached matrix to be had and rho
+        needs to be recomputed, when the cache cannot be cut down safely: when it
+        is missing keys that are active now, and when its keys repeat -- a
+        multi-index observation contributes one key per row, each with its own
+        position, and the key alone cannot say which column belongs to which row.
         """
         for blob in self._load_blob_metadata(BlobType.RHO_MATRIX):
             if (
                 isinstance(blob.blob_info, RhoStorageData)
                 and blob.blob_info.param_name == param_name
             ):
-                if observation_keys is not None and not set(observation_keys).issubset(
-                    blob.blob_info.observation_keys
-                ):
+                stored_keys = list(blob.blob_info.observation_keys)
+                columns = _rho_matrix_columns(stored_keys, observation_keys)
+                if columns is None:
                     logger.info(
-                        "Cached rho matrix for %r is missing observation keys "
-                        "%s, skipping",
+                        "Cached rho matrix for %r cannot be reused for the active "
+                        "observations (%d stored, %d active%s), so rho needs to be "
+                        "recomputed",
                         param_name,
-                        sorted(
-                            set(observation_keys) - set(blob.blob_info.observation_keys)
-                        ),
+                        len(stored_keys),
+                        len(observation_keys) if observation_keys else 0,
+                        ", stored keys are not unique"
+                        if len(set(stored_keys)) != len(stored_keys)
+                        else "",
                     )
                     return None
                 data = self.load_blob(blob.uri)
-                sparse_matrix = sp.sparse.load_npz(io.BytesIO(data))
-                return sparse_matrix.toarray()
+                matrix = sp.sparse.load_npz(io.BytesIO(data)).toarray()
+                if columns == list(range(matrix.shape[1])):
+                    return matrix
+                return matrix[:, columns]
         return None
 
     @require_write
