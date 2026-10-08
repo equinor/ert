@@ -23,6 +23,7 @@ from ert.server.app import app
 from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
     _experiments,
+    websocket_endpoint,
 )
 from ert.services import ErtClient
 from ert.storage import ExperimentState
@@ -59,6 +60,7 @@ def setup_client(monkeypatch):
         experiment_id = "experiment_id"
         state = ExperimentRunnerState()
         state.events = cast(list[StatusEvents], events)
+        state.finalized.set()
         _experiments[experiment_id] = state
 
         monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
@@ -310,6 +312,45 @@ def test_websocket_multiple_connections_one_fails(setup_client):
     assert event == {"event_type": "EndEvent", "failed": False, "msg": "Complete"}
 
 
+def test_that_each_event_stream_closes_normally_after_end_event(setup_client):
+    client, _, experiment_id = setup_client()
+    credentials = b64encode(b"username:password").decode()
+    for _ in range(2):
+        with client.websocket_connect(
+            f"/experiment_runs/events/{experiment_id}",
+            headers={"Authorization": f"Basic {credentials}"},
+        ) as websocket:
+            assert websocket.receive_json()["event_type"] == "EndEvent"
+            with pytest.raises(WebSocketDisconnect) as exception:
+                websocket.receive_json()
+            assert exception.value.code == 1000
+
+
+async def test_that_event_stream_stays_open_until_experiment_is_finalized(
+    setup_client, monkeypatch
+):
+    _, _, experiment_id = setup_client()
+    state = _experiments[experiment_id]
+    state.finalized.clear()
+    credentials = b64encode(b"username:password").decode()
+    websocket = MagicMock()
+    websocket.headers = {"Authorization": f"Basic {credentials}"}
+    websocket.accept = AsyncMock()
+    websocket.send_json = AsyncMock()
+    websocket.close = AsyncMock()
+
+    stream = asyncio.create_task(websocket_endpoint(websocket, experiment_id))
+    await asyncio.sleep(0.1)
+
+    websocket.send_json.assert_awaited_once()
+    websocket.close.assert_not_called()
+
+    state.finalized.set()
+    await stream
+
+    websocket.close.assert_awaited_once_with(code=1000)
+
+
 def test_websocket_multiple_events_in_queue(setup_client):
     @dataclass
     class TestEvent:
@@ -338,12 +379,10 @@ def test_that_multiple_started_experiments_each_receive_distinct_experiment_ids(
     original = dict(_experiments)
     _experiments.clear()
     try:
-        mock_runner = MagicMock()
-        mock_runner.run = AsyncMock()
         config_body = everest_config_with_defaults().to_dict()
         with patch(
-            "ert.server.endpoints.experiment_runs.ExperimentRunner",
-            return_value=mock_runner,
+            "ert.server.endpoints.experiment_runs.run_everest",
+            new_callable=AsyncMock,
         ):
             r1 = client.post(
                 "/experiment_runs/start_experiment",
@@ -417,8 +456,6 @@ def test_that_start_experiment_with_unknown_forward_model_job_returns_422(
 
 def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypatch):
     client, auth_headers = authorized_client
-    mock_runner = MagicMock()
-    mock_runner.run = AsyncMock()
 
     config_body = yaml.safe_load(MIN_CONFIG)
 
@@ -432,8 +469,8 @@ def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypa
 
     with (
         patch(
-            "ert.server.endpoints.experiment_runs.ExperimentRunner",
-            return_value=mock_runner,
+            "ert.server.endpoints.experiment_runs.run_everest",
+            new_callable=AsyncMock,
         ),
         warnings.catch_warnings(record=True) as caught_warnings,
     ):

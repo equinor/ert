@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Callable
+from contextlib import aclosing
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -18,7 +19,7 @@ from everest.strings import (
 )
 
 if TYPE_CHECKING:
-    from ert.run_models.event import EverestBatchResultEvent
+    from ert.run_models.event import EverestBatchResultEvent, StatusEvents
 
 
 # The methods in this file are typically called for the client side.
@@ -87,12 +88,28 @@ def start_monitor(
 
     Monitoring stops when the server stops answering.
     """
+    for event in client.iter_events(experiment_id, refresh_interval=polling_interval):
+        callback(_monitor_event(event))
+
+
+async def start_monitor_async(
+    client: ErtClient,
+    callback: Callable[[dict[str, Any]], None],
+    experiment_id: str,
+    polling_interval: float = 0.1,
+) -> None:
+    async with aclosing(
+        client.iter_events_async(experiment_id, refresh_interval=polling_interval)
+    ) as events:
+        async for event in events:
+            callback(_monitor_event(event))
+
+
+def _monitor_event(event: StatusEvents) -> dict[str, Any]:
     from ert.run_models.event import (  # ruff: ignore[import-outside-top-level]
         EverestBatchResultEvent,
     )
 
-    for event in client.iter_events(experiment_id, refresh_interval=polling_interval):
-        if isinstance(event, EverestBatchResultEvent):
-            callback({OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(event)})
-        else:
-            callback({SIM_PROGRESS_ID: event})
+    if isinstance(event, EverestBatchResultEvent):
+        return {OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(event)}
+    return {SIM_PROGRESS_ID: event}

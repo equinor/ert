@@ -2,8 +2,10 @@ from unittest.mock import patch
 
 import polars as pl
 import pytest
+from pydantic import TypeAdapter
 
 from ert.config import (
+    AnalysisConfig,
     ConfigValidationError,
     ConfigWarning,
     DesignMatrix,
@@ -13,6 +15,59 @@ from ert.config import (
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource
 from tests.ert.conftest import _create_design_matrix
+
+
+def test_that_analysis_config_with_design_matrix_survives_json_round_trip(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_path, pl.DataFrame({"REAL": [0, 1], "a": [1.0, 2.0], "b": [3.0, 4.0]})
+    )
+    analysis_config = AnalysisConfig(
+        design_matrix=DesignMatrix(
+            filename=design_path, design_sheet="DesignSheet", default_sheet=None
+        )
+    )
+    adapter = TypeAdapter(AnalysisConfig)
+
+    restored = adapter.validate_python(
+        adapter.dump_python(analysis_config, mode="json")
+    )
+
+    assert restored.design_matrix == analysis_config.design_matrix
+
+
+def test_that_merged_design_matrices_survive_json_round_trip(tmp_path):
+    _create_design_matrix(
+        tmp_path / "first.xlsx",
+        pl.DataFrame({"REAL": [0, 1, 2], "a": [1.0, 2.0, 3.0]}),
+    )
+    _create_design_matrix(
+        tmp_path / "second.xlsx",
+        pl.DataFrame({"REAL": [0, 1], "b": [4.0, 5.0]}),
+    )
+    analysis_config = AnalysisConfig.from_dict(
+        {
+            "DESIGN_MATRIX": [
+                [str(tmp_path / "first.xlsx"), {"UPDATE": "FALSE"}],
+                [str(tmp_path / "second.xlsx"), {"UPDATE": "TRUE"}],
+            ]
+        }
+    )
+    adapter = TypeAdapter(AnalysisConfig)
+
+    restored = adapter.validate_python(
+        adapter.dump_python(analysis_config, mode="json")
+    )
+
+    original_dm = analysis_config.design_matrix
+    restored_dm = restored.design_matrix
+    assert original_dm is not None
+    assert restored_dm is not None
+    assert [p.name for p in restored_dm.parameter_configurations] == ["a", "b"]
+    assert restored_dm.design_matrix_df.equals(original_dm.design_matrix_df)
+    assert restored_dm.active_realizations == original_dm.active_realizations
+    assert restored_dm.parameter_priority == original_dm.parameter_priority
+    assert restored_dm.updatable_parameters == {"a": False, "b": True}
 
 
 def test_that_categorical_design_matrix_parameters_are_excluded_from_update(tmp_path):
@@ -220,6 +275,7 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
             update_strategy=None,
         ),
     ]
+    dm.updatable_parameters = {cfg.name: False for cfg in dm.parameter_configurations}
 
     merged_params = dm.merge_with_existing_parameters(existing_parameters=[])
 
