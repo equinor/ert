@@ -201,9 +201,10 @@ def apply_parameter_update_overrides[P: ParameterConfig](
                 f"Cannot update non-updatable parameter '{parameter.name}'"
             )
         if strategy not in supported_localization_types(parameter.type):
+            parameter_type = "GenKW" if parameter.type == "gen_kw" else parameter.type
             raise ValueError(
                 f"{strategy.name.title()} localization is not supported for "
-                f"parameter '{parameter.name}' of type '{parameter.type}'"
+                f"{parameter_type} '{parameter.name}'"
             )
         parameter.update_strategy = strategy
     return result
