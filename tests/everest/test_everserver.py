@@ -26,12 +26,10 @@ from ert.server.endpoints.experiment_runs import (
 )
 from ert.services import ErtClient
 from ert.storage import ExperimentState
+from everest.bin.everest_script import start_server
 from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
 from everest.everserver import server as everserver
-from everest.everserver import (
-    start_server,
-)
 from everest.strings import (
     OPT_FAILURE_ALL_REALIZATIONS,
     OPT_FAILURE_REALIZATIONS,

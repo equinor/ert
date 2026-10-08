@@ -29,15 +29,12 @@ from ert.scheduler.event import FinishedEvent
 from ert.services import ErtClient, SharedClient
 from ert.services.shared_client import ErtClientConnectionInfo
 from ert.utils import makedirs_if_needed
-from everest.bin.everest_script import everest_entry
+from everest.bin.everest_script import everest_entry, start_server
 from everest.config import EverestConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.install_job_config import InstallForwardModelStepConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
-from everest.everserver import (
-    start_server,
-)
 from tests.ert.utils import wait_until
 from tests.everest.utils import everest_config_with_defaults
 
