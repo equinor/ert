@@ -36,7 +36,7 @@ from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import tracer
 
-from ._excel_to_dict import excel_to_dict
+from ._excel_to_design import excel_to_config
 from .create_design import DesignMatrix, _normalize_xlsx_filename
 
 logger = logging.getLogger(__name__)
@@ -264,9 +264,9 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
             "file and the output file"
         )
 
-    # Parse Excel config file to dict-of-dict configuration
+    # Parse Excel config file to design configuration
     print(f"Reading file: {args.config!r}")
-    config = excel_to_dict(
+    fmudesign_config = excel_to_config(
         args.config,
         gen_input_sheet=args.general_input,
         design_input_sheet=args.designinput,
@@ -276,7 +276,9 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
     # If destination is 'analysis/generateddesignmatrix.xlsx', then plots
     # will be saved to 'analysis/generateddesignmatrix/<SENSNAME>/<VARNAME>.png'
     output_dir = Path(destination).with_suffix("")
-    design = DesignMatrix(config=config, verbosity=args.verbose, output_dir=output_dir)
+    design = DesignMatrix(
+        config=fmudesign_config, verbosity=args.verbose, output_dir=output_dir
+    )
 
     design.to_xlsx(args.destination)
 

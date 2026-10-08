@@ -12,7 +12,7 @@ from pydantic import (
     field_serializer,
 )
 
-from .config_validation import SeedStrategy
+from .seed_strategy import SeedStrategy
 from .utils import resolve_path
 
 
