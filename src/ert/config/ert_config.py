@@ -581,9 +581,19 @@ def create_and_hook_workflows(
                 ).set_context(raw_mode)
             )
             continue
+        register_workflow = not (
+            len(inline_workflow) == 1
+            or (
+                inline_workflow[0] in workflow_jobs
+                and inline_workflow[1] not in workflow_jobs
+            )
+        )
+        if not register_workflow:
+            inline_workflow = [inline_workflow[0], *inline_workflow]
         try:
             wf_name, wf = _create_workflow_from_job(inline_workflow)
-            _register_workflow(inline_workflow, wf_name, wf)
+            if register_workflow:
+                _register_workflow(inline_workflow, wf_name, wf)
             errors.extend(_validate_fixtures(wf_name, wf, mode))
             declared_hooks[mode].append(
                 _DeclaredHook(_declaration_order_of(wf_name), wf)

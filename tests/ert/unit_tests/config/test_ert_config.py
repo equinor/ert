@@ -2969,6 +2969,34 @@ def test_that_hook_workflow_job_registers_and_hooks_workflow(ert_config_with_job
     assert ert_config.workflows["my_wf"] in ert_config.hooked_workflows[mode]
 
 
+@pytest.mark.parametrize("job_args", ["", " foo bar"])
+def test_that_hook_workflow_job_without_name_is_hidden_from_workflows(
+    ert_config_with_job, job_args
+):
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB MY_JOB{job_args} PRE_SIMULATION
+        HOOK_WORKFLOW_JOB name MY_JOB{job_args} POST_SIMULATION
+        """),
+    )
+
+    assert len(ert_config.workflows) == 1
+    assert "name" in ert_config.workflows
+    workflow1 = ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION][0]
+    workflow2 = ert_config.hooked_workflows[HookRuntime.POST_SIMULATION][0]
+
+    job, args = workflow1.cmd_list[0]
+    assert workflow1.name == "MY_JOB"
+    assert job.name == "MY_JOB"
+    assert args == job_args.split()
+
+    job, args = workflow2.cmd_list[0]
+    assert workflow2.name == "name"
+    assert job.name == "MY_JOB"
+    assert args == job_args.split()
+
+
 @pytest.mark.parametrize(
     ("hook_lines_in_config_order", "expected_hook_order"),
     [

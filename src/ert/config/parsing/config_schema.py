@@ -137,7 +137,7 @@ def hook_workflow_keyword() -> SchemaItem:
 def hook_workflow_job_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.HOOK_WORKFLOW_JOB,
-        argc_min=3,
+        argc_min=2,
         argc_max=None,
         multi_occurrence=True,
     )

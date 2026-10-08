@@ -2177,7 +2177,11 @@ step, without requiring a separate workflow file and a
 
 Syntax::
 
-   HOOK_WORKFLOW_JOB <workflow_name> <job_name> [args...] <runtime_step>
+        HOOK_WORKFLOW_JOB [<workflow_name>] <job_name> [args...] <runtime_step>
+
+The optional :code:`workflow_name` makes the workflow available for manual
+execution in the GUI. If it is omitted, the workflow is only run automatically
+at the configured runtime step and is hidden from the GUI workflow list.
 
 The last argument must be one of the supported runtime step values:
 :code:`PRE_SIMULATION`, :code:`POST_SIMULATION`, :code:`PRE_UPDATE`,
@@ -2189,6 +2193,7 @@ The last argument must be one of the supported runtime step values:
 ::
 
    HOOK_WORKFLOW_JOB export_rft EXPORT_RFT some_path/rft.csv POST_SIMULATION
+        HOOK_WORKFLOW_JOB EXPORT_RFT some_path/rft.csv POST_SIMULATION
 
 Hooks declared with :code:`HOOK_WORKFLOW_JOB` and :code:`HOOK_WORKFLOW` share the
 same execution order at a given runtime step, which follows the order of
