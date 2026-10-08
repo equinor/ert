@@ -1,25 +1,30 @@
 from pathlib import Path
 
-
-def minimal_configuration():
-    return {
-        "designtype": "onebyone",
-        "repeats": 1,
-        "distribution_seed": 1234,
-        "seeds": None,
-        "defaultvalues": {},
-        "sensitivities": {},
-    }
+from fmudesign import DesignConfig
+from fmudesign.seed_strategy import SeedStrategy
 
 
-def onebyone_configuration():
-    return {
-        "designtype": "onebyone",
-        "repeats": 10,
-        "distribution_seed": None,
-        "seeds": "default",
-        "background": None,
-        "defaultvalues": {
+def minimal_configuration() -> DesignConfig:
+    return DesignConfig(
+        designtype="onebyone",
+        repeats=1,
+        rms_seeds=None,
+        defaultvalues={},
+        sensitivities={},
+        distribution_seed=1234,
+    )
+
+
+def onebyone_configuration() -> DesignConfig:
+    return DesignConfig(
+        designtype="onebyone",
+        repeats=10,
+        distribution_seed=None,
+        rms_seeds="default",
+        correlation_iterations=0,
+        seed_strategy=SeedStrategy.JOINT,
+        background=None,
+        defaultvalues={
             "RMS_SEED": 1000,
             "FAULT_POSITION": 0,
             "DC_MODEL": "base",
@@ -32,7 +37,7 @@ def onebyone_configuration():
             "PARAM3": 0,
             "PARAM4": 0,
         },
-        "sensitivities": {
+        sensitivities={
             "rms_seed": {
                 "seedname": "RMS_SEED",
                 "senstype": "seed",
@@ -70,19 +75,21 @@ def onebyone_configuration():
                 "dependencies": {},
             },
         },
-        "decimals": {},
-    }
+        decimals={},
+    )
 
 
-def full_mc_configuration(correlation_workbook: Path):
+def full_mc_configuration(correlation_workbook: Path) -> DesignConfig:
     correlation_file = str(correlation_workbook)
-    return {
-        "designtype": "onebyone",
-        "repeats": 1,
-        "distribution_seed": 555,
-        "seeds": "default",
-        "background": None,
-        "defaultvalues": {
+    return DesignConfig(
+        designtype="onebyone",
+        repeats=1,
+        distribution_seed=555,
+        rms_seeds="default",
+        correlation_iterations=0,
+        seed_strategy=SeedStrategy.JOINT,
+        background=None,
+        defaultvalues={
             "RMS_SEED": 1000,
             "HUM_MODE": "PREDICTION",
             "HUM_METHOD": "SIMPLE",
@@ -101,7 +108,7 @@ def full_mc_configuration(correlation_workbook: Path):
             "DERIVED_PARAM1": 1,
             "DERIVED_PARAM2": "a",
         },
-        "sensitivities": {
+        sensitivities={
             "montecarlo": {
                 "senstype": "dist",
                 "parameters": {
@@ -143,7 +150,7 @@ def full_mc_configuration(correlation_workbook: Path):
                 },
             }
         },
-        "decimals": {
+        decimals={
             "PARAM1": 3,
             "PARAM2": 2,
             "PARAM3": 3,
@@ -154,20 +161,22 @@ def full_mc_configuration(correlation_workbook: Path):
             "NTG2": 2,
             "FAULTSEAL": 3,
         },
-    }
+    )
 
 
 def background_configuration(
     correlation_workbook: Path,
     external_parameters: Path,
-):
+) -> DesignConfig:
     correlation_file = str(correlation_workbook)
-    return {
-        "designtype": "onebyone",
-        "repeats": 5,
-        "distribution_seed": None,
-        "seeds": "default",
-        "background": {
+    return DesignConfig(
+        designtype="onebyone",
+        repeats=5,
+        distribution_seed=None,
+        rms_seeds="default",
+        correlation_iterations=0,
+        seed_strategy=SeedStrategy.JOINT,
+        background={
             "correlations": {
                 "inputfile": correlation_file,
                 "sheetnames": ["background_corr"],
@@ -179,7 +188,7 @@ def background_configuration(
             },
             "decimals": {"PARAM17": 2, "PARAM18": 2, "PARAM19": 2},
         },
-        "defaultvalues": {
+        defaultvalues={
             "DEFAULT1": 0,
             "DEFAULT2": "prediction",
             "DEFAULT3": 0,
@@ -207,7 +216,7 @@ def background_configuration(
             "FAULT_SEAL": "base",
             "PARAM20": 0.5,
         },
-        "sensitivities": {
+        sensitivities={
             "background": {"senstype": "background", "dependencies": {}},
             "faults": {
                 "cases": {
@@ -296,5 +305,5 @@ def background_configuration(
                 "dependencies": {},
             },
         },
-        "decimals": {"PARAM9": 2, "PARAM10": 3},
-    }
+        decimals={"PARAM9": 2, "PARAM10": 3},
+    )
