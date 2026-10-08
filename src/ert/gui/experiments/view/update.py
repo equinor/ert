@@ -98,11 +98,19 @@ class ReportLogTable(UpdateLogTable):
 
         self.status_column_index = data.header.index("status")
         self.missing_realizations_col_index = data.header.index("missing_realizations")
+        self.observation_warnings_col_index = (
+            data.header.index("observation_warnings")
+            if "observation_warnings" in data.header
+            else None
+        )
 
         self.hideColumn(self.missing_realizations_col_index)
+        if self.observation_warnings_col_index is not None:
+            self.hideColumn(self.observation_warnings_col_index)
 
         self.itemClicked.connect(self._handle_item_click)
         self._underline_missing_realization_status()
+        self._set_warning_status()
 
     def _underline_missing_realization_status(self) -> None:
         """
@@ -118,6 +126,24 @@ class ReportLogTable(UpdateLogTable):
                     font.setUnderline(True)
                     item.setFont(font)
 
+    def _set_warning_status(self) -> None:
+        """
+        Underline "active" when there is a warning to indicate that they are
+        clickable, and prepend a warning sign to the cell text.
+        """
+        if self.observation_warnings_col_index is None:
+            return
+        for i, row in enumerate(self.data.data):
+            str_val = str(row[self.status_column_index])
+            warning_val = str(row[self.observation_warnings_col_index])
+            if str_val == ObservationStatus.ACTIVE and warning_val:
+                item = self.item(i, self.status_column_index)
+                if item is not None:
+                    font = item.font()
+                    font.setUnderline(True)
+                    item.setFont(font)
+                    item.setText(f"\u26a0 {item.text()}")
+
     @Slot(QTableWidgetItem)
     def _handle_item_click(self, item: QTableWidgetItem) -> None:
         if (
@@ -129,28 +155,49 @@ class ReportLogTable(UpdateLogTable):
                 "all items in the table should have been initialized"
             )
 
-            missing_realizations = hidden_item.text()
+            self._show_message_dialog(
+                "Observation deactivated",
+                "Missing responses from active realizations:",
+                hidden_item.text(),
+            )
+        elif (
+            self.observation_warnings_col_index is not None
+            and self.status_column_index == item.column()
+        ):
+            hidden_item = self.item(item.row(), self.observation_warnings_col_index)
+            assert hidden_item is not None, (
+                "all items in the table should have been initialized"
+            )
+            if not hidden_item.text():
+                return
 
-            dialog = QDialog(self)
-            dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            dialog.setWindowTitle("Observation deactivated")
-            dialog.resize(500, 500)
-            dialog.setSizeGripEnabled(True)
+            self._show_message_dialog(
+                "Observation warning",
+                "Warnings reported for active realizations:",
+                hidden_item.text(),
+            )
 
-            layout = QVBoxLayout(dialog)
-            layout.addWidget(QLabel("Missing responses from active realizations:"))
+    def _show_message_dialog(self, title: str, label: str, message: str) -> None:
+        dialog = QDialog(self)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        dialog.setWindowTitle(title)
+        dialog.resize(500, 500)
+        dialog.setSizeGripEnabled(True)
 
-            text_edit = QTextEdit()
-            text_edit.setReadOnly(True)
-            text_edit.setPlainText(missing_realizations)
-            text_edit.setViewportMargins(15, 0, 0, 0)
-            layout.addWidget(text_edit)
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel(label))
 
-            buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-            buttons.accepted.connect(dialog.accept)
-            layout.addWidget(buttons)
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(message)
+        text_edit.setViewportMargins(15, 0, 0, 0)
+        layout.addWidget(text_edit)
 
-            dialog.exec()
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(dialog.accept)
+        layout.addWidget(buttons)
+
+        dialog.exec()
 
 
 class UpdateWidget(QWidget):

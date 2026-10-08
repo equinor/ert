@@ -21,7 +21,7 @@ from ert.config import (
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import DEFAULT_LOCALIZATION_RADIUS
-from ert.warnings import PostExperimentWarning
+from ert.warnings import ObservationReportWarning
 
 
 @settings(max_examples=10)
@@ -256,7 +256,7 @@ def test_that_when_not_finding_response_obs_keys_raises_warning(monkeypatch):
 
     monkeypatch.setattr(summary_config, "read_summary", mock_read_summary)
 
-    with pytest.warns(PostExperimentWarning) as warnings:
+    with pytest.warns(ObservationReportWarning) as warnings:
         SummaryConfig(input_files=["CASE"], keys=list(obs_keys)).read_from_file(
             ".", 0, 0
         )
@@ -284,7 +284,7 @@ def _collect_summary_response_warnings(
     return [
         w
         for w in ws
-        if issubclass(w.category, PostExperimentWarning)
+        if issubclass(w.category, ObservationReportWarning)
         and "Could not find response" in str(w.message)
     ]
 

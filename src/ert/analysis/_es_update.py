@@ -191,6 +191,7 @@ def perform_ensemble_update(
         "response_std",
         "status",
         "missing_realizations",
+        "observation_warnings",
     )
 
     if num_obs == 0:
