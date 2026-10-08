@@ -7,7 +7,7 @@ Output of this module can be used in custom standalone applications.
 import logging
 
 from ._designsummary import summarize_design
-from ._excel_to_dict import excel_to_dict, inputdict_to_yaml
+from ._excel_to_design import config_to_yaml, excel_to_config
 from .create_design import DesignMatrix
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     "DesignMatrix",
-    "excel_to_dict",
-    "inputdict_to_yaml",
+    "config_to_yaml",
+    "excel_to_config",
     "summarize_design",
 ]

@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from fmudesign import DesignMatrix
+from tests.fmudesign._configurations import minimal_configuration
 
 
 def assert_valid_designmatrix(design_values):
@@ -15,26 +16,23 @@ def assert_valid_designmatrix(design_values):
 
 
 def test_that_design_matrix_generates_seed_sensitivity_for_each_repeat():
-    design = DesignMatrix(
-        {
-            "designtype": "onebyone",
-            "seeds": "default",
-            "repeats": 10,
-            "distribution_seed": 42,
-            "defaultvalues": {},
-            "sensitivities": {
-                "rms_seed": {
-                    "seedname": "RMS_SEED",
-                    "senstype": "seed",
-                    "parameters": None,
-                    "dependencies": {},
-                }
-            },
+    config = minimal_configuration()
+    repeats = 10
+    config.repeats = repeats
+    config.seeds = "default"
+    config.sensitivities = {
+        "rms_seed": {
+            "seedname": "RMS_SEED",
+            "senstype": "seed",
+            "parameters": None,
+            "dependencies": {},
         }
-    )
+    }
+
+    design = DesignMatrix(config)
 
     assert_valid_designmatrix(design.designvalues)
-    assert len(design.designvalues) == 10
+    assert len(design.designvalues) == repeats
     assert isinstance(design.defaultvalues, dict)
 
 

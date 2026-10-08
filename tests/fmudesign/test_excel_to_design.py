@@ -1,18 +1,20 @@
-"""Testing excel_to_dict"""
-
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import openpyxl
 import pandas as pd
 import pytest
+from ruamel.yaml import YAML
 
-from fmudesign import excel_to_dict, inputdict_to_yaml
-from fmudesign._excel_to_dict import (
+from fmudesign import config_to_yaml, excel_to_config
+from fmudesign._excel_to_design import (
     _assert_no_merged_cells,
 )
+from fmudesign.design_config import DesignConfig
 from fmudesign.design_input import _read_dependencies
 from fmudesign.utils import _has_value, map_dependencies
+from tests.fmudesign._configurations import full_mc_configuration
 
 MOCK_GENERAL_INPUT = pd.DataFrame(
     data=[
@@ -58,36 +60,36 @@ def _write_config_workbook(
     return path
 
 
-def test_that_excel_to_dict_parses_workbook_into_configuration_dictionary(tmp_path):
-    input_path = _write_config_workbook(tmp_path / "designinput.xlsx")
-    dict_design = excel_to_dict(input_path)
+def test_that_excel_to_design_parses_workbook_into_configuration_dictionary(use_tmpdir):
+    input_path = _write_config_workbook("designinput.xlsx")
+    design_config = excel_to_config(input_path)
 
-    assert isinstance(dict_design, dict)
-    assert dict_design["designtype"] == "onebyone"
-    assert dict_design["distribution_seed"] == 42
-    assert dict_design["defaultvalues"] == {}
-    assert isinstance(dict_design["sensitivities"], dict)
+    assert isinstance(design_config, DesignConfig)
+    assert design_config.designtype == "onebyone"
+    assert design_config.distribution_seed == 42
+    assert design_config.defaultvalues == {}
+    assert isinstance(design_config.sensitivities, dict)
 
-    sens = dict_design["sensitivities"]
+    sens = design_config.sensitivities
     assert sens["rms_seed"]["seedname"] == "RMS_SEED"
     assert sens["rms_seed"]["senstype"] == "seed"
 
     alternate_path = _write_config_workbook(
-        tmp_path / "designinput2.xlsx",
+        "designinput2.xlsx",
         general_sheet="Generalinput",
         design_sheet="Design_input",
         default_sheet="DefaultValues",
     )
-    dict_design = excel_to_dict(alternate_path)
-    assert isinstance(dict_design, dict)
-    assert dict_design["sensitivities"]["rms_seed"]["senstype"] == "seed"
+    design_config = excel_to_config(alternate_path)
+    assert isinstance(design_config, DesignConfig)
+    assert design_config.sensitivities["rms_seed"]["senstype"] == "seed"
 
-    yaml_path = tmp_path / "dictdesign.yaml"
-    inputdict_to_yaml(dict_design, yaml_path)
-    assert "RMS_SEED" in yaml_path.read_text(encoding="utf-8")
+    yaml_file = "dictdesign.yaml"
+    config_to_yaml(design_config, yaml_file)
+    assert "RMS_SEED" in Path(yaml_file).read_text(encoding="utf-8")
 
 
-def test_that_duplicate_sensitivity_names_raise_value_error(tmp_path):
+def test_that_duplicate_sensitivity_names_raise_value_error(use_tmpdir):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
@@ -99,17 +101,17 @@ def test_that_duplicate_sensitivity_names_raise_value_error(tmp_path):
         ]
     )
     input_path = _write_config_workbook(
-        tmp_path / "designinput.xlsx", design_input=mock_erroneous_designinput
+        "designinput.xlsx", design_input=mock_erroneous_designinput
     )
 
     with pytest.raises(
         ValueError, match="Two sensitivities cannot share the same sensname"
     ):
-        excel_to_dict(input_path)
+        excel_to_config(input_path)
 
 
-def test_that_excel_to_dict_strips_sensitivity_and_parameter_name_whitespace(
-    tmp_path,
+def test_that_excel_to_design_strips_sensitivity_and_parameter_name_whitespace(
+    use_tmpdir,
 ):
     """Spaces before and after parameter names are probably
     invisible user errors in Excel sheets. Remove them.
@@ -128,22 +130,24 @@ def test_that_excel_to_dict_strips_sensitivity_and_parameter_name_whitespace(
         ]
     )
     input_path = _write_config_workbook(
-        tmp_path / "designinput.xlsx",
+        "designinput.xlsx",
         design_input=mock_spacious_designinput,
         defaultvalues=defaultvalues_spacious,
     )
 
-    dict_design = excel_to_dict(input_path)
-    assert next(iter(dict_design["sensitivities"].keys())) == "rms_seed"
-    assert dict_design["defaultvalues"] == {
+    design_config = excel_to_config(input_path)
+    assert next(iter(design_config.sensitivities.keys())) == "rms_seed"
+    assert design_config.defaultvalues == {
         "spacious_multiplier": 1.2,
         "spacious2": 3.3,
     }
 
 
-def test_that_excel_to_dict_rejects_duplicate_default_names_after_trimming(tmp_path):
+def test_that_excel_to_design_rejects_duplicate_default_names_after_trimming(
+    use_tmpdir,
+):
     input_path = _write_config_workbook(
-        tmp_path / "designinput.xlsx",
+        "designinput.xlsx",
         defaultvalues=pd.DataFrame(
             [
                 ["parametername", "value"],
@@ -154,10 +158,10 @@ def test_that_excel_to_dict_rejects_duplicate_default_names_after_trimming(tmp_p
     )
 
     with pytest.raises(ValueError, match="duplicate parameter names"):
-        excel_to_dict(input_path)
+        excel_to_config(input_path)
 
 
-def test_that_mixed_sensitivity_types_raise_value_error(tmp_path):
+def test_that_mixed_sensitivity_types_raise_value_error(use_tmpdir):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
@@ -166,11 +170,11 @@ def test_that_mixed_sensitivity_types_raise_value_error(tmp_path):
         ]
     )
     input_path = _write_config_workbook(
-        tmp_path / "designinput.xlsx", design_input=mock_erroneous_designinput
+        "designinput.xlsx", design_input=mock_erroneous_designinput
     )
 
     with pytest.raises(ValueError, match="contains more than one sensitivity type"):
-        excel_to_dict(input_path)
+        excel_to_config(input_path)
 
 
 @pytest.mark.parametrize(
@@ -180,7 +184,7 @@ def test_that_has_value_treats_only_nan_as_missing(value, expected):
     assert _has_value(value) is expected
 
 
-def test_that_excel_to_dict_parses_background_sheet(tmp_path):
+def test_that_excel_to_design_parses_background_sheet(use_tmpdir):
     general_input = pd.DataFrame(
         data=[
             ["designtype", "onebyone"],
@@ -201,23 +205,23 @@ def test_that_excel_to_dict_parses_background_sheet(tmp_path):
     )
 
     input_path = _write_config_workbook(
-        tmp_path / "designinput.xlsx",
+        "designinput.xlsx",
         general_input=general_input,
         defaultvalues=defaultvalues,
         background=background,
         design_sheet="design_input",
     )
 
-    dict_design = excel_to_dict(input_path)
+    design_config = excel_to_config(input_path)
 
     # Assert it has been interpreted correctly from input files:
-    assert dict_design["background"]["parameters"]["extraseed"] == [
+    assert design_config.background["parameters"]["extraseed"] == [
         "scenario",
         ["30,40,50"],
         None,
     ]
-    assert dict_design["repeats"] == 3
-    assert dict_design["defaultvalues"]["extraseed"] == 0
+    assert design_config.repeats == 3
+    assert design_config.defaultvalues["extraseed"] == 0
 
 
 def _write_background_workbook(path, background, corr_matrix, background_name):
@@ -249,6 +253,7 @@ def _write_background_workbook(path, background, corr_matrix, background_name):
     return path
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("sheet", ["designinput", "backgroundsheet"])
 @pytest.mark.parametrize(
     ("missing_field", "error"),
@@ -281,7 +286,7 @@ def _write_background_workbook(path, background, corr_matrix, background_name):
     ],
 )
 def test_that_missing_distribution_fields_report_the_field_and_source(
-    tmp_path, sheet, missing_field, error
+    sheet, missing_field, error
 ):
     row = {
         "param_name": "PARAM_A",
@@ -295,7 +300,7 @@ def test_that_missing_distribution_fields_report_the_field_and_source(
     if sheet == "designinput":
         row = {"sensname": "uncertainty", "type": "dist", **row}
     distribution_rows = pd.DataFrame([list(row), list(row.values())])
-    input_path = tmp_path / "designinput.xlsx"
+    input_path = "designinput.xlsx"
 
     if sheet == "designinput":
         _write_config_workbook(input_path, design_input=distribution_rows)
@@ -303,7 +308,7 @@ def test_that_missing_distribution_fields_report_the_field_and_source(
         _write_background_workbook(input_path, distribution_rows, None, sheet)
 
     with pytest.raises(ValueError, match=error) as exc_info:
-        excel_to_dict(input_path)
+        excel_to_config(input_path)
 
     message = str(exc_info.value).lower()
     if sheet == "backgroundsheet":
@@ -337,7 +342,7 @@ BACKGROUND_WITH_CORR = pd.DataFrame(
     ],
 )
 def test_that_invalid_background_correlation_sheet_raises_value_error(
-    tmp_path, index, columns, error
+    use_tmpdir, index, columns, error
 ):
     corr_matrix = pd.DataFrame(
         [[1.0, np.nan], [0.5, 1.0]],
@@ -345,23 +350,23 @@ def test_that_invalid_background_correlation_sheet_raises_value_error(
         columns=columns,
     )
     input_path = _write_background_workbook(
-        tmp_path / "designinput.xlsx",
+        "designinput.xlsx",
         BACKGROUND_WITH_CORR,
         corr_matrix,
         "backgroundsheet",
     )
 
     with pytest.raises(ValueError, match=error):
-        excel_to_dict(input_path)
+        excel_to_config(input_path)
 
 
-def test_that_missing_background_sheet_error_lists_available_sheets(tmp_path):
+def test_that_missing_background_sheet_error_lists_available_sheets(use_tmpdir):
     input_path = _write_background_workbook(
-        tmp_path / "designinput.xlsx", BACKGROUND_WITH_CORR, None, "typo_sheet"
+        "designinput.xlsx", BACKGROUND_WITH_CORR, None, "typo_sheet"
     )
 
     with pytest.raises(ValueError, match="Sheets in workbook") as exc_info:
-        excel_to_dict(input_path)
+        excel_to_config(input_path)
 
     message = str(exc_info.value)
     assert "typo_sheet" in message
@@ -373,7 +378,7 @@ def test_that_missing_background_sheet_error_lists_available_sheets(tmp_path):
     "background_name", ["Backgroundsheet", "background_sheet", " backgroundsheet "]
 )
 def test_that_background_sheet_matching_ignores_case_underscores_and_whitespace(
-    tmp_path, background_name
+    use_tmpdir, background_name
 ):
     corr_matrix = pd.DataFrame(
         [[1.0, np.nan], [0.5, 1.0]],
@@ -381,13 +386,13 @@ def test_that_background_sheet_matching_ignores_case_underscores_and_whitespace(
         columns=["PARAM_A", "PARAM_B"],
     )
     input_path = _write_background_workbook(
-        tmp_path / "designinput.xlsx",
+        "designinput.xlsx",
         BACKGROUND_WITH_CORR,
         corr_matrix,
         background_name,
     )
 
-    background = excel_to_dict(input_path)["background"]
+    background = excel_to_config(input_path).background
     assert list(background["parameters"]) == ["PARAM_A", "PARAM_B"]
     assert background["correlations"]["sheetnames"] == ["bgcorr"]
 
@@ -406,16 +411,18 @@ def test_that_missing_background_csv_file_raises_value_error(use_tmpdir):
         "specified in the general input sheet, "
         "was not found in 'designinput.xlsx'.",
     ):
-        excel_to_dict(input_path)
+        excel_to_config(input_path)
 
 
 @pytest.mark.parametrize("background_name", ["None", "none", np.nan])
-def test_that_none_like_background_names_disable_background(tmp_path, background_name):
+def test_that_none_like_background_names_disable_background(
+    use_tmpdir, background_name
+):
     input_path = _write_background_workbook(
-        tmp_path / "designinput.xlsx", BACKGROUND_WITH_CORR, None, background_name
+        "designinput.xlsx", BACKGROUND_WITH_CORR, None, background_name
     )
 
-    assert excel_to_dict(input_path)["background"] is None
+    assert excel_to_config(input_path).background is None
 
 
 def test_that_assert_no_merged_cells_rejects_merged_cells(tmp_path):
@@ -432,7 +439,7 @@ def test_that_assert_no_merged_cells_rejects_merged_cells(tmp_path):
         _assert_no_merged_cells(input_path)
 
 
-def test_that_excel_to_dict_preserves_seed_strategy(tmp_path):
+def test_that_excel_to_design_preserves_seed_strategy(use_tmpdir):
     general = pd.DataFrame(
         data=[
             ["designtype", "onebyone"],
@@ -447,12 +454,12 @@ def test_that_excel_to_dict_preserves_seed_strategy(tmp_path):
         data=[["sensname", "numreal", "type", "param_name"], ["rms_seed", "", "seed"]]
     )
     input_path = _write_config_workbook(
-        tmp_path / "designinput.xlsx",
+        "designinput.xlsx",
         general_input=general,
         design_input=designinput,
     )
-    dict_design = excel_to_dict(input_path)
-    assert dict_design["seed_strategy"] == "independent"
+    dict_design = excel_to_config(input_path)
+    assert dict_design.seed_strategy == "independent"
 
 
 def _write_dependency_workbook(path, rows):
@@ -680,3 +687,34 @@ def test_that_dependency_sheet_without_source_parameter_raises_value_error(
             sheetname="dependencies",
             from_parameter="SOURCE",
         )
+
+
+def test_that_config_to_yaml_does_not_dump_python_specific_content(use_tmpdir):
+    design_config = full_mc_configuration(Path("foo.xlsx"))
+    config_to_yaml(design_config, "dump.yaml")
+    yaml_content = Path("dump.yaml").read_text(encoding="utf-8")
+    assert "config_validation.SeedStrategy" not in yaml_content
+    assert "!!python/object" not in yaml_content
+    assert "design_config.DesignConfig" not in yaml_content
+    assert "_pydantic_" not in yaml_content
+
+
+def test_that_config_to_roundtrip_recreates_design_config(use_tmpdir):
+    design_config = full_mc_configuration(Path("foo.xlsx"))
+    config_to_yaml(design_config, "dump.yaml")
+    yaml = YAML()
+    yaml_content = yaml.load(Path("dump.yaml").read_text(encoding="utf-8"))
+    assert design_config == DesignConfig(**yaml_content)
+
+
+def test_that_empty_rms_seeds_file_raises_value_error(use_tmpdir):
+    empty_file = "seeds.txt"
+    Path(empty_file).touch()
+    general_input = MOCK_GENERAL_INPUT.copy()
+    general_input.loc[len(MOCK_GENERAL_INPUT)] = ["rms_seeds", empty_file]
+
+    design_file = "foo.xlsx"
+    _write_config_workbook(path=design_file, general_input=general_input)
+
+    with pytest.raises(ValueError, match="at least one seed"):
+        excel_to_config(design_file)

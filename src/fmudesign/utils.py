@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import polars as pl
+from polars.exceptions import NoDataError
 from python_calamine import CalamineWorkbook
 
 
@@ -50,14 +51,22 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
     or csv/txt file. Blank cells and lines are skipped.
 
     Args:
-        filename (str): name of file
+        filename (Path | str): name of file
     """
     if str(filename).endswith(".xlsx"):
         seeds = pl.read_excel(
             filename, has_header=False, read_options={"dtypes": "string"}
         ).to_series(0)
     elif str(filename).endswith((".csv", ".txt")):
-        seeds = pl.read_csv(filename, has_header=False, infer_schema=False).to_series(0)
+        try:
+            seeds = pl.read_csv(
+                filename, has_header=False, infer_schema=False
+            ).to_series(0)
+        except NoDataError:
+            raise ValueError(
+                f"rms_seeds file '{filename}' contains no data. "
+                f"rms_seeds file must contain at least one seed."
+            ) from None
     else:
         raise ValueError(
             "External file with seed values should "
