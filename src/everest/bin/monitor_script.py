@@ -11,11 +11,11 @@ from ert.services.ert_client import ErtClient
 from ert.storage import ErtStorageException, ExperimentState
 from everest.config import EverestConfig, ServerConfig
 
+from .monitor import run_server_monitor
 from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
-    run_server_monitor,
     setup_logging,
 )
 
