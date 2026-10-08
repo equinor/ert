@@ -9,8 +9,8 @@ import xlsxwriter
 from hypothesis import assume, given
 from pydantic import TypeAdapter, ValidationError
 
-from fmudesign.config_validation import SeedStrategy
 from fmudesign.general_input import GeneralInput
+from fmudesign.seed_strategy import SeedStrategy
 
 PYDANTIC_PATH_ERROR = "Path does not point to a file|Input is not a valid path"
 
@@ -513,3 +513,10 @@ def test_that_from_xlsx_constructs_general_input_from_excel_values(
     assert gi.distribution_seed == distribution_seed
     assert gi.correlation_iterations == correlation_iterations
     assert gi.seed_strategy == seed_strategy
+
+
+def test_that_seed_strategy_input_is_stripped_of_whitespace():
+    cfg = base_general_input_dict() | {"seed_strategy": "  independent  "}
+    stream = _rows_to_xlsx_bytestream([list(kv) for kv in cfg.items()])
+    gi = GeneralInput.from_xlsx(stream, "general_input")
+    assert gi.seed_strategy == SeedStrategy.INDEPENDENT

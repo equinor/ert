@@ -2,13 +2,14 @@
 
 import math
 from collections import Counter
-from collections.abc import Hashable, Iterable
+from collections.abc import Callable, Hashable, Iterable
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import polars as pl
+from polars.exceptions import NoDataError
 from python_calamine import CalamineWorkbook
 
 
@@ -50,20 +51,28 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
     or csv/txt file. Blank cells and lines are skipped.
 
     Args:
-        filename (str): name of file
+        filename (Path | str): name of file
     """
     if str(filename).endswith(".xlsx"):
-        seeds = pl.read_excel(
-            filename, has_header=False, read_options={"dtypes": "string"}
-        ).to_series(0)
+        reader: Callable[..., pl.DataFrame] = pl.read_excel
+        kwargs: dict[str, Any] = {"read_options": {"dtypes": "string"}}
     elif str(filename).endswith((".csv", ".txt")):
-        seeds = pl.read_csv(filename, has_header=False, infer_schema=False).to_series(0)
+        reader = pl.read_csv
+        kwargs = {"infer_schema": False}
     else:
         raise ValueError(
             "External file with seed values should "
             "be on Excel or csv format "
             "and end with .xlsx .csv or .txt"
         )
+
+    try:
+        seeds = reader(filename, has_header=False, **kwargs).to_series(0)
+    except NoDataError:
+        raise ValueError(
+            f"rms_seeds file '{filename}' contains no data. "
+            f"rms_seeds file must contain at least one seed."
+        ) from None
 
     seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
     try:
@@ -72,15 +81,6 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
         raise ValueError(
             f"Seed values in {str(filename)!r} must be integers: {err}"
         ) from err
-
-
-def find_max_realisations(config: dict[str, Any]) -> int:
-    """Finds the maximum number of realisations over all sensitivity cases."""
-    max_reals = config.get("repeats", 0)
-    for sens_info in config["sensitivities"].values():
-        max_reals = max(sens_info.get("numreal", 0), max_reals)
-    assert max_reals > 0
-    return max_reals
 
 
 def printwarning(corr_group_name: str) -> None:
