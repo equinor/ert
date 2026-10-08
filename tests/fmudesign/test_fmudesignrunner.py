@@ -121,7 +121,7 @@ def _mock_design_generation(monkeypatch):
     def noop(*_args, **_kwargs):
         pass
 
-    monkeypatch.setattr(fmudesignrunner, "excel_to_dict", noop)
+    monkeypatch.setattr(fmudesignrunner, "excel_to_config", noop)
     monkeypatch.setattr(DesignMatrix, "_generate", noop)
     monkeypatch.setattr(DesignMatrix, "to_xlsx", noop)
 
@@ -265,7 +265,7 @@ def test_that_run_rejects_output_matching_input_after_adding_xlsx_suffix(
     args = parser.parse_args(["run", str(input_path), str(input_path.with_suffix(""))])
     monkeypatch.setattr(
         fmudesignrunner,
-        "excel_to_dict",
+        "excel_to_config",
         lambda *args, **kwargs: pytest.fail("Input workbook was parsed"),
     )
 
