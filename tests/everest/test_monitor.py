@@ -19,8 +19,11 @@ from ert.ensemble_evaluator.snapshot import EnsembleSnapshotMetadata
 from ert.resources import all_shell_script_fm_steps
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.services import ErtClient
-from everest.bin.utils import run_empty_server_monitor, run_server_monitor
-from everest.everserver.client import start_monitor
+from everest.bin.monitor import (
+    run_empty_server_monitor,
+    run_server_monitor,
+    start_monitor,
+)
 from everest.strings import SIM_PROGRESS_ID
 from tests.ert.utils import SnapshotBuilder
 
