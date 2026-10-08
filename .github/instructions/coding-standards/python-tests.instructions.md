@@ -3,18 +3,22 @@ applyTo: '**/*.py'
 description: 'Python test code authoring conventions'
 ---
 
-# Python Test Instructions
+# Python test instructions
 
 Conventions for Python test code.
 
-## Test Framework
+## Test framework
 
 * Use `pytest` for writing and running tests.
+* Don't test private (_-prefixed) helpers, trivial properties or constants directly.
+* Don't add tests for logic that higher-level tests already cover.
+* Prefer a few meaningful tests over one test per line of code.
+* One behavior per test; several assertions on that behavior are fine.
 * Tests should be self-contained, no shared mutable state, fixtures for clean environments, deterministic, fast.
 * Test observable behavior, not implementation details; a test should survive a refactor that preserves behavior.
 * Assertions should produce clear failure messages; compare concrete values so pytest can show the diff (`assert result == 42`, not `assert is_valid(result)`) and add a message when the comparison alone does not explain the failure.
 
-## Mocking Libraries
+## Mocking libraries
 
 | Library                        | Usage                                                  |
 |--------------------------------|--------------------------------------------------------|
@@ -28,7 +32,7 @@ Conventions for Python test code.
 * `monkeypatch.setattr()` — simple attribute overrides (constants, config values, environment variables) where return tracking is not needed.
 * Direct `MagicMock()` import — acceptable for constructing pure test data stubs (mock objects used as constructor arguments, not as spy/assert targets).
 
-## Test Naming
+## Test naming
 
 Rationale: `pytest --collect-only tests/` output should be self-explanatory.
 
@@ -45,7 +49,6 @@ test_that_setenv_does_not_expand_envvar
 test_that_new_line_can_be_escaped
 test_that_unknown_queue_option_gives_error_message
 test_that_config_path_substitution_is_the_name_of_the_configs_directory
-test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given
 ```
 
 Poor examples (vague or not behavior-focused):
@@ -58,28 +61,31 @@ test_print_progress
 test_bad_user_config_file_error_message
 ```
 
-Prefer one assertion per test. Related assertions validating the same behavior are acceptable. Do not verify logger mocks.
+* Use `@pytest.mark.parametrize` for data-driven tests with multiple input/output combinations. If setting multiple cases in `@pytest.mark.parametrize`, use `id=` for meaningful case names.
 
-Use `@pytest.mark.parametrize` for data-driven tests with multiple input/output combinations.
-If setting multiple cases in `@pytest.mark.parametrize`, use `id=` for meaningful case names.
+* Avoid smells such as `works`, `correctly`, `as_expected`, `are_handled`, `handles`, `success`, `failure`.
+  Replace them with the explicit condition or outcome, e.g. `test_that_double_comments_are_handled` → `test_that_double_comments_are_ignored`.
+* Domain words such as `workflow_failure` should not be considered vague; they should clearly convey the specific condition or outcome being tested.
 
-Test names including `works`, `correctly`, `as_expected`, `are_handled`, `handles`, `success`, `failure` are explicitly banned.
-Replace them with the explicit condition or outcome, e.g. `test_that_double_comments_are_handled` → `test_that_double_comments_are_ignored`.
-
-## Test Organization
-
+## Test organization
+* All tests should be placed under the `tests/` directory.
+* Mirror the source layout, e.g. src/ert/<path>/<module>.py → tests/ert/unit_tests/<path>/test_<module>.py; Everest tests go in everest, fmudesign tests in fmudesign.
 * File naming mirrors module under test with `test_` prefix (for example, `_read_summary.py` → `test_read_summary.py`).
 * Fixtures in `conftest.py` when shared across multiple test files.
-* Class-based grouping optional; use when tests share setup logic.
-* Group test methods by behavior, alphabetically within groups.
-* Common mock setup in fixtures or class-level setup; specific setup in individual tests.
 
-## Test Categories
+
+## Test categories
 
 * `unit_tests` must be exceptionally fast/reliable; mark `slow`, `unreliable`, `high_utilization` otherwise.
 * `ui_tests` test user-visible workflows (actions and resulting UI/CLI state); do not duplicate logic assertions already covered by unit tests.
 * `performance_tests` guard runtime/memory.
 * Fuzz/hypothesis coverage expected for data-integrity code (`ert.storage`, `ert.field_utils`, `ert.config._read_summary`).
+
+## Test data
+
+* Use `dedent` for file contents.
+* Use `# fmt: off` for tabular data.
+* Use realistic but round values and standard dates unless the odd value is what's being tested.
 
 ## Hypothesis
 
@@ -110,7 +116,7 @@ def test_that_reverse_preserves_length(xs):
     assert len(xs) == len(reverse(xs))
 ```
 
-## pytest-mock Patterns
+## pytest-mock patterns
 
 The `mocker` fixture from pytest-mock replaces direct `unittest.mock` usage. These patterns show each migration.
 
@@ -242,7 +248,7 @@ def test_that_the_output_formatter_accepts_any_writer():
     assert result == "hello"
 ```
 
-## Complete Example
+## Complete example
 
 A full test module using the mocker fixture and naming conventions:
 
