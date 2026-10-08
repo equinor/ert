@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from unittest.mock import patch
 
 import polars as pl
@@ -36,7 +37,9 @@ def test_that_analysis_config_with_design_matrix_survives_json_round_trip(tmp_pa
     assert restored.design_matrix == analysis_config.design_matrix
 
 
-def test_that_merged_design_matrices_survive_json_round_trip(tmp_path):
+def test_that_merged_design_matrices_can_be_restored_without_the_source_files(
+    tmp_path,
+):
     _create_design_matrix(
         tmp_path / "first.xlsx",
         pl.DataFrame({"REAL": [0, 1, 2], "a": [1.0, 2.0, 3.0]}),
@@ -54,13 +57,14 @@ def test_that_merged_design_matrices_survive_json_round_trip(tmp_path):
         }
     )
     adapter = TypeAdapter(AnalysisConfig)
+    serialized = adapter.dump_python(analysis_config, mode="json")
+    (tmp_path / "first.xlsx").unlink()
+    (tmp_path / "second.xlsx").unlink()
 
-    restored = adapter.validate_python(
-        adapter.dump_python(analysis_config, mode="json")
-    )
+    restored = adapter.validate_python(serialized)
 
-    original_dm = analysis_config.design_matrix
     restored_dm = restored.design_matrix
+    original_dm = analysis_config.design_matrix
     assert original_dm is not None
     assert restored_dm is not None
     assert [p.name for p in restored_dm.parameter_configurations] == ["a", "b"]
@@ -84,10 +88,26 @@ def test_that_design_matrices_cannot_be_merged_into_each_other_circularly(tmp_pa
     with pytest.raises(ConfigValidationError, match="same name"):
         second.merge_with_other(first)
 
-    assert second.additional_matrices == []
     TypeAdapter(AnalysisConfig).dump_python(
         AnalysisConfig(design_matrix=first), mode="json"
     )
+
+
+def test_that_circular_design_matrices_are_serializable(tmp_path):
+    names = ["foo", "bar", "baz"]
+    for name, param in zip(names, ["a", "b", "c"], strict=True):
+        _create_design_matrix(
+            tmp_path / f"{name}.xlsx",
+            pl.DataFrame({"REAL": [0, 1], param: [1.0, 2.0]}),
+        )
+    first, second, third = (
+        DesignMatrix(tmp_path / f"{name}.xlsx", "DesignSheet", None) for name in names
+    )
+    first.merge_with_other(second)
+    second.merge_with_other(third)
+    third.merge_with_other(first)
+
+    asdict(first)
 
 
 def test_that_categorical_design_matrix_parameters_are_excluded_from_update(tmp_path):
