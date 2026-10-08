@@ -30,7 +30,9 @@ from ert.gui.ertwidgets import (
     ValueModel,
     get_parameters_button,
 )
-from ert.gui.ertwidgets.models.parameter_configuration import ParameterConfiguration
+from ert.gui.ertwidgets.models.parameter_update_draft_model import (
+    ParameterUpdateDraftModel,
+)
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.storage.local_experiment import ExperimentType
@@ -169,7 +171,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         design_matrix = analysis_config.design_matrix
 
-        self._parameter_state = ParameterConfiguration(
+        self._parameter_state = ParameterUpdateDraftModel(
             parameter_configuration
             if design_matrix is None
             else design_matrix.merge_with_existing_parameters(parameter_configuration)
@@ -277,7 +279,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def active_parameters(self) -> list[ParameterConfig] | None:
         return (
             self._parameter_state.parameters
-            if self._parameter_state.available
+            if self._parameter_state.has_parameter_source
             else None
         )
 
@@ -297,15 +299,20 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         selected = self._select_prior_ensemble_box.isChecked()
         ensemble = self._selected_prior_ensemble
         try:
-            self._parameter_state.select_prior(
-                selected,
-                str(ensemble.id) if ensemble is not None else None,
-                ensemble.experiment.parameter_configuration.values()
-                if ensemble is not None
-                else (),
-            )
+            if selected:
+                self._parameter_state.select_prior(
+                    str(ensemble.id) if ensemble is not None else None,
+                    ensemble.experiment.parameter_configuration.values()
+                    if ensemble is not None
+                    else (),
+                )
+            else:
+                self._parameter_state.use_configured_parameters()
         except OSError as err:
-            self._parameter_state.select_prior(selected)
+            if selected:
+                self._parameter_state.select_prior(None, ())
+            else:
+                self._parameter_state.use_configured_parameters()
             logger.error(str(err))
             Suggestor(
                 errors=[ErrorInfo(str(err))],
@@ -515,7 +522,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     @property
     def _selected_param_configuration_is_valid(self) -> bool:
-        return self._parameter_state.available and has_updatable_parameters(
+        return self._parameter_state.has_parameter_source and has_updatable_parameters(
             self._parameter_state.parameters
         )
 
@@ -534,7 +541,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     @override
     def get_experiment_arguments(self) -> Arguments:
-        if not self._parameter_state.available:
+        if not self._parameter_state.has_parameter_source:
             raise ValueError("Select an available prior ensemble before running")
         return Arguments(
             mode=ES_MDA_MODE,

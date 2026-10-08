@@ -22,7 +22,9 @@ from ert.gui.ertwidgets import (
     CopyableLabel,
     get_parameters_button,
 )
-from ert.gui.ertwidgets.models.parameter_configuration import ParameterConfiguration
+from ert.gui.ertwidgets.models.parameter_update_draft_model import (
+    ParameterUpdateDraftModel,
+)
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
 from ert.run_models.ensemble_smoother import DEPRECATION_MESSAGE
@@ -115,7 +117,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         design_matrix = analysis_config.design_matrix
-        self._parameter_state = ParameterConfiguration(
+        self._parameter_state = ParameterUpdateDraftModel(
             parameter_configuration
             if design_matrix is None
             else design_matrix.merge_with_existing_parameters(parameter_configuration)

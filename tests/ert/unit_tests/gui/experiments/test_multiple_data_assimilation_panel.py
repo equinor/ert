@@ -79,9 +79,13 @@ def test_that_prior_viewer_summary_and_reset_use_the_same_isolated_draft(qtbot):
         parameter_configuration={"stored": stored},
     )
     panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
-    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    panel._parameter_state.apply_strategies_by_type(
+        {"gen_kw": LocalizationType.ADAPTIVE}
+    )
     panel._select_prior_ensemble_box.setChecked(True)
-    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    panel._parameter_state.apply_strategies_by_type(
+        {"gen_kw": LocalizationType.ADAPTIVE}
+    )
 
     notifier.ertChanged.emit()
     assert panel.get_experiment_arguments().parameter_update_overrides == {
@@ -98,7 +102,7 @@ def test_that_prior_viewer_summary_and_reset_use_the_same_isolated_draft(qtbot):
         node = dialog.tree_widget.topLevelItem(0).child(0)
         assert node.text(0) == "stored"
         assert node.child(0).text(0) == "Update: adaptive"
-        panel._parameter_state.reset()
+        panel._parameter_state.reset_all_overrides()
         node = dialog.tree_widget.topLevelItem(0).child(0)
         assert node.child(0).text(0) == "Update: global"
         dialog.accept()
@@ -167,11 +171,15 @@ def test_that_bottom_parameter_summary_follows_only_the_active_panel(qtbot):
     panel._select_prior_ensemble_box.setChecked(True)
     summary = experiment_panel.configuration_summary
     assert "stored_group" in summary._parameter_label.text()
-    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    panel._parameter_state.apply_strategies_by_type(
+        {"gen_kw": LocalizationType.ADAPTIVE}
+    )
     assert summary._parameters == panel.active_parameters
 
     smoother = experiment_panel.findChild(EnsembleSmootherPanel)
-    smoother._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    smoother._parameter_state.apply_strategies_by_type(
+        {"gen_kw": LocalizationType.ADAPTIVE}
+    )
     assert summary._parameters == panel.active_parameters
     panel._select_prior_ensemble_box.setChecked(False)
     assert "stored_group" not in summary._parameter_label.text()

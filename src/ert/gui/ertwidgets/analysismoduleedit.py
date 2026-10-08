@@ -16,7 +16,7 @@ from ert.config import ESSettings, LocalizationType, ParameterConfig
 from ert.gui.icon_utils import load_icon
 
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from .models.parameter_configuration import ParameterConfiguration
+from .models.parameter_update_draft_model import ParameterUpdateDraftModel
 
 
 class AnalysisModuleEdit(QWidget):
@@ -25,7 +25,7 @@ class AnalysisModuleEdit(QWidget):
     def __init__(
         self,
         es_settings: ESSettings,
-        parameter_config: list[ParameterConfig] | ParameterConfiguration,
+        parameter_config: list[ParameterConfig] | ParameterUpdateDraftModel,
         ensemble_size: int,
     ) -> None:
         QWidget.__init__(self)
@@ -33,8 +33,8 @@ class AnalysisModuleEdit(QWidget):
         self._es_settings: ESSettings = es_settings
         self.parameter_state = (
             parameter_config
-            if isinstance(parameter_config, ParameterConfiguration)
-            else ParameterConfiguration(parameter_config)
+            if isinstance(parameter_config, ParameterUpdateDraftModel)
+            else ParameterUpdateDraftModel(parameter_config)
         )
         self._ensemble_size: int = ensemble_size
 
@@ -52,11 +52,11 @@ class AnalysisModuleEdit(QWidget):
             "Restore configured and selected-prior parameter localizations. "
             "General settings are unchanged."
         )
-        reset_button.clicked.connect(self.parameter_state.reset)
+        reset_button.clicked.connect(self.parameter_state.reset_all_overrides)
         layout.addWidget(reset_button)
 
         def refresh_buttons() -> None:
-            variables_popup_button.setEnabled(self.parameter_state.available)
+            variables_popup_button.setEnabled(self.parameter_state.has_parameter_source)
             reset_button.setEnabled(self.parameter_state.has_changes)
 
         self.parameter_state.changed.connect(refresh_buttons)
@@ -142,7 +142,7 @@ class AnalysisModuleEdit(QWidget):
             )
             self._es_settings.enkf_truncation = update_settings_dialog.enkf_truncation
             selected_strategies = update_settings_dialog.update_strategies
-            self.parameter_state.apply_strategies(
+            self.parameter_state.apply_strategies_by_type(
                 {
                     name.lower(): strategy
                     for name, strategy in selected_strategies.items()

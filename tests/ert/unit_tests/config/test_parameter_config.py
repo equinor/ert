@@ -1,6 +1,10 @@
 import pytest
 
 from ert.config import LocalizationType, ParameterConfig, has_updatable_parameters
+from ert.config.parameter_config import (
+    apply_parameter_update_overrides,
+    supported_localization_types,
+)
 
 
 def test_that_has_updatable_parameters_is_false_for_empty_parameter_list():
@@ -43,3 +47,38 @@ def test_that_has_updatable_parameters_is_true_when_any_parameter_is_updatable(
         else [updatable_parameter]
     )
     assert has_updatable_parameters(parameter_configs)
+
+
+@pytest.mark.parametrize(
+    ("parameter_type", "expected"),
+    [
+        ("gen_kw", {LocalizationType.GLOBAL, LocalizationType.ADAPTIVE}),
+        ("field", set(LocalizationType)),
+        ("surface", set(LocalizationType)),
+    ],
+)
+def test_that_localization_capabilities_exclude_distance_only_for_gen_kw(
+    parameter_type, expected
+):
+    assert supported_localization_types(parameter_type) == expected
+
+
+@pytest.mark.parametrize("parameter_index", [0, 1, 2])
+@pytest.mark.parametrize("strategy", list(LocalizationType))
+def test_that_override_validation_enforces_localization_capabilities(
+    non_updatable_parameter_configs: list[ParameterConfig],
+    parameter_index: int,
+    strategy: LocalizationType,
+):
+    parameter = non_updatable_parameter_configs[parameter_index].model_copy(
+        update={"update_strategy": LocalizationType.GLOBAL}
+    )
+    if strategy in supported_localization_types(parameter.type):
+        updated = apply_parameter_update_overrides(
+            [parameter], {parameter.name: strategy}
+        )
+        assert updated[0].update_strategy == strategy
+    else:
+        with pytest.raises(ValueError, match="localization is not supported"):
+            apply_parameter_update_overrides([parameter], {parameter.name: strategy})
+    assert parameter.update_strategy == LocalizationType.GLOBAL

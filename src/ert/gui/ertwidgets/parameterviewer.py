@@ -14,7 +14,9 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ParameterConfig
-from ert.gui.ertwidgets.models.parameter_configuration import ParameterConfiguration
+from ert.gui.ertwidgets.models.parameter_update_draft_model import (
+    ParameterUpdateDraftModel,
+)
 
 
 class ParametersViewer(QDialog):
@@ -137,7 +139,7 @@ class ParametersViewer(QDialog):
 
 
 def get_parameters_button(
-    parameter_configurations: list[ParameterConfig] | ParameterConfiguration,
+    parameter_configurations: list[ParameterConfig] | ParameterUpdateDraftModel,
     parent: QWidget,
 ) -> QHBoxLayout:
     parameter_viewer_button = QPushButton("Show parameters")
@@ -145,11 +147,11 @@ def get_parameters_button(
     parameter_viewer_button.clicked.connect(
         lambda: _show_parameter_viewer(parameter_configurations, parent)
     )
-    if isinstance(parameter_configurations, ParameterConfiguration):
+    if isinstance(parameter_configurations, ParameterUpdateDraftModel):
 
         def refresh_button() -> None:
             parameter_viewer_button.setEnabled(
-                parameter_configurations.available
+                parameter_configurations.has_parameter_source
                 and bool(parameter_configurations.parameters)
             )
 
@@ -163,10 +165,10 @@ def get_parameters_button(
 
 
 def _show_parameter_viewer(
-    parameter_configurations: list[ParameterConfig] | ParameterConfiguration,
+    parameter_configurations: list[ParameterConfig] | ParameterUpdateDraftModel,
     parent: QWidget,
 ) -> None:
-    if isinstance(parameter_configurations, ParameterConfiguration):
+    if isinstance(parameter_configurations, ParameterUpdateDraftModel):
         parameter_dialog = ParametersViewer(parameter_configurations.parameters, parent)
 
         def refresh_dialog() -> None:

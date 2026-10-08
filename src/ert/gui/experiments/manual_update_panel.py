@@ -20,7 +20,9 @@ from ert.gui.ertwidgets import (
     Suggestor,
     TextModel,
 )
-from ert.gui.ertwidgets.models.parameter_configuration import ParameterConfiguration
+from ert.gui.ertwidgets.models.parameter_update_draft_model import (
+    ParameterUpdateDraftModel,
+)
 from ert.gui.experiments._panel_utils import create_target_ensemble_format_field
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
@@ -93,7 +95,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         ) = create_target_ensemble_format_field(analysis_config, notifier)
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
-        self._parameter_state = ParameterConfiguration(parameter_configuration)
+        self._parameter_state = ParameterUpdateDraftModel(parameter_configuration)
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
             parameter_config=self._parameter_state,
@@ -158,14 +160,13 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         ensemble = self._ensemble_selector.selected_ensemble
         try:
             self._parameter_state.select_prior(
-                True,
                 str(ensemble.id) if ensemble is not None else None,
                 ensemble.experiment.parameter_configuration.values()
                 if ensemble is not None
                 else (),
             )
         except OSError as err:
-            self._parameter_state.select_prior(True)
+            self._parameter_state.select_prior(None, ())
             logger.error(str(err))
             Suggestor(
                 errors=[ErrorInfo(str(err))],
@@ -176,7 +177,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     @property
     @override
     def active_parameters(self) -> list[ParameterConfig] | None:
-        if not self._parameter_state.available:
+        if not self._parameter_state.has_parameter_source:
             return None
         if self.selected_update_method != "ES Update":
             ensemble = self._ensemble_selector.selected_ensemble
@@ -201,14 +202,14 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
-            and self._parameter_state.available
+            and self._parameter_state.has_parameter_source
             and has_updatable_parameters(self.active_parameters or [])
         )
 
     @override
     def get_experiment_arguments(self) -> Arguments:
         prior_id = self._parameter_state.prior_id
-        if not self._parameter_state.available or prior_id is None:
+        if not self._parameter_state.has_parameter_source or prior_id is None:
             raise ValueError("Select an available ensemble before running")
         return Arguments(
             mode=MANUAL_UPDATE_MODE

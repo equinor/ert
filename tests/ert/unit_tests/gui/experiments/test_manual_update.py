@@ -33,7 +33,9 @@ def test_that_manual_update_initializes_from_prior_and_hides_es_edits_from_enif(
     qtbot.addWidget(panel)
     assert panel.active_parameters == [prior_parameter]
     assert panel.isConfigurationValid()
-    panel._parameter_state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    panel._parameter_state.apply_strategies_by_type(
+        {"gen_kw": LocalizationType.ADAPTIVE}
+    )
     assert panel.get_experiment_arguments().parameter_update_overrides == {
         "prior": LocalizationType.ADAPTIVE
     }

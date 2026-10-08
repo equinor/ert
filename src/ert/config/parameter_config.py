@@ -25,6 +25,12 @@ class LocalizationType(StrEnum):
     DISTANCE = "distance"
 
 
+def supported_localization_types(parameter_type: str) -> frozenset[LocalizationType]:
+    if parameter_type == "gen_kw":
+        return frozenset({LocalizationType.GLOBAL, LocalizationType.ADAPTIVE})
+    return frozenset(LocalizationType)
+
+
 class InvalidParameterFile(Exception):
     """
     Raised when a parameter file does not fulfill its
@@ -194,9 +200,10 @@ def apply_parameter_update_overrides[P: ParameterConfig](
             raise ValueError(
                 f"Cannot update non-updatable parameter '{parameter.name}'"
             )
-        if parameter.type == "gen_kw" and strategy == LocalizationType.DISTANCE:
+        if strategy not in supported_localization_types(parameter.type):
             raise ValueError(
-                f"Distance localization is not supported for GenKW '{parameter.name}'"
+                f"{strategy.name.title()} localization is not supported for "
+                f"parameter '{parameter.name}' of type '{parameter.type}'"
             )
         parameter.update_strategy = strategy
     return result

@@ -4,8 +4,29 @@ from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QMessageBox, QPush
 from pytestqt.qtbot import QtBot
 
 from ert.config import ESSettings, GenKwConfig, LocalizationType
+from ert.config.parameter_config import supported_localization_types
 from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
+
+
+def test_that_localization_choices_match_parameter_type_capabilities(qtbot: QtBot):
+    parameter_types = ["gen_kw", "field", "surface"]
+    panel = AnalysisModuleVariablesPanel(
+        update_strategies={
+            parameter_type.upper(): LocalizationType.GLOBAL
+            for parameter_type in parameter_types
+        },
+        correlation_threshold=0.5,
+        enkf_truncation=0.9,
+    )
+    qtbot.addWidget(panel)
+    for parameter_type, combobox in zip(
+        parameter_types, panel.findChildren(QComboBox), strict=True
+    ):
+        assert {
+            combobox.itemData(index, Qt.ItemDataRole.UserRole)
+            for index in range(combobox.count())
+        } == supported_localization_types(parameter_type)
 
 
 @pytest.mark.timeout(10)
@@ -54,7 +75,7 @@ def test_that_a_changed_parameter_source_rejects_pending_dialog_edits(
         dialog = QApplication.activeModalWidget()
         panel = dialog.findChild(AnalysisModuleVariablesPanel)
         panel._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
-        widget.parameter_state.select_prior(True, "prior", [parameter])
+        widget.parameter_state.select_prior("prior", [parameter])
         dialog.accept()
 
     QTimer.singleShot(0, change_source_and_accept)
@@ -70,15 +91,15 @@ def test_that_reset_button_restores_configured_and_prior_drafts(qtbot):
     widget = AnalysisModuleEdit(ESSettings(), [parameter], 3)
     qtbot.addWidget(widget)
     state = widget.parameter_state
-    state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
-    state.select_prior(True, "prior", [parameter])
-    state.apply_strategies({"gen_kw": LocalizationType.ADAPTIVE})
+    state.apply_strategies_by_type({"gen_kw": LocalizationType.ADAPTIVE})
+    state.select_prior("prior", [parameter])
+    state.apply_strategies_by_type({"gen_kw": LocalizationType.ADAPTIVE})
     reset = widget.findChild(QPushButton, "reset_parameter_changes")
     assert reset.isEnabled()
     reset.click()
     assert not reset.isEnabled()
     assert state.overrides == {}
-    state.select_prior(False)
+    state.use_configured_parameters()
     assert state.overrides == {}
 
 

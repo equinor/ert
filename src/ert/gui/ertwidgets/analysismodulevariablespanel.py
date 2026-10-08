@@ -14,17 +14,16 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import AnalysisModule, LocalizationType
+from ert.config.parameter_config import supported_localization_types
 
 
 class _LocalizationTypeModel(QStandardItemModel):
-    def __init__(self, exclude: set[LocalizationType] | None = None) -> None:
+    def __init__(self, parameter_type: str) -> None:
         super().__init__()
 
-        type_set = set(LocalizationType)
-        if exclude is not None:
-            type_set -= exclude
-
-        for localization_type in sorted(type_set, key=lambda lt: lt.name):
+        for localization_type in sorted(
+            supported_localization_types(parameter_type), key=lambda lt: lt.name
+        ):
             item = QStandardItem(localization_type.name)
             item.setData(localization_type, Qt.ItemDataRole.UserRole)
             self.appendRow(item)
@@ -51,9 +50,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
 
         gen_kw_combobox = QComboBox(self)
-        gen_kw_combobox.setModel(
-            _LocalizationTypeModel(exclude={LocalizationType.DISTANCE})
-        )
+        gen_kw_combobox.setModel(_LocalizationTypeModel("gen_kw"))
         gen_kw_combobox.setCurrentIndex(
             self._find_correct_index(gen_kw_combobox, "GEN_KW")
         )
@@ -66,7 +63,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow("GEN_KW", gen_kw_combobox)
 
         field_combobox = QComboBox(self)
-        field_combobox.setModel(_LocalizationTypeModel())
+        field_combobox.setModel(_LocalizationTypeModel("field"))
         field_combobox.setCurrentIndex(
             self._find_correct_index(field_combobox, "FIELD")
         )
@@ -79,7 +76,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow("FIELD", field_combobox)
 
         surface_combobox = QComboBox(self)
-        surface_combobox.setModel(_LocalizationTypeModel())
+        surface_combobox.setModel(_LocalizationTypeModel("surface"))
         surface_combobox.setCurrentIndex(
             self._find_correct_index(surface_combobox, "SURFACE")
         )
