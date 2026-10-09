@@ -132,7 +132,10 @@ class EnsembleEvaluator:
         self._publisher_receiving_timeout: float = 60.0
         self._evaluation_result: asyncio.Future[bool] = asyncio.Future()
         self._scheduler = Scheduler(
-            create_driver(self.ensemble._queue_config.queue_options),
+            create_driver(
+                self.ensemble._queue_config.queue_options,
+                max_runtime=self.ensemble._queue_config.max_runtime,
+            ),
             self.ensemble.active_reals,
             self._manifest_queue,
             self._events,
