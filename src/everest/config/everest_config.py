@@ -43,6 +43,7 @@ from ert.config import (
     EverestObjectivesConfig,
     QueueSystem,
 )
+from ert.config.queue_config import SlurmQueueOptions
 from ert.plugins import get_site_plugins
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -551,6 +552,23 @@ class EverestConfig(BaseModelWithContextSupport):
     def validate_queue_system(self) -> Self:
         if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
+            # Avoid inheriting max_runtime from the simulator's queue system.
+            if isinstance(self.server.queue_system, SlurmQueueOptions):
+                self.server.queue_system.max_runtime = None
+
+        if (
+            isinstance(self.server.queue_system, SlurmQueueOptions)
+            and self.server.max_runtime is not None
+        ):
+            if self.server.queue_system.max_runtime is not None:
+                ConfigWarning.warn(
+                    f"Everest configuration server.max_runtime "
+                    f"{self.server.max_runtime} overrides "
+                    "max_runtime set in server.queue_system "
+                    f"{self.server.queue_system.max_runtime}"
+                )
+            self.server.queue_system.max_runtime = None
+
         if (
             str(self.simulator.queue_system.name).lower() == "local"  # type: ignore
             and str(self.server.queue_system.name).lower()  # type: ignore

@@ -3,6 +3,7 @@ import os
 import stat
 import sys
 import threading
+from contextlib import nullcontext
 from functools import partial
 from pathlib import Path
 from shutil import which
@@ -25,7 +26,10 @@ from ert.config.queue_config import (
 )
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
+from ert.scheduler import Driver, create_driver
 from ert.scheduler.event import FinishedEvent
+from ert.scheduler.lsf_driver import LsfDriver
+from ert.scheduler.slurm_driver import SlurmDriver
 from ert.services import ErtClient, SharedClient
 from ert.services.shared_client import ErtClientConnectionInfo
 from ert.utils import makedirs_if_needed
@@ -216,6 +220,77 @@ def test_find_queue_system(config_kwargs, expected_result):
 
     result = config.simulator
     assert result.queue_system.name == expected_result
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_that_server_max_runtime_does_not_copy_queue_system_max_runtime():
+    everest_config = everest_config_with_defaults(
+        simulator={"queue_system": {"name": "slurm", "max_runtime": 600}},
+    )
+    assert everest_config.server.max_runtime is None
+    assert isinstance(everest_config.server.queue_system, SlurmQueueOptions)
+    assert isinstance(everest_config.simulator.queue_system, SlurmQueueOptions)
+    assert everest_config.server.queue_system.max_runtime is None
+    assert everest_config.simulator.queue_system.max_runtime == 600
+
+
+@pytest.mark.parametrize(
+    ("server_config", "expected_max_runtime", "expected_warning"),
+    [
+        pytest.param(
+            {"queue_system": {"name": "slurm", "max_runtime": 300}, "max_runtime": 600},
+            600,
+            "Everest configuration server.max_runtime ",
+            id="server_max_runtime_overrides_queue_max_runtime",
+        ),
+        pytest.param(
+            {"queue_system": {"name": "slurm", "max_runtime": 300}},
+            300,
+            None,
+            id="queue_max_runtime_is_used_when_server_max_runtime_is_unset",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_that_server_max_runtime_takes_precedence_over_slurm_server_queue_max_runtime(
+    server_config, expected_max_runtime, expected_warning
+):
+    with (
+        pytest.warns(ConfigWarning, match=expected_warning)
+        if expected_warning
+        else nullcontext()
+    ):
+        config = everest_config_with_defaults(
+            server=server_config,
+            simulator={"queue_system": {"name": "slurm"}},
+        )
+    assert isinstance(config.server.queue_system, SlurmQueueOptions)
+    driver = create_driver(
+        config.server.queue_system, max_runtime=config.server.max_runtime
+    )
+
+    assert isinstance(driver, SlurmDriver)
+    assert driver._max_runtime == expected_max_runtime
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_that_server_max_runtime_is_passed_padded_to_lsf_driver():
+    max_runtime = 600
+    config = everest_config_with_defaults(
+        server={"queue_system": {"name": "lsf"}, "max_runtime": max_runtime},
+        simulator={"queue_system": {"name": "lsf"}},
+    )
+    assert isinstance(config.server.queue_system, LsfQueueOptions)
+    driver = create_driver(
+        config.server.queue_system, max_runtime=config.server.max_runtime
+    )
+
+    expected_minutes = (
+        max_runtime + Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS
+    ) // 60
+
+    assert isinstance(driver, LsfDriver)
+    assert driver._max_runtime == str(expected_minutes)
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
