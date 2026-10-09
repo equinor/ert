@@ -26,6 +26,7 @@ from resfo_utilities.testing import (
 
 from ert.cli.main import ErtCliError
 from ert.config import BreakthroughConfig, SummaryConfig
+from ert.config._observations import BreakthroughObservation
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -391,8 +392,13 @@ def test_that_breakthrough_observation_value_reflects_threshold_crossing_date(
     with open_storage("storage") as storage:
         experiment = next(iter(storage.experiments))
         prior = experiment.get_ensemble_by_name("default")
-        breakthrough_responses = prior.load_responses("breakthrough", (0, 1))
-        assert breakthrough_responses["values"].to_list() == expected_breakthrough_days
+        obs_and_responses = prior.get_observations_and_responses(
+            ["BRT_OBS"], np.array([0, 1])
+        )
+        assert [
+            obs_and_responses["0"].item(),
+            obs_and_responses["1"].item(),
+        ] == expected_breakthrough_days
 
 
 def test_that_breakthrough_values_are_recomputed_as_more_realizations_complete(
@@ -412,6 +418,8 @@ def test_that_breakthrough_values_are_recomputed_as_more_realizations_complete(
     start_date = case.start_date
     threshold = 0.9  # never reached by either realization
     breakthrough_obs_date = case.breakthrough_obs_date
+    obs_name = "BRT_OBS"
+    response_key = "WWCT:OP1"
 
     times_days0 = case.times_days0
     wwct_values0 = case.wwct_values0
@@ -420,16 +428,24 @@ def test_that_breakthrough_values_are_recomputed_as_more_realizations_complete(
 
     breakthrough_config = BreakthroughConfig(
         keys=["BREAKTHROUGH:WWCT:OP1"],
-        summary_keys=["WWCT:OP1"],
+        summary_keys=[response_key],
         thresholds=[threshold],
         observed_dates=[breakthrough_obs_date],
+    )
+
+    breakthrough_observation = BreakthroughObservation(
+        name=obs_name,
+        key=response_key,
+        date=breakthrough_obs_date,
+        error=10,
+        threshold=threshold,
     )
 
     def summary_response(realization: int, times_days: list[int], wwct_values):
         return pl.DataFrame(
             {
                 "realization": [realization] * len(times_days),
-                "response_key": ["WWCT:OP1"] * len(times_days),
+                "response_key": [response_key] * len(times_days),
                 "time": [start_date + timedelta(days=d) for d in times_days],
                 "values": wwct_values,
             }
@@ -444,6 +460,7 @@ def test_that_breakthrough_values_are_recomputed_as_more_realizations_complete(
                     ),
                     breakthrough_config.model_dump(mode="json"),
                 ],
+                "observations": [breakthrough_observation.model_dump(mode="json")],
             }
         )
         ensemble = storage.create_ensemble(
@@ -459,9 +476,10 @@ def test_that_breakthrough_values_are_recomputed_as_more_realizations_complete(
             "breakthrough", breakthrough_config.derive_from_storage(0, 1, ensemble), 1
         )
 
-        early_breakthrough_value = ensemble.load_responses("breakthrough", (1,))[
-            "values"
-        ].item()
+        early_breakthrough_value = ensemble.get_observations_and_responses(
+            [obs_name], np.array([1])
+        )["1"].item()
+
         early_expected_offset = (
             start_date + timedelta(days=times_days1[-1] + 1) - breakthrough_obs_date
         ).days
@@ -476,10 +494,17 @@ def test_that_breakthrough_values_are_recomputed_as_more_realizations_complete(
             "breakthrough", breakthrough_config.derive_from_storage(0, 0, ensemble), 0
         )
 
-        # Reloading both realizations' (already saved) breakthrough responses
-        # must reflect the *new* ensemble end date
-        updated_breakthrough = ensemble.load_responses("breakthrough", (0, 1))
+        # Recalculating update with both realizations' (already saved) breakthrough
+        # responses must reflect the *new* ensemble end date
+        updated_breakthrough = ensemble.get_observations_and_responses(
+            [obs_name], np.array([0, 1])
+        )
         updated_expected_offset = (
             start_date + timedelta(days=times_days0[-1] + 1) - breakthrough_obs_date
         ).days
-        assert updated_breakthrough["values"].to_list() == [updated_expected_offset] * 2
+        assert updated_breakthrough["0"].item() == pytest.approx(
+            updated_expected_offset
+        )
+        assert updated_breakthrough["1"].item() == pytest.approx(
+            updated_expected_offset
+        )

@@ -336,8 +336,8 @@ Required items are:
 
 The key must refer to an existing summary key available from the simulation output.
 
-Breakthrough observations are set to the day after :term:`ensemble end date` if
-``THRESHOLD`` is never reached for the given summary key.
+For the update step, breakthrough observations are set to the day after :term:`ensemble
+end date` if ``THRESHOLD`` is never reached for the given summary key.
 
 .. _general_observation:
 
