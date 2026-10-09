@@ -81,7 +81,7 @@ def test_that_export_and_import_are_inverses(
     )
 
 
-@pytest.mark.parametrize("code_type", ["int", "byte"])
+@pytest.mark.parametrize("code_type", ["int", "byte"], ids=str)
 def test_that_import_of_coded_parameter_gives_error_message(code_type):
     content = dedent(
         f"""roff-asc

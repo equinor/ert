@@ -68,7 +68,7 @@ def test_that_get_nr_primary_components_is_according_to_theory(p, rho, seed):
     assert get_nr_primary_components(Y, threshold_3 - 0.01) == 3
 
 
-@pytest.mark.parametrize("nr_observations", [4, 7, 12])
+@pytest.mark.parametrize("nr_observations", [4, 7, 12], ids=str)
 def test_that_correlated_and_independent_observations_are_grouped_separately(
     nr_observations,
 ):

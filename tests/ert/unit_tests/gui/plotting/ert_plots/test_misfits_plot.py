@@ -344,7 +344,7 @@ def test_that_mean_gets_plotted_for_summary_data_when_enabled(
     assert len(axes_lines) == 2  # mean line + hline
 
 
-@pytest.mark.parametrize("enabled", [True, False])
+@pytest.mark.parametrize("enabled", [True, False], ids=str)
 def test_that_legend_items_for_summary_data_is_toggleable(
     enabled, make_ensemble, make_plot_context, make_key_def
 ):

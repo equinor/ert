@@ -460,7 +460,7 @@ def test_that_pert_requires_minimum_strictly_less_than_maximum():
         GenKwConfig._parse_distribution("MYNAME", "PERT", ["1", "1", "1"])
 
 
-@pytest.mark.parametrize("mode", ["-1", "0", "1", "2"])
+@pytest.mark.parametrize("mode", ["-1", "0", "1", "2"], ids=str)
 def test_that_pert_requires_mode_strictly_between_bounds(mode):
     with pytest.raises(ConfigValidationError, match="must be strictly between"):
         GenKwConfig._parse_distribution("MYNAME", "PERT", ["0", mode, "1"])
@@ -471,7 +471,7 @@ def test_that_pert_requires_mode_strictly_between_bounds(mode):
     range(4),
     ids=["minimum", "mode", "maximum", "scale"],
 )
-@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"], ids=str)
 def test_that_pert_requires_finite_parameters(parameter_index, value):
     values = ["0", "0.5", "1", "4"]
     values[parameter_index] = value
@@ -480,7 +480,7 @@ def test_that_pert_requires_finite_parameters(parameter_index, value):
         GenKwConfig._parse_distribution("MYNAME", "PERT", values)
 
 
-@pytest.mark.parametrize("scale", ["0", "-1"])
+@pytest.mark.parametrize("scale", ["0", "-1"], ids=str)
 def test_that_pert_requires_positive_scale(scale):
     with pytest.raises(
         ConfigValidationError,

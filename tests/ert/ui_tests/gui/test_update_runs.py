@@ -137,7 +137,9 @@ def poly_case_with_missing_response_for_each_observation(
         yield gui
 
 
-@pytest.mark.parametrize("update_method", ["ES Update", "EnIF Update (Experimental)"])
+@pytest.mark.parametrize(
+    "update_method", ["ES Update", "EnIF Update (Experimental)"], ids=str
+)
 def test_that_report_table_is_displayed_on_no_active_observations(
     qtbot,
     run_experiment,

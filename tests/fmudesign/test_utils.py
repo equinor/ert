@@ -10,7 +10,7 @@ from hypothesis import given
 from fmudesign.utils import map_dependencies, resolve_path, seeds_from_extern
 
 
-@pytest.mark.parametrize("suffix", ["xlsx", "csv", "txt"])
+@pytest.mark.parametrize("suffix", ["xlsx", "csv", "txt"], ids=str)
 def test_that_seeds_from_extern_reads_first_column_as_integers(tmp_path, suffix):
     seeds_file = tmp_path / f"seeds.{suffix}"
     if suffix == "xlsx":

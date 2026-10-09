@@ -370,7 +370,7 @@ def test_that_log_level_property_is_consistent_with_environment_log_level():
 
 
 @pytest.mark.parametrize("config_class", [SimulatorConfig, ServerConfig])
-@pytest.mark.parametrize("queue_system", ["lsf", "torque", "slurm", "local"])
+@pytest.mark.parametrize("queue_system", ["lsf", "torque", "slurm", "local"], ids=str)
 def test_removed_queue_options_init(queue_system, config_class):
     config = {"queue_system": queue_system}
     with pytest.raises(ValueError, match=f"valid options for {queue_system} are"):

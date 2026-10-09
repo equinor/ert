@@ -213,7 +213,7 @@ def test_that_repeated_comments_are_ignored():
     ) == [{"type": ObservationType.SUMMARY, "name": "FOPR"}]
 
 
-@pytest.mark.parametrize("observation_type", ["HISTORY", "GENERAL", "SUMMARY"])
+@pytest.mark.parametrize("observation_type", ["HISTORY", "GENERAL", "SUMMARY"], ids=str)
 def test_that_duplicate_keys_results_in_error_message_with_location(observation_type):
     with pytest.raises(
         ObservationConfigError,

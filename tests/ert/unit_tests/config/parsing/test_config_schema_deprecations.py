@@ -132,7 +132,7 @@ def test_that_a_deprecation_message_is_shown_when_the_update_settings_keyword_is
         ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nUPDATE_SETTINGS some args\n")
 
 
-@pytest.mark.parametrize("definer", ["DEFINE", "DATA_KW"])
+@pytest.mark.parametrize("definer", ["DEFINE", "DATA_KW"], ids=str)
 @pytest.mark.parametrize(
     ("definition", "expected"),
     [

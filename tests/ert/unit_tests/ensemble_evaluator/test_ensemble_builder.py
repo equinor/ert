@@ -7,7 +7,7 @@ from ert.ensemble_evaluator._ensemble import LegacyEnsemble, Realization
 from ert.ensemble_evaluator.state import FORWARD_MODEL_STATE_INIT
 
 
-@pytest.mark.parametrize("active_real", [True, False])
+@pytest.mark.parametrize("active_real", [True, False], ids=str)
 def test_build_ensemble(active_real):
     ensemble = LegacyEnsemble(
         [

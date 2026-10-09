@@ -19,7 +19,7 @@ from ert.validation import rangestring_to_mask
 from .conftest import get_child, wait_for_child
 
 
-@pytest.mark.parametrize("mode", ["ES Update", "EnIF Update (Experimental)"])
+@pytest.mark.parametrize("mode", ["ES Update", "EnIF Update (Experimental)"], ids=str)
 def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot, mode):
     """This runs a full manual update workflow, first running ensemble experiment
     where some of the realizations fail, then doing an update before running an
