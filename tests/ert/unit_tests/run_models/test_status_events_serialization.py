@@ -3,7 +3,9 @@ from collections import defaultdict
 from datetime import UTC
 from datetime import datetime as dt
 
+import numpy as np
 import pytest
+from fastapi.encoders import jsonable_encoder
 
 from ert.analysis.event import DataSection
 from ert.ensemble_evaluator import state
@@ -209,6 +211,23 @@ def test_status_event_serialization(event):
     json_res = status_event_to_json(event)
     round_trip_event = status_event_from_json(json_res)
     assert event == round_trip_event
+
+
+def test_that_update_table_with_numpy_rows_can_be_sent_over_websocket():
+    event = RunModelDataEvent(
+        iteration=0,
+        run_id=uuid.uuid4(),
+        name="Auto scale",
+        data=DataSection(
+            header=["observation", "scaling"],
+            data=np.array([["OBS", 1.5]], dtype=object),
+        ),
+    )
+
+    assert jsonable_encoder(event)["data"]["data"] == [["OBS", 1.5]]
+    restored = status_event_from_json(status_event_to_json(event))
+    assert isinstance(restored, RunModelDataEvent)
+    assert restored.data.data == [["OBS", 1.5]]
 
 
 def _build_full_snapshot_event() -> FullSnapshotEvent:
