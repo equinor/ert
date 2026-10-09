@@ -15,11 +15,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config import ParameterConfig
 from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     AnalysisModuleEdit,
     CopyableLabel,
+)
+from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
+    ParameterConfigurationStateModel,
 )
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
@@ -37,7 +41,7 @@ from ._update_strategy_summary_widget import UpdateStrategySummaryWidget
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig, ParameterConfig
+    from ert.config import AnalysisConfig
 
 
 @dataclass
@@ -46,6 +50,7 @@ class Arguments:
     target_ensemble: str
     realizations: str
     experiment_name: str
+    parameter_configuration: list[ParameterConfig]
 
 
 def _create_deprecation_banner() -> QWidget:
@@ -113,26 +118,29 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         ) = create_target_ensemble_format_field(analysis_config, notifier)
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
-        parameter_configuration = merge_design_matrix_parameters(
-            analysis_config, parameter_configuration
+        self._param_state = ParameterConfigurationStateModel(
+            merge_design_matrix_parameters(
+                analysis_config.design_matrix, parameter_configuration
+            ),
+            self,
         )
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            parameter_config=parameter_configuration,
+            get_update_strategies=lambda: self._param_state.update_strategies,
             ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
+        self._analysis_module_edit.update_strategies_changed.connect(
+            self._param_state.apply_update_strategies
+        )
 
         layout.addRow("Update settings:", self._analysis_module_edit)
         self._update_strategy_label = QLabel("Parameter Localizations")
         self._update_strategy_label.setObjectName("update_strategy_label")
         self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
-            self._analysis_module_edit.parameter_config, self
-        )
-        self._analysis_module_edit.settings_changed.connect(
-            self._refresh_update_strategy_summary_widget
+            self._param_state, self
         )
         self._update_strategy_label.setToolTip(
             self._update_strategy_summary_widget.toolTip()
@@ -147,8 +155,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         add_parameter_configuration_rows(
             self,
             layout,
-            analysis_config,
-            self._analysis_module_edit.parameter_config,
+            analysis_config.design_matrix,
+            lambda: self._param_state.parameters,
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )
@@ -171,16 +179,10 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         )
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
-    def _refresh_update_strategy_summary_widget(self) -> None:
-        self._update_strategy_summary_widget.set_parameters(
-            self._analysis_module_edit.parameter_config
-        )
-
     @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, EnsembleSmootherPanel):
-            self._refresh_update_strategy_summary_widget()
             self._update_experiment_name_placeholder()
 
     def _update_experiment_name_placeholder(self) -> None:
@@ -194,7 +196,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             self._experiment_name_field.isValid()
             and self._ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
-            and has_updatable_parameters(self._analysis_module_edit.parameter_config)
+            and has_updatable_parameters(self._param_state.parameters)
         )
 
     @override
@@ -204,4 +206,5 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             experiment_name=self._experiment_name_field.get_text,
+            parameter_configuration=self._param_state.parameters,
         )
