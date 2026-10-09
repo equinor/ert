@@ -790,8 +790,8 @@ def test_that_update_tab_shows_incoming_update_on_posterior_ensemble(
     update_view = ensemble_widget._update_view
     assert update_view._description_label.isVisible()
     assert update_view._description_label.text() == (
-        f"Update {posterior_iteration - 1}: input iteration {posterior_iteration - 1}"
-        f" \u2192 output iteration {posterior_iteration}"
+        f"Update {posterior_iteration - 1}: iter-{posterior_iteration - 1}"
+        f" \u2192 iter-{posterior_iteration}"
     )
     assert update_view._status_label.text() == (
         "The ensemble_smoother update failed: No active observations left"
@@ -876,8 +876,8 @@ def test_that_switching_posterior_ensembles_shows_their_own_updates(qtbot, seque
         == f"Update {update_iteration}"
     )
     assert update_view._description_label.text() == (
-        f"Update {update_iteration}: input iteration {update_iteration}"
-        f" \u2192 output iteration {update_iteration + 1}"
+        f"Update {update_iteration}: iter-{update_iteration}"
+        f" \u2192 iter-{update_iteration + 1}"
     )
     assert update_view._status_label.text() == "Updated with enif"
     assert len(update_view._tab_widget.findChildren(UpdateLogTable)) == 1

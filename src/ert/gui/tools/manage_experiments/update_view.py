@@ -81,8 +81,8 @@ class UpdateView(QWidget):
         if self.has_update:
             update_iteration = ensemble.iteration - 1
             self._description_label.setText(
-                f"Update {update_iteration}: input iteration {update_iteration}"
-                f" \u2192 output iteration {ensemble.iteration}"
+                f"Update {update_iteration}: iter-{update_iteration}"
+                f" \u2192 iter-{ensemble.iteration}"
             )
 
     @property
