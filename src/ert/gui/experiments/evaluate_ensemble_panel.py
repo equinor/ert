@@ -26,7 +26,7 @@ from ert.validation import EnsembleRealizationsArgument
 logger = logging.getLogger(__name__)
 
 
-def create_leaf_ensemble_selector(notifier: ErtNotifier) -> EnsembleSelector:
+def create_leaf_node_ensemble_selector(notifier: ErtNotifier) -> EnsembleSelector:
     def show_only_no_children_filter(
         ensembles: Iterable[Ensemble],
     ) -> Iterable[Ensemble]:
@@ -56,7 +56,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         layout = QFormLayout()
         layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
-        self._ensemble_selector = create_leaf_ensemble_selector(notifier)
+        self._ensemble_selector = create_leaf_node_ensemble_selector(notifier)
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=runpath)
         layout.addRow("Runpath:", runpath_label)
