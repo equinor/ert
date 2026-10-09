@@ -102,6 +102,7 @@ dev = [
     "jsonpath_ng",
     "jupyter",
     "jupytext",
+    "minires",
     "nbsphinx",
     "oil_reservoir_synthesizer",
     "pytest-asyncio",
