@@ -2,7 +2,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, NonNegativeInt, model_validator
 
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -40,6 +40,24 @@ class ServerConfig(BaseModel, extra="forbid"):
             """
         ),
         discriminator="name",
+    )
+    max_runtime: NonNegativeInt | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Maximum allowed running time for the everest server job, specified
+            in seconds.
+
+            The limit, padded with ten minutes, is passed on to the queue system
+            the server is submitted to (e.g. `bsub -W` for LSF). When the limit
+            is reached, the queue system stops the server and with it the whole
+            optimization. If not set, or set to 0, the default limit of the queue
+            system applies. For Slurm, this overrides `max_runtime` given in
+            `server.queue_system`. The `max_runtime` of the simulator's Slurm
+            queue system is not applied to the server. This option has no
+            effect on the local queue.
+            """
+        ),
     )
 
     @model_validator(mode="before")

@@ -16,6 +16,7 @@ from opentelemetry.trace import Status, StatusCode
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
+from ert.config.queue_config import SlurmQueueOptions
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -48,7 +49,16 @@ MAX_EVERSERVER_READY_TIME = 10 * 60  # 10 minutes
 
 async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """Start an EVEREST server running the optimization defined in the config"""
-    driver = create_driver(config.server.queue_system, poll_period=0.1)  # type: ignore
+    queue_options = config.server.queue_system
+    if config.server.max_runtime is not None and isinstance(
+        queue_options, SlurmQueueOptions
+    ):
+        queue_options = queue_options.model_copy(update={"max_runtime": None})
+    driver = create_driver(
+        queue_options,  # type: ignore
+        poll_period=0.1,
+        max_runtime=config.server.max_runtime,
+    )
     try:
         args = [
             "--output-dir",

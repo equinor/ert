@@ -376,6 +376,66 @@ if __name__ == "__main__":
     assert final_state.returncode == 0
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_that_start_server_submits_server_with_padded_max_runtime(
+    change_to_tmpdir, monkeypatch
+):
+    bin_path = Path("bin").absolute()
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bsub_path = bin_path / "bsub"
+    bsub_path.write_text(
+        '#!/bin/sh\necho "$@" > captured_bsub_args\necho "Unexpected output"\n',
+        encoding="utf-8",
+    )
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    Path("config.yml").touch()
+    everest_config = everest_config_with_defaults(
+        config_path="./config.yml",
+        server={"queue_system": {"name": "lsf"}, "max_runtime": 3600},
+        simulator={"queue_system": {"name": "lsf"}},
+    )
+
+    with pytest.raises(ValueError, match="Failed to submit Everserver"):
+        await start_server(everest_config, logging_level=logging.INFO)
+
+    assert "-W 70" in Path("captured_bsub_args").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("server_max_runtime", "expected_time_arg"),
+    [
+        pytest.param(86400, "--time=1-0:10:00", id="server_max_runtime_is_used"),
+        pytest.param(None, None, id="simulator_max_runtime_is_not_inherited"),
+    ],
+)
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+async def test_that_start_server_on_slurm_ignores_simulator_max_runtime(
+    change_to_tmpdir, monkeypatch, server_max_runtime, expected_time_arg
+):
+    bin_path = Path("bin").absolute()
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    sbatch_path = bin_path / "sbatch"
+    sbatch_path.write_text(
+        '#!/bin/sh\necho "$@" > captured_sbatch_args\nexit 1\n', encoding="utf-8"
+    )
+    sbatch_path.chmod(sbatch_path.stat().st_mode | stat.S_IEXEC)
+    Path("config.yml").touch()
+    everest_config = everest_config_with_defaults(
+        config_path="./config.yml",
+        server={"max_runtime": server_max_runtime},
+        simulator={"queue_system": {"name": "slurm", "max_runtime": 600}},
+    )
+
+    with pytest.raises(ValueError, match="Failed to submit Everserver"):
+        await start_server(everest_config, logging_level=logging.INFO)
+
+    sbatch_args = Path("captured_sbatch_args").read_text(encoding="utf-8").split()
+    time_args = [arg for arg in sbatch_args if arg.startswith("--time=")]
+    assert time_args == ([expected_time_arg] if expected_time_arg else [])
+
+
 def test_get_that_get_server_info_from_conn_info_converts_values():
     conn_info = ErtClientConnectionInfo(
         base_url="https://example.com:1234",
