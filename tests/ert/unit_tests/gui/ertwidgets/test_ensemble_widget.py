@@ -95,7 +95,14 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
-def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
+@pytest.mark.parametrize(
+    ("value_modifier"),
+    [
+        pytest.param(1, id="threshold is reached"),
+        pytest.param(100, id="threshold is never reached"),
+    ],
+)
+def test_that_breakthrough_experiment_does_not_crash(qtbot, storage, value_modifier):
     date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     key = "WWCT:OP1"
 
@@ -116,7 +123,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
 
     def summary_response() -> pl.DataFrame:
         num_points = 15
-        values = range(num_points)
+        values = [n / value_modifier for n in range(num_points)]
 
         return pl.DataFrame(
             {
