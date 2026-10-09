@@ -52,7 +52,7 @@ class SingleTestRunPanel(ExperimentConfigPanel):
             self,
             layout,
             analysis_config,
-            parameter_configuration,
+            lambda: parameter_configuration,
         )
         self.setLayout(layout)
 

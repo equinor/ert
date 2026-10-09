@@ -116,7 +116,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
             self,
             layout,
             analysis_config,
-            self._parameter_configuration,
+            lambda: self._parameter_configuration,
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )

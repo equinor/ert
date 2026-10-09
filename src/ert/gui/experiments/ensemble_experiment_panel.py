@@ -91,7 +91,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             self,
             layout,
             analysis_config,
-            parameter_configuration,
+            lambda: parameter_configuration,
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )

@@ -18,6 +18,8 @@ from ert.validation.range_string_argument import RangeSubsetStringArgument
 from ._design_matrix_panel import DesignMatrixPanel
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ert.config import AnalysisConfig, ParameterConfig
     from ert.gui.ertnotifier import ErtNotifier
     from ert.storage import Storage
@@ -89,7 +91,7 @@ def add_parameter_configuration_rows(
     parent: QWidget,
     layout: QFormLayout,
     analysis_config: AnalysisConfig,
-    parameter_configuration: list[ParameterConfig],
+    get_parameter_configuration: Callable[[], list[ParameterConfig]],
     *,
     number_of_realizations_label: QLabel | None = None,
     config_num_realization: int | None = None,
@@ -104,7 +106,7 @@ def add_parameter_configuration_rows(
             ),
         )
 
-    if parameter_configuration:
+    if get_parameter_configuration():
         layout.addRow(
-            "Parameters", get_parameters_button(parameter_configuration, parent)
+            "Parameters", get_parameters_button(get_parameter_configuration, parent)
         )

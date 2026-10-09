@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -124,12 +126,13 @@ class ParametersViewer(QDialog):
 
 
 def get_parameters_button(
-    parameter_configurations: list[ParameterConfig], parent: QWidget
+    get_parameter_configurations: Callable[[], list[ParameterConfig]],
+    parent: QWidget,
 ) -> QHBoxLayout:
     parameter_viewer_button = QPushButton("Show parameters")
     parameter_viewer_button.setMinimumWidth(50)
     parameter_viewer_button.clicked.connect(
-        lambda: _show_parameter_viewer(parameter_configurations, parent)
+        lambda: _show_parameter_viewer(get_parameter_configurations(), parent)
     )
 
     button_layout = QHBoxLayout()
