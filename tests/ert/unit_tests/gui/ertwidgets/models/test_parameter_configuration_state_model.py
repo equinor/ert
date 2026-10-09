@@ -40,6 +40,8 @@ def test_that_applying_update_strategies_with_prior_leaves_configured_draft_unse
     state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
 
     assert state._configured_parameters.draft is None
+    assert state._prior_parameters is not None
+    assert state._prior_parameters.draft is not None
 
 
 def test_that_parameters_without_update_strategy_keep_none_strategy():
