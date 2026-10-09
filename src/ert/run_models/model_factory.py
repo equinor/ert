@@ -487,15 +487,10 @@ def _setup_multiple_data_assimilation(
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
 
-    parameter_configs, design_matrix = _merge_parameter_configs(
-        design_matrix=None
-        if args.prior_ensemble_id
-        else config.analysis_config.design_matrix,
-        parameter_configs=getattr(
-            args,
-            "parameter_configuration",
-            config.ensemble_config.parameter_configuration,
-        ),
+    parameter_configs, design_matrix = _resolve_parameter_configs_from_args(
+        config,
+        args,
+        None if args.prior_ensemble_id else config.analysis_config.design_matrix,
     )
 
     runmodel_config = MultipleDataAssimilationConfig(

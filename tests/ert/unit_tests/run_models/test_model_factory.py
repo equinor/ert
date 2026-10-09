@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid1
 
 import numpy as np
+import polars as pl
 import pytest
 from pydantic import ValidationError
 
@@ -12,12 +13,16 @@ from ert.config import (
     AnalysisConfig,
     ConfigValidationError,
     ConfigWarning,
+    DesignMatrix,
     EnsembleConfig,
     ErtConfig,
     GenKwConfig,
+    LocalizationType,
     ModelConfig,
     ObservationSettings,
 )
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP
+from ert.config.distribution import RawSettings
 from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -35,10 +40,13 @@ from ert.run_models import (
 )
 from ert.run_models.model_factory import (
     _resolve_parameter_configs,
+    _resolve_parameter_configs_from_args,
     _setup_ensemble_information_filter,
     _setup_ensemble_smoother,
     _setup_multiple_data_assimilation,
 )
+from ert.run_models.run_model_configs import DictEncodedDataFrame
+from tests.ert.conftest import _create_design_matrix
 
 
 def _gen_kw_config(name: str = "COEFFS") -> GenKwConfig:
@@ -592,6 +600,149 @@ def test_that_prior_ensemble_allows_current_config_without_updatable_parameters(
 
     assert parameter_configs == config.ensemble_config.parameter_configuration
     assert design_matrix_dict is None
+
+
+def _mock_design_matrix() -> MagicMock:
+    design_matrix = MagicMock(spec=DesignMatrix)
+    design_matrix.design_matrix_df = pl.DataFrame({"realization": [0], "a": [1.0]})
+    design_matrix.merge_with_existing_parameters.return_value = [_gen_kw_config("a")]
+    return design_matrix
+
+
+def test_that_parameter_configuration_from_args_is_not_merged_with_design_matrix_again():  # ruff: ignore[line-too-long]
+    design_matrix = _mock_design_matrix()
+    already_merged = [_gen_kw_config("a")]
+
+    parameter_configs, design_matrix_dict = _resolve_parameter_configs_from_args(
+        ErtConfig(),
+        Namespace(parameter_configuration=already_merged),
+        design_matrix,
+    )
+
+    design_matrix.merge_with_existing_parameters.assert_not_called()
+    assert parameter_configs is already_merged
+    assert design_matrix_dict == DictEncodedDataFrame.from_polars(
+        design_matrix.design_matrix_df
+    )
+
+
+def test_that_config_parameters_are_merged_with_design_matrix_when_args_lack_them():
+    design_matrix = _mock_design_matrix()
+    config = ErtConfig(
+        ensemble_config=EnsembleConfig(parameter_configs={"b": _gen_kw_config("b")})
+    )
+
+    parameter_configs, _ = _resolve_parameter_configs_from_args(
+        config, Namespace(), design_matrix
+    )
+
+    design_matrix.merge_with_existing_parameters.assert_called_once_with(
+        config.ensemble_config.parameter_configuration
+    )
+    assert parameter_configs == [_gen_kw_config("a")]
+
+
+def _design_matrix_parameter(
+    update_strategy: LocalizationType | None,
+) -> GenKwConfig:
+    return GenKwConfig(
+        name="a",
+        distribution=RawSettings(),
+        group=DESIGN_MATRIX_GROUP,
+        update_strategy=update_strategy,
+    )
+
+
+def _config_with_design_matrix(tmp_path) -> ErtConfig:
+    design_matrix_df = pl.DataFrame({"REAL": [0, 1], "a": [1.0, 2.0]})
+    design_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(design_path, design_matrix_df)
+    return ErtConfig(
+        runpath_config=ModelConfig(num_realizations=2),
+        analysis_config=AnalysisConfig(
+            minimum_required_realizations=2,
+            design_matrix=DesignMatrix(
+                filename=design_path,
+                design_sheet="DesignSheet",
+                default_sheet=None,
+                update=True,
+                gen_kw_update_strategy=LocalizationType.GLOBAL,
+            ),
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "experiment_setup_method",
+    [_setup_ensemble_smoother, _setup_multiple_data_assimilation],
+)
+def test_that_gui_update_strategy_is_kept_for_design_matrix_parameters(
+    experiment_setup_method, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    config = _config_with_design_matrix(tmp_path)
+    design_matrix = config.analysis_config.design_matrix
+    assert design_matrix is not None
+    gui_parameter = _design_matrix_parameter(LocalizationType.ADAPTIVE)
+    args = Namespace(
+        realizations="0-1",
+        weights="2,1",
+        target_ensemble="target_%d",
+        prior_ensemble_id=None,
+        experiment_name="experiment",
+        parameter_configuration=[gui_parameter],
+    )
+
+    model = experiment_setup_method(
+        config, args, ObservationSettings(), queue.SimpleQueue()
+    )
+
+    assert model.parameter_configuration == [gui_parameter]
+    assert model.design_matrix == DictEncodedDataFrame.from_polars(
+        design_matrix.design_matrix_df
+    )
+
+
+def test_that_multiple_data_assimilation_from_prior_uses_gui_parameters_without_design_matrix(  # ruff: ignore[line-too-long]
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        ert.run_models.run_model.RunModel,
+        "validate_successful_realizations_count",
+        MagicMock(),
+    )
+    gui_parameter = _design_matrix_parameter(LocalizationType.ADAPTIVE)
+    args = Namespace(
+        realizations="0-1",
+        weights="2,1",
+        target_ensemble="target_%d",
+        prior_ensemble_id=str(uuid1()),
+        experiment_name="experiment",
+        parameter_configuration=[gui_parameter],
+    )
+
+    with patch(
+        "ert.run_models.run_model.Storage.get_ensemble",
+        return_value=MagicMock(
+            iteration=0,
+            ensemble_size=2,
+            **{
+                "get_realization_mask_with_responses.return_value": np.array(
+                    [True, True]
+                )
+            },
+        ),
+    ):
+        model = _setup_multiple_data_assimilation(
+            _config_with_design_matrix(tmp_path),
+            args,
+            ObservationSettings(),
+            queue.SimpleQueue(),
+        )
+
+    assert model.parameter_configuration == [gui_parameter]
+    assert model.design_matrix is None
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
