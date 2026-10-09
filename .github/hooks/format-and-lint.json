@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "type": "command",
+        "matcher": "edit|create|apply_patch",
+        "bash": "python3 .github/hooks/format_and_lint.py",
+        "cwd": ".",
+        "timeoutSec": 30
+      }
+    ]
+  }
+}
