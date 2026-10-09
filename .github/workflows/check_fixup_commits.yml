@@ -1,5 +1,4 @@
 name: Check for fixup commits
-# Comment for demonstration purposes
 
 on:
   pull_request:
