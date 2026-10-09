@@ -212,7 +212,7 @@ class WorkflowRunner:
             )
             jobrunner.run(args, fixtures=self.fixtures)
 
-            if self.__cancelled:
+            if self.__cancelled or jobrunner.isCancelled():
                 status = WorkflowJobStatus.CANCELLED
             elif jobrunner.hasFailed():
                 status = WorkflowJobStatus.FAILED
@@ -240,7 +240,7 @@ class WorkflowRunner:
             else:
                 logger.info(self._log_entry(result), extra=extra)
 
-            if jobrunner.hasFailed() and jobrunner.stop_on_fail:
+            if status is WorkflowJobStatus.FAILED and jobrunner.stop_on_fail:
                 self.__running = False
                 raise RuntimeError(
                     f"Workflow job {result.name} failed with error: {result.stderr}"

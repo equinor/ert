@@ -1,4 +1,5 @@
 import logging
+import stat
 import threading
 import time
 from pathlib import Path
@@ -7,8 +8,10 @@ from unittest.mock import patch
 
 import pytest
 
+from ert import ErtScript
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
+    ErtScriptWorkflow,
     ExecutableWorkflow,
     UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
@@ -325,6 +328,59 @@ def test_that_output_of_job_that_stops_workflow_is_still_logged(caplog):
 
     assert "status=failed" in caplog.text
     assert "--- stdout ---\nHello Failing" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_interrupted_by_ctrl_c_is_logged_as_cancelled_without_errors(
+    caplog,
+):
+    class InterruptedScript(ErtScript):
+        def run(self):
+            raise KeyboardInterrupt
+
+    job = ErtScriptWorkflow(name="INTERRUPTED", ert_script=InterruptedScript)
+    workflow = Workflow(src_file="workflow", cmd_list=[(job, [])])
+    runner = WorkflowRunner(workflow, fixtures={})
+
+    with caplog.at_level(logging.INFO):
+        runner.run_blocking()
+
+    [result] = runner.workflow_job_results()
+    assert result.status is WorkflowJobStatus.CANCELLED
+    assert "Script cancelled (CTRL+C)" in result.stderr
+    assert "job=INTERRUPTED#0 status=cancelled" in caplog.text
+    assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("stop_on_fail", [False, True])
+def test_that_external_job_killed_by_cancel_is_logged_as_cancelled_without_errors(
+    caplog, stop_on_fail
+):
+    sleep_script = Path("sleep.sh")
+    sleep_script.write_text(
+        "#!/bin/sh\ntouch started\nexec sleep 30\n", encoding="utf-8"
+    )
+    sleep_script.chmod(sleep_script.stat().st_mode | stat.S_IEXEC)
+    job = ExecutableWorkflow(
+        name="SLEEP",
+        executable=str(sleep_script.absolute()),
+        stop_on_fail=stop_on_fail,
+    )
+    workflow = Workflow(src_file="workflow", cmd_list=[(job, [])])
+    runner = WorkflowRunner(workflow, fixtures={})
+
+    with caplog.at_level(logging.INFO):
+        runner.run()
+        wait_until(lambda: Path("started").exists())
+        runner.cancel()
+        runner.wait()
+
+    assert runner.exception() is None
+    [result] = runner.workflow_job_results()
+    assert result.status is WorkflowJobStatus.CANCELLED
+    assert "job=SLEEP#0 status=cancelled" in caplog.text
+    assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
 
 
 @pytest.mark.slow
