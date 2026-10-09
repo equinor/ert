@@ -122,6 +122,27 @@ def _merge_parameter_configs(
     return merged, DictEncodedDataFrame.from_polars(design_matrix.design_matrix_df)
 
 
+def _resolve_parameter_configs_from_args(
+    config: ErtConfig, args: Namespace, design_matrix: DesignMatrix | None
+) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
+    """Parameter configurations passed in args (from the GUI) are expected
+    to already be merged with the design matrix, and are used as-is.
+    """
+    parameter_configs: list[ParameterConfig] | None = getattr(
+        args, "parameter_configuration", None
+    )
+    if parameter_configs is None:
+        return _merge_parameter_configs(
+            design_matrix=design_matrix,
+            parameter_configs=config.ensemble_config.parameter_configuration,
+        )
+    if design_matrix is None:
+        return parameter_configs, None
+    return parameter_configs, DictEncodedDataFrame.from_polars(
+        design_matrix.design_matrix_df
+    )
+
+
 def _resolve_parameter_configs(
     config: ErtConfig, prior_ensemble: str | None = None
 ) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
@@ -382,7 +403,9 @@ def _setup_ensemble_smoother(
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
 
-    parameter_configs, design_matrix = _resolve_parameter_configs(config)
+    parameter_configs, design_matrix = _resolve_parameter_configs_from_args(
+        config, args, config.analysis_config.design_matrix
+    )
 
     runmodel_config = EnsembleSmootherConfig(
         target_ensemble=args.target_ensemble,
