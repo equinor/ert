@@ -46,12 +46,12 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         layout.addRow("Runpath:", runpath_label)
 
         parameter_configuration = merge_design_matrix_parameters(
-            analysis_config, parameter_configuration
+            analysis_config.design_matrix, parameter_configuration
         )
         add_parameter_configuration_rows(
             self,
             layout,
-            analysis_config,
+            analysis_config.design_matrix,
             lambda: parameter_configuration,
         )
         self.setLayout(layout)
