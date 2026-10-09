@@ -39,10 +39,13 @@ def create_driver(
                 max_runtime=max_runtime,
             )
         case QueueSystem.SLURM:
+            slurm_driver_options = queue_options.driver_options
+            if slurm_driver_options.get("max_runtime") is None:
+                slurm_driver_options["max_runtime"] = max_runtime
             return SlurmDriver(
                 **dict(
                     {"user": getpwuid(getuid()).pw_name},
-                    **queue_options.driver_options,
+                    **slurm_driver_options,
                 ),
                 poll_period=poll_period,
             )

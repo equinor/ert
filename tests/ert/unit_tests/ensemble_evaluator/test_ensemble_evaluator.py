@@ -31,7 +31,12 @@ from _ert.forward_model_runner.client import (
 )
 from ert.config import QueueSystem
 from ert.config.ert_config import ErtConfig
-from ert.config.queue_config import QueueConfig
+from ert.config.queue_config import (
+    LsfQueueOptions,
+    QueueConfig,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EnsembleSnapshot,
@@ -51,7 +56,10 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.scheduler import JobState
 from ert.scheduler.job import Job
+from ert.scheduler.lsf_driver import LsfDriver
+from ert.scheduler.openpbs_driver import OpenPBSDriver
 from ert.scheduler.scheduler import Scheduler
+from ert.scheduler.slurm_driver import SlurmDriver
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -92,6 +100,34 @@ async def test_when_task_fails_evaluator_raises_exception(
     )
     with pytest.raises(RuntimeError, match=error_msg):
         await evaluator.run_and_get_successful_realizations()
+
+
+@pytest.mark.parametrize(
+    ("queue_options", "driver_type", "expected_max_runtime"),
+    [
+        pytest.param(LsfQueueOptions(), LsfDriver, "70", id="lsf"),
+        pytest.param(TorqueQueueOptions(), OpenPBSDriver, "4200", id="torque"),
+        pytest.param(SlurmQueueOptions(), SlurmDriver, 3600, id="slurm"),
+    ],
+)
+async def test_that_evaluator_creates_driver_with_max_runtime_for_cluster_queue_systems(
+    make_ee_config,
+    queue_options,
+    driver_type: type[LsfDriver | OpenPBSDriver | SlurmDriver],
+    expected_max_runtime,
+):
+    ensemble = TestEnsemble(0, 2, 2, id_="0")
+    ensemble._queue_config = QueueConfig(
+        queue_system=queue_options.name,
+        queue_options=queue_options,
+        max_runtime=3600,
+    )
+
+    evaluator = EnsembleEvaluator(ensemble, make_ee_config(), end_event=Event())
+
+    driver = evaluator._scheduler.driver
+    assert isinstance(driver, driver_type)
+    assert driver._max_runtime == expected_max_runtime
 
 
 async def test_evaluator_raises_on_invalid_dispatch_event(make_ee_config):
