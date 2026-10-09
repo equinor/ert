@@ -27,7 +27,7 @@ class ExportRFTJob(ErtScript):
 
     def run(
         self,
-        run_paths: Runpaths,
+        runpaths: Runpaths,
         ensemble: Ensemble,
         workflow_args: list[Any],
     ) -> None:
@@ -39,7 +39,7 @@ class ExportRFTJob(ErtScript):
 
         iteration = ensemble.iteration
         realizations = ensemble.get_realization_list_with_responses()
-        paths = run_paths.get_paths(realizations, iteration)
+        paths = runpaths.get_paths(realizations, iteration)
 
         for realization, runpath in zip(realizations, paths, strict=True):
             if self.isCancelled():
