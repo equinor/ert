@@ -543,10 +543,32 @@ def test_that_prior_ensemble_allows_current_config_without_updatable_parameters(
     assert design_matrix_dict is None
 
 
-def test_that_config_parameters_are_merged_with_design_matrix_when_args_lack_them():
+def _mock_design_matrix() -> MagicMock:
     design_matrix = MagicMock(spec=DesignMatrix)
     design_matrix.design_matrix_df = pl.DataFrame({"realization": [0], "a": [1.0]})
     design_matrix.merge_with_existing_parameters.return_value = [_gen_kw_config("a")]
+    return design_matrix
+
+
+def test_that_parameter_configuration_from_args_is_not_merged_with_design_matrix_again():  # ruff: ignore[line-too-long]
+    design_matrix = _mock_design_matrix()
+    already_merged = [_gen_kw_config("a")]
+
+    parameter_configs, design_matrix_dict = _resolve_parameter_configs_from_args(
+        ErtConfig(),
+        Namespace(parameter_configuration=already_merged),
+        design_matrix,
+    )
+
+    design_matrix.merge_with_existing_parameters.assert_not_called()
+    assert parameter_configs is already_merged
+    assert design_matrix_dict == DictEncodedDataFrame.from_polars(
+        design_matrix.design_matrix_df
+    )
+
+
+def test_that_config_parameters_are_merged_with_design_matrix_when_args_lack_them():
+    design_matrix = _mock_design_matrix()
     config = ErtConfig(
         ensemble_config=EnsembleConfig(parameter_configs={"b": _gen_kw_config("b")})
     )
