@@ -128,14 +128,19 @@ class ErtScript:
             if not hasattr(self, "run"):
                 error_msg = "No 'run' function implemented"
             self.output_stack_trace(error=error_msg)
-            logger.error(
+            message = (
                 f"Attribute error in workflow script {self.__class__.__name__}:"
                 f" {error_msg}"
             )
+            if self.isCancelled():
+                logger.info(message)
+            else:
+                logger.error(message)
             return None
         except KeyboardInterrupt:
             error_msg = "Script cancelled (CTRL+C)"
-            self.output_stack_trace(error=error_msg)
+            self.cancel()
+            self._append_to_stderrdata(error_msg)
             logger.info(
                 f"Script cancelled in workflow script {self.__class__.__name__}:"
                 f" {error_msg}"
@@ -150,11 +155,20 @@ class ErtScript:
             return uw.args[0]
         except ExternalScriptError as e:
             self.output_stack_trace(error=str(e))
-            logger.error(f"Workflow job failed: {e!s}")
+            if self.isCancelled():
+                logger.info(f"Workflow job cancelled: {e!s}")
+            else:
+                logger.error(f"Workflow job failed: {e!s}")
             return None
         except BaseException as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
             self.output_stack_trace(f"{e!s}\n{full_trace}")
+            if self.isCancelled():
+                logger.info(
+                    f"Exception in cancelled workflow script "
+                    f"{self.__class__.__name__}: {e!s}"
+                )
+                return None
             logger.exception(
                 f"Exception in workflow script {self.__class__.__name__}:"
                 f" {e!s}\n{full_trace}"
@@ -199,12 +213,14 @@ class ErtScript:
             f"The script '{self.__class__.__name__}' caused an "
             f"error while running:\n{str(stack_trace).strip()}\n"
         )
+        self._append_to_stderrdata(error)
+        self.__failed = True
 
+    def _append_to_stderrdata(self, text: str) -> None:
         existing_stderr = self.stderrdata
         if existing_stderr and not existing_stderr.endswith("\n"):
             existing_stderr += "\n"
-        self._stderrdata = existing_stderr + error
-        self.__failed = True
+        self._stderrdata = existing_stderr + text
 
     @staticmethod
     def loadScriptFromFile(

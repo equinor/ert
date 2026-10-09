@@ -1,3 +1,4 @@
+import logging
 import stat
 import sys
 import threading
@@ -83,6 +84,22 @@ def test_that_exits_in_ert_script_is_trapped():
     failing = FailingScript()
     failing.initializeAndRun([], [])
     assert failing.hasFailed()
+
+
+@pytest.mark.parametrize("exception", [AttributeError, ValueError])
+def test_that_exception_raised_by_cancelled_ert_script_is_not_logged_as_error(
+    caplog, exception
+):
+    class CancelledAndFailingScript(ErtScript):
+        def run(self):
+            self.cancel()
+            raise exception("raised after cancel")
+
+    with caplog.at_level(logging.INFO):
+        CancelledAndFailingScript().initializeAndRun([], [])
+
+    assert "raised after cancel" in caplog.text
+    assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
 
 
 def test_that_stdout_and_stderr_printed_by_ert_script_are_captured():
