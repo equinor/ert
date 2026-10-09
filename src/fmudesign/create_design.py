@@ -24,7 +24,8 @@ import probabilit
 
 from ert.shared import __version__ as ert_version
 
-from .config_validation import SeedStrategy, validate_configuration
+from .config_validation import SeedStrategy
+from .design_config import DesignConfig
 from .design_distributions import (
     DiscreteViaUniform,
     is_number,
@@ -34,7 +35,6 @@ from .design_distributions import (
 from .quality_report import QualityReporter, print_corrmat
 from .utils import (
     _raise_if_duplicates,
-    find_max_realisations,
     map_dependencies,
     parameters_from_extern,
     printwarning,
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from collections.abc import Hashable, Sequence
+    from collections.abc import Sequence
 
     import numpy.typing as npt
 
@@ -100,7 +100,7 @@ class DesignMatrix:
     """
 
     designvalues: pd.DataFrame
-    defaultvalues: dict[Hashable, Any]
+    defaultvalues: dict[str, str | float | int | bool]
     backgroundvalues: pd.DataFrame | None
     seedvalues: list[int] | None
     verbosity: int
@@ -112,15 +112,18 @@ class DesignMatrix:
     START_COLUMNS = ("REAL", "SENSNAME", "SENSCASE", "RMS_SEED")
 
     def __init__(
-        self, config: dict[str, Any], verbosity: int = 0, output_dir: Path | None = None
+        self,
+        config: DesignConfig,
+        verbosity: int = 0,
+        output_dir: Path | None = None,
     ) -> None:
         self.designvalues = pd.DataFrame()
         self.verbosity: int = verbosity
         self.output_dir: Path | None = output_dir
         self._generate(config)
 
-    def log_inputdict(self, inputdict: dict[str, Any]) -> None:
-        sensitivities: dict[str, Any] = inputdict["sensitivities"]
+    def log_inputdict(self, config: DesignConfig) -> None:
+        sensitivities: dict[str, Any] = config.sensitivities
         parameters: list[tuple[str, list[Any] | None]] = [
             param
             for sens_values in sensitivities.values()
@@ -130,8 +133,8 @@ class DesignMatrix:
                 else (sens_values.get("parameters") or {})
             ).items()
         ]
-        if isinstance(background := inputdict.get("background"), dict):
-            parameters.extend(background.get("parameters", {}).items())
+        if isinstance(config.background, dict):
+            parameters.extend(config.background.get("parameters", {}).items())
 
         senstype_to_unique_params: dict[str, set[str]] = defaultdict(set)
         for sensvals in sensitivities.values():
@@ -151,14 +154,14 @@ class DesignMatrix:
         summary_log = dedent(
             f"""\
             Fmudesign summary:
-            Designtype: {inputdict.get("designtype")}
-            Repeats: {inputdict.get("repeats")}
-            Seed strategy: {inputdict.get("seed_strategy")}
-            Correlation iterations: {inputdict.get("correlation_iterations")}
+            Designtype: {config.designtype}
+            Repeats: {config.repeats}
+            Seed strategy: {config.seed_strategy}
+            Correlation iterations: {config.correlation_iterations}
             Number of sensitivities: {len(sensitivities)}
             Number of background parameters: {
-                len(background.get("parameters", {}))
-                if isinstance(background, dict)
+                len(config.background.get("parameters", {}))
+                if isinstance(config.background, dict)
                 else 0
             }
             Distribution count: {
@@ -183,14 +186,10 @@ class DesignMatrix:
                     }
                 )
             }
-            Has background: {bool(inputdict.get("background"))}
-            RMS seeds: {
-                "file"
-                if isinstance(inputdict.get("seeds"), list)
-                else inputdict.get("seeds")
-            }
-            Number of parameters with decimals: {len(inputdict.get("decimals") or {})}
-            Distribution seed: {inputdict.get("distribution_seed") is not None}
+            Has background: {bool(config.background)}
+            RMS seeds: {"file" if isinstance(config.seeds, list) else config.seeds}
+            Number of parameters with decimals: {len(config.decimals or {})}
+            Distribution seed: {config.distribution_seed is not None}
             Number of dependencies: {
                 sum(
                     len(sens.get("dependencies", {})) for sens in sensitivities.values()
@@ -203,20 +202,18 @@ class DesignMatrix:
         )
         logger.info(summary_log)
 
-    def _generate(self, inputdict: dict[str, Any]) -> None:
+    def _generate(self, config: DesignConfig) -> None:
         """Adds default values and background values if they exist.
         Loops through sensitivities and adds them to designvalues.
 
         Args:
-            inputdict (dict): input parameters for design
+            config (DesignConfig): configuration for generating a DesignMatrix
         """
-        inputdict = validate_configuration(inputdict, verbosity=self.verbosity)
+        self.rng = np.random.default_rng(seed=config.distribution_seed)
+        self.defaultvalues = config.defaultvalues
 
-        self.rng = np.random.default_rng(seed=inputdict.get("distribution_seed"))
-        self.defaultvalues = inputdict["defaultvalues"]
-
-        self.seed_strategy = inputdict["seed_strategy"]
-        distribution_seed = inputdict.get("distribution_seed")
+        self.seed_strategy = config.seed_strategy
+        distribution_seed = config.distribution_seed
         self.base_seed = (
             distribution_seed
             if distribution_seed is not None
@@ -224,13 +221,16 @@ class DesignMatrix:
         )
 
         # Reading or generating rms seed values
-        max_reals = find_max_realisations(inputdict)
-        self.seedvalues = DesignMatrix.create_rms_seeds(inputdict["seeds"], max_reals)
+        max_reals = max(
+            [sensinfo.get("numreal", 0) for sensinfo in config.sensitivities.values()]
+            + [config.repeats]
+        )
+        self.seedvalues = DesignMatrix.create_rms_seeds(config.seeds, max_reals)
 
         self.add_background(
-            back_dict=inputdict.get("background"),
+            back_dict=config.background,
             max_values=max_reals,
-            correlation_iterations=inputdict.get("correlation_iterations", 0),
+            correlation_iterations=config.correlation_iterations,
         )
 
         sensitivity: Sensitivity
@@ -238,9 +238,9 @@ class DesignMatrix:
         self.designvalues["SENSNAME"] = None
         self.designvalues["SENSCASE"] = None
 
-        for key, sens in inputdict["sensitivities"].items():
+        for key, sens in config.sensitivities.items():
             # Number of realisations (rows) to use for each sensitivity
-            size = sens.get("numreal", inputdict["repeats"])
+            size = sens.get("numreal", config.repeats)
 
             print(f" Generating sensitivity : {key}")
 
@@ -283,9 +283,7 @@ class DesignMatrix:
                         seedvalues=self.seedvalues,
                         corrdict=sens["correlations"],
                         rng=self.rng,
-                        correlation_iterations=inputdict.get(
-                            "correlation_iterations", 0
-                        ),
+                        correlation_iterations=config.correlation_iterations,
                         seed_strategy=self.seed_strategy,
                         base_seed=self.base_seed,
                     )
@@ -334,12 +332,11 @@ class DesignMatrix:
                             )
 
         # Once all sensitivities have been added, complete the work
-        if "background" in inputdict:
-            self._fill_with_background_values()
+        self._fill_with_background_values()
         self._fill_with_defaultvalues()
 
         # Round columns in `self.designvalues` to desired precision
-        self._set_decimals(inputdict)
+        self._set_decimals(config)
 
         # Create REAL column (realization number)
         self.designvalues = self.designvalues.assign(REAL=lambda df: np.arange(len(df)))
@@ -353,7 +350,7 @@ class DesignMatrix:
         # Make all values numerical if possible
         self.designvalues = self.designvalues.map(to_numeric_safe)
 
-        self.log_inputdict(inputdict)
+        self.log_inputdict(config)
 
     def to_xlsx(
         self,
@@ -612,7 +609,7 @@ class DesignMatrix:
                     raise ValueError("Cannot round a string parameter")
         self.backgroundvalues = mc_backgroundvalues.copy()
 
-    def _set_decimals(self, inputdict: dict[str, Any]) -> None:
+    def _set_decimals(self, config: DesignConfig) -> None:
         """Round to specified number of decimals.
 
         Args:
@@ -621,14 +618,14 @@ class DesignMatrix:
                                     (key, value)s are (param, decimals)
         """
         # No decimal information => Nothing to do.
-        if not inputdict.get("decimals"):
+        if not config.decimals:
             return
 
-        dict_decimals = inputdict["decimals"].copy()
+        dict_decimals = config.decimals.copy()
 
         # If there are dependencies (derived params) that are copies,
         # like TO := copy(FROM), then the new TO column must be rounded too.
-        for sensdict in inputdict["sensitivities"].values():
+        for sensdict in config.sensitivities.values():
             if not sensdict["dependencies"]:
                 continue
             for from_param, from_dict in sensdict["dependencies"].items():

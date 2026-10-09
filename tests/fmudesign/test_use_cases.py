@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from fmudesign import DesignMatrix, excel_to_dict
+from fmudesign import DesignMatrix, excel_to_config
 from fmudesign.fmudesignrunner import EXAMPLES
 from fmudesign.utils import map_dependencies
 
@@ -27,7 +27,7 @@ def _run_cli(*args):
 
 
 def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
-    tmp_path,
+    use_tmpdir,
 ):
     general_input = pd.DataFrame(
         data=[
@@ -54,9 +54,9 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
             ["/scratch/foo/2020a_hm3/", 38, 3],
             ["/scratch/foo/2020a_hm3/", 54, 3],
         ],
-    ).to_excel(tmp_path / "hmrealizations.xlsx")
+    ).to_excel("hmrealizations.xlsx")
 
-    input_path = tmp_path / "designinput.xlsx"
+    input_path = "designinput.xlsx"
     with pd.ExcelWriter(input_path, engine="openpyxl") as writer:
         general_input.to_excel(
             writer, sheet_name="general_input", index=False, header=None
@@ -78,7 +78,7 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
         ).to_excel(writer, sheet_name="design_input", index=False)
         defaultvalues.to_excel(writer, sheet_name="defaultvalues", index=False)
 
-    design = DesignMatrix(excel_to_dict(input_path))
+    design = DesignMatrix(excel_to_config(input_path))
 
     assert set(design.designvalues["RESTARTPATH"]) == {"/scratch/foo/2020a_hm3/"}
     assert set(design.designvalues["HMITER"]) == {3}
@@ -91,7 +91,7 @@ def test_that_prediction_rejection_reuses_background_ensemble_per_sensitivity(
     "gen_input_sheet", ["general_input", "General_Input", "GENERALINPUT"]
 )
 def test_that_constant_distribution_generates_identical_parameter_values(
-    tmp_path, gen_input_sheet
+    use_tmpdir, gen_input_sheet
 ):
     general_input = pd.DataFrame(
         data=[
@@ -116,7 +116,7 @@ def test_that_constant_distribution_generates_identical_parameter_values(
         data=[["montecarlo", 100, "dist", "a", "const", 1.0]],
     )
 
-    input_path = tmp_path / "designinput.xlsx"
+    input_path = "designinput.xlsx"
     with pd.ExcelWriter(input_path, engine="openpyxl") as writer:
         general_input.to_excel(
             writer, sheet_name=gen_input_sheet, index=False, header=None
@@ -124,7 +124,7 @@ def test_that_constant_distribution_generates_identical_parameter_values(
         design_input.to_excel(writer, sheet_name="designinput", index=False)
         defaultvalues.to_excel(writer, sheet_name="defaultvalues", index=False)
 
-    design = DesignMatrix(excel_to_dict(input_path, gen_input_sheet="generalinput"))
+    design = DesignMatrix(excel_to_config(input_path, gen_input_sheet="generalinput"))
 
     assert len(design.designvalues) == 100
     assert set(design.designvalues["a"]) == {1.0}
@@ -156,24 +156,23 @@ def test_that_cli_verbosity_controls_sensitivity_plot_generation(
 
 @pytest.mark.slow
 def test_that_advanced_examples_preserve_correlations_and_dependencies(
-    tmp_path, monkeypatch
+    use_tmpdir, monkeypatch
 ):
-    monkeypatch.chdir(tmp_path)
     _run_cli("init", "ex2_correlations.xlsx")
     _run_cli("init", "ex8_mc_with_correls.xlsx")
 
-    correlations = excel_to_dict("ex2_correlations.xlsx")
-    assert Path(correlations["background"]["extern"]).is_file()
-    assert Path(correlations["sensitivities"]["sens8"]["extern_file"]).is_file()
-    assert correlations["sensitivities"]["sens7"]["correlations"]["sheetnames"] == [
+    correlation_config = excel_to_config("ex2_correlations.xlsx")
+    assert Path(correlation_config.background["extern"]).is_file()
+    assert Path(correlation_config.sensitivities["sens8"]["extern_file"]).is_file()
+    assert correlation_config.sensitivities["sens7"]["correlations"]["sheetnames"] == [
         "corr1"
     ]
-    assert correlations["sensitivities"]["contacts"]["cases"] == {
+    assert correlation_config.sensitivities["contacts"]["cases"] == {
         "shallow": {"PARAM2": -1, "PARAM3": -1, "PARAM4": -1},
         "deep": {"PARAM2": 1.0, "PARAM3": 1.0, "PARAM4": 1.0},
     }
 
-    monte_carlo = excel_to_dict("ex8_mc_with_correls.xlsx")["sensitivities"][
+    monte_carlo = excel_to_config("ex8_mc_with_correls.xlsx").sensitivities[
         "montecarlo"
     ]
     assert monte_carlo["correlations"]["sheetnames"] == [
