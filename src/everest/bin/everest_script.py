@@ -48,7 +48,14 @@ MAX_EVERSERVER_READY_TIME = 10 * 60  # 10 minutes
 
 async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """Start an EVEREST server running the optimization defined in the config"""
-    driver = create_driver(config.server.queue_system, poll_period=0.1)  # type: ignore
+    server_config = config.server
+    if server_config.queue_system is None:
+        raise ValueError("Server queue system was not resolved during validation")
+    driver = create_driver(
+        server_config.queue_system,
+        poll_period=0.1,
+        max_runtime=server_config.max_runtime,
+    )
     try:
         args = [
             "--output-dir",
