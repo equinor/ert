@@ -30,6 +30,7 @@ from ert.run_models.event import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.storage import LocalStorage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
+from ert.workflow_runner import WorkflowJobFailedError
 
 
 class ErtCliError(Exception):
@@ -99,7 +100,10 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
         if LocalStorage.check_migration_needed(path):
             LocalStorage.perform_migration(path)
         with open_storage(path, "w") as storage:
-            execute_workflow(ert_config, storage, args.name)
+            try:
+                execute_workflow(ert_config, storage, args.name)
+            except WorkflowJobFailedError as err:
+                raise ErtCliError(str(err)) from err
         return
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()

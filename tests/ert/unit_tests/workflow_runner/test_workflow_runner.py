@@ -13,7 +13,12 @@ from ert.config.workflow_job import (
     UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
 )
-from ert.workflow_runner import WorkflowJobRunner, WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobFailedError,
+    WorkflowJobRunner,
+    WorkflowJobStatus,
+    WorkflowRunner,
+)
 from tests.ert.utils import wait_until
 
 from .workflow_common import WorkflowCommon
@@ -234,6 +239,24 @@ def test_that_job_results_contain_one_entry_per_job_invocation():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_result_of_failed_job_holds_error_separately_from_stderr():
+    WorkflowCommon.createExternalDumpJob()
+    Path("failing_workflow").write_text("DUMP_FAILING\n", encoding="utf-8")
+    failing_job = workflow_job_from_file(
+        "dump_failing_job", name="DUMP_FAILING", origin="user"
+    )
+    workflow = Workflow.from_file("failing_workflow", {}, {"DUMP_FAILING": failing_job})
+
+    runner = WorkflowRunner(workflow, fixtures={})
+    runner.run_blocking()
+
+    [result] = runner.workflow_job_results()
+    assert result.status is WorkflowJobStatus.FAILED
+    assert result.error.endswith("dump_failing.py failed with exit code 1")
+    assert result.stderr.startswith("Traceback")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_output_of_workflow_job_is_written_to_ert_log(caplog):
     WorkflowCommon.createExternalDumpJob()
 
@@ -319,7 +342,7 @@ def test_that_output_of_job_that_stops_workflow_is_still_logged(caplog):
 
     with (
         caplog.at_level(logging.INFO, logger="ert.workflow_runner"),
-        pytest.raises(RuntimeError, match="failed with error"),
+        pytest.raises(WorkflowJobFailedError, match=r"Workflow job .* failed: "),
     ):
         WorkflowRunner(workflow, fixtures={}).run_blocking()
 

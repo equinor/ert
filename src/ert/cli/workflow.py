@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import logging
+import sys
 from typing import TYPE_CHECKING
 
 from ert.runpaths import Runpaths
-from ert.workflow_runner import WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobStatus,
+    WorkflowRunner,
+    format_workflow_job_failure,
+)
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -34,6 +39,18 @@ def execute_workflow(
             "ensemble": None,
         },
     )
-    runner.run_blocking()
+    try:
+        runner.run_blocking()
+    finally:
+        for result in runner.workflow_job_results():
+            if (
+                result.status is WorkflowJobStatus.FAILED
+                and not result.stopped_workflow
+            ):
+                print(
+                    format_workflow_job_failure(result.name, result.error),
+                    file=sys.stderr,
+                )
+
     if not all(v["completed"] for v in runner.workflowReport().values()):
         logger.error(f"Workflow {workflow_name} failed!")

@@ -22,7 +22,7 @@ from _ert.threading import ErtThread
 from ert.gui.ertwidgets import EnsembleSelector
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.runpaths import Runpaths
-from ert.workflow_runner import WorkflowRunner
+from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -157,17 +157,23 @@ class RunWorkflowWidget(QWidget):
             success = self._workflow_runner.workflowResult()
 
             if success:
-                report = self._workflow_runner.workflowReport()
-                failed_jobs = [k for k, v in report.items() if not v["completed"]]
-                self.workflowSucceeded.emit(failed_jobs)
+                self.workflowSucceeded.emit(self._failed_job_errors())
             else:
                 self.workflowFailed.emit()
 
-    def workflowFinished(self, failed_jobs: Iterable[str]) -> None:
+    def _failed_job_errors(self) -> list[str]:
+        assert self._workflow_runner is not None
+        return [
+            f"{result.name}: {result.error}"
+            for result in self._workflow_runner.workflow_job_results()
+            if result.status is WorkflowJobStatus.FAILED
+        ]
+
+    def workflowFinished(self, failed_job_errors: Iterable[str]) -> None:
         workflow_name = self.getCurrentWorkflowName()
         jobs_msg = "successfully!"
-        if failed_jobs:
-            jobs_msg = "\nThe following jobs failed: " + ", ".join(list(failed_jobs))
+        if failed_job_errors:
+            jobs_msg = "\nThe following jobs failed:\n" + "\n".join(failed_job_errors)
 
         QMessageBox.information(
             self,
@@ -179,21 +185,13 @@ class RunWorkflowWidget(QWidget):
             self._running_workflow_dialog = None
 
     def workflowFinishedWithFail(self) -> None:
-        assert self._workflow_runner is not None
-        report = self._workflow_runner.workflowReport()
-        failing_workflows = [
-            (wfname, info) for wfname, info in report.items() if not info["completed"]
-        ]
-
-        title_text = f"Workflow{'s' if len(failing_workflows) > 1 else ''} failed"
-        content_text = "\n\n".join(
-            [
-                f"{wfname} failed: \n {info['stderr'].strip()}"
-                for wfname, info in failing_workflows
-            ]
+        workflow_name = self.getCurrentWorkflowName()
+        QMessageBox.critical(
+            self,
+            "Workflow failed",
+            f"The workflow '{workflow_name}' was stopped. "
+            "The following jobs failed:\n" + "\n".join(self._failed_job_errors()),
         )
-
-        QMessageBox.critical(self, title_text, content_text)
         if self._running_workflow_dialog is not None:
             self._running_workflow_dialog.reject()
             self._running_workflow_dialog = None

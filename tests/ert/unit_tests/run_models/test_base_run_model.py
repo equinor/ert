@@ -47,7 +47,11 @@ from ert.run_models.run_model import (
     UserCancelled,
 )
 from ert.warnings import PostExperimentWarning
-from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobFailedError,
+    WorkflowJobStatus,
+    WorkflowRunner,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -1004,7 +1008,7 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
         experiment, ensemble_size=1, name="ensemble"
     )
 
-    with pytest.raises(RuntimeError, match="failed with error"):
+    with pytest.raises(WorkflowJobFailedError, match=r"Workflow job .* failed: "):
         brm.run_workflows(
             fixtures=PreSimulationFixtures(
                 random_seed=1,
@@ -1018,10 +1022,13 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
     (event,) = _drain(status_queue)
     assert event.status is WorkflowJobStatus.FAILED
     assert event.stdout == "printed before failing\n"
+    assert event.stopped_workflow
+    assert event.error.endswith("failed with exit code 1")
 
-    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
-        "printed before failing\n"
-    ]
+    [persisted_event] = _persisted_workflow_events(experiment)
+    assert persisted_event.stdout == "printed before failing\n"
+    assert persisted_event.stopped_workflow
+    assert persisted_event.error == event.error
 
 
 def test_that_workflow_events_from_update_hook_carry_iteration(tmp_path, use_tmpdir):
