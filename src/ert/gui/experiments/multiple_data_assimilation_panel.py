@@ -224,7 +224,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         add_parameter_configuration_rows(
             self,
             layout,
-            analysis_config,
+            analysis_config.design_matrix,
             self._analysis_module_edit.parameter_config,
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
