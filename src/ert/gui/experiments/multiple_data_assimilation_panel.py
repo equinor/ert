@@ -229,7 +229,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         add_parameter_configuration_rows(
             self,
             layout,
-            analysis_config,
+            analysis_config.design_matrix,
             lambda: self._param_state.parameters,
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,

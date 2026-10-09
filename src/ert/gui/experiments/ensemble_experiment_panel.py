@@ -85,12 +85,12 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         layout.addRow("Active realizations", self._active_realizations_field)
 
         parameter_configuration = merge_design_matrix_parameters(
-            analysis_config, parameter_configuration
+            analysis_config.design_matrix, parameter_configuration
         )
         add_parameter_configuration_rows(
             self,
             layout,
-            analysis_config,
+            analysis_config.design_matrix,
             lambda: parameter_configuration,
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
