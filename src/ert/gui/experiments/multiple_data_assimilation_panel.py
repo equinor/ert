@@ -477,12 +477,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
             and self.weights_valid
-            and self._selected_param_configuration_is_valid
+            and has_updatable_parameters(self._param_state.parameters)
         )
-
-    @property
-    def _selected_param_configuration_is_valid(self) -> bool:
-        return has_updatable_parameters(self._param_state.parameters)
 
     @property
     def _selected_prior_ensemble(self) -> Ensemble | None:

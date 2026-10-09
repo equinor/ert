@@ -120,7 +120,7 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
         config_num_realization=1,
     )
     qtbot.addWidget(panel)
-    assert not panel._selected_param_configuration_is_valid
+    assert not panel.isConfigurationValid()
 
     select_prior_ensemble_checkbox = panel.findChild(
         QCheckBox, "select_prior_checkbox_esmda"
@@ -129,7 +129,6 @@ def test_that_configuration_validity_reflects_prior_ensemble_updatable_parameter
     select_prior_ensemble_checkbox.click()
     assert select_prior_ensemble_checkbox.isChecked()
 
-    assert panel._selected_param_configuration_is_valid is expected_valid
     assert panel.isConfigurationValid() is expected_valid
 
 
