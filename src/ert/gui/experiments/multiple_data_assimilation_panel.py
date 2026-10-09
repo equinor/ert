@@ -83,7 +83,7 @@ def create_prior_ensemble_selector(notifier: ErtNotifier) -> EnsembleSelector:
             and ensemble.iteration < ensemble.relative_weights.count(",") + 1
         )
 
-    def get_ensembles_of_ensemble_experiment_type(
+    def get_ensembles_of_experiment_type(
         ensembles: Iterable[Ensemble],
     ) -> Iterable[Ensemble]:
         """
@@ -100,7 +100,7 @@ def create_prior_ensemble_selector(notifier: ErtNotifier) -> EnsembleSelector:
 
     filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
         get_ensembles_that_are_not_last_es_mda_iteration,
-        get_ensembles_of_ensemble_experiment_type,
+        get_ensembles_of_experiment_type,
     ]
     selector = EnsembleSelector(notifier, filters=filters)
     selector.setEnabled(False)
