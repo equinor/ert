@@ -332,7 +332,7 @@ class EnsembleWidget(QWidget):
         if response_ds is not None and not response_ds.is_empty():
             response_ds_for_label = response_ds.rename({"values": "Responses"})[
                 ["response_key", "Responses"]
-            ]
+            ].filter(pl.col("Responses").is_not_null())
 
             ax.errorbar(
                 x="Observation",
