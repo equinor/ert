@@ -19,6 +19,9 @@ from ert.gui.ertwidgets import (
     Suggestor,
     TextModel,
 )
+from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
+    ParameterConfigurationStateModel,
+)
 from ert.gui.experiments._panel_utils import create_target_ensemble_format_field
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
@@ -92,22 +95,25 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         ) = create_target_ensemble_format_field(analysis_config, notifier)
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
+        self._param_state = ParameterConfigurationStateModel(
+            parameter_configuration, self
+        )
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            parameter_config=parameter_configuration,
+            get_update_strategies=lambda: self._param_state.update_strategies,
             ensemble_size=0,
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         self._analysis_module_edit.setEnabled(False)
+        self._analysis_module_edit.update_strategies_changed.connect(
+            self._param_state.apply_update_strategies
+        )
 
         layout.addRow("Update settings:", self._analysis_module_edit)
         self._update_strategy_label = QLabel("Parameter Localizations")
         self._update_strategy_label.setObjectName("update_strategy_label")
         self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
-            self._analysis_module_edit.parameter_config, self
-        )
-        self._analysis_module_edit.settings_changed.connect(
-            self._refresh_update_strategy_summary_widget
+            self._param_state, self
         )
         self._update_strategy_label.setToolTip(
             self._update_strategy_summary_widget.toolTip()
@@ -169,15 +175,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
     def _parameter_configuration_changed(self) -> None:
         if self._ensemble_selector.selected_ensemble is not None:
-            self._analysis_module_edit.parameter_config = list(
+            self._param_state.select_prior(
                 self._ensemble_selector.selected_ensemble.experiment.parameter_configuration.values()
             )
-            self._refresh_update_strategy_summary_widget()
-
-    def _refresh_update_strategy_summary_widget(self) -> None:
-        self._update_strategy_summary_widget.set_parameters(
-            self._analysis_module_edit.parameter_config
-        )
 
     @Slot(str)
     def _on_update_method_changed(self, new_method: str) -> None:
@@ -206,7 +206,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             ensemble_size=self._ensemble_size,
             experiment_name=self._experiment_name_field.get_text,
-            parameter_configuration=self._analysis_module_edit.parameter_config,
+            parameter_configuration=self._param_state.parameters,
         )
 
     def _realizations_from_fs(self) -> None:
@@ -252,7 +252,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, ManualUpdatePanel):
             self._realizations_from_fs()
-            self._refresh_update_strategy_summary_widget()
 
             self._experiment_name_field.setPlaceholderText(
                 f"Manual update of {self._ensemble_selector.selected_ensemble.name}"

@@ -14,6 +14,9 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config.parameter_config import ParameterConfig
+from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
+    ParameterConfigurationStateModel,
+)
 
 _COLUMN_HEADERS = ("strategy", "parameter type", "count")
 _PARAMETER_TYPE_DISPLAY_NAMES = {
@@ -31,10 +34,11 @@ _SummaryRow = tuple[str, str, str]
 class UpdateStrategySummaryWidget(QTableWidget):
     def __init__(
         self,
-        parameter_configs: Iterable[ParameterConfig],
+        parameter_state: ParameterConfigurationStateModel,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
+        self._parameter_state = parameter_state
         self.setObjectName("update_strategy_summary_widget")
         self.setAccessibleName("Update strategy counts by parameter type")
         self.setColumnCount(3)
@@ -64,10 +68,11 @@ class UpdateStrategySummaryWidget(QTableWidget):
         vertical_header.setVisible(False)
         vertical_header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.setToolTip(_TOOLTIP)
-        self.set_parameters(parameter_configs)
+        parameter_state.changed.connect(self._refresh)
+        self._refresh()
 
-    def set_parameters(self, parameter_configs: Iterable[ParameterConfig]) -> None:
-        rows = _summarize_parameters(parameter_configs)
+    def _refresh(self) -> None:
+        rows = _summarize_parameters(self._parameter_state.parameters)
 
         self.setRowCount(len(rows))
         for row_index, row in enumerate(rows):

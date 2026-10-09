@@ -90,3 +90,4 @@ def test_that_update_strategy_edited_in_dialog_is_used_in_experiment_arguments(
     assert panel.get_experiment_arguments().parameter_configuration == [
         parameter.model_copy(update={"update_strategy": LocalizationType.ADAPTIVE})
     ]
+    assert parameter.update_strategy == LocalizationType.GLOBAL

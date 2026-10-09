@@ -1,4 +1,11 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QPushButton,
+)
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
@@ -280,39 +287,61 @@ def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
     assert not panel._update_strategy_label.isHidden()
 
 
-def test_that_activating_manual_update_refreshes_externally_changed_strategy(
+def test_that_update_strategy_edited_in_dialog_applies_to_selected_ensemble_parameters(
     qtbot: QtBot,
 ):
-    parameter = GenKwConfig(
-        name="parameter",
+    configured_parameter = GenKwConfig(
+        name="configured",
         distribution=RawSettings(),
-        update_strategy=LocalizationType.ADAPTIVE,
+        update_strategy=LocalizationType.GLOBAL,
+    )
+    prior_parameter = GenKwConfig(
+        name="stored",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.DISTANCE,
     )
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     notifier._storage._setup_mocked_run(
         "ensemble",
         "experiment",
-        [REALIZATION_FINISHED_SUCCESSFULLY],
-        parameter_configuration={"parameter": parameter},
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 2,
+        parameter_configuration={"stored": prior_parameter},
     )
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         runpath="",
         notifier=notifier,
-        parameter_configuration=[],
+        parameter_configuration=[configured_parameter],
     )
     qtbot.addWidget(panel)
-    summary = panel.findChild(UpdateStrategySummaryWidget)
-    assert summary is not None
-    strategy_item = summary.item(0, 0)
-    assert strategy_item is not None
-    assert strategy_item.text() == "Adaptive"
+    assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
 
-    parameter.update_strategy = LocalizationType.DISTANCE
-    assert strategy_item.text() == "Adaptive"
-    panel.experimentTypeChanged(panel)
+    def select_adaptive_strategy_and_save() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        gen_kw_selector = dialog.findChildren(QComboBox)[0]
+        gen_kw_selector.setCurrentIndex(
+            gen_kw_selector.findData(
+                LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole
+            )
+        )
+        buttons = dialog.findChild(QDialogButtonBox)
+        assert buttons is not None
+        save_button = buttons.button(QDialogButtonBox.StandardButton.Save)
+        assert save_button is not None
+        qtbot.mouseClick(save_button, Qt.MouseButton.LeftButton)
 
-    strategy_item = summary.item(0, 0)
-    assert strategy_item is not None
-    assert strategy_item.text() == "Distance"
+    QTimer.singleShot(0, select_adaptive_strategy_and_save)
+    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
+    assert edit_button is not None
+    assert edit_button.isEnabled()
+    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
+
+    assert panel.get_experiment_arguments().parameter_configuration == [
+        prior_parameter.model_copy(
+            update={"update_strategy": LocalizationType.ADAPTIVE}
+        )
+    ]
+    assert prior_parameter.update_strategy == LocalizationType.DISTANCE
+    assert configured_parameter.update_strategy == LocalizationType.GLOBAL
