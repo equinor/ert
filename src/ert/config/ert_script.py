@@ -128,7 +128,8 @@ class ErtScript:
             return self._run_capturing_output(arguments)
         except KeyboardInterrupt:
             error_msg = "Script cancelled (CTRL+C)"
-            self._record_error(error_msg)
+            self.cancel()
+            self._append_to_stderrdata(error_msg)
             logger.info(
                 f"Script cancelled in workflow script {self.__class__.__name__}:"
                 f" {error_msg}"
@@ -143,10 +144,19 @@ class ErtScript:
             return uw.args[0]
         except ExternalScriptError as e:
             self._record_error(str(e))
-            logger.error(f"Workflow job failed: {e!s}")
+            if self.isCancelled():
+                logger.info(f"Workflow job cancelled: {e!s}")
+            else:
+                logger.error(f"Workflow job failed: {e!s}")
             return None
         except BaseException as e:
             self._record_error(f"{type(e).__name__}: {e!s}")
+            if self.isCancelled():
+                logger.info(
+                    f"Exception in cancelled workflow script "
+                    f"{self.__class__.__name__}: {e!s}"
+                )
+                return None
             logger.exception(
                 f"Exception in workflow script {self.__class__.__name__}: {e!s}"
             )
@@ -185,12 +195,15 @@ class ErtScript:
         return arguments
 
     def _record_error(self, error: str) -> None:
+        self._append_to_stderrdata(error)
+        self._error = error
+        self.__failed = True
+
+    def _append_to_stderrdata(self, text: str) -> None:
         existing_stderr = self.stderrdata
         if existing_stderr and not existing_stderr.endswith("\n"):
             existing_stderr += "\n"
-        self._stderrdata = existing_stderr + error
-        self._error = error
-        self.__failed = True
+        self._stderrdata = existing_stderr + text
 
     @staticmethod
     def loadScriptFromFile(
