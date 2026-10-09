@@ -596,6 +596,17 @@ def test_that_flow_fm_gives_error_on_np_in_opts(plugins_ert_config):
         )
 
 
+def test_that_flow_fm_accepts_mpi_opts(plugins_ert_config):
+    ert_config = plugins_ert_config.from_file_contents(
+        'NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<MPI_OPTS>="--bind-to core")\n'
+    )
+
+    flow_step = ert_config.forward_model_steps[0]
+    assert flow_step.private_args["<MPI_OPTS>"] == "--bind-to core"
+    flow_json = create_forward_model_json({}, ert_config.forward_model_steps, None)
+    assert "--mpi-args=--bind-to core" in flow_json["jobList"][0]["argList"]
+
+
 @pytest.mark.parametrize("fm_step_name", ["ECLIPSE100", "ECLIPSE300", "FLOW"])
 def test_that_reservoir_simulator_fm_rejects_unknown_keyword(
     plugins_ert_config, fm_step_name
