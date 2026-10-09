@@ -770,10 +770,7 @@ class LocalEnsemble(BaseMode):
         return times.max()  # type: ignore
 
     def _load_responses_lazy(
-        self,
-        response_key: str,
-        realizations: tuple[int, ...],
-        ensemble_end_date: datetime | None = None,
+        self, response_key: str, realizations: tuple[int, ...]
     ) -> pl.LazyFrame:
         select_key = False
         if response_key in self.experiment.response_configuration:
@@ -798,13 +795,7 @@ class LocalEnsemble(BaseMode):
 
             loaded.append(df)
 
-        result = pl.concat(loaded) if loaded else pl.DataFrame().lazy()
-        config = self.experiment.response_configuration.get(response_type)
-        if isinstance(config, DerivedResponseConfig):
-            if ensemble_end_date is None:
-                ensemble_end_date = self._compute_ensemble_end_date()
-            result = config.fill_missing_values(result, ensemble_end_date)
-        return result
+        return pl.concat(loaded) if loaded else pl.DataFrame().lazy()
 
     @require_write
     def save_parameters(
@@ -1063,9 +1054,15 @@ class LocalEnsemble(BaseMode):
                     for k in ["response_key", *response_cls.match_key]
                 }
 
-                responses = self._load_responses_lazy(
-                    response_type, (real,), ensemble_end_date=ensemble_end_date
-                ).with_columns([pl.col("response_key").cast(pl.Categorical)])
+                responses = self._load_responses_lazy(response_type, (real,))
+                if isinstance(response_cls, DerivedResponseConfig):
+                    responses = response_cls.fill_missing_values(
+                        responses, ensemble_end_date
+                    )
+
+                responses = responses.with_columns(
+                    [pl.col("response_key").cast(pl.Categorical)]
+                )
 
                 if (
                     response_type == "rft"

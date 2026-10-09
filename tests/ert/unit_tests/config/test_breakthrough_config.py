@@ -2,10 +2,12 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+import numpy as np
 import polars as pl
 import pytest
 
 from ert.config import BreakthroughConfig, SummaryConfig
+from ert.config._observations import BreakthroughObservation
 from ert.storage import Ensemble
 from ert.storage.local_storage import open_storage
 
@@ -15,6 +17,7 @@ class BreakthroughData:
     response_key: str
     time: datetime
     breakthrough_config: BreakthroughConfig
+    breakthrough_observations: list[BreakthroughObservation]
 
     @staticmethod
     def monthly_times() -> list[datetime]:
@@ -88,15 +91,27 @@ def _breakthrough_data(
     response_key="WWCT:OP1",
     time=datetime(2000, 3, 2, 13, 0),  # ruff: ignore[call-datetime-without-tzinfo]
 ) -> BreakthroughData:
-    breakthrough_config = BreakthroughConfig(
+    threshold = 0.2
+    breakthrough_config = _breakthrough_config(
         keys=[f"BREAKTHROUGH:{response_key}"],
         summary_keys=[response_key],
-        thresholds=[0.2],
+        thresholds=[threshold],
         observed_dates=[time],
     )
 
+    breakthrough_observation = BreakthroughObservation(
+        name="BRK_OBS1",
+        key=response_key,
+        date=time,
+        error=10,
+        threshold=threshold,
+    )
+
     return BreakthroughData(
-        response_key=response_key, time=time, breakthrough_config=breakthrough_config
+        response_key=response_key,
+        time=time,
+        breakthrough_config=breakthrough_config,
+        breakthrough_observations=[breakthrough_observation],
     )
 
 
@@ -118,6 +133,10 @@ def _breakthrough_setup(tmp_path, breakthrough_data=None):
                     summary_config.model_dump(mode="json"),
                     breakthrough_data.breakthrough_config.model_dump(mode="json"),
                 ],
+                "observations": [
+                    obs.model_dump(mode="json")
+                    for obs in breakthrough_data.breakthrough_observations
+                ],
             }
         )
 
@@ -128,6 +147,7 @@ def _breakthrough_setup(tmp_path, breakthrough_data=None):
             response_key=breakthrough_data.response_key,
             time=breakthrough_data.time,
             breakthrough_config=breakthrough_data.breakthrough_config,
+            breakthrough_observations=breakthrough_data.breakthrough_observations,
             ensemble=ensemble,
         )
 
@@ -185,7 +205,7 @@ def test_that_derive_from_storage_stores_null_when_threshold_is_not_reached(
         assert breakthrough_response["values"].item() is None
 
 
-def test_that_loading_breakthrough_responses_fills_in_with_day_after_ensemble_end_date(
+def test_that_get_observations_and_responses_fills_in_with_day_after_ensemble_end_date(
     tmp_path,
 ):
     with _breakthrough_setup(tmp_path) as breakthrough_setup:
@@ -200,15 +220,18 @@ def test_that_loading_breakthrough_responses_fills_in_with_day_after_ensemble_en
         )
         ensemble.save_response("breakthrough", breakthrough_response, 0)
 
-        loaded = ensemble.load_responses("breakthrough", (0,))
+        obs_name = breakthrough_setup.breakthrough_observations[0].name
+        obs_and_responses = ensemble.get_observations_and_responses(
+            [obs_name], np.array([0])
+        )
 
-        assert loaded["time"].item() is not None
         expected_offset_days = (
             breakthrough_setup.ensemble_end_date()
             + timedelta(days=1)
             - breakthrough_setup.time
         ).total_seconds() / (60 * 60 * 24)
-        assert loaded["values"].item() == pytest.approx(expected_offset_days)
+
+        assert obs_and_responses["0"].item() == pytest.approx(expected_offset_days)
 
 
 def test_that_fill_missing_values_returns_unchanged_when_there_are_no_summary_keys():
