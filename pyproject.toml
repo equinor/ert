@@ -249,6 +249,7 @@ select = [
     "PLE",
     "PLW",
     "PT",    # pytest
+    "os-path-dirname",
     "os-stat",
     "os-chmod",
     "os-getcwd",

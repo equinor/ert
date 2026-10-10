@@ -98,8 +98,9 @@ def render_template(
 
     _assert_input(all_input_files, template_file, output_file)
 
-    if directory := os.path.dirname(output_file):
-        Path(directory).mkdir(exist_ok=True, parents=True)
+    directory = Path(output_file).parent
+    if directory != Path():
+        directory.mkdir(exist_ok=True, parents=True)
 
     template = _load_template(template_file)
     data = _load_input(all_input_files)

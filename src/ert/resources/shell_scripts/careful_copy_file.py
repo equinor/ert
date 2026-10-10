@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import os
 import shutil
 import sys
 from pathlib import Path
@@ -17,9 +16,9 @@ def careful_copy_file(src: str, target: str | None = None) -> None:
             shutil.copyfile(src, target_file)
             print(f"Copying file '{src}' -> '{target_file}'")
         else:
-            target_path = os.path.dirname(target)
-            if target_path and not Path(target_path).is_dir():
-                Path(target_path).mkdir(parents=True)
+            target_path = Path(target) if target.endswith("/") else Path(target).parent
+            if target_path != Path() and not target_path.is_dir():
+                target_path.mkdir(parents=True)
                 print(f"Creating directory '{target_path}' ")
             if Path(target).is_dir():
                 target_file = str(Path(target) / Path(src).name)

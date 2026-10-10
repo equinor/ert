@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -18,8 +19,8 @@ def ensure_bin_in_path():
     in a virtualenv.
     """
     path = os.environ["PATH"]
-    exec_path = os.path.dirname(sys.executable)
-    os.environ["PATH"] = exec_path + os.pathsep + path
+    exec_path = Path(sys.executable).parent
+    os.environ["PATH"] = str(exec_path) + os.pathsep + path
     yield
     os.environ["PATH"] = path
 

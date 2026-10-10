@@ -1138,7 +1138,7 @@ class ErtConfig(BaseModel, extra="forbid"):
                 obs_config_file, obs_config_input = obs_config_args
                 log_observation_keys(obs_config_input)
                 obs_configs = make_observations(
-                    os.path.dirname(obs_config_file),
+                    str(Path(obs_config_file).parent),
                     obs_config_input,
                     shape_registry=shape_registry,
                 )
