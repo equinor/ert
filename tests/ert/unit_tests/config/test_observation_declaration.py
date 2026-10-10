@@ -1,5 +1,4 @@
 import math
-import os
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
@@ -43,7 +42,7 @@ observation_contents = stlark.from_lark(observations_parser)
 def make_and_parse_observations(contents, filename):
     registry = ShapeRegistry()
     return make_observations(
-        os.path.dirname(filename),
+        str(Path(filename).parent),
         parse_observations(contents, filename),
         shape_registry=registry,
     )
@@ -159,9 +158,7 @@ def test_that_make_observations_migrates_observations():
     # Re-parse the migrated obs_config and build the observation objects
     migrated_contents = Path("obs_config").read_text(encoding="utf8")
     parsed = parse_observations(migrated_contents, "obs_config")
-    observations = make_observations(
-        os.path.dirname("obs_config"), parsed, ShapeRegistry()
-    )
+    observations = make_observations("", parsed, ShapeRegistry())
 
     # Validate migrated observations contain expected entries and values
     names = [getattr(o, "name", None) for o in observations]
@@ -1154,7 +1151,6 @@ def test_that_empty_seismic_observation_file_does_not_raise(file_context_token):
 def test_that_seismic_observation_coordinate_distance_below_tolerance_raises(
     file_context_token, east, north
 ):
-
     Path("obs.csv").write_text(
         dedent(
             f"""
