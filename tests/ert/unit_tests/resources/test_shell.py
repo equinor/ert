@@ -2,6 +2,7 @@ import contextlib
 import os
 import shutil
 import sys
+from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
 from unittest.mock import patch
@@ -496,6 +497,16 @@ def test_copy_file3():
 
     Path("file.txt").write_text("Hei", encoding="utf-8")
     copy_file("file.txt", "rms/output/")
+    assert Path("rms/output/file.txt").read_text(encoding="utf-8") == "Hei"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("copy", [copy_file, careful_copy_file])
+def test_that_copy_creates_directory_for_trailing_slash_target(
+    copy: Callable[[str, str | None], None],
+):
+    Path("file.txt").write_text("Hei", encoding="utf-8")
+    copy("file.txt", "rms/output/")
     assert Path("rms/output/file.txt").read_text(encoding="utf-8") == "Hei"
 
 
