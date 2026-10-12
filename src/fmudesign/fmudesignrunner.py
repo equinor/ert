@@ -338,6 +338,7 @@ def main() -> None:
 
     # Backwards compatibility. If not a known command, assume "run"
     valid_cmds = ("run", "init", "-h", "--help", "-v", "--version")
+    given_args = sys.argv[1:]
     if len(sys.argv) > 1 and sys.argv[1] not in valid_cmds:
         sys.argv.insert(1, "run")
 
@@ -352,7 +353,7 @@ def main() -> None:
     setup_site_logging(root_logger)
 
     logging.getLogger("fmudesign").setLevel(logging.INFO)
-    logger.info(f"Running fmudesign with args: {sys.argv[1:]}")
+    logger.info(f"Running fmudesign with args: {given_args}")
 
     err_guide_msg = (
         "\n \n"
