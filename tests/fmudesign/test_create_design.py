@@ -645,7 +645,12 @@ def test_that_print_corrmat_formats_without_mutating_input(capsys):
     pd.testing.assert_frame_equal(df, original)
 
 
-def test_that_summary_log_reports_usage_of_design_features(caplog):
+def test_that_summary_log_reports_usage_of_design_features(tmp_path, caplog):
+    correlation_file = tmp_path / "correlations.xlsx"
+    _write_correlation_sheets(
+        correlation_file,
+        {"corr1": (["A", "B", "D"], [[1, 0.5, 0.5], [0.5, 1, 0.5], [0.5, 0.5, 1]])},
+    )
     config = minimal_configuration() | {
         "repeats": 2,
         "seeds": "default",
@@ -657,7 +662,14 @@ def test_that_summary_log_reports_usage_of_design_features(caplog):
             "correlations": None,
             "decimals": {"A": 2},
         },
-        "defaultvalues": {"A": 0, "B": 0, "C": "base", "E": 0},
+        "defaultvalues": {
+            "A": 0,
+            "B": 0,
+            "C": "base",
+            "D": "low",
+            "E": 0,
+            "F": False,
+        },
         "sensitivities": {
             "seed": {
                 "senstype": "seed",
@@ -667,22 +679,28 @@ def test_that_summary_log_reports_usage_of_design_features(caplog):
             },
             "a": {
                 "senstype": "scenario",
-                "cases": {"low": {"A": -1}, "high": {"A": 1}},
-                "dependencies": {},
+                "cases": {"low": {"A": -1, "F": True}, "high": {"A": 1, "F": True}},
+                "dependencies": {
+                    "A": {"from_values": [-1, 1], "to_params": {"E": [0.25, 0.75]}}
+                },
             },
             "c": {
                 "senstype": "scenario",
-                "cases": {"alternative": {"C": "alternative"}},
+                "cases": {"alternative": {"C": 1}},
                 "dependencies": {},
             },
-            "ab": {
+            "abd": {
                 "senstype": "dist",
-                "numreal": 3,
+                "numreal": 4,
                 "parameters": {
-                    "A": ["normal", [0, 1], None],
-                    "B": ["normal", [0, 1, -1, 1], None],
+                    "A": ["normal", [0, 1], "corr1"],
+                    "B": ["normal", [0, 1, -1, 1], "corr1"],
+                    "D": ["discrete", ["low,high"], "corr1"],
                 },
-                "correlations": None,
+                "correlations": {
+                    "inputfile": str(correlation_file),
+                    "sheetnames": ["corr1"],
+                },
                 "dependencies": {},
             },
         },
@@ -694,30 +712,43 @@ def test_that_summary_log_reports_usage_of_design_features(caplog):
     [summary] = [m for m in caplog.messages if m.startswith("Fmudesign summary")]
     assert summary.splitlines() == [
         "Fmudesign summary:",
-        "Designtype: onebyone",
         "Repeats: 2",
         "Seed strategy: joint",
         "Correlation iterations: 0",
         "Number of sensitivities: 4",
+        "Number of sensitivities per type: {'seed': 1, 'scenario': 2, 'dist': 1}",
         "Number of background parameters: 2",
-        "Distribution count: {'const': 1, 'normal': 2, 'uniform': 2}",
+        "Number of background parameters also set in sensitivities: 2",
+        (
+            "Distribution count (name, parameter count): "
+            "{('normal', 2): 1, ('normal', 4): 1, ('discrete', 1): 1, "
+            "('uniform', 2): 2}"
+        ),
         (
             "Parameters per sensitivity type in designinput: "
-            "{'seed': 1, 'scenario': 2, 'dist': 2}"
+            "{'seed': 1, 'scenario': 3, 'dist': 3}"
         ),
-        "Parameters in designmatrix: 5",
-        "Parameters in designmatrix defaultsheet: 4",
-        "Number of parameters with correlations: 0",
-        "Has background: True",
+        "Parameters in designmatrix: 7",
+        "Number of non-numeric parameters in designmatrix: 3",
+        "Number of parameters mixing text and numbers in designmatrix: 1",
+        "Parameters in designmatrix defaultsheet: 6",
+        "Number of parameters with correlations: 3",
+        "Distributions per correlation group: [{'normal': 2, 'discrete': 1}]",
+        "Background: distributions",
         "RMS seeds: default",
         "Number of parameters with decimals: 1",
         "Distribution seed: False",
-        "Number of dependencies: 0",
+        "Number of dependencies: 1",
+        (
+            "Number of parameters per sensitivity: "
+            "[('seed', 1), ('scenario', 2), ('scenario', 1), ('dist', 3)]"
+        ),
+        "Number of parameters set in more than one sensitivity: 2",
         (
             "Number of realizations per sensitivity: "
-            "[('seed', 2), ('scenario', 4), ('scenario', 2), ('dist', 3)]"
+            "[('seed', 2), ('scenario', 4), ('scenario', 2), ('dist', 4)]"
         ),
-        "Total number of realizations: 11",
+        "Total number of realizations: 12",
     ]
 
 
