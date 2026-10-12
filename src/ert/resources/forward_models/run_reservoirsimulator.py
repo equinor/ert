@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import datetime
-import glob
 import os
 import re
 import shutil
@@ -31,11 +30,9 @@ class EclError(RuntimeError):
         if re.search(a_slave_failed_pattern, self.args[0]):
             for match in re.finditer(slave_runpaths, self.args[0], re.MULTILINE):
                 (ecl_case_starts_with, ecl_case_dir) = match.groups()
-                for prt_file in glob.glob(
-                    f"{ecl_case_dir}/{ecl_case_starts_with}*.PRT"
-                ):
+                for prt_file in Path(ecl_case_dir).glob(f"{ecl_case_starts_with}*.PRT"):
                     if ecl_output_has_license_error(
-                        Path(prt_file).read_text(encoding="utf-8", errors="ignore")
+                        prt_file.read_text(encoding="utf-8", errors="ignore")
                     ):
                         return True
         return False
@@ -64,26 +61,22 @@ slave_runpaths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DI
 
 
 def find_unsmry(basepath: Path) -> Path | None:
-    def _is_unsmry(base: str, path: str) -> bool:
-        if "." not in path:
-            return False
-        split = path.split(".")
-        return split[-2].endswith(base) and split[-1].lower() in {
-            "unsmry",
-            "funsmry",
+    def _is_unsmry(path: Path) -> bool:
+        return path.stem.endswith(basepath.name) and path.suffix.lower() in {
+            ".unsmry",
+            ".funsmry",
         }
 
-    base = basepath.name
-    candidates: list[str] = list(
-        filter(lambda x: _is_unsmry(base, x), glob.glob(str(basepath) + "*"))
-    )
+    candidates = [
+        path for path in basepath.parent.glob(f"{basepath.name}*") if _is_unsmry(path)
+    ]
     if not candidates:
         return None
     if len(candidates) > 1:
         raise ValueError(
             f"Ambiguous reference to unsmry in {basepath}, could be any of {candidates}"
         )
-    return Path(candidates[0])
+    return candidates[0]
 
 
 def await_completed_unsmry_file(

@@ -365,6 +365,23 @@ def test_find_unsmry(paths_to_touch, basepath, expectation):
         assert str(run_reservoirsimulator.find_unsmry(Path(basepath))) == expectation
 
 
+def test_that_find_unsmry_accepts_absolute_basepath(tmp_path):
+    (tmp_path / "SPE1.UNSMRY").touch()
+    assert (
+        run_reservoirsimulator.find_unsmry(tmp_path / "SPE1")
+        == tmp_path / "SPE1.UNSMRY"
+    )
+
+
+def test_that_find_unsmry_ignores_dots_in_directory_names(tmp_path):
+    runpath = tmp_path / "run.v2"
+    runpath.mkdir()
+    (runpath / "SPE1.UNSMRY").touch()
+    assert (
+        run_reservoirsimulator.find_unsmry(runpath / "SPE1") == runpath / "SPE1.UNSMRY"
+    )
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_timeout_on_missing_smry():

@@ -1,4 +1,3 @@
-import glob
 import json
 import os
 import socket
@@ -170,10 +169,9 @@ def test_storage_logging(change_to_tmpdir):
     ) as server:
         assert server.wait_until_ready(), "StorageService failed to start"
 
-    logfiles = glob.glob("api-log-storage*.txt")
+    logfiles = list(Path().glob("api-log-storage*.txt"))
     assert len(logfiles) == 1, "Expected exactly one log file"
-    with Path(logfiles[0]).open(encoding="utf-8") as logfile:
-        contents = logfile.readlines()
+    contents = logfiles[0].read_text(encoding="utf-8").splitlines()
 
     # check for duplicated log entries
     assert (

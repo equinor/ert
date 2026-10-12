@@ -250,6 +250,7 @@ select = [
     "PLW",
     "PT",    # pytest
     "PTH124",
+    "PTH207",
     "os-path-dirname",
     "os-stat",
     "os-chmod",

@@ -6,7 +6,6 @@ This script partially mocks the Slurm provided utility scontrol:
 """
 
 import argparse
-import glob
 import os
 import signal
 from pathlib import Path
@@ -32,11 +31,11 @@ def main() -> None:
 
     jobs_path = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
 
-    for pidfile in glob.glob(f"{jobs_path}/*.pid"):
-        job = pidfile.split("/")[-1].split(".")[0]
+    for pidfile in jobs_path.glob("*.pid"):
+        job = pidfile.name.split(".")[0]
         if args.jobid and job != args.jobid:
             continue
-        pid = read(Path(pidfile))
+        pid = read(pidfile)
         returncode = read(jobs_path / f"{job}.returncode")
         name = read(jobs_path / f"{job}.name")
         cancelled = read(jobs_path / f"{job}.cancelled", default="no")

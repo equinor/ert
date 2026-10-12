@@ -6,7 +6,6 @@ This script partially mocks the Slurm provided utility squeue:
 """
 
 import argparse
-import glob
 import os
 from pathlib import Path
 from typing import Literal
@@ -41,9 +40,9 @@ def main() -> None:
 
     jobs_path = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
 
-    for pidfile in glob.glob(f"{jobs_path}/*.pid"):
-        job = pidfile.split("/")[-1].split(".")[0]
-        pid = read(Path(pidfile))
+    for pidfile in jobs_path.glob("*.pid"):
+        job = pidfile.name.split(".")[0]
+        pid = read(pidfile)
         returncode = read(jobs_path / f"{job}.returncode")
 
         state: JobState = "PENDING"

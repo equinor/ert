@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import glob
 import json
 import os
 import signal
@@ -171,7 +170,7 @@ def test_memory_profile_is_logged_as_csv(
         _ert.forward_model_runner.runner.ForwardModelStep, "MEMORY_POLL_PERIOD", 0.1
     )
     fm_dispatch(["fm_dispatch", str(Path.cwd())])
-    csv_files = glob.glob("logs/memory-profile*csv")
+    csv_files = list(Path("logs").glob("memory-profile*csv"))
     mem_df = pd.read_csv(csv_files[0], parse_dates=True)
     assert mem_df["timestamp"].is_monotonic_increasing
     assert (mem_df["fm_step_id"].unique() == [0, 1, 2]).all()
