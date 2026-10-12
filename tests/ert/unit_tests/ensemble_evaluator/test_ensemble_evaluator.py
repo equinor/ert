@@ -52,6 +52,7 @@ from ert.ensemble_evaluator.state import (
 from ert.scheduler import JobState
 from ert.scheduler.job import Job
 from ert.scheduler.scheduler import Scheduler
+from tests.ert.utils import BlackholingIpcProxy
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -548,6 +549,33 @@ async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to
         assert await asyncio.wait_for(
             dispatcher_1.received_terminate_message.wait(), timeout=5
         )
+
+
+@pytest.mark.timeout(15)
+async def test_that_dispatcher_event_reaches_evaluator_after_link_silently_dies(
+    evaluator_to_use, monkeypatch
+):
+    (evaluator, event_queue) = evaluator_to_use
+    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 2)
+    monkeypatch.setattr("_ert.forward_model_runner.client.HEARTBEAT_INTERVAL_MS", 100)
+    monkeypatch.setattr("_ert.forward_model_runner.client.HEARTBEAT_TIMEOUT_MS", 300)
+    async with (
+        BlackholingIpcProxy(evaluator._config.get_uri()) as proxy,
+        Client(
+            proxy.uri,
+            dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}",
+            ack_timeout=0.5,
+        ) as dispatcher,
+    ):
+        proxy.blackhole_existing_connections()
+        event = ForwardModelStepSuccess(
+            ensemble=evaluator.ensemble.id_, real="0", fm_step="0"
+        )
+        await dispatcher.send(dispatcher_event_to_json(event))
+
+    snapshot = EnsembleSnapshot().update_from_event(await event_queue.get())
+    while snapshot.get_fm_step("0", "0").get("status") != FORWARD_MODEL_STATE_FINISHED:
+        snapshot = snapshot.update_from_event(await event_queue.get())
 
 
 @pytest.mark.timeout(10)

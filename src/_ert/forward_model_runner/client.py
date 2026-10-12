@@ -20,6 +20,14 @@ CONNECT_MSG = b"CONNECT"
 DISCONNECT_MSG = b"DISCONNECT"
 ACK_MSG = b"ACK"
 TERMINATE_MSG = b"TERMINATE"
+HEARTBEAT_INTERVAL_MS = 5_000
+HEARTBEAT_TIMEOUT_MS = 30_000
+
+
+def enable_heartbeating(socket: zmq.asyncio.Socket) -> None:
+    socket.setsockopt(zmq.HEARTBEAT_IVL, HEARTBEAT_INTERVAL_MS)
+    socket.setsockopt(zmq.HEARTBEAT_TIMEOUT, HEARTBEAT_TIMEOUT_MS)
+    socket.setsockopt(zmq.HEARTBEAT_TTL, HEARTBEAT_TIMEOUT_MS)
 
 
 class Client:
@@ -43,6 +51,7 @@ class Client:
         # this is to avoid blocking the event loop when closing the socket
         # wherein the linger is set to 0 to discard all messages in the queue
         self.socket.setsockopt(zmq.LINGER, 0)
+        enable_heartbeating(self.socket)
         self.dealer_id = dealer_name or f"dispatch-{uuid.uuid4().hex[:8]}"
         self.received_terminate_message: asyncio.Event = asyncio.Event()
         self.socket.setsockopt_string(zmq.IDENTITY, self.dealer_id)
@@ -106,21 +115,19 @@ class Client:
 
     async def _receiver(self) -> None:
         while True:
-            try:  # ruff: ignore[too-many-statements-in-try-clause]
+            try:
                 _, raw_msg = await self.socket.recv_multipart()
-                if raw_msg == ACK_MSG:
-                    self._ack_event.set()
-                elif raw_msg == TERMINATE_MSG:
-                    self.received_terminate_message.set()
-                else:
-                    await self.process_message(raw_msg.decode("utf-8"))
             except zmq.ZMQError as exc:
-                logger.debug(
-                    f"{self.dealer_id} connection to evaluator went down, "
-                    f"reconnecting: {exc}"
+                logger.warning(
+                    f"{self.dealer_id} stopped receiving from evaluator: {exc}"
                 )
-                await asyncio.sleep(0)
-                self.socket.connect(self.url)
+                return
+            if raw_msg == ACK_MSG:
+                self._ack_event.set()
+            elif raw_msg == TERMINATE_MSG:
+                self.received_terminate_message.set()
+            else:
+                await self.process_message(raw_msg.decode("utf-8"))
 
     async def send(self, message: str | bytes, retries: int | None = None) -> None:
         self._ack_event.clear()
@@ -156,8 +163,6 @@ class Client:
             if retries > 0:
                 logger.info(f"Retrying... ({retries} attempts left)")
                 await asyncio.sleep(backoff)
-                # this call is idempotent
-                self.socket.connect(self.url)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
             retries -= 1
         raise ClientConnectionError(
