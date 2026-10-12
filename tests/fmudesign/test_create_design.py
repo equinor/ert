@@ -1,6 +1,7 @@
 """Testing code for generation of design matrices"""
 
 import json
+import logging
 import math
 from datetime import datetime
 
@@ -642,6 +643,82 @@ def test_that_print_corrmat_formats_without_mutating_input(capsys):
     assert ".90" in output
     assert "-0.00" not in output
     pd.testing.assert_frame_equal(df, original)
+
+
+def test_that_summary_log_reports_usage_of_design_features(caplog):
+    config = minimal_configuration() | {
+        "repeats": 2,
+        "seeds": "default",
+        "background": {
+            "parameters": {
+                "A": ["uniform", [0, 1], None],
+                "E": ["uniform", [0, 1], None],
+            },
+            "correlations": None,
+            "decimals": {"A": 2},
+        },
+        "defaultvalues": {"A": 0, "B": 0, "C": "base", "E": 0},
+        "sensitivities": {
+            "seed": {
+                "senstype": "seed",
+                "seedname": "RMS_SEED",
+                "parameters": {"B": ["const", 1]},
+                "dependencies": {},
+            },
+            "a": {
+                "senstype": "scenario",
+                "cases": {"low": {"A": -1}, "high": {"A": 1}},
+                "dependencies": {},
+            },
+            "c": {
+                "senstype": "scenario",
+                "cases": {"alternative": {"C": "alternative"}},
+                "dependencies": {},
+            },
+            "ab": {
+                "senstype": "dist",
+                "numreal": 3,
+                "parameters": {
+                    "A": ["normal", [0, 1], None],
+                    "B": ["normal", [0, 1, -1, 1], None],
+                },
+                "correlations": None,
+                "dependencies": {},
+            },
+        },
+    }
+
+    caplog.set_level(logging.INFO, logger="fmudesign")
+    DesignMatrix(config=config)
+
+    [summary] = [m for m in caplog.messages if m.startswith("Fmudesign summary")]
+    assert summary.splitlines() == [
+        "Fmudesign summary:",
+        "Designtype: onebyone",
+        "Repeats: 2",
+        "Seed strategy: joint",
+        "Correlation iterations: 0",
+        "Number of sensitivities: 4",
+        "Number of background parameters: 2",
+        "Distribution count: {'const': 1, 'normal': 2, 'uniform': 2}",
+        (
+            "Parameters per sensitivity type in designinput: "
+            "{'seed': 1, 'scenario': 2, 'dist': 2}"
+        ),
+        "Parameters in designmatrix: 5",
+        "Parameters in designmatrix defaultsheet: 4",
+        "Number of parameters with correlations: 0",
+        "Has background: True",
+        "RMS seeds: default",
+        "Number of parameters with decimals: 1",
+        "Distribution seed: False",
+        "Number of dependencies: 0",
+        (
+            "Number of realizations per sensitivity: "
+            "[('seed', 2), ('scenario', 4), ('scenario', 2), ('dist', 3)]"
+        ),
+        "Total number of realizations: 11",
+    ]
 
 
 def test_that_fill_with_background_values_replaces_missing_parameter_values():
