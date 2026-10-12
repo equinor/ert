@@ -78,7 +78,7 @@ def api(client: RecordingClient) -> ErtClient:
     return ErtClient(client)  # type: ignore
 
 
-def test_that_registration_serializes_parameter_configs_in_arguments() -> None:
+def test_that_registration_serializes_parameter_configs_in_arguments():
     @dataclass
     class Arguments:
         mode: str
@@ -141,7 +141,7 @@ def test_that_registered_ert_requests_send_config_id_as_a_query_parameter(
     endpoint: str,
     payload: dict[str, object] | None,
     expected: object,
-) -> None:
+):
     transport = MagicMock(spec=SharedClient)
     transport.conn_info.auth_token = "token"
     transport.request.return_value = httpx.Response(200, json=payload)
@@ -158,7 +158,7 @@ def test_that_registered_ert_requests_send_config_id_as_a_query_parameter(
     )
 
 
-def test_that_rerun_requests_send_the_flag_and_accept_an_empty_response() -> None:
+def test_that_rerun_requests_send_the_flag_and_accept_an_empty_response():
     transport = MagicMock(spec=SharedClient)
     transport.conn_info.auth_token = "token"
     transport.request.return_value = httpx.Response(200)

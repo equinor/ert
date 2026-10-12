@@ -217,7 +217,7 @@ def test_that_storage_initialization_error_releases_lock_and_preserves_index(
     monkeypatch: pytest.MonkeyPatch,
     failing_method: str,
     failure_type: type[BaseException],
-) -> None:
+):
     monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
     with open_storage(tmp_path, mode="w") as storage:
         storage.create_experiment(name="existing").create_ensemble(
@@ -248,7 +248,7 @@ def test_that_storage_initialization_error_releases_lock_and_preserves_index(
 @pytest.mark.parametrize("read_only", [True, False])
 def test_that_failed_storage_open_preserves_an_existing_writers_lock(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, read_only: bool
-) -> None:
+):
     monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
     with open_storage(tmp_path, mode="w") as writer:
         with (
@@ -269,7 +269,7 @@ def test_that_failed_storage_open_preserves_an_existing_writers_lock(
 
 def test_that_corrupted_storage_releases_lock_without_rewriting_index(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+):
     monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
     with open_storage(tmp_path / "storage", mode="w") as storage:
         storage.create_experiment().create_ensemble(name="prior", ensemble_size=1)

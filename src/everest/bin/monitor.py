@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from contextlib import aclosing
 import logging
 import shutil
 import sys
 import traceback
 from collections import defaultdict
 from collections.abc import Callable, KeysView, Sequence
+from contextlib import aclosing
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, ClassVar
 

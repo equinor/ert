@@ -63,7 +63,7 @@ from .conftest import make_workflow_event
 _original_run_ensemble_evaluator_async = RunModel.run_ensemble_evaluator_async
 
 
-def test_that_worker_shutdown_requests_thread_exit_before_waiting() -> None:
+def test_that_worker_shutdown_requests_thread_exit_before_waiting():
     worker = Mock()
     thread = Mock()
     thread.isRunning.side_effect = [True, False, False]
@@ -1245,7 +1245,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot):
 @pytest.mark.slow
 def test_that_terminating_experiment_during_hooked_workflows_stops_run_dialog(
     qtbot: QtBot, monkeypatch, start_run_dialog
-) -> None:
+):
     config_file = "hooked_workflow_config.ert"
     monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
     monkeypatch.setattr(

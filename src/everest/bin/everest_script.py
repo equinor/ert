@@ -29,15 +29,16 @@ from everest.util import (
     version_info,
 )
 
-from .monitor import run_empty_server_monitor, run_server_monitor
+from .monitor import (
+    run_empty_server_monitor,
+    run_server_monitor,
+    run_server_monitor_async,
+)
 from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
     remove_show_scaling_warning_setting,
-    run_empty_server_monitor,
-    run_server_monitor,
-    run_server_monitor_async,
     setup_logging,
 )
 

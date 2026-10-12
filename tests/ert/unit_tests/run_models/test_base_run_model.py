@@ -92,7 +92,7 @@ def test_that_failed_model_initialization_releases_storage_lock(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     failure_type: type[BaseException],
-) -> None:
+):
     original_post_init = RunModel.model_post_init
 
     def fail_after_opening_storage(self: RunModel, context: object) -> None:
@@ -113,7 +113,7 @@ def test_that_failed_model_initialization_releases_storage_lock(
 
 def test_that_validation_before_storage_opens_preserves_the_validation_error(
     tmp_path: Path,
-) -> None:
+):
     storage_path = tmp_path / "storage"
 
     with pytest.raises(ValidationError, match="random_seed"):

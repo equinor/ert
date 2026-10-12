@@ -71,7 +71,7 @@ from .conftest import (
 
 
 @pytest.mark.usefixtures("qtbot")
-def test_that_gui_context_destroys_the_window_before_returning(tmp_path: Path) -> None:
+def test_that_gui_context_destroys_the_window_before_returning(tmp_path: Path):
     config_path = tmp_path / "config.ert"
     config_path.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
     destroyed = Mock()
