@@ -19,8 +19,6 @@ class ClientConnectionError(Exception):
 CONNECT_MSG = b"CONNECT"
 DISCONNECT_MSG = b"DISCONNECT"
 ACK_MSG = b"ACK"
-HEARTBEAT_MSG = b"BEAT"
-HEARTBEAT_TIMEOUT = 5.0
 TERMINATE_MSG = b"TERMINATE"
 
 
@@ -107,23 +105,11 @@ class Client:
         raise NotImplementedError("Only monitor can receive messages!")
 
     async def _receiver(self) -> None:
-        last_heartbeat_time: float | None = None
         while True:
             try:  # ruff: ignore[too-many-statements-in-try-clause]
                 _, raw_msg = await self.socket.recv_multipart()
                 if raw_msg == ACK_MSG:
                     self._ack_event.set()
-                elif raw_msg == HEARTBEAT_MSG:
-                    if (
-                        last_heartbeat_time
-                        and (asyncio.get_running_loop().time() - last_heartbeat_time)
-                        > 2 * HEARTBEAT_TIMEOUT
-                    ):
-                        await self.socket.send_multipart([b"", CONNECT_MSG])
-                        logger.warning(
-                            f"{self.dealer_id} heartbeat failed - reconnecting."
-                        )
-                    last_heartbeat_time = asyncio.get_running_loop().time()
                 elif raw_msg == TERMINATE_MSG:
                     self.received_terminate_message.set()
                 else:

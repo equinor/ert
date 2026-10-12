@@ -1,8 +1,5 @@
-import asyncio
-
 import pytest
 
-import _ert.forward_model_runner.client
 from _ert.forward_model_runner.client import Client, ClientConnectionError
 from tests.ert.utils import MockZMQServer
 
@@ -47,24 +44,3 @@ async def test_retry():
     assert mock_server.messages.count("test_1") == 2
     assert mock_server.messages.count("test_2") == 1
     assert mock_server.messages.count("test_3") == 1
-
-
-async def test_reconnect_when_missing_heartbeat(monkeypatch):
-    async with MockZMQServer(filtered_message_types=[]) as mock_server:
-        monkeypatch.setattr(_ert.forward_model_runner.client, "HEARTBEAT_TIMEOUT", 0.01)
-        async with Client(mock_server.uri) as client:
-            await client.send("start", retries=1)
-
-            await mock_server.do_heartbeat()
-            await asyncio.sleep(0.1)
-            await mock_server.do_heartbeat()
-            await client.send("stop", retries=1)
-
-    # the client should be disconnected
-    assert len(mock_server.dealers) == 0
-
-    # when reconnection happens CONNECT message is sent again
-    assert mock_server.messages.count("CONNECT") == 2
-    assert mock_server.messages.count("DISCONNECT") == 1
-    assert "start" in mock_server.messages
-    assert "stop" in mock_server.messages
