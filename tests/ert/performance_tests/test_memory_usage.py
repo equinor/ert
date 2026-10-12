@@ -9,7 +9,6 @@ from textwrap import dedent
 import memray
 import numpy as np
 import polars as pl
-import py
 import pytest
 import xtgeo
 
@@ -29,7 +28,7 @@ from tests.ert.ui_tests.cli.run_cli import run_cli
 
 @pytest.fixture
 def poly_template(monkeypatch):
-    folder = py.path.local(tempfile.mkdtemp())
+    folder = Path(tempfile.mkdtemp())
     script_path = Path(__file__).parent.resolve()
     folder = make_poly_example(
         folder,

@@ -1,3 +1,6 @@
+import contextlib
+from pathlib import Path
+
 import pytest
 
 from ert.config import ErtConfig
@@ -7,9 +10,9 @@ from ert.storage.local_ensemble import load_parameters_and_responses_from_runpat
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_load_from_context(benchmark, template_config):
-    path = template_config["folder"]
+    path = Path(template_config["folder"])
 
-    with path.as_cwd(), open_storage(path / "_storage", mode="w") as storage:
+    with contextlib.chdir(path), open_storage(path / "_storage", mode="w") as storage:
         config = ErtConfig.from_file("poly.ert")
         load_into = storage.create_experiment().create_ensemble(
             name="A1", ensemble_size=config.runpath_config.num_realizations

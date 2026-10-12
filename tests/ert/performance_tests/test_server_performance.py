@@ -152,7 +152,7 @@ def test_direct_dark_performance(benchmark, template_config, function, keyword):
         "gen_data_with_obs": "POLY_RES_0@0",
     }[keyword]
 
-    with template_config["folder"].as_cwd():
+    with contextlib.chdir(template_config["folder"]):
         storage = open_storage("storage")
         experiment_json = experiments.get_experiments(storage=storage)
         ensemble_id_default = None
@@ -185,7 +185,7 @@ def test_direct_dark_performance_with_storage(
         "gen_data_with_obs": "POLY_RES_0@0",
     }[keyword]
 
-    with template_config["folder"].as_cwd():
+    with contextlib.chdir(template_config["folder"]):
         storage = open_storage("storage")
         experiment_json = experiments.get_experiments(storage=storage)
         ensemble_id_default = None

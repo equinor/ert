@@ -563,8 +563,8 @@ def test_careful_copy_when_target_is_none_does_not_touch_existing():
 
 
 @pytest.fixture
-def minimal_case(tmpdir):
-    with tmpdir.as_cwd():
+def minimal_case(tmp_path: Path):
+    with contextlib.chdir(tmp_path):
         Path("config.ert").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
         yield
 

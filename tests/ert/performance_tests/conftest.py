@@ -1,9 +1,10 @@
+import contextlib
 import hashlib
 import json
 from argparse import ArgumentParser
+from pathlib import Path
 
 import pytest
-from py import path
 
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
@@ -12,7 +13,7 @@ from ert.observation_converters.history_to_summary import convert_history_to_sum
 
 from .performance_utils import make_poly_template
 
-template_config_path = None
+template_config_path: str | None = None
 
 
 def make_case(reals, x_size):
@@ -49,9 +50,9 @@ cases_to_run = [
 )
 def template_config(request, source_root, tmp_path_factory):
     if template_config_path:
-        tmpdir = path.local(template_config_path)
+        tmpdir = Path(template_config_path)
     else:
-        tmpdir = path.local(tmp_path_factory.mktemp("my_poly_tmp"))
+        tmpdir = tmp_path_factory.mktemp("my_poly_tmp")
 
     params = request.param
     params.update()
@@ -60,7 +61,7 @@ def template_config(request, source_root, tmp_path_factory):
     template_hash = hashlib.sha1(json.dumps(template_sorted).encode()).hexdigest()
     template_dir = tmpdir / template_hash
 
-    if template_dir.isdir():
+    if template_dir.is_dir():
         poly_folder = template_dir / "poly"
         params["folder"] = poly_folder
         yield params
@@ -69,7 +70,7 @@ def template_config(request, source_root, tmp_path_factory):
         params["folder"] = poly_folder
         convert_history_to_summary(str(poly_folder / "poly.ert"))
 
-        with poly_folder.as_cwd():
+        with contextlib.chdir(poly_folder):
             parser = ArgumentParser(prog="test_main")
             parsed = ert_parser(
                 parser,
