@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 
 import numpy as np
-import py
 import resfo
 from jinja2 import Environment, FileSystemLoader
 from numpy import array
@@ -59,7 +58,7 @@ def render_template(folder, template, target, **kwargs):
     Path(file).write_text(output, encoding="utf-8")
 
 
-def make_poly_example(folder, source, **kwargs):
+def make_poly_example(folder: Path, source, **kwargs):
     folder /= "poly"
     summary_count = kwargs["summary_data_count"]
     gen_obs_count = kwargs["gen_obs_count"]
@@ -158,11 +157,11 @@ def server_app(monkeypatch):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        folder = py.path.local(sys.argv[1])
+        folder = Path(sys.argv[1])
         if folder.exists():
-            folder.remove()
+            shutil.rmtree(folder)
     else:
-        folder = py.path.local(tempfile.mkdtemp())
+        folder = Path(tempfile.mkdtemp())
 
     source_dir = source_dir()
 

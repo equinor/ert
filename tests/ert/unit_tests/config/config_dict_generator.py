@@ -11,7 +11,6 @@ from warnings import filterwarnings
 
 import hypothesis.strategies as st
 from hypothesis import assume, note
-from py import path as py_path
 from pydantic import PositiveInt
 from resfo_utilities import make_summary_key
 from resfo_utilities.testing import (
@@ -642,9 +641,9 @@ def config_generators(draw, use_eclbase=booleans):
     # will write the config to that file.
     @contextlib.contextmanager
     def generate_files_and_dict(tmp_path_factory, config_file_name=None):
-        tmp = py_path.local(tmp_path_factory.mktemp("config_dict"))
-        note(f"Using tmp dir: {tmp!s}")
-        with tmp.as_cwd():
+        tmp = tmp_path_factory.mktemp("config_dict")
+        note(f"Using tmp dir: {tmp}")
+        with contextlib.chdir(tmp):
             config_values.run_template = [
                 [str(tmp / src), target] for src, target in config_values.run_template
             ]

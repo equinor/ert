@@ -4,7 +4,6 @@ import shutil
 from argparse import ArgumentParser
 
 import pytest
-from py import path
 from starlette.testclient import TestClient
 
 from ert.__main__ import ert_parser
@@ -19,14 +18,13 @@ def poly_example_tmp_dir_shared(
     tmp_path_factory,
     source_root,
 ):
-    tmpdir = tmp_path_factory.mktemp("my_poly_tmp")
-    poly_dir = path.local(tmpdir / "poly_example")
+    poly_dir = tmp_path_factory.mktemp("my_poly_tmp") / "poly_example"
     shutil.copytree(
         source_root / "test-data" / "ert" / "poly_example",
         poly_dir,
         ignore=shutil.ignore_patterns("*ipynb", "poly_out", "storage", "logs"),
     )
-    with poly_dir.as_cwd():
+    with contextlib.chdir(poly_dir):
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
             parser,
@@ -44,7 +42,7 @@ def poly_example_tmp_dir_shared(
 
 @pytest.fixture
 def poly_example_tmp_dir(poly_example_tmp_dir_shared):
-    with poly_example_tmp_dir_shared.as_cwd():
+    with contextlib.chdir(poly_example_tmp_dir_shared):
         yield
 
 
