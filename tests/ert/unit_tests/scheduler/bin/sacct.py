@@ -6,7 +6,6 @@ This script partially mocks the Slurm provided utility sacct:
 """
 
 import argparse
-import glob
 import os
 from pathlib import Path
 from typing import Literal
@@ -35,11 +34,11 @@ def main() -> None:
 
     jobs_path = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
 
-    for pidfile in glob.glob(f"{jobs_path}/*.pid"):
-        job = pidfile.split("/")[-1].split(".")[0]
+    for pidfile in jobs_path.glob("*.pid"):
+        job = pidfile.name.split(".")[0]
         if args.j and job != args.j:
             continue
-        pid = read(Path(pidfile))
+        pid = read(pidfile)
         returncode = read(jobs_path / f"{job}.returncode")
         cancelled = read(jobs_path / f"{job}.cancelled", default="no")
         state: JobState = "PENDING"
