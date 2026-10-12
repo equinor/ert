@@ -20,7 +20,6 @@ from ert.storage import (
     open_storage,
 )
 from ert.utils import makedirs_if_needed
-from everest.bin.monitor import start_monitor_async
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.strings import EVEREST

@@ -27,7 +27,7 @@ from ert.storage import LocalStorage, open_storage
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
 
-def test_that_run_args_deserializes_selected_parameter_configurations() -> None:
+def test_that_run_args_deserializes_selected_parameter_configurations():
     parameters = [
         GenKwConfig.model_validate(
             {
@@ -60,7 +60,7 @@ def test_that_run_args_deserializes_selected_parameter_configurations() -> None:
     )
 
 
-def test_that_run_args_preserves_omitted_parameter_configuration() -> None:
+def test_that_run_args_preserves_omitted_parameter_configuration():
     args = ert_runner.RunArgs.model_validate_json(
         '{"mode": "es_mda", "experiment_name": "parameter-selection"}'
     )
@@ -68,7 +68,7 @@ def test_that_run_args_preserves_omitted_parameter_configuration() -> None:
     assert not hasattr(args, "parameter_configuration")
 
 
-def test_that_run_args_preserves_empty_parameter_configuration() -> None:
+def test_that_run_args_preserves_empty_parameter_configuration():
     args = ert_runner.RunArgs.model_validate_json(
         '{"mode": "es_mda", "experiment_name": "parameter-selection", '
         '"parameter_configuration": []}'
@@ -80,7 +80,7 @@ def test_that_run_args_preserves_empty_parameter_configuration() -> None:
 @pytest.mark.asyncio
 async def test_that_start_uses_the_registered_model_and_config_id(
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
+):
     registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
     monkeypatch.setattr(ert_runner, "_experiments", registry)
     config = Mock(
@@ -130,7 +130,7 @@ async def test_that_start_uses_the_registered_model_and_config_id(
 @pytest.mark.parametrize("rerun_failed_realizations", [False, True])
 async def test_that_execution_retains_its_model_after_termination(
     monkeypatch: pytest.MonkeyPatch, outcome: str, rerun_failed_realizations: bool
-) -> None:
+):
     experiment_id = str(uuid4())
     model = Mock(spec=RunModel)
     state = ert_runner.ErtExperimentRunnerState(
@@ -141,7 +141,7 @@ async def test_that_execution_retains_its_model_after_termination(
 
     def execute(
         evaluator_config: EvaluatorServerConfig, *, rerun_failed_realizations: bool
-    ) -> None:
+    ):
         assert state.run_model is model
         if outcome == "exception":
             raise RuntimeError("Simulation raised")
@@ -170,7 +170,7 @@ async def test_that_execution_retains_its_model_after_termination(
 @pytest.mark.asyncio
 async def test_that_model_creation_error_does_not_register_a_state(
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
+):
     registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
     monkeypatch.setattr(ert_runner, "_experiments", registry)
     monkeypatch.setattr(
@@ -192,12 +192,12 @@ async def test_that_model_creation_error_does_not_register_a_state(
 @pytest.mark.asyncio
 async def test_that_failed_registration_releases_partially_initialized_storage(
     minimum_case: ErtConfig, monkeypatch: pytest.MonkeyPatch
-) -> None:
+):
     registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
     monkeypatch.setattr(ert_runner, "_experiments", registry)
     monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
 
-    def fail_after_opening_storage(self: SingleTestRun, context: object) -> None:
+    def fail_after_opening_storage(self: SingleTestRun, context: object):
         RunModel.model_post_init(self, context)
         raise RuntimeError("Invalid prior ensemble")
 
@@ -226,7 +226,7 @@ async def test_that_failed_registration_releases_partially_initialized_storage(
 @pytest.mark.asyncio
 async def test_that_cancellation_before_start_does_not_start_simulations(
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
+):
     experiment_id = str(uuid4())
     model = Mock(spec=RunModel)
     model._storage = Mock(spec=LocalStorage)
@@ -262,7 +262,7 @@ def runner_client() -> Iterator[TestClient]:
 
 def test_that_inspection_and_runpath_requests_reuse_the_registered_model(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, runner_client: TestClient
-) -> None:
+):
     runpath = tmp_path / "realization-0"
     runpath.mkdir()
     model = Mock(spec=RunModel)
@@ -318,7 +318,7 @@ def test_that_runpath_requests_report_run_model_errors(
     method: str,
     model_method: str,
     expected_status: int,
-) -> None:
+):
     model = Mock(spec=RunModel)
     getattr(model, model_method).side_effect = OSError("Disk error")
     config_id = str(uuid4())
@@ -355,7 +355,7 @@ def test_that_config_id_requests_reject_missing_or_non_ert_states(
     method: str,
     endpoint: str,
     other_experiment: bool,
-) -> None:
+):
     config_id = str(uuid4())
     if other_experiment:
         monkeypatch.setitem(_experiments, config_id, ExperimentRunnerState())
@@ -370,7 +370,7 @@ def test_that_config_id_requests_reject_missing_or_non_ert_states(
 
 def test_that_discard_closes_storage_and_removes_the_registration(
     monkeypatch: pytest.MonkeyPatch, runner_client: TestClient
-) -> None:
+):
     model = Mock(spec=RunModel)
     model._storage = Mock()
     state = ert_runner.ErtExperimentRunnerState(
@@ -398,7 +398,7 @@ def test_that_discard_closes_storage_and_removes_the_registration(
 @pytest.mark.asyncio
 async def test_that_start_rejects_a_state_resolved_before_discard(
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
+):
     model = Mock(spec=RunModel)
     model._storage = Mock()
     state = ert_runner.ErtExperimentRunnerState(
@@ -421,7 +421,7 @@ def test_that_discard_rejects_started_experiments_without_closing_storage(
     monkeypatch: pytest.MonkeyPatch,
     runner_client: TestClient,
     experiment_status: ExperimentState,
-) -> None:
+):
     model = Mock(spec=RunModel)
     model._storage = Mock()
     state = ert_runner.ErtExperimentRunnerState(
@@ -444,7 +444,7 @@ def test_that_discard_rejects_started_experiments_without_closing_storage(
 def test_that_a_registered_model_cannot_be_started_twice(
     monkeypatch: pytest.MonkeyPatch,
     runner_client: TestClient,
-) -> None:
+):
     config_id = str(uuid4())
     state = ert_runner.ErtExperimentRunnerState(
         run_model=Mock(spec=RunModel), status_queue=SimpleQueue()
@@ -473,7 +473,7 @@ def test_that_rerun_reuses_the_model_and_clears_previous_events(
     monkeypatch: pytest.MonkeyPatch,
     runner_client: TestClient,
     terminal_status: ExperimentState,
-) -> None:
+):
     model = Mock(spec=RunModel)
     model.supports_rerunning_failed_realizations = True
     model.has_failed_realizations.return_value = True
@@ -516,7 +516,7 @@ def test_that_rerun_rejects_unfinished_or_ineligible_models(
     status: ExperimentState,
     supports_rerun: bool,
     has_failures: bool,
-) -> None:
+):
     model = Mock(spec=RunModel)
     model.supports_rerunning_failed_realizations = supports_rerun
     model.has_failed_realizations.return_value = has_failures

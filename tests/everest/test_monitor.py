@@ -114,7 +114,7 @@ async def test_that_async_server_monitor_consumes_events_with_optional_display(
     event = EndEvent(failed=False, msg="completed")
     consumed = MagicMock()
     update = MagicMock()
-    monkeypatch.setattr("everest.bin.utils._ServerMonitor.update", update)
+    monkeypatch.setattr("everest.bin.monitor._ServerMonitor.update", update)
 
     async def event_stream():
         yield event
