@@ -131,19 +131,25 @@ class DesignMatrix:
                 else (sens_values.get("parameters") or {})
             ).items()
         ]
+        decimals = set(inputdict.get("decimals") or {})
         if isinstance(background := inputdict.get("background"), dict):
             parameters.extend(background.get("parameters", {}).items())
+            decimals |= set(background.get("decimals", {}))
+        non_parameter_columns = set(self.START_COLUMNS) - {"RMS_SEED"}
 
         senstype_to_unique_params: dict[str, set[str]] = defaultdict(set)
+        reals_per_sensitivity: list[tuple[str, int]] = []
         for sensvals in sensitivities.values():
+            reals = sensvals.get("numreal", inputdict["repeats"])
             if (senstype := sensvals["senstype"]) == "scenario":
-                senstype_to_unique_params[senstype] |= {
+                params = {
                     param for case in sensvals["cases"].values() for param in case
                 }
+                reals *= len(sensvals["cases"])
             else:
-                senstype_to_unique_params[senstype] |= set(
-                    sensvals.get("parameters") or {}
-                )
+                params = set(sensvals.get("parameters") or {})
+            senstype_to_unique_params[senstype] |= params
+            reals_per_sensitivity.append((senstype, reals))
         senstype_to_param_count: dict[str, int] = {
             senstype: len(params)
             for senstype, params in senstype_to_unique_params.items()
@@ -158,19 +164,16 @@ class DesignMatrix:
             Correlation iterations: {inputdict.get("correlation_iterations")}
             Number of sensitivities: {len(sensitivities)}
             Number of background parameters: {
-                len(background.get("parameters", {}))
-                if isinstance(background, dict)
-                else 0
+                0
+                if self.backgroundvalues is None
+                else len(set(self.backgroundvalues.columns) - non_parameter_columns)
             }
             Distribution count: {
                 dict(Counter(v[0] for p, v in parameters if v is not None))
             }
             Parameters per sensitivity type in designinput: {senstype_to_param_count}
             Parameters in designmatrix: {
-                len(
-                    set(self.designvalues.columns)
-                    - (set(self.START_COLUMNS) - {"RMS_SEED"})
-                )
+                len(set(self.designvalues.columns) - non_parameter_columns)
             }
             Parameters in designmatrix defaultsheet: {len(self.defaultvalues)}
             Number of parameters with correlations: {
@@ -190,16 +193,14 @@ class DesignMatrix:
                 if isinstance(inputdict.get("seeds"), list)
                 else inputdict.get("seeds")
             }
-            Number of parameters with decimals: {len(inputdict.get("decimals") or {})}
+            Number of parameters with decimals: {len(decimals)}
             Distribution seed: {inputdict.get("distribution_seed") is not None}
             Number of dependencies: {
                 sum(
                     len(sens.get("dependencies", {})) for sens in sensitivities.values()
                 )
             }
-            Number of realizations per sensitivity: {
-                self.designvalues["SENSNAME"].value_counts().to_list()
-            }
+            Number of realizations per sensitivity: {reals_per_sensitivity}
             Total number of realizations: {len(self.designvalues)}"""
         )
         logger.info(summary_log)
