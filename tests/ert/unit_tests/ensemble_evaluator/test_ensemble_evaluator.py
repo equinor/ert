@@ -551,6 +551,7 @@ async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to
         )
 
 
+@pytest.mark.slow
 @pytest.mark.timeout(15)
 async def test_that_dispatcher_event_reaches_evaluator_after_link_silently_dies(
     evaluator_to_use, monkeypatch
