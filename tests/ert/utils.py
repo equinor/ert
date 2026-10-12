@@ -6,6 +6,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
@@ -17,7 +18,6 @@ from _ert.forward_model_runner.client import (
     ACK_MSG,
     CONNECT_MSG,
     DISCONNECT_MSG,
-    HEARTBEAT_MSG,
     TERMINATE_MSG,
 )
 from _ert.threading import ErtThread
@@ -245,10 +245,6 @@ class MockZMQServer:
             self.router_socket.close()
             zmq_context.term()
 
-    async def do_heartbeat(self):
-        for dealer in self.dealers:
-            await self.router_socket.send_multipart([dealer, b"", HEARTBEAT_MSG])
-
     async def send_terminate_message(self):
         for dealer in self.dealers:
             await self.router_socket.send_multipart([dealer, b"", TERMINATE_MSG])
@@ -277,6 +273,69 @@ class MockZMQServer:
                     await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
             except asyncio.CancelledError:
                 break
+
+
+@dataclass
+class _ProxiedConnection:
+    writers: tuple[asyncio.StreamWriter, asyncio.StreamWriter]
+    blackholed: bool = False
+
+
+class BlackholingIpcProxy:
+    """Forwards a zmq ipc endpoint and can make existing connections silently
+    discard all traffic without closing them, emulating a dead network link.
+    """
+
+    def __init__(self, target_uri: str) -> None:
+        self._target_path = target_uri.removeprefix("ipc://")
+        self._path = f"/tmp/socket-{uuid.uuid4().hex[:8]}"
+        self.uri = f"ipc://{self._path}"
+        self._connections: list[_ProxiedConnection] = []
+
+    async def __aenter__(self) -> Self:
+        self._server = await asyncio.start_unix_server(
+            self._proxy_connection, path=self._path
+        )
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        for connection in self._connections:
+            for writer in connection.writers:
+                writer.close()
+        self._server.close()
+        await self._server.wait_closed()
+        Path(self._path).unlink(missing_ok=True)
+
+    def blackhole_existing_connections(self) -> None:
+        for connection in self._connections:
+            connection.blackholed = True
+
+    async def _proxy_connection(
+        self, client_reader: asyncio.StreamReader, client_writer: asyncio.StreamWriter
+    ) -> None:
+        server_reader, server_writer = await asyncio.open_unix_connection(
+            self._target_path
+        )
+        connection = _ProxiedConnection(writers=(client_writer, server_writer))
+        self._connections.append(connection)
+        await asyncio.gather(
+            self._forward(client_reader, server_writer, connection),
+            self._forward(server_reader, client_writer, connection),
+        )
+
+    @staticmethod
+    async def _forward(
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        connection: _ProxiedConnection,
+    ) -> None:
+        with contextlib.suppress(ConnectionError):
+            while data := await reader.read(65536):
+                if not connection.blackholed:
+                    writer.write(data)
+                    await writer.drain()
+        if not connection.blackholed:
+            writer.close()
 
 
 async def poll(

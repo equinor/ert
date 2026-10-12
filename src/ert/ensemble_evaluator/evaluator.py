@@ -34,6 +34,7 @@ from _ert.forward_model_runner.client import (
     CONNECT_MSG,
     DISCONNECT_MSG,
     TERMINATE_MSG,
+    enable_heartbeating,
 )
 from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.config import QueueSystem
@@ -424,6 +425,9 @@ class EnsembleEvaluator:
         try:  # ruff: ignore[too-many-statements-in-try-clause]
             self._router_socket: zmq.asyncio.Socket = zmq_context.socket(zmq.ROUTER)
             self._router_socket.setsockopt(zmq.LINGER, 0)
+            enable_heartbeating(self._router_socket)
+            # Lets a reconnecting dispatcher replace its stale, not yet timed out pipe
+            self._router_socket.setsockopt(zmq.ROUTER_HANDOVER, 1)
             if self._config.server_public_key and self._config.server_secret_key:
                 self._router_socket.curve_secretkey = self._config.server_secret_key
                 self._router_socket.curve_publickey = self._config.server_public_key
