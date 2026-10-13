@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from scipy.stats import spearmanr
 
 from ert.analysis.misfit_preprocessor import (
     cluster_responses,
@@ -342,83 +343,25 @@ def test_autoscale_clusters_observations_by_correlation_pattern_ignoring_sign(
     np.testing.assert_allclose(scale_factors, expected_scale_factors)
 
 
-@pytest.mark.parametrize(
-    ("corr_de_target", "expect_de_merged"),
-    [
-        (0.55, True),  # Above threshold ~0.42: D-E merges first
-        (0.50, True),
-        (0.45, True),
-        (0.40, False),  # Below threshold: A-B or B-C merges first
-        (0.30, False),
-    ],
-)
-def test_that_clustering_prioritizes_global_similarity_over_local_correlation(
-    corr_de_target, expect_de_merged
-):
+@pytest.mark.parametrize("corr_de_target", [0.85, 0.80, 0.60, 0.40, 0.30])
+def test_that_clustering_merges_most_correlated_pair_first(corr_de_target):
     """
-    This test demonstrates that the current clustering implementation (using
-    Euclidean distance on correlation rows) can behave unintuitively by prioritizing
-    pairs with LOWER direct correlation for merging over pairs with HIGHER direct
-    correlation. This happens when the higher-correlation pair disagrees strongly on
-    other variables.
-
-    "Prioritizing" here means that the hierarchical clustering algorithm considers
-    the lower-correlation pair to be "closer" (more similar) and thus merges them
-    earlier in the bottom-up clustering process.
+    Verify that hierarchical clustering with distance = 1 - |rho|
+    merges the pair with the highest absolute pairwise correlation first.
 
     Scenario:
-    - Group 1: A, B, C.
-      A and C are independent.
-      B = A + C (correlated ~0.707 with both).
-      In other words, A and B are correlated ~0.7, the same is true for B and C.
-      However, the Euclidean distance between A's and B's correlation rows is large
-      because of the disagreement on C
+    - Group 1: A, B, C where B = A + C.
+    - Group 2: D, E with controlled correlation `corr_de_target`.
 
-    - Group 2: D, E.
-      D and E are isolated and correlated with strength rho (varied by parametrization).
-      They agree perfectly on A, B, C (zero correlation with all).
-      The Euclidean distance between D's and E's correlation rows is relatively
-      small because they have consistent (zero) correlations with everything else.
-
-    Each variable's correlation row (the corresponding row in the correlation matrix)
-    includes its correlation with all variables, including itself (1.0 on diagonal).
-    For D and E we have:
-
-    D's row: [corr(D,A)=0, corr(D,B)=0, corr(D,C)=0, corr(D,D)=1.0, corr(D,E)=rho]
-    E's row: [corr(E,A)=0, corr(E,B)=0, corr(E,C)=0, corr(E,D)=rho, corr(E,E)=1.0]
-
-    For A, B and C we have:
-    A's row: [corr(A,A)=1.0, corr(A,B)=0.7, corr(A,C)=0, corr(A,D)=0, corr(A,E)=0]
-    B's row: [corr(B,A)=0.7, corr(B,B)=1.0, corr(B,C)=0.7, corr(B,D)=0, corr(B,E)=0]
-    C's row: [corr(C,A)=0, corr(C,B)=0.7, corr(C,C)=1.0, corr(C,D)=0, corr(C,E)=0]
-
-    Threshold calculations (based on Euclidean distance between correlation rows):
-      dist(D,E) = sqrt((0-0)^2 + (0-0)^2 + (0-0)^2 + (1-rho)^2 + (rho-1)^2))
-                = sqrt(2 * (1 - rho)^2)
-      dist(A,B) = dist(B,C) = sqrt((1-0.7)^2 + (0.7-1)^2 + (0-0.7)^2 + (0-0)^2+(0-0)^2))
-                = 0.82
-
-      Solve dist(D,E) < dist(A,B) for rho:
-      sqrt(2 * (1 - rho)^2) < 0.82
-        2 * (1 - rho)^2 < 0.82^2
-        (1 - rho)^2 < 0.82^2 / 2
-        1 - rho < sqrt(0.82^2 / 2)
-        rho > 1 - sqrt(0.82^2 / 2) ≈ 0.42
-      Hence, when rho > 0.42, D-E merges first; otherwise either A-B or B-C merges first
-      (depending on random variation in the sampling).
-
-    This test is parametrized to verify both regimes:
-    - rho > 0.42: D-E merges first despite corr(A,B) > rho and corr(B,C) > rho
-    - rho < 0.42: D-E no longer the closest pair (either A-B or B-C merges first)
+    The expected first merge is derived from the measured absolute Spearman
+    correlations, which are the values used by the implementation.
     """
 
     rng = np.random.default_rng(42)
     N_realizations = 10000
 
-    # Construct A, B, C
     A = rng.standard_normal(N_realizations)
     C = rng.standard_normal(N_realizations)
-    # B = A + C. Normalize everyone.
     A = (A - np.mean(A)) / np.std(A)
     C = (C - np.mean(C)) / np.std(C)
     B = A + C
@@ -433,24 +376,10 @@ def test_that_clustering_prioritizes_global_similarity_over_local_correlation(
 
     dataset = np.array([A, B, C, D, E]).T
 
-    # Verify correlations
-    corr = np.corrcoef(dataset, rowvar=False)
-    # The return type of corrcoef is ambiguous (float | ndarray) in stubs,
-    # so we assert it is an array to silence static analysis warnings about indexing.
-    assert isinstance(corr, np.ndarray)
-    corr_AB = corr[0, 1]
-    corr_BC = corr[1, 2]
-    corr_DE = corr[3, 4]
-
-    assert np.isclose(corr_AB, 0.707, atol=0.05), (
-        f"Setup error: A-B corr {corr_AB} != 0.707"
-    )
-    assert np.isclose(corr_BC, 0.707, atol=0.05), (
-        f"Setup error: B-C corr {corr_BC} != 0.707"
-    )
-    assert np.isclose(corr_DE, corr_de_target, atol=0.05), (
-        f"Setup error: D-E corr {corr_DE} != {corr_de_target}"
-    )
+    corr = np.asarray(spearmanr(dataset).statistic)
+    abs_corr = np.abs(corr)
+    np.fill_diagonal(abs_corr, -np.inf)
+    expected_pair = tuple(sorted(np.unravel_index(np.argmax(abs_corr), abs_corr.shape)))
 
     # We ask for a clustering that would force exactly ONE merge.
     # Total items = 5 (A, B, C, D, E).
@@ -458,19 +387,14 @@ def test_that_clustering_prioritizes_global_similarity_over_local_correlation(
     # to merge and leave the others as singletons.
     clusters = cluster_responses(dataset, nr_clusters=4)
 
-    is_DE_merged = clusters[3] == clusters[4]
-    is_AB_merged = clusters[0] == clusters[1]
-    is_BC_merged = clusters[1] == clusters[2]
+    merged_pairs = [
+        (i, j)
+        for i in range(len(clusters))
+        for j in range(i + 1, len(clusters))
+        if clusters[i] == clusters[j]
+    ]
 
-    failure_msg = (
-        f"DE_merged={is_DE_merged}, AB_merged={is_AB_merged}, BC_merged={is_BC_merged}."
-        f"Correlations: AB={corr_AB:.3f}, BC={corr_BC:.3f}, DE={corr_DE:.3f}"
-    )
-    assert is_DE_merged == expect_de_merged, failure_msg
-    # When D-E merges first, A-B and B-Cshould not (they stay separate)
-    if expect_de_merged:
-        assert not is_AB_merged, failure_msg
-        assert not is_BC_merged, failure_msg
+    assert merged_pairs == [expected_pair]
 
 
 def test_clustering_and_scaling_realistic_scenario():
@@ -580,3 +504,13 @@ def test_clustering_and_scaling_edge_case():
     # eigenvalues spread even for independent data, so the top ~91 components
     # already explain 95% of variance.
     assert len(np.unique(clusters)) == 91
+
+
+def test_that_cluster_responses_handles_tied_responses():
+    rng = np.random.default_rng(2)
+    responses = rng.integers(0, 3, size=(15, 8)).astype(np.float64)
+
+    clusters = cluster_responses(responses, nr_clusters=2)
+
+    assert len(clusters) == 8
+    assert set(clusters).issubset({1, 2})
