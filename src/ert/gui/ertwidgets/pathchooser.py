@@ -128,7 +128,7 @@ class PathChooser(QWidget):
 
     def getPath(self) -> str:
         """Returns the path"""
-        return os.path.expanduser(str(self._path_line.text()).strip())
+        return os.path.expanduser(str(self._path_line.text()).strip())  # ruff: ignore[os-path-expanduser]
 
     def selectPath(self) -> None:
         """Pops up the 'select a file/directory' dialog"""
