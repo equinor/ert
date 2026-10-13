@@ -1,5 +1,4 @@
 import contextlib
-import os
 import shutil
 import sys
 from collections.abc import Callable
@@ -68,7 +67,7 @@ def test_symlink():
 
     symlink("target", "link")
     assert Path("link").is_symlink()
-    assert os.readlink("link") == "target"
+    assert Path("link").readlink() == Path("target")
 
     Path("target2").write_text("target ...", encoding="utf-8")
 
@@ -77,7 +76,7 @@ def test_symlink():
 
     symlink("target2", "link")
     assert Path("link").is_symlink()
-    assert os.readlink("link") == "target2"
+    assert Path("link").readlink() == Path("target2")
 
     Path("root1/sub1/sub2").mkdir(parents=True)
     Path("root2/sub1/sub2").mkdir(parents=True)

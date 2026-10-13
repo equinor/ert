@@ -252,6 +252,7 @@ select = [
     "PTH122",
     "PTH124",
     "PTH207",
+    "os-readlink",
     "os-unlink",
     "os-path-isabs",
     "os-path-dirname",
