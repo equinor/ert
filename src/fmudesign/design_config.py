@@ -5,10 +5,10 @@ from typing import Annotated, Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveInt
 
 from ert.config.design_matrix import read_default_values
-from fmudesign.config_validation import SeedStrategy, validate_configuration
 from fmudesign.design_input import DesignInput
 from fmudesign.general_input import GeneralInput
 from fmudesign.read_background import read_background
+from fmudesign.seed_strategy import SeedStrategy
 from fmudesign.utils import seeds_from_extern
 
 
@@ -82,5 +82,4 @@ class DesignConfig(BaseModel):
             }
         )
 
-        validate_configuration(configuration)
         return cls(**configuration)

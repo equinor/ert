@@ -24,7 +24,6 @@ import probabilit
 
 from ert.shared import __version__ as ert_version
 
-from .config_validation import SeedStrategy
 from .design_config import DesignConfig
 from .design_distributions import (
     DiscreteViaUniform,
@@ -33,6 +32,7 @@ from .design_distributions import (
     to_probabilit,
 )
 from .quality_report import QualityReporter, print_corrmat
+from .seed_strategy import SeedStrategy
 from .utils import (
     _raise_if_duplicates,
     map_dependencies,

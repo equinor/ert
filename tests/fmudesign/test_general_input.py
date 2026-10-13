@@ -9,8 +9,8 @@ import xlsxwriter
 from hypothesis import assume, given
 from pydantic import TypeAdapter, ValidationError
 
-from fmudesign.config_validation import SeedStrategy
 from fmudesign.general_input import GeneralInput
+from fmudesign.seed_strategy import SeedStrategy
 
 PYDANTIC_PATH_ERROR = "Path does not point to a file|Input is not a valid path"
 

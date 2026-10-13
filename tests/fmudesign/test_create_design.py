@@ -12,9 +12,9 @@ from scipy import stats
 from ert.shared import __version__ as ert_version
 from fmudesign import DesignConfig, DesignMatrix, excel_to_config
 from fmudesign import design_distributions as design_dist
-from fmudesign.config_validation import SeedStrategy
 from fmudesign.create_design import MonteCarloSensitivity, _derive_rng
 from fmudesign.quality_report import print_corrmat
+from fmudesign.seed_strategy import SeedStrategy
 
 from ._configurations import (
     background_configuration,

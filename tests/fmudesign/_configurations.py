@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fmudesign import DesignConfig
-from fmudesign.config_validation import SeedStrategy
+from fmudesign.seed_strategy import SeedStrategy
 
 
 def minimal_configuration() -> DesignConfig:
