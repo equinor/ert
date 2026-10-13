@@ -10,7 +10,7 @@ def delete_file(filename: str) -> None:
         if filepath.is_file():
             uid = filepath.stat().st_uid
             if uid == os.getuid():
-                os.unlink(filename)
+                filepath.unlink()
                 print(f"Removing file:'{filename}'")
             else:
                 sys.stderr.write(
@@ -18,8 +18,8 @@ def delete_file(filename: str) -> None:
                 )
         else:
             raise OSError(f"Entry:'{filename}' is not a regular file")
-    elif Path(filename).is_symlink():
-        Path(filename).unlink()
+    elif filepath.is_symlink():
+        filepath.unlink()
     else:
         sys.stderr.write(f"File: '{filename}' does not exist - delete ignored\n")
 

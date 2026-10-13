@@ -27,9 +27,10 @@ def symlink(target: str, link_name: str) -> None:
             f"which implies that {target_check} must exist, but it does not."
         )
 
-    if Path(link_name).is_symlink():
-        os.unlink(link_name)
-    Path(link_name).symlink_to(target)
+    link_name_path = Path(link_name)
+    if link_name_path.is_symlink():
+        link_name_path.unlink()
+    link_name_path.symlink_to(target)
     print(f"Linking '{link_name}' -> '{target}' [ cwd:{Path.cwd()} ]")
 
 
