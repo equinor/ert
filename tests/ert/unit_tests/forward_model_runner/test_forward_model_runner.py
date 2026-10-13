@@ -1,6 +1,5 @@
 import json
 import os
-import os.path
 import stat
 import textwrap
 from pathlib import Path
@@ -95,7 +94,7 @@ def test_run_multiple_ok():
         assert Path(dir_number).is_dir()
         assert Path(f"mkdir_out.{dir_number}").is_file()
         assert Path(f"mkdir_err.{dir_number}").is_file()
-        assert os.path.getsize(f"mkdir_err.{dir_number}") == 0
+        assert Path(f"mkdir_err.{dir_number}").stat().st_size == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")

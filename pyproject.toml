@@ -266,6 +266,7 @@ select = [
     "os-remove",
     "os-rename",
     "os-mkdir",
+    "os-path-getsize",
     "os-path-isfile",
     "os-path-join",
     "os-path-isdir",

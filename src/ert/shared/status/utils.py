@@ -1,4 +1,3 @@
-import os
 import resource
 import sys
 from pathlib import Path
@@ -18,10 +17,12 @@ def byte_with_unit(byte_count: float) -> str:
     return f"{byte_count:.2f} {suffixes[i]}"
 
 
-def file_has_content(file_path: str) -> bool:
-    file_path_exists = Path(str(file_path)).is_file()
-    if file_path_exists:
-        return os.path.getsize(file_path) > 0
+def file_has_content(file_path: str | None) -> bool:
+    if file_path is None:
+        return False
+    path = Path(file_path)
+    if path.is_file():
+        return path.stat().st_size > 0
     return False
 
 
