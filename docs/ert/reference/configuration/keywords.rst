@@ -40,8 +40,8 @@ Keyword name                                                             Require
 :ref:`JOBNAME <jobname>`                                                 NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
 :ref:`LOAD_WORKFLOW <load_workflow>`                                     NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                             NO                                                                      Load a workflow job into ERT
-:ref:`LOCALIZATION <localization>`                                       NO                                      False                           Enable experimental adaptive localization correlation
-:ref:`LOCALIZATION_CORRELATION_THRESHOLD <local_corr_threshold>`         NO                                      0.30                            Specifying adaptive localization correlation threshold
+:ref:`LOCALIZATION <localization>`                                       NO                                      False                           Enable experimental adaptive localization correlation (Deprecated)
+:ref:`LOCALIZATION_CORRELATION_THRESHOLD <local_corr_threshold>`         NO                                      min(1, 3/sqrt(N))               Specifying adaptive localization correlation threshold
 :ref:`MAX_RUNNING <max_running>`                                         NO                                      0                               Set the maximum number of simultaneously submitted and running realizations a positive integer (> 0) is required
 :ref:`MAX_RUNTIME <max_runtime>`                                         NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                           NO                                      2                               How many times the queue system should retry a simulation
@@ -1796,7 +1796,7 @@ ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
 
 .. _inversion_algorithm:
 
-INVERSION (deprecated)
+INVERSION (Deprecated)
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Specifies the inversion algorithm used in the analysis step.
@@ -1817,18 +1817,22 @@ truncation threshold (see :ref:`ENKF_TRUNCATION <enkf_truncation>`)::
 
 .. _localization:
 
-LOCALIZATION
-^^^^^^^^^^^^
-
-The analysis module has capability for enabling adaptive localization
-correlation threshold.
-This can be enabled from the config file using the
-ANALYSIS_SET_VAR keyword but is valid for the ``STD_ENKF`` module only.
-This is default ``False``.
+LOCALIZATION (Deprecated)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Replaced by parameter type adaptive localization specification.
+(see :ref:`ANALYSIS_SET_VAR <parameters_section>`)
 
 ::
 
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+
+        Is replaced by:
+
+        ANALYSIS_SET_VAR PARAMETERS FIELD ADAPTIVE
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        ANALYSIS_SET_VAR PARAMETERS SURFACE ADAPTIVE
+
+
 
 .. _local_corr_threshold:
 
@@ -1839,7 +1843,7 @@ The analysis module has capability for specifying the adaptive
 localization correlation threshold value.
 This can be specified from the config file using the
 ANALYSIS_SET_VAR keyword but is valid for the ``STD_ENKF`` module only.
-This is default ``0.30``.
+This is default ``min(1, 3/sqrt(N))``.
 
 ::
 
