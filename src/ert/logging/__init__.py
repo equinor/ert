@@ -1,6 +1,5 @@
 import logging
 import os
-import pathlib
 import sys
 from collections.abc import Callable
 from datetime import datetime
@@ -11,8 +10,8 @@ from typing import Any
 from _ert import ansi
 from _ert.utils import file_safe_timestamp
 
-LOGGING_CONFIG = pathlib.Path(__file__).parent.resolve() / "logger.conf"
-STORAGE_LOG_CONFIG = pathlib.Path(__file__).parent.resolve() / "storage_log.conf"
+LOGGING_CONFIG = Path(__file__).parent.resolve() / "logger.conf"
+STORAGE_LOG_CONFIG = Path(__file__).parent.resolve() / "storage_log.conf"
 
 _FORMATS_ANSI = {
     logging.FATAL: ansi.RED + "[FATAL]" + ansi.RESET + " {message}",
@@ -44,7 +43,7 @@ class TimestampedFileHandler(logging.FileHandler):
         filename, extension = os.path.splitext(filename)
 
         if "config_filename" in kwargs:
-            config_file_path = pathlib.Path(kwargs.pop("config_filename"))
+            config_file_path = Path(kwargs.pop("config_filename"))
             name, ext = os.path.splitext(config_file_path.name)
             config_filename = f"{name}-{ext[1:]}"
             filename = f"{filename}-{config_filename}-{timestamp}{extension}"
