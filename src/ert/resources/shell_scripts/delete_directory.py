@@ -8,7 +8,7 @@ def delete_file(filename: str | Path) -> None:
     stat_info = os.lstat(filename)
     uid = stat_info.st_uid
     if uid == os.getuid():
-        os.unlink(filename)
+        Path(filename).unlink()
         print(f"Removing file:'{filename}'")
     else:
         sys.stderr.write(f"Sorry you are not owner of file:{filename} - not deleted\n")

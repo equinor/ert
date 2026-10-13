@@ -394,10 +394,8 @@ class ForwardModelStep:
         ).exists():
             errors.append(f"Could not locate start_file:{start_file}")
 
-        if (error_file := self.step_data.get("error_file")) and Path(
-            error_file
-        ).exists():
-            os.unlink(error_file)
+        if error_file := self.step_data.get("error_file"):
+            Path(error_file).unlink(missing_ok=True)
 
         if executable_error := _check_executable(self.step_data.get("executable")):
             errors.append(executable_error)

@@ -251,6 +251,7 @@ select = [
     "PT",    # pytest
     "PTH124",
     "PTH207",
+    "os-unlink",
     "os-path-isabs",
     "os-path-dirname",
     "os-stat",

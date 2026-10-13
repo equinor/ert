@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Literal, Self, cast, overload
@@ -204,7 +203,7 @@ class Field(ParameterConfig):
             substitute_runpath_name(str(self.output_file), real_nr, ensemble.iteration)
         )
         if file_out.is_symlink():
-            os.unlink(file_out)
+            file_out.unlink()
 
         save_field(
             self._transform_data(self._fetch_from_ensemble(real_nr, ensemble)),
