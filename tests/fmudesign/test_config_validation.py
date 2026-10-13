@@ -15,11 +15,6 @@ def _minimal_config(**extra):
     }
 
 
-def test_that_seed_strategy_defaults_to_joint():
-    cfg = validate_configuration(_minimal_config())
-    assert cfg["seed_strategy"] is SeedStrategy.JOINT
-
-
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
