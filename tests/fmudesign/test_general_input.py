@@ -513,3 +513,19 @@ def test_that_from_xlsx_constructs_general_input_from_excel_values(
     assert gi.distribution_seed == distribution_seed
     assert gi.correlation_iterations == correlation_iterations
     assert gi.seed_strategy == seed_strategy
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("independent", SeedStrategy.INDEPENDENT),
+        (" independent ", SeedStrategy.INDEPENDENT),
+        (None, SeedStrategy.JOINT),
+        ("None", SeedStrategy.JOINT),
+    ],
+)
+def test_that_seed_strategy_input_is_normalized_to_enum(value, expected):
+    cfg = base_general_input_dict() | {"seed_strategy": value}
+    stream = _rows_to_xlsx_bytestream([list(kv) for kv in cfg.items()])
+    gi = GeneralInput.from_xlsx(stream, "general_input")
+    assert gi.seed_strategy == expected
