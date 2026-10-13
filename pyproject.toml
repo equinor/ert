@@ -254,6 +254,7 @@ select = [
     "PTH207",
     "os-path-getctime",
     "os-readlink",
+    "os-path-expanduser",
     "os-unlink",
     "os-path-isabs",
     "os-path-dirname",
