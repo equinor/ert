@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import json
-import os
 from pathlib import Path
 from textwrap import dedent
 from typing import Any
@@ -138,7 +137,7 @@ class InstallDataConfig(BaseModel, extra="forbid"):
 
         if self.source is not None:
             source = self.source.replace("<CONFIG_PATH>", config_directory)
-            if not os.path.isabs(source):
+            if not Path(source).is_absolute():
                 source = str(Path(config_directory) / source)
 
             is_dir = _is_dir_all_model(source, model_realizations)

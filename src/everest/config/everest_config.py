@@ -962,7 +962,7 @@ to read summary data from forward model, do:
         if path is None:
             path = DEFAULT_OUTPUT_DIR
 
-        if os.path.isabs(path):
+        if Path(path).is_absolute():
             return path
 
         cfgdir = self.config_directory
@@ -976,7 +976,7 @@ to read summary data from forward model, do:
     def simulation_dir(self) -> str:
         path = self.environment.simulation_folder
 
-        if os.path.isabs(path):
+        if Path(path).is_absolute():
             return path
 
         return str(Path(self.output_dir) / path)

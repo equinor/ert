@@ -69,11 +69,12 @@ class PathChooser(QWidget):
 
     def isPathValid(self, path: str) -> tuple[bool, str]:
         path = path.strip()
-        path_exists = Path(path).exists()
-        is_file = Path(path).is_file()
-        is_directory = Path(path).is_dir()
-        is_executable = os.access(path, os.X_OK)
-        is_absolute = os.path.isabs(path)
+        p = Path(path)
+        path_exists = p.exists()
+        is_file = p.is_file()
+        is_directory = p.is_dir()
+        is_executable = os.access(p, os.X_OK)
+        is_absolute = p.is_absolute()
 
         valid = True
         message = ""

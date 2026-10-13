@@ -9,7 +9,6 @@ from collections import Counter, defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cached_property
-from os import path
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self, cast, overload
 
@@ -1540,7 +1539,7 @@ class ErtConfig(BaseModel, extra="forbid"):
             content_dict[ConfigKeys.RUNPATH_FILE] = str(
                 Path(config_dir) / ErtConfig.DEFAULT_RUNPATH_FILE
             )
-        elif not path.isabs(content_dict[ConfigKeys.RUNPATH_FILE]):
+        elif not Path(content_dict[ConfigKeys.RUNPATH_FILE]).is_absolute():
             content_dict[ConfigKeys.RUNPATH_FILE] = str(
                 (Path(config_dir) / content_dict[ConfigKeys.RUNPATH_FILE]).resolve()
             )
