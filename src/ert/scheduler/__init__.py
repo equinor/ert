@@ -43,10 +43,8 @@ def create_driver(
             if slurm_driver_options.get("max_runtime") is None:
                 slurm_driver_options["max_runtime"] = max_runtime
             return SlurmDriver(
-                **dict(
-                    {"user": getpwuid(getuid()).pw_name},
-                    **slurm_driver_options,
-                ),
+                **slurm_driver_options,
+                user=getpwuid(getuid()).pw_name,
                 poll_period=poll_period,
             )
         case default:
