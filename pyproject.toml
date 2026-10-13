@@ -249,6 +249,7 @@ select = [
     "PLE",
     "PLW",
     "PT",    # pytest
+    "PTH122",
     "PTH124",
     "PTH207",
     "os-unlink",

@@ -4,7 +4,6 @@ import asyncio
 import contextlib
 import io
 import logging
-import os
 import time
 from collections import Counter
 from collections.abc import Iterable
@@ -1980,13 +1979,14 @@ def _log_grid_contents(
     runpath: str, summary_config: SummaryConfig, iens: int, iter_: int
 ) -> None:
     try:  # ruff: ignore[too-many-statements-in-try-clause]
-        filename = substitute_runpath_name(summary_config.input_files[0], iens, iter_)
-        base, extension = os.path.splitext(filename)
+        filename = Path(
+            substitute_runpath_name(summary_config.input_files[0], iens, iter_)
+        )
         # Cut of extensions ".data", ".smspec" or ".unsmry"
-        if extension.lower() in {".data", ".smspec", ".unsmry"}:
-            filename = base
+        if filename.suffix.lower() in {".data", ".smspec", ".unsmry"}:
+            filename = filename.with_suffix("")
         for grid_file in Path(runpath).iterdir():
-            if grid_file.stem != filename or grid_file.suffix.lower() not in {
+            if grid_file.stem != filename.name or grid_file.suffix.lower() not in {
                 ".egrid",
                 ".grid",
             }:

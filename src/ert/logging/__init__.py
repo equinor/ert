@@ -40,11 +40,14 @@ class TimestampedFileHandler(logging.FileHandler):
             datetime.now().astimezone().isoformat(timespec="minutes")
         )
 
-        filename, extension = os.path.splitext(filename)
+        filepath = Path(filename)
+        filename = str(filepath.with_suffix(""))
+        extension = filepath.suffix
 
         if "config_filename" in kwargs:
             config_file_path = Path(kwargs.pop("config_filename"))
-            name, ext = os.path.splitext(config_file_path.name)
+            name = config_file_path.stem
+            ext = config_file_path.suffix
             config_filename = f"{name}-{ext[1:]}"
             filename = f"{filename}-{config_filename}-{timestamp}{extension}"
         else:
@@ -52,8 +55,9 @@ class TimestampedFileHandler(logging.FileHandler):
 
         if kwargs.pop("use_log_dir_from_env", False) and "ERT_LOG_DIR" in os.environ:
             log_dir = os.environ["ERT_LOG_DIR"]
-            filename = log_dir + "/" + filename
-            Path(filename).parent.mkdir(exist_ok=True, parents=True)
+            filepath = Path(log_dir) / filename
+            filepath.parent.mkdir(exist_ok=True, parents=True)
+            filename = str(filepath)
 
         super().__init__(filename, *args, **kwargs)
 
