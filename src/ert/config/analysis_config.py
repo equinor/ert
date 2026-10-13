@@ -131,6 +131,16 @@ class AnalysisConfig:
                 parameter_type_update_strategies["SURFACE"] = LocalizationType.ADAPTIVE
                 parameter_type_update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
 
+                ConfigWarning.deprecation_warn(
+                    "LOCALIZATION has been removed, and is equivalent to:\n"
+                    "ANALYSIS_SET_VAR PARAMETERS FIELD ADAPTIVE\n"
+                    "ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE\n"
+                    "ANALYSIS_SET_VAR PARAMETERS SURFACE ADAPTIVE\n"
+                    "Note that for other parameter types than GEN_KW other localization"
+                    " options are preferred, see: "
+                    "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#parameters"
+                )
+
             if module_name == "PARAMETERS":
                 parameter_type = var_name
                 strategy_name = value
