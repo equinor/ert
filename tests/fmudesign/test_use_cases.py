@@ -131,6 +131,49 @@ def test_that_constant_distribution_generates_identical_parameter_values(
     assert set(design.designvalues["SENSNAME"]) == {"montecarlo"}
 
 
+def test_that_dates_typed_in_excel_stay_dates_in_the_design_matrix(tmp_path):
+    case_date = pd.Timestamp("2027-01-01")
+    default_date = pd.Timestamp("2027-06-01")
+    input_path = tmp_path / "designinput.xlsx"
+    with pd.ExcelWriter(input_path, engine="openpyxl") as writer:
+        pd.DataFrame(
+            data=[
+                ["designtype", "onebyone"],
+                ["repeats", 1],
+                ["rms_seeds", None],
+                ["distribution_seed", None],
+            ]
+        ).to_excel(writer, sheet_name="general_input", index=False, header=None)
+        pd.DataFrame(
+            columns=[
+                "sensname",
+                "numreal",
+                "type",
+                "param_name",
+                "senscase1",
+                "value1",
+                "senscase2",
+                "value2",
+            ],
+            data=[
+                ["wellstart", None, "scenario", "WELL_DATE", "early", case_date],
+                ["other", None, "scenario", "X", "low", 0, "high", 1],
+            ],
+        ).to_excel(writer, sheet_name="designinput", index=False)
+        pd.DataFrame(
+            columns=["param_name", "default_value"],
+            data=[["WELL_DATE", default_date], ["X", 0]],
+        ).to_excel(writer, sheet_name="defaultvalues", index=False)
+
+    design = DesignMatrix(excel_to_dict(input_path))
+
+    assert design.designvalues["WELL_DATE"].tolist() == [
+        case_date,
+        default_date,
+        default_date,
+    ]
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize("verbosity", [1, 2])
 def test_that_cli_verbosity_controls_sensitivity_plot_generation(

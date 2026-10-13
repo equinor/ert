@@ -108,8 +108,11 @@ def printwarning(corr_group_name: str) -> None:
     )
 
 
-def to_numeric_safe(val: float | str) -> int | float | str:
-    """Convert all values that CAN be converted to numeric. Retain the rest.
+def to_numeric_safe(
+    val: float | str | pd.Timedelta | pd.Timestamp,
+) -> int | float | str | pd.Timedelta | pd.Timestamp:
+    """Convert all values (apart from pandas datetime objects) that CAN be converted
+    to numeric. Retain the rest.
     This used to be pd.to_numeric(..., errors='ignore'), but was deprecated.
 
     Examples
@@ -122,9 +125,10 @@ def to_numeric_safe(val: float | str) -> int | float | str:
     [5, np.int64(3), 'dog']
 
     """
-    assert not isinstance(val, pd.Series | pd.DataFrame | list)
+    if isinstance(val, pd.Timestamp | pd.Timedelta):
+        return val
     try:
-        return pd.to_numeric(val)  # noq
+        return pd.to_numeric(val)
     except (ValueError, TypeError):
         return val
 
