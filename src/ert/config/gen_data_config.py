@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Literal, Self, cast
@@ -99,7 +98,7 @@ class GenDataConfig(SimulationResponseConfig):
                 ) from e
 
             report_steps_ = sorted(report_steps_) if report_steps_ else None
-            if os.path.isabs(res_file):
+            if Path(res_file).is_absolute():
                 raise ConfigValidationError.with_context(
                     f"The RESULT_FILE:{res_file} setting for {name} is "
                     f"invalid - must be a relative path",
