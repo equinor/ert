@@ -42,15 +42,11 @@ def _load_template(template_path: str) -> jinja2.Template:
     ).get_template(filename)
 
 
-def _generate_file_namespace(filename: str) -> str:
-    return os.path.splitext(Path(filename).name)[0]
-
-
 def _load_input(input_files: Sequence[str]) -> dict[str, Any]:
     """Loads input files (JSON or YAML) and returns the content as dict."""
     data = {}
     for input_file in input_files:
-        input_namespace = _generate_file_namespace(input_file)
+        input_namespace = Path(input_file).stem
         data[input_namespace] = load_data(input_file)
 
     return data
