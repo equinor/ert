@@ -364,6 +364,11 @@ class LegacySummaryObservation(
                 "LOCATION_X and LOCATION_Y must be given together",
                 observation_dict.context,
             )
+        if "range" in localization_values and "x" not in localization_values:
+            raise ObservationConfigError.with_context(
+                "LOCATION_RANGE requires LOCATION_X and LOCATION_Y",
+                observation_dict.context,
+            )
 
         return [
             cls(
