@@ -4,7 +4,7 @@ import pandas as pd
 
 from .read_correlations import parse_sensitivity_correlations
 from .read_distributions import parse_distribution_parameters
-from .utils import _has_value, _is_int, excel_sheet_names, find_sheet
+from .utils import excel_sheet_names, find_sheet, parse_decimals
 
 
 def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
@@ -44,10 +44,6 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
     )
 
     if "decimals" in bck_input:
-        decimals: dict[str, Any] = {}
-        for row in bck_input.itertuples():
-            if _has_value(row.decimals) and _is_int(row.decimals):
-                decimals[row.param_name] = int(row.decimals)
-        backdict["decimals"] = decimals
+        backdict["decimals"] = parse_decimals(bck_input)
 
     return backdict
