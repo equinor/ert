@@ -49,11 +49,6 @@ class DesignConfig(BaseModel):
         """
         if isinstance(seeds := general_input.rms_seeds, Path):
             rms_seeds: Literal["default"] | list[int] | None = seeds_from_extern(seeds)
-            if not rms_seeds:
-                raise ValueError(
-                    f"Empty rms_seeds file '{seeds.resolve()}', "
-                    f"must contain at least one seed."
-                )
         else:
             rms_seeds = seeds
 
