@@ -37,7 +37,6 @@ from .utils import (
     find_max_realisations,
     map_dependencies,
     parameters_from_extern,
-    printwarning,
     to_numeric_safe,
 )
 
@@ -1028,9 +1027,11 @@ class MonteCarloSensitivity(Sensitivity):
         for corr_group_name, corr_group in groups.items():
             corr_group_name = cast("str", corr_group_name)
 
-            # A single correlation - print warning and skip it
             if len(corr_group) == 1:
-                printwarning(corr_group_name)
+                print(
+                    "Warning: Only one parameter uses correlation sheet "
+                    f"{corr_group_name!r}, so it is sampled without correlation."
+                )
                 continue
 
             # The Excel sheet only fills in the lower triangle, which

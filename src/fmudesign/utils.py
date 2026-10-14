@@ -83,31 +83,6 @@ def find_max_realisations(config: dict[str, Any]) -> int:
     return max_reals
 
 
-def printwarning(corr_group_name: str) -> None:
-    print(
-        "#######################################################\n"
-        "fmudesign Warning:                                     \n"
-        "Using designinput sheets where "
-        "corr_sheet is only specified for one parameter "
-        "will cause non-correlated parameters .\n"
-        f"ONLY ONE PARAMETER WAS SPECIFIED TO USE CORR_SHEET {corr_group_name}\n"
-        "\n"
-        "Note change in how correlated parameters are specified \n"
-        "from fmudesign version 1.0.1 in August 2019:\n"
-        "Name of correlation sheet must be specified for each "
-        "parameter in correlation matrix. \n"
-        "This to enable use of several correlation sheets. "
-        "This also means non-correlated parameters do not "
-        "have to be included in correlation matrix. \n "
-        "See documentation: \n"
-        "https://equinor.github.io/fmu-tools/"
-        "fmudesign.html#create-design-matrix-for-"
-        "one-by-one-sensitivities\n"
-        "\n"
-        "####################################################\n"
-    )
-
-
 def to_numeric_safe(val: float | str) -> int | float | str:
     """Convert all values that CAN be converted to numeric. Retain the rest.
     This used to be pd.to_numeric(..., errors='ignore'), but was deprecated.
