@@ -2,7 +2,7 @@
 
 import math
 from collections import Counter
-from collections.abc import Hashable, Iterable
+from collections.abc import Callable, Hashable, Iterable
 from pathlib import Path
 from typing import Any
 
@@ -54,25 +54,25 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
         filename (Path | str): name of file
     """
     if str(filename).endswith(".xlsx"):
-        seeds = pl.read_excel(
-            filename, has_header=False, read_options={"dtypes": "string"}
-        ).to_series(0)
+        reader: Callable[..., pl.DataFrame] = pl.read_excel
+        kwargs: dict[str, Any] = {"read_options": {"dtypes": "string"}}
     elif str(filename).endswith((".csv", ".txt")):
-        try:
-            seeds = pl.read_csv(
-                filename, has_header=False, infer_schema=False
-            ).to_series(0)
-        except NoDataError:
-            raise ValueError(
-                f"rms_seeds file '{filename}' contains no data. "
-                f"rms_seeds file must contain at least one seed."
-            ) from None
+        reader = pl.read_csv
+        kwargs = {"infer_schema": False}
     else:
         raise ValueError(
             "External file with seed values should "
             "be on Excel or csv format "
             "and end with .xlsx .csv or .txt"
         )
+
+    try:
+        seeds = reader(filename, has_header=False, **kwargs).to_series(0)
+    except NoDataError:
+        raise ValueError(
+            f"rms_seeds file '{filename}' contains no data. "
+            f"rms_seeds file must contain at least one seed."
+        ) from None
 
     seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
     try:
