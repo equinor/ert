@@ -216,7 +216,13 @@ def perform_ensemble_update(
             ypos=filtered_data["north"].to_numpy()[has_location],
             main_range=filtered_data["radius"].to_numpy()[has_location],
             location_mask=has_location,
-            observation_keys=filtered_data["observation_key"]
+            observation_ids=filtered_data.select(
+                pl.concat_str(
+                    [pl.col("response_key").cast(pl.String), pl.col("index")],
+                    separator=":",
+                )
+            )
+            .to_series()
             .to_numpy()[has_location]
             .tolist(),
         )

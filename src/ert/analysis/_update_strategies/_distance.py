@@ -153,12 +153,12 @@ class DistanceLocalizationUpdate:
         """Try to load a cached rho matrix from experiment blob storage."""
         if self._experiment is None:
             return None
-        obs_keys = (
-            self._obs_loc.observation_keys
-            if self._obs_loc is not None and self._obs_loc.observation_keys
+        obs_ids = (
+            self._obs_loc.observation_ids
+            if self._obs_loc is not None and self._obs_loc.observation_ids
             else None
         )
-        return self._experiment.load_rho_matrix(param_name, obs_keys)
+        return self._experiment.load_rho_matrix(param_name, obs_ids)
 
     def _update_field(
         self,
@@ -213,14 +213,14 @@ class DistanceLocalizationUpdate:
 
             rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
 
-            if self._obs_loc.observation_keys:
+            if self._obs_loc.observation_ids:
                 rho_sparse = sp.sparse.csc_matrix(rho_2d)
                 buf = io.BytesIO()
                 sp.sparse.save_npz(buf, rho_sparse)
                 self._progress_callback(
                     AnalysisRhoMatrixEvent(
                         param_name=param_config.name,
-                        observation_keys=self._obs_loc.observation_keys,
+                        observation_ids=self._obs_loc.observation_ids,
                         shape=rho_2d.shape,
                         data_type=str(rho_2d.dtype),
                         matrix_bytes=buf.getvalue(),
@@ -295,14 +295,14 @@ class DistanceLocalizationUpdate:
 
             rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
 
-            if self._obs_loc.observation_keys:
+            if self._obs_loc.observation_ids:
                 rho_sparse = sp.sparse.csc_matrix(rho_flat)
                 buf = io.BytesIO()
                 sp.sparse.save_npz(buf, rho_sparse)
                 self._progress_callback(
                     AnalysisRhoMatrixEvent(
                         param_name=param_config.name,
-                        observation_keys=self._obs_loc.observation_keys,
+                        observation_ids=self._obs_loc.observation_ids,
                         shape=rho_flat.shape,
                         data_type=str(rho_flat.dtype),
                         matrix_bytes=buf.getvalue(),
