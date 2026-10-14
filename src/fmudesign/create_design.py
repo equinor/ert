@@ -250,11 +250,9 @@ class DesignMatrix:
                         key, verbosity=self.verbosity
                     )
                     sensitivity.generate(size=size)
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "background":
                     sensitivity = BackgroundSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(size=size)
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "seed":
                     sensitivity = SeedSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -263,7 +261,6 @@ class DesignMatrix:
                         seedvalues=self.seedvalues,
                         parameters=sens["parameters"],
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "scenario":
                     sensitivity = ScenarioSensitivity(key, verbosity=self.verbosity)
                     for casekey, case in sens["cases"].items():
@@ -274,7 +271,6 @@ class DesignMatrix:
                             seedvalues=self.seedvalues,
                         )
                         sensitivity.add_case(temp_case)
-                        sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "dist":
                     sensitivity = MonteCarloSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -289,7 +285,6 @@ class DesignMatrix:
                         seed_strategy=self.seed_strategy,
                         base_seed=self.base_seed,
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "extern":
                     sensitivity = ExternSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -298,10 +293,10 @@ class DesignMatrix:
                         parameters=sens["parameters"],
                         seedvalues=self.seedvalues,
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case unknown:
                     raise ValueError(f"Unknown sensitivity type: {unknown!r}")
 
+            sensitivity.map_dependencies(sens.get("dependencies", {}))
             self._add_sensitivity(sensitivity)
 
             # MonteCarloSensitivity is special - it can produce debugging outputs
