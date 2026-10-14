@@ -12,6 +12,7 @@ import yaml
 from ert.config.design_matrix import read_default_values
 
 from .design_input import DesignInput
+from .exceptions import FmudesignInputError
 from .general_input import GeneralInput
 from .read_background import read_background
 from .utils import (
@@ -103,6 +104,13 @@ def _excel_to_dict_onebyone(
     else:
         background = None
 
+    try:
+        defaultvalues = read_default_values(
+            Path(input_filename), default_values_sheet, has_header=True
+        )
+    except ValueError as err:
+        raise FmudesignInputError(str(err)) from err
+
     output: dict[str, Any] = {
         "input_file": input_filename,
         "designtype": general_input.designtype,
@@ -112,9 +120,7 @@ def _excel_to_dict_onebyone(
         "seeds": rms_seeds,
         "correlation_iterations": general_input.correlation_iterations,
         "seed_strategy": general_input.seed_strategy,
-        "defaultvalues": read_default_values(
-            Path(input_filename), default_values_sheet, has_header=True
-        ),
+        "defaultvalues": defaultvalues,
         "sensitivities": design_input.sensitivities,
     }  # This is the config that we read and return
 
@@ -131,7 +137,7 @@ def _assert_no_merged_cells(input_filename: str) -> None:
         worksheet = workbook[sheet_name]
         merged_ranges = list(worksheet.merged_cells.ranges)
         if merged_ranges:
-            raise ValueError(
+            raise FmudesignInputError(
                 "Merged cells are not allowed. Found merged cell in "
                 f"{input_filename} at sheet '{sheet_name}'.\n"
                 f"Found {len(merged_ranges)} merged cell range(s): {merged_ranges}"

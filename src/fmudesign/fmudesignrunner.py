@@ -39,6 +39,7 @@ from ert.trace import trace, tracer
 
 from ._excel_to_dict import excel_to_dict
 from .create_design import DesignMatrix, _normalize_xlsx_filename
+from .exceptions import FmudesignInputError
 
 logger = logging.getLogger(__name__)
 
@@ -256,11 +257,11 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
 
     # Check existence of config file
     if not Path(args.config).is_file():
-        raise OSError(f"Input file {args.config} does not exist")
+        raise FmudesignInputError(f"Input file {args.config} does not exist")
 
     destination = _normalize_xlsx_filename(args.destination)
     if Path(args.config).resolve() == Path(destination).resolve():
-        raise OSError(
+        raise FmudesignInputError(
             f'Identical name "{args.config}" have been provided for the input'
             "file and the output file"
         )
@@ -377,6 +378,14 @@ def main() -> None:
             )
             logger.error(msg)
             print(msg)
+        print(err_guide_msg)
+        sys.exit(1)
+    except FmudesignInputError as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        msg = f"Invalid fmudesign input: {err}"
+        logger.error(msg)
+        print(msg)
         print(err_guide_msg)
         sys.exit(1)
     except Exception as err:

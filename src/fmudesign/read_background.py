@@ -2,6 +2,7 @@ from typing import Any
 
 import pandas as pd
 
+from .exceptions import FmudesignInputError
 from .read_correlations import parse_sensitivity_correlations
 from .read_distributions import parse_distribution_parameters
 from .utils import _has_value, _is_int, excel_sheet_names, find_sheet
@@ -22,7 +23,7 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
     try:
         bck_sheet = find_sheet(bck_sheet, names=sheet_names)
     except ValueError as err:
-        raise ValueError(
+        raise FmudesignInputError(
             f"Sheet {bck_sheet!r} with background parameters, specified in the "
             f"general input sheet, was not found in {inp_filename!r}.\n"
             f"Sheets in workbook: {sheet_names}\n"

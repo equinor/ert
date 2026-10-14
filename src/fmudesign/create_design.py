@@ -31,6 +31,7 @@ from .design_distributions import (
     read_correlations,
     to_probabilit,
 )
+from .exceptions import FmudesignInputError
 from .quality_report import QualityReporter, print_corrmat
 from .utils import (
     _raise_if_duplicates,
@@ -560,7 +561,7 @@ class DesignMatrix:
                 if key not in case_:
                     temp_df[key] = self.backgroundvalues[key]
                     if len(temp_df) > len(self.backgroundvalues):
-                        raise ValueError(
+                        raise FmudesignInputError(
                             "Provided number of background values "
                             f"{len(self.backgroundvalues)} is smaller than number"
                             f" of realisations for sensitivity {sensname}"
@@ -585,7 +586,9 @@ class DesignMatrix:
                     self.defaultvalues[key]
                 )
             elif key not in self.START_COLUMNS:
-                raise LookupError(f"No defaultvalues given for parameter {key} ")
+                raise FmudesignInputError(
+                    f"No defaultvalues given for parameter {key} "
+                )
 
     def _add_dist_background(
         self,
@@ -648,7 +651,7 @@ class DesignMatrix:
                         .round(int(back_dict["decimals"][key]))
                     )
                 else:
-                    raise ValueError("Cannot round a string parameter")
+                    raise FmudesignInputError("Cannot round a string parameter")
         self.backgroundvalues = mc_backgroundvalues.copy()
 
     def _set_decimals(self, inputdict: dict[str, Any]) -> None:
@@ -686,7 +689,7 @@ class DesignMatrix:
                         .round(int(dict_decimals[key]))
                     )
                 else:
-                    raise ValueError(f"Cannot round a string parameter {key}")
+                    raise FmudesignInputError(f"Cannot round a string parameter {key}")
 
 
 class Sensitivity:
@@ -748,7 +751,7 @@ class SeedSensitivity(Sensitivity):
                 "Seed values must be set when running sensitivity type 'seed'. "
                 f"Got seed: {seedvalues}"
             )
-            raise ValueError(msg)
+            raise FmudesignInputError(msg)
 
         self.sensvalues = pd.DataFrame(index=range(size))
         self.sensvalues[seedname] = seedvalues[0:size]
@@ -758,7 +761,7 @@ class SeedSensitivity(Sensitivity):
                 dist_name = parameters[key][0].lower()
                 constant = parameters[key][1]
                 if dist_name != "const":
-                    raise ValueError(
+                    raise FmudesignInputError(
                         'A sensitivity of type "seed" can only have '
                         "additional parameters where dist_name is "
                         f'"const". Check sensitivity {self.sensname}"'
@@ -1058,7 +1061,7 @@ class MonteCarloSensitivity(Sensitivity):
         Shared by both the 'joint' and 'independent' seed strategies.
 
         Raises:
-            ValueError: if a parameter is a member of more than one correlation
+            FmudesignInputError: if a parameter is a member of more than one correlation
                 group, since only one of the requested correlations could then
                 be honoured.
         """
@@ -1101,7 +1104,7 @@ class MonteCarloSensitivity(Sensitivity):
             # would get the correlations of whichever group is sampled last.
             for name in multivariate_parameters:
                 if name in group_of_param:
-                    raise ValueError(
+                    raise FmudesignInputError(
                         f"Parameter {name!r} is part of several correlation "
                         f"groups: {group_of_param[name]!r} and "
                         f"{corr_group_name!r}. A parameter may only appear in "
@@ -1264,7 +1267,7 @@ class ExternSensitivity(Sensitivity):
         self.sensvalues = pd.DataFrame(columns=parameters, index=range(size))
         extern_values = parameters_from_extern(filename)
         if size > len(extern_values):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Number of realisations {size} specified for "
                 f"sensitivity {self.sensname} is larger than rows in "
                 f"file {filename}"
@@ -1273,7 +1276,7 @@ class ExternSensitivity(Sensitivity):
             if param in extern_values:
                 self.sensvalues[param] = list(extern_values[param][:size])
             else:
-                raise ValueError(f"Parameter {param} not in external file")
+                raise FmudesignInputError(f"Parameter {param} not in external file")
 
         self.sensvalues["SENSNAME"] = self.sensname
         self.sensvalues["SENSCASE"] = "p10_p90"

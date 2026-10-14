@@ -5,6 +5,7 @@ from argparse import Namespace
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import openpyxl
 import pytest
 from pydantic import BaseModel
 
@@ -12,6 +13,7 @@ from fmudesign import (
     DesignMatrix,
     fmudesignrunner,
 )
+from fmudesign.exceptions import FmudesignInputError
 from fmudesign.fmudesignrunner import (
     Example,
     get_parser,
@@ -97,6 +99,25 @@ def test_that_main_catches_generic_exception_and_prints_traceback_with_message(
     )
 
 
+def test_that_missing_worksheet_is_reported_as_invalid_input_without_traceback(
+    tmp_path, monkeypatch, capsys, caplog
+):
+    config = tmp_path / "config.xlsx"
+    openpyxl.Workbook().save(config)
+    monkeypatch.setattr(
+        sys, "argv", ["fmudesign", "run", str(config), str(tmp_path / "out.xlsx")]
+    )
+
+    with pytest.raises(SystemExit) as sys_exit:
+        fmudesignrunner.main()
+    assert sys_exit.value.code == 1
+
+    captured = capsys.readouterr()
+    assert "Invalid fmudesign input: No match for general_input" in captured.out
+    assert "Traceback" not in captured.err
+    assert "crashed unexpectedly" not in caplog.text
+
+
 def _create_run_args(
     general_sheet="general_input",
     design_sheet="designinput",
@@ -153,7 +174,9 @@ def test_that_subcommand_run_raises_when_config_does_not_exist(use_tmpdir):
     missing_file = "does_not_exist"
     args = _create_run_args(config_file_name=missing_file)
     Path(missing_file).unlink()
-    with pytest.raises(OSError, match=f"Input file {missing_file} does not exist"):
+    with pytest.raises(
+        FmudesignInputError, match=f"Input file {missing_file} does not exist"
+    ):
         subcommand_run(args, parser_run)
 
 
@@ -166,7 +189,8 @@ def test_that_subcommand_run_raises_when_config_is_equal_to_destination(use_tmpd
         config_file_name=duplicate_name, destination_file_name=duplicate_name
     )
     with pytest.raises(
-        OSError, match=rf'Identical name "{duplicate_name}".*input.*output file'
+        FmudesignInputError,
+        match=rf'Identical name "{duplicate_name}".*input.*output file',
     ):
         subcommand_run(args, parser_run)
 
@@ -269,7 +293,7 @@ def test_that_run_rejects_output_matching_input_after_adding_xlsx_suffix(
         lambda *args, **kwargs: pytest.fail("Input workbook was parsed"),
     )
 
-    with pytest.raises(OSError, match="Identical name"):
+    with pytest.raises(FmudesignInputError, match="Identical name"):
         args.func(args)
 
     assert input_path.read_bytes() == original_content
