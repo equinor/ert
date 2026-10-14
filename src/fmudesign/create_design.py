@@ -736,7 +736,7 @@ class SingleRealisationReference(Sensitivity):
         """Generates realisation number only
 
         Args:
-            realnums (list): list of integers with realization numbers
+            size (int): number of rows to generate
         """
         self.sensvalues = pd.DataFrame(index=range(size))
         self.sensvalues["SENSNAME"] = self.sensname
@@ -836,7 +836,7 @@ class ScenarioSensitivityCase(Sensitivity):
             size (int): number of rows to generate
             parameters (dict):
                 dictionary with parameter names and values
-            seeds (str): default or None
+            seedvalues (list): list of integer seed values or None
         """
 
         self.sensvalues = pd.DataFrame(
@@ -882,7 +882,7 @@ class MonteCarloSensitivity(Sensitivity):
         Args:
             size (int): number of rows to generate
             parameters (dict): dictionary of parameters and distributions
-            values (list): a list of seed values or None
+            seedvalues (list): list of integer seed values or None
             corrdict (dict): Configuration for correlated parameters. Contains:
                 - 'inputfile': Name of Excel file with correlation matrices
                 - 'sheetnames': List of sheet names, where each sheet contains a
@@ -1193,7 +1193,7 @@ class ExternSensitivity(Sensitivity):
             size (int): number of samples to generate
             filename (str): file to read values from
             parameters (list): list with parameter names
-            seeds (str): default or None
+            seedvalues (list): list of integer seed values or None
         """
         _raise_if_duplicates(parameters)
         self.sensvalues = pd.DataFrame(columns=parameters, index=range(size))
