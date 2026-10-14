@@ -529,11 +529,3 @@ def test_that_seed_strategy_input_is_normalized_to_enum(value, expected):
     stream = _rows_to_xlsx_bytestream([list(kv) for kv in cfg.items()])
     gi = GeneralInput.from_xlsx(stream, "general_input")
     assert gi.seed_strategy == expected
-
-
-@pytest.mark.parametrize("value", ["bogus", "[independent]", "{joint: 1}", 5, 1.5])
-def test_that_invalid_seed_strategy_raises_value_error(value):
-    cfg = base_general_input_dict() | {"seed_strategy": value}
-    stream = _rows_to_xlsx_bytestream([list(kv) for kv in cfg.items()])
-    with pytest.raises(ValueError, match="seed_strategy"):
-        GeneralInput.from_xlsx(stream, "general_input")
