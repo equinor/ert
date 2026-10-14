@@ -13,7 +13,6 @@ from fmudesign.utils import seeds_from_extern
 
 
 class DesignConfig(BaseModel):
-    input_file: str
     designtype: Literal["onebyone"]
     repeats: PositiveInt
     defaultvalues: dict[str, str | float | int | bool]
@@ -75,7 +74,6 @@ class DesignConfig(BaseModel):
             general_input_dict
             | asdict(design_input)
             | {
-                "input_file": input_filename,
                 "background": background,
                 "seeds": rms_seeds,
                 "defaultvalues": default_values,

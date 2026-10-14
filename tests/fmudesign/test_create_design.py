@@ -743,7 +743,6 @@ def _design_config(
         },
         background=background,
         decimals=None,
-        input_file="foo",
         correlation_iterations=0,
     )
 

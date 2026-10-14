@@ -6,7 +6,6 @@ from fmudesign.seed_strategy import SeedStrategy
 
 def minimal_configuration() -> DesignConfig:
     return DesignConfig(
-        input_file="foo",
         designtype="onebyone",
         repeats=1,
         seeds=None,
@@ -17,7 +16,6 @@ def minimal_configuration() -> DesignConfig:
 
 def onebyone_configuration() -> DesignConfig:
     return DesignConfig(
-        input_file="foo",
         designtype="onebyone",
         repeats=10,
         distribution_seed=None,
@@ -83,7 +81,6 @@ def onebyone_configuration() -> DesignConfig:
 def full_mc_configuration(correlation_workbook: Path) -> DesignConfig:
     correlation_file = str(correlation_workbook)
     return DesignConfig(
-        input_file="foo",
         designtype="onebyone",
         repeats=1,
         distribution_seed=555,
@@ -172,7 +169,6 @@ def background_configuration(
 ) -> DesignConfig:
     correlation_file = str(correlation_workbook)
     return DesignConfig(
-        input_file="foo",
         designtype="onebyone",
         repeats=5,
         distribution_seed=None,
