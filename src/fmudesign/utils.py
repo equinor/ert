@@ -1,6 +1,5 @@
 """Module for utility functions that do not belong elsewhere."""
 
-import math
 from collections import Counter
 from collections.abc import Hashable, Iterable
 from pathlib import Path
@@ -81,6 +80,24 @@ def find_max_realisations(config: dict[str, Any]) -> int:
         max_reals = max(sens_info.get("numreal", 0), max_reals)
     assert max_reals > 0
     return max_reals
+
+
+def parse_decimals(df: pd.DataFrame) -> dict[str, int]:
+    """Return the number of decimals per 'param_name' from the 'decimals'
+    column, skipping rows without a whole number of decimals.
+
+    >>> parse_decimals(pd.DataFrame({'param_name': ['a', 'b', 'c', 'd'],
+    ...                              'decimals': [2, '1', 0.5, None]}))
+    {'a': 2, 'b': 1}
+    """
+    decimals = pd.to_numeric(df["decimals"], errors="coerce")
+    is_whole = decimals.notna() & (decimals % 1 == 0)
+    return {
+        name: int(value)
+        for name, value in zip(
+            df.loc[is_whole, "param_name"], decimals[is_whole], strict=True
+        )
+    }
 
 
 def to_numeric_safe(val: float | str) -> int | float | str:
@@ -248,17 +265,6 @@ def _has_value(value: Any) -> bool:
         return not np.isnan(value)
     except TypeError:
         return True
-
-
-def _is_int(teststring: str) -> bool:
-    """Test if string is a finite integer"""
-    try:
-        if not np.isnan(int(teststring)):
-            return math.isclose((float(teststring) % 1), 0, abs_tol=1e-14)
-    except ValueError:
-        return False
-    else:
-        return False  # It was a "number", but it was NaN.
 
 
 def resolve_path(target: str | None, *, base_file: str | None = None) -> str | None:
