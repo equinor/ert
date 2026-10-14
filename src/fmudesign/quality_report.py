@@ -356,7 +356,6 @@ class QualityReporter:
         df_corr: pd.DataFrame,
         *,
         output_dir: Path | None = None,
-        show: bool,
     ) -> None:
         """Plot correlation group of variables.
 
@@ -364,10 +363,9 @@ class QualityReporter:
             corr_name: Name of the correlation group
             df_corr: DataFrame containing the correlation structure to plot
             output_dir: Optional directory path to save plots
-            show: Whether or not to show the matplotlib figure
         """
         # Short circuit this case, as there is nothing to do
-        if (not show) and (output_dir is None):
+        if output_dir is None:
             return
 
         def corrfunc(
@@ -421,9 +419,6 @@ class QualityReporter:
             pairgrid.savefig(filename, dpi=200)
             print(f" - Saved correlation: {filename}")
 
-        if show:
-            plt.show()
-
         plt.close(pairgrid.fig)
 
     def plot_correlation_heatmap(
@@ -432,7 +427,6 @@ class QualityReporter:
         df_corr: pd.DataFrame,
         *,
         output_dir: Path | None = None,
-        show: bool,
     ) -> None:
         """Plot correlation heatmap of group of variables.
 
@@ -440,10 +434,9 @@ class QualityReporter:
             corr_name: Name of the correlation group
             df_corr: DataFrame containing the correlation structure to plot
             output_dir: Optional directory path to save plots
-            show: Whether or not to show the matplotlib figure
         """
         # Short circuit this case, as there is nothing to do
-        if (not show) and (output_dir is None):
+        if output_dir is None:
             return
 
         df = self.df[df_corr.columns].select_dtypes(include="number")
@@ -502,9 +495,6 @@ class QualityReporter:
             fig.savefig(filename, dpi=200)
             print(f" - Saved correlation heatmap: {filename}")
 
-        if show:
-            plt.show()
-
         plt.close(fig)
 
 
@@ -559,62 +549,3 @@ def print_corrmat(df_corrmat: pd.DataFrame) -> None:
             colalign=("left",),
         )
     )
-
-
-if __name__ == "__main__":
-    # Testing and experimenting with this class is easier with an example,
-    # rather than trying to formally test the design of output plots
-    # using units tests and the like. Therefore an example is included.
-
-    # Create sample data
-    rng = np.random.default_rng(42)
-    n_samples = 500
-
-    # Generate correlated data
-    mean = [0, 0]
-    cov = [[1, 0.7], [0.7, 1]]
-    correlated_data = rng.multivariate_normal(mean, cov, n_samples)
-
-    df = pd.DataFrame(
-        {
-            "COST": correlated_data[:, 0] * 100 + 1000,
-            "EFFICIENCY": correlated_data[:, 1] * 0.1 + 0.8,
-            "MATERIAL": rng.choice(
-                ["Steel", "Aluminum", "Titanium"], n_samples, p=[0.5, 0.3, 0.2]
-            ),
-        }
-    )
-
-    variables: dict[str, list[Any]] = {
-        "COST": ["Normal", [1000, 100]],
-        "EFFICIENCY": ["Normal", [0.8, 0.1]],
-        "MATERIAL": ["Discrete", ["Steel", "Aluminum", "Titanium"]],
-    }
-
-    # Create QualityReporter
-    quality_reporter = QualityReporter(df, variables)
-
-    # 1. Plot all columns
-    quality_reporter.plot_columns()
-
-    # 2. Plot individual numeric variable
-    fig, ax = quality_reporter.plot_numeric(df["COST"], "COST", variables["COST"])
-    plt.show()
-    plt.close(fig)
-
-    # 3. Plot individual discrete variable
-    fig, ax = quality_reporter.plot_discrete(
-        df["MATERIAL"], "MATERIAL", variables["MATERIAL"]
-    )
-    plt.show()
-    plt.close(fig)
-
-    # 4. Correlation analysis and plotting
-    correlation_matrix = pd.DataFrame(
-        [[1.0, 0.7], [0.7, 1.0]],
-        index=["COST", "EFFICIENCY"],
-        columns=["COST", "EFFICIENCY"],
-    )
-
-    quality_reporter.print_correlation("corr1", correlation_matrix)
-    quality_reporter.plot_correlation("corr1", correlation_matrix, show=True)
