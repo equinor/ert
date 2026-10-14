@@ -795,14 +795,9 @@ class ScenarioSensitivity(Sensitivity):
     within the case.
 
     Attributes:
-        case1 (ScenarioSensitivityCase): first case, e.g. 'low case'
-        case2 (ScenarioSensitivityCase): second case, e.g. 'high case'
         sensvalues (pd.DataFrame): design values for the sensitivity, containing
            1-2 cases
     """
-
-    case1: ScenarioSensitivityCase | None = None
-    case2: ScenarioSensitivityCase | None = None
 
     def add_case(self, senscase: ScenarioSensitivityCase) -> None:
         """
@@ -813,17 +808,10 @@ class ScenarioSensitivity(Sensitivity):
             senscase (ScenarioSensitivityCase):
                 Equals SENSCASE in design matrix.
         """
-        if self.case1 is not None:  # Case 1 has been read, this is case2
-            if senscase.sensvalues is not None and "SENSCASE" in senscase.sensvalues:
-                self.case2 = senscase
-                senscase.sensvalues["SENSNAME"] = self.sensname
-                self.sensvalues = pd.concat(
-                    [self.sensvalues, senscase.sensvalues], sort=True
-                )
-        elif senscase.sensvalues is not None and "SENSCASE" in senscase.sensvalues:
-            self.case1 = senscase
-            self.sensvalues = senscase.sensvalues.copy()
-            self.sensvalues["SENSNAME"] = self.sensname
+        case_values = senscase.sensvalues.assign(SENSNAME=self.sensname)
+        if hasattr(self, "sensvalues"):
+            case_values = pd.concat([self.sensvalues, case_values], sort=True)
+        self.sensvalues = case_values
 
 
 class ScenarioSensitivityCase(Sensitivity):
