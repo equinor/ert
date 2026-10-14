@@ -717,3 +717,17 @@ def test_that_empty_rms_seeds_file_raises_value_error(use_tmpdir):
 
     with pytest.raises(ValueError, match="at least one seed"):
         excel_to_config(design_file)
+
+
+def test_that_empty_parameter_name_with_decimals_is_dropped_in_config(use_tmpdir):
+    wb_path = "design.xlsx"
+    design_input = pd.DataFrame(
+        [
+            ["sensname", "numreal", "type", "param_name", "decimals"],
+            ["rms_seed", "", "seed", "", 2],
+            ["default", 1, "ref", "foo", 3],
+        ]
+    )
+    _write_config_workbook(wb_path, design_input=design_input)
+    config = excel_to_config(wb_path)
+    assert config.decimals == {"foo": 3}
