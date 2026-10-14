@@ -339,7 +339,7 @@ def test_that_distance_localization_stores_and_reuses_rho_blob(
     rng = np.random.default_rng(99)
     param_ensemble = rng.standard_normal((n_params, n_real))
 
-    obs_keys = ["WOPR:OP1", "FOPR"]
+    obs_ids = ["WOPR:OP1:2020-01-01", "FOPR:2020-01-01"]
     obs_context = ObservationContext(
         responses=np.vstack([param_ensemble[0], param_ensemble[-1]]),
         observation_values=np.array([1.0, -1.0]),
@@ -350,7 +350,7 @@ def test_that_distance_localization_stores_and_reuses_rho_blob(
             ypos=np.array([0.5, 2.5]),
             main_range=np.array([2.0, 2.0]),
             location_mask=np.ones(2, dtype=bool),
-            observation_keys=obs_keys,
+            observation_ids=obs_ids,
         ),
     )
 
@@ -380,14 +380,14 @@ def test_that_distance_localization_stores_and_reuses_rho_blob(
 
         assert len(iter0_events) == 1
         assert iter0_events[0].param_name == param_config.name
-        assert iter0_events[0].observation_keys == obs_keys
+        assert iter0_events[0].observation_ids == obs_ids
         assert iter0_events[0].data_type == "float32"
 
         blobs = experiment._load_blob_metadata(BlobType.RHO_MATRIX)
         assert len(blobs) == 1
         assert isinstance(blobs[0].blob_info, RhoStorageData)
         assert blobs[0].blob_info.param_name == param_config.name
-        assert blobs[0].blob_info.observation_keys == obs_keys
+        assert blobs[0].blob_info.observation_ids == obs_ids
 
         loaded_rho = experiment.load_rho_matrix(param_config.name)
         assert loaded_rho is not None

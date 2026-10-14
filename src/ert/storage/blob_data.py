@@ -59,7 +59,7 @@ class ScalingFactorsData(BaseModel):
 class RhoStorageData(_MatrixBase):
     blob_type: Literal[BlobType.RHO_MATRIX] = BlobType.RHO_MATRIX
     param_name: str
-    observation_keys: list[str] = []
+    observation_ids: list[str] = []
 
 
 class EverestBatchData(BaseModel):

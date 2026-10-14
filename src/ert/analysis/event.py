@@ -108,7 +108,7 @@ class AnalysisScalingEvent(AnalysisEvent):
 class AnalysisRhoMatrixEvent(AnalysisEvent):
     event_type: Literal["AnalysisRhoMatrixEvent"] = "AnalysisRhoMatrixEvent"
     param_name: str
-    observation_keys: list[str]
+    observation_ids: list[str]
     shape: tuple[int, int]
     data_type: str
     matrix_bytes: bytes = Field(exclude=True)

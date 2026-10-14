@@ -54,32 +54,26 @@ logger = logging.getLogger(__name__)
 
 
 def _rho_matrix_columns(
-    stored_keys: list[str], observation_keys: list[str] | None
+    stored_ids: list[str], observation_ids: list[str] | None
 ) -> list[int] | None:
     """Columns of a cached rho matrix to use, or None if the cache cannot serve.
 
-    A cached rho matrix has one column per observation, labelled by observation
-    key alone; the columns represent `observation_keys`, in the order provided by
-    ert storage.
+    A cached rho matrix has one column per observation, labelled by observation id
+    (response key and index), which is the identity of an observation. The columns
+    represent `observation_ids`, in the order provided by ert storage.
 
     None means the cache cannot serve and the rho matrix has to be recomputed.
-    That is so when it lacks a key that is active now, and when its keys are not
-    unique: all rows of a SEISMIC_OBSERVATION share one observation key while each
-    row has its own position, so the key cannot say which of its columns belongs
-    to which row, and selecting columns by key would misalign the taper.
-    Recomputing is expensive, which makes this a temporary measure; #14617
-    proposes storing the observation locations and radius in the blob metadata
-    instead, which would disambiguate the columns and let the cache serve these
-    cases too.
+    This might happen when an id is not present or when its ids are not
+    unique.
     """
-    if observation_keys is None or observation_keys == stored_keys:
-        return list(range(len(stored_keys)))
-    if len(set(stored_keys)) != len(stored_keys):
+    if observation_ids is None or observation_ids == stored_ids:
+        return list(range(len(stored_ids)))
+    if len(set(stored_ids)) != len(stored_ids):
         return None
-    column_of = {key: column for column, key in enumerate(stored_keys)}
-    if not set(observation_keys).issubset(column_of):
+    column_of = {obs_id: column for column, obs_id in enumerate(stored_ids)}
+    if not set(observation_ids).issubset(column_of):
         return None
-    return [column_of[key] for key in observation_keys]
+    return [column_of[obs_id] for obs_id in observation_ids]
 
 
 class ExperimentState(StrEnum):
@@ -690,37 +684,35 @@ class LocalExperiment(BaseMode):
         return self._storage.load_blob(self._path / BLOB_DATA_DIR, uri)
 
     def load_rho_matrix(
-        self, param_name: str, observation_keys: list[str] | None = None
+        self, param_name: str, observation_ids: list[str] | None = None
     ) -> npt.NDArray[np.floating] | None:
         """Load a cached rho matrix for the given parameter name.
 
-        The returned matrix is filtered only to the given observation keys. Note
+        The returned matrix is filtered only to the given observation ids. Note
         that the observations may have been deactivated in later iterations of
         es-mda, so the blob matrix might contain extra observations columns.
 
         ``None`` is returned, meaning there is no cached matrix to be had and the
         rho matrix has to be recomputed, when it cannot be filtered safely: when it
-        is missing keys that are active now, and when its keys are not unique, as
-        for a SEISMIC_OBSERVATION whose rows all share one observation key while
-        each has its own position (ref #14617).
+        is missing ids that are active now, and when its ids are not unique.
         """
         for blob in self._load_blob_metadata(BlobType.RHO_MATRIX):
             if (
                 isinstance(blob.blob_info, RhoStorageData)
                 and blob.blob_info.param_name == param_name
             ):
-                stored_keys = list(blob.blob_info.observation_keys)
-                columns = _rho_matrix_columns(stored_keys, observation_keys)
+                stored_ids = list(blob.blob_info.observation_ids)
+                columns = _rho_matrix_columns(stored_ids, observation_ids)
                 if columns is None:
                     logger.info(
                         "Cached rho matrix for %r cannot be reused for the active "
                         "observations (%d stored, %d active%s), so rho needs to be "
                         "recomputed",
                         param_name,
-                        len(stored_keys),
-                        len(observation_keys) if observation_keys else 0,
-                        ", stored keys are not unique"
-                        if len(set(stored_keys)) != len(stored_keys)
+                        len(stored_ids),
+                        len(observation_ids) if observation_ids else 0,
+                        ", stored ids are not unique"
+                        if len(set(stored_ids)) != len(stored_ids)
                         else "",
                     )
                     return None
@@ -743,7 +735,7 @@ class LocalExperiment(BaseMode):
                 shape=event.shape,
                 data_type=event.data_type,
                 param_name=event.param_name,
-                observation_keys=event.observation_keys,
+                observation_ids=event.observation_ids,
             ),
             file_type="application/x-npz",
             blob_dir=self._path / BLOB_DATA_DIR,

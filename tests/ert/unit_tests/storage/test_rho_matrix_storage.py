@@ -12,7 +12,7 @@ from ert.storage.blob_data import BlobType, RhoStorageData
 def _make_rho_event(
     param_name: str = "FIELD_A",
     shape: tuple[int, int] = (6, 2),
-    observation_keys: list[str] | None = None,
+    observation_ids: list[str] | None = None,
 ) -> tuple[AnalysisRhoMatrixEvent, np.ndarray]:
     rng = np.random.default_rng(42)
     dense = rng.random(shape).astype(np.float64)
@@ -22,7 +22,7 @@ def _make_rho_event(
     sp.sparse.save_npz(buf, sparse)
     event = AnalysisRhoMatrixEvent(
         param_name=param_name,
-        observation_keys=observation_keys or ["OBS_1", "OBS_2"],
+        observation_ids=observation_ids or ["OBS_1", "OBS_2"],
         shape=shape,
         data_type=str(dense.dtype),
         matrix_bytes=buf.getvalue(),
@@ -37,9 +37,9 @@ def test_that_load_rho_matrix_returns_none_when_no_blob_exists(tmp_path):
         assert experiment.load_rho_matrix("NONEXISTENT") is None
 
 
-def test_that_rho_matrix_metadata_contains_observation_keys(tmp_path):
-    obs_keys = ["WOPR:OP1", "WGPR:OP2", "FOPR"]
-    event, _ = _make_rho_event(observation_keys=obs_keys, shape=(6, 3))
+def test_that_rho_matrix_metadata_contains_observation_ids(tmp_path):
+    obs_ids = ["WOPR:OP1", "WGPR:OP2", "FOPR"]
+    event, _ = _make_rho_event(observation_ids=obs_ids, shape=(6, 3))
 
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
@@ -51,7 +51,7 @@ def test_that_rho_matrix_metadata_contains_observation_keys(tmp_path):
     blob = blobs[0]
     assert isinstance(blob.blob_info, RhoStorageData)
     assert blob.blob_info.param_name == "FIELD_A"
-    assert blob.blob_info.observation_keys == obs_keys
+    assert blob.blob_info.observation_ids == obs_ids
     assert blob.blob_info.sparse is True
     assert blob.blob_info.shape == (6, 3)
     assert blob.file_type == "application/x-npz"
@@ -80,10 +80,10 @@ def test_that_rho_matrix_blob_files_are_written_to_disk(tmp_path):
 
 def test_that_load_rho_matrix_distinguishes_parameters_by_name(tmp_path):
     event_a, dense_a = _make_rho_event(
-        param_name="PORO", shape=(4, 3), observation_keys=["O1", "O2", "O3"]
+        param_name="PORO", shape=(4, 3), observation_ids=["O1", "O2", "O3"]
     )
     event_b, dense_b = _make_rho_event(
-        param_name="PERM", shape=(5, 2), observation_keys=["O4", "O5"]
+        param_name="PERM", shape=(5, 2), observation_ids=["O4", "O5"]
     )
 
     with open_storage(tmp_path, mode="w") as storage:
@@ -100,35 +100,31 @@ def test_that_load_rho_matrix_distinguishes_parameters_by_name(tmp_path):
     np.testing.assert_array_equal(loaded_b, dense_b)
 
 
-def test_that_load_rho_matrix_validates_observation_keys(tmp_path):
-    """Cached rho is valid for subset/equal keys, stale when keys are missing."""
-    stored_keys = ["OBS_A", "OBS_B", "OBS_C"]
+def test_that_load_rho_matrix_validates_observation_ids(tmp_path):
+    """Cached rho is valid for subset/equal ids, stale when ids are missing."""
+    stored_ids = ["OBS_A", "OBS_B", "OBS_C"]
     event, dense = _make_rho_event(
-        param_name="PORO", shape=(4, 3), observation_keys=stored_keys
+        param_name="PORO", shape=(4, 3), observation_ids=stored_ids
     )
 
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         experiment.save_blob(event)
 
-        # full set of observation keys — should return cached matrix
-        result = experiment.load_rho_matrix("PORO", observation_keys=stored_keys)
+        result = experiment.load_rho_matrix("PORO", observation_ids=stored_ids)
         assert result is not None
         np.testing.assert_array_equal(result, dense)
 
-        # subset of observation keys — should return those columns, and only those
-        result = experiment.load_rho_matrix("PORO", observation_keys=["OBS_A", "OBS_C"])
+        result = experiment.load_rho_matrix("PORO", observation_ids=["OBS_A", "OBS_C"])
         assert result is not None
         np.testing.assert_array_equal(result, dense[:, [0, 2]])
 
-        # no observation keys specified — should return cached matrix
-        result = experiment.load_rho_matrix("PORO", observation_keys=None)
+        result = experiment.load_rho_matrix("PORO", observation_ids=None)
         assert result is not None
         np.testing.assert_array_equal(result, dense)
 
-        # missing observation keys — should be treated as invalid and return None
         result = experiment.load_rho_matrix(
-            "PORO", observation_keys=["OBS_A", "OBS_NEW"]
+            "PORO", observation_ids=["OBS_A", "OBS_NEW"]
         )
         assert result is None
 
@@ -142,7 +138,7 @@ def test_that_load_rho_matrix_is_cut_down_to_the_active_observations(tmp_path):
     column per active observation, so the columns have to line up.
     """
     event, dense = _make_rho_event(
-        param_name="PORO", shape=(4, 3), observation_keys=["OBS_A", "OBS_B", "OBS_C"]
+        param_name="PORO", shape=(4, 3), observation_ids=["OBS_A", "OBS_B", "OBS_C"]
     )
 
     with open_storage(tmp_path, mode="w") as storage:
@@ -155,37 +151,30 @@ def test_that_load_rho_matrix_is_cut_down_to_the_active_observations(tmp_path):
             (["OBS_B"], [1]),
             (["OBS_C", "OBS_A"], [2, 0]),
         ]:
-            result = experiment.load_rho_matrix("PORO", observation_keys=active)
+            result = experiment.load_rho_matrix("PORO", observation_ids=active)
             assert result is not None
             assert result.shape == (4, len(active))
             np.testing.assert_array_equal(result, dense[:, columns])
 
 
-def test_that_load_rho_matrix_is_recomputed_when_stored_keys_are_not_unique(tmp_path):
-    """A repeated key gives no way to tell its columns apart, so do not guess.
-
-    All rows of a SEISMIC_OBSERVATION share one observation key, each with its own
-    position and so its own column. Subsetting by key would misalign the taper,
-    which is worse than recomputing, so None is returned (ref #14617).
-    """
+def test_that_load_rho_matrix_is_recomputed_when_stored_ids_are_not_unique(tmp_path):
+    """A repeated id gives no way to tell its columns apart, so do not guess."""
     event, dense = _make_rho_event(
-        param_name="PORO", shape=(4, 3), observation_keys=["OBS_A", "OBS_A", "OBS_B"]
+        param_name="PORO", shape=(4, 3), observation_ids=["OBS_A", "OBS_A", "OBS_B"]
     )
 
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         experiment.save_blob(event)
 
-        # The stored set, unchanged, is still served: the columns line up as they are
         result = experiment.load_rho_matrix(
-            "PORO", observation_keys=["OBS_A", "OBS_A", "OBS_B"]
+            "PORO", observation_ids=["OBS_A", "OBS_A", "OBS_B"]
         )
         assert result is not None
         np.testing.assert_array_equal(result, dense)
 
-        # Anything else is refused rather than guessed at
-        assert experiment.load_rho_matrix("PORO", observation_keys=["OBS_A"]) is None
+        assert experiment.load_rho_matrix("PORO", observation_ids=["OBS_A"]) is None
         assert (
-            experiment.load_rho_matrix("PORO", observation_keys=["OBS_A", "OBS_B"])
+            experiment.load_rho_matrix("PORO", observation_ids=["OBS_A", "OBS_B"])
             is None
         )
