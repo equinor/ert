@@ -20,7 +20,9 @@ class DesignConfig(BaseModel):
     correlation_iterations: NonNegativeInt = 0
     distribution_seed: NonNegativeInt | None = None
     background: dict[str, Any] | None = None
-    seeds: Literal["default"] | Annotated[list[int], Field(min_length=1)] | None = None
+    rms_seeds: Literal["default"] | Annotated[list[int], Field(min_length=1)] | None = (
+        None
+    )
     seed_strategy: SeedStrategy = Field(
         default=SeedStrategy.JOINT, validate_default=True
     )
@@ -70,7 +72,7 @@ class DesignConfig(BaseModel):
             | asdict(design_input)
             | {
                 "background": background,
-                "seeds": rms_seeds,
+                "rms_seeds": rms_seeds,
                 "defaultvalues": default_values,
             }
         )

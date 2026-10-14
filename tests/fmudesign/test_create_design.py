@@ -733,7 +733,7 @@ def _design_config(
 
     return DesignConfig(
         designtype="onebyone",
-        seeds=None,
+        rms_seeds=None,
         repeats=repeats,
         distribution_seed=distribution_seed,
         seed_strategy=strategy,

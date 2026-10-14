@@ -19,7 +19,7 @@ def test_that_design_matrix_generates_seed_sensitivity_for_each_repeat():
     config = minimal_configuration()
     repeats = 10
     config.repeats = repeats
-    config.seeds = "default"
+    config.rms_seeds = "default"
     config.sensitivities = {
         "rms_seed": {
             "seedname": "RMS_SEED",

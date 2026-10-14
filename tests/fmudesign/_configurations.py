@@ -8,7 +8,7 @@ def minimal_configuration() -> DesignConfig:
     return DesignConfig(
         designtype="onebyone",
         repeats=1,
-        seeds=None,
+        rms_seeds=None,
         defaultvalues={},
         sensitivities={},
     )
@@ -19,7 +19,7 @@ def onebyone_configuration() -> DesignConfig:
         designtype="onebyone",
         repeats=10,
         distribution_seed=None,
-        seeds="default",
+        rms_seeds="default",
         correlation_iterations=0,
         seed_strategy=SeedStrategy.JOINT,
         background=None,
@@ -84,7 +84,7 @@ def full_mc_configuration(correlation_workbook: Path) -> DesignConfig:
         designtype="onebyone",
         repeats=1,
         distribution_seed=555,
-        seeds="default",
+        rms_seeds="default",
         correlation_iterations=0,
         seed_strategy=SeedStrategy.JOINT,
         background=None,
@@ -172,7 +172,7 @@ def background_configuration(
         designtype="onebyone",
         repeats=5,
         distribution_seed=None,
-        seeds="default",
+        rms_seeds="default",
         correlation_iterations=0,
         seed_strategy=SeedStrategy.JOINT,
         background={

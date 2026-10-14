@@ -187,7 +187,9 @@ class DesignMatrix:
                 )
             }
             Has background: {bool(config.background)}
-            RMS seeds: {"file" if isinstance(config.seeds, list) else config.seeds}
+            RMS seeds: {
+                "file" if isinstance(config.rms_seeds, list) else config.rms_seeds
+            }
             Number of parameters with decimals: {len(config.decimals or {})}
             Distribution seed: {config.distribution_seed is not None}
             Number of dependencies: {
@@ -225,7 +227,7 @@ class DesignMatrix:
             [sensinfo.get("numreal", 0) for sensinfo in config.sensitivities.values()]
             + [config.repeats]
         )
-        self.seedvalues = DesignMatrix.create_rms_seeds(config.seeds, max_reals)
+        self.seedvalues = DesignMatrix.create_rms_seeds(config.rms_seeds, max_reals)
 
         self.add_background(
             back_dict=config.background,
