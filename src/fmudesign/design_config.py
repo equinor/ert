@@ -26,7 +26,7 @@ class DesignConfig(BaseModel):
     )
     decimals: dict[str, int] | None = None
 
-    model_config = ConfigDict(extra="forbid", use_enum_values=True)
+    model_config = ConfigDict(extra="forbid")
 
     @classmethod
     def from_input(

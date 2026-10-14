@@ -692,7 +692,7 @@ def test_that_config_to_yaml_does_not_dump_python_specific_content(use_tmpdir):
     design_config = full_mc_configuration(Path("foo.xlsx"))
     config_to_yaml(design_config, "dump.yaml")
     yaml_content = Path("dump.yaml").read_text(encoding="utf-8")
-    assert "config_validation.SeedStrategy" not in yaml_content
+    assert "SeedStrategy" not in yaml_content
     assert "!!python/object" not in yaml_content
     assert "design_config.DesignConfig" not in yaml_content
     assert "_pydantic_" not in yaml_content
