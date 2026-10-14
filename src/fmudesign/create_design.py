@@ -292,11 +292,9 @@ class DesignMatrix:
                         key, verbosity=self.verbosity
                     )
                     sensitivity.generate(size=size)
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "background":
                     sensitivity = BackgroundSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(size=size)
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "seed":
                     sensitivity = SeedSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -305,7 +303,6 @@ class DesignMatrix:
                         seedvalues=self.seedvalues,
                         parameters=sens["parameters"],
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "scenario":
                     sensitivity = ScenarioSensitivity(key, verbosity=self.verbosity)
                     for casekey, case in sens["cases"].items():
@@ -316,7 +313,6 @@ class DesignMatrix:
                             seedvalues=self.seedvalues,
                         )
                         sensitivity.add_case(temp_case)
-                        sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "dist":
                     sensitivity = MonteCarloSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -329,7 +325,6 @@ class DesignMatrix:
                         seed_strategy=self.seed_strategy,
                         base_seed=self.base_seed,
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "extern":
                     sensitivity = ExternSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -338,10 +333,10 @@ class DesignMatrix:
                         parameters=sens["parameters"],
                         seedvalues=self.seedvalues,
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case unknown:
                     raise ValueError(f"Unknown sensitivity type: {unknown!r}")
 
+            sensitivity.map_dependencies(sens.get("dependencies", {}))
             self._add_sensitivity(sensitivity)
 
             # MonteCarloSensitivity is special - it can produce debugging outputs
@@ -791,7 +786,7 @@ class SingleRealisationReference(Sensitivity):
         """Generates realisation number only
 
         Args:
-            realnums (list): list of integers with realization numbers
+            size (int): number of rows to generate
         """
         self.sensvalues = pd.DataFrame(index=range(size))
         self.sensvalues["SENSNAME"] = self.sensname
@@ -839,14 +834,9 @@ class ScenarioSensitivity(Sensitivity):
     within the case.
 
     Attributes:
-        case1 (ScenarioSensitivityCase): first case, e.g. 'low case'
-        case2 (ScenarioSensitivityCase): second case, e.g. 'high case'
         sensvalues (pd.DataFrame): design values for the sensitivity, containing
            1-2 cases
     """
-
-    case1: ScenarioSensitivityCase | None = None
-    case2: ScenarioSensitivityCase | None = None
 
     def add_case(self, senscase: ScenarioSensitivityCase) -> None:
         """
@@ -857,17 +847,10 @@ class ScenarioSensitivity(Sensitivity):
             senscase (ScenarioSensitivityCase):
                 Equals SENSCASE in design matrix.
         """
-        if self.case1 is not None:  # Case 1 has been read, this is case2
-            if senscase.sensvalues is not None and "SENSCASE" in senscase.sensvalues:
-                self.case2 = senscase
-                senscase.sensvalues["SENSNAME"] = self.sensname
-                self.sensvalues = pd.concat(
-                    [self.sensvalues, senscase.sensvalues], sort=True
-                )
-        elif senscase.sensvalues is not None and "SENSCASE" in senscase.sensvalues:
-            self.case1 = senscase
-            self.sensvalues = senscase.sensvalues.copy()
-            self.sensvalues["SENSNAME"] = self.sensname
+        case_values = senscase.sensvalues.assign(SENSNAME=self.sensname)
+        if hasattr(self, "sensvalues"):
+            case_values = pd.concat([self.sensvalues, case_values], sort=True)
+        self.sensvalues = case_values
 
 
 class ScenarioSensitivityCase(Sensitivity):
@@ -903,7 +886,7 @@ class ScenarioSensitivityCase(Sensitivity):
             size (int): number of rows to generate
             parameters (dict):
                 dictionary with parameter names and values
-            seeds (str): default or None
+            seedvalues (list): list of integer seed values or None
         """
 
         self.sensvalues = pd.DataFrame(
@@ -949,7 +932,7 @@ class MonteCarloSensitivity(Sensitivity):
         Args:
             size (int): number of rows to generate
             parameters (dict): dictionary of parameters and distributions
-            values (list): a list of seed values or None
+            seedvalues (list): list of integer seed values or None
             corrdict (dict): Configuration for correlated parameters. Contains:
                 - 'inputfile': Name of Excel file with correlation matrices
                 - 'sheetnames': List of sheet names, where each sheet contains a
@@ -1258,7 +1241,7 @@ class ExternSensitivity(Sensitivity):
             size (int): number of samples to generate
             filename (str): file to read values from
             parameters (list): list with parameter names
-            seeds (str): default or None
+            seedvalues (list): list of integer seed values or None
         """
         _raise_if_duplicates(parameters)
         self.sensvalues = pd.DataFrame(columns=parameters, index=range(size))
