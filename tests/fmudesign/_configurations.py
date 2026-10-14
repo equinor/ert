@@ -11,6 +11,7 @@ def minimal_configuration() -> DesignConfig:
         rms_seeds=None,
         defaultvalues={},
         sensitivities={},
+        distribution_seed=None,
     )
 
 
