@@ -35,16 +35,11 @@ def excel_to_config(
     Returns:
         DesignConfig for DesignMatrix
     """
-    # To be backwards compatible, we do not change the input arg names
-    general_input_sheet = gen_input_sheet
-    default_values_sheet = default_val_sheet
-
-    # Find sheets
     _assert_no_merged_cells(input_filename)
     sheet_names = excel_sheet_names(input_filename)
-    general_input_sheet = find_sheet(general_input_sheet, names=sheet_names)
+    general_input_sheet = find_sheet(gen_input_sheet, names=sheet_names)
     design_input_sheet = find_sheet(design_input_sheet, names=sheet_names)
-    default_values_sheet = find_sheet(default_values_sheet, names=sheet_names)
+    default_values_sheet = find_sheet(default_val_sheet, names=sheet_names)
 
     general_input = GeneralInput.from_xlsx(input_filename, general_input_sheet)
     design_input = DesignInput.from_xlsx(input_filename, design_input_sheet)
