@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     import numpy.typing as npt
 
@@ -73,6 +73,15 @@ def _derive_rng(base_seed: int, *keys: str) -> np.random.Generator:
         hasher.update(len(data).to_bytes(4, "big"))
         hasher.update(data)
     return np.random.default_rng(int.from_bytes(hasher.digest(), "big"))
+
+
+def _round_to_decimals(df: pd.DataFrame, decimals: Mapping[str, int]) -> None:
+    """Round, in place, each column of `df` that has a number of decimals."""
+    for key in df.columns:
+        if key in decimals:
+            if not is_number(df[key].iloc[0]):
+                raise ValueError(f"Cannot round a string parameter {key}")
+            df[key] = df[key].astype(float).round(int(decimals[key]))
 
 
 class DesignMatrix:
@@ -633,16 +642,7 @@ class DesignMatrix:
                 )
 
         # Rounding of background values as specified
-        if "decimals" in back_dict:
-            for key in back_dict["decimals"]:
-                if is_number(mc_backgroundvalues[key].iloc[0]):
-                    mc_backgroundvalues[key] = (
-                        mc_backgroundvalues[key]
-                        .astype(float)
-                        .round(int(back_dict["decimals"][key]))
-                    )
-                else:
-                    raise ValueError("Cannot round a string parameter")
+        _round_to_decimals(mc_backgroundvalues, back_dict.get("decimals", {}))
         self.backgroundvalues = mc_backgroundvalues.copy()
 
     def _set_decimals(self, config: DesignConfig) -> None:
@@ -670,17 +670,7 @@ class DesignMatrix:
                         continue
                     dict_decimals[to_param] = dict_decimals[from_param]
 
-        # Round each column
-        for key in self.designvalues.columns:
-            if key in dict_decimals:
-                if is_number(self.designvalues[key].iloc[0]):
-                    self.designvalues[key] = (
-                        self.designvalues[key]
-                        .astype(float)
-                        .round(int(dict_decimals[key]))
-                    )
-                else:
-                    raise ValueError(f"Cannot round a string parameter {key}")
+        _round_to_decimals(self.designvalues, dict_decimals)
 
 
 class Sensitivity:
