@@ -20,7 +20,8 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-import probabilit
+import probabilit.correlation
+import probabilit.modeling
 
 from ert.shared import __version__ as ert_version
 
