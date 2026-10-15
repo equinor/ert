@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import cast
@@ -18,7 +18,7 @@ class ValidationMessages:
 
 
 @contextmanager
-def capture_validation() -> Iterator[ValidationMessages]:
+def capture_validation() -> Generator[ValidationMessages, None, None]:
     logger = logging.getLogger(__name__)
     validations = ValidationMessages()
     with catch_warnings(record=True) as all_warnings:

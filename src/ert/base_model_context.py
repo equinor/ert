@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @contextmanager
-def use_runtime_plugins(value: ErtRuntimePlugins) -> Iterator[None]:
+def use_runtime_plugins(value: ErtRuntimePlugins) -> Generator[None, None, None]:
     token = init_context_var.set(value)  # type: ignore
     try:
         yield

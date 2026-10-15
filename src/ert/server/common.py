@@ -2,7 +2,7 @@ import io
 import logging
 import os
 import re
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from enum import StrEnum, auto
 from importlib import metadata
@@ -63,7 +63,7 @@ def get_storage_api_version() -> str:
 @contextmanager
 def reraise_as_http_errors(
     custom_logger: logging.Logger = logger, details: dict[int, str] | None = None
-) -> Iterator[None]:
+) -> Generator[None, None, None]:
     error_details = {404: "Ensemble not found", 500: "Internal server error"} | (
         details or {}
     )

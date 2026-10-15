@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import operator
 import os
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from functools import reduce
 from pathlib import Path
@@ -118,7 +118,7 @@ def _interpret_token(val: str) -> list[str]:
 def open_grdecl(
     grdecl_file: str | os.PathLike[str],
     keywords: list[str],
-) -> Iterator[Iterator[tuple[str, list[str]]]]:
+) -> Generator[Iterator[tuple[str, list[str]]], None, None]:
     """Generates tuples of keyword and values in records of a grdecl file.
 
     The format of the file must be that of the GRID section of a eclipse input
