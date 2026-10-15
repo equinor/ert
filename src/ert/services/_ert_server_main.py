@@ -1,5 +1,5 @@
 import argparse
-import datetime
+import datetime as dt
 import json
 import logging
 import logging.config
@@ -139,10 +139,8 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
         .issuer_name(issuer)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.datetime.now(datetime.UTC))
-        .not_valid_after(
-            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
-        )  # 1 year
+        .not_valid_before(dt.datetime.now(dt.UTC))
+        .not_valid_after(dt.datetime.now(dt.UTC) + dt.timedelta(days=365))  # 1 year
         .add_extension(
             x509.SubjectAlternativeName(
                 [x509.DNSName(f"{san_name}") for san_name in subject_alternative_names]

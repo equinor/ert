@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import logging
 import threading
 import types
@@ -35,9 +35,7 @@ class WorkflowJobResult:
     stdout: str
     stderr: str
     status: WorkflowJobStatus
-    timestamp: datetime.datetime = field(
-        default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
-    )
+    timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now(tz=dt.UTC))
 
 
 class WorkflowJobRunner:

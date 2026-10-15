@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
-import datetime
+import datetime as dt
 import importlib.metadata
 import json
 import logging
@@ -81,8 +81,8 @@ class JobProgress(TypedDict):
     name: str
     status: str
     error: str | None
-    start_time: datetime.datetime | None
-    end_time: datetime.datetime | None
+    start_time: dt.datetime | None
+    end_time: dt.datetime | None
     realization: str
     simulation: str
 
@@ -229,7 +229,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         cls,
         everest_config: EverestConfig,
         experiment_name: str = (
-            f"EnOpt@{datetime.datetime.now().astimezone().isoformat(timespec='seconds')}"
+            f"EnOpt@{dt.datetime.now().astimezone().isoformat(timespec='seconds')}"
         ),
         target_ensemble: str = "batch",
         optimization_callback: OptimizerCallback | None = None,

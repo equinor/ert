@@ -1,6 +1,6 @@
 import asyncio
 import dataclasses
-import datetime
+import datetime as dt
 import logging
 import os
 import queue
@@ -360,7 +360,7 @@ class ExperimentRunner:
             with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(
                     everest_config=self._everest_config,
-                    experiment_name=f"EnOpt@{datetime.datetime.now().astimezone().isoformat(timespec='seconds')}",
+                    experiment_name=f"EnOpt@{dt.datetime.now().astimezone().isoformat(timespec='seconds')}",
                     target_ensemble="batch",
                     status_queue=status_queue,
                     runtime_plugins=site_plugins,

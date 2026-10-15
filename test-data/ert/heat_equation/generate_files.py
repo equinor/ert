@@ -1,6 +1,6 @@
 """Contains code that was used to generate files expected by ert."""
 
-import datetime
+import datetime as dt
 from collections.abc import Callable
 from pathlib import Path
 
@@ -100,7 +100,7 @@ def generate_priors():
         )
 
 
-START_DATE = datetime.date(2010, 1, 1)
+START_DATE = dt.date(2010, 1, 1)
 RADIUS = 20
 
 
@@ -113,7 +113,7 @@ def create_summary_observations(df_obs: pd.DataFrame):
     observations_loc_file = "observations_loc.txt"
     with Path(observations_loc_file).open("w", encoding="utf-8") as f:
         for t in obs_times:
-            obs_date = START_DATE + datetime.timedelta(days=int(t))
+            obs_date = START_DATE + dt.timedelta(days=int(t))
 
             for coord in obs_coordinates:
                 idx = (int(t), int(coord.x), int(coord.y))

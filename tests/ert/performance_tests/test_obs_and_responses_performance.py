@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import random
 import sys
 from dataclasses import dataclass
@@ -143,9 +143,9 @@ def create_experiment_args(
         for i in range(num_gen_data_obs)
     ]
 
-    _summary_time_delta = datetime.timedelta(30)
+    _summary_time_delta = dt.timedelta(30)
     summary_timesteps = [
-        datetime.datetime(2000, 1, 1) + datetime.timedelta(30) * i  # ruff: ignore[call-datetime-without-tzinfo]
+        dt.datetime(2000, 1, 1) + dt.timedelta(30) * i  # ruff: ignore[call-datetime-without-tzinfo]
         for i in range(num_summary_timesteps)
     ]
     summary_response_keys = [

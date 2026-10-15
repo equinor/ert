@@ -1,5 +1,5 @@
 import contextlib
-import datetime
+import datetime as dt
 import operator
 import os
 import stat
@@ -360,7 +360,7 @@ class ErtConfigValues:
         result = [
             ("<CONFIG_PATH>", cwd),
             ("<CONFIG_FILE_BASE>", config_file_name.split(".")[0]),
-            ("<DATE>", datetime.datetime.now().astimezone().date().isoformat()),
+            ("<DATE>", dt.datetime.now().astimezone().date().isoformat()),
             ("<CWD>", cwd),
             ("<CONFIG_FILE>", config_file_name),
         ]
@@ -415,7 +415,7 @@ def ert_config_values(draw, use_eclbase=booleans):
         )
     )
     sum_keys = draw(small_list(summary_variables(), min_size=1))
-    first_date = datetime.datetime.strptime("1999-1-1", "%Y-%m-%d")  # ruff: ignore[call-datetime-strptime-without-zone]
+    first_date = dt.datetime.strptime("1999-1-1", "%Y-%m-%d")  # ruff: ignore[call-datetime-strptime-without-zone]
     smspec = draw(
         smspecs(
             sum_keys=st.just(sum_keys),
@@ -529,18 +529,16 @@ def sim_job(installed_jobs):
 
 def get_date(observation, start):
     if observation.date is not None:
-        return datetime.datetime.strptime(observation.date, "%Y-%m-%d")  # ruff: ignore[call-datetime-strptime-without-zone]
-    delta = datetime.timedelta(days=0)
+        return dt.datetime.strptime(observation.date, "%Y-%m-%d")  # ruff: ignore[call-datetime-strptime-without-zone]
+    delta = dt.timedelta(days=0)
     if observation.days is not None:
-        delta += datetime.timedelta(days=observation.days)
+        delta += dt.timedelta(days=observation.days)
     if observation.hours is not None:
-        delta += datetime.timedelta(hours=observation.hours)
+        delta += dt.timedelta(hours=observation.hours)
     return start + delta
 
 
-def _observation_dates(
-    observations, start_date: datetime.datetime
-) -> list[datetime.datetime]:
+def _observation_dates(observations, start_date: dt.datetime) -> list[dt.datetime]:
     """
     :returns: the dates that need to exist in the refcase for ert to accept the
         observations
@@ -567,7 +565,7 @@ def _observation_dates(
     min_restart = max(restart_indecies) if restart_indecies else 2
     i = 0
     while len(dates) <= max(min_restart, 2):
-        dates.append(start_date + datetime.timedelta(days=i))
+        dates.append(start_date + dt.timedelta(days=i))
         dates = list(set(dates))
         i += 1
     return dates

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import copy
-import datetime
+import datetime as dt
 import functools
 import logging
 import os
@@ -385,7 +385,7 @@ class RunModel(RunModelConfig, ABC):
         def handle_captured_event(message: Warning | str) -> None:
             self.send_event(WarningEvent(msg=str(message)))
 
-        start_timestamp = datetime.datetime.now(tz=datetime.UTC)
+        start_timestamp = dt.datetime.now(tz=dt.UTC)
         self._workflow_run_id = uuid.uuid4()
         self._pending_workflow_events = []
         try:  # ruff: ignore[too-many-statements-in-try-clause]
@@ -459,7 +459,7 @@ class RunModel(RunModelConfig, ABC):
                 )
             )
             seconds_used = (
-                datetime.datetime.now(tz=datetime.UTC) - start_timestamp
+                dt.datetime.now(tz=dt.UTC) - start_timestamp
             ).total_seconds()
             logger.info(f"Experiment run finished in: {seconds_used:g}s")
 
@@ -907,7 +907,7 @@ class RunModel(RunModelConfig, ABC):
         iteration: int | None,
     ) -> None:
         # Report jobs not started due to cancellation
-        now = datetime.datetime.now(tz=datetime.UTC)
+        now = dt.datetime.now(tz=dt.UTC)
         events = [
             WorkflowEvent(
                 run_id=self._workflow_run_id,

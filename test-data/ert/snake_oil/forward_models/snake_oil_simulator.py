@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import datetime
+import datetime as dt
 from pathlib import Path
 
 import numpy as np
@@ -51,7 +51,7 @@ def write_summary_data(
 ):
     time_map = []
     total_step_count = time_step_count * mini_step_count
-    start_date = datetime.date(2010, 1, 1)
+    start_date = dt.date(2010, 1, 1)
 
     def content_generator():
         for report_step in range(time_step_count):
@@ -62,7 +62,7 @@ def write_summary_data(
 
                 step = report_step * mini_step_count + mini_step
                 day = float(step)
-                time_map.append((start_date + datetime.timedelta(days=day)).isoformat())
+                time_map.append((start_date + dt.timedelta(days=day)).isoformat())
                 values = [
                     simulator.fopt(),
                     simulator.fopr(),

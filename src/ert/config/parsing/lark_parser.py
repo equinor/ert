@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import os
 from collections.abc import Iterator, Sequence
 from pathlib import Path
@@ -506,7 +506,7 @@ def _transform_tree(
         pre_defines = [
             ["<CONFIG_PATH>", config_dir],
             ["<CONFIG_FILE_BASE>", config_file_base],
-            ["<DATE>", datetime.datetime.now().astimezone().date().isoformat()],
+            ["<DATE>", dt.datetime.now().astimezone().date().isoformat()],
             ["<CWD>", config_dir],
             ["<CONFIG_FILE>", Path(file).name],
         ]

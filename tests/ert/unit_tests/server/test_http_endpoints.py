@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import io
 import json
 import re
@@ -496,7 +496,7 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
         *[
             create_breakthrough_observation(
                 name="BREAKTHROUGH_OBSERVATION",
-                date=datetime.datetime(2010, month, 1),  # ruff: ignore[call-datetime-without-tzinfo]
+                date=dt.datetime(2010, month, 1),  # ruff: ignore[call-datetime-without-tzinfo]
             )
             for month in [11, 7, 12]
         ],

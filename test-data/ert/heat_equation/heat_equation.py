@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Partial Differential Equations to use as forward models."""
 
-import datetime
+import datetime as dt
 import json
 import sys
 from pathlib import Path
@@ -35,7 +35,7 @@ from resfo_utilities.testing import (
 
 def create_summary_smspec_unsmry(
     summary_vectors: dict[str, list[float]],
-    start_date: datetime.date,
+    start_date: dt.date,
     time_step_in_days: float = 30,
 ):
     summary_keys = list(summary_vectors.keys())
@@ -83,7 +83,7 @@ def heat_equation(
     u: npt.NDArray[np.float64],
     cond: npt.NDArray[np.float64],
     dx: int,
-    dt: float,
+    delta_t: float,
     k_start: int,
     k_end: int,
     rng: np.random.Generator,
@@ -97,7 +97,7 @@ def heat_equation(
     u_ = u.copy()
     nx = u.shape[1]  # number of grid cells
     assert cond.shape == (nx, nx)
-    gamma = (cond * dt) / (dx**2)
+    gamma = (cond * delta_t) / (dx**2)
 
     # Pre-sample all noise at once
     if scale is not None:
@@ -168,15 +168,15 @@ if __name__ == "__main__":
     # value but not zero because we want to be able to divide by them.
     cond = cond.clip(min=1e-8)
 
-    # Calculate maximum `dt`.
+    # Calculate maximum `delta_t`.
     # If higher values are used, the numerical solution will become unstable.
     # Note that this could be avoided if we used an implicit solver.
-    dt = dx**2 / (4 * np.max(cond))
+    delta_t = dx**2 / (4 * np.max(cond))
 
     t = float(parameters["t"]["value"])
     scaled_u_init = room_temperature + (u_init - room_temperature) * t
 
-    response = heat_equation(scaled_u_init, cond, dx, dt, k_start, k_end, rng)
+    response = heat_equation(scaled_u_init, cond, dx, delta_t, k_start, k_end, rng)
 
     index = sorted((obs.x, obs.y) for obs in obs_coordinates)
     for time_step in obs_times:
@@ -184,14 +184,12 @@ if __name__ == "__main__":
             f.writelines(f"{response[time_step][i]}\n" for i in index)
 
     time_map = []
-    start_date = datetime.date(2010, 1, 1)
+    start_date = dt.date(2010, 1, 1)
 
     summary_values = {name: [] for name in summary_names}
     # for time_step in obs_times:
     for time_step in range(k_start, k_end):
-        time_map.append(
-            (start_date + datetime.timedelta(days=float(time_step))).isoformat()
-        )
+        time_map.append((start_date + dt.timedelta(days=float(time_step))).isoformat())
         for obs in obs_coordinates:
             summary_values[f"HEAT_{obs.x}_{obs.y}"].append(
                 response[time_step][obs.x, obs.y]
@@ -199,7 +197,7 @@ if __name__ == "__main__":
 
     smspec, unsmry = create_summary_smspec_unsmry(
         summary_vectors=summary_values,
-        start_date=datetime.datetime(2010, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
+        start_date=dt.datetime(2010, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
         time_step_in_days=1,
     )
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import contextlib
-import datetime
+import datetime as dt
 import io
 import logging
 import os
@@ -198,7 +198,7 @@ class ForwardModelStep:
         existing_target_file_mtime: int | None = _get_existing_target_file_mtime(
             target_file
         )
-        run_start_time = datetime.datetime.now(tz=datetime.UTC)
+        run_start_time = dt.datetime.now(tz=dt.UTC)
         try:
             proc = Popen(
                 arg_list,
@@ -333,11 +333,11 @@ class ForwardModelStep:
         self,
         exit_code: int | None,
         proc: Popen[Process],  # type: ignore
-        run_start_time: datetime.datetime,
+        run_start_time: dt.datetime,
     ) -> Exited | None:
         max_running_minutes = self.step_data.get("max_running_minutes")
 
-        run_time = datetime.datetime.now(tz=datetime.UTC) - run_start_time
+        run_time = dt.datetime.now(tz=dt.UTC) - run_start_time
         if (
             max_running_minutes is None
             or run_time.total_seconds() < max_running_minutes * 60
