@@ -32,7 +32,7 @@ def poly_template(monkeypatch):
     script_path = Path(__file__).parent.resolve()
     folder = make_poly_example(
         folder,
-        f"{script_path}/../../../test-data/ert/poly_template",
+        script_path.parent.parent.parent / "test-data" / "ert" / "poly_template",
         gen_data_count=34,
         gen_data_entries=15,
         summary_data_entries=100,

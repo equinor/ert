@@ -58,7 +58,7 @@ def render_template(folder, template, target, **kwargs):
     Path(file).write_text(output, encoding="utf-8")
 
 
-def make_poly_example(folder: Path, source, **kwargs):
+def make_poly_example(folder: Path, source: Path, **kwargs):
     folder /= "poly"
     summary_count = kwargs["summary_data_count"]
     gen_obs_count = kwargs["gen_obs_count"]
