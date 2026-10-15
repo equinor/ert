@@ -30,7 +30,6 @@ from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting, wait_cursor
 from ert.gui.plotting.ert_plots.misfits import wide_pandas_to_long_polars_with_misfits
-
 from ert.gui.plotting.utils.plot_maps import (
     CROSS_ENSEMBLE_STATISTICS,
     DISTRIBUTION,
@@ -390,12 +389,13 @@ class PlotWindow(QMainWindow):
         return self._api.api_version
 
     def _apply_ensemble_selection_policy_for_tab(self, tab_name: str) -> None:
-        if tab_name in {MISFIT_MAP, OBSERVATIONS_MAP}:
-            self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
-            if len(self._ensemble_selection_widget.get_selected_ensembles()) > 1:
-                self._ensemble_selection_widget.clear_ensemble_selection()
-        else:
-            self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
+        if not self.is_everest:
+            if tab_name in {MISFIT_MAP, OBSERVATIONS_MAP, WATERFALL}:
+                self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
+                if len(self._ensemble_selection_widget.get_selected_ensembles()) > 1:
+                    self._ensemble_selection_widget.clear_ensemble_selection()
+            else:
+                self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
         self._update_ensemble_group_title()
 
     def _update_ensemble_group_title(self) -> None:
@@ -450,11 +450,6 @@ class PlotWindow(QMainWindow):
         self._distribution_options.get_widget().setVisible(
             plot_widget.name == DISTRIBUTION
         )
-
-        if plot_widget.name == WATERFALL:
-            self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
-        elif not self.is_everest:
-            self._ensemble_selection_widget.reset_maximum_ensemble_limit_to_default()
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
