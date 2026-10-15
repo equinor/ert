@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import json
 import re
 from typing import Any
@@ -98,7 +98,7 @@ def assert_roundtrip(
     return rft_response_df, location_metadata_df
 
 
-base_date = datetime.date(2000, 1, 1)
+base_date = dt.date(2000, 1, 1)
 base_observation_truncated = {
     "observation_key": "OBS1",
     "response_key": "WELL:2000-01-01:PRESSURE",
@@ -948,8 +948,8 @@ def test_that_migrating_storage_to_28_does_not_fail_on_null_location_inconsisten
 
 
 def test_that_migrating_storage_to_28_splits_large_dataframe():
-    date1 = datetime.date(2011, 1, 1)
-    date2 = datetime.date(2022, 2, 2)
+    date1 = dt.date(2011, 1, 1)
+    date2 = dt.date(2022, 2, 2)
     response_key1 = f"WELL:{date1}:PRESSURE"
     response_key2 = f"WELL:{date2}:PRESSURE"
     zone1 = "zone1"
@@ -1007,7 +1007,7 @@ def test_that_migrating_storage_to_28_splits_large_dataframe():
         schema=observation_schema(),
     )
 
-    def get_response_data(date: datetime.date) -> list[dict[str, Any]]:
+    def get_response_data(date: dt.date) -> list[dict[str, Any]]:
         response_key = f"WELL:{date}:PRESSURE"
         return [
             {

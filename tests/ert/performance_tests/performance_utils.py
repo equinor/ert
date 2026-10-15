@@ -1,5 +1,5 @@
 import contextlib
-import datetime
+import datetime as dt
 import shutil
 import sys
 import tempfile
@@ -116,7 +116,7 @@ def make_poly_example(folder: Path, source: Path, **kwargs):
     else:
         summary = Summary.writer(
             str(folder) + "/refcase/REFCASE",
-            datetime.datetime(2010, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
+            dt.datetime(2010, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
             10,
             10,
             10,

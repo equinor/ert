@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 
 from PyQt6.QtCore import QDate
 from PyQt6.QtWidgets import (
@@ -44,8 +44,8 @@ class CustomDateEdit(QWidget):
 
         self._calendar_widget.activated.connect(self.setDate)
 
-    def setDate(self, date: datetime.date | QDate) -> None:
-        if isinstance(date, datetime.date):
+    def setDate(self, date: dt.date | QDate) -> None:
+        if isinstance(date, dt.date):
             date = QDate(date.year, date.month, date.day)
 
         if date is not None and date.isValid():
@@ -53,11 +53,11 @@ class CustomDateEdit(QWidget):
         else:
             self._line_edit.setText("")
 
-    def date(self) -> datetime.date | None:
+    def date(self) -> dt.date | None:
         date_string = self._line_edit.text()
         if len(str(date_string).strip()) > 0:
             date = QDate.fromString(date_string, "yyyy-MM-dd")
             if date.isValid():
-                return datetime.date(date.year(), date.month(), date.day())
+                return dt.date(date.year(), date.month(), date.day())
 
         return None

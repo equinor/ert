@@ -1,5 +1,5 @@
 import contextlib
-import datetime
+import datetime as dt
 import os
 import stat
 import sys
@@ -406,9 +406,7 @@ def test_that_max_running_minutes_timeout_triggers_for_jobs_running_over_24_hour
     mock_proc.pid = os.getpid()
 
     # Simulate a job that has been running for 25 hours (exceeds 1440-min limit)
-    run_start_time = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
-        hours=25
-    )
+    run_start_time = dt.datetime.now(tz=dt.UTC) - dt.timedelta(hours=25)
     result = fmstep.handle_process_timeout_and_create_exited_msg(
         0, mock_proc, run_start_time
     )
@@ -424,9 +422,7 @@ def test_that_max_running_minutes_timeout_does_not_trigger_before_limit():
     mock_proc = MagicMock()
 
     # Simulate a job that has been running for 23 hours (within the 24-hour limit)
-    run_start_time = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
-        hours=23
-    )
+    run_start_time = dt.datetime.now(tz=dt.UTC) - dt.timedelta(hours=23)
     result = fmstep.handle_process_timeout_and_create_exited_msg(
         0, mock_proc, run_start_time
     )

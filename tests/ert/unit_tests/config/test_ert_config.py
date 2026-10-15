@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import json
 import logging
 import os.path
@@ -398,7 +398,7 @@ def test_that_the_date_magic_string_is_substituted_with_todays_date():
     Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
     ert_config = ErtConfig.from_file(test_config_file_name)
 
-    date_string = datetime.datetime.now().astimezone().date().isoformat()
+    date_string = dt.datetime.now().astimezone().date().isoformat()
     expected_storage = Path(f"storage/{test_config_file_base}-{date_string}").resolve()
     expected_run_path = f"{expected_storage}/runpath/realization-<IENS>/iter-<ITER>"
     expected_ens_path = f"{expected_storage}/ensemble"

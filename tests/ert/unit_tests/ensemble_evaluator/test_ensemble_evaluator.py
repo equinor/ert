@@ -1,5 +1,5 @@
 import asyncio
-import datetime
+import datetime as dt
 import logging
 import uuid
 from threading import Event
@@ -344,7 +344,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
 )
 def test_overspent_cpu_is_logged(
     num_cpu: int,
-    start: datetime.datetime,
+    start: dt.datetime,
     duration: int,
     cpu_seconds: float,
     evaluator_to_use,
@@ -361,7 +361,7 @@ def test_overspent_cpu_is_logged(
         "dummy",
         FMStepSnapshot(
             start_time=start,
-            end_time=start + datetime.timedelta(seconds=duration),
+            end_time=start + dt.timedelta(seconds=duration),
             cpu_seconds=cpu_seconds,
         ),
     )
@@ -388,7 +388,7 @@ def test_that_average_computer_load_is_included_in_overspent_cpu_message(
 
     monkeypatch.setattr(TestEnsemble, "queue_system", QueueSystem.LSF)
 
-    start = datetime.datetime(2024, 1, 1, tzinfo=datetime.UTC)
+    start = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
     duration = 100
     num_cpu = 1
     cpu_seconds = 1000.0  # Guarantees overspending is detected
@@ -398,7 +398,7 @@ def test_that_average_computer_load_is_included_in_overspent_cpu_message(
         "dummy",
         FMStepSnapshot(
             start_time=start,
-            end_time=start + datetime.timedelta(seconds=duration),
+            end_time=start + dt.timedelta(seconds=duration),
             cpu_seconds=cpu_seconds,
             computer_load=12.34,
         ),

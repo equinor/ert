@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 import os
 import socket
@@ -139,7 +139,7 @@ class File(Reporter):
 
     @staticmethod
     def _init_step_status_dict(
-        start_time: datetime.datetime,
+        start_time: dt.datetime,
         run_id: str | None,
         steps: list["ForwardModelStep"],
     ) -> "StatusDict":

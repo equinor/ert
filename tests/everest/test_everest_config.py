@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 import re
 from pathlib import Path
@@ -47,7 +47,7 @@ def test_that_str_type_failures_are_propagated(tmp_path, monkeypatch):
     [
         (12),
         (True),
-        (datetime.date(2024, 1, 1)),
+        (dt.date(2024, 1, 1)),
     ],
 )
 def test_that_non_string_keys_are_caught_in_config(tmp_path, monkeypatch, key):

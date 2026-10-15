@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from pathlib import Path
 
 import numpy as np
@@ -100,7 +100,7 @@ def create_summary_observation_dict(
 def create_breakthrough_observation(
     name: str = "breakthrough_observation",
     key: str = "WWCT:OP1",
-    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
+    date: dt.datetime = dt.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
     error: float = 10.0,
     threshold: float = 0.2,
 ) -> BreakthroughObservation:
@@ -116,7 +116,7 @@ def create_breakthrough_observation(
 def create_breakthrough_observation_dict(
     name: str = "breakthrough_observation",
     key: str = "WWCT:OP1",
-    date: datetime.datetime = datetime.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
+    date: dt.datetime = dt.datetime(2000, 3, 2, 13, 0, 0),  # ruff: ignore[call-datetime-without-tzinfo]
     error: float = 10.0,
     threshold: float = 0.2,
 ) -> dict:
@@ -221,7 +221,7 @@ def create_rft_response(
     cell_center: tuple[float, float, float] = (100.0, 200.0, 25.0),
     cell_zones: tuple[str, ...] = (),
 ) -> pl.DataFrame:
-    time = datetime.datetime.strptime(date, "%Y-%m-%d").date()  # ruff: ignore[call-datetime-strptime-without-zone]
+    time = dt.datetime.strptime(date, "%Y-%m-%d").date()  # ruff: ignore[call-datetime-strptime-without-zone]
     return pl.DataFrame(
         {
             "response_key": [f"{well}:{date}:{prop}"],

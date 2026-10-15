@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from enum import Enum
 
 import hypothesis.strategies as st
@@ -132,8 +132,8 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
     seen = set()
     unique_names = names.filter(lambda x: x not in seen).map(lambda x: seen.add(x) or x)
     datetimes = st.datetimes(
-        max_value=start_date + datetime.timedelta(days=200_000),  # ~ 300 years
-        min_value=start_date + datetime.timedelta(days=1),
+        max_value=start_date + dt.timedelta(days=200_000),  # ~ 300 years
+        min_value=start_date + dt.timedelta(days=1),
     )
     observation_generators = []
     if ensemble_keys is not None:

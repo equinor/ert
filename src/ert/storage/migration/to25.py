@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import json
 import shutil
 from pathlib import Path
@@ -22,7 +22,7 @@ def _observation_row_to_declaration(
         "error": float(error) if error is not None else None,
     }
     if response_type == "summary":
-        date_str = cast(datetime.datetime, row.get("time")).date().isoformat()
+        date_str = cast(dt.datetime, row.get("time")).date().isoformat()
         decl.update(
             {
                 "type": "summary_observation",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import fnmatch
 import logging
 import os
@@ -181,9 +181,9 @@ class RFTConfig(SimulationResponseConfig):
 
         filepath: InitVar[str]
         well: InitVar[str]
-        date: InitVar[datetime.date]
+        date: InitVar[dt.date]
 
-        def __post_init__(self, filepath: str, well: str, date: datetime.date) -> None:
+        def __post_init__(self, filepath: str, well: str, date: dt.date) -> None:
             num_conns = len(self.well_connection_cells)
             for rft_property, values in self.property_values.items():
                 num_values = len(values)
@@ -200,7 +200,7 @@ class RFTConfig(SimulationResponseConfig):
 
     def _scan_rft(
         self, filepath: str
-    ) -> dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]:
+    ) -> dict[tuple[WellName, dt.date], RFTConfig.ValidRFTEntry]:
         # This is a somewhat complicated optimization in order to
         # support wildcards in well names, dates and properties
         # A python for loop is too slow so we use a compiled regex
@@ -235,7 +235,7 @@ class RFTConfig(SimulationResponseConfig):
             )
         )
 
-        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry] = {}
+        rft_data: dict[tuple[WellName, dt.date], RFTConfig.ValidRFTEntry] = {}
         try:  # ruff: ignore[too-many-statements-in-try-clause]
             with RFTReader.open(filepath) as rft:
                 for entry in rft:
@@ -284,7 +284,7 @@ class RFTConfig(SimulationResponseConfig):
 
     def _warn_about_missing_rft_responses(
         self,
-        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry],
+        rft_data: dict[tuple[WellName, dt.date], RFTConfig.ValidRFTEntry],
         rft_filename: str,
     ) -> None:
         missing_response_properties = defaultdict(list)
@@ -325,7 +325,7 @@ class RFTConfig(SimulationResponseConfig):
             return pl.DataFrame(schema=self.response_schema())
 
         rft_filepath = self._rft_filepath(self.input_files[0], runpath, iens, iter_)
-        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
+        rft_data: dict[tuple[WellName, dt.date], RFTConfig.ValidRFTEntry]
         rft_data = self._scan_rft(rft_filepath)
 
         self._warn_about_missing_rft_responses(rft_data, Path(rft_filepath).name)
@@ -726,7 +726,7 @@ class RFTConfig(SimulationResponseConfig):
                     "step known to generate rft files"
                 )
 
-            declared_data: dict[WellName, dict[datetime.date, list[RFTProperty]]] = (
+            declared_data: dict[WellName, dict[dt.date, list[RFTProperty]]] = (
                 defaultdict(lambda: defaultdict(list))
             )
             for rft in rfts:

@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 from unittest.mock import patch
 
@@ -96,8 +96,8 @@ def test_data_for_response_doesnt_mistake_history_for_response(tmp_path):
                     "response_key": ["FGPR", "FGPR"],
                     "time": pl.Series(
                         [
-                            datetime.datetime(2000, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
-                            datetime.datetime(2000, 1, 2),  # ruff: ignore[call-datetime-without-tzinfo]
+                            dt.datetime(2000, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
+                            dt.datetime(2000, 1, 2),  # ruff: ignore[call-datetime-without-tzinfo]
                         ],
                         dtype=pl.Datetime("ms"),
                     ),

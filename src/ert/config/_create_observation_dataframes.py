@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 from collections import defaultdict
 from collections.abc import Sequence
 from typing import Any, assert_never
@@ -116,7 +116,7 @@ def _handle_summary_observation(
     summary_key = summary_dict.key
     value = summary_dict.value
     std_dev = summary_dict.error
-    date = datetime.datetime.fromisoformat(summary_dict.date)
+    date = dt.datetime.fromisoformat(summary_dict.date)
 
     east = None
     north = None

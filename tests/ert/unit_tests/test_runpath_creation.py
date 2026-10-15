@@ -349,7 +349,7 @@ async def test_that_pre_defines_are_substituted_templates(
 ):
     fixed_datetime = datetime.fromisoformat(EXPECTED_DATE)
     monkeypatch.setattr(
-        lark_parser.datetime,
+        lark_parser.dt,
         "datetime",
         MagicMock(now=MagicMock(return_value=fixed_datetime)),
     )
@@ -431,7 +431,7 @@ async def test_that_the_data_file_keyword_also_has_similar_behavior_to_run_templ
 
     fixed_datetime = datetime.fromisoformat(EXPECTED_DATE)
     monkeypatch.setattr(
-        lark_parser.datetime,
+        lark_parser.dt,
         "datetime",
         MagicMock(now=MagicMock(return_value=fixed_datetime)),
     )

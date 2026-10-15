@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
+import datetime as dt
 import itertools
 import logging
 import shlex
@@ -483,10 +483,8 @@ def _parse_squeue_output(output: str) -> Iterator[tuple[str, SqueueInfo]]:
 
 
 def _seconds_to_slurm_time_format(seconds: float) -> str:
-    days = datetime.timedelta(seconds=int(seconds)).days
-    hhmmss = str(
-        datetime.timedelta(seconds=int(seconds)) - datetime.timedelta(days=days)
-    )
+    days = dt.timedelta(seconds=int(seconds)).days
+    hhmmss = str(dt.timedelta(seconds=int(seconds)) - dt.timedelta(days=days))
     if days:
         return f"{days}-{hhmmss}"
     return hhmmss
