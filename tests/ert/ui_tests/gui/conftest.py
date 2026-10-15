@@ -2,7 +2,7 @@ import contextlib
 import fileinput
 import shutil
 import stat
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
@@ -56,7 +56,7 @@ def reset_ert_api_client():
 
 
 @contextmanager
-def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
+def open_gui_with_config(config_path) -> Generator[ErtMainWindow, None, None]:
     with (
         _open_main_window(config_path) as (
             gui,
@@ -100,7 +100,9 @@ def _new_poly_example(
 
 
 @contextmanager
-def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
+def _open_main_window(
+    path,
+) -> Generator[tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
     args_mock = Mock()
     args_mock.config = str(path)
     site_plugins = get_site_plugins()

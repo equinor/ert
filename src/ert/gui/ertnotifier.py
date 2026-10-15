@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from uuid import UUID
 
@@ -31,7 +31,7 @@ class ErtNotifier(QObject):
         return self._storage  # type: ignore
 
     @contextmanager
-    def write_storage(self) -> Iterator[Storage]:
+    def write_storage(self) -> Generator[Storage, None, None]:
         assert self._storage_path is not None
         storage = open_storage(self._storage_path, mode="w")
         try:

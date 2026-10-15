@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from typing import Any
 
@@ -32,7 +32,7 @@ from .textbox import TextBox
 
 
 @contextmanager
-def wait_cursor() -> Iterator[None]:
+def wait_cursor() -> Generator[None, None, None]:
     """A context manager to show the wait cursor while the body is executing."""
     QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
     try:

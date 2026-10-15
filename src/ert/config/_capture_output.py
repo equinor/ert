@@ -19,7 +19,7 @@ import contextlib
 import io
 import sys
 import threading
-from collections.abc import Iterator
+from collections.abc import Generator
 from typing import Any, TextIO, override
 
 
@@ -51,7 +51,7 @@ class _CaptureProxy(io.TextIOBase):
         return buffers
 
     @contextlib.contextmanager
-    def capture(self) -> Iterator[io.StringIO]:
+    def capture(self) -> Generator[io.StringIO, None, None]:
         """Record what the calling thread writes for the duration of the block."""
         buffer = io.StringIO()
         buffers = self._buffers
@@ -114,7 +114,7 @@ _capture_lock = threading.Lock()
 
 
 @contextlib.contextmanager
-def capturing(stream_name: str) -> Iterator[io.StringIO]:
+def capturing(stream_name: str) -> Generator[io.StringIO, None, None]:
     # Record what the calling thread writes to ``sys.<stream_name>``
     proxy: _CaptureProxy
     with _capture_lock:

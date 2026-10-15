@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import override
 
@@ -83,7 +83,7 @@ class EventViewerPanel(QDialog):
 
 
 @contextmanager
-def add_gui_log_handler() -> Iterator[GUILogHandler]:
+def add_gui_log_handler() -> Generator[GUILogHandler, None, None]:
     """
     Context manager for the GUILogHandler singleton. Will make sure that the
     handler is removed prior to program exit.
