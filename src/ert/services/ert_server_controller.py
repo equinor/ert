@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 SERVICE_CONF_PATHS: set[str] = set()
 
+print(f"ert_server_controller is imported in {os.getpid()}")
+
 
 class ErtServerConnectionInfo(TypedDict):
     urls: list[str]
@@ -40,16 +42,36 @@ class ErtServerExit(OSError):
     pass
 
 
+_previous_handlers: dict[int, Callable[[int, types.FrameType | None], object]] = {}
+
+
 def cleanup_service_files(signum: int, frame: types.FrameType | None) -> None:
     for file_path in SERVICE_CONF_PATHS:
-        file = Path(file_path)
-        file.unlink(missing_ok=True)
-    raise ErtServerExit(f"Signal {signum} received.")
+        print(f"Unlinking {file_path} for cleanup")
+        Path(file_path).unlink(missing_ok=True)
+    previous = _previous_handlers.get(signum)
+    print(f"Signal {signum} received, previous handler: {previous}")
+    if previous is not None:
+        previous(signum, frame)
 
 
-if threading.current_thread() is threading.main_thread():
-    signal.signal(signal.SIGTERM, cleanup_service_files)
-    signal.signal(signal.SIGINT, cleanup_service_files)
+def _install_cleanup_on_signals() -> None:
+    """Delete service files on SIGTERM/SIGINT, then defer to the handler that
+    was installed before, so the caller's signal behavior is preserved.
+
+    Signals without a Python handler (SIG_DFL, SIG_IGN) are not wrapped: Python
+    handlers do not run while a Qt event loop is active, which is why the GUIs
+    choose SIG_DFL.
+    """
+    if threading.current_thread() is not threading.main_thread():
+        return
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        previous = signal.getsignal(sig)
+        if sig in _previous_handlers or not callable(previous):
+            continue
+        _previous_handlers[sig] = previous
+        signal.signal(sig, cleanup_service_files)
+    print(f"Installed cleanup handlers in {os.getpid()}: {_previous_handlers}")
 
 
 class ServerBootFail(RuntimeError):
@@ -81,6 +103,8 @@ class _Proc(threading.Thread):
         env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
 
+        _install_cleanup_on_signals()
+        print(f"Adding to SERVICE_CONF_PATHS {self._connection_info_path}")
         SERVICE_CONF_PATHS.add(str(self._connection_info_path))
 
         # The process is waited for in _do_shutdown()

@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 
 
 def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
+    print("in run_ert_storage")
     with ErtServerController.start_server(
         verbose=True,
         project=Path(ErtConfig.from_file(args.config).ens_path),
