@@ -5,6 +5,7 @@ import logging
 from collections.abc import Callable, Iterable
 from enum import StrEnum
 from fnmatch import fnmatch
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -26,6 +27,12 @@ from .snapshots import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _as_floating(array: npt.NDArray[Any]) -> npt.NDArray[np.floating]:
+    if np.issubdtype(array.dtype, np.floating):
+        return array
+    return array.astype(np.float64)
 
 
 def _copy_unupdated_parameters(
