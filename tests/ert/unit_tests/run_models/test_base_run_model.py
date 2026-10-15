@@ -9,6 +9,7 @@ from queue import SimpleQueue
 from types import MethodType
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import polars as pl
 import pytest
 from pydantic import ConfigDict
 
@@ -48,6 +49,7 @@ from ert.run_models.run_model import (
 )
 from ert.warnings import PostExperimentWarning
 from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+from tests.ert.conftest import _create_design_matrix
 
 
 @pytest.fixture(autouse=True)
@@ -896,7 +898,8 @@ def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
     caplog, use_tmpdir
 ):
     caplog.set_level(logging.INFO)
-    config_dict = _ert_config_dict()
+    _create_design_matrix("design_matrix.xlsx", pl.DataFrame({"REAL": [0], "a": [1]}))
+    config_dict = _ert_config_dict() | {"DESIGN_MATRIX": [["design_matrix.xlsx", {}]]}
     ert_config = ErtConfig.from_dict(config_dict)
     ert_config._log_config_dict(config_dict)
     assert "'OBS_CONFIG': '<REDACTED>'" in caplog.text
@@ -911,6 +914,7 @@ def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
     model.log_at_startup()
     assert "'observations': '<REDACTED>'" in caplog.text
     assert "'shape_registry': '<REDACTED>'" in caplog.text
+    assert "'design_matrix':" not in caplog.text
 
 
 def test_that_ert_config_logs_insensitive_information_about_observations_and_shapes(
