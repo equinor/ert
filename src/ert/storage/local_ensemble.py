@@ -1193,11 +1193,16 @@ class LocalEnsemble(BaseMode):
                 # it in the dataset
                 continue
 
+            if any(df.height != first_columns.height for df in realization_columns):
+                raise ValueError(
+                    "Realization columns for response type "
+                    f"{response_type} have differing numbers of rows"
+                )
+
             dfs_per_response_type.append(
                 pl.concat(
                     [first_columns, *realization_columns],
-                    how="horizontal",
-                    strict=True,
+                    how="horizontal_extend",
                 )
             )
 
