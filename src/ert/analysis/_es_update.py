@@ -20,6 +20,7 @@ from ert.config.parameter_config import LocalizationType
 
 from ._update_commons import (
     ErtAnalysisError,
+    _as_floating,
     _copy_unupdated_parameters,
     _OutlierColumns,
     _preprocess_observations_and_responses,
@@ -273,7 +274,7 @@ def perform_ensemble_update(
 
         # Delegate update to strategy
         param_ensemble_array = strategy.update(
-            param_ensemble_array,
+            _as_floating(param_ensemble_array),
             param_cfg,
             non_zero_variance_mask,
         )

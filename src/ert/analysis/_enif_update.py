@@ -21,6 +21,7 @@ from ert.storage import Ensemble
 
 from ._update_commons import (
     ErtAnalysisError,
+    _as_floating,
     _copy_unupdated_parameters,
     _preprocess_observations_and_responses,
     noop_progress_callback,
@@ -228,8 +229,8 @@ def analysis_EnIF(
     param_arrays: dict[str, npt.NDArray[np.floating]] = {}
 
     for group in updated_parameters:
-        param_arrays[group] = source_ensemble.load_parameters_numpy(
-            group, iens_active_index
+        param_arrays[group] = _as_floating(
+            source_ensemble.load_parameters_numpy(group, iens_active_index)
         )
 
     param_nan_masks, parameter_group_sizes, X_full, nan_row_mask = compute_nan_masks(
