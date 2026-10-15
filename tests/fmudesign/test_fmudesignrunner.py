@@ -1,10 +1,12 @@
 import argparse
+import getpass
 import re
 import sys
 from argparse import Namespace
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 from pydantic import BaseModel
 
@@ -18,6 +20,8 @@ from fmudesign.fmudesignrunner import (
     subcommand_init,
     subcommand_run,
 )
+
+from ._configurations import minimal_configuration
 
 
 def test_that_given_unknown_command_run_is_inserted_at_position_one(monkeypatch):
@@ -169,6 +173,39 @@ def test_that_subcommand_run_raises_when_config_is_equal_to_destination(use_tmpd
         OSError, match=rf'Identical name "{duplicate_name}".*input.*output file'
     ):
         subcommand_run(args, parser_run)
+
+
+def _run_and_read_metadata(monkeypatch) -> pd.Series:
+    monkeypatch.setattr(
+        fmudesignrunner, "excel_to_dict", lambda *_, **__: minimal_configuration()
+    )
+    Path("input.xlsx").touch()
+    parser, _ = get_parser()
+    args = parser.parse_args(["run", "input.xlsx", "output.xlsx"])
+    args.func(args)
+    return pd.read_excel("output.xlsx", sheet_name="Metadata", index_col=0)["Value"]
+
+
+def test_that_metadata_records_user_komodo_release_and_input_file_inside_komodo(
+    use_tmpdir, monkeypatch
+):
+    monkeypatch.setenv("KOMODO_RELEASE", "2026.10.01-py312")
+
+    metadata = _run_and_read_metadata(monkeypatch)
+
+    assert metadata["Created by:"] == getpass.getuser()
+    assert metadata["Created using komodo release:"] == "2026.10.01-py312"
+    assert metadata["Created from input file:"] == str(Path("input.xlsx").resolve())
+
+
+def test_that_metadata_contains_no_user_or_paths_outside_komodo(
+    use_tmpdir, monkeypatch
+):
+    monkeypatch.delenv("KOMODO_RELEASE", raising=False)
+
+    metadata = _run_and_read_metadata(monkeypatch)
+
+    assert metadata.index.tolist() == ["Created using ert version:", "Created on:"]
 
 
 def test_that_subcommand_init_raises_if_example_doesnt_exist(monkeypatch):
