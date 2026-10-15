@@ -133,6 +133,18 @@ def _data_section_as_parquet(data: DataSection | None) -> bytes:
     return buffer.getvalue()
 
 
+def observation_id_expr() -> pl.Expr:
+    """Identify observations by what they observe, as ``<response_key>:<index>``.
+
+    Observation names are optional and shared by all rows of e.g. a
+    SEISMIC_OBSERVATION, so they cannot identify an observation. Applies to the
+    DataFrame returned by :meth:`LocalEnsemble.get_observations_and_responses`.
+    """
+    return pl.concat_str(
+        [pl.col("response_key").cast(pl.String), pl.col("index")], separator=":"
+    )
+
+
 class LocalEnsemble(BaseMode):
     """
     Represents an ensemble within the local storage system of ERT.
