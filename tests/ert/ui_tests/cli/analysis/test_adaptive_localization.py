@@ -41,7 +41,7 @@ def run_cli_single_update_with_case(poly_config, experiment_name):
 def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     set_adaptive_localization_1 = dedent(
         """
-        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 1.0
         """
     )
@@ -76,7 +76,7 @@ def test_that_adaptive_localization_works_with_a_single_observation():
     """
     set_adaptive_localization_0 = dedent(
         """
-        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
         """
     )
@@ -181,7 +181,7 @@ GEN_DATA POLY_RES2 RESULT_FILE:poly.out2
 INSTALL_JOB poly_eval POLY_EVAL
 FORWARD_MODEL poly_eval
 
-ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
 ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
 
 ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
@@ -242,7 +242,7 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     """
     set_adaptive_localization_0 = dedent(
         """
-        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
         """
     )
@@ -288,13 +288,13 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
 
     set_adaptive_localization_cutoff1 = dedent(
         f"""
-        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD {cutoff1}
         """
     )
     set_adaptive_localization_cutoff2 = dedent(
         f"""
-        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD {cutoff2}
         """
     )
