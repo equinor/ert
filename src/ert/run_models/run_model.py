@@ -239,6 +239,7 @@ class RunModel(RunModelConfig, ABC):
             "rng",
             "runpaths",
             "substitutions",
+            "design_matrix",
         ]
         sensitive_keys = [
             "observations",
