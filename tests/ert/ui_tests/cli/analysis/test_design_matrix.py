@@ -13,6 +13,7 @@ import pytest
 from ert.cli.main import ErtCliError
 from ert.config import ConfigWarning, ErtConfig
 from ert.mode_definitions import (
+    ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -444,11 +445,22 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
 @pytest.mark.usefixtures(
     "copy_poly_case", "use_site_configurations_with_no_queue_options"
 )
-def test_that_partial_genkw_overlap_with_sampled_priority_updates_dm_params():
+@pytest.mark.parametrize(
+    ("experiment_mode", "extra_args", "prior_name", "posterior_name"),
+    [
+        pytest.param(
+            ES_MDA_MODE, ["--weights=1"], "default_0", "default_1", id=ES_MDA_MODE
+        ),
+        pytest.param(ENIF_MODE, [], "iter-0", "iter-1", id=ENIF_MODE),
+    ],
+)
+def test_that_partial_genkw_overlap_with_sampled_priority_updates_dm_params(
+    experiment_mode, extra_args, prior_name, posterior_name
+):
     num_realizations = 20
     rng = np.random.default_rng(42)
     design_b_values = [100.0 + i for i in range(num_realizations)]
-    design_c_values = rng.uniform(0, 2, num_realizations).tolist()
+    design_c_values = rng.integers(0, 3, num_realizations).tolist()
     _create_design_matrix(
         "poly_design.xlsx",
         pl.DataFrame(
@@ -487,8 +499,9 @@ def test_that_partial_genkw_overlap_with_sampled_priority_updates_dm_params():
         "but due to the sampled priority they will remain as such",
     ):
         run_cli(
-            ENSEMBLE_SMOOTHER_MODE,
+            experiment_mode,
             "--disable-monitoring",
+            *extra_args,
             "poly.ert",
             "--experiment-name",
             "test-experiment",
@@ -497,8 +510,8 @@ def test_that_partial_genkw_overlap_with_sampled_priority_updates_dm_params():
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        prior = experiment.get_ensemble_by_name("iter-0")
-        posterior = experiment.get_ensemble_by_name("iter-1")
+        prior = experiment.get_ensemble_by_name(prior_name)
+        posterior = experiment.get_ensemble_by_name(posterior_name)
 
         prior_b = prior.load_parameters("b")["b"].to_list()
         prior_b_transformed = prior.load_parameters("b", transformed=True)["b"]
@@ -509,17 +522,21 @@ def test_that_partial_genkw_overlap_with_sampled_priority_updates_dm_params():
         # prior b values should not be equal to the design matrix values
         assert not np.allclose(prior_b, design_b_values)
 
-        prior_c = prior.load_parameters("c")["c"].to_list()
+        prior_c = prior.load_parameters("c")["c"]
         prior_c_transformed = prior.load_parameters("c", transformed=True)["c"]
+        # integer design matrix values are stored as integers in the prior
+        assert prior_c.dtype.is_integer()
         # prior c values should be equal to the design matrix values
         assert np.allclose(prior_c, prior_c_transformed)
-        np.testing.assert_allclose(prior_c, design_c_values)
+        np.testing.assert_array_equal(prior_c.to_list(), design_c_values)
         # prior c transformed values should also be equal to the design matrix values
         assert np.allclose(prior_c_transformed, design_c_values)
 
         posterior_a = posterior.load_parameters("a")["a"].to_list()
         posterior_b = posterior.load_parameters("b")["b"].to_list()
-        posterior_c = posterior.load_parameters("c")["c"].to_list()
+        posterior_c = posterior.load_parameters("c")["c"]
+        # the update turns integer parameters into floats
+        assert posterior_c.dtype == pl.Float64
         # all updated parameters should be different from their prior values
         assert not np.allclose(posterior_a, prior.load_parameters("a")["a"].to_list())
         assert not np.allclose(posterior_b, prior_b)
