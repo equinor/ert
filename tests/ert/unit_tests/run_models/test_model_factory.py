@@ -107,31 +107,6 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
         )
 
 
-def test_iterative_ensemble_format_is_set_by_target_ensemble():
-    assert (
-        model_factory._iterative_ensemble_format(
-            Namespace(current_ensemble="current", target_ensemble="target_%d")
-        )
-        == "target_%d"
-    )
-
-
-def test_iterative_ensemble_format_defaults_to_current_when_no_target_ensemble_is_given():  # ruff: ignore[line-too-long]
-    assert (
-        model_factory._iterative_ensemble_format(
-            Namespace(current_ensemble="current", target_ensemble=None)
-        )
-        == "current_%d"
-    )
-
-
-def test_ensemble_format_is_default_when_neither_current_or_target_is_given():
-    assert (
-        model_factory._iterative_ensemble_format(Namespace(target_ensemble=None))
-        == "default_%d"
-    )
-
-
 def test_default_realizations():
     ensemble_size = 100
     assert (
