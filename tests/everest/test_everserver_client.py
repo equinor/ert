@@ -240,7 +240,7 @@ def test_that_server_max_runtime_does_not_copy_queue_system_max_runtime():
         pytest.param(
             {"queue_system": {"name": "slurm", "max_runtime": 300}, "max_runtime": 600},
             600,
-            "server.max_runtime overrides",
+            "Everest configuration server.max_runtime ",
             id="server_max_runtime_overrides_queue_max_runtime",
         ),
         pytest.param(

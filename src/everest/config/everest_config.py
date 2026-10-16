@@ -562,7 +562,10 @@ class EverestConfig(BaseModelWithContextSupport):
         ):
             if self.server.queue_system.max_runtime is not None:
                 ConfigWarning.warn(
-                    "server.max_runtime overrides max_runtime in server.queue_system"
+                    f"Everest configuration server.max_runtime "
+                    f"{self.server.max_runtime} overrides "
+                    "max_runtime set in server.queue_system "
+                    f"{self.server.queue_system.max_runtime}"
                 )
             self.server.queue_system.max_runtime = None
 
