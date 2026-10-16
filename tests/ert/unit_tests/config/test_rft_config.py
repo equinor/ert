@@ -1359,6 +1359,7 @@ def test_rft_value_approximation(
     ("rft_response_config", "rft_obs_config"),
     [(False, True), (True, False), (True, True)],
 )
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
 def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_on_rft_config(  # ruff: ignore[line-too-long]
     approximate_missing_rft_values_config,
     expected_setting,

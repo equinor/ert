@@ -391,6 +391,7 @@ def test_that_rft_config_is_created_from_observations():
     }
 
 
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
 def test_that_rft_config_is_created_from_mix_of_observations_and_responses():
     ert_config = ErtConfig.from_dict(
         {
