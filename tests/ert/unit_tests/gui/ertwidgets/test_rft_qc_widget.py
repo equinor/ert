@@ -551,7 +551,7 @@ def _mock_rft_ensemble(
         "file-<IENS>-<ITER>",
     ],
 )
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_response_file_path_is_resolved(qtbot, eclbase):
     ert_config = ErtConfig.from_dict(

@@ -2669,7 +2669,7 @@ def test_that_invalid_option_name_in_design_matrix_raises_validation_error(
 
 def test_that_single_rft_is_parsed():
     with pytest.warns(
-        ConfigWarning, match="Config contains a RFT key but no forward model"
+        ConfigWarning, match="Config contains an RFT key but no forward model"
     ):
         config = ErtConfig.from_file_contents(
             """
@@ -2692,7 +2692,7 @@ def test_that_single_rft_is_parsed():
 
 def test_that_multiple_rfts_are_parsed():
     with pytest.warns(
-        ConfigWarning, match="Config contains a RFT key but no forward model"
+        ConfigWarning, match="Config contains an RFT key but no forward model"
     ):
         config = ErtConfig.from_file_contents(
             """
@@ -2723,7 +2723,7 @@ def test_that_multiple_rfts_are_parsed():
 
 def test_that_rft_properties_can_be_given_with_spaces():
     with pytest.warns(
-        ConfigWarning, match="Config contains a RFT key but no forward model"
+        ConfigWarning, match="Config contains an RFT key but no forward model"
     ):
         config = ErtConfig.from_file_contents(
             """
