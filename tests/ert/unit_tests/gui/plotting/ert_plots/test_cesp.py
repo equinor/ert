@@ -86,7 +86,7 @@ def test_that_mean_gets_plotted_for_ensemble_data_when_enabled(
     assert len(axes.get_lines()) == len(ensemble_to_data)
 
 
-@pytest.mark.parametrize("enabled", [True, False])
+@pytest.mark.parametrize("enabled", [True, False], ids=str)
 def test_that_legend_items_for_ensemble_data_is_toggleable(
     plot_context, ensemble_to_data, enabled
 ):
@@ -120,7 +120,7 @@ def test_that_legend_items_for_ensemble_data_is_toggleable(
         assert (item in legend_texts) == enabled
 
 
-@pytest.mark.parametrize("outliers_enabled", [True, False])
+@pytest.mark.parametrize("outliers_enabled", [True, False], ids=str)
 def test_that_outliers_legend_is_shown_only_when_outliers_are_enabled(
     plot_context, ensemble_to_data, outliers_enabled
 ):

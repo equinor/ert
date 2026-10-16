@@ -350,7 +350,7 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly(
     assert res_config.forward_model_steps[2].private_args["<FILE>"] == "file.txt"
 
 
-@pytest.mark.parametrize("quote_mismatched_arg", ['"A', 'A"', '"A""', '"'])
+@pytest.mark.parametrize("quote_mismatched_arg", ['"A', 'A"', '"A""', '"'], ids=str)
 def test_unmatched_quotes_in_step_arg_gives_config_validation_error(
     quote_mismatched_arg, plugins_ert_config
 ):
@@ -485,7 +485,7 @@ def test_that_forward_model_with_different_token_kinds_are_added():
     ] == [("job", 0), ("job", 1)]
 
 
-@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"], ids=str)
 def test_that_eclipse_fm_step_require_explicit_version(eclipse_v, plugins_ert_config):
     with (
         patch(
@@ -507,7 +507,7 @@ def test_that_eclipse_fm_step_require_explicit_version(eclipse_v, plugins_ert_co
 
 
 @pytest.mark.skipif(shutil.which("eclrun") is None, reason="eclrun is not in $PATH")
-@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"], ids=str)
 def test_that_eclipse_fm_step_check_version_availability(eclipse_v, plugins_ert_config):
     with (
         patch(
@@ -525,7 +525,7 @@ def test_that_eclipse_fm_step_check_version_availability(eclipse_v, plugins_ert_
         )
 
 
-@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"], ids=str)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(
     eclipse_v, plugins_ert_config
@@ -557,7 +557,7 @@ def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(
 
 
 @pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is present")
-@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"], ids=str)
 def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_present(
     eclipse_v, plugins_ert_config
 ):
@@ -596,7 +596,7 @@ def test_that_flow_fm_gives_error_on_np_in_opts(plugins_ert_config):
         )
 
 
-@pytest.mark.parametrize("fm_step_name", ["ECLIPSE100", "ECLIPSE300", "FLOW"])
+@pytest.mark.parametrize("fm_step_name", ["ECLIPSE100", "ECLIPSE300", "FLOW"], ids=str)
 def test_that_reservoir_simulator_fm_rejects_unknown_keyword(
     plugins_ert_config, fm_step_name
 ):

@@ -159,7 +159,7 @@ def test_invalid_min_realization_raises_config_validation_error():
         )
 
 
-@pytest.mark.parametrize("extension", ["txt", "xls"])
+@pytest.mark.parametrize("extension", ["txt", "xls"], ids=str)
 def test_that_design_matrix_rejects_non_xlsx_files(extension):
     with pytest.raises(
         ConfigValidationError,

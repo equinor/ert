@@ -17,7 +17,7 @@ def test_that_default_everestconfig_lints():
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
 
-@pytest.mark.parametrize("iteration", [0, 1, 2])
+@pytest.mark.parametrize("iteration", [0, 1, 2], ids=str)
 def test_that_runpath_strings_are_generated_correctly(
     tmp_path, min_config, iteration, monkeypatch
 ):

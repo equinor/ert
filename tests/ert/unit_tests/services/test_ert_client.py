@@ -257,8 +257,8 @@ def test_that_event_stream_logs_first_event_and_total_on_close(event_client, cap
     assert "ended after 1 events" in caplog.text
 
 
-@pytest.mark.parametrize("status_code", [200, 401, 503])
-@pytest.mark.parametrize("timeout", [None, 1.0])
+@pytest.mark.parametrize("status_code", [200, 401, 503], ids=str)
+@pytest.mark.parametrize("timeout", [None, 1.0], ids=str)
 def test_that_server_probe_checks_authenticated_endpoint_with_requested_timeout(
     event_client, status_code, timeout
 ):
