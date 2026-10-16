@@ -130,6 +130,12 @@ class SelectionListView(QListView):
         super().mousePressEvent(e)
 
     @override
+    def mouseMoveEvent(self, e: QMouseEvent | None) -> None:
+        if e is not None and not self._is_selectable(e):
+            return
+        super().mouseMoveEvent(e)
+
+    @override
     def mouseReleaseEvent(self, e: QMouseEvent | None) -> None:
         if e is not None and not self._is_selectable(e):
             return
