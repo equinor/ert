@@ -50,7 +50,7 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """Start an EVEREST server running the optimization defined in the config"""
     server_config = config.server
     if server_config.queue_system is None:
-        raise ValueError("Server queue system was not resolved during validation")
+        raise ValueError("Server queue system is none.")
     driver = create_driver(
         server_config.queue_system,
         poll_period=0.1,
