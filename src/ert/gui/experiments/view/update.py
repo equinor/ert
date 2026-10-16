@@ -153,6 +153,33 @@ class ReportLogTable(UpdateLogTable):
             dialog.exec()
 
 
+def create_table_tab(
+    name: str,
+    data: DataSection,
+    table_type: type[UpdateLogTable] = UpdateLogTable,
+) -> QWidget:
+    """Build the table and summary fields shown in one tab of an update."""
+    widget = QWidget()
+    layout = QVBoxLayout()
+    widget.setLayout(layout)
+
+    table = table_type(data)
+    table.setObjectName("CSV_" + name)
+    layout.addWidget(table)
+
+    if data.extra:
+        grid_layout = QGridLayout()
+        nr_each_column = math.ceil(len(data.extra) / 2)
+        for i, (k, v) in enumerate(data.extra.items()):
+            column = (i // nr_each_column) * 2
+            grid_layout.addWidget(QLabel(str(k) + ":"), i % nr_each_column, column)
+            grid_layout.addWidget(QLabel(str(v)), i % nr_each_column, column + 1)
+        layout.addSpacing(10)
+        layout.addLayout(grid_layout)
+
+    return widget
+
+
 class UpdateWidget(QWidget):
     def __init__(self, iteration: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -212,24 +239,7 @@ class UpdateWidget(QWidget):
         data: DataSection,
         table_type: type[UpdateLogTable] = UpdateLogTable,
     ) -> None:
-        widget = QWidget()
-        layout = QVBoxLayout()
-        widget.setLayout(layout)
-
-        table = table_type(data)
-        table.setObjectName("CSV_" + name)
-        layout.addWidget(table)
-
-        if data.extra:
-            grid_layout = QGridLayout()
-            nr_each_column = math.ceil(len(data.extra) / 2)
-            for i, (k, v) in enumerate(data.extra.items()):
-                column = (i // nr_each_column) * 2
-                grid_layout.addWidget(QLabel(str(k) + ":"), i % nr_each_column, column)
-                grid_layout.addWidget(QLabel(str(v)), i % nr_each_column, column + 1)
-            layout.addSpacing(10)
-            layout.addLayout(grid_layout)
-
+        widget = create_table_tab(name, data, table_type)
         self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, name))
 
     def _insert_report_tab(
