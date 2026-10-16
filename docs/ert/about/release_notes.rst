@@ -49,6 +49,18 @@ From the command line, use the ``--single-update`` flag:
 Version 26.0
 ------------
 
+Update reports in Manage experiments
+####################################
+
+The tables shown in the `Update` tabs while an experiment is running are now kept, so
+they remain available after the run has finished. Selecting an ensemble in
+`Manage experiments` shows an `Update <iteration>` tab with the report and any auto
+scaling tables from the update that produced that ensemble (the posterior). The numbering
+follows the running experiment, so the update that turned `iter-0` into `iter-1` is
+`Update 0` and is found on `iter-1`. The tab identifies both the input and output
+iterations. The initial prior has no update tab; the final posterior does.
+
+
 Updated Analysis Panel
 ######################
 
