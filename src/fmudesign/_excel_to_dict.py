@@ -39,57 +39,14 @@ def excel_to_dict(
     Returns:
         dict on format for DesignMatrix
     """
-    # To be backwards compatible, we do not change the input arg names
-    general_input_sheet = gen_input_sheet
-    default_values_sheet = default_val_sheet
-
-    # Find sheets
     _assert_no_merged_cells(input_filename)
     sheet_names = excel_sheet_names(input_filename)
-    general_input_sheet = find_sheet(general_input_sheet, names=sheet_names)
+    general_input_sheet = find_sheet(gen_input_sheet, names=sheet_names)
     design_input_sheet = find_sheet(design_input_sheet, names=sheet_names)
-    default_values_sheet = find_sheet(default_values_sheet, names=sheet_names)
+    default_values_sheet = find_sheet(default_val_sheet, names=sheet_names)
 
     general_input = GeneralInput.from_xlsx(input_filename, general_input_sheet)
     design_input = DesignInput.from_xlsx(input_filename, design_input_sheet)
-
-    return _excel_to_dict_onebyone(
-        input_filename=input_filename,
-        general_input=general_input,
-        design_input=design_input,
-        default_values_sheet=default_values_sheet,
-    )
-
-
-def inputdict_to_yaml(inputdict: dict[str, Any], filename: str) -> None:
-    """Write inputdict to yaml format
-
-    Args:
-        inputdict (dict)
-        filename (str): name of output file
-    """
-    with Path(filename).open("w", encoding="utf-8") as stream:
-        yaml.dump(inputdict, stream)
-
-
-def _excel_to_dict_onebyone(
-    input_filename: str,
-    *,
-    general_input: GeneralInput,
-    design_input: DesignInput,
-    default_values_sheet: str,
-) -> dict[str, Any]:
-    """Reads configuration from Excel file for a onebyone design matrix.
-
-    Args:
-        input_filename (str): Name of excel workbook
-        general_input (GeneralInput): Validated general input
-        design_input (DesignInput): Validated design input
-        default_values_sheet (str): name of default value sheet
-
-    Returns:
-        dict on format for DesignMatrix
-    """
 
     if isinstance(seeds := general_input.rms_seeds, Path):
         rms_seeds: Literal["default"] | list[int] | None = seeds_from_extern(seeds)
@@ -104,7 +61,6 @@ def _excel_to_dict_onebyone(
         background = None
 
     output: dict[str, Any] = {
-        "input_file": input_filename,
         "designtype": general_input.designtype,
         "repeats": general_input.repeats,
         "distribution_seed": general_input.distribution_seed,
@@ -116,11 +72,22 @@ def _excel_to_dict_onebyone(
             Path(input_filename), default_values_sheet, has_header=True
         ),
         "sensitivities": design_input.sensitivities,
-    }  # This is the config that we read and return
+    }
 
     if design_input.decimals is not None:
         output["decimals"] = design_input.decimals
     return output
+
+
+def inputdict_to_yaml(inputdict: dict[str, Any], filename: str) -> None:
+    """Write inputdict to yaml format
+
+    Args:
+        inputdict (dict)
+        filename (str): name of output file
+    """
+    with Path(filename).open("w", encoding="utf-8") as stream:
+        yaml.dump(inputdict, stream)
 
 
 def _assert_no_merged_cells(input_filename: str) -> None:

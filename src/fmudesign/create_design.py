@@ -38,7 +38,6 @@ from .utils import (
     find_max_realisations,
     map_dependencies,
     parameters_from_extern,
-    printwarning,
     to_numeric_safe,
 )
 
@@ -46,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from collections.abc import Hashable, Sequence
+    from collections.abc import Hashable, Mapping, Sequence
 
     import numpy.typing as npt
 
@@ -74,6 +73,15 @@ def _derive_rng(base_seed: int, *keys: str) -> np.random.Generator:
         hasher.update(len(data).to_bytes(4, "big"))
         hasher.update(data)
     return np.random.default_rng(int.from_bytes(hasher.digest(), "big"))
+
+
+def _round_to_decimals(df: pd.DataFrame, decimals: Mapping[str, int]) -> None:
+    """Round, in place, each column of `df` that has a number of decimals."""
+    for key in df.columns:
+        if key in decimals:
+            if not is_number(df[key].iloc[0]):
+                raise ValueError(f"Cannot round a string parameter {key}")
+            df[key] = df[key].astype(float).round(int(decimals[key]))
 
 
 class DesignMatrix:
@@ -251,11 +259,9 @@ class DesignMatrix:
                         key, verbosity=self.verbosity
                     )
                     sensitivity.generate(size=size)
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "background":
                     sensitivity = BackgroundSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(size=size)
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "seed":
                     sensitivity = SeedSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -264,7 +270,6 @@ class DesignMatrix:
                         seedvalues=self.seedvalues,
                         parameters=sens["parameters"],
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "scenario":
                     sensitivity = ScenarioSensitivity(key, verbosity=self.verbosity)
                     for casekey, case in sens["cases"].items():
@@ -275,7 +280,6 @@ class DesignMatrix:
                             seedvalues=self.seedvalues,
                         )
                         sensitivity.add_case(temp_case)
-                        sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "dist":
                     sensitivity = MonteCarloSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -290,7 +294,6 @@ class DesignMatrix:
                         seed_strategy=self.seed_strategy,
                         base_seed=self.base_seed,
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case "extern":
                     sensitivity = ExternSensitivity(key, verbosity=self.verbosity)
                     sensitivity.generate(
@@ -299,10 +302,10 @@ class DesignMatrix:
                         parameters=sens["parameters"],
                         seedvalues=self.seedvalues,
                     )
-                    sensitivity.map_dependencies(sens.get("dependencies", {}))
                 case unknown:
                     raise ValueError(f"Unknown sensitivity type: {unknown!r}")
 
+            sensitivity.map_dependencies(sens.get("dependencies", {}))
             self._add_sensitivity(sensitivity)
 
             # MonteCarloSensitivity is special - it can produce debugging outputs
@@ -325,13 +328,13 @@ class DesignMatrix:
                     for corr_name, df_corr in sensitivity.correlation_dfs_.items():
                         # Always plot heatmaps
                         quality_reporter.plot_correlation_heatmap(
-                            corr_name, df_corr, output_dir=output_dir, show=False
+                            corr_name, df_corr, output_dir=output_dir
                         )
 
                         # Only plot pairgrid for small correlations
                         if len(df_corr) <= 6:
                             quality_reporter.plot_correlation(
-                                corr_name, df_corr, output_dir=output_dir, show=False
+                                corr_name, df_corr, output_dir=output_dir
                             )
 
         # Once all sensitivities have been added, complete the work
@@ -597,20 +600,11 @@ class DesignMatrix:
             # Correlations
             for corr_name, df_corr in mc_background.correlation_dfs_.items():
                 quality_reporter.plot_correlation(
-                    corr_name, df_corr, output_dir=output_dir, show=False
+                    corr_name, df_corr, output_dir=output_dir
                 )
 
         # Rounding of background values as specified
-        if "decimals" in back_dict:
-            for key in back_dict["decimals"]:
-                if is_number(mc_backgroundvalues[key].iloc[0]):
-                    mc_backgroundvalues[key] = (
-                        mc_backgroundvalues[key]
-                        .astype(float)
-                        .round(int(back_dict["decimals"][key]))
-                    )
-                else:
-                    raise ValueError("Cannot round a string parameter")
+        _round_to_decimals(mc_backgroundvalues, back_dict.get("decimals", {}))
         self.backgroundvalues = mc_backgroundvalues.copy()
 
     def _set_decimals(self, inputdict: dict[str, Any]) -> None:
@@ -638,17 +632,7 @@ class DesignMatrix:
                         continue
                     dict_decimals[to_param] = dict_decimals[from_param]
 
-        # Round each column
-        for key in self.designvalues.columns:
-            if key in dict_decimals:
-                if is_number(self.designvalues[key].iloc[0]):
-                    self.designvalues[key] = (
-                        self.designvalues[key]
-                        .astype(float)
-                        .round(int(dict_decimals[key]))
-                    )
-                else:
-                    raise ValueError(f"Cannot round a string parameter {key}")
+        _round_to_decimals(self.designvalues, dict_decimals)
 
 
 class Sensitivity:
@@ -753,7 +737,7 @@ class SingleRealisationReference(Sensitivity):
         """Generates realisation number only
 
         Args:
-            realnums (list): list of integers with realization numbers
+            size (int): number of rows to generate
         """
         self.sensvalues = pd.DataFrame(index=range(size))
         self.sensvalues["SENSNAME"] = self.sensname
@@ -801,14 +785,9 @@ class ScenarioSensitivity(Sensitivity):
     within the case.
 
     Attributes:
-        case1 (ScenarioSensitivityCase): first case, e.g. 'low case'
-        case2 (ScenarioSensitivityCase): second case, e.g. 'high case'
         sensvalues (pd.DataFrame): design values for the sensitivity, containing
            1-2 cases
     """
-
-    case1: ScenarioSensitivityCase | None = None
-    case2: ScenarioSensitivityCase | None = None
 
     def add_case(self, senscase: ScenarioSensitivityCase) -> None:
         """
@@ -819,17 +798,10 @@ class ScenarioSensitivity(Sensitivity):
             senscase (ScenarioSensitivityCase):
                 Equals SENSCASE in design matrix.
         """
-        if self.case1 is not None:  # Case 1 has been read, this is case2
-            if senscase.sensvalues is not None and "SENSCASE" in senscase.sensvalues:
-                self.case2 = senscase
-                senscase.sensvalues["SENSNAME"] = self.sensname
-                self.sensvalues = pd.concat(
-                    [self.sensvalues, senscase.sensvalues], sort=True
-                )
-        elif senscase.sensvalues is not None and "SENSCASE" in senscase.sensvalues:
-            self.case1 = senscase
-            self.sensvalues = senscase.sensvalues.copy()
-            self.sensvalues["SENSNAME"] = self.sensname
+        case_values = senscase.sensvalues.assign(SENSNAME=self.sensname)
+        if hasattr(self, "sensvalues"):
+            case_values = pd.concat([self.sensvalues, case_values], sort=True)
+        self.sensvalues = case_values
 
 
 class ScenarioSensitivityCase(Sensitivity):
@@ -865,7 +837,7 @@ class ScenarioSensitivityCase(Sensitivity):
             size (int): number of rows to generate
             parameters (dict):
                 dictionary with parameter names and values
-            seeds (str): default or None
+            seedvalues (list): list of integer seed values or None
         """
 
         self.sensvalues = pd.DataFrame(
@@ -911,7 +883,7 @@ class MonteCarloSensitivity(Sensitivity):
         Args:
             size (int): number of rows to generate
             parameters (dict): dictionary of parameters and distributions
-            values (list): a list of seed values or None
+            seedvalues (list): list of integer seed values or None
             corrdict (dict): Configuration for correlated parameters. Contains:
                 - 'inputfile': Name of Excel file with correlation matrices
                 - 'sheetnames': List of sheet names, where each sheet contains a
@@ -1046,9 +1018,11 @@ class MonteCarloSensitivity(Sensitivity):
         for corr_group_name, corr_group in groups.items():
             corr_group_name = cast("str", corr_group_name)
 
-            # A single correlation - print warning and skip it
             if len(corr_group) == 1:
-                printwarning(corr_group_name)
+                print(
+                    "Warning: Only one parameter uses correlation sheet "
+                    f"{corr_group_name!r}, so it is sampled without correlation."
+                )
                 continue
 
             # The Excel sheet only fills in the lower triangle, which
@@ -1220,7 +1194,7 @@ class ExternSensitivity(Sensitivity):
             size (int): number of samples to generate
             filename (str): file to read values from
             parameters (list): list with parameter names
-            seeds (str): default or None
+            seedvalues (list): list of integer seed values or None
         """
         _raise_if_duplicates(parameters)
         self.sensvalues = pd.DataFrame(columns=parameters, index=range(size))

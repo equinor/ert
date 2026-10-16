@@ -1,12 +1,17 @@
 from dataclasses import dataclass
-from typing import Any, Self, cast
+from typing import Any, Self
 
 import pandas as pd
 from python_calamine import CalamineWorkbook
 
 from fmudesign.read_correlations import parse_sensitivity_correlations
 from fmudesign.read_distributions import parse_distribution_parameters
-from fmudesign.utils import _has_value, _raise_if_duplicates, resolve_path
+from fmudesign.utils import (
+    _has_value,
+    _raise_if_duplicates,
+    parse_decimals,
+    resolve_path,
+)
 
 
 @dataclass
@@ -31,17 +36,7 @@ class DesignInput:
         _check_designinput(df)
         df["sensname"] = df["sensname"].ffill()
 
-        decimals = None
-        if "decimals" in df:
-            # Convert to numeric, then filter for integers
-            numeric_decimals = pd.to_numeric(df["decimals"], errors="coerce")
-            mask = numeric_decimals.notna() & (numeric_decimals % 1 == 0)
-
-            valid_decimals = df[mask]
-            decimals = {
-                row.param_name: int(cast("float", row.decimals))
-                for row in valid_decimals.itertuples()
-            }
+        decimals = parse_decimals(df) if "decimals" in df else None
 
         grouped = df.groupby("sensname", sort=False)
 
