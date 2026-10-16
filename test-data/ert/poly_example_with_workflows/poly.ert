@@ -1,0 +1,37 @@
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 50
+
+RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+
+OBS_CONFIG observations
+REALIZATION_MEMORY 50mb
+
+NUM_REALIZATIONS 100
+MIN_REALIZATIONS 1
+
+GEN_KW COEFFS coeff_priors
+GEN_DATA POLY_RES RESULT_FILE:poly.out
+
+INSTALL_JOB poly_eval POLY_EVAL
+FORWARD_MODEL poly_eval
+
+-- Load the single workflow job that all workflows below reuse.
+LOAD_WORKFLOW_JOB PRINT_MESSAGE PRINT_MESSAGE
+
+-- Load one workflow per hook point.
+LOAD_WORKFLOW workflows/pre_experiment      pre_experiment
+LOAD_WORKFLOW workflows/pre_simulation      pre_simulation
+LOAD_WORKFLOW workflows/post_simulation     post_simulation
+LOAD_WORKFLOW workflows/pre_first_update    pre_first_update
+LOAD_WORKFLOW workflows/pre_update          pre_update
+LOAD_WORKFLOW workflows/post_update         post_update
+LOAD_WORKFLOW workflows/post_experiment     post_experiment
+
+-- Hook each workflow to its corresponding runtime.
+HOOK_WORKFLOW pre_experiment      PRE_EXPERIMENT
+HOOK_WORKFLOW pre_simulation      PRE_SIMULATION
+HOOK_WORKFLOW post_simulation     POST_SIMULATION
+HOOK_WORKFLOW pre_first_update    PRE_FIRST_UPDATE
+HOOK_WORKFLOW pre_update          PRE_UPDATE
+HOOK_WORKFLOW post_update         POST_UPDATE
+HOOK_WORKFLOW post_experiment     POST_EXPERIMENT
