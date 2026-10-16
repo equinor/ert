@@ -338,6 +338,13 @@ def copy_heat_equation(copy_case):
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
+@pytest.fixture
+def copy_waterflood(copy_case):
+    copy_case("waterflood")
+    with Path("config.ert").open("a", encoding="utf-8") as fh:
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+
+
 @pytest.fixture(
     name="copy_snake_oil_case_storage",
     params=[
