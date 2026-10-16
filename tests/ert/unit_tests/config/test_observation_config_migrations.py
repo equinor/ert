@@ -250,7 +250,7 @@ SUMMARY_OBSERVATION FOPR_OBS2 {
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_summary_observation_old_location_is_migrated_to_new_localization():
+def test_that_summary_observation_location_keywords_are_migrated_to_localization():
     setup_timemap_config(
         """\
         SUMMARY_OBSERVATION FOPR_OBS {
@@ -646,6 +646,45 @@ def test_that_observation_config_without_refcase_or_time_map_raises_error(
             """,
             "Could not find",
             id="summary observation date not found in time map",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE      = 0.1;
+                ERROR      = 0.05;
+                RESTART    = 1;
+                KEY        = FOPR;
+                LOCATION_X = 100.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location x without y",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE      = 0.1;
+                ERROR      = 0.05;
+                RESTART    = 1;
+                KEY        = FOPR;
+                LOCATION_Y = 200.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location y without x",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE          = 0.1;
+                ERROR          = 0.05;
+                RESTART        = 1;
+                KEY            = FOPR;
+                LOCATION_RANGE = 300.0;
+            };
+            """,
+            "LOCATION_RANGE requires LOCATION_X and LOCATION_Y",
+            id="summary observation location range without coordinates",
         ),
     ],
 )
