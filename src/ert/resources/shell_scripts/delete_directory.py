@@ -24,7 +24,7 @@ def delete_empty_directory(dirname: str) -> None:
             print(f"Removing symbolic link:'{dirname}'")
         else:
             try:
-                Path(dirname).rmdir()
+                os.rmdir(dirname)  # ruff: ignore[os-rmdir]
                 print(f"Removing directory:'{dirname}'")
             except OSError as error:
                 if error.errno == 39:
