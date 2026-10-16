@@ -52,7 +52,7 @@ def create_target_ensemble_format_field(
     target_ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
     target_ensemble_format_field = StringBox(
         target_ensemble_format_model,  # type: ignore
-        target_ensemble_format_model.getDefaultValue(),  # type: ignore
+        target_ensemble_format_model.get_default_value(),  # type: ignore
         continuous_update=True,
     )
     target_ensemble_format_field.setValidator(ProperNameFormatArgument())
