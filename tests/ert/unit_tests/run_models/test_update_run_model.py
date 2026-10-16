@@ -3,7 +3,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.analysis.event import AnalysisCompleteEvent, DataSection
+from ert.analysis.event import (
+    AnalysisCompleteEvent,
+    AnalysisDataEvent,
+    AnalysisErrorEvent,
+    DataSection,
+)
 from ert.config import (
     ConfigValidationError,
     ESSettings,
@@ -88,17 +93,38 @@ def test_that_update_creates_next_iteration_from_updatable_prior(
     )
 
 
-def test_that_send_smoother_event_persists_observation_report_on_analysis_complete():
+_DATA_SECTION = DataSection(
+    header=["observation_key", "status"],
+    data=[("OBS_1", "Active"), ("OBS_2", "Deactivated, outlier")],
+)
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        pytest.param(
+            AnalysisCompleteEvent(
+                data=_DATA_SECTION, update_algorithm="ensemble_smoother"
+            ),
+            id="complete",
+        ),
+        pytest.param(
+            AnalysisDataEvent(name="Auto scale: OBS_GROUP", data=_DATA_SECTION),
+            id="data",
+        ),
+        pytest.param(
+            AnalysisErrorEvent(
+                error_msg="No active observations left",
+                data=_DATA_SECTION,
+                update_algorithm="ensemble_smoother",
+            ),
+            id="error",
+        ),
+    ],
+)
+def test_that_send_smoother_event_persists_update_tables_on_posterior_ensemble(event):
     model = MagicMock(spec=UpdateRunModel)
     mock_ensemble = MagicMock()
-
-    data_section = DataSection(
-        header=["observation_key", "status"],
-        data=[("OBS_1", "Active"), ("OBS_2", "Deactivated, outlier")],
-    )
-    event = AnalysisCompleteEvent(
-        data=data_section, update_algorithm="ensemble_smoother"
-    )
 
     UpdateRunModel.send_smoother_event(
         model,

@@ -1,5 +1,6 @@
 import dataclasses
 import functools
+import logging
 import uuid
 
 from ert.analysis import build_strategy_map, smoother_update
@@ -34,6 +35,8 @@ from ert.run_models.event import (
 from ert.run_models.run_model import ErtRunError, RunModel
 from ert.run_models.run_model_configs import UpdateRunModelConfig
 from ert.storage import Ensemble, LocalExperiment
+
+logger = logging.getLogger(__name__)
 
 
 class UpdateRunModel(RunModel, UpdateRunModelConfig):
@@ -179,6 +182,13 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisErrorEvent():
+                try:
+                    ensemble.save_blob(event)
+                except Exception:
+                    logger.exception(
+                        "Could not store the report of the failed update of %s",
+                        ensemble.name,
+                    )
                 self.send_event(
                     RunModelErrorEvent(
                         iteration=iteration,
@@ -188,6 +198,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisDataEvent():
+                ensemble.save_blob(event)
                 self.send_event(
                     RunModelDataEvent(
                         iteration=iteration,
