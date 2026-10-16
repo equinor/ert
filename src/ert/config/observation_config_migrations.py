@@ -608,7 +608,17 @@ def remove_refcase_and_time_map_dependence_from_obs_config(
             f"SUMMARY_OBSERVATION {smry_obs.name} {{\n"
             f"   VALUE    = {smry_obs.value};\n"
             f"   ERROR    = {smry_obs.error};\n"
-            f"   DATE     = {date.strftime('%Y-%m-%d')};\n"
+            + (
+                f"   ERROR_MODE = {smry_obs.error_mode.value};\n"
+                if smry_obs.error_mode != ErrorModes.ABS
+                else ""
+            )
+            + (
+                f"   ERROR_MIN = {smry_obs.error_min};\n"
+                if smry_obs.error_mode == ErrorModes.RELMIN
+                else ""
+            )
+            + f"   DATE     = {date.strftime('%Y-%m-%d')};\n"
             f"   KEY      = {smry_obs.key};\n"
             + (
                 f"   LOCATION_X={smry_obs.location_x};\n"

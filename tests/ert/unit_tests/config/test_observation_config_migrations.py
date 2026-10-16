@@ -847,6 +847,49 @@ def test_that_summary_observation_uses_restart_computed_from_time_map(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    ("error_fields", "expected", "unexpected"),
+    [
+        pytest.param(
+            "ERROR_MODE = RELMIN; ERROR_MIN = 50.0;",
+            ["ERROR_MODE = RELMIN;", "ERROR_MIN = 50.0;"],
+            [],
+            id="relmin",
+        ),
+        pytest.param(
+            "ERROR_MODE = REL;", ["ERROR_MODE = REL;"], ["ERROR_MIN"], id="rel"
+        ),
+        pytest.param("", [], ["ERROR_MODE", "ERROR_MIN"], id="abs_default"),
+    ],
+)
+def test_that_summary_observation_conversion_keeps_error_mode_and_min(
+    error_fields, expected, unexpected
+):
+    setup_timemap_config(
+        f"""\
+        SUMMARY_OBSERVATION WOPR_OBS {{
+            VALUE = 200.0;
+            ERROR = 0.1;
+            {error_fields}
+            RESTART = 1;
+            KEY   = WOPR:OP1;
+        }};
+        """,
+        time_map_content="2020-01-01\n2020-02-01\n",
+    )
+
+    result = remove_refcase_and_time_map_dependence_from_obs_config("config.ert")
+
+    assert result is not None
+    [summary_change] = result.summary_obs_changes
+    declaration = " ".join(summary_change.declaration.split())
+    for field in expected:
+        assert field in declaration
+    for field in unexpected:
+        assert field not in declaration
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_missing_obs_config_returns_no_changes():
     Path("config.ert").write_text(
         "NUM_REALIZATIONS 1\n",
