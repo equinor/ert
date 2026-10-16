@@ -29,7 +29,11 @@ from everest.util import (
     version_info,
 )
 
-from .monitor import run_empty_server_monitor, run_server_monitor
+from .monitor import (
+    run_empty_server_monitor,
+    run_server_monitor,
+    run_server_monitor_async,
+)
 from .utils import (
     ArgParseFormatter,
     get_experiment_status,
@@ -129,16 +133,19 @@ def everest_entry(args: list[str] | None = None) -> None:
         if threading.current_thread() is threading.main_thread():
             signal.signal(
                 signal.SIGINT,
-                partial(signal.default_int_handler),
+                signal.default_int_handler,
             )
 
         async def run_with_interrupt_handler() -> None:
             try:
                 await run_everest(options)
-            except KeyboardInterrupt:
+            except asyncio.CancelledError:
                 handle_keyboard_interrupt(signal.SIGINT, None, options)
 
-        asyncio.run(run_with_interrupt_handler())
+        try:
+            asyncio.run(run_with_interrupt_handler())
+        except KeyboardInterrupt:
+            handle_keyboard_interrupt(signal.SIGINT, None, options)
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
@@ -302,15 +309,11 @@ async def run_everest(options: argparse.Namespace) -> None:
         monitor_thread.start()
         run_gui(options.config.output_dir)
         monitor_thread.join()
-    elif options.disable_monitoring:
-        run_empty_server_monitor(
-            client=client,
-            experiment_id=experiment_id,
-        )
     else:
-        run_server_monitor(
+        await run_server_monitor_async(
             client=client,
             experiment_id=experiment_id,
+            disable_monitoring=options.disable_monitoring,
         )
 
     msg: str = ""
