@@ -737,7 +737,7 @@ def test_that_summary_log_reports_usage_of_design_features(tmp_path, caplog):
         "Background: distributions",
         "RMS seeds: default",
         "Number of parameters with decimals: 1",
-        "Distribution seed: False",
+        "Distribution seed: True",
         "Number of dependencies: 1",
         (
             "Number of parameters per sensitivity: "

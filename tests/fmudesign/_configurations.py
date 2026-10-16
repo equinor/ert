@@ -5,7 +5,7 @@ def minimal_configuration():
     return {
         "designtype": "onebyone",
         "repeats": 1,
-        "distribution_seed": None,
+        "distribution_seed": 1234,
         "seeds": None,
         "defaultvalues": {},
         "sensitivities": {},
