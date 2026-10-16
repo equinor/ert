@@ -2288,11 +2288,11 @@ def test_that_hours_are_rounded_to_closest_int_in_plot_observations():
 
 
 def test_that_base_observation_fails_validation_with_unknown_kwarg():
-
     with pytest.raises(ValidationError):
         BaseObservation(random_kwarg=42)
 
 
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
 def test_that_missing_rft_observations_name_is_defaulted_to_primary_keys():
     well = "PROD"
     date = "2015-02-01"

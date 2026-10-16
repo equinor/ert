@@ -131,7 +131,7 @@ def _open_rft_qc_tab(qtbot: QtBot, gui: QWidget) -> RftQcWidget:
 
 
 @pytest.mark.screenshot_test
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 def test_that_inspect_rft_tab_screenshot_is_up_to_date(
     qtbot,
     tmp_path: Path,

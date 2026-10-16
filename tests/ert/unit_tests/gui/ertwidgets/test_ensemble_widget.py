@@ -150,7 +150,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage, value_modif
     assert len(ensemble_widget._figure.get_axes()) == 1
 
 
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
     date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
@@ -241,7 +241,7 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
 @pytest.mark.parametrize(
     ("approximate_missing_rft_values", "visualized_responses"), [(True, 1), (False, 0)]
 )
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_enabled(
     qtbot, storage, approximate_missing_rft_values, visualized_responses
@@ -351,7 +351,7 @@ def verify_number_of_visualized_responses(ensemble_widget, expected_num_response
     assert len(displayed_responses) == expected_num_responses
 
 
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     qtbot, storage

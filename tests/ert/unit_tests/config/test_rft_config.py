@@ -769,7 +769,7 @@ def test_that_substitutions_are_applied_to_zonemap_filename(
         )
 
 
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 def test_that_missing_egrid_with_locations_raises_invalid_response_file(
     mock_resfo_file,
 ):
@@ -1485,7 +1485,7 @@ def _collect_rft_response_warnings(
 def test_that_simple_rft_key_with_response_doesnt_warn(
     setup_mock_resfo_file,
 ):
-    """Simple means a RFT key not containing any wildcards in this context"""
+    """Simple means an RFT key not containing any wildcards in this context"""
     warnings_ = _collect_rft_response_warnings(
         wells=[_MOCK_RESFO_RFT_WELL],
         times=[_MOCK_RESFO_RFT_TIME],
