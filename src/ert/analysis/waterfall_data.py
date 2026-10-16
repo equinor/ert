@@ -8,35 +8,19 @@ from __future__ import annotations
 
 import io
 import logging
-from collections import Counter
 from typing import TYPE_CHECKING
 
 import numpy as np
 import polars as pl
 import scipy.sparse
 
+from ert.storage import observation_id_expr
 from ert.storage.blob_data import BlobType
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
-
-
-def _observation_names_with_indices(obs_resp_df: pl.DataFrame) -> list[str]:
-    observation_names = obs_resp_df["observation_key"].to_list()
-    if "index" not in obs_resp_df.columns:
-        return observation_names
-
-    name_counts = Counter(observation_names)
-    if all(count == 1 for count in name_counts.values()):
-        return observation_names
-
-    observation_indices = obs_resp_df["index"].to_list()
-    return [
-        f"{name}[{index}]" if name_counts[name] > 1 else name
-        for name, index in zip(observation_names, observation_indices, strict=True)
-    ]
 
 
 def compute_waterfall_data(
@@ -133,7 +117,7 @@ def compute_waterfall_data(
         obs_resp_df = obs_resp_df.filter(obs_resp_df["status"] == "Active")
 
     observation_values = obs_resp_df["observations"].to_numpy()
-    observation_names = _observation_names_with_indices(obs_resp_df)
+    observation_ids = obs_resp_df.select(observation_id_expr()).to_series().to_list()
 
     # Simulated responses: columns named by realization index
     real_cols = [str(i) for i in iens]
@@ -169,7 +153,7 @@ def compute_waterfall_data(
 
     # Sort by absolute contribution, take top N
     sorted_indices = np.argsort(np.abs(contributions))[::-1]
-    sorted_names = np.array(observation_names)[sorted_indices]
+    sorted_names = np.array(observation_ids)[sorted_indices]
     sorted_values = contributions[sorted_indices]
 
     if len(sorted_values) > nobservations:

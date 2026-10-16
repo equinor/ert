@@ -60,6 +60,8 @@ def k_blob_ensemble() -> MagicMock:
     prior.get_realization_mask_with_responses.return_value = np.ones(n_real, dtype=bool)
     prior.get_observations_and_responses.return_value = pl.DataFrame(
         {
+            "response_key": ["FOPR"] * n_obs,
+            "index": [f"2020-01-0{i + 1} 00:00:00" for i in range(n_obs)],
             "observation_key": [f"OBS_{i}" for i in range(n_obs)],
             "observations": obs_vals.tolist(),
             "status": ["Active"] * n_obs,
@@ -124,6 +126,8 @@ def test_that_k_row_width_and_observation_count_mismatch_returns_empty_dataframe
     prior.get_realization_mask_with_responses.return_value = np.array([True, True])
     prior.get_observations_and_responses.return_value = pl.DataFrame(
         {
+            "response_key": ["FOPR", "FOPR"],
+            "index": ["2020-01-01 00:00:00", "2020-01-02 00:00:00"],
             "observation_key": ["OBS_A", "OBS_B"],
             "observations": [1.0, 2.0],
             "status": ["Active", "Active"],
@@ -181,6 +185,8 @@ def test_that_observation_contributions_preserve_direct_k_innovation_values():
     prior.get_realization_mask_with_responses.return_value = np.ones(n_real, dtype=bool)
     prior.get_observations_and_responses.return_value = pl.DataFrame(
         {
+            "response_key": ["FOPR", "FOPR", "FOPR"],
+            "index": ["0", "1", "2"],
             "observation_key": ["OBS_A", "OBS_B", "OBS_C"],
             "observations": observation_values.tolist(),
             "status": ["Active"] * len(observation_values),
@@ -201,56 +207,86 @@ def test_that_observation_contributions_preserve_direct_k_innovation_values():
     result = compute_waterfall_data(ensemble, "PARAM")
     contributions = result.filter(pl.col("type") == "contribution")
 
-    assert contributions.filter(pl.col("name") == "OBS_A")["value"][0] == pytest.approx(
-        2.0
-    )
-    assert contributions.filter(pl.col("name") == "OBS_B")["value"][0] == pytest.approx(
-        2.0
-    )
-    assert contributions.filter(pl.col("name") == "OBS_C")["value"][0] == pytest.approx(
-        0.5
-    )
+    assert contributions.filter(pl.col("name") == "FOPR:0")["value"][
+        0
+    ] == pytest.approx(2.0)
+    assert contributions.filter(pl.col("name") == "FOPR:1")["value"][
+        0
+    ] == pytest.approx(2.0)
+    assert contributions.filter(pl.col("name") == "FOPR:2")["value"][
+        0
+    ] == pytest.approx(0.5)
     residual_value = contributions.filter(pl.col("name") == "Residual")["value"][0]
     assert residual_value == pytest.approx(0.5)
 
 
-def test_that_duplicate_observation_names_include_observation_index():
+def _ensemble_with_observations(observations: pl.DataFrame) -> MagicMock:
+    n_obs = observations.height
     n_real = 3
-    k_row = np.array([1.0, 1.0, 1.0])
-    observation_values = np.array([10.0, 20.0, 30.0])
-    simulated = np.tile([9.0, 18.0, 27.0], (n_real, 1)).T
-    real_cols = {str(i): simulated[:, i].tolist() for i in range(n_real)}
+    real_cols = {str(i): pl.col("observations") - 1.0 for i in range(n_real)}
 
     prior = MagicMock()
     prior.get_realization_mask_with_responses.return_value = np.ones(n_real, dtype=bool)
-    prior.get_observations_and_responses.return_value = pl.DataFrame(
-        {
-            "observation_key": ["POLY_OBS", "POLY_OBS", "POLY_OBS"],
-            "index": ["0, 0", "0, 2", "0, 4"],
-            "observations": observation_values.tolist(),
-            "status": ["Active"] * len(observation_values),
-            **real_cols,
-        }
+    prior.get_observations_and_responses.return_value = observations.with_columns(
+        status=pl.lit("Active"), **real_cols
     )
-    prior.load_parameters_numpy.return_value = np.array([[0.0], [1.0], [2.0]])
+    prior.load_parameters_numpy.return_value = np.zeros((n_real, 1))
 
     ensemble = MagicMock()
     ensemble.id = uuid.uuid4()
     ensemble.parent = uuid.uuid4()
     ensemble.load_blob_metadata.return_value = [_make_k_blob({"PARAM": 1})]
-    ensemble.load_blob.return_value = _dense_k_bytes(k_row[np.newaxis, :])
-    ensemble.experiment.observation_keys = ["POLY_OBS"]
-    ensemble.load_parameters_numpy.return_value = np.array([[6.0], [7.0], [8.0]])
+    ensemble.load_blob.return_value = _dense_k_bytes(np.ones((1, n_obs)))
+    ensemble.experiment.observation_keys = (
+        observations["observation_key"].unique().to_list()
+    )
+    ensemble.load_parameters_numpy.return_value = np.full((n_real, 1), float(n_obs))
     ensemble._storage.get_ensemble.return_value = prior
+    return ensemble
+
+
+def test_that_every_observation_is_labelled_by_response_key_and_index():
+    ensemble = _ensemble_with_observations(
+        pl.DataFrame(
+            {
+                "response_key": ["POLY_RES", "POLY_RES", "FOPR"],
+                "index": ["0, 0", "0, 2", "2020-01-01 00:00:00"],
+                "observation_key": ["POLY_OBS", "POLY_OBS", "FOPR_OBS"],
+                "observations": [10.0, 20.0, 30.0],
+            }
+        )
+    )
 
     result = compute_waterfall_data(ensemble, "PARAM")
-    observation_names = result.filter(pl.col("type") == "contribution")[
-        "name"
-    ].to_list()
+    observation_names = result.filter(pl.col("type") == "contribution")["name"]
 
-    assert "POLY_OBS[0, 0]" in observation_names
-    assert "POLY_OBS[0, 2]" in observation_names
-    assert "POLY_OBS[0, 4]" in observation_names
+    assert sorted(observation_names) == [
+        "FOPR:2020-01-01 00:00:00",
+        "POLY_RES:0, 0",
+        "POLY_RES:0, 2",
+    ]
+
+
+def test_that_seismic_observation_rows_sharing_name_get_distinct_labels():
+    ensemble = _ensemble_with_observations(
+        pl.DataFrame(
+            {
+                "response_key": ["SEISMIC", "SEISMIC", "SEISMIC"],
+                "index": ["123.5, 456.7", "123.5, 460.0", "130.0, 456.7"],
+                "observation_key": ["SEISMIC_OBS", "SEISMIC_OBS", "SEISMIC_OBS"],
+                "observations": [10.0, 20.0, 30.0],
+            }
+        )
+    )
+
+    result = compute_waterfall_data(ensemble, "PARAM")
+    observation_names = result.filter(pl.col("type") == "contribution")["name"]
+
+    assert sorted(observation_names) == [
+        "SEISMIC:123.5, 456.7",
+        "SEISMIC:123.5, 460.0",
+        "SEISMIC:130.0, 456.7",
+    ]
 
 
 def test_that_observations_exceeding_nobservations_limit_are_bundled(
@@ -278,6 +314,8 @@ def test_that_flat_prior_uses_raw_mean_shift_as_posterior_value():
     prior.get_realization_mask_with_responses.return_value = np.ones(5, dtype=bool)
     prior.get_observations_and_responses.return_value = pl.DataFrame(
         {
+            "response_key": ["FOPR"] * n_obs,
+            "index": [str(i) for i in range(n_obs)],
             "observation_key": [f"OBS_{i}" for i in range(n_obs)],
             "observations": obs_vals.tolist(),
             "status": ["Active"] * n_obs,
@@ -317,6 +355,8 @@ def test_that_k_row_offset_selects_the_correct_parameter_row():
     prior.get_realization_mask_with_responses.return_value = np.ones(n_real, dtype=bool)
     prior.get_observations_and_responses.return_value = pl.DataFrame(
         {
+            "response_key": ["FOPR"] * n_obs,
+            "index": [str(i) for i in range(n_obs)],
             "observation_key": [f"OBS_{i}" for i in range(n_obs)],
             "observations": obs_vals.tolist(),
             "status": ["Active"] * n_obs,
@@ -336,8 +376,8 @@ def test_that_k_row_offset_selects_the_correct_parameter_row():
 
     result = compute_waterfall_data(ensemble, "SECOND")
     first_contribution_name = result.filter(pl.col("type") == "contribution")["name"][0]
-    # SECOND's K row is [0, 0, 1] so only OBS_2 has a non-zero contribution
-    assert first_contribution_name == "OBS_2"
+    # SECOND's K row is [0, 0, 1] so only FOPR:2 has a non-zero contribution
+    assert first_contribution_name == "FOPR:2"
 
 
 def test_that_inactive_observations_are_excluded_by_status_filter():
@@ -351,6 +391,8 @@ def test_that_inactive_observations_are_excluded_by_status_filter():
     prior.get_realization_mask_with_responses.return_value = np.ones(n_real, dtype=bool)
     prior.get_observations_and_responses.return_value = pl.DataFrame(
         {
+            "response_key": ["FOPR", "FOPR"],
+            "index": ["0", "1"],
             "observation_key": ["OBS_0", "OBS_1"],
             "observations": [10.0, 20.0],
             "status": ["Active", "Inactive"],
@@ -375,5 +417,5 @@ def test_that_inactive_observations_are_excluded_by_status_filter():
     observation_names = result.filter(pl.col("type") == "contribution")[
         "name"
     ].to_list()
-    assert "OBS_1" not in observation_names
-    assert "OBS_0" in observation_names
+    assert "FOPR:1" not in observation_names
+    assert "FOPR:0" in observation_names

@@ -3,6 +3,7 @@ from __future__ import annotations
 from .local_ensemble import (
     LocalEnsemble,
     load_realization_parameters_and_responses,
+    observation_id_expr,
 )
 from .local_experiment import ExperimentState, ExperimentStatus, LocalExperiment
 from .local_storage import LocalStorage, local_storage_set_ert_config, open_storage
@@ -47,5 +48,6 @@ __all__ = [
     "Storage",
     "load_realization_parameters_and_responses",
     "local_storage_set_ert_config",
+    "observation_id_expr",
     "open_storage",
 ]
