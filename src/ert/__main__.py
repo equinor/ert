@@ -26,6 +26,7 @@ from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
+    DEFAULT_TARGET_ENSEMBLE_FORMAT,
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -348,7 +349,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     ensemble_smoother_parser.add_argument(
         "--target-case",
         type=valid_name_format,
-        default="iter-%d",
+        default=DEFAULT_TARGET_ENSEMBLE_FORMAT,
         action=DeprecatedAction,
         alternative_option="--target-ensemble",
         dest="target_ensemble",
@@ -358,7 +359,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     ensemble_smoother_parser.add_argument(
         "--target-ensemble",
         type=valid_name_format,
-        default="iter-%d",
+        default=DEFAULT_TARGET_ENSEMBLE_FORMAT,
         dest="target_ensemble",
         help="Name of the ensemble where the results for the "
         "updated parameters will be stored.",
@@ -391,7 +392,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     enif_parser.add_argument(
         "--target-ensemble",
         type=valid_name_format,
-        default="iter-%d",
+        default=DEFAULT_TARGET_ENSEMBLE_FORMAT,
         dest="target_ensemble",
         help="Name of the ensemble where the results for the "
         "updated parameters will be stored.",
@@ -419,6 +420,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     es_mda_parser.add_argument(
         "--target-ensemble",
         type=valid_name_format,
+        default=DEFAULT_TARGET_ENSEMBLE_FORMAT,
         help="The es_mda creates multiple ensembles for the different "
         "iterations. The ensemble names will follow the specified format. "
         "For example, 'Target ensemble format: iter-%%d' will generate "

@@ -341,7 +341,7 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
 @pytest.mark.parametrize(
     ("experiment_mode", "ensemble_name", "iterations"),
     [
-        (ES_MDA_MODE, "default_", 4),
+        (ES_MDA_MODE, "iter-", 4),
         (ENSEMBLE_SMOOTHER_MODE, "iter-", 2),
     ],
 )
@@ -448,9 +448,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
 @pytest.mark.parametrize(
     ("experiment_mode", "extra_args", "prior_name", "posterior_name"),
     [
-        pytest.param(
-            ES_MDA_MODE, ["--weights=1"], "default_0", "default_1", id=ES_MDA_MODE
-        ),
+        pytest.param(ES_MDA_MODE, ["--weights=1"], "iter-0", "iter-1", id=ES_MDA_MODE),
         pytest.param(ENIF_MODE, [], "iter-0", "iter-1", id=ENIF_MODE),
     ],
 )
