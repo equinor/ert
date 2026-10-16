@@ -1,0 +1,2 @@
+class FmudesignInputError(ValueError):
+    pass

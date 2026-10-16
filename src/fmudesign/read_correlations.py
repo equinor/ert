@@ -4,6 +4,7 @@ from typing import Any
 import pandas as pd
 
 from .design_distributions import read_correlations
+from .exceptions import FmudesignInputError
 from .utils import _has_value
 
 
@@ -53,7 +54,7 @@ def parse_sensitivity_correlations(
             msg += f"Parameters in {group_description}: {sorted(set(parameters))}\n"
             msg += f"Parameters in correlation sheet: {sorted(set(df_corr.columns))}\n"
             msg += "These parameters must be specified one-to-one."
-            raise ValueError(msg)
+            raise FmudesignInputError(msg)
 
     correlations["sheetnames"] = list(corr_to_params)
 

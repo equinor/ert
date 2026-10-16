@@ -11,6 +11,8 @@ import probabilit.distributions
 import probabilit.modeling
 from scipy import stats
 
+from .exceptions import FmudesignInputError
+
 
 def validate_params(distname: str, parameters: list[str]) -> list[float]:
     """Common parameter validation for all distributions.
@@ -21,21 +23,21 @@ def validate_params(distname: str, parameters: list[str]) -> list[float]:
     >>> validate_params('normal', ['inf'])
     Traceback (most recent call last):
         ...
-    ValueError: Parameter 1 in distribution normal is not finite: inf
-    """
+    fmudesign.exceptions.FmudesignInputError: Parameter 1 in distribution normal is not finite: inf
+    """  # ruff: ignore[line-too-long]
     new_parameters: list[float] = []
 
     for i, parameter in enumerate(parameters):
         try:
             new_parameters.append(float(parameter))
         except (ValueError, TypeError) as e:
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Parameter {i + 1} in distribution {distname} not "
                 f"convertible to number: {parameter}"
             ) from e
 
         if not np.isfinite(new_parameters[i]):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Parameter {i + 1} in distribution {distname} "
                 f"is not finite: {parameter}"
             )
@@ -140,7 +142,7 @@ def to_probabilit(
         values = [v.strip() for v in values_str.split(",")]
         probabilities = [float(v.strip()) for v in probabilities_str.split(",")]
         if len(values) != len(probabilities):
-            raise ValueError(
+            raise FmudesignInputError(
                 "Length mismatch for discrete distribution, "
                 f"dist_param1 has length {len(values)}, "
                 f"but dist_param2 has length {len(probabilities)}. "
@@ -187,7 +189,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("norm"):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Normal must have 2 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -209,7 +211,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("logn"):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Lognormal must have 2 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -226,7 +228,7 @@ def to_probabilit(
             return probabilit.distributions.Uniform(minimum=minimum, maximum=maximum)
 
         case [_, parameters] if distname.startswith("unif"):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Uniform must have 2 parameters, got: {len(parameters)} ({parameters})"
             )
 
@@ -243,7 +245,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("triang"):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Triangular must have 3 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -260,7 +262,7 @@ def to_probabilit(
             return probabilit.Distribution("beta", a=a, b=b, loc=loc, scale=scale)
 
         case [_, parameters] if distname.startswith("beta"):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Beta must have 2 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -293,7 +295,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("pert"):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"PERT must have 3 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -304,13 +306,15 @@ def to_probabilit(
             return probabilit.Distribution("loguniform", low, high)
 
         case [_, parameters] if distname.startswith("logunif"):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Loguniform must have 2 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
 
         case [distname, parameters]:
-            raise ValueError(f"Invalid combination of {distname=} and {parameters=}.")
+            raise FmudesignInputError(
+                f"Invalid combination of {distname=} and {parameters=}."
+            )
 
 
 def is_number(teststring: str) -> bool:
@@ -337,7 +341,7 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
             as column and index
     """
     if not str(excel_filename).endswith(".xlsx"):
-        raise ValueError(
+        raise FmudesignInputError(
             "Correlation matrix filename should be on Excel format and end with .xlsx"
         )
 
@@ -368,7 +372,7 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
             "These values must match exactly. Please fix sheet "
             f"{corr_sheet!r} in file {excel_filename!r}."
         )
-        raise ValueError(msg)
+        raise FmudesignInputError(msg)
 
     arr = correlations.to_numpy(copy=True)
     upper_idx = np.triu_indices_from(arr, k=1)
@@ -376,19 +380,19 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
     lower_entries = arr[lower_idx]
 
     if not np.all(np.isnan(arr[upper_idx])):
-        raise ValueError(
+        raise FmudesignInputError(
             "All upper-triangular elements in matrix in "
             f"corr sheet {corr_sheet} must be blank."
         )
 
     if not np.all(np.isfinite(lower_entries)):
-        raise ValueError(
+        raise FmudesignInputError(
             "All lower-triangular elements in matrix in "
             f"corr sheet {corr_sheet} must be specified."
         )
 
     if np.any((lower_entries < -1) | (lower_entries > 1)):
-        raise ValueError(
+        raise FmudesignInputError(
             "All lower-triangular elements in matrix in "
             f"corr sheet {corr_sheet} must be between -1 and 1."
         )

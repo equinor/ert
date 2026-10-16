@@ -29,15 +29,17 @@ from argparse import ArgumentParser, Namespace, _SubParsersAction
 from importlib.resources import as_file, files
 from pathlib import Path
 
+from opentelemetry.trace import Status, StatusCode
 from packaging.version import Version
 from pydantic import ValidationError
 
 from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
-from ert.trace import tracer
+from ert.trace import trace, tracer
 
 from ._excel_to_dict import excel_to_dict
 from .create_design import DesignMatrix, _normalize_xlsx_filename
+from .exceptions import FmudesignInputError
 
 logger = logging.getLogger(__name__)
 
@@ -255,11 +257,11 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
 
     # Check existence of config file
     if not Path(args.config).is_file():
-        raise OSError(f"Input file {args.config} does not exist")
+        raise FmudesignInputError(f"Input file {args.config} does not exist")
 
     destination = _normalize_xlsx_filename(args.destination)
     if Path(args.config).resolve() == Path(destination).resolve():
-        raise OSError(
+        raise FmudesignInputError(
             f'Identical name "{args.config}" have been provided for the input'
             "file and the output file"
         )
@@ -330,6 +332,7 @@ def main() -> None:
 
     Wrapper for the fmudesign module
     """
+    span = trace.get_current_span()
 
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
@@ -338,6 +341,7 @@ def main() -> None:
 
     # Backwards compatibility. If not a known command, assume "run"
     valid_cmds = ("run", "init", "-h", "--help", "-v", "--version")
+    given_args = sys.argv[1:]
     if len(sys.argv) > 1 and sys.argv[1] not in valid_cmds:
         sys.argv.insert(1, "run")
 
@@ -352,7 +356,7 @@ def main() -> None:
     setup_site_logging(root_logger)
 
     logging.getLogger("fmudesign").setLevel(logging.INFO)
-    logger.info(f"Running fmudesign with args: {sys.argv[1:]}")
+    logger.info(f"Running fmudesign with args: {given_args}")
 
     err_guide_msg = (
         "\n \n"
@@ -365,6 +369,8 @@ def main() -> None:
     try:
         args.func(args)
     except ValidationError as e:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(e)
         for err in e.errors(include_url=False):
             msg = (
                 f"Validation error for '{err['loc'][0]}': "
@@ -374,7 +380,17 @@ def main() -> None:
             print(msg)
         print(err_guide_msg)
         sys.exit(1)
+    except FmudesignInputError as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        msg = f"Invalid fmudesign input: {err}"
+        logger.error(msg)
+        print(msg)
+        print(err_guide_msg)
+        sys.exit(1)
     except Exception as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
         logger.exception(f"fmudesign crashed unexpectedly with: {err}")
         traceback.print_exc()
         print(err_guide_msg)

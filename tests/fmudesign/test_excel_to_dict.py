@@ -12,6 +12,7 @@ from fmudesign._excel_to_dict import (
     _assert_no_merged_cells,
 )
 from fmudesign.design_input import _read_dependencies
+from fmudesign.exceptions import FmudesignInputError
 from fmudesign.utils import _has_value, map_dependencies
 
 MOCK_GENERAL_INPUT = pd.DataFrame(
@@ -153,7 +154,7 @@ def test_that_excel_to_dict_rejects_duplicate_default_names_after_trimming(tmp_p
         ),
     )
 
-    with pytest.raises(ValueError, match="duplicate parameter names"):
+    with pytest.raises(FmudesignInputError, match="duplicate parameter names"):
         excel_to_dict(input_path)
 
 
@@ -360,7 +361,7 @@ def test_that_missing_background_sheet_error_lists_available_sheets(tmp_path):
         tmp_path / "designinput.xlsx", BACKGROUND_WITH_CORR, None, "typo_sheet"
     )
 
-    with pytest.raises(ValueError, match="Sheets in workbook") as exc_info:
+    with pytest.raises(FmudesignInputError, match="Sheets in workbook") as exc_info:
         excel_to_dict(input_path)
 
     message = str(exc_info.value)

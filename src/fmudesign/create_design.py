@@ -32,6 +32,7 @@ from .design_distributions import (
     read_correlations,
     to_probabilit,
 )
+from .exceptions import FmudesignInputError
 from .quality_report import QualityReporter, print_corrmat
 from .utils import (
     _raise_if_duplicates,
@@ -122,28 +123,60 @@ class DesignMatrix:
 
     def log_inputdict(self, inputdict: dict[str, Any]) -> None:
         sensitivities: dict[str, Any] = inputdict["sensitivities"]
-        parameters: list[tuple[str, list[Any] | None]] = [
-            param
+        sampled_parameters: list[dict[str, Any]] = [
+            sens_values["parameters"]
             for sens_values in sensitivities.values()
-            for param in (
-                dict.fromkeys(sens_values.get("parameters") or [])
-                if isinstance(sens_values.get("parameters"), list)
-                else (sens_values.get("parameters") or {})
-            ).items()
+            if sens_values["senstype"] == "dist"
         ]
+        background_source = None
+        decimals = set(inputdict.get("decimals") or {})
         if isinstance(background := inputdict.get("background"), dict):
-            parameters.extend(background.get("parameters", {}).items())
+            sampled_parameters.append(background.get("parameters", {}))
+            decimals |= set(background.get("decimals", {}))
+            background_source = "extern" if "extern" in background else "distributions"
+        parameters = [
+            param for params in sampled_parameters for param in params.items()
+        ]
+        correlation_groups: defaultdict[tuple[int, str], Counter[str]] = defaultdict(
+            Counter
+        )
+        for source, source_parameters in enumerate(sampled_parameters):
+            for dist_name, _, corr_sheet in source_parameters.values():
+                if corr_sheet is not None:
+                    correlation_groups[source, corr_sheet][dist_name] += 1
+        non_parameter_columns = set(self.START_COLUMNS) - {"RMS_SEED"}
+        background_params = (
+            set()
+            if self.backgroundvalues is None
+            else set(self.backgroundvalues.columns) - non_parameter_columns
+        )
+        non_numeric_values = self.designvalues.drop(
+            columns=list(non_parameter_columns)
+        ).select_dtypes(exclude="number")
+        is_text = non_numeric_values.map(lambda value: isinstance(value, str))
 
         senstype_to_unique_params: dict[str, set[str]] = defaultdict(set)
+        params_per_sensitivity: list[tuple[str, int]] = []
+        reals_per_sensitivity: list[tuple[str, int]] = []
+        sensitivities_per_param: Counter[str] = Counter()
         for sensvals in sensitivities.values():
+            reals = sensvals.get("numreal", inputdict["repeats"])
             if (senstype := sensvals["senstype"]) == "scenario":
-                senstype_to_unique_params[senstype] |= {
+                params = {
                     param for case in sensvals["cases"].values() for param in case
                 }
+                reals *= len(sensvals["cases"])
             else:
-                senstype_to_unique_params[senstype] |= set(
-                    sensvals.get("parameters") or {}
-                )
+                params = set(sensvals.get("parameters") or {})
+            derived_params = {
+                param
+                for dependency in sensvals.get("dependencies", {}).values()
+                for param in dependency["to_params"]
+            }
+            senstype_to_unique_params[senstype] |= params
+            params_per_sensitivity.append((senstype, len(params)))
+            reals_per_sensitivity.append((senstype, reals))
+            sensitivities_per_param.update(params | derived_params)
         senstype_to_param_count: dict[str, int] = {
             senstype: len(params)
             for senstype, params in senstype_to_unique_params.items()
@@ -152,54 +185,61 @@ class DesignMatrix:
         summary_log = dedent(
             f"""\
             Fmudesign summary:
-            Designtype: {inputdict.get("designtype")}
             Repeats: {inputdict.get("repeats")}
             Seed strategy: {inputdict.get("seed_strategy")}
             Correlation iterations: {inputdict.get("correlation_iterations")}
             Number of sensitivities: {len(sensitivities)}
-            Number of background parameters: {
-                len(background.get("parameters", {}))
-                if isinstance(background, dict)
-                else 0
+            Number of sensitivities per type: {
+                dict(Counter(sens["senstype"] for sens in sensitivities.values()))
             }
-            Distribution count: {
-                dict(Counter(v[0] for p, v in parameters if v is not None))
+            Number of background parameters: {len(background_params)}
+            Number of background parameters also set in sensitivities: {
+                len(background_params & sensitivities_per_param.keys())
+            }
+            Distribution count (name, parameter count): {
+                dict(Counter((dist[0], len(dist[1])) for _, dist in parameters))
             }
             Parameters per sensitivity type in designinput: {senstype_to_param_count}
             Parameters in designmatrix: {
-                len(
-                    set(self.designvalues.columns)
-                    - (set(self.START_COLUMNS) - {"RMS_SEED"})
-                )
+                len(set(self.designvalues.columns) - non_parameter_columns)
+            }
+            Number of non-numeric parameters in designmatrix: {
+                non_numeric_values.shape[1]
+            }
+            Number of parameters mixing text and numbers in designmatrix: {
+                (is_text.any() & ~is_text.all()).sum()
             }
             Parameters in designmatrix defaultsheet: {len(self.defaultvalues)}
             Number of parameters with correlations: {
                 len(
                     {
                         param
-                        for param, val in parameters
-                        if isinstance(val, list)
-                        and len(val) == 3
-                        and val[2] is not None
+                        for param, (_, _, corr_sheet) in parameters
+                        if corr_sheet is not None
                     }
                 )
             }
-            Has background: {bool(inputdict.get("background"))}
+            Distributions per correlation group: {
+                [dict(group) for group in correlation_groups.values()]
+            }
+            Background: {background_source}
             RMS seeds: {
                 "file"
                 if isinstance(inputdict.get("seeds"), list)
                 else inputdict.get("seeds")
             }
-            Number of parameters with decimals: {len(inputdict.get("decimals") or {})}
+            Number of parameters with decimals: {len(decimals)}
             Distribution seed: {inputdict.get("distribution_seed") is not None}
             Number of dependencies: {
                 sum(
                     len(sens.get("dependencies", {})) for sens in sensitivities.values()
                 )
             }
-            Number of realizations per sensitivity: {
-                self.designvalues["SENSNAME"].value_counts().to_list()
+            Number of parameters per sensitivity: {params_per_sensitivity}
+            Number of parameters set in more than one sensitivity: {
+                sum(count > 1 for count in sensitivities_per_param.values())
             }
+            Number of realizations per sensitivity: {reals_per_sensitivity}
             Total number of realizations: {len(self.designvalues)}"""
         )
         logger.info(summary_log)
@@ -522,7 +562,7 @@ class DesignMatrix:
                 if key not in case_:
                     temp_df[key] = self.backgroundvalues[key]
                     if len(temp_df) > len(self.backgroundvalues):
-                        raise ValueError(
+                        raise FmudesignInputError(
                             "Provided number of background values "
                             f"{len(self.backgroundvalues)} is smaller than number"
                             f" of realisations for sensitivity {sensname}"
@@ -547,7 +587,9 @@ class DesignMatrix:
                     self.defaultvalues[key]
                 )
             elif key not in self.START_COLUMNS:
-                raise LookupError(f"No defaultvalues given for parameter {key} ")
+                raise FmudesignInputError(
+                    f"No defaultvalues given for parameter {key} "
+                )
 
     def _add_dist_background(
         self,
@@ -610,7 +652,7 @@ class DesignMatrix:
                         .round(int(back_dict["decimals"][key]))
                     )
                 else:
-                    raise ValueError("Cannot round a string parameter")
+                    raise FmudesignInputError("Cannot round a string parameter")
         self.backgroundvalues = mc_backgroundvalues.copy()
 
     def _set_decimals(self, inputdict: dict[str, Any]) -> None:
@@ -648,7 +690,7 @@ class DesignMatrix:
                         .round(int(dict_decimals[key]))
                     )
                 else:
-                    raise ValueError(f"Cannot round a string parameter {key}")
+                    raise FmudesignInputError(f"Cannot round a string parameter {key}")
 
 
 class Sensitivity:
@@ -710,7 +752,7 @@ class SeedSensitivity(Sensitivity):
                 "Seed values must be set when running sensitivity type 'seed'. "
                 f"Got seed: {seedvalues}"
             )
-            raise ValueError(msg)
+            raise FmudesignInputError(msg)
 
         self.sensvalues = pd.DataFrame(index=range(size))
         self.sensvalues[seedname] = seedvalues[0:size]
@@ -720,7 +762,7 @@ class SeedSensitivity(Sensitivity):
                 dist_name = parameters[key][0].lower()
                 constant = parameters[key][1]
                 if dist_name != "const":
-                    raise ValueError(
+                    raise FmudesignInputError(
                         'A sensitivity of type "seed" can only have '
                         "additional parameters where dist_name is "
                         f'"const". Check sensitivity {self.sensname}"'
@@ -1020,7 +1062,7 @@ class MonteCarloSensitivity(Sensitivity):
         Shared by both the 'joint' and 'independent' seed strategies.
 
         Raises:
-            ValueError: if a parameter is a member of more than one correlation
+            FmudesignInputError: if a parameter is a member of more than one correlation
                 group, since only one of the requested correlations could then
                 be honoured.
         """
@@ -1063,7 +1105,7 @@ class MonteCarloSensitivity(Sensitivity):
             # would get the correlations of whichever group is sampled last.
             for name in multivariate_parameters:
                 if name in group_of_param:
-                    raise ValueError(
+                    raise FmudesignInputError(
                         f"Parameter {name!r} is part of several correlation "
                         f"groups: {group_of_param[name]!r} and "
                         f"{corr_group_name!r}. A parameter may only appear in "
@@ -1226,7 +1268,7 @@ class ExternSensitivity(Sensitivity):
         self.sensvalues = pd.DataFrame(columns=parameters, index=range(size))
         extern_values = parameters_from_extern(filename)
         if size > len(extern_values):
-            raise ValueError(
+            raise FmudesignInputError(
                 f"Number of realisations {size} specified for "
                 f"sensitivity {self.sensname} is larger than rows in "
                 f"file {filename}"
@@ -1235,7 +1277,7 @@ class ExternSensitivity(Sensitivity):
             if param in extern_values:
                 self.sensvalues[param] = list(extern_values[param][:size])
             else:
-                raise ValueError(f"Parameter {param} not in external file")
+                raise FmudesignInputError(f"Parameter {param} not in external file")
 
         self.sensvalues["SENSNAME"] = self.sensname
         self.sensvalues["SENSCASE"] = "p10_p90"
