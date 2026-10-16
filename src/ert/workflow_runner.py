@@ -21,6 +21,16 @@ from ert.config import (
 )
 
 
+def format_workflow_job_failure(job_name: str, error: str | None) -> str:
+    error_lines = (error or "no error message").splitlines()
+    indented_error = "\n    ".join(error_lines)
+    return f"Workflow job {job_name} failed: {indented_error}"
+
+
+class WorkflowJobFailedError(RuntimeError):
+    """Raised when a workflow job configured with STOP_ON_FAIL fails."""
+
+
 class WorkflowJobStatus(StrEnum):
     SUCCESS = "success"
     FAILED = "failed"
@@ -35,6 +45,8 @@ class WorkflowJobResult:
     stdout: str
     stderr: str
     status: WorkflowJobStatus
+    error: str | None = None
+    stopped_workflow: bool = False
     timestamp: datetime.datetime = field(
         default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
     )
@@ -138,6 +150,11 @@ class WorkflowJobRunner:
             raise ValueError("The job must be run before getting stderrdata")
         return self.__script.stderrdata
 
+    def error(self) -> str | None:
+        if self.__script is None:
+            raise ValueError("The job must be run before getting error")
+        return self.__script.error
+
 
 class WorkflowRunner:
     def __init__(
@@ -218,6 +235,7 @@ class WorkflowRunner:
                 status = WorkflowJobStatus.FAILED
             else:
                 status = WorkflowJobStatus.SUCCESS
+            stops_workflow = jobrunner.hasFailed() and jobrunner.stop_on_fail
 
             self.__status[jobrunner.name] = {
                 "stdout": jobrunner.stdoutdata(),
@@ -231,6 +249,8 @@ class WorkflowRunner:
                 stdout=jobrunner.stdoutdata(),
                 stderr=jobrunner.stderrdata(),
                 status=status,
+                error=jobrunner.error(),
+                stopped_workflow=stops_workflow,
             )
             self.__job_results.append(result)
 
@@ -240,10 +260,10 @@ class WorkflowRunner:
             else:
                 logger.info(self._log_entry(result), extra=extra)
 
-            if jobrunner.hasFailed() and jobrunner.stop_on_fail:
+            if stops_workflow:
                 self.__running = False
-                raise RuntimeError(
-                    f"Workflow job {result.name} failed with error: {result.stderr}"
+                raise WorkflowJobFailedError(
+                    format_workflow_job_failure(result.name, result.error)
                 )
 
         self.__current_job = None

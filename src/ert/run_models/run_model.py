@@ -77,7 +77,11 @@ from ert.storage import (
 from ert.trace import tracer
 from ert.utils import log_duration
 from ert.warnings import PostExperimentWarning, capture_specific_warning
-from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobFailedError,
+    WorkflowJobStatus,
+    WorkflowRunner,
+)
 
 from ._create_runpath import create_runpath
 from .event import (
@@ -432,6 +436,10 @@ class RunModel(RunModelConfig, ABC):
         except ErtRunError as e:
             failed = True
             exception = e
+        except WorkflowJobFailedError as e:
+            failed = True
+            exception = e
+            error_messages.clear()
         except UserWarning as e:
             logger.exception(e)
         except UserCancelled as e:
@@ -893,6 +901,8 @@ class RunModel(RunModelConfig, ABC):
                 status=result.status,
                 timestamp=result.timestamp,
                 iteration=iteration,
+                error=result.error,
+                stopped_workflow=result.stopped_workflow,
             )
             for result in workflow_runner.workflow_job_results()
         ]

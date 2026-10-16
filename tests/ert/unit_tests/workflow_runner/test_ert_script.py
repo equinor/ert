@@ -7,6 +7,7 @@ import pytest
 
 from ert import ErtScript
 from ert.config import ExternalErtScript, external_ert_script
+from ert.config.ert_script import ExternalScriptError
 
 from .workflow_common import WorkflowCommon
 
@@ -111,29 +112,44 @@ def test_that_output_printed_before_ert_script_raises_is_captured():
     assert script.stdoutdata == "printed before failing\n"
 
 
-def test_that_stack_trace_of_failing_script_is_appended_to_captured_stderr():
+@pytest.mark.parametrize("printed_stderr", ["printed to stderr\n", "partial"])
+def test_that_error_of_failing_script_is_appended_to_captured_stderr_without_traceback(
+    caplog, printed_stderr
+):
     class PrintingAndFailingScript(ErtScript):
         def run(self):
-            print("printed to stderr", file=sys.stderr)
+            print(printed_stderr, end="", file=sys.stderr)
             raise ValueError("boom")
 
     script = PrintingAndFailingScript()
     script.initializeAndRun([], [])
 
-    assert script.stderrdata.startswith("printed to stderr\n")
-    assert "ValueError: boom" in script.stderrdata
+    assert script.stderrdata == f"{printed_stderr.rstrip()}\nValueError: boom"
+    assert "Traceback" in caplog.text
 
 
-def test_that_stderr_without_trailing_newline_is_separated_from_stack_trace():
-    class PrintingAndFailingScript(ErtScript):
+@pytest.mark.parametrize(
+    ("error", "expected_stderr"),
+    [
+        (ValueError("boom"), "ValueError: boom"),
+        (AttributeError("boom"), "AttributeError: boom"),
+        (UserWarning("boom"), "boom"),
+        (ExternalScriptError("boom"), "boom"),
+    ],
+)
+def test_that_failing_ert_script_writes_nothing_of_its_own_to_terminal(
+    capsys, error, expected_stderr
+):
+    class FailingScript(ErtScript):
         def run(self):
-            print("partial", end="", file=sys.stderr)
-            raise ValueError("boom")
+            raise error
 
-    script = PrintingAndFailingScript()
+    script = FailingScript()
     script.initializeAndRun([], [])
 
-    assert script.stderrdata.startswith("partial\nboom\n")
+    assert script.stderrdata == expected_stderr
+    assert script.error == expected_stderr
+    assert not capsys.readouterr().err
 
 
 def test_that_output_captured_from_ert_script_is_still_written_to_stdout(capsys):
