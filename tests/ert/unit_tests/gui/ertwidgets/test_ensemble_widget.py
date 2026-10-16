@@ -711,7 +711,6 @@ def test_that_observations_in_the_tree_are_constrained_by_response_key(qtbot, st
 def test_that_observations_are_identified_and_sorted_by_full_index_key(
     qtbot, storage, observations, expected_name_order, mocked_files
 ):
-
     def mock_gen_obs_file():
         gen_obs_file = "gen_obs_data.txt"
         gen_obs = [float(i + 1) for i in range(5)]
@@ -842,10 +841,10 @@ def test_that_run_status_tab_shows_placeholder_when_no_snapshot_exists(qtbot, st
     assert run_status_view._stack.currentWidget() is run_status_view._placeholder
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
     qtbot, storage
 ):
-
     date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     key = "FOPR"
     config = ErtConfig.from_dict(

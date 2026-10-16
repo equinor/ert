@@ -898,6 +898,7 @@ def _ert_config_dict():
     }
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
     caplog, use_tmpdir
 ):
@@ -921,6 +922,7 @@ def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
     assert "'design_matrix':" not in caplog.text
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_ert_config_logs_insensitive_information_about_observations_and_shapes(
     caplog,
 ):

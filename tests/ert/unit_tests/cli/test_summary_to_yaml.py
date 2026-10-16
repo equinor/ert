@@ -34,6 +34,7 @@ def _make_summary_obs(
 
 
 @pytest.mark.usefixtures("snake_oil_case")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 @pytest.mark.slow
 def test_that_happy_path_on_snake_oil_produces_yaml_and_stdout(capsys):
     args = MagicMock(format="yaml", config="snake_oil.ert")
