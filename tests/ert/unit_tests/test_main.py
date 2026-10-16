@@ -6,6 +6,7 @@ from packaging.version import Version
 import ert.shared
 from ert.__main__ import ert_parser
 from ert.mode_definitions import (
+    DEFAULT_TARGET_ENSEMBLE_FORMAT,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -251,6 +252,11 @@ def test_argparse_no_port_range():
 def test_that_es_mda_single_update_flag_sets_weights_to_one():
     parsed = ert_parser(None, [ES_MDA_MODE, "--single-update", "path/to/config.ert"])
     assert parsed.weights == "1"
+
+
+def test_that_es_mda_target_ensemble_defaults_to_iter_format():
+    parsed = ert_parser(None, [ES_MDA_MODE, "path/to/config.ert"])
+    assert parsed.target_ensemble == DEFAULT_TARGET_ENSEMBLE_FORMAT
 
 
 def test_that_es_mda_single_update_flag_cannot_be_combined_with_weights():

@@ -2,6 +2,7 @@ from typing import override
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
+from ert.mode_definitions import DEFAULT_TARGET_ENSEMBLE_FORMAT
 
 from .valuemodel import ValueModel
 
@@ -29,7 +30,7 @@ class TargetEnsembleModel(ValueModel):
             ValueModel.setValue(self, value)
 
     def getDefaultValue(self) -> str | None:
-        return "iter-%d"
+        return DEFAULT_TARGET_ENSEMBLE_FORMAT
 
     def _on_current_ensemble_changed(self) -> None:
         if not self._custom:
