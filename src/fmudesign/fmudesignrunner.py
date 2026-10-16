@@ -278,7 +278,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
     output_dir = Path(destination).with_suffix("")
     design = DesignMatrix(config=config, verbosity=args.verbose, output_dir=output_dir)
 
-    design.to_xlsx(args.destination)
+    design.to_xlsx(args.destination, input_filename=args.config)
 
 
 def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
