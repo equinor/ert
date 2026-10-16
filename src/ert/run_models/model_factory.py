@@ -496,7 +496,7 @@ def _setup_multiple_data_assimilation(
     runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
-        target_ensemble=_iterative_ensemble_format(args),
+        target_ensemble=args.target_ensemble,
         arg_weights=args.weights,
         prior_ensemble_id=args.prior_ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
@@ -538,19 +538,4 @@ def _realizations(
         return np.ones(ensemble_size, dtype=bool)
     return np.array(
         ActiveRange(rangestring=args.realizations, length=ensemble_size).mask
-    )
-
-
-def _iterative_ensemble_format(args: Namespace) -> str:
-    """
-    When a RunModel runs multiple iterations, an ensemble format will be used.
-    E.g. when starting from the ensemble 'ensemble', subsequent runs can be named
-    'ensemble_0', 'ensemble_1', 'ensemble_2', etc.
-
-    This format can be set from the commandline via the `target_ensemble` option.
-    or we use the current ensemble and add `_%d` to it.
-    """
-    return (
-        args.target_ensemble
-        or f"{getattr(args, 'current_ensemble', None) or 'default'}_%d"
     )
