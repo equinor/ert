@@ -78,9 +78,46 @@ def test_plugin_with_fixtures():
     assert plugin.initializeAndRun([], [], {"ensemble": fixture_mock}) == fixture_mock
 
 
+def test_that_run_paths_fixture_is_injected_as_alias_for_runpaths():
+    class FixturePlugin(ErtPlugin):
+        def run(self, run_paths):
+            return run_paths
+
+    runpaths_mock = MagicMock()
+    with pytest.warns(DeprecationWarning, match="rename the argument to 'runpaths'"):
+        assert (
+            FixturePlugin().initializeAndRun([], [], {"runpaths": runpaths_mock})
+            == runpaths_mock
+        )
+
+
+def test_that_requesting_run_paths_fixture_logs_deprecation(caplog):
+    class FixturePlugin(ErtPlugin):
+        def run(self, run_paths):
+            pass
+
+    with (
+        caplog.at_level(logging.WARNING),
+        pytest.warns(DeprecationWarning, match="run_paths"),
+    ):
+        FixturePlugin().initializeAndRun([], [], {"runpaths": MagicMock()})
+
+    assert "uses deprecated fixture 'run_paths'" in caplog.text
+
+
+def test_that_requested_fixtures_reports_run_paths_as_runpaths():
+    class FixturePlugin(ErtPlugin):
+        def run(self, run_paths, ensemble):
+            pass
+
+    plugin = FixturePlugin()
+    assert plugin.requested_fixtures == {"runpaths", "ensemble"}
+    assert plugin.requested_deprecated_fixtures == {"run_paths"}
+
+
 def test_plugin_with_missing_arguments(caplog):
     class FixturePlugin(ErtPlugin):
-        def run(self, arg_1, ensemble, run_paths, arg_2="something"):
+        def run(self, arg_1, ensemble, runpaths, arg_2="something"):
             pass
 
     plugin = FixturePlugin()
@@ -90,7 +127,7 @@ def test_plugin_with_missing_arguments(caplog):
         plugin.initializeAndRun(
             [],
             [1, 2],
-            {"ensemble": fixture_mock, "run_paths": fixture2_mock},
+            {"ensemble": fixture_mock, "runpaths": fixture2_mock},
         )
 
     assert plugin.hasFailed()

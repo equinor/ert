@@ -36,7 +36,7 @@ class PostExperimentFixtures:
 class PreSimulationFixtures:
     random_seed: int
     reports_dir: str
-    run_paths: Runpaths
+    runpaths: Runpaths
     storage: Storage
     ensemble: Ensemble
     hook: HookRuntime = HookRuntime.PRE_SIMULATION
@@ -51,7 +51,7 @@ class PostSimulationFixtures(PreSimulationFixtures):
 class PreFirstUpdateFixtures:
     random_seed: int
     reports_dir: str
-    run_paths: Runpaths
+    runpaths: Runpaths
     storage: Storage
     ensemble: Ensemble
     es_settings: ESSettings
@@ -74,11 +74,14 @@ class WorkflowFixtures(TypedDict, total=False):
     parent: QWidget | None
     random_seed: int | None
     reports_dir: str
-    run_paths: Runpaths
+    runpaths: Runpaths
     storage: Storage
     ensemble: Ensemble | None
     es_settings: ESSettings
     observation_settings: ObservationSettings
+
+
+deprecated_fixture_aliases: dict[str, str] = {"run_paths": "runpaths"}
 
 
 def create_workflow_fixtures_from_hooked(

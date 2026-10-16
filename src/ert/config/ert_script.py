@@ -5,6 +5,7 @@ import inspect
 import logging
 import sys
 import traceback
+import warnings
 from abc import abstractmethod
 from types import MappingProxyType, ModuleType
 from typing import Any
@@ -13,6 +14,7 @@ from ._capture_output import capturing
 from .workflow_fixtures import (
     WorkflowFixtures,
     all_hooked_workflow_fixtures,
+    deprecated_fixture_aliases,
 )
 
 logger = logging.getLogger(__name__)
@@ -85,11 +87,17 @@ class ErtScript:
 
     @property
     def requested_fixtures(self) -> set[str]:
-        return {
-            k
+        requested = {
+            deprecated_fixture_aliases.get(k, k)
             for k in inspect.signature(self.run).parameters
-            if k in all_hooked_workflow_fixtures
         }
+        return requested & all_hooked_workflow_fixtures
+
+    @property
+    def requested_deprecated_fixtures(self) -> set[str]:
+        return set(inspect.signature(self.run).parameters) & set(
+            deprecated_fixture_aliases
+        )
 
     def initializeAndRun(
         self,
@@ -182,8 +190,16 @@ class ErtScript:
         arguments = []
         errors = []
         for val in func_args:
-            if val in fixtures:
-                arguments.append(fixtures.get(val))
+            fixture_name = deprecated_fixture_aliases.get(val, val)
+            if fixture_name in fixtures:
+                if fixture_name != val:
+                    msg = (
+                        f"Workflow job {self.__class__.__name__} uses deprecated "
+                        f"fixture '{val}', rename the argument to '{fixture_name}'"
+                    )
+                    logger.warning(msg)
+                    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+                arguments.append(fixtures.get(fixture_name))
             else:
                 errors.append(val)
         if errors:

@@ -2266,6 +2266,34 @@ def test_ert_script_hook_pre_experiment_but_asks_for_ensemble(monkeypatch):
         ErtConfig.from_file("config.ert")
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_hooked_workflow_requesting_run_paths_gives_deprecation_warning(
+    monkeypatch,
+):
+    class SomeScript(ErtScript):
+        def run(self, run_paths):
+            pass
+
+    wfjob = ErtScriptWorkflow(name="TEST_SCRIPT", ert_script=SomeScript)
+    monkeypatch.setattr(ErtConfig, "PREINSTALLED_WORKFLOWS", {"TEST_SCRIPT": wfjob})
+    Path("workflow").write_text("TEST_SCRIPT", encoding="utf-8")
+
+    with pytest.warns(
+        ConfigWarning,
+        match=r"TEST_SCRIPT uses deprecated fixture 'run_paths', "
+        r"rename the argument to 'runpaths'",
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 1
+                LOAD_WORKFLOW workflow workflow_alias
+                HOOK_WORKFLOW workflow_alias POST_SIMULATION
+                """
+            )
+        )
+
+
 @pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
 def test_ert_script_hook_pre_experiment_but_asks_for_random_seed(monkeypatch):
     class SomeScript(ErtScript):
