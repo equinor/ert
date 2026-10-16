@@ -333,7 +333,27 @@ def test_cleanup_service_files(tmpdir):
         assert storage_service_file.exists()
         SERVICE_CONF_PATHS.add(tmpdir / storage_service_file)
 
-        with pytest.raises(OSError, match="Signal 99 received"):
-            cleanup_service_files(signum=99, frame=None)
+        cleanup_service_files(signum=99, frame=None)
 
         assert not storage_service_file.exists()
+
+
+def test_that_cleanup_signal_handler_removes_files_and_calls_previous_handler(
+    tmp_path, monkeypatch
+):
+    service_file = tmp_path / "ert_server_connection.json"
+    service_file.write_text("info", encoding="utf-8")
+    called = []
+    monkeypatch.setattr(
+        "ert.services.ert_server_controller.SERVICE_CONF_PATHS",
+        {str(service_file)},
+    )
+    monkeypatch.setattr(
+        "ert.services.ert_server_controller._previous_handlers",
+        {99: lambda signum, frame: called.append(signum)},
+    )
+
+    cleanup_service_files(signum=99, frame=None)
+
+    assert not service_file.exists()
+    assert called == [99]
