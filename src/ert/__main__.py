@@ -417,15 +417,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         ES_MDA_MODE, description=es_mda_description, help=es_mda_description
     )
     es_mda_parser.add_argument(
-        "--target-case",
-        type=valid_name_format,
-        action=DeprecatedAction,
-        alternative_option="--target-ensemble",
-        dest="target_ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --target-ensemble instead.",
-    )
-    es_mda_parser.add_argument(
         "--target-ensemble",
         type=valid_name_format,
         help="The es_mda creates multiple ensembles for the different "
