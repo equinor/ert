@@ -17,6 +17,7 @@ from python_calamine import CalamineWorkbook
 from ert.config.parameter_config import LocalizationType
 from ert.config.parsing.config_errors import ConfigWarning
 
+from .dict_encoded_dataframe import SerializableDataFrame
 from .distribution import RawSettings
 from .gen_kw_config import DataSource, GenKwConfig
 from .parsing import ConfigValidationError, ErrorInfo
@@ -37,11 +38,23 @@ class DesignMatrix:
     update: bool = False
     categorical_parameters: frozenset[str] = field(default_factory=frozenset)
     gen_kw_update_strategy: LocalizationType | None = None
-    updatable_parameters: dict[str, bool] = field(init=False, default_factory=dict)
+    updatable_parameters: dict[str, bool] = field(default_factory=dict)
+    # The merged result. When design_matrix_df is empty, all of these are read
+    # from the file instead.
+    design_matrix_df: SerializableDataFrame = field(
+        default_factory=pl.DataFrame, compare=False, repr=False
+    )
+    active_realizations: list[bool] = field(default_factory=list)
+    parameter_configurations: list[GenKwConfig] = field(default_factory=list)
+    parameter_priority: dict[str, str] = field(default_factory=dict)
 
     DISALLOWED_CELL_VALUES: ClassVar[list[str]] = ["nan", "null", "none", ""]
 
     def __post_init__(self) -> None:
+        if self.design_matrix_df.is_empty():
+            self._load_from_file()
+
+    def _load_from_file(self) -> None:
         try:
             (
                 self.active_realizations,
