@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import defaultdict
+from collections.abc import Callable, Mapping
 
 from PyQt6.QtCore import QMargins, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -13,25 +13,25 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ESSettings, LocalizationType, ParameterConfig
+from ert.config import ESSettings, LocalizationType
 from ert.gui.icon_utils import load_icon
 
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
 class AnalysisModuleEdit(QWidget):
-    settings_changed = Signal()
+    update_strategies_changed = Signal(dict)
 
     def __init__(
         self,
         es_settings: ESSettings,
-        parameter_config: list[ParameterConfig],
+        get_update_strategies: Callable[[], Mapping[str, LocalizationType]],
         ensemble_size: int,
     ) -> None:
         QWidget.__init__(self)
 
         self._es_settings: ESSettings = es_settings
-        self._parameter_config: list[ParameterConfig] = parameter_config
+        self._get_update_strategies = get_update_strategies
         self._ensemble_size: int = ensemble_size
 
         layout = QHBoxLayout()
@@ -47,14 +47,6 @@ class AnalysisModuleEdit(QWidget):
 
         self.setLayout(layout)
 
-    @property
-    def parameter_config(self) -> list[ParameterConfig]:
-        return self._parameter_config
-
-    @parameter_config.setter
-    def parameter_config(self, value: list[ParameterConfig]) -> None:
-        self._parameter_config = value
-
     def _show_update_settings_dialog(self) -> None:
         dialog = QDialog(self.parent())  # type: ignore
         dialog.setWindowTitle("Update settings")
@@ -65,15 +57,6 @@ class AnalysisModuleEdit(QWidget):
 
         layout = QVBoxLayout()
 
-        update_strategies: dict[str, LocalizationType] = defaultdict(
-            lambda: LocalizationType.GLOBAL
-        )
-        for parameter_config in self._parameter_config:
-            if parameter_config.update_strategy:
-                update_strategies[parameter_config.type.upper()] = (
-                    parameter_config.update_strategy
-                )
-
         correlation_threshold = 1.0
         if self._ensemble_size != 0:
             correlation_threshold = self._es_settings.correlation_threshold(
@@ -81,7 +64,7 @@ class AnalysisModuleEdit(QWidget):
             )
 
         update_settings_dialog = AnalysisModuleVariablesPanel(
-            update_strategies=update_strategies,
+            update_strategies=dict(self._get_update_strategies()),
             correlation_threshold=correlation_threshold,
             enkf_truncation=self._es_settings.enkf_truncation,
         )
@@ -114,11 +97,6 @@ class AnalysisModuleEdit(QWidget):
                 update_settings_dialog.correlation_threshold
             )
             self._es_settings.enkf_truncation = update_settings_dialog.enkf_truncation
-            for name, strategy in update_settings_dialog.update_strategies.items():
-                for parameter_config in self._parameter_config:
-                    if (
-                        parameter_config.type.upper() == name
-                        and parameter_config.update_strategy is not None
-                    ):
-                        parameter_config.update_strategy = strategy
-            self.settings_changed.emit()
+            self.update_strategies_changed.emit(
+                dict(update_settings_dialog.update_strategies)
+            )

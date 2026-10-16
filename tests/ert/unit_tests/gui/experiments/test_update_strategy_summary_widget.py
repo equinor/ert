@@ -5,6 +5,9 @@ from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
 from ert.config.parameter_config import LocalizationType, ParameterConfig
+from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
+    ParameterConfigurationStateModel,
+)
 from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
     _summarize_parameters,
@@ -56,41 +59,50 @@ def test_that_strategy_summary_orders_counts_lexicographically_by_strategy_and_t
     assert _summarize_parameters(iter(configs)) == rows
 
 
-def test_that_strategy_summary_widget_displays_rows_with_headers(qtbot: QtBot):
-    parameter = GenKwConfig(
+def _parameter(
+    update_strategy: LocalizationType | None = LocalizationType.GLOBAL,
+) -> GenKwConfig:
+    return GenKwConfig(
         name="parameter",
         distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=update_strategy,
     )
-    widget = UpdateStrategySummaryWidget([parameter])
+
+
+def _rows(widget: UpdateStrategySummaryWidget) -> list[tuple[str, ...]]:
+    return [
+        tuple(widget.item(row, column).text() for column in range(widget.columnCount()))
+        for row in range(widget.rowCount())
+    ]
+
+
+def test_that_strategy_summary_widget_displays_rows_with_headers(qtbot: QtBot):
+    widget = UpdateStrategySummaryWidget(
+        ParameterConfigurationStateModel([_parameter()])
+    )
     qtbot.addWidget(widget)
     assert [
         widget.horizontalHeaderItem(column).text()
         for column in range(widget.columnCount())
     ] == ["strategy", "parameter type", "count"]
-    assert [
-        tuple(widget.item(row, column).text() for column in range(widget.columnCount()))
-        for row in range(widget.rowCount())
-    ] == [("Global", "GenKW", "1")]
+    assert _rows(widget) == [("Global", "GenKW", "1")]
 
 
-def test_that_replacing_parameters_removes_old_strategy_counts_and_shows_empty_summary(
+def test_that_strategy_summary_widget_follows_parameter_state_changes(
     qtbot: QtBot,
 ):
-    parameter = GenKwConfig(
-        name="parameter",
-        distribution={"name": "uniform", "min": 0, "max": 1},
-    )
-    widget = UpdateStrategySummaryWidget([parameter])
+    state = ParameterConfigurationStateModel([_parameter()])
+    widget = UpdateStrategySummaryWidget(state)
     qtbot.addWidget(widget)
-    widget.show()
-    assert widget.rowCount() == 1
-    assert widget.item(0, 0).text() == "Global"
 
-    parameter.update_strategy = None
-    widget.set_parameters([parameter])
-    assert widget.item(0, 0).text() == "Non-updatable"
+    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    assert _rows(widget) == [("Adaptive", "GenKW", "1")]
 
-    widget.set_parameters([])
-    assert widget.rowCount() == 0
-    widget.set_parameters([parameter])
-    assert widget.item(0, 0).text() == "Non-updatable"
+    state.select_prior([_parameter(update_strategy=None)])
+    assert _rows(widget) == [("Non-updatable", "GenKW", "1")]
+
+    state.select_prior([])
+    assert _rows(widget) == []
+
+    state.deselect_prior()
+    assert _rows(widget) == [("Adaptive", "GenKW", "1")]
