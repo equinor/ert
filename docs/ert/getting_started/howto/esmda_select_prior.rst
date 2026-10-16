@@ -6,29 +6,33 @@ Imagine you are conducting an experiment consisting of three iterations of ES-MD
 with each iteration potentially taking hours or even days.
 For the purposes of this example, assume that the "Relative weights" are set to ``4, 2, 1``.
 
-As part of running this experiment, ERT creates four ensembles, which by default are named ``default_0``, ``default_1`` and ``default_2``, ``default_3``.
-It is possible that too many realizations fail during the model evaluation in ``default_3``, leaving no responses to analyse.
+As part of running this experiment, ERT creates four ensembles, which by default are named ``iter-0``, ``iter-1``, ``iter-2`` and ``iter-3``.
+It is possible that too many realizations fail during the model evaluation in ``iter-3``, leaving no responses to analyse.
 Various factors, for example license server issues or compute cluster downtime, can lead to such failures.
-One solution is to run from ``default_2`` as the prior ensemble, which is straightforward in ERT.
+One solution is to run from ``iter-2`` as the prior ensemble, which is straightforward in ERT.
+
+.. note::
+   Earlier versions of the ``ert es_mda`` CLI named the ensembles ``default_0``, ``default_1`` and so on.
+   To keep that naming scheme, pass ``--target-ensemble 'default_%d'``.
 
 The ES-MDA experiment can also be run from a valid prior ensemble when the current
 configuration does not contain updatable parameters. This makes it possible to
 restart from the prior ensemble even if the current configuration is not
 otherwise valid for an ES-MDA update.
 
-**Steps to run from** ``default_2``:
+**Steps to run from** ``iter-2``:
 
 1. Check the "Select prior ensemble" checkbox.
 2. Use the "Run from prior ensemble" drop-down list to select the prior ensemble.
-    In this example, you'll pick ``default_2``.
+    In this example, you'll pick ``iter-2``.
 3. Click "Run from prior ensemble".
-    This creates a new ensemble which by default is called ``default_2_3``.
+    This creates a new experiment called ``Run from iter-2``, containing a new ensemble which by default is called ``iter-3``.
     This ensemble will use the relative weight ``1``,
     consistent with the last value specified in the "Relative weights" sequence: ``4, 2, 1``.
 
 **Note:**
 
-- When running from a prior ensemble, the ``PRE_FIRST_UPDATE`` (see :ref:`HOOK_WORKFLOW <automatically-run-workflows>`) will only execute if the prior ensemble is at iteration zero, such as ``default_0``.
+- When running from a prior ensemble, the ``PRE_FIRST_UPDATE`` (see :ref:`HOOK_WORKFLOW <automatically-run-workflows>`) will only execute if the prior ensemble is at iteration zero, such as ``iter-0``.
   For later iterations, any such workflows that, for example, manipulate observations must be run manually before running from the prior ensemble.
 
 .. image:: select_prior_es-mda.png
