@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
 
+from ert.config import ParameterConfig
 from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -31,7 +32,7 @@ from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig, ParameterConfig
+    from ert.config import AnalysisConfig
 
 
 @dataclass
@@ -40,6 +41,7 @@ class Arguments:
     target_ensemble: str
     realizations: str
     experiment_name: str
+    parameter_configuration: list[ParameterConfig]
 
 
 class EnsembleSmootherPanel(ExperimentConfigPanel):
@@ -181,4 +183,5 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             experiment_name=self._experiment_name_field.get_text,
+            parameter_configuration=self._analysis_module_edit.parameter_config,
         )
