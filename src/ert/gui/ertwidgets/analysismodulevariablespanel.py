@@ -36,10 +36,12 @@ class AnalysisModuleVariablesPanel(QWidget):
         update_strategies: dict[str, LocalizationType],
         correlation_threshold: float,
         enkf_truncation: float,
+        enabled_update_strategy_types: set[str] | None = None,
     ) -> None:
         QWidget.__init__(self)
 
         self._update_strategies = update_strategies
+        self._enabled_update_strategy_types = enabled_update_strategy_types
         self._correlation_threshold = correlation_threshold
         self._enkf_truncation = enkf_truncation
 
@@ -51,9 +53,11 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
 
         gen_kw_combobox = QComboBox(self)
+        gen_kw_combobox.setObjectName("GEN_KW")
         gen_kw_combobox.setModel(
             _LocalizationTypeModel(exclude={LocalizationType.DISTANCE})
         )
+        gen_kw_combobox.setEnabled(self._is_update_strategy_type_enabled("GEN_KW"))
         gen_kw_combobox.setCurrentIndex(
             self._find_correct_index(gen_kw_combobox, "GEN_KW")
         )
@@ -66,7 +70,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow("GEN_KW", gen_kw_combobox)
 
         field_combobox = QComboBox(self)
+        field_combobox.setObjectName("FIELD")
         field_combobox.setModel(_LocalizationTypeModel())
+        field_combobox.setEnabled(self._is_update_strategy_type_enabled("FIELD"))
         field_combobox.setCurrentIndex(
             self._find_correct_index(field_combobox, "FIELD")
         )
@@ -79,7 +85,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow("FIELD", field_combobox)
 
         surface_combobox = QComboBox(self)
+        surface_combobox.setObjectName("SURFACE")
         surface_combobox.setModel(_LocalizationTypeModel())
+        surface_combobox.setEnabled(self._is_update_strategy_type_enabled("SURFACE"))
         surface_combobox.setCurrentIndex(
             self._find_correct_index(surface_combobox, "SURFACE")
         )
@@ -150,6 +158,12 @@ class AnalysisModuleVariablesPanel(QWidget):
             ) != -1:
                 return index
         return combobox.findData(LocalizationType.GLOBAL, Qt.ItemDataRole.UserRole)
+
+    def _is_update_strategy_type_enabled(self, type_name: str) -> bool:
+        return (
+            self._enabled_update_strategy_types is None
+            or type_name in self._enabled_update_strategy_types
+        )
 
     def _create_double_spinbox(
         self,
