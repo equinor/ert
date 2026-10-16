@@ -41,6 +41,7 @@ class DesignInput:
             decimals = {
                 row.param_name: int(cast("float", row.decimals))
                 for row in valid_decimals.itertuples()
+                if not pd.isna(row.param_name)
             }
 
         grouped = df.groupby("sensname", sort=False)
