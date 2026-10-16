@@ -17,6 +17,7 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config.parameter_config import LocalizationType
+from ert.storage import observation_id_expr
 
 from ._update_commons import (
     ErtAnalysisError,
@@ -216,12 +217,7 @@ def perform_ensemble_update(
             ypos=filtered_data["north"].to_numpy()[has_location],
             main_range=filtered_data["radius"].to_numpy()[has_location],
             location_mask=has_location,
-            observation_ids=filtered_data.select(
-                pl.concat_str(
-                    [pl.col("response_key").cast(pl.String), pl.col("index")],
-                    separator=":",
-                )
-            )
+            observation_ids=filtered_data.select(observation_id_expr())
             .to_series()
             .to_numpy()[has_location]
             .tolist(),
