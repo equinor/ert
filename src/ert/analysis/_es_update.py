@@ -504,7 +504,13 @@ def smoother_update(
             data = None
             if isinstance(e, ErtAnalysisError):
                 data = e.data
-            progress_callback(AnalysisErrorEvent(error_msg=str(e), data=data))
+            progress_callback(
+                AnalysisErrorEvent(
+                    error_msg=str(e),
+                    data=data,
+                    update_algorithm="ensemble_smoother",
+                )
+            )
             raise
 
     progress_callback(
