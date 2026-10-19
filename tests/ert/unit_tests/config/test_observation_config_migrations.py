@@ -686,6 +686,34 @@ def test_that_observation_config_without_refcase_or_time_map_raises_error(
             "LOCATION_RANGE requires LOCATION_X and LOCATION_Y",
             id="summary observation location range without coordinates",
         ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE          = 0.1;
+                ERROR          = 0.05;
+                RESTART        = 1;
+                KEY            = FOPR;
+                LOCATION_X     = 100.0;
+                LOCATION_RANGE = 300.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location range with only x",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE          = 0.1;
+                ERROR          = 0.05;
+                RESTART        = 1;
+                KEY            = FOPR;
+                LOCATION_Y     = 200.0;
+                LOCATION_RANGE = 300.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location range with only y",
+        ),
     ],
 )
 def test_that_invalid_history_observation_refcase_usage_raises_error(
