@@ -394,6 +394,11 @@ only the most necessary options have been added.
 
     QUEUE_OPTION SLURM MAX_RUNTIME 100
 
+  .. deprecated::
+    Use the general :ref:`MAX_RUNTIME<max_runtime>` keyword instead, which
+    applies to all queue systems. If both are set, the Slurm option takes
+    precedence.
+
 .. _slurm_include_host:
 .. topic:: INCLUDE_HOST
 

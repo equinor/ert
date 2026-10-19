@@ -447,6 +447,16 @@ class QueueConfig(BaseModelWithContextSupport):
             selected_queue_system, config_dict, site_queue_options_dict
         )
 
+        if (
+            isinstance(selected_queue_options, SlurmQueueOptions)
+            and selected_queue_options.max_runtime is not None
+        ):
+            ConfigWarning.deprecation_warn(
+                "QUEUE_OPTION SLURM MAX_RUNTIME is deprecated and will be "
+                "removed. Use the general MAX_RUNTIME keyword instead.",
+                "MAX_RUNTIME",
+            )
+
         if selected_queue_options.project_code is None:
             tags = {
                 fm_name.lower()
