@@ -46,10 +46,8 @@ from .blob_data import (
     MatrixStorageData,
     ObservationReportData,
     ScalingFactorsData,
-    StoredUpdate,
     UpdateDataTableData,
     UpdateStatus,
-    UpdateTable,
 )
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
@@ -280,11 +278,6 @@ class LocalEnsemble(BaseMode):
     @property
     def parent(self) -> UUID | None:
         return self._index.prior_ensemble_id
-
-    @property
-    def has_stored_update(self) -> bool:
-        """Whether an update producing this ensemble was recorded in storage."""
-        return any(self.load_blob_metadata(BlobType.OBSERVATION_REPORT))
 
     @property
     def experiment(self) -> LocalExperiment:
@@ -1521,61 +1514,6 @@ class LocalEnsemble(BaseMode):
             )
         else:
             assert_never(blob_event)
-
-    def load_stored_update(self) -> StoredUpdate | None:
-        report = next(
-            (
-                (metadata.uri, metadata.blob_info)
-                for metadata in self.load_blob_metadata(BlobType.OBSERVATION_REPORT)
-                if isinstance(metadata.blob_info, ObservationReportData)
-            ),
-            None,
-        )
-        if report is None:
-            return None
-        report_uri, report_info = report
-
-        data_tables = sorted(
-            (
-                (metadata.uri, metadata.blob_info)
-                for metadata in self.load_blob_metadata(BlobType.UPDATE_DATA_TABLE)
-                if isinstance(metadata.blob_info, UpdateDataTableData)
-            ),
-            key=lambda table: table[1].table_index,
-        )
-        tables = [
-            self._load_update_table(uri, info.table_name, info.summary)
-            for uri, info in data_tables
-        ]
-        tables.append(
-            self._load_update_table(
-                report_uri, "Report", report_info.summary, is_report=True
-            )
-        )
-
-        return StoredUpdate(
-            update_algorithm=report_info.update_algorithm,
-            status=report_info.status,
-            tables=tables,
-            error_message=report_info.error_message,
-        )
-
-    def _load_update_table(
-        self,
-        uri: str,
-        name: str,
-        summary: dict[str, str],
-        *,
-        is_report: bool = False,
-    ) -> UpdateTable:
-        table = pl.read_parquet(io.BytesIO(self.load_blob(uri)))
-        return UpdateTable(
-            name=name,
-            header=table.columns,
-            rows=table.rows(),
-            summary=summary,
-            is_report=is_report,
-        )
 
     @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:

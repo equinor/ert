@@ -1,3 +1,4 @@
+import io
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -11,7 +12,7 @@ from xtgeo import RegularSurface, surface_from_file
 from ert.config import ErtConfig, GenKwConfig
 from ert.mode_definitions import ES_MDA_MODE
 from ert.storage import RealizationStorageState, open_storage
-from ert.storage.blob_data import UpdateStatus
+from ert.storage.blob_data import BlobType, UpdateStatus
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
@@ -88,14 +89,18 @@ def test_that_update_report_of_finished_run_can_be_read_back_from_posterior_ense
     with open_storage("storage") as storage:
         experiment = storage.get_experiment_by_name("es-test")
         posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
-        update = posterior_ensemble.load_stored_update()
+        (report_blob,) = posterior_ensemble.load_blob_metadata(
+            BlobType.OBSERVATION_REPORT
+        )
+        report_update_table = pl.read_parquet(
+            io.BytesIO(posterior_ensemble.load_blob(report_blob.uri))
+        )
 
-        assert update.update_algorithm == "ensemble_smoother"
-        assert update.status == UpdateStatus.COMPLETED
-        assert [table.name for table in update.tables] == ["Report"]
-        assert "observation_key" in update.tables[0].header
-        assert update.tables[0].rows
-        assert update.tables[0].summary["Parent ensemble"] == "iter-0"
+        assert report_blob.blob_info.update_algorithm == "ensemble_smoother"
+        assert report_blob.blob_info.status == UpdateStatus.COMPLETED
+        assert report_blob.blob_info.summary["Parent ensemble"] == "iter-0"
+        assert "observation_key" in report_update_table.columns
+        assert not report_update_table.is_empty()
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
