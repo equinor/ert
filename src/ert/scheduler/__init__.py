@@ -40,7 +40,7 @@ def create_driver(
             )
         case QueueSystem.SLURM:
             slurm_driver_options = queue_options.driver_options
-            if slurm_driver_options.get("max_runtime") is None:
+            if max_runtime is not None:
                 slurm_driver_options["max_runtime"] = max_runtime
             return SlurmDriver(
                 **slurm_driver_options,
