@@ -1,4 +1,5 @@
 import pytest
+from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig, LocalizationType
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
@@ -16,16 +17,9 @@ def _parameter(
     )
 
 
-@pytest.mark.parametrize("with_prior", [False, True])
-def test_that_applying_update_strategies_does_not_mutate_source_parameters(
-    with_prior: bool,
-):
+def test_that_applying_update_strategies_does_not_mutate_source_parameters():
     source = [_parameter("source")]
-    state = ParameterConfigurationStateModel([_parameter("configured")])
-    if with_prior:
-        state.select_prior(source)
-    else:
-        state = ParameterConfigurationStateModel(source)
+    state = ParameterConfigurationStateModel(source)
 
     state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
 
@@ -33,15 +27,35 @@ def test_that_applying_update_strategies_does_not_mutate_source_parameters(
     assert state.parameters[0].update_strategy == LocalizationType.ADAPTIVE
 
 
-def test_that_applying_update_strategies_with_prior_leaves_configured_draft_unset():
+@pytest.mark.parametrize(
+    "prior",
+    [
+        pytest.param([_parameter("prior")], id="prior"),
+        pytest.param([], id="empty_prior"),
+    ],
+)
+def test_that_updating_prior_parameter_config_raises_error_and_keeps_prior(
+    qtbot: QtBot, prior: list[GenKwConfig]
+):
     state = ParameterConfigurationStateModel([_parameter("configured")])
-    state.select_prior([_parameter("prior")])
+    state.select_prior(prior)
 
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    with (
+        qtbot.assertNotEmitted(state.changed),
+        pytest.raises(RuntimeError, match="cannot be changed"),
+    ):
+        state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
 
-    assert state._configured_parameters.draft is None
-    assert state._prior_parameters is not None
-    assert state._prior_parameters.draft is not None
+    assert state.parameters == prior
+
+
+def test_that_selecting_an_empty_prior_gives_no_parameters():
+    state = ParameterConfigurationStateModel([_parameter("configured")])
+
+    state.select_prior([])
+
+    assert state.parameters == []
+    assert state.update_strategies == {}
 
 
 def test_that_parameters_without_update_strategy_keep_none_strategy():
@@ -80,43 +94,30 @@ def test_that_selecting_and_deselecting_prior_switches_active_parameters():
 
     state.select_prior(prior)
     assert state.parameters == prior
+    assert state.has_prior
 
     state.deselect_prior()
     assert state.parameters == configured
+    assert not state.has_prior
     assert state._prior_parameters is None
 
 
-def test_that_reset_clears_configured_and_prior_drafts():
+def test_that_reset_restores_configured_update_strategies():
     configured = [_parameter("configured")]
-    prior = [_parameter("prior")]
     state = ParameterConfigurationStateModel(configured)
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
-    state.select_prior(prior)
     state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
 
     state.reset_parameters()
 
-    assert state._configured_parameters.draft is None
-    assert state._prior_parameters is not None
-    assert state._prior_parameters.draft is None
-    assert state.parameters == prior
+    assert state.parameters == configured
+    assert state.update_strategies == {"GEN_KW": LocalizationType.GLOBAL}
 
 
-def test_that_reselecting_an_equal_prior_keeps_its_draft():
+def test_that_deselecting_prior_restores_configured_draft():
     state = ParameterConfigurationStateModel([_parameter("configured")])
-    state.select_prior([_parameter("prior")])
     state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
 
     state.select_prior([_parameter("prior")])
+    state.deselect_prior()
 
     assert state.update_strategies == {"GEN_KW": LocalizationType.ADAPTIVE}
-
-
-def test_that_selecting_a_different_prior_discards_previous_prior_draft():
-    state = ParameterConfigurationStateModel([_parameter("configured")])
-    state.select_prior([_parameter("prior")])
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
-
-    state.select_prior([_parameter("other_prior")])
-
-    assert state.update_strategies == {"GEN_KW": LocalizationType.GLOBAL}

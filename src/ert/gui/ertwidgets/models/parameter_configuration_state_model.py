@@ -1,20 +1,9 @@
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
 
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 
 from ert.config.parameter_config import LocalizationType, ParameterConfig
-
-
-@dataclass
-class _ParameterConfigurations:
-    init: list[ParameterConfig]
-    draft: list[ParameterConfig] | None = None
-
-    @property
-    def current(self) -> list[ParameterConfig]:
-        return self.init if self.draft is None else self.draft
 
 
 class ParameterConfigurationStateModel(QObject):
@@ -26,16 +15,25 @@ class ParameterConfigurationStateModel(QObject):
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
-        self._configured_parameters = _ParameterConfigurations(list(parameters))
-        self._prior_parameters: _ParameterConfigurations | None = None
-
-    @property
-    def _active(self) -> _ParameterConfigurations:
-        return self._prior_parameters or self._configured_parameters
+        self._init_configured_parameters = list(parameters)
+        self._draft_configured_parameters: list[ParameterConfig] | None = None
+        self._prior_parameters: list[ParameterConfig] | None = None
 
     @property
     def parameters(self) -> list[ParameterConfig]:
-        return self._active.current
+        if self._prior_parameters is not None:
+            return self._prior_parameters
+        return self._configured_parameters
+
+    @property
+    def has_prior(self) -> bool:
+        return self._prior_parameters is not None
+
+    @property
+    def _configured_parameters(self) -> list[ParameterConfig]:
+        if self._draft_configured_parameters is not None:
+            return self._draft_configured_parameters
+        return self._init_configured_parameters
 
     @property
     def update_strategies(self) -> dict[str, LocalizationType]:
@@ -48,28 +46,26 @@ class ParameterConfigurationStateModel(QObject):
     def apply_update_strategies(
         self, update_strategies: Mapping[str, LocalizationType]
     ) -> None:
-        active = self._active
-        active.draft = [
+        if self.has_prior:
+            raise RuntimeError("Parameters from prior ensemble cannot be changed.")
+
+        self._draft_configured_parameters = [
             parameter.model_copy(
                 update={"update_strategy": update_strategies[parameter.type.upper()]}
             )
             if parameter.update_strategy is not None
             and parameter.type.upper() in update_strategies
             else parameter
-            for parameter in active.current
+            for parameter in self._configured_parameters
         ]
         self.changed.emit()
 
     def reset_parameters(self) -> None:
-        self._configured_parameters.draft = None
-        if self._prior_parameters:
-            self._prior_parameters.draft = None
+        self._draft_configured_parameters = None
         self.changed.emit()
 
     def select_prior(self, prior_parameter_config: Iterable[ParameterConfig]) -> None:
-        prior = list(prior_parameter_config)
-        if self._prior_parameters is None or self._prior_parameters.init != prior:
-            self._prior_parameters = _ParameterConfigurations(prior)
+        self._prior_parameters = list(prior_parameter_config)
         self.changed.emit()
 
     def deselect_prior(self) -> None:
