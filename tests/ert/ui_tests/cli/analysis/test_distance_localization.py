@@ -5,7 +5,7 @@ import polars as pl
 import pytest
 
 from ert.config import ErtConfig
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ES_MDA_MODE
 from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
@@ -62,7 +62,8 @@ def test_that_distance_localization_reduces_posterior_variance():
         fh.writelines(config_content)
 
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "heat_dl.ert",
         "--experiment-name",
@@ -163,7 +164,8 @@ def test_that_distance_localization_heat_equation_matches_snapshot(snapshot):
         fh.writelines(config_content)
 
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "heat_dl.ert",
         "--experiment-name",

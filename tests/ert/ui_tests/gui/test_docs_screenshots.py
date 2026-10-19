@@ -6,7 +6,7 @@ from textwrap import dedent
 import numpy as np
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QToolButton, QWidget
 from pytestqt.qtbot import QtBot
 from skimage import io, transform
 from skimage.metrics import structural_similarity as ssim
@@ -18,7 +18,7 @@ from ert.gui.experiments.view import RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectionWidget
 from ert.gui.tools.load_results import LoadResultsPanel
-from ert.run_models import EnsembleExperiment, EnsembleSmoother, RunModel
+from ert.run_models import EnsembleExperiment, MultipleDataAssimilation, RunModel
 from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
@@ -102,13 +102,24 @@ class ExampleFolders(StrEnum):
 
 
 def run_experiment(
-    qtbot: QtBot, experiment_mode: RunModel, gui: QWidget, *, click_done: bool = True
+    qtbot: QtBot,
+    experiment_mode: RunModel,
+    gui: QWidget,
+    *,
+    click_done: bool = True,
+    single_update: bool = False,
 ) -> None:
     # Select correct experiment in the simulation panel
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
 
     simulation_mode_combo.setCurrentText(experiment_mode.display_name())
+
+    if single_update:
+        single_update_box = get_child(
+            experiment_panel, QCheckBox, name="single_update_checkbox_esmda"
+        )
+        single_update_box.setChecked(True)
 
     # Click start simulation and agree to the message
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
@@ -423,7 +434,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
 
     gui = open_gui_with_docs_example
 
-    run_experiment(qtbot, EnsembleSmoother, gui)
+    run_experiment(qtbot, MultipleDataAssimilation, gui, single_update=True)
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
@@ -479,7 +490,7 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
 
     gui = open_gui_with_docs_example
 
-    run_experiment(qtbot, EnsembleSmoother, gui)
+    run_experiment(qtbot, MultipleDataAssimilation, gui, single_update=True)
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 

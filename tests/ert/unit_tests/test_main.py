@@ -7,7 +7,6 @@ import ert.shared
 from ert.__main__ import ert_parser
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
@@ -94,21 +93,6 @@ def test_argparse_exec_ensemble_experiment_faulty_realizations():
                 "path/to/config.ert",
             ],
         )
-
-
-def test_argparse_exec_smoother_valid_ensemble():
-    parsed = ert_parser(
-        None,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--target-ensemble",
-            "some_ensemble_%d",
-            "path/to/config.ert",
-        ],
-    )
-    assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
-    assert parsed.target_ensemble == "some_ensemble_%d"
-    assert parsed.func.__name__ == "run_ert_cli"
 
 
 def test_argparse_exec_es_mda_valid_case():

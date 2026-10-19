@@ -26,7 +26,6 @@ from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
 )
@@ -49,7 +48,6 @@ def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
 @pytest.mark.parametrize(
     "mode",
     [
-        pytest.param(ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
         pytest.param(ENIF_MODE),
     ],
@@ -168,7 +166,6 @@ def test_that_unopenable_observation_config_fails_gracefully():
 @pytest.mark.parametrize(
     "mode",
     [
-        pytest.param(ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
     ],
 )
@@ -652,9 +649,6 @@ def _remove_linestartswith(file_name: str, startswith: str):
 @pytest.mark.parametrize(
     ("mode", "target"),
     [
-        pytest.param(
-            ENSEMBLE_SMOOTHER_MODE, "target_%d", id=f"{ENSEMBLE_SMOOTHER_MODE}"
-        ),
         pytest.param(ES_MDA_MODE, "iter-%d", id=f"{ES_MDA_MODE}"),
         pytest.param(ENIF_MODE, "target_%d", id=f"{ENIF_MODE}"),
     ],
@@ -681,15 +675,6 @@ def test_cli_runs_without_observations_for_non_update_modes(mode):
     _remove_linestartswith("poly.ert", "OBS_CONFIG")
 
     run_cli(mode, "--disable-monitoring", "poly.ert")
-
-
-@pytest.mark.usefixtures("copy_poly_case", "mock_cli_run")
-def test_that_ensemble_smoother_prints_deprecation_warning(capsys):
-    run_cli(ENSEMBLE_SMOOTHER_MODE, "--disable-monitoring", "poly.ert")
-
-    captured = capsys.readouterr()
-    assert "Ensemble Smoother is deprecated" in captured.out
-    assert "es_mda --single-update" in captured.out
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -791,16 +776,15 @@ def test_exclude_parameter_from_update():
         fh.writelines("MY_KEYWORD NORMAL 0 1")
 
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
-        "--target-ensemble",
-        "iter-%d",
         "--realizations",
         "0-5",
         "poly.ert",
     )
     with open_storage("storage", "r") as storage:
-        experiment = storage.get_experiment_by_name("es")
+        experiment = storage.get_experiment_by_name("es-mda")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
         np.allclose(

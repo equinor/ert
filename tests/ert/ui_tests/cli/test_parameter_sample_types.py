@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import xtgeo
 
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ES_MDA_MODE
 from ert.storage import open_storage
 
 from .run_cli import run_cli
@@ -106,12 +106,13 @@ if __name__ == "__main__":
         Path("config.ert").write_text(config, encoding="utf-8")
 
         run_cli(
-            ENSEMBLE_SMOOTHER_MODE,
+            ES_MDA_MODE,
+            "--single-update",
             "--disable-monitoring",
             "config.ert",
         )
         with open_storage(tmpdir / "storage") as storage:
-            experiment = storage.get_experiment_by_name("es")
+            experiment = storage.get_experiment_by_name("es-mda")
             prior = experiment.get_ensemble_by_name("iter-0")
             posterior = experiment.get_ensemble_by_name("iter-1")
             prior_param = (

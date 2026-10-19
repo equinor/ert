@@ -5,11 +5,11 @@ import pytest
 
 from ert.__main__ import ert_parser
 from ert.cli.main import ErtCliError, run_cli
-from ert.mode_definitions import ENIF_MODE, ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE
+from ert.mode_definitions import ENIF_MODE, ES_MDA_MODE
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-@pytest.mark.parametrize("mode", [ENSEMBLE_SMOOTHER_MODE, ENIF_MODE, ES_MDA_MODE])
+@pytest.mark.parametrize("mode", [ENIF_MODE, ES_MDA_MODE])
 def test_that_cli_update_runs_reject_configs_without_updatable_parameters(mode):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line in fin:
