@@ -450,3 +450,12 @@ def test_that_site_queue_options_are_ignored_with_differing_user_queue_system_ar
     ).from_file_contents("NUM_REALIZATIONS 1\nQUEUE_SYSTEM LOCAL\n")
 
     assert config.queue_config.queue_system == QueueSystem.LOCAL
+
+
+def test_that_slurm_specific_max_runtime_option_is_deprecated():
+    with pytest.warns(ConfigWarning, match="SLURM MAX_RUNTIME is deprecated"):
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM SLURM\n"
+            "QUEUE_OPTION SLURM MAX_RUNTIME 100\n"
+        )
