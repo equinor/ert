@@ -313,14 +313,6 @@ def to_probabilit(
             raise ValueError(f"Invalid combination of {distname=} and {parameters=}.")
 
 
-def is_number(teststring: str) -> bool:
-    """Test if a string can be parsed as a float"""
-    try:
-        return not np.isnan(float(teststring))
-    except ValueError:
-        return False
-
-
 def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
     """Read a correlation matrix from an Excel sheet.
 

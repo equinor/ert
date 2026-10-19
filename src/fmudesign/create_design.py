@@ -28,7 +28,6 @@ from ert.shared import __version__ as ert_version
 from .design_config import DesignConfig
 from .design_distributions import (
     DiscreteViaUniform,
-    is_number,
     read_correlations,
     to_probabilit,
 )
@@ -79,9 +78,15 @@ def _round_to_decimals(df: pd.DataFrame, decimals: Mapping[str, int]) -> None:
     """Round, in place, each column of `df` that has a number of decimals."""
     for key in df.columns:
         if key in decimals:
-            if not is_number(df[key].iloc[0]):
-                raise ValueError(f"Cannot round a string parameter {key}")
-            df[key] = df[key].astype(float).round(int(decimals[key]))
+            try:
+                values = df[key].astype(float)
+            except (TypeError, ValueError) as err:
+                raise ValueError(
+                    f"Cannot round parameter {key!r} to {decimals[key]} decimals "
+                    f"({err}). Either clear its 'decimals' cell or make all its "
+                    "values numeric."
+                ) from err
+            df[key] = values.round(int(decimals[key]))
 
 
 class DesignMatrix:

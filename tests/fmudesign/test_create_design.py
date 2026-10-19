@@ -768,6 +768,25 @@ def test_that_fill_with_background_values_replaces_missing_parameter_values():
     assert dm.designvalues["param1"].tolist() == [10.0, 20.0]
 
 
+def test_that_decimals_are_rejected_for_parameter_with_any_non_numeric_value():
+    config = minimal_configuration()
+    config.decimals = {"A": 1}
+    config.defaultvalues = {"A": 0}
+    config.sensitivities = {
+        "a": {
+            "senstype": "scenario",
+            "cases": {"low": {"A": -1}, "high": {"A": "foo"}},
+            "dependencies": {},
+        }
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=r"Cannot round parameter 'A' to 1 decimals .*'foo'.*'decimals'",
+    ):
+        DesignMatrix(config=config)
+
+
 def test_that_set_decimals_propagates_zero_precision_to_dependency():
     config = minimal_configuration()
     config.decimals = {"SOURCE": 0}
