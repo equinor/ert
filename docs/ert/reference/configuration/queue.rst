@@ -396,7 +396,7 @@ only the most necessary options have been added.
 
   .. deprecated::
     Use the general :ref:`MAX_RUNTIME<max_runtime>` keyword instead, which
-    applies to all queue systems. If both are set, the Slurm option takes
+    applies to all queue systems. If both are set, the general keyword takes
     precedence.
 
 .. _slurm_include_host:

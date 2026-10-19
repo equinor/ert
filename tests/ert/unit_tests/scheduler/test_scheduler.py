@@ -18,6 +18,7 @@ from _ert.events import (
     RealizationTimeout,
 )
 from ert.config import QueueConfig, QueueSystem
+from ert.config.queue_config import SlurmQueueOptions
 from ert.ensemble_evaluator import Realization
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, job, scheduler
@@ -937,3 +938,15 @@ async def test_that_scheduler_kills_jobs_when_driver_lags_after_checksum(
 
     assert kill_called.is_set(), "driver.kill was never called by the watchdog"
     assert "orphaned child processes" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("general_max_runtime", "expected"),
+    [(50, 50), (None, 100)],
+)
+def test_that_general_max_runtime_overrides_slurm_specific_option(
+    general_max_runtime, expected
+):
+    queue_options = SlurmQueueOptions(max_runtime=100)
+    driver = create_driver(queue_options, max_runtime=general_max_runtime)
+    assert driver._max_runtime == expected
