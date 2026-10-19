@@ -19,7 +19,6 @@ from ert.config import (
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
     MANUAL_ENIF_UPDATE_MODE,
@@ -30,7 +29,6 @@ from ert.run_models.run_model_configs import (
     DictEncodedDataFrame,
     EnsembleExperimentConfig,
     EnsembleInformationFilterConfig,
-    EnsembleSmootherConfig,
     EvaluateEnsembleConfig,
     ManualUpdateConfig,
     MultipleDataAssimilationConfig,
@@ -42,7 +40,6 @@ from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import (
     EnsembleInformationFilter,
 )
-from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
 from .manual_update import ManualUpdate
 from .manual_update_enif import ManualUpdateEnIF
@@ -74,8 +71,6 @@ def _dispatch_create_model(
         return _setup_ensemble_experiment(config, args, status_queue)
     if args.mode == EVALUATE_ENSEMBLE_MODE:
         return _setup_evaluate_ensemble(config, args, status_queue)
-    if args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(config, args, update_settings, status_queue)
     if args.mode == ENIF_MODE:
         return _setup_ensemble_information_filter(
             config, args, update_settings, status_queue
@@ -392,48 +387,6 @@ def _setup_manual_update_enif(
         parameter_configuration=config.ensemble_config.parameter_configuration,
     )
     return ManualUpdateEnIF(**runmodel_config.model_dump(), status_queue=status_queue)
-
-
-def _setup_ensemble_smoother(
-    config: ErtConfig,
-    args: Namespace,
-    update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
-) -> EnsembleSmoother:
-    active_realizations = _get_and_validate_active_realizations_list(args, config)
-    validate_minimum_realizations(config, active_realizations)
-
-    parameter_configs, design_matrix = _resolve_parameter_configs_from_args(
-        config, args, config.analysis_config.design_matrix
-    )
-
-    runmodel_config = EnsembleSmootherConfig(
-        target_ensemble=args.target_ensemble,
-        experiment_name=getattr(args, "experiment_name", ""),
-        active_realizations=active_realizations,
-        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-        random_seed=config.random_seed,
-        storage_path=config.ens_path,
-        queue_config=config.queue_config,
-        analysis_settings=config.analysis_config.es_settings,
-        update_settings=update_settings,
-        runpath_file=config.runpath_file,
-        design_matrix=design_matrix,
-        parameter_configuration=parameter_configs,
-        response_configuration=config.ensemble_config.response_configuration,
-        ert_templates=config.ert_templates,
-        user_config_file=Path(config.user_config_file),
-        env_vars=config.env_vars,
-        env_pr_fm_step=config.env_pr_fm_step,
-        runpath_config=config.runpath_config,
-        forward_model_steps=config.forward_model_steps,
-        substitutions=config.substitutions,
-        hooked_workflows=config.hooked_workflows,
-        log_path=config.analysis_config.log_path,
-        observations=config.observation_declarations,
-        shape_registry=config.shape_registry,
-    )
-    return EnsembleSmoother(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _setup_ensemble_information_filter(

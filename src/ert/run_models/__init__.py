@@ -1,7 +1,6 @@
 from ert.run_models.run_model_configs import (
     EnsembleExperimentConfig,
     EnsembleInformationFilterConfig,
-    EnsembleSmootherConfig,
     EvaluateEnsembleConfig,
     MultipleDataAssimilationConfig,
     SingleTestRunConfig,
@@ -11,7 +10,6 @@ from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import (
     EnsembleInformationFilter,
 )
-from .ensemble_smoother import EnsembleSmoother
 from .event import (
     RunModelEvent,
     RunModelStatusEvent,
@@ -36,8 +34,6 @@ __all__ = [
     "EnsembleExperimentConfig",
     "EnsembleInformationFilter",
     "EnsembleInformationFilterConfig",
-    "EnsembleSmoother",
-    "EnsembleSmootherConfig",
     "ErtRunError",
     "EvaluateEnsembleConfig",
     "MultipleDataAssimilation",
