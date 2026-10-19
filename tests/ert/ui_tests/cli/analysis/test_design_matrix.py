@@ -494,7 +494,7 @@ def test_that_partial_genkw_overlap_with_sampled_priority_updates_dm_params(
     with pytest.warns(
         ConfigWarning,
         match=r"Parameters \['b'\] are also defined in design matrix, "
-        "but due to the sampled priority they will remain as such",
+        "but due to the given priority they will be sampled as GenKW.",
     ):
         run_cli(
             experiment_mode,

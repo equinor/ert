@@ -1200,8 +1200,8 @@ class ErtConfig(BaseModel, extra="forbid"):
                 if param_sampled:
                     ConfigWarning.warn(
                         f"Parameters {param_sampled} "
-                        "are also defined in design matrix, but due to the sampled"
-                        " priority they will remain as such."
+                        "are also defined in design matrix, but due to the given"
+                        " priority they will be sampled as GEN_KW."
                     )
                 if param_design:
                     if dm.update:
