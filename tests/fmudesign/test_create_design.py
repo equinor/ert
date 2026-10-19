@@ -806,6 +806,25 @@ def test_that_set_decimals_propagates_zero_precision_to_dependency():
     assert design.designvalues["TARGET"].tolist() == [2.0]
 
 
+def test_that_dependency_mapped_values_are_not_rounded_to_source_decimals():
+    config = minimal_configuration()
+    config.decimals = {"A": 0}
+    config.defaultvalues = {"A": 0, "B": 0.5}
+    config.sensitivities = {
+        "a": {
+            "senstype": "scenario",
+            "cases": {"low": {"A": -1}, "high": {"A": 1}},
+            "dependencies": {
+                "A": {"from_values": [-1, 1], "to_params": {"B": [0.25, 0.75]}}
+            },
+        }
+    }
+
+    design = DesignMatrix(config=config)
+
+    assert design.designvalues["B"].tolist() == [0.25, 0.75]
+
+
 def _sample_mc(
     params,
     *,
