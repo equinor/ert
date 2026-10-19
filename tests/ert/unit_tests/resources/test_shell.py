@@ -311,7 +311,7 @@ def test_that_delete_directory_on_a_symlink_to_a_directory_only_deletes_link():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("trailing", ["", "/"])
+@pytest.mark.parametrize("trailing", ["", "/"], ids=str)
 def test_that_delete_directory_on_a_symlink_to_a_directory_is_conditionally_ignored(
     trailing,
 ):

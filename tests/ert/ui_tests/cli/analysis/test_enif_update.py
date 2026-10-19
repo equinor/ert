@@ -89,7 +89,7 @@ def _populate_prior(prior, rng, genkw_names):
 
 @pytest.mark.filterwarnings("ignore::scipy.linalg.LinAlgWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-@pytest.mark.parametrize("param_order", ["genkw_first", "surface_first"])
+@pytest.mark.parametrize("param_order", ["genkw_first", "surface_first"], ids=str)
 def test_that_enif_nan_filtering_does_not_contaminate_genkw(tmp_path, param_order):
     rng = np.random.default_rng(42)
     surf_cfg = SURFACE_CONFIG.model_dump(mode="json")

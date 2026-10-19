@@ -62,7 +62,7 @@ def test_that_widget_visibility_follows_checkbox_toggle(qtbot):
     assert edit.isVisible()
 
 
-@pytest.mark.parametrize("checked", [True, False])
+@pytest.mark.parametrize("checked", [True, False], ids=str)
 def test_that_initial_visibility_mirrors_checkbox_state(qtbot, checked):
     edit, _, _ = _make_edit(qtbot, checked=checked)
 

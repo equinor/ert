@@ -223,7 +223,7 @@ def test_init_transform_is_gotten_from_keyword(parse_field_line, transform):
     assert field.input_transformation == transform
 
 
-@pytest.mark.parametrize("transform", ["INIT_TRANSFORM", "OUTPUT_TRANSFORM"])
+@pytest.mark.parametrize("transform", ["INIT_TRANSFORM", "OUTPUT_TRANSFORM"], ids=str)
 def test_unknown_transform_functions_raises_a_config_error(parse_field_line, transform):
     with pytest.raises(
         expected_exception=ConfigValidationError,
@@ -234,7 +234,7 @@ def test_unknown_transform_functions_raises_a_config_error(parse_field_line, tra
         )
 
 
-@pytest.mark.parametrize("boolean", [True, False])
+@pytest.mark.parametrize("boolean", [True, False], ids=str)
 def test_forward_init_is_gotten_from_keyword(parse_field_line, boolean):
     field = parse_field_line(
         f"FIELD f PARAMETER f.roff INIT_FILES:f%d.grdecl FORWARD_INIT:{boolean}"
@@ -242,7 +242,7 @@ def test_forward_init_is_gotten_from_keyword(parse_field_line, boolean):
     assert field.forward_init == boolean
 
 
-@pytest.mark.parametrize("invalid", ["not_right", "uhum"])
+@pytest.mark.parametrize("invalid", ["not_right", "uhum"], ids=str)
 def test_invalid_forward_init_gives_a_user_error_message(parse_field_line, invalid):
     with pytest.raises(
         ConfigValidationError,

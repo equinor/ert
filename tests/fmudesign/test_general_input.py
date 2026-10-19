@@ -438,7 +438,7 @@ def test_that_read_general_input_filters_empty_keys_with_none_like_values(none_l
     assert result == {"foo": "bar"}
 
 
-@pytest.mark.parametrize("none_like", ["none", "None", "NONE", "null", "NULL"])
+@pytest.mark.parametrize("none_like", ["none", "None", "NONE", "null", "NULL"], ids=str)
 def test_that_read_general_input_preserves_none_like_excel_keys(none_like):
     rows = [
         ["designtype", "onebyone"],

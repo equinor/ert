@@ -175,7 +175,7 @@ def test_that_dates_typed_in_excel_stay_dates_in_the_design_matrix(tmp_path):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("verbosity", [1, 2])
+@pytest.mark.parametrize("verbosity", [1, 2], ids=str)
 def test_that_cli_verbosity_controls_sensitivity_plot_generation(
     tmp_path, monkeypatch, verbosity
 ):

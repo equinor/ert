@@ -165,7 +165,7 @@ async def test_add_dispatch_information_to_jobs_file(
         assert len(content["jobList"]) == 0
 
 
-@pytest.mark.parametrize("max_submit", [1, 2, 3])
+@pytest.mark.parametrize("max_submit", [1, 2, 3], ids=str)
 async def test_that_max_submit_was_reached(realization, max_submit, mock_driver):
     retries = 0
 
@@ -250,7 +250,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
 
 
 @pytest.mark.flaky(reruns=3)
-@pytest.mark.parametrize("max_running", [0, 1, 2, 10])
+@pytest.mark.parametrize("max_running", [0, 1, 2, 10], ids=str)
 async def test_max_running(max_running, mock_driver, storage, tmp_path):
     runs: list[bool] = []
 
@@ -414,7 +414,7 @@ async def test_job_exception_correctly_propagates(mock_driver, realization, capl
 
 
 @pytest.mark.timeout(6)
-@pytest.mark.parametrize("should_fail", [True, False])
+@pytest.mark.parametrize("should_fail", [True, False], ids=str)
 async def test_that_failed_realization_will_not_be_cancelled(
     should_fail, realization, mock_driver
 ):

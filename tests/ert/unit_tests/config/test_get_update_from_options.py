@@ -20,7 +20,7 @@ def test_that_get_update_from_options_returns_expected_strategy(options, expecte
     assert get_update_from_options(options) == expected
 
 
-@pytest.mark.parametrize("value", ["INVALID", "yes", "no", "1", "0", ""])
+@pytest.mark.parametrize("value", ["INVALID", "yes", "no", "1", "0", ""], ids=str)
 def test_that_get_update_from_options_raises_on_invalid_value(value):
     with pytest.raises(ConfigValidationError, match=f"Invalid UPDATE option: {value}"):
         get_update_from_options({"UPDATE": value})
