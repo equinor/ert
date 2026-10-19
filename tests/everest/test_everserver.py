@@ -76,7 +76,7 @@ async def wait_for_server_to_complete(config):
             if isinstance(event, FinishedEvent) and event.iens == 0:
                 return
 
-    driver = await start_server(config, logging.DEBUG)
+    driver = await start_server(config)
     api = ErtClient.get_client(Path(ServerConfig.get_session_dir(config.output_dir)))
     api.wait_for_server(timeout=120)
     api.start_experiment(config.to_dict())

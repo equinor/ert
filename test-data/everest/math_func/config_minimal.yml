@@ -38,5 +38,4 @@ simulator:
 
 environment:
   simulation_folder: sim_output
-  log_level: info
   random_seed: 123

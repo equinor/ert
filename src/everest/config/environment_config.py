@@ -4,6 +4,7 @@ from typing import Literal, Self
 from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
 
+from ert.config import ConfigWarning
 from everest.config.validation_utils import check_path_valid
 
 
@@ -27,24 +28,13 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
             """
         ),
     )
-    log_level: Literal["debug", "info", "warning", "error", "critical"] = Field(
-        default="info",
+    log_level: Literal["debug", "info", "warning", "error", "critical"] | None = Field(
+        default=None,
+        deprecated=True,
         description=dedent(
             """
-            Defines the verbosity of logs output by EVEREST.
-
-            The default log level is `info`. The supported log levels are:
-
-            - `debug`: Detailed information, typically of interest only when
-               diagnosing problems.
-            - `info`: Confirmation that things are working as expected.
-            - `warning`: An indication that something unexpected happened, or
-               indicative of some problem in the near future (e.g. `disk space
-               low`). The software is still working as expected.
-            - `error`: Due to a more serious problem, the software has not been
-               able to perform some function.
-            - `critical`: A serious error, indicating that the program will not
-              be able to continue running.
+            Deprecated and ignored. The log level is no longer configurable;
+            logs are written to disk at the `debug` level.
             """
         ),
     )
@@ -67,6 +57,15 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
             raise ValueError("output_folder can not be None")
         check_path_valid(output_folder)
         return output_folder
+
+    @model_validator(mode="after")
+    def warn_about_deprecated_log_level(self) -> Self:
+        if self.log_level is not None:
+            ConfigWarning.deprecation_warn(
+                "`environment: log_level` is deprecated and ignored. "
+                "The log level is no longer configurable."
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_random_seed(self) -> Self:

@@ -55,5 +55,4 @@ simulator:
 environment:
   simulation_folder: sim_output
   output_folder: everest_output_multiobj_advanced
-  log_level: debug
   random_seed: 999
