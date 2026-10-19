@@ -15,7 +15,6 @@ from ert.config.queue_config import QueueConfig
 from ert.run_models.run_model_configs import (
     EnsembleExperimentConfig,
     EnsembleInformationFilterConfig,
-    EnsembleSmootherConfig,
     ManualUpdateConfig,
     MultipleDataAssimilationConfig,
     RunModelConfig,
@@ -24,7 +23,6 @@ from ert.run_models.run_model_configs import (
 )
 
 INITIAL_UPDATE_CONFIGS = [
-    EnsembleSmootherConfig,
     EnsembleInformationFilterConfig,
     MultipleDataAssimilationConfig,
 ]

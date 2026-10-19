@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from resfo_utilities import RFTReader
 
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ES_MDA_MODE
 
 from .run_cli import run_cli
 
@@ -26,7 +26,7 @@ def test_that_rft_example_with_rft_observation_keyword_yelds_same_result_as_gend
     were changed upon the release of Flow 2026.04
     """
     shutil.copytree(source_root / "test-data" / "ert" / "rft_example", "test-data")
-    run_cli(ENSEMBLE_SMOOTHER_MODE, "--disable-monitoring", "test-data/rft.ert")
+    run_cli(ES_MDA_MODE, "--single-update", "--disable-monitoring", "test-data/rft.ert")
     pressure = {}
     for file in sorted(Path("spe1_out").rglob("*.RFT")):
         rft = RFTReader.open(file)

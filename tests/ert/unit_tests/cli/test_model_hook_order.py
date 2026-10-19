@@ -25,7 +25,6 @@ from ert.config import (
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
-    EnsembleSmoother,
     MultipleDataAssimilation,
     RunModel,
     initial_ensemble_run_model,
@@ -78,11 +77,6 @@ def patch_run_model(monkeypatch):
                 "target_ensemble": "ens%d",
                 "prior_ensemble_id": "",
             },
-            EXPECTED_CALL_ORDER_WITH_ONE_UPDATE,
-        ),
-        (
-            EnsembleSmoother,
-            {"target_ensemble": "ens%d"},
             EXPECTED_CALL_ORDER_WITH_ONE_UPDATE,
         ),
         (

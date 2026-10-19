@@ -8,7 +8,7 @@ from starlette.testclient import TestClient
 
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ES_MDA_MODE
 from ert.server import common
 from ert.server.app import app
 
@@ -29,7 +29,8 @@ def poly_example_tmp_dir_shared(
         parsed = ert_parser(
             parser,
             [
-                ENSEMBLE_SMOOTHER_MODE,
+                ES_MDA_MODE,
+                "--single-update",
                 "--disable-monitoring",
                 "--realizations",
                 "1,2,4",

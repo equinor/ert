@@ -18,7 +18,7 @@ from ert.analysis import (
 )
 from ert.config import ErtConfig, ObservationSettings
 from ert.config._create_observation_dataframes import create_observation_dataframes
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ES_MDA_MODE
 from ert.observation_converters.history_to_summary import convert_history_to_summary
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
@@ -305,7 +305,8 @@ if __name__ == "__main__":
 
 def run_poly():
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "config.ert",
     )

@@ -30,7 +30,6 @@ from ert.gui.ertwidgets.parameterviewer import ParametersViewer
 from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
 )
-from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
@@ -250,7 +249,7 @@ def test_that_strategy_summary_reflects_only_saved_update_settings(
 
 @pytest.mark.parametrize(
     "panel_type",
-    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+    [MultipleDataAssimilationPanel],
 )
 def test_that_update_strategy_summary_includes_design_matrix_parameters(
     qtbot: QtBot, tmp_path, panel_type
@@ -298,7 +297,7 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
 
 @pytest.mark.parametrize(
     "panel_type",
-    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+    [MultipleDataAssimilationPanel],
 )
 def test_that_activating_panel_refreshes_strategy_changed_by_another_panel(
     qtbot: QtBot, panel_type
@@ -782,7 +781,7 @@ def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
 
 @pytest.mark.parametrize(
     "panel_type",
-    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+    [MultipleDataAssimilationPanel],
 )
 @pytest.mark.parametrize("design_parameter_name", ["design_parameter", "original"])
 @pytest.mark.timeout(10)

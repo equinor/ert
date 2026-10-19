@@ -43,7 +43,7 @@ from ert.storage import (
     open_storage,
 )
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
-    run_cli_ES_with_case,
+    run_cli_single_update_with_case,
 )
 from tests.ert.unit_tests.gui.experiments.conftest import make_workflow_event
 
@@ -433,7 +433,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         encoding="utf-8",
     )
 
-    prior_ens_id, _, _ = run_cli_ES_with_case(
+    prior_ens_id, _, _ = run_cli_single_update_with_case(
         "poly_localization_0.ert", "test_experiment"
     )
     config = ErtConfig.from_file("poly_localization_0.ert")

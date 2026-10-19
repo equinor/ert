@@ -47,7 +47,6 @@ from ert.config.queue_config import (
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
     MANUAL_UPDATE_MODE,
@@ -57,7 +56,6 @@ from ert.plugins import ErtRuntimePlugins
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
-    EnsembleSmoother,
     MultipleDataAssimilation,
     create_model,
 )
@@ -558,50 +556,6 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     update_runmodels(),
     st.data(),
 )
-def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
-    tmp_path_factory: pytest.TempPathFactory,
-    initial_ensemble_args: dict[str, Any],
-    update_runmodel_args: dict[str, Any],
-    data,
-):
-    tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
-    baserunmodel_args, runtime_plugins = runmodel_args(
-        data.draw, tmp_path_factory, min_active_realizations=2
-    )
-    note(f"Running in directory {tmp_path}")
-    with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
-        patch.chdir(tmp_path)
-        runmodel = EnsembleSmoother(
-            **(
-                baserunmodel_args
-                | initial_ensemble_args
-                | update_runmodel_args
-                | {"status_queue": queue.SimpleQueue()}
-            ),
-        )
-        runmodel._storage.close()
-
-        runmodel_from_serialized = EnsembleSmoother.model_validate(
-            runmodel.model_dump(mode="json", exclude={"experiment_type"})
-            | {"status_queue": queue.SimpleQueue()}
-        )
-
-        assert (
-            runmodel_from_serialized.env_vars
-            == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
-        )
-        assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
-            mode="json"
-        )
-
-
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(
-    initial_ensemble_runmodels(require_updatable_parameters=True),
-    update_runmodels(),
-    st.data(),
-)
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
@@ -829,30 +783,6 @@ def test_that_dumped_ensemble_experiment_matches_snapshot(
             realizations="1,2",
             experiment_name="default_name",
             current_ensemble="the_experiment",
-        ),
-        case=f"{config_dir}.{config_file}",
-    )
-
-
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@pytest.mark.parametrize("case", cases_to_test)
-def test_that_dumped_ensemble_smoother_matches_snapshot(
-    case, copy_case, snapshot, change_to_tmpdir
-):
-    config_dir, config_file = case.split("/")
-    copy_case(config_dir)
-
-    config = ErtConfig.from_file(config_file)
-    config.random_seed = 1  # Ensure deterministic
-
-    _create_and_verify_runmodel_snapshot(
-        config,
-        snapshot,
-        cli_args=Namespace(
-            mode=ENSEMBLE_SMOOTHER_MODE,
-            realizations="1,2",
-            target_ensemble="helloworld<ITER>",
-            experiment_name="dummy",
         ),
         case=f"{config_dir}.{config_file}",
     )

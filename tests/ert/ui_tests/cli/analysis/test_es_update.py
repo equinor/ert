@@ -5,12 +5,11 @@ from textwrap import dedent
 import numpy as np
 import polars as pl
 import pytest
-from polars.testing import assert_frame_equal
 from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
 from ert.config import ErtConfig, GenKwConfig
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE
+from ert.mode_definitions import ES_MDA_MODE
 from ert.storage import RealizationStorageState, open_storage
 from ert.storage.blob_data import UpdateStatus
 from tests.ert.ui_tests.cli.run_cli import run_cli
@@ -42,7 +41,8 @@ def obs() -> pl.DataFrame:
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_has_lower_variance_than_prior():
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "--realizations",
         "1-50",
@@ -76,7 +76,8 @@ def test_that_posterior_has_lower_variance_than_prior():
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_update_report_of_finished_run_can_be_read_back_from_posterior_ensemble():
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "--realizations",
         "1-2",
@@ -137,7 +138,8 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     Path("observations/observations.txt").write_text(obs, encoding="utf-8")
 
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "snake_oil_surface.ert",
     )
@@ -145,7 +147,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     ert_config = ErtConfig.from_file("snake_oil_surface.ert")
 
     storage = open_storage(ert_config.ens_path)
-    experiment = storage.get_experiment_by_name("es")
+    experiment = storage.get_experiment_by_name("es-mda")
     ens_prior = experiment.get_ensemble_by_name("iter-0")
     ens_posterior = experiment.get_ensemble_by_name("iter-1")
 
@@ -174,7 +176,8 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_update_multiple_param():
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "snake_oil.ert",
     )
@@ -182,7 +185,7 @@ def test_update_multiple_param():
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
     storage = open_storage(ert_config.ens_path)
-    experiment = storage.get_experiment_by_name("es")
+    experiment = storage.get_experiment_by_name("es-mda")
     prior_ensemble = experiment.get_ensemble_by_name("iter-0")
     posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
 
@@ -247,7 +250,8 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
     poly_py.chmod(poly_py.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "--realizations",
         "0-2",
@@ -257,7 +261,7 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
     ert_config = ErtConfig.from_file("poly.ert")
 
     with open_storage(ert_config.ens_path) as storage:
-        experiment = storage.get_experiment_by_name("es")
+        experiment = storage.get_experiment_by_name("es-mda")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
 
@@ -267,47 +271,3 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
             for idx, v in enumerate(prior.get_ensemble_state())
             if RealizationStorageState.FAILURE_IN_CURRENT in v
         )
-
-
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_es_mda_with_single_unit_weight_equals_ensemble_smoother():
-    with Path("poly.ert").open("a", encoding="utf-8") as fout:
-        fout.write("\nRANDOM_SEED 1234\n")
-
-    run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitoring",
-        "--realizations",
-        "0-9",
-        "poly.ert",
-        "--experiment-name",
-        "es",
-    )
-    run_cli(
-        ES_MDA_MODE,
-        "--disable-monitoring",
-        "--realizations",
-        "0-9",
-        "poly.ert",
-        "--experiment-name",
-        "es_mda",
-        "--target-ensemble",
-        "iter-%d",
-        "--single-update",
-    )
-
-    realizations = tuple(range(10))
-    with open_storage("storage") as storage:
-        es = storage.get_experiment_by_name("es")
-        es_mda = storage.get_experiment_by_name("es_mda")
-        for ensemble_name in ("iter-0", "iter-1"):
-            es_ensemble = es.get_ensemble_by_name(ensemble_name)
-            es_mda_ensemble = es_mda.get_ensemble_by_name(ensemble_name)
-            assert_frame_equal(
-                es_ensemble.load_scalars(), es_mda_ensemble.load_scalars()
-            )
-            assert_frame_equal(
-                es_ensemble.load_responses("POLY_RES", realizations),
-                es_mda_ensemble.load_responses("POLY_RES", realizations),
-            )
-        assert len(list(es_mda.ensembles)) == 2

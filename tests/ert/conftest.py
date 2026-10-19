@@ -38,7 +38,6 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
 )
 from ert.server.app import app
@@ -444,7 +443,9 @@ def _run_snake_oil(source_root: Path, monkeypatch: pytest.MonkeyPatch):
     run_cli(parsed)
 
 
-def _run_heat_equation(source_root: Path, run_mode, monkeypatch: pytest.MonkeyPatch):
+def _run_heat_equation(
+    source_root: Path, run_mode, monkeypatch: pytest.MonkeyPatch, *extra_args: str
+):
     shutil.copytree(source_root / "test-data" / "ert" / "heat_equation", "test_data")
     monkeypatch.chdir("test_data")
     with Path("config.ert").open("a", encoding="utf-8") as fh:
@@ -454,6 +455,7 @@ def _run_heat_equation(source_root: Path, run_mode, monkeypatch: pytest.MonkeyPa
         parser,
         [
             run_mode,
+            *extra_args,
             "--disable-monitoring",
             "config.ert",
         ],
@@ -491,7 +493,7 @@ def _shared_heat_equation_es(request, monkeypatch, source_root: Path):
     )
     monkeypatch.chdir(cache_path)
     if not any(Path().iterdir()):
-        _run_heat_equation(source_root, ENSEMBLE_SMOOTHER_MODE, monkeypatch)
+        _run_heat_equation(source_root, ES_MDA_MODE, monkeypatch, "--single-update")
     else:
         monkeypatch.chdir("test_data")
 
