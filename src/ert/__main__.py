@@ -29,7 +29,6 @@ from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
@@ -334,65 +333,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         help="Name of the experiment",
     )
 
-    # ensemble_smoother_parser
-    ensemble_smoother_description = (
-        "[DEPRECATED: use 'es_mda --single-update'] Run experiments in cli "
-        "while performing one update on the parameters by using the ensemble "
-        "smoother algorithm."
-    )
-    ensemble_smoother_parser = subparsers.add_parser(
-        ENSEMBLE_SMOOTHER_MODE,
-        description=ensemble_smoother_description,
-        help=ensemble_smoother_description,
-    )
-    ensemble_smoother_parser.add_argument(
-        "--current-case",
-        type=valid_name,
-        action=DeprecatedAction,
-        alternative_option="--current-ensemble",
-        dest="current_ensemble",
-        default="default",
-        help="Deprecated: This argument is deprecated and has no effect.",
-    )
-    ensemble_smoother_parser.add_argument(
-        "--current-ensemble",
-        type=valid_name,
-        default="default",
-        help="This argument is deprecated and has no effect.",
-    )
-    ensemble_smoother_parser.add_argument(
-        "--target-case",
-        type=valid_name_format,
-        default=DEFAULT_TARGET_ENSEMBLE_FORMAT,
-        action=DeprecatedAction,
-        alternative_option="--target-ensemble",
-        dest="target_ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --target-ensemble instead.",
-    )
-    ensemble_smoother_parser.add_argument(
-        "--target-ensemble",
-        type=valid_name_format,
-        default=DEFAULT_TARGET_ENSEMBLE_FORMAT,
-        dest="target_ensemble",
-        help="Name of the ensemble where the results for the "
-        "updated parameters will be stored.",
-    )
-    ensemble_smoother_parser.add_argument(
-        "--realizations",
-        type=valid_realizations,
-        help="These are the realizations that will be used to perform experiments."
-        "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
-        "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
-        "while realizations 10,11, 12,...,49 will be excluded",
-    )
-    ensemble_smoother_parser.add_argument(
-        "--experiment-name",
-        type=str,
-        default="es",
-        help="Name of the experiment",
-    )
-
     # enif_parser
     enif_description = (
         "Run experiments in cli while performing one update"
@@ -559,7 +499,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     for cli_parser in [
         test_run_parser,
         ensemble_experiment_parser,
-        ensemble_smoother_parser,
         enif_parser,
         es_mda_parser,
         workflow_parser,

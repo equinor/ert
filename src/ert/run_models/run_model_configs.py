@@ -186,16 +186,6 @@ class InitialEnsembleUpdateRunModelConfig(
         return self
 
 
-class EnsembleSmootherConfig(InitialEnsembleUpdateRunModelConfig):
-    def to_experiment_config(self) -> ExperimentConfig:
-        return {
-            **self._initial_ensemble_experiment_config(),
-            **self._update_experiment_config(),
-            **self._common_fields(),
-            "experiment_type": ExperimentType.ENSEMBLE_SMOOTHER,
-        }
-
-
 class EnsembleInformationFilterConfig(InitialEnsembleUpdateRunModelConfig):
     def to_experiment_config(self) -> ExperimentConfig:
         return {
