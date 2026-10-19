@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import io
 import logging
-from typing import cast
 
+import polars as pl
 from PyQt6.QtWidgets import (
     QLabel,
     QTabWidget,
@@ -17,32 +18,42 @@ from ert.gui.experiments.view.update import (
     create_table_tab,
 )
 from ert.storage import Ensemble
-from ert.storage.blob_data import StoredUpdate, UpdateStatus, UpdateTable
+from ert.storage.blob_data import (
+    BlobStorageData,
+    BlobType,
+    ObservationReportData,
+    UpdateDataTableData,
+    UpdateStatus,
+)
 
 logger = logging.getLogger(__name__)
 
 _REPORT_TABLE_COLUMNS = {"status", "missing_realizations"}
 
 
-def _as_data_section(table: UpdateTable) -> DataSection:
-    return DataSection(
-        header=list(table.header),
-        data=[cast(list[str | float], list(row)) for row in table.rows],
-        extra=dict(table.summary),
-    )
+def _table_index(blob: BlobStorageData) -> int:
+    assert isinstance(blob.blob_info, UpdateDataTableData)
+    return blob.blob_info.table_index
 
 
-def _table_type(table: UpdateTable) -> type[UpdateLogTable]:
+def _read_data_section(
+    ensemble: Ensemble, uri: str, summary: dict[str, str]
+) -> DataSection:
+    table = pl.read_parquet(io.BytesIO(ensemble.load_blob(uri)))
+    return DataSection(header=table.columns, data=table.rows(), extra=summary)
+
+
+def _report_table_type(report: DataSection) -> type[UpdateLogTable]:
     # ReportLogTable raises unless both columns are present, so an unfinished
     # report from a failed update is shown as a plain table instead.
-    if table.is_report and _REPORT_TABLE_COLUMNS.issubset(table.header):
+    if _REPORT_TABLE_COLUMNS.issubset(report.header):
         return ReportLogTable
     return UpdateLogTable
 
 
 def _has_readable_update(ensemble: Ensemble) -> bool:
     try:
-        return ensemble.has_stored_update
+        return bool(ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT))
     except Exception:
         logger.exception("Could not read the blob metadata of ensemble %s", ensemble.id)
         return False
@@ -98,30 +109,39 @@ class UpdateView(QWidget):
 
         assert self._ensemble is not None
         try:
-            update = self._ensemble.load_stored_update()
+            self._show_update(self._ensemble)
         except Exception:
             logger.exception(
                 "Could not read the stored update of %s", self._ensemble.name
             )
+            self._clear_tabs()
             self._status_label.setText(
                 f"The update that produced {self._ensemble.name} could not be read "
                 f"from storage."
             )
-            return
 
-        if update is None:
-            return
+    def _show_update(self, ensemble: Ensemble) -> None:
+        [report_blob] = ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)
+        report_info = report_blob.blob_info
+        assert isinstance(report_info, ObservationReportData)
+        self._status_label.setText(_describe(report_info))
 
-        self._status_label.setText(_describe(update))
-        for table in update.tables:
-            if not table.header:
-                continue
-            self._tab_widget.addTab(
-                create_table_tab(
-                    table.name, _as_data_section(table), _table_type(table)
-                ),
-                table.name,
-            )
+        table_blobs = ensemble.load_blob_metadata(BlobType.UPDATE_DATA_TABLE)
+        for table_blob in sorted(table_blobs, key=_table_index):
+            table_info = table_blob.blob_info
+            assert isinstance(table_info, UpdateDataTableData)
+            table = _read_data_section(ensemble, table_blob.uri, table_info.summary)
+            self._add_tab(table_info.table_name, table, UpdateLogTable)
+
+        report = _read_data_section(ensemble, report_blob.uri, report_info.summary)
+        self._add_tab("Report", report, _report_table_type(report))
+
+    def _add_tab(
+        self, name: str, data: DataSection, table_type: type[UpdateLogTable]
+    ) -> None:
+        if not data.header:
+            return
+        self._tab_widget.addTab(create_table_tab(name, data, table_type), name)
 
     def _clear_tabs(self) -> None:
         # QTabWidget.clear() only removes the tabs, it does not delete their pages.
@@ -132,10 +152,10 @@ class UpdateView(QWidget):
                 page.deleteLater()
 
 
-def _describe(update: StoredUpdate) -> str:
-    if update.status is UpdateStatus.FAILED:
+def _describe(report: ObservationReportData) -> str:
+    if report.status is UpdateStatus.FAILED:
         return (
-            f"The {update.update_algorithm} update failed: "
-            f"{update.error_message or 'no error message was recorded'}"
+            f"The {report.update_algorithm} update failed: "
+            f"{report.error_message or 'no error message was recorded'}"
         )
-    return f"Updated with {update.update_algorithm}"
+    return f"Updated with {report.update_algorithm}"
