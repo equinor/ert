@@ -671,10 +671,9 @@ class DesignMatrix:
             if not sensdict["dependencies"]:
                 continue
             for from_param, from_dict in sensdict["dependencies"].items():
-                for to_param in from_dict["to_params"]:
-                    if from_param not in dict_decimals:
-                        continue
-                    dict_decimals[to_param] = dict_decimals[from_param]
+                for to_param, to_values in from_dict["to_params"].items():
+                    if from_param in dict_decimals and not to_values:
+                        dict_decimals[to_param] = dict_decimals[from_param]
 
         # Round each column
         for key in self.designvalues.columns:
