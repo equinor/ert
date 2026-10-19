@@ -168,14 +168,14 @@ class _Index(BaseModel, extra="forbid"):
     status: ExperimentStatus | None = Field(default=None)
 
 
-_responses_adapter = TypeAdapter(  # type: ignore
+_responses_adapter = TypeAdapter(
     Annotated[
         KnownResponseTypes,
         Field(discriminator="type"),
     ]
 )
 
-_parameters_adapter = TypeAdapter(  # type: ignore
+_parameters_adapter = TypeAdapter(
     Annotated[
         (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
         Field(discriminator="type"),
@@ -261,7 +261,7 @@ class LocalExperiment(BaseMode):
             output_path = path / "observations"
             output_path.mkdir(parents=True, exist_ok=True)
 
-            obs_adapter = TypeAdapter(Observation)  # type: ignore
+            obs_adapter = TypeAdapter(Observation)
             obs_objs: list[Observation] = [
                 obs_adapter.validate_python(od) for od in observation_declarations
             ]
@@ -477,7 +477,7 @@ class LocalExperiment(BaseMode):
     def response_configuration(
         self,
     ) -> dict[str, ResponseConfig]:
-        responses = {}
+        responses: dict[str, ResponseConfig] = {}
 
         for data in self.response_info.values():
             response_instance = _responses_adapter.validate_python(data)
@@ -532,7 +532,7 @@ class LocalExperiment(BaseMode):
         output_path = self.mount_point / "observations"
         output_path.mkdir(parents=True, exist_ok=True)
 
-        obs_adapter = TypeAdapter(Observation)  # type: ignore
+        obs_adapter = TypeAdapter(Observation)
         obs_objs: list[Observation] = [
             obs_adapter.validate_python(od) for od in serialized_observations
         ]
