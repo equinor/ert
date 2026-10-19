@@ -261,7 +261,7 @@ class EvaluateEnsembleConfig(RunModelConfig):
 EverestResponseTypes = (
     EverestObjectivesConfig | EverestConstraintsConfig | SummaryConfig | GenDataConfig
 )
-EverestResponseTypesAdapter = TypeAdapter(  # type: ignore
+EverestResponseTypesAdapter = TypeAdapter(
     Annotated[
         EverestResponseTypes,
         Field(discriminator="type"),
