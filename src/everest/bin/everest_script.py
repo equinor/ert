@@ -46,7 +46,7 @@ MAX_EVERSERVER_PENDING_TIME = 30 * 60  # 30 minutes
 MAX_EVERSERVER_READY_TIME = 10 * 60  # 10 minutes
 
 
-async def start_server(config: EverestConfig, logging_level: int) -> Driver:
+async def start_server(config: EverestConfig) -> Driver:
     """Start an EVEREST server running the optimization defined in the config"""
     server_config = config.server
     if server_config.queue_system is None:
@@ -60,8 +60,6 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
         args = [
             "--output-dir",
             str(config.output_dir),
-            "--logging-level",
-            str(logging_level),
             "--traceparent",
             str(get_traceparent()),
         ]
@@ -247,8 +245,6 @@ async def run_everest(options: argparse.Namespace) -> None:
     except (OSError, LookupError) as e:
         logger.error(f"Failed to save optimization config: {e}")
 
-    logging_level = logging.DEBUG if options.debug else options.config.logging_level
-
     submit_msg = (
         "Submitting Everest server to the "
         f"{options.config.server.queue_system.name} queue ..."
@@ -258,7 +254,7 @@ async def run_everest(options: argparse.Namespace) -> None:
     pend_start_time: float = time.monotonic()
     try:
         await asyncio.wait_for(
-            start_server(options.config, logging_level),
+            start_server(options.config),
             timeout=MAX_EVERSERVER_PENDING_TIME,
         )
     except TimeoutError as e:

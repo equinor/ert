@@ -1,4 +1,3 @@
-import logging
 import os
 from argparse import ArgumentParser
 from copy import copy
@@ -951,19 +950,6 @@ to read summary data from forward model, do:
 
     def copy(self) -> "EverestConfig":  # type: ignore
         return EverestConfig.model_validate(self.model_dump(exclude_none=True))
-
-    @property
-    def logging_level(self) -> int:
-        level = self.environment.log_level
-
-        levels = {
-            "debug": logging.DEBUG,  # 10
-            "info": logging.INFO,  # 20
-            "warning": logging.WARNING,  # 30
-            "error": logging.ERROR,  # 40
-            "critical": logging.CRITICAL,  # 50
-        }
-        return levels.get(level.lower(), logging.INFO)
 
     @property
     def config_directory(self) -> str:

@@ -1,5 +1,4 @@
 import datetime as dt
-import logging
 import re
 from pathlib import Path
 from textwrap import dedent
@@ -318,55 +317,6 @@ def test_that_invalid_keys_are_linted():
         ("workflows", "presimulation"),
         ("wrkflows",),
     }
-
-
-def test_that_log_level_property_is_consistent_with_environment_log_level():
-    """
-    Pydantic 1 somehow overrides property setters, and it was necessary
-    to enforce this behavior by overriding __getattr__.
-    This test verifies that the computed setter/getter works as intended
-    """
-    config_src = {
-        "controls": [
-            {
-                "name": "group_0",
-                "min": 0,
-                "max": 0.1,
-                "perturbation_magnitude": 0.01,
-                "variables": [
-                    {"name": "w01", "initial_guess": 0.0626},
-                ],
-            }
-        ],
-        "objective_functions": [{"name": "npv_function"}],
-        "optimization": {
-            "algorithm": "optpp_q_newton",
-            "max_iterations": 2,
-            "max_function_evaluations": 2,
-            "perturbation_num": 2,
-        },
-        "model": {"realizations": [0, 1]},
-        "environment": {
-            "output_folder": "everezt_output",
-            "simulation_folder": "tutorial_simulations",
-            "log_level": "debug",
-        },
-    }
-
-    levels = {
-        "debug": logging.DEBUG,  # 10
-        "info": logging.INFO,  # 20
-        "warning": logging.WARNING,  # 30
-        "error": logging.ERROR,  # 40
-        "critical": logging.CRITICAL,  # 50
-    }
-
-    config = everest_config_with_defaults(**config_src)
-    assert config.logging_level == levels[config.environment.log_level]
-
-    for lvl_str, lvl_int in levels.items():
-        config.environment.log_level = lvl_str
-        assert config.logging_level == lvl_int
 
 
 @pytest.mark.parametrize("config_class", [SimulatorConfig, ServerConfig])

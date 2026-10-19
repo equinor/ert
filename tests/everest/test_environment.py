@@ -5,6 +5,7 @@ import pytest
 
 import ert.run_models.everest_run_model
 from ert.base_model_context import use_runtime_plugins
+from ert.config import ConfigWarning
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
@@ -13,7 +14,6 @@ from tests.everest.utils import everest_config_with_defaults
 
 def test_that_default_everestconfig_lints():
     config = everest_config_with_defaults()
-    config.environment.log_level = "info"
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
 
@@ -42,3 +42,8 @@ def test_that_runpath_strings_are_generated_correctly(
         f"everest_output/simulation_folder/batch_{iteration}/realization-0/evaluation_0",
         f"everest_output/simulation_folder/batch_{iteration}/realization-2/evaluation_0",
     ]
+
+
+def test_that_log_level_in_environment_gives_deprecation_warning():
+    with pytest.warns(ConfigWarning, match="`environment: log_level` is deprecated"):
+        everest_config_with_defaults(environment={"log_level": "debug"})

@@ -114,7 +114,6 @@ def main() -> None:
     signal.signal(signal.SIGINT, raise_ert_server_exit_on_signal)
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--output-dir", "-o", type=str)
-    arg_parser.add_argument("--logging-level", "-l", type=int, default=logging.INFO)
     arg_parser.add_argument(
         "--traceparent",
         type=str,
@@ -141,7 +140,7 @@ def main() -> None:
         try:  # ruff: ignore[too-many-statements-in-try-clause]
             plugin_log_handles = _configure_loggers(
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
-                logging_level=options.logging_level,
+                logging_level=logging.DEBUG,
                 output_file=log_file.name,
             )
 
