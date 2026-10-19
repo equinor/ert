@@ -16,7 +16,7 @@ from resfo_utilities.testing import (
     Unsmry,
 )
 
-from ert.config import ConfigValidationError, ShapeRegistry
+from ert.config import ConfigValidationError, ErtConfig, ShapeRegistry
 from ert.config._observations import SummaryObservation, make_observations
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
@@ -1036,3 +1036,66 @@ def test_that_history_observation_segment_error_min_sets_error_floor():
     # minimum of 2.0 is used instead.
     assert len(history_change.summary_obs_declarations) == 1
     assert "ERROR    = 2.0" in history_change.summary_obs_declarations[0]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    ("error_mode_lines", "expected_error"),
+    [
+        pytest.param("", 0.1, id="abs"),
+        pytest.param("ERROR_MODE = REL;", 20.0, id="rel"),
+        pytest.param("ERROR_MODE = RELMIN; ERROR_MIN = 50.0;", 50.0, id="relmin"),
+    ],
+)
+def test_that_converted_summary_observation_keeps_error_of_original(
+    error_mode_lines, expected_error
+):
+    setup_refcase_config(
+        f"""\
+        SUMMARY_OBSERVATION WOPR_OP1_1 {{
+            VALUE = 200.0;
+            ERROR = 0.1;
+            {error_mode_lines}
+            RESTART = 1;
+            KEY = WOPR:OP1;
+        }};
+        """,
+        summary_vectors={"WOPR:OP1": [100, 110, 120]},
+    )
+
+    convert_history_to_summary("config.ert")
+
+    [observation] = ErtConfig.from_file("config.ert").observation_declarations
+    assert observation.error == pytest.approx(expected_error)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_summary_observation_conversion_preserves_relmin_error_mode():
+    setup_refcase_config(
+        """\
+        SUMMARY_OBSERVATION WOPR_OP1_1 {
+            VALUE = 200.0;
+            ERROR = 0.1;
+            ERROR_MODE = RELMIN;
+            ERROR_MIN = 50.0;
+            RESTART = 1;
+            KEY = WOPR:OP1;
+        };
+        """,
+        summary_vectors={"WOPR:OP1": [100, 110, 120]},
+    )
+
+    convert_history_to_summary("config.ert")
+
+    assert (
+        Path("observations.txt").read_text(encoding="utf-8")
+        == """SUMMARY_OBSERVATION WOPR_OP1_1 {
+   VALUE    = 200.0;
+   ERROR    = 0.1;
+   ERROR_MODE = RELMIN;
+   ERROR_MIN = 50.0;
+   DATE     = 2020-01-01;
+   KEY      = WOPR:OP1;
+};
+"""
+    )
