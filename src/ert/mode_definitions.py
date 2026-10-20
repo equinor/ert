@@ -7,7 +7,6 @@ WORKFLOW_MODE = "workflow"
 EVALUATE_ENSEMBLE_MODE = "evaluate_ensemble"
 MANUAL_UPDATE_MODE = "manual_update"
 MANUAL_ENIF_UPDATE_MODE = "manual_enif_update"
-DEFAULT_TARGET_ENSEMBLE_FORMAT = "iter-%d"
 
 MODULE_MODE = {
     "EnsembleInformationFilter": ENIF_MODE,

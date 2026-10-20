@@ -14,6 +14,8 @@ from _ert.utils import file_safe_timestamp
 P = ParamSpec("P")
 R = TypeVar("R")
 
+DEFAULT_TARGET_ENSEMBLE_FORMAT = "iter-%d"
+
 
 def log_duration(
     logger: logging.Logger,

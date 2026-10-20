@@ -2,7 +2,7 @@ from typing import override
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.mode_definitions import DEFAULT_TARGET_ENSEMBLE_FORMAT
+from ert.utils import DEFAULT_TARGET_ENSEMBLE_FORMAT
 
 from .valuemodel import ValueModel
 
