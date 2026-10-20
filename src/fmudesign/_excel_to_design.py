@@ -1,6 +1,6 @@
 """This module contains functions for reading Excel config files.
-These are converted to a dict-of-dicts representation, then they are used
-by the DesignMatrix class to generate design matrices.
+These are converted to a DesignConfig, which the DesignMatrix class uses
+to generate design matrices.
 """
 
 from pathlib import Path
@@ -53,10 +53,10 @@ def excel_to_config(
 
 
 def config_to_yaml(config: DesignConfig, filename: str) -> None:
-    """Write inputdict to yaml format
+    """Write a design configuration to a YAML file
 
     Args:
-        config (DesignConfig)
+        config (DesignConfig): configuration to write
         filename (str): name of output file
     """
     with Path(filename).open("w", encoding="utf-8") as stream:

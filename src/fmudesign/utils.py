@@ -17,6 +17,17 @@ def excel_sheet_names(filename: Path | str) -> list[str]:
         return workbook.sheet_names
 
 
+def read_excel_sheet(filename: str, sheet_name: str | int = 0) -> pd.DataFrame:
+    """Read an Excel sheet, dropping empty rows and unnamed columns, which
+    formatting of empty cells can introduce.
+    """
+    return (
+        pd.read_excel(filename, sheet_name, engine="openpyxl")
+        .dropna(axis=0, how="all")
+        .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
+    )
+
+
 def parameters_from_extern(filename: str) -> pd.DataFrame:
     """Read parameter values or background values
     from specified file. Format either Excel ('xlsx')
@@ -29,11 +40,7 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
         raise ValueError(f"External file '{filename}' does not exist.")
 
     if str(filename).endswith(".xlsx"):
-        return (
-            pd.read_excel(filename, engine="openpyxl")
-            .dropna(axis=0, how="all")
-            .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
-        )
+        return read_excel_sheet(filename)
 
     if str(filename).endswith(".csv"):
         return pd.read_csv(filename)
@@ -269,14 +276,11 @@ def _has_value(value: Any) -> bool:
         return True
 
 
-def resolve_path(target: str | None, *, base_file: str | None = None) -> str | None:
+def resolve_path(target: str, *, base_file: str | None = None) -> str:
     """Try to resolve the path of potential file 'target' either as relative to
     'base_file' or cwd.
     If not, return target.
     """
-    if target is None:
-        return None
-
     if (
         base_file is not None
         and (relative_path := Path(base_file).parent / target).is_file()
