@@ -100,6 +100,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             es_settings=analysis_config.es_settings,
             parameter_config=parameter_configuration,
             ensemble_size=0,
+            can_edit_update_strategies=lambda: False,
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         self._analysis_module_edit.setEnabled(False)
@@ -146,6 +147,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(
             self._parameter_configuration_changed
         )
+        self._parameter_configuration_changed()
 
         self.setLayout(layout)
 
