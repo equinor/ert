@@ -91,3 +91,10 @@ def test_that_duplicate_normalized_dependency_keys_raise_value_error(from_values
         map_dependencies(
             pd.DataFrame({"SOURCE": from_values[:1]}), dependencies=dependencies
         )
+
+
+def test_that_seeds_from_extern_raises_when_file_contains_just_newlines(use_tmpdir):
+    seeds_file = "seeds.txt"
+    Path(seeds_file).write_text("\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r"'seeds.txt' contains no data"):
+        seeds_from_extern(seeds_file)

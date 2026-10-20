@@ -69,12 +69,15 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
     try:
         seeds = reader(filename, has_header=False, **kwargs).to_series(0)
     except NoDataError:
+        seeds = pl.Series(dtype=pl.String)
+
+    seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
+    if seeds.is_empty():
         raise ValueError(
             f"rms_seeds file '{filename}' contains no data. "
             f"rms_seeds file must contain at least one seed."
-        ) from None
+        )
 
-    seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
     try:
         return seeds.cast(pl.Int64).to_list()
     except pl.exceptions.InvalidOperationError as err:
