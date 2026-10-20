@@ -192,11 +192,13 @@ def map_dependencies(
             ) from err
 
         for to_param, to_values_ in from_dict["to_params"].items():
+            # Read per target, as a target may overwrite the source column
+            source_values = df[from_param].map(to_numeric_safe)
             to_values = [to_numeric_safe(value) for value in to_values_]
 
             # No values to map to => to_param = copy(from_param)
             if not to_values:
-                df = df.assign(**{to_param: df[from_param].map(to_numeric_safe)})
+                df[to_param] = source_values
                 if verbose:
                     print(f"Copied {from_param!r} to {to_param!r}")
                 continue
@@ -211,10 +213,10 @@ def map_dependencies(
 
             # At this point we have a mapping 'from_param' - > 'to_param'
             # defined elementwise by values of 'from_values' -> 'to_values'
-            mapping = dict(zip(from_values, to_values, strict=False))
+            mapping = dict(zip(from_values, to_values, strict=True))
 
             # Check that every value will be mapped
-            not_mapped = set(df[from_param].map(to_numeric_safe)) - set(from_values)
+            not_mapped = set(source_values) - set(from_values)
             if not_mapped:
                 msg = (
                     f"Mapping dependencies {from_param!r} to {to_param!r} using "
@@ -223,14 +225,7 @@ def map_dependencies(
                 )
                 raise ValueError(msg)
 
-            df = df.assign(
-                **{
-                    # Bind loop variables as default args to the lambda
-                    to_param: lambda df, from_param=from_param, mapping=mapping: (
-                        df[from_param].map(to_numeric_safe).map(mapping)
-                    )
-                }
-            )
+            df[to_param] = source_values.map(mapping)
             if verbose:
                 print(
                     f"Mapping dependency. From {from_param!r} "

@@ -16,7 +16,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -548,7 +548,7 @@ class DesignMatrix:
         """Adding a sensitivity to the design
 
         Args:
-            sensitivity of class Scenario, MonteCarlo or Extern
+            sensitivity (Sensitivity): sensitivity with values to append
         """
         self.designvalues = pd.concat([self.designvalues, sensitivity.sensvalues])
 
@@ -654,9 +654,8 @@ class DesignMatrix:
         """Round to specified number of decimals.
 
         Args:
-            inputdict (dictionary): input dictionary that might have a sub-dict
-                                    with key "decimals". This sub-dict has
-                                    (key, value)s are (param, decimals)
+            config (DesignConfig): configuration whose 'decimals' maps
+                parameter names to their number of decimals
         """
         # No decimal information => Nothing to do.
         if not config.decimals:
@@ -689,13 +688,11 @@ class Sensitivity:
         self.sensname: str = sensname
         self.verbosity: int = verbosity
 
-    def map_dependencies(self, dependencies: dict[str, Any]) -> Sensitivity:
-        """Map the dependencies, mutating the dataframe `self.sensvalues`."""
-        verbose = self.verbosity > 0  # Because the function takes a boolean
-        self.sensvalues: pd.DataFrame = map_dependencies(
-            self.sensvalues, dependencies=dependencies, verbose=verbose
+    def map_dependencies(self, dependencies: dict[str, Any]) -> None:
+        """Map the dependencies, replacing the dataframe `self.sensvalues`."""
+        self.sensvalues = map_dependencies(
+            self.sensvalues, dependencies=dependencies, verbose=self.verbosity > 0
         )
-        return self
 
 
 class SeedSensitivity(Sensitivity):
@@ -1041,26 +1038,19 @@ class MonteCarloSensitivity(Sensitivity):
         if not corrdict:
             return []
 
-        df_params = (
-            pd.DataFrame.from_dict(
-                parameters,
-                orient="index",
-                columns=["dist_name", "dist_params", "corr_sheet"],
-            )
-            .reset_index()
-            .rename(columns={"index": "param_name"})
-            .assign(corr_sheet=lambda df: df.corr_sheet.fillna("nocorr"))
+        group_sizes = Counter(
+            corr_sheet
+            for _, _, corr_sheet in parameters.values()
+            if pd.notna(corr_sheet)
         )
-
-        groups = dict(iter(df_params.groupby("corr_sheet")))
-        groups.pop("nocorr", None)
 
         loaded: list[CorrelationGroup] = []
         group_of_param: dict[str, str] = {}
-        for corr_group_name, corr_group in groups.items():
-            corr_group_name = cast("str", corr_group_name)
-
-            if len(corr_group) == 1:
+        # The order affects seeded sampling: sheet indices first, then names
+        for corr_group_name in sorted(
+            group_sizes, key=lambda name: (isinstance(name, str), name)
+        ):
+            if group_sizes[corr_group_name] == 1:
                 print(
                     "Warning: Only one parameter uses correlation sheet "
                     f"{corr_group_name!r}, so it is sampled without correlation."
