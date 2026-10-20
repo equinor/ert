@@ -33,10 +33,8 @@ from everest.util import version_info
 logger = logging.getLogger(__name__)
 
 
-def _configure_loggers(
-    log_dir: Path, logging_level: int, output_file: str | None
-) -> list[logging.Handler]:
-    def make_handler_config(path: Path, log_level: int) -> dict[str, Any]:
+def _configure_loggers(log_dir: Path, output_file: str | None) -> list[logging.Handler]:
+    def make_handler_config(path: Path, log_level: int | str) -> dict[str, Any]:
         makedirs_if_needed(path.parent)
         return {
             "class": "logging.FileHandler",
@@ -45,7 +43,9 @@ def _configure_loggers(
             "filename": path,
         }
 
-    ert_loggers = yaml.safe_load(LOGGING_CONFIG.read_text(encoding="utf-8"))["loggers"]
+    ert_logging_config = yaml.safe_load(LOGGING_CONFIG.read_text(encoding="utf-8"))
+    ert_loggers = ert_logging_config["loggers"]
+    logging_level = ert_logging_config["root"]["level"]
     logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -59,9 +59,9 @@ def _configure_loggers(
             "root": {"handlers": ["everserver_log"], "level": logging_level},
             "uvicorn": {"level": logging.WARNING},
             **{
-                logger_name: {"level": logging.WARNING}
+                logger_name: {"level": logger_config["level"]}
                 for logger_name, logger_config in ert_loggers.items()
-                if logger_config.get("level") == "WARNING"
+                if "level" in logger_config and "handlers" not in logger_config
             },
             "ropt": {
                 "handlers": ["ropt_log"],
@@ -140,7 +140,6 @@ def main() -> None:
         try:  # ruff: ignore[too-many-statements-in-try-clause]
             plugin_log_handles = _configure_loggers(
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
-                logging_level=logging.DEBUG,
                 output_file=log_file.name,
             )
 
