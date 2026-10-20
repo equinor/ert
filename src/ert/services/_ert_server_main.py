@@ -30,7 +30,7 @@ from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
-from ert.services import ErtServerExit
+from ert.services import ErtServerExit, raise_ert_server_exit_on_signal
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
 from ert.trace import tracer
@@ -263,6 +263,8 @@ def _join_terminate_thread(terminate_on_parent_death_thread: threading.Thread) -
 
 
 def main() -> None:
+    signal.signal(signal.SIGTERM, raise_ert_server_exit_on_signal)
+    signal.signal(signal.SIGINT, raise_ert_server_exit_on_signal)
     args = parse_args()
     authentication = _generate_authentication()
     os.environ["ERT_STORAGE_TOKEN"] = authentication

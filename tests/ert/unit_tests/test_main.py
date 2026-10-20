@@ -39,7 +39,7 @@ def test_parsed_config(monkeypatch, input_path):
 def test_argparse_exec_test_run_valid_case():
     parsed = ert_parser(None, [TEST_RUN_MODE, "path/to/config.ert"])
     assert parsed.mode == TEST_RUN_MODE
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 def test_argparse_exec_ensemble_experiment_valid_case():
@@ -49,7 +49,7 @@ def test_argparse_exec_ensemble_experiment_valid_case():
     )
     assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
     assert parsed.realizations == "1-4,7,8"
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 def test_argparse_exec_ensemble_experiment_current_case():
@@ -65,7 +65,7 @@ def test_argparse_exec_ensemble_experiment_current_case():
         )
     assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
     assert parsed.current_ensemble == "test_case"
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 def test_argparse_exec_ensemble_experiment_current_ensemble():
@@ -80,7 +80,7 @@ def test_argparse_exec_ensemble_experiment_current_ensemble():
     )
     assert parsed.mode == ENSEMBLE_EXPERIMENT_MODE
     assert parsed.current_ensemble == "test_ensemble"
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 def test_argparse_exec_ensemble_experiment_faulty_realizations():
@@ -108,7 +108,7 @@ def test_argparse_exec_smoother_valid_ensemble():
     )
     assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
     assert parsed.target_ensemble == "some_ensemble_%d"
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 def test_argparse_exec_es_mda_valid_case():
@@ -129,7 +129,7 @@ def test_argparse_exec_es_mda_valid_case():
     assert parsed.target_ensemble == "some_ensemble%d"
     assert parsed.realizations == "1-10"
     assert parsed.weights == "1, 2, 4"
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 def test_that_es_mda_parses_prior_ensemble_id():
@@ -139,7 +139,7 @@ def test_that_es_mda_parses_prior_ensemble_id():
     )
     assert parsed.mode == ES_MDA_MODE
     assert parsed.prior_ensemble_id == "test_ensemble"
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 @pytest.mark.parametrize(
@@ -164,7 +164,7 @@ def test_argparse_exec_workflow():
     parsed = ert_parser(None, [WORKFLOW_MODE, "workflow_name", "path/to/config.ert"])
     assert parsed.mode == WORKFLOW_MODE
     assert parsed.name == "workflow_name"
-    assert parsed.func.__name__ == "run_cli"
+    assert parsed.func.__name__ == "run_ert_cli"
 
 
 @pytest.mark.parametrize(

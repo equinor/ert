@@ -9,10 +9,9 @@ import pytest
 from ert.services import ert_server_controller
 from ert.services.ert_server_controller import (
     _ERT_SERVER_CONNECTION_INFO_FILE,
-    SERVICE_CONF_PATHS,
     ErtServerController,
     ServerBootFail,
-    cleanup_service_files,
+    _delete_connection_files_then_call_previous_handler,
     create_ert_server_controller,
 )
 
@@ -325,15 +324,22 @@ def test_that_fetch_connection_info_raises_when_storage_path_does_not_exist(
         proc.shutdown()
 
 
-def test_cleanup_service_files(tmpdir):
-    with tmpdir.as_cwd():
-        storage_service_name = "storage"
-        storage_service_file = Path(f"{storage_service_name}_server.json")
-        storage_service_file.write_text("storage_service info", encoding="utf-8")
-        assert storage_service_file.exists()
-        SERVICE_CONF_PATHS.add(tmpdir / storage_service_file)
+def test_that_signal_handler_deletes_connection_files_and_calls_previous_handler(
+    tmp_path, monkeypatch
+):
+    connection_file = tmp_path / "ert_server_connection.json"
+    connection_file.write_text("info", encoding="utf-8")
+    signals_received = []
+    monkeypatch.setattr(
+        "ert.services.ert_server_controller.SERVICE_CONF_PATHS",
+        {str(connection_file)},
+    )
+    monkeypatch.setattr(
+        "ert.services.ert_server_controller._previous_signal_handlers",
+        {99: lambda signum, frame: signals_received.append(signum)},
+    )
 
-        with pytest.raises(OSError, match="Signal 99 received"):
-            cleanup_service_files(signum=99, frame=None)
+    _delete_connection_files_then_call_previous_handler(signum=99, frame=None)
 
-        assert not storage_service_file.exists()
+    assert not connection_file.exists()
+    assert signals_received == [99]
