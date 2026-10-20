@@ -184,6 +184,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
+            can_edit_update_strategies=lambda: self._selected_prior_ensemble is None,
         )
         self._initial_parameter_config = self._analysis_module_edit.parameter_config
         layout.addRow("Update settings:", self._analysis_module_edit)
