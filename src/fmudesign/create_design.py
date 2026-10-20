@@ -354,32 +354,9 @@ class DesignMatrix:
 
             # MonteCarloSensitivity is special - it can produce debugging outputs
             if isinstance(sensitivity, MonteCarloSensitivity) and self.verbosity > 0:
-                quality_reporter = QualityReporter(
-                    df=sensitivity.sensvalues, variables=sens["parameters"]
+                self._report_samples(
+                    sensitivity, sens["parameters"], plot=self.verbosity > 1
                 )
-
-                # Print to terminal
-                quality_reporter.print_numeric()
-                quality_reporter.print_discrete()
-                for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-                    quality_reporter.print_correlation(corr_name, df_corr)
-
-                if self.verbosity > 1 and self.output_dir is not None:
-                    output_dir = self.output_dir / key
-                    quality_reporter.plot_columns(output_dir=output_dir)
-
-                    # Correlations
-                    for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-                        # Always plot heatmaps
-                        quality_reporter.plot_correlation_heatmap(
-                            corr_name, df_corr, output_dir=output_dir
-                        )
-
-                        # Only plot pairgrid for small correlations
-                        if len(df_corr) <= 6:
-                            quality_reporter.plot_correlation(
-                                corr_name, df_corr, output_dir=output_dir
-                            )
 
         # Once all sensitivities have been added, complete the work
         self._fill_with_background_values()
@@ -623,32 +600,45 @@ class DesignMatrix:
             seed_strategy=self.seed_strategy,
             base_seed=self.base_seed,
         )
-        mc_backgroundvalues = mc_background.sensvalues.copy()
-        quality_reporter = QualityReporter(
-            df=mc_backgroundvalues, variables=back_dict["parameters"]
-        )
-
-        # Print info to terminal
         if self.verbosity > 0:
-            quality_reporter.print_numeric()
-            quality_reporter.print_discrete()
-            for corr_name, df_corr in mc_background.correlation_dfs_.items():
-                quality_reporter.print_correlation(corr_name, df_corr)
+            self._report_samples(mc_background, back_dict["parameters"], plot=True)
 
-        # Write plots to disk
-        if self.verbosity > 0 and self.output_dir is not None:
-            output_dir = self.output_dir / mc_background.sensname
-            quality_reporter.plot_columns(output_dir=output_dir)
+        background_values = mc_background.sensvalues
+        _round_to_decimals(background_values, back_dict.get("decimals", {}))
+        self.backgroundvalues = background_values
 
-            # Correlations
-            for corr_name, df_corr in mc_background.correlation_dfs_.items():
+    def _report_samples(
+        self,
+        sensitivity: MonteCarloSensitivity,
+        variables: dict[str, Any],
+        *,
+        plot: bool,
+    ) -> None:
+        """Print statistics of the sampled values and, if `plot`, save plots
+        of them to `output_dir`.
+        """
+        quality_reporter = QualityReporter(
+            df=sensitivity.sensvalues, variables=variables
+        )
+        quality_reporter.print_numeric()
+        quality_reporter.print_discrete()
+        for corr_name, df_corr in sensitivity.correlation_dfs_.items():
+            quality_reporter.print_correlation(corr_name, df_corr)
+
+        if not plot or self.output_dir is None:
+            return
+
+        output_dir = self.output_dir / sensitivity.sensname
+        quality_reporter.plot_columns(output_dir=output_dir)
+        for corr_name, df_corr in sensitivity.correlation_dfs_.items():
+            quality_reporter.plot_correlation_heatmap(
+                corr_name, df_corr, output_dir=output_dir
+            )
+            # Only plot pairgrid for small correlation groups
+            if len(df_corr) <= 6:
                 quality_reporter.plot_correlation(
                     corr_name, df_corr, output_dir=output_dir
                 )
-
-        # Rounding of background values as specified
-        _round_to_decimals(mc_backgroundvalues, back_dict.get("decimals", {}))
-        self.backgroundvalues = mc_backgroundvalues.copy()
 
     def _set_decimals(self, config: DesignConfig) -> None:
         """Round to specified number of decimals.
