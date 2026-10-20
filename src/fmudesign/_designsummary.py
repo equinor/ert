@@ -4,6 +4,8 @@ import pandas as pd
 
 from .utils import read_excel_sheet
 
+from fmudesign.exceptions import FmudesignError
+
 
 def _get_sensitivity_type(senscase: str) -> str:
     """Determine sensitivity type based on the case name"""
@@ -48,7 +50,7 @@ def summarize_design(filename: str, sheetname: str = "DesignSheet01") -> pd.Data
     elif str(filename).endswith(".csv"):
         dgn = pd.read_csv(filename)
     else:
-        raise ValueError(
+        raise FmudesignError(
             "Design matrix must be on Excel or csv format"
             " and filename must end with .xlsx or .csv"
         )

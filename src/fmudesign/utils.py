@@ -11,6 +11,8 @@ import polars as pl
 from polars.exceptions import NoDataError
 from python_calamine import CalamineWorkbook
 
+from fmudesign.exceptions import FmudesignError
+
 
 def excel_sheet_names(filename: Path | str) -> list[str]:
     with CalamineWorkbook.from_path(filename) as workbook:
@@ -37,7 +39,7 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
         filename (str): name of file
     """
     if not Path(filename).is_file():
-        raise ValueError(f"External file '{filename}' does not exist.")
+        raise FmudesignError(f"External file '{filename}' does not exist.")
 
     if str(filename).endswith(".xlsx"):
         return read_excel_sheet(filename)
@@ -45,7 +47,7 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
     if str(filename).endswith(".csv"):
         return pd.read_csv(filename)
 
-    raise ValueError(
+    raise FmudesignError(
         "External file with parameter values should "
         "be on Excel or csv format "
         "and end with .xlsx or .csv"
@@ -66,7 +68,7 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
         reader = pl.read_csv
         kwargs = {"infer_schema": False}
     else:
-        raise ValueError(
+        raise FmudesignError(
             "External file with seed values should "
             "be on Excel or csv format "
             "and end with .xlsx .csv or .txt"
@@ -79,7 +81,7 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
 
     seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
     if seeds.is_empty():
-        raise ValueError(
+        raise FmudesignError(
             f"rms_seeds file '{filename}' contains no data. "
             f"rms_seeds file must contain at least one seed."
         )
@@ -87,7 +89,7 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
     try:
         return seeds.cast(pl.Int64).to_list()
     except pl.exceptions.InvalidOperationError as err:
-        raise ValueError(
+        raise FmudesignError(
             f"Seed values in {str(filename)!r} must be integers: {err}"
         ) from err
 
@@ -194,7 +196,7 @@ def map_dependencies(
         try:
             _raise_if_duplicates(from_values)
         except ValueError as err:
-            raise ValueError(
+            raise FmudesignError(
                 f"Duplicate dependency keys for {from_param!r}\n{err}"
             ) from err
 
@@ -216,7 +218,7 @@ def map_dependencies(
                     f"Length mismatch.\nMapping from values: {from_values!r}"
                     f"\nMapping to values: {to_values!r}"
                 )
-                raise ValueError(msg)
+                raise FmudesignError(msg)
 
             # At this point we have a mapping 'from_param' - > 'to_param'
             # defined elementwise by values of 'from_values' -> 'to_values'
@@ -230,7 +232,7 @@ def map_dependencies(
                     f"mapping:\n{mapping!r}\n failed. The following values could "
                     f"not be mapped:\n{not_mapped!r}"
                 )
-                raise ValueError(msg)
+                raise FmudesignError(msg)
 
             df[to_param] = source_values.map(mapping)
             if verbose:
@@ -245,7 +247,7 @@ def map_dependencies(
 
 
 def find_sheet(name: str, names: list[str]) -> str:
-    """Search for Excel sheets with a soft matching. Raises ValueError if zero
+    """Search for Excel sheets with a soft matching. Raises FmudesignError if zero
     or more than one match is found.
 
     Examples:
@@ -254,7 +256,7 @@ def find_sheet(name: str, names: list[str]) -> str:
     >>> find_sheet('variable_input', ['generalinput', 'designinput', 'defaultinput'])
     Traceback (most recent call last):
       ...
-    ValueError: No match for variable_input: ['generalinput', 'designinput', 'defaultinput']
+    fmudesign.exceptions.FmudesignError: No match for variable_input: ['generalinput', 'designinput', 'defaultinput']
     """  # ruff: ignore[line-too-long]
 
     def sanitize(inputstring: str) -> str:
@@ -262,9 +264,9 @@ def find_sheet(name: str, names: list[str]) -> str:
 
     found = [name_i for name_i in names if sanitize(name) == sanitize(name_i)]
     if not found:
-        raise ValueError(f"No match for {name}: {names}")
+        raise FmudesignError(f"No match for {name}: {names}")
     if len(found) > 1:
-        raise ValueError(f"More than one match for {name}: {found}")
+        raise FmudesignError(f"More than one match for {name}: {found}")
     return found[0]
 
 
