@@ -24,6 +24,7 @@ import probabilit.correlation
 import probabilit.modeling
 
 from ert.shared import __version__ as ert_version
+from fmudesign.exceptions import FmudesignError
 
 from .design_config import DesignConfig
 from .design_distributions import (
@@ -81,7 +82,7 @@ def _round_to_decimals(df: pd.DataFrame, decimals: Mapping[str, int]) -> None:
             try:
                 values = df[key].astype(float)
             except (TypeError, ValueError) as err:
-                raise ValueError(
+                raise FmudesignError(
                     f"Cannot round parameter {key!r} to {decimals[key]} decimals "
                     f"({err}). Either clear its 'decimals' cell or make all its "
                     "values numeric."
@@ -347,7 +348,7 @@ class DesignMatrix:
                         seedvalues=self.seedvalues,
                     )
                 case unknown:
-                    raise ValueError(f"Unknown sensitivity type: {unknown!r}")
+                    raise FmudesignError(f"Unknown sensitivity type: {unknown!r}")
 
             sensitivity.map_dependencies(sens.get("dependencies", {}))
             self._add_sensitivity(sensitivity)
@@ -494,7 +495,7 @@ class DesignMatrix:
 
         # Raise if none of the cases above apply. We do this because if we did not we
         # would return None, which is a valid case in itself.
-        raise ValueError(f"Must be None, 'default' or list: {seeds=}")
+        raise FmudesignError(f"Must be None, 'default' or list: {seeds=}")
 
     def add_background(
         self,
@@ -530,13 +531,13 @@ class DesignMatrix:
                     correlation_iterations=correlation_iterations,
                 )
             else:
-                raise KeyError(
+                raise FmudesignError(
                     "Neither keys 'extern' or 'parameters' were set in background "
                     "dictionary - of which one is required. If no background values "
                     "are to be used, set background to 'None'."
                 )
         else:
-            raise TypeError(
+            raise FmudesignError(
                 "Background value in DesignMatrix config must be 'None' or of type "
                 "'dict'."
             )
@@ -568,7 +569,7 @@ class DesignMatrix:
                 if key not in case_:
                     temp_df[key] = self.backgroundvalues[key]
                     if len(temp_df) > len(self.backgroundvalues):
-                        raise ValueError(
+                        raise FmudesignError(
                             "Provided number of background values "
                             f"{len(self.backgroundvalues)} is smaller than number"
                             f" of realisations for sensitivity {sensname}"
@@ -593,7 +594,7 @@ class DesignMatrix:
                     self.defaultvalues[key]
                 )
             elif key not in self.START_COLUMNS:
-                raise LookupError(f"No defaultvalues given for parameter {key} ")
+                raise FmudesignError(f"No defaultvalues given for parameter {key} ")
 
     def _add_dist_background(
         self,
@@ -737,7 +738,7 @@ class SeedSensitivity(Sensitivity):
                 "Seed values must be set when running sensitivity type 'seed'. "
                 f"Got seed: {seedvalues}"
             )
-            raise ValueError(msg)
+            raise FmudesignError(msg)
 
         self.sensvalues = pd.DataFrame(index=range(size))
         self.sensvalues[seedname] = seedvalues[0:size]
@@ -747,7 +748,7 @@ class SeedSensitivity(Sensitivity):
                 dist_name = parameters[key][0].lower()
                 constant = parameters[key][1]
                 if dist_name != "const":
-                    raise ValueError(
+                    raise FmudesignError(
                         'A sensitivity of type "seed" can only have '
                         "additional parameters where dist_name is "
                         f'"const". Check sensitivity {self.sensname}"'
@@ -959,7 +960,7 @@ class MonteCarloSensitivity(Sensitivity):
         self.correlation_dfs_: dict[str, pd.DataFrame] = {}  # correlation matrices
 
         if size < 0:
-            raise ValueError(f"Got < 0 samples ({size=})")
+            raise FmudesignError(f"Got < 0 samples ({size=})")
 
         distr_by_name: dict[str, ProbabilitNode] = {}
         for param_name, (dist_name, dist_params, _) in parameters.items():
@@ -981,7 +982,7 @@ class MonteCarloSensitivity(Sensitivity):
             )
         elif seed_strategy == SeedStrategy.INDEPENDENT:
             if base_seed is None:
-                raise ValueError(
+                raise FmudesignError(
                     "'base_seed' is required when seed_strategy='independent'"
                 )
             self._sample_independent(
@@ -992,7 +993,7 @@ class MonteCarloSensitivity(Sensitivity):
                 base_seed=base_seed,
             )
         else:
-            raise ValueError(
+            raise FmudesignError(
                 f"'seed_strategy' must be one of {[s.value for s in SeedStrategy]}, "
                 f"got: {seed_strategy!r}"
             )
@@ -1001,7 +1002,7 @@ class MonteCarloSensitivity(Sensitivity):
             samples = distr_obj.samples_
             is_numeric = issubclass(samples.dtype.type, np.number)
             if is_numeric and not np.all(np.isfinite(samples)):
-                raise ValueError(
+                raise FmudesignError(
                     f"Sampling produced non-finite values in {distr_name}={distr_obj}\n"
                     "Please review the parameters in the distribution."
                 )
@@ -1020,7 +1021,7 @@ class MonteCarloSensitivity(Sensitivity):
         null_columns = self.sensvalues.isna().any(axis=0)
         if null_columns.any():
             cols_w_null = list(null_columns.loc[lambda ser: ser].index)
-            raise ValueError(f"Found NaN values in columns: {cols_w_null}")
+            raise FmudesignError(f"Found NaN values in columns: {cols_w_null}")
 
     def _load_correlation_groups(
         self,
@@ -1080,7 +1081,7 @@ class MonteCarloSensitivity(Sensitivity):
             # would get the correlations of whichever group is sampled last.
             for name in multivariate_parameters:
                 if name in group_of_param:
-                    raise ValueError(
+                    raise FmudesignError(
                         f"Parameter {name!r} is part of several correlation "
                         f"groups: {group_of_param[name]!r} and "
                         f"{corr_group_name!r}. A parameter may only appear in "
@@ -1239,11 +1240,14 @@ class ExternSensitivity(Sensitivity):
             parameters (list): list with parameter names
             seedvalues (list): list of integer seed values or None
         """
-        _raise_if_duplicates(parameters)
+        try:
+            _raise_if_duplicates(parameters)
+        except ValueError as e:
+            raise FmudesignError(f"Found parameters with duplicate names.\n{e}") from e
         self.sensvalues = pd.DataFrame(columns=parameters, index=range(size))
         extern_values = parameters_from_extern(filename)
         if size > len(extern_values):
-            raise ValueError(
+            raise FmudesignError(
                 f"Number of realisations {size} specified for "
                 f"sensitivity {self.sensname} is larger than rows in "
                 f"file {filename}"
@@ -1252,7 +1256,7 @@ class ExternSensitivity(Sensitivity):
             if param in extern_values:
                 self.sensvalues[param] = list(extern_values[param][:size])
             else:
-                raise ValueError(f"Parameter {param} not in external file")
+                raise FmudesignError(f"Parameter {param} not in external file")
 
         self.sensvalues["SENSNAME"] = self.sensname
         self.sensvalues["SENSCASE"] = "p10_p90"

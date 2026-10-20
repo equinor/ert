@@ -8,6 +8,8 @@ from pathlib import Path
 import openpyxl
 import yaml
 
+from fmudesign.exceptions import FmudesignError
+
 from .design_config import DesignConfig
 from .design_input import DesignInput
 from .general_input import GeneralInput
@@ -71,7 +73,7 @@ def _assert_no_merged_cells(input_filename: str) -> None:
         worksheet = workbook[sheet_name]
         merged_ranges = list(worksheet.merged_cells.ranges)
         if merged_ranges:
-            raise ValueError(
+            raise FmudesignError(
                 "Merged cells are not allowed. Found merged cell in "
                 f"{input_filename} at sheet '{sheet_name}'.\n"
                 f"Found {len(merged_ranges)} merged cell range(s): {merged_ranges}"

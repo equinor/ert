@@ -3,6 +3,8 @@ from typing import Any
 
 import pandas as pd
 
+from fmudesign.exceptions import FmudesignError
+
 from .design_distributions import read_correlations
 from .utils import _has_value
 
@@ -47,13 +49,14 @@ def parse_sensitivity_correlations(
     for corr_sheet, parameters in corr_to_params.items():
         df_corr = read_correlations(excel_filename=inputfile, corr_sheet=corr_sheet)
         if set(df_corr.columns) != set(parameters):
-            msg = f"Mismatch between parameters in {group_description} "
-            msg += f"pointing to\ncorrelation sheet {corr_sheet!r} and "
-            msg += "parameters specified in that correlation sheet.\n"
-            msg += f"Parameters in {group_description}: {sorted(set(parameters))}\n"
-            msg += f"Parameters in correlation sheet: {sorted(set(df_corr.columns))}\n"
-            msg += "These parameters must be specified one-to-one."
-            raise ValueError(msg)
+            raise FmudesignError(
+                f"Mismatch between parameters in {group_description} "
+                f"pointing to\ncorrelation sheet {corr_sheet!r} and "
+                "parameters specified in that correlation sheet.\n"
+                f"Parameters in {group_description}: {sorted(set(parameters))}\n"
+                f"Parameters in correlation sheet: {sorted(set(df_corr.columns))}\n"
+                "These parameters must be specified one-to-one."
+            )
 
     correlations["sheetnames"] = list(corr_to_params)
 

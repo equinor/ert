@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveInt
 
 from ert.config.design_matrix import read_default_values
 from fmudesign.design_input import DesignInput
+from fmudesign.exceptions import FmudesignError
 from fmudesign.general_input import GeneralInput
 from fmudesign.read_background import read_background
 from fmudesign.seed_strategy import SeedStrategy
@@ -58,9 +59,16 @@ class DesignConfig(BaseModel):
             background = read_background(input_filename, bgr)
         else:
             background = None
-        default_values = read_default_values(
-            Path(input_filename), default_values_sheet, has_header=True
-        )
+
+        try:
+            default_values = read_default_values(
+                Path(input_filename), default_values_sheet, has_header=True
+            )
+        except ValueError as e:
+            raise FmudesignError(
+                f"Could not read default values from sheet "
+                f"'{default_values_sheet}': {e}"
+            ) from e
 
         general_input_dict = general_input.model_dump()
         general_input_dict.pop("rms_seeds")
