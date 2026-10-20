@@ -26,7 +26,6 @@ from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
-    DEFAULT_TARGET_ENSEMBLE_FORMAT,
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -44,6 +43,7 @@ from ert.services._ert_server_main import (
 from ert.shared.status.utils import get_ert_memory_usage
 from ert.storage import ErtStorageException, ErtStoragePermissionError
 from ert.trace import trace, tracer
+from ert.utils import DEFAULT_TARGET_ENSEMBLE_FORMAT
 from ert.validation import (
     IntegerArgument,
     NumberListStringArgument,

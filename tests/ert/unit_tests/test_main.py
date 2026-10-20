@@ -6,13 +6,13 @@ from packaging.version import Version
 import ert.shared
 from ert.__main__ import ert_parser
 from ert.mode_definitions import (
-    DEFAULT_TARGET_ENSEMBLE_FORMAT,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
+from ert.utils import DEFAULT_TARGET_ENSEMBLE_FORMAT
 
 
 @pytest.fixture(autouse=True)
