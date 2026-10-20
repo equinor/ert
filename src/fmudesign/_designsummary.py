@@ -2,6 +2,8 @@
 
 import pandas as pd
 
+from .utils import read_excel_sheet
+
 
 def _get_sensitivity_type(senscase: str) -> str:
     """Determine sensitivity type based on the case name"""
@@ -42,13 +44,7 @@ def summarize_design(filename: str, sheetname: str = "DesignSheet01") -> pd.Data
 
     # Read design matrix
     if str(filename).endswith(".xlsx"):
-        # Drop empty rows or columns that have been read in
-        # due to having background colour/formatting
-        dgn = (
-            pd.read_excel(filename, sheetname, engine="openpyxl")
-            .dropna(axis=0, how="all")
-            .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
-        )
+        dgn = read_excel_sheet(filename, sheetname)
     elif str(filename).endswith(".csv"):
         dgn = pd.read_csv(filename)
     else:
@@ -72,45 +68,17 @@ def summarize_design(filename: str, sheetname: str = "DesignSheet01") -> pd.Data
         ]
     )
 
-    # Get unique sensitivity names in order of appearance
-    sensnames = dgn["SENSNAME"].unique()
-
-    for sensno, sensname in enumerate(sensnames):
-        sens_group = dgn[dgn["SENSNAME"] == sensname].copy()
+    for sensno, (sensname, sens_group) in enumerate(
+        dgn.groupby("SENSNAME", sort=False)
+    ):
         # Get cases in order of appearance
-        cases = (
-            sens_group.drop_duplicates("SENSCASE")[["SENSCASE"]].to_numpy().flatten()
-        )
-
-        # First case
-        case1_data = sens_group[sens_group["SENSCASE"] == cases[0]]
-        casename1 = cases[0]
-        startreal1 = case1_data["REAL"].min()
-        endreal1 = case1_data["REAL"].max()
-
-        # Handle second case if it exists
-        if len(cases) > 1:
-            case2_data = sens_group[sens_group["SENSCASE"] == cases[1]]
-            casename2 = cases[1]
-            startreal2 = case2_data["REAL"].min()
-            endreal2 = case2_data["REAL"].max()
-        else:
-            casename2 = None
-            startreal2 = None
-            endreal2 = None
-
-        senstype = _get_sensitivity_type(cases[0])
-        # Add row to results
-        designsummary.loc[sensno] = [
-            sensno,
-            sensname,
-            senstype,
-            casename1,
-            startreal1,
-            endreal1,
-            casename2,
-            startreal2,
-            endreal2,
-        ]
+        cases = sens_group["SENSCASE"].unique()
+        summary = [sensno, sensname, _get_sensitivity_type(cases[0])]
+        for case in cases[:2]:
+            reals = sens_group.loc[sens_group["SENSCASE"] == case, "REAL"]
+            summary += [case, reals.min(), reals.max()]
+        if len(cases) == 1:
+            summary += [None, None, None]
+        designsummary.loc[sensno] = summary
 
     return designsummary
