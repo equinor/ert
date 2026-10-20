@@ -1,4 +1,11 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QPushButton,
+)
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
@@ -316,3 +323,47 @@ def test_that_activating_manual_update_refreshes_externally_changed_strategy(
     strategy_item = summary.item(0, 0)
     assert strategy_item is not None
     assert strategy_item.text() == "Distance"
+
+
+def test_that_update_strategies_of_selected_ensemble_cannot_be_edited_in_dialog(
+    qtbot: QtBot,
+):
+    prior_parameter = GenKwConfig(
+        name="parameter",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.DISTANCE,
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "ensemble",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY],
+        parameter_configuration={"parameter": prior_parameter},
+    )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        runpath="",
+        notifier=notifier,
+        parameter_configuration=[],
+    )
+    qtbot.addWidget(panel)
+
+    def save_with_locked_strategy_selectors() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        assert not any(c.isEnabled() for c in dialog.findChildren(QComboBox))
+        buttons = dialog.findChild(QDialogButtonBox)
+        assert buttons is not None
+        save_button = buttons.button(QDialogButtonBox.StandardButton.Save)
+        assert save_button is not None
+        qtbot.mouseClick(save_button, Qt.MouseButton.LeftButton)
+
+    QTimer.singleShot(0, save_with_locked_strategy_selectors)
+    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
+    assert edit_button is not None
+    assert edit_button.isEnabled()
+    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
+
+    assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
+    assert prior_parameter.update_strategy == LocalizationType.DISTANCE
