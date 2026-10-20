@@ -2,6 +2,7 @@ import argparse
 import logging
 import logging.config
 import pathlib
+import signal
 import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -12,7 +13,12 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.services import ErtClient, ErtServerController, ErtServerExit
+from ert.services import (
+    ErtClient,
+    ErtServerController,
+    ErtServerExit,
+    raise_ert_server_exit_on_signal,
+)
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
@@ -104,6 +110,8 @@ def get_trace_context():
 
 
 def main() -> None:
+    signal.signal(signal.SIGTERM, raise_ert_server_exit_on_signal)
+    signal.signal(signal.SIGINT, raise_ert_server_exit_on_signal)
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--output-dir", "-o", type=str)
     arg_parser.add_argument("--logging-level", "-l", type=int, default=logging.INFO)

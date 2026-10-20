@@ -40,16 +40,46 @@ class ErtServerExit(OSError):
     pass
 
 
-def cleanup_service_files(signum: int, frame: types.FrameType | None) -> None:
-    for file_path in SERVICE_CONF_PATHS:
-        file = Path(file_path)
-        file.unlink(missing_ok=True)
+def raise_ert_server_exit_on_signal(signum: int, frame: types.FrameType | None) -> None:
     raise ErtServerExit(f"Signal {signum} received.")
 
 
-if threading.current_thread() is threading.main_thread():
-    signal.signal(signal.SIGTERM, cleanup_service_files)
-    signal.signal(signal.SIGINT, cleanup_service_files)
+_previous_signal_handlers: dict[
+    int, Callable[[int, types.FrameType | None], object]
+] = {}
+
+
+def _delete_connection_files_then_call_previous_handler(
+    signum: int, frame: types.FrameType | None
+) -> None:
+    for file_path in SERVICE_CONF_PATHS:
+        Path(file_path).unlink(missing_ok=True)
+    previous_handler = _previous_signal_handlers.get(signum)
+    if previous_handler is not None:
+        previous_handler(signum, frame)
+
+
+def _install_signal_handlers_that_delete_connection_files() -> None:
+    """Delete connection files on SIGTERM and SIGINT, then call the Python
+    handler the entry point installed before constructing the controller
+    (for example one that raises ErtServerExit or KeyboardInterrupt).
+
+    Signals without a Python handler (signal.SIG_DFL, signal.SIG_IGN) are left
+    alone: there is nothing to delegate to, and the GUIs use signal.SIG_DFL
+    because Python handlers only run when the interpreter regains control,
+    which it does not while inside Qt's event loop.
+    """
+    if threading.current_thread() is not threading.main_thread():
+        return
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        previous_handler = signal.getsignal(sig)
+        if not callable(previous_handler):
+            # SIG_DFL and SIG_IGN ends here.
+            continue
+        if sig in _previous_signal_handlers:
+            continue
+        _previous_signal_handlers[sig] = previous_handler
+        signal.signal(sig, _delete_connection_files_then_call_previous_handler)
 
 
 class ServerBootFail(RuntimeError):
@@ -81,6 +111,7 @@ class _Proc(threading.Thread):
         env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
 
+        _install_signal_handlers_that_delete_connection_files()
         SERVICE_CONF_PATHS.add(str(self._connection_info_path))
 
         # The process is waited for in _do_shutdown()

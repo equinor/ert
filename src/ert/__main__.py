@@ -8,6 +8,7 @@ import multiprocessing
 import os
 import re
 import resource
+import signal
 import sys
 import warnings
 from argparse import ArgumentParser, ArgumentTypeError
@@ -57,7 +58,20 @@ from everest.bin.utils import remove_show_scaling_warning_setting
 logger = logging.getLogger(__name__)
 
 
+def _raise_keyboard_interrupt_on_sigterm_and_sigint() -> None:
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+
+
+def run_ert_cli(
+    args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None
+) -> None:
+    _raise_keyboard_interrupt_on_sigterm_and_sigint()
+    run_cli(args, runtime_plugins)
+
+
 def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
+    _raise_keyboard_interrupt_on_sigterm_and_sigint()
     with ErtServerController.start_server(
         verbose=True,
         project=Path(ErtConfig.from_file(args.config).ens_path),
@@ -550,7 +564,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         es_mda_parser,
         workflow_parser,
     ]:
-        cli_parser.set_defaults(func=run_cli)
+        cli_parser.set_defaults(func=run_ert_cli)
         cli_parser.add_argument(
             "--verbose", action="store_true", help="Show verbose output.", default=False
         )
