@@ -1,6 +1,6 @@
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QApplication, QDialog, QPushButton
+from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QPushButton
 from pytestqt.qtbot import QtBot
 
 from ert.config import ESSettings, GenKwConfig, LocalizationType
@@ -91,6 +91,47 @@ def test_that_only_parameters_with_update_strategy_are_updated(qtbot: QtBot):
 
     assert parameter_without_strategy.update_strategy is None
     assert parameter_with_strategy.update_strategy == LocalizationType.ADAPTIVE
+
+
+def test_that_locked_update_strategies_disable_comboboxes_and_are_not_applied(
+    qtbot: QtBot,
+):
+    es_settings = ESSettings()
+    parameter = GenKwConfig(
+        name="name",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=LocalizationType.GLOBAL,
+    )
+    widget = AnalysisModuleEdit(
+        es_settings=es_settings,
+        parameter_config=[parameter],
+        ensemble_size=10,
+        can_edit_update_strategies=lambda: False,
+    )
+    qtbot.addWidget(widget)
+    comboboxes_enabled: list[bool] = []
+
+    def edit_and_accept_dialog() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        panel = dialog.findChild(AnalysisModuleVariablesPanel)
+        assert panel is not None
+        comboboxes = panel.findChildren(QComboBox)
+        comboboxes_enabled.extend(combobox.isEnabled() for combobox in comboboxes)
+        panel.truncation_spinner.setValue(0.3)
+        comboboxes[0].setCurrentIndex(
+            comboboxes[0].findData(LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole)
+        )
+        dialog.accept()
+
+    QTimer.singleShot(0, edit_and_accept_dialog)
+    button = widget.findChild(QPushButton)
+    assert button is not None
+    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+
+    assert comboboxes_enabled == [False, False, False]
+    assert parameter.update_strategy == LocalizationType.GLOBAL
+    assert pytest.approx(es_settings.enkf_truncation) == 0.3
 
 
 def test_that_settings_are_not_updated_on_cancel(qtbot: QtBot):

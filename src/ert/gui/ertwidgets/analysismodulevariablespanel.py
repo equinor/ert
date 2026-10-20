@@ -36,6 +36,8 @@ class AnalysisModuleVariablesPanel(QWidget):
         update_strategies: dict[str, LocalizationType],
         correlation_threshold: float,
         enkf_truncation: float,
+        *,
+        strategies_editable: bool = True,
     ) -> None:
         QWidget.__init__(self)
 
@@ -90,6 +92,13 @@ class AnalysisModuleVariablesPanel(QWidget):
             )
         )
         layout.addRow("SURFACE", surface_combobox)
+
+        for combobox in (gen_kw_combobox, field_combobox, surface_combobox):
+            combobox.setEnabled(strategies_editable)
+            if not strategies_editable:
+                combobox.setToolTip(
+                    "Update strategy is defined by the selected ensemble"
+                )
 
         layout.addRow(QLabel("<b>General settings</b>"))
 
