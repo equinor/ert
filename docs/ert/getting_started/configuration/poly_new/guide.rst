@@ -456,7 +456,7 @@ With the final configuration:
 
 .. literalinclude:: with_observations/poly_final.ert
 
-Launch ERT, choose the "Ensemble Smoother" and hit the play button.
+Launch ERT, choose the ``Multiple data assimilation``, toggle on the ``Single update``-option and hit the play button.
 
 Plot prior and posterior ensembles and notice that the updated parameters yield responses that better align with observations.
 
@@ -495,7 +495,7 @@ Remove index list from ``observations`` as we now use all 50 observations:
 
 .. literalinclude:: with_more_observations/observations
 
-Re-run ``Ensemble smoother`` and notice that the estimate of ``b`` has improved:
+Re-run ``Multiple data assimilation`` with the ``Single update``-option enabled and notice that the estimate of ``b`` has improved:
 
 .. image:: with_more_observations/coeff_b.png
 
