@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
-from dateutil import tz
 from PyQt6.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
 
@@ -80,7 +79,7 @@ def test_changes(full_snapshot):
 
 
 @pytest.mark.requires_window_manager
-@pytest.mark.parametrize("timezone", [(None), tz.gettz("UTC")])
+@pytest.mark.parametrize("timezone", [(None), UTC])
 @patch("ert.gui.model.snapshot.datetime", wraps=datetime)
 def test_duration(mock_datetime, timezone, full_snapshot):
     source_model = SnapshotModel()
