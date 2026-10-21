@@ -38,12 +38,12 @@ EVEREST_CONSTRAINT_PLOT = "Constraints"
 ERT_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     STATISTICS: StatisticsPlot,
     MISFITS: MisfitsPlot,
+    CROSSPLOT: CrossPlot,
     HISTOGRAM: HistogramPlot,
     GAUSSIAN_KDE: GaussianKDEPlot,
     DISTRIBUTION: DistributionPlot,
     CROSS_ENSEMBLE_STATISTICS: CrossEnsembleStatisticsPlot,
     STD_DEV: StdDevPlot,
-    CROSSPLOT: CrossPlot,
 }
 EVEREST_PLOT_MAP: dict[str, Callable[[], Plotter]] = {
     EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT: EverestBatchObjectiveFunctionPlot,
