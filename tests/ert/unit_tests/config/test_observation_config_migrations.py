@@ -16,10 +16,12 @@ from resfo_utilities.testing import (
     Unsmry,
 )
 
-from ert.config import ConfigValidationError
+from ert.config import ConfigValidationError, ShapeRegistry
+from ert.config._observations import SummaryObservation, make_observations
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
+from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import ObservationConfigError
 from ert.observation_converters.history_to_summary import convert_history_to_summary
 
@@ -245,6 +247,52 @@ SUMMARY_OBSERVATION FOPR_OBS2 {
 };
 """
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_summary_observation_location_keywords_are_migrated_to_localization():
+    setup_timemap_config(
+        """\
+        SUMMARY_OBSERVATION FOPR_OBS {
+            VALUE          = 110.0;
+            ERROR          = 5.0;
+            RESTART        = 1;
+            KEY            = FOPR;
+            LOCATION_X     = 100.0;
+            LOCATION_Y     = 200.0;
+            LOCATION_RANGE = 300.0;
+        };
+        """
+    )
+
+    convert_history_to_summary("config.ert")
+
+    migrated_contents = Path("observations.txt").read_text(encoding="utf-8")
+    assert (
+        migrated_contents
+        == """SUMMARY_OBSERVATION FOPR_OBS {
+   VALUE    = 110.0;
+   ERROR    = 5.0;
+   DATE     = 2020-01-11;
+   KEY      = FOPR;
+   LOCALIZATION {
+      EAST   = 100.0;
+      NORTH  = 200.0;
+      RADIUS = 300.0;
+   };
+};
+"""
+    )
+    shape_registry = ShapeRegistry()
+    [observation] = make_observations(
+        "",
+        parse_observations(migrated_contents, "observations.txt"),
+        shape_registry=shape_registry,
+    )
+    assert isinstance(observation, SummaryObservation)
+    assert observation.shape_id is not None
+    shape = shape_registry.get(observation.shape_id)
+    assert (shape.east, shape.north, shape.radius) == (100.0, 200.0, 300.0)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -598,6 +646,73 @@ def test_that_observation_config_without_refcase_or_time_map_raises_error(
             """,
             "Could not find",
             id="summary observation date not found in time map",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE      = 0.1;
+                ERROR      = 0.05;
+                RESTART    = 1;
+                KEY        = FOPR;
+                LOCATION_X = 100.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location x without y",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE      = 0.1;
+                ERROR      = 0.05;
+                RESTART    = 1;
+                KEY        = FOPR;
+                LOCATION_Y = 200.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location y without x",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE          = 0.1;
+                ERROR          = 0.05;
+                RESTART        = 1;
+                KEY            = FOPR;
+                LOCATION_RANGE = 300.0;
+            };
+            """,
+            "LOCATION_RANGE requires LOCATION_X and LOCATION_Y",
+            id="summary observation location range without coordinates",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE          = 0.1;
+                ERROR          = 0.05;
+                RESTART        = 1;
+                KEY            = FOPR;
+                LOCATION_X     = 100.0;
+                LOCATION_RANGE = 300.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location range with only x",
+        ),
+        pytest.param(
+            """\
+            SUMMARY_OBSERVATION FOPR_OBS {
+                VALUE          = 0.1;
+                ERROR          = 0.05;
+                RESTART        = 1;
+                KEY            = FOPR;
+                LOCATION_Y     = 200.0;
+                LOCATION_RANGE = 300.0;
+            };
+            """,
+            "LOCATION_X and LOCATION_Y must be given together",
+            id="summary observation location range with only y",
         ),
     ],
 )
