@@ -100,6 +100,7 @@ BSUB_FAILURE_MESSAGES = (
     "Too many processors requested",
     "cannot be used in the resource requirement section",
     "duplicate section",
+    "RUNLIMIT value is too big",
 )
 
 
