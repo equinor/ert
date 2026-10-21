@@ -50,7 +50,50 @@ def test_that_python_files_extracts_existing_repository_python_files(tmp_path):
     ]
 
 
-def test_that_main_runs_only_ruff_hooks_twice_for_changed_python_files(
+def run_hook_command(hook_name: str, *files: str) -> list[str]:
+    return [
+        "uv",
+        "run",
+        "--only-group",
+        "style",
+        "pre-commit",
+        "run",
+        hook_name,
+        "--files",
+        *files,
+    ]
+
+
+def test_that_main_reruns_ruff_hooks_when_the_first_run_modifies_files(
+    tmp_path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    hook = load_hook_module()
+    python_file = tmp_path / "changed.py"
+    python_file.touch()
+    monkeypatch.setattr(
+        hook.sys,
+        "stdin",
+        io.StringIO(json.dumps({"cwd": str(tmp_path), "toolArgs": "changed.py"})),
+    )
+    commands: list[list[str]] = []
+    return_codes = iter([1, 0, 0, 0])
+
+    def run_hook(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return subprocess.CompletedProcess(command, next(return_codes), "", "")
+
+    monkeypatch.setattr(hook, "run_hook", run_hook)
+
+    hook.main()
+
+    assert commands == [
+        run_hook_command(hook_name, "changed.py")
+        for hook_name in ("ruff-check", "ruff-format") * 2
+    ]
+    assert not capsys.readouterr().out
+
+
+def test_that_main_runs_ruff_hooks_once_when_files_are_already_clean(
     tmp_path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ):
     hook = load_hook_module()
@@ -67,25 +110,15 @@ def test_that_main_runs_only_ruff_hooks_twice_for_changed_python_files(
         commands.append(command)
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr(hook, "run_ruff", run_hook)
+    monkeypatch.setattr(hook, "run_hook", run_hook)
 
     hook.main()
 
     assert commands == [
-        [
-            "uv",
-            "run",
-            "--group",
-            "style",
-            "pre-commit",
-            "run",
-            hook_name,
-            "--files",
-            "changed.py",
-        ]
-        for hook_name in ("ruff-check", "ruff-format") * 2
+        run_hook_command(hook_name, "changed.py")
+        for hook_name in ("ruff-check", "ruff-format")
     ]
-    assert json.loads(capsys.readouterr().out) == {}
+    assert not capsys.readouterr().out
 
 
 def test_that_main_ignores_file_modifications_when_verification_passes(
@@ -107,8 +140,36 @@ def test_that_main_ignores_file_modifications_when_verification_passes(
             subprocess.CompletedProcess([], 0, "", ""),
         ]
     )
-    monkeypatch.setattr(hook, "run_ruff", lambda _command: next(results))
+    monkeypatch.setattr(hook, "run_hook", lambda _command: next(results))
 
     hook.main()
 
-    assert json.loads(capsys.readouterr().out) == {}
+    assert not capsys.readouterr().out
+
+
+def test_that_main_reports_remaining_ruff_errors_as_additional_context(
+    tmp_path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    hook = load_hook_module()
+    python_file = tmp_path / "changed.py"
+    python_file.touch()
+    monkeypatch.setattr(
+        hook.sys,
+        "stdin",
+        io.StringIO(json.dumps({"cwd": str(tmp_path), "toolArgs": "changed.py"})),
+    )
+    results = iter(
+        [
+            subprocess.CompletedProcess([], 1, "unfixable lint", ""),
+            subprocess.CompletedProcess([], 0, "", ""),
+            subprocess.CompletedProcess([], 1, "unfixable lint", ""),
+            subprocess.CompletedProcess([], 0, "", ""),
+        ]
+    )
+    monkeypatch.setattr(hook, "run_hook", lambda _command: next(results))
+
+    hook.main()
+
+    assert json.loads(capsys.readouterr().out) == {
+        "additionalContext": "unfixable lint"
+    }
