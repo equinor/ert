@@ -23,7 +23,6 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "aiohttp",
     "anyio",
     "cryptography",
     "decorator",
@@ -40,7 +39,6 @@ dependencies = [
     "lark",
     "lxml",
     "matplotlib>=3.11.1",
-    "netCDF4",
     "networkx",
     "numpy",
     "openpyxl",
@@ -53,13 +51,10 @@ dependencies = [
     "pluggy>=1.3.0",
     "polars>=1.42.1",
     "probabilit>=0.5.0",
-    "progressbar2",
     "psutil",
     "pyarrow", # extra dependency for pandas (parquet)
     "pydantic > 2",
     "pyqt6 < 6.10.0",  # rhel8 https://www.riverbankcomputing.com/pipermail/pyqt/2025-October/046342.html
-    "python-dateutil",
-    "python-multipart", # extra dependency for fastapi
     "pyyaml",
     "pyzmq",
     "requests",
@@ -111,7 +106,6 @@ dev = [
     "pytest-mock",
     "pytest-mpl",
     "pytest-qt",
-    "pytest-raises",
     "pytest-rerunfailures!=16.0",
     "pytest-snapshot",
     "pytest-timeout",
@@ -137,13 +131,11 @@ types = [
     "types-lxml",
     "types-requests",
     "types-PyYAML",
-    "types-python-dateutil",
     "types-decorator",
     "types-docutils",
     "types-tqdm",
     "types-openpyxl",
     "types-psutil",
-    "types-setuptools",
     "types-tabulate",
     "types-networkx",
     "types-shapely",
