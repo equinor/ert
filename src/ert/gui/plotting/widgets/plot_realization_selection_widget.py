@@ -38,7 +38,6 @@ class RealizationSelectionWidget(QWidget):
         if self._realizations_list.count() > 0:
             first_item = self._realizations_list.item(0)
             if first_item is not None:
-                first_item.setSelected(True)
                 self._realizations_list.setCurrentItem(first_item)
 
     def get_selected_realization(self) -> str | None:
