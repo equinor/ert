@@ -112,7 +112,7 @@ dev = [
     "pytest-xdist",
     "pytest-durations",
     "pytest>6",
-    "resdata",
+    "resdata>=7.0.0b3",
     "rust-just",
     "scikit-image",
     "sphinx",
