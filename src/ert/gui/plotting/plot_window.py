@@ -617,7 +617,8 @@ class PlotWindow(QMainWindow):
                 plot_context,
                 history_data_available=history_data_available,
                 has_observations=key_def.observations,
-                show_observations=key_def.observations and selected_tab != MISFITS,
+                show_observations=key_def.observations
+                and selected_tab not in {MISFITS, CROSSPLOT},
                 log_scale_available=log_scale_valid_values
                 and selected_tab in {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE},
             )
