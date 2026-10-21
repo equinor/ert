@@ -1,6 +1,4 @@
 # ruff: file-ignore[implicit-namespace-package]
-"""Format and lint Python files changed by a Copilot edit tool."""
-
 from __future__ import annotations
 
 import json
@@ -53,8 +51,12 @@ def python_files(tool_args: object, repository_root: Path) -> list[Path]:
     return sorted(paths)
 
 
-def run_ruff(command: list[str]) -> subprocess.CompletedProcess[str]:
+def run_hook(command: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, capture_output=True, text=True, check=False)
+
+
+def run_hooks(commands: list[list[str]]) -> list[subprocess.CompletedProcess[str]]:
+    return [run_hook(command) for command in commands]
 
 
 def failure_context(results: list[subprocess.CompletedProcess[str]]) -> str:
@@ -69,7 +71,6 @@ def main() -> None:
     repository_root = Path(payload["cwd"]).resolve()
     files = python_files(payload.get("toolArgs"), repository_root)
     if not files:
-        print("{}")
         return
 
     file_arguments = [str(path.relative_to(repository_root)) for path in files]
@@ -77,7 +78,7 @@ def main() -> None:
         [
             "uv",
             "run",
-            "--group",
+            "--only-group",
             "style",
             "pre-commit",
             "run",
@@ -87,14 +88,14 @@ def main() -> None:
         ]
         for hook in ("ruff-check", "ruff-format")
     ]
-    for command in commands:
-        run_ruff(command)
+    fix_results = run_hooks(commands)
+    if all(result.returncode == 0 for result in fix_results):
+        return
 
-    results = [run_ruff(command) for command in commands]
-    if any(result.returncode != 0 for result in results):
-        print(json.dumps({"additionalContext": failure_context(results)}))
-    else:
-        print("{}")
+    # pre-commit fails when hooks modify files, so rerun to detect unfixed errors
+    verification_results = run_hooks(commands)
+    if any(result.returncode != 0 for result in verification_results):
+        print(json.dumps({"additionalContext": failure_context(verification_results)}))
 
 
 if __name__ == "__main__":
