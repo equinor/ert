@@ -11,7 +11,7 @@ from ert.gui.plotting.ert_plots.misfits import (
     MisfitsPlot,
     wide_pandas_to_long_polars_with_misfits,
 )
-from ert.gui.plotting.utils import PlotConfig
+from ert.gui.plotting.utils import PlotConfig, PlotContext
 
 
 def test_that_misfits_plot_is_empty_when_observations_are_missing(
@@ -542,3 +542,69 @@ def test_that_seismic_misfit_plot_skips_ensembles_with_no_misfit_data(
     assert xtick_labels == ["ensemble"]
     assert len(figure.axes[0].patches) == 1
     assert figure.axes[0].get_xlim() == (-0.5, 0.5)
+
+
+@pytest.mark.parametrize(
+    ("data_origin", "key", "columns", "observation_data"),
+    [
+        pytest.param(
+            "summary",
+            "FOPR",
+            ["2023-01-01", "2023-01-02"],
+            {0: [2.0, 10.0, "2023-01-01"], 1: [2.0, 20.0, "2023-01-02"]},
+            id="summary",
+        ),
+        pytest.param(
+            "seismic",
+            "SEISMIC_KEY",
+            ["0", "5"],
+            {0: [10.0, 100.0, "0"], 1: [10.0, 200.0, "5"]},
+            id="seismic",
+        ),
+    ],
+)
+def test_that_misfit_plot_colors_follow_ensemble_selection_color_indexes(
+    data_origin, key, columns, observation_data, make_ensemble, make_key_def
+):
+    iter_3 = make_ensemble("iter-3", "id-3")
+    iter_2 = make_ensemble("iter-2", "id-2")
+    iter_1 = make_ensemble("iter-1", "id-1")
+    iter_0 = make_ensemble("iter-0", "id-0")
+    plot_config = PlotConfig()
+    plot_context = PlotContext(
+        plot_config,
+        ensembles=[iter_3, iter_2, iter_1, iter_0],
+        ensembles_color_indexes=[0, 1, 2, 3],
+        key=key,
+        layer=None,
+    )
+    figure = Figure()
+
+    MisfitsPlot().plot(
+        figure,
+        plot_context,
+        {
+            ensemble: pd.DataFrame(
+                {column: [1.0] for column in columns},
+                index=pd.Index([0], name="Realization"),
+            )
+            for ensemble in (iter_3, iter_2, iter_1, iter_0)
+        },
+        observation_data=pd.DataFrame(
+            data=observation_data, index=["STD", "OBS", "key_index"]
+        ),
+        std_dev_images={},
+        obs_loc=None,
+        key_def=make_key_def(key=key, data_origin=data_origin),
+    )
+
+    legend = figure.axes[0].get_legend()
+    legend_colors = {
+        text.get_text(): handle.get_color()
+        for text, handle in zip(legend.get_texts(), legend.legend_handles, strict=True)
+    }
+    palette = plot_config.line_color_cycle()
+    assert legend_colors["iter-3"] == palette[0][0]
+    assert legend_colors["iter-2"] == palette[1][0]
+    assert legend_colors["iter-1"] == palette[2][0]
+    assert legend_colors["iter-0"] == palette[3][0]

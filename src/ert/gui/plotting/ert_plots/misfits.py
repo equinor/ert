@@ -97,16 +97,20 @@ class MisfitsPlot:
 
     @staticmethod
     def _map_ensembles_to_colours(
-        sorted_ensemble_keys: list[tuple[str, str]],
-        colour_list: list[tuple[str, float]],  # tuples of hex and alpha values
+        plot_context: PlotContext,
     ) -> dict[tuple[str, str], str]:
         """
-        Build a consistent color map and figure-level legend
-        used by all misfit plots. Alpha values are dropped.
+        Map each ensemble to the color assigned to it in the ensemble selection,
+        so that misfit plots match the other plots. Alpha values are dropped.
         """
+        colour_list = plot_context.plotConfig().line_color_cycle()
         return {
-            key: colour_list[i % len(colour_list)][0]
-            for i, key in enumerate(sorted_ensemble_keys)
+            (ensemble.name, ensemble.id): colour_list[color_index % len(colour_list)][0]
+            for ensemble, color_index in zip(
+                plot_context.ensembles(),
+                plot_context.ensembles_color_indexes(),
+                strict=False,
+            )
         }
 
     @staticmethod
@@ -190,9 +194,7 @@ class MisfitsPlot:
         index_to_pos = {idx: i for i, idx in enumerate(all_unique_indexes)}
 
         sorted_ensemble_keys = sorted(data_with_misfits.keys())
-        color_map = self._map_ensembles_to_colours(
-            sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
-        )
+        color_map = self._map_ensembles_to_colours(plot_context)
 
         y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
 
@@ -285,9 +287,7 @@ class MisfitsPlot:
         plot_context.plot_type = PlotType.BOX
 
         sorted_ensemble_keys = sorted(data_with_misfits.keys())
-        color_map = self._map_ensembles_to_colours(
-            sorted_ensemble_keys, plot_context.plotConfig().line_color_cycle()
-        )
+        color_map = self._map_ensembles_to_colours(plot_context)
 
         # Average observation-point misfits within each realization. Each box then
         # represents the ensemble distribution of mean misfits across realizations.
