@@ -389,17 +389,10 @@ class RunDialog(QFrame):
         return self.flag_experiment_done
 
     def _add_dynamic_tab(self, widget: QWidget, label: str) -> int:
-        # If the currently selected tab is the most recently added dynamic
-        # tab, keep following along as new tabs are added; otherwise the
-        # user has navigated elsewhere and we leave their selection alone.
-        last_index = self._tab_widget.count() - 1
-        follow_new_tab = (
-            last_index >= 0
-            and not isinstance(self._tab_widget.widget(last_index), WorkflowLogWidget)
-            and self._tab_widget.currentIndex() == last_index
-        )
+        # Follow new tabs while the last tab is selected. The Workflows tab is
+        # always first, so it is only last when it is the sole, auto-selected tab.
         tab_index = self._tab_widget.addTab(widget, label)
-        if follow_new_tab:
+        if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
             self._tab_widget.setCurrentIndex(tab_index)
         return tab_index
 
@@ -664,10 +657,9 @@ class RunDialog(QFrame):
                     initial_status_text="Preparing runpaths...",
                     completed_action="created",
                 )
-                tab_index = self._tab_widget.addTab(
+                self._add_dynamic_tab(
                     runpath_creation_progress_widget, "Creating runpaths..."
                 )
-                self._tab_widget.setCurrentIndex(tab_index)
                 runpath_creation_progress_widget.start(event.total_runpaths_to_create)
             case FinishedTotalRunPathCreationEvent():
                 last_index = self._tab_widget.count() - 1
