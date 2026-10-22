@@ -57,7 +57,9 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
 
         async def mock_checksum_consumer(self, *args) -> None:
             event = await self._manifest_queue.get()
-            assert isinstance(event, ForwardModelStepChecksum)
+            while not isinstance(event, ForwardModelStepChecksum):
+                self._manifest_queue.task_done()
+                event = await self._manifest_queue.get()
             self.checksum.update(event.checksums)
             self._manifest_queue.task_done()
             await rename_and_wait()

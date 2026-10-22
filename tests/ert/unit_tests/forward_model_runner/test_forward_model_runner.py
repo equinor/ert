@@ -92,8 +92,7 @@ def test_run_multiple_ok():
     for dir_number in dir_list:
         assert Path(dir_number).is_dir()
         assert Path(f"mkdir_out.{dir_number}").is_file()
-        assert Path(f"mkdir_err.{dir_number}").is_file()
-        assert Path(f"mkdir_err.{dir_number}").stat().st_size == 0
+        assert not Path(f"mkdir_err.{dir_number}").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -274,3 +273,21 @@ def test_default_env_variables_available_inside_fm_step_context():
     # Check default ENV variable not available outside of step context
     for k in ForwardModelStep.default_env:
         assert k not in os.environ
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("failing_step", [False, True])
+def test_that_exited_message_lists_only_non_empty_std_stream_files(failing_step):
+    script = "print('x')" + ("; raise SystemExit(1)" if failing_step else "")
+    step = {
+        "name": "writer",
+        "executable": "/usr/bin/env",
+        "argList": ["python3", "-c", script],
+        "stdout": "out.txt",
+        "stderr": "err.txt",
+    }
+    runner = ForwardModelRunner(create_jobs_json([step]))
+    exited = next(msg for msg in runner.run([]) if isinstance(msg, Exited))
+
+    assert exited.std_stream_paths == {"stdout": str(Path("out.txt").absolute())}
+    assert not Path("err.txt").exists()
