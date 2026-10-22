@@ -34,6 +34,7 @@ def create_scheduler():
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
     sch._manifest_queue = None
+    sch.std_stream_paths = {}
     sch._cancelled = False
     sch._cancelled_by_evaluator = False
     sch.schedule_kill = lambda real: sch.driver.kill([real])
@@ -350,6 +351,60 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
         await job_run_task
 
     assert f"File {file_path} checksum verification failed." in log_msgs
+
+
+@pytest.mark.asyncio
+async def test_that_reported_file_paths_include_std_streams_relative_to_runpath(
+    realization: Realization,
+):
+    scheduler = create_scheduler()
+    runpath = Path(realization.run_arg.runpath)
+    scheduler.checksum = {
+        str(runpath): {"file": {"type": "file", "path": str(runpath / "result.txt")}}
+    }
+    scheduler.std_stream_paths = {
+        realization.run_arg.iens: {runpath / "step.stdout", Path("/elsewhere/log")}
+    }
+
+    assert Job(scheduler, realization)._reported_file_paths() == {
+        Path("result.txt"),
+        Path("step.stdout"),
+    }
+
+
+@pytest.mark.asyncio
+async def test_that_failed_attempt_output_paths_are_dropped_after_silent_retry(
+    realization: Realization, mocker
+):
+    scheduler = create_scheduler()
+    runpath = Path(realization.run_arg.runpath)
+    scheduler.checksum = {str(runpath): {}}
+    failed_attempt_stdout = runpath / "failed.stdout"
+    job = Job(scheduler, realization)
+    job.submit_time = 0.0
+    attempts = 0
+
+    async def submit_and_run_once(_sem):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            scheduler.std_stream_paths[job.iens] = {failed_attempt_stdout}
+            job.returncode.set_result(1)
+        else:
+            job.returncode.set_result(0)
+
+    mocker.patch.object(job, "_submit_and_run_once", submit_and_run_once)
+    mocker.patch.object(job, "_handle_finished_forward_model", AsyncMock())
+    scheduler.warnings_extracted = False
+    log_warnings = mocker.patch(
+        "ert.scheduler.job.log_warnings_from_forward_model",
+        AsyncMock(return_value=0),
+    )
+
+    await job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=2)
+
+    assert attempts == 2
+    assert log_warnings.call_args.kwargs["existing_output_files"] == set()
 
 
 @pytest.mark.asyncio
@@ -825,3 +880,35 @@ async def test_killing_job_does_not_hang_on_waiting_for_scheduler_to_kill_in_bat
         f"Realization {job.iens} did not get confirmation from "
         "scheduler that the batch killing with driver ran successfully."
     ) in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "nonempty_files",
+    [(), ("stdout",), ("stderr",), ("stdout", "stderr")],
+)
+async def test_that_empty_output_files_are_not_waited_for(
+    realization, mocker, nonempty_files
+):
+    mocker.patch("asyncio.sleep")
+    runpath = Path(realization.run_arg.runpath)
+    runpath.mkdir()
+    existing_output_files = set()
+    for stream in nonempty_files:
+        filename = Path(f"foo.{stream}.0")
+        (runpath / filename).write_text("hello", encoding="utf-8")
+        existing_output_files.add(filename)
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+            stderr_file="foo.stderr",
+        )
+    ]
+    remaining_timeout = await log_warnings_from_forward_model(
+        realization,
+        time.time() - 1,
+        existing_output_files=existing_output_files,
+    )
+    assert remaining_timeout == Job.DEFAULT_FILE_VERIFICATION_TIMEOUT

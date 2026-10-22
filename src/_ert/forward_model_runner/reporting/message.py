@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Literal, NotRequired, Self
 import psutil
 from typing_extensions import TypedDict
 
+from _ert.events import StdStream
+
 if TYPE_CHECKING:
     from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 
@@ -123,6 +125,7 @@ class Exited(Message):
     ) -> None:
         super().__init__(fm_step)
         self.exit_code = exit_code
+        self.std_stream_paths: dict[StdStream, str] = {}
 
 
 class Checksum(Message):

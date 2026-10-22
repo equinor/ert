@@ -240,7 +240,12 @@ class Event(Reporter):
         elif isinstance(msg, Exited):
             if msg.success():
                 logger.debug(f"Step {step_name} exited successfully")
-                self._dump_event(ForwardModelStepSuccess(**step_msg))
+                self._dump_event(
+                    ForwardModelStepSuccess(
+                        **step_msg,
+                        std_stream_paths=msg.std_stream_paths,
+                    )
+                )
             else:
                 logger.error(
                     STEP_EXIT_FAILED_STRING_TEMPLATE.format(
@@ -256,7 +261,10 @@ class Event(Reporter):
                 )
                 self._dump_event(
                     ForwardModelStepFailure(
-                        **step_msg, exit_code=msg.exit_code, error_msg=error_message
+                        **step_msg,
+                        exit_code=msg.exit_code,
+                        error_msg=error_message,
+                        std_stream_paths=msg.std_stream_paths,
                     )
                 )
 
