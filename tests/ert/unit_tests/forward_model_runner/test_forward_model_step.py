@@ -298,8 +298,8 @@ def test_makedirs(monkeypatch, tmp_path):
     )
     for _ in fmstep.run():
         pass
-    assert (tmp_path / "a/file").is_file()
-    assert (tmp_path / "b/c/file").is_file()
+    assert (tmp_path / "a").is_dir()
+    assert (tmp_path / "b/c").is_dir()
 
 
 @pytest.mark.parametrize(
@@ -430,3 +430,39 @@ def test_that_max_running_minutes_timeout_does_not_trigger_before_limit():
     assert result is None, (
         "Timeout should not trigger for a job running 23h with a 1440-minute limit"
     )
+
+
+def test_that_stdout_and_stderr_files_are_only_created_when_written_to(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    step = ForwardModelStep(
+        {
+            "name": "writer",
+            "executable": "/bin/sh",
+            "argList": ["-c", "echo hello"],
+            "stdout": "out.txt",
+            "stderr": "err.txt",
+        },
+        0,
+    )
+    list(step.run())
+    assert (tmp_path / "out.txt").read_text(encoding="utf-8") == "hello\n"
+    assert not (tmp_path / "err.txt").exists()
+
+
+def test_that_stale_output_files_are_removed_when_step_writes_nothing(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out.txt").write_text("stale")
+    step = ForwardModelStep(
+        {
+            "name": "silent",
+            "executable": "/bin/true",
+            "stdout": "out.txt",
+        },
+        0,
+    )
+    list(step.run())
+    assert not (tmp_path / "out.txt").exists()

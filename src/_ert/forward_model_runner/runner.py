@@ -16,6 +16,8 @@ from _ert.forward_model_runner.reporting.message import (
     Message,
 )
 
+OUTPUT_FILE_MD5_PREFIX_BYTES = 1024 * 1024
+
 
 class ForwardModelRunner:
     def __init__(self, steps_data: "ForwardModelDescriptionJSON") -> None:
@@ -46,6 +48,21 @@ class ForwardModelRunner:
             for name, file in data.items()
         }
 
+    @staticmethod
+    def _stdout_stderr_checksum_entries(
+        steps: list[ForwardModelStep],
+    ) -> dict[str, Manifest]:
+        entries: dict[str, Manifest] = {}
+        for step in steps:
+            for stream, file in (("stdout", step.std_out), ("stderr", step.std_err)):
+                if file and Path(file).is_file():
+                    entries[f"{step.name()}.{step.index}.{stream}"] = {
+                        "type": "file",
+                        "path": str(Path(file).absolute()),
+                        "bytecount_used_in_md5sum": OUTPUT_FILE_MD5_PREFIX_BYTES,
+                    }
+        return entries
+
     def _populate_checksums(
         self, manifest: dict[str, Manifest] | None
     ) -> dict[str, Manifest]:
@@ -54,7 +71,9 @@ class ForwardModelRunner:
         for info in manifest.values():
             path = Path(info["path"])
             if path.exists():
-                info["md5sum"] = hashlib.md5(path.read_bytes()).hexdigest()
+                with path.open("rb") as f:
+                    content = f.read(info.get("bytecount_used_in_md5sum", -1))
+                info["md5sum"] = hashlib.md5(content).hexdigest()
             else:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest
@@ -89,18 +108,30 @@ class ForwardModelRunner:
         else:
             yield init_message
 
+        started_steps: list[ForwardModelStep] = []
         for step in step_queue:
             self._currently_running_step = step
+            started_steps.append(step)
             for status_update in step.run():
                 yield status_update
                 if not status_update.success():
-                    yield Checksum(checksum_dict={}, run_path=str(Path.cwd()))
+                    yield Checksum(
+                        checksum_dict=self._populate_checksums(
+                            self._stdout_stderr_checksum_entries(started_steps)
+                        ),
+                        run_path=str(Path.cwd()),
+                    )
                     yield Finish().with_error(
                         "Not all forward model steps completed successfully."
                     )
                     return
 
-        checksum_dict = self._populate_checksums(self._read_manifest())
+        checksum_dict = self._populate_checksums(
+            {
+                **(self._read_manifest() or {}),
+                **self._stdout_stderr_checksum_entries(started_steps),
+            }
+        )
         yield Checksum(checksum_dict=checksum_dict, run_path=str(Path.cwd()))
         yield Finish()
 
