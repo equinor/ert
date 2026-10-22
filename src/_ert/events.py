@@ -3,6 +3,8 @@ from typing import Annotated, Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
+StdStream = Literal["stdout", "stderr"]
+
 
 class Id:
     FORWARD_MODEL_STEP_START_TYPE = Literal["forward_model_step.start"]
@@ -88,12 +90,14 @@ class ForwardModelStepRunning(ForwardModelStepBaseEvent):
 class ForwardModelStepSuccess(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_SUCCESS_TYPE = Id.FORWARD_MODEL_STEP_SUCCESS
     current_memory_usage: int | None = None
+    std_stream_paths: dict[StdStream, str] = Field(default_factory=dict)
 
 
 class ForwardModelStepFailure(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_FAILURE_TYPE = Id.FORWARD_MODEL_STEP_FAILURE
     error_msg: str
     exit_code: int | None = None
+    std_stream_paths: dict[StdStream, str] = Field(default_factory=dict)
 
 
 class ForwardModelStepCancelled(ForwardModelStepBaseEvent):
