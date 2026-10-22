@@ -3,6 +3,9 @@ from datetime import UTC
 from datetime import datetime as dt
 
 import pytest
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QDialogButtonBox
+from pytestqt.qtbot import QtBot
 
 from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshot,
@@ -18,6 +21,16 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_UNKNOWN,
 )
 from tests.ert.utils import SnapshotBuilder
+
+
+def click_dialog_button(
+    qtbot: QtBot, dialog: QDialog, button: QDialogButtonBox.StandardButton
+) -> None:
+    button_box = dialog.findChild(QDialogButtonBox)
+    assert button_box is not None
+    push_button = button_box.button(button)
+    assert push_button is not None
+    qtbot.mouseClick(push_button, Qt.MouseButton.LeftButton)
 
 
 @pytest.fixture
