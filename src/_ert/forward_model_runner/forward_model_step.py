@@ -8,6 +8,7 @@ import os
 import signal
 import socket
 import sys
+import threading
 import time
 import uuid
 from collections.abc import Generator, Iterable, Sequence
@@ -117,6 +118,52 @@ def killed_by_oom(pids: Iterable[int]) -> bool:
     return False
 
 
+class LazyOutputFile:
+    """Captures a child process output stream through a pipe, creating the
+    target file only when the first output arrives.
+    """
+
+    DRAIN_TIMEOUT = 5.0  # Seconds to wait for the pipe to drain after exit
+
+    def __init__(self, path: str) -> None:
+        self._path = Path(path)
+        self._path.resolve().parent.mkdir(parents=True, exist_ok=True)
+        self._path.unlink(missing_ok=True)
+        self._read_fd, self.write_fd = os.pipe()
+        self._write_closed = False
+        self._thread = threading.Thread(target=self._pump, daemon=True)
+        self._thread.start()
+
+    def _pump(self) -> None:
+        file: io.BufferedWriter | None = None
+        try:
+            while chunk := os.read(self._read_fd, 65536):
+                if file is None:
+                    file = self._path.open("ab")
+                file.write(chunk)
+                file.flush()
+        except OSError:
+            logger.exception(f"Failed to capture output to {self._path}")
+        finally:
+            if file is not None:
+                file.close()
+            os.close(self._read_fd)
+
+    def close_write_end(self) -> None:
+        if not self._write_closed:
+            self._write_closed = True
+            os.close(self.write_fd)
+
+    def finish(self) -> None:
+        self.close_write_end()
+        self._thread.join(self.DRAIN_TIMEOUT)
+
+    def append(self, text: str) -> None:
+        self.finish()
+        with self._path.open("a", encoding="utf-8") as file:
+            file.write(text)
+
+
 class ForwardModelStep:
     MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
     TARGET_FILE_POLL_PERIOD = 5  # Seconds to wait for target file after step completion
@@ -152,29 +199,10 @@ class ForwardModelStep:
             combined_arg_list += arg_list
         return combined_arg_list
 
-    def _open_file_handles(
-        self,
-    ) -> tuple[
-        io.TextIOWrapper | None, io.TextIOWrapper | None, io.TextIOWrapper | None
-    ]:
+    def _open_stdin(self) -> io.TextIOWrapper | None:
         if stdin_file := self.step_data.get("stdin"):
-            stdin = open(stdin_file, encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
-        else:
-            stdin = None
-
-        if self.std_err:
-            Path(self.std_err).resolve().parent.mkdir(parents=True, exist_ok=True)
-            stderr = open(self.std_err, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
-        else:
-            stderr = None
-
-        if self.std_out:
-            Path(self.std_out).resolve().parent.mkdir(parents=True, exist_ok=True)
-            stdout = open(self.std_out, "w", encoding="utf-8")  # ruff: ignore[builtin-open, open-file-with-context-handler]
-        else:
-            stdout = None
-
-        return (stdin, stdout, stderr)
+            return open(stdin_file, encoding="utf-8")  # ruff: ignore[builtin-open]
+        return None
 
     def _create_environment(self) -> dict[str, str] | None:
         combined_environment = None
@@ -191,8 +219,9 @@ class ForwardModelStep:
 
         arg_list = self._build_arg_list()
 
-        (stdin, stdout, stderr) = self._open_file_handles()
-        # stdin/stdout/stderr are closed at the end of this function
+        stdin = self._open_stdin()
+        stdout = LazyOutputFile(self.std_out) if self.std_out else None
+        stderr = LazyOutputFile(self.std_err) if self.std_err else None
 
         target_file: str | None = self.step_data.get("target_file")
         existing_target_file_mtime: int | None = _get_existing_target_file_mtime(
@@ -203,8 +232,8 @@ class ForwardModelStep:
             proc = Popen(
                 arg_list,
                 stdin=stdin,
-                stdout=stdout,
-                stderr=stderr,
+                stdout=stdout.write_fd if stdout else None,
+                stderr=stderr.write_fd if stderr else None,
                 env=self._create_environment(),
             )
             process = Process(proc.pid)
@@ -212,9 +241,13 @@ class ForwardModelStep:
             exited_message = self._handle_process_io_error_and_create_exited_message(
                 e, stderr
             )
-            yield exited_message
             ensure_file_handles_closed([stdin, stdout, stderr])
+            yield exited_message
             return
+        finally:
+            for output in (stdout, stderr):
+                if output:
+                    output.close_write_end()
 
         exit_code = None
 
@@ -237,6 +270,7 @@ class ForwardModelStep:
                     )
                 )
                 if isinstance(potential_exited_msg, Exited):
+                    ensure_file_handles_closed([stdin, stdout, stderr])
                     yield potential_exited_msg
                     return
 
@@ -362,7 +396,7 @@ class ForwardModelStep:
         )
 
     def _handle_process_io_error_and_create_exited_message(
-        self, e: OSError, stderr: io.TextIOWrapper | None
+        self, e: OSError, stderr: LazyOutputFile | None
     ) -> Exited:
         msg = f"{e.strerror} {e.filename}"
         if e.strerror == "Exec format error" and e.errno == 8:
@@ -372,7 +406,7 @@ class ForwardModelStep:
                 f"'#!/usr/bin/env python' to the top of the file: "
             )
         if stderr:
-            stderr.write(msg)
+            stderr.append(msg)
         return Exited(self, e.errno).with_error(msg)
 
     def name(self) -> str:
@@ -441,9 +475,13 @@ def _get_existing_target_file_mtime(file: str | None) -> int | None:
     return mtime
 
 
-def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) -> None:
+def ensure_file_handles_closed(
+    file_handles: Sequence[io.TextIOWrapper | LazyOutputFile | None],
+) -> None:
     for file_handle in file_handles:
-        if file_handle is not None:
+        if isinstance(file_handle, LazyOutputFile):
+            file_handle.finish()
+        elif file_handle is not None:
             file_handle.close()
 
 
