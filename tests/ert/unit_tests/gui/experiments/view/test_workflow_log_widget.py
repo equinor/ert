@@ -91,6 +91,22 @@ def test_that_selector_follows_newest_iteration_until_user_picks_one(widget):
     assert column_values(widget, 2) == ["job_in_iter_0"]
 
 
+def test_that_selecting_row_stops_selector_from_following_newest_iteration(widget):
+    widget.add_event(
+        make_workflow_event(
+            iteration=0, job_name="job_in_iter_0", stdout="output from iter 0"
+        )
+    )
+    widget._table.selectRow(0)
+
+    widget.add_event(make_workflow_event(iteration=1, job_name="job_in_iter_1"))
+
+    assert widget._iteration_selector.currentText() == "Iteration 0"
+    selected_rows = widget._table.selectionModel().selectedRows()
+    assert [index.row() for index in selected_rows] == [0]
+    assert widget._stdout_view.toPlainText() == "output from iter 0"
+
+
 def test_that_events_without_iteration_are_listed_first_in_selector(widget):
     widget.add_event(make_workflow_event(iteration=1, job_name="job_in_iter_1"))
     widget.add_event(
