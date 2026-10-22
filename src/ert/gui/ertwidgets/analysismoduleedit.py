@@ -84,6 +84,11 @@ class AnalysisModuleEdit(QWidget):
             update_strategies=update_strategies,
             correlation_threshold=correlation_threshold,
             enkf_truncation=self._es_settings.enkf_truncation,
+            enabled_update_strategy_types={
+                parameter_config.type.upper()
+                for parameter_config in self._parameter_config
+                if parameter_config.update_strategy is not None
+            },
         )
 
         layout.addWidget(update_settings_dialog, stretch=1)

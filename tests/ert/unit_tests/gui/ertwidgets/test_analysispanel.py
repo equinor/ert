@@ -34,6 +34,20 @@ def test_that_empty_update_strategies_are_set_to_global(qtbot: QtBot):
             assert combobox.currentData() == LocalizationType.GLOBAL
 
 
+def test_that_unavailable_parameter_types_are_not_editable(qtbot: QtBot):
+    widget = AnalysisModuleVariablesPanel(
+        update_strategies={"GEN_KW": LocalizationType.GLOBAL},
+        correlation_threshold=0.5,
+        enkf_truncation=0.2,
+        enabled_update_strategy_types={"GEN_KW"},
+    )
+    qtbot.addWidget(widget)
+
+    assert widget.findChild(QComboBox, "GEN_KW").isEnabled()
+    assert not widget.findChild(QComboBox, "FIELD").isEnabled()
+    assert not widget.findChild(QComboBox, "SURFACE").isEnabled()
+
+
 def test_that_panel_initializes_with_correct_values(qtbot: QtBot):
     settings = ESSettings()
     settings.localization_correlation_threshold = 0.5

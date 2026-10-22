@@ -1,6 +1,6 @@
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QApplication, QDialog, QPushButton
+from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QPushButton
 from pytestqt.qtbot import QtBot
 
 from ert.config import ESSettings, GenKwConfig, LocalizationType
@@ -80,6 +80,9 @@ def test_that_only_parameters_with_update_strategy_are_updated(qtbot: QtBot):
 
         panel = dialog.findChild(AnalysisModuleVariablesPanel)
         assert panel is not None
+        assert panel.findChild(QComboBox, "GEN_KW").isEnabled()
+        assert not panel.findChild(QComboBox, "FIELD").isEnabled()
+        assert not panel.findChild(QComboBox, "SURFACE").isEnabled()
         panel._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
         dialog.accept()
 
