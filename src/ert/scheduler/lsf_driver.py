@@ -101,6 +101,7 @@ BSUB_FAILURE_MESSAGES = (
     "cannot be used in the resource requirement section",
     "duplicate section",
     "RUNLIMIT value is too big",
+    "RUNLIMIT: Cannot exceed",
 )
 
 
