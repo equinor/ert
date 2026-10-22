@@ -1435,3 +1435,62 @@ def test_that_rerunning_failed_realizations_clears_workflows_tab(qtbot: QtBot):
     assert workflows_widget._table.item(0, 2).text() == "from_second_run"
 
     _stop_event_monitoring(qtbot, dialog, new_queue)
+
+
+@pytest.mark.timeout(10)
+def test_that_workflows_tab_stays_selected_only_after_user_selects_it(
+    qtbot: QtBot,
+):
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    def snapshot_event(iteration: int) -> FullSnapshotEvent:
+        return FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label=f"Iter {iteration}",
+            total_iterations=2,
+            progress=0.0,
+            realization_count=1,
+            status_count={"Unknown": 1},
+            iteration=iteration,
+        )
+
+    queue.put(make_workflow_event())
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    workflows_widget = dialog._tab_widget.widget(0)
+    assert isinstance(workflows_widget, WorkflowLogWidget)
+    assert dialog._tab_widget.currentWidget() is workflows_widget
+
+    queue.put(snapshot_event(0))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 2, timeout=2000)
+    assert isinstance(dialog._tab_widget.currentWidget(), RealizationWidget)
+
+    dialog._tab_widget.setCurrentWidget(workflows_widget)
+
+    queue.put(StartingTotalRunPathCreationEvent(total_runpaths_to_create=1))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 3, timeout=2000)
+    assert dialog._tab_widget.currentWidget() is workflows_widget
+
+    queue.put(FinishedTotalRunPathCreationEvent())
+    queue.put(snapshot_event(1))
+    qtbot.waitUntil(
+        lambda: isinstance(dialog._tab_widget.widget(2), RealizationWidget),
+        timeout=2000,
+    )
+    assert dialog._tab_widget.currentWidget() is workflows_widget
+
+    _stop_event_monitoring(qtbot, dialog, queue)
