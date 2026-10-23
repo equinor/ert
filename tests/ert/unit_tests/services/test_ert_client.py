@@ -1,7 +1,7 @@
 import io
 import logging
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import httpx
 import pandas as pd
@@ -281,3 +281,71 @@ def test_that_server_probe_returns_false_on_transport_error(event_client, error_
     api.client.request.side_effect = error_type("unavailable")
 
     assert not api.server_is_running(timeout=1)
+
+
+@pytest.fixture
+def stop_client(event_client, monkeypatch):
+    sleeps = MagicMock()
+    monkeypatch.setattr("ert.services.ert_client.time.sleep", sleeps)
+    api, _, _ = event_client
+    return api, sleeps
+
+
+def _respond_with(api, *status_codes):
+    api.client.request.side_effect = [
+        MagicMock(status_code=status_code) for status_code in status_codes
+    ]
+
+
+@pytest.mark.parametrize("status_code", [404, 500, 505])
+def test_that_stop_server_returns_false_when_every_attempt_has_non_ok_status(
+    stop_client, status_code
+):
+    api, _ = stop_client
+    _respond_with(api, *[status_code] * 5)
+
+    assert api.stop_server() is False
+
+    assert api.client.request.call_count == 5
+
+
+def test_that_stop_server_backs_off_with_increasing_delays_between_attempts(
+    stop_client,
+):
+    api, sleeps = stop_client
+    _respond_with(api, *[503] * 5)
+
+    api.stop_server()
+
+    assert sleeps.call_args_list == [call(n) for n in range(1, 6)]
+
+
+def test_that_stop_server_returns_true_when_a_retry_gets_an_ok_response(stop_client):
+    api, _ = stop_client
+    _respond_with(api, 503, 404, 200)
+
+    assert api.stop_server() is True
+
+    assert api.client.request.call_count == 3
+
+
+def test_that_stop_server_limits_attempts_to_the_requested_retries(stop_client):
+    api, _ = stop_client
+    _respond_with(api, 503, 503)
+
+    assert api.stop_server(retries=2) is False
+
+    assert api.client.request.call_count == 2
+
+
+@pytest.mark.parametrize("error_type", [httpx.ConnectError, httpx.ReadTimeout])
+def test_that_stop_server_propagates_transport_errors_when_server_is_unreachable(
+    stop_client, error_type
+):
+    api, _ = stop_client
+    api.client.request.side_effect = error_type("unavailable")
+
+    with pytest.raises(error_type):
+        api.stop_server()
+
+    assert api.client.request.call_count == 1

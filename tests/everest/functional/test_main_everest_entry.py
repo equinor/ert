@@ -13,6 +13,7 @@ from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig
+from tests.ert.utils import wait_until
 from tests.everest.utils import (
     capture_streams,
     everest_config_with_defaults,
@@ -184,3 +185,44 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
 
         status = get_experiment_status(config.storage_dir)
         assert status.status == ExperimentState.stopped
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.flaky(reruns=3)
+@pytest.mark.timeout(180)
+@pytest.mark.slow
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+def test_that_everest_kill_stops_a_running_optimization_and_the_server(
+    capsys, setup_minimal_everest_case
+):
+    with setup_minimal_everest_case(forward_model_sleep_time=15) as config_path:
+        config = EverestConfig.load_file(config_path)
+        run_thread = threading.Thread(
+            target=start_everest, args=(["everest", "run", config_path],)
+        )
+        run_thread.start()
+
+        wait_until(
+            lambda: (
+                (status := get_experiment_status(config.storage_dir)) is not None
+                and status.status == ExperimentState.running
+            ),
+            interval=1,
+            timeout=120,
+        )
+
+        start_everest(["everest", "kill", config_path])
+        run_thread.join(timeout=60)
+
+        out = capsys.readouterr().out
+        assert "Waiting for server to stop ..." in out
+        assert "Server stopped." in out
+        assert not run_thread.is_alive()
+        assert get_experiment_status(config.storage_dir).status == (
+            ExperimentState.stopped
+        )
+
+        SharedClient.close_client()
+        start_everest(["everest", "kill", config_path])
+        assert "Server is not running." in capsys.readouterr().out
