@@ -169,6 +169,7 @@ def test_that_report_log_table_only_shows_message_on_nan_status_click(qtbot: QtB
         verify_that_data_column_click_does_not_produce_dialog(row, data_column)
 
 
+@pytest.mark.slow
 def test_that_report_log_table_matches_data_on_sort(qtbot: QtBot):
     headers = ["value", "status", "missing_realizations"]
     value_column = 0

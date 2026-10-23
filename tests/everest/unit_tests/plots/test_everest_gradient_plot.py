@@ -75,6 +75,7 @@ def test_that_legend_appear_and_displays_control_names(
     assert "control_2" in legend_texts
 
 
+@pytest.mark.slow
 def test_that_type_and_style_is_correct(
     generic_plot_context, everest_ensemble, palette_size
 ):

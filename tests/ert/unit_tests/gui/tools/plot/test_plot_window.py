@@ -459,6 +459,7 @@ def test_that_history_and_observations_checkbox_state_update_when_switching_keys
     assert not observations_checkbox.isChecked()
 
 
+@pytest.mark.slow
 def test_that_general_option_checkboxes_change_rendered_plot(
     qtbot: QtBot,
     monkeypatch: pytest.MonkeyPatch,
