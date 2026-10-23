@@ -1273,3 +1273,41 @@ def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_des
     assert "Realizations: 1" in caplog.text
     assert "Parameters: 3" in caplog.text
     assert "Observations: 5" in caplog.text
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_esmda_from_gui_keeps_design_matrix_integers_with_sampled_priority(
+    qtbot, run_experiment
+):
+    _create_design_matrix(
+        "poly_design.xlsx", pl.DataFrame({"REAL": [0, 1], "int_param": [1, 2]})
+    )
+    Path("poly.ert").write_text(
+        dedent(
+            """\
+            QUEUE_OPTION LOCAL MAX_RUNNING 2
+            RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+            OBS_CONFIG observations
+            NUM_REALIZATIONS 2
+            GEN_KW COEFFS coeff_priors
+            GEN_DATA POLY_RES RESULT_FILE:poly.out
+            DESIGN_MATRIX poly_design.xlsx PRIORITY:sampled
+            ANALYSIS_SET_VAR STD_ENKF WEIGHTS 1
+            INSTALL_JOB poly_eval POLY_EVAL
+            FORWARD_MODEL poly_eval
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with open_gui_with_config("poly.ert") as gui:
+        qtbot.addWidget(gui)
+        run_experiment(MultipleDataAssimilation, gui)
+
+    with open_storage(ErtConfig.from_file("poly.ert").ens_path) as storage:
+        prior = next(
+            ensemble for ensemble in storage.ensembles if ensemble.iteration == 0
+        )
+        int_param = prior.load_parameters("int_param")["int_param"]
+    assert int_param.dtype.is_integer()
+    assert int_param.to_list() == [1, 2]
