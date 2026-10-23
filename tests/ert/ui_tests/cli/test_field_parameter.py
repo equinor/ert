@@ -13,7 +13,7 @@ from polars.testing import assert_frame_equal
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.config import ErtConfig, ObservationSettings
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ES_MDA_MODE
 from ert.storage import open_storage
 from ert.storage.blob_data import BlobType, MatrixStorageData
 
@@ -26,7 +26,7 @@ ENIF_HEAT_SNAPSHOT_ABS_TOL = 0.011
 def test_field_param_update_using_heat_equation_enif(
     symlinked_heat_equation_storage_enif,
 ):
-    config = ErtConfig.from_file("config.ert")
+    config = symlinked_heat_equation_storage_enif
     with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("enif")
         prior = experiment.get_ensemble_by_name("iter-0")
@@ -165,7 +165,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
 def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_es):
     config = symlinked_heat_equation_storage_es
     with open_storage(config.ens_path, mode="r") as storage:
-        experiment = storage.get_experiment_by_name("es")
+        experiment = storage.get_experiment_by_name("es-mda")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
 
@@ -293,13 +293,14 @@ if __name__ == "__main__":
         )
 
         run_cli(
-            ENSEMBLE_SMOOTHER_MODE,
+            ES_MDA_MODE,
+            "--single-update",
             "--disable-monitoring",
             "config.ert",
         )
         config = ErtConfig.from_file("config.ert")
         with open_storage(config.ens_path) as storage:
-            experiment = storage.get_experiment_by_name("es")
+            experiment = storage.get_experiment_by_name("es-mda")
             prior = experiment.get_ensemble_by_name("iter-0")
             posterior = experiment.get_ensemble_by_name("iter-1")
 
@@ -375,9 +376,9 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
     - Numerical warnings from division by zero
     - Cross-correlation matrix instabilities
     """
-    config = ErtConfig.from_file("config.ert")
+    config = symlinked_heat_equation_storage_es
     with open_storage(config.ens_path, mode="w") as storage:
-        experiment = storage.get_experiment_by_name("es")
+        experiment = storage.get_experiment_by_name("es-mda")
         prior = experiment.get_ensemble_by_name("iter-0")
         cond = prior.load_parameters("COND")
         init_temp_scale = prior.load_parameters("INIT_TEMP_SCALE")
@@ -486,7 +487,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
 def test_foward_init_false():
     config = ErtConfig.from_file("config_forward_init_false.ert")
     run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
+        ES_MDA_MODE,
+        "--single-update",
         "--disable-monitoring",
         "config_forward_init_false.ert",
         "--experiment-name",

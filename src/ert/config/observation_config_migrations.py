@@ -359,6 +359,18 @@ class LegacySummaryObservation(
             raise _missing_value_error(observation_dict.context, "KEY")
         if "ERROR" not in float_values:
             raise _missing_value_error(observation_dict.context, "ERROR")
+        if ("x" in localization_values) != ("y" in localization_values):
+            raise ObservationConfigError.with_context(
+                "LOCATION_X and LOCATION_Y must be given together",
+                observation_dict.context,
+            )
+        if "range" in localization_values and not all(
+            k in localization_values for k in ("x", "y")
+        ):
+            raise ObservationConfigError.with_context(
+                "LOCATION_RANGE requires LOCATION_X and LOCATION_Y",
+                observation_dict.context,
+            )
 
         return [
             cls(
@@ -604,28 +616,29 @@ def remove_refcase_and_time_map_dependence_from_obs_config(
         )
         date = obs_time_list[restart]
 
+        localization_declaration = ""
+        if smry_obs.location_x is not None and smry_obs.location_y is not None:
+            radius_declaration = (
+                f"      RADIUS = {smry_obs.location_range};\n"
+                if smry_obs.location_range is not None
+                else ""
+            )
+            localization_declaration = (
+                "   LOCALIZATION {\n"
+                f"      EAST   = {smry_obs.location_x};\n"
+                f"      NORTH  = {smry_obs.location_y};\n"
+                f"{radius_declaration}"
+                "   };\n"
+            )
+
         declaration = (
             f"SUMMARY_OBSERVATION {smry_obs.name} {{\n"
             f"   VALUE    = {smry_obs.value};\n"
             f"   ERROR    = {smry_obs.error};\n"
             f"   DATE     = {date.strftime('%Y-%m-%d')};\n"
             f"   KEY      = {smry_obs.key};\n"
-            + (
-                f"   LOCATION_X={smry_obs.location_x};\n"
-                if smry_obs.location_x is not None
-                else ""
-            )
-            + (
-                f"   LOCATION_Y={smry_obs.location_y};\n"
-                if smry_obs.location_y is not None
-                else ""
-            )
-            + (
-                f"   LOCATION_RANGE={smry_obs.location_range};\n"
-                if smry_obs.location_range is not None
-                else ""
-            )
-            + "};"
+            f"{localization_declaration}"
+            "};"
         )
         summary_obs_changes.append(
             _SummaryObservationChange(

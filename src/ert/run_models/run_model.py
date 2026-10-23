@@ -320,7 +320,7 @@ class RunModel(RunModelConfig, ABC):
     @classmethod
     def group(cls) -> str | None:
         """Default value to prevent errors in children classes
-        since only EnsembleExperiment and EnsembleSmoother should
+        since only EnsembleExperiment should
         override it
         """
         return None

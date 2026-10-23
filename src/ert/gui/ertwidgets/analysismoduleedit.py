@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable
 
 from PyQt6.QtCore import QMargins, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -27,11 +28,13 @@ class AnalysisModuleEdit(QWidget):
         es_settings: ESSettings,
         parameter_config: list[ParameterConfig],
         ensemble_size: int,
+        can_edit_update_strategies: Callable[[], bool] = lambda: True,
     ) -> None:
         QWidget.__init__(self)
 
         self._es_settings: ESSettings = es_settings
         self._parameter_config: list[ParameterConfig] = parameter_config
+        self._can_edit_update_strategies = can_edit_update_strategies
         self._ensemble_size: int = ensemble_size
 
         layout = QHBoxLayout()
@@ -80,10 +83,12 @@ class AnalysisModuleEdit(QWidget):
                 self._ensemble_size
             )
 
+        strategies_editable = self._can_edit_update_strategies()
         update_settings_dialog = AnalysisModuleVariablesPanel(
             update_strategies=update_strategies,
             correlation_threshold=correlation_threshold,
             enkf_truncation=self._es_settings.enkf_truncation,
+            strategies_editable=strategies_editable,
         )
 
         layout.addWidget(update_settings_dialog, stretch=1)
@@ -114,11 +119,12 @@ class AnalysisModuleEdit(QWidget):
                 update_settings_dialog.correlation_threshold
             )
             self._es_settings.enkf_truncation = update_settings_dialog.enkf_truncation
-            for name, strategy in update_settings_dialog.update_strategies.items():
-                for parameter_config in self._parameter_config:
-                    if (
-                        parameter_config.type.upper() == name
-                        and parameter_config.update_strategy is not None
-                    ):
-                        parameter_config.update_strategy = strategy
+            if strategies_editable:
+                for name, strategy in update_settings_dialog.update_strategies.items():
+                    for parameter_config in self._parameter_config:
+                        if (
+                            parameter_config.type.upper() == name
+                            and parameter_config.update_strategy is not None
+                        ):
+                            parameter_config.update_strategy = strategy
             self.settings_changed.emit()

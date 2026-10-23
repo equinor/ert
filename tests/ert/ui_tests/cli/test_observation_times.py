@@ -29,7 +29,6 @@ from ert.config import BreakthroughConfig, SummaryConfig
 from ert.config._observations import BreakthroughObservation
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
 )
 from ert.storage import open_storage
@@ -246,7 +245,9 @@ def different_end_dates_case() -> DifferentEndDatesCase:
 
 
 def _run_case_with_observations(
-    case: DifferentEndDatesCase, observations: str, mode: str = ENSEMBLE_SMOOTHER_MODE
+    case: DifferentEndDatesCase,
+    observations: str,
+    mode_args: tuple[str, ...] = (ES_MDA_MODE, "--single-update"),
 ) -> None:
     Path("config.ert").write_text(
         dedent(
@@ -277,7 +278,7 @@ def _run_case_with_observations(
 
     stderr = StringIO()
     with redirect_stderr(stderr):
-        run_cli(mode, "config.ert")
+        run_cli(*mode_args, "config.ert")
     assert "Experiment completed" in stderr.getvalue()
 
 
@@ -386,7 +387,7 @@ def test_that_breakthrough_observation_value_reflects_threshold_crossing_date(
         }};
         """
         ),
-        mode=ENSEMBLE_EXPERIMENT_MODE,
+        mode_args=(ENSEMBLE_EXPERIMENT_MODE,),
     )
 
     with open_storage("storage") as storage:

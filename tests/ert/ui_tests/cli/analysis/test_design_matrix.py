@@ -15,7 +15,6 @@ from ert.config import ConfigWarning, ErtConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
 )
 from ert.storage import open_storage
@@ -342,7 +341,6 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
     ("experiment_mode", "ensemble_name", "iterations"),
     [
         (ES_MDA_MODE, "iter-", 4),
-        (ENSEMBLE_SMOOTHER_MODE, "iter-", 2),
     ],
 )
 def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
@@ -584,7 +582,6 @@ def test_run_poly_example_with_design_matrix_selective_realizations(
     "experiment_mode",
     [
         (ES_MDA_MODE),
-        (ENSEMBLE_SMOOTHER_MODE),
     ],
 )
 def test_design_matrix_on_esmda_fail_without_updateable_parameters(

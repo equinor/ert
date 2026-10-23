@@ -24,15 +24,12 @@ from ert.config import (
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import RawSettings
 from ert.mode_definitions import (
-    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
     TEST_RUN_MODE,
 )
 from ert.run_models import (
     EnsembleExperiment,
-    EnsembleInformationFilter,
-    EnsembleSmoother,
     MultipleDataAssimilation,
     SingleTestRun,
     create_model,
@@ -42,7 +39,6 @@ from ert.run_models.model_factory import (
     _resolve_parameter_configs,
     _resolve_parameter_configs_from_args,
     _setup_ensemble_information_filter,
-    _setup_ensemble_smoother,
     _setup_multiple_data_assimilation,
 )
 from ert.run_models.run_model_configs import DictEncodedDataFrame
@@ -65,7 +61,6 @@ def _gen_kw_config_text(tmp_path, kw_name: str = "COEFFS") -> str:
 @pytest.mark.parametrize(
     "mode",
     [
-        pytest.param(ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
     ],
 )
@@ -209,34 +204,6 @@ def test_setup_ensemble_experiment(tmp_path):
     assert isinstance(model, EnsembleExperiment)
 
     assert model.active_realizations == [True] * 100
-
-
-@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
-def test_setup_ensemble_smoother(tmp_path):
-    model = model_factory._setup_ensemble_smoother(
-        ErtConfig.from_file_contents(
-            f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}\n{_gen_kw_config_text(tmp_path)}"
-        ),
-        Namespace(
-            realizations="0-4,7,8",
-            current_ensemble="default",
-            target_ensemble="test_case",
-            experiment_name="just_smoothing",
-        ),
-        ObservationSettings(),
-        queue.SimpleQueue(),
-    )
-    assert isinstance(model, EnsembleSmoother)
-    assert (
-        model.active_realizations
-        == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
-    )
-
-
-def test_that_only_ensemble_smoother_display_name_is_marked_deprecated():
-    assert EnsembleSmoother.name() == "Ensemble smoother"
-    assert "DEPRECATED" in EnsembleSmoother.display_name()
-    assert "DEPRECATED" not in EnsembleInformationFilter.display_name()
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
@@ -462,7 +429,6 @@ def test_that_realizations_outside_prior_active_range_raises_validation_error():
     "analysis_mode",
     [
         model_factory._setup_multiple_data_assimilation,
-        model_factory._setup_ensemble_smoother,
         model_factory._setup_ensemble_information_filter,
         model_factory._setup_manual_update,
         model_factory._setup_manual_update_enif,
@@ -627,7 +593,7 @@ def _config_with_design_matrix(tmp_path) -> ErtConfig:
 
 @pytest.mark.parametrize(
     "experiment_setup_method",
-    [_setup_ensemble_smoother, _setup_multiple_data_assimilation],
+    [_setup_multiple_data_assimilation],
 )
 def test_that_gui_update_strategy_is_kept_for_design_matrix_parameters(
     experiment_setup_method, tmp_path, monkeypatch
@@ -703,7 +669,6 @@ def test_that_mda_from_prior_uses_gui_parameters_without_design_matrix(
     "experiment_setup_method",
     [
         _setup_multiple_data_assimilation,
-        _setup_ensemble_smoother,
         _setup_ensemble_information_filter,
     ],
 )

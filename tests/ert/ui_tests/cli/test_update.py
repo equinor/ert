@@ -10,7 +10,7 @@ import pytest
 from hypothesis import given, note, settings
 
 from ert.cli.main import ErtCliError
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ES_MDA_MODE
 from ert.storage import open_storage
 
 from .run_cli import run_cli
@@ -206,7 +206,8 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
             warnings.simplefilter("always")
             try:
                 run_cli(
-                    ENSEMBLE_SMOOTHER_MODE,
+                    ES_MDA_MODE,
+                    "--single-update",
                     "--disable-monitoring",
                     "--experiment-name",
                     "experiment",

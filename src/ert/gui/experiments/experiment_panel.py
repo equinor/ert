@@ -38,7 +38,6 @@ from ert.services.ert_client import ErtClient
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_information_filter_panel import EnsembleInformationFilterPanel
-from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
 from .experiment_config_panel import ExperimentConfigPanel
 from .manual_update_panel import ManualUpdatePanel
@@ -220,17 +219,6 @@ class ExperimentPanel(QWidget):
                 config_num_realization,
             ),
             has_observation_declarations,
-        )
-        self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(
-                analysis_config,
-                config.ensemble_config.parameter_configuration,
-                runpath,
-                notifier,
-                active_realizations,
-                config_num_realization,
-            ),
-            has_observation_declarations and has_updatable_parameters,
         )
         self.addExperimentConfigPanel(
             EnsembleInformationFilterPanel(

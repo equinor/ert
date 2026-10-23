@@ -30,7 +30,6 @@ from ert.gui.ertwidgets.parameterviewer import ParametersViewer
 from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
 )
-from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
@@ -250,7 +249,7 @@ def test_that_strategy_summary_reflects_only_saved_update_settings(
 
 @pytest.mark.parametrize(
     "panel_type",
-    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+    [MultipleDataAssimilationPanel],
 )
 def test_that_update_strategy_summary_includes_design_matrix_parameters(
     qtbot: QtBot, tmp_path, panel_type
@@ -298,7 +297,7 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
 
 @pytest.mark.parametrize(
     "panel_type",
-    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+    [MultipleDataAssimilationPanel],
 )
 def test_that_activating_panel_refreshes_strategy_changed_by_another_panel(
     qtbot: QtBot, panel_type
@@ -782,7 +781,7 @@ def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
 
 @pytest.mark.parametrize(
     "panel_type",
-    [EnsembleSmootherPanel, MultipleDataAssimilationPanel],
+    [MultipleDataAssimilationPanel],
 )
 @pytest.mark.parametrize("design_parameter_name", ["design_parameter", "original"])
 @pytest.mark.timeout(10)
@@ -878,3 +877,52 @@ def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
         if button.text() == "Show parameters"
     )
     qtbot.mouseClick(show_parameters_button, Qt.MouseButton.LeftButton)
+
+
+def test_that_prior_selection_disables_parameter_update_strategy_changes(
+    qtbot: QtBot,
+):
+    prior_parameter = GenKwConfig(
+        name="prior",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        update_strategy=LocalizationType.GLOBAL,
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "prior",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY],
+        experiment_type=ExperimentType.ES_MDA,
+        parameter_configuration={"prior": prior_parameter},
+    )
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=[],
+        runpath="",
+        notifier=notifier,
+        active_realizations=[True],
+        config_num_realization=1,
+    )
+    qtbot.addWidget(panel)
+    panel.findChild(QCheckBox, "select_prior_checkbox_esmda").setChecked(True)
+    comboboxes_enabled: list[bool] = []
+
+    def select_adaptive_strategy_and_save() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        comboboxes = dialog.findChildren(QComboBox)
+        comboboxes_enabled.extend(combobox.isEnabled() for combobox in comboboxes)
+        comboboxes[0].setCurrentIndex(
+            comboboxes[0].findData(LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole)
+        )
+        dialog.accept()
+
+    QTimer.singleShot(0, select_adaptive_strategy_and_save)
+    qtbot.mouseClick(
+        panel.findChild(QPushButton, "analysis_variables_popup_button"),
+        Qt.MouseButton.LeftButton,
+    )
+
+    assert comboboxes_enabled == [False, False, False]
+    assert prior_parameter.update_strategy == LocalizationType.GLOBAL

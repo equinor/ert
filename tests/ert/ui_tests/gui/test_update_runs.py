@@ -12,8 +12,6 @@ from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.experiments.view.update import UpdateLogTable, UpdateWidget
 from ert.run_models import (
     EnsembleExperiment,
-    EnsembleInformationFilter,
-    EnsembleSmoother,
     MultipleDataAssimilation,
 )
 from ert.run_models.manual_update import ManualUpdate
@@ -37,9 +35,6 @@ def test_that_esmda_remains_selectable_when_parameters_are_not_updatable(qtbot):
     with open_gui_with_config("poly.ert") as gui:
         experiment_panel = get_child(gui, ExperimentPanel)
         simulation_mode_combo = get_child(experiment_panel, QComboBox)
-        for run_model in (EnsembleSmoother, EnsembleInformationFilter, ManualUpdate):
-            idx = simulation_mode_combo.findText(run_model.display_name())
-            assert not simulation_mode_combo.model().item(idx).isEnabled()
         for run_model in (MultipleDataAssimilation, EnsembleExperiment):
             idx = simulation_mode_combo.findText(run_model.display_name())
             assert simulation_mode_combo.model().item(idx).isEnabled()

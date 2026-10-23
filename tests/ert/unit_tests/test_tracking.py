@@ -29,7 +29,7 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
-    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
     TEST_RUN_MODE,
 )
 from ert.run_models.model_factory import create_model
@@ -116,7 +116,8 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
             "",
             "",
             [
-                ENSEMBLE_SMOOTHER_MODE,
+                ES_MDA_MODE,
+                "--single-update",
                 "--realizations",
                 "0,1",
                 "poly.ert",
@@ -134,7 +135,8 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
                 '    if os.getcwd().split("/")[-2].split("-")[1] == "0": sys.exit(1)'
             ),
             [
-                ENSEMBLE_SMOOTHER_MODE,
+                ES_MDA_MODE,
+                "--single-update",
                 "--realizations",
                 "0,1",
                 "poly.ert",
@@ -312,9 +314,9 @@ def test_setting_env_context_during_run(
     ("mode", "cmd_line_arguments"),
     [
         pytest.param(
-            ENSEMBLE_SMOOTHER_MODE,
-            ["--realizations", "0,1", "poly.ert"],
-            id=ENSEMBLE_SMOOTHER_MODE,
+            ES_MDA_MODE,
+            ["--single-update", "--realizations", "0,1", "poly.ert"],
+            id=ES_MDA_MODE,
         ),
         pytest.param(
             ENSEMBLE_EXPERIMENT_MODE,

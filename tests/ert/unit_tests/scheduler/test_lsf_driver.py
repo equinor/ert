@@ -671,6 +671,8 @@ async def test_that_runtime_error_is_thrown_when_bsub_does_not_eventually_succee
             ),
         ),
         (255, "Error in rusage section. Job not submitted."),
+        (255, "RUNLIMIT value is too big. Job not submitted."),
+        (255, "RUNLIMIT: Cannot exceed queue's hard limit(s). Job not submitted."),
     ],
 )
 async def test_that_bsub_is_not_retried_for_unrecoverable_errors(

@@ -1,11 +1,3 @@
-from collections.abc import Callable, Generator
-from contextlib import contextmanager
-from typing import Any
-
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QCursor
-from PyQt6.QtWidgets import QApplication
-
 from .analysismoduleedit import AnalysisModuleEdit
 from .checklist import CheckList
 from .closabledialog import ClosableDialog
@@ -29,27 +21,7 @@ from .searchbox import SearchBox
 from .stringbox import StringBox
 from .suggestor import Suggestor
 from .textbox import TextBox
-
-
-@contextmanager
-def wait_cursor() -> Generator[None, None, None]:
-    """A context manager to show the wait cursor while the body is executing."""
-    QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
-    try:
-        yield
-    finally:
-        QApplication.restoreOverrideCursor()
-
-
-def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
-    """A function decorator to show the wait cursor while the function is working."""
-
-    def wrapper(*arg: Any) -> Any:
-        with wait_cursor():
-            return func(*arg)
-
-    return wrapper
-
+from .wait_cursor import showWaitCursorWhileWaiting, wait_cursor
 
 __all__ = [
     "ActiveRealizationsModel",
