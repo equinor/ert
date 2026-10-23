@@ -545,6 +545,19 @@ def test_that_job_runner_stops_reporting_it_is_running_when_arguments_are_reject
     assert not runner.isRunning()
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "method_name", ["isCancelled", "hasFailed", "stdoutdata", "stderrdata", "error"]
+)
+def test_that_job_runner_rejects_reading_result_before_job_has_run(method_name):
+    WorkflowCommon.createExternalDumpJob()
+    job = workflow_job_from_file(name="DUMP", config_file="dump_job", origin="user")
+    runner = WorkflowJobRunner(job)
+
+    with pytest.raises(ValueError, match="The job must be run before"):
+        getattr(runner, method_name)()
+
+
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
