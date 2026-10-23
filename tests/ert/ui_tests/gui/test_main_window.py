@@ -1275,9 +1275,9 @@ def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_des
     assert "Observations: 5" in caplog.text
 
 
-@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.usefixtures("copy_poly_case", "qtbot")
 def test_that_esmda_from_gui_keeps_design_matrix_integers_with_sampled_priority(
-    qtbot, run_experiment
+    run_experiment,
 ):
     _create_design_matrix(
         "poly_design.xlsx", pl.DataFrame({"REAL": [0, 1], "int_param": [1, 2]})
@@ -1301,7 +1301,6 @@ def test_that_esmda_from_gui_keeps_design_matrix_integers_with_sampled_priority(
     )
 
     with open_gui_with_config("poly.ert") as gui:
-        qtbot.addWidget(gui)
         run_experiment(MultipleDataAssimilation, gui)
 
     with open_storage(ErtConfig.from_file("poly.ert").ens_path) as storage:

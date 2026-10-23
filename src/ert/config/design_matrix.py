@@ -69,7 +69,7 @@ class DesignMatrix:
                 for col, dtype in self.design_matrix_df.schema.items()
                 if col != "realization" and not dtype.is_numeric()
             )
-            self.updatable_parameters: dict[str, bool] = {
+            self.updatable_parameters = {
                 cfg.name: self.update for cfg in self.parameter_configurations
             }
         except (ValueError, AttributeError) as exc:
@@ -79,8 +79,6 @@ class DesignMatrix:
                 f" {exc}",
                 str(self.filename),
             ) from exc
-        for matrix in pending_matrices:
-            self.merge_with_other(matrix)
 
     @classmethod
     def from_config_list(
@@ -214,7 +212,6 @@ class DesignMatrix:
             if cfg.name not in common_keys
         )
         self.parameter_priority.update(dm_other.parameter_priority)
-        self.additional_matrices.append(dm_other)
         self.categorical_parameters |= dm_other.categorical_parameters - common_keys
         self.updatable_parameters.update(dm_other.updatable_parameters)
 
