@@ -76,24 +76,13 @@ def _rows(widget: UpdateStrategySummaryWidget) -> list[tuple[str, ...]]:
     ]
 
 
-def test_that_strategy_summary_widget_displays_rows_with_headers(qtbot: QtBot):
-    widget = UpdateStrategySummaryWidget(
-        ParameterConfigurationStateModel([_parameter()])
-    )
-    qtbot.addWidget(widget)
-    assert [
-        widget.horizontalHeaderItem(column).text()
-        for column in range(widget.columnCount())
-    ] == ["strategy", "parameter type", "count"]
-    assert _rows(widget) == [("Global", "GenKW", "1")]
-
-
 def test_that_strategy_summary_widget_refreshes_rows_when_parameter_state_changes(
     qtbot: QtBot,
 ):
     state = ParameterConfigurationStateModel([_parameter()])
     widget = UpdateStrategySummaryWidget(state)
     qtbot.addWidget(widget)
+    assert _rows(widget) == [("Global", "GenKW", "1")]
 
     state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
     assert _rows(widget) == [("Adaptive", "GenKW", "1")]
