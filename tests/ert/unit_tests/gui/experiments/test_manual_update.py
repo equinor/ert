@@ -18,6 +18,7 @@ from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
 )
 from ert.gui.experiments.manual_update_panel import ManualUpdatePanel
+from tests.ert.unit_tests.gui.conftest import click_dialog_button
 
 from .conftest import (
     REALIZATION_FINISHED_SUCCESSFULLY,
@@ -287,49 +288,100 @@ def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
     assert not panel._update_strategy_label.isHidden()
 
 
-def test_that_activating_manual_update_refreshes_externally_changed_strategy(
+def test_that_strategy_summary_shows_configured_parameters_when_no_ensemble_is_selected(
     qtbot: QtBot,
 ):
-    parameter = GenKwConfig(
-        name="parameter",
-        distribution=RawSettings(),
-        update_strategy=LocalizationType.ADAPTIVE,
-    )
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
     notifier._storage._setup_mocked_run(
         "ensemble",
         "experiment",
         [REALIZATION_FINISHED_SUCCESSFULLY],
-        parameter_configuration={"parameter": parameter},
+        parameter_configuration={
+            "stored": GenKwConfig(
+                name="stored",
+                distribution=RawSettings(),
+                update_strategy=LocalizationType.DISTANCE,
+            )
+        },
     )
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         runpath="",
         notifier=notifier,
-        parameter_configuration=[],
+        parameter_configuration=[
+            GenKwConfig(
+                name="configured",
+                distribution=RawSettings(),
+                update_strategy=LocalizationType.GLOBAL,
+            )
+        ],
     )
     qtbot.addWidget(panel)
     summary = panel.findChild(UpdateStrategySummaryWidget)
+    ensemble_selector = panel.findChild(EnsembleSelector)
     assert summary is not None
-    strategy_item = summary.item(0, 0)
-    assert strategy_item is not None
-    assert strategy_item.text() == "Adaptive"
+    assert ensemble_selector is not None
+    assert summary.item(0, 0).text() == "Distance"
 
-    parameter.update_strategy = LocalizationType.DISTANCE
-    assert strategy_item.text() == "Adaptive"
-    panel.experimentTypeChanged(panel)
+    ensemble_selector.setCurrentIndex(-1)
 
-    strategy_item = summary.item(0, 0)
-    assert strategy_item is not None
-    assert strategy_item.text() == "Distance"
+    assert summary.rowCount() == 1
+    assert summary.item(0, 0).text() == "Global"
 
 
-def test_that_update_strategies_of_selected_ensemble_cannot_be_edited_in_dialog(
+def test_that_run_uses_parameter_configuration_of_selected_ensemble(qtbot: QtBot):
+    configured_parameter = GenKwConfig(
+        name="configured",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.GLOBAL,
+    )
+    stored_parameters = {
+        f"ensemble_{index}": GenKwConfig(
+            name="stored",
+            distribution=RawSettings(),
+            update_strategy=strategy,
+        )
+        for index, strategy in enumerate(
+            [LocalizationType.ADAPTIVE, LocalizationType.DISTANCE]
+        )
+    }
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    for index, (ensemble_name, parameter) in enumerate(stored_parameters.items()):
+        notifier._storage._setup_mocked_run(
+            ensemble_name,
+            f"experiment_{index}",
+            [REALIZATION_FINISHED_SUCCESSFULLY],
+            parameter_configuration={"stored": parameter},
+        )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        runpath="",
+        notifier=notifier,
+        parameter_configuration=[configured_parameter],
+    )
+    qtbot.addWidget(panel)
+    ensemble_selector = panel.findChild(EnsembleSelector)
+    assert ensemble_selector is not None
+
+    for index, (ensemble_name, parameter) in enumerate(stored_parameters.items()):
+        ensemble_selector.setCurrentIndex(
+            ensemble_selector.findText(f"experiment_{index} : {ensemble_name}")
+        )
+        assert panel.get_experiment_arguments().parameter_configuration == [parameter]
+
+
+def test_that_prior_ensemble_strategies_are_locked_in_update_settings_dialog(
     qtbot: QtBot,
 ):
+    configured_parameter = GenKwConfig(
+        name="configured",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.GLOBAL,
+    )
     prior_parameter = GenKwConfig(
-        name="parameter",
+        name="stored",
         distribution=RawSettings(),
         update_strategy=LocalizationType.DISTANCE,
     )
@@ -338,32 +390,35 @@ def test_that_update_strategies_of_selected_ensemble_cannot_be_edited_in_dialog(
     notifier._storage._setup_mocked_run(
         "ensemble",
         "experiment",
-        [REALIZATION_FINISHED_SUCCESSFULLY],
-        parameter_configuration={"parameter": prior_parameter},
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 2,
+        parameter_configuration={"stored": prior_parameter},
     )
     panel = ManualUpdatePanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         runpath="",
         notifier=notifier,
-        parameter_configuration=[],
+        parameter_configuration=[configured_parameter],
     )
     qtbot.addWidget(panel)
+    assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
+    strategy_selectors_enabled: list[bool] = []
 
-    def save_with_locked_strategy_selectors() -> None:
+    def save_update_settings() -> None:
         dialog = QApplication.activeModalWidget()
         assert isinstance(dialog, QDialog)
-        assert not any(c.isEnabled() for c in dialog.findChildren(QComboBox))
-        buttons = dialog.findChild(QDialogButtonBox)
-        assert buttons is not None
-        save_button = buttons.button(QDialogButtonBox.StandardButton.Save)
-        assert save_button is not None
-        qtbot.mouseClick(save_button, Qt.MouseButton.LeftButton)
+        strategy_selectors_enabled.extend(
+            selector.isEnabled() for selector in dialog.findChildren(QComboBox)
+        )
+        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Save)
 
-    QTimer.singleShot(0, save_with_locked_strategy_selectors)
+    QTimer.singleShot(0, save_update_settings)
     edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
     assert edit_button is not None
     assert edit_button.isEnabled()
     qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
 
+    assert strategy_selectors_enabled
+    assert not any(strategy_selectors_enabled)
     assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
     assert prior_parameter.update_strategy == LocalizationType.DISTANCE
+    assert configured_parameter.update_strategy == LocalizationType.GLOBAL

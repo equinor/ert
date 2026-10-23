@@ -1,183 +1,205 @@
+from collections.abc import Callable
+
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QPushButton
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
+    QPushButton,
+)
 from pytestqt.qtbot import QtBot
 
-from ert.config import ESSettings, GenKwConfig, LocalizationType
+from ert.config import ESSettings, LocalizationType, ParameterType
 from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
-from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
+from tests.ert.unit_tests.gui.conftest import click_dialog_button
 
 
-def test_that_settings_are_updated_correctly(qtbot: QtBot):
-    es_settings = ESSettings()
-    es_settings.localization_correlation_threshold = 0.5
-    es_settings.enkf_truncation = 0.2
-    ensemble_size = 10
-    parameter = GenKwConfig(
-        name="name",
-        distribution={"name": "uniform", "min": 0, "max": 1},
-        update_strategy=LocalizationType.GLOBAL,
+def _click_edit_button_and_interact_with_dialog(
+    qtbot: QtBot,
+    widget: AnalysisModuleEdit,
+    interact_with_dialog: Callable[[QDialog], None],
+) -> None:
+    def interact() -> None:
+        dialog = QApplication.activeModalWidget()
+        assert isinstance(dialog, QDialog)
+        interact_with_dialog(dialog)
+
+    QTimer.singleShot(0, interact)
+    edit_button = widget.findChild(QPushButton, "analysis_variables_popup_button")
+    assert edit_button is not None
+    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
+
+
+def _update_strategy_selector(
+    dialog: QDialog, parameter_type: ParameterType
+) -> QComboBox:
+    combobox = dialog.findChild(QComboBox, parameter_type)
+    assert combobox is not None, f"No update strategy selector for {parameter_type}"
+    return combobox
+
+
+def _set_update_strategy(
+    dialog: QDialog, parameter_type: ParameterType, strategy: LocalizationType
+) -> None:
+    combobox = _update_strategy_selector(dialog, parameter_type)
+    index = combobox.findData(strategy, Qt.ItemDataRole.UserRole)
+    assert index != -1
+    combobox.setCurrentIndex(index)
+
+
+def _set_spinbox_value(dialog: QDialog, object_name: str, value: float) -> None:
+    spinbox = dialog.findChild(QDoubleSpinBox, object_name)
+    assert spinbox is not None
+    spinbox.setValue(value)
+
+
+def _set_threshold_and_truncation_in_dialog(
+    dialog: QDialog, correlation_threshold: float, enkf_truncation: float
+) -> None:
+    _set_spinbox_value(
+        dialog, "localization_correlation_threshold", correlation_threshold
     )
-    parameter_config = [parameter]
+    _set_spinbox_value(dialog, "enkf_truncation", enkf_truncation)
 
+
+def _create_analysis_module_edit(
+    qtbot: QtBot,
+    es_settings: ESSettings,
+    update_strategies: dict[ParameterType, LocalizationType],
+    *,
+    can_edit_update_strategies: bool = True,
+) -> tuple[AnalysisModuleEdit, list[dict[ParameterType, LocalizationType]]]:
     widget = AnalysisModuleEdit(
         es_settings=es_settings,
-        parameter_config=parameter_config,
-        ensemble_size=ensemble_size,
+        get_update_strategies=lambda: update_strategies,
+        ensemble_size=10,
+        can_edit_update_strategies=lambda: can_edit_update_strategies,
     )
     qtbot.addWidget(widget)
+    emitted: list[dict[ParameterType, LocalizationType]] = []
+    widget.update_strategies_changed.connect(emitted.append)
+    return widget, emitted
 
-    def inspect_and_accept_dialog() -> None:
 
-        dialog = QApplication.activeModalWidget()
-        assert dialog is not None
-        assert isinstance(dialog, QDialog)
+@pytest.fixture
+def es_settings() -> ESSettings:
+    settings = ESSettings()
+    settings.localization_correlation_threshold = 0.5
+    settings.enkf_truncation = 0.2
+    return settings
 
-        panel = dialog.findChild(AnalysisModuleVariablesPanel)
-        assert panel is not None
 
-        # Update settings in the panel
-        panel._correlation_threshold = 0.7
-        panel._enkf_truncation = 0.3
-        panel._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
+def test_that_saving_dialog_updates_es_settings_and_emits_edited_update_strategies(
+    qtbot: QtBot, es_settings: ESSettings
+):
+    widget, emitted = _create_analysis_module_edit(
+        qtbot, es_settings, {ParameterType.GEN_KW: LocalizationType.GLOBAL}
+    )
 
-        dialog.accept()
+    def edit_and_save(dialog: QDialog) -> None:
+        _set_threshold_and_truncation_in_dialog(dialog, 0.7, 0.3)
+        _set_update_strategy(dialog, ParameterType.GEN_KW, LocalizationType.ADAPTIVE)
+        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Save)
 
-    QTimer.singleShot(0, inspect_and_accept_dialog)
+    _click_edit_button_and_interact_with_dialog(qtbot, widget, edit_and_save)
 
-    button = widget.findChild(QPushButton)
-    assert button is not None
-    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
-
-    # After the dialog is accepted, check that the settings are updated
     assert pytest.approx(es_settings.localization_correlation_threshold) == 0.7
     assert pytest.approx(es_settings.enkf_truncation) == 0.3
-    assert widget._parameter_config[0].update_strategy == LocalizationType.ADAPTIVE
+    assert emitted == [{ParameterType.GEN_KW: LocalizationType.ADAPTIVE}]
 
 
-def test_that_only_parameters_with_update_strategy_are_updated(qtbot: QtBot):
-    parameter_without_strategy = GenKwConfig(
-        name="without_strategy",
-        distribution={"name": "uniform", "min": 0, "max": 1},
-        update_strategy=None,
-    )
-    parameter_with_strategy = GenKwConfig(
-        name="with_strategy",
-        distribution={"name": "uniform", "min": 0, "max": 1},
-        update_strategy=LocalizationType.GLOBAL,
-    )
-
-    widget = AnalysisModuleEdit(
-        es_settings=ESSettings(),
-        parameter_config=[parameter_without_strategy, parameter_with_strategy],
-        ensemble_size=10,
-    )
-    qtbot.addWidget(widget)
-
-    def select_adaptive_strategy_and_accept_dialog() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, QDialog)
-
-        panel = dialog.findChild(AnalysisModuleVariablesPanel)
-        assert panel is not None
-        panel._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
-        dialog.accept()
-
-    QTimer.singleShot(0, select_adaptive_strategy_and_accept_dialog)
-
-    button = widget.findChild(QPushButton)
-    assert button is not None
-    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
-
-    assert parameter_without_strategy.update_strategy is None
-    assert parameter_with_strategy.update_strategy == LocalizationType.ADAPTIVE
-
-
-def test_that_locked_update_strategies_disable_comboboxes_and_are_not_applied(
-    qtbot: QtBot,
+def test_that_cancelling_dialog_leaves_es_settings_unchanged_and_emits_nothing(
+    qtbot: QtBot, es_settings: ESSettings
 ):
-    es_settings = ESSettings()
-    parameter = GenKwConfig(
-        name="name",
-        distribution={"name": "uniform", "min": 0, "max": 1},
-        update_strategy=LocalizationType.GLOBAL,
+    widget, emitted = _create_analysis_module_edit(
+        qtbot, es_settings, {ParameterType.GEN_KW: LocalizationType.GLOBAL}
     )
-    settings_changed: list[bool] = []
-    widget = AnalysisModuleEdit(
-        es_settings=es_settings,
-        parameter_config=[parameter],
-        ensemble_size=10,
-        can_edit_update_strategies=lambda: False,
-    )
-    widget.settings_changed.connect(lambda: settings_changed.append(True))
-    qtbot.addWidget(widget)
-    comboboxes_enabled: list[bool] = []
 
-    def edit_and_accept_dialog() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, QDialog)
-        panel = dialog.findChild(AnalysisModuleVariablesPanel)
-        assert panel is not None
-        comboboxes = panel.findChildren(QComboBox)
-        comboboxes_enabled.extend(combobox.isEnabled() for combobox in comboboxes)
-        panel.truncation_spinner.setValue(0.3)
-        comboboxes[0].setCurrentIndex(
-            comboboxes[0].findData(LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole)
-        )
-        dialog.accept()
+    def edit_and_cancel(dialog: QDialog) -> None:
+        _set_threshold_and_truncation_in_dialog(dialog, 0.7, 0.3)
+        _set_update_strategy(dialog, ParameterType.GEN_KW, LocalizationType.ADAPTIVE)
+        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Cancel)
 
-    QTimer.singleShot(0, edit_and_accept_dialog)
-    button = widget.findChild(QPushButton)
-    assert button is not None
-    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+    _click_edit_button_and_interact_with_dialog(qtbot, widget, edit_and_cancel)
 
-    assert comboboxes_enabled == [False, False, False]
-    assert parameter.update_strategy == LocalizationType.GLOBAL
-    assert pytest.approx(es_settings.enkf_truncation) == 0.3
-    assert settings_changed == [True]
-
-
-def test_that_settings_are_not_updated_on_cancel(qtbot: QtBot):
-    es_settings = ESSettings()
-    es_settings.localization_correlation_threshold = 0.5
-    es_settings.enkf_truncation = 0.2
-    ensemble_size = 10
-    parameter = GenKwConfig(
-        name="name",
-        distribution={"name": "uniform", "min": 0, "max": 1},
-        update_strategy=LocalizationType.GLOBAL,
-    )
-    parameter_config = [parameter]
-
-    widget = AnalysisModuleEdit(
-        es_settings=es_settings,
-        parameter_config=parameter_config,
-        ensemble_size=ensemble_size,
-    )
-    qtbot.addWidget(widget)
-
-    def inspect_and_reject_dialog() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert dialog is not None
-        assert isinstance(dialog, QDialog)
-
-        panel = dialog.findChild(AnalysisModuleVariablesPanel)
-        assert panel is not None
-
-        # Update settings in the panel
-        panel._correlation_threshold = 0.7
-        panel._enkf_truncation = 0.3
-        panel._update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
-
-        dialog.reject()
-
-    QTimer.singleShot(0, inspect_and_reject_dialog)
-
-    button = widget.findChild(QPushButton)
-    assert button is not None
-    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
-
-    # After the dialog is rejected, check that the settings are not updated
     assert pytest.approx(es_settings.localization_correlation_threshold) == 0.5
     assert pytest.approx(es_settings.enkf_truncation) == 0.2
-    assert widget._parameter_config[0].update_strategy == LocalizationType.GLOBAL
+    assert emitted == []
+
+
+def test_that_update_strategy_selectors_are_disabled_when_strategies_are_not_editable(
+    qtbot: QtBot, es_settings: ESSettings
+):
+    widget, _ = _create_analysis_module_edit(
+        qtbot,
+        es_settings,
+        {ParameterType.GEN_KW: LocalizationType.GLOBAL},
+        can_edit_update_strategies=False,
+    )
+    selectors_enabled: list[bool] = []
+
+    def inspect_and_cancel(dialog: QDialog) -> None:
+        selectors_enabled.extend(c.isEnabled() for c in dialog.findChildren(QComboBox))
+        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Cancel)
+
+    _click_edit_button_and_interact_with_dialog(qtbot, widget, inspect_and_cancel)
+
+    assert selectors_enabled
+    assert not any(selectors_enabled)
+
+
+def test_that_saving_dialog_with_non_editable_strategies_saves_es_settings_only(
+    qtbot: QtBot, es_settings: ESSettings
+):
+    widget, emitted = _create_analysis_module_edit(
+        qtbot,
+        es_settings,
+        {ParameterType.GEN_KW: LocalizationType.GLOBAL},
+        can_edit_update_strategies=False,
+    )
+
+    def edit_and_save(dialog: QDialog) -> None:
+        _set_threshold_and_truncation_in_dialog(dialog, 0.7, 0.3)
+        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Save)
+
+    _click_edit_button_and_interact_with_dialog(qtbot, widget, edit_and_save)
+
+    assert pytest.approx(es_settings.localization_correlation_threshold) == 0.7
+    assert pytest.approx(es_settings.enkf_truncation) == 0.3
+    assert emitted == []
+
+
+def test_that_dialog_reads_update_strategies_when_opened_not_when_created(
+    qtbot: QtBot, es_settings: ESSettings
+):
+    current_strategies = {ParameterType.GEN_KW: LocalizationType.GLOBAL}
+    widget, _ = _create_analysis_module_edit(qtbot, es_settings, current_strategies)
+    current_strategies[ParameterType.GEN_KW] = LocalizationType.ADAPTIVE
+    shown_strategies: list[LocalizationType] = []
+
+    def inspect_and_cancel(dialog: QDialog) -> None:
+        selector = _update_strategy_selector(dialog, ParameterType.GEN_KW)
+        shown_strategies.append(selector.currentData(Qt.ItemDataRole.UserRole))
+        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Cancel)
+
+    _click_edit_button_and_interact_with_dialog(qtbot, widget, inspect_and_cancel)
+
+    assert shown_strategies == [LocalizationType.ADAPTIVE]
+
+
+def test_that_saving_dialog_does_not_mutate_provided_update_strategies(
+    qtbot: QtBot, es_settings: ESSettings
+):
+    provided = {ParameterType.GEN_KW: LocalizationType.GLOBAL}
+    widget, _ = _create_analysis_module_edit(qtbot, es_settings, provided)
+
+    def edit_and_save(dialog: QDialog) -> None:
+        _set_update_strategy(dialog, ParameterType.GEN_KW, LocalizationType.ADAPTIVE)
+        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Save)
+
+    _click_edit_button_and_interact_with_dialog(qtbot, widget, edit_and_save)
+
+    assert provided == {ParameterType.GEN_KW: LocalizationType.GLOBAL}

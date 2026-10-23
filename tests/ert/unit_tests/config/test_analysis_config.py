@@ -12,6 +12,8 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     ESSettings,
+    LocalizationType,
+    ParameterType,
 )
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
@@ -442,7 +444,7 @@ def test_config_wrong_module(config, expectation):
         )
 
 
-def test_that_parameter_type_update_strategies_is_set_correctly():
+def test_that_parameters_analysis_set_var_sets_strategy_per_parameter_type():
 
     strategies = AnalysisConfig.from_dict(
         {
@@ -453,9 +455,46 @@ def test_that_parameter_type_update_strategies_is_set_correctly():
         }
     ).parameter_type_update_strategies
 
-    assert len(strategies) == 2
-    assert strategies["FIELD"] == "distance"
-    assert strategies["GEN_KW"] == "adaptive"
+    assert strategies == {
+        ParameterType.FIELD: LocalizationType.DISTANCE,
+        ParameterType.GEN_KW: LocalizationType.ADAPTIVE,
+    }
+    assert all(isinstance(key, ParameterType) for key in strategies)
+
+
+@pytest.mark.parametrize(
+    ("parameter_type", "localization_type"),
+    [
+        (parameter_type, localization_type)
+        for parameter_type in ParameterType
+        for localization_type in LocalizationType
+        if localization_type not in parameter_type.supported_localization_types
+    ],
+)
+def test_that_unsupported_strategy_for_parameter_type_raises_validation_error(
+    parameter_type: ParameterType, localization_type: LocalizationType
+):
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            f"{localization_type.name} strategy is not supported for "
+            f"{parameter_type} parameters"
+        ),
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: [
+                    ["PARAMETERS", parameter_type.name, localization_type.name],
+                ],
+            }
+        )
+
+
+def test_that_gen_kw_does_not_support_distance_localization():
+    assert (
+        LocalizationType.DISTANCE
+        not in ParameterType.GEN_KW.supported_localization_types
+    )
 
 
 def test_that_parameter_strategy_with_unknown_strategy_raises_validation_error():
