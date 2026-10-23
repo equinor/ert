@@ -14,11 +14,10 @@ from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.gui.tools.workflows import RunWorkflowWidget
-from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment
 from ert.storage import Storage
 
-from .conftest import get_child, wait_for_child
+from .conftest import get_child, open_gui_with_config, wait_for_child
 
 
 @contextmanager
@@ -33,19 +32,8 @@ def _open_main_window(
     """)
     )
     (path / "test_wf").write_text("EXPORT_RUNPATH\n")
-    config = ErtConfig.with_plugins(get_site_plugins()).from_file(path / "config.ert")
-
-    args_mock = Mock()
-    args_mock.config = "config.ert"
-    # handler defined here to ensure lifetime until end of function, if inlined
-    # it will cause the following error:
-    # RuntimeError: wrapped C/C++ object of type GUILogHandler
-    handler = GUILogHandler()
-    gui = _setup_main_window(config, args_mock, handler, config.ens_path)
-    try:
+    with open_gui_with_config(path / "config.ert") as gui:
         yield gui
-    finally:
-        gui.close()
 
 
 @pytest.fixture
