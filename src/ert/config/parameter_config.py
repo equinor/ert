@@ -25,6 +25,12 @@ class LocalizationType(StrEnum):
     DISTANCE = "distance"
 
 
+class ParameterType(StrEnum):
+    GEN_KW = "GEN_KW"
+    FIELD = "FIELD"
+    SURFACE = "SURFACE"
+
+
 class InvalidParameterFile(Exception):
     """
     Raised when a parameter file does not fulfill its

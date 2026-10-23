@@ -1,7 +1,7 @@
 import pytest
 from pytestqt.qtbot import QtBot
 
-from ert.config import GenKwConfig, LocalizationType, SurfaceConfig
+from ert.config import GenKwConfig, LocalizationType, ParameterType, SurfaceConfig
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
@@ -42,7 +42,7 @@ def test_that_applying_update_strategies_emits_changed(qtbot: QtBot):
     state = ParameterConfigurationStateModel([_parameter("configured")])
 
     with qtbot.waitSignal(state.changed, timeout=0):
-        state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+        state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
 
 
 def test_that_parameters_with_type_missing_from_mapping_keep_their_update_strategy():
@@ -50,7 +50,7 @@ def test_that_parameters_with_type_missing_from_mapping_keep_their_update_strate
         [_parameter("gen_kw"), _surface("surface", LocalizationType.DISTANCE)]
     )
 
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
 
     assert [p.update_strategy for p in state.parameters] == [
         LocalizationType.ADAPTIVE,
@@ -62,7 +62,7 @@ def test_that_applying_update_strategies_does_not_mutate_source_parameters():
     source = [_parameter("source")]
     state = ParameterConfigurationStateModel(source)
 
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
 
     assert source[0].update_strategy == LocalizationType.GLOBAL
     assert state.parameters[0].update_strategy == LocalizationType.ADAPTIVE
@@ -85,7 +85,7 @@ def test_that_applying_update_strategies_with_prior_selected_raises_and_emits_no
         qtbot.assertNotEmitted(state.changed),
         pytest.raises(RuntimeError, match="cannot be changed"),
     ):
-        state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+        state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
 
     assert state.parameters == prior
 
@@ -104,7 +104,7 @@ def test_that_parameters_without_update_strategy_keep_none_strategy():
         [_parameter("without", update_strategy=None), _parameter("with")]
     )
 
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
 
     assert [p.update_strategy for p in state.parameters] == [
         None,
@@ -117,15 +117,27 @@ def test_that_update_strategies_only_include_parameters_with_a_strategy():
         [_parameter("without", update_strategy=None), _parameter("with")]
     )
 
-    assert state.update_strategies == {"GEN_KW": LocalizationType.GLOBAL}
+    assert state.update_strategies == {ParameterType.GEN_KW: LocalizationType.GLOBAL}
+
+
+def test_that_update_strategies_are_keyed_by_parameter_type():
+    state = ParameterConfigurationStateModel(
+        [_parameter("gen_kw"), _surface("surface")]
+    )
+
+    assert all(isinstance(key, ParameterType) for key in state.update_strategies)
+    assert set(state.update_strategies) == {
+        ParameterType.GEN_KW,
+        ParameterType.SURFACE,
+    }
 
 
 def test_that_update_strategies_reflect_applied_draft():
     state = ParameterConfigurationStateModel([_parameter("configured")])
 
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
 
-    assert state.update_strategies == {"GEN_KW": LocalizationType.ADAPTIVE}
+    assert state.update_strategies == {ParameterType.GEN_KW: LocalizationType.ADAPTIVE}
 
 
 def test_that_toggling_prior_switches_active_parameters_and_emits_changed(
@@ -148,9 +160,9 @@ def test_that_toggling_prior_switches_active_parameters_and_emits_changed(
 
 def test_that_deselecting_prior_restores_configured_draft():
     state = ParameterConfigurationStateModel([_parameter("configured")])
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
 
     state.select_prior([_parameter("prior")])
     state.deselect_prior()
 
-    assert state.update_strategies == {"GEN_KW": LocalizationType.ADAPTIVE}
+    assert state.update_strategies == {ParameterType.GEN_KW: LocalizationType.ADAPTIVE}

@@ -46,7 +46,7 @@ from .forward_model_step import (
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
 from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
-from .parameter_config import LocalizationType
+from .parameter_config import LocalizationType, ParameterType
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
@@ -1250,16 +1250,12 @@ class ErtConfig(BaseModel, extra="forbid"):
         # update strategies
         for param_config in ensemble_config.parameter_configs.values():
             if param_config.update_strategy is not None:
-                if (
-                    str(param_config.type).upper()
-                    in analysis_config.parameter_type_update_strategies
-                ):
-                    strategy = analysis_config.parameter_type_update_strategies[
-                        str(param_config.type).upper()
-                    ]
-                    param_config.update_strategy = strategy
-                else:
-                    param_config.update_strategy = LocalizationType.GLOBAL
+                param_config.update_strategy = (
+                    analysis_config.parameter_type_update_strategies.get(
+                        ParameterType(str(param_config.type).upper()),
+                        LocalizationType.GLOBAL,
+                    )
+                )
 
         zonemap = config_dict.get(ConfigKeys.ZONEMAP)
         if zonemap:

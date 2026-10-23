@@ -4,7 +4,11 @@ import pytest
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
-from ert.config.parameter_config import LocalizationType, ParameterConfig
+from ert.config.parameter_config import (
+    LocalizationType,
+    ParameterConfig,
+    ParameterType,
+)
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
@@ -95,7 +99,7 @@ def test_that_strategy_summary_widget_refreshes_rows_when_parameter_state_change
     widget = UpdateStrategySummaryWidget(state)
     qtbot.addWidget(widget)
 
-    state.apply_update_strategies({"GEN_KW": LocalizationType.ADAPTIVE})
+    state.apply_update_strategies({ParameterType.GEN_KW: LocalizationType.ADAPTIVE})
     assert _rows(widget) == [("Adaptive", "GenKW", "1")]
 
     state.select_prior([_parameter(update_strategy=None)])
