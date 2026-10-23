@@ -1141,6 +1141,7 @@ def test_that_esmda_from_gui_keeps_design_matrix_integers_with_sampled_priority(
     Path("poly.ert").write_text(
         dedent(
             """\
+            QUEUE_SYSTEM LOCAL
             QUEUE_OPTION LOCAL MAX_RUNNING 2
             RUNPATH poly_out/realization-<IENS>/iter-<ITER>
             OBS_CONFIG observations
