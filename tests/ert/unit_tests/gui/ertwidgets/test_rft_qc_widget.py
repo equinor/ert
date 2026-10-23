@@ -120,6 +120,7 @@ def display_all_points(widget: RftQcWidget) -> None:
     widget._plot._fit_view_to_displayed_points()
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_rft_qc_widget_loads_and_displays_observations_responses_and_file_rft(
     qtbot, mocked_files, mock_resfo_file
@@ -1648,6 +1649,7 @@ def test_that_point_details_omit_missing_fields_and_coordinates(qtbot):
     assert "Expected Zone:" not in text
 
 
+@pytest.mark.slow
 @pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_rft_qc_plot_in_grid_coordinates_is_unchanged(
@@ -1660,6 +1662,7 @@ def test_that_rft_qc_plot_in_grid_coordinates_is_unchanged(
         return widget._plot.canvas.figure
 
 
+@pytest.mark.slow
 @pytest.mark.mpl_image_compare(tolerance=10.0, style="default")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_rft_qc_plot_in_utm_coordinates_is_unchanged(
