@@ -30,6 +30,16 @@ class ParameterType(StrEnum):
     FIELD = "FIELD"
     SURFACE = "SURFACE"
 
+    @property
+    def supported_localization_types(self) -> tuple[LocalizationType, ...]:
+        if self is ParameterType.GEN_KW:
+            return tuple(
+                localization_type
+                for localization_type in LocalizationType
+                if localization_type is not LocalizationType.DISTANCE
+            )
+        return tuple(LocalizationType)
+
 
 class InvalidParameterFile(Exception):
     """
