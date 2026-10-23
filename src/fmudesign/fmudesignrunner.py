@@ -36,11 +36,19 @@ from pydantic import ValidationError
 from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import trace, tracer
+from fmudesign.exceptions import FmudesignError
 
 from ._excel_to_design import excel_to_config
 from .create_design import DesignMatrix, _normalize_xlsx_filename
 
 logger = logging.getLogger(__name__)
+
+
+def _format_validation_error(err: ValidationError) -> str:
+    return "\n".join(
+        f"Validation error for '{e['loc'][0]}': {e['msg']}, was '{e['input']}'"
+        for e in err.errors(include_url=False)
+    )
 
 
 @dataclasses.dataclass
@@ -256,11 +264,11 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
 
     # Check existence of config file
     if not Path(args.config).is_file():
-        raise OSError(f"Input file {args.config} does not exist")
+        raise FmudesignError(f"Input file {args.config} does not exist")
 
     destination = _normalize_xlsx_filename(args.destination)
     if Path(args.config).resolve() == Path(destination).resolve():
-        raise OSError(
+        raise FmudesignError(
             f'Identical name "{args.config}" have been provided for the input'
             "file and the output file"
         )
@@ -369,16 +377,15 @@ def main() -> None:
     )
     try:
         args.func(args)
-    except ValidationError as e:
+    except (FmudesignError, ValidationError) as e:
+        message = (
+            _format_validation_error(e) if isinstance(e, ValidationError) else str(e)
+        )
         span.set_status(Status(StatusCode.ERROR))
         span.record_exception(e)
-        for err in e.errors(include_url=False):
-            msg = (
-                f"Validation error for '{err['loc'][0]}': "
-                f"{err['msg']}, was '{err['input']}'"
-            )
-            logger.error(msg)
-            print(msg)
+        logger.error(message)
+        print(f"\nfmudesign failed with:\n{message}")
+
         print(err_guide_msg)
         sys.exit(1)
     except Exception as err:

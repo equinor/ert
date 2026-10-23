@@ -2,6 +2,8 @@ from typing import Any, Literal
 
 import pandas as pd
 
+from fmudesign.exceptions import FmudesignError
+
 from .utils import _has_value
 
 
@@ -23,22 +25,22 @@ def parse_distribution_parameters(
                 if source == "background"
                 else f"Dist sensitivity {row.sensname}"
             )
-            raise ValueError(
+            raise FmudesignError(
                 f"{description} specified where one line has empty parameter name "
             )
         if not _has_value(row.dist_param1):
-            raise ValueError(
+            raise FmudesignError(
                 f"Parameter {row.param_name} has been input "
                 f"{location} but with empty first distribution parameter "
             )
         if not _has_value(row.dist_param2) and _has_value(row.dist_param3):
-            raise ValueError(
+            raise FmudesignError(
                 f"Parameter {row.param_name} has been input{gap_location} with "
                 'value for "dist_param3" while "dist_param2" is empty. '
                 "This is not allowed"
             )
         if not _has_value(row.dist_param3) and _has_value(row.dist_param4):
-            raise ValueError(
+            raise FmudesignError(
                 f"Parameter {row.param_name} has been input{gap_location} with "
                 'value for "dist_param4" while "dist_param3" is empty. '
                 "This is not allowed"
