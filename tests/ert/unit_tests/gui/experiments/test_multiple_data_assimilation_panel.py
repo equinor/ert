@@ -242,16 +242,16 @@ def test_that_prior_selection_updates_summary_and_run_configuration(qtbot: QtBot
         pytest.param(
             QDialogButtonBox.StandardButton.Save,
             LocalizationType.ADAPTIVE,
-            id="save",
+            id="save_applies_adaptive",
         ),
         pytest.param(
             QDialogButtonBox.StandardButton.Cancel,
             LocalizationType.GLOBAL,
-            id="cancel",
+            id="cancel_keeps_global",
         ),
     ],
 )
-def test_that_only_saved_update_settings_change_strategy_used_in_run_and_summary(
+def test_that_update_strategy_dialog_applies_selection_only_on_save(
     qtbot: QtBot,
     dialog_button: QDialogButtonBox.StandardButton,
     expected_strategy: LocalizationType,
