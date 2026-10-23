@@ -1,4 +1,3 @@
-import copy
 import math
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -9,9 +8,6 @@ import numpy.typing as npt
 import pandas as pd
 import scipy as sp
 import seaborn as sns
-from probabilit.correlation import (
-    nearest_correlation_matrix,
-)
 from probabilit.modeling import Distribution
 
 from .design_distributions import to_probabilit
@@ -20,6 +16,14 @@ if TYPE_CHECKING:
     from matplotlib.patches import Rectangle
 
 COLORS = list(plt.rcParams["axes.prop_cycle"].by_key()["color"])
+
+
+def _plot_title(var_name: str, var_description: list[Any]) -> str:
+    dist_name, dist_parameters = var_description[:2]
+    arguments = ", ".join(
+        f"dist_param{i}={value}" for i, value in enumerate(dist_parameters, start=1)
+    )
+    return f"{var_name}\n{dist_name}~({arguments})"
 
 
 class QualityReporter:
@@ -58,7 +62,7 @@ class QualityReporter:
                       e.g., {"COST": ["normal", [0.0, 1.0]]}
         """
         self.df: pd.DataFrame = df.loc[:, list(variables.keys())]
-        self.variables: dict[str, list[Any]] = copy.deepcopy(variables)
+        self.variables = variables
         assert not self.df.empty
 
     def print_numeric(self) -> None:
@@ -166,16 +170,7 @@ class QualityReporter:
         sns.histplot(data=series, stat="density", bins=bins, ax=ax)
         sns.kdeplot(series, ax=ax, color="blue", label="KDE")
 
-        # Create string to describe distribution
-        var_string = (
-            f"{var_description[0]}~("
-            + ", ".join(
-                f"dist_param{i + 1}={v}" for i, v in enumerate(var_description[1])
-            )
-            + ")"
-        )
-
-        ax.set_title(f"{var_name}\n{var_string}", fontsize=7)
+        ax.set_title(_plot_title(var_name, var_description), fontsize=7)
 
         # Add plot of expected PDF
         dist_name, dist_parameters = var_description[:2]
@@ -245,16 +240,7 @@ class QualityReporter:
         proportions = value_counts / value_counts.sum()
         sns.barplot(x=value_counts.index, y=proportions.to_numpy(), ax=ax)
 
-        # Create string to describe distribution
-        var_string = (
-            f"{var_description[0]}~("
-            + ", ".join(
-                f"dist_param{i + 1}={v}" for i, v in enumerate(var_description[1])
-            )
-            + ")"
-        )
-
-        ax.set_title(f"{var_name}\n{var_string}", fontsize=7)
+        ax.set_title(_plot_title(var_name, var_description), fontsize=7)
         ax.set_xlabel(var_name)
         ax.set_ylabel("Proportion")
 
@@ -281,14 +267,9 @@ class QualityReporter:
 
         Args:
             corr_name: Name of the correlation group
-            df_corr: DataFrame containing the desired correlation matrix
+            df_corr: DataFrame containing the desired correlation matrix, which
+                must be a valid correlation matrix
         """
-        corr_arr = df_corr.to_numpy()
-        assert np.allclose(corr_arr, corr_arr.T)
-        assert df_corr.shape[0] == df_corr.shape[1]
-
-        # Get lower triangular indices
-        idx_low_triang = np.tril_indices_from(corr_arr, k=-1)
         corr = self.df[df_corr.columns].select_dtypes(include="number").corr()
         # Do not print if only a single variable remains
         if corr.shape[1] == 1:
@@ -306,22 +287,6 @@ class QualityReporter:
         else:
             print("Skipping printing desired correlation. Matrix too large.")
 
-        nearest_corr = nearest_correlation_matrix(
-            corr_arr, weights=None, eps=1e-6, verbose=False
-        )
-        diffs = nearest_corr[idx_low_triang] - corr_arr[idx_low_triang]
-        corr_rmse = np.sqrt(np.mean(diffs**2))
-
-        if corr_rmse > 1e-2:
-            print(f"The desired correlation matrix is not valid => {corr_rmse=:.2f}")
-            print("Closest valid correlation matrix (used as target):")
-            df_nearest_corr = pd.DataFrame(
-                nearest_corr, columns=df_corr.columns, index=df_corr.index
-            )
-            print_corrmat(df_nearest_corr)
-        else:
-            print("The desired correlation matrix is valid")
-
         # No correlation in samples (e.g. discrete variables)
         if corr.empty:
             return
@@ -332,8 +297,9 @@ class QualityReporter:
         else:
             print("Skipping printing observed (Pearson) correlation. Matrix too large.")
 
-        # Difference between achieved corr in samples and target
-        diffs = corr.to_numpy()[idx_low_triang] - nearest_corr[idx_low_triang]
+        target = df_corr.loc[corr.index, corr.columns].to_numpy()
+        idx_low_triang = np.tril_indices_from(target, k=-1)
+        diffs = corr.to_numpy()[idx_low_triang] - target[idx_low_triang]
         corr_rmse = np.sqrt(np.mean(diffs**2))
         print(
             "Distance metrics between target correlation matrix "
@@ -485,7 +451,6 @@ class QualityReporter:
         ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha="center", va="top")
         ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
         ax.tick_params(axis="both", which="major", labelsize=6)
-        plt.subplots_adjust(bottom=0.15)
 
         fig.tight_layout()
 

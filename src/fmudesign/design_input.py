@@ -10,6 +10,7 @@ from fmudesign.utils import (
     _has_value,
     _raise_if_duplicates,
     parse_decimals,
+    read_excel_sheet,
     resolve_path,
 )
 
@@ -21,12 +22,7 @@ class DesignInput:
 
     @classmethod
     def from_xlsx(cls, input_filename: str, design_input_sheet: str) -> Self:
-        designinput = (
-            pd.read_excel(input_filename, design_input_sheet, engine="openpyxl")
-            .dropna(axis=0, how="all")
-            .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
-        )
-
+        designinput = read_excel_sheet(input_filename, design_input_sheet)
         return cls.from_dataframe(input_filename, designinput)
 
     @classmethod

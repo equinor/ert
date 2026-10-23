@@ -17,6 +17,17 @@ def excel_sheet_names(filename: Path | str) -> list[str]:
         return workbook.sheet_names
 
 
+def read_excel_sheet(filename: str, sheet_name: str | int = 0) -> pd.DataFrame:
+    """Read an Excel sheet, dropping empty rows and unnamed columns, which
+    formatting of empty cells can introduce.
+    """
+    return (
+        pd.read_excel(filename, sheet_name, engine="openpyxl")
+        .dropna(axis=0, how="all")
+        .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
+    )
+
+
 def parameters_from_extern(filename: str) -> pd.DataFrame:
     """Read parameter values or background values
     from specified file. Format either Excel ('xlsx')
@@ -29,11 +40,7 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
         raise ValueError(f"External file '{filename}' does not exist.")
 
     if str(filename).endswith(".xlsx"):
-        return (
-            pd.read_excel(filename, engine="openpyxl")
-            .dropna(axis=0, how="all")
-            .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
-        )
+        return read_excel_sheet(filename)
 
     if str(filename).endswith(".csv"):
         return pd.read_csv(filename)
@@ -192,11 +199,13 @@ def map_dependencies(
             ) from err
 
         for to_param, to_values_ in from_dict["to_params"].items():
+            # Read per target, as a target may overwrite the source column
+            source_values = df[from_param].map(to_numeric_safe)
             to_values = [to_numeric_safe(value) for value in to_values_]
 
             # No values to map to => to_param = copy(from_param)
             if not to_values:
-                df = df.assign(**{to_param: df[from_param].map(to_numeric_safe)})
+                df[to_param] = source_values
                 if verbose:
                     print(f"Copied {from_param!r} to {to_param!r}")
                 continue
@@ -211,10 +220,10 @@ def map_dependencies(
 
             # At this point we have a mapping 'from_param' - > 'to_param'
             # defined elementwise by values of 'from_values' -> 'to_values'
-            mapping = dict(zip(from_values, to_values, strict=False))
+            mapping = dict(zip(from_values, to_values, strict=True))
 
             # Check that every value will be mapped
-            not_mapped = set(df[from_param].map(to_numeric_safe)) - set(from_values)
+            not_mapped = set(source_values) - set(from_values)
             if not_mapped:
                 msg = (
                     f"Mapping dependencies {from_param!r} to {to_param!r} using "
@@ -223,14 +232,7 @@ def map_dependencies(
                 )
                 raise ValueError(msg)
 
-            df = df.assign(
-                **{
-                    # Bind loop variables as default args to the lambda
-                    to_param: lambda df, from_param=from_param, mapping=mapping: (
-                        df[from_param].map(to_numeric_safe).map(mapping)
-                    )
-                }
-            )
+            df[to_param] = source_values.map(mapping)
             if verbose:
                 print(
                     f"Mapping dependency. From {from_param!r} "
@@ -274,14 +276,11 @@ def _has_value(value: Any) -> bool:
         return True
 
 
-def resolve_path(target: str | None, *, base_file: str | None = None) -> str | None:
+def resolve_path(target: str, *, base_file: str | None = None) -> str:
     """Try to resolve the path of potential file 'target' either as relative to
     'base_file' or cwd.
     If not, return target.
     """
-    if target is None:
-        return None
-
     if (
         base_file is not None
         and (relative_path := Path(base_file).parent / target).is_file()

@@ -119,8 +119,8 @@ def to_probabilit(
     distname: str,
     dist_parameters: Sequence[str],
 ) -> probabilit.modeling.Node[npt.NDArray[Any]]:
-    """
-    Prepare scipy distributions with parameters
+    """Create a probabilit node for a distribution with parameters
+
     Args:
         distname (str): distribution name 'normal', 'lognormal', 'triang',
         'uniform', 'logunif', 'discrete', 'pert', 'beta'

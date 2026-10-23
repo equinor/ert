@@ -16,7 +16,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -354,32 +354,9 @@ class DesignMatrix:
 
             # MonteCarloSensitivity is special - it can produce debugging outputs
             if isinstance(sensitivity, MonteCarloSensitivity) and self.verbosity > 0:
-                quality_reporter = QualityReporter(
-                    df=sensitivity.sensvalues, variables=sens["parameters"]
+                self._report_samples(
+                    sensitivity, sens["parameters"], plot=self.verbosity > 1
                 )
-
-                # Print to terminal
-                quality_reporter.print_numeric()
-                quality_reporter.print_discrete()
-                for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-                    quality_reporter.print_correlation(corr_name, df_corr)
-
-                if self.verbosity > 1 and self.output_dir is not None:
-                    output_dir = self.output_dir / key
-                    quality_reporter.plot_columns(output_dir=output_dir)
-
-                    # Correlations
-                    for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-                        # Always plot heatmaps
-                        quality_reporter.plot_correlation_heatmap(
-                            corr_name, df_corr, output_dir=output_dir
-                        )
-
-                        # Only plot pairgrid for small correlations
-                        if len(df_corr) <= 6:
-                            quality_reporter.plot_correlation(
-                                corr_name, df_corr, output_dir=output_dir
-                            )
 
         # Once all sensitivities have been added, complete the work
         self._fill_with_background_values()
@@ -548,7 +525,7 @@ class DesignMatrix:
         """Adding a sensitivity to the design
 
         Args:
-            sensitivity of class Scenario, MonteCarlo or Extern
+            sensitivity (Sensitivity): sensitivity with values to append
         """
         self.designvalues = pd.concat([self.designvalues, sensitivity.sensvalues])
 
@@ -623,40 +600,52 @@ class DesignMatrix:
             seed_strategy=self.seed_strategy,
             base_seed=self.base_seed,
         )
-        mc_backgroundvalues = mc_background.sensvalues.copy()
-        quality_reporter = QualityReporter(
-            df=mc_backgroundvalues, variables=back_dict["parameters"]
-        )
-
-        # Print info to terminal
         if self.verbosity > 0:
-            quality_reporter.print_numeric()
-            quality_reporter.print_discrete()
-            for corr_name, df_corr in mc_background.correlation_dfs_.items():
-                quality_reporter.print_correlation(corr_name, df_corr)
+            self._report_samples(mc_background, back_dict["parameters"], plot=True)
 
-        # Write plots to disk
-        if self.verbosity > 0 and self.output_dir is not None:
-            output_dir = self.output_dir / mc_background.sensname
-            quality_reporter.plot_columns(output_dir=output_dir)
+        background_values = mc_background.sensvalues
+        _round_to_decimals(background_values, back_dict.get("decimals", {}))
+        self.backgroundvalues = background_values
 
-            # Correlations
-            for corr_name, df_corr in mc_background.correlation_dfs_.items():
+    def _report_samples(
+        self,
+        sensitivity: MonteCarloSensitivity,
+        variables: dict[str, Any],
+        *,
+        plot: bool,
+    ) -> None:
+        """Print statistics of the sampled values and, if `plot`, save plots
+        of them to `output_dir`.
+        """
+        quality_reporter = QualityReporter(
+            df=sensitivity.sensvalues, variables=variables
+        )
+        quality_reporter.print_numeric()
+        quality_reporter.print_discrete()
+        for corr_name, df_corr in sensitivity.correlation_dfs_.items():
+            quality_reporter.print_correlation(corr_name, df_corr)
+
+        if not plot or self.output_dir is None:
+            return
+
+        output_dir = self.output_dir / sensitivity.sensname
+        quality_reporter.plot_columns(output_dir=output_dir)
+        for corr_name, df_corr in sensitivity.correlation_dfs_.items():
+            quality_reporter.plot_correlation_heatmap(
+                corr_name, df_corr, output_dir=output_dir
+            )
+            # Only plot pairgrid for small correlation groups
+            if len(df_corr) <= 6:
                 quality_reporter.plot_correlation(
                     corr_name, df_corr, output_dir=output_dir
                 )
-
-        # Rounding of background values as specified
-        _round_to_decimals(mc_backgroundvalues, back_dict.get("decimals", {}))
-        self.backgroundvalues = mc_backgroundvalues.copy()
 
     def _set_decimals(self, config: DesignConfig) -> None:
         """Round to specified number of decimals.
 
         Args:
-            inputdict (dictionary): input dictionary that might have a sub-dict
-                                    with key "decimals". This sub-dict has
-                                    (key, value)s are (param, decimals)
+            config (DesignConfig): configuration whose 'decimals' maps
+                parameter names to their number of decimals
         """
         # No decimal information => Nothing to do.
         if not config.decimals:
@@ -689,13 +678,11 @@ class Sensitivity:
         self.sensname: str = sensname
         self.verbosity: int = verbosity
 
-    def map_dependencies(self, dependencies: dict[str, Any]) -> Sensitivity:
-        """Map the dependencies, mutating the dataframe `self.sensvalues`."""
-        verbose = self.verbosity > 0  # Because the function takes a boolean
-        self.sensvalues: pd.DataFrame = map_dependencies(
-            self.sensvalues, dependencies=dependencies, verbose=verbose
+    def map_dependencies(self, dependencies: dict[str, Any]) -> None:
+        """Map the dependencies, replacing the dataframe `self.sensvalues`."""
+        self.sensvalues = map_dependencies(
+            self.sensvalues, dependencies=dependencies, verbose=self.verbosity > 0
         )
-        return self
 
 
 class SeedSensitivity(Sensitivity):
@@ -1041,26 +1028,19 @@ class MonteCarloSensitivity(Sensitivity):
         if not corrdict:
             return []
 
-        df_params = (
-            pd.DataFrame.from_dict(
-                parameters,
-                orient="index",
-                columns=["dist_name", "dist_params", "corr_sheet"],
-            )
-            .reset_index()
-            .rename(columns={"index": "param_name"})
-            .assign(corr_sheet=lambda df: df.corr_sheet.fillna("nocorr"))
+        group_sizes = Counter(
+            corr_sheet
+            for _, _, corr_sheet in parameters.values()
+            if pd.notna(corr_sheet)
         )
-
-        groups = dict(iter(df_params.groupby("corr_sheet")))
-        groups.pop("nocorr", None)
 
         loaded: list[CorrelationGroup] = []
         group_of_param: dict[str, str] = {}
-        for corr_group_name, corr_group in groups.items():
-            corr_group_name = cast("str", corr_group_name)
-
-            if len(corr_group) == 1:
+        # The order affects seeded sampling: sheet indices first, then names
+        for corr_group_name in sorted(
+            group_sizes, key=lambda name: (isinstance(name, str), name)
+        ):
+            if group_sizes[corr_group_name] == 1:
                 print(
                     "Warning: Only one parameter uses correlation sheet "
                     f"{corr_group_name!r}, so it is sampled without correlation."
