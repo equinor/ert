@@ -275,6 +275,7 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         snapshot.assert_match(data.write_csv(float_precision=12), "gen_kw_unsorted")
 
 
+@pytest.mark.slow
 def test_that_load_scalars_returns_correct_data(snake_oil_default_storage, snapshot):
     data: pl.DataFrame = snake_oil_default_storage.load_scalars()
     snapshot.assert_match(data.write_csv(float_precision=6), "data.csv")

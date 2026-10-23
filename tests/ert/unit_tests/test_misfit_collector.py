@@ -2,6 +2,7 @@ import polars as pl
 import pytest
 
 
+@pytest.mark.slow
 def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, snapshot):
     data = snake_oil_default_storage.load_all_misfit_data()
     rounded = data.with_columns(pl.col(pl.Float64).round(8))

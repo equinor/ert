@@ -9,6 +9,7 @@ from ert.plugins.hook_implementations.workflows.export_misfit_data import (
 )
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"),
     reason="https://github.com/equinor/ert/issues/7533",

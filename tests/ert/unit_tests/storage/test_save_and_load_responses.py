@@ -82,6 +82,7 @@ def test_that_load_responses_throws_exception(tmp_path):
             ensemble.load_responses("I_DONT_EXIST", (1,))
 
 
+@pytest.mark.slow
 def test_keyword_type_checks(snake_oil_default_storage):
     assert (
         "BPR:1,3,8"
@@ -91,6 +92,7 @@ def test_keyword_type_checks(snake_oil_default_storage):
     )
 
 
+@pytest.mark.slow
 def test_keyword_type_checks_missing_key(snake_oil_default_storage):
     assert (
         "nokey"

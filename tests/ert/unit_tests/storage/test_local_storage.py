@@ -286,6 +286,7 @@ def test_ensemble_no_parameters(storage):
     )
 
 
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_get_unique_experiment_name(snake_oil_storage):
     with patch(
@@ -577,6 +578,7 @@ def test_set_failure_will_not_recreate_ensemble_directory(storage):
     assert not dummy_ensemble._path.exists()
 
 
+@pytest.mark.slow
 def test_that_permission_error_is_logged_in_load_ensembles(snake_oil_storage, caplog):
     ensemble = snake_oil_storage.get_experiment_by_name(
         "ensemble-experiment"
@@ -595,6 +597,7 @@ def test_that_permission_error_is_logged_in_load_ensembles(snake_oil_storage, ca
         Path(ensemble._path).chmod(0o755)  # restore permissions
 
 
+@pytest.mark.slow
 def test_that_permission_error_is_logged_in_load_index(snake_oil_storage, caplog):
     index_path = snake_oil_storage.path / "index.json"
     index_path.chmod(0o000)  # no permissions
