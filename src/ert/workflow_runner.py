@@ -210,6 +210,11 @@ class WorkflowRunner:
             )
             jobrunner.run(args, fixtures=self.fixtures)
 
+            if jobrunner.isCancelled():
+                # A job cancelled from within, e.g. by Ctrl+C, stops the rest too
+                with self._current_job_lock:
+                    self.__cancelled = True
+
             if self.__cancelled:
                 status = WorkflowJobStatus.CANCELLED
             elif jobrunner.hasFailed():
@@ -238,7 +243,7 @@ class WorkflowRunner:
             else:
                 logger.info(self._log_entry(result), extra=extra)
 
-            if jobrunner.hasFailed() and jobrunner.stop_on_fail:
+            if status is WorkflowJobStatus.FAILED and jobrunner.stop_on_fail:
                 self.__running = False
                 raise RuntimeError(
                     f"Workflow job {result.name} failed with error: {result.stderr}"
