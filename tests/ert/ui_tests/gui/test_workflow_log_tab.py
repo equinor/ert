@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -27,7 +27,7 @@ def _write_common_config_files() -> None:
 
 
 @contextmanager
-def _run_experiment(qtbot: QtBot, config_file: str) -> Iterator[RunDialog]:
+def _run_experiment(qtbot: QtBot, config_file: str) -> Generator[RunDialog]:
     with open_gui_with_config(config_file) as gui:
         experiment_panel = gui.findChild(ExperimentPanel)
         assert experiment_panel

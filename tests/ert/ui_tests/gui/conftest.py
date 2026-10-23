@@ -100,7 +100,7 @@ def _new_poly_example(
 
 
 @contextmanager
-def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
+def _open_main_window(path) -> Generator[tuple[ErtMainWindow, Storage, ErtConfig]]:
     path = Path(path).resolve()
     args_mock = Mock()
     args_mock.config = str(path)
