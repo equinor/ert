@@ -308,7 +308,9 @@ def test_that_observation_report_blob_writes_parquet_metadata_and_can_be_loaded(
         assert loaded_blobs[0].file_type == "application/parquet"
 
 
-def test_that_stored_update_of_failed_update_without_data_is_marked_failed(tmp_path):
+def test_that_failed_update_without_data_stores_failed_report_with_empty_table(
+    tmp_path,
+):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(
@@ -323,11 +325,11 @@ def test_that_stored_update_of_failed_update_without_data_is_marked_failed(tmp_p
             )
         )
 
-        update = ensemble.load_stored_update()
+        (report,) = ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)
 
-        assert update.status == UpdateStatus.FAILED
-        assert update.error_message == "No active observations left"
-        assert [table.header for table in update.tables] == [[]]
+        assert report.blob_info.status == UpdateStatus.FAILED
+        assert report.blob_info.error_message == "No active observations left"
+        assert pl.read_parquet(io.BytesIO(ensemble.load_blob(report.uri))).is_empty()
 
 
 def test_that_update_data_table_round_trips_header_summary_and_numpy_rows(tmp_path):
@@ -353,19 +355,14 @@ def test_that_update_data_table_round_trips_header_summary_and_numpy_rows(tmp_pa
                 ),
             )
         )
-        ensemble.save_blob(
-            AnalysisCompleteEvent(
-                data=DataSection(header=["observation_key"], data=[("OBS_1",)]),
-                update_algorithm="ensemble_smoother",
-            )
-        )
+        (data_table,) = ensemble.load_blob_metadata(BlobType.UPDATE_DATA_TABLE)
+        table = pl.read_parquet(io.BytesIO(ensemble.load_blob(data_table.uri)))
 
-        update = ensemble.load_stored_update()
-
-        assert update.tables[0].header == ["Observation", "Cluster", "Scaling factor"]
-        assert update.tables[0].rows == [("OBS_1", 1, 1.5)]
-        assert [type(cell) for cell in update.tables[0].rows[0]] == [str, int, float]
-        assert update.tables[0].summary == {"Clusters": "2"}
+        assert data_table.blob_info.table_name == "Auto scale: OBS_GROUP"
+        assert data_table.blob_info.summary == {"Clusters": "2"}
+        assert table.columns == ["Observation", "Cluster", "Scaling factor"]
+        assert table.rows() == [("OBS_1", 1, 1.5)]
+        assert [type(cell) for cell in table.rows()[0]] == [str, int, float]
 
 
 def test_that_observation_report_saved_without_status_fields_loads_as_completed(
@@ -395,23 +392,14 @@ def test_that_observation_report_saved_without_status_fields_loads_as_completed(
             del metadata["blob_info"][field]
         sidecar.write_text(json.dumps(metadata), encoding="utf-8")
 
-        update = ensemble.load_stored_update()
+        (report,) = ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)
 
-        assert update.update_algorithm == "ensemble_smoother"
-        assert update.status == UpdateStatus.COMPLETED
-        assert update.error_message is None
-        assert update.tables[-1].summary == {}
-
-
-def test_that_ensemble_without_recorded_update_has_no_stored_update(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment()
-        ensemble = storage.create_ensemble(
-            experiment, ensemble_size=1, iteration=0, name="prior"
+        assert report.blob_info == ObservationReportData(
+            update_algorithm="ensemble_smoother",
+            summary={},
+            status=UpdateStatus.COMPLETED,
+            error_message=None,
         )
-
-        assert not ensemble.has_stored_update
-        assert ensemble.load_stored_update() is None
 
 
 @pytest.mark.parametrize(

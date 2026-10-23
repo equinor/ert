@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Annotated, Literal
 
@@ -93,24 +91,3 @@ class BlobStorageData(BaseModel):
         | EverestBatchData,
         Discriminator("blob_type"),
     ]
-
-
-@dataclass
-class UpdateTable:
-    """One tab of an update, as shown while the experiment was running."""
-
-    name: str
-    header: list[str]
-    rows: Sequence[Sequence[object]]
-    summary: dict[str, str] = field(default_factory=dict)
-    is_report: bool = False
-
-
-@dataclass
-class StoredUpdate:
-    """The update that produced an ensemble, as recorded in storage."""
-
-    update_algorithm: str
-    status: UpdateStatus
-    tables: list[UpdateTable]
-    error_message: str | None = None
