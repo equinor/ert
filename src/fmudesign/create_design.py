@@ -950,13 +950,23 @@ class MonteCarloSensitivity(Sensitivity):
 
         distr_by_name: dict[str, ProbabilitNode] = {}
         for param_name, (dist_name, dist_params, _) in parameters.items():
-            distr_by_name[param_name] = to_probabilit(
-                distname=dist_name, dist_parameters=dist_params
-            )
+            try:
+                distr_by_name[param_name] = to_probabilit(
+                    distname=dist_name, dist_parameters=dist_params
+                )
+            except ValueError as err:
+                raise FmudesignError(
+                    f"Parameter {param_name!r} in sensitivity {self.sensname!r}: {err}"
+                ) from err
 
         # Read and validate the correlation groups once, up front. Both seed
         # strategies consume the same groups; only the seeding differs.
-        corr_groups = self._load_correlation_groups(parameters, corrdict)
+        corr_groups = self._load_correlation_groups(
+            parameters,
+            corrdict,
+            size=size,
+            correlation_iterations=correlation_iterations,
+        )
 
         if seed_strategy == SeedStrategy.JOINT:
             self._sample_joint(
@@ -986,13 +996,6 @@ class MonteCarloSensitivity(Sensitivity):
 
         for distr_name, distr_obj in distr_by_name.items():
             samples = distr_obj.samples_
-            is_numeric = issubclass(samples.dtype.type, np.number)
-            if is_numeric and not np.all(np.isfinite(samples)):
-                raise FmudesignError(
-                    f"Sampling produced non-finite values in {distr_name}={distr_obj}\n"
-                    "Please review the parameters in the distribution."
-                )
-
             if isinstance(distr_obj, DiscreteViaUniform):
                 samples = distr_obj.to_values(samples)
 
@@ -1013,6 +1016,9 @@ class MonteCarloSensitivity(Sensitivity):
         self,
         parameters: dict[str, Any],
         corrdict: dict[str, Any] | None,
+        *,
+        size: int,
+        correlation_iterations: int,
     ) -> list[CorrelationGroup]:
         """Return ``(group_name, df_correlations, member_params)`` per correlation
         group, reading and validating each matrix.
@@ -1025,6 +1031,11 @@ class MonteCarloSensitivity(Sensitivity):
             ValueError: if a parameter is a member of more than one correlation
                 group, since only one of the requested correlations could then
                 be honoured.
+            ValueError: if ``size`` is less than 2, since a correlation group
+                needs at least 2 realizations to induce any correlation.
+            ValueError: if ``correlation_iterations`` is 0 and a group has at
+                least as many parameters as ``size``, since Iman-Conover needs
+                more realizations than correlated parameters.
         """
         if not corrdict:
             return []
@@ -1067,6 +1078,26 @@ class MonteCarloSensitivity(Sensitivity):
                         "one correlation matrix."
                     )
                 group_of_param[name] = corr_group_name
+
+            if size < 2:
+                raise FmudesignError(
+                    f"Correlation group {corr_group_name!r} in sensitivity "
+                    f"{self.sensname!r} needs at least 2 realizations (numreal, "
+                    "or repeats if numreal is not set) to correlate its "
+                    f"parameters, got {size}."
+                )
+
+            num_params = len(multivariate_parameters)
+            if correlation_iterations == 0 and size <= num_params:
+                raise FmudesignError(
+                    f"Correlation group {corr_group_name!r} in sensitivity "
+                    f"{self.sensname!r} has {num_params} parameters, but only "
+                    f"{size} realizations. Inducing correlations needs more "
+                    "realizations than correlated parameters. Use at least "
+                    f"{num_params + 1} realizations (numreal, or repeats if "
+                    "numreal is not set), or fewer parameters in the correlation "
+                    "group."
+                )
 
             if self.verbosity == 0:
                 print(
@@ -1150,9 +1181,14 @@ class MonteCarloSensitivity(Sensitivity):
 
         # Sample the dummy node. This samples every parent distribution and
         # stores the draws on each distribution object as 'samples_'.
-        expression.sample(
-            size=size, random_state=rng, method="lhs", correlator=correlator
-        )
+        try:
+            expression.sample(
+                size=size, random_state=rng, method="lhs", correlator=correlator
+            )
+        except ValueError as err:
+            raise FmudesignError(
+                f"Sampling sensitivity {self.sensname!r} failed: {err}"
+            ) from err
 
     def _sample_independent(
         self,
@@ -1177,9 +1213,18 @@ class MonteCarloSensitivity(Sensitivity):
             expression.correlate(*distrs, corr_mat=df_correlations.to_numpy())
             unit_rng = _derive_rng(base_seed, self.sensname, "corr", group_name)
             correlator = self._make_correlator(correlation_iterations, unit_rng)
-            expression.sample(
-                size=size, random_state=unit_rng, method="lhs", correlator=correlator
-            )
+            try:
+                expression.sample(
+                    size=size,
+                    random_state=unit_rng,
+                    method="lhs",
+                    correlator=correlator,
+                )
+            except ValueError as err:
+                raise FmudesignError(
+                    f"Sampling correlation group {group_name!r} in sensitivity "
+                    f"{self.sensname!r} failed: {err}"
+                ) from err
             grouped_params.update(member_params)
 
         # Each remaining (uncorrelated) parameter is its own independent unit.
@@ -1187,7 +1232,13 @@ class MonteCarloSensitivity(Sensitivity):
             if param_name in grouped_params:
                 continue
             unit_rng = _derive_rng(base_seed, self.sensname, "param", param_name)
-            distr.sample(size=size, random_state=unit_rng, method="lhs")
+            try:
+                distr.sample(size=size, random_state=unit_rng, method="lhs")
+            except ValueError as err:
+                raise FmudesignError(
+                    f"Sampling parameter {param_name!r} in sensitivity "
+                    f"{self.sensname!r} failed: {err}"
+                ) from err
 
 
 class ExternSensitivity(Sensitivity):

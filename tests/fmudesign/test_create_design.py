@@ -1155,10 +1155,119 @@ def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strateg
         )
 
 
+def test_that_only_iman_conover_requires_more_realizations_than_correlated_parameters(
+    tmp_path,
+):
+    path = tmp_path / "corr.xlsx"
+    names = ["X", "Y", "Z"]
+    _write_correlation_sheets(path, {"corr1": (names, np.eye(len(names)))})
+    params = {name: ("normal", ["0", "1"], "corr1") for name in names}
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"Correlation group 'corr1' in sensitivity 'foo' has 3 parameters, "
+            r"but only 3 realizations.*at least 4 realizations"
+        ),
+    ):
+        _sample_mc(params, corrdict=corrdict, size=3, correlation_iterations=0)
+
+    _sample_mc(params, corrdict=corrdict, size=3, correlation_iterations=1)
+
+
+@pytest.mark.parametrize("correlation_iterations", [0, 1])
+def test_that_correlation_groups_require_at_least_two_realizations(
+    tmp_path, correlation_iterations
+):
+    path = tmp_path / "corr.xlsx"
+    names = ["X", "Y"]
+    _write_correlation_sheets(path, {"corr1": (names, np.eye(len(names)))})
+    params = {name: ("normal", ["0", "1"], "corr1") for name in names}
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"Correlation group 'corr1' in sensitivity 'foo' needs at least 2 "
+            r"realizations .* got 1\."
+        ),
+    ):
+        _sample_mc(
+            params,
+            corrdict=corrdict,
+            size=1,
+            correlation_iterations=correlation_iterations,
+        )
+
+
 def test_that_unknown_seed_strategy_raises_value_error():
     """The low-level API must reject typos instead of silently using 'joint'."""
     with pytest.raises(FmudesignError, match="seed_strategy"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, strategy="bogus")
+
+
+@pytest.mark.parametrize(
+    ("dist_name", "dist_params", "requirement"),
+    [
+        ("normal", ["1", "0"], "stddev > 0"),
+        ("normal", ["0", "1", "2", "1"], "stddev > 0 and min < max"),
+        ("normal_p10_p90", ["2", "2"], "p10 < p90"),
+        ("lognormal", ["0", "1", "-1", "2"], "sigma > 0 and 0 <= min < max"),
+        ("unif", ["0", "0"], "min < max"),
+        ("uniform_p10_p90", ["2", "2"], "p10 < p90"),
+        ("triang", ["1", "1", "1"], "min <= mode <= max and min < max"),
+        ("triangular_p10_p90", ["1", "1", "1"], "p10 < p90"),
+        ("beta", ["0", "1"], "a > 0 and b > 0"),
+        ("pert_p10_p90", ["1", "1", "1"], "p10 < p90"),
+        ("logunif", ["0", "1"], "0 < min < max"),
+        ("discrete", ["a", "b", "c"], "1 or 2 parameters"),
+        (
+            "discrete",
+            ["a,b", "-1,-2"],
+            "probabilities >= 0 with a finite positive sum",
+        ),
+    ],
+)
+def test_that_invalid_distribution_parameters_raise_fmudesign_error_naming_parameter(
+    dist_name, dist_params, requirement
+):
+    with pytest.raises(
+        FmudesignError,
+        match=rf"Parameter 'A' in sensitivity 'foo': .* must have {requirement}, ",
+    ):
+        _sample_mc({"A": (dist_name, dist_params, None)}, size=5)
+
+
+def test_that_invalid_distribution_parameter_errors_label_each_value():
+    with pytest.raises(
+        FmudesignError,
+        match=r", got: mean=0\.0, stddev=1\.0, min=2\.0, max=1\.0$",
+    ):
+        _sample_mc({"A": ("normal", ["0", "1", "2", "1"], None)}, size=5)
+
+
+@pytest.mark.parametrize(
+    ("strategy", "corr_sheet", "sampled_unit"),
+    [
+        ("joint", None, "sensitivity 'foo'"),
+        ("independent", None, "parameter 'A' in sensitivity 'foo'"),
+        ("independent", "corr1", "correlation group 'corr1' in sensitivity 'foo'"),
+    ],
+)
+def test_that_sampling_errors_raise_fmudesign_error_naming_the_sampled_unit(
+    tmp_path, strategy, corr_sheet, sampled_unit
+):
+    path = tmp_path / "corr.xlsx"
+    _write_correlation_sheets(path, {"corr1": (["A", "B"], np.eye(2))})
+    params = {
+        "A": ("lognormal", ["1000", "1"], corr_sheet),
+        "B": ("normal", ["0", "1"], corr_sheet),
+    }
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    with pytest.raises(
+        FmudesignError,
+        match=rf"Sampling {sampled_unit} failed: Sampling gave non-finite values",
+    ):
+        _sample_mc(params, corrdict=corrdict, strategy=strategy, size=5)
 
 
 def test_that_independent_sampling_without_base_seed_raises_value_error():
