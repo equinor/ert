@@ -88,16 +88,13 @@ class MisfitsPlot:
                 pl.col("key_index").cast(pl.Float32).cast(pl.UInt16)
             )
         elif response_type == "seismic":
-            key_index_with_correct_dtype = (
-                pl.col("key_index").cast(pl.Float32).cast(pl.Int32)
-            )
+            key_index_with_correct_dtype = pl.col("key_index")
         else:
             raise ValueError(f"Unsupported response_type: {response_type}")
 
         obs_df = (
             pl.from_pandas(observation_data.T)
             .rename({"OBS": "observation", "STD": "error"})
-            .with_columns(pl.col("key_index").cast(pl.String))
             .with_columns(key_index_with_correct_dtype)
         )
 

@@ -390,7 +390,7 @@ def test_that_legend_items_for_summary_data_is_toggleable(
         assert (item in legend_texts) == enabled
 
 
-def test_that_misfit_conversion_for_seismic_casts_key_index_to_int32():
+def test_that_misfit_conversion_for_seismic_casts_key_index_to_string():
     ensemble_df = pd.DataFrame(
         {"0": [110.0], "5": [180.0]}, index=pd.Index([0], name="Realization")
     )
@@ -411,7 +411,7 @@ def test_that_misfit_conversion_for_seismic_casts_key_index_to_int32():
     )
 
     result_df = result["ens1", "id1"]
-    assert result_df["key_index"].dtype == pl.Int32
+    assert result_df["key_index"].dtype == pl.String
 
 
 def test_that_seismic_misfit_plot_draws_one_box_per_ensemble_with_ensemble_name(
