@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import io
 import json
 import logging
@@ -10,7 +11,7 @@ import time
 import traceback
 from base64 import b64encode
 from collections import OrderedDict
-from collections.abc import Callable, Generator
+from collections.abc import AsyncGenerator, Callable, Generator
 from contextlib import suppress
 from copy import deepcopy
 from functools import wraps
@@ -23,17 +24,22 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from pydantic import ValidationError
-from websockets.asyncio.client import backoff, process_exception
 from pydantic_core import to_jsonable_python
+from websockets.asyncio.client import (
+    ClientConnection,
+    backoff,
+    connect,
+    process_exception,
+)
 from websockets.exceptions import (
     ConnectionClosedError,
     ConnectionClosedOK,
     WebSocketException,
 )
-from websockets.sync.client import ClientConnection, connect
 
 from _ert.threading import ErtThread
 from ert.config.ert_config import ErtConfig
+from ert.ensemble_evaluator import ConnectionLostEvent, EndEvent
 from ert.server.common import ErtRunnerEndpoints, EverEndpoints
 
 from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
@@ -477,6 +483,35 @@ class ErtClient:
         Each iterator owns a separate connection and blocks only its consuming
         thread. Close the iterator when stopping consumption early.
         """
+        with asyncio.Runner() as runner:
+            events = self.iter_events_async(
+                experiment_id,
+                open_timeout,
+                websocket_recv_timeout,
+            )
+
+            async def next_event() -> StatusEvents:
+                return await anext(events)
+
+            async def close_events() -> None:
+                await events.aclose()
+
+            try:
+                while True:
+                    try:
+                        event = runner.run(next_event())
+                    except StopAsyncIteration:
+                        break
+                    yield event
+            finally:
+                runner.run(close_events())
+
+    async def iter_events_async(
+        self,
+        experiment_id: str,
+        open_timeout: float = 30.0,
+        websocket_recv_timeout: float = 1.0,
+    ) -> AsyncGenerator[StatusEvents, None]:
         from ert.run_models.event import (  # ruff: ignore[import-outside-top-level]
             status_event_from_json,
         )
@@ -489,7 +524,7 @@ class ErtClient:
         credentials = b64encode(f"{username}:{password}".encode()).decode()
 
         logger.info("Connecting to WebSocket event stream at %s", url)
-        websocket = self._connect_with_retry(url, open_timeout, credentials)
+        websocket = await self._connect_with_retry(url, open_timeout, credentials)
         if websocket is None:
             return
 
@@ -498,7 +533,8 @@ class ErtClient:
             logger.info("Connected to WebSocket event stream at %s", url)
             while True:
                 try:
-                    message = websocket.recv(timeout=websocket_recv_timeout)
+                    async with asyncio.timeout(websocket_recv_timeout):
+                        message = await websocket.recv()
                 except TimeoutError:
                     message = None
                 if message:
@@ -515,6 +551,7 @@ class ErtClient:
                                 type(event).__name__,
                             )
                         yield event
+
         except ConnectionClosedOK:
             logger.debug("Connection closed by server")
         except ConnectionClosedError as error:
@@ -527,11 +564,8 @@ class ErtClient:
         except Exception:
             logger.error(traceback.format_exc())
         finally:
-            # Interrupting the generator unwinds it mid closing-handshake, which
-            # makes close() raise InvalidState. That must not replace the
-            # KeyboardInterrupt or GeneratorExit that triggered the teardown.
             with suppress(WebSocketException, OSError):
-                websocket.close()
+                await websocket.close()
             logger.info(
                 "WebSocket event stream for experiment %s ended after %s events",
                 experiment_id,
@@ -543,20 +577,33 @@ class ErtClient:
         experiment_id: str,
         open_timeout: float = 30,
         websocket_recv_timeout: float = 1.0,
+        *,
+        event_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> tuple[queue.SimpleQueue[StatusEvents], ErtThread]:
         """Return a queue of experiment events and the thread that fills it.
 
         The caller owns the thread and must start it.
         """
-        event_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+        if event_queue is None:
+            event_queue = queue.SimpleQueue()
 
         def passthrough_ws_events() -> None:
+            end_event_received = False
             for event in self.iter_events(
                 experiment_id,
                 open_timeout=open_timeout,
                 websocket_recv_timeout=websocket_recv_timeout,
             ):
+                end_event_received = isinstance(event, EndEvent)
                 event_queue.put(event)
+            if not end_event_received:
+                event_queue.put(
+                    ConnectionLostEvent(
+                        failed=True,
+                        msg="Lost connection to the ERT server before the "
+                        "experiment finished.",
+                    )
+                )
 
         monitor_thread = ErtThread(
             name="ert_storage_api_event_monitor",
@@ -566,7 +613,7 @@ class ErtClient:
 
         return event_queue, monitor_thread
 
-    def _connect_with_retry(
+    async def _connect_with_retry(
         self, url: str, open_timeout: float, credentials: str
     ) -> ClientConnection | None:
         """Open a WebSocket connection, retrying transient handshake failures.
@@ -579,10 +626,11 @@ class ErtClient:
         delays: Generator[float] = backoff()
         for attempt in range(1, _WEBSOCKET_CONNECT_RETRIES + 1):
             try:
-                return connect(
+                return await connect(
                     url,
                     ssl=self._ssl_context,
                     open_timeout=open_timeout,
+                    max_size=None,
                     additional_headers={"Authorization": f"Basic {credentials}"},
                 )
             except Exception as exc:
@@ -598,7 +646,7 @@ class ErtClient:
                     f"(attempt {attempt}/{_WEBSOCKET_CONNECT_RETRIES}), "
                     f"retrying in {delay:.1f}s. Exception: {exc}",
                 )
-                time.sleep(delay)
+                await asyncio.sleep(delay)
         return None
 
     # <-------------- Internals -------------->
