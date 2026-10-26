@@ -197,7 +197,12 @@ class RunModel(RunModelConfig, ABC):
         _total_iterations: int | None = None,
         **data: Any,
     ) -> None:
-        super().__init__(**data)
+        try:
+            super().__init__(**data)
+        except BaseException:
+            if (storage := getattr(self, "_storage", None)) is not None:
+                storage.close()
+            raise
 
         if _total_iterations is not None:
             self._total_iterations = _total_iterations
