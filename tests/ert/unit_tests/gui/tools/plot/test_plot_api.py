@@ -1,6 +1,7 @@
 import gc
 import unittest
 from datetime import date, datetime
+from pathlib import Path
 from textwrap import dedent
 
 import httpx
@@ -12,9 +13,14 @@ from pandas.testing import assert_frame_equal
 from resfo_utilities import history_key
 
 from ert.config import EverestObjectivesConfig, GenKwConfig, SummaryConfig
+from ert.config.seismic_config import SeismicConfig
 from ert.gui.plotting.plot_api import PlotApi, PlotApiKeyDefinition
 from ert.server import common
 from ert.storage import open_storage
+from tests.ert.defaults_generator import (
+    create_seismic_observation,
+    create_seismic_response,
+)
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
 
@@ -134,6 +140,52 @@ def test_can_load_data_and_observations(api):
             assert not obs_data.empty
         data = api.data_for_response(ensemble.id, key)
         assert not data.empty
+
+
+def test_that_seismic_observations_include_east_and_north_coordinates(api_and_storage):
+    api, storage, _ = api_and_storage
+    key = "horizon--amplitude_full_min_depth--20250101_20240101"
+
+    points = [(15.0, 25.0), (18.0, 29.0)]
+    values = [0.5, 0.75]
+    errors = [0.25, 0.125]
+
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SeismicConfig(
+                    input_files=[f"{key}.csv"],
+                    keys=[key],
+                    has_finalized_keys=True,
+                ).model_dump(mode="json")
+            ],
+            "ert_templates": [],
+            "observations": [
+                create_seismic_observation(
+                    name="SEISMIC_OBSERVATION",
+                    filepath=Path(f"{key}.csv"),
+                    east=east,
+                    north=north,
+                    value=value,
+                    error=error,
+                ).model_dump(mode="json")
+                for (east, north), value, error in zip(
+                    points, values, errors, strict=True
+                )
+            ],
+        }
+    )
+    ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
+
+    obs_data = api.observations_for_key([str(ensemble.id)], key)
+
+    assert list(obs_data.index) == ["STD", "OBS", "key_index", "EAST", "NORTH"]
+    assert obs_data.loc["key_index"].tolist() == ["15.0,25.0", "18.0,29.0"]
+    assert obs_data.loc["EAST"].tolist() == [15.0, 18.0]
+    assert obs_data.loc["NORTH"].tolist() == [25.0, 29.0]
+    assert obs_data.loc["OBS"].tolist() == [0.5, 0.75]
+    assert obs_data.loc["STD"].tolist() == [0.25, 0.125]
 
 
 @pytest.mark.slow
@@ -476,6 +528,52 @@ def test_that_data_for_response_is_empty_for_ensembles_without_responses(
     result_df = api.data_for_response(str(ensemble.id), "FOPT")
 
     assert result_df.empty
+
+
+def test_that_seismic_response_columns_are_east_north_coordinate_labels(
+    api_and_storage,
+):
+    api, storage, _ = api_and_storage
+    key = "horizon--amplitude_full_min_depth--20250101_20240101"
+
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SeismicConfig(
+                    input_files=[f"{key}.csv"],
+                    keys=[key],
+                    has_finalized_keys=True,
+                ).model_dump(mode="json")
+            ],
+            "ert_templates": [],
+            "observations": [],
+        }
+    )
+    ensemble = experiment.create_ensemble(ensemble_size=2, name="ensemble")
+
+    points = [(15.0, 25.0), (18.0, 29.0)]
+    values_per_realization = [[1.5, 2.5], [3.5, 4.5]]
+
+    for realization, values in enumerate(values_per_realization):
+        ensemble.save_response(
+            "seismic",
+            pl.concat(
+                [
+                    create_seismic_response(
+                        response_key=key, east=east, north=north, values=value
+                    )
+                    for (east, north), value in zip(points, values, strict=True)
+                ]
+            ),
+            realization,
+        )
+
+    result = api.data_for_response(str(ensemble.id), key)
+
+    assert list(result.columns) == ["15.0,25.0", "18.0,29.0"]
+    assert list(result.index) == [0, 1]
+    assert result.to_numpy().tolist() == [[1.5, 2.5], [3.5, 4.5]]
 
 
 @pytest.mark.slow

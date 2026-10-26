@@ -517,9 +517,9 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
                 north=north,
             )
             for east, north in [
-                (15.0, 25.0),
-                (15.0 + 3, 25.0 + 4),
-                (15.0 + 3 + 5, 25.0 + 4 + 12),
+                (15.25, 4.0),
+                (8.0, 25.0),
+                (15.125, 5.0),
             ]
         ],
     ]
@@ -548,4 +548,4 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
             case "RFT_OBSERVATION":
                 assert observation["x_axis"] == ["7.0", "11.0", "12.0"]
             case "SEISMIC_OBSERVATION":
-                assert observation["x_axis"] == ["0.0", "5.0", "18.0"]
+                assert observation["x_axis"] == ["15.125,5.0", "15.25,4.0", "8.0,25.0"]
