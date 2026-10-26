@@ -748,10 +748,10 @@ def test_that_empty_parameter_name_with_decimals_is_dropped_in_config(use_tmpdir
 
 
 def test_that_validation_errors_are_formatted_to_user_as_handled_exception(
-    use_tmpdir, caplog, capsys
+    use_tmpdir, monkeypatch, caplog, capsys
 ):
     invalid_distribution_seed = "foo"
-    general = pd.DataFrame(
+    general_input = pd.DataFrame(
         data=[
             ["designtype", "onebyone"],
             ["repeats", "10"],
@@ -763,9 +763,9 @@ def test_that_validation_errors_are_formatted_to_user_as_handled_exception(
     )
     input_path = _write_config_workbook(
         "designinput.xlsx",
-        general_input=general,
+        general_input=general_input,
     )
-    sys.argv = ["fmudesign", input_path]
+    monkeypatch.setattr(sys, "argv", ["fmudesign", input_path])
     with pytest.raises(SystemExit):
         main()
 
@@ -778,7 +778,7 @@ def test_that_validation_errors_are_formatted_to_user_as_handled_exception(
 
 
 def test_that_non_numeric_distribution_parameter_is_treated_as_handled_fmudesign_error(
-    use_tmpdir, caplog, capsys
+    use_tmpdir, monkeypatch, caplog, capsys
 ):
     design_input = pd.DataFrame(
         [
@@ -798,7 +798,7 @@ def test_that_non_numeric_distribution_parameter_is_treated_as_handled_fmudesign
     input_path = _write_config_workbook(
         "designinput.xlsx", design_input=design_input, defaultvalues=defaultvalues
     )
-    sys.argv = ["fmudesign", input_path]
+    monkeypatch.setattr(sys, "argv", ["fmudesign", input_path])
     with pytest.raises(SystemExit):
         main()
 
