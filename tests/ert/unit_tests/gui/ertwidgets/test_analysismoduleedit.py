@@ -8,15 +8,12 @@ from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
-    QFormLayout,
-    QLabel,
     QPushButton,
 )
 from pytestqt.qtbot import QtBot
 
 from ert.config import ESSettings, LocalizationType, ParameterType
 from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
-from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from tests.ert.unit_tests.gui.conftest import click_dialog_button
 
 
@@ -39,15 +36,9 @@ def _click_edit_button_and_interact_with_dialog(
 def _update_strategy_selector(
     dialog: QDialog, parameter_type: ParameterType
 ) -> QComboBox:
-    panel = dialog.findChild(AnalysisModuleVariablesPanel)
-    assert panel is not None
-    layout = panel.layout()
-    assert isinstance(layout, QFormLayout)
-    for combobox in panel.findChildren(QComboBox):
-        label = layout.labelForField(combobox)
-        if isinstance(label, QLabel) and label.text() == parameter_type.name:
-            return combobox
-    raise AssertionError(f"No update strategy selector for {parameter_type}")
+    combobox = dialog.findChild(QComboBox, parameter_type)
+    assert combobox is not None, f"No update strategy selector for {parameter_type}"
+    return combobox
 
 
 def _set_update_strategy(
