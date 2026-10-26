@@ -256,7 +256,11 @@ def find_sheet(name: str, names: list[str]) -> str:
     >>> find_sheet('variable_input', ['generalinput', 'designinput', 'defaultinput'])
     Traceback (most recent call last):
       ...
-    fmudesign.exceptions.FmudesignError: No match for variable_input: ['generalinput', 'designinput', 'defaultinput']
+    fmudesign.exceptions.FmudesignError: Sheet 'variable_input' was not found. Sheets in workbook: ['generalinput', 'designinput', 'defaultinput']
+    >>> find_sheet('design_input', ['designinput', 'Design_Input'])
+    Traceback (most recent call last):
+      ...
+    fmudesign.exceptions.FmudesignError: Sheet 'design_input' matches several sheets: ['designinput', 'Design_Input']
     """  # ruff: ignore[line-too-long]
 
     def sanitize(inputstring: str) -> str:
@@ -264,9 +268,11 @@ def find_sheet(name: str, names: list[str]) -> str:
 
     found = [name_i for name_i in names if sanitize(name) == sanitize(name_i)]
     if not found:
-        raise FmudesignError(f"No match for {name}: {names}")
+        raise FmudesignError(
+            f"Sheet {name!r} was not found. Sheets in workbook: {names}"
+        )
     if len(found) > 1:
-        raise FmudesignError(f"More than one match for {name}: {found}")
+        raise FmudesignError(f"Sheet {name!r} matches several sheets: {found}")
     return found[0]
 
 

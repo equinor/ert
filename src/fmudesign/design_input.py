@@ -81,8 +81,15 @@ class DesignInput:
                 sensdict["parameters"] = list(group["param_name"])
 
             else:
+                problem = (
+                    f"invalid type {sens_type!r}"
+                    if _has_value(sens_type)
+                    else "no type on its first row"
+                )
                 raise FmudesignError(
-                    f"Sensitivity {sensname} does not have a valid sensitivity type"
+                    f"Sensitivity {sensname!r} in the design input sheet has "
+                    f"{problem}. Valid types are: seed, scenario, dist, ref, "
+                    "background, extern."
                 )
 
             if "numreal" in group and _has_value(group["numreal"].iloc[0]):

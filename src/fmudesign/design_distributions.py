@@ -12,6 +12,7 @@ import probabilit.modeling
 from scipy import stats
 
 from fmudesign.exceptions import FmudesignError
+from fmudesign.utils import excel_sheet_names
 
 
 def validate_params(distname: str, parameters: list[str]) -> list[float]:
@@ -340,8 +341,8 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
             "Correlation matrix filename should be on Excel format and end with .xlsx"
         )
 
-    correlations = (
-        pd.read_excel(
+    try:
+        correlations = pd.read_excel(
             excel_filename,
             sheet_name=corr_sheet,
             index_col=0,
@@ -350,7 +351,15 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
             na_values=[" " * i for i in range(10)],
             engine="openpyxl",
         )
-        .dropna(axis=0, how="all")
+    except ValueError as err:
+        raise FmudesignError(
+            f"Correlation sheet {corr_sheet!r} could not be read from "
+            f"{excel_filename!r}: {err}\n"
+            f"Sheets in workbook: {excel_sheet_names(excel_filename)}"
+        ) from err
+
+    correlations = (
+        correlations.dropna(axis=0, how="all")
         # Remove any 'Unnamed' columns that Excel/pandas may have automatically added.
         .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
         # Remove whitespace
@@ -368,7 +377,13 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
             f"{corr_sheet!r} in file {excel_filename!r}."
         )
 
-    arr = correlations.to_numpy(copy=True)
+    try:
+        arr = correlations.to_numpy(dtype=float, copy=True)
+    except (ValueError, TypeError) as err:
+        raise FmudesignError(
+            f"All elements in matrix in corr sheet {corr_sheet} must be numbers "
+            f"or blank, got: {err}"
+        ) from err
     upper_idx = np.triu_indices_from(arr, k=1)
     lower_idx = np.tril_indices_from(arr, k=0)  # Include diag
     lower_entries = arr[lower_idx]

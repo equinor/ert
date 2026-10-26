@@ -188,6 +188,31 @@ def test_that_mixed_sensitivity_types_raise_value_error(use_tmpdir):
 
 
 @pytest.mark.parametrize(
+    ("sens_type", "problem"),
+    [
+        ("montecarlo", "has invalid type 'montecarlo'"),
+        ("", "has no type on its first row"),
+    ],
+)
+def test_that_invalid_sensitivity_type_error_lists_valid_types(
+    use_tmpdir, sens_type, problem
+):
+    design_input = pd.DataFrame(
+        data=[["sensname", "numreal", "type", "param_name"], ["Sens_1", "", sens_type]]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            rf"Sensitivity 'Sens_1' in the design input sheet {problem}\. "
+            r"Valid types are: seed, scenario, dist, ref, background, extern\."
+        ),
+    ):
+        excel_to_config(input_path)
+
+
+@pytest.mark.parametrize(
     ("value", "expected"), [(1, True), (np.nan, False), (None, True)]
 )
 def test_that_has_value_treats_only_nan_as_missing(value, expected):
@@ -367,6 +392,42 @@ def test_that_invalid_background_correlation_sheet_raises_value_error(
     )
 
     with pytest.raises(FmudesignError, match=error):
+        excel_to_config(input_path)
+
+
+def test_that_missing_correlation_sheet_raises_fmudesign_error(use_tmpdir):
+    input_path = _write_background_workbook(
+        "designinput.xlsx", BACKGROUND_WITH_CORR, None, "backgroundsheet"
+    )
+
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"Correlation sheet 'bgcorr' could not be read from 'designinput.xlsx'"
+            r".*\nSheets in workbook: \['general_input', 'designinput', "
+            r"'defaultvalues', 'backgroundsheet'\]"
+        ),
+    ):
+        excel_to_config(input_path)
+
+
+def test_that_non_numeric_correlation_entry_raises_fmudesign_error(use_tmpdir):
+    corr_matrix = pd.DataFrame(
+        [[1.0, np.nan], ["0,5", 1.0]],
+        index=["PARAM_A", "PARAM_B"],
+        columns=["PARAM_A", "PARAM_B"],
+    )
+    input_path = _write_background_workbook(
+        "designinput.xlsx", BACKGROUND_WITH_CORR, corr_matrix, "backgroundsheet"
+    )
+
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"All elements in matrix in corr sheet bgcorr must be numbers or "
+            r"blank, got: .*'0,5'"
+        ),
+    ):
         excel_to_config(input_path)
 
 
