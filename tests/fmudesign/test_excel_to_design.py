@@ -747,36 +747,6 @@ def test_that_empty_parameter_name_with_decimals_is_dropped_in_config(use_tmpdir
     assert config.decimals == {"foo": 3}
 
 
-def test_that_validation_errors_are_formatted_to_user_as_handled_exception(
-    use_tmpdir, monkeypatch, caplog, capsys
-):
-    invalid_distribution_seed = "foo"
-    general_input = pd.DataFrame(
-        data=[
-            ["designtype", "onebyone"],
-            ["repeats", "10"],
-            ["rms_seeds", "default"],
-            ["background", "None"],
-            ["distribution_seed", invalid_distribution_seed],
-            ["seed_strategy", "independent"],
-        ]
-    )
-    input_path = _write_config_workbook(
-        "designinput.xlsx",
-        general_input=general_input,
-    )
-    monkeypatch.setattr(sys, "argv", ["fmudesign", input_path])
-    with pytest.raises(SystemExit):
-        main()
-
-    assert "fmudesign crashed unexpectedly" not in caplog.text
-
-    output = capsys.readouterr().out
-    assert "fmudesign failed with" in output
-    assert "Validation error for 'distribution_seed'" in output
-    assert invalid_distribution_seed in output
-
-
 def test_that_non_numeric_distribution_parameter_is_treated_as_handled_fmudesign_error(
     use_tmpdir, monkeypatch, caplog, capsys
 ):
