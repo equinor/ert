@@ -1,0 +1,15 @@
+name: install_flow
+description: Installs OPM flow from the OPM PPA
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install flow from the OPM PPA
+      run: |
+        set -e
+        sudo apt-get install -y software-properties-common
+        sudo apt-add-repository -y ppa:opm/ppa
+        sudo apt-get update
+        sudo apt-get install -y mpi-default-bin
+        sudo apt-get install -y libopm-simulators-bin python3-opm-common
+      shell: bash
