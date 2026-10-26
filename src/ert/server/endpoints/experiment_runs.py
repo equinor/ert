@@ -1,6 +1,7 @@
 import asyncio
 import dataclasses
 import datetime as dt
+import json
 import logging
 import os
 import queue
@@ -28,7 +29,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
-from starlette.websockets import WebSocket
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, QueueSystem
@@ -283,11 +284,21 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
             event = await _get_event(
                 subscriber_id=subscriber_id, experiment_id=experiment_id
             )
-            await websocket.send_json(jsonable_encoder(event))
+            payload = json.dumps(
+                jsonable_encoder(event), separators=(",", ":"), ensure_ascii=False
+            )
+            if (mib := len(payload.encode()) / 2**20) > 1:
+                logging.getLogger(__name__).info(
+                    f"Sending {type(event).__name__} of {mib:.2f} MiB "
+                    f"to subscriber {subscriber_id}"
+                )
+            await websocket.send_text(payload)
             if isinstance(event, EndEvent):
                 await run.finalized.wait()
                 await websocket.close(code=status.WS_1000_NORMAL_CLOSURE)
                 break
+    except WebSocketDisconnect:
+        logging.getLogger(__name__).info(f"Subscriber {subscriber_id} disconnected")
     except Exception as e:
         logging.getLogger(__name__).exception(str(e))
     finally:

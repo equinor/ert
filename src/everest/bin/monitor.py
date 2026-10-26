@@ -6,6 +6,7 @@ import sys
 import traceback
 from collections import defaultdict
 from collections.abc import Callable, KeysView, Sequence
+from contextlib import aclosing
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -16,6 +17,7 @@ from ert.ensemble_evaluator import (
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.event import EndEvent
+from ert.run_models.event import StatusEvents
 from ert.services.ert_client import ErtClient
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import format_list
@@ -341,3 +343,36 @@ def start_monitor(
             callback({OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(event)})
         else:
             callback({SIM_PROGRESS_ID: event})
+
+
+async def start_monitor_async(
+    client: ErtClient,
+    callback: Callable[[dict[str, Any]], None],
+    experiment_id: str,
+    polling_interval: float = 0.1,
+) -> None:
+    async with aclosing(
+        client.iter_events_async(experiment_id, refresh_interval=polling_interval)
+    ) as events:
+        async for event in events:
+            callback(_monitor_event(event))
+
+
+def _monitor_event(event: StatusEvents) -> dict[str, Any]:
+    from ert.run_models.event import (  # ruff: ignore[import-outside-top-level]
+        EverestBatchResultEvent,
+    )
+
+    if isinstance(event, EverestBatchResultEvent):
+        return {OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(event)}
+    return {SIM_PROGRESS_ID: event}
+
+
+async def run_server_monitor_async(
+    client: ErtClient,
+    experiment_id: str,
+    *,
+    disable_monitoring: bool = False,
+) -> None:
+    callback = (lambda _: None) if disable_monitoring else _ServerMonitor().update
+    await start_monitor_async(client, callback=callback, experiment_id=experiment_id)
