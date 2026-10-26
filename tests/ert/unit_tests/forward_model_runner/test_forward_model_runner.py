@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import stat
@@ -274,3 +275,32 @@ def test_default_env_variables_available_inside_fm_step_context():
     # Check default ENV variable not available outside of step context
     for k in ForwardModelStep.default_env:
         assert k not in os.environ
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("failing_step", [False, True])
+def test_that_checksum_lists_only_non_empty_output_files_with_prefix_md5(
+    failing_step,
+):
+    script = "print('x' * 2 * 1024 * 1024)" + (
+        "; raise SystemExit(1)" if failing_step else ""
+    )
+    step = {
+        "name": "writer",
+        "executable": "/usr/bin/env",
+        "argList": ["python3", "-c", script],
+        "stdout": "out.txt",
+        "stderr": "err.txt",
+    }
+    runner = ForwardModelRunner(create_jobs_json([step]))
+    checksum = next(msg for msg in runner.run([]) if isinstance(msg, Checksum)).data
+
+    assert list(checksum) == ["writer.0.stdout"]
+    entry = checksum["writer.0.stdout"]
+    assert entry["path"] == str(Path("out.txt").absolute())
+    assert entry["md5_prefix_bytes"] == 1024 * 1024
+    assert (
+        entry["md5sum"]
+        == hashlib.md5(Path("out.txt").read_bytes()[: 1024 * 1024]).hexdigest()
+    )
+    assert not Path("err.txt").exists()
