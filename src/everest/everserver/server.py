@@ -32,6 +32,23 @@ from everest.util import version_info
 
 logger = logging.getLogger(__name__)
 
+EVENT_STREAM_DRAIN_TIMEOUT = 30.0
+
+
+def _wait_for_event_streams_to_drain(
+    client: ErtClient,
+    timeout: float = EVENT_STREAM_DRAIN_TIMEOUT,
+    poll_interval: float = 0.1,
+) -> None:
+    deadline = time.monotonic() + timeout
+    while client.active_event_streams() > 0:
+        if time.monotonic() >= deadline:
+            logger.warning(
+                f"Event streams still active after {timeout}s, shutting down anyway"
+            )
+            return
+        time.sleep(poll_interval)
+
 
 def _configure_loggers(log_dir: Path, output_file: str | None) -> list[logging.Handler]:
     def make_handler_config(path: Path, log_level: int | str) -> dict[str, Any]:
@@ -165,6 +182,7 @@ def main() -> None:
                     ]
                     done = experiment_ids and not any(active)
                     time.sleep(0.5)
+                _wait_for_event_streams_to_drain(client)
         except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
             logging.getLogger(__name__).info("Everserver stopped by user")

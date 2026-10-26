@@ -34,6 +34,7 @@ class EverEndpoints(StrEnum):
     EXPERIMENTS = auto()
     STATUS = auto()
     EVENTS = auto()
+    ACTIVE_STREAMS = auto()
     RUNPATH = auto()
 
 
