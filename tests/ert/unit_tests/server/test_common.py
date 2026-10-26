@@ -173,9 +173,9 @@ def test_that_seismic_response_has_distance_columns_and_values(
         result_df = data_for_response(ensemble, "filename")
 
         assert result_df.index.name == "Realization"
-        assert list(result_df.columns) == [0.0, 5.0]
-        assert result_df.iloc[0][0.0] == pytest.approx(1.0)
-        assert result_df.iloc[0][5.0] == pytest.approx(2.0)
+        assert list(result_df.columns) == ["1.0,1.0", "4.0,5.0"]
+        assert result_df.iloc[0]["1.0,1.0"] == pytest.approx(1.0)
+        assert result_df.iloc[0]["4.0,5.0"] == pytest.approx(2.0)
 
 
 @patch(
