@@ -24,7 +24,7 @@ def validate_params(distname: str, parameters: list[str]) -> list[float]:
     >>> validate_params('normal', ['inf'])
     Traceback (most recent call last):
         ...
-    fmudesign.exceptions.FmudesignError: Parameter 1 in distribution normal is not finite: inf
+    fmudesign.exceptions.FmudesignError: dist_param1 in distribution normal is not finite: inf
     """  # ruff: ignore[line-too-long]
     new_parameters: list[float] = []
 
@@ -33,13 +33,13 @@ def validate_params(distname: str, parameters: list[str]) -> list[float]:
             new_parameters.append(float(parameter))
         except (ValueError, TypeError) as e:
             raise FmudesignError(
-                f"Parameter {i + 1} in distribution {distname} not "
+                f"dist_param{i + 1} in distribution {distname} not "
                 f"convertible to number: {parameter}"
             ) from e
 
         if not np.isfinite(new_parameters[i]):
             raise FmudesignError(
-                f"Parameter {i + 1} in distribution {distname} "
+                f"dist_param{i + 1} in distribution {distname} "
                 f"is not finite: {parameter}"
             )
 
@@ -121,6 +121,11 @@ class DiscreteViaUniform(probabilit.Distribution):
         )
 
 
+def _require(condition: bool, message: str) -> None:
+    if not condition:
+        raise FmudesignError(message)
+
+
 def to_probabilit(
     distname: str,
     dist_parameters: Sequence[str],
@@ -142,6 +147,11 @@ def to_probabilit(
             values_str = str(dist_parameters[0])
             values = [v.strip() for v in values_str.split(",")]
             return DiscreteViaUniform(values)
+        _require(
+            len(dist_parameters) == 2,
+            "Discrete must have 1 or 2 parameters, got: "
+            f"{len(dist_parameters)} ({list(dist_parameters)})",
+        )
         values_str, probabilities_str = map(str, dist_parameters)
         values = [v.strip() for v in values_str.split(",")]
         probabilities = [float(v.strip()) for v in probabilities_str.split(",")]
@@ -153,6 +163,11 @@ def to_probabilit(
                 "dist_param1 and dist_param2 must have the same number of "
                 "entries for discrete distributions."
             )
+        _require(
+            all(p >= 0 for p in probabilities) and 0 < sum(probabilities) < np.inf,
+            "Discrete must have probabilities >= 0 with a finite positive sum, "
+            f"got: {probabilities}",
+        )
         return DiscreteViaUniform(values, probabilities)
 
     # Special case for constant
@@ -168,6 +183,10 @@ def to_probabilit(
         # ================== NORMAL ==================
 
         case [_, (p10, p90)] if distname.startswith("normal_p10_p90"):
+            _require(
+                p10 < p90,
+                f"Normal must have p10 < p90, got: p10={p10}, p90={p90}",
+            )
             # We use the equations
             # p10 = mu - z*sigma and p90 = mu + z*sigma
             # to find mu and sigma
@@ -177,6 +196,11 @@ def to_probabilit(
             return probabilit.distributions.Normal(mean=mean, std=std)
 
         case [_, (p10, p90, low, high)] if distname.startswith("normal_p10_p90"):
+            _require(
+                p10 < p90 and low < high,
+                "Normal must have p10 < p90 and min < max, got: "
+                f"p10={p10}, p90={p90}, min={low}, max={high}",
+            )
             z_score = stats.norm.ppf(0.9)
             mean = (p10 + p90) / 2
             std = (p90 - p10) / (2 * z_score)
@@ -185,9 +209,18 @@ def to_probabilit(
             )
 
         case [_, (mean, std)] if distname.startswith("norm"):
+            _require(
+                std > 0,
+                f"Normal must have stddev > 0, got: mean={mean}, stddev={std}",
+            )
             return probabilit.distributions.Normal(mean=mean, std=std)
 
         case [_, (mean, std, low, high)] if distname.startswith("norm"):
+            _require(
+                std > 0 and low < high,
+                "Normal must have stddev > 0 and min < max, got: "
+                f"mean={mean}, stddev={std}, min={low}, max={high}",
+            )
             return probabilit.distributions.TruncatedNormal(
                 mean=mean, std=std, low=low, high=high
             )
@@ -201,11 +234,20 @@ def to_probabilit(
         # ================== LOGNORMAL ==================
 
         case [_, (mu, sigma)] if distname.startswith("logn"):
+            _require(
+                sigma > 0,
+                f"Lognormal must have sigma > 0, got: mu={mu}, sigma={sigma}",
+            )
             return probabilit.distributions.Lognormal.from_log_params(
                 mu=mu, sigma=sigma
             )
 
         case [_, (mu, sigma, low, high)] if distname.startswith("logn"):
+            _require(
+                sigma > 0 and 0 <= low < high,
+                "Lognormal must have sigma > 0 and 0 <= min < max, got: "
+                f"mu={mu}, sigma={sigma}, min={low}, max={high}",
+            )
             # (mu, sigma) are defined in log-space, but (low, high)
             # are defined on exp-space
             return probabilit.modeling.Exp(
@@ -223,12 +265,20 @@ def to_probabilit(
         # ================== UNIFORM ==================
 
         case [_, (p10, p90)] if distname.startswith("uniform_p10_p90"):
+            _require(
+                p10 < p90,
+                f"Uniform must have p10 < p90, got: p10={p10}, p90={p90}",
+            )
             length = (p90 - p10) / 0.8
             minimum = p10 - 0.1 * length
             maximum = p90 + 0.1 * length
             return probabilit.distributions.Uniform(minimum=minimum, maximum=maximum)
 
         case [_, (minimum, maximum)] if distname.startswith("unif"):
+            _require(
+                minimum < maximum,
+                f"Uniform must have min < max, got: min={minimum}, max={maximum}",
+            )
             return probabilit.distributions.Uniform(minimum=minimum, maximum=maximum)
 
         case [_, parameters] if distname.startswith("unif"):
@@ -239,11 +289,21 @@ def to_probabilit(
         # ================== TRIANGULAR ==================
 
         case [_, (low, mode, high)] if distname.startswith("triangular_p10_p90"):
+            _require(
+                low < high,
+                "Triangular must have p10 < p90, got: "
+                f"p10={low}, mode={mode}, p90={high}",
+            )
             return probabilit.distributions.Triangular(
                 low=low, mode=mode, high=high, low_perc=0.1, high_perc=0.9
             )
 
         case [_, (minimum, mode, maximum)] if distname.startswith("triang"):
+            _require(
+                minimum <= mode <= maximum and minimum < maximum,
+                "Triangular must have min <= mode <= max and min < max, got: "
+                f"min={minimum}, mode={mode}, max={maximum}",
+            )
             return probabilit.distributions.Triangular(
                 low=minimum, mode=mode, high=maximum, low_perc=0.0, high_perc=1.0
             )
@@ -257,10 +317,19 @@ def to_probabilit(
         # ================== BETA ==================
 
         case [_, (a, b)] if distname.startswith("beta"):
+            _require(
+                a > 0 and b > 0,
+                f"Beta must have a > 0 and b > 0, got: a={a}, b={b}",
+            )
             # Defaults to probabilit.Distribution("beta", a=a, b=b, loc=0, scale=1)
             return probabilit.Distribution("beta", a=a, b=b)
 
         case [_, (a, b, low, high)] if distname.startswith("beta"):
+            _require(
+                a > 0 and b > 0 and low < high,
+                "Beta must have a > 0, b > 0 and min < max, got: "
+                f"a={a}, b={b}, min={low}, max={high}",
+            )
             loc = low
             scale = high - low
             return probabilit.Distribution("beta", a=a, b=b, loc=loc, scale=scale)
@@ -274,11 +343,20 @@ def to_probabilit(
         # ================== PERT ==================
 
         case [_, (low, mode, high)] if distname.startswith("pert_p10_p90"):
+            _require(
+                low < high,
+                f"PERT must have p10 < p90, got: p10={low}, mode={mode}, p90={high}",
+            )
             return probabilit.distributions.PERT(
                 low=low, mode=mode, high=high, low_perc=0.1, high_perc=0.9
             )
 
         case [_, (low, mode, high, scale)] if distname.startswith("pert_p10_p90"):
+            _require(
+                low < high,
+                "PERT must have p10 < p90, got: "
+                f"p10={low}, mode={mode}, p90={high}, scale={scale}",
+            )
             return probabilit.distributions.PERT(
                 low=low, mode=mode, high=high, low_perc=0.1, high_perc=0.9, gamma=scale
             )
@@ -307,6 +385,10 @@ def to_probabilit(
         # ================== LOGUNIFORM ==================
 
         case [_, (low, high)] if distname.startswith("logunif"):
+            _require(
+                0 < low < high,
+                f"Loguniform must have 0 < min < max, got: min={low}, max={high}",
+            )
             return probabilit.Distribution("loguniform", low, high)
 
         case [_, parameters] if distname.startswith("logunif"):
