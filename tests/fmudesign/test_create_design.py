@@ -1238,3 +1238,13 @@ def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
             parameters=["PARAM1", "PARAM2", "PARAM1", "PARAM3", "PARAM3", "PARAM3"],
             seedvalues=None,
         )
+
+
+@pytest.mark.parametrize("probabilities", [[1.5, -0.5], [np.nan, 0.5], [np.inf, 1.0]])
+def test_that_non_finite_or_negative_probabilities_raise_fmudesign_error(probabilities):
+    with pytest.raises(FmudesignError, match="must be finite non-negative"):
+        design_dist.quantiles_to_values(
+            quantiles=np.array([0.1, 0.9]),
+            values=np.array(["a", "b"]),
+            probabilities=np.array(probabilities),
+        )
