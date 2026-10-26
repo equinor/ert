@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
+import polars as pl
 
+from ert.config._reservoir_data_utils import SeismicData
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.gui.plotting.utils.plot_tools import ConditionalAxisFormatter, PlotTools
 from ert.gui.utils import truncate_experiment_name
@@ -33,7 +36,16 @@ class CrossPlot:
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
-        plotCross(figure, plot_context, ensemble_to_data_map, observation_data)
+        assert key_def is not None, "key_def must be provided"
+        response_type = key_def.metadata["data_origin"]
+        plotCross(
+            figure,
+            plot_context,
+            ensemble_to_data_map,
+            observation_data,
+            key_def=key_def,
+            response_type=response_type,
+        )
 
 
 def plotCross(
@@ -41,6 +53,8 @@ def plotCross(
     plot_context: PlotContext,
     ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
     observation_data: pd.DataFrame,
+    key_def: PlotApiKeyDefinition,
+    response_type: str,
 ) -> None:
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
@@ -53,8 +67,6 @@ def plotCross(
         axes.text(0.5, 0.5, "No observations available", ha="center", va="center")
         axes.set_axis_off()
         return
-
-    obs_by_key_index = _observations_by_key_index(observation_data)
 
     all_obs: list[np.ndarray] = []
     all_resp: list[np.ndarray] = []
@@ -69,7 +81,12 @@ def plotCross(
         if data.empty:
             continue
 
-        obs_values, resp_values = _match_obs_to_responses(data, obs_by_key_index)
+        obs_values, resp_values = _match_obs_to_responses(
+            data,
+            obs_data=observation_data,
+            key_def=key_def,
+            response_type=response_type,
+        )
         if obs_values.size == 0:
             continue
 
@@ -102,47 +119,80 @@ def plotCross(
     )
 
 
-def _observations_by_key_index(observation_data: pd.DataFrame) -> pd.Series:
-    obs_values = pd.to_numeric(
-        observation_data.loc["OBS"].to_numpy(), errors="coerce"
-    ).astype(np.float32)
-    raw_key_index = observation_data.loc["key_index"].to_numpy()
-    key_index = _to_matchable_key(raw_key_index)
-    series = pd.Series(obs_values, index=key_index)
-    return series[~series.index.duplicated(keep="first")].dropna()
+def _parse_coordinate_pairs(values: Iterable[Any]) -> list[tuple[float, float]]:
+    pairs = []
+    for value in values:
+        east, north = str(value).strip("()").split(",")
+        pairs.append((float(east), float(north)))
+    return pairs
+
+
+def _join_obs_with_response_data(
+    ensemble_df: pd.DataFrame,
+    observation_data: pd.DataFrame,
+    response_type: Literal["summary", "gen_data", "rft", "breakthrough", "seismic"],
+    key_def: PlotApiKeyDefinition,
+) -> pl.DataFrame:
+    if response_type in {"summary", "breakthrough"}:
+        key_index_with_correct_dtype = pl.col("key_index").str.to_datetime(strict=False)
+    elif response_type in {"gen_data", "rft"}:
+        key_index_with_correct_dtype = (
+            pl.col("key_index").cast(pl.Float32).cast(pl.UInt16)
+        )
+    elif response_type == "seismic":
+        key_index_with_correct_dtype = pl.col("key_index")
+    else:
+        raise ValueError(f"Unsupported response_type: {response_type}")
+
+    obs_df = (
+        pl.from_pandas(observation_data.T)
+        .rename({"OBS": "observation", "STD": "error"})
+        .with_columns(key_index_with_correct_dtype)
+    )
+
+    east, north = zip(*_parse_coordinate_pairs(obs_df["key_index"]), strict=True)
+    obs_df = obs_df.with_columns(pl.Series("east", east), pl.Series("north", north))
+    obs_df = obs_df.with_columns(pl.lit(key_def.key).alias("response_key"))
+
+    response_df = (
+        pl.from_pandas(ensemble_df, include_index=True)
+        .unpivot(
+            index=ensemble_df.index.name,
+            variable_name="key_index",
+            value_name="response",
+        )
+        .with_columns(key_index_with_correct_dtype)
+    )
+    east, north = zip(*_parse_coordinate_pairs(response_df["key_index"]), strict=True)
+    response_df = response_df.with_columns(
+        pl.Series("east", east), pl.Series("north", north)
+    )
+    response_df = response_df.with_columns(pl.lit(key_def.key).alias("response_key"))
+    if response_type == "seismic":
+        response_df = SeismicData.use_observation_locations_in_respective_responses(
+            response_df, obs_df
+        )
+        joint_df = response_df.join(obs_df, on=["east", "north"], how="inner")
+    else:
+        joint_df = response_df.join(obs_df, on="key_index", how="inner")
+    return joint_df
 
 
 def _match_obs_to_responses(
-    ensemble_data: pd.DataFrame, obs_by_key_index: pd.Series
+    ensemble_data: pd.DataFrame,
+    obs_data: pd.DataFrame,
+    key_def: PlotApiKeyDefinition,
+    response_type: str,
 ) -> tuple[np.ndarray, np.ndarray]:
-    responses = ensemble_data.copy()
-    responses.columns = _to_matchable_key(responses.columns.to_numpy())
-
-    common_keys = obs_by_key_index.index.intersection(responses.columns)
-    if len(common_keys) == 0:
-        return np.array([], dtype=np.float32), np.array([], dtype=np.float32)
-
-    obs_matched = obs_by_key_index.loc[common_keys].to_numpy()
-    resp_matched = (
-        responses[common_keys]
-        .apply(pd.to_numeric, errors="coerce")
-        .to_numpy()
-        .astype(np.float32)
+    df = _join_obs_with_response_data(
+        ensemble_data,
+        observation_data=obs_data,
+        key_def=key_def,
+        response_type=response_type,
     )
-
-    n_realizations = resp_matched.shape[0]
-    obs_flat = np.tile(obs_matched, n_realizations)
-    resp_flat = resp_matched.reshape(-1)
-
-    mask = ~np.isnan(obs_flat) & ~np.isnan(resp_flat)
-    return obs_flat[mask], resp_flat[mask]
-
-
-def _to_matchable_key(values: np.ndarray) -> np.ndarray:
-    numeric = pd.to_numeric(pd.Series(values), errors="coerce")
-    if numeric.notna().all():
-        return numeric.astype(np.float32).to_numpy()
-    return pd.Index(values).astype(str).to_numpy()
+    if df.is_empty():
+        return np.array([], dtype=np.float32), np.array([], dtype=np.float32)
+    return df["observation"].to_numpy(), df["response"].to_numpy()
 
 
 def _plot_cross(
