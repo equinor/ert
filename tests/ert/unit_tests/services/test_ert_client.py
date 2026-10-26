@@ -1,5 +1,7 @@
 import io
+import json
 import logging
+from dataclasses import dataclass
 from typing import Any
 from unittest.mock import MagicMock, call
 
@@ -14,8 +16,13 @@ from websockets.exceptions import (
 )
 from websockets.frames import Close
 
+from ert.config import ErtConfig, GenKwConfig
 from ert.ensemble_evaluator import EndEvent
-from ert.services.ert_client import _WEBSOCKET_CONNECT_RETRIES, ErtClient
+from ert.services.ert_client import (
+    _WEBSOCKET_CONNECT_RETRIES,
+    DEFAULT_TIMEOUT,
+    ErtClient,
+)
 from ert.services.shared_client import SharedClient
 
 
@@ -68,6 +75,106 @@ def client() -> RecordingClient:
 @pytest.fixture
 def api(client: RecordingClient) -> ErtClient:
     return ErtClient(client)  # type: ignore
+
+
+def test_that_registration_serializes_parameter_configs_in_arguments():
+    @dataclass
+    class Arguments:
+        mode: str
+        parameter_configuration: list[GenKwConfig]
+
+    parameter = GenKwConfig(
+        name="COEFF", distribution={"name": "normal", "mean": 0, "std": 1}
+    )
+    args = Arguments(mode="manual_update", parameter_configuration=[parameter])
+    config = MagicMock(spec=ErtConfig)
+    config.model_dump.return_value = {}
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+
+    def request(method: str, url: str, **kwargs: Any) -> httpx.Response:
+        assert method == "POST"
+        assert url == "/experiment_runs/register"
+        encoded = httpx.Request(method, f"https://localhost{url}", json=kwargs["json"])
+        assert json.loads(encoded.content)["config"] == {}
+        assert json.loads(encoded.content)["args"] == {
+            "mode": "manual_update",
+            "parameter_configuration": [parameter.model_dump(mode="json")],
+        }
+        return httpx.Response(
+            200, json={"config_id": "registered-config"}, request=encoded
+        )
+
+    transport.request.side_effect = request
+    assert ErtClient(transport).register_ert(config, args) == "registered-config"
+    config.model_dump.assert_called_once_with(mode="json")
+    transport.request.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("method_name", "http_method", "endpoint", "payload", "expected"),
+    [
+        ("start_experiment_ert", "POST", "start_experiment_ert", None, None),
+        ("discard_registration", "DELETE", "register", None, None),
+        ("runpath_exists", "POST", "runpath", {}, True),
+        ("runpath_delete", "DELETE", "runpath", {}, True),
+        (
+            "get_runmodel_data",
+            "POST",
+            "runmodel",
+            {"number_of_active_realizations": 2},
+            {"number_of_active_realizations": 2},
+        ),
+        (
+            "get_failed_realizations",
+            "GET",
+            "failed_realizations",
+            {"failed_realizations": [False, True]},
+            [False, True],
+        ),
+    ],
+)
+def test_that_registered_ert_requests_send_config_id_as_a_query_parameter(
+    method_name: str,
+    http_method: str,
+    endpoint: str,
+    payload: dict[str, object] | None,
+    expected: object,
+):
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(200, json=payload)
+    api = ErtClient(transport)
+
+    assert getattr(api, method_name)("registered-config") == expected
+
+    transport.request.assert_called_once_with(
+        http_method,
+        f"/experiment_runs/{endpoint}",
+        auth=api._auth,
+        params={"config_id": "registered-config"},
+        timeout=DEFAULT_TIMEOUT,
+    )
+
+
+def test_that_rerun_requests_send_the_flag_and_accept_an_empty_response():
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(200)
+    api = ErtClient(transport)
+
+    assert (
+        api.start_experiment_ert("registered-config", rerun_failed_realizations=True)
+        is None
+    )
+
+    transport.request.assert_called_once_with(
+        "POST",
+        "/experiment_runs/start_experiment_ert",
+        auth=api._auth,
+        params={"config_id": "registered-config", "rerun_failed_realizations": True},
+        timeout=DEFAULT_TIMEOUT,
+    )
 
 
 def test_that_repeated_parameter_calls_issue_a_single_request(api, client):

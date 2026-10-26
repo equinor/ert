@@ -24,6 +24,7 @@ import numpy.typing as npt
 import pandas as pd
 from pydantic import ValidationError
 from websockets.asyncio.client import backoff, process_exception
+from pydantic_core import to_jsonable_python
 from websockets.exceptions import (
     ConnectionClosedError,
     ConnectionClosedOK,
@@ -32,7 +33,8 @@ from websockets.exceptions import (
 from websockets.sync.client import ClientConnection, connect
 
 from _ert.threading import ErtThread
-from ert.server.common import EverEndpoints
+from ert.config.ert_config import ErtConfig
+from ert.server.common import ErtRunnerEndpoints, EverEndpoints
 
 from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
 
@@ -348,6 +350,7 @@ class ErtClient:
         )
 
     def start_experiment(self, config: dict[str, Any]) -> str:
+        """Starts an Everest experiment, returns the experiment ID."""
         response = self._request(
             "POST",
             f"{_EXPERIMENT_RUNS}/{EverEndpoints.START_EXPERIMENT}",
@@ -356,7 +359,46 @@ class ErtClient:
         )
         return str(_checked(response).json()["experiment_id"])
 
+    def register_ert(self, config: ErtConfig, args: Any) -> str:
+        """Registers an ERT configuration, returns its config ID."""
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.REGISTER}",
+            auth=self._auth,
+            json={
+                "config": config.model_dump(mode="json"),
+                "args": to_jsonable_python(args),
+            },
+        )
+        return str(_checked(response).json()["config_id"])
+
+    def discard_registration(self, config_id: str) -> None:
+        _checked(
+            self._request(
+                "DELETE",
+                f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.REGISTER}",
+                auth=self._auth,
+                params={"config_id": config_id},
+            )
+        )
+
+    def start_experiment_ert(
+        self, config_id: str, *, rerun_failed_realizations: bool = False
+    ) -> None:
+        """Starts a registered ERT experiment."""
+        params: dict[str, str | bool] = {"config_id": config_id}
+        if rerun_failed_realizations:
+            params["rerun_failed_realizations"] = True
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.START_EXPERIMENT_ERT}",
+            auth=self._auth,
+            params=params,
+        )
+        _checked(response)
+
     def stop_server(self, retries: int = 5) -> bool:
+        """Stops the experiment server, returns True if successful."""
         status_code, sleep = 400, retries
         while status_code != httpx.codes.OK and retries > 0:
             status_code = self._request(
@@ -368,14 +410,53 @@ class ErtClient:
             time.sleep(sleep - retries)
         return status_code == httpx.codes.OK
 
-    def runpath_exists(self, paths: list[str]) -> bool:
+    def runpath_exists(self, config_id: str) -> bool:
+        """
+        Checks if the runpath for the given ERT experiment exists.
+        Returns True if it does.
+        """
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_RUNS}/{EverEndpoints.RUNPATH}",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.RUNPATH}",
             auth=self._auth,
-            json={"paths": paths},
+            params={"config_id": config_id},
+        )
+        if response.status_code == httpx.codes.NOT_FOUND:
+            return False
+        _checked(response)
+        return True
+
+    def runpath_delete(self, config_id: str) -> bool:
+        """
+        Deletes the runpath for the given ERT experiment.
+        Returns True if successful.
+        """
+        response = self._request(
+            "DELETE",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.RUNPATH}",
+            auth=self._auth,
+            params={"config_id": config_id},
         )
         return response.status_code == httpx.codes.OK
+
+    def get_runmodel_data(self, config_id: str) -> dict[str, Any]:
+        """Retrieves the runmodel data for the given ERT experiment."""
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.RUNMODEL}",
+            auth=self._auth,
+            params={"config_id": config_id},
+        )
+        return _checked(response).json()
+
+    def get_failed_realizations(self, config_id: str) -> list[bool]:
+        response = self._request(
+            "GET",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.FAILED_REALIZATIONS}",
+            auth=self._auth,
+            params={"config_id": config_id},
+        )
+        return _checked(response).json()["failed_realizations"]
 
     # <-------------- WebSocket -------------->
 
