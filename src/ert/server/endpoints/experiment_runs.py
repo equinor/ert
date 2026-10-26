@@ -63,6 +63,8 @@ class ExperimentRunnerState:
     status: ExperimentStatus = dataclasses.field(default_factory=ExperimentStatus)
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
     subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
+    finalized: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    active_streams: int = 0
     config_path: str | os.PathLike[str] | None = None
     run_path: str | os.PathLike[str] | None = None
     storage_path: str | os.PathLike[str] | None = None
@@ -199,6 +201,17 @@ def experiments() -> JSONResponse:
     return JSONResponse({"experiment_ids": list(_experiments.keys())})
 
 
+@router.get("/" + EverEndpoints.ACTIVE_STREAMS, dependencies=authenticated)
+def active_streams() -> JSONResponse:
+    return JSONResponse(
+        {
+            "active_streams": sum(
+                experiment.active_streams for experiment in _experiments.values()
+            )
+        }
+    )
+
+
 @router.post("/" + EverEndpoints.STOP, dependencies=authenticated)
 def stop() -> Response:
     if not _experiments:
@@ -221,9 +234,8 @@ async def start_experiment(
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState()
     _experiments[experiment_id] = experiment_state
-    runner = ExperimentRunner(config, experiment_id)
     try:
-        background_tasks.add_task(runner.run)
+        background_tasks.add_task(run_everest, config, experiment_id)
         experiment_state.config_path = config.config_path
         experiment_state.run_path = config.simulation_dir
         experiment_state.storage_path = config.output_dir
@@ -304,23 +316,25 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     subscriber_id = str(uuid.uuid4())
-    try:
+    run = _experiments[experiment_id]
+    run.active_streams += 1
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
         while True:
             event = await _get_event(
                 subscriber_id=subscriber_id, experiment_id=experiment_id
             )
             await websocket.send_json(jsonable_encoder(event))
             if isinstance(event, EndEvent):
+                await run.finalized.wait()
+                await websocket.close(code=status.WS_1000_NORMAL_CLOSURE)
                 break
     except Exception as e:
         logging.getLogger(__name__).exception(str(e))
     finally:
+        run.active_streams -= 1
         logging.getLogger(__name__).info(
             f"Subscriber {subscriber_id} done. Closing websocket"
         )
-        # Give some time for subscribers to get events
-        await asyncio.sleep(5)
-        _experiments[experiment_id].subscribers[subscriber_id].done()
 
 
 async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
@@ -342,84 +356,82 @@ async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
     return event
 
 
-class ExperimentRunner:
-    def __init__(
-        self,
-        everest_config: EverestConfig,
-        experiment_id: str,
-    ) -> None:
-        self._everest_config = everest_config
-        self._experiment_id = experiment_id
+async def run_everest(config: EverestConfig, experiment_id: str) -> None:
+    run = _experiments[experiment_id]
+    status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+    run_model: EverestRunModel | None = None
+    end_message = "Experiment ended without a terminal event"
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
+        site_plugins = get_site_plugins()
+        with use_runtime_plugins(site_plugins):
+            run_model = EverestRunModel.create(
+                everest_config=config,
+                experiment_name=f"EnOpt@{dt.datetime.now().astimezone().isoformat(timespec='seconds')}",
+                target_ensemble="batch",
+                status_queue=status_queue,
+                runtime_plugins=site_plugins,
+            )
+        run.status = ExperimentStatus(
+            message="Experiment started", status=ExperimentState.running
+        )
+        loop = asyncio.get_running_loop()
+        simulation_future = loop.run_in_executor(
+            None,
+            lambda: run_model.start_simulations_thread(
+                EvaluatorServerConfig()
+                if run_model.queue_config.queue_system == QueueSystem.LOCAL
+                else EvaluatorServerConfig(use_ipc_protocol=False)
+            ),
+        )
+        while True:
+            if run.status.status == ExperimentState.stopped:
+                run_model.cancel()
+                raise UserCancelled("Optimization aborted")
+            try:
+                item: StatusEvents = status_queue.get(block=False)
+            except queue.Empty:
+                await asyncio.sleep(0.01)
+                continue
 
-    async def run(self) -> None:
-        run = _experiments[self._experiment_id]
-        status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-        run_model: EverestRunModel | None = None
-        try:  # ruff: ignore[too-many-statements-in-try-clause]
-            site_plugins = get_site_plugins()
-            with use_runtime_plugins(site_plugins):
-                run_model = EverestRunModel.create(
-                    everest_config=self._everest_config,
-                    experiment_name=f"EnOpt@{dt.datetime.now().astimezone().isoformat(timespec='seconds')}",
-                    target_ensemble="batch",
-                    status_queue=status_queue,
-                    runtime_plugins=site_plugins,
-                )
-            run.status = ExperimentStatus(
-                message="Experiment started", status=ExperimentState.running
-            )
-            loop = asyncio.get_running_loop()
-            simulation_future = loop.run_in_executor(
-                None,
-                lambda: run_model.start_simulations_thread(
-                    EvaluatorServerConfig()
-                    if run_model.queue_config.queue_system == QueueSystem.LOCAL
-                    else EvaluatorServerConfig(use_ipc_protocol=False)
-                ),
-            )
-            while True:
-                if run.status.status == ExperimentState.stopped:
-                    run_model.cancel()
-                    raise UserCancelled("Optimization aborted")
-                try:
-                    item: StatusEvents = status_queue.get(block=False)
-                except queue.Empty:
-                    await asyncio.sleep(0.01)
-                    continue
+            run.events.append(item)
+            for sub in run.subscribers.values():
+                sub.notify()
 
-                run.events.append(item)
-                for sub in run.subscribers.values():
-                    sub.notify()
-
-                if isinstance(item, EndEvent):
-                    # Wait for subscribers to receive final events
-                    for sub in list(run.subscribers.values()):
-                        await sub.is_done()
-                    break
-            await simulation_future
-            exp_status, msg = _get_optimization_status(
-                run_model.exit_code,
-                run.events,
-            )
-            run.status = ExperimentStatus(
-                message=msg,
-                status=exp_status,
-            )
-        except UserCancelled as e:
-            logging.getLogger(__name__).info(f"User cancelled: {e}")
-        except Exception as e:
-            logging.getLogger(__name__).exception(e)
-            run.status = ExperimentStatus(
-                message=f"Exception: {e}\n{traceback.format_exc()}",
-                status=ExperimentState.failed,
-            )
-        finally:
+            if isinstance(item, EndEvent):
+                break
+        await simulation_future
+        exp_status, msg = _get_optimization_status(
+            run_model.exit_code,
+            run.events,
+        )
+        run.status = ExperimentStatus(
+            message=msg,
+            status=exp_status,
+        )
+    except UserCancelled as e:
+        end_message = str(e)
+        logging.getLogger(__name__).info(f"User cancelled: {e}")
+    except Exception as e:
+        end_message = str(e)
+        logging.getLogger(__name__).exception(e)
+        run.status = ExperimentStatus(
+            message=f"Exception: {e}\n{traceback.format_exc()}",
+            status=ExperimentState.failed,
+        )
+    finally:
+        try:
             if run_model and run_model._experiment:
                 run_model._experiment.status = run.status
+        finally:
+            if not any(isinstance(event, EndEvent) for event in run.events):
+                run.events.append(EndEvent(failed=True, msg=end_message))
+                for sub in run.subscribers.values():
+                    sub.notify()
+            run.finalized.set()
 
-            logging.getLogger(__name__).info(
-                f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
-            )
+        logging.getLogger(__name__).info(
+            f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
+        )
 
 
 class Subscriber:
@@ -433,17 +445,10 @@ class Subscriber:
     def __init__(self) -> None:
         self.index = 0
         self._event = asyncio.Event()
-        self._done = asyncio.Event()
 
     def notify(self) -> None:
         self._event.set()
 
-    def done(self) -> None:
-        self._done.set()
-
     async def wait_for_event(self) -> None:
         await self._event.wait()
         self._event.clear()
-
-    async def is_done(self) -> None:
-        await self._done.wait()
