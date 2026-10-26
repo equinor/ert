@@ -415,8 +415,10 @@ class RunModel(RunModelConfig, ABC):
                         f"restart/rerun of failed simulations."
                     )
 
-                if rerun_failed_realizations:
+                if rerun_failed_realizations or not self._storage.can_write:
                     self._storage = open_storage(self.storage_path, mode="w")
+
+                if rerun_failed_realizations:
                     self.active_realizations = (
                         self._create_mask_from_failed_realizations()
                     )
