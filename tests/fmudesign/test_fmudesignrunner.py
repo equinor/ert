@@ -54,7 +54,9 @@ def test_that_missing_func_raises_system_exit_with_descriptive_error(
     assert "usage: fmudesign [-v] [-h] {run,init}" in stdout
 
 
-def test_that_main_catches_and_formats_validation_errors(monkeypatch, capsys):
+def test_that_main_catches_and_formats_validation_errors(
+    use_tmpdir, monkeypatch, capsys
+):
     path = "foo.xlsx"
     invalid_distribution_seed = "invalid_distribution_seed"
     general_input = pd.DataFrame(
