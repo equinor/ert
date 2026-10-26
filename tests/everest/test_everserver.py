@@ -339,13 +339,13 @@ async def test_that_event_stream_stays_open_until_experiment_is_finalized(
     websocket = MagicMock()
     websocket.headers = {"Authorization": f"Basic {credentials}"}
     websocket.accept = AsyncMock()
-    websocket.send_json = AsyncMock()
+    websocket.send_text = AsyncMock()
     websocket.close = AsyncMock()
 
     stream = asyncio.create_task(websocket_endpoint(websocket, experiment_id))
     await asyncio.sleep(0.1)
 
-    websocket.send_json.assert_awaited_once()
+    websocket.send_text.assert_awaited_once()
     websocket.close.assert_not_called()
 
     state.finalized.set()
@@ -362,7 +362,7 @@ async def test_that_a_stream_counts_as_active_until_it_has_closed(setup_client):
     websocket = MagicMock()
     websocket.headers = {"Authorization": f"Basic {credentials}"}
     websocket.accept = AsyncMock()
-    websocket.send_json = AsyncMock()
+    websocket.send_text = AsyncMock()
     websocket.close = AsyncMock()
 
     stream = asyncio.create_task(websocket_endpoint(websocket, experiment_id))

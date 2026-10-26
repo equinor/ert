@@ -3,6 +3,7 @@ from ._ensemble import Realization
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
 from .event import (
+    ConnectionLostEvent,
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
@@ -12,6 +13,7 @@ from .event import (
 from .snapshot import EnsembleSnapshot, FMStepSnapshot, RealizationSnapshot
 
 __all__ = [
+    "ConnectionLostEvent",
     "EndEvent",
     "Ensemble",
     "EnsembleEvaluator",
