@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from os import PathLike
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +17,7 @@ class OptimalResult:
     objectives: dict[str, Any]
 
 
-def get_optimal_result(output_dir: str) -> OptimalResult | None:
+def get_optimal_result(output_dir: PathLike[str] | str) -> OptimalResult | None:
     experiment = get_everest_experiment(Path(output_dir))
     max_total_objective = np.inf
     matching_batches = []
