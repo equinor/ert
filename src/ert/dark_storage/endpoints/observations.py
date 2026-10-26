@@ -12,7 +12,7 @@ from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
     get_storage,
     reraise_as_http_errors,
-    seismic_distance_expression,
+    seismic_coordinate_expression,
 )
 from ert.storage import Experiment, Storage
 
@@ -149,7 +149,7 @@ def _get_observations(
                 sort_expr = pl.col("tvd")
                 x_axis_expr = sort_expr.cast(pl.Utf8)
             case "seismic":
-                sort_expr = seismic_distance_expression("name")
+                sort_expr = seismic_coordinate_expression()
                 x_axis_expr = sort_expr.cast(pl.Utf8)
             case _:
                 raise ValueError(f"Unknown response type {stored_response_type}")

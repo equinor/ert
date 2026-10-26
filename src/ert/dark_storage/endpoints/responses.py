@@ -15,7 +15,7 @@ from polars.exceptions import ColumnNotFoundError
 from ert.dark_storage.common import (
     get_storage,
     reraise_as_http_errors,
-    seismic_distance_expression,
+    seismic_coordinate_expression,
     serialize_dataframe_to_response,
 )
 from ert.storage import Ensemble, Storage
@@ -340,15 +340,13 @@ def data_for_response(
                 .pivot_table(index="Realization", columns="depth", values="values")
             )
         case "seismic":
+            seismic_responses = ensemble.load_responses(
+                response_key,
+                tuple(realizations_with_responses),
+            )
             return (
-                ensemble.load_responses(
-                    response_key,
-                    tuple(realizations_with_responses),
-                )
-                .rename({"realization": "Realization"})
-                .with_columns(
-                    seismic_distance_expression("Realization").alias("distance")
-                )
+                seismic_responses.rename({"realization": "Realization"})
+                .with_columns(seismic_coordinate_expression().alias("distance"))
                 .unique()
                 .to_pandas()
                 .pivot_table(index="Realization", columns="distance", values="values")

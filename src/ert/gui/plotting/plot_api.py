@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cached_property, lru_cache
 from itertools import combinations as combi
@@ -337,7 +338,10 @@ class PlotApi:
                 try:
                     df.columns = [int(s) for s in df.columns]
                 except ValueError:
-                    df.columns = [float(s) for s in df.columns]
+                    try:
+                        df.columns = [float(s) for s in df.columns]
+                    except ValueError:
+                        df.columns = [str(s) for s in df.columns]
 
             try:
                 return df.astype(float)
@@ -514,7 +518,7 @@ class PlotApi:
                         f"ensemble_name={ensemble.name}, e={e}"
                     ) from e
 
-                key_index: list[int | float | pd.Timestamp]
+                key_index: Sequence[int | float | pd.Timestamp | str]
                 for obs in observations:
                     try:
                         int(obs["x_axis"][0])
@@ -524,8 +528,10 @@ class PlotApi:
                             float(obs["x_axis"][0])
                             key_index = [float(v) for v in obs["x_axis"]]
                         except ValueError:
-                            key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
-
+                            try:
+                                key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+                            except ValueError:
+                                key_index = [str(v) for v in obs["x_axis"]]
                     observations_dfs.append(
                         pd.DataFrame(
                             {

@@ -546,4 +546,4 @@ def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
             case "RFT_OBSERVATION":
                 assert observation["x_axis"] == ["7.0", "11.0", "12.0"]
             case "SEISMIC_OBSERVATION":
-                assert observation["x_axis"] == ["0.0", "5.0", "18.0"]
+                assert observation["x_axis"] == ["15.0,25.0", "18.0,29.0", "23.0,41.0"]
