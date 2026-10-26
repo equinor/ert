@@ -1,9 +1,10 @@
+import asyncio
 import io
 import json
 import logging
 from dataclasses import dataclass
 from typing import Any
-from unittest.mock import MagicMock, call
+from unittest.mock import AsyncMock, MagicMock, call
 
 import httpx
 import pandas as pd
@@ -253,10 +254,10 @@ def event_client(monkeypatch):
     transport.conn_info.base_url = "https://localhost:1234"
     transport.conn_info.auth_token = "token"
     transport.conn_info.cert = False
-    connect = MagicMock()
+    connect = AsyncMock()
     connection = connect.return_value
     monkeypatch.setattr("ert.services.ert_client.connect", connect)
-    monkeypatch.setattr("ert.services.ert_client.time.sleep", lambda _: None)
+    monkeypatch.setattr("ert.services.ert_client.asyncio.sleep", AsyncMock())
     return ErtClient(transport), connection, connect
 
 
@@ -283,7 +284,7 @@ def test_that_closing_event_iterator_releases_connection(event_client):
     assert next(events) == event
     connection.close.assert_not_called()
     events.close()
-    connection.close.assert_called_once()
+    connection.close.assert_awaited_once()
 
 
 def test_that_failure_to_close_websocket_does_not_mask_generator_exit(event_client):
@@ -295,6 +296,61 @@ def test_that_failure_to_close_websocket_does_not_mask_generator_exit(event_clie
 
     assert next(events) == event
     events.close()
+
+
+def test_that_receive_timeout_does_not_end_the_event_stream(event_client):
+    api, connection, connect = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.side_effect = [
+        TimeoutError,
+        event.model_dump_json(),
+        ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+    ]
+
+    assert list(api.iter_events("experiment")) == [event]
+    connect.assert_awaited_once()
+    assert connection.recv.await_count == 3
+    connection.close.assert_awaited_once()
+
+
+def test_that_interrupting_event_iteration_closes_connection_and_event_loop(
+    event_client,
+):
+    api, connection, _ = event_client
+    event = EndEvent(failed=False, msg="completed")
+    loops = []
+
+    async def receive():
+        loops.append(asyncio.get_running_loop())
+        return event.model_dump_json()
+
+    connection.recv.side_effect = receive
+    events = api.iter_events("experiment")
+    assert next(events) == event
+
+    with pytest.raises(KeyboardInterrupt):
+        events.throw(KeyboardInterrupt)
+
+    connection.close.assert_awaited_once()
+    assert loops[0].is_closed()
+
+
+def test_that_monitor_thread_delivers_events_and_closes_connection(event_client):
+    api, connection, _ = event_client
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.side_effect = [
+        event.model_dump_json(),
+        ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+    ]
+    event_queue, monitor = api.setup_event_queue_from_ws_endpoint("experiment")
+
+    monitor.start()
+    monitor.join(timeout=5)
+
+    assert not monitor.is_alive()
+    assert event_queue.get_nowait() == event
+    assert event_queue.empty()
+    connection.close.assert_awaited_once()
 
 
 def test_that_transient_handshake_failure_is_retried_instead_of_ending_the_stream(
@@ -309,7 +365,7 @@ def test_that_transient_handshake_failure_is_retried_instead_of_ending_the_strea
     connect.side_effect = [_invalid_message_from_eof(), connection]
 
     assert list(api.iter_events("experiment")) == [event]
-    assert connect.call_count == 2
+    assert connect.await_count == 2
 
 
 def test_that_fatal_handshake_failure_is_not_retried(event_client):
@@ -317,7 +373,7 @@ def test_that_fatal_handshake_failure_is_not_retried(event_client):
     connect.side_effect = InvalidMessage("malformed handshake response")
 
     assert list(api.iter_events("experiment")) == []
-    assert connect.call_count == 1
+    assert connect.await_count == 1
 
 
 def test_that_repeated_transient_handshake_failures_eventually_give_up(event_client):
@@ -325,7 +381,7 @@ def test_that_repeated_transient_handshake_failures_eventually_give_up(event_cli
     connect.side_effect = _invalid_message_from_eof()
 
     assert list(api.iter_events("experiment")) == []
-    assert connect.call_count == _WEBSOCKET_CONNECT_RETRIES
+    assert connect.await_count == _WEBSOCKET_CONNECT_RETRIES
 
 
 def test_that_abnormal_event_stream_closure_logs_experiment_and_close_reason(
@@ -345,7 +401,7 @@ def test_that_abnormal_event_stream_closure_logs_experiment_and_close_reason(
     assert "unknown experiment" in caplog.text
     assert "Connected to WebSocket event stream" in caplog.text
     assert "ended after 0 events" in caplog.text
-    connection.close.assert_called_once()
+    connection.close.assert_awaited_once()
 
 
 def test_that_event_stream_logs_first_event_and_total_on_close(event_client, caplog):
