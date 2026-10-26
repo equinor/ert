@@ -33,6 +33,7 @@ from PyQt6.QtWidgets import (
 from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErrorInfo, WarningInfo
 from ert.ensemble_evaluator import (
+    ConnectionLostEvent,
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
@@ -380,6 +381,7 @@ class RunDialog(QFrame):
 
         self.setMinimumSize(1200, 600)
         self._is_rerunning_failed_realizations = False
+        self._connection_lost = False
         self.flag_experiment_done = False
 
         self._latest_iteration = 0
@@ -471,6 +473,7 @@ class RunDialog(QFrame):
         self, *, rerun_failed_realizations: bool = False
     ) -> None:
         self.flag_experiment_done = False
+        self._connection_lost = False
         if rerun_failed_realizations is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
@@ -522,7 +525,8 @@ class RunDialog(QFrame):
         self.kill_button.setEnabled(False)
         self.kill_button.setText("Terminate experiment")
         self.rerun_button.setEnabled(
-            self._run_model_api.has_failed_realizations()
+            not self._connection_lost
+            and self._run_model_api.has_failed_realizations()
             and self._run_model_api.supports_rerunning_failed_realizations
         )
         self._notifier.set_is_experiment_running(False)
@@ -596,6 +600,10 @@ class RunDialog(QFrame):
         match event:
             case StartEvent():
                 self._start_time = event.timestamp
+            case ConnectionLostEvent(msg=msg):
+                self._connection_lost = True
+                self.experiment_done.emit(True, msg)
+                self._ticker.stop()
             case EndEvent(failed=failed, msg=msg):
                 self.experiment_done.emit(failed, msg)
                 self._ticker.stop()
@@ -736,6 +744,11 @@ class RunDialog(QFrame):
         self._is_rerunning_failed_realizations = True
         self.rerun_failed_realizations_experiment.emit()
         self.set_show_warning_button_to_initial_state()
+
+    def restore_controls_after_failed_rerun_request(self) -> None:
+        self._is_rerunning_failed_realizations = False
+        self.kill_button.setEnabled(False)
+        self.rerun_button.setEnabled(True)
 
     @override
     def hideEvent(self, event: QHideEvent | None) -> None:
