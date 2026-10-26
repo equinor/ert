@@ -157,18 +157,6 @@ class AnalysisConfig:
                 parameter_type_name = var_name
                 strategy_name = value
 
-                if (
-                    parameter_type_name == ParameterType.GEN_KW.name
-                    and strategy_name == LocalizationType.DISTANCE.name
-                ):
-                    all_errors.append(
-                        ConfigValidationError(
-                            "DISTANCE strategy is not supported for GEN_KW parameters. "
-                            "Valid strategies for GEN_KW are: GLOBAL, ADAPTIVE"
-                        )
-                    )
-                    continue
-
                 if parameter_type_name not in ParameterType.__members__:
                     all_errors.append(
                         ConfigValidationError(
@@ -189,9 +177,21 @@ class AnalysisConfig:
                     )
                     continue
 
-                parameter_type_update_strategies[ParameterType[parameter_type_name]] = (
-                    LocalizationType[strategy_name]
-                )
+                parameter_type = ParameterType[parameter_type_name]
+                localization_type = LocalizationType[strategy_name]
+                supported = parameter_type.supported_localization_types
+                if localization_type not in supported:
+                    all_errors.append(
+                        ConfigValidationError(
+                            f"{localization_type.name} strategy is not supported for "
+                            f"{parameter_type.name} parameters. Valid strategies for "
+                            f"{parameter_type.name} are: "
+                            f"{', '.join(lt.name for lt in supported)}"
+                        )
+                    )
+                    continue
+
+                parameter_type_update_strategies[parameter_type] = localization_type
                 continue
 
             if module_name == "IES_ENKF":
