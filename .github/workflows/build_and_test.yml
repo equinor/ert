@@ -113,7 +113,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-24.04 ]
         python-version: [ '3.14' ]
     uses: ./.github/workflows/test_ert_with_flow.yml
     with:
