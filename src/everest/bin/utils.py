@@ -165,7 +165,9 @@ def remove_show_scaling_warning_setting() -> None:
         )
 
 
-def get_experiment_status(storage_dir: str) -> ExperimentStatus | None:
+def get_experiment_status(
+    storage_dir: os.PathLike[str] | str,
+) -> ExperimentStatus | None:
     """
     Reads the experiment status from storage. We assume that there is
     only one experiment for each everest run in storage.

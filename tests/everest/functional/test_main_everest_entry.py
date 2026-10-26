@@ -76,6 +76,7 @@ def test_everest_entry_run(cached_example):
 
     config = EverestConfig.load_file(config_file)
     optimal = get_optimal_result(config.storage_dir)
+    assert optimal is not None
     assert optimal.controls["point.x"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)
@@ -91,6 +92,7 @@ def test_everest_entry_run(cached_example):
 
     config = EverestConfig.load_file(config_file)
     experiment_status = get_experiment_status(config.storage_dir)
+    assert experiment_status is not None
     assert experiment_status.status == ExperimentState.completed
 
 
@@ -183,4 +185,5 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
         assert "The optimization will be stopped and the program will exit..." in out
 
         status = get_experiment_status(config.storage_dir)
+        assert status is not None
         assert status.status == ExperimentState.stopped
