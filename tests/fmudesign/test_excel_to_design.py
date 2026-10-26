@@ -1,4 +1,3 @@
-import sys
 from datetime import date
 from pathlib import Path
 
@@ -18,7 +17,6 @@ from fmudesign._excel_to_design import (
     _assert_no_merged_cells,
 )
 from fmudesign.design_input import _read_dependencies
-from fmudesign.fmudesignrunner import main
 from fmudesign.utils import _has_value, map_dependencies
 from tests.fmudesign._configurations import full_mc_configuration
 
@@ -745,35 +743,3 @@ def test_that_empty_parameter_name_with_decimals_is_dropped_in_config(use_tmpdir
     _write_config_workbook(wb_path, design_input=design_input)
     config = excel_to_config(wb_path)
     assert config.decimals == {"foo": 3}
-
-
-def test_that_non_numeric_distribution_parameter_is_treated_as_handled_fmudesign_error(
-    use_tmpdir, monkeypatch, caplog, capsys
-):
-    design_input = pd.DataFrame(
-        [
-            [
-                "sensname",
-                "numreal",
-                "type",
-                "param_name",
-                "dist_name",
-                "dist_param1",
-                "dist_param2",
-            ],
-            ["sens", 5, "dist", "PARAM", "normal", "abc", 1],
-        ]
-    )
-    defaultvalues = pd.DataFrame([["param", "value"], ["PARAM", 1]])
-    input_path = _write_config_workbook(
-        "designinput.xlsx", design_input=design_input, defaultvalues=defaultvalues
-    )
-    monkeypatch.setattr(sys, "argv", ["fmudesign", input_path])
-    with pytest.raises(SystemExit):
-        main()
-
-    assert "fmudesign crashed unexpectedly" not in caplog.text
-
-    output = capsys.readouterr().out
-    assert "fmudesign failed with" in output
-    assert "not convertible to number: abc" in output

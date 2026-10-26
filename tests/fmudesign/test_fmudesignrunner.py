@@ -305,3 +305,35 @@ def test_that_init_copies_nothing_when_auxiliary_destination_exists(
     assert exc_info.value.code == 1
     assert not Path("ex2_correlations.xlsx").exists()
     assert auxiliary_path.read_bytes() == original_content
+
+
+def test_that_non_numeric_distribution_parameter_is_treated_as_handled_fmudesign_error(
+    use_tmpdir, monkeypatch, caplog, capsys
+):
+    design_input = pd.DataFrame(
+        [
+            [
+                "sensname",
+                "numreal",
+                "type",
+                "param_name",
+                "dist_name",
+                "dist_param1",
+                "dist_param2",
+            ],
+            ["sens", 5, "dist", "PARAM", "normal", "abc", 1],
+        ]
+    )
+    defaultvalues = pd.DataFrame([["param", "value"], ["PARAM", 1]])
+    input_path = _write_config_workbook(
+        "designinput.xlsx", design_input=design_input, defaultvalues=defaultvalues
+    )
+    monkeypatch.setattr(sys, "argv", ["fmudesign", input_path])
+    with pytest.raises(SystemExit):
+        fmudesignrunner.main()
+
+    assert "fmudesign crashed unexpectedly" not in caplog.text
+
+    output = capsys.readouterr().out
+    assert "fmudesign failed with" in output
+    assert "not convertible to number: abc" in output
