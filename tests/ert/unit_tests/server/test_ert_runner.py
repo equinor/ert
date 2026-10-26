@@ -51,13 +51,11 @@ def test_that_run_args_deserializes_selected_parameter_configurations():
         )
     )
 
-    assert args.parameter_configuration == parameters
-    assert all(
-        isinstance(parameter, GenKwConfig) for parameter in args.parameter_configuration
-    )
-    assert all(
-        parameter.update_strategy is None for parameter in args.parameter_configuration
-    )
+    assert args.model_extra is not None
+    selected = args.model_extra["parameter_configuration"]
+    assert selected == parameters
+    assert all(isinstance(parameter, GenKwConfig) for parameter in selected)
+    assert all(parameter.update_strategy is None for parameter in selected)
 
 
 def test_that_run_args_preserves_omitted_parameter_configuration():
@@ -74,7 +72,8 @@ def test_that_run_args_preserves_empty_parameter_configuration():
         '"parameter_configuration": []}'
     )
 
-    assert args.parameter_configuration == []
+    assert args.model_extra is not None
+    assert args.model_extra["parameter_configuration"] == []
 
 
 @pytest.mark.asyncio

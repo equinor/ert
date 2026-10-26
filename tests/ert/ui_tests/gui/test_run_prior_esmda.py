@@ -1,4 +1,5 @@
 from PyQt6.QtCore import Qt
+from PyQt6.QtTest import QSignalSpy
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QWidget
 
 from ert.gui.ertwidgets import StringBox
@@ -115,7 +116,11 @@ def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
     run_dialog = gui.findChild(RunDialog)
+    completion = QSignalSpy(run_dialog.experiment_done)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=20000)
+    assert completion
+    failed, message = completion[0]
+    assert not failed, message
     assert (
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."
