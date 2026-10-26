@@ -1,7 +1,5 @@
 from typing import Any
 
-import pandas as pd
-
 from fmudesign.exceptions import FmudesignError
 
 from .read_correlations import parse_sensitivity_correlations

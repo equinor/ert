@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from .utils import read_excel_sheet
-
 from fmudesign.exceptions import FmudesignError
+
+from .utils import read_excel_sheet
 
 
 def _get_sensitivity_type(senscase: str) -> str:
