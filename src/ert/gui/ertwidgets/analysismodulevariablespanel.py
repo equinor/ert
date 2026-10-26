@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import cast
 
 from annotated_types import Ge, Gt, Le
@@ -17,14 +18,10 @@ from ert.config import AnalysisModule, LocalizationType, ParameterType
 
 
 class _LocalizationTypeModel(QStandardItemModel):
-    def __init__(self, exclude: set[LocalizationType] | None = None) -> None:
+    def __init__(self, localization_types: Iterable[LocalizationType]) -> None:
         super().__init__()
 
-        type_set = set(LocalizationType)
-        if exclude is not None:
-            type_set -= exclude
-
-        for localization_type in sorted(type_set, key=lambda lt: lt.name):
+        for localization_type in sorted(localization_types, key=lambda lt: lt.name):
             item = QStandardItem(localization_type.name)
             item.setData(localization_type, Qt.ItemDataRole.UserRole)
             self.appendRow(item)
@@ -54,7 +51,7 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         gen_kw_combobox = QComboBox(self)
         gen_kw_combobox.setModel(
-            _LocalizationTypeModel(exclude={LocalizationType.DISTANCE})
+            _LocalizationTypeModel(ParameterType.GEN_KW.supported_localization_types)
         )
         gen_kw_combobox.setCurrentIndex(
             self._find_correct_index(gen_kw_combobox, ParameterType.GEN_KW)
@@ -68,7 +65,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow(ParameterType.GEN_KW.name, gen_kw_combobox)
 
         field_combobox = QComboBox(self)
-        field_combobox.setModel(_LocalizationTypeModel())
+        field_combobox.setModel(
+            _LocalizationTypeModel(ParameterType.FIELD.supported_localization_types)
+        )
         field_combobox.setCurrentIndex(
             self._find_correct_index(field_combobox, ParameterType.FIELD)
         )
@@ -81,7 +80,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow(ParameterType.FIELD.name, field_combobox)
 
         surface_combobox = QComboBox(self)
-        surface_combobox.setModel(_LocalizationTypeModel())
+        surface_combobox.setModel(
+            _LocalizationTypeModel(ParameterType.SURFACE.supported_localization_types)
+        )
         surface_combobox.setCurrentIndex(
             self._find_correct_index(surface_combobox, ParameterType.SURFACE)
         )
