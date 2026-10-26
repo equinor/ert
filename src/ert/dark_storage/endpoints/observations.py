@@ -77,6 +77,7 @@ async def get_observations_for_response(
         obs_keys,
         json.loads(filter_on) if filter_on is not None else None,
         requested_response_type=response_type,
+        response_key=response_key,
     )
     if not obss:
         return []
@@ -104,6 +105,7 @@ def _get_observations(
     observation_keys: list[str] | None = None,
     filter_on: dict[str, Any] | None = None,
     requested_response_type: str | None = None,
+    response_key: str | None = None,
 ) -> list[dict[str, Any]]:
     observations = []
 
@@ -118,15 +120,17 @@ def _get_observations(
         if observation_keys is not None:
             df = df.filter(pl.col("observation_key").is_in(observation_keys))
 
+        if response_key is not None:
+            df = df.filter(pl.col("response_key").eq(response_key))
         if df.is_empty():
             continue
 
         if filter_on is not None:
-            for response_key, selected_value in filter_on.items():
+            for filter_column, selected_value in filter_on.items():
                 # For now we only filter on report_step
                 # When we filter on more, we should infer what type to cast
                 # the value to from the dtype of the polars column
-                df = df.filter(pl.col(response_key).eq(int(selected_value)))
+                df = df.filter(pl.col(filter_column).eq(int(selected_value)))
 
         if df.is_empty():
             continue
@@ -163,6 +167,7 @@ def _get_observations(
             observations.append(
                 {
                     "name": obs_key[0],
+                    "response_key": obs_df["response_key"].to_list(),
                     "values": values,
                     "errors": obs_df["errors"].to_list(),
                     "x_axis": obs_df["x_axis"].to_list(),
@@ -171,5 +176,4 @@ def _get_observations(
                     "radius": obs_df["radius"].to_list(),
                 }
             )
-
     return observations
