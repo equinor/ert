@@ -557,7 +557,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         assume(parameter not in parameter_names and parameter not in group_names)
         with pytest.raises(
             KeyError,
-            match=f"{parameter} is not registered|No SCALAR dataset in",
+            match=f"{parameter} is not registered|No scalar dataset in",
         ):
             _ = storage_ensemble.load_parameters(parameter, self.iens_to_edit)
 

@@ -22,6 +22,7 @@ from ert.storage.blob_data import (
     BlobType,
     MatrixStorageData,
     ObservationReportData,
+    ScalarsData,
     UpdateStatus,
 )
 from ert.storage.local_ensemble import (
@@ -172,7 +173,7 @@ def test_that_load_scalar_keys_raises_key_error_for_missing_parameters(tmp_path)
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 
-        with pytest.raises(KeyError, match="No SCALAR dataset in storage"):
+        with pytest.raises(KeyError, match="No scalar dataset in storage"):
             ensemble.load_scalar_keys(keys=["param1"])
 
 
@@ -721,3 +722,50 @@ def test_that_reading_absent_batch_dataframe_returns_none(tmp_path):
         assert ensemble.batch_objectives is None
         assert ensemble.batch_constraint_gradient is None
         assert not ensemble.has_function_results
+
+
+def _create_scalar_ensemble(storage):
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [
+                GenKwConfig(
+                    name=name,
+                    group="group",
+                    distribution={"name": "uniform", "min": 0, "max": 1},
+                ).model_dump(mode="json")
+                for name in ("param1", "param2")
+            ]
+        }
+    )
+    return storage.create_ensemble(experiment.id, ensemble_size=3, name="test")
+
+
+def test_that_scalars_are_stored_as_a_single_scalars_blob(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        ensemble = _create_scalar_ensemble(storage)
+
+        ensemble.save_parameters(
+            pl.DataFrame({"realization": [0, 1], "param1": [1.0, 2.0]})
+        )
+
+        [blob] = ensemble.load_blob_metadata(BlobType.SCALARS)
+        assert isinstance(blob.blob_info, ScalarsData)
+        assert blob.file_type == "application/parquet"
+        assert blob.file_size == len(ensemble.load_blob(blob.uri))
+
+
+def test_that_save_parameters_appends_to_the_scalars_blob(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        ensemble = _create_scalar_ensemble(storage)
+
+        ensemble.save_parameters(
+            pl.DataFrame({"realization": [0, 1], "param1": [1.0, 2.0]})
+        )
+        ensemble.save_parameters(
+            pl.DataFrame({"realization": [0, 1], "param2": [3.0, 4.0]})
+        )
+
+        assert len(ensemble.load_blob_metadata(BlobType.SCALARS)) == 1
+        df = ensemble.load_scalar_keys()
+        assert df["param1"].to_list() == [1.0, 2.0]
+        assert df["param2"].to_list() == [3.0, 4.0]
