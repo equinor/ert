@@ -1,3 +1,4 @@
+import logging
 from typing import override
 
 from PyQt6.QtCore import QObject
@@ -7,6 +8,8 @@ from ert.gui.icon_utils import load_icon
 from ert.gui.tools import Tool
 
 from .panel import EventViewerPanel, GUILogHandler
+
+logger = logging.getLogger(__name__)
 
 
 class EventViewerTool(Tool, QObject):
@@ -25,6 +28,7 @@ class EventViewerTool(Tool, QObject):
 
     @override
     def trigger(self) -> None:
+        logger.info("Gui utility: EventViewer tool was used")
         self.logging_window.show()
 
     @Slot()

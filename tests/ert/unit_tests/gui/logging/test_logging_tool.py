@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from ert.gui.tools.event_viewer import EventViewerPanel, GUILogHandler
+from ert.gui.tools.event_viewer import EventViewerPanel, EventViewerTool, GUILogHandler
 
 logger = logging.getLogger(__name__)
 
@@ -27,3 +27,16 @@ def test_logging_widget(qtbot, caplog, log_func, expected):
     with qtbot.waitExposed(widget), caplog.at_level(logging.DEBUG):
         log_func("Writing some text")
         assert widget.text_box.toPlainText() == expected
+
+
+def test_that_event_viewer_usage_is_logged_only_when_opened(qtbot, caplog):
+    tool = EventViewerTool(GUILogHandler())
+    qtbot.addWidget(tool.logging_window)
+
+    with caplog.at_level(logging.INFO):
+        tool.close_wnd()
+    assert "EventViewer tool was used" not in caplog.text
+
+    with caplog.at_level(logging.INFO):
+        tool.trigger()
+    assert "EventViewer tool was used" in caplog.text
