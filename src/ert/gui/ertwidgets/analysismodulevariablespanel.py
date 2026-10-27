@@ -50,6 +50,8 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
 
         for parameter_type in ParameterType:
+            if parameter_type not in update_strategies:
+                continue
             layout.addRow(
                 parameter_type.name,
                 self._create_strategy_combobox(parameter_type, strategies_editable),

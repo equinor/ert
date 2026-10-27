@@ -37,27 +37,21 @@ def _strategy_combobox(
     return combobox
 
 
-def test_that_panel_has_one_strategy_combobox_per_parameter_type(qtbot: QtBot):
-    widget = _create_panel(qtbot, {})
+def test_that_panel_only_has_strategy_comboboxes_for_given_parameter_types(
+    qtbot: QtBot,
+):
+    widget = _create_panel(qtbot, {ParameterType.FIELD: LocalizationType.GLOBAL})
 
-    assert sorted(c.objectName() for c in widget.findChildren(QComboBox)) == sorted(
-        ParameterType
-    )
-
-
-def test_that_empty_update_strategies_are_set_to_global(qtbot: QtBot):
-    widget = _create_panel(qtbot, {})
-
-    for parameter_type in ParameterType:
-        combobox = _strategy_combobox(widget, parameter_type)
-        assert combobox.currentData() == LocalizationType.GLOBAL
+    assert [c.objectName() for c in widget.findChildren(QComboBox)] == [
+        ParameterType.FIELD
+    ]
 
 
 @pytest.mark.parametrize("parameter_type", list(ParameterType))
 def test_that_strategy_combobox_only_offers_supported_localization_types(
     qtbot: QtBot, parameter_type: ParameterType
 ):
-    widget = _create_panel(qtbot, {})
+    widget = _create_panel(qtbot, {parameter_type: LocalizationType.GLOBAL})
 
     combobox = _strategy_combobox(widget, parameter_type)
     offered = {combobox.itemData(index) for index in range(combobox.count())}

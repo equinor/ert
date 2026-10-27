@@ -871,6 +871,6 @@ def test_that_prior_selection_disables_parameter_update_strategy_changes(
     assert edit_button is not None
     qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
 
-    assert comboboxes_enabled == [False, False, False]
+    assert comboboxes_enabled == [False]
     assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
     assert prior_parameter.update_strategy == LocalizationType.GLOBAL
