@@ -925,5 +925,5 @@ def test_that_prior_selection_disables_parameter_update_strategy_changes(
         Qt.MouseButton.LeftButton,
     )
 
-    assert comboboxes_enabled == [False, False, False]
+    assert comboboxes_enabled == [False]
     assert prior_parameter.update_strategy == LocalizationType.GLOBAL
