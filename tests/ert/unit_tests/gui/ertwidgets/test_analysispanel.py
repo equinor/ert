@@ -8,30 +8,17 @@ from ert.config import ESSettings, LocalizationType
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
-def test_that_empty_update_strategies_are_set_to_global(qtbot: QtBot):
-    settings = ESSettings()
-    settings.localization_correlation_threshold = 0.5
-    settings.enkf_truncation = 0.2
-    update_strategies = {}
-
+def test_that_panel_only_has_strategy_comboboxes_for_given_parameter_types(
+    qtbot: QtBot,
+):
     widget = AnalysisModuleVariablesPanel(
-        update_strategies=update_strategies,
+        update_strategies={"FIELD": LocalizationType.GLOBAL},
         correlation_threshold=0.5,
         enkf_truncation=0.2,
     )
-
     qtbot.addWidget(widget)
 
-    comboboxes = widget.findChildren(QComboBox)
-    assert len(comboboxes) == 3
-
-    for combobox in comboboxes:
-        if (
-            combobox.objectName() == "GEN_KW"
-            or combobox.objectName() == "SURFACE"
-            or combobox.objectName() == "FIELD"
-        ):
-            assert combobox.currentData() == LocalizationType.GLOBAL
+    assert [c.objectName() for c in widget.findChildren(QComboBox)] == ["FIELD"]
 
 
 def test_that_panel_initializes_with_correct_values(qtbot: QtBot):
