@@ -17,7 +17,7 @@ from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
 from .graph_utils import create_flattened_cube_graph
-from .parameter_config import InvalidParameterFile, ParameterConfig
+from .parameter_config import InvalidParameterFile, ParameterConfig, ParameterType
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
 
 
 class SurfaceConfig(ParameterConfig):
-    type: Literal["surface"] = "surface"
+    type: Literal[ParameterType.SURFACE] = ParameterType.SURFACE
     dimensionality: Literal[2] = 2
     ncol: int
     nrow: int
