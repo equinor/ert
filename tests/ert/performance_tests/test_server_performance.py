@@ -341,7 +341,7 @@ def test_that_load_scalars_handles_many_genkw_keys(benchmark, tmp_path):
         df = df.insert_column(
             0, pl.Series("realization", np.arange(reals, dtype=np.int32))
         )
-        df.write_parquet(ensemble.mount_point / "SCALAR.parquet")
+        ensemble.save_parameters(df)
 
         benchmark(ensemble.load_scalars)
 

@@ -33,7 +33,7 @@ from .realization_storage_state import RealizationStorageState
 logger = logging.getLogger(__name__)
 
 
-_LOCAL_STORAGE_VERSION = 42
+_LOCAL_STORAGE_VERSION = 43
 
 
 def open_storage(
@@ -649,6 +649,7 @@ class LocalStorage(BaseMode):
             to40,
             to41,
             to42,
+            to43,
         )
 
         try:  # ruff: ignore[too-many-statements-in-try-clause]
@@ -720,6 +721,7 @@ class LocalStorage(BaseMode):
                     39: to40,
                     40: to41,
                     41: to42,
+                    42: to43,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)
@@ -767,10 +769,14 @@ class LocalStorage(BaseMode):
         blob_info: BlobInfo,
         file_type: str,
         blob_dir: Path,
+        uri: str | None = None,
     ) -> BlobStorageData:
-        """Create a blob record and persist its data and JSON sidecar."""
-        blob_id = uuid4().hex[:8]
-        uri = f"{blob_id}.blob"
+        """Create a blob record and persist its data and JSON sidecar.
+
+        If *uri* is given, an existing blob with that uri is overwritten.
+        """
+        if uri is None:
+            uri = f"{uuid4().hex[:8]}.blob"
         instance = BlobStorageData(
             uri=uri,
             file_size=len(data),
