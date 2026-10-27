@@ -2,6 +2,8 @@ import json
 import os
 import socket
 import ssl
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -33,6 +35,25 @@ def test_create_connection_string(monkeypatch):
     assert len(connection_string["urls"]) == len(
         set(connection_string["urls"])
     )  # all unique
+
+
+@pytest.mark.slow
+def test_that_storage_log_config_keeps_loggers_created_before_it_is_applied(
+    change_to_tmpdir, monkeypatch
+):
+    monkeypatch.delenv("ERT_LOG_DIR", raising=False)
+    script = (
+        "import logging, logging.config, yaml\n"
+        "from ert.logging import STORAGE_LOG_CONFIG\n"
+        "logger = logging.getLogger('ert.storage.local_storage')\n"
+        "logging.config.dictConfig("
+        "yaml.safe_load(STORAGE_LOG_CONFIG.read_text(encoding='utf-8')))\n"
+        "print(logger.disabled)\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, check=True
+    )
+    assert result.stdout.strip() == "False"
 
 
 def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpdir):
