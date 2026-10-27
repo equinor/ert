@@ -52,53 +52,19 @@ class AnalysisModuleVariablesPanel(QWidget):
             QLabel("<b>Select the localization method for each parameter type</b>")
         )
 
-        gen_kw_combobox = QComboBox(self)
-        gen_kw_combobox.setModel(
-            _LocalizationTypeModel(exclude={LocalizationType.DISTANCE})
-        )
-        gen_kw_combobox.setCurrentIndex(
-            self._find_correct_index(gen_kw_combobox, "GEN_KW")
-        )
-        gen_kw_combobox.currentIndexChanged.connect(
-            lambda index: self._update_strategies.__setitem__(
-                "GEN_KW",
-                gen_kw_combobox.itemData(index, Qt.ItemDataRole.UserRole),
+        for parameter_type, excluded_localization_types in (
+            ("GEN_KW", {LocalizationType.DISTANCE}),
+            ("FIELD", None),
+            ("SURFACE", None),
+        ):
+            if parameter_type not in update_strategies:
+                continue
+            layout.addRow(
+                parameter_type,
+                self._create_strategy_combobox(
+                    parameter_type, excluded_localization_types, strategies_editable
+                ),
             )
-        )
-        layout.addRow("GEN_KW", gen_kw_combobox)
-
-        field_combobox = QComboBox(self)
-        field_combobox.setModel(_LocalizationTypeModel())
-        field_combobox.setCurrentIndex(
-            self._find_correct_index(field_combobox, "FIELD")
-        )
-        field_combobox.currentIndexChanged.connect(
-            lambda index: self._update_strategies.__setitem__(
-                "FIELD",
-                field_combobox.itemData(index, Qt.ItemDataRole.UserRole),
-            )
-        )
-        layout.addRow("FIELD", field_combobox)
-
-        surface_combobox = QComboBox(self)
-        surface_combobox.setModel(_LocalizationTypeModel())
-        surface_combobox.setCurrentIndex(
-            self._find_correct_index(surface_combobox, "SURFACE")
-        )
-        surface_combobox.currentIndexChanged.connect(
-            lambda index: self._update_strategies.__setitem__(
-                "SURFACE",
-                surface_combobox.itemData(index, Qt.ItemDataRole.UserRole),
-            )
-        )
-        layout.addRow("SURFACE", surface_combobox)
-
-        for combobox in (gen_kw_combobox, field_combobox, surface_combobox):
-            combobox.setEnabled(strategies_editable)
-            if not strategies_editable:
-                combobox.setToolTip(
-                    "Update strategy is defined by the selected ensemble"
-                )
 
         layout.addRow(QLabel("<b>General settings</b>"))
 
@@ -150,6 +116,27 @@ class AnalysisModuleVariablesPanel(QWidget):
     @property
     def enkf_truncation(self) -> float:
         return self._enkf_truncation
+
+    def _create_strategy_combobox(
+        self,
+        parameter_type: str,
+        excluded_localization_types: set[LocalizationType] | None,
+        strategies_editable: bool,
+    ) -> QComboBox:
+        combobox = QComboBox(self)
+        combobox.setObjectName(parameter_type)
+        combobox.setModel(_LocalizationTypeModel(exclude=excluded_localization_types))
+        combobox.setCurrentIndex(self._find_correct_index(combobox, parameter_type))
+        combobox.currentIndexChanged.connect(
+            lambda index: self._update_strategies.__setitem__(
+                parameter_type,
+                combobox.itemData(index, Qt.ItemDataRole.UserRole),
+            )
+        )
+        combobox.setEnabled(strategies_editable)
+        if not strategies_editable:
+            combobox.setToolTip("Update strategy is defined by the selected ensemble")
+        return combobox
 
     def _find_correct_index(self, combobox: QComboBox, type_name: str) -> int:
         if type_name in self._update_strategies:
