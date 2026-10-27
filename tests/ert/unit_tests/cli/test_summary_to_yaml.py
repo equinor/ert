@@ -83,7 +83,7 @@ def test_that_no_summary_observations_raises_ert_cli_error():
         YamlConverter([brt_obs])
 
 
-def test_that_observations_with_same_summary_key_are_gathered_in_yaml_dict(use_tmpdir):
+def test_that_observations_with_same_summary_key_are_gathered_in_yaml_dict():
     k1, k2 = "bar", "foo"
     observations = 2 * [
         _make_summary_obs(key=k1),
@@ -162,7 +162,7 @@ def test_that_config_warnings_are_caught_instead_of_printed_to_terminal(
     assert len(w) == 0
 
 
-def test_that_yaml_converter_sorts_observations_by_date(use_tmpdir):
+def test_that_yaml_converter_sorts_observations_by_date():
     d1 = "2000-01-01"
     d4 = "2000-01-11"
     d3 = "2000-01-03"
@@ -177,7 +177,7 @@ def test_that_yaml_converter_sorts_observations_by_date(use_tmpdir):
     assert yaml_key_order == [d1, d2, d3, d4, d5]
 
 
-def test_that_yaml_converter_natsorts_summary_keys(use_tmpdir):
+def test_that_yaml_converter_natsorts_summary_keys():
     k1 = "WOPR:OP1"
     k3 = "WOPR:OP13"
     k2 = "WOPR:OP2"

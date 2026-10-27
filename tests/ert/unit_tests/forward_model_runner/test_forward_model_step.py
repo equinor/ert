@@ -22,7 +22,6 @@ from _ert.forward_model_runner.reporting.message import Exited, Running, Start
 @patch("_ert.forward_model_runner.forward_model_step._check_executable")
 @patch("_ert.forward_model_runner.forward_model_step.Popen")
 @patch("_ert.forward_model_runner.forward_model_step.Process")
-@pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_process_failing(mock_process, mock_popen, mock_check_executable):
     fmstep = ForwardModelStep({}, 0)
     mock_check_executable.return_value = ""

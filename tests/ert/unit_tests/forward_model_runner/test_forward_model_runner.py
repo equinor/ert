@@ -43,7 +43,6 @@ def set_up_environ():
             os.environ[key] = value
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_missing_joblist_json():
     with pytest.raises(KeyError):
         ForwardModelRunner({})

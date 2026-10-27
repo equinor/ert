@@ -552,7 +552,7 @@ def _mock_rft_ensemble(
     ],
 )
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
-def test_that_response_file_path_is_resolved(qtbot, use_tmpdir, eclbase):
+def test_that_response_file_path_is_resolved(qtbot, eclbase):
     ert_config = ErtConfig.from_dict(
         {
             "RUNPATH": "runpath/realization-<IENS>/iter-<ITER>",

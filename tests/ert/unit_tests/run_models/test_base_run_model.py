@@ -709,7 +709,7 @@ def test_create_mask_from_failed_realizations_returns_initial_active_realization
     assert failed_realization_mask == initial_active_realizations
 
 
-def test_that_defaulted_user_queue_options_overrides_site_queue_options(use_tmpdir):
+def test_that_defaulted_user_queue_options_overrides_site_queue_options():
     user_queue_options = LsfQueueOptions(
         max_running=0,
         submit_sleep=0,

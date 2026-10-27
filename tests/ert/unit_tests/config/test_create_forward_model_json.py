@@ -280,7 +280,6 @@ def verify_json_dump(fm_steplist, config, selected_steps, run_id):
         step["name"] = name_back_up
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_config_path_and_file(context):
     run_id = "test_config_path_and_file_in_jobs_json"
 
@@ -302,7 +301,6 @@ def test_config_path_and_file(context):
     assert steps_json["config_file"] == "config.ert"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_no_steps(context):
     run_id = "test_no_jobs_id"
 

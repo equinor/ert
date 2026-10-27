@@ -1265,7 +1265,7 @@ def test_that_all_required_keywords_in_forward_model_are_validated():
         )
 
 
-def test_that_site_fm_step_serializes_as_reference_to_site_plugin(use_tmpdir):
+def test_that_site_fm_step_serializes_as_reference_to_site_plugin():
     class SiteForwardModel(ForwardModelStepPlugin):
         def __init__(self) -> None:
             super().__init__(

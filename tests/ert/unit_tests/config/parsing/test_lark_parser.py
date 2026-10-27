@@ -160,7 +160,6 @@ def test_that_cyclical_includes_raise_config_validation_error():
         _ = parse(test_config_file_name, schema=USER_CONFIG_SCHEMA)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_no_keywords_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="must be set"):
         _ = parse_contents("", file_name="config.ert", schema=USER_CONFIG_SCHEMA)
