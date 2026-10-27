@@ -903,9 +903,7 @@ def test_that_get_rft_observations_and_responses_adds_missing_saturation_columns
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_times(
-    tmp_path,
-):
+def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_times():
     observations = [
         create_rft_observation(date="2020-01-15"),
         create_rft_observation(
