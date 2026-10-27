@@ -1,12 +1,10 @@
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import override
 
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QDialog, QPlainTextEdit, QVBoxLayout
 
 from ert.gui.ertwidgets import SearchBar
@@ -14,8 +12,6 @@ from ert.gui.ertwidgets import SearchBar
 # Need to separate GUILogHandler into _Signaler & _GUILogHandler
 # to avoid a object lifetime issue where logging keeps around a reference
 # to the handler until application exit
-
-logger = logging.getLogger(__name__)
 
 
 class _Signaler(QObject):
@@ -75,11 +71,6 @@ class EventViewerPanel(QDialog):
     @Slot(str)
     def val_changed(self, value: str) -> None:
         self.text_box.appendPlainText(value)
-
-    @override
-    def closeEvent(self, event: QCloseEvent | None) -> None:
-        logger.info("Gui utility: EventViewer tool was used")
-        super().closeEvent(event)
 
 
 @contextmanager
