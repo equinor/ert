@@ -68,6 +68,10 @@ By installing your own steps in this way, you can extend the capabilities of ERT
 
 Notes
 _____
+STDOUT and STDERR must be relative paths that stay inside the runpath. Absolute
+paths and paths containing :code:`..` that escape the runpath are rejected as
+configuration errors.
+
 When configuring ARGLIST for FORWARD_MODEL steps, "long-options" signified by a
 double dash, like :code:`--some-option`, is problematic for Ert as the double
 dash is treated as a comment. Enclose any such long options in quotes for this
