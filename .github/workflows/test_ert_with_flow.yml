@@ -53,7 +53,16 @@ jobs:
         uv pip install git+https://github.com/equinor/everest-models
 
     - name: Install flow
-      uses: ./.github/actions/install_flow
+      run: |
+        set -e
+        sudo apt install software-properties-common
+        sudo apt-add-repository ppa:opm/ppa
+        sudo apt update
+        sudo apt install mpi-default-bin
+        sudo apt install libopm-simulators-bin python3-opm-common
+
+        which flow
+        flow --version
 
     - name: Run integration tests towards OPM flow without flowrun
       run: |
