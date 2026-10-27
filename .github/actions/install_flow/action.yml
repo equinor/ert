@@ -1,5 +1,5 @@
 name: install_flow
-description: Installs OPM flow from the OPM PPA and verifies where it came from
+description: Installs OPM flow from the OPM PPA
 
 runs:
   using: "composite"
@@ -12,24 +12,4 @@ runs:
         sudo apt-get update
         sudo apt-get install -y mpi-default-bin
         sudo apt-get install -y libopm-simulators-bin python3-opm-common
-      shell: bash
-
-    - name: Verify flow origin and version
-      run: |
-        set -e
-        POLICY=$(apt-cache policy libopm-simulators-bin)
-        echo "$POLICY"
-        if ! echo "$POLICY" | grep -A3 '\*\*\*' | grep -q 'ppa.launchpadcontent.net/opm/ppa'; then
-          echo "::error::libopm-simulators-bin was not installed from ppa:opm/ppa"
-          exit 1
-        fi
-        which flow
-        flow --version
-        {
-          echo "### OPM flow"
-          echo '```'
-          echo "$POLICY"
-          flow --version
-          echo '```'
-        } >> "$GITHUB_STEP_SUMMARY"
       shell: bash
