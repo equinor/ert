@@ -1,4 +1,5 @@
 import gc
+import logging
 import os
 from unittest.mock import patch
 
@@ -88,6 +89,29 @@ def print_system_load_on_test_failure(request):
             "System load after test failure (1/5/15min): "
             f"{load1:.2f}, {load5:.2f}, {load15:.2f}, cpu_count={os.cpu_count()}"
         )
+
+
+@pytest.fixture(autouse=True)
+def remove_root_log_handlers_added_by_test():
+    """Site plugins attach remote log handlers to the root logger, which
+    would otherwise forward log records from all subsequent tests.
+    """
+    root_logger = logging.getLogger()
+    handlers_before = list(root_logger.handlers)
+    yield
+    added_handlers = [
+        h
+        for h in root_logger.handlers
+        if h not in handlers_before and not type(h).__module__.startswith("_pytest")
+    ]
+    loggers = [root_logger] + [
+        existing_logger
+        for existing_logger in logging.Logger.manager.loggerDict.values()
+        if isinstance(existing_logger, logging.Logger)
+    ]
+    for handler in added_handlers:
+        for existing_logger in loggers:
+            existing_logger.removeHandler(handler)
 
 
 @pytest.hookimpl(wrapper=True)
