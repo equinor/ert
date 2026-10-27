@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import AnalysisModule, LocalizationType
+from ert.config import AnalysisModule, LocalizationType, ParameterType
 
 
 class _LocalizationTypeModel(QStandardItemModel):
@@ -33,7 +33,7 @@ class _LocalizationTypeModel(QStandardItemModel):
 class AnalysisModuleVariablesPanel(QWidget):
     def __init__(
         self,
-        update_strategies: dict[str, LocalizationType],
+        update_strategies: dict[ParameterType, LocalizationType],
         correlation_threshold: float,
         enkf_truncation: float,
         *,
@@ -57,41 +57,41 @@ class AnalysisModuleVariablesPanel(QWidget):
             _LocalizationTypeModel(exclude={LocalizationType.DISTANCE})
         )
         gen_kw_combobox.setCurrentIndex(
-            self._find_correct_index(gen_kw_combobox, "GEN_KW")
+            self._find_correct_index(gen_kw_combobox, ParameterType.GEN_KW)
         )
         gen_kw_combobox.currentIndexChanged.connect(
             lambda index: self._update_strategies.__setitem__(
-                "GEN_KW",
+                ParameterType.GEN_KW,
                 gen_kw_combobox.itemData(index, Qt.ItemDataRole.UserRole),
             )
         )
-        layout.addRow("GEN_KW", gen_kw_combobox)
+        layout.addRow(ParameterType.GEN_KW.name, gen_kw_combobox)
 
         field_combobox = QComboBox(self)
         field_combobox.setModel(_LocalizationTypeModel())
         field_combobox.setCurrentIndex(
-            self._find_correct_index(field_combobox, "FIELD")
+            self._find_correct_index(field_combobox, ParameterType.FIELD)
         )
         field_combobox.currentIndexChanged.connect(
             lambda index: self._update_strategies.__setitem__(
-                "FIELD",
+                ParameterType.FIELD,
                 field_combobox.itemData(index, Qt.ItemDataRole.UserRole),
             )
         )
-        layout.addRow("FIELD", field_combobox)
+        layout.addRow(ParameterType.FIELD.name, field_combobox)
 
         surface_combobox = QComboBox(self)
         surface_combobox.setModel(_LocalizationTypeModel())
         surface_combobox.setCurrentIndex(
-            self._find_correct_index(surface_combobox, "SURFACE")
+            self._find_correct_index(surface_combobox, ParameterType.SURFACE)
         )
         surface_combobox.currentIndexChanged.connect(
             lambda index: self._update_strategies.__setitem__(
-                "SURFACE",
+                ParameterType.SURFACE,
                 surface_combobox.itemData(index, Qt.ItemDataRole.UserRole),
             )
         )
-        layout.addRow("SURFACE", surface_combobox)
+        layout.addRow(ParameterType.SURFACE.name, surface_combobox)
 
         for combobox in (gen_kw_combobox, field_combobox, surface_combobox):
             combobox.setEnabled(strategies_editable)
@@ -140,7 +140,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.blockSignals(False)
 
     @property
-    def update_strategies(self) -> dict[str, LocalizationType]:
+    def update_strategies(self) -> dict[ParameterType, LocalizationType]:
         return self._update_strategies
 
     @property
@@ -151,9 +151,11 @@ class AnalysisModuleVariablesPanel(QWidget):
     def enkf_truncation(self) -> float:
         return self._enkf_truncation
 
-    def _find_correct_index(self, combobox: QComboBox, type_name: str) -> int:
-        if type_name in self._update_strategies:
-            localization_type = self._update_strategies[type_name]
+    def _find_correct_index(
+        self, combobox: QComboBox, parameter_type: ParameterType
+    ) -> int:
+        if parameter_type in self._update_strategies:
+            localization_type = self._update_strategies[parameter_type]
             if (
                 index := combobox.findData(localization_type, Qt.ItemDataRole.UserRole)
             ) != -1:

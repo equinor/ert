@@ -12,6 +12,8 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     ESSettings,
+    LocalizationType,
+    ParameterType,
 )
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
@@ -442,7 +444,7 @@ def test_config_wrong_module(config, expectation):
         )
 
 
-def test_that_parameter_type_update_strategies_is_set_correctly():
+def test_that_parameters_analysis_set_var_sets_strategy_per_parameter_type():
 
     strategies = AnalysisConfig.from_dict(
         {
@@ -453,9 +455,11 @@ def test_that_parameter_type_update_strategies_is_set_correctly():
         }
     ).parameter_type_update_strategies
 
-    assert len(strategies) == 2
-    assert strategies["FIELD"] == "distance"
-    assert strategies["GEN_KW"] == "adaptive"
+    assert strategies == {
+        ParameterType.FIELD: LocalizationType.DISTANCE,
+        ParameterType.GEN_KW: LocalizationType.ADAPTIVE,
+    }
+    assert all(isinstance(key, ParameterType) for key in strategies)
 
 
 def test_that_parameter_strategy_with_unknown_strategy_raises_validation_error():

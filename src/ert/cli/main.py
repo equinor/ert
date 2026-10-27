@@ -75,7 +75,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
         and ert_config.analysis_config.parameter_type_update_strategies
     ):
         strategies = "".join(
-            f"  {param_type}: {strategy.name}\n"
+            f"  {param_type.name}: {strategy.name}\n"
             for param_type, strategy in (
                 ert_config.analysis_config.parameter_type_update_strategies.items()
             )
