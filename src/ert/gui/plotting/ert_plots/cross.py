@@ -202,7 +202,7 @@ def _plot_cross(
     resp_values: np.ndarray,
     label: str,
 ) -> None:
-    style = plot_config.distribution_style()
+    style = plot_config.distribution_style(obs_values.size)
 
     lines = axes.plot(
         obs_values,
