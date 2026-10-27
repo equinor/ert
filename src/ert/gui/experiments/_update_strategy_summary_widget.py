@@ -13,16 +13,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config.parameter_config import ParameterConfig
+from ert.config.parameter_config import ParameterConfig, ParameterType
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
 
 _COLUMN_HEADERS = ("strategy", "parameter type", "count")
-_PARAMETER_TYPE_DISPLAY_NAMES = {
-    "gen_kw": "GenKW",
-    "field": "Field",
-    "surface": "Surface",
+_PARAMETER_TYPE_DISPLAY_NAMES: dict[str, str] = {
+    ParameterType.GEN_KW: "GenKW",
+    ParameterType.FIELD: "Field",
+    ParameterType.SURFACE: "Surface",
 }
 _TOOLTIP = (
     "Each Field or Surface counts as one configuration, "

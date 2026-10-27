@@ -38,6 +38,7 @@ from .parameter_config import (
     LocalizationType,
     ParameterCardinality,
     ParameterConfig,
+    ParameterType,
     has_updatable_parameters,
 )
 from .parsing import (
@@ -139,6 +140,7 @@ __all__ = [
     "OutlierSettings",
     "ParameterCardinality",
     "ParameterConfig",
+    "ParameterType",
     "PostExperimentFixtures",
     "PostSimulationFixtures",
     "PostUpdateFixtures",

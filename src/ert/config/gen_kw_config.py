@@ -17,7 +17,12 @@ from typing_extensions import TypedDict
 from ert.config._get_update_from_options import get_update_from_options
 
 from .distribution import DISTRIBUTION_CLASSES, DistributionSettings, get_distribution
-from .parameter_config import LocalizationType, ParameterCardinality, ParameterConfig
+from .parameter_config import (
+    LocalizationType,
+    ParameterCardinality,
+    ParameterConfig,
+    ParameterType,
+)
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -100,7 +105,7 @@ class _ParsedGenKwConfig:
 
 
 class GenKwConfig(ParameterConfig):
-    type: Literal["gen_kw"] = "gen_kw"
+    type: Literal[ParameterType.GEN_KW] = ParameterType.GEN_KW
     dimensionality: Literal[1] = 1
     distribution: DistributionSettings
     forward_init: bool = False
