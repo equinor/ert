@@ -376,6 +376,35 @@ def test_that_positional_forward_model_args_gives_config_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("keyword", ["STDOUT", "STDERR"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/tmp/out.txt",
+        "../out.txt",
+        "sub/../../out.txt",
+        "..",
+        "<RUNPATH>/../out.txt",
+    ],
+)
+def test_that_stdout_and_stderr_paths_outside_runpath_are_rejected(keyword, path):
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"{keyword} must be a relative path that does not go outside",
+    ):
+        forward_model_step_from_config_contents(
+            f"EXECUTABLE echo\n{keyword} {path}\n", "STEP"
+        )
+
+
+@pytest.mark.parametrize(
+    "path", ["out.txt", "sub/out.txt", "sub/../out.txt", "<RUNPATH>/out.txt", "null"]
+)
+def test_that_stdout_paths_inside_runpath_are_accepted(path):
+    forward_model_step_from_config_contents(f"EXECUTABLE echo\nSTDOUT {path}\n", "STEP")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_installing_two_forward_model_steps_with_the_same_name_warn():
     test_config_file_name = "test.ert"
     Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")

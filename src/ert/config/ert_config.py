@@ -9,7 +9,7 @@ from collections import Counter, defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cached_property
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self, cast, overload
 
 from numpy.random import SeedSequence
@@ -1633,6 +1633,33 @@ def uppercase_subkeys_and_stringify_subvalues(
     return fixed_dict
 
 
+def _escapes_parent_directory(path: PurePath) -> bool:
+    depth = 0
+    for part in path.parts:
+        depth += -1 if part == ".." else 1
+        if depth < 0:
+            return True
+    return False
+
+
+def _validate_path_is_inside_runpath(
+    keyword: str, path: str | None, config_file: str
+) -> None:
+    if path is None or path == "null":
+        return
+    runpath_placeholder = "<RUNPATH>"
+    if path.startswith(runpath_placeholder):
+        pure_path = PurePath(path.removeprefix(runpath_placeholder).lstrip("/"))
+    else:
+        pure_path = PurePath(path)
+    if pure_path.is_absolute() or _escapes_parent_directory(pure_path):
+        raise ConfigValidationError(
+            f"{keyword} must be a relative path that does not go outside "
+            f"the runpath, got {path!r}",
+            config_file=config_file,
+        )
+
+
 def forward_model_step_from_config_contents(
     config_contents: str,
     config_file: str,
@@ -1657,6 +1684,11 @@ def forward_model_step_from_config_contents(
     arg_types_list = parse_arg_types_list(
         specified_arg_types, specified_min_args, specified_max_args
     )
+
+    for keyword in (ForwardModelStepKeys.STDOUT, ForwardModelStepKeys.STDERR):
+        _validate_path_is_inside_runpath(
+            keyword, content_dict.get(keyword), config_file
+        )
 
     environment = {k: v for [k, v] in content_dict.get("ENV", [])}
     default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
