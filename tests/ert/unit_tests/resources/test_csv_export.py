@@ -1,6 +1,7 @@
 import json
 
 import polars as pl
+import pytest
 
 from ert.plugins.hook_implementations.workflows.csv_export import CSVExportJob
 from ert.storage import open_storage
@@ -53,6 +54,7 @@ def test_that_csv_export_matches_snapshot(monkeypatch, tmp_path, snapshot):
         )
 
 
+@pytest.mark.slow
 def test_that_csv_export_stops_processing_ensembles_once_cancelled(
     monkeypatch, tmp_path
 ):

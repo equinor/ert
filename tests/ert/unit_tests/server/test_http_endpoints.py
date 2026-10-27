@@ -253,6 +253,7 @@ def test_get_experiment_observations(poly_example_tmp_dir, server_client):
     assert response_json[0]["radius"] == 5 * [None]
 
 
+@pytest.mark.slow
 def test_that_experiment_observations_endpoint_returns_localization(
     tmp_path, monkeypatch, server_app
 ):
@@ -309,6 +310,7 @@ def test_that_experiment_observations_endpoint_returns_localization(
     assert observations_by_name["OBSERVATION_2"]["radius"] == [20.0]
 
 
+@pytest.mark.slow
 def test_blob_endpoint_includes_matrix_parameter_group_sizes(
     tmp_path, monkeypatch, server_app
 ):
@@ -347,6 +349,7 @@ def test_blob_endpoint_includes_matrix_parameter_group_sizes(
     }
 
 
+@pytest.mark.slow
 def test_that_blob_endpoint_returns_blob_bytes(tmp_path, monkeypatch, server_app):
     storage_path = tmp_path / "storage"
     with open_storage(storage_path, mode="w") as storage:
@@ -376,6 +379,7 @@ def test_that_blob_endpoint_returns_blob_bytes(tmp_path, monkeypatch, server_app
     assert resp.content == blob_bytes
 
 
+@pytest.mark.slow
 def test_that_blobs_endpoint_lists_everest_batch_dataframes(
     tmp_path, monkeypatch, server_app
 ):
@@ -411,6 +415,7 @@ def test_that_blobs_endpoint_lists_everest_batch_dataframes(
         assert blob["blob_info"]["dataframe_name"] == name
 
 
+@pytest.mark.slow
 def test_that_blob_endpoint_returns_everest_batch_dataframe_parquet(
     tmp_path, monkeypatch, server_app
 ):
@@ -481,6 +486,7 @@ def test_get_coeffs_records(poly_example_tmp_dir, server_client, coeffs):
     assert dataframe.shape == (3, 1)
 
 
+@pytest.mark.slow
 def test_that_observations_are_sorted_on_x_axis_column(tmp_path):
     rft_config = RFTConfig(input_files=["DUMMY"])
     storage_path = tmp_path / "storage"

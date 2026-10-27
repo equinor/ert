@@ -473,6 +473,7 @@ def test_that_clustering_prioritizes_global_similarity_over_local_correlation(
         assert not is_BC_merged, failure_msg
 
 
+@pytest.mark.slow
 def test_clustering_and_scaling_realistic_scenario():
     """
     Integration test for the autoscaler with two independent observation groups.

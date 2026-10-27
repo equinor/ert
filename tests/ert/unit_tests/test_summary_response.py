@@ -14,6 +14,7 @@ from ert.storage.local_ensemble import load_parameters_and_responses_from_runpat
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+@pytest.mark.slow
 async def test_load_summary_response_restart_not_zero(
     tmpdir, snapshot, request, storage, run_args
 ):

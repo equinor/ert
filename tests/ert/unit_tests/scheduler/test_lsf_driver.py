@@ -1374,6 +1374,7 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     assert job_id in driver._bhist_cache
 
 
+@pytest.mark.slow
 async def test_no_exception_when_no_access_to_bjobs_executable(
     not_found_bjobs, caplog, job_name
 ):

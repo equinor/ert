@@ -105,6 +105,7 @@ def test_configpath_in_defs(tmp_path, monkeypatch):
     assert expected_definitions_after_load == loaded_config.definitions
 
 
+@pytest.mark.slow
 def test_dependent_definitions(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     current_working_directory = Path.cwd()

@@ -471,6 +471,7 @@ def test_workflow_success():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.slow
 def test_workflow_stops_with_stopping_job():
     WorkflowCommon.createExternalDumpJob()
     with Path("dump_failing_job").open("a", encoding="utf-8") as f:
@@ -553,6 +554,7 @@ def test_that_cancel_does_not_block_on_an_uncooperative_internal_job():
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+@pytest.mark.slow
 def test_that_a_cancel_call_racing_with_job_startup_still_cancels_the_job(
     monkeypatch,
 ):
@@ -594,6 +596,7 @@ def test_that_a_cancel_call_racing_with_job_startup_still_cancels_the_job(
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+@pytest.mark.slow
 def test_that_cancel_does_not_block_while_the_next_job_is_being_constructed(
     monkeypatch,
 ):

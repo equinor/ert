@@ -556,6 +556,7 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     update_runmodels(),
     st.data(),
 )
+@pytest.mark.slow
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
@@ -600,6 +601,7 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     multidass(),
     st.data(),
 )
+@pytest.mark.slow
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],

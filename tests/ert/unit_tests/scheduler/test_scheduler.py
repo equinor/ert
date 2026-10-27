@@ -96,6 +96,7 @@ async def test_single_job(realization, mock_driver):
     assert await future == realization.iens
 
 
+@pytest.mark.slow
 async def test_cancel(realization, mock_driver):
     pre = asyncio.Event()
     post = asyncio.Event()
@@ -339,6 +340,7 @@ async def test_max_runtime_while_killing(realization, mock_driver):
 
 
 @pytest.mark.timeout(6)
+@pytest.mark.slow
 async def test_that_job_does_not_retry_when_killed_by_scheduler(
     realization, mock_driver
 ):
@@ -416,6 +418,7 @@ async def test_job_exception_correctly_propagates(mock_driver, realization, capl
 
 @pytest.mark.timeout(6)
 @pytest.mark.parametrize("should_fail", [True, False])
+@pytest.mark.slow
 async def test_that_failed_realization_will_not_be_cancelled(
     should_fail, realization, mock_driver
 ):
@@ -447,6 +450,7 @@ async def test_that_failed_realization_will_not_be_cancelled(
     assert kill_called == (not should_fail)
 
 
+@pytest.mark.slow
 @pytest.mark.timeout(6)
 async def test_that_long_running_jobs_were_stopped(
     storage, tmp_path, mock_driver, caplog
@@ -598,6 +602,7 @@ async def mock_failure(message, *args, **kwargs):
 
 
 @pytest.mark.timeout(5)
+@pytest.mark.slow
 async def test_that_driver_poll_exceptions_are_propagated(mock_driver, realization):
     driver = mock_driver()
 
@@ -612,6 +617,7 @@ async def test_that_driver_poll_exceptions_are_propagated(mock_driver, realizati
 
 
 @pytest.mark.timeout(5)
+@pytest.mark.slow
 async def test_that_publisher_exceptions_are_propagated(
     mock_driver, realization, monkeypatch
 ):
@@ -628,6 +634,7 @@ async def test_that_publisher_exceptions_are_propagated(
 
 
 @pytest.mark.timeout(5)
+@pytest.mark.slow
 async def test_that_process_event_queue_exceptions_are_propagated(
     mock_driver, realization, monkeypatch
 ):
@@ -756,6 +763,7 @@ async def test_log_warnings_from_forward_model_is_run_once_per_ensemble(
     mocked_stdouterr_parser.assert_called_once()
 
 
+@pytest.mark.slow
 async def test_schedule_kills_in_batches(
     tmp_path, mock_driver, monkeypatch, storage, caplog
 ):
@@ -823,6 +831,7 @@ async def test_schedule_kills_in_batches(
 
 
 @pytest.mark.timeout(10)
+@pytest.mark.slow
 async def test_batch_killing_runs_batches_in_parallell(
     tmp_path, mock_driver, monkeypatch, storage, caplog
 ):
@@ -899,6 +908,7 @@ async def test_batch_killing_runs_batches_in_parallell(
 
 
 @pytest.mark.timeout(10)
+@pytest.mark.slow
 async def test_that_scheduler_kills_jobs_when_driver_lags_after_checksum(
     realization, mock_driver, caplog
 ):

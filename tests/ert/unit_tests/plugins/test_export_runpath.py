@@ -34,6 +34,7 @@ def writing_setup(setup_case):
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+@pytest.mark.slow
 def test_export_runpath_empty_range(writing_setup):
     writing_setup, run_paths = writing_setup
 

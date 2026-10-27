@@ -220,6 +220,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     )
 
 
+@pytest.mark.slow
 def test_update_handles_precision_loss_in_std_dev(tmp_path):
     """
     This is a regression test for precision loss in calculating
@@ -451,6 +452,7 @@ def test_that_posterior_gen_kw_values_match_expected_on_snake_oil(
         ),
     ],
 )
+@pytest.mark.slow
 def test_that_alpha_can_be_used_for_outlier_detection(
     alpha, expected, storage, uniform_parameter, obs, expectation
 ):
@@ -569,6 +571,7 @@ def test_that_update_strategies_are_logged_in_clusters(caplog, update_strategy):
     "update_strategy",
     [LocalizationType.ADAPTIVE, LocalizationType.GLOBAL],
 )
+@pytest.mark.slow
 def test_that_constant_parameter_is_skipped_with_warning_and_carried_over(
     storage, obs, caplog, update_strategy
 ):
@@ -661,6 +664,7 @@ def test_that_constant_parameter_is_skipped_with_warning_and_carried_over(
     assert np.array_equal(prior_values, posterior_values)
 
 
+@pytest.mark.slow
 def test_that_adaptive_localization_skips_batch_where_all_parameters_are_constant():
     """When adaptive localization splits parameters into several batches and a
     whole batch consists only of zero-variance parameters, that batch must be
@@ -1340,6 +1344,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.slow
 def test_gen_data_missing(storage, uniform_parameter, obs):
     response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
     experiment = storage.create_experiment(
@@ -1408,6 +1413,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.slow
 def test_update_subset_parameters(storage, uniform_parameter, obs):
     ensemble_size = 12  # We only want to update 0-9
     active_realizations = [True] * 10 + [False] * 2

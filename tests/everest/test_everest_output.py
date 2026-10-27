@@ -32,6 +32,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("everest.bin.everest_script.run_server_monitor")
 @patch("everest.bin.everest_script.start_server")
+@pytest.mark.slow
 def test_save_running_config(
     mock_start_server,
     mock_run_server_monitor,

@@ -104,6 +104,7 @@ def test_runner_can_extract_base_name(data_path: str, expected: str):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.slow
 def test_await_completed_summary_file_will_return_asap():
     resfo.write("FOO_ASAP.UNSMRY", [("INTEHEAD", np.array([1], dtype=np.int32))])
     assert (

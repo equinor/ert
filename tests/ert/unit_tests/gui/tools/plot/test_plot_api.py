@@ -23,6 +23,7 @@ def _autouse_patch_ertclient_to_testclient(patch_ertclient_to_testclient):
     pass
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("status_code", "blobs", "expected"),
     [
@@ -43,6 +44,7 @@ def test_that_has_kalman_gain_requires_a_matrix_k_blob(
     assert api.has_kalman_gain("ensemble-id") is expected
 
 
+@pytest.mark.slow
 def test_key_def_structure(api: PlotApi):
     key_defs = api.parameters_api_key_defs + api.responses_api_key_defs
     fopr = next(x for x in key_defs if x.key == "FOPR")
@@ -100,6 +102,7 @@ def test_key_def_structure(api: PlotApi):
     assert bpr_parameter == PlotApiKeyDefinition(**bpr_parameter_expected)
 
 
+@pytest.mark.slow
 def test_case_structure(api):
     ensembles = [ensemble.name for ensemble in api.get_all_ensembles()]
     hidden_case = [
@@ -118,6 +121,7 @@ def test_case_structure(api):
     assert hidden_case == [".ensemble_2", "uninitialized_ensemble"]
 
 
+@pytest.mark.slow
 def test_can_load_data_and_observations(api):
     responses = [("BPR:1,3,8", False), ("FOPR", True)]
     ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
@@ -132,6 +136,7 @@ def test_can_load_data_and_observations(api):
         assert not data.empty
 
 
+@pytest.mark.slow
 def test_all_data_type_keys(api):
     keys = [e.key for e in (api.parameters_api_key_defs + api.responses_api_key_defs)]
     assert sorted(keys) == sorted(
@@ -147,6 +152,7 @@ def test_all_data_type_keys(api):
     )
 
 
+@pytest.mark.slow
 def test_load_history_data(api):
     ens_id = next(ens.id for ens in api.get_all_ensembles() if ens.name == "default_0")
     df = api.history_data(ensemble_ids=[ens_id], key="FOPR")
@@ -155,6 +161,7 @@ def test_load_history_data(api):
     )
 
 
+@pytest.mark.slow
 def test_load_history_data_searches_until_history_found(api):
     ensemble_ids = [
         ens.id
@@ -167,6 +174,7 @@ def test_load_history_data_searches_until_history_found(api):
     )
 
 
+@pytest.mark.slow
 def test_load_history_data_returns_empty_frame_if_no_history(api):
     ensemble_ids = [
         ens.id
@@ -177,6 +185,7 @@ def test_load_history_data_returns_empty_frame_if_no_history(api):
     assert_frame_equal(df, pd.DataFrame())
 
 
+@pytest.mark.slow
 def test_plot_api_request_errors_all_data_type_keys(api, mocker):
     # Mock the experiment name to be something unexpected
     mocker.patch(
@@ -188,6 +197,7 @@ def test_plot_api_request_errors_all_data_type_keys(api, mocker):
         api.parameters_api_key_defs + api.responses_api_key_defs
 
 
+@pytest.mark.slow
 def test_plot_api_request_errors(api):
     ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
 
@@ -212,6 +222,7 @@ def api_and_storage(monkeypatch, tmp_path):
     gc.collect()
 
 
+@pytest.mark.slow
 def test_plot_api_handles_urlescape(api_and_storage):
     api, storage, _ = api_and_storage
     key = "WBHP:46/3-7S"
@@ -273,6 +284,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
     )
 
 
+@pytest.mark.slow
 def test_plot_api_handles_empty_gen_kw(api_and_storage):
     api, storage, _ = api_and_storage
     key = "gen_kw"
@@ -312,6 +324,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     )
 
 
+@pytest.mark.slow
 def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
     api, storage, _ = api_and_storage
     experiment = storage.create_experiment(
@@ -333,6 +346,7 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
     assert api.data_for_parameter(str(ensemble.id), "gen_kw:does_not_exist").empty
 
 
+@pytest.mark.slow
 def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
     api, storage, _ = api_and_storage
     experiment = storage.create_experiment(
@@ -363,6 +377,7 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
     assert test.to_numpy() == np.array([[10]])
 
 
+@pytest.mark.slow
 def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
     api, storage, _ = api_and_storage
 
@@ -412,6 +427,7 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
     assert obs_data.shape == (5, 6)
 
 
+@pytest.mark.slow
 def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage):
     api, storage, _ = api_and_storage
     experiment = storage.create_experiment(
@@ -431,6 +447,7 @@ def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage
     assert api.observations_for_key([str(ensemble.id)], "NAIMFRAC").empty
 
 
+@pytest.mark.slow
 def test_that_data_for_response_is_empty_for_ensembles_without_responses(
     api_and_storage,
 ):
@@ -461,6 +478,7 @@ def test_that_data_for_response_is_empty_for_ensembles_without_responses(
     assert result_df.empty
 
 
+@pytest.mark.slow
 def test_that_response_key_has_observation_when_only_one_experiment_has_observations(
     api_and_storage,
 ):
@@ -546,6 +564,7 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
         )
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("well_name", ["46/3-7s", "FOPR"])
 def test_that_response_keys_do_not_match_keys_that_are_substrings(
     api_and_storage, well_name
@@ -656,6 +675,7 @@ def _create_gradient_only_ensemble(storage):
     return ensemble, objective_key
 
 
+@pytest.mark.slow
 def test_that_data_for_response_returns_empty_for_gradient_only_ensemble(
     api_and_storage,
 ):
@@ -670,6 +690,7 @@ def test_that_data_for_response_returns_empty_for_gradient_only_ensemble(
     assert result.empty
 
 
+@pytest.mark.slow
 def test_that_data_for_gradient_returns_empty_when_no_gradient_parquet_saved(
     api_and_storage,
 ):
@@ -683,6 +704,7 @@ def test_that_data_for_gradient_returns_empty_when_no_gradient_parquet_saved(
     assert result.empty
 
 
+@pytest.mark.slow
 def test_that_data_for_gradient_is_fetched_once_for_repeated_calls(api_and_storage):
     api, storage, _ = api_and_storage
     ensemble, objective_key = _create_gradient_only_ensemble(storage)
@@ -699,6 +721,7 @@ def test_that_data_for_gradient_is_fetched_once_for_repeated_calls(api_and_stora
     assert api._cached_gradient.cache_info() == expected_cache_info
 
 
+@pytest.mark.slow
 def test_that_data_for_controls_and_parameters_is_fetched_once_for_repeated_calls(api):
     ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
 

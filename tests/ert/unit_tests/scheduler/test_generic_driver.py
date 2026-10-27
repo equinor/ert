@@ -250,6 +250,7 @@ async def test_execute_with_retry_exits_on_filenotfounderror(driver: Driver, cap
     assert "/usr/bin/foo" in message
 
 
+@pytest.mark.slow
 async def test_poll_ignores_filenotfounderror(driver: Driver, caplog):
     if isinstance(driver, LocalDriver):
         pytest.skip("LocalDriver does not poll")

@@ -226,7 +226,6 @@ def snapshot_update_event_with_fm_message():
     return json.dumps(jsonable_encoder(event))
 
 
-@pytest.mark.slow
 def test_that_the_monitor_shows_failed_jobs(
     monitor_client, full_snapshot_event, snapshot_update_failure_event, capsys
 ):
@@ -258,7 +257,6 @@ def test_that_the_monitor_shows_failed_jobs(
     )
 
 
-@pytest.mark.slow
 def test_that_the_monitor_shows_running_jobs(
     monitor_client, full_snapshot_event, snapshot_update_event, capsys
 ):
@@ -286,7 +284,6 @@ def test_that_the_monitor_shows_running_jobs(
     ).translate({ord(c): None for c in string.whitespace})
 
 
-@pytest.mark.slow
 def test_that_a_forward_model_message_reaches_the_cli(
     monitor_client, full_snapshot_event, snapshot_update_event_with_fm_message, capsys
 ):
@@ -323,7 +320,6 @@ def test_that_a_forward_model_message_reaches_the_cli(
     ).translate({ord(c): None for c in string.whitespace})
 
 
-@pytest.mark.slow
 def test_that_a_failed_everest_batch_result_event_is_shown(
     monitor_client, everest_batch_result_event, capsys
 ):

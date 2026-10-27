@@ -441,6 +441,7 @@ def test_large_snapshot(
         ),
     ],
 )
+@pytest.mark.slow
 def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog):
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
@@ -513,6 +514,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
         ),
     ],
 )
+@pytest.mark.slow
 def test_run_dialog_memory_usage_showing(
     events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):

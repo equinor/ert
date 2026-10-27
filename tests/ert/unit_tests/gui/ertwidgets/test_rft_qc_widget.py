@@ -552,6 +552,7 @@ def _mock_rft_ensemble(
     ],
 )
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.slow
 def test_that_response_file_path_is_resolved(qtbot, eclbase):
     ert_config = ErtConfig.from_dict(
         {
@@ -596,6 +597,7 @@ def test_that_missing_response_file_shows_warning(qtbot):
     assert widget._load_status_label.text().startswith("Could not load responses")
 
 
+@pytest.mark.slow
 def test_that_malformed_response_file_shows_warning(qtbot):
     ensemble = _mock_rft_ensemble(
         stored_observations=None,
@@ -734,6 +736,7 @@ def test_that_missing_rft_file_keeps_load_toggle_disabled(qtbot):
     assert not widget._load_rft_file_toggle.isEnabled()
 
 
+@pytest.mark.slow
 def test_that_observations_status_column_is_added(qtbot):
     # fmt: off
     observations = [
@@ -829,6 +832,7 @@ def test_that_observations_status_column_is_added(qtbot):
     ]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("with_observations"),
     [
@@ -1128,6 +1132,7 @@ def pick_point(plot: RftPlot, index: int) -> None:
     _dispatch_mouse_event(plot, "button_press_event", x, y, button=MouseButton.LEFT)
 
 
+@pytest.mark.slow
 def test_that_observations_can_be_loaded_without_responses(qtbot):
     widget = _rft_qc_widget(
         qtbot, _two_point_ensemble(with_observations=True, with_responses=False)
@@ -1138,6 +1143,7 @@ def test_that_observations_can_be_loaded_without_responses(qtbot):
     ]
 
 
+@pytest.mark.slow
 def test_that_selecting_point_shows_point_details(qtbot):
     widget = _rft_qc_widget(
         qtbot, _two_point_ensemble(), file_response=_two_point_file_response()
@@ -1238,6 +1244,7 @@ def test_that_utm_toggle_is_unchecked_when_coordinates_become_unavailable(qtbot)
     assert not panel._toggle_utm_coords.isEnabled()
 
 
+@pytest.mark.slow
 def test_that_runpath_is_resolved_from_ert_config(qtbot):
     ert_config = ErtConfig.from_dict({"RUNPATH": "runpath/real-<IENS>/iter-<ITER>"})
     widget = RftQcWidget(ert_config)
@@ -1252,6 +1259,7 @@ def test_that_runpath_is_resolved_from_ert_config(qtbot):
     assert runpath.endswith("runpath/real-1/iter-0")
 
 
+@pytest.mark.slow
 def test_that_utm_is_reset_and_made_unavailable_when_cell_center_info_is_missing(qtbot):
     # Legacy ert runs did not store cell_center information for rft responses
     # The RFT QC tool handles this by disabling the UTM toggle when cell_center
@@ -1287,6 +1295,7 @@ def test_that_utm_is_reset_and_made_unavailable_when_cell_center_info_is_missing
     assert not widget._filter_panel._toggle_utm_coords.isEnabled()
 
 
+@pytest.mark.slow
 def test_that_reapplying_filter_preserves_view_and_fit_restores_it(qtbot):
     widget = _rft_qc_widget(qtbot, _two_point_ensemble())
 
@@ -1312,6 +1321,7 @@ def test_that_reapplying_filter_preserves_view_and_fit_restores_it(qtbot):
     )
 
 
+@pytest.mark.slow
 def test_that_empty_redraw_clears_points_and_preserves_view_limits(qtbot):
     plot = RftPlot(lambda *_: None, lambda: None)
     empty = pl.DataFrame(schema=DisplayPoints.schema())
@@ -1337,6 +1347,7 @@ def test_that_empty_redraw_clears_points_and_preserves_view_limits(qtbot):
     assert plot._ax.get_zlim() == pytest.approx((-1, 1))
 
 
+@pytest.mark.slow
 def test_that_center_on_selected_recenters_view_on_selected_point(qtbot):
     widget = _rft_qc_widget(qtbot, _two_point_ensemble())
     plot = widget._plot
@@ -1378,6 +1389,7 @@ def test_that_center_on_selected_recenters_view_on_selected_point(qtbot):
         assert (lo + hi) / 2 == pytest.approx(c)
 
 
+@pytest.mark.slow
 def test_that_clicking_away_from_points_does_not_select_anything(qtbot):
     widget = _rft_qc_widget(qtbot, _two_point_ensemble())
     plot = widget._plot
@@ -1402,6 +1414,7 @@ def _display_points_df(
     return pl.DataFrame(rows, schema=DisplayPoints.schema(), orient="row")
 
 
+@pytest.mark.slow
 def test_that_selected_point_stays_selected_after_redraw_when_point_is_unchanged(qtbot):
     plot = RftPlot(lambda *_: None, lambda: None)
     empty = pl.DataFrame(schema=DisplayPoints.schema())
@@ -1431,6 +1444,7 @@ def test_that_selected_point_stays_selected_after_redraw_when_point_is_unchanged
     assert plot._selected_index == 0
 
 
+@pytest.mark.slow
 def test_that_selection_falls_back_to_same_cell_when_coordinates_change_after_redraw(
     qtbot,
 ):
@@ -1461,6 +1475,7 @@ def test_that_selection_falls_back_to_same_cell_when_coordinates_change_after_re
     assert plot._selected_index == 0
 
 
+@pytest.mark.slow
 def test_that_selection_is_cleared_when_selected_cell_is_absent_after_redraw(qtbot):
     plot = RftPlot(lambda *_: None, lambda: None)
     empty = pl.DataFrame(schema=DisplayPoints.schema())
@@ -1487,6 +1502,7 @@ def test_that_selection_is_cleared_when_selected_cell_is_absent_after_redraw(qtb
     assert plot._selected_index is None
 
 
+@pytest.mark.slow
 def test_that_selected_point_is_kept_based_on_cell_index_if_utm_coords_missing(qtbot):
     plot = RftPlot(lambda *_: None, lambda: None)
     empty = pl.DataFrame(schema=DisplayPoints.schema())
@@ -1514,6 +1530,7 @@ def test_that_selected_point_is_kept_based_on_cell_index_if_utm_coords_missing(q
     assert plot._selected_index == 0
 
 
+@pytest.mark.slow
 def test_that_scrolling_over_a_point_does_not_select_it(qtbot):
     widget = _rft_qc_widget(qtbot, _two_point_ensemble())
     plot = widget._plot
@@ -1535,6 +1552,7 @@ def hover_plot(plot: RftPlot, x: float, y: float) -> None:
     _dispatch_mouse_event(plot, "motion_notify_event", x, y)
 
 
+@pytest.mark.slow
 def test_that_hovering_over_point_highlights_it_and_moving_away_clears_it(qtbot):
     widget = _rft_qc_widget(qtbot, _two_point_ensemble())
     plot = widget._plot
@@ -1574,6 +1592,7 @@ def scroll_plot(
     )
 
 
+@pytest.mark.slow
 def test_that_scrolling_zooms_the_view(qtbot):
     widget = _rft_qc_widget(qtbot, _two_point_ensemble())
     plot = widget._plot
