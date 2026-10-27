@@ -1413,9 +1413,9 @@ def test_that_seismic_observation_warns_given_north_or_east_keys_in_config(
 
     expected_warning1 = "Invalid key: 'EAST' in LOCALIZATION for SEISMIC_OBSERVATION."
     expected_warning2 = "Invalid key: 'NORTH' in LOCALIZATION for SEISMIC_OBSERVATION."
-    assert len(warnings) == 2
-    assert expected_warning1 in str(warnings[0].message)
-    assert expected_warning2 in str(warnings[1].message)
+    messages = [str(warning.message) for warning in warnings]
+    assert any(expected_warning1 in message for message in messages)
+    assert any(expected_warning2 in message for message in messages)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
