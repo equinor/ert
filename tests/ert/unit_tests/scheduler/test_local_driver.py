@@ -119,7 +119,7 @@ async def test_kill_when_job_completed(cmd, returncode, use_tmpdir):
     )
 
 
-async def test_that_killing_killed_job_does_not_raise(use_tmpdir):
+async def test_that_killing_killed_job_does_not_raise():
     driver = LocalDriver()
     await driver.submit(23, "/usr/bin/env", "sleep", "10")
     assert await driver.event_queue.get() == StartedEvent(iens=23)

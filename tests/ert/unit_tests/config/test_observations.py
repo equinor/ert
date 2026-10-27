@@ -1408,7 +1408,6 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
             )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_general_observations_data_must_match_a_gen_datas_name(file_context_token):
     with pytest.raises(
         ConfigValidationError,
@@ -1439,7 +1438,6 @@ def test_that_general_observations_data_must_match_a_gen_datas_name(file_context
         )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_general_observation_restart_must_match_gen_data_report_step(
     file_context_token,
 ):
@@ -2340,9 +2338,7 @@ def test_that_missing_summary_observations_name_is_defaulted_to_primary_key():
     assert obs_name == f"{key}:{date}"
 
 
-def test_that_missing_gen_obs_name_is_defaulted_to_primary_key_without_obs_file(
-    use_tmpdir,
-):
+def test_that_missing_gen_obs_name_is_defaulted_to_primary_key_without_obs_file():
     obs_config_contents = """
         GENERAL_OBSERVATION {
            DATA    = GEN;

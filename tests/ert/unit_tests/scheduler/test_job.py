@@ -198,7 +198,6 @@ async def test_job_run_sends_expected_events(
     assert scheduler.driver.submit.call_count == max_submit
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.asyncio
 async def test_num_cpu_is_propagated_to_driver(realization: Realization):
     realization.num_cpu = 8
@@ -221,7 +220,6 @@ async def test_num_cpu_is_propagated_to_driver(realization: Realization):
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.asyncio
 async def test_realization_memory_is_propagated_to_driver(realization: Realization):
     realization.realization_memory = 8 * 1024**2
@@ -351,7 +349,6 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
     assert f"File {file_path} checksum verification failed." in log_msgs
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.asyncio
 async def test_when_no_checksum_info_is_received_a_warning_is_logged(
     realization: Realization, mocker

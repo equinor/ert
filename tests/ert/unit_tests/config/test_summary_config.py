@@ -67,7 +67,6 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmp
         )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_directory(
     tmp_path,
 ):

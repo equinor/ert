@@ -644,7 +644,6 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
 
 @pytest.mark.parametrize("c", ["\\", "?", "+", ":", "*"])
 @pytest.mark.filterwarnings("ignore:RUNPATH keyword contains no value placeholders")
-@pytest.mark.usefixtures("use_tmpdir")
 def test_char_in_unquoted_is_allowed(c):
     ert_config = ErtConfig.from_file_contents(
         dedent(
@@ -797,7 +796,6 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
     assert step_json["jobList"][0]["environment"]["FOO"] == anystring
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -827,7 +825,6 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
     assert "FOO" not in step_json["jobList"][0]["environment"]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -852,7 +849,6 @@ def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
     assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -877,7 +873,6 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
     assert step_json["jobList"][0]["environment"]["FOO"] == "{'a_dict_as_value': 1}"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -1193,7 +1188,6 @@ def test_that_define_can_set_substitutions_to_the_empty_string():
     assert ert_config.substitutions.get("<TEST1>") == ""  # ruff: ignore[compare-to-empty-string]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_quoted_arguments_to_define_escapes_spaces_and_comments():
     ert_Config = ErtConfig.from_file_contents(
         dedent(
@@ -1361,7 +1355,7 @@ def test_that_defines_in_included_files_has_immediate_effect():
     assert "baz-<ITER>-<IENS>" in ert_config.runpath_config.runpath_format_string
 
 
-@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_multiple_errors_are_shown_for_forward_model():
     with pytest.raises(ConfigValidationError) as err:
@@ -1394,7 +1388,6 @@ def test_that_multiple_errors_are_shown_for_forward_model():
         assert any(line.endswith(msg) for line in cli_message.splitlines())
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefine_behavior_is_consistent_with_setting_environment_variables():
     ert_config = ErtConfig.from_file_contents(
         dedent(
@@ -1843,7 +1836,6 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
         "ECLIPSE100",
     ],
 )
-@pytest.mark.usefixtures("use_tmpdir")
 def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
     with warnings.catch_warnings():
@@ -3039,7 +3031,6 @@ def test_that_hooked_workflows_across_include_are_ordered_by_declaration(
     assert actual_hook_order == ["inline_wf_before", "loaded_wf", "inline_wf_after"]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_hooked_workflows_are_ordered_when_name_uses_a_define(
     ert_config_with_job,
 ):
