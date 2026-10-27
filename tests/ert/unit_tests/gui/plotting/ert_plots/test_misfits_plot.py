@@ -259,6 +259,7 @@ def test_that_box_and_scatter_plot_is_being_plotted_for_summary_data(
     assert len(axes.patches) == 3  # 2 boxes + background patch
 
 
+@pytest.mark.slow
 def test_that_mean_gets_plotted_for_summary_data_when_enabled(
     make_ensemble, make_plot_context, make_key_def
 ):

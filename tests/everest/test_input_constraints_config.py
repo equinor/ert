@@ -88,6 +88,7 @@ def test_input_constraint_control_references(tmp_path, capsys, monkeypatch):
     assert not capsys.readouterr().out
 
 
+@pytest.mark.slow
 def test_that_auto_scale_and_input_constraints_scale_are_mutually_exclusive():
     with pytest.raises(
         ValueError,

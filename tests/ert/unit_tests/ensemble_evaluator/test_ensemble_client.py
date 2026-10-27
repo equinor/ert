@@ -49,6 +49,7 @@ async def test_retry():
     assert mock_server.messages.count("test_3") == 1
 
 
+@pytest.mark.slow
 async def test_reconnect_when_missing_heartbeat(monkeypatch):
     async with MockZMQServer(filtered_message_types=[]) as mock_server:
         monkeypatch.setattr(_ert.forward_model_runner.client, "HEARTBEAT_TIMEOUT", 0.01)

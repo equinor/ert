@@ -56,6 +56,7 @@ async def test_kill_while_running():
 @pytest.mark.parametrize(
     "sleep_before_killing", [None, 0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 )
+@pytest.mark.slow
 async def test_kill_before_running(sleep_before_killing):
     driver = LocalDriver()
 

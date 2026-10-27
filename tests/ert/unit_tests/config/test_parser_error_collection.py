@@ -1014,6 +1014,7 @@ DEFINE A <2>
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.slow
 def test_that_deprecations_are_handled(contents, expected_errors):
     for expected_error in expected_errors:
         assert_that_config_leads_to_warning(

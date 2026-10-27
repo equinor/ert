@@ -871,6 +871,7 @@ def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
     )
 
 
+@pytest.mark.slow
 def test_that_plugin_forward_model_raises_pre_realization_validation_error():
     class FM1(ForwardModelStepPlugin):
         def __init__(self) -> None:

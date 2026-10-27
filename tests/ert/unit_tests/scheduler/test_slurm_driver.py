@@ -140,6 +140,7 @@ async def test_exclude_is_set(exclude):
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(include=st.text(st.characters(whitelist_categories=("Lu",)), min_size=1))
 @settings(max_examples=10)
+@pytest.mark.slow
 async def test_include_is_set(include):
     driver = SlurmDriver(include_hosts=f"{include}")
     await driver.submit(0, "sleep", name="myjobname")
@@ -299,6 +300,7 @@ def mock_slurm(pytestconfig, monkeypatch, tmp_path):
     mock_bin(monkeypatch, tmp_path)
 
 
+@pytest.mark.slow
 async def test_slurm_stdout_file(job_name, use_tmpdir):
     driver = SlurmDriver()
     driver._poll_period = 0.01
@@ -309,6 +311,7 @@ async def test_slurm_stdout_file(job_name, use_tmpdir):
     assert "yay" in slurm_stdout
 
 
+@pytest.mark.slow
 async def test_slurm_dumps_stderr_to_file(job_name, use_tmpdir):
     driver = SlurmDriver()
     driver._poll_period = 0.01
@@ -456,6 +459,7 @@ async def test_kill_before_submit_is_finished(
 
 
 @pytest.mark.parametrize(("cmd", "exit_code"), [("true", 0), ("false", 1)])
+@pytest.mark.slow
 async def test_slurm_uses_sacct(
     monkeypatch, tmp_path, caplog, cmd, exit_code, pytestconfig
 ):
@@ -486,6 +490,7 @@ async def test_slurm_uses_sacct(
     assert "scontrol failed, trying sacct" in caplog.text
 
 
+@pytest.mark.slow
 async def test_slurm_timeout(monkeypatch, caplog, pytestconfig, use_tmpdir):
     caplog.set_level(logging.INFO)
 

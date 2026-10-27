@@ -122,6 +122,7 @@ def test_everest_entry(
     "everest.bin.kill_script.ErtClient",
     **{"get_client.side_effect": TimeoutError()},
 )
+@pytest.mark.slow
 def test_everest_entry_detached_already_run(
     kill_script_api_mock,
     everest_script_api_mock,
@@ -204,6 +205,7 @@ def test_everest_entry_detached_already_run_monitor(
     "everest.bin.kill_script.ErtClient",
     **{"get_client.return_value.stop_server.return_value": True},
 )
+@pytest.mark.slow
 def test_everest_entry_detached_running(
     kill_api_mock,
     start_server_mock,

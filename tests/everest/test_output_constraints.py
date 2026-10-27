@@ -60,6 +60,7 @@ def test_that_auto_scale_and_constraints_scale_are_mutually_exclusive():
         )
 
 
+@pytest.mark.slow
 def test_upper_bound_output_constraint_def(tmp_path):
     output_constraint_definition = OutputConstraintConfig(
         name="some_name",

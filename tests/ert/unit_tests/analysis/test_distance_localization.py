@@ -58,6 +58,7 @@ def _surface_config(ncol: int, nrow: int) -> SurfaceConfig:
     )
 
 
+@pytest.mark.slow
 def test_that_distance_localization_updates_all_z_layers_at_observation_xy(tmp_path):
     """
     Places a single observation in the corner cell (0, 0) with a short correlation

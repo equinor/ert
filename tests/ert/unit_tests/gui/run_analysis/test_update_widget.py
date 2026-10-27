@@ -118,6 +118,7 @@ def verify_disabled_observations_dialog_shows_on_click(
     click_on_table_cell(qtbot, report_table, row, column)
 
 
+@pytest.mark.slow
 def test_that_report_log_table_only_shows_message_on_nan_status_click(qtbot: QtBot):
     headers = ["status", "value", "missing_realizations"]
     status_column = 0

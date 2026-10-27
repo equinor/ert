@@ -46,6 +46,7 @@ def create_experiment_from_config(config: ErtConfig, storage):
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
+@pytest.mark.slow
 def test_that_missing_response_for_observation_response_key_does_not_crash(
     qtbot, storage
 ):
@@ -102,6 +103,7 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
         pytest.param(100, id="threshold is never reached"),
     ],
 )
+@pytest.mark.slow
 def test_that_breakthrough_experiment_does_not_crash(qtbot, storage, value_modifier):
     date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     key = "WWCT:OP1"
@@ -149,6 +151,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage, value_modif
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.slow
 def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
     date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
     config = ErtConfig.from_dict(
@@ -239,6 +242,7 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
     ("approximate_missing_rft_values", "visualized_responses"), [(True, 1), (False, 0)]
 )
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.slow
 def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_enabled(
     qtbot, storage, approximate_missing_rft_values, visualized_responses
 ):
@@ -348,6 +352,7 @@ def verify_number_of_visualized_responses(ensemble_widget, expected_num_response
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.slow
 def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     qtbot, storage
 ):
@@ -505,6 +510,7 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     verify_number_of_visualized_responses(ensemble_widget, expected_num_responses=1)
 
 
+@pytest.mark.slow
 def test_that_seismic_observations_use_tolerance_on_response_match(qtbot, storage):
     observation = create_seismic_observation(east=1.0, north=1.0)
     response0 = create_seismic_response(east=1.05, north=1.05)
@@ -566,6 +572,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
 
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
+@pytest.mark.slow
 def test_that_observations_in_the_tree_are_constrained_by_response_key(qtbot, storage):
     name = "obs"
     key1 = "key1"
@@ -605,6 +612,7 @@ def test_that_observations_in_the_tree_are_constrained_by_response_key(qtbot, st
         assert top.childCount() == 1
 
 
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
 @pytest.mark.parametrize(
     ("observations", "expected_name_order"),

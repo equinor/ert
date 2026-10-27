@@ -607,6 +607,7 @@ def test_that_general_option_checkboxes_change_rendered_plot(
     qtbot.waitUntil(general_options.isVisible, timeout=5000)
 
 
+@pytest.mark.slow
 def test_that_log_scale_state_is_preserved_when_switching_plot_tabs(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, mock_plot_api: MagicMock
 ):
@@ -732,6 +733,7 @@ def _current_tab_name(plot_window: PlotWindow) -> str:
     return plot_window._central_tab.tabText(plot_window._central_tab.currentIndex())
 
 
+@pytest.mark.slow
 def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, mock_plot_api: MagicMock
 ):
@@ -752,6 +754,7 @@ def test_that_default_plot_tab_is_unaffected_by_plot_map_ordering(
     assert _current_tab_name(plot_window) == ENSEMBLE
 
 
+@pytest.mark.slow
 def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_it(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
@@ -776,6 +779,7 @@ def test_that_plot_tab_last_used_for_a_data_type_is_restored_when_returning_to_i
         pytest.param([0.1, 0.5, 0.9], True, id="positive-values"),
     ],
 )
+@pytest.mark.slow
 def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
     qtbot: QtBot,
     tab_name: str,
@@ -894,6 +898,7 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
         pytest.param("y", id="y-axis"),
     ],
 )
+@pytest.mark.slow
 def test_that_clicking_axis_label_emits_edit_request(qtbot: QtBot, axis: str):
     ensemble = EnsembleObject(
         "ensemble",
@@ -999,6 +1004,7 @@ def test_that_clicking_title_emits_edit_request(qtbot: QtBot):
         pytest.param("title", id="title"),
     ],
 )
+@pytest.mark.slow
 def test_that_hovering_editable_text_shows_it_as_clickable(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, text_kind: str
 ):
@@ -1159,6 +1165,7 @@ def test_that_sidebar_axis_label_edit_uses_configured_or_visible_label(
         ),
     ],
 )
+@pytest.mark.slow
 def test_that_axis_label_edit_updates_or_preserves_persistent_config(
     qtbot: QtBot,
     axis: str,
@@ -1297,6 +1304,7 @@ def test_that_breakthrough_response_title_keeps_the_breakthrough_prefix(
     assert plot_widget._figure.axes[0].get_title() == "BREAKTHROUGH:WWCT:OP1"
 
 
+@pytest.mark.slow
 def test_that_resetting_axis_label_restores_histogram_default_label(qtbot: QtBot):
     ensemble = EnsembleObject(
         "ensemble",
@@ -1408,6 +1416,7 @@ def test_that_seismic_y_label_is_created(key, expected_y_label):
     assert label == expected_y_label
 
 
+@pytest.mark.slow
 def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
@@ -1527,6 +1536,7 @@ def _select_additional_ensemble(plot_window: PlotWindow, row: int) -> None:
 
 
 @pytest.mark.parametrize("tab_name", [MISFIT_MAP, OBSERVATIONS_MAP])
+@pytest.mark.slow
 def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
     qtbot: QtBot, tab_name: str, mock_plot_api: MagicMock
 ):
@@ -1544,6 +1554,7 @@ def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
     assert len(selection_widget.get_selected_ensembles()) == 1
 
 
+@pytest.mark.slow
 def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
@@ -1564,6 +1575,7 @@ def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit
     )
 
 
+@pytest.mark.slow
 def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_limit(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
@@ -1584,6 +1596,7 @@ def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_lim
     )
 
 
+@pytest.mark.slow
 def test_that_selecting_a_key_restoring_the_misfit_map_tab_narrows_selection_to_one(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):

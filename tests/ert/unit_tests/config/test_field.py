@@ -22,6 +22,7 @@ from ert.field_utils import (
 from ert.sample_prior import sample_prior
 
 
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 @pytest.mark.filterwarnings("ignore:EGrid file given with numres < 1")
 def test_write_to_runpath_produces_the_transformed_field_in_storage(
