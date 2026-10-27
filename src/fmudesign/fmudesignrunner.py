@@ -298,9 +298,8 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
 
     # Verify that all examples in EXAMPLES_DIR exist on disk
     for example in EXAMPLES:
-        assert (EXAMPLES_DIR / example.filename).is_file(), (
-            f"Example file '{example.filename}' does not exist"
-        )
+        if not (EXAMPLES_DIR / example.filename).is_file():
+            raise FmudesignError(f"Example file '{example.filename}' does not exist")
 
     # No files were provided
     if not args.file:
@@ -310,8 +309,9 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     filename = args.file.strip()
     examples_by_filename = {example.filename: example for example in EXAMPLES}
     if filename not in examples_by_filename:
-        print(f"Error on {filename!r}. Not found among: {set(examples_by_filename)}")
-        sys.exit(1)
+        raise FmudesignError(
+            f"Error on {filename!r}. Not found among: {set(examples_by_filename)}"
+        )
 
     example = examples_by_filename[filename]
     destinations = [filename, *example.other_files]
@@ -319,9 +319,11 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
         destination for destination in destinations if Path(destination).exists()
     ]
     if existing_destinations:
-        for destination in existing_destinations:
-            print(f"Error on {destination!r}. Already exists.")
-        sys.exit(1)
+        err = "\n".join(
+            f"Error on {destination!r}. Already exists."
+            for destination in existing_destinations
+        )
+        raise FmudesignError(err)
 
     with as_file(EXAMPLES_DIR / filename) as source_path:
         shutil.copy(source_path, filename)
@@ -331,8 +333,6 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
         with as_file(EXAMPLES_DIR / other_file) as source_path:
             shutil.copy(source_path, other_file)
             print(f"  Created auxiliary file {other_file!r}.")
-
-    sys.exit(0)
 
 
 @tracer.start_as_current_span("fmudesign.application.start")
