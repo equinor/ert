@@ -53,7 +53,7 @@ class TimestampedFileHandler(logging.FileHandler):
         else:
             filename = f"{filename}-{timestamp}{extension}"
 
-        if kwargs.pop("use_log_dir_from_env", False) and "ERT_LOG_DIR" in os.environ:
+        if "ERT_LOG_DIR" in os.environ:
             log_dir = os.environ["ERT_LOG_DIR"]
             filepath = Path(log_dir) / filename
             filepath.parent.mkdir(exist_ok=True, parents=True)
