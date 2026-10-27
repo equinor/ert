@@ -64,7 +64,13 @@ def plotCross(
     plot_context.deactivate_date_support()
 
     if observation_data.empty:
-        axes.text(0.5, 0.5, "No observations available", ha="center", va="center")
+        axes.text(
+            0.5,
+            0.5,
+            "No observations or responses are available for selected data type key",
+            ha="center",
+            va="center",
+        )
         axes.set_axis_off()
         return
 
