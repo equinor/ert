@@ -246,16 +246,14 @@ class ForwardModelStep:
                 if exit_code is not None:
                     break
             except TimeoutExpired:
-                potential_exited_msg = (
-                    self.handle_process_timeout_and_create_exited_msg(
-                        exit_code,
-                        proc,  # type: ignore
-                        run_start_time,
-                    )
-                )
-                if isinstance(potential_exited_msg, Exited):
+                if self._has_exceeded_max_running_minutes(run_start_time):
+                    self._kill_process_group_if_separate(proc)
                     self._close_streams_and_remove_empty_outputs(stdin, stdout, stderr)
-                    yield potential_exited_msg
+                    yield Exited(self, exit_code).with_error(
+                        f"Step:{self.name()} has been running "
+                        f"for more than {self.step_data.get('max_running_minutes')} "
+                        "minutes - explicitly killed."
+                    )
                     return
 
             (memory_rss, cpu_seconds_snapshot, oom_score, pids) = _get_processtree_data(
@@ -347,21 +345,15 @@ class ForwardModelStep:
             f"Process exited with status code {exited_message.exit_code}"
         )
 
-    def handle_process_timeout_and_create_exited_msg(
-        self,
-        exit_code: int | None,
-        proc: Popen[Process],  # type: ignore
-        run_start_time: dt.datetime,
-    ) -> Exited | None:
+    def _has_exceeded_max_running_minutes(self, run_start_time: dt.datetime) -> bool:
         max_running_minutes = self.step_data.get("max_running_minutes")
-
+        if max_running_minutes is None:
+            return False
         run_time = dt.datetime.now(tz=dt.UTC) - run_start_time
-        if (
-            max_running_minutes is None
-            or run_time.total_seconds() < max_running_minutes * 60
-        ):
-            return None
+        return run_time.total_seconds() >= max_running_minutes * 60
 
+    @staticmethod
+    def _kill_process_group_if_separate(proc: Popen[bytes]) -> None:
         # If the spawned process is not in the same process group as
         # the callee (fm_dispatch), we will kill the process group
         # explicitly.
@@ -372,12 +364,6 @@ class ForwardModelStep:
         this_group_id = os.getpgid(os.getpid())
         if process_group_id != this_group_id:
             os.killpg(process_group_id, signal.SIGKILL)
-
-        return Exited(self, exit_code).with_error(
-            f"Step:{self.name()} has been running "
-            f"for more than {max_running_minutes} "
-            "minutes - explicitly killed."
-        )
 
     def _handle_process_io_error_and_create_exited_message(
         self, e: OSError, stderr: io.TextIOWrapper | None
