@@ -76,7 +76,10 @@ def test_that_plot_cross_shows_no_observations_message_when_observation_data_is_
         response_type="seismic",
     )
 
-    assert fig.axes[0].texts[0].get_text() == "No observations available"
+    assert (
+        fig.axes[0].texts[0].get_text()
+        == "No observations or responses are available for selected data type key"
+    )
     assert not fig.axes[0].axison
 
 
