@@ -1,5 +1,4 @@
-from typing import Any
-
+import numpy as np
 import polars as pl
 
 from ert.config._shapes import PolygonShapeConfig, ShapeRegistry
@@ -92,22 +91,23 @@ def _qc_observation_location_is_inside_boundary(
     considered an error, they are just silently removed.
     """
 
-    def is_inside_boundary(row: dict[str, Any]) -> bool:
-        boundary_id = row["boundary_id"]
-        if boundary_id is None:
-            return True
+    boundary_ids = df["boundary_id"]
+    east = df["east"].to_numpy()
+    north = df["north"].to_numpy()
+    keep_row = np.ones(df.height, dtype=np.bool_)
+
+    for boundary_id in boundary_ids.drop_nulls().unique().to_list():
         boundary = shape_registry.get(boundary_id)
         assert boundary is not None, (
             f"Boundary with ID {boundary_id} not found in shape registry."
         )
         assert isinstance(boundary, PolygonShapeConfig)
-        return boundary.contains(row["east"], row["north"])
-
-    return df.filter(
-        pl.struct(["boundary_id", "east", "north"]).map_elements(
-            is_inside_boundary, return_dtype=pl.Boolean
+        rows_with_boundary = boundary_ids.eq_missing(boundary_id).to_numpy()
+        keep_row[rows_with_boundary] = boundary.contains(
+            east[rows_with_boundary], north[rows_with_boundary]
         )
-    )
+
+    return df.filter(pl.Series(keep_row))
 
 
 def qc_seismic_observations(

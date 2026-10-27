@@ -1,5 +1,6 @@
 from textwrap import dedent
 
+import numpy as np
 import pytest
 import shapely
 
@@ -257,8 +258,10 @@ def test_that_polygon_shape_preserves_holes_in_merged_polygon(mocked_files):
     )
     mocked_files["polygon.pol"] = top + bottom + left + right
     shape = PolygonShapeConfig.from_file("polygon.pol")
-    assert shape.contains(0.5, 0.5)
-    assert not shape.contains(1.5, 1.5)
+    assert shape.contains(np.array([0.5, 1.5]), np.array([0.5, 1.5])).tolist() == [
+        True,
+        False,
+    ]
 
 
 def test_that_polygon_shape_normalizes_and_simplifies_multipolygons(mocked_files):
