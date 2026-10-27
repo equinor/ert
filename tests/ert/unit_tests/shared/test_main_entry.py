@@ -44,7 +44,7 @@ def test_storage_exception_is_not_unexpected_error(caplog):
     caplog.set_level(logging.ERROR)
 
     def mock_acquire(*args, **kwargs):
-        raise filelock.Timeout
+        raise filelock.Timeout("storage.lock")
 
     file_lock_mock.acquire = mock_acquire
 
@@ -56,6 +56,7 @@ def test_storage_exception_is_not_unexpected_error(caplog):
         main.main()
     assert "ERT crashed unexpectedly" not in str(exc_info.value)
     assert "Failed to open storage" in str(exc_info.value)
+    assert "Not able to acquire lock" in str(exc_info.value)
 
 
 def test_non_writable_log_directory_exits_with_message(monkeypatch, use_tmpdir):
