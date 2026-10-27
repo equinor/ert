@@ -4,7 +4,7 @@ import pytest
 from PyQt6.QtWidgets import QComboBox, QDoubleSpinBox
 from pytestqt.qtbot import QtBot
 
-from ert.config import ESSettings, LocalizationType
+from ert.config import ESSettings, LocalizationType, ParameterType
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
@@ -39,9 +39,9 @@ def test_that_panel_initializes_with_correct_values(qtbot: QtBot):
     settings.localization_correlation_threshold = 0.5
     settings.enkf_truncation = 0.2
     update_strategies = {
-        "GEN_KW": LocalizationType.GLOBAL,
-        "SURFACE": LocalizationType.DISTANCE,
-        "FIELD": LocalizationType.ADAPTIVE,
+        ParameterType.GEN_KW: LocalizationType.GLOBAL,
+        ParameterType.SURFACE: LocalizationType.DISTANCE,
+        ParameterType.FIELD: LocalizationType.ADAPTIVE,
     }
 
     widget = AnalysisModuleVariablesPanel(
@@ -77,21 +77,21 @@ def test_that_panel_initializes_with_correct_values(qtbot: QtBot):
 @pytest.mark.parametrize(
     ("parameter_type", "initial_strategy", "changed_strategy"),
     [
-        ("GEN_KW", LocalizationType.GLOBAL, LocalizationType.ADAPTIVE),
-        ("FIELD", LocalizationType.ADAPTIVE, LocalizationType.DISTANCE),
-        ("SURFACE", LocalizationType.DISTANCE, LocalizationType.GLOBAL),
+        (ParameterType.GEN_KW, LocalizationType.GLOBAL, LocalizationType.ADAPTIVE),
+        (ParameterType.FIELD, LocalizationType.ADAPTIVE, LocalizationType.DISTANCE),
+        (ParameterType.SURFACE, LocalizationType.DISTANCE, LocalizationType.GLOBAL),
     ],
 )
 def test_that_changing_localization_control_updates_parameter_strategy_property(
     qtbot: QtBot,
-    parameter_type: str,
+    parameter_type: ParameterType,
     initial_strategy: LocalizationType,
     changed_strategy: LocalizationType,
 ):
     update_strategies = {
-        "GEN_KW": LocalizationType.GLOBAL,
-        "FIELD": LocalizationType.ADAPTIVE,
-        "SURFACE": LocalizationType.DISTANCE,
+        ParameterType.GEN_KW: LocalizationType.GLOBAL,
+        ParameterType.FIELD: LocalizationType.ADAPTIVE,
+        ParameterType.SURFACE: LocalizationType.DISTANCE,
     }
     widget = AnalysisModuleVariablesPanel(
         update_strategies=update_strategies,

@@ -56,7 +56,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
 
         if analysis_config.parameter_type_update_strategies:
             strategies_html = "".join(
-                f"<li><b>{param_type}</b>: {strategy.name}</li>"
+                f"<li><b>{param_type.name}</b>: {strategy.name}</li>"
                 for param_type, strategy in (
                     analysis_config.parameter_type_update_strategies.items()
                 )

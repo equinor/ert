@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ESSettings, LocalizationType
+from ert.config import ESSettings, LocalizationType, ParameterType
 from ert.gui.icon_utils import load_icon
 
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
@@ -25,7 +25,7 @@ class AnalysisModuleEdit(QWidget):
     def __init__(
         self,
         es_settings: ESSettings,
-        get_update_strategies: Callable[[], Mapping[str, LocalizationType]],
+        get_update_strategies: Callable[[], Mapping[ParameterType, LocalizationType]],
         ensemble_size: int,
         can_edit_update_strategies: Callable[[], bool] = lambda: True,
     ) -> None:
