@@ -5,11 +5,12 @@ from argparse import Namespace
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
-from pydantic import BaseModel
 
 from fmudesign import (
     DesignMatrix,
+    FmudesignError,
     fmudesignrunner,
 )
 from fmudesign.fmudesignrunner import (
@@ -17,6 +18,9 @@ from fmudesign.fmudesignrunner import (
     get_parser,
     subcommand_init,
     subcommand_run,
+)
+from tests.fmudesign.test_excel_to_design import (
+    _write_config_workbook,
 )
 
 
@@ -50,17 +54,23 @@ def test_that_missing_func_raises_system_exit_with_descriptive_error(
     assert "usage: fmudesign [-v] [-h] {run,init}" in stdout
 
 
-def test_that_main_catches_and_formats_validation_errors(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["fmudesign", "foo"])
+def test_that_main_catches_and_formats_validation_errors(
+    use_tmpdir, monkeypatch, capsys
+):
+    path = "foo.xlsx"
+    invalid_distribution_seed = "invalid_distribution_seed"
+    general_input = pd.DataFrame(
+        data=[
+            ["designtype", "onebyone"],
+            ["repeats", "10"],
+            ["rms_seeds", "default"],
+            ["background", "None"],
+            ["distribution_seed", invalid_distribution_seed],
+        ]
+    )
+    _write_config_workbook(path, general_input=general_input)
 
-    def validation_error(_):
-        class Foo(BaseModel):
-            x: int
-
-        Foo(x="foo")
-
-    mock_args = MagicMock(func=validation_error)
-    monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda _: mock_args)
+    monkeypatch.setattr(sys, "argv", ["fmudesign", path])
 
     with pytest.raises(SystemExit) as sys_exit:
         fmudesignrunner.main()
@@ -68,8 +78,8 @@ def test_that_main_catches_and_formats_validation_errors(monkeypatch, capsys):
 
     stdout = capsys.readouterr().out
     assert (
-        "Validation error for 'x': Input should be a valid integer, "
-        "unable to parse string as an integer, was 'foo'"
+        "Validation error for 'distribution_seed': Input should be a valid integer, "
+        f"unable to parse string as an integer, was '{invalid_distribution_seed}'"
     ) in stdout
 
 
@@ -153,7 +163,9 @@ def test_that_subcommand_run_raises_when_config_does_not_exist(use_tmpdir):
     missing_file = "does_not_exist"
     args = _create_run_args(config_file_name=missing_file)
     Path(missing_file).unlink()
-    with pytest.raises(OSError, match=f"Input file {missing_file} does not exist"):
+    with pytest.raises(
+        FmudesignError, match=f"Input file {missing_file} does not exist"
+    ):
         subcommand_run(args, parser_run)
 
 
@@ -166,7 +178,8 @@ def test_that_subcommand_run_raises_when_config_is_equal_to_destination(use_tmpd
         config_file_name=duplicate_name, destination_file_name=duplicate_name
     )
     with pytest.raises(
-        OSError, match=rf'Identical name "{duplicate_name}".*input.*output file'
+        FmudesignError,
+        match=rf'Identical name "{duplicate_name}".*input.*output file',
     ):
         subcommand_run(args, parser_run)
 
@@ -269,7 +282,7 @@ def test_that_run_rejects_output_matching_input_after_adding_xlsx_suffix(
         lambda *args, **kwargs: pytest.fail("Input workbook was parsed"),
     )
 
-    with pytest.raises(OSError, match="Identical name"):
+    with pytest.raises(FmudesignError, match="Identical name"):
         args.func(args)
 
     assert input_path.read_bytes() == original_content
@@ -292,3 +305,35 @@ def test_that_init_copies_nothing_when_auxiliary_destination_exists(
     assert exc_info.value.code == 1
     assert not Path("ex2_correlations.xlsx").exists()
     assert auxiliary_path.read_bytes() == original_content
+
+
+def test_that_non_numeric_distribution_parameter_is_treated_as_handled_fmudesign_error(
+    use_tmpdir, monkeypatch, caplog, capsys
+):
+    design_input = pd.DataFrame(
+        [
+            [
+                "sensname",
+                "numreal",
+                "type",
+                "param_name",
+                "dist_name",
+                "dist_param1",
+                "dist_param2",
+            ],
+            ["sens", 5, "dist", "PARAM", "normal", "abc", 1],
+        ]
+    )
+    defaultvalues = pd.DataFrame([["param", "value"], ["PARAM", 1]])
+    input_path = _write_config_workbook(
+        "designinput.xlsx", design_input=design_input, defaultvalues=defaultvalues
+    )
+    monkeypatch.setattr(sys, "argv", ["fmudesign", input_path])
+    with pytest.raises(SystemExit):
+        fmudesignrunner.main()
+
+    assert "fmudesign crashed unexpectedly" not in caplog.text
+
+    output = capsys.readouterr().out
+    assert "fmudesign failed with" in output
+    assert "not convertible to number: abc" in output

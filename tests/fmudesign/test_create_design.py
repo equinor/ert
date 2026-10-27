@@ -11,9 +11,13 @@ import pytest
 from scipy import stats
 
 from ert.shared import __version__ as ert_version
-from fmudesign import DesignConfig, DesignMatrix, excel_to_config
+from fmudesign import DesignConfig, DesignMatrix, FmudesignError, excel_to_config
 from fmudesign import design_distributions as design_dist
-from fmudesign.create_design import MonteCarloSensitivity, _derive_rng
+from fmudesign.create_design import (
+    ExternSensitivity,
+    MonteCarloSensitivity,
+    _derive_rng,
+)
 from fmudesign.quality_report import print_corrmat
 from fmudesign.seed_strategy import SeedStrategy
 
@@ -781,7 +785,7 @@ def test_that_decimals_are_rejected_for_parameter_with_any_non_numeric_value():
     }
 
     with pytest.raises(
-        ValueError,
+        FmudesignError,
         match=r"Cannot round parameter 'A' to 1 decimals .*'foo'.*'decimals'",
     ):
         DesignMatrix(config=config)
@@ -1138,7 +1142,7 @@ def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strateg
         "W": ("normal", ["0", "1"], "corr2"),
     }
     with pytest.raises(
-        ValueError,
+        FmudesignError,
         match=(
             "Parameter 'Z' is part of several correlation groups: 'corr1' and 'corr2'"
         ),
@@ -1153,12 +1157,12 @@ def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strateg
 
 def test_that_unknown_seed_strategy_raises_value_error():
     """The low-level API must reject typos instead of silently using 'joint'."""
-    with pytest.raises(ValueError, match="seed_strategy"):
+    with pytest.raises(FmudesignError, match="seed_strategy"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, strategy="bogus")
 
 
 def test_that_independent_sampling_without_base_seed_raises_value_error():
-    with pytest.raises(ValueError, match="base_seed"):
+    with pytest.raises(FmudesignError, match="base_seed"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, base=None)
 
 
@@ -1216,5 +1220,31 @@ def test_that_initializing_dm_without_background_populates_background_to_none():
 def test_that_missing_background_keys_in_background_dict_raises_key_error():
     config = minimal_configuration()
     config.background = {}
-    with pytest.raises(KeyError, match="'extern' or 'parameters'"):
+    with pytest.raises(FmudesignError, match="'extern' or 'parameters'"):
         DesignMatrix(config=config)
+
+
+def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
+    use_tmpdir,
+):
+    sens = ExternSensitivity(sensname="extern", verbosity=0)
+    with pytest.raises(
+        FmudesignError,
+        match=r"(?s)duplicate names.*\{'PARAM1': 2, 'PARAM3': 3\}",
+    ):
+        sens.generate(
+            size=1,
+            filename="unused.csv",
+            parameters=["PARAM1", "PARAM2", "PARAM1", "PARAM3", "PARAM3", "PARAM3"],
+            seedvalues=None,
+        )
+
+
+@pytest.mark.parametrize("probabilities", [[1.5, -0.5], [np.nan, 0.5], [np.inf, 1.0]])
+def test_that_non_finite_or_negative_probabilities_raise_fmudesign_error(probabilities):
+    with pytest.raises(FmudesignError, match="must be finite non-negative"):
+        design_dist.quantiles_to_values(
+            quantiles=np.array([0.1, 0.9]),
+            values=np.array(["a", "b"]),
+            probabilities=np.array(probabilities),
+        )

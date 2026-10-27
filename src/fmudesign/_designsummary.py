@@ -2,6 +2,8 @@
 
 import pandas as pd
 
+from fmudesign.exceptions import FmudesignError
+
 from .utils import read_excel_sheet
 
 
@@ -48,7 +50,7 @@ def summarize_design(filename: str, sheetname: str = "DesignSheet01") -> pd.Data
     elif str(filename).endswith(".csv"):
         dgn = pd.read_csv(filename)
     else:
-        raise ValueError(
+        raise FmudesignError(
             "Design matrix must be on Excel or csv format"
             " and filename must end with .xlsx or .csv"
         )

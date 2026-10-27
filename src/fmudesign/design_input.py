@@ -4,6 +4,7 @@ from typing import Any, Self
 import pandas as pd
 from python_calamine import CalamineWorkbook
 
+from fmudesign.exceptions import FmudesignError
 from fmudesign.read_correlations import parse_sensitivity_correlations
 from fmudesign.read_distributions import parse_distribution_parameters
 from fmudesign.utils import (
@@ -80,7 +81,7 @@ class DesignInput:
                 sensdict["parameters"] = list(group["param_name"])
 
             else:
-                raise ValueError(
+                raise FmudesignError(
                     f"Sensitivity {sensname} does not have a valid sensitivity type"
                 )
 
@@ -119,7 +120,7 @@ def _check_designinput(dsgn_input: pd.DataFrame) -> None:
     if duplicated_mask.any():
         # Find the first duplicate to include in error message
         duplicate_name = valid_sensnames[duplicated_mask].iloc[0]
-        raise ValueError(
+        raise FmudesignError(
             f"sensname '{duplicate_name}' was found on more than one row in "
             "designinput sheet. Two sensitivities cannot share the same sensname. "
             "Please correct this and rerun"
@@ -130,7 +131,7 @@ def _check_designinput(dsgn_input: pd.DataFrame) -> None:
         try:
             _raise_if_duplicates(df_sensname["param_name"])
         except ValueError as e:
-            raise ValueError(f"Duplicate param names in {sensname}\n{e}") from e
+            raise FmudesignError(f"Duplicate param names in {sensname}\n{e}") from e
 
 
 def _check_for_mixed_sensitivities(sens_name: str, sens_group: pd.DataFrame) -> None:
@@ -140,7 +141,7 @@ def _check_for_mixed_sensitivities(sens_name: str, sens_group: pd.DataFrame) -> 
 
     unique_types = sens_group["type"].dropna().unique()
     if len(unique_types) > 1:
-        raise ValueError(
+        raise FmudesignError(
             f"The sensitivity with sensname '{sens_name}' in designinput sheet "
             "contains more than one sensitivity type. For each sensname all parameters "
             "must be specified using the same type (seed, scenario, dist, ref, "
@@ -157,7 +158,7 @@ def _read_constants(sensgroup: pd.DataFrame) -> dict[str, Any]:
     paramdict: dict[str, Any] = {}
     for row in sensgroup.itertuples():
         if not _has_value(row.dist_param1):
-            raise ValueError(
+            raise FmudesignError(
                 f"Parameter name {row.param_name} has been input "
                 'in a sensitivity of type "seed". \n'
                 f"If {row.param_name} was meant to be the name of "
@@ -185,7 +186,7 @@ def _read_scenario_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
     casedict2: dict[str, Any] = {}
 
     if not _has_value(sensgroup["senscase1"].iloc[0]):
-        raise ValueError(
+        raise FmudesignError(
             "Sensitivity {} has been input "
             "as a scenario sensitivity, but "
             "without a name in senscase1 column.".format(sensgroup["sensname"].iloc[0])
@@ -193,13 +194,13 @@ def _read_scenario_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
 
     for row in sensgroup.itertuples():
         if not _has_value(row.param_name):
-            raise ValueError(
+            raise FmudesignError(
                 f"Scenario sensitivity {row.sensname} specified "
                 "where one line has empty parameter "
                 "name "
             )
         if not _has_value(row.value1):
-            raise ValueError(
+            raise FmudesignError(
                 f"Parameter {row.param_name} has been input "
                 'as type "scenario" but with empty '
                 "value in value1 column "
@@ -209,7 +210,7 @@ def _read_scenario_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
     if _has_value(sensgroup["senscase2"].iloc[0]):
         for row in sensgroup.itertuples():
             if not _has_value(row.value2):
-                raise ValueError(
+                raise FmudesignError(
                     "Sensitivity {} has been input "
                     "with a name in senscase2 column "
                     "but without a value for parameter {} "
@@ -223,7 +224,7 @@ def _read_scenario_sensitivity(sensgroup: pd.DataFrame) -> dict[str, Any]:
     else:
         for row in sensgroup.itertuples():
             if _has_value(row.value2):
-                raise ValueError(
+                raise FmudesignError(
                     "Sensitivity {} has been input "
                     "with a value for parameter {} "
                     "in value2 column "
@@ -252,7 +253,7 @@ def _read_dependencies(
     """
     with CalamineWorkbook.from_path(filename) as workbook:
         if sheetname not in workbook.sheet_names:
-            raise ValueError(f"Worksheet {sheetname!r} not found")
+            raise FmudesignError(f"Worksheet {sheetname!r} not found")
         cells = workbook.get_sheet_by_name(sheetname).to_python(skip_empty_area=False)
     rows = (
         [value if value.strip() else "" for value in map(str, row)] for row in cells
@@ -260,7 +261,7 @@ def _read_dependencies(
 
     headers = {index: name for index, name in enumerate(next(rows, [])) if name}
     if from_parameter not in headers.values():
-        raise ValueError(
+        raise FmudesignError(
             f"Parameter {from_parameter} specified to have derived parameters, "
             f"but the sheet specifying the dependencies {sheetname} does "
             "not contain the input parameter. "
@@ -269,7 +270,7 @@ def _read_dependencies(
     try:
         _raise_if_duplicates(list(headers.values()))
     except ValueError as err:
-        raise ValueError(
+        raise FmudesignError(
             f"Duplicate parameter names in dependency sheet {sheetname!r}\n{err}"
         ) from err
 
@@ -281,7 +282,7 @@ def _read_dependencies(
             continue
         for name, value in zip(headers.values(), values, strict=True):
             if not value:
-                raise ValueError(
+                raise FmudesignError(
                     f"Missing dependency value for parameter {name!r} "
                     f"in sheet {sheetname!r}, row {row_number}"
                 )

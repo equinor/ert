@@ -7,7 +7,12 @@ import pandas as pd
 import pytest
 from ruamel.yaml import YAML
 
-from fmudesign import DesignConfig, config_to_yaml, excel_to_config
+from fmudesign import (
+    DesignConfig,
+    FmudesignError,
+    config_to_yaml,
+    excel_to_config,
+)
 from fmudesign._excel_to_design import (
     _assert_no_merged_cells,
 )
@@ -37,10 +42,12 @@ def _write_config_workbook(
     design_input=MOCK_DESIGNINPUT,
     defaultvalues=None,
     background=None,
+    correlations=None,
     general_sheet="general_input",
     design_sheet="designinput",
     default_sheet="defaultvalues",
     background_sheet="backgroundsheet",
+    correlation_sheet="corr1",
 ):
     if defaultvalues is None:
         defaultvalues = pd.DataFrame()
@@ -55,6 +62,10 @@ def _write_config_workbook(
         if background is not None:
             background.to_excel(
                 writer, sheet_name=background_sheet, index=False, header=None
+            )
+        if correlations is not None:
+            correlations.to_excel(
+                writer, sheet_name=correlation_sheet, index=False, header=None
             )
     return path
 
@@ -104,7 +115,7 @@ def test_that_duplicate_sensitivity_names_raise_value_error(use_tmpdir):
     )
 
     with pytest.raises(
-        ValueError, match="Two sensitivities cannot share the same sensname"
+        FmudesignError, match="Two sensitivities cannot share the same sensname"
     ):
         excel_to_config(input_path)
 
@@ -156,7 +167,7 @@ def test_that_excel_to_design_rejects_duplicate_default_names_after_trimming(
         ),
     )
 
-    with pytest.raises(ValueError, match="duplicate parameter names"):
+    with pytest.raises(FmudesignError, match="duplicate parameter names"):
         excel_to_config(input_path)
 
 
@@ -172,7 +183,7 @@ def test_that_mixed_sensitivity_types_raise_value_error(use_tmpdir):
         "designinput.xlsx", design_input=mock_erroneous_designinput
     )
 
-    with pytest.raises(ValueError, match="contains more than one sensitivity type"):
+    with pytest.raises(FmudesignError, match="contains more than one sensitivity type"):
         excel_to_config(input_path)
 
 
@@ -306,7 +317,7 @@ def test_that_missing_distribution_fields_report_the_field_and_source(
     else:
         _write_background_workbook(input_path, distribution_rows, None, sheet)
 
-    with pytest.raises(ValueError, match=error) as exc_info:
+    with pytest.raises(FmudesignError, match=error) as exc_info:
         excel_to_config(input_path)
 
     message = str(exc_info.value).lower()
@@ -355,7 +366,7 @@ def test_that_invalid_background_correlation_sheet_raises_value_error(
         "backgroundsheet",
     )
 
-    with pytest.raises(ValueError, match=error):
+    with pytest.raises(FmudesignError, match=error):
         excel_to_config(input_path)
 
 
@@ -364,7 +375,7 @@ def test_that_missing_background_sheet_error_lists_available_sheets(use_tmpdir):
         "designinput.xlsx", BACKGROUND_WITH_CORR, None, "typo_sheet"
     )
 
-    with pytest.raises(ValueError, match="Sheets in workbook") as exc_info:
+    with pytest.raises(FmudesignError, match="Sheets in workbook") as exc_info:
         excel_to_config(input_path)
 
     message = str(exc_info.value)
@@ -405,7 +416,7 @@ def test_that_missing_background_csv_file_raises_value_error(use_tmpdir):
     )
 
     with pytest.raises(
-        ValueError,
+        FmudesignError,
         match=r"Sheet 'missing_background.csv' with background parameters, "
         "specified in the general input sheet, "
         "was not found in 'designinput.xlsx'.",
@@ -434,7 +445,7 @@ def test_that_assert_no_merged_cells_rejects_merged_cells(tmp_path):
     workbook.save(input_path)
     workbook.close()
 
-    with pytest.raises(ValueError, match="Merged cells"):
+    with pytest.raises(FmudesignError, match="Merged cells"):
         _assert_no_merged_cells(input_path)
 
 
@@ -612,7 +623,7 @@ def test_that_incomplete_dependency_rows_raise_a_configuration_error(
     )
 
     with pytest.raises(
-        ValueError,
+        FmudesignError,
         match=f"Missing dependency value for parameter '{missing_parameter}' "
         "in sheet 'dependencies', row 4",
     ):
@@ -650,7 +661,8 @@ def test_that_duplicate_dependency_parameter_names_raise_value_error(
     )
 
     with pytest.raises(
-        ValueError, match="Duplicate parameter names in dependency sheet 'dependencies'"
+        FmudesignError,
+        match="Duplicate parameter names in dependency sheet 'dependencies'",
     ):
         _read_dependencies(
             filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
@@ -662,7 +674,7 @@ def test_that_missing_dependency_worksheet_raises_value_error(tmp_path):
         tmp_path / "dependencies.xlsx", [["SOURCE", "TARGET"]]
     )
 
-    with pytest.raises(ValueError, match="Worksheet 'missing' not found"):
+    with pytest.raises(FmudesignError, match="Worksheet 'missing' not found"):
         _read_dependencies(
             filename=str(input_path), sheetname="missing", from_parameter="SOURCE"
         )
@@ -677,7 +689,7 @@ def test_that_dependency_sheet_without_source_parameter_raises_value_error(
     input_path = _write_dependency_workbook(tmp_path / "dependencies.xlsx", rows)
 
     with pytest.raises(
-        ValueError,
+        FmudesignError,
         match=r"Parameter SOURCE.*sheet specifying the dependencies dependencies.*"
         r"does not contain the input parameter",
     ):
@@ -715,7 +727,7 @@ def test_that_empty_rms_seeds_file_raises_value_error(use_tmpdir):
     design_file = "foo.xlsx"
     _write_config_workbook(path=design_file, general_input=general_input)
 
-    with pytest.raises(ValueError, match="at least one seed"):
+    with pytest.raises(FmudesignError, match="at least one seed"):
         excel_to_config(design_file)
 
 
