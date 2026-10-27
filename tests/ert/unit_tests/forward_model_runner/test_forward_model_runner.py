@@ -93,7 +93,8 @@ def test_run_multiple_ok():
     for dir_number in dir_list:
         assert Path(dir_number).is_dir()
         assert Path(f"mkdir_out.{dir_number}").is_file()
-        assert not Path(f"mkdir_err.{dir_number}").exists()
+        assert Path(f"mkdir_err.{dir_number}").is_file()
+        assert Path(f"mkdir_err.{dir_number}").stat().st_size == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
