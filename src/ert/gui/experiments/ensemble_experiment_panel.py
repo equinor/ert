@@ -90,8 +90,8 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         add_parameter_configuration_rows(
             self,
             layout,
-            analysis_config.design_matrix,
-            parameter_configuration,
+            design_matrix=analysis_config.design_matrix,
+            get_parameter_configuration=lambda: parameter_configuration,
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )
