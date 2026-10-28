@@ -1,5 +1,6 @@
 import inspect
 import json
+import logging
 from contextlib import asynccontextmanager
 from enum import Enum
 from typing import Any
@@ -10,6 +11,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from ert.server.endpoints import router as endpoints_router
 from ert.server.exceptions import ErtStorageError
+
+logger = logging.getLogger(__name__)
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -65,6 +68,10 @@ app = FastAPI(
 async def ert_storage_error_handler(
     request: Request, exc: ErtStorageError
 ) -> JSONResponse:
+    logger.warning(
+        f"{request.method} {request.url.path} failed with "
+        f"status {exc.__status_code__}: {exc.args[0]}"
+    )
     return JSONResponse(
         {
             "detail": {
@@ -82,6 +89,9 @@ async def ert_storage_error_handler(
 async def not_implemented_handler(
     request: Request, exc: NotImplementedError
 ) -> JSONResponse:
+    logger.error(
+        f"{request.method} {request.url.path} is not implemented", exc_info=exc
+    )
     return JSONResponse({}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 

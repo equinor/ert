@@ -312,6 +312,9 @@ def main() -> None:
             run_server(args, debug=False, uvicorn_config=uvicorn_config)
         except (SystemExit, ErtServerExit):
             logger.info("Stopping ert server")
+        except BaseException:
+            logger.exception("Ert server crashed unexpectedly")
+            raise
         finally:
             stopped.set()
             _join_terminate_thread(terminate_on_parent_death_thread)
