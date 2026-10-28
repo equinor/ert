@@ -68,9 +68,10 @@ app = FastAPI(
 async def ert_storage_error_handler(
     request: Request, exc: ErtStorageError
 ) -> JSONResponse:
-    logger.warning(
+    logger.error(
         f"{request.method} {request.url.path} failed with "
-        f"status {exc.__status_code__}: {exc.args[0]}"
+        f"status {exc.__status_code__}: {exc.args[0]}",
+        exc_info=exc,
     )
     return JSONResponse(
         {
