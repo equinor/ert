@@ -1,3 +1,4 @@
+import inspect
 import json
 from contextlib import asynccontextmanager
 from enum import Enum
@@ -44,10 +45,17 @@ async def lifespan(app: FastAPI):  # type: ignore
     yield
 
 
+_fastapi_telemetry_options: dict[str, Any] = (
+    {"telemetry": {"tracing": False}}
+    if "telemetry" in inspect.signature(FastAPI).parameters
+    else {}
+)
+
 app = FastAPI(
     title="ERT server API",
     version="0.1.0",
     debug=True,
+    **_fastapi_telemetry_options,
     default_response_class=JSONResponse,
     lifespan=lifespan,
 )
