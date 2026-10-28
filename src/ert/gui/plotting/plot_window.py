@@ -275,6 +275,9 @@ class PlotWindow(QMainWindow):
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
                 self.keySelected
             )
+            self._ensemble_selection_widget.ensembleSelectionChanged.connect(
+                self._update_realization_choices
+            )
 
             self._everest_parameters = [
                 kd.parameter.name
@@ -300,10 +303,7 @@ class PlotWindow(QMainWindow):
                 expanded=True,
             )
 
-            max_realizations = max((ens.size for ens in plot_case_objects), default=0)
-            self._realization_selection_widget = RealizationSelectionWidget(
-                [str(i) for i in range(max_realizations)]
-            )
+            self._realization_selection_widget = RealizationSelectionWidget([])
             self._realization_selection_widget.realizationSelectionChanged.connect(
                 self.update_plot
             )
@@ -312,6 +312,7 @@ class PlotWindow(QMainWindow):
                 create_group_layout([self._realization_selection_widget]),
                 expanded=True,
             )
+            self._update_realization_choices()
 
             self._everest_controls_plot_options = EverestControlsPlotOptions(
                 self.update_plot
@@ -380,6 +381,20 @@ class PlotWindow(QMainWindow):
 
             if self.getSelectedKey() is None:
                 self._show_no_data_message()
+
+    def _update_realization_choices(self) -> None:
+        selected_ensembles = self._ensemble_selection_widget.get_selected_ensembles()
+        max_realizations = max(
+            (
+                ensemble.size
+                for ensemble in selected_ensembles
+                if ensemble.size is not None
+            ),
+            default=0,
+        )
+        self._realization_selection_widget.set_realizations(
+            [str(i) for i in range(max_realizations)]
+        )
 
     def _show_no_data_message(self) -> None:
         current_widget = self._central_tab.currentWidget()
