@@ -1534,7 +1534,6 @@ def test_that_seismic_y_label_is_created(key, expected_y_label):
     assert label == expected_y_label
 
 
-@pytest.mark.slow
 def test_that_realization_count_matches_largest_selected_ensemble(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ):
@@ -1582,7 +1581,6 @@ def test_that_realization_count_matches_largest_selected_ensemble(
     assert labels == [str(i) for i in range(8)]
 
 
-@pytest.mark.slow
 def test_that_realization_selector_ignores_hidden_ensembles_when_computing_max_size(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ):
@@ -1664,7 +1662,6 @@ def test_that_realization_selection_group_is_hidden_on_plot_window_startup(
     assert plot_window._realization_group.isVisible() is False
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize(
     "tab_name",
     [ENSEMBLE, STATISTICS, CROSSPLOT, MISFITS],
@@ -1721,7 +1718,6 @@ def test_that_realization_selection_group_is_visible_only_when_cross_plot_tab_is
     )
 
 
-@pytest.mark.slow
 def test_that_cross_plot_tab_is_enabled_for_observed_seismic_keys(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ):
@@ -1777,7 +1773,6 @@ def test_that_cross_plot_tab_is_enabled_for_observed_seismic_keys(
     )
 
 
-@pytest.mark.slow
 def test_that_cross_plot_tab_is_disabled_for_observed_non_seismic_keys(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ):
