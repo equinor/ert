@@ -1535,7 +1535,7 @@ def test_that_seismic_y_label_is_created(key, expected_y_label):
 
 
 @pytest.mark.slow
-def test_that_realization_selector_lists_max_ensemble_size_realizations(
+def test_that_realization_count_matches_largest_selected_ensemble(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ):
     mock_plot_api_cls = MagicMock(spec=PlotApi)
@@ -1569,6 +1569,11 @@ def test_that_realization_selector_lists_max_ensemble_size_realizations(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
     plot_window.show()
+
+    ensemble_list = plot_window._ensemble_selection_widget._selected_ensembles
+    ensemble_list.slot_toggle_plot(ensemble_list.item(1))
+
+    assert len(ensemble_list) == 2
 
     realization_list = plot_window._realization_selection_widget._realizations_list
     assert realization_list.count() == 8
