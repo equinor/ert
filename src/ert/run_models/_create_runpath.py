@@ -37,7 +37,6 @@ from ert.run_models.event import (
     StatusEvents,
 )
 from ert.substitutions import Substitutions, substitute_runpath_name
-from ert.utils import log_duration
 
 if TYPE_CHECKING:
     from ert.run_arg import RunArg
@@ -390,7 +389,6 @@ def _create_one_runpath(
     return timings
 
 
-@log_duration(logger, logging.INFO)
 async def create_runpath(
     run_args: list[RunArg],
     ensemble: Ensemble,
@@ -405,6 +403,7 @@ async def create_runpath(
     context_env: dict[str, str] | None = None,
     handle_runpath_creation_event: Callable[[StatusEvents], None] | None = None,
 ) -> None:
+    wall_start_time = time.perf_counter()
     if context_env is None:
         context_env = {}
     runpaths.set_ert_ensemble(ensemble.name)
@@ -474,12 +473,13 @@ async def create_runpath(
 
     task_timings = [task.result() for task in tasks]
 
+    # Summed over realizations created in parallel, so these are not wall time
     for task_timing in task_timings:
         for key, value in task_timing.items():
             timings[key] += value
 
-    logger.info(f"_create_runpath durations: {timings}")
-
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
     )
+    timings["wall_time"] = time.perf_counter() - wall_start_time
+    logger.info(f"_create_runpath durations: {timings}")
