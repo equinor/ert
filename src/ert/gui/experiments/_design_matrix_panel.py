@@ -23,12 +23,12 @@ class DesignMatrixPanel(QDialog):
     def __init__(
         self,
         design_matrix_df: pl.DataFrame,
-        filename: str,
+        label: str,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
 
-        self.setWindowTitle(f"Design matrix parameters from {filename}")
+        self.setWindowTitle(f"Design matrix parameters from {label}")
 
         table_view = QTableView(self)
         table_view.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
@@ -65,7 +65,7 @@ class DesignMatrixPanel(QDialog):
     def show_dm_params(design_matrix: "DesignMatrix") -> None:
         viewer = DesignMatrixPanel(
             design_matrix.design_matrix_df,
-            design_matrix.filename.name,
+            design_matrix.label,
         )
         viewer.setMinimumHeight(500)
         viewer.setMinimumWidth(1000)

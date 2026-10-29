@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 from pytestqt.qtbot import QtBot
 
-from ert.config import DesignMatrix, EnsembleConfig, GenKwConfig
+from ert.config import DesignMatrix, DesignMatrixConfig, EnsembleConfig, GenKwConfig
 from ert.config.analysis_config import AnalysisConfig
 from ert.config.analysis_module import ESSettings
 from ert.config.distribution import RawSettings
@@ -246,11 +246,13 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
         design_matrix_path,
         pl.DataFrame({"REAL": [0, 1], "matrix_parameter": [1.0, 2.0]}),
     )
-    design_matrix = DesignMatrix(
-        filename=design_matrix_path,
-        design_sheet="DesignSheet",
-        default_sheet=None,
-        update=True,
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_matrix_path,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        ),
         gen_kw_update_strategy=LocalizationType.DISTANCE,
     )
     notifier = ErtNotifier()
@@ -749,11 +751,13 @@ def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
         design_matrix_path,
         pl.DataFrame({"REAL": [0], design_parameter_name: [1]}),
     )
-    design_matrix = DesignMatrix(
-        filename=design_matrix_path,
-        design_sheet="DesignSheet",
-        default_sheet=None,
-        update=True,
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_matrix_path,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        )
     )
 
     notifier = ErtNotifier()

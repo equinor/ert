@@ -14,7 +14,7 @@ from pydantic.dataclasses import dataclass
 from ert.config.parameter_config import LocalizationType, ParameterType
 
 from .analysis_module import ESSettings
-from .design_matrix import DesignMatrix
+from .design_matrix import DesignMatrix, DesignMatrixConfig
 from .parsing import (
     ConfigDict,
     ConfigKeys,
@@ -301,8 +301,8 @@ class AnalysisConfig:
             es_settings.weights = es_mda_weights
 
         design_matrices = [
-            DesignMatrix.from_config_list(
-                design_matrix_config_list,
+            DesignMatrix.from_config(
+                DesignMatrixConfig.from_config_list(design_matrix_config_list),
                 parameter_type_update_strategies.get(ParameterType.GEN_KW),
             )
             for design_matrix_config_list in design_matrix_config_lists

@@ -9,6 +9,7 @@ from ert.config import (
     ConfigValidationError,
     DataSource,
     DesignMatrix,
+    DesignMatrixConfig,
     GenKwConfig,
     LocalizationType,
 )
@@ -86,10 +87,11 @@ def test_merge_multiple_occurrences(
         ),
         pl.DataFrame([["a", 1], ["b", 4]], orient="row"),
     )
-    design_matrix_1 = DesignMatrix(
-        tmp_path / "design_matrix_1.xlsx", "DesignSheet", "DefaultSheet", "sampled"
+    design_matrix_1 = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            tmp_path / "design_matrix_1.xlsx", "DesignSheet", "DefaultSheet", "sampled"
+        )
     )
-    assert design_matrix_1.priority_source == "sampled"
     assert design_matrix_1.parameter_priority == {
         "a": DataSource.SAMPLED,
         "b": DataSource.SAMPLED,
@@ -97,13 +99,14 @@ def test_merge_multiple_occurrences(
     _create_design_matrix(
         tmp_path / "design_matrix_2.xlsx", design_sheet_pd, default_sheet_pd
     )
-    design_matrix_2 = DesignMatrix(
-        tmp_path / "design_matrix_2.xlsx",
-        "DesignSheet",
-        "DefaultSheet",
-        "design_matrix",
+    design_matrix_2 = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            tmp_path / "design_matrix_2.xlsx",
+            "DesignSheet",
+            "DefaultSheet",
+            "design_matrix",
+        )
     )
-    assert design_matrix_2.priority_source == "design_matrix"
     assert set(design_matrix_2.parameter_priority.values()) == {
         DataSource.DESIGN_MATRIX
     }
@@ -200,7 +203,9 @@ def test_merge_with_existing_parameters_with_custom_priorities(
     )
     default_sheet_df = pl.DataFrame([["a", 1], ["b", 4]], orient="row")
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet", priority)
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet", priority)
+    )
     new_config_parameters = design_matrix.merge_with_existing_parameters(genkw_configs)
     assert len(new_config_parameters) == num_configs
     for config in new_config_parameters:
@@ -297,8 +302,8 @@ def test_read_and_merge_with_existing_parameters(
     )
     default_sheet_df = pl.DataFrame([["a", 1], ["b", 4]], orient="row")
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
-    design_matrix = DesignMatrix(
-        design_path, "DesignSheet", "DefaultSheet", priority_source
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet", priority_source)
     )
     new_config_parameters = design_matrix.merge_with_existing_parameters(genkw_configs)
     assert len(new_config_parameters) == num_configs
@@ -318,11 +323,13 @@ def test_that_merging_design_matrices_preserves_each_matrix_update_setting(tmp_p
         pl.DataFrame({"REAL": [0, 1, 2], "a": [1, 2, 3]}),
         pl.DataFrame(),
     )
-    design_matrix_1 = DesignMatrix(
-        tmp_path / "design_matrix_1.xlsx",
-        "DesignSheet",
-        "DefaultSheet",
-        update=True,
+    design_matrix_1 = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            tmp_path / "design_matrix_1.xlsx",
+            "DesignSheet",
+            "DefaultSheet",
+            update=True,
+        ),
         gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
     _create_design_matrix(
@@ -330,11 +337,13 @@ def test_that_merging_design_matrices_preserves_each_matrix_update_setting(tmp_p
         pl.DataFrame({"REAL": [0, 1, 2], "b": [4, 5, 6]}),
         pl.DataFrame(),
     )
-    design_matrix_2 = DesignMatrix(
-        tmp_path / "design_matrix_2.xlsx",
-        "DesignSheet",
-        "DefaultSheet",
-        update=False,
+    design_matrix_2 = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            tmp_path / "design_matrix_2.xlsx",
+            "DesignSheet",
+            "DefaultSheet",
+            update=False,
+        )
     )
 
     design_matrix_1.merge_with_other(design_matrix_2)
@@ -362,7 +371,9 @@ def test_reading_design_matrix(tmp_path):
         [["one", 1, ""], ["b", 4, ""], ["d", "case_name", 3]], orient="row"
     )
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+    )
     design_params = [cfg.name for cfg in design_matrix.parameter_configurations]
     assert all(param in design_params for param in ("a", "b", "c", "one", "d"))
     assert design_matrix.active_realizations == [True, True, False, False, True]
@@ -403,7 +414,9 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
 
     with pytest.raises(ValueError, match=error_msg):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
 
 
 @pytest.mark.parametrize(
@@ -455,7 +468,9 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
         for col_idx, header in enumerate(column_names):
             ws.write(0, col_idx, header)
     with pytest.raises(ValueError, match=error_msg):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
 
 
 @pytest.mark.parametrize(
@@ -496,7 +511,9 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
 
     with pytest.raises(ValueError, match=error_msg):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
 
 
 @pytest.mark.parametrize(
@@ -564,7 +581,9 @@ def test_reading_default_sheet_validation(tmp_path, data, error_msg):
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
 
     with pytest.raises(ValueError, match=error_msg):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
 
 
 def test_default_values_used(tmp_path):
@@ -581,7 +600,9 @@ def test_default_values_used(tmp_path):
         [["one", 1], ["b", 4], ["d", "case_name"]], orient="row"
     )
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+    )
     df = design_matrix.design_matrix_df
     np.testing.assert_equal(df["one"], np.array([1, 1, 1, 1]))
     np.testing.assert_equal(df["b"], np.array([0, 2, 0, 1]))
@@ -630,7 +651,9 @@ def test_whitespace_is_stripped_from_string_parameters(tmp_path):
         [["one", 1], ["b", 4], ["d", " case_name   "]], orient="row"
     )
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+    )
     df = design_matrix.design_matrix_df
     np.testing.assert_equal(df["one"], np.array([1, 1, 1, 1]))
     np.testing.assert_equal(df["b"], np.array([0, 2, 0, 1]))
@@ -654,7 +677,9 @@ def test_that_numeric_string_columns_are_converted(tmp_path):
         strict=False,
     )
     _create_design_matrix(design_path, design_matrix_df)
-    design_matrix = DesignMatrix(design_path, "DesignSheet", None)
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", None)
+    )
     df = design_matrix.design_matrix_df
     assert df.schema["a"] == pl.Int64
     assert df.schema["b"] == pl.Float64
@@ -686,7 +711,9 @@ def test_that_excel_datetime_columns_are_converted_to_strings_with_warning(tmp_p
         ConfigWarning,
         match="The design matrix contains date/datetime columns",
     ):
-        design_matrix = DesignMatrix(design_path, "DesignSheet", None)
+        design_matrix = DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", None)
+        )
 
     df = design_matrix.design_matrix_df
     assert df.schema["date_col"] == pl.String
@@ -714,7 +741,7 @@ def test_that_design_sheet_excel_error_cells_raise_config_validation_error(tmp_p
             r".*#NAME\?"
         ),
     ):
-        DesignMatrix(design_path, "DesignSheet", None)
+        DesignMatrix.from_config(DesignMatrixConfig(design_path, "DesignSheet", None))
 
 
 def test_that_default_sheet_excel_error_cells_raise_config_validation_error(tmp_path):
@@ -738,7 +765,9 @@ def test_that_default_sheet_excel_error_cells_raise_config_validation_error(tmp_
         ConfigValidationError,
         match=r"Default sheet contains empty cells or cells with a disallowed value",
     ):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
 
 
 def test_that_missing_default_sheet_raises_config_validation_error(tmp_path):
@@ -746,7 +775,9 @@ def test_that_missing_default_sheet_raises_config_validation_error(tmp_path):
     _write_sheets(design_path, design_rows=[("REAL", "a"), (0, 1)])
 
     with pytest.raises(ConfigValidationError, match="MissingDefaults"):
-        DesignMatrix(design_path, "DesignSheet", "MissingDefaults")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "MissingDefaults")
+        )
 
 
 def _write_sheets(
@@ -784,7 +815,9 @@ def test_that_blank_rows_do_not_shift_reported_design_sheet_row(tmp_path):
         match=r"Design matrix contains empty cells or cells with a disallowed value "
         r"\['Row 5, column a'\]",
     ):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
 
 
 def test_that_blank_rows_do_not_shift_reported_default_sheet_row(tmp_path):
@@ -806,7 +839,9 @@ def test_that_blank_rows_do_not_shift_reported_default_sheet_row(tmp_path):
         match=r"Default sheet contains empty cells or cells with a disallowed value "
         r"\['Row 4, column 1'\]",
     ):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
 
 
 def test_that_empty_and_whitespace_only_default_rows_are_ignored(tmp_path):
@@ -823,7 +858,9 @@ def test_that_empty_and_whitespace_only_default_rows_are_ignored(tmp_path):
         default_rows=[("one", 1), (None, None), ("  ", "\t "), ("d", 6)],
     )
 
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+    )
 
     assert design_matrix.design_matrix_df["realization"].to_list() == [0, 1]
     assert design_matrix.design_matrix_df["a"].to_list() == [1, 2]
@@ -849,4 +886,6 @@ def test_that_blank_rows_above_the_data_do_not_shift_reported_rows_in_default_sh
         match=r"Default sheet contains empty cells or cells with a disallowed value "
         rf"\['Row {bad_row}, column 1'\]",
     ):
-        DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+        DesignMatrix.from_config(
+            DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+        )
