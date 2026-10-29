@@ -14,6 +14,7 @@ from ert.config import (
     ConfigValidationError,
     ConfigWarning,
     DesignMatrix,
+    DesignMatrixConfig,
     EnsembleConfig,
     ErtConfig,
     GenKwConfig,
@@ -580,11 +581,13 @@ def _config_with_design_matrix(tmp_path) -> ErtConfig:
         runpath_config=ModelConfig(num_realizations=2),
         analysis_config=AnalysisConfig(
             minimum_required_realizations=2,
-            design_matrix=DesignMatrix(
-                filename=design_path,
-                design_sheet="DesignSheet",
-                default_sheet=None,
-                update=True,
+            design_matrix=DesignMatrix.from_config(
+                DesignMatrixConfig(
+                    filename=design_path,
+                    design_sheet="DesignSheet",
+                    default_sheet=None,
+                    update=True,
+                ),
                 gen_kw_update_strategy=LocalizationType.GLOBAL,
             ),
         ),

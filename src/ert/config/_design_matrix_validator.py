@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from .design_matrix import DesignMatrix
+from .design_matrix import DesignMatrix, DesignMatrixConfig
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,9 @@ class DesignMatrixValidator:
             designsheet = private_args["<designsheet>"]
             defaultsheet = private_args["<defaultssheet>"]
             self.design_matrices.append(
-                DesignMatrix(xlsfilename, designsheet, defaultsheet)
+                DesignMatrix.from_config(
+                    DesignMatrixConfig(xlsfilename, designsheet, defaultsheet)
+                )
             )
         except Exception as exc:
             logger.warning(
