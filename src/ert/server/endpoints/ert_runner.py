@@ -220,7 +220,7 @@ async def start_experiment_ert(
                 )
             if (
                 not config.finalized.is_set()
-                or config.status.status
+                or config.status.state
                 not in {
                     ExperimentState.completed,
                     ExperimentState.failed,
@@ -248,7 +248,7 @@ async def start_experiment_ert(
         except Exception:
             error_message = "Could not start experiment due to an internal error."
             config.status = ExperimentStatus(
-                status=ExperimentState.failed,
+                state=ExperimentState.failed,
                 message=error_message,
             )
             logging.getLogger(__name__).exception("Failed to start experiment")
@@ -341,14 +341,14 @@ async def run_ert(
     cancellation_requested = False
 
     try:  # ruff: ignore[too-many-statements-in-try-clause]
-        if run.status.status == ExperimentState.stopped:
+        if run.status.state == ExperimentState.stopped:
             model._storage.close()
             run.publish(EndEvent(failed=True, msg="Experiment cancelled before start."))
             run.finalized.set()
             return
 
         run.status = ExperimentStatus(
-            message="Experiment started", status=ExperimentState.running
+            message="Experiment started", state=ExperimentState.running
         )
         try:
             evaluator_config = EvaluatorServerConfig(
@@ -368,7 +368,7 @@ async def run_ert(
 
         while True:
             if (
-                run.status.status == ExperimentState.stopped
+                run.status.state == ExperimentState.stopped
                 and not cancellation_requested
             ):
                 model.cancel()
@@ -396,10 +396,10 @@ async def run_ert(
         logging.getLogger(__name__).exception("Experiment failed")
         terminal_event = EndEvent(failed=True, msg=str(error))
 
-    if run.status.status != ExperimentState.stopped:
+    if run.status.state != ExperimentState.stopped:
         run.status = ExperimentStatus(
             message=terminal_event.msg,
-            status=(
+            state=(
                 ExperimentState.failed
                 if terminal_event.failed
                 else ExperimentState.completed
