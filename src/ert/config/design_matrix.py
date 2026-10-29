@@ -294,6 +294,23 @@ class DesignMatrix:
     def read_and_validate_design_matrix(
         self,
     ) -> tuple[list[bool], pl.DataFrame, list[GenKwConfig]]:
+        param_names, design_matrix_df, row_labels = self._read_design_sheet()
+        design_matrix_df = self._validate_design_values(
+            design_matrix_df, param_names, row_labels
+        )
+        defaults = (
+            read_default_values(self.filename, self.default_sheet, has_header=False)
+            if self.default_sheet is not None
+            else {}
+        )
+        return self._complete_design_matrix(design_matrix_df, defaults)
+
+    def _read_design_sheet(
+        self,
+    ) -> tuple[tuple[str | None, ...], pl.DataFrame, list[str]]:
+        """Read the parameter names, the rows of the design sheet and a label
+        for each row to use in error messages.
+        """
         # Read the parameter names (first row) as strings to prevent polars from
         # modifying them. This ensures that duplicate or empty column names are
         # preserved exactly as they appear in the Excel sheet. By doing this, we
@@ -353,6 +370,18 @@ class DesignMatrix:
         design_matrix_df, excel_row_numbers = _drop_empty_rows(
             design_matrix_df, first_excel_row=2
         )
+        return (
+            param_names,
+            design_matrix_df,
+            [f"Row {row_number}" for row_number in excel_row_numbers],
+        )
+
+    @staticmethod
+    def _validate_design_values(
+        design_matrix_df: pl.DataFrame,
+        param_names: tuple[str | None, ...],
+        row_labels: list[str],
+    ) -> pl.DataFrame:
         design_matrix_df = design_matrix_df.with_columns(
             pl.col(pl.Float32, pl.Float64).fill_nan(None)
         ).with_columns(pl.col(pl.String).str.strip_chars())
@@ -406,22 +435,25 @@ class DesignMatrix:
         param_names = tuple(param_names[i] for i in columns_to_keep)
 
         if errors := DesignMatrix._validate_design_matrix(
-            design_matrix_df, param_names, excel_row_numbers
+            design_matrix_df, param_names, row_labels
         ):
             error_msg = "\n".join(errors)
             raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
 
-        design_matrix_df.columns = list(param_names)
+        # Empty parameter names are rejected by _validate_design_matrix
+        design_matrix_df.columns = cast(list[str], list(param_names))
+        return design_matrix_df
 
-        if self.default_sheet is not None:
-            defaults = read_default_values(
-                self.filename, self.default_sheet, has_header=False
-            )
-            design_matrix_df = design_matrix_df.with_columns(
-                pl.lit(value).alias(name)
-                for name, value in defaults.items()
-                if name not in design_matrix_df.columns
-            )
+    @staticmethod
+    def _complete_design_matrix(
+        design_matrix_df: pl.DataFrame,
+        defaults: dict[str, str | float | int | bool],
+    ) -> tuple[list[bool], pl.DataFrame, list[GenKwConfig]]:
+        design_matrix_df = design_matrix_df.with_columns(
+            pl.lit(value).alias(name)
+            for name, value in defaults.items()
+            if name not in design_matrix_df.columns
+        )
 
         if "realization" in design_matrix_df.schema:
             raise ValueError(
@@ -469,8 +501,8 @@ class DesignMatrix:
     @staticmethod
     def _validate_design_matrix(
         design_matrix: pl.DataFrame,
-        param_names: tuple[str],
-        excel_row_numbers: list[int],
+        param_names: tuple[str | None, ...],
+        row_labels: list[str],
     ) -> list[str]:
         """
         Validate user inputted design matrix
@@ -489,7 +521,7 @@ class DesignMatrix:
                 f" {duplicates_formatted}"
             )
         empties = [
-            f"Row {excel_row_numbers[i]}, column {param_names[j]}"
+            f"{row_labels[i]}, column {param_names[j]}"
             for i, j in zip(
                 *np.where(design_matrix.select(pl.all().is_null())),
                 strict=False,
