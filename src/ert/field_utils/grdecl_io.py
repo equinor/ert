@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import io
 import operator
 import os
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from functools import reduce
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any, BinaryIO, TextIO
 
 import numpy as np
 import numpy.typing as npt
+import polars as pl
 import resfo
 
 from ert.config.parameter_config import InvalidParameterFile
@@ -259,7 +259,18 @@ def import_bgrdecl(
     raise ValueError(f"Did not find field parameter {field_name} in {file_path}")
 
 
-_BUFFER_SIZE = 2**20  # 1.04 megabytes
+_VALUES_PER_LINE = 6
+_LINES_PER_CHUNK = 2**16
+
+
+def _write_grdecl_lines(fh: BinaryIO, lines: npt.NDArray[np.float32]) -> None:
+    pl.DataFrame(lines, orient="row").write_csv(
+        fh,
+        include_header=False,
+        separator=" ",
+        float_scientific=True,
+        float_precision=6,
+    )
 
 
 def export_grdecl(
@@ -269,32 +280,28 @@ def export_grdecl(
     binary: bool,
 ) -> None:
     """Export ascii or binary GRDECL"""
-    values = values.flatten(order="F")
     if isinstance(values, np.ma.MaskedArray):
         values = values.filled(0.0)
+    flat_values = values.ravel(order="F")
 
     if binary:
-        resfo.write(file_path, [(param_name.ljust(8), values.astype(np.float32))])
+        resfo.write(
+            file_path,
+            [(param_name.ljust(8), flat_values.astype(np.float32, copy=False))],
+        )
     else:
-        length = values.shape[0]
-        per_line = 6
-        iters = 5
-        per_iter = per_line * iters
-        fmt = " ".join(["%3e"] * per_line)
-        fmt = "\n".join([fmt] * iters) + "\n"
-        with (
-            Path(file_path).open("wb+", 0) as fh,
-            io.BufferedWriter(fh, _BUFFER_SIZE) as bw,
-            io.TextIOWrapper(bw, write_through=True, encoding="utf-8") as tw,
-        ):
-            tw.write(param_name + "\n")
-            i = 0
-            while i + per_iter <= length:
-                tw.write(fmt % tuple(values[i : i + per_iter]))
-                i += per_iter
-
-            for j, v in enumerate(values[length - (length % per_iter) :]):
-                tw.write(f" {v:3e}")
-                if j % 6 == 5:
-                    tw.write("\n")
-            tw.write(" /\n")
+        num_full_lines = len(flat_values) // _VALUES_PER_LINE
+        full_lines = flat_values[: num_full_lines * _VALUES_PER_LINE].reshape(
+            num_full_lines, _VALUES_PER_LINE
+        )
+        remainder = flat_values[num_full_lines * _VALUES_PER_LINE :]
+        with Path(file_path).open("wb") as fh:
+            fh.write(f"{param_name}\n".encode())
+            # Polars formats without holding the GIL, so concurrent exports
+            # (one thread per realization) run in parallel. Writing in chunks
+            # bounds the memory used by the intermediate data frames.
+            for start in range(0, num_full_lines, _LINES_PER_CHUNK):
+                _write_grdecl_lines(fh, full_lines[start : start + _LINES_PER_CHUNK])
+            if len(remainder) > 0:
+                _write_grdecl_lines(fh, remainder.reshape(1, -1))
+            fh.write(b" /\n")
