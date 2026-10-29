@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from unittest.mock import patch
 
 import polars as pl
 import pytest
@@ -10,6 +9,7 @@ from ert.config import (
     ConfigValidationError,
     ConfigWarning,
     DesignMatrix,
+    DesignMatrixConfig,
     GenKwConfig,
     LocalizationType,
 )
@@ -24,8 +24,10 @@ def test_that_analysis_config_with_design_matrix_survives_json_round_trip(tmp_pa
         design_path, pl.DataFrame({"REAL": [0, 1], "a": [1.0, 2.0], "b": [3.0, 4.0]})
     )
     analysis_config = AnalysisConfig(
-        design_matrix=DesignMatrix(
-            filename=design_path, design_sheet="DesignSheet", default_sheet=None
+        design_matrix=DesignMatrix.from_config(
+            DesignMatrixConfig(
+                filename=design_path, design_sheet="DesignSheet", default_sheet=None
+            )
         )
     )
     adapter = TypeAdapter(AnalysisConfig)
@@ -81,8 +83,12 @@ def test_that_design_matrices_cannot_be_merged_into_each_other_circularly(tmp_pa
     _create_design_matrix(
         tmp_path / "second.xlsx", pl.DataFrame({"REAL": [0, 1], "b": [3.0, 4.0]})
     )
-    first = DesignMatrix(tmp_path / "first.xlsx", "DesignSheet", None)
-    second = DesignMatrix(tmp_path / "second.xlsx", "DesignSheet", None)
+    first = DesignMatrix.from_config(
+        DesignMatrixConfig(tmp_path / "first.xlsx", "DesignSheet", None)
+    )
+    second = DesignMatrix.from_config(
+        DesignMatrixConfig(tmp_path / "second.xlsx", "DesignSheet", None)
+    )
     first.merge_with_other(second)
 
     with pytest.raises(ConfigValidationError, match="same name"):
@@ -101,7 +107,10 @@ def test_that_circular_design_matrices_are_serializable(tmp_path):
             pl.DataFrame({"REAL": [0, 1], param: [1.0, 2.0]}),
         )
     first, second, third = (
-        DesignMatrix(tmp_path / f"{name}.xlsx", "DesignSheet", None) for name in names
+        DesignMatrix.from_config(
+            DesignMatrixConfig(tmp_path / f"{name}.xlsx", "DesignSheet", None)
+        )
+        for name in names
     )
     first.merge_with_other(second)
     second.merge_with_other(third)
@@ -120,11 +129,13 @@ def test_that_categorical_design_matrix_parameters_are_excluded_from_update(tmp_
         }
     )
     _create_design_matrix(design_path, design_matrix_df)
-    dm = DesignMatrix(
-        filename=design_path,
-        design_sheet="DesignSheet",
-        default_sheet=None,
-        update=True,
+    dm = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_path,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        ),
         gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
 
@@ -149,11 +160,13 @@ def test_that_categorical_design_matrix_parameters_overlapping_gen_kw_are_exclud
         }
     )
     _create_design_matrix(design_path, design_matrix_df)
-    dm = DesignMatrix(
-        filename=design_path,
-        design_sheet="DesignSheet",
-        default_sheet=None,
-        update=True,
+    dm = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_path,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        ),
         gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
 
@@ -197,11 +210,13 @@ def test_that_categorical_parameters_from_merged_design_matrix_are_excluded_from
             }
         ),
     )
-    dm1 = DesignMatrix(
-        filename=design_path_1,
-        design_sheet="DesignSheet",
-        default_sheet=None,
-        update=True,
+    dm1 = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_path_1,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        ),
         gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
 
@@ -215,10 +230,12 @@ def test_that_categorical_parameters_from_merged_design_matrix_are_excluded_from
             }
         ),
     )
-    dm2 = DesignMatrix(
-        filename=design_path_2,
-        design_sheet="DesignSheet",
-        default_sheet=None,
+    dm2 = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_path_2,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+        )
     )
 
     dm1.merge_with_other(dm2)
@@ -250,12 +267,7 @@ def test_that_from_config_list_with_update_option_parses_boolean_value(
         },
     ]
 
-    with patch.object(DesignMatrix, "__post_init__", return_value=None):
-        dm = DesignMatrix.from_config_list(
-            config_list,
-            gen_kw_update_strategy=None,
-        )
-        assert dm.update is expected
+    assert DesignMatrixConfig.from_config_list(config_list).update is expected
 
 
 def test_that_from_config_list_with_invalid_update_option_throws():
@@ -269,14 +281,11 @@ def test_that_from_config_list_with_invalid_update_option_throws():
         },
     ]
 
-    with (
-        patch.object(DesignMatrix, "__post_init__", return_value=None),
-        pytest.raises(
-            ConfigValidationError,
-            match="UPDATE must be either 'TRUE' or 'FALSE'; is 'INVALID'",
-        ),
+    with pytest.raises(
+        ConfigValidationError,
+        match="UPDATE must be either 'TRUE' or 'FALSE'; is 'INVALID'",
     ):
-        DesignMatrix.from_config_list(config_list, gen_kw_update_strategy=None)
+        DesignMatrixConfig.from_config_list(config_list)
 
 
 @pytest.mark.parametrize("priority", ["design_matrix", "sampled"])
@@ -284,18 +293,20 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
     priority,
 ):
 
-    with patch.object(DesignMatrix, "__post_init__", return_value=None):
-        dm = DesignMatrix.from_config_list(
-            [
-                "dummy.xlsx",
-                {
-                    "DESIGN_SHEET": "DesignSheet",
-                    "DEFAULT_SHEET": "DefaultSheet",
-                    "PRIORITY": priority,
-                },
-            ],
-            gen_kw_update_strategy=LocalizationType.ADAPTIVE,
-        )
+    dm_config = DesignMatrixConfig.from_config_list(
+        [
+            "dummy.xlsx",
+            {
+                "DESIGN_SHEET": "DesignSheet",
+                "DEFAULT_SHEET": "DefaultSheet",
+                "PRIORITY": priority,
+            },
+        ]
+    )
+    dm = DesignMatrix(
+        update=dm_config.update,
+        gen_kw_update_strategy=LocalizationType.ADAPTIVE,
+    )
 
     # state after loading design matrix
     dm.parameter_configurations = [
@@ -325,19 +336,21 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
 def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_params_and_update_true(  # ruff: ignore[line-too-long]
     priority,
 ):
-    with patch.object(DesignMatrix, "__post_init__", return_value=None):
-        dm = DesignMatrix.from_config_list(
-            [
-                "dummy.xlsx",
-                {
-                    "DESIGN_SHEET": "DesignSheet",
-                    "DEFAULT_SHEET": "DefaultSheet",
-                    "PRIORITY": priority,
-                    "UPDATE": "TRUE",
-                },
-            ],
-            gen_kw_update_strategy=LocalizationType.ADAPTIVE,
-        )
+    dm_config = DesignMatrixConfig.from_config_list(
+        [
+            "dummy.xlsx",
+            {
+                "DESIGN_SHEET": "DesignSheet",
+                "DEFAULT_SHEET": "DefaultSheet",
+                "PRIORITY": priority,
+                "UPDATE": "TRUE",
+            },
+        ]
+    )
+    dm = DesignMatrix(
+        update=dm_config.update,
+        gen_kw_update_strategy=LocalizationType.ADAPTIVE,
+    )
 
     # state after loading design matrix
     dm.parameter_configurations = [
@@ -369,19 +382,18 @@ def test_that_merge_with_existing_parameters_merges_correctly_with_no_existing_p
 def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_update_strategy_sets_update_to_global(  # ruff: ignore[line-too-long]
     priority,
 ):
-    with patch.object(DesignMatrix, "__post_init__", return_value=None):
-        dm = DesignMatrix.from_config_list(
-            [
-                "dummy.xlsx",
-                {
-                    "DESIGN_SHEET": "DesignSheet",
-                    "DEFAULT_SHEET": "DefaultSheet",
-                    "PRIORITY": priority,
-                    "UPDATE": "TRUE",
-                },
-            ],
-            gen_kw_update_strategy=None,
-        )
+    dm_config = DesignMatrixConfig.from_config_list(
+        [
+            "dummy.xlsx",
+            {
+                "DESIGN_SHEET": "DesignSheet",
+                "DEFAULT_SHEET": "DefaultSheet",
+                "PRIORITY": priority,
+                "UPDATE": "TRUE",
+            },
+        ]
+    )
+    dm = DesignMatrix(update=dm_config.update, gen_kw_update_strategy=None)
 
     # state after loading design matrix
     dm.parameter_configurations = [
@@ -406,7 +418,7 @@ def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_up
     ]
     dm.updatable_parameters = {cfg.name: True for cfg in dm.parameter_configurations}
     dm.parameter_priority = {
-        cfg.name: dm.priority_source for cfg in dm.parameter_configurations
+        cfg.name: dm_config.priority_source for cfg in dm.parameter_configurations
     }
 
     new_params = dm.merge_with_existing_parameters(existing_parameters=[])
@@ -478,19 +490,21 @@ def test_that_merge_with_existing_parameter_with_update_true_and_no_parameter_up
 def test_that_merge_with_existing_parameters_respects_update_flag_and_priority(
     update, global_update_strategy, existing_parameters, expected
 ):
-    with patch.object(DesignMatrix, "__post_init__", return_value=None):
-        dm = DesignMatrix.from_config_list(
-            [
-                "dummy.xlsx",
-                {
-                    "DESIGN_SHEET": "DesignSheet",
-                    "DEFAULT_SHEET": "DefaultSheet",
-                    "PRIORITY": "design_matrix",
-                    "UPDATE": update,
-                },
-            ],
-            gen_kw_update_strategy=global_update_strategy,
-        )
+    dm_config = DesignMatrixConfig.from_config_list(
+        [
+            "dummy.xlsx",
+            {
+                "DESIGN_SHEET": "DesignSheet",
+                "DEFAULT_SHEET": "DefaultSheet",
+                "PRIORITY": "design_matrix",
+                "UPDATE": update,
+            },
+        ]
+    )
+    dm = DesignMatrix(
+        update=dm_config.update,
+        gen_kw_update_strategy=global_update_strategy,
+    )
 
     # state after loading design matrix
     dm.parameter_configurations = [
