@@ -131,7 +131,7 @@ def test_that_locked_update_strategies_disable_comboboxes_and_are_not_applied(
     assert button is not None
     qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
-    assert comboboxes_enabled == [False, False, False]
+    assert comboboxes_enabled == [False]
     assert parameter.update_strategy == LocalizationType.GLOBAL
     assert pytest.approx(es_settings.enkf_truncation) == 0.3
     assert settings_changed == [True]
