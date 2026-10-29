@@ -14,13 +14,13 @@ from fmudesign.utils import map_dependencies
 EXAMPLE_FILES = [example.filename for example in EXAMPLES]
 
 
-def _run_cli(*args):
+def _run_cli(*args, capture_output=False):
     env = os.environ.copy()
     env.setdefault("MPLBACKEND", "Agg")
     return subprocess.run(
         ["fmudesign", *map(str, args)],
         check=True,
-        capture_output=True,
+        capture_output=capture_output,
         text=True,
         env=env,
     )
@@ -183,7 +183,11 @@ def test_that_cli_verbosity_controls_sensitivity_plot_generation(
     designfile = "ex4_background_parameters.xlsx"
     _run_cli("init", designfile)
     result = _run_cli(
-        "run", designfile, "analysis/design.v2", *(["--verbose"] * verbosity)
+        "run",
+        designfile,
+        "analysis/design.v2",
+        *(["--verbose"] * verbosity),
+        capture_output=True,
     )
 
     assert (tmp_path / "analysis/design.v2.xlsx").is_file()

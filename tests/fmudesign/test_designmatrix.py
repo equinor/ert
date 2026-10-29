@@ -44,7 +44,6 @@ def test_that_cli_accepts_relative_input_and_custom_output_paths(tmp_path, monke
         ["fmudesign", "init", "ex2_correlations.xlsx"],
         cwd=case_dir,
         check=True,
-        capture_output=True,
         text=True,
     )
     monkeypatch.chdir(tmp_path)
@@ -114,7 +113,6 @@ def test_that_cli_resolves_external_seeds_file_relative_to_input(tmp_path, monke
     subprocess.run(
         ["fmudesign", str(relative_design), str(output_path)],
         check=True,
-        capture_output=True,
         text=True,
     )
 
