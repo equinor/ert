@@ -343,6 +343,7 @@ def _create_one_runpath(
         result = param_substituter.substitute(source_file_content)
         timings["substitute_parameters"] += time.perf_counter() - start_time
 
+        start_time = time.perf_counter()
         target = runpath / target_file
         if not target.parent.exists():
             target.parent.mkdir(exist_ok=True, parents=True)
@@ -356,6 +357,7 @@ def _create_one_runpath(
     _backup_if_existing(path)
     timings["backup_if_existing"] = time.perf_counter() - start_time
 
+    start_time = time.perf_counter()
     forward_model_output = create_forward_model_json(
         context=substitutions,
         forward_model_steps=forward_model_steps,
