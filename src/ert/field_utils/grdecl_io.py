@@ -261,6 +261,7 @@ def import_bgrdecl(
 
 _VALUES_PER_LINE = 6
 _LINES_PER_CHUNK = 2**16
+_BINARY_WRITE_BUFFER_SIZE = 2**20
 
 
 def _write_grdecl_lines(fh: BinaryIO, lines: npt.NDArray[np.float32]) -> None:
@@ -285,10 +286,13 @@ def export_grdecl(
     flat_values = values.ravel(order="F")
 
     if binary:
-        resfo.write(
-            file_path,
-            [(param_name.ljust(8), flat_values.astype(np.float32, copy=False))],
-        )
+        # resfo writes many small records, and each flush of a small buffer
+        # releases and reacquires the GIL, which stalls when other threads
+        # are busy.
+        with Path(file_path).open("wb", buffering=_BINARY_WRITE_BUFFER_SIZE) as fh:
+            resfo.write(
+                fh, [(param_name.ljust(8), flat_values.astype(np.float32, copy=False))]
+            )
     else:
         num_full_lines = len(flat_values) // _VALUES_PER_LINE
         full_lines = flat_values[: num_full_lines * _VALUES_PER_LINE].reshape(
