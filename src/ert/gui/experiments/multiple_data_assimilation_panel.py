@@ -145,6 +145,18 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         layout.addRow("Runpath:", CopyableLabel(text=runpath))
 
+        self._weights_before_single_update = self._configured_weights
+        single_update_tooltip = (
+            "Run a single update with weight 1, "
+            "equivalent to running the previous Ensemble Smoother."
+        )
+        self._single_update_box = QCheckBox("")
+        self._single_update_box.setObjectName("single_update_checkbox_esmda")
+        self._single_update_box.setToolTip(single_update_tooltip)
+        single_update_label = QLabel("Single update (Ensemble Smoother):")
+        single_update_label.setToolTip(single_update_tooltip)
+        layout.addRow(single_update_label, self._single_update_box)
+
         number_of_realizations_container, number_of_realizations_label = (
             create_number_of_realizations_container(len(active_realizations))
         )
@@ -165,18 +177,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.weights = self._configured_weights
         self.weights_valid = True
         self._createInputForWeights(layout)
-
-        self._weights_before_single_update = self._configured_weights
-        single_update_tooltip = (
-            "Run a single update with weight 1, "
-            "equivalent to running the previous Ensemble Smoother."
-        )
-        self._single_update_box = QCheckBox("")
-        self._single_update_box.setObjectName("single_update_checkbox_esmda")
-        self._single_update_box.setToolTip(single_update_tooltip)
-        single_update_label = QLabel("Single update:")
-        single_update_label.setToolTip(single_update_tooltip)
-        layout.addRow(single_update_label, self._single_update_box)
 
         self._param_state = ParameterConfigurationStateModel(
             merge_design_matrix_parameters(
