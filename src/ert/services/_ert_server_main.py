@@ -274,6 +274,7 @@ def main() -> None:
         "ssl_certfile": cert_path,
         "ssl_keyfile_password": key_pw,
         "ssl_version": ssl.PROTOCOL_TLS_SERVER,
+        "timeout_graceful_shutdown": 3,
     }
 
     logging_conf = yaml.safe_load(
