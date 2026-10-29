@@ -88,7 +88,7 @@ def monitor_everest(options: argparse.Namespace) -> None:
 
         try:
             experiment_status = get_experiment_status(str(config.storage_dir))
-            if experiment_status and experiment_status.status == ExperimentState.failed:
+            if experiment_status and experiment_status.state == ExperimentState.failed:
                 raise SystemExit(experiment_status.message or "Optimization failed")
             if experiment_status:
                 print(
@@ -102,14 +102,14 @@ def monitor_everest(options: argparse.Namespace) -> None:
             experiment_status = get_experiment_status(str(config.storage_dir))
             if (
                 experiment_status is None
-                or experiment_status.status == ExperimentState.never_run
+                or experiment_status.state == ExperimentState.never_run
             ):
                 print(
                     "The optimization has not run yet.\n"
                     "To run the optimization use command:\n"
                     f"  `everest run {config.config_file}`"
                 )
-            elif experiment_status.status == ExperimentState.failed:
+            elif experiment_status.state == ExperimentState.failed:
                 print(
                     "Optimization run failed, with error: "
                     f"{experiment_status.message}\n"

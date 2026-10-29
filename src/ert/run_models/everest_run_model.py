@@ -539,7 +539,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         if self._experiment is not None:
             self._experiment.status = ExperimentStatus(
                 message="Optimization aborted",
-                status=ExperimentState.stopped,
+                state=ExperimentState.stopped,
             )
         super().cancel()
 
@@ -755,7 +755,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         self._experiment = self._experiment or self._create_experiment_storage()
 
         self._experiment.status = ExperimentStatus(
-            message="Experiment started", status=ExperimentState.running
+            message="Experiment started", state=ExperimentState.running
         )
 
         # Initialize the ropt optimizer:
@@ -782,18 +782,18 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                     self._exit_code = EverestExitCode.MAX_FUNCTIONS_REACHED
                     experiment_status = ExperimentStatus(
                         message="Maximum number of function evaluations reached",
-                        status=ExperimentState.completed,
+                        state=ExperimentState.completed,
                     )
                 case RoptExitCode.MAX_BATCHES_REACHED:
                     self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
                     experiment_status = ExperimentStatus(
                         message="Maximum number of batches reached",
-                        status=ExperimentState.completed,
+                        state=ExperimentState.completed,
                     )
                 case RoptExitCode.USER_ABORT:
                     self._exit_code = EverestExitCode.USER_ABORT
                     experiment_status = ExperimentStatus(
-                        message="Optimization aborted", status=ExperimentState.stopped
+                        message="Optimization aborted", state=ExperimentState.stopped
                     )
                 case RoptExitCode.TOO_FEW_REALIZATIONS:
                     self._exit_code = (
@@ -805,12 +805,12 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                         message="Too few realizations are evaluated successfully"
                         if self.get_number_of_successful_realizations() > 0
                         else "All realizations failed",
-                        status=ExperimentState.failed,
+                        state=ExperimentState.failed,
                     )
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
                     experiment_status = ExperimentStatus(
-                        message="Experiment completed", status=ExperimentState.completed
+                        message="Experiment completed", state=ExperimentState.completed
                     )
 
         if experiment_status is not None:
