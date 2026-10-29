@@ -320,9 +320,9 @@ specified in `REAL` column; i.e.; 0,1 and 3 in the example. If the `REAL` column
 as realization; i.e. 0,1 and 2 in the example.
 
 Multiple :code:`DESIGN_MATRIX` keywords can be added to the configuration file and ert will validate that
-the parameter names are either unique or the values need to be the same for the overlapping parameters
-in the different instances of the keyword. The ``PRIORITY`` and ``UPDATE`` options of each keyword only
-apply to the parameters read by that keyword.
+the parameter names are unique across the different instances of the keyword. A keyword that is repeated
+with the same file and options is only read once. The ``PRIORITY`` and ``UPDATE`` options of each keyword
+only apply to the parameters read by that keyword.
 
 In case there is a different number of realizations in each instance, the intersection of the active realizations will be used
 and ert will raise a warning. If there are no common active realizations, ert will produce a ConfigValidationError.

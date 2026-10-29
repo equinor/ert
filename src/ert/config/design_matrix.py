@@ -30,54 +30,80 @@ DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 DISALLOWED_CELL_VALUES = ["nan", "null", "none", ""]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DesignMatrix:
-    filename: Path
-    design_sheet: str
-    default_sheet: str | None
-    priority_source: str = "design_matrix"
-    update: bool = False
-    categorical_parameters: frozenset[str] = field(default_factory=frozenset)
-    gen_kw_update_strategy: LocalizationType | None = None
-    updatable_parameters: dict[str, bool] = field(default_factory=dict)
-    # The merged result. When design_matrix_df is empty, all of these are read
-    # from the file instead.
-    design_matrix_df: SerializableDataFrame = field(
-        default_factory=pl.DataFrame, compare=False, repr=False
-    )
-    active_realizations: list[bool] = field(default_factory=list)
-    parameter_configurations: list[GenKwConfig] = field(default_factory=list)
-    parameter_priority: dict[str, str] = field(default_factory=dict)
+    """Design matrix parameter values, merged from one or more configs."""
 
-    def __post_init__(self) -> None:
-        if self.design_matrix_df.is_empty():
-            self._load_from_file()
+    labels: list[str]
+    categorical_parameters: frozenset[str]
+    gen_kw_update_strategy: LocalizationType | None
+    updatable_parameters: dict[str, bool]
+    design_matrix_df: SerializableDataFrame = field(compare=False, repr=False)
+    active_realizations: list[bool]
+    parameter_configurations: list[GenKwConfig]
+    parameter_priority: dict[str, str]
 
-    def _load_from_file(self) -> None:
-        try:
-            (
-                self.active_realizations,
-                self.design_matrix_df,
-                self.parameter_configurations,
-            ) = self.read_and_validate_design_matrix()
-            self.parameter_priority = {
-                cfg.name: self.priority_source for cfg in self.parameter_configurations
-            }
-            self.categorical_parameters = frozenset(
-                col
-                for col, dtype in self.design_matrix_df.schema.items()
-                if col != "realization" and not dtype.is_numeric()
-            )
-            self.updatable_parameters = {
-                cfg.name: self.update for cfg in self.parameter_configurations
-            }
-        except (ValueError, AttributeError) as exc:
-            raise ConfigValidationError.with_context(
-                f"Error reading design matrix {self.filename}"
-                f" ({self.design_sheet} {self.default_sheet or ''}):"
-                f" {exc}",
-                str(self.filename),
-            ) from exc
+    @classmethod
+    def from_config(
+        cls,
+        config: DesignMatrixConfig,
+        gen_kw_update_strategy: LocalizationType | None = None,
+    ) -> DesignMatrix:
+        return cls.from_dataframe(
+            config.read(),
+            label=config.label,
+            priority_source=config.priority_source,
+            update=config.update,
+            gen_kw_update_strategy=gen_kw_update_strategy,
+        )
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        design_matrix_df: pl.DataFrame,
+        *,
+        label: str,
+        priority_source: str = DataSource.DESIGN_MATRIX,
+        update: bool = False,
+        gen_kw_update_strategy: LocalizationType | None = None,
+    ) -> DesignMatrix:
+        """Create a design matrix from a dataframe with a 'realization' column
+        and one column for each parameter.
+
+        The dataframe must already be validated, like the one returned by
+        DesignMatrixConfig.read().
+        """
+        parameter_names = [
+            col for col in design_matrix_df.columns if col != "realization"
+        ]
+        reals = design_matrix_df.get_column("realization").to_list()
+        return cls(
+            labels=[label],
+            categorical_parameters=frozenset(
+                name
+                for name in parameter_names
+                if not design_matrix_df.schema[name].is_numeric()
+            ),
+            gen_kw_update_strategy=gen_kw_update_strategy,
+            updatable_parameters=dict.fromkeys(parameter_names, update),
+            design_matrix_df=design_matrix_df,
+            active_realizations=[x in reals for x in range(max(reals) + 1)],
+            parameter_configurations=[
+                GenKwConfig(
+                    name=name,
+                    update_strategy=None,
+                    group=DESIGN_MATRIX_GROUP,
+                    input_source=DataSource.DESIGN_MATRIX,
+                    distribution=RawSettings(name="raw"),
+                )
+                for name in parameter_names
+            ],
+            parameter_priority=dict.fromkeys(parameter_names, priority_source),
+        )
+
+    @property
+    def label(self) -> str:
+        return ", ".join(self.labels)
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
         errors = []
@@ -87,10 +113,7 @@ class DesignMatrix:
         if common_keys:
             errors.append(
                 ErrorInfo(
-                    f"Design Matrices '{self.filename.name} "
-                    f"({self.design_sheet} {self.default_sheet or ''})' and "
-                    f"'{dm_other.filename.name} ({dm_other.design_sheet} "
-                    f"{dm_other.default_sheet or ''})' "
+                    f"Design Matrices '{self.label}' and '{dm_other.label}' "
                     "contains columns with the same name: "
                     f"{common_keys}!"
                 )
@@ -105,18 +128,13 @@ class DesignMatrix:
             if not any(real_intersection):
                 errors.append(
                     ErrorInfo(
-                        f"Design Matrices '{self.filename.name} "
-                        f"({self.design_sheet} {self.default_sheet or ''})' and "
-                        f"'{dm_other.filename.name} "
-                        f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                        f"Design Matrices '{self.label}' and '{dm_other.label}' "
                         "do not have any active realizations in common!"
                     )
                 )
             else:
                 ConfigWarning.warn(
-                    f"Design Matrices '{self.filename.name} ({self.design_sheet} "
-                    f"{self.default_sheet or ''})' and '{dm_other.filename.name} "
-                    f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                    f"Design Matrices '{self.label}' and '{dm_other.label}' "
                     "do not have the same active realizations. The merged design "
                     "matrix will only contain the realizations that are active "
                     "in all instances."
@@ -133,10 +151,7 @@ class DesignMatrix:
         except ValueError as exc:
             raise ConfigValidationError(
                 f"Error when merging design matrices "
-                f"'{self.filename.name} ({self.design_sheet}"
-                f" {self.default_sheet or ''})'"
-                f" and '{dm_other.filename.name} ({dm_other.design_sheet} "
-                f"{dm_other.default_sheet or ''})': {exc}!"
+                f"'{self.label}' and '{dm_other.label}': {exc}!"
             ) from exc
 
         reals = self.design_matrix_df.get_column("realization").to_list()
@@ -150,6 +165,7 @@ class DesignMatrix:
         self.parameter_priority.update(dm_other.parameter_priority)
         self.categorical_parameters |= dm_other.categorical_parameters - common_keys
         self.updatable_parameters.update(dm_other.updatable_parameters)
+        self.labels.extend(dm_other.labels)
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
@@ -229,12 +245,21 @@ class DesignMatrix:
 
         return new_param_configs
 
+
+@dataclass(frozen=True)
+class DesignMatrixConfig:
+    """A DESIGN_MATRIX keyword: a spreadsheet with a design matrix and its options."""
+
+    filename: Path
+    design_sheet: str
+    default_sheet: str | None
+    priority_source: str = "design_matrix"
+    update: bool = False
+
     @classmethod
     def from_config_list(
-        cls,
-        config_list: list[str | dict[str, str]],
-        gen_kw_update_strategy: LocalizationType | None,
-    ) -> DesignMatrix:
+        cls, config_list: list[str | dict[str, str]]
+    ) -> DesignMatrixConfig:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
         valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET", "PRIORITY", "UPDATE"]
@@ -289,22 +314,36 @@ class DesignMatrix:
             default_sheet=default_sheet,
             priority_source=priority_source,
             update=update_value == "TRUE",
-            gen_kw_update_strategy=gen_kw_update_strategy,
         )
 
-    def read_and_validate_design_matrix(
-        self,
-    ) -> tuple[list[bool], pl.DataFrame, list[GenKwConfig]]:
-        param_names, design_matrix_df, row_labels = self._read_design_sheet()
-        design_matrix_df = _validate_design_values(
-            design_matrix_df, param_names, row_labels
-        )
-        defaults = (
-            read_default_values(self.filename, self.default_sheet, has_header=False)
-            if self.default_sheet is not None
-            else {}
-        )
-        return _complete_design_matrix(design_matrix_df, defaults)
+    @property
+    def label(self) -> str:
+        return f"{self.filename.name} ({self._sheets})"
+
+    @property
+    def _sheets(self) -> str:
+        return " ".join(filter(None, [self.design_sheet, self.default_sheet]))
+
+    def read(self) -> pl.DataFrame:
+        """Read a dataframe with a 'realization' column and one column for
+        each parameter.
+        """
+        try:
+            param_names, design_matrix_df, row_labels = self._read_design_sheet()
+            design_matrix_df = _validate_design_values(
+                design_matrix_df, param_names, row_labels
+            )
+            defaults = (
+                read_default_values(self.filename, self.default_sheet, has_header=False)
+                if self.default_sheet is not None
+                else {}
+            )
+            return _complete_design_matrix(design_matrix_df, defaults)
+        except (ValueError, AttributeError) as exc:
+            raise ConfigValidationError.with_context(
+                f"Error reading design matrix {self.filename} ({self._sheets}): {exc}",
+                str(self.filename),
+            ) from exc
 
     def _read_design_sheet(
         self,
@@ -430,6 +469,8 @@ def _validate_design_values(
         design_matrix_df.columns[i] for i in columns_to_keep
     )
     param_names = tuple(param_names[i] for i in columns_to_keep)
+    if design_matrix_df.width == 0:
+        raise ValueError("Design sheet contains no parameters.")
 
     if errors := _validate_design_matrix(design_matrix_df, param_names, row_labels):
         error_msg = "\n".join(errors)
@@ -443,7 +484,7 @@ def _validate_design_values(
 def _complete_design_matrix(
     design_matrix_df: pl.DataFrame,
     defaults: dict[str, str | float | int | bool],
-) -> tuple[list[bool], pl.DataFrame, list[GenKwConfig]]:
+) -> pl.DataFrame:
     design_matrix_df = design_matrix_df.with_columns(
         pl.lit(value).alias(name)
         for name, value in defaults.items()
@@ -470,26 +511,7 @@ def _complete_design_matrix(
     else:
         design_matrix_df = design_matrix_df.with_row_index(name="realization")
 
-    design_matrix_df = convert_numeric_string_columns(design_matrix_df)
-
-    parameter_configurations: list[GenKwConfig] = [
-        GenKwConfig(
-            name=col,
-            update_strategy=None,
-            group=DESIGN_MATRIX_GROUP,
-            input_source=DataSource.DESIGN_MATRIX,
-            distribution=RawSettings(name="raw"),
-        )
-        for col in design_matrix_df.columns
-        if col != "realization"
-    ]
-
-    reals = design_matrix_df.get_column("realization").to_list()
-    return (
-        [x in reals for x in range(max(reals) + 1)],
-        design_matrix_df,
-        parameter_configurations,
-    )
+    return convert_numeric_string_columns(design_matrix_df)
 
 
 def _validate_design_matrix(
@@ -497,11 +519,7 @@ def _validate_design_matrix(
     param_names: tuple[str | None, ...],
     row_labels: list[str],
 ) -> list[str]:
-    """
-    Validate user inputted design matrix
-    :raises: ValueError if design matrix contains empty headers, empty
-    cells, or cells with disallowed values
-    """
+    """Return errors for invalid parameter names and empty cells."""
     errors = []
     param_name_count = Counter(p for p in param_names if p is not None)
     duplicate_param_names = [(n, c) for n, c in param_name_count.items() if c > 1]
