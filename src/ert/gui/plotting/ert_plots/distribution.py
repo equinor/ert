@@ -68,6 +68,12 @@ class DistributionPlot:
             )
             return
 
+        if not any(
+            self._has_numeric_data(data) for data in ensemble_to_data_map.values()
+        ):
+            figure.text(0.5, 0.5, "<no data>", ha="center", va="center")
+            return
+
         if not self._histogram and not self._gkde_plot:
             # Only rug plots, no empty main plot on top
             self._plot_rug(
@@ -108,6 +114,9 @@ class DistributionPlot:
             strict=False,
         ):
             config.set_current_color(color_index)
+            if not self._has_numeric_data(data):
+                self._add_ensemble_legend(config, ensemble, no_data=True)
+                continue
             if self._gkde_plot:
                 self._plot_gkde(
                     main_axes, data[0], config, log_scale=plot_context.log_scale
@@ -154,6 +163,12 @@ class DistributionPlot:
         else:
             main_axes = figure.add_subplot(111)
         return main_axes
+
+    @staticmethod
+    def _has_numeric_data(data: pd.DataFrame) -> bool:
+        return 0 in data.columns and not PlotTools.array_is_empty_or_non_numeric(
+            data[0]
+        )
 
     @staticmethod
     def _evaluate_kde(
@@ -261,11 +276,30 @@ class DistributionPlot:
                 strict=False,
             )
         ):
-            if PlotTools.array_is_empty_or_non_numeric(data[0]):
+            rug = rug_plots[index]
+            rug.yaxis.set_visible(False)
+            rug.xaxis.set_visible(
+                only_rug and index == number_of_ensembles - 1
+            )  # x-axis on all if no mainplot, otherwise only on last rug plot
+            if only_rug and index == number_of_ensembles - 1:
+                rug.tick_params(axis="x", labelbottom=True)
+            PlotTools.remove_spines(rug, ["top", "right", "left", "bottom"])
+            if plot_context.log_scale:
+                rug.set_xscale("log")
+            config.set_current_color(color_index)
+            if not self._has_numeric_data(data):
+                rug.text(
+                    0.5,
+                    0.5,
+                    "<no data>",
+                    transform=rug.transAxes,
+                    ha="center",
+                    va="center",
+                )
+                if only_rug:
+                    self._add_ensemble_legend(config, ensemble, no_data=True)
                 continue
 
-            rug = rug_plots[index]
-            config.set_current_color(color_index)
             rug.plot(
                 data[0],
                 np.zeros(len(data[0])),
@@ -282,16 +316,6 @@ class DistributionPlot:
             if only_rug:
                 self._add_ensemble_legend(config, ensemble)
 
-            rug.yaxis.set_visible(False)
-            rug.xaxis.set_visible(
-                only_rug and index == number_of_ensembles - 1
-            )  # x-axis on all if no mainplot, otherwise only on last rug plot
-            if only_rug and index == number_of_ensembles - 1:
-                rug.tick_params(axis="x", labelbottom=True)
-            PlotTools.remove_spines(rug, ["top", "right", "left", "bottom"])
-            if plot_context.log_scale:
-                rug.set_xscale("log")
-
         if only_rug:
             PlotTools.set_title(rug_plots[0], plot_context)
             if config.is_legend_enabled() and config.legend_items():
@@ -305,11 +329,13 @@ class DistributionPlot:
                 )
 
     def _add_ensemble_legend(
-        self, config: PlotConfig, ensemble: EnsembleObject
+        self, config: PlotConfig, ensemble: EnsembleObject, *, no_data: bool = False
     ) -> None:
         label = (
             f"{truncate_experiment_name(ensemble.experiment_name)} : {ensemble.name}"
         )
+        if no_data:
+            label += " <no data>"
         config.add_legend_item(
             label,
             Line2D(
