@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
+from httpx import RequestError
 from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
@@ -26,6 +27,7 @@ from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinit
 from ert.gui.plotting.plot_window import (
     PlotWindow,
     create_error_dialog,
+    handle_exception,
     make_seismic_y_label,
 )
 from ert.gui.plotting.utils import PlotConfig, PlotContext
@@ -90,6 +92,22 @@ def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
         qd.findChild(QPushButton, name="copy_button"), Qt.MouseButton.LeftButton
     )
     assert QApplication.clipboard().text() == "world"
+
+
+def test_that_request_error_dialog_includes_the_underlying_error_message(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    open_error_dialog = MagicMock()
+    monkeypatch.setattr(
+        "ert.gui.plotting.plot_window.open_error_dialog", open_error_dialog
+    )
+
+    handle_exception(RequestError("Response key FOPR not found"))
+
+    title, content = open_error_dialog.call_args.args
+    assert title == "RequestError"
+    assert "An error occurred while making a request to the Plot API." in content
+    assert "Response key FOPR not found" in content
 
 
 @pytest.fixture
