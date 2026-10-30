@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -493,9 +494,10 @@ def test_that_save_blob_rejects_malformed_blob_events(
         ),
     ],
 )
-def test_that_load_blobs_rejects_malformed_blob_metadata(
+def test_that_load_blob_metadata_skips_malformed_metadata_and_logs_a_warning(
     tmp_path,
     metadata,
+    caplog,
 ):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
@@ -504,10 +506,13 @@ def test_that_load_blobs_rejects_malformed_blob_metadata(
         )
         blob_dir = ensemble._path / "blobs"
         blob_dir.mkdir()
-        (blob_dir / "metadata.blob.json").write_bytes(metadata)
+        metadata_path = blob_dir / "metadata.blob.json"
+        metadata_path.write_bytes(metadata)
 
-        with pytest.raises(ValidationError):
-            ensemble.load_blob_metadata()
+        with caplog.at_level(logging.WARNING, logger="ert.storage.local_storage"):
+            assert ensemble.load_blob_metadata() == []
+
+        assert f"Failed to validate blob metadata from {metadata_path}" in caplog.text
 
 
 @pytest.mark.parametrize(

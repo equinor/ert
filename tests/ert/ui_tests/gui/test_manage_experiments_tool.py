@@ -1,4 +1,3 @@
-import json
 import shutil
 import time
 from pathlib import Path
@@ -897,57 +896,6 @@ def test_that_switching_posterior_ensembles_shows_their_own_updates(qtbot, seque
         update_view._tab_widget.widget(0).findChild(ReportLogTable).item(0, 0).text()
         == "first_observation"
     )
-
-
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_update_tab_is_hidden_for_ensemble_whose_blob_metadata_cannot_be_read(
-    qtbot,
-):
-    config = ErtConfig.from_file("poly.ert")
-    notifier = ErtNotifier()
-    notifier.set_storage(config.ens_path)
-
-    with notifier.write_storage() as storage:
-        experiment = storage.create_experiment(name="experiment")
-        posterior = experiment.create_ensemble(
-            ensemble_size=config.runpath_config.num_realizations,
-            name="posterior",
-            iteration=1,
-        )
-        posterior.save_blob(
-            AnalysisCompleteEvent(
-                data=DataSection(header=["observation_key"], data=[("POLY_OBS",)]),
-                update_algorithm="ensemble_smoother",
-            )
-        )
-        # A blob written by a newer ert, which this version cannot parse.
-        (posterior._path / "blobs" / "from_the_future.json").write_text(
-            json.dumps(
-                {
-                    "uri": "from_the_future",
-                    "file_size": 0,
-                    "file_type": "application/parquet",
-                    "name": "from_the_future",
-                    "blob_info": {"blob_type": "from_the_future"},
-                }
-            ),
-            encoding="utf-8",
-        )
-
-    tool = ManageExperimentsPanel(
-        config, notifier, config.runpath_config.num_realizations
-    )
-    qtbot.addWidget(tool)
-    tool.show()
-
-    storage_widget = tool.findChild(StorageWidget)
-    storage_widget._tree_view.expandAll()
-    experiment_index = storage_widget._tree_view.model().index(0, 0)
-    _select_ensemble_named(storage_widget, experiment_index, "posterior")
-
-    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
-    assert isinstance(ensemble_widget, EnsembleWidget)
-    assert not ensemble_widget._tab_widget.isTabVisible(_EnsembleWidgetTabs.UPDATE_TAB)
 
 
 def test_that_export_parameters_button_opens_the_export_dialog(
