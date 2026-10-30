@@ -17,8 +17,11 @@ from ert.services import (
     ErtClient,
     ErtServerController,
     ErtServerExit,
+    SharedClient,
     raise_ert_server_exit_on_signal,
 )
+from ert.services.ert_server_controller import LOOPBACK_HOST, ErtServerConnectionInfo
+from ert.services.shared_client import Client, ErtClientConnectionInfo
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
@@ -91,6 +94,23 @@ def _configure_loggers(log_dir: Path, output_file: str | None) -> list[logging.H
     return plugin_log_handles
 
 
+def _create_loopback_client(
+    server_path: Path, connection_info: ErtServerConnectionInfo
+) -> ErtClient:
+    return ErtClient(
+        SharedClient(
+            server_path,
+            Client(
+                ErtClientConnectionInfo(
+                    base_url=f"https://{LOOPBACK_HOST}:{connection_info['port']}",
+                    auth_token=connection_info["authtoken"],
+                    cert=connection_info["cert"],
+                )
+            ),
+        )
+    )
+
+
 def get_trace_context():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument(
@@ -151,8 +171,9 @@ def main() -> None:
             with ErtServerController.init_service(
                 timeout=240, project=server_path, logging_config=log_file.name
             ) as server:
-                server.fetch_connection_info()
-                client = ErtClient.get_client(server_path)
+                client = _create_loopback_client(
+                    server_path, server.fetch_connection_info()
+                )
                 done = False
                 while not done:
                     experiment_ids = client.experiment_ids()
