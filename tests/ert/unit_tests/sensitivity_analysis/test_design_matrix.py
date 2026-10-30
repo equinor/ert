@@ -312,7 +312,26 @@ def test_read_and_merge_with_existing_parameters(
         )
 
 
-def test_that_merging_design_matrices_preserves_each_matrix_update_setting(tmp_path):
+@pytest.mark.parametrize(
+    ("update_1", "update_2", "expected"),
+    [
+        pytest.param(
+            True,
+            False,
+            {"a": LocalizationType.GLOBAL, "b": None},
+            id="update_true_then_false",
+        ),
+        pytest.param(
+            False,
+            True,
+            {"a": None, "b": LocalizationType.GLOBAL},
+            id="update_false_then_true",
+        ),
+    ],
+)
+def test_that_merging_design_matrices_preserves_each_matrix_update_setting(
+    tmp_path, update_1, update_2, expected
+):
     _create_design_matrix(
         tmp_path / "design_matrix_1.xlsx",
         pl.DataFrame({"REAL": [0, 1, 2], "a": [1, 2, 3]}),
@@ -322,7 +341,7 @@ def test_that_merging_design_matrices_preserves_each_matrix_update_setting(tmp_p
         tmp_path / "design_matrix_1.xlsx",
         "DesignSheet",
         "DefaultSheet",
-        update=True,
+        update=update_1,
         gen_kw_update_strategy=LocalizationType.GLOBAL,
     )
     _create_design_matrix(
@@ -334,17 +353,14 @@ def test_that_merging_design_matrices_preserves_each_matrix_update_setting(tmp_p
         tmp_path / "design_matrix_2.xlsx",
         "DesignSheet",
         "DefaultSheet",
-        update=False,
+        update=update_2,
     )
 
     design_matrix_1.merge_with_other(design_matrix_2)
 
     new_config_parameters = design_matrix_1.merge_with_existing_parameters([])
     update_strategies = {cfg.name: cfg.update_strategy for cfg in new_config_parameters}
-    assert update_strategies == {
-        "a": LocalizationType.GLOBAL,
-        "b": None,
-    }
+    assert update_strategies == expected
 
 
 def test_reading_design_matrix(tmp_path):
