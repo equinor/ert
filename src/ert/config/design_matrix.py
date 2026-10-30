@@ -226,15 +226,18 @@ class DesignMatrix:
         design_matrix_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
         fallback_update_strategy = (
             self.gen_kw_update_strategy or LocalizationType.GLOBAL
-            if self.update
-            else None
         )
 
-        if self.update and self.categorical_parameters:
+        updatable_categorical_parameters = sorted(
+            name
+            for name in self.categorical_parameters
+            if self.updatable_parameters.get(name)
+        )
+        if updatable_categorical_parameters:
             ConfigWarning.warn(
                 "Design matrix parameters with categorical values are not "
                 "supported by the update step and will not be updated: "
-                f"{', '.join(sorted(self.categorical_parameters))}."
+                f"{', '.join(updatable_categorical_parameters)}."
             )
 
         for param_cfg in existing_parameters:
@@ -251,12 +254,11 @@ class DesignMatrix:
                 update_strategy: LocalizationType | None = None
                 if input_source == DataSource.SAMPLED:
                     update_strategy = param_cfg.update_strategy
-                elif self.update and param_cfg.name not in self.categorical_parameters:
-                    update_strategy = (
-                        fallback_update_strategy
-                        if self.updatable_parameters.get(param_cfg.name)
-                        else None
-                    )
+                elif (
+                    self.updatable_parameters.get(param_cfg.name)
+                    and param_cfg.name not in self.categorical_parameters
+                ):
+                    update_strategy = fallback_update_strategy
 
                 new_param_configs += [
                     GenKwConfig(
