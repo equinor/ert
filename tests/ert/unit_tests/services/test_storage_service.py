@@ -246,11 +246,19 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkey
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable
     x509 = ssl._ssl._test_decode_cert(conn_info["cert"])  # type: ignore[attr-defined]
-    sans = [san[1] for san in x509["subjectAltName"]]
+    dns_sans = [value for kind, value in x509["subjectAltName"] if kind == "DNS"]
 
     # extract hostname from the url strings "https://<hostname>:<port>/..."
     hosts_from_urls = [u.split("https://")[1].split(":")[0] for u in conn_info["urls"]]
-    assert set(sans) == set(hosts_from_urls)
+    assert set(dns_sans) == set(hosts_from_urls)
+
+
+@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
+@pytest.mark.slow
+def test_that_loopback_ip_exists_as_san_in_certificate(change_to_tmpdir):
+    cert_path, _, _ = _generate_certificate(Path())
+    x509 = ssl._ssl._test_decode_cert(str(cert_path))  # type: ignore[attr-defined]
+    assert ("IP Address", "127.0.0.1") in x509["subjectAltName"]
 
 
 def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(

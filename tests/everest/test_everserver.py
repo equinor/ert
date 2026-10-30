@@ -24,7 +24,7 @@ from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
     _experiments,
 )
-from ert.services import ErtClient
+from ert.services import ErtClient, ErtServerController
 from ert.storage import ExperimentState
 from everest.bin.everest_script import start_server
 from everest.bin.utils import get_experiment_status
@@ -111,6 +111,19 @@ def test_configure_logger_failure(mock_configure_loggers, change_to_tmpdir, capl
     with caplog.at_level(logging.ERROR):
         everserver.main()
     assert "Configuring logger failed" in caplog.records[0].getMessage()
+
+
+@pytest.mark.skip_mac_ci
+@pytest.mark.slow
+def test_that_everserver_client_reaches_ert_server_over_loopback_with_tls(
+    change_to_tmpdir,
+):
+    with ErtServerController.start_server(project=Path().absolute()) as server:
+        client = everserver._create_loopback_client(
+            Path().absolute(), server.fetch_connection_info()
+        )
+        assert client.conn_info.base_url.startswith("https://127.0.0.1:")
+        assert client.experiment_ids() == []
 
 
 @pytest.mark.skip_mac_ci

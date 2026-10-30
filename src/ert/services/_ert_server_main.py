@@ -1,5 +1,6 @@
 import argparse
 import datetime as dt
+import ipaddress
 import json
 import logging
 import logging.config
@@ -31,6 +32,7 @@ from uvicorn.supervisors import ChangeReload
 from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
 from ert.services import ErtServerExit, raise_ert_server_exit_on_signal
+from ert.services.ert_server_controller import LOOPBACK_HOST
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
 from ert.trace import tracer
@@ -144,6 +146,7 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
         .add_extension(
             x509.SubjectAlternativeName(
                 [x509.DNSName(f"{san_name}") for san_name in subject_alternative_names]
+                + [x509.IPAddress(ipaddress.ip_address(LOOPBACK_HOST))]
             ),
             critical=False,
         )

@@ -210,6 +210,7 @@ class _Proc(threading.Thread):
 
 _ERT_SERVER_CONNECTION_INFO_FILE = "ert_server_connection.json"
 _ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_ert_server_main.py")
+LOOPBACK_HOST = "127.0.0.1"
 
 
 class ErtServerContext:
