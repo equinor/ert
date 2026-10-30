@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -493,21 +494,46 @@ def test_that_save_blob_rejects_malformed_blob_events(
         ),
     ],
 )
-def test_that_load_blobs_rejects_malformed_blob_metadata(
+def test_that_load_blob_metadata_skips_malformed_metadata_and_logs_a_warning(
     tmp_path,
     metadata,
+    caplog,
+    monkeypatch,
 ):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
-        blob_dir = ensemble._path / "blobs"
-        blob_dir.mkdir()
-        (blob_dir / "metadata.blob.json").write_bytes(metadata)
+        ensemble.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(header=["observation_key"], data=[("OBS_1",)]),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+        metadata_path = ensemble._path / "blobs" / "malformed.blob.json"
+        metadata_path.write_bytes(metadata)
 
-        with pytest.raises(ValidationError):
-            ensemble.load_blob_metadata()
+        real_glob = Path.glob
+
+        def malformed_first(self, pattern):
+            return iter(
+                sorted(
+                    real_glob(self, pattern),
+                    key=lambda path: path.name != metadata_path.name,
+                )
+            )
+
+        with (
+            monkeypatch.context() as patch,
+            caplog.at_level(logging.WARNING, logger="ert.storage.local_storage"),
+        ):
+            # patch the glob results so that the malformed metadata comes first
+            patch.setattr(Path, "glob", malformed_first)
+            blobs = ensemble.load_blob_metadata()
+
+        assert [blob.name for blob in blobs] == ["observation_report"]
+        assert f"Failed to validate blob metadata from {metadata_path}" in caplog.text
 
 
 @pytest.mark.parametrize(

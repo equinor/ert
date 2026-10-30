@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-import logging
 
 import polars as pl
 from PyQt6.QtWidgets import (
@@ -26,8 +25,6 @@ from ert.storage.blob_data import (
     UpdateStatus,
 )
 
-logger = logging.getLogger(__name__)
-
 _REPORT_TABLE_COLUMNS = {"status", "missing_realizations"}
 
 
@@ -51,12 +48,13 @@ def _report_table_type(report: DataSection) -> type[UpdateLogTable]:
     return UpdateLogTable
 
 
-def _has_readable_update(ensemble: Ensemble) -> bool:
-    try:
-        return bool(ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT))
-    except Exception:
-        logger.exception("Could not read the blob metadata of ensemble %s", ensemble.id)
-        return False
+def _describe(report: ObservationReportData) -> str:
+    if report.status is UpdateStatus.FAILED:
+        return (
+            f"The {report.update_algorithm} update failed: "
+            f"{report.error_message or 'no error message was recorded'}"
+        )
+    return f"Updated with {report.update_algorithm}"
 
 
 class UpdateView(QWidget):
@@ -83,7 +81,9 @@ class UpdateView(QWidget):
     def set_ensemble(self, ensemble: Ensemble) -> None:
         """Check for an update producing this ensemble without reading its tables."""
         self._ensemble = ensemble
-        self._has_update = _has_readable_update(ensemble)
+        self._has_update = bool(
+            ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)
+        )
 
         self._clear_tabs()
         self._description_label.clear()
@@ -110,10 +110,7 @@ class UpdateView(QWidget):
         assert self._ensemble is not None
         try:
             self._show_update(self._ensemble)
-        except Exception:
-            logger.exception(
-                "Could not read the stored update of %s", self._ensemble.name
-            )
+        except (OSError, pl.exceptions.PolarsError):
             self._clear_tabs()
             self._status_label.setText(
                 f"The update that produced {self._ensemble.name} could not be read "
@@ -150,12 +147,3 @@ class UpdateView(QWidget):
             self._tab_widget.removeTab(0)
             if page is not None:
                 page.deleteLater()
-
-
-def _describe(report: ObservationReportData) -> str:
-    if report.status is UpdateStatus.FAILED:
-        return (
-            f"The {report.update_algorithm} update failed: "
-            f"{report.error_message or 'no error message was recorded'}"
-        )
-    return f"Updated with {report.update_algorithm}"
