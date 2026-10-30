@@ -13,6 +13,7 @@ from ert.services import ErtServerController
 from ert.services._ert_server_main import _create_connection_info, _generate_certificate
 from ert.services.ert_server_controller import create_ert_server_controller
 from ert.shared import find_available_socket
+from ert.shared.constants import LOCALHOST_IP
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
@@ -69,7 +70,7 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
         "urls": [
             f"http://{host}:51839"
             for host in (
-                "127.0.0.1",
+                LOCALHOST_IP,
                 socket.gethostname(),
                 socket.getfqdn(),
             )
@@ -99,7 +100,7 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
         "urls": [
             f"http://{host}:51839"
             for host in (
-                "127.0.0.1",
+                LOCALHOST_IP,
                 socket.gethostname(),
                 socket.getfqdn(),
             )
@@ -139,10 +140,10 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
     """
     stale_file = Path("ert_server_connection.json")
     connection_info = {
-        "urls": ["http://127.0.0.1:1"],
+        "urls": [f"http://{LOCALHOST_IP}:1"],
         "authtoken": "stale_token",
         "cert": "",
-        "host": "127.0.0.1",
+        "host": LOCALHOST_IP,
         "port": "1",
         "auth": "",
     }
@@ -237,7 +238,9 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
-def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkeypatch):
+def test_that_server_hosts_and_localhost_ip_exists_as_san_in_certificate(
+    change_to_tmpdir, monkeypatch
+):
     auth_token = "very_secret_token"
     sock = find_available_socket()
     cert_path, _, _ = _generate_certificate(Path())
@@ -246,11 +249,12 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkey
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable
     x509 = ssl._ssl._test_decode_cert(conn_info["cert"])  # type: ignore[attr-defined]
-    sans = [san[1] for san in x509["subjectAltName"]]
+    dns_sans = [value for kind, value in x509["subjectAltName"] if kind == "DNS"]
 
     # extract hostname from the url strings "https://<hostname>:<port>/..."
     hosts_from_urls = [u.split("https://")[1].split(":")[0] for u in conn_info["urls"]]
-    assert set(sans) == set(hosts_from_urls)
+    assert set(dns_sans) == set(hosts_from_urls)
+    assert ("IP Address", LOCALHOST_IP) in x509["subjectAltName"]
 
 
 def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(

@@ -16,6 +16,7 @@ from contextlib import suppress
 from copy import deepcopy
 from functools import wraps
 from os import PathLike
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Concatenate, cast
 from urllib.parse import quote
 
@@ -41,11 +42,14 @@ from _ert.threading import ErtThread
 from ert.config.ert_config import ErtConfig
 from ert.ensemble_evaluator import ConnectionLostEvent, EndEvent
 from ert.server.common import ErtRunnerEndpoints, EverEndpoints
+from ert.shared.constants import LOCALHOST_IP
 
-from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
+from .shared_client import Client, ErtClientConnectionInfo, Methods, SharedClient
 
 if TYPE_CHECKING:
     from ert.run_models.event import StatusEvents
+
+    from .ert_server_controller import ErtServerConnectionInfo
 
 DEFAULT_TIMEOUT = 120
 DEFAULT_CACHE_SIZE = 256
@@ -154,6 +158,28 @@ class ErtClient:
         """
         return cls(
             SharedClient.get_client(project, connect_timeout), timeout=request_timeout
+        )
+
+    @classmethod
+    def get_localhost_client(
+        cls,
+        project: Path,
+        connection_info: ErtServerConnectionInfo,
+        request_timeout: int = DEFAULT_TIMEOUT,
+    ) -> ErtClient:
+        """Connect to a server on the local host, bypassing hostname lookup."""
+        return cls(
+            SharedClient(
+                project,
+                Client(
+                    ErtClientConnectionInfo(
+                        base_url=f"https://{LOCALHOST_IP}:{connection_info['port']}",
+                        auth_token=connection_info["authtoken"],
+                        cert=connection_info["cert"],
+                    )
+                ),
+            ),
+            timeout=request_timeout,
         )
 
     @property

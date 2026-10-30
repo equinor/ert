@@ -168,8 +168,9 @@ def main() -> None:
             with ErtServerController.init_service(
                 timeout=240, project=server_path, logging_config=log_file.name
             ) as server:
-                server.fetch_connection_info()
-                client = ErtClient.get_client(server_path)
+                client = ErtClient.get_localhost_client(
+                    server_path, server.fetch_connection_info()
+                )
                 done = False
                 while not done:
                     experiment_ids = client.experiment_ids()
