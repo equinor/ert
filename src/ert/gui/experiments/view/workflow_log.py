@@ -166,6 +166,12 @@ class WorkflowLogWidget(QWidget):
             # Follow the newest iteration until the user picks one themselves.
             self._iteration_selector.setCurrentIndex(len(iterations) - 1)
         self._iteration_selector.blockSignals(False)
+
+        shown_iteration_is_unchanged = (
+            had_selection and self._selected_iteration() == previously_selected
+        )
+        if shown_iteration_is_unchanged:
+            return
         self._on_iteration_changed()
 
     def _on_iteration_chosen_by_user(self, _index: int) -> None:
@@ -217,6 +223,7 @@ class WorkflowLogWidget(QWidget):
         if not rows:
             self._clear_detail()
             return
+        self._iteration_chosen_by_user = True
         events = self._events.get(self._selected_iteration(), [])
         row = rows[0].row()
         if row >= len(events):
