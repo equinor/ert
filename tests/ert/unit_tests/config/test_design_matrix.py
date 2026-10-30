@@ -193,7 +193,7 @@ def test_that_categorical_parameters_from_merged_design_matrix_are_excluded_from
         pl.DataFrame(
             {
                 "REAL": [0, 1, 2],
-                "a": [1.0, 2.0, 3.0],
+                "a": ["red", "green", "blue"],
             }
         ),
     )
@@ -201,8 +201,7 @@ def test_that_categorical_parameters_from_merged_design_matrix_are_excluded_from
         filename=design_path_1,
         design_sheet="DesignSheet",
         default_sheet=None,
-        update=True,
-        gen_kw_update_strategy=LocalizationType.GLOBAL,
+        update=False,
     )
 
     design_path_2 = tmp_path / "design_matrix_2.xlsx"
@@ -219,17 +218,18 @@ def test_that_categorical_parameters_from_merged_design_matrix_are_excluded_from
         filename=design_path_2,
         design_sheet="DesignSheet",
         default_sheet=None,
+        update=True,
     )
 
     dm1.merge_with_other(dm2)
 
-    with pytest.warns(ConfigWarning, match="categorical values.*: b"):
+    with pytest.warns(ConfigWarning, match=r"categorical values.*: b\.$"):
         merged_params = {
             p.name: p
             for p in dm1.merge_with_existing_parameters(existing_parameters=[])
         }
 
-    assert merged_params["a"].update_strategy == LocalizationType.GLOBAL
+    assert merged_params["a"].update_strategy is None
     assert merged_params["b"].update_strategy is None
 
 
@@ -513,7 +513,9 @@ def test_that_merge_with_existing_parameters_respects_update_flag_and_priority(
             update_strategy=None,
         ),
     ]
-    dm.updatable_parameters = {cfg.name: update for cfg in dm.parameter_configurations}
+    dm.updatable_parameters = {
+        cfg.name: update == "TRUE" for cfg in dm.parameter_configurations
+    }
     dm.parameter_priority = {
         "param1": DataSource.DESIGN_MATRIX.value,
         "param2": DataSource.SAMPLED.value,
