@@ -45,6 +45,7 @@ from .blob_data import (
     EverestBatchData,
     MatrixStorageData,
     ObservationReportData,
+    ScalarsData,
     ScalingFactorsData,
     UpdateDataTableData,
     UpdateStatus,
@@ -76,7 +77,6 @@ class EverestRealizationInfo(TypedDict):
     perturbation: int  # -1 means it stems from unperturbed controls
 
 
-SCALAR_FILENAME = "SCALAR"
 BLOB_DATA_DIR = "blobs"
 
 
@@ -334,16 +334,16 @@ class LocalEnsemble(BaseMode):
 
     @cached_property
     def _existing_scalars(self) -> dict[str, list[int]]:
-        group_path = self.mount_point / f"{_escape_filename(SCALAR_FILENAME)}.parquet"
+        scalar_blob_uri = self._scalar_blob_uri
         genkw_mask: dict[str, list[int]] = {
             param_name: []
             for param_name, param in self.experiment.parameter_configuration.items()
             if param.cardinality
             == ParameterCardinality.multiple_configs_per_ensemble_dataset
         }
-        if not group_path.exists():
+        if not scalar_blob_uri:
             return genkw_mask
-        df = pl.scan_parquet(group_path)
+        df = pl.scan_parquet(self._path / BLOB_DATA_DIR / scalar_blob_uri)
         cols = df.collect_schema().names()
         real = (
             df.select("realization")
@@ -545,26 +545,31 @@ class LocalEnsemble(BaseMode):
         datasets = [self._load_single_dataset(group, int(i)) for i in realizations]
         return xr.combine_nested(datasets, concat_dim="realizations")
 
-    def _load_parameters_lazy(
-        self,
-        group: str,
-    ) -> pl.LazyFrame:
-        """
-        Lazy load genkw group with all realizations
-        Parameters
-        ----------
-        group : str
-            Name of parameter group to load.
+    @property
+    def _scalar_blob_uri(self) -> str | None:
+        for blob in self.load_blob_metadata(BlobType.SCALARS):
+            return blob.uri
+        return None
 
-        Returns
-        -------
-        parameters : pl.LazyFrame
-            Loaded parameters.
-        """
-        group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
-        if not group_path.exists():
-            raise KeyError(f"No {group} dataset in storage for ensemble {self.name}")
-        return pl.scan_parquet(group_path)
+    def _load_scalars_lazy(self) -> pl.LazyFrame:
+        """Lazy load all scalar parameters for all realizations."""
+        uri = self._scalar_blob_uri
+        if uri is None:
+            raise KeyError(f"No scalar dataset in storage for ensemble {self.name}")
+        return pl.scan_parquet(self._path / BLOB_DATA_DIR / uri)
+
+    @require_write
+    def _save_scalars(self, dataframe: pl.DataFrame) -> None:
+        buf = io.BytesIO()
+        dataframe.write_parquet(buf)
+        self._storage.save_blob(
+            name="scalar",
+            data=buf.getvalue(),
+            blob_info=ScalarsData(),
+            file_type="application/parquet",
+            blob_dir=self._path / BLOB_DATA_DIR,
+            uri=self._scalar_blob_uri,
+        )
 
     def load_scalar_keys(
         self,
@@ -576,7 +581,7 @@ class LocalEnsemble(BaseMode):
         if keys is None:
             keys = self.experiment.parameter_keys
 
-        df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
+        df_lazy = self._load_scalars_lazy()
         names = df_lazy.collect_schema().names()
         matches = [key for key in keys if any(key in item for item in names)]
         if len(matches) != len(keys):
@@ -693,6 +698,7 @@ class LocalEnsemble(BaseMode):
             )
         raise KeyError(f"{group} is not registered to the experiment.")
 
+    @require_write
     def save_parameters_numpy(
         self,
         parameters: npt.NDArray[np.floating],
@@ -702,9 +708,7 @@ class LocalEnsemble(BaseMode):
         config_node = self.experiment.parameter_configuration[param_group]
         complete_df: pl.DataFrame | None = None
         with contextlib.suppress(KeyError):
-            complete_df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
-                engine="streaming"
-            )
+            complete_df = self._load_scalars_lazy().collect(engine="streaming")
         for real, ds in config_node.create_storage_datasets(
             parameters, iens_active_index
         ):
@@ -723,9 +727,8 @@ class LocalEnsemble(BaseMode):
             else:
                 self.save_parameters(ds, config_node.name, real)
 
-        group_path = self.mount_point / f"{_escape_filename(SCALAR_FILENAME)}.parquet"
         if complete_df is not None:
-            self._storage._to_parquet_transaction(group_path, complete_df)
+            self._save_scalars(complete_df)
 
     def load_scalars(
         self, realizations: npt.NDArray[np.int_] | None = None
@@ -862,9 +865,7 @@ class LocalEnsemble(BaseMode):
             try:
                 # since all realizations are saved in a single parquet file,
                 # this makes sure that we only add / replace new data.
-                df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
-                    engine="streaming"
-                )
+                df = self._load_scalars_lazy().collect(engine="streaming")
                 df = df.drop(
                     [c for c in dataset.columns if c != "realization"], strict=False
                 )
@@ -876,10 +877,7 @@ class LocalEnsemble(BaseMode):
             except KeyError:
                 df_full = dataset
 
-            group_path = (
-                self.mount_point / f"{_escape_filename(SCALAR_FILENAME)}.parquet"
-            )
-            self._storage._to_parquet_transaction(group_path, df_full)
+            self._save_scalars(df_full)
             return
 
         assert group is not None, "Group must be provided for xarray Dataset"
