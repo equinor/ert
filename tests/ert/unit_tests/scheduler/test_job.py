@@ -822,3 +822,29 @@ async def test_killing_job_does_not_hang_on_waiting_for_scheduler_to_kill_in_bat
         f"Realization {job.iens} did not get confirmation from "
         "scheduler that the batch killing with driver ran successfully."
     ) in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_log_warnings_skips_output_files_not_reported_as_existing(
+    realization, mocker
+):
+    mock_sleep = mocker.patch("asyncio.sleep")
+    Path(realization.run_arg.runpath).mkdir()
+    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
+        "hello", encoding="utf-8"
+    )
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+            stderr_file="foo.stderr",
+        )
+    ]
+    remaining_timeout = await log_warnings_from_forward_model(
+        realization,
+        time.time() - 1,
+        existing_output_files={Path("foo.stdout.0")},
+    )
+    assert remaining_timeout == Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
+    mock_sleep.assert_not_called()
