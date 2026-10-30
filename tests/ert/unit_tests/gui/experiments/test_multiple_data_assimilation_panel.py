@@ -548,7 +548,7 @@ def test_that_prior_selection_disables_parameter_update_strategy_changes(
     )
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        parameter_configuration=[],
+        parameter_configuration=[prior_parameter],
         runpath="",
         notifier=notifier,
         active_realizations=[True],
@@ -574,5 +574,5 @@ def test_that_prior_selection_disables_parameter_update_strategy_changes(
         Qt.MouseButton.LeftButton,
     )
 
-    assert comboboxes_enabled == [False, False, False]
+    assert comboboxes_enabled == [False]
     assert prior_parameter.update_strategy == LocalizationType.GLOBAL
