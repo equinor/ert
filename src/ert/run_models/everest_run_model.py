@@ -21,9 +21,8 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import PrivateAttr, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
-from ropt.evaluation import EvaluationBatchContext, EvaluationBatchResult
 from ropt.results import FunctionResults, Results
-from ropt.workflow import BasicOptimizer
+from ropt.workflow import BasicOptimizer, EvaluationBatchContext, EvaluationBatchResult
 from typing_extensions import TypedDict, runtime_checkable
 
 from ert.config import (
