@@ -318,7 +318,7 @@ async def run_everest(options: argparse.Namespace) -> None:
 
     msg: str = ""
     experiment_status = get_experiment_status(options.config.storage_dir)
-    if experiment_status and experiment_status.status == ExperimentState.failed:
+    if experiment_status and experiment_status.state == ExperimentState.failed:
         msg = f"EVEREST run failed with: {experiment_status.message or 'Unknown error'}"
         logger.error(msg)
         err = SystemExit(msg)
