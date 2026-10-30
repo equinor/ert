@@ -108,7 +108,14 @@ class UpdateView(QWidget):
             return
 
         assert self._ensemble is not None
-        self._show_update(self._ensemble)
+        try:
+            self._show_update(self._ensemble)
+        except (OSError, pl.exceptions.PolarsError):
+            self._clear_tabs()
+            self._status_label.setText(
+                f"The update that produced {self._ensemble.name} could not be read "
+                f"from storage."
+            )
 
     def _show_update(self, ensemble: Ensemble) -> None:
         [report_blob] = ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)
