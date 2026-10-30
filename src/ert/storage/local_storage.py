@@ -18,7 +18,7 @@ from uuid import UUID, uuid4
 import polars as pl
 import xarray as xr
 from filelock import FileLock, Timeout
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 import ert.storage
 from ert.config import ErtConfig
@@ -797,7 +797,13 @@ class LocalStorage(BaseMode):
         adapter: TypeAdapter[BlobStorageData] = TypeAdapter(BlobStorageData)
         results = []
         for json_path in blob_dir.glob("*.json"):
-            meta = adapter.validate_json(json_path.read_bytes())
+            try:
+                meta = adapter.validate_json(json_path.read_bytes())
+            except ValidationError as e:
+                logger.warning(
+                    "Failed to validate blob metadata from %s: %s", json_path, e
+                )
+                continue
             if blob_type is None or meta.blob_info.blob_type == blob_type:
                 results.append(meta)
         return results
