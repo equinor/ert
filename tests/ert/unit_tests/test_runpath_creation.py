@@ -1,3 +1,4 @@
+import ast
 import logging
 import os
 import threading
@@ -1221,6 +1222,46 @@ async def test_that_create_runpath_emits_expected_events(prior_ensemble):
         assert event.iens in active_iens
 
     assert isinstance(events[-1], FinishedTotalRunPathCreationEvent)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_logged_runpath_wall_time_is_shorter_than_summed_step_times(
+    prior_ensemble, caplog, monkeypatch
+):
+    num_realizations = 5
+    seconds_per_realization = 0.1
+    config = ErtConfig.from_dict({"NUM_REALIZATIONS": num_realizations})
+    runpaths = Runpaths.from_config(config)
+    run_args = create_run_arguments(runpaths, [True] * num_realizations, prior_ensemble)
+    monkeypatch.setattr(
+        _create_runpath,
+        "_generate_parameter_files",
+        lambda *args, **kwargs: time.sleep(seconds_per_realization) or ({}, {}),
+    )
+    caplog.set_level(logging.INFO)
+
+    await create_runpath(
+        run_args=run_args,
+        ensemble=prior_ensemble,
+        user_config_file=str(config.user_config_file),
+        forward_model_steps=config.forward_model_steps,
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        substitutions=config.substitutions,
+        parameters_file="parameters",
+        runpaths=runpaths,
+        end_event=threading.Event(),
+    )
+
+    [message] = [
+        record.message
+        for record in caplog.records
+        if record.message.startswith("_create_runpath durations")
+    ]
+    durations = ast.literal_eval(message[message.index("{") : -1])
+    summed_time = durations["generate_parameter_files"]
+    assert summed_time >= num_realizations * seconds_per_realization
+    assert seconds_per_realization <= durations["wall_time"] < summed_time
 
 
 @pytest.mark.slow
