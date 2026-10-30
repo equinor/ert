@@ -52,5 +52,8 @@ def execute_workflow(
                     file=sys.stderr,
                 )
 
-    if not all(v["completed"] for v in runner.workflowReport().values()):
+    if any(
+        result.status is WorkflowJobStatus.FAILED
+        for result in runner.workflow_job_results()
+    ):
         logger.error(f"Workflow {workflow_name} failed!")
