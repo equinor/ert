@@ -1203,20 +1203,25 @@ class ErtConfig(BaseModel, extra="forbid"):
                         "are also defined in design matrix, but due to the given"
                         " priority they will be sampled as GEN_KW."
                     )
-                if param_design:
-                    if dm.update:
-                        ConfigWarning.warn(
-                            f"Parameters {param_design} "
-                            "will be overridden by design matrix with UPDATE:TRUE. "
-                            "Updates will be enabled for these parameters "
-                            "following the GEN_KW update strategy."
-                        )
-                    else:
-                        ConfigWarning.warn(
-                            f"Parameters {param_design} "
-                            "will be overridden by design matrix. Updates will be "
-                            "turned off for these parameters."
-                        )
+                param_design_updatable = [
+                    k for k in param_design if dm.updatable_parameters.get(k)
+                ]
+                param_design_not_updatable = [
+                    k for k in param_design if not dm.updatable_parameters.get(k)
+                ]
+                if param_design_updatable:
+                    ConfigWarning.warn(
+                        f"Parameters {param_design_updatable} "
+                        "will be overridden by design matrix with UPDATE:TRUE. "
+                        "Updates will be enabled for these parameters "
+                        "following the GEN_KW update strategy."
+                    )
+                if param_design_not_updatable:
+                    ConfigWarning.warn(
+                        f"Parameters {param_design_not_updatable} "
+                        "will be overridden by design matrix. Updates will be "
+                        "turned off for these parameters."
+                    )
 
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)

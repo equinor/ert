@@ -3273,6 +3273,42 @@ def test_that_gen_kw_defaults_to_none_with_update_false(change_to_tmpdir):
     assert param.update_strategy is None
 
 
+def test_that_overridden_gen_kw_parameters_follow_update_of_their_design_matrix(
+    change_to_tmpdir,
+):
+    Path("prior.txt").write_text("a NORMAL 0 1\nb NORMAL 0 1", encoding="utf-8")
+    _create_design_matrix("fixed.xlsx", pl.DataFrame({"REAL": [0, 1], "a": [1, 2]}))
+    _create_design_matrix("updatable.xlsx", pl.DataFrame({"REAL": [0, 1], "b": [3, 4]}))
+    Path("config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 2
+            GEN_KW COEFFS prior.txt
+            DESIGN_MATRIX fixed.xlsx UPDATE:FALSE
+            DESIGN_MATRIX updatable.xlsx UPDATE:TRUE
+        """),
+        encoding="utf-8",
+    )
+
+    with (
+        pytest.warns(
+            ConfigWarning,
+            match=r"\['a'\] will be overridden by design matrix\. Updates will be "
+            "turned off",
+        ),
+        pytest.warns(
+            ConfigWarning,
+            match=r"\['b'\] will be overridden by design matrix with UPDATE:TRUE",
+        ),
+    ):
+        ert_config = ErtConfig.from_file("config.ert")
+
+    update_strategies = {
+        cfg.name: cfg.update_strategy
+        for cfg in ert_config.parameter_configurations_with_design_matrix
+    }
+    assert update_strategies == {"a": None, "b": "global"}
+
+
 def test_that_log_observation_keys_logs_count_of_summary_keys(caplog):
     caplog.set_level(logging.INFO)
     wopr_count = 5
