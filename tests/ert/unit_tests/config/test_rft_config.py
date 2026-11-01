@@ -1079,8 +1079,8 @@ def _rft_responses_for_approximation(
     layers = [  # depth  pressure    swat    sgas
               (   5.0,    100.0,     0.1,     0.2),  # layer 1  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
               (  15.0,    200.0,     0.2,     0.3),  # layer 2  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-              (  25.0,     None,  np.nan,  np.nan),  # layer 3  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
-              (  35.0,     None,    None,    None),  # layer 4  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+              (  25.0,     None,  np.nan,  np.nan),  # layer 3  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+              (  35.0,     None,    None,    None),  # layer 4  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
               (  45.0,    200.0,     0.2,     0.3),  # layer 5  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
               (  55.0,   1000.0,     0.3,     0.2),  # layer 6  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ]
