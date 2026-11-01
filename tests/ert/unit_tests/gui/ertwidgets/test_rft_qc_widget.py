@@ -373,7 +373,7 @@ def test_that_rft_qc_widget_loads_and_displays_observations_responses_and_file_r
         # fmt: off
         overlay_and_not_in_grid_points = [
         # well_connection_cell   east   north    tvd           status
-            (        None,      200.0,  251.0, 300.0,    _PointStatus.NOT_IN_GRID),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+            (        None,      200.0,  251.0, 300.0,    _PointStatus.NOT_IN_GRID),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
             (   (1, 1, 3),      100.0,  100.0, 300.0,    _PointStatus.MATCHED),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
             (   (2, 2, 5),      200.0,  200.0, 500.0,    _PointStatus.INVALID_ZONE),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
             (   (2, 2, 4),      200.0,  200.0, 400.0,    _PointStatus.NO_RESPONSE),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
@@ -742,8 +742,8 @@ def test_that_observations_status_column_is_added(qtbot):
     observations = [
         # east  north   tvd   zone    observation
         ( 1.0,   1.0,   1.0, "zone1",  10.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( 1.0,   1.0,   2.0,    None,  11.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
-        ( 1.0,   1.0,   3.0,    None,  12.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+        ( 1.0,   1.0,   2.0,    None,  11.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+        ( 1.0,   1.0,   3.0,    None,  12.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   1.0, "zone1",  13.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   3.0, "zone1",  14.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 3.0,   1.0,   1.0, "zone1",  15.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
@@ -757,7 +757,7 @@ def test_that_observations_status_column_is_added(qtbot):
         ( 1.0,   1.0,   3.0, ["zone1"],       [1, 1, 3],    [1.0, 1.0, 3.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   1.0,        [],       [2, 1, 1],    [2.0, 1.0, 1.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   3.0, ["zone2"],       [2, 1, 3],    [2.0, 1.0, 3.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( 3.0,   1.0,   1.0,        [],            None,               None),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+        ( 3.0,   1.0,   1.0,        [],            None,               None),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 4.0,   1.0,   1.0, ["zone1"],       [4, 1, 1],    [4.0, 1.0, 1.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ]
 
