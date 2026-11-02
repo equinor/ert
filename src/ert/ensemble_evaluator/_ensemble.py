@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from _ert.events import (
@@ -13,6 +13,7 @@ from _ert.events import (
 )
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
 from ert.run_arg import RunArg
+from ert.substitutions import Substitutions
 
 from .snapshot import EnsembleSnapshot, FMStepSnapshot, RealizationSnapshot
 from .state import (
@@ -93,6 +94,7 @@ class LegacyEnsemble:
     _queue_config: QueueConfig
     min_required_realizations: int
     id_: str
+    substitutions: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.snapshot: EnsembleSnapshot = self._create_snapshot()
@@ -110,14 +112,26 @@ class LegacyEnsemble:
         snapshot = EnsembleSnapshot()
         snapshot._ensemble_state = ENSEMBLE_STATE_UNKNOWN
         for real in self.active_reals:
+            substituter = Substitutions(self.substitutions).real_iter_substituter(
+                real.iens, real.run_arg.itr
+            )
             realization = RealizationSnapshot(
                 active=True, status=REALIZATION_STATE_WAITING, fm_steps={}
             )
             for index, fm_step in enumerate(real.fm_steps):
+                private_args = Substitutions(
+                    {
+                        key: substituter.substitute(value)
+                        for key, value in fm_step.private_args.items()
+                    }
+                )
+                name = private_args.substitute(
+                    fm_step.display_name, max_iterations=1, warn_max_iter=False
+                )
                 realization["fm_steps"][str(index)] = FMStepSnapshot(
                     status=FORWARD_MODEL_STATE_INIT,
                     index=str(index),
-                    name=fm_step.name,
+                    name=substituter.substitute(name),
                 )
             snapshot.add_realization(str(real.iens), realization)
         return snapshot

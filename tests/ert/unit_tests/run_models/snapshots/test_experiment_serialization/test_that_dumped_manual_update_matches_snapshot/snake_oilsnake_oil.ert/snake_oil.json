@@ -30,6 +30,7 @@
     {
       "name": "SNAKE_OIL_SIMULATOR",
       "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_simulator.py",
+      "label": null,
       "stdin_file": null,
       "stdout_file": "snake_oil.stdout",
       "stderr_file": "snake_oil.stderr",
@@ -55,6 +56,7 @@
     {
       "name": "SNAKE_OIL_NPV",
       "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_npv.py",
+      "label": null,
       "stdin_file": null,
       "stdout_file": "snake_oil_npv.stdout",
       "stderr_file": "snake_oil_npv.stderr",
@@ -80,6 +82,7 @@
     {
       "name": "SNAKE_OIL_DIFF",
       "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_diff.py",
+      "label": null,
       "stdin_file": null,
       "stdout_file": "snake_oil_diff.stdout",
       "stderr_file": "snake_oil_diff.stderr",

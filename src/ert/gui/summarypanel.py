@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from html import escape
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt
@@ -112,9 +113,9 @@ class SummaryPanel(QFrame):
         )
         for fm_name, fm_count in self._runlength_encode_list(forward_model_list):
             if fm_count == 1:
-                text.addRow(fm_name)
+                text.addRow(escape(fm_name))
             else:
-                text.addRow(f"{fm_name} x{fm_count}")
+                text.addRow(f"{escape(fm_name)} x{fm_count}")
 
         self.addColumn(text.getText())
 

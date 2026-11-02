@@ -268,6 +268,44 @@ def test_parsing_forward_model_with_double_dash_is_possible(plugins_ert_config):
     )
 
 
+def test_that_forward_model_name_argument_sets_substituted_display_name(
+    plugins_ert_config,
+):
+    ert_config = plugins_ert_config.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        FORWARD_MODEL COPY_FILE(<FROM>=foo, <TO>=bar, NAME=copy_<IENS>)
+        """
+    )
+    fm_step = ert_config.forward_model_steps[0]
+
+    assert fm_step.name == "COPY_FILE"
+    assert fm_step.display_name == "copy_<IENS>"
+    assert "NAME" not in fm_step.private_args
+
+    fm_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id=None,
+        iens=4,
+    )
+    assert fm_json["jobList"][0]["name"] == "copy_4"
+
+
+def test_that_forward_model_display_name_defaults_to_step_name(plugins_ert_config):
+    ert_config = plugins_ert_config.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        FORWARD_MODEL COPY_FILE(<FROM>=foo, <TO>=bar)
+        """
+    )
+    fm_step = ert_config.forward_model_steps[0]
+
+    assert fm_step.display_name == fm_step.name
+
+
 def test_parsing_forward_model_with_quotes_does_not_introduce_spaces(
     plugins_ert_config,
 ):
@@ -1196,6 +1234,18 @@ def test_that_plugin_fm_step_rejects_keyword_not_in_allowed_keywords():
         )
 
 
+def test_that_keyword_validation_error_uses_forward_model_display_name():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Keyword <C> is not allowed for forward model step custom name",
+    ):
+        _load_forward_model_with_keyword_contract(
+            "(NAME='custom name',<C>=three)",
+            allowed_keywords=["<A>"],
+            command=["echo", "<A>"],
+        )
+
+
 def test_that_plugin_fm_step_without_allowed_keywords_accepts_unknown_keywords():
     _load_forward_model_with_keyword_contract(
         "(<UNKNOWN>=value)",
@@ -1310,12 +1360,14 @@ def test_that_site_fm_step_serializes_as_reference_to_site_plugin():
         # PS: It is missing private args, this must be added by mutation
         # as it is the current practice in ert config
         site_fm.private_args = {"ONE": "1", "TWO": "2"}
+        site_fm.label = "site label"
 
         serialized_fm_step = site_fm.model_dump(mode="json")
         assert serialized_fm_step == {
             "name": "SITE_FM",
             "type": "site_installed",
             "private_args": {"ONE": "1", "TWO": "2"},
+            "label": "site label",
         }
 
 
@@ -1345,6 +1397,7 @@ def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmst
                 "name": "SITE_FM",
                 "type": "site_installed",
                 "private_args": {"hello": "hi", "hi": "2"},
+                "label": "site label",
             }
         )
 
@@ -1356,6 +1409,7 @@ def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmst
             "hello": "hi",
             "hi": "2",
         }
+        assert site_fm_with_updated_executable.label == "site label"
 
 
 def test_that_user_fm_step_retains_executable_and_private_args_when_serialized(

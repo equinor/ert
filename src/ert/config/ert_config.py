@@ -153,7 +153,7 @@ def create_forward_model_json(
             fm_step_args = ",".join(
                 [f"{key}={value}" for key, value in fm_step.private_args.items()]
             )
-            fm_step_description = f"{fm_step.name}({fm_step_args})"
+            fm_step_description = f"{fm_step.display_name}({fm_step_args})"
             self.substitution_context_hint = (
                 f"parsing forward model step `FORWARD_MODEL {fm_step_description}` - "
                 "reconstructed, with defines applied during parsing"
@@ -231,7 +231,7 @@ def create_forward_model_json(
     for idx, fm_step in enumerate(forward_model_steps):
         substituter = Substituter(fm_step)
         fm_step_json: ForwardModelStepJSON = {
-            "name": substituter.substitute(fm_step.name),
+            "name": substituter.substitute(fm_step.display_name),
             "executable": substituter.substitute(fm_step.executable),
             "target_file": substituter.substitute(fm_step.target_file),
             "error_file": substituter.substitute(fm_step.error_file),
@@ -272,7 +272,7 @@ def create_forward_model_json(
             job_list_errors.append(
                 ErrorInfo(
                     message=f"Validation failed for "
-                    f"forward model step {fm_step.name}: {exc!s}"
+                    f"forward model step {fm_step.display_name}: {exc!s}"
                 ).set_context(fm_step.name)
             )
 
@@ -727,7 +727,10 @@ def create_list_of_forward_model_steps_to_run(
         for arg in args:
             match arg:
                 case key, val:
-                    fm_step.private_args[key] = val
+                    if key == ForwardModelStepKeys.NAME:
+                        fm_step.label = val
+                    else:
+                        fm_step.private_args[key] = val
                 case val:
                     fm_step.arglist.append(val)
                     user_positional_args.append(val)
@@ -788,7 +791,8 @@ def create_list_of_forward_model_steps_to_run(
             except ForwardModelStepValidationError as err:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Forward model step pre-experiment validation failed: {err!s}",
+                        f"Forward model step {fm_step.display_name} "
+                        f"pre-experiment validation failed: {err!s}",
                         context=fm_step.name,
                     ),
                 )

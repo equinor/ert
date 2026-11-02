@@ -1,4 +1,5 @@
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import pytest
 
@@ -18,6 +19,19 @@ from ert.constant_filenames import ERROR_file, LOG_file, STATUS_file, STATUS_jso
 @pytest.fixture
 def reporter():
     return File()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_error_report_preserves_special_characters_in_step_names(reporter):
+    name = "copy & validate <input>"
+    reason = f"Step:{name} timed out"
+    step = ForwardModelStep({"name": name}, 0)
+
+    reporter._dump_error_file(step, reason)
+
+    error = ET.parse(ERROR_file)
+    assert error.findtext("step") == name
+    assert error.findtext("reason") == reason
 
 
 @pytest.mark.usefixtures("use_tmpdir")

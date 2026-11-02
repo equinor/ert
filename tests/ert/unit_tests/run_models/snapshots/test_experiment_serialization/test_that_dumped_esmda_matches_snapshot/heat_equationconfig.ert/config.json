@@ -34,6 +34,7 @@
     {
       "name": "heat_equation",
       "executable": "test-data/ert/heat_equation.config.ert/heat_equation.py",
+      "label": null,
       "stdin_file": null,
       "stdout_file": "heat_equation.stdout",
       "stderr_file": "heat_equation.stderr",

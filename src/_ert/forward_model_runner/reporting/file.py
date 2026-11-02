@@ -5,6 +5,7 @@ import socket
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
+from xml.sax.saxutils import escape
 
 if TYPE_CHECKING:
     from _ert.forward_model_runner.forward_model_step import ForwardModelStep
@@ -186,8 +187,8 @@ class File(Reporter):
             file.write(
                 f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"
             )
-            file.write(f"  <step>{fm_step.name()}</step>\n")
-            file.write(f"  <reason>{error_msg}</reason>\n")
+            file.write(f"  <step>{escape(fm_step.name())}</step>\n")
+            file.write(f"  <reason>{escape(str(error_msg))}</reason>\n")
             stderr_file = None
             if fm_step.std_err:
                 if Path(fm_step.std_err).exists():

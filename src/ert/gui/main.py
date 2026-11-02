@@ -226,11 +226,15 @@ def _start_initial_gui_window(
             ),
             None,
         )
-    counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
+    counter_fm_steps = Counter(
+        (fms.name, fms.display_name) for fms in ert_config.forward_model_steps
+    )
 
-    for fm_step_name, count in counter_fm_steps.items():
+    for (fm_step_name, display_name), count in counter_fm_steps.items():
+        display_label = f" ({display_name})" if display_name != fm_step_name else ""
         logger.info(
-            f"Config contains forward model step {fm_step_name} {count} time(s)",
+            f"Config contains forward model step {fm_step_name}{display_label} "
+            f"{count} time(s)",
         )
 
     for msg in validation_messages.deprecations:

@@ -3,6 +3,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
+from ert.config.ert_config import create_forward_model_json
+from ert.config.forward_model_step import UserInstalledForwardModelStep
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble, Realization
 from ert.ensemble_evaluator.state import FORWARD_MODEL_STATE_INIT
 
@@ -35,3 +37,46 @@ def test_build_ensemble(active_real):
             ensemble.snapshot.get_fm_step("2", "0").get("status")
             == FORWARD_MODEL_STATE_INIT
         )
+
+
+@pytest.mark.parametrize(
+    ("label", "expected"),
+    [
+        ("custom label", "custom label"),
+        ("<PREFIX>_<INPUT>_<IENS>_<ITER>", "copy_input_2_3"),
+    ],
+)
+def test_that_snapshot_uses_forward_model_display_name(label, expected):
+    step = UserInstalledForwardModelStep(
+        name="echo_command",
+        label=label,
+        executable="",
+        private_args={"<INPUT>": "input"},
+    )
+    substitutions = {"<PREFIX>": "copy"}
+    ensemble = LegacyEnsemble(
+        [
+            Realization(
+                iens=2,
+                run_arg=MagicMock(itr=3),
+                num_cpu=1,
+                max_runtime=0,
+                job_script="job_script",
+                fm_steps=[step],
+                active=True,
+                realization_memory=0,
+            )
+        ],
+        {},
+        QueueConfig(queue_system=QueueSystem.LOCAL),
+        0,
+        "1",
+        substitutions=substitutions,
+    )
+
+    job = create_forward_model_json(
+        context=substitutions, forward_model_steps=[step], run_id=None, iens=2, itr=3
+    )["jobList"][0]
+    assert (
+        ensemble.snapshot.get_fm_step("2", "0").get("name") == job["name"] == expected
+    )

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
+from ert.config import ErtConfig, Field, ForwardModelStep, GenKwConfig, SurfaceConfig
 from ert.field_utils import ErtboxParameters, FieldFileFormat
 from ert.gui.ertwidgets import ErtSummary
 
@@ -11,9 +11,9 @@ from ert.gui.ertwidgets import ErtSummary
 def mock_ert():
     ert_mock = MagicMock()
 
-    ert_mock.forward_model_step_name_list.return_value = [
-        "forward_model_1",
-        "forward_model_2",
+    ert_mock.forward_model_steps = [
+        ForwardModelStep(name="forward_model_1", executable="echo"),
+        ForwardModelStep(name="forward_model_2", executable="echo"),
     ]
 
     gen_kws = {

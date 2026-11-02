@@ -140,6 +140,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
 
     Attributes:
         executable: The name of the executable to be run
+        label: Optional display name for this invocation of the forward model step
         stdin_file: File where this forward model step's stdin is written
         stdout_file: File where this forward model step's stdout is written
         stderr_file: File where this forward model step's stderr is written
@@ -175,6 +176,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
 
     name: str
     executable: str
+    label: str | None = None
     stdin_file: str | None = None
     stdout_file: str | None = None
     stderr_file: str | None = None
@@ -197,6 +199,10 @@ class ForwardModelStep(BaseModelWithContextSupport):
         "_ERT_REALIZATION_NUMBER": "<IENS>",
         "_ERT_RUNPATH": "<RUNPATH>",
     }
+
+    @property
+    def display_name(self) -> str:
+        return self.label if self.label is not None else self.name
 
     def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
         """
@@ -224,7 +230,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
             plural = "s" if len(missing_keywords) > 1 else ""
             raise ConfigValidationError.with_context(
                 f"Required keyword{plural} {', '.join(sorted(missing_keywords))} "
-                f"not found for forward model step {self.name}",
+                f"not found for forward model step {self.display_name}",
                 self.name,
             )
 
@@ -244,7 +250,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
             allowed_keywords_message = ", ".join(sorted(accepted_keywords)) or "none"
             raise ConfigValidationError.with_context(
                 f"Keyword{plural} {', '.join(sorted(unexpected_keywords))} "
-                f"{verb} not allowed for forward model step {self.name}. "
+                f"{verb} not allowed for forward model step {self.display_name}. "
                 f"Allowed keywords: {allowed_keywords_message}",
                 self.name,
             )
@@ -285,6 +291,7 @@ class _SerializedSiteInstalledForwardModelStep(TypedDict):
     type: Literal["site_installed"]
     name: str
     private_args: dict[str, str]
+    label: NotRequired[str]
 
 
 class SiteInstalledForwardModelStep(ForwardModelStep):
@@ -299,11 +306,14 @@ class SiteInstalledForwardModelStep(ForwardModelStep):
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> _SerializedSiteInstalledForwardModelStep:
-        return {
+        serialized: _SerializedSiteInstalledForwardModelStep = {
             "type": "site_installed",
             "name": self.name,
             "private_args": self.private_args,
         }
+        if self.label is not None:
+            serialized["label"] = self.label
+        return serialized
 
     @model_validator(mode="before")
     @classmethod
@@ -339,8 +349,14 @@ class SiteInstalledForwardModelStep(ForwardModelStep):
             for k in SiteInstalledForwardModelStep.model_fields
         }
 
-        return site_fm_instance | (
-            {"private_args": values["private_args"]} if "private_args" in values else {}
+        return (
+            site_fm_instance
+            | (
+                {"private_args": values["private_args"]}
+                if "private_args" in values
+                else {}
+            )
+            | ({"label": values["label"]} if "label" in values else {})
         )
 
 

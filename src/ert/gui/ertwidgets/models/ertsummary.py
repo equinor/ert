@@ -15,7 +15,7 @@ class ErtSummary:
         self.ert_config = ert_config
 
     def getForwardModels(self) -> list[str]:
-        return self.ert_config.forward_model_step_name_list()
+        return [step.display_name for step in self.ert_config.forward_model_steps]
 
     def get_parameters(self) -> tuple[list[str], list[str], int]:
         parameters_updatable = []

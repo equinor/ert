@@ -774,6 +774,7 @@ class RunModel(RunModelConfig, ABC):
             self.queue_config,
             self.minimum_required_realizations,
             str(experiment_id),
+            substitutions=self.substitutions,
         )
 
     @property

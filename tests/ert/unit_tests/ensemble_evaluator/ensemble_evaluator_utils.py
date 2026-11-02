@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import Ensemble
 from ert.ensemble_evaluator._ensemble import ForwardModelStep, Realization
@@ -17,7 +19,7 @@ class TestEnsemble(Ensemble):
                 active=True,
                 max_runtime=0,
                 num_cpu=0,
-                run_arg=None,
+                run_arg=MagicMock(itr=iter_),
                 job_script=None,
                 realization_memory=0,
             )

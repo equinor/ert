@@ -83,6 +83,15 @@ Invoking the step is then done by including it in the ert config:
 
     FORWARD_MODEL STEP_NAME(<ARG0>=3, <ARG1>="something")
 
+An optional :code:`NAME` argument sets a display name for this invocation.
+It defaults to the forward model step's name and is shown in run status,
+logs, and validation messages. The installed step name remains its identity.
+The value supports magic-string substitution:
+
+.. code-block:: bash
+
+    FORWARD_MODEL STEP_NAME(<ARG0>=3, NAME=step_<IENS>)
+
 
 Note that the following behaviour provides identical results:
 
