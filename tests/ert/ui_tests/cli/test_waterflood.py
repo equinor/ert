@@ -88,7 +88,7 @@ def forecast_error(config_file: str) -> tuple[float, float]:
                 [
                     after.filter(pl.col("response_key") == f"WWCT:{producer}")
                     .group_by("time")
-                    .mean()
+                    .agg(pl.col("values").mean())
                     .sort("time")["values"]
                     .to_numpy()
                     for producer in PRODUCERS
