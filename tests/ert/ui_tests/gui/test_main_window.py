@@ -55,6 +55,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
+from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.conftest import _create_design_matrix
@@ -128,7 +129,9 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_unchecking_all_forward_model_steps_disables_the_run_button(qapp):
+def test_that_unchecking_all_forward_model_steps_disables_the_run_button(
+    qapp, monkeypatch
+):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
@@ -136,13 +139,34 @@ def test_that_unchecking_all_forward_model_steps_disables_the_run_button(qapp):
         experiment_panel = get_child(gui, ExperimentPanel)
         summary = get_child(experiment_panel, SummaryPanel)
         run_button = get_child(experiment_panel, QToolButton, name="run_experiment")
+        combo = get_child(experiment_panel, QComboBox, name="experiment_type")
 
+        assert not summary.forward_model_selection.isVisible()
+        forward_model_column = summary._layout.itemAt(0).layout()
+        assert forward_model_column is not None
+        assert forward_model_column.indexOf(summary.forward_model_selection) >= 0
+        combo.setCurrentText(EvaluateEnsemble.display_name())
+        assert not summary.forward_model_selection.isHidden()
+        evaluate_panel = experiment_panel._experiment_widgets[EvaluateEnsemble]
+        monkeypatch.setattr(evaluate_panel, "isConfigurationValid", lambda: True)
+        experiment_panel.validationStatusChanged()
         assert run_button.isEnabled()
 
-        get_child(summary, QPushButton, name="uncheck_all_forward_model_steps").click()
+        get_child(
+            experiment_panel, QPushButton, name="uncheck_all_forward_model_steps"
+        ).click()
         assert not run_button.isEnabled()
 
-        get_child(summary, QPushButton, name="check_all_forward_model_steps").click()
+        summary.forward_model_step_list.item(0).setCheckState(Qt.CheckState.Checked)
+        assert run_button.isEnabled()
+
+        get_child(
+            experiment_panel, QPushButton, name="uncheck_all_forward_model_steps"
+        ).click()
+        assert not run_button.isEnabled()
+        get_child(
+            experiment_panel, QPushButton, name="check_all_forward_model_steps"
+        ).click()
         assert run_button.isEnabled()
 
 
@@ -156,11 +180,18 @@ def test_that_selected_forward_model_step_indices_are_passed_to_model_creation(
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         experiment_panel = get_child(gui, ExperimentPanel)
         summary = get_child(experiment_panel, SummaryPanel)
+        combo = get_child(experiment_panel, QComboBox, name="experiment_type")
+        combo.setCurrentText(EvaluateEnsemble.display_name())
         create_model = Mock(side_effect=ValueError("stop before running"))
         monkeypatch.setattr(
             "ert.gui.experiments.experiment_panel.create_model", create_model
         )
         monkeypatch.setattr(QMessageBox, "warning", Mock())
+        monkeypatch.setattr(
+            experiment_panel,
+            "get_experiment_arguments",
+            Mock(side_effect=[Mock(), Mock()]),
+        )
 
         experiment_panel.run_experiment()
         summary.forward_model_step_list.item(0).setCheckState(Qt.CheckState.Unchecked)

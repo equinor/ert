@@ -113,9 +113,14 @@ class SummaryPanel(QFrame):
         plural_s = ""
         if len(forward_model_steps) != 1:
             plural_s = "s"
+        title = f"Forward model ({len(forward_model_steps):,} step{plural_s})"
+        forward_model_list = summary.getForwardModels()
+        text = SummaryTemplate(title)
+        for fm_name, fm_count in self._runlength_encode_list(forward_model_list):
+            text.addRow(f"{fm_name} x{fm_count}" if fm_count > 1 else fm_name)
         self.addForwardModelList(
             forward_model_steps,
-            f"Forward model ({len(forward_model_steps):,} step{plural_s})",
+            text.getText(),
         )
 
         parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
@@ -139,10 +144,16 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-    def addForwardModelList(self, steps: list[Any], title: str) -> None:
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel(title))
+    def addForwardModelList(self, steps: list[Any], summary_text: str) -> None:
+        self.forward_model_summary = QLabel(summary_text)
+        self.forward_model_summary.setWordWrap(True)
+        self.forward_model_summary.setTextFormat(Qt.TextFormat.RichText)
+        summary_layout = QVBoxLayout()
+        summary_layout.addWidget(self.forward_model_summary)
 
+        self.forward_model_selection = QWidget()
+        selection_layout = QVBoxLayout(self.forward_model_selection)
+        selection_layout.setContentsMargins(0, 0, 0, 0)
         buttons = QHBoxLayout()
         check_all = QPushButton("Check all")
         check_all.setObjectName("check_all_forward_model_steps")
@@ -159,7 +170,7 @@ class SummaryPanel(QFrame):
         invert.clicked.connect(self._invert_step_selection)
         buttons.addWidget(invert)
 
-        layout.addLayout(buttons)
+        selection_layout.addLayout(buttons)
         self.forward_model_step_list = QListWidget()
         self.forward_model_step_list.setObjectName("forward_model_step_list")
         for index, step in enumerate(steps, start=1):
@@ -182,13 +193,16 @@ class SummaryPanel(QFrame):
         self.forward_model_step_list.itemChanged.connect(
             lambda _: self.selection_changed.emit()
         )
-        self.forward_model_step_list.setMinimumHeight(75)
-        self.forward_model_step_list.setMaximumHeight(150)
-        layout.addWidget(self.forward_model_step_list)
+        self.forward_model_step_list.setMaximumHeight(100)
+        selection_layout.addWidget(self.forward_model_step_list)
+        self.forward_model_selection.hide()
+        summary_layout.addWidget(self.forward_model_selection)
+        summary_layout.addStretch(1)
+        self._layout.addLayout(summary_layout)
 
-        container = QWidget()
-        container.setLayout(layout)
-        self._layout.addWidget(container)
+    def set_step_selection_visible(self, visible: bool) -> None:
+        self.forward_model_summary.setVisible(not visible)
+        self.forward_model_selection.setVisible(visible)
 
     def selected_step_indices(self) -> list[int]:
         selected: list[int] = []
@@ -247,3 +261,13 @@ class SummaryPanel(QFrame):
             f"Parameters: {parameter_count}\n"
             f"Observations: {observations_count}"
         )
+
+    @staticmethod
+    def _runlength_encode_list(strings: list[str]) -> list[tuple[str, int]]:
+        string_counts: list[tuple[str, int]] = []
+        for string in strings:
+            if not string_counts or string_counts[-1][0] != string:
+                string_counts.append((string, 1))
+            else:
+                string_counts[-1] = (string, string_counts[-1][1] + 1)
+        return string_counts

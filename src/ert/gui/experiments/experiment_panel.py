@@ -32,6 +32,7 @@ from ert.gui.find_ert_info import find_ert_info
 from ert.gui.icon_utils import load_icon
 from ert.gui.summarypanel import SummaryPanel
 from ert.run_models import RunModel, StatusEvents, create_model
+from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -165,16 +166,17 @@ class ExperimentPanel(QWidget):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.addLayout(experiment_type_layout)
 
+        self.configuration_summary = SummaryPanel(config)
+        self.configuration_summary.selection_changed.connect(
+            self.validationStatusChanged
+        )
+
         self._experiment_stack = QStackedWidget()
         self._experiment_stack.setLineWidth(1)
         self._experiment_stack.setFrameStyle(QFrame.Shape.StyledPanel)
 
         layout.addWidget(self._experiment_stack)
-
-        self.configuration_summary = SummaryPanel(config)
-        self.configuration_summary.selection_changed.connect(
-            self.validationStatusChanged
-        )
+        layout.addWidget(self.configuration_summary)
 
         self._experiment_widgets: dict[type[RunModel], ExperimentConfigPanel] = (
             OrderedDict()
@@ -299,12 +301,13 @@ class ExperimentPanel(QWidget):
 
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
-        selected_step_indices = self.configuration_summary.selected_step_indices()
-        args.forward_model_step_indices = (
-            selected_step_indices
-            if len(selected_step_indices) < len(self.config.forward_model_steps)
-            else None
-        )
+        if self.get_current_experiment_type() is EvaluateEnsemble:
+            selected_step_indices = self.configuration_summary.selected_step_indices()
+            args.forward_model_step_indices = (
+                selected_step_indices
+                if len(selected_step_indices) < len(self.config.forward_model_steps)
+                else None
+            )
         event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         with wait_cursor():
             try:
@@ -458,6 +461,9 @@ class ExperimentPanel(QWidget):
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()
+        self.configuration_summary.set_step_selection_visible(
+            current_model is EvaluateEnsemble
+        )
         if current_model is not None:
             widget = self._experiment_widgets[self.get_current_experiment_type()]
             self._experiment_stack.setCurrentWidget(widget)
@@ -466,11 +472,15 @@ class ExperimentPanel(QWidget):
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
+        requires_step_selection = (
+            self.get_current_experiment_type() is EvaluateEnsemble
+            and bool(self.config.forward_model_steps)
+        )
         self.run_button.setEnabled(
             self._experiment_done
             and widget.isConfigurationValid()
             and (
-                not self.config.forward_model_steps
+                not requires_step_selection
                 or bool(self.configuration_summary.selected_step_indices())
             )
         )
