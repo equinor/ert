@@ -25,7 +25,7 @@ def small_snapshot() -> EnsembleSnapshot:
     for i in range(2):
         builder.add_fm_step(
             fm_step_id=str(i),
-            index=str(i),
+            index=i + 1,
             name=f"job_{i}",
             current_memory_usage="500",
             max_memory_usage="1000",

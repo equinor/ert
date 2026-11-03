@@ -50,7 +50,7 @@ def simulate_forward_model_event_handling(
         for fm_idx in range(forward_models):
             realization["fm_steps"][str(fm_idx)] = FMStepSnapshot(
                 status=state.FORWARD_MODEL_STATE_START,
-                index=str(fm_idx),
+                index=fm_idx + 1,
                 name=f"FM_{fm_idx}",
             )
         snapshot.add_realization(str(real), realization)

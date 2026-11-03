@@ -31,25 +31,25 @@ def snapshot():
         SnapshotBuilder()
         .add_fm_step(
             fm_step_id="0",
-            index="0",
+            index=1,
             name="forward_model0",
             status="Unknown",
         )
         .add_fm_step(
             fm_step_id="1",
-            index="1",
+            index=2,
             name="forward_model1",
             status="Unknown",
         )
         .add_fm_step(
             fm_step_id="2",
-            index="2",
+            index=3,
             name="forward_model2",
             status="Unknown",
         )
         .add_fm_step(
             fm_step_id="3",
-            index="3",
+            index=4,
             name="forward_model3",
             status="Unknown",
         )

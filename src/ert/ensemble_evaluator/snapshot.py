@@ -397,7 +397,8 @@ class EnsembleSnapshot:
 
         fm = FMStepSnapshot(
             status=status,
-            index=event.fm_step,
+            # event.fm_step is the 0-based position; index is the 1-based step number
+            index=int(event.fm_step) + 1,
             start_time=start_time,
             end_time=end_time,
             error=error,
@@ -457,7 +458,7 @@ class FMStepSnapshot(TypedDict, total=False):
     status: str | None
     start_time: datetime | None
     end_time: datetime | None
-    index: str | None
+    index: int | None  # 1-based position in the forward model sequence
     current_memory_usage: int | None
     max_memory_usage: int | None
     cpu_seconds: float | None

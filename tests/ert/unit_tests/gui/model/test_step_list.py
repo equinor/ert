@@ -42,6 +42,22 @@ def test_using_qt_model_tester(full_snapshot):
 
 
 @pytest.mark.requires_window_manager
+def test_that_vertical_header_enumerates_steps_from_one(full_snapshot):
+    source_model = SnapshotModel()
+
+    model = FMStepListProxyModel(None, 0, 0)
+    model.setSourceModel(source_model)
+
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
+
+    headers = [
+        model.headerData(row, Qt.Orientation.Vertical)
+        for row in range(model.rowCount())
+    ]
+    assert headers == [1, 2, 3, 4]
+
+
+@pytest.mark.requires_window_manager
 def test_changes(full_snapshot):
     source_model = SnapshotModel()
 

@@ -94,7 +94,7 @@ def full_snapshot_event():
     snapshot = SnapshotBuilder(metadata=METADATA)
     snapshot.add_fm_step(
         fm_step_id="0",
-        index="0",
+        index=1,
         name="fm_step_0",
         status=state.FORWARD_MODEL_STATE_START,
         current_memory_usage="500",
@@ -106,7 +106,7 @@ def full_snapshot_event():
     for i, command in enumerate(all_shell_script_fm_steps):
         snapshot.add_fm_step(
             fm_step_id=str(i + 1),
-            index=str(i + 1),
+            index=i + 1,
             name=command,
             status=state.FORWARD_MODEL_STATE_START,
             current_memory_usage="500",
@@ -144,7 +144,7 @@ def snapshot_update_event():
         .add_fm_step(
             fm_step_id="0",
             name=None,
-            index="0",
+            index=1,
             status=state.FORWARD_MODEL_STATE_FINISHED,
             end_time=datetime(2019, 1, 1, tzinfo=UTC),
         )
@@ -181,7 +181,7 @@ def snapshot_update_failure_event():
         .add_fm_step(
             fm_step_id="0",
             name=None,
-            index="0",
+            index=1,
             status=state.FORWARD_MODEL_STATE_FAILURE,
             end_time=datetime(2019, 1, 1, tzinfo=UTC),
             error="The run is cancelled due to reaching MAX_RUNTIME",
@@ -207,7 +207,7 @@ def snapshot_update_event_with_fm_message():
         .add_fm_step(
             fm_step_id="0",
             name=None,
-            index="0",
+            index=1,
             status=state.FORWARD_MODEL_STATE_FINISHED,
             end_time=datetime(2019, 1, 1, tzinfo=UTC),
         )

@@ -37,6 +37,7 @@ IterNum = UserRole + 12
 MemoryUsageRole = UserRole + 13
 CallbackStatusMessageRole = UserRole + 14
 ArgumentsRole = UserRole + 15
+FMStepIndexRole = UserRole + 16
 
 # Indicates what type the underlying data is
 IsEnsembleRole = UserRole + 8
@@ -475,6 +476,9 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == RealIens:
             return node.parent.id_ if node.parent else None
+
+        if role == FMStepIndexRole:
+            return node.data.get("index")
 
         if role == IterNum:
             return (

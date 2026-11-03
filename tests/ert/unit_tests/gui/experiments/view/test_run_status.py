@@ -10,7 +10,7 @@ def _build_run_status_snapshot(iteration: int) -> FullSnapshotEvent:
         snapshot=SnapshotBuilder()
         .add_fm_step(
             fm_step_id="0",
-            index="0",
+            index=1,
             name="fm_step_0",
             status=state.FORWARD_MODEL_STATE_FINISHED,
         )
