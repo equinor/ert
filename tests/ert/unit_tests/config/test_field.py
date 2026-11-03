@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import resfo
+import xarray as xr
 import xtgeo
 
 from ert.config import ConfigValidationError, ConfigWarning, Field
@@ -18,6 +19,7 @@ from ert.field_utils import (
     Shape,
     calculate_ertbox_parameters,
     read_field,
+    save_field,
 )
 from ert.sample_prior import sample_prior
 
@@ -71,6 +73,79 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
                 Path(f"export/with/path/{real}"), real, prior_ensemble
             )
         assert not Path(f"export/with/path/{real}/permx.grdecl").is_file()
+
+
+@pytest.mark.parametrize(
+    ("file_format", "undefined_value"),
+    [(FieldFileFormat.ROFF, -999.0), (FieldFileFormat.GRDECL, 0.0)],
+)
+def test_that_undefined_cells_in_init_file_stay_undefined_when_written_to_runpath(
+    tmp_path, storage, file_format, undefined_value
+):
+    shape = Shape(nx=2, ny=3, nz=4)
+    undefined_cells = np.zeros(shape, dtype=bool)
+    undefined_cells[0, 0, :] = True
+    init_values = np.ma.MaskedArray(
+        np.arange(1, 25, dtype=np.float32).reshape(shape), mask=undefined_cells
+    )
+    save_field(init_values, "PORO", tmp_path / "init.roff", FieldFileFormat.ROFF)
+
+    output_file = Path(f"poro.{file_format.name.lower()}")
+    field = Field(
+        name="PORO",
+        forward_init=True,
+        update_strategy="global",
+        ertbox_params=ErtboxParameters(nx=shape.nx, ny=shape.ny, nz=shape.nz),
+        file_format=file_format,
+        forward_init_file="init.roff",
+        output_file=output_file,
+        grid_file="grid.EGRID",
+    )
+    experiment_id = storage.create_experiment(
+        experiment_config={"parameter_configuration": [field.model_dump(mode="json")]}
+    )
+    ensemble = storage.create_ensemble(experiment_id, name="ensemble", ensemble_size=1)
+    ensemble.save_parameters(
+        field.read_from_runpath(tmp_path, real_nr=0, iteration=0), field.name, 0
+    )
+
+    field.write_to_runpath(tmp_path / "runpath", 0, ensemble)
+
+    exported_values = np.ma.getdata(
+        read_field(tmp_path / "runpath" / output_file, field.name, shape)
+    )
+    np.testing.assert_array_equal(exported_values[undefined_cells], undefined_value)
+    np.testing.assert_array_equal(
+        exported_values[~undefined_cells], init_values.compressed()
+    )
+
+
+@pytest.mark.filterwarnings("ignore:invalid value encountered in log")
+def test_that_nan_produced_by_output_transform_raises_on_roff_export(tmp_path, storage):
+    field = Field(
+        name="PORO",
+        forward_init=True,
+        update_strategy="global",
+        ertbox_params=ErtboxParameters(nx=1, ny=1, nz=2),
+        file_format=FieldFileFormat.ROFF,
+        output_transformation="LN",
+        forward_init_file="init.roff",
+        output_file=Path("poro.roff"),
+        grid_file="grid.EGRID",
+    )
+    experiment_id = storage.create_experiment(
+        experiment_config={"parameter_configuration": [field.model_dump(mode="json")]}
+    )
+    ensemble = storage.create_ensemble(experiment_id, name="ensemble", ensemble_size=1)
+    stored_values_with_negative_cell = np.array([[[-1.0, 1.0]]], dtype=np.float32)
+    ensemble.save_parameters(
+        xr.Dataset({"values": (["x", "y", "z"], stored_values_with_negative_cell)}),
+        field.name,
+        0,
+    )
+
+    with pytest.raises(ValueError, match="contained infinity or nan values"):
+        field.write_to_runpath(tmp_path / "runpath", 0, ensemble)
 
 
 def create_dummy_field(nx, ny, nz, mask):
