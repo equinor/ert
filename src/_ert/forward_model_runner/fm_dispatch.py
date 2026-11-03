@@ -20,6 +20,7 @@ from _ert.forward_model_runner.reporting.message import (
     ProcessTreeStatus,
 )
 from _ert.forward_model_runner.runner import ForwardModelRunner
+from _ert.rangestring import rangestring_to_list
 from _ert.utils import file_safe_timestamp
 
 if TYPE_CHECKING:
@@ -168,12 +169,27 @@ def _stop_reporters(
             reporter.stop(exited_event=exited_event)
 
 
+def parse_step_indices(value: str) -> list[int]:
+    """Parse 1-based step indices such as "3-5,8,10-12" (ranges inclusive)."""
+    try:
+        indices = sorted(rangestring_to_list(value))
+        if not indices or indices[0] < 1:
+            raise ValueError(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"Invalid step indices {value!r}, expected 1-based indices "
+            "and ranges such as '3-5,8,10-12'"
+        ) from None
+    return indices
+
+
 class Namespace(argparse.Namespace):
     """fm_dispatch argument parser namespace"""
 
     run_path: str | None = None
     report_to_evaluator: bool = False
     steps: list[str]
+    stepindices: list[int] | None = None
 
 
 def fm_dispatch(args: list[str]) -> None:
@@ -193,6 +209,14 @@ def fm_dispatch(args: list[str]) -> None:
         ),
     )
 
+    parser.add_argument(
+        "--stepindices",
+        type=parse_step_indices,
+        help=(
+            "1-based indices and inclusive ranges of forward model steps to "
+            "execute, e.g. '3-5,8,10-12'. Can be combined with step names."
+        ),
+    )
     parser.add_argument(
         "--report-to-evaluator",
         action="store_true",
@@ -221,7 +245,7 @@ def fm_dispatch(args: list[str]) -> None:
     dispatch_url = fm_description.get("dispatch_url")
     real_id = fm_description.get("real_id")
 
-    is_interactive_run = len(parsed_args.steps) > 0
+    is_interactive_run = len(parsed_args.steps) > 0 or bool(parsed_args.stepindices)
     reporters = _setup_reporters(
         is_interactive_run,
         parsed_args.report_to_evaluator,
@@ -241,7 +265,20 @@ def fm_dispatch(args: list[str]) -> None:
         _stop_reporters_and_sigkill(reporters, exited_event)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
-    _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
+    if parsed_args.stepindices:
+        missing_indices = set(parsed_args.stepindices) - {
+            step.index + 1 for step in fm_runner.steps
+        }
+        if missing_indices:
+            parser.error(
+                f"Step indices {sorted(missing_indices)} do not exist. "
+                "Available forward_model steps: "
+                f"{[(step.index + 1, step.name()) for step in fm_runner.steps]}"
+            )
+
+    _report_all_messages(
+        fm_runner.run(parsed_args.steps, parsed_args.stepindices), reporters
+    )
 
 
 def main() -> None:
