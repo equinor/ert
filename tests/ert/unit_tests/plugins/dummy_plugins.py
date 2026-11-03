@@ -3,7 +3,7 @@ from io import StringIO
 
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
-from ert import ErtScript, ForwardModelStepPlugin, plugin
+from ert import EcosystemPlugin, ErtScript, ForwardModelStepPlugin, plugin
 
 
 @plugin(name="dummy")
@@ -90,3 +90,15 @@ PLUGIN_IP_ADDRESS = "1.0.0.127"
 @plugin(name="dummy")
 def get_ip_address():
     return PLUGIN_IP_ADDRESS
+
+
+class DummyEcosystem(EcosystemPlugin):
+    name: str = "DUMMY_ECOSYSTEM"
+
+    def configure(self, config_dict):
+        config_dict.setdefault("FORWARD_MODEL", []).append(["DummyForwardModel"])
+
+
+@plugin(name="dummy")
+def ecosystem_plugin():
+    return DummyEcosystem
