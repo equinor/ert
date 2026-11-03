@@ -252,6 +252,7 @@ class Field(ParameterConfig):
     def _transform_data(
         self, data_array: xr.DataArray
     ) -> np.ma.MaskedArray[Any, np.dtype[np.floating]]:
+        inactive_cells = np.isnan(data_array.values)
         return np.ma.MaskedArray(
             _field_truncate(
                 field_transform(
@@ -261,6 +262,7 @@ class Field(ParameterConfig):
                 self.truncation_min,
                 self.truncation_max,
             ),
+            mask=inactive_cells,
             fill_value=np.nan,
         )
 
