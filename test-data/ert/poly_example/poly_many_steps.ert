@@ -1,0 +1,34 @@
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 50
+
+RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+
+OBS_CONFIG observations
+REALIZATION_MEMORY 50mb
+
+NUM_REALIZATIONS 10
+MIN_REALIZATIONS 1
+
+GEN_KW COEFFS coeff_priors
+GEN_DATA POLY_RES RESULT_FILE:poly.out
+
+INSTALL_JOB poly_eval POLY_EVAL
+INSTALL_JOB write_marker WRITE_MARKER
+
+-- Four distinct trivial steps, each writing its own file in the runpath
+INSTALL_JOB step_alpha WRITE_MARKER
+INSTALL_JOB step_beta WRITE_MARKER
+INSTALL_JOB step_gamma WRITE_MARKER
+INSTALL_JOB step_delta WRITE_MARKER
+
+FORWARD_MODEL step_alpha(<OUTPUT>=alpha.txt, <TEXT>=alpha)
+FORWARD_MODEL step_beta(<OUTPUT>=beta.txt, <TEXT>=beta, <SLEEP>=1)
+FORWARD_MODEL step_gamma(<OUTPUT>=gamma.txt, <TEXT>=gamma, <SLEEP>=2)
+FORWARD_MODEL step_delta(<OUTPUT>=delta.txt, <TEXT>=delta, <SLEEP>=3)
+
+-- Three identical steps differing only by arguments
+FORWARD_MODEL write_marker(<OUTPUT>=repeat_1.txt, <TEXT>=first)
+FORWARD_MODEL write_marker(<OUTPUT>=repeat_2.txt, <TEXT>=second)
+FORWARD_MODEL write_marker(<OUTPUT>=repeat_3.txt, <TEXT>=third)
+
+FORWARD_MODEL poly_eval
