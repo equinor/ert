@@ -332,6 +332,7 @@ def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
         (False, False, "1234"),
         (False, True, None),
         (False, True, "1234"),
+        (True, False, None),
         (True, False, "1234"),
         (True, True, "1234"),
     ],
@@ -341,7 +342,7 @@ def test_that_event_reporter_requires_report_to_evaluator_and_ens_id(
 ):
     reporters = _setup_reporters(is_interactive_run, report_to_evaluator, ens_id, "")
 
-    if is_interactive_run:
+    if is_interactive_run and not report_to_evaluator:
         assert len(reporters) == 1
         assert isinstance(reporters[0], Interactive)
     elif report_to_evaluator and ens_id:

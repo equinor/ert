@@ -52,6 +52,7 @@ class RunModelConfig(BaseModelWithContextSupport):
     runpath_config: ModelConfig
     queue_config: QueueConfig
     forward_model_steps: list[SiteOrUserForwardModelStep]
+    forward_model_step_indices: list[int] | None = Field(default=None, exclude=True)
     substitutions: dict[str, str]
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]]
     active_realizations: list[bool]
@@ -62,7 +63,7 @@ class RunModelConfig(BaseModelWithContextSupport):
     supports_rerunning_failed_realizations: ClassVar[bool] = False
 
     def _common_fields(self) -> ExperimentConfig:
-        return {
+        fields: ExperimentConfig = {
             "storage_path": self.storage_path,
             "runpath_file": str(self.runpath_file),
             "user_config_file": str(self.user_config_file),
@@ -84,6 +85,9 @@ class RunModelConfig(BaseModelWithContextSupport):
             "start_iteration": self.start_iteration,
             "minimum_required_realizations": self.minimum_required_realizations,
         }
+        if self.forward_model_step_indices is not None:
+            fields["forward_model_step_indices"] = self.forward_model_step_indices
+        return fields
 
     @model_validator(mode="after")
     def _restore_plugin_forward_model_step_subclasses(self) -> Self:

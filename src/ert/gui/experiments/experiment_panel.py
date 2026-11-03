@@ -171,6 +171,11 @@ class ExperimentPanel(QWidget):
 
         layout.addWidget(self._experiment_stack)
 
+        self.configuration_summary = SummaryPanel(config)
+        self.configuration_summary.selection_changed.connect(
+            self.validationStatusChanged
+        )
+
         self._experiment_widgets: dict[type[RunModel], ExperimentConfigPanel] = (
             OrderedDict()
         )
@@ -240,7 +245,6 @@ class ExperimentPanel(QWidget):
             has_observation_declarations and has_updatable_parameters,
         )
 
-        self.configuration_summary = SummaryPanel(config)
         layout.addWidget(self.configuration_summary)
 
         self.setLayout(layout)
@@ -295,6 +299,12 @@ class ExperimentPanel(QWidget):
 
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
+        selected_step_indices = self.configuration_summary.selected_step_indices()
+        args.forward_model_step_indices = (
+            selected_step_indices
+            if len(selected_step_indices) < len(self.config.forward_model_steps)
+            else None
+        )
         event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         with wait_cursor():
             try:
@@ -457,5 +467,10 @@ class ExperimentPanel(QWidget):
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
         self.run_button.setEnabled(
-            self._experiment_done and widget.isConfigurationValid()
+            self._experiment_done
+            and widget.isConfigurationValid()
+            and (
+                not self.config.forward_model_steps
+                or bool(self.configuration_summary.selected_step_indices())
+            )
         )

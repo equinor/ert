@@ -246,6 +246,32 @@ async def test_realization_memory_is_propagated_to_driver(realization: Realizati
 
 
 @pytest.mark.asyncio
+async def test_that_selected_step_indices_are_passed_as_compact_ranges(realization):
+    realization.fm_step_indices = [1, 2, 4, 6, 7, 8]
+    scheduler = create_scheduler()
+    job = Job(scheduler, realization)
+    job_run_task = asyncio.create_task(
+        job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+    )
+    job.started.set()
+    job.returncode.set_result(0)
+    await job_run_task
+
+    scheduler.driver.submit.assert_called_with(
+        realization.iens,
+        realization.job_script,
+        realization.run_arg.runpath,
+        "--report-to-evaluator",
+        "--stepindices",
+        "1-2,4,6-8",
+        name=realization.run_arg.job_name,
+        runpath=Path(realization.run_arg.runpath),
+        num_cpu=realization.num_cpu,
+        realization_memory=realization.realization_memory,
+    )
+
+
+@pytest.mark.asyncio
 @pytest.mark.slow
 async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     realization: Realization,
