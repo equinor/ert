@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import ErtSummary
+from ert.gui.ertwidgets.forward_model_step_selector import ForwardModelStepSelector
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -107,16 +108,18 @@ class SummaryPanel(QFrame):
         plural_s = ""
         if not len(forward_model_list) or len(forward_model_list) > 1:
             plural_s = "s"
-        text = SummaryTemplate(
-            f"Forward model ({len(forward_model_list):,} step{plural_s})"
+        title = QLabel(
+            SummaryTemplate(
+                f"Forward model ({len(forward_model_list):,} step{plural_s})"
+            ).getText()
         )
-        for fm_name, fm_count in self._runlength_encode_list(forward_model_list):
-            if fm_count == 1:
-                text.addRow(fm_name)
-            else:
-                text.addRow(f"{fm_name} x{fm_count}")
-
-        self.addColumn(text.getText())
+        title.setTextFormat(Qt.TextFormat.RichText)
+        self.forward_model_selector = ForwardModelStepSelector(forward_model_list)
+        forward_model_layout = QVBoxLayout()
+        forward_model_layout.addWidget(title)
+        forward_model_layout.addWidget(self.forward_model_selector)
+        forward_model_layout.addStretch(1)
+        self._layout.addLayout(forward_model_layout)
 
         parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
             summary.get_parameters()
@@ -164,19 +167,3 @@ class SummaryPanel(QFrame):
             f"Parameters: {parameter_count}\n"
             f"Observations: {observations_count}"
         )
-
-    @staticmethod
-    def _runlength_encode_list(strings: list[str]) -> list[tuple[str, int]]:
-        """Runlength encode a list of strings.
-
-        Returns a list of tuples, first element is the string, and the second
-        element is the count of consecutive occurrences of the string at the current
-        position.
-        """
-        string_counts: list[tuple[str, int]] = []
-        for string in strings:
-            if not string_counts or string_counts[-1][0] != string:
-                string_counts.append((string, 1))
-            else:
-                string_counts[-1] = (string, string_counts[-1][1] + 1)
-        return string_counts
