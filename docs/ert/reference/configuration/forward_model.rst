@@ -56,6 +56,7 @@ By installing your own steps in this way, you can extend the capabilities of ERT
 .. code-block:: bash
 
     EXECUTABLE  path/to/program
+    DISPLAY_NAME "STEP_NAME <ARG0>"
 
     STDERR      prog.stderr      -- Name of stderr file (defaults to
                                  -- name_of_file.stderr.<step_nr>)
@@ -83,14 +84,25 @@ Invoking the step is then done by including it in the ert config:
 
     FORWARD_MODEL STEP_NAME(<ARG0>=3, <ARG1>="something")
 
-An optional :code:`NAME` argument sets a display name for this invocation.
-It defaults to the forward model step's name and is shown in run status,
-logs, and validation messages. The installed step name remains its identity.
-The value supports magic-string substitution:
+An optional :code:`DISPLAY_NAME` in the step configuration sets its default
+display name. Argument placeholders use invocation arguments when supplied,
+otherwise their :code:`DEFAULT` values. For example:
+
+.. code-block:: bash
+
+    DISPLAY_NAME "Copy <FROM> to <TO>"
+
+An optional :code:`NAME` argument overrides the display name for one invocation.
+Without either setting, the installed step name is used. Display names appear
+in the GUI summary, run status, logs, and validation messages; the installed
+step name remains its identity. Both settings support magic-string substitution:
 
 .. code-block:: bash
 
     FORWARD_MODEL STEP_NAME(<ARG0>=3, NAME=step_<IENS>)
+
+Runtime placeholders such as :code:`<IENS>` remain visible in the GUI summary
+before running and are resolved for each realization when running.
 
 
 Note that the following behaviour provides identical results:

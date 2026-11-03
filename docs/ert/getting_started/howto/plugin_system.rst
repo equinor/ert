@@ -94,6 +94,11 @@ default of accepting any named argument. Required keywords and keywords with a
 list rejects all other named arguments. These declarations validate argument names
 only; use the validation methods for constraints on argument values.
 
+Set ``display_name="Copy <FROM> to <TO>"`` in the plugin constructor to provide
+a default display name using argument placeholders. User-provided arguments
+override ``default_mapping`` values, and an invocation's ``NAME=`` overrides
+the template. Without either setting, the installed step name is shown.
+
 When creating documentation in ERT, forward model steps will be grouped by their
 main categories (ie. the category listed before the first dot).
 

@@ -231,7 +231,7 @@ def create_forward_model_json(
     for idx, fm_step in enumerate(forward_model_steps):
         substituter = Substituter(fm_step)
         fm_step_json: ForwardModelStepJSON = {
-            "name": substituter.substitute(fm_step.display_name),
+            "name": real_iter_substituter.substitute(fm_step.display_name),
             "executable": substituter.substitute(fm_step.executable),
             "target_file": substituter.substitute(fm_step.target_file),
             "error_file": substituter.substitute(fm_step.error_file),
@@ -1699,6 +1699,7 @@ def forward_model_step_from_config_contents(
 
     return UserInstalledForwardModelStep(
         name=name,
+        display_name_template=content_dict.get(ForwardModelStepKeys.DISPLAY_NAME),
         executable=content_dict["EXECUTABLE"],
         stdin_file=content_dict.get("STDIN"),
         stdout_file=content_dict.get("STDOUT"),

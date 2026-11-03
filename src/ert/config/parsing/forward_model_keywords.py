@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class ForwardModelStepKeys(StrEnum):
     NAME = "NAME"
+    DISPLAY_NAME = "DISPLAY_NAME"
     EXECUTABLE = "EXECUTABLE"
 
     STDIN = "STDIN"

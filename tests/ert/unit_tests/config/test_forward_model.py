@@ -306,6 +306,38 @@ def test_that_forward_model_display_name_defaults_to_step_name(plugins_ert_confi
     assert fm_step.display_name == fm_step.name
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        ("<FROM>=input.txt", "Copy input.txt to output.txt <IENS>"),
+        (
+            '<FROM>=input.txt, <TO>=result.txt, NAME="Custom <TO> <IENS>"',
+            "Custom result.txt <IENS>",
+        ),
+    ],
+)
+def test_that_install_job_display_name_uses_arguments_defaults_and_name_override(
+    args, expected
+):
+    Path("step").write_text(
+        'EXECUTABLE echo\nDISPLAY_NAME "Copy <FROM> to <TO> <IENS>"\n'
+        "DEFAULT <TO> output.txt\n",
+        encoding="utf-8",
+    )
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nINSTALL_JOB COPY step\nFORWARD_MODEL COPY({args})"
+    )
+    step = config.forward_model_steps[0]
+
+    assert step.name == "COPY"
+    assert step.display_name == expected
+    restored = TypeAdapter(SiteOrUserForwardModelStep).validate_python(
+        step.model_dump()
+    )
+    assert restored.display_name == expected
+
+
 def test_parsing_forward_model_with_quotes_does_not_introduce_spaces(
     plugins_ert_config,
 ):
@@ -1383,6 +1415,8 @@ def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmst
             super().__init__(
                 name="SITE_FM",
                 command=["custom_echo.sh", "helloworld", "<hello>", "<hi>", "<noop>"],
+                display_name="Greeting <hello> <recipient>",
+                default_mapping={"<recipient>": "world"},
             )
 
     with use_runtime_plugins(
@@ -1410,6 +1444,9 @@ def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmst
             "hi": "2",
         }
         assert site_fm_with_updated_executable.label == "site label"
+        site_fm_with_updated_executable.label = None
+        site_fm_with_updated_executable.private_args = {"<hello>": "Hello"}
+        assert site_fm_with_updated_executable.display_name == "Greeting Hello world"
 
 
 def test_that_user_fm_step_retains_executable_and_private_args_when_serialized(

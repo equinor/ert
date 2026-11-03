@@ -25,6 +25,7 @@ from pydantic_core.core_schema import ValidationInfo
 from typing_extensions import TypedDict
 
 from ert.base_model_context import BaseModelWithContextSupport
+from ert.substitutions import Substitutions
 
 from .parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
@@ -86,6 +87,7 @@ class ForwardModelStepJSON(TypedDict):
 
 
 class ForwardModelStepOptions(TypedDict, total=False):
+    display_name: NotRequired[str]
     stdin_file: NotRequired[str]
     stdout_file: NotRequired[str]
     stderr_file: NotRequired[str]
@@ -141,6 +143,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
     Attributes:
         executable: The name of the executable to be run
         label: Optional display name for this invocation of the forward model step
+        display_name_template: Default display name with argument placeholders
         stdin_file: File where this forward model step's stdin is written
         stdout_file: File where this forward model step's stdout is written
         stderr_file: File where this forward model step's stderr is written
@@ -177,6 +180,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
     name: str
     executable: str
     label: str | None = None
+    display_name_template: str | None = None
     stdin_file: str | None = None
     stdout_file: str | None = None
     stderr_file: str | None = None
@@ -202,7 +206,14 @@ class ForwardModelStep(BaseModelWithContextSupport):
 
     @property
     def display_name(self) -> str:
-        return self.label if self.label is not None else self.name
+        template = self.label
+        if template is None:
+            template = self.display_name_template
+        if template is None:
+            return self.name
+        return Substitutions(self.default_mapping | self.private_args).substitute(
+            template, max_iterations=1, warn_max_iter=False
+        )
 
     def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
         """
@@ -390,6 +401,7 @@ class ForwardModelStepPlugin(SiteInstalledForwardModelStep):
 
         super().__init__(
             name=name,
+            display_name_template=kwargs.get("display_name"),
             executable=executable,
             arglist=arglist,
             stdin_file=stdin_file,

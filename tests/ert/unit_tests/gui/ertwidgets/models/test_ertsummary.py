@@ -93,6 +93,24 @@ def test_getForwardModels(mock_ert):
     assert forward_model_list == expected_list
 
 
+def test_that_summary_resolves_arguments_but_preserves_runtime_name_placeholders(
+    mock_ert,
+):
+    mock_ert.forward_model_steps = [
+        ForwardModelStep(
+            name="COPY",
+            executable="echo",
+            display_name_template="Copy <FROM> to <TO> <IENS>",
+            private_args={"<FROM>": "input.txt"},
+            default_mapping={"<TO>": "output.txt"},
+        )
+    ]
+
+    assert ErtSummary(mock_ert).getForwardModels() == [
+        "Copy input.txt to output.txt <IENS>"
+    ]
+
+
 def test_getParameters(mock_ert):
     expected_list = ["field (10, 5, 3)", "gen_kw (3)", "surface (10, 7)"]
     parameter_list, _, parameter_count = ErtSummary(mock_ert).get_parameters()

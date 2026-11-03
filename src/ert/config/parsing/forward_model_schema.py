@@ -14,6 +14,13 @@ def executable_keyword() -> SchemaItem:
     )
 
 
+def display_name_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ForwardModelStepKeys.DISPLAY_NAME,
+        type_map=[SchemaItemType.STRING],
+    )
+
+
 def stdin_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ForwardModelStepKeys.STDIN,
@@ -129,6 +136,7 @@ def default_keyword() -> SchemaItem:
 
 forward_model_schema_items: list[SchemaItem] = [
     executable_keyword(),
+    display_name_keyword(),
     stdin_keyword(),
     stdout_keyword(),
     stderr_keyword(),

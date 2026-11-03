@@ -40,18 +40,23 @@ def test_build_ensemble(active_real):
 
 
 @pytest.mark.parametrize(
-    ("label", "expected"),
+    ("label", "template", "expected"),
     [
-        ("custom label", "custom label"),
-        ("<PREFIX>_<INPUT>_<IENS>_<ITER>", "copy_input_2_3"),
+        ("custom label", None, "custom label"),
+        ("<PREFIX>_<INPUT>_<IENS>_<ITER>", None, "copy_input_2_3"),
+        (None, "<PREFIX>_<INPUT>_<OUTPUT>_<IENS>_<ITER>", "copy_input_out_2_3"),
+        ("override <INPUT>", "ignored", "override input"),
+        (None, "<NESTED>", "<INPUT>"),
     ],
 )
-def test_that_snapshot_uses_forward_model_display_name(label, expected):
+def test_that_snapshot_uses_forward_model_display_name(label, template, expected):
     step = UserInstalledForwardModelStep(
         name="echo_command",
         label=label,
+        display_name_template=template,
         executable="",
-        private_args={"<INPUT>": "input"},
+        private_args={"<INPUT>": "input", "<NESTED>": "<INPUT>"},
+        default_mapping={"<INPUT>": "ignored", "<OUTPUT>": "out"},
     )
     substitutions = {"<PREFIX>": "copy"}
     ensemble = LegacyEnsemble(

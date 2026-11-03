@@ -119,19 +119,10 @@ class LegacyEnsemble:
                 active=True, status=REALIZATION_STATE_WAITING, fm_steps={}
             )
             for index, fm_step in enumerate(real.fm_steps):
-                private_args = Substitutions(
-                    {
-                        key: substituter.substitute(value)
-                        for key, value in fm_step.private_args.items()
-                    }
-                )
-                name = private_args.substitute(
-                    fm_step.display_name, max_iterations=1, warn_max_iter=False
-                )
                 realization["fm_steps"][str(index)] = FMStepSnapshot(
                     status=FORWARD_MODEL_STATE_INIT,
                     index=str(index),
-                    name=substituter.substitute(name),
+                    name=substituter.substitute(fm_step.display_name),
                 )
             snapshot.add_realization(str(real.iens), realization)
         return snapshot

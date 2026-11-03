@@ -31,6 +31,7 @@
       "name": "poly_eval",
       "executable": "test-data/ert/poly_example.poly.ert/poly_eval.py",
       "label": null,
+      "display_name_template": null,
       "stdin_file": null,
       "stdout_file": "poly_eval.stdout",
       "stderr_file": "poly_eval.stderr",
