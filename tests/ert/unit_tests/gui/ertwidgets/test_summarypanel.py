@@ -9,6 +9,7 @@ from ert.gui.summarypanel import SummaryPanel
 def create_summary_panel(qtbot, steps):
     config = SimpleNamespace(
         forward_model_steps=steps,
+        forward_model_step_name_list=lambda: [step.name for step in steps],
         parameter_configurations_with_design_matrix=[],
         observation_declarations=[],
     )
@@ -52,6 +53,20 @@ def test_that_forward_model_steps_are_checked_by_default(qtbot):
     assert panel.selected_step_indices() == [1, 2]
 
 
+def test_that_step_selector_can_be_shown_instead_of_forward_model_summary(qtbot):
+    panel = create_summary_panel(
+        qtbot, [SimpleNamespace(name="FIRST", private_args={})]
+    )
+
+    assert not panel.forward_model_summary.isHidden()
+    assert panel.forward_model_selection.isHidden()
+
+    panel.set_step_selection_visible(True)
+
+    assert panel.forward_model_summary.isHidden()
+    assert not panel.forward_model_selection.isHidden()
+
+
 def test_that_unchecking_all_then_inverting_selects_every_step(qtbot):
     panel = create_summary_panel(
         qtbot,
@@ -60,13 +75,13 @@ def test_that_unchecking_all_then_inverting_selects_every_step(qtbot):
             SimpleNamespace(name="SECOND", private_args={}),
         ],
     )
-    panel.findChild(
+    panel.forward_model_selection.findChild(
         QPushButton,
         "uncheck_all_forward_model_steps",
     ).click()
     assert panel.selected_step_indices() == []
 
-    panel.findChild(
+    panel.forward_model_selection.findChild(
         QPushButton,
         "invert_forward_model_steps",
     ).click()
