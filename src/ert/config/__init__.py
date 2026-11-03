@@ -10,6 +10,7 @@ from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
 from .breakthrough_config import BreakthroughConfig
 from .capture_validation import capture_validation
 from .design_matrix import DesignMatrix
+from .ecosystem_plugin import EcosystemPlugin
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig, forward_model_step_from_config_contents
 from .ert_plugin import ErtPlugin
@@ -102,6 +103,7 @@ __all__ = [
     "DerivedResponseConfig",
     "DesignMatrix",
     "ESSettings",
+    "EcosystemPlugin",
     "EnsembleConfig",
     "ErrorInfo",
     "ErtConfig",
