@@ -1,4 +1,4 @@
-from .rangestring import mask_to_rangestring, rangestring_to_mask
+from _ert.rangestring import mask_to_rangestring, rangestring_to_mask
 
 
 class ActiveRange:

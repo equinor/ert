@@ -46,6 +46,11 @@ The scheduler passes the flag :code:`--report-to-evaluator`, which makes
 example when rerunning a realization manually with :code:`fm_dispatch.py <runpath>`,
 no connection is attempted, so it works also when ERT is not running.
 
+To run only some of the steps, pass step names and/or :code:`--stepindices`
+with 1-based indices and inclusive ranges, for example
+:code:`fm_dispatch.py --stepindices 3-5,8,10-12 <runpath>`. Names and indices
+can be combined.
+
 The run environment of the forward model using a plain ERT installation is the
 same as the core. That entails that environment variables are carried over and
 one assumes that the disk where the relevant environment is installed is also
