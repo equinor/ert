@@ -47,6 +47,7 @@ def full_snapshot() -> EnsembleSnapshot:
                 index="0",
                 status=FORWARD_MODEL_STATE_START,
                 error="error",
+                arguments="<DIRECTORY>=my_dir",
                 stdout="std_out_file",
                 stderr="std_err_file",
                 current_memory_usage=123,
