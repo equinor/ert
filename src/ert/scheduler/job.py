@@ -145,6 +145,7 @@ class Job:
                         self.real.iens,
                         self.real.job_script,
                         self.real.run_arg.runpath,
+                        "--report-to-evaluator",
                         num_cpu=self.real.num_cpu,
                         realization_memory=self.real.realization_memory,
                         name=self.real.run_arg.job_name,

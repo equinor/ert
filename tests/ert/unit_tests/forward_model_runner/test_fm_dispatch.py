@@ -7,7 +7,7 @@ import signal
 import stat
 import sys
 from pathlib import Path
-from subprocess import Popen
+from subprocess import Popen, run
 from textwrap import dedent
 from threading import Lock
 from typing import Any
@@ -270,23 +270,68 @@ def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
 
 
 @pytest.mark.parametrize(
-    ("is_interactive_run", "ens_id"),
-    [(False, None), (False, "1234"), (True, None), (True, "1234")],
+    ("is_interactive_run", "report_to_evaluator", "ens_id"),
+    [
+        (False, False, None),
+        (False, False, "1234"),
+        (False, True, None),
+        (False, True, "1234"),
+        (True, False, "1234"),
+        (True, True, "1234"),
+    ],
 )
-def test_setup_reporters(is_interactive_run: bool, ens_id: str | None):
-    reporters = _setup_reporters(is_interactive_run, ens_id, "")
+def test_that_event_reporter_requires_report_to_evaluator_and_ens_id(
+    is_interactive_run: bool, report_to_evaluator: bool, ens_id: str | None
+):
+    reporters = _setup_reporters(is_interactive_run, report_to_evaluator, ens_id, "")
 
-    if not is_interactive_run and not ens_id:
+    if is_interactive_run:
+        assert len(reporters) == 1
+        assert isinstance(reporters[0], Interactive)
+    elif report_to_evaluator and ens_id:
+        assert len(reporters) == 2
+        assert any(isinstance(r, Event) for r in reporters)
+    else:
         assert len(reporters) == 1
         assert not any(isinstance(r, Event) for r in reporters)
 
-    if not is_interactive_run and ens_id:
-        assert len(reporters) == 2
-        assert any(isinstance(r, Event) for r in reporters)
 
-    if is_interactive_run and ens_id:
-        assert len(reporters) == 1
-        assert any(isinstance(r, Interactive) for r in reporters)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_fm_dispatch_without_report_flag_does_not_connect_to_evaluator(
+    tmp_path: Path,
+):
+    executable = write_executable(tmp_path, "#!/bin/sh\ntouch step.out\n")
+    write_forward_model_description(
+        {
+            "ens_id": "_id_",
+            "dispatch_url": "tcp://127.0.0.1:1",
+            "jobList": [job_dict(executable, [], "step")],
+        }
+    )
+    with patch.object(Event, "__init__") as event_init:
+        fm_dispatch(["fm_dispatch", str(Path.cwd())])
+
+    event_init.assert_not_called()
+    assert Path("step.out").is_file()
+
+
+def test_that_fm_dispatch_script_runs_minimal_jobs_json_without_ert(tmp_path: Path):
+    runpath = tmp_path / "runpath"
+    runpath.mkdir()
+    executable = write_executable(
+        tmp_path, '#!/bin/sh\necho "hello from fm_dispatch" > echo.out\n'
+    )
+    (runpath / FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+        json.dumps({"jobList": [job_dict(executable, [], "echo_step")]}),
+        encoding="utf-8",
+    )
+
+    result = run(["fm_dispatch.py", str(runpath)], cwd=tmp_path, check=False)
+
+    assert result.returncode == 0
+    assert (runpath / "echo.out").read_text(encoding="utf-8") == (
+        "hello from fm_dispatch\n"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -406,7 +451,12 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
         )
 
         fm_dispatch_process = Popen(  # ruff: ignore[create-subprocess-in-async-function]
-            [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
+            [
+                Path.cwd() / "setsid",
+                "fm_dispatch.py",
+                Path.cwd(),
+                "--report-to-evaluator",
+            ]
         )
         p = psutil.Process(fm_dispatch_process.pid)
 
@@ -448,7 +498,12 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
         )
 
         fm_dispatch_process = Popen(  # ruff: ignore[create-subprocess-in-async-function]
-            [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
+            [
+                Path.cwd() / "setsid",
+                "fm_dispatch.py",
+                Path.cwd(),
+                "--report-to-evaluator",
+            ]
         )
 
         await asyncio.wait_for(
