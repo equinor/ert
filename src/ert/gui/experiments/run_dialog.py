@@ -62,6 +62,7 @@ from ert.gui.model.snapshot import (
     FM_STEP_COLUMNS,
     ArgumentsRole,
     FileRole,
+    FMStepIndexRole,
     IterNum,
     RealIens,
     SnapshotModel,
@@ -269,7 +270,7 @@ class FMStepOverview(QTableView):
             FileDialog(
                 selected_file,
                 fm_step_name,
-                index.row(),
+                index.data(FMStepIndexRole),
                 index.data(RealIens),
                 index.data(IterNum),
                 self,

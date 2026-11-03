@@ -94,7 +94,7 @@ class SnapshotBuilder(BaseModel):
     def add_fm_step(
         self,
         fm_step_id: str,
-        index: str,
+        index: int,
         name: str | None,
         status: str | None,
         current_memory_usage: str | None = None,

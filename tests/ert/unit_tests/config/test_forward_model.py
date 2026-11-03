@@ -719,6 +719,7 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
     assert len(fm_json["jobList"]) == 1
     job_from_joblist = fm_json["jobList"][0]
     assert job_from_joblist["name"] == "PluginForwardModel"
+    assert job_from_joblist["index"] == 1
     assert job_from_joblist["executable"] == "something"
     assert job_from_joblist["stdout"] == "PluginForwardModel.stdout.0"
     assert job_from_joblist["stderr"] == "PluginForwardModel.stderr.0"

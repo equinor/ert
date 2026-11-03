@@ -13,6 +13,7 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.model.snapshot import (
     FM_STEP_COLUMN_SIZE,
     FM_STEP_COLUMNS,
+    FMStepIndexRole,
     IsEnsembleRole,
     IsFMStepRole,
     IsRealizationRole,
@@ -92,7 +93,8 @@ class FMStepListProxyModel(QAbstractProxyModel):
                     header = header.replace("_", " ")
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:
-                return section
+                step_index = self.index(section, 0, QModelIndex()).data(FMStepIndexRole)
+                return step_index if step_index is not None else section + 1
         return None
 
     @override

@@ -116,7 +116,7 @@ class LegacyEnsemble:
             for index, fm_step in enumerate(real.fm_steps):
                 realization["fm_steps"][str(index)] = FMStepSnapshot(
                     status=FORWARD_MODEL_STATE_INIT,
-                    index=str(index),
+                    index=index + 1,
                     name=fm_step.name,
                     arguments=", ".join(
                         f"{key}={value}" for key, value in fm_step.private_args.items()

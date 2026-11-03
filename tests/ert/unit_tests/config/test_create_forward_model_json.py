@@ -248,6 +248,8 @@ def verify_json_dump(fm_steplist, config, selected_steps, run_id):
         step = fm_steplist[selected_step]
         loaded_step = config["jobList"][step_index]
 
+        assert loaded_step["index"] == step_index + 1
+
         # Since no argList is loaded as an empty list by forward_model
         arg_list_back_up = step["argList"]
         step["argList"] = empty_list_if_none(step["argList"])
@@ -363,6 +365,26 @@ def run_all(fm_steplist, context):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_all_steps(fm_step_list, context):
     run_all(fm_step_list, context)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_jobs_json_index_enumerates_steps_from_one(fm_step_list, context):
+    ert_config = ErtConfig(
+        forward_model_steps=set_up_forward_model(fm_step_list),
+        substitutions=context,
+    )
+
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="run_id",
+    )
+
+    assert [step["index"] for step in data["jobList"]] == list(
+        range(1, len(fm_step_list) + 1)
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

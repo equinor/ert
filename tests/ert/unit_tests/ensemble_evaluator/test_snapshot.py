@@ -18,7 +18,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
         fm_step_id="0",
         fm_step=FMStepSnapshot(
             status="Finished",
-            index="0",
+            index=1,
             start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
             end_time=datetime(year=2020, month=10, day=28, tzinfo=UTC),
         ),
@@ -28,7 +28,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
         fm_step_id="1",
         fm_step=FMStepSnapshot(
             status="Running",
-            index="1",
+            index=2,
             start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         ),
     )
@@ -37,7 +37,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
         fm_step_id="0",
         fm_step=FMStepSnapshot(
             status="Running",
-            index="0",
+            index=1,
             start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         ),
     )
@@ -48,7 +48,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
 
     assert snapshot.get_fm_step(real_id="1", fm_step_id="0") == FMStepSnapshot(
         status="Finished",
-        index="0",
+        index=1,
         start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         end_time=datetime(year=2020, month=10, day=28, tzinfo=UTC),
         name="forward_model0",
@@ -56,7 +56,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
 
     assert snapshot.get_fm_step(real_id="1", fm_step_id="1") == FMStepSnapshot(
         status="Running",
-        index="1",
+        index=2,
         start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         name="forward_model1",
     )
@@ -64,7 +64,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
     assert snapshot.get_fm_step(real_id="9", fm_step_id="0").get("status") == "Running"
     assert snapshot.get_fm_step(real_id="9", fm_step_id="0") == FMStepSnapshot(
         status="Running",
-        index="0",
+        index=1,
         start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         name="forward_model0",
     )
