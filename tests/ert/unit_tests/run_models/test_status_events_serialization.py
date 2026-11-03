@@ -47,7 +47,7 @@ METADATA = EnsembleSnapshotMetadata(
                     SnapshotBuilder(metadata=METADATA)
                     .add_fm_step(
                         fm_step_id="0",
-                        index="0",
+                        index=1,
                         name="fm_step_0",
                         status=state.FORWARD_MODEL_STATE_START,
                         current_memory_usage="500",
@@ -58,7 +58,7 @@ METADATA = EnsembleSnapshotMetadata(
                     )
                     .add_fm_step(
                         fm_step_id="1",
-                        index="1",
+                        index=2,
                         name="fm_step_1",
                         status=state.FORWARD_MODEL_STATE_START,
                         current_memory_usage="500",
@@ -90,7 +90,7 @@ METADATA = EnsembleSnapshotMetadata(
                 snapshot=SnapshotBuilder(metadata=METADATA)
                 .add_fm_step(
                     fm_step_id="0",
-                    index="0",
+                    index=1,
                     status=state.FORWARD_MODEL_STATE_FINISHED,
                     name="fm_step_0",
                     end_time=dt(2019, 1, 1, tzinfo=UTC),
@@ -113,7 +113,7 @@ METADATA = EnsembleSnapshotMetadata(
                 snapshot=SnapshotBuilder(metadata=METADATA)
                 .add_fm_step(
                     fm_step_id="1",
-                    index="1",
+                    index=2,
                     status=state.FORWARD_MODEL_STATE_FAILURE,
                     name="fm_step_1",
                 )
@@ -235,7 +235,7 @@ def _build_full_snapshot_event() -> FullSnapshotEvent:
         snapshot=SnapshotBuilder(metadata=METADATA)
         .add_fm_step(
             fm_step_id="0",
-            index="0",
+            index=1,
             name="fm_step_0",
             status=state.FORWARD_MODEL_STATE_FINISHED,
         )

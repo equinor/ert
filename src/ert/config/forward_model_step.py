@@ -52,6 +52,7 @@ class ForwardModelStepJSON(TypedDict):
     on the queue.
 
     Attributes:
+        index: 1-based position of the step in the forward model sequence
         executable: The name of the executable to be run
         target_file: Name of file expected to be produced after the forward
             model step is executed successfully.
@@ -73,6 +74,7 @@ class ForwardModelStepJSON(TypedDict):
     """
 
     name: str
+    index: int
     executable: str
     target_file: str | None
     error_file: str | None

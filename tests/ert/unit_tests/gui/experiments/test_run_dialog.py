@@ -270,7 +270,7 @@ def test_large_snapshot(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -305,7 +305,7 @@ def test_large_snapshot(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             max_memory_usage="1000",
                             current_memory_usage="500",
@@ -342,13 +342,13 @@ def test_large_snapshot(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .add_fm_step(
                             fm_step_id="1",
-                            index="1",
+                            index=2,
                             name="fm_step_1",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -365,7 +365,7 @@ def test_large_snapshot(
                     snapshot=SnapshotBuilder()
                     .add_fm_step(
                         fm_step_id="0",
-                        index="0",
+                        index=1,
                         status=state.FORWARD_MODEL_STATE_FINISHED,
                         name="fm_step_0",
                     )
@@ -381,7 +381,7 @@ def test_large_snapshot(
                     snapshot=SnapshotBuilder()
                     .add_fm_step(
                         fm_step_id="1",
-                        index="1",
+                        index=2,
                         status=state.FORWARD_MODEL_STATE_FAILURE,
                         name="fm_step_1",
                     )
@@ -404,7 +404,7 @@ def test_large_snapshot(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -422,7 +422,7 @@ def test_large_snapshot(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -459,7 +459,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -476,7 +476,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
                     snapshot=SnapshotBuilder()
                     .add_fm_step(
                         fm_step_id="0",
-                        index="0",
+                        index=1,
                         status=state.FORWARD_MODEL_STATE_RUNNING,
                         current_memory_usage="45000",
                         max_memory_usage="55000",
@@ -494,7 +494,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
                     snapshot=SnapshotBuilder()
                     .add_fm_step(
                         fm_step_id="0",
-                        index="0",
+                        index=1,
                         status=state.FORWARD_MODEL_STATE_FINISHED,
                         name="fm_step_0",
                         current_memory_usage="50000",
@@ -553,13 +553,13 @@ def test_run_dialog_memory_usage_showing(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .add_fm_step(
                             fm_step_id="1",
-                            index="1",
+                            index=2,
                             name="fm_step_1",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -588,13 +588,13 @@ def test_run_dialog_memory_usage_showing(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .add_fm_step(
                             fm_step_id="1",
-                            index="1",
+                            index=2,
                             name="fm_step_1",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -852,7 +852,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -870,7 +870,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -1063,7 +1063,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -1082,7 +1082,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(
                         SnapshotBuilder()
                         .add_fm_step(
                             fm_step_id="0",
-                            index="0",
+                            index=1,
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
@@ -1163,7 +1163,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot):
                 SnapshotBuilder()
                 .add_fm_step(
                     fm_step_id="0",
-                    index="0",
+                    index=1,
                     name="fm_step_0",
                     status=state.FORWARD_MODEL_STATE_START,
                 )
@@ -1361,7 +1361,7 @@ def test_that_workflows_tab_does_not_shift_everest_batch_result_events_to_wrong_
                 SnapshotBuilder()
                 .add_fm_step(
                     fm_step_id="0",
-                    index="0",
+                    index=1,
                     name="fm_step_0",
                     status=state.FORWARD_MODEL_STATE_START,
                 )

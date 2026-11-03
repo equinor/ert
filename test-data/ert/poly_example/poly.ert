@@ -14,3 +14,7 @@ GEN_DATA POLY_RES RESULT_FILE:poly.out
 
 INSTALL_JOB poly_eval POLY_EVAL
 FORWARD_MODEL poly_eval
+FORWARD_MODEL poly_eval
+FORWARD_MODEL poly_eval
+FORWARD_MODEL poly_eval
+FORWARD_MODEL poly_eval

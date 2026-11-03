@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
-from PyQt6.QtCore import QModelIndex
+from PyQt6.QtCore import QModelIndex, Qt
 from pytestqt.qt_compat import qt_api
 
 from ert.ensemble_evaluator import identifiers as ids
@@ -42,6 +42,22 @@ def test_using_qt_model_tester(full_snapshot):
 
 
 @pytest.mark.requires_window_manager
+def test_that_vertical_header_enumerates_steps_from_one(full_snapshot):
+    source_model = SnapshotModel()
+
+    model = FMStepListProxyModel(None, 0, 0)
+    model.setSourceModel(source_model)
+
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
+
+    headers = [
+        model.headerData(row, Qt.Orientation.Vertical)
+        for row in range(model.rowCount())
+    ]
+    assert headers == [1, 2, 3, 4]
+
+
+@pytest.mark.requires_window_manager
 def test_changes(full_snapshot):
     source_model = SnapshotModel()
 
@@ -76,6 +92,33 @@ def test_changes(full_snapshot):
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
         == FORWARD_MODEL_STATE_FAILURE
     )
+
+
+def test_that_name_column_shows_arguments_when_present(full_snapshot):
+    source_model = SnapshotModel()
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
+    model = FMStepListProxyModel(None, 0, 0)
+    model.setSourceModel(source_model)
+    name_index = model.index(0, _id_to_col(ids.NAME), QModelIndex())
+
+    assert name_index.data() == "poly_eval(<DIRECTORY>=my_dir)"
+    assert (
+        name_index.data(Qt.ItemDataRole.ToolTipRole) == "poly_eval(<DIRECTORY>=my_dir)"
+    )
+    assert name_index.data(Qt.ItemDataRole.TextAlignmentRole) == (
+        Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+    )
+
+
+def test_that_name_column_shows_only_name_without_arguments(full_snapshot):
+    source_model = SnapshotModel()
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
+    model = FMStepListProxyModel(None, 0, 0)
+    model.setSourceModel(source_model)
+    name_index = model.index(1, _id_to_col(ids.NAME), QModelIndex())
+
+    assert name_index.data() == "poly_postval"
+    assert name_index.data(Qt.ItemDataRole.ToolTipRole) == "poly_postval"
 
 
 @pytest.mark.requires_window_manager

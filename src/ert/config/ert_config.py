@@ -232,6 +232,7 @@ def create_forward_model_json(
         substituter = Substituter(fm_step)
         fm_step_json: ForwardModelStepJSON = {
             "name": substituter.substitute(fm_step.name),
+            "index": idx + 1,
             "executable": substituter.substitute(fm_step.executable),
             "target_file": substituter.substitute(fm_step.target_file),
             "error_file": substituter.substitute(fm_step.error_file),

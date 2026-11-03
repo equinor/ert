@@ -33,7 +33,9 @@ The input to a forward model consists of:
 After this, the forward model is submitted to the queue system. In particular,
 this entails that the script :code:`fm_dispatch.py` is executed with the runpath of
 the forward model as an argument. It will locate the :code:`jobs.json` file and
-execute the forward model as prescribed. During execution the status of the
+execute the forward model as prescribed. Each step in the :code:`jobList` carries
+an :code:`index` field giving its 1-based position in the forward model sequence,
+matching the step numbering shown in the graphical user interface. During execution the status of the
 forward model is dumped to the :code:`status.json` file. It contains information
 about whether each step was a success or failure, the start and end running
 time, memory usage and so forth. In addition, each step's standard out and
@@ -44,6 +46,11 @@ purposes.
 The Start experiment GUI can select a subset of forward model steps to execute.
 It passes their 1-based indices to :code:`fm_dispatch.py`, while the complete
 step sequence remains in :code:`jobs.json`.
+
+The scheduler passes the flag :code:`--report-to-evaluator`, which makes
+:code:`fm_dispatch.py` report events to the running ERT. Without the flag, for
+example when rerunning a realization manually with :code:`fm_dispatch.py <runpath>`,
+no connection is attempted, so it works also when ERT is not running.
 
 The run environment of the forward model using a plain ERT installation is the
 same as the core. That entails that environment variables are carried over and

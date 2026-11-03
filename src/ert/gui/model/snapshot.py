@@ -36,6 +36,8 @@ RealIens = UserRole + 7
 IterNum = UserRole + 12
 MemoryUsageRole = UserRole + 13
 CallbackStatusMessageRole = UserRole + 14
+ArgumentsRole = UserRole + 15
+FMStepIndexRole = UserRole + 16
 
 # Indicates what type the underlying data is
 IsEnsembleRole = UserRole + 8
@@ -307,10 +309,12 @@ class SnapshotModel(QAbstractItemModel):
         if not index.isValid():
             return None
 
+        node = cast(IterNode | RealNode | ForwardModelStepNode, index.internalPointer())
         if role == Qt.ItemDataRole.TextAlignmentRole:
+            if index.column() == 0:
+                return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             return Qt.AlignmentFlag.AlignCenter
 
-        node = cast(IterNode | RealNode | ForwardModelStepNode, index.internalPointer())
         if role == NodeRole:
             return node
 
@@ -387,6 +391,12 @@ class SnapshotModel(QAbstractItemModel):
         index: QModelIndex, node: ForwardModelStepNode, role: Qt.ItemDataRole
     ) -> Any:
         node_id = str(node.id_)
+        name = node.data.get(ids.NAME)
+        arguments = node.data.get(ids.ARGUMENTS)
+        display_name = f"{name}({arguments})" if name and arguments else name
+
+        if role == ArgumentsRole:
+            return arguments
 
         if role == Qt.ItemDataRole.FontRole:
             data_name = FM_STEP_COLUMNS[index.column()]
@@ -417,6 +427,9 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.DisplayRole:
             data_name = FM_STEP_COLUMNS[index.column()]
+            if data_name == ids.NAME:
+                return display_name
+
             if data_name == ids.MAX_MEMORY_USAGE:
                 data = node.data
                 bytes_ = cast(str | None, data.get(data_name))
@@ -464,6 +477,9 @@ class SnapshotModel(QAbstractItemModel):
         if role == RealIens:
             return node.parent.id_ if node.parent else None
 
+        if role == FMStepIndexRole:
+            return node.data.get("index")
+
         if role == IterNum:
             return (
                 node.parent.parent.id_ if node.parent and node.parent.parent else None
@@ -474,6 +490,8 @@ class SnapshotModel(QAbstractItemModel):
             tt_text = None
             if data_name == ids.ERROR:
                 tt_text = node.data.get(ids.ERROR)
+            elif data_name == ids.NAME:
+                tt_text = display_name
             elif data_name == DURATION:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is not None:

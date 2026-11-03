@@ -31,6 +31,7 @@ from _ert.forward_model_runner.fm_dispatch import (
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
 from _ert.forward_model_runner.reporting.message import Finish, Init, Message
+from _ert.forward_model_runner.runner import ForwardModelRunner
 from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
 
@@ -218,31 +219,65 @@ def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     assert Path("step_C.out").is_file()
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_fm_dispatch_runs_steps_selected_by_one_based_indices(tmp_path: Path):
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("3", [3]), ("3-5,8,10-12", [3, 4, 5, 8, 10, 11, 12]), (" 1 , 2-2", [1, 2])],
+)
+def test_that_step_indices_are_parsed_as_one_based_inclusive_ranges(
+    value: str, expected: list[int]
+):
+    assert parse_step_indices(value) == expected
+
+
+@pytest.mark.parametrize("value", ["", "0", "a", "5-3", "1-", "-2", "1,,2"])
+def test_that_invalid_step_indices_are_rejected(value: str):
+    with pytest.raises(argparse.ArgumentTypeError, match="Invalid step indices"):
+        parse_step_indices(value)
+
+
+def test_that_steps_can_be_selected_by_one_based_index_with_stepindices(
+    tmp_path: Path,
+):
     executable = write_executable(
         tmp_path,
         "#!/usr/bin/env python\n"
         "import sys\n"
-        'open(f"step_{sys.argv[1]}.out", "w", encoding="utf-8").close()\n',
+        'open("step_{}.out".format(sys.argv[1]), "w").close()\n',
     )
     write_forward_model_description(
         {
-            "jobList": [
-                job_dict(executable, ["A"], "step_A"),
-                job_dict(executable, ["B"], "step_B"),
-                job_dict(executable, ["C"], "step_C"),
-            ],
+            "global_environment": {},
+            "global_update_path": {},
+            "jobList": [job_dict(executable, [name], "SAME_NAME") for name in "ABCD"],
+            "run_id": "",
+            "ert_pid": "",
         }
     )
 
     fm_dispatch(
-        ["fm_dispatch", str(Path.cwd()), "--report-to-evaluator", "--stepindices", "2"]
+        [
+            "fm_dispatch",
+            str(Path.cwd()),
+            "--report-to-evaluator",
+            "--stepindices",
+            "1,3-4",
+        ]
     )
 
-    assert not Path("step_A.out").exists()
-    assert Path("step_B.out").is_file()
-    assert not Path("step_C.out").exists()
+    assert Path("step_A.out").is_file()
+    assert not Path("step_B.out").is_file()
+    assert Path("step_C.out").is_file()
+    assert Path("step_D.out").is_file()
+
+
+def test_that_stepindices_out_of_range_gives_error_message():
+    runner = ForwardModelRunner(
+        {"jobList": [], "run_id": "", "ert_pid": ""}  # type: ignore[typeddict-item]
+    )
+    messages = list(runner.run([], [1]))
+    assert isinstance(messages[0], Init)
+    assert "does not exist" in messages[0].error_message
+    assert not messages[-1].success()
 
 
 def test_no_jobs_json_file_raises_IOError(tmp_path: Path):
@@ -310,14 +345,14 @@ def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
         (True, True, "1234"),
     ],
 )
-def test_setup_reporters(
+def test_that_event_reporter_requires_report_to_evaluator_and_ens_id(
     is_interactive_run: bool, report_to_evaluator: bool, ens_id: str | None
 ):
     reporters = _setup_reporters(is_interactive_run, report_to_evaluator, ens_id, "")
 
     if is_interactive_run and not report_to_evaluator:
         assert len(reporters) == 1
-        assert any(isinstance(r, Interactive) for r in reporters)
+        assert isinstance(reporters[0], Interactive)
     elif report_to_evaluator and ens_id:
         assert len(reporters) == 2
         assert any(isinstance(r, Event) for r in reporters)
@@ -326,14 +361,23 @@ def test_setup_reporters(
         assert not any(isinstance(r, Event | Interactive) for r in reporters)
 
 
-def test_that_step_indices_parse_one_based_values_and_ranges():
-    assert parse_step_indices("3-5,8,10-12") == [3, 4, 5, 8, 10, 11, 12]
-
-
-@pytest.mark.parametrize("value", ["0", "4-2", "invalid"])
-def test_that_invalid_step_indices_are_rejected(value):
-    with pytest.raises(argparse.ArgumentTypeError):
-        parse_step_indices(value)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_fm_dispatch_without_report_flag_does_not_connect_to_evaluator(
+    tmp_path: Path,
+):
+    executable = write_executable(tmp_path, "#!/bin/sh\ntouch step.out\n")
+    write_forward_model_description(
+        {
+            "ens_id": "_id_",
+            "dispatch_url": "tcp://127.0.0.1:1",
+            "jobList": [job_dict(executable, [], "step")],
+        }
+    )
+    with patch.object(Event, "__init__") as event_init:
+        fm_dispatch(["fm_dispatch", str(Path.cwd())])
+    event_init.assert_not_called()
+    assert Path("step.out").is_file()
+    assert Path("step.out").is_file()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

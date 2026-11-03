@@ -7,12 +7,22 @@ from queue import SimpleQueue
 from typing import cast, override
 
 import humanize
-from PyQt6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer
+from PyQt6.QtCore import QModelIndex, QRect, QSize, Qt, QThread, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QHideEvent, QMouseEvent, QMovie, QTextCursor, QTextOption
+from PyQt6.QtGui import (
+    QFontMetrics,
+    QHideEvent,
+    QMouseEvent,
+    QMovie,
+    QPainter,
+    QPalette,
+    QTextCursor,
+    QTextOption,
+)
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QDialog,
     QDialogButtonBox,
     QFrame,
@@ -24,6 +34,9 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QSplitter,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     QTableView,
     QTabWidget,
     QVBoxLayout,
@@ -47,7 +60,9 @@ from ert.gui.model.node import IterNode
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
     FM_STEP_COLUMNS,
+    ArgumentsRole,
     FileRole,
+    FMStepIndexRole,
     IterNum,
     RealIens,
     SnapshotModel,
@@ -94,6 +109,93 @@ _EVEREST_TOTAL_PROGRESS_TEMPLATE = "Batch {iteration} progress: {total_progress}
 logger = logging.getLogger(__name__)
 
 
+class FMStepNameDelegate(QStyledItemDelegate):
+    @override
+    def paint(
+        self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex
+    ) -> None:
+        arguments = index.data(ArgumentsRole)
+        if painter is None or not arguments or not index.data():
+            super().paint(painter, option, index)
+            return
+
+        style_option = QStyleOptionViewItem(option)
+        self.initStyleOption(style_option, index)
+        text = style_option.text
+        if text is None:
+            super().paint(painter, option, index)
+            return
+        name = text[: -len(arguments) - 2]
+        style_option.text = ""
+        widget = style_option.widget
+        style = widget.style() if widget else QApplication.style()
+        if style is None:
+            super().paint(painter, option, index)
+            return
+        style.drawControl(
+            QStyle.ControlElement.CE_ItemViewItem, style_option, painter, widget
+        )
+        text_rect = style.subElementRect(
+            QStyle.SubElement.SE_ItemViewItemText, style_option, widget
+        )
+        metrics = QFontMetrics(style_option.font)
+        name_width = metrics.horizontalAdvance(name)
+        open_paren_width = metrics.horizontalAdvance("(")
+        close_paren_width = metrics.horizontalAdvance(")")
+        text_color = style_option.palette.color(
+            QPalette.ColorRole.HighlightedText
+            if style_option.state & QStyle.StateFlag.State_Selected
+            else QPalette.ColorRole.Text
+        )
+        painter.save()
+        painter.setFont(style_option.font)
+        painter.setPen(text_color)
+        if name_width + open_paren_width >= text_rect.width():
+            painter.drawText(
+                text_rect,
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                metrics.elidedText(
+                    name, Qt.TextElideMode.ElideRight, text_rect.width()
+                ),
+            )
+        else:
+            painter.drawText(
+                QRect(
+                    text_rect.left(),
+                    text_rect.top(),
+                    name_width + open_paren_width,
+                    text_rect.height(),
+                ),
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                f"{name}(",
+            )
+            arguments_rect = text_rect.adjusted(name_width + open_paren_width, 0, 0, 0)
+            arguments_width = arguments_rect.width()
+            arguments_fit = (
+                metrics.horizontalAdvance(arguments) + close_paren_width
+                <= arguments_width
+            )
+            if arguments_fit:
+                rendered_arguments = f"{arguments})"
+            else:
+                rendered_arguments = metrics.elidedText(
+                    arguments,
+                    Qt.TextElideMode.ElideRight,
+                    max(0, arguments_width - close_paren_width),
+                )
+            painter.setPen(
+                style_option.palette.color(
+                    QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text
+                )
+            )
+            painter.drawText(
+                arguments_rect,
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                rendered_arguments,
+            )
+        painter.restore()
+
+
 def _batch_type_text(batch_id: int, batch_types: set[str]) -> str:
     """
     >>> _batch_type_text(1, {"FunctionResult"})
@@ -127,6 +229,7 @@ class FMStepOverview(QTableView):
 
         self.clicked.connect(self._fm_step_clicked)
         self.setModel(self._fm_step_model)
+        self.setItemDelegateForColumn(0, FMStepNameDelegate(self))
 
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
@@ -167,7 +270,7 @@ class FMStepOverview(QTableView):
             FileDialog(
                 selected_file,
                 fm_step_name,
-                index.row(),
+                index.data(FMStepIndexRole),
                 index.data(RealIens),
                 index.data(IterNum),
                 self,

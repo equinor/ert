@@ -36,6 +36,13 @@ The Start experiment GUI now lists the forward model steps with their arguments
 and lets you select which steps to run. The list is numbered from 1, matching
 the indices accepted by ``fm_dispatch.py``.
 
+Forward model step arguments in Experiment status
+#################################################
+
+The Experiment status table now shows each forward model step's private arguments
+alongside its name, making repeated step names easier to distinguish. Hover over
+the name to see the full string when it does not fit in the column.
+
 Single update mode for ES-MDA, Ensemble Smoother deprecated
 ###########################################################
 
