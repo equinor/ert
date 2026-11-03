@@ -1,3 +1,4 @@
+from .ecosystem_plugins import ecosystem_plugin
 from .event_listener import on_status_event
 from .forward_model_steps import (
     forward_model_configuration,
@@ -16,6 +17,7 @@ from .site_config import site_configurations
 __all__ = [
     "add_log_handle_to_root",
     "add_span_processor",
+    "ecosystem_plugin",
     "ertscript_workflow",
     "forward_model_configuration",
     "get_ip_address",

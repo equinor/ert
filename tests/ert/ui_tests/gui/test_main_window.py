@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
 from xtgeo import RegularSurface
 
 import ert.gui
-from ert.config import ErtConfig
+from ert.config import EcosystemPlugin, ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -142,6 +142,80 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
         assert all(
             e in m for m, e in zip(shown_messages, expected_message_types, strict=False)
         )
+
+
+class _GuiStartupEcosystem(EcosystemPlugin):
+    name: str = "DUMMY"
+    startup_calls: int = 0
+
+    def configure(self, config_dict):
+        pass
+
+    def on_gui_startup(self):
+        self.startup_calls += 1
+
+
+def test_that_selected_ecosystem_plugins_are_notified_on_gui_startup(qapp, tmp_path):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1\nECOSYSTEM DUMMY\n", encoding="utf-8")
+    ecosystem = _GuiStartupEcosystem()
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"DUMMY": ecosystem}}
+    )
+
+    args = Mock()
+    args.config = str(config_file)
+    with add_gui_log_handler() as log_handler:
+        gui, *_ = ert.gui.main._start_initial_gui_window(
+            args, log_handler, runtime_plugins
+        )
+        assert isinstance(gui, ErtMainWindow)
+
+    assert ecosystem.startup_calls == 1
+
+
+def test_that_gui_startup_is_skipped_when_the_selected_ecosystem_is_not_installed():
+    plugin = Mock(spec=EcosystemPlugin)
+    config = Mock(
+        spec=ErtConfig,
+        ecosystem="MISSING",
+        PREINSTALLED_ECOSYSTEM_PLUGINS={"OTHER": plugin},
+    )
+
+    ert.gui.main._run_ecosystem_gui_startup(config, Mock(spec=logging.Logger))
+
+    plugin.on_gui_startup.assert_not_called()
+
+
+def test_that_gui_startup_is_skipped_when_no_ecosystem_is_selected():
+    plugin = Mock(spec=EcosystemPlugin)
+    config = Mock(
+        spec=ErtConfig,
+        ecosystem=None,
+        PREINSTALLED_ECOSYSTEM_PLUGINS={"OTHER": plugin},
+    )
+
+    ert.gui.main._run_ecosystem_gui_startup(config, Mock(spec=logging.Logger))
+
+    plugin.on_gui_startup.assert_not_called()
+
+
+def test_that_failing_ecosystem_gui_startup_is_logged_and_does_not_raise(caplog):
+    class FailingEcosystem(_GuiStartupEcosystem):
+        def on_gui_startup(self):
+            raise RuntimeError("no credentials")
+
+    config = Mock(
+        spec=ErtConfig,
+        ecosystem="DUMMY",
+        PREINSTALLED_ECOSYSTEM_PLUGINS={"DUMMY": FailingEcosystem()},
+    )
+
+    with caplog.at_level(logging.ERROR):
+        ert.gui.main._run_ecosystem_gui_startup(config, logging.getLogger(__name__))
+
+    assert "Ecosystem plugin 'DUMMY' failed during gui startup" in caplog.text
+    assert "no credentials" in caplog.text
 
 
 @pytest.mark.usefixtures("copy_poly_case")
