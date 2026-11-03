@@ -44,6 +44,7 @@ from ert.gui.plotting.plot_window import (
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectListWidget
 from ert.gui.plotting.widgets.collapsible_section import CollapsibleSection
+from ert.gui.summarypanel import SummaryPanel
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -124,6 +125,51 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
         assert combo_box.currentText() == SingleTestRun.display_name()
 
         assert gui.windowTitle().startswith("ERT - poly.ert")
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_unchecking_all_forward_model_steps_disables_the_run_button(qapp):
+    args = Mock()
+    args.config = "poly.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        experiment_panel = get_child(gui, ExperimentPanel)
+        summary = get_child(experiment_panel, SummaryPanel)
+        run_button = get_child(experiment_panel, QToolButton, name="run_experiment")
+
+        assert run_button.isEnabled()
+
+        get_child(summary, QPushButton, name="uncheck_all_forward_model_steps").click()
+        assert not run_button.isEnabled()
+
+        get_child(summary, QPushButton, name="check_all_forward_model_steps").click()
+        assert run_button.isEnabled()
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_selected_forward_model_step_indices_are_passed_to_model_creation(
+    qapp, monkeypatch
+):
+    args = Mock()
+    args.config = "poly.ert"
+    with add_gui_log_handler() as log_handler:
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        experiment_panel = get_child(gui, ExperimentPanel)
+        summary = get_child(experiment_panel, SummaryPanel)
+        create_model = Mock(side_effect=ValueError("stop before running"))
+        monkeypatch.setattr(
+            "ert.gui.experiments.experiment_panel.create_model", create_model
+        )
+        monkeypatch.setattr(QMessageBox, "warning", Mock())
+
+        experiment_panel.run_experiment()
+        summary.forward_model_step_list.item(0).setCheckState(Qt.CheckState.Unchecked)
+        experiment_panel.run_experiment()
+
+        assert [
+            call.args[1].forward_model_step_indices
+            for call in create_model.call_args_list
+        ] == [None, list(range(2, summary.forward_model_step_list.count() + 1))]
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")

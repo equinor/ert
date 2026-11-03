@@ -112,6 +112,22 @@ def test_default_realizations():
     )
 
 
+def test_that_selected_forward_model_step_indices_are_saved_with_experiment(tmp_path):
+    config = ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\nENSPATH {tmp_path}")
+    model = model_factory.create_model(
+        config,
+        Namespace(
+            mode=TEST_RUN_MODE,
+            current_ensemble="ensemble",
+            experiment_name=None,
+            forward_model_step_indices=[1, 3],
+        ),
+        queue.SimpleQueue(),
+    )
+
+    assert model.to_experiment_config()["forward_model_step_indices"] == [1, 3]
+
+
 def test_custom_realizations():
     ensemble_size = 100
     args = Namespace(realizations="0-4,7,8")

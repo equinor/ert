@@ -3,12 +3,16 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSignalBlocker, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
@@ -78,6 +82,8 @@ class SummaryTemplate:
 
 
 class SummaryPanel(QFrame):
+    selection_changed = Signal()
+
     def __init__(self, config: ErtConfig) -> None:
         self.config = config
         QFrame.__init__(self)
@@ -103,20 +109,14 @@ class SummaryPanel(QFrame):
     def updateSummary(self) -> None:
         summary = ErtSummary(self.config)
 
-        forward_model_list = summary.getForwardModels()
+        forward_model_steps = self.config.forward_model_steps
         plural_s = ""
-        if not len(forward_model_list) or len(forward_model_list) > 1:
+        if len(forward_model_steps) != 1:
             plural_s = "s"
-        text = SummaryTemplate(
-            f"Forward model ({len(forward_model_list):,} step{plural_s})"
+        self.addForwardModelList(
+            forward_model_steps,
+            f"Forward model ({len(forward_model_steps):,} step{plural_s})",
         )
-        for fm_name, fm_count in self._runlength_encode_list(forward_model_list):
-            if fm_count == 1:
-                text.addRow(fm_name)
-            else:
-                text.addRow(f"{fm_name} x{fm_count}")
-
-        self.addColumn(text.getText())
 
         parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
             summary.get_parameters()
@@ -138,6 +138,89 @@ class SummaryPanel(QFrame):
             text.addRow(f"{entry['observation_key']} ({entry['count']})")
 
         self.addColumn(text.getText())
+
+    def addForwardModelList(self, steps: list[Any], title: str) -> None:
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel(title))
+
+        buttons = QHBoxLayout()
+        check_all = QPushButton("Check all")
+        check_all.setObjectName("check_all_forward_model_steps")
+        check_all.clicked.connect(lambda: self._set_all_steps_checked(True))
+        buttons.addWidget(check_all)
+
+        uncheck_all = QPushButton("Uncheck all")
+        uncheck_all.setObjectName("uncheck_all_forward_model_steps")
+        uncheck_all.clicked.connect(lambda: self._set_all_steps_checked(False))
+        buttons.addWidget(uncheck_all)
+
+        invert = QPushButton("Invert")
+        invert.setObjectName("invert_forward_model_steps")
+        invert.clicked.connect(self._invert_step_selection)
+        buttons.addWidget(invert)
+
+        layout.addLayout(buttons)
+        self.forward_model_step_list = QListWidget()
+        self.forward_model_step_list.setObjectName("forward_model_step_list")
+        for index, step in enumerate(steps, start=1):
+            arguments = ", ".join(
+                f"{key}={value}" for key, value in step.private_args.items()
+            )
+            text = f"{index}: {step.name}"
+            if arguments:
+                text += f"({arguments})"
+            item = QListWidgetItem(text)
+            item.setData(Qt.ItemDataRole.UserRole, index)
+            item.setToolTip(text)
+            item.setFlags(
+                item.flags()
+                | Qt.ItemFlag.ItemIsUserCheckable
+                | Qt.ItemFlag.ItemIsEnabled
+            )
+            item.setCheckState(Qt.CheckState.Checked)
+            self.forward_model_step_list.addItem(item)
+        self.forward_model_step_list.itemChanged.connect(
+            lambda _: self.selection_changed.emit()
+        )
+        self.forward_model_step_list.setMinimumHeight(75)
+        self.forward_model_step_list.setMaximumHeight(150)
+        layout.addWidget(self.forward_model_step_list)
+
+        container = QWidget()
+        container.setLayout(layout)
+        self._layout.addWidget(container)
+
+    def selected_step_indices(self) -> list[int]:
+        selected: list[int] = []
+        for row in range(self.forward_model_step_list.count()):
+            item = self.forward_model_step_list.item(row)
+            assert item is not None
+            if item.checkState() == Qt.CheckState.Checked:
+                selected.append(item.data(Qt.ItemDataRole.UserRole))
+        return selected
+
+    def _set_all_steps_checked(self, checked: bool) -> None:
+        blocker = QSignalBlocker(self.forward_model_step_list)
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        for row in range(self.forward_model_step_list.count()):
+            item = self.forward_model_step_list.item(row)
+            assert item is not None
+            item.setCheckState(state)
+        blocker.unblock()
+        self.selection_changed.emit()
+
+    def _invert_step_selection(self) -> None:
+        blocker = QSignalBlocker(self.forward_model_step_list)
+        for row in range(self.forward_model_step_list.count()):
+            item = self.forward_model_step_list.item(row)
+            assert item is not None
+            item.setCheckState(
+                Qt.CheckState.Unchecked
+                if item.checkState() == Qt.CheckState.Checked
+                else Qt.CheckState.Checked
+            )
+        blocker.unblock()
+        self.selection_changed.emit()
 
     def addColumn(self, text: str) -> None:
         layout = QVBoxLayout()
@@ -164,19 +247,3 @@ class SummaryPanel(QFrame):
             f"Parameters: {parameter_count}\n"
             f"Observations: {observations_count}"
         )
-
-    @staticmethod
-    def _runlength_encode_list(strings: list[str]) -> list[tuple[str, int]]:
-        """Runlength encode a list of strings.
-
-        Returns a list of tuples, first element is the string, and the second
-        element is the count of consecutive occurrences of the string at the current
-        position.
-        """
-        string_counts: list[tuple[str, int]] = []
-        for string in strings:
-            if not string_counts or string_counts[-1][0] != string:
-                string_counts.append((string, 1))
-            else:
-                string_counts[-1] = (string, string_counts[-1][1] + 1)
-        return string_counts

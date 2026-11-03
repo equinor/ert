@@ -48,6 +48,10 @@ The scheduler passes the flag :code:`--report-to-evaluator`, which makes
 example when rerunning a realization manually with :code:`fm_dispatch.py <runpath>`,
 no connection is attempted, so it works also when ERT is not running.
 
+The Start experiment GUI can select a subset of forward model steps to execute.
+It passes their 1-based indices to :code:`fm_dispatch.py`, while the complete
+step sequence remains in :code:`jobs.json`.
+
 The run environment of the forward model using a plain ERT installation is the
 same as the core. That entails that environment variables are carried over and
 one assumes that the disk where the relevant environment is installed is also

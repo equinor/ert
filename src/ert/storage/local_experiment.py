@@ -122,6 +122,7 @@ class ExperimentConfig(TypedDict, total=False):
     env_pr_fm_step: dict[str, Any]
     runpath_config: dict[str, Any]
     forward_model_steps: list[dict[str, Any]]
+    forward_model_step_indices: list[int] | None
 
     # Initial-ensemble fields
     ert_templates: list[tuple[str, str]]

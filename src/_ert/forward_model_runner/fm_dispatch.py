@@ -56,7 +56,7 @@ def _setup_reporters(
     real_id: str | None = None,
 ) -> list[reporting.Reporter]:
     reporters: list[reporting.Reporter] = []
-    if is_interactive_run:
+    if is_interactive_run and not report_to_evaluator:
         reporters.append(reporting.Interactive())
     elif report_to_evaluator and ens_id and experiment_id is None:
         reporters.append(reporting.File())
@@ -213,7 +213,6 @@ def fm_dispatch(args: list[str]) -> None:
             "If no steps are specified, all steps will be executed."
         ),
     )
-
     parser.add_argument(
         "--stepindices",
         type=parse_step_indices,

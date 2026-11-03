@@ -97,6 +97,26 @@ def test_run_multiple_ok():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_forward_model_runner_selects_steps_by_one_based_indices():
+    fm_step_list = [
+        {
+            "name": f"MKDIR_{index}",
+            "executable": "mkdir",
+            "argList": ["-p", f"directory-{index}"],
+        }
+        for index in range(1, 4)
+    ]
+
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
+
+    list(fmr.run([], [2]))
+
+    assert not Path("directory-1").exists()
+    assert Path("directory-2").is_dir()
+    assert not Path("directory-3").exists()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given():
     fm_step_list = []
     file_list = ["1", "2", "3", "4", "5"]
