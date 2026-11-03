@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import os
@@ -25,10 +26,12 @@ from _ert.forward_model_runner.fm_dispatch import (
     _report_all_messages,
     _setup_reporters,
     fm_dispatch,
+    parse_step_indices,
 )
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
 from _ert.forward_model_runner.reporting.message import Finish, Init, Message
+from _ert.forward_model_runner.runner import ForwardModelRunner
 from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
 
@@ -214,6 +217,59 @@ def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     assert not Path("step_A.out").is_file()
     assert Path("step_B.out").is_file()
     assert Path("step_C.out").is_file()
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("3", [3]), ("3-5,8,10-12", [3, 4, 5, 8, 10, 11, 12]), (" 1 , 2-2", [1, 2])],
+)
+def test_that_step_indices_are_parsed_as_one_based_inclusive_ranges(
+    value: str, expected: list[int]
+):
+    assert parse_step_indices(value) == expected
+
+
+@pytest.mark.parametrize("value", ["", "0", "a", "5-3", "1-", "-2", "1,,2"])
+def test_that_invalid_step_indices_are_rejected(value: str):
+    with pytest.raises(argparse.ArgumentTypeError, match="Invalid step indices"):
+        parse_step_indices(value)
+
+
+def test_that_steps_can_be_selected_by_one_based_index_with_stepindices(
+    tmp_path: Path,
+):
+    executable = write_executable(
+        tmp_path,
+        "#!/usr/bin/env python\n"
+        "import sys\n"
+        'open("step_{}.out".format(sys.argv[1]), "w").close()\n',
+    )
+    write_forward_model_description(
+        {
+            "global_environment": {},
+            "global_update_path": {},
+            "jobList": [job_dict(executable, [name], "SAME_NAME") for name in "ABCD"],
+            "run_id": "",
+            "ert_pid": "",
+        }
+    )
+
+    fm_dispatch(["fm_dispatch", str(Path.cwd()), "--stepindices", "1,3-4"])
+
+    assert Path("step_A.out").is_file()
+    assert not Path("step_B.out").is_file()
+    assert Path("step_C.out").is_file()
+    assert Path("step_D.out").is_file()
+
+
+def test_that_stepindices_out_of_range_gives_error_message():
+    runner = ForwardModelRunner(
+        {"jobList": [], "run_id": "", "ert_pid": ""}  # type: ignore[typeddict-item]
+    )
+    messages = list(runner.run([], [1]))
+    assert isinstance(messages[0], Init)
+    assert "does not exist" in messages[0].error_message
+    assert not messages[-1].success()
 
 
 def test_no_jobs_json_file_raises_IOError(tmp_path: Path):
