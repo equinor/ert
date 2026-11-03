@@ -29,6 +29,13 @@ Highlighted changes
 Version 27.0
 ------------
 
+Select forward model steps in the Start experiment GUI
+######################################################
+
+The Start experiment GUI now lists the forward model steps with their arguments
+and lets you select which steps to run. The list is numbered from 1, matching
+the indices accepted by ``fm_dispatch.py``.
+
 Single update mode for ES-MDA, Ensemble Smoother deprecated
 ###########################################################
 

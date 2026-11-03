@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 def _setup_reporters(
     is_interactive_run: bool,
+    report_to_evaluator: bool,
     ens_id: str | None,
     dispatch_url: str | None,
     ee_token: str | None = None,
@@ -55,9 +56,9 @@ def _setup_reporters(
     real_id: str | None = None,
 ) -> list[reporting.Reporter]:
     reporters: list[reporting.Reporter] = []
-    if is_interactive_run:
+    if is_interactive_run and not report_to_evaluator:
         reporters.append(reporting.Interactive())
-    elif ens_id and experiment_id is None:
+    elif report_to_evaluator and ens_id and experiment_id is None:
         reporters.append(reporting.File())
         if dispatch_url is not None:
             reporters.append(
@@ -167,11 +168,35 @@ def _stop_reporters(
             reporter.stop(exited_event=exited_event)
 
 
+def _parse_index_range(part: str) -> range:
+    start, sep, end = part.strip().partition("-")
+    first = int(start)
+    last = int(end) if sep else first
+    if first < 1 or last < first:
+        raise ValueError(part)
+    return range(first, last + 1)
+
+
+def parse_step_indices(value: str) -> list[int]:
+    """Parse 1-based step indices such as "3-5,8,10-12" (ranges inclusive)."""
+    try:
+        return [
+            index for part in value.split(",") for index in _parse_index_range(part)
+        ]
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"Invalid step indices {value!r}, expected 1-based indices "
+            "and ranges such as '3-5,8,10-12'"
+        ) from None
+
+
 class Namespace(argparse.Namespace):
     """fm_dispatch argument parser namespace"""
 
     run_path: str | None = None
+    report_to_evaluator: bool = False
     steps: list[str]
+    stepindices: list[int] | None = None
 
 
 def fm_dispatch(args: list[str]) -> None:
@@ -188,6 +213,22 @@ def fm_dispatch(args: list[str]) -> None:
         help=(
             "One or more forward model steps to be executed from the jobs.json file. "
             "If no steps are specified, all steps will be executed."
+        ),
+    )
+    parser.add_argument(
+        "--stepindices",
+        type=parse_step_indices,
+        help=(
+            "1-based indices and inclusive ranges of forward model steps to "
+            "execute, e.g. '3-5,8,10-12'. Can be combined with step names."
+        ),
+    )
+    parser.add_argument(
+        "--report-to-evaluator",
+        action="store_true",
+        help=(
+            "Report forward model events to the ensemble evaluator given in "
+            "jobs.json. Without this flag, no network connection is attempted."
         ),
     )
 
@@ -210,9 +251,15 @@ def fm_dispatch(args: list[str]) -> None:
     dispatch_url = fm_description.get("dispatch_url")
     real_id = fm_description.get("real_id")
 
-    is_interactive_run = len(parsed_args.steps) > 0
+    is_interactive_run = len(parsed_args.steps) > 0 or bool(parsed_args.stepindices)
     reporters = _setup_reporters(
-        is_interactive_run, ens_id, dispatch_url, ee_token, experiment_id, str(real_id)
+        is_interactive_run,
+        parsed_args.report_to_evaluator,
+        ens_id,
+        dispatch_url,
+        ee_token,
+        experiment_id,
+        str(real_id),
     )
 
     fm_runner = ForwardModelRunner(fm_description)
@@ -224,7 +271,9 @@ def fm_dispatch(args: list[str]) -> None:
         _stop_reporters_and_sigkill(reporters, exited_event)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
-    _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
+    _report_all_messages(
+        fm_runner.run(parsed_args.steps, parsed_args.stepindices), reporters
+    )
 
 
 def main() -> None:

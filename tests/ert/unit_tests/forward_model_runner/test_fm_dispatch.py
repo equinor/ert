@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import os
@@ -25,6 +26,7 @@ from _ert.forward_model_runner.fm_dispatch import (
     _report_all_messages,
     _setup_reporters,
     fm_dispatch,
+    parse_step_indices,
 )
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
@@ -216,6 +218,33 @@ def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     assert Path("step_C.out").is_file()
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_fm_dispatch_runs_steps_selected_by_one_based_indices(tmp_path: Path):
+    executable = write_executable(
+        tmp_path,
+        "#!/usr/bin/env python\n"
+        "import sys\n"
+        'open(f"step_{sys.argv[1]}.out", "w", encoding="utf-8").close()\n',
+    )
+    write_forward_model_description(
+        {
+            "jobList": [
+                job_dict(executable, ["A"], "step_A"),
+                job_dict(executable, ["B"], "step_B"),
+                job_dict(executable, ["C"], "step_C"),
+            ],
+        }
+    )
+
+    fm_dispatch(
+        ["fm_dispatch", str(Path.cwd()), "--report-to-evaluator", "--stepindices", "2"]
+    )
+
+    assert not Path("step_A.out").exists()
+    assert Path("step_B.out").is_file()
+    assert not Path("step_C.out").exists()
+
+
 def test_no_jobs_json_file_raises_IOError(tmp_path: Path):
     with pytest.raises(IOError, match=r"No such file or directory: 'jobs.json'"):
         fm_dispatch(["script.py", str(tmp_path)])
@@ -270,23 +299,41 @@ def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
 
 
 @pytest.mark.parametrize(
-    ("is_interactive_run", "ens_id"),
-    [(False, None), (False, "1234"), (True, None), (True, "1234")],
+    ("is_interactive_run", "report_to_evaluator", "ens_id"),
+    [
+        (False, False, None),
+        (False, False, "1234"),
+        (False, True, None),
+        (False, True, "1234"),
+        (True, False, None),
+        (True, False, "1234"),
+        (True, True, "1234"),
+    ],
 )
-def test_setup_reporters(is_interactive_run: bool, ens_id: str | None):
-    reporters = _setup_reporters(is_interactive_run, ens_id, "")
+def test_setup_reporters(
+    is_interactive_run: bool, report_to_evaluator: bool, ens_id: str | None
+):
+    reporters = _setup_reporters(is_interactive_run, report_to_evaluator, ens_id, "")
 
-    if not is_interactive_run and not ens_id:
-        assert len(reporters) == 1
-        assert not any(isinstance(r, Event) for r in reporters)
-
-    if not is_interactive_run and ens_id:
-        assert len(reporters) == 2
-        assert any(isinstance(r, Event) for r in reporters)
-
-    if is_interactive_run and ens_id:
+    if is_interactive_run and not report_to_evaluator:
         assert len(reporters) == 1
         assert any(isinstance(r, Interactive) for r in reporters)
+    elif report_to_evaluator and ens_id:
+        assert len(reporters) == 2
+        assert any(isinstance(r, Event) for r in reporters)
+    else:
+        assert len(reporters) == 1
+        assert not any(isinstance(r, Event | Interactive) for r in reporters)
+
+
+def test_that_step_indices_parse_one_based_values_and_ranges():
+    assert parse_step_indices("3-5,8,10-12") == [3, 4, 5, 8, 10, 11, 12]
+
+
+@pytest.mark.parametrize("value", ["0", "4-2", "invalid"])
+def test_that_invalid_step_indices_are_rejected(value):
+    with pytest.raises(argparse.ArgumentTypeError):
+        parse_step_indices(value)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -406,7 +453,12 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
         )
 
         fm_dispatch_process = Popen(  # ruff: ignore[create-subprocess-in-async-function]
-            [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
+            [
+                Path.cwd() / "setsid",
+                "fm_dispatch.py",
+                Path.cwd(),
+                "--report-to-evaluator",
+            ]
         )
         p = psutil.Process(fm_dispatch_process.pid)
 
@@ -448,7 +500,12 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
         )
 
         fm_dispatch_process = Popen(  # ruff: ignore[create-subprocess-in-async-function]
-            [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
+            [
+                Path.cwd() / "setsid",
+                "fm_dispatch.py",
+                Path.cwd(),
+                "--report-to-evaluator",
+            ]
         )
 
         await asyncio.wait_for(

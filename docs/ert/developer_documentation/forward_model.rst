@@ -41,6 +41,10 @@ standard error is piped to unique files for each step. Both the status
 file and the log files are picked up again by the core for monitoring
 purposes.
 
+The Start experiment GUI can select a subset of forward model steps to execute.
+It passes their 1-based indices to :code:`fm_dispatch.py`, while the complete
+step sequence remains in :code:`jobs.json`.
+
 The run environment of the forward model using a plain ERT installation is the
 same as the core. That entails that environment variables are carried over and
 one assumes that the disk where the relevant environment is installed is also

@@ -192,3 +192,4 @@ class Realization:
     num_cpu: int
     job_script: str
     realization_memory: int  # Memory to reserve/book, in bytes
+    fm_step_indices: list[int] | None = None

@@ -760,6 +760,7 @@ class RunModel(RunModelConfig, ABC):
                 active=run_arg.active,
                 iens=run_arg.iens,
                 fm_steps=self.forward_model_steps,
+                fm_step_indices=self.forward_model_step_indices,
                 max_runtime=self.queue_config.max_runtime,
                 run_arg=run_arg,
                 num_cpu=self.queue_config.queue_options.num_cpu,

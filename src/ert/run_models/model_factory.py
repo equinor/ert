@@ -101,9 +101,11 @@ def create_model(
     update_settings = config.analysis_config.observation_settings
 
     try:
-        return _dispatch_create_model(config, args, update_settings, status_queue)
+        model = _dispatch_create_model(config, args, update_settings, status_queue)
     except PydanticValidationError as err:
         raise ConfigValidationError.from_pydantic(err) from err
+    model.forward_model_step_indices = getattr(args, "forward_model_step_indices", None)
+    return model
 
 
 def _merge_parameter_configs(

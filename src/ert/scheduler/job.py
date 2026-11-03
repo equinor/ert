@@ -45,6 +45,19 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _format_step_indices(indices: list[int]) -> str:
+    ordered_indices = sorted(set(indices))
+    ranges: list[str] = []
+    start = previous = ordered_indices[0]
+    for index in ordered_indices[1:]:
+        if index != previous + 1:
+            ranges.append(f"{start}-{previous}" if start != previous else str(start))
+            start = index
+        previous = index
+    ranges.append(f"{start}-{previous}" if start != previous else str(start))
+    return ",".join(ranges)
+
+
 class JobState(StrEnum):
     WAITING = "WAITING"
     RESUBMITTING = "RESUBMITTING"
@@ -140,11 +153,20 @@ class Job:
             await self._send(JobState.SUBMITTING)
             self.submit_time = time.monotonic()
             try:
+                driver_args = ["--report-to-evaluator"]
+                if self.real.fm_step_indices is not None:
+                    driver_args.extend(
+                        [
+                            "--stepindices",
+                            _format_step_indices(self.real.fm_step_indices),
+                        ]
+                    )
                 submit_task = asyncio.create_task(
                     self.driver.submit(
                         self.real.iens,
                         self.real.job_script,
                         self.real.run_arg.runpath,
+                        *driver_args,
                         num_cpu=self.real.num_cpu,
                         realization_memory=self.real.realization_memory,
                         name=self.real.run_arg.job_name,
