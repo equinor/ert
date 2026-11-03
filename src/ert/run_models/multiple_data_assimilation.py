@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import PrivateAttr
 
+from _ert.rangestring import mask_to_rangestring
 from ert.config import (
     ConfigValidationError,
     PostExperimentFixtures,
@@ -28,7 +29,6 @@ from ert.storage.local_experiment import (
     LocalExperiment,
 )
 from ert.trace import tracer
-from ert.validation.rangestring import mask_to_rangestring
 
 from .run_model import ErtRunError
 
