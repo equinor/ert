@@ -59,12 +59,19 @@ class ForwardModelRunner:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest
 
-    def run(self, names_of_steps_to_run: list[str]) -> Generator[Message]:
-        if not names_of_steps_to_run:
+    def run(
+        self,
+        names_of_steps_to_run: list[str],
+        indices_of_steps_to_run: list[int] | None = None,
+    ) -> Generator[Message]:
+        indices = set(indices_of_steps_to_run or [])
+        if not names_of_steps_to_run and not indices:
             step_queue = self.steps
         else:
             step_queue = [
-                step for step in self.steps if step.name() in names_of_steps_to_run
+                step
+                for step in self.steps
+                if step.name() in names_of_steps_to_run or step.index + 1 in indices
             ]
         init_message = Init(
             step_queue,
@@ -76,10 +83,13 @@ class ForwardModelRunner:
         )
 
         unused = set(names_of_steps_to_run) - {step.name() for step in step_queue}
-        if unused:
+        unused_indices = indices - {step.index + 1 for step in step_queue}
+        if unused or unused_indices:
+            missing = sorted(unused) + sorted(unused_indices)
             init_message.with_error(
-                f"{unused} does not exist. "
-                f"Available forward_model steps: {[step.name() for step in self.steps]}"
+                f"{missing} does not exist. "
+                f"Available forward_model steps: "
+                f"{[(step.index + 1, step.name()) for step in self.steps]}"
             )
             yield init_message
             yield Finish().with_error(

@@ -168,12 +168,33 @@ def _stop_reporters(
             reporter.stop(exited_event=exited_event)
 
 
+def _parse_index_range(part: str) -> range:
+    start, sep, end = part.strip().partition("-")
+    first = int(start)
+    last = int(end) if sep else first
+    if first < 1 or last < first:
+        raise ValueError(part)
+    return range(first, last + 1)
+
+
+def parse_step_indices(value: str) -> list[int]:
+    """Parse 1-based step indices such as "3-5,8,10-12" (ranges inclusive)."""
+    try:
+        return [i for part in value.split(",") for i in _parse_index_range(part)]
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"Invalid step indices {value!r}, expected 1-based indices "
+            "and ranges such as '3-5,8,10-12'"
+        ) from None
+
+
 class Namespace(argparse.Namespace):
     """fm_dispatch argument parser namespace"""
 
     run_path: str | None = None
     report_to_evaluator: bool = False
     steps: list[str]
+    stepindices: list[int] | None = None
 
 
 def fm_dispatch(args: list[str]) -> None:
@@ -193,6 +214,14 @@ def fm_dispatch(args: list[str]) -> None:
         ),
     )
 
+    parser.add_argument(
+        "--stepindices",
+        type=parse_step_indices,
+        help=(
+            "1-based indices and inclusive ranges of forward model steps to "
+            "execute, e.g. '3-5,8,10-12'. Can be combined with step names."
+        ),
+    )
     parser.add_argument(
         "--report-to-evaluator",
         action="store_true",
@@ -221,7 +250,7 @@ def fm_dispatch(args: list[str]) -> None:
     dispatch_url = fm_description.get("dispatch_url")
     real_id = fm_description.get("real_id")
 
-    is_interactive_run = len(parsed_args.steps) > 0
+    is_interactive_run = len(parsed_args.steps) > 0 or bool(parsed_args.stepindices)
     reporters = _setup_reporters(
         is_interactive_run,
         parsed_args.report_to_evaluator,
@@ -241,7 +270,9 @@ def fm_dispatch(args: list[str]) -> None:
         _stop_reporters_and_sigkill(reporters, exited_event)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
-    _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
+    _report_all_messages(
+        fm_runner.run(parsed_args.steps, parsed_args.stepindices), reporters
+    )
 
 
 def main() -> None:
