@@ -29,6 +29,13 @@ Highlighted changes
 Version 27.0
 ------------
 
+Forward model step arguments in Experiment status
+#################################################
+
+The Experiment status table now shows each forward model step's private arguments
+alongside its name, making repeated step names easier to distinguish. Hover over
+the name to see the full string when it does not fit in the column.
+
 Single update mode for ES-MDA, Ensemble Smoother deprecated
 ###########################################################
 

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
+from ert.config.forward_model_step import UserInstalledForwardModelStep
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble, Realization
 from ert.ensemble_evaluator.state import FORWARD_MODEL_STATE_INIT
 
@@ -35,3 +36,34 @@ def test_build_ensemble(active_real):
             ensemble.snapshot.get_fm_step("2", "0").get("status")
             == FORWARD_MODEL_STATE_INIT
         )
+
+
+def test_that_snapshot_fm_step_arguments_are_formatted_as_private_args():
+    step = UserInstalledForwardModelStep(
+        name="echo_command",
+        executable="",
+        private_args={"<INPUT>": "input", "<OUTPUT>": "output"},
+    )
+    ensemble = LegacyEnsemble(
+        [
+            Realization(
+                iens=2,
+                run_arg=MagicMock(itr=3),
+                num_cpu=1,
+                max_runtime=0,
+                job_script="job_script",
+                fm_steps=[step],
+                active=True,
+                realization_memory=0,
+            )
+        ],
+        {},
+        QueueConfig(queue_system=QueueSystem.LOCAL),
+        0,
+        "1",
+    )
+
+    assert (
+        ensemble.snapshot.get_fm_step("2", "0").get("arguments")
+        == "<INPUT>=input, <OUTPUT>=output"
+    )

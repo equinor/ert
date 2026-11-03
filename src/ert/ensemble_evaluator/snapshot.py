@@ -463,6 +463,7 @@ class FMStepSnapshot(TypedDict, total=False):
     cpu_seconds: float | None
     computer_load: float | None
     name: str | None
+    arguments: str | None
     error: str | None
     stdout: str | None
     stderr: str | None
