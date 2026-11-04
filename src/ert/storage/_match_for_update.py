@@ -63,3 +63,14 @@ def _add_index_column(
     if "index" in joined.columns:
         joined = joined.drop("index")
     return joined.rename({"__tmp_index_key__": "index"})
+
+
+def _update_realization_column_on_error(
+    joined: pl.DataFrame, real: str
+) -> pl.DataFrame:
+    return joined.with_columns(
+        pl.when(pl.col(f"qc_error_{real}").is_null())
+        .then(pl.col(str(real)))
+        .otherwise(pl.lit(None, dtype=pl.Float32))
+        .alias(str(real))
+    )

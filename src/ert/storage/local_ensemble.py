@@ -40,6 +40,7 @@ from ert.config.rft_config import RFTConfig
 from ert.storage._match_for_update import (
     _add_index_column,
     _update_qc_error_on_mismatch,
+    _update_realization_column_on_error,
     _validate_selected_observations,
 )
 from ert.storage.match import MatchConfig, matching_strategy
@@ -1145,13 +1146,7 @@ class LocalEnsemble(BaseMode):
 
                 joined = _update_qc_error_on_mismatch(joined, response_cls, real)
                 joined = _add_index_column(joined, response_cls, real)
-
-                joined = joined.with_columns(
-                    pl.when(pl.col(f"qc_error_{real}").is_null())
-                    .then(pl.col(str(real)))
-                    .otherwise(pl.lit(None, dtype=pl.Float32))
-                    .alias(str(real))
-                )
+                joined = _update_realization_column_on_error(joined, real)
 
                 if first_columns is None:
                     # The "leftmost" index columns are not yet collected.
