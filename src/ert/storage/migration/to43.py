@@ -34,9 +34,10 @@ def _move_scalar_parquet_into_blobs(path: Path) -> None:
         }
 
         (blob_dir / uri).write_bytes(data)
-        (blob_dir / f"{uri}.json").write_text(
-            json.dumps(blob_data, indent=2), encoding="utf-8"
-        )
+        metadata_file = blob_dir / f"{uri}.json"
+        temporary_file = metadata_file.with_suffix(".tmp")
+        temporary_file.write_text(json.dumps(blob_data, indent=2), encoding="utf-8")
+        temporary_file.replace(metadata_file)
         parquet_file.unlink()
         logger.info("Moved %s into blob %s", parquet_file, uri)
 
