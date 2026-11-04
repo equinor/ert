@@ -38,6 +38,7 @@ from ert.config.observation_quality_control import (
 )
 from ert.config.rft_config import RFTConfig
 from ert.storage._match_for_update import (
+    _add_index_column,
     _update_qc_error_on_mismatch,
     _validate_selected_observations,
 )
@@ -1143,15 +1144,7 @@ class LocalEnsemble(BaseMode):
                     joined = strategy.match(observations, pivoted)
 
                 joined = _update_qc_error_on_mismatch(joined, response_cls, real)
-
-                # Avoid potential collision with "index" column (it could be a part
-                # of the index_key)
-                joined = joined.with_columns(
-                    response_cls.index_column_expr().alias("__tmp_index_key__")
-                )
-                if "index" in joined.columns:
-                    joined = joined.drop("index")
-                joined = joined.rename({"__tmp_index_key__": "index"})
+                joined = _add_index_column(joined, response_cls, real)
 
                 joined = joined.with_columns(
                     pl.when(pl.col(f"qc_error_{real}").is_null())

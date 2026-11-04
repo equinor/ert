@@ -50,3 +50,16 @@ def _update_qc_error_on_mismatch(
             no_matched_response_condition, no_matched_response_error
         ).alias(f"qc_error_{real}")
     )
+
+
+def _add_index_column(
+    joined: pl.DataFrame, response_cls: ResponseConfig, real: str
+) -> pl.DataFrame:
+    # Avoid potential collision with "index" column (it could be a part
+    # of the index_key)
+    joined = joined.with_columns(
+        response_cls.index_column_expr().alias("__tmp_index_key__")
+    )
+    if "index" in joined.columns:
+        joined = joined.drop("index")
+    return joined.rename({"__tmp_index_key__": "index"})
