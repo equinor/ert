@@ -31,17 +31,13 @@ from ert.config import (
 from ert.config._reservoir_data_utils import SeismicData
 from ert.config.field import Field, field_transform
 from ert.config.observation_quality_control import (
-    append_to_qc_error,
-    ensure_qc_error_column,
     qc_rft_observations,
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
 from ert.storage._match_for_update import (
-    _add_index_column,
     _join_observations_and_responses,
-    _update_qc_error_on_mismatch,
-    _update_realization_column_on_error,
+    _retrieve_common_columns,
     _validate_selected_observations,
 )
 from ert.storage.match import MatchConfig, matching_strategy
@@ -1073,7 +1069,7 @@ class LocalEnsemble(BaseMode):
             reals = np.sort(iens_active_index).tolist()
 
             # Load and join one realization at a time to reduce peak memory usage
-            first_columns: pl.DataFrame | None = None
+            common_columns: pl.DataFrame | None = None
             realization_columns: list[pl.DataFrame] = []
 
             for real in reals:
@@ -1137,33 +1133,17 @@ class LocalEnsemble(BaseMode):
                     strategy, observations, pivoted, real
                 )
 
-                if first_columns is None:
-                    # The "leftmost" index columns are not yet collected.
-                    # They are the same for all iterations, and indexed the same
-                    # because we do a left join for the observations.
-                    # Hence, we select these columns only once.
-                    first_columns = joined.select(
-                        [
-                            "response_key",
-                            "index",
-                            "observation_key",
-                            "observations",
-                            "std",
-                            "east",
-                            "north",
-                            "radius",
-                        ]
-                    )
-
+                if common_columns is None:
+                    common_columns = _retrieve_common_columns(joined)
                 realization_columns.append(joined.select(str(real), f"qc_error_{real}"))
 
-            if first_columns is None:
+            if common_columns is None:
                 # Not a single realization had any responses to the
                 # observations. Hence, there is no need to include
                 # it in the dataset
                 continue
 
-            if any(df.height != first_columns.height for df in realization_columns):
+            if any(df.height != common_columns.height for df in realization_columns):
                 raise ValueError(
                     "Realization columns for response type "
                     f"{response_type} have differing numbers of rows"
@@ -1171,7 +1151,7 @@ class LocalEnsemble(BaseMode):
 
             dfs_per_response_type.append(
                 pl.concat(
-                    [first_columns, *realization_columns],
+                    [common_columns, *realization_columns],
                     how="horizontal_extend",
                 )
             )

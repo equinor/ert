@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-import numpy as np
 import polars as pl
 
 from ert.config.observation_quality_control import (
@@ -13,10 +12,8 @@ from ert.config.observation_quality_control import (
 from ert.config.response_config import ResponseConfig
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-
     from .local_ensemble import LocalEnsemble
-from ert.storage.match import MatchStrategyType, matching_strategy
+from ert.storage.match import MatchStrategyType
 
 
 def _validate_selected_observations(
@@ -98,4 +95,23 @@ def _update_realization_column_on_error(
         .then(pl.col(str(real)))
         .otherwise(pl.lit(None, dtype=pl.Float32))
         .alias(str(real))
+    )
+
+
+def _retrieve_common_columns(joined: pl.DataFrame) -> pl.DataFrame:
+    # The "leftmost" index columns are not yet collected.
+    # They are the same for all iterations, and indexed the same
+    # because we do a left join for the observations.
+    # Hence, we select these columns only once.
+    return joined.select(
+        [
+            "response_key",
+            "index",
+            "observation_key",
+            "observations",
+            "std",
+            "east",
+            "north",
+            "radius",
+        ]
     )
