@@ -37,6 +37,7 @@ from ert.config.observation_quality_control import (
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
+from ert.storage.match import MatchConfig, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -1056,6 +1057,9 @@ class LocalEnsemble(BaseMode):
             if response_type not in observations_by_type:
                 continue
 
+            match_config = MatchConfig()
+            strategy = matching_strategy(self, response_cls, match_config=match_config)
+
             observations_for_type = (
                 observations_by_type[response_type]
                 .filter(pl.col("observation_key").is_in(list(selected_observations)))
@@ -1138,28 +1142,8 @@ class LocalEnsemble(BaseMode):
                     joined = observations.with_columns(
                         pl.lit(None, dtype=pl.Float32).alias(str(real)),
                     )
-                elif "time" in pivoted:
-                    by_cols = [
-                        "response_key",
-                        *[k for k in response_cls.match_key if k != "time"],
-                    ]
-                    joined = observations.sort(
-                        by=[*by_cols, "time"]
-                    ).join_asof(
-                        pivoted.sort(by=[*by_cols, "time"]),
-                        by=by_cols,
-                        on="time",
-                        check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
-                        strategy="nearest",
-                        tolerance="1s",
-                    )
                 else:
-                    joined = observations.join(
-                        pivoted,
-                        how="left",
-                        on=["response_key", *response_cls.match_key],
-                        nulls_equal=True,
-                    )
+                    joined = strategy.match(observations, pivoted)
 
                 no_matched_response_condition = pl.col(str(real)).is_null()
                 no_matched_response_error = pl.concat_str(

@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import polars as pl
 
 from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.gen_data_config import GenDataConfig
@@ -76,13 +78,42 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
         else:
             self.match_keys = ["response_key", *response_cls.match_key]
 
+    def match(
+        self,
+        observations: pl.DataFrame,
+        responses: pl.DataFrame,
+    ) -> pl.DataFrame:
+        return observations.join(
+            responses,
+            how="left",
+            on=self.match_keys,
+            nulls_equal=True,
+        )
+
 
 class GenDataMatchStrategy(ReservoirDataMatchStrategy[GenDataConfig]):
     pass
 
 
 class SummaryMatchStrategy(ReservoirDataMatchStrategy[SummaryConfig]):
-    pass
+    @override
+    def match(
+        self,
+        observations: pl.DataFrame,
+        responses: pl.DataFrame,
+    ) -> pl.DataFrame:
+        by_cols = [*[k for k in self.match_keys if k != "time"]]
+
+        return observations.sort(
+            by=[*by_cols, "time"]
+        ).join_asof(
+            responses.sort(by=[*by_cols, "time"]),
+            by=by_cols,
+            on="time",
+            check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
+            strategy="nearest",
+            tolerance="1s",
+        )
 
 
 class BreakthroughMatchStrategy(ReservoirDataMatchStrategy[BreakthroughConfig]):
