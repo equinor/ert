@@ -37,6 +37,7 @@ from ert.config.observation_quality_control import (
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
+from ert.storage._match_for_update import _validate_selected_observations
 from ert.storage.match import MatchConfig, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
@@ -1032,14 +1033,7 @@ class LocalEnsemble(BaseMode):
                 or "123.5, 456.7, 2500.0, None" when zone is missing
         - Seismic "123.5, 456.7" (east, north)
         """
-        known_observations = self.experiment.observation_keys
-
-        unknown_observations = set(selected_observations) - set(known_observations)
-
-        if unknown_observations:
-            raise KeyError(
-                f"Observations: {', '.join(unknown_observations)} not in experiment"
-            )
+        _validate_selected_observations(self, selected_observations)
 
         observations_by_type = self.experiment.observations
 
