@@ -39,6 +39,7 @@ from ert.config.observation_quality_control import (
 from ert.config.rft_config import RFTConfig
 from ert.storage._match_for_update import (
     _add_index_column,
+    _join_observations_and_responses,
     _update_qc_error_on_mismatch,
     _update_realization_column_on_error,
     _validate_selected_observations,
@@ -1076,7 +1077,7 @@ class LocalEnsemble(BaseMode):
             realization_columns: list[pl.DataFrame] = []
 
             for real in reals:
-                observations = ensure_qc_error_column(observations_for_type)
+                observations = observations_for_type
                 if response_type == "rft":
                     observations = self.add_rft_metadata_and_qc(observations, real)
 
@@ -1132,21 +1133,9 @@ class LocalEnsemble(BaseMode):
                         .agg(pl.col(str(real)).mean())
                     )
 
-                if pivoted.is_empty():
-                    # There are no responses for this realization,
-                    # so we explicitly create a column of Nones
-                    # to represent this. We are basically saying that
-                    # for this realization, each observation points
-                    # to a None response.
-                    joined = observations.with_columns(
-                        pl.lit(None, dtype=pl.Float32).alias(str(real)),
-                    )
-                else:
-                    joined = strategy.match(observations, pivoted)
-
-                joined = _update_qc_error_on_mismatch(joined, response_cls, real)
-                joined = _add_index_column(joined, response_cls, real)
-                joined = _update_realization_column_on_error(joined, real)
+                joined = _join_observations_and_responses(
+                    strategy, observations, pivoted, real
+                )
 
                 if first_columns is None:
                     # The "leftmost" index columns are not yet collected.

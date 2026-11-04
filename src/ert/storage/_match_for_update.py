@@ -30,6 +30,31 @@ def _validate_selected_observations(
         )
 
 
+def _join_observations_and_responses(
+    strategy: MatchStrategyType,
+    observations: pl.DataFrame,
+    responses: pl.DataFrame,
+    real: int,
+) -> pl.DataFrame:
+    if responses.is_empty():
+        # There are no responses for this realization,
+        # so we explicitly create a column of Nones
+        # to represent this. We are basically saying that
+        # for this realization, each observation points
+        # to a None response.
+        joined = observations.with_columns(
+            pl.lit(None, dtype=pl.Float32).alias(str(real)),
+        )
+    else:
+        joined = strategy.match(observations, responses)
+
+    joined = ensure_qc_error_column(joined)
+    joined = _update_qc_error_on_mismatch(joined, strategy.response_cls, str(real))
+    joined = _update_realization_column_on_error(joined, str(real))
+    joined = _add_index_column(joined, strategy.response_cls, str(real))
+    return joined  # ruff: ignore[unnecessary-assign]
+
+
 def _update_qc_error_on_mismatch(
     joined: pl.DataFrame, response_cls: ResponseConfig, real: str
 ) -> pl.DataFrame:
