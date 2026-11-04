@@ -801,7 +801,10 @@ class LocalStorage(BaseMode):
                 meta = adapter.validate_json(json_path.read_bytes())
             except ValidationError as e:
                 logger.warning(
-                    "Failed to validate blob metadata from %s: %s", json_path, e
+                    "Failed to validate blob metadata for blob_type %s from %s: %s",
+                    blob_type,
+                    json_path,
+                    e,
                 )
                 continue
             if blob_type is None or meta.blob_info.blob_type == blob_type:

@@ -81,8 +81,8 @@ class UpdateView(QWidget):
     def set_ensemble(self, ensemble: Ensemble) -> None:
         """Check for an update producing this ensemble without reading its tables."""
         self._ensemble = ensemble
-        self._has_update = bool(
-            ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)
+        self._has_update = (
+            len(ensemble.load_blob_metadata(BlobType.OBSERVATION_REPORT)) == 1
         )
 
         self._clear_tabs()

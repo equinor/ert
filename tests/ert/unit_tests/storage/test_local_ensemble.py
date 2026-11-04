@@ -533,7 +533,10 @@ def test_that_load_blob_metadata_skips_malformed_metadata_and_logs_a_warning(
             blobs = ensemble.load_blob_metadata()
 
         assert [blob.name for blob in blobs] == ["observation_report"]
-        assert f"Failed to validate blob metadata from {metadata_path}" in caplog.text
+        assert (
+            f"Failed to validate blob metadata for blob_type None from {metadata_path}"
+            in caplog.text
+        )
 
 
 @pytest.mark.parametrize(
