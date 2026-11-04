@@ -396,13 +396,14 @@ def main() -> None:
         print(err_guide_msg)
         sys.exit(1)  # Exit with a non-zero status code (required for smoke tests!)
 
-    print(
-        "\n",
-        f"Thank you for using fmudesign {Version(ert_version).base_version}\n",
-        " - Documentation:           https://equinor.github.io/fmu-tools/fmudesign.html\n",
-        " - Course docs:             https://fmu-docs.equinor.com/docs/fmu-coursedocs/fmu-howto/sensitivities/index.html\n",
-        " - Issues/feature requests: https://github.com/equinor/ert/issues\n",
-    )
+    if args.func.func is not subcommand_init:
+        print(
+            "\n",
+            f"Thank you for using fmudesign {Version(ert_version).base_version}\n",
+            " - Documentation:           https://equinor.github.io/fmu-tools/fmudesign.html\n",
+            " - Course docs:             https://fmu-docs.equinor.com/docs/fmu-coursedocs/fmu-howto/sensitivities/index.html\n",
+            " - Issues/feature requests: https://github.com/equinor/ert/issues\n",
+        )
 
 
 if __name__ == "__main__":

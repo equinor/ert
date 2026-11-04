@@ -2,6 +2,7 @@ import argparse
 import re
 import sys
 from argparse import Namespace
+from functools import partial
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -29,7 +30,7 @@ def test_that_given_unknown_command_run_is_inserted_at_position_one(monkeypatch)
 
     assert sys.argv[1] == "foo"
 
-    mock_args = MagicMock(func=lambda _: None)
+    mock_args = MagicMock(func=partial(lambda _: None))
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda _: mock_args)
     fmudesignrunner.main()
 
