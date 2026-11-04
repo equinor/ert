@@ -379,6 +379,9 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
     environment_variables: Mapping[str, str] = Field(default_factory=dict)
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
+    status_listener: Callable[..., None] | None = Field(
+        default=None, exclude=True, repr=False
+    )
 
 
 def get_site_plugins(
@@ -427,6 +430,7 @@ def get_site_plugins(
         ),
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
+        status_listener=plugin_manager.notify_status_event,
     )
 
 
