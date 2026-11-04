@@ -28,3 +28,25 @@ def _validate_selected_observations(
         raise KeyError(
             f"Observations: {', '.join(unknown_observations)} not in experiment"
         )
+
+
+def _update_qc_error_on_mismatch(
+    joined: pl.DataFrame, response_cls: ResponseConfig, real: str
+) -> pl.DataFrame:
+    no_matched_response_condition = pl.col(str(real)).is_null()
+    no_matched_response_error = pl.concat_str(
+        [
+            pl.lit("no response matched observation data: "),
+            pl.lit("response_key="),
+            pl.col("response_key").cast(pl.String),
+            pl.lit(", "),
+            response_cls.match_key_dict_expr(),
+        ],
+        separator="",
+    )
+
+    return joined.with_columns(
+        append_to_qc_error(
+            no_matched_response_condition, no_matched_response_error
+        ).alias(f"qc_error_{real}")
+    )

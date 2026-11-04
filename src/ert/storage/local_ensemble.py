@@ -37,7 +37,10 @@ from ert.config.observation_quality_control import (
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
-from ert.storage._match_for_update import _validate_selected_observations
+from ert.storage._match_for_update import (
+    _update_qc_error_on_mismatch,
+    _validate_selected_observations,
+)
 from ert.storage.match import MatchConfig, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
@@ -1139,23 +1142,7 @@ class LocalEnsemble(BaseMode):
                 else:
                     joined = strategy.match(observations, pivoted)
 
-                no_matched_response_condition = pl.col(str(real)).is_null()
-                no_matched_response_error = pl.concat_str(
-                    [
-                        pl.lit("no response matched observation data: "),
-                        pl.lit("response_key="),
-                        pl.col("response_key").cast(pl.String),
-                        pl.lit(", "),
-                        response_cls.match_key_dict_expr(),
-                    ],
-                    separator="",
-                )
-
-                joined = joined.with_columns(
-                    append_to_qc_error(
-                        no_matched_response_condition, no_matched_response_error
-                    ).alias(f"qc_error_{real}")
-                )
+                joined = _update_qc_error_on_mismatch(joined, response_cls, real)
 
                 # Avoid potential collision with "index" column (it could be a part
                 # of the index_key)
