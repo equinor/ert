@@ -34,6 +34,8 @@ hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
 
 if TYPE_CHECKING:
+    from ert.run_models.event import StatusEvents
+
     from .plugin_response import PluginMetadata, PluginResponse
 K = TypeVar("K")
 V = TypeVar("V")
@@ -189,6 +191,12 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_installable_workflow_jobs(self) -> dict[str, str]:
         return self._get_config_workflow_jobs()
+
+    def notify_status_event(self, event: StatusEvents) -> None:
+        try:
+            self.hook.on_status_event(event=event)
+        except Exception:
+            logger.exception("On status event plugin failed")
 
     @staticmethod
     def _merge_internal_jobs(
