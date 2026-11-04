@@ -31,12 +31,15 @@ from ert.config import (
 from ert.config._reservoir_data_utils import SeismicData
 from ert.config.field import Field, field_transform
 from ert.config.observation_quality_control import (
-    append_to_qc_error,
-    ensure_qc_error_column,
     qc_rft_observations,
     qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
+from ert.storage._match_for_update import (
+    _join_observations_and_responses,
+    _retrieve_common_columns,
+    _validate_selected_observations,
+)
 from ert.storage.match import MatchConfig, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
@@ -1031,14 +1034,7 @@ class LocalEnsemble(BaseMode):
                 or "123.5, 456.7, 2500.0, None" when zone is missing
         - Seismic "123.5, 456.7" (east, north)
         """
-        known_observations = self.experiment.observation_keys
-
-        unknown_observations = set(selected_observations) - set(known_observations)
-
-        if unknown_observations:
-            raise KeyError(
-                f"Observations: {', '.join(unknown_observations)} not in experiment"
-            )
+        _validate_selected_observations(self, selected_observations)
 
         observations_by_type = self.experiment.observations
 
@@ -1072,11 +1068,11 @@ class LocalEnsemble(BaseMode):
             reals = np.sort(iens_active_index).tolist()
 
             # Load and join one realization at a time to reduce peak memory usage
-            first_columns: pl.DataFrame | None = None
+            common_columns: pl.DataFrame | None = None
             realization_columns: list[pl.DataFrame] = []
 
             for real in reals:
-                observations = ensure_qc_error_column(observations_for_type)
+                observations = observations_for_type
                 if response_type == "rft":
                     observations = self.add_rft_metadata_and_qc(observations, real)
 
@@ -1132,79 +1128,21 @@ class LocalEnsemble(BaseMode):
                         .agg(pl.col(str(real)).mean())
                     )
 
-                if pivoted.is_empty():
-                    # There are no responses for this realization,
-                    # so we explicitly create a column of Nones
-                    # to represent this. We are basically saying that
-                    # for this realization, each observation points
-                    # to a None response.
-                    joined = observations.with_columns(
-                        pl.lit(None, dtype=pl.Float32).alias(str(real)),
-                    )
-                else:
-                    joined = strategy.match(observations, pivoted)
-
-                no_matched_response_condition = pl.col(str(real)).is_null()
-                no_matched_response_error = pl.concat_str(
-                    [
-                        pl.lit("no response matched observation data: "),
-                        pl.lit("response_key="),
-                        pl.col("response_key").cast(pl.String),
-                        pl.lit(", "),
-                        response_cls.match_key_dict_expr(),
-                    ],
-                    separator="",
+                joined = _join_observations_and_responses(
+                    strategy, observations, pivoted, real
                 )
 
-                joined = joined.with_columns(
-                    append_to_qc_error(
-                        no_matched_response_condition, no_matched_response_error
-                    ).alias(f"qc_error_{real}")
-                )
-
-                # Avoid potential collision with "index" column (it could be a part
-                # of the index_key)
-                joined = joined.with_columns(
-                    response_cls.index_column_expr().alias("__tmp_index_key__")
-                )
-                if "index" in joined.columns:
-                    joined = joined.drop("index")
-                joined = joined.rename({"__tmp_index_key__": "index"})
-
-                joined = joined.with_columns(
-                    pl.when(pl.col(f"qc_error_{real}").is_null())
-                    .then(pl.col(str(real)))
-                    .otherwise(pl.lit(None, dtype=pl.Float32))
-                    .alias(str(real))
-                )
-
-                if first_columns is None:
-                    # The "leftmost" index columns are not yet collected.
-                    # They are the same for all iterations, and indexed the same
-                    # because we do a left join for the observations.
-                    # Hence, we select these columns only once.
-                    first_columns = joined.select(
-                        [
-                            "response_key",
-                            "index",
-                            "observation_key",
-                            "observations",
-                            "std",
-                            "east",
-                            "north",
-                            "radius",
-                        ]
-                    )
-
+                if common_columns is None:
+                    common_columns = _retrieve_common_columns(joined)
                 realization_columns.append(joined.select(str(real), f"qc_error_{real}"))
 
-            if first_columns is None:
+            if common_columns is None:
                 # Not a single realization had any responses to the
                 # observations. Hence, there is no need to include
                 # it in the dataset
                 continue
 
-            if any(df.height != first_columns.height for df in realization_columns):
+            if any(df.height != common_columns.height for df in realization_columns):
                 raise ValueError(
                     "Realization columns for response type "
                     f"{response_type} have differing numbers of rows"
@@ -1212,7 +1150,7 @@ class LocalEnsemble(BaseMode):
 
             dfs_per_response_type.append(
                 pl.concat(
-                    [first_columns, *realization_columns],
+                    [common_columns, *realization_columns],
                     how="horizontal_extend",
                 )
             )
