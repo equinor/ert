@@ -80,6 +80,22 @@ by creation time to maintain consistent ordering.
 .. image:: images/v27/field_update_comparison.png
 
 
+Workflow output in the GUI
+##########################
+
+Output from workflow jobs is now shown in a new *Workflows* tab, so you no
+longer need to read the ERT log. While an experiment is running, the tab in
+the run dialog lists each job with its hook, workflow, status and time.
+Selecting a job shows its stdout and stderr. Use the *Iteration* dropdown to
+see the jobs for a given iteration.
+
+Output from hooked workflows is stored with the experiment. To see it after
+the run, select the experiment in *Manage experiments* and open its
+*Workflows* tab.
+
+.. image:: images/v27/workflows_tab.png
+
+
 Version 26.0
 ------------
 
