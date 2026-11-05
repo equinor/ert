@@ -10,8 +10,10 @@ used to generate design matrices, including one or several Sensitivities.
 
 from __future__ import annotations
 
+import getpass
 import hashlib
 import logging
+import os
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -385,6 +387,7 @@ class DesignMatrix:
         filename: str,
         designsheet: str = "DesignSheet01",
         defaultsheet: str = "DefaultValues",
+        input_filename: str | None = None,
     ) -> None:
         """Writing design matrix to an Excel workbook in standard FMU format
         to be used in FMU/ERT by DESIGN2PARAMS and DESIGN_KW
@@ -395,6 +398,8 @@ class DesignMatrix:
                 (optional, defaults to 'DesignSheet01')
             defaultsheet (str): name of excel sheet containing default
                 values (optional, defaults to 'DefaultValues')
+            input_filename (str): input workbook the design was generated from,
+                recorded in the metadata when running in komodo (optional)
         """
         normalized_filename = _normalize_xlsx_filename(filename)
         if normalized_filename != filename:
@@ -417,18 +422,23 @@ class DesignMatrix:
                 writer, sheet_name=defaultsheet, index=False, header=False
             )
 
-            version_info = pd.DataFrame(
-                {
-                    "Description": ["Created using ert version:", "Created on:"],
-                    "Value": [
-                        ert_version,
-                        datetime.now()
-                        .astimezone()
-                        .isoformat(sep=" ", timespec="seconds"),
-                    ],
-                }
-            )
-            version_info.to_excel(writer, sheet_name="Metadata", index=False)
+            metadata = {
+                "Created using ert version:": ert_version,
+                "Created on:": datetime.now()
+                .astimezone()
+                .isoformat(sep=" ", timespec="seconds"),
+            }
+            # Only identify the user and their paths on internal komodo installations
+            if komodo_release := os.environ.get("KOMODO_RELEASE"):
+                metadata["Created by:"] = getpass.getuser()
+                metadata["Created using komodo release:"] = komodo_release
+                if input_filename is not None:
+                    metadata["Created from input file:"] = str(
+                        Path(input_filename).resolve()
+                    )
+            pd.DataFrame(
+                data=list(metadata.items()), columns=["Description", "Value"]
+            ).to_excel(writer, sheet_name="Metadata", index=False)
 
         print(
             f"Design matrix of shape {self.designvalues.shape} written to: {filename!r}"

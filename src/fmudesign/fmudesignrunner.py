@@ -289,7 +289,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
         config=fmudesign_config, verbosity=args.verbose, output_dir=output_dir
     )
 
-    design.to_xlsx(args.destination)
+    design.to_xlsx(args.destination, input_filename=args.config)
 
 
 def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
