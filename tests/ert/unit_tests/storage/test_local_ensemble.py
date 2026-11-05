@@ -2,6 +2,7 @@ import io
 import json
 import logging
 from pathlib import Path
+from unittest.mock import Mock
 
 import numpy as np
 import polars as pl
@@ -560,6 +561,39 @@ def test_that_load_blob_raises_file_not_found_for_invalid_uri(
 
         with pytest.raises(FileNotFoundError):
             ensemble.load_blob(uri)
+
+
+@pytest.mark.parametrize(
+    "uri",
+    [
+        pytest.param("ABCDEF12.blob", id="uppercase-hex"),
+        pytest.param("Abcdef12.blob", id="mixed-hex"),
+        pytest.param("abcef1.blob", id="short-hex"),
+        pytest.param("abcdef12.blob.json", id="metadata-sidecar"),
+    ],
+)
+def test_that_load_blob_rejects_existing_files_with_invalid_uri_before_resolving_path(
+    tmp_path,
+    monkeypatch,
+    uri,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+        blob_dir = ensemble._path / "blobs"
+        blob_dir.mkdir()
+        (blob_dir / uri).write_bytes(b"existing blob")
+
+        resolve = Mock()
+        with monkeypatch.context() as patch:
+            patch.setattr(Path, "resolve", resolve)
+
+            with pytest.raises(FileNotFoundError):
+                ensemble.load_blob(uri)
+
+        resolve.assert_not_called()
 
 
 def test_that_sparse_and_dense_matrix_blobs_can_be_saved_and_loaded(tmp_path):
