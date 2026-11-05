@@ -52,15 +52,9 @@ click **Show parameters** to open the :ref:`parameter viewer <parameter_viewer>`
 Single update mode for ES-MDA, Ensemble Smoother deprecated
 ###########################################################
 
-ES-MDA now has a **Single update** option, which runs one update with weight 1.
-This gives the same result as the Ensemble Smoother, which is now deprecated
-and will be removed in a future release.
-
-In the GUI, select *Multiple data assimilation* and check **Single update**:
-
-.. image:: images/v27/single_update_mode.png
-
-From the command line, use the ``--single-update`` flag:
+ES-MDA now has a ``--single-update`` command line flag, which runs one update
+with weight 1. This gives the same result as the Ensemble Smoother, which is now
+deprecated and will be removed in a future release.
 
 .. code-block:: text
 
