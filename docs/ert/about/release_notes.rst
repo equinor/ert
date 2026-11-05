@@ -29,6 +29,26 @@ Highlighted changes
 Version 27.0
 ------------
 
+Parameter localization overview table
+#####################################
+
+The *Multiple data assimilation* and *Manual update* panels now contain a
+**Parameter Localizations** table summarizing how parameters will be updated.
+Each row shows an update strategy (e.g. "Global"), a parameter type
+(e.g. "GenKW" or "Field") and the number of parameters with that
+combination.
+
+Each GEN_KW parameter counts individually, while each FIELD
+and SURFACE counts as one, regardless of its number of grid cells or nodes.
+Parameters that are not updated are listed as "Non-updatable".
+Rows are sorted alphabetically.
+
+.. image:: images/v27/parameter_localization_table.png
+
+The table is meant as a quick overview; for details about each parameter,
+click **Show parameters** to open the :ref:`parameter viewer <parameter_viewer>`.
+
+
 Single update mode for ES-MDA, Ensemble Smoother deprecated
 ###########################################################
 

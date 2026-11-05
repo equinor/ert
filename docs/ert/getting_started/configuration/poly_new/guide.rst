@@ -282,6 +282,8 @@ The two required arguments for :ref:`GEN_KW <gen_kw>` are:
  1. **COEFFS**: The name assigned to the parameter set, serving as an identifier.
  2. **coeff_priors**: The name of the file containing the defined priors.
 
+.. _parameter_viewer:
+
 Once configured, a button "Parameters" will appear in the simulation panel
 Clicking this will open the "Parameter viewer" window, displaying the defined parameters:
 
