@@ -37,7 +37,7 @@ from ert.storage._match_for_update import (
     _retrieve_common_columns,
     _validate_selected_observations,
 )
-from ert.storage.match import MatchConfig, matching_strategy
+from ert.storage.match import MatchConfig, RFTMatchStrategy, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -981,11 +981,16 @@ class LocalEnsemble(BaseMode):
     ) -> None:
         filename = "rft_observation_location_metadata.parquet"
         output_path = self._realization_dir(realization) / filename
+        Path(output_path).parent.mkdir(exist_ok=True, parents=True)
         self._storage._to_parquet_transaction(output_path, dataset)
 
     def load_observation_location_metadata(self, realization: int) -> pl.DataFrame:
         filename = "rft_observation_location_metadata.parquet"
         ds_path = self._realization_dir(realization) / filename
+        if not ds_path.exists():
+            raise FileNotFoundError(
+                f"RFT location metadata not found for realization {realization}"
+            )
         return pl.read_parquet(ds_path)
 
     def add_rft_metadata_and_qc(
@@ -1119,13 +1124,6 @@ class LocalEnsemble(BaseMode):
             pl.int_range(pl.len()).over("well").alias("order"),
         )
 
-        pivot_index = [
-            "well",
-            "date",
-            "realization",
-            "well_connection_cell",
-        ]
-
         output_columns = [
             "order",
             "east",
@@ -1152,37 +1150,20 @@ class LocalEnsemble(BaseMode):
 
         result_frames: list[pl.DataFrame] = []
 
+        config = cast(RFTConfig, self.experiment.response_configuration["rft"])
+        match_keys = ["well", "date", "well_connection_cell"]
+
+        match_config = MatchConfig()
+        match_config.special_match_keys = match_keys
+        match_config.filter_out_unmatchable_responses = True
+        match_config.pivot_responses_on = "property"
+        strategy = RFTMatchStrategy(self, config, match_config)
+
+        pure_observations = strategy.prepare_observations(pure_observations)
+
         for real in sorted(realizations):
-            responses = self.load_responses("rft", (real,)).with_columns(
-                pl.col("property").str.to_lowercase(),
-            )
-            observation_metadata_in_realization = (
-                self.load_observation_location_metadata(real)
-            )
-            observations = RFTConfig.enrich_observations_with_metadata(
-                pure_observations,
-                observation_metadata_in_realization,
-            )
-            if cast(
-                RFTConfig, self.experiment.response_configuration["rft"]
-            ).approximate_missing_values:
-                responses = RFTConfig.approximate_missing_rft_responses(
-                    responses.lazy(), observations
-                ).collect()
-
-            join_keys = ["well", "date", "well_connection_cell"]
-            observed_values = {k: observations[k].unique() for k in join_keys}
-
-            for col, values in observed_values.items():
-                responses = responses.filter(
-                    pl.col(col).is_in(values.implode(), nulls_equal=True)
-                )
-
-            pivoted = responses.pivot(
-                on="property",
-                index=pivot_index,
-                values="values",
-            )
+            observations = strategy.enrich_observations_with_realization_metadata(pure_observations, real)
+            pivoted = strategy.extract_responses((real,), observations)
 
             for col in ["pressure", "sgas", "swat"]:
                 if col not in pivoted.columns:
@@ -1195,12 +1176,7 @@ class LocalEnsemble(BaseMode):
             )
 
             joined = (
-                observations.join(
-                    pivoted,
-                    how="left",
-                    on=join_keys,
-                    nulls_equal=True,
-                )
+                strategy.match(observations, pivoted)
                 .with_columns(
                     RFTConfig.is_zone_valid().alias("valid_zone"),
                     (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
