@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import stat
 import uuid
 from pathlib import Path
 
@@ -23,6 +25,7 @@ def _move_scalar_parquet_into_blobs(path: Path) -> None:
         blob_dir = ens_dir / "blobs"
         blob_dir.mkdir(parents=True, exist_ok=True)
 
+        source_mode = stat.S_IMODE(parquet_file.stat().st_mode)
         data = parquet_file.read_bytes()
         uri = f"{uuid.uuid4().hex[:8]}.blob"
         blob_data = {
@@ -33,7 +36,10 @@ def _move_scalar_parquet_into_blobs(path: Path) -> None:
             "blob_info": {"blob_type": "scalars"},
         }
 
-        (blob_dir / uri).write_bytes(data)
+        blob_file = blob_dir / uri
+        with blob_file.open("xb") as file:
+            os.fchmod(file.fileno(), source_mode)
+            file.write(data)
         metadata_file = blob_dir / f"{uri}.json"
         temporary_file = metadata_file.with_suffix(".tmp")
         temporary_file.write_text(json.dumps(blob_data, indent=2), encoding="utf-8")
