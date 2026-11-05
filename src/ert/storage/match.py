@@ -10,7 +10,11 @@ import polars as pl
 
 from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.gen_data_config import GenDataConfig
-from ert.config.observation_quality_control import qc_seismic_observations
+from ert.config.observation_quality_control import (
+    ensure_qc_error_column,
+    qc_rft_observations,
+    qc_seismic_observations,
+)
 from ert.config.response_config import ResponseConfig
 from ert.config.rft_config import RFTConfig
 from ert.config.seismic_config import SeismicConfig
@@ -114,6 +118,11 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
     def customize_observations(self, observations: pl.DataFrame) -> pl.DataFrame:
         return observations
 
+    def enrich_observations_with_realization_metadata(
+        self, observations: pl.DataFrame, realization: int
+    ) -> pl.DataFrame:
+        return observations
+
 
 class GenDataMatchStrategy(ReservoirDataMatchStrategy[GenDataConfig]):
     pass
@@ -145,7 +154,22 @@ class BreakthroughMatchStrategy(ReservoirDataMatchStrategy[BreakthroughConfig]):
 
 
 class RFTMatchStrategy(ReservoirDataMatchStrategy[RFTConfig]):
-    pass
+    @override
+    def enrich_observations_with_realization_metadata(
+        self, observations: pl.DataFrame, realization: int
+    ) -> pl.DataFrame:
+        observation_metadata_in_realization = (
+            self.ensemble.load_observation_location_metadata(realization)
+        )
+        observations = RFTConfig.enrich_observations_with_metadata(
+            observations, observation_metadata_in_realization
+        )
+
+        if self.match_config.qc_observations:
+            observations = ensure_qc_error_column(observations)
+            observations = qc_rft_observations(observations)
+
+        return observations
 
 
 class SeismicMatchStrategy(ReservoirDataMatchStrategy[SeismicConfig]):
