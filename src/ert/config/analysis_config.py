@@ -279,12 +279,14 @@ class AnalysisConfig:
         try:
             es_settings = ESSettings(**options["STD_ENKF"])
             outlier_settings: dict[str, Any] = {
-                "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
-                "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
+                "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA),
+                "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF),
             }
 
             obs_settings = ObservationSettings(
-                outlier_settings=OutlierSettings(**outlier_settings),
+                outlier_settings=OutlierSettings(
+                    **{k: v for k, v in outlier_settings.items() if v is not None}
+                ),
                 auto_scale_observations=auto_scale_observations,
             )
         except ValidationError as err:
