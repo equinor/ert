@@ -212,9 +212,9 @@ class SurfaceConfig(ParameterConfig):
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
         if self.file_format == "ascii":
-            surf.to_ascii_file(file_path)
+            file_path.write_text(surf.to_ascii_string())
         elif self.file_format == "binary":
-            surf.to_binary_file(file_path)
+            file_path.write_bytes(surf.to_binary_buffer())
         else:
             raise ValueError(f"Unsupported file format {self.file_format}")
 
