@@ -406,6 +406,14 @@ def test_that_the_date_magic_string_is_substituted_with_todays_date():
     assert ert_config.runpath_config.runpath_format_string == expected_run_path
 
 
+def test_that_user_defining_the_user_magic_string_overrides_the_predefined_value():
+    ert_config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nDEFINE <USER> someone_else\n"
+    )
+
+    assert ert_config.substitutions["<USER>"] == "someone_else"
+
+
 def test_that_subst_list_is_given_default_runpath_file():
     assert ErtConfig.from_file_contents("NUM_REALIZATIONS 1").substitutions[
         "<RUNPATH_FILE>"
