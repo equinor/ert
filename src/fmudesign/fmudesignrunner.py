@@ -296,11 +296,6 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     """Handles the 'init' subcommand."""
     EXAMPLES_DIR = files("fmudesign.examples")
 
-    # Verify that all examples in EXAMPLES_DIR exist on disk
-    for example in EXAMPLES:
-        if not (EXAMPLES_DIR / example.filename).is_file():
-            raise FmudesignError(f"Example file '{example.filename}' does not exist")
-
     # No files were provided
     if not args.file:
         parser.print_help()

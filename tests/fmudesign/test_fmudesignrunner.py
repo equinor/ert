@@ -15,7 +15,6 @@ from fmudesign import (
     fmudesignrunner,
 )
 from fmudesign.fmudesignrunner import (
-    Example,
     get_parser,
     subcommand_init,
     subcommand_run,
@@ -183,21 +182,6 @@ def test_that_subcommand_run_raises_when_config_is_equal_to_destination(use_tmpd
         match=rf'Identical name "{duplicate_name}".*input.*output file',
     ):
         subcommand_run(args, parser_run)
-
-
-def test_that_subcommand_init_raises_if_example_doesnt_exist(monkeypatch):
-    _, subparsers = get_parser()
-    parser_init = subparsers.choices["init"]
-    monkeypatch.setattr(
-        fmudesignrunner,
-        "EXAMPLES",
-        [Example("foo.xlsx", description="")],
-    )
-    config_file = "foo.xlsx"
-    with pytest.raises(
-        FmudesignError, match=f"Example file '{config_file}' does not exist"
-    ):
-        subcommand_init(Namespace(file="config.xlsx"), parser_init)
 
 
 def test_that_subcommand_init_raises_if_config_is_not_provided(capsys):
