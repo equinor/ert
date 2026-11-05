@@ -59,9 +59,9 @@ def test_get_experiment_status(change_to_tmpdir):
     assert status is None
 
     # Update the experiment status to running
-    experiment.status = ExperimentStatus(status=ExperimentState.running)
+    experiment.status = ExperimentStatus(state=ExperimentState.running)
     status = get_experiment_status(storage_dir)
-    assert status.status == ExperimentState.running
+    assert status.state == ExperimentState.running
 
 
 @pytest.mark.parametrize(

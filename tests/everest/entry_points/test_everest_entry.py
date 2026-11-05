@@ -169,7 +169,7 @@ def test_everest_entry_detached_already_run(
 @patch("everest.bin.monitor_script.run_server_monitor")
 @patch(
     "everest.bin.monitor_script.get_experiment_status",
-    return_value=ExperimentStatus(status=ExperimentState.completed, message=""),
+    return_value=ExperimentStatus(state=ExperimentState.completed, message=""),
 )
 @patch(
     "everest.bin.monitor_script.ErtClient",
@@ -285,7 +285,7 @@ def test_everest_entry_detached_running_monitor(
 @patch("everest.bin.monitor_script.run_server_monitor")
 @patch(
     "everest.bin.monitor_script.get_experiment_status",
-    return_value=ExperimentStatus(status=ExperimentState.completed),
+    return_value=ExperimentStatus(state=ExperimentState.completed),
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(

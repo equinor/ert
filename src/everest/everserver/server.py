@@ -159,7 +159,7 @@ def main() -> None:
                     active = [
                         ExperimentStatus(
                             **client.experiment_status(experiment_id)
-                        ).status
+                        ).state
                         in {ExperimentState.pending, ExperimentState.running}
                         for experiment_id in experiment_ids
                     ]
