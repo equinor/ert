@@ -57,6 +57,14 @@ class SummaryConfig(SimulationResponseConfig):
         df = df.explode("values", "time", empty_as_null=False)
         return df.sort(by=["time"])
 
+    @staticmethod
+    def response_schema() -> dict[str, Any]:
+        return {
+            "response_key": pl.String,
+            "time": pl.Datetime("ms"),
+            "values": pl.Float32,
+        }
+
     @property
     def match_key(self) -> list[str]:
         return ["time"]
