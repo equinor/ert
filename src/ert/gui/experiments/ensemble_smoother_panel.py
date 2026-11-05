@@ -5,15 +5,7 @@ from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import (
-    QApplication,
-    QFormLayout,
-    QHBoxLayout,
-    QLabel,
-    QStyle,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
 from ert.config import ParameterConfig
 from ert.config.parameter_config import has_updatable_parameters
@@ -24,7 +16,6 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
-from ert.run_models.ensemble_smoother import DEPRECATION_MESSAGE
 
 from ._panel_utils import (
     add_parameter_configuration_rows,
@@ -48,32 +39,6 @@ class Arguments:
     realizations: str
     experiment_name: str
     parameter_configuration: list[ParameterConfig]
-
-
-def _create_deprecation_banner() -> QWidget:
-    banner = QWidget()
-    layout = QHBoxLayout(banner)
-    layout.setContentsMargins(0, 0, 0, 0)
-
-    icon = QLabel()
-    style = QApplication.style()
-    if style is not None:
-        icon.setPixmap(
-            style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning).pixmap(
-                16, 16
-            )
-        )
-
-    warning = QLabel(
-        f"{DEPRECATION_MESSAGE} Select 'Multiple data assimilation' "
-        "and check 'Single update'."
-    )
-    warning.setWordWrap(True)
-    warning.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-    warning.setObjectName("ensemble_smoother_deprecation_warning")
-    layout.addWidget(icon, alignment=Qt.AlignmentFlag.AlignTop)
-    layout.addWidget(warning, stretch=1)
-    return banner
 
 
 class EnsembleSmootherPanel(ExperimentConfigPanel):
@@ -154,11 +119,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )
-        panel_layout = QVBoxLayout()
-        panel_layout.addWidget(_create_deprecation_banner())
-        panel_layout.addLayout(layout)
-        panel_layout.addStretch()
-        self.setLayout(panel_layout)
+        self.setLayout(layout)
         self._connect_signals()
 
     def _connect_signals(self) -> None:

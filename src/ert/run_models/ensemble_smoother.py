@@ -92,10 +92,6 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
         return "Ensemble smoother"
 
     @classmethod
-    def display_name(cls) -> str:
-        return cls.name() + " - DEPRECATED"
-
-    @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → update → evaluate"
 
