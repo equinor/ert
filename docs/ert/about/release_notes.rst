@@ -60,6 +60,20 @@ deprecated and will be removed in a future release.
 
     ert es_mda --single-update config.ert
 
+
+Field update comparison plot
+############################
+
+This adds possibility to compare prior and posterior field parameters to
+show the strength of the update by computing the difference of the mean
+across realizations.
+
+The plot requires to select two ensembles and it sorts them
+by creation time to maintain consistent ordering.
+
+.. image:: images/v27/field_update_comparison.png
+
+
 Version 26.0
 ------------
 
