@@ -1066,9 +1066,9 @@ class LocalEnsemble(BaseMode):
             realization_columns: list[pl.DataFrame] = []
 
             for real in reals:
-                observations = observations_for_type
-                if response_type == "rft":
-                    observations = self.add_rft_metadata_and_qc(observations, real)
+                observations = strategy.enrich_observations_with_realization_metadata(
+                    observations_for_type, real
+                )
 
                 observed_cols = {
                     k: observations[k].unique()
