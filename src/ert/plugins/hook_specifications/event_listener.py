@@ -11,4 +11,13 @@ if TYPE_CHECKING:
 @no_type_check
 @hook_specification
 def on_status_event(event: StatusEvents) -> None:
-    """Called on every status event emit"""
+    """Called for every status event emitted by a running experiment.
+
+    Implementations are called synchronously by the experiment, so they must
+    return quickly. Events may be emitted concurrently from multiple threads,
+    so implementations must be thread-safe. If a plugin raises an exception,
+    the error is logged and the experiment continues, but any remaining
+    plugins will not receive that event.
+
+    :param event: The emitted status event.
+    """
