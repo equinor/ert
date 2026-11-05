@@ -59,6 +59,7 @@
     "<DATE>": "2000-01-01",
     "<CWD>": "test-data/ert/poly_example.poly.ert",
     "<CONFIG_FILE>": "poly.ert",
+    "<USER>": "user",
     "<RUNPATH_FILE>": "test-data/ert/poly_example.poly.ert/.ert_runpath_list",
     "<RUNPATH>": "test-data/ert/poly_example.poly.ert/poly_out/realization-<IENS>/iter-<ITER>",
     "<ECL_BASE>": "ECLBASE<IENS>",
