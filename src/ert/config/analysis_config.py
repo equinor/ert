@@ -14,7 +14,7 @@ from pydantic.dataclasses import dataclass
 from ert.config.parameter_config import LocalizationType, ParameterType
 
 from .analysis_module import ESSettings
-from .design_matrix import DesignMatrix
+from .design_matrix import DesignMatrix, DesignMatrixConfig
 from .parsing import (
     ConfigDict,
     ConfigKeys,
@@ -92,8 +92,6 @@ class AnalysisConfig:
             )
 
         min_realization = min(min_realization, num_realization)
-
-        design_matrix_config_lists = config_dict.get(ConfigKeys.DESIGN_MATRIX, [])
 
         options: dict[str, dict[str, Any]] = {"STD_ENKF": {}}
 
@@ -300,25 +298,27 @@ class AnalysisConfig:
         if es_mda_weights is not None and es_settings is not None:
             es_settings.weights = es_mda_weights
 
+        design_matrix_configs: list[DesignMatrixConfig] = []
+        for design_matrix_config_list in config_dict.get(ConfigKeys.DESIGN_MATRIX, []):
+            dm_config = DesignMatrixConfig.from_config_list(design_matrix_config_list)
+            if dm_config in design_matrix_configs:
+                logger.warning(
+                    f"Duplicate DESIGN_MATRIX entries {dm_config}, only reading once."
+                )
+            else:
+                design_matrix_configs.append(dm_config)
         design_matrices = [
-            DesignMatrix.from_config_list(
-                design_matrix_config_list,
-                parameter_type_update_strategies.get(ParameterType.GEN_KW),
+            DesignMatrix.from_config(
+                dm_config, parameter_type_update_strategies.get(ParameterType.GEN_KW)
             )
-            for design_matrix_config_list in design_matrix_config_lists
+            for dm_config in design_matrix_configs
         ]
         design_matrix: DesignMatrix | None = None
 
         if design_matrices:
             design_matrix = design_matrices[0]
             for dm_other in design_matrices[1:]:
-                if design_matrix != dm_other:
-                    design_matrix.merge_with_other(dm_other)
-                else:
-                    logger.warning(
-                        f"Duplicate DESIGN_MATRIX entries {dm_other}, "
-                        "only reading once."
-                    )
+                design_matrix.merge_with_other(dm_other)
             logger.info("Running ERT with DESIGN_MATRIX")
         return cls(
             minimum_required_realizations=min_realization,

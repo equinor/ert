@@ -9,6 +9,7 @@ from pandas import DataFrame, ExcelWriter
 
 from ert.config import (
     DesignMatrix,
+    DesignMatrixConfig,
     ErtConfig,
     GenKwConfig,
 )
@@ -183,7 +184,9 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
         DataFrame().to_excel(
             xl_write, index=False, sheet_name="DefaultSheet", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(design_path, "DesignSheet", "DefaultSheet")
+    )
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
             experiment_config={
