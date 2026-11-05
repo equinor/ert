@@ -1052,23 +1052,19 @@ class LocalEnsemble(BaseMode):
                 )
                 responses = strategy._extract_lazy_responses((real,), observations)
 
-                pivoted = responses.collect(engine="streaming").pivot(
+                responses = responses.collect(engine="streaming")
+                if response_type == "seismic":
+                    responses = (
+                        SeismicData.use_observation_locations_in_respective_responses(
+                            responses, observations
+                        )
+                    )
+                pivoted = responses.pivot(
                     on="realization",
                     index=["response_key", *response_cls.match_key],
                     values="values",
                     aggregate_function="mean",
                 )
-                if response_type == "seismic":
-                    pivoted = (
-                        SeismicData.use_observation_locations_in_respective_responses(
-                            pivoted, observations
-                        )
-                        # Due to performed validations, all match keys should be unique.
-                        # Calculating 'mean' anyway to assure no ugly error is raised if
-                        # validations are somehow bypassed
-                        .group_by(["response_key", "east", "north"])
-                        .agg(pl.col(str(real)).mean())
-                    )
 
                 joined = _join_observations_and_responses(
                     strategy, observations, pivoted, real
