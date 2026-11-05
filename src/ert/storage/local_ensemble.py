@@ -28,9 +28,6 @@ from ert.config import (
     SummaryConfig,
 )
 from ert.config.field import Field, field_transform
-from ert.config.observation_quality_control import (
-    qc_rft_observations,
-)
 from ert.config.rft_config import RFTConfig
 from ert.storage._match_for_update import (
     _join_observations_and_responses,
@@ -993,18 +990,6 @@ class LocalEnsemble(BaseMode):
             )
         return pl.read_parquet(ds_path)
 
-    def add_rft_metadata_and_qc(
-        self, observations: pl.DataFrame, realization: int
-    ) -> pl.DataFrame:
-        observation_metadata_in_realization = self.load_observation_location_metadata(
-            realization
-        )
-        enriched_observations = RFTConfig.enrich_observations_with_metadata(
-            observations, observation_metadata_in_realization
-        )
-
-        return qc_rft_observations(enriched_observations)
-
     def get_observations_and_responses(
         self,
         selected_observations: Iterable[str],
@@ -1162,7 +1147,9 @@ class LocalEnsemble(BaseMode):
         pure_observations = strategy.prepare_observations(pure_observations)
 
         for real in sorted(realizations):
-            observations = strategy.enrich_observations_with_realization_metadata(pure_observations, real)
+            observations = strategy.enrich_observations_with_realization_metadata(
+                pure_observations, real
+            )
             pivoted = strategy.extract_responses((real,), observations)
 
             for col in ["pressure", "sgas", "swat"]:

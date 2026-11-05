@@ -32,7 +32,6 @@ from ert.storage import (
     open_storage,
 )
 from ert.storage.local_ensemble import (
-    LocalEnsemble,
     _write_observation_metadata,
 )
 from tests.ert import rft_qc_example
@@ -530,16 +529,13 @@ def _mock_rft_ensemble(
             else stored_location_metadata
         )
 
-    ensemble.add_rft_metadata_and_qc = partial(
-        LocalEnsemble.add_rft_metadata_and_qc, ensemble
-    )
     if isinstance(stored_responses, BaseException):
-        ensemble.load_responses.side_effect = stored_responses
+        ensemble._load_responses_lazy.side_effect = stored_responses
     else:
-        ensemble.load_responses.return_value = (
-            pl.DataFrame(schema=RFTConfig.response_schema())
+        ensemble._load_responses_lazy.return_value = (
+            pl.LazyFrame(schema=RFTConfig.response_schema())
             if stored_responses is None
-            else stored_responses
+            else stored_responses.lazy()
         )
     return ensemble
 
