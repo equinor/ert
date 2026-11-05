@@ -34,6 +34,10 @@ from ert.gui.ertwidgets.suggestor.suggestor import Suggestor
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments._design_matrix_panel import DesignMatrixPanel
 from ert.gui.experiments.ensemble_experiment_panel import EnsembleExperimentPanel
+from ert.gui.experiments.ensemble_smoother_panel import (
+    EnsembleSmoother,
+    EnsembleSmootherPanel,
+)
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
@@ -977,6 +981,8 @@ def test_forward_model_overview_label_selected_on_tab_change(
     [
         (EnsembleExperiment, EnsembleExperimentPanel, 5),
         (EnsembleExperiment, EnsembleExperimentPanel, 15),
+        (EnsembleSmoother, EnsembleSmootherPanel, 5),
+        (EnsembleSmoother, EnsembleSmootherPanel, 15),
         (MultipleDataAssimilation, MultipleDataAssimilationPanel, 5),
         (MultipleDataAssimilation, MultipleDataAssimilationPanel, 15),
     ],
