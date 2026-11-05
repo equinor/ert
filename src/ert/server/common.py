@@ -37,6 +37,14 @@ class EverEndpoints(StrEnum):
     RUNPATH = auto()
 
 
+class ErtRunnerEndpoints(StrEnum):
+    REGISTER = auto()
+    START_EXPERIMENT_ERT = auto()
+    RUNPATH = auto()
+    RUNMODEL = auto()
+    FAILED_REALIZATIONS = auto()
+
+
 def get_storage() -> Storage:
     global _storage
     if _storage is None:
