@@ -93,8 +93,6 @@ class AnalysisConfig:
 
         min_realization = min(min_realization, num_realization)
 
-        design_matrix_config_lists = config_dict.get(ConfigKeys.DESIGN_MATRIX, [])
-
         options: dict[str, dict[str, Any]] = {"STD_ENKF": {}}
 
         auto_scale_observations: list[ObservationGroups] = []
@@ -301,7 +299,7 @@ class AnalysisConfig:
             es_settings.weights = es_mda_weights
 
         design_matrix_configs: list[DesignMatrixConfig] = []
-        for design_matrix_config_list in design_matrix_config_lists:
+        for design_matrix_config_list in config_dict.get(ConfigKeys.DESIGN_MATRIX, []):
             dm_config = DesignMatrixConfig.from_config_list(design_matrix_config_list)
             if dm_config in design_matrix_configs:
                 logger.warning(
