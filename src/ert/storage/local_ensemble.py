@@ -32,7 +32,6 @@ from ert.config._reservoir_data_utils import SeismicData
 from ert.config.field import Field, field_transform
 from ert.config.observation_quality_control import (
     qc_rft_observations,
-    qc_seismic_observations,
 )
 from ert.config.rft_config import RFTConfig
 from ert.storage._match_for_update import (
@@ -1037,7 +1036,9 @@ class LocalEnsemble(BaseMode):
         """
         _validate_selected_observations(self, selected_observations)
 
-        observations_by_type = self.experiment.observations
+        observations_dict = self.experiment.observations
+        response_config_dict = self.experiment.response_configuration
+        reals = np.sort(iens_active_index).tolist()
 
         ensemble_end_date = (
             self._compute_ensemble_end_date()
@@ -1046,27 +1047,19 @@ class LocalEnsemble(BaseMode):
         )
 
         dfs_per_response_type = []
-        for (
-            response_type,
-            response_cls,
-        ) in self.experiment.response_configuration.items():
-            if response_type not in observations_by_type:
+        for response_type, response_cls in response_config_dict.items():
+            if response_type not in observations_dict:
                 continue
 
             match_config = MatchConfig()
+            match_config.convert_response_key_to_categorical = True
+            match_config.obs_keys_to_filter_observations_on = selected_observations
+            match_config.qc_observations = True
             strategy = matching_strategy(self, response_cls, match_config=match_config)
 
-            observations_for_type = (
-                observations_by_type[response_type]
-                .filter(pl.col("observation_key").is_in(list(selected_observations)))
-                .with_columns([pl.col("response_key").cast(pl.Categorical)])
+            observations_for_type = strategy.prepare_observations(
+                observations_dict[response_type]
             )
-            if response_type == "seismic":
-                observations_for_type = qc_seismic_observations(
-                    observations_for_type, self.experiment.shape_registry
-                )
-
-            reals = np.sort(iens_active_index).tolist()
 
             # Load and join one realization at a time to reduce peak memory usage
             common_columns: pl.DataFrame | None = None

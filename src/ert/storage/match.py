@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, override
 
@@ -9,6 +10,7 @@ import polars as pl
 
 from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.gen_data_config import GenDataConfig
+from ert.config.observation_quality_control import qc_seismic_observations
 from ert.config.response_config import ResponseConfig
 from ert.config.rft_config import RFTConfig
 from ert.config.seismic_config import SeismicConfig
@@ -56,6 +58,9 @@ class MatchConfig:
     )
 
     special_match_keys: list[str] | None = None
+    convert_response_key_to_categorical: bool = False
+    obs_keys_to_filter_observations_on: Iterable[str] | None = None
+    qc_observations: bool = False
 
 
 class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
@@ -78,6 +83,22 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
         else:
             self.match_keys = ["response_key", *response_cls.match_key]
 
+    def prepare_observations(self, observations: pl.DataFrame) -> pl.DataFrame:
+        observations = self.customize_observations(observations)
+
+        if self.match_config.obs_keys_to_filter_observations_on is not None:
+            selected_observations = self.match_config.obs_keys_to_filter_observations_on
+            observations = observations.filter(
+                pl.col("observation_key").is_in(list(selected_observations))
+            )
+
+        if self.match_config.convert_response_key_to_categorical:
+            observations = observations.with_columns(
+                [pl.col("response_key").cast(pl.Categorical)]
+            )
+
+        return observations
+
     def match(
         self,
         observations: pl.DataFrame,
@@ -89,6 +110,9 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
             on=self.match_keys,
             nulls_equal=True,
         )
+
+    def customize_observations(self, observations: pl.DataFrame) -> pl.DataFrame:
+        return observations
 
 
 class GenDataMatchStrategy(ReservoirDataMatchStrategy[GenDataConfig]):
@@ -125,7 +149,13 @@ class RFTMatchStrategy(ReservoirDataMatchStrategy[RFTConfig]):
 
 
 class SeismicMatchStrategy(ReservoirDataMatchStrategy[SeismicConfig]):
-    pass
+    @override
+    def customize_observations(self, observations: pl.DataFrame) -> pl.DataFrame:
+        if self.match_config.qc_observations:
+            observations = qc_seismic_observations(
+                observations, self.ensemble.experiment.shape_registry
+            )
+        return observations
 
 
 MatchStrategyType = (
