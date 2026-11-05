@@ -36,6 +36,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.combobox_with_description import GROUP_TITLE_ROLE
+from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmoother
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
 from ert.gui.plotting.plot_window import (
@@ -68,7 +69,7 @@ from .conftest import (
     wait_for_child,
 )
 
-NUMBER_OF_PANELS = 8
+NUMBER_OF_PANELS = 9
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
@@ -776,6 +777,7 @@ def test_that_the_help_menu_contains_the_about_dialog(qtbot):
     ("exp_type", "panel_name"),
     [
         (EnsembleExperiment, "Ensemble_experiment_panel"),
+        (EnsembleSmoother, "ensemble_smoother_panel"),
         (EnsembleInformationFilter, "enif_panel"),
         (MultipleDataAssimilation, "ES_MDA_panel"),
     ],
