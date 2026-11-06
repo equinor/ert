@@ -1469,7 +1469,7 @@ class RftQcWidget(QWidget):
                 ).collect()
             )
             approximated = responses_including_approximations.join(
-                responses, on=responses.columns, how="anti"
+                responses, on=responses.columns, how="anti", nulls_equal=True
             )
             responses = pl.concat(
                 [
