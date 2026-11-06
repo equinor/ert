@@ -125,6 +125,44 @@ def test_field_grid_mask_correspondence_all_false(monkeypatch, tmp_path):
     assert graph.number_of_edges() == _n_lattice_edges(nx, ny, nz)
 
 
+@pytest.mark.parametrize(
+    "shape", [(2, 3, 4), (3, 4, 5), (6, 5, 4), (1, 5, 5), (10, 10, 1)]
+)
+def test_that_field_parameter_graph_edges_join_neighbouring_cells(shape):
+    nx, ny, nz = shape
+    field_config = Field(
+        name="some_name",
+        forward_init=True,
+        update_strategy="global",
+        ertbox_params=ErtboxParameters(nx, ny, nz),
+        file_format=FieldFileFormat.ROFF,
+        output_transformation=None,
+        input_transformation=None,
+        truncation_min=None,
+        truncation_max=None,
+        forward_init_file="no_nees",
+        output_file="no_nees",
+        grid_file="no_nees",
+    )
+
+    graph = field_config.load_parameter_graph()
+
+    # Node k is row k of the flattened (x, y, z) parameter array
+    assert set(graph.nodes()) == set(range(nx * ny * nz))
+    assert graph.number_of_edges() == _n_lattice_edges(nx, ny, nz)
+    for node_a, node_b in graph.edges():
+        cell_a = np.unravel_index(node_a, shape)
+        cell_b = np.unravel_index(node_b, shape)
+        manhattan_distance = sum(
+            abs(int(coord_a) - int(coord_b))
+            for coord_a, coord_b in zip(cell_a, cell_b, strict=True)
+        )
+        assert manhattan_distance == 1, (
+            f"Nodes {node_a} and {node_b} are connected, but cells "
+            f"{cell_a} and {cell_b} are not neighbours."
+        )
+
+
 @pytest.fixture
 def grid_shape():
     return Shape(2, 3, 4)
