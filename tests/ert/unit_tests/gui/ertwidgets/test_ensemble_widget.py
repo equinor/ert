@@ -530,8 +530,8 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     [
         pytest.param(0, 0, 2),
         pytest.param(5000, 5000, 0),
-        pytest.param(50, 5000, 1, marks=pytest.mark.xfail(strict=True)),
-        pytest.param(50, 5, 2, marks=pytest.mark.xfail(strict=True)),
+        pytest.param(50, 5000, 1),
+        pytest.param(50, 5, 2),
     ],
 )
 def test_that_summary_observations_use_tolerance_on_response_match(
