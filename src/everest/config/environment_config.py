@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
@@ -58,14 +58,16 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
         check_path_valid(output_folder)
         return output_folder
 
-    @model_validator(mode="after")
-    def warn_about_deprecated_log_level(self) -> Self:
-        if self.log_level is not None:
+    @model_validator(mode="before")
+    def warn_about_deprecated_log_level_before(
+        cls, values: dict[str, Any]
+    ) -> dict[str, Any]:
+        if "log_level" in values and values["log_level"] is not None:
             ConfigWarning.deprecation_warn(
                 "`environment: log_level` is deprecated and ignored. "
                 "The log level is no longer configurable."
             )
-        return self
+        return values
 
     @model_validator(mode="after")
     def validate_random_seed(self) -> Self:
