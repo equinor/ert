@@ -33,6 +33,7 @@ from .realization_storage_state import RealizationStorageState
 logger = logging.getLogger(__name__)
 
 
+_BLOB_URI_PATTERN = re.compile(r"^[0-9a-f]{8}\.blob$")
 _LOCAL_STORAGE_VERSION = 42
 
 
@@ -813,6 +814,9 @@ class LocalStorage(BaseMode):
 
     def load_blob(self, blob_dir: Path, uri: str) -> bytes:
         """Return raw bytes for the blob identified by *uri* inside *blob_dir*."""
+        if not _BLOB_URI_PATTERN.fullmatch(uri):
+            logger.warning("Invalid blob URI: %s", uri)
+            raise ValueError(f"Invalid blob URI: {uri}")
         resolved_dir = blob_dir.resolve()
         blob_path = (resolved_dir / uri).resolve()
         try:
