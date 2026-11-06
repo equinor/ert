@@ -325,7 +325,6 @@ def start_monitor(
     client: ErtClient,
     callback: Callable[[dict[str, Any]], None],
     experiment_id: str,
-    polling_interval: float = 0.1,
 ) -> None:
     """
     Checks status on EVEREST server and calls callback when status changes
@@ -336,7 +335,7 @@ def start_monitor(
         EverestBatchResultEvent,
     )
 
-    for event in client.iter_events(experiment_id, refresh_interval=polling_interval):
+    for event in client.iter_events(experiment_id):
         if isinstance(event, EverestBatchResultEvent):
             callback({OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(event)})
         else:
