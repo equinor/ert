@@ -399,4 +399,4 @@ def test_that_failing_status_event_plugin_does_not_block_other_plugins(caplog):
     pm.notify_status_event(event)
 
     assert events_received == [event]
-    assert "On status event plugin 'FailingPlugin' failed" in caplog.text
+    assert "Plugin 'failing_status_listener' failed in on_status_event" in caplog.text
