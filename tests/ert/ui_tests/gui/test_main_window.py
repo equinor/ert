@@ -3,6 +3,7 @@ import logging
 import shutil
 import stat
 from pathlib import Path
+from queue import SimpleQueue
 from textwrap import dedent
 from unittest.mock import MagicMock, Mock, patch
 
@@ -922,8 +923,6 @@ def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
         assert latest_run_title not in titles
         titles.append(latest_run_title)
         runs[latest_run_title] = latest_run_dialog
-        # Titles have second resolution; ensure the next run gets a distinct one
-        qtbot.wait(1100)
 
     def retrieve_existing_menu_actions(expected_actions_number):
         simulation_status_menu = gui.findChild(
@@ -969,6 +968,35 @@ def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
     retrieve_existing_menu_actions(3)
     verify_only_latest_run_is_marked_bold_and_dialog_visible_on_new_experiment()
     verify_clicking_on_action_changes_bold_action_and_visible_dialog()
+
+
+def test_that_run_dialogs_added_within_the_same_second_get_distinct_names(
+    opened_main_window_poly, qtbot
+):
+    gui = opened_main_window_poly
+
+    def make_run_dialog():
+        api = MagicMock()
+        api.experiment_name = "Ensemble experiment"
+        dialog = RunDialog("Test", api, SimpleQueue(), MagicMock())
+        qtbot.addWidget(dialog)
+        return dialog
+
+    first, second = make_run_dialog(), make_run_dialog()
+    second.set_experiment_name(first.property("experiment_name"))
+
+    gui.slot_add_widget(first)
+    gui.slot_add_widget(second)
+
+    first_name = first.property("experiment_name")
+    second_name = second.property("experiment_name")
+    assert second_name == f"{first_name} (2)"
+    assert second._experiment_name_label.text() == second_name
+    assert gui.central_panels_map[first_name] is first
+    assert gui.central_panels_map[second_name] is second
+
+    menu = gui.findChild(SidebarToolButton, "button_Experiment_status").menu()
+    assert [action.text() for action in menu.actions()] == [second_name, first_name]
 
 
 def test_warnings_from_forward_model_are_propagated_to_ert_main_window_post_simulation(

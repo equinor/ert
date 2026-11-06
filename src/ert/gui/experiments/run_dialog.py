@@ -259,9 +259,8 @@ class RunDialog(QFrame):
         experiment_id = experiment_type + " : " + date_time
 
         self._experiment_name_label = QLabel(self)
-        self._experiment_name_label.setText(experiment_id)
         self._experiment_name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setProperty("experiment_name", experiment_id)
+        self.set_experiment_name(experiment_id)
 
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
@@ -463,6 +462,10 @@ class RunDialog(QFrame):
             if exec_hosts and exec_hosts != "-":
                 text += f", assigned to host: {exec_hosts}"
             self._fm_step_label.setText(text)
+
+    def set_experiment_name(self, experiment_name: str) -> None:
+        self._experiment_name_label.setText(experiment_name)
+        self.setProperty("experiment_name", experiment_name)
 
     def setup_event_monitoring(
         self, *, rerun_failed_realizations: bool = False
