@@ -277,23 +277,30 @@ class EnsembleEvaluator:
         set_event_handler({EnsembleCancelled}, self._cancelled_handler)
         set_event_handler({EnsembleFailed}, self._failed_handler)
 
+        terminal_event_types = (EnsembleSucceeded, EnsembleFailed, EnsembleCancelled)
+        loop = asyncio.get_running_loop()
+
+        # The batch is considered complete whenever no events are being
+        # accumulated, including while idly waiting for the next event
+        self._complete_batch.set()
         while True:
+            event = await self._events.get()
+            self._complete_batch.clear()
             batch: list[tuple[EVENT_HANDLER, SnapshotInputEvent]] = []
-            start_time = asyncio.get_running_loop().time()
-            while (
-                len(batch) < self._max_batch_size
-                and asyncio.get_running_loop().time() - start_time
-                < self._batching_interval
-            ):
-                self._complete_batch.clear()
+            deadline = loop.time() + self._batching_interval
+            while True:
+                batch.append((event_handler[type(event)], event))
+                self._events.task_done()
+                if len(batch) >= self._max_batch_size or isinstance(
+                    event, terminal_event_types
+                ):
+                    break
                 try:
-                    event = self._events.get_nowait()
-                    function = event_handler[type(event)]
-                    batch.append((function, event))
-                    self._events.task_done()
-                except asyncio.QueueEmpty:
-                    await asyncio.sleep(self.DEFAULT_SLEEP_PERIOD)
-                    continue
+                    event = await asyncio.wait_for(
+                        self._events.get(), timeout=deadline - loop.time()
+                    )
+                except TimeoutError:
+                    break
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
             if self._events.qsize() > 2 * self._max_batch_size:

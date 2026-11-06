@@ -314,17 +314,19 @@ def run_experiment_fixture(request):
         # Click start simulation and agree to the message
         run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
+        runpath_dialog_timer = QTimer(gui)
+        runpath_dialog_timer.setSingleShot(True)
+        runpath_dialog_timer.timeout.connect(
+            lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False)
+        )
         if experiment_mode.name() not in {
             "Ensemble experiment",
             "Evaluate ensemble",
         }:
-            runpath_dialog_timer = QTimer(gui)
-            runpath_dialog_timer.setSingleShot(True)
-            runpath_dialog_timer.timeout.connect(
-                lambda: handle_runpath_dialog(gui, qtbot, delete_runpath=False)
-            )
             runpath_dialog_timer.start(1000)
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+        runpath_dialog_timer.stop()
+        runpath_dialog_timer.deleteLater()
 
         if wait_done or check_realizations:
             qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
