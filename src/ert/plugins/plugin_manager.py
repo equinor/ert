@@ -193,13 +193,7 @@ class ErtPluginManager(pluggy.PluginManager):
         return self._get_config_workflow_jobs()
 
     def notify_status_event(self, event: StatusEvents) -> None:
-        for hook_impl in self.hook.on_status_event.get_hookimpls():
-            try:
-                hook_impl.function(event=event)
-            except Exception:
-                logger.exception(
-                    f"On status event plugin '{hook_impl.plugin_name}' failed"
-                )
+        self.hook.on_status_event(event=event)
 
     @staticmethod
     def _merge_internal_jobs(

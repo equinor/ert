@@ -380,18 +380,6 @@ def test_that_on_status_event_hook_receives_notified_events():
     assert events_received == [event]
 
 
-def test_that_failing_status_event_plugin_does_not_raise(caplog):
-    class FailingPlugin:
-        @plugin(name="failing_status_listener")
-        def on_status_event(event):
-            raise RuntimeError("kaboom")
-
-    pm = ErtPluginManager(plugins=[FailingPlugin])
-    pm.notify_status_event(FinishedTotalRunPathCreationEvent())
-
-    assert "On status event plugin 'FailingPlugin' failed" in caplog.text
-
-
 def test_that_failing_status_event_plugin_does_not_block_other_plugins(caplog):
     events_received = []
 
