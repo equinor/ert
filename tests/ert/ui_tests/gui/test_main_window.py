@@ -919,10 +919,11 @@ def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
         assert len(run_dialogs) == expected_dialogs_number
         latest_run_dialog = run_dialogs[-1]
         latest_run_title = latest_run_dialog._experiment_name_label.text()
-        # all titles should be different because run_experiment fixture takes >1s
         assert latest_run_title not in titles
         titles.append(latest_run_title)
         runs[latest_run_title] = latest_run_dialog
+        # Titles have second resolution; ensure the next run gets a distinct one
+        qtbot.wait(1100)
 
     def retrieve_existing_menu_actions(expected_actions_number):
         simulation_status_menu = gui.findChild(
