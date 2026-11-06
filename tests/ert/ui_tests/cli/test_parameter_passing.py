@@ -45,6 +45,10 @@ names = st.text(
         max_codepoint=ord("~"),
         exclude_characters="\"'$,:%",  # These have specific meaning in configs
     ),
+).filter(
+    # Names consisting only of dots (".", "..", ...) give file names such as
+    # "..ext" which have no extension according to Path.suffix
+    lambda name: bool(Path(f"{name}.ext").suffix)
 )
 
 config_contents = """
