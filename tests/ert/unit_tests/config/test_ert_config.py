@@ -20,6 +20,7 @@ from ert import ErtScript, ErtScriptWorkflow
 from ert.config import (
     CircleShapeConfig,
     ConfigValidationError,
+    EcosystemPlugin,
     ErtConfig,
     ESSettings,
     HookRuntime,
@@ -3412,3 +3413,117 @@ def test_that_workflow_without_explicit_name_is_named_after_its_file():
     ert_config = ErtConfig.from_file("test.ert")
 
     assert ert_config.workflows["wf_file"].name == "wf_file"
+
+
+class _StepAppendingEcosystem(EcosystemPlugin):
+    name: str = "APPENDER"
+
+    def configure(self, config_dict, step="COPY_FILE"):
+        if step.upper() not in {"COPY_FILE", "MAKE_DIRECTORY"}:
+            raise ConfigValidationError.with_context(f"Unknown step {step}", step)
+        config_dict.setdefault("FORWARD_MODEL", []).append(
+            [step.upper(), [["<FROM>", "a"], ["<TO>", "b"]]]
+        )
+
+
+def test_that_ecosystem_keyword_lets_the_plugin_modify_the_config_dict():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    ert_config = ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL MAKE_DIRECTORY(<DIRECTORY>=d)
+            ECOSYSTEM APPENDER
+            """
+        )
+    )
+
+    assert ert_config.forward_model_step_name_list() == [
+        "MAKE_DIRECTORY",
+        "COPY_FILE",
+    ]
+    assert ert_config.forward_model_steps[1].private_args == {
+        "<FROM>": "a",
+        "<TO>": "b",
+    }
+    assert ert_config.ecosystem == "APPENDER"
+
+
+def test_that_unknown_ecosystem_name_gives_error_listing_installed_plugins():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Line 3.*Could not find ecosystem plugin 'NOPE'.*\['APPENDER'\]",
+    ):
+        ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS 1
+                ECOSYSTEM NOPE
+                """
+            )
+        )
+
+
+def test_that_ecosystem_options_are_passed_to_configure_as_lowercase_kwargs():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    ert_config = ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+        "NUM_REALIZATIONS 1\nECOSYSTEM APPENDER STEP:make_directory\n"
+    )
+    assert ert_config.forward_model_step_name_list() == ["MAKE_DIRECTORY"]
+    assert ert_config.ecosystem == "APPENDER"
+
+
+def test_that_ecosystem_plugins_accepting_var_keyword_get_all_options():
+    received = {}
+
+    class KwargsEcosystem(EcosystemPlugin):
+        name: str = "KWARGS"
+
+        def configure(self, config_dict, **options):
+            received.update(options)
+
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"KWARGS": KwargsEcosystem()}}
+    )
+    ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+        "NUM_REALIZATIONS 1\nECOSYSTEM KWARGS ANY:thing OTHER:value\n"
+    )
+    assert received == {"any": "thing", "other": "value"}
+
+
+def test_that_unknown_ecosystem_option_gives_error_listing_accepted_options():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Line 2.*'APPENDER' does not accept option NOPE.*\['STEP'\]",
+    ):
+        ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+            "NUM_REALIZATIONS 1\nECOSYSTEM APPENDER NOPE:1\n"
+        )
+
+
+def test_that_config_errors_raised_by_ecosystem_configure_keep_their_context():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    with pytest.raises(ConfigValidationError, match=r"Line 2.*Unknown step bad"):
+        ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+            "NUM_REALIZATIONS 1\nECOSYSTEM APPENDER STEP:bad\n"
+        )
+
+
+def test_that_ecosystem_arguments_must_be_options():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Line 2.*Option argument should be of the form 'key':'value', got 'B'",
+    ):
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nECOSYSTEM A B\n")

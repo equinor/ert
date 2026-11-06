@@ -5,10 +5,15 @@ from pathlib import Path
 import pytest
 
 import ert.plugins.hook_implementations
-from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
+from ert import EcosystemPlugin
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins, plugin
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
-from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
+from tests.ert.unit_tests.plugins.dummy_plugins import (
+    PLUGIN_IP_ADDRESS,
+    DummyEcosystem,
+    DummyFMStep,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -362,3 +367,37 @@ def test_get_ip_address(monkeypatch, tmpdir):
         assert default_plugin.get_ip_address() != pm.get_ip_address()
         assert default_plugin.get_ip_address() == default_ip_address
         assert pm.get_ip_address() == PLUGIN_IP_ADDRESS
+
+
+def test_that_ecosystem_plugins_are_installed_by_name_in_runtime_plugins(
+    monkeypatch,
+):
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    assert pm.ecosystem_plugin is DummyEcosystem
+
+    monkeypatch.setattr(pm, "get_installable_workflow_jobs", dict)
+    runtime_plugins = get_site_plugins(pm)
+    assert list(runtime_plugins.installed_ecosystem_plugins) == ["DUMMY_ECOSYSTEM"]
+    assert isinstance(
+        runtime_plugins.installed_ecosystem_plugins["DUMMY_ECOSYSTEM"], DummyEcosystem
+    )
+
+
+def test_that_installing_more_than_one_ecosystem_plugin_is_an_error():
+    class OtherEcosystem(EcosystemPlugin):
+        name: str = "OTHER_ECOSYSTEM"
+
+        def configure(self, config_dict):
+            pass
+
+    class OtherPlugins:
+        @staticmethod
+        @plugin(name="other")
+        def ecosystem_plugin():
+            return OtherEcosystem
+
+    pm = ErtPluginManager(plugins=[dummy_plugins, OtherPlugins])
+    with pytest.raises(
+        ValueError, match=r"Only one ecosystem plugin.*DummyEcosystem.*OtherEcosystem"
+    ):
+        _ = pm.ecosystem_plugin

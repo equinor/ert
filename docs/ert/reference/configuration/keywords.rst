@@ -2104,6 +2104,23 @@ FORWARD_MODEL
     In available steps in ERT you can see a list of the steps which are available.
 
 
+.. _ecosystem:
+
+ECOSYSTEM
+---------
+
+The :code:`ECOSYSTEM` keyword selects an ecosystem plugin installed through
+the :doc:`plugin system </getting_started/howto/plugin_system>` 
+Syntax::
+
+   ECOSYSTEM <plugin_name> [<OPTION>:<value> ...]
+
+*Example:*
+
+::
+
+   ECOSYSTEM FMU UPLOAD:AUTOMATIC
+
 .. _queue_system:
 
 QUEUE_SYSTEM

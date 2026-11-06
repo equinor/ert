@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import logging
 import os
 import pprint
@@ -32,6 +33,7 @@ from ._observations import (
 from ._shapes import ShapeRegistry
 from .analysis_config import AnalysisConfig
 from .breakthrough_config import BreakthroughConfig
+from .ecosystem_plugin import EcosystemPlugin
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelJSON,
@@ -842,6 +844,19 @@ RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
 USER_CONFIG_SCHEMA = init_user_config_schema()
 
 
+def _accepted_ecosystem_options(plugin: EcosystemPlugin) -> frozenset[str] | None:
+    """Keyword parameters of ``plugin.configure``; ``None`` if it takes ``**kwargs``."""
+    parameters = list(inspect.signature(plugin.configure).parameters.values())[1:]
+    if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters):
+        return None
+    return frozenset(
+        p.name
+        for p in parameters
+        if p.kind
+        in {inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD}
+    )
+
+
 class ErtConfig(BaseModel, extra="forbid"):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
@@ -849,6 +864,7 @@ class ErtConfig(BaseModel, extra="forbid"):
         Mapping[str, SiteInstalledForwardModelStep]
     ] = {}
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, WorkflowJob]] = {}
+    PREINSTALLED_ECOSYSTEM_PLUGINS: ClassVar[Mapping[str, EcosystemPlugin]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ENV_VARIABLES: ClassVar[dict[str, str]] = {}
     QUEUE_OPTIONS: ClassVar[KnownQueueOptions | None] = None
@@ -880,6 +896,7 @@ class ErtConfig(BaseModel, extra="forbid"):
         default_factory=RandomSeedGenerator
     )
     shape_registry: ShapeRegistry = Field(default_factory=ShapeRegistry)
+    ecosystem: str | None = None
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -981,6 +998,9 @@ class ErtConfig(BaseModel, extra="forbid"):
                 Mapping[str, SiteInstalledForwardModelStep]
             ] = runtime_plugins.installed_forward_model_steps
             PREINSTALLED_WORKFLOWS = dict(runtime_plugins.installed_workflow_jobs)
+            PREINSTALLED_ECOSYSTEM_PLUGINS: ClassVar[Mapping[str, EcosystemPlugin]] = (
+                runtime_plugins.installed_ecosystem_plugins
+            )
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = (
                 uppercase_subkeys_and_stringify_subvalues(
                     {k: dict(v) for k, v in runtime_plugins.env_pr_fm_step.items()}
@@ -1047,7 +1067,44 @@ class ErtConfig(BaseModel, extra="forbid"):
         )
 
     @classmethod
+    def _apply_ecosystem_plugin(cls, config_dict: ConfigDict) -> None:
+        if ConfigKeys.ECOSYSTEM not in config_dict:
+            return
+        ecosystem_name, raw_options = config_dict[ConfigKeys.ECOSYSTEM]
+        ecosystem_plugin = cls.PREINSTALLED_ECOSYSTEM_PLUGINS.get(ecosystem_name)
+        if ecosystem_plugin is None:
+            raise ConfigValidationError.with_context(
+                f"Could not find ecosystem plugin {ecosystem_name!r} in list "
+                "of installed ecosystem plugins: "
+                f"{sorted(cls.PREINSTALLED_ECOSYSTEM_PLUGINS)!r}",
+                ecosystem_name,
+            )
+        accepted = _accepted_ecosystem_options(ecosystem_plugin)
+        if accepted is not None:
+            unknown = [key for key in raw_options if key.lower() not in accepted]
+            if unknown:
+                raise ConfigValidationError.from_collected(
+                    [
+                        ErrorInfo(
+                            f"Ecosystem plugin {ecosystem_name!r} does not accept "
+                            f"option {key!s}. Accepted options: "
+                            f"{sorted(opt.upper() for opt in accepted)!r}"
+                        ).set_context(ecosystem_name)
+                        for key in unknown
+                    ]
+                )
+        options = {key.lower(): value for key, value in raw_options.items()}
+        try:
+            ecosystem_plugin.configure(config_dict, **options)
+        except ConfigValidationError as err:
+            for info in err.errors:
+                if info.line is None:
+                    info.set_context(ecosystem_name)
+            raise ConfigValidationError.from_collected([err]) from err
+
+    @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> Self:
+        cls._apply_ecosystem_plugin(config_dict)
         substitutions = _substitutions_from_dict(config_dict)
         runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
@@ -1293,6 +1350,11 @@ class ErtConfig(BaseModel, extra="forbid"):
                 observation_declarations=list(obs_configs),
                 zonemap=zonemap,
                 shape_registry=shape_registry,
+                ecosystem=(
+                    str(config_dict[ConfigKeys.ECOSYSTEM][0])
+                    if ConfigKeys.ECOSYSTEM in config_dict
+                    else None
+                ),
             )
 
             cls_config.derive_rft_response_input_from_observations(config_dict)
