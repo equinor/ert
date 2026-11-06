@@ -39,7 +39,7 @@ from ert.storage._match_for_update import (
     _retrieve_common_columns,
     _validate_selected_observations,
 )
-from ert.storage.match import MatchConfig, matching_strategy
+from ert.storage.match import BreakthroughMatchStrategy, MatchConfig, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -782,24 +782,6 @@ class LocalEnsemble(BaseMode):
             engine="streaming"
         )
 
-    def _compute_ensemble_end_date(self) -> datetime | None:
-        """Returns the last simulated time across all realizations with
-        responses.
-        All summary keys share the same time axis within a given
-        realization, guaranteed by the summary file format.
-        """
-        if "summary" not in self.experiment.response_configuration:
-            return None
-
-        available_realizations = self.get_realization_list_with_responses()
-        if not available_realizations:
-            return None
-
-        times = self.load_responses("summary", tuple(available_realizations))["time"]
-        if len(times) == 0:
-            return None
-        return times.max()  # type: ignore
-
     def _load_responses_lazy(
         self, response_key: str, realizations: tuple[int, ...]
     ) -> pl.LazyFrame:
@@ -1040,12 +1022,6 @@ class LocalEnsemble(BaseMode):
         response_config_dict = self.experiment.response_configuration
         reals = np.sort(iens_active_index).tolist()
 
-        ensemble_end_date = (
-            self._compute_ensemble_end_date()
-            if "breakthrough" in self.experiment.response_configuration
-            else None
-        )
-
         dfs_per_response_type = []
         for response_type, response_cls in response_config_dict.items():
             if response_type not in observations_dict:
@@ -1055,6 +1031,7 @@ class LocalEnsemble(BaseMode):
             match_config.convert_response_key_to_categorical = True
             match_config.obs_keys_to_filter_observations_on = selected_observations
             match_config.qc_observations = True
+            match_config.breakthrough.fill_in_unreached_threshold = True
             strategy = matching_strategy(self, response_cls, match_config=match_config)
 
             observations_for_type = strategy.prepare_observations(
@@ -1078,7 +1055,8 @@ class LocalEnsemble(BaseMode):
                 responses = self._load_responses_lazy(response_type, (real,))
                 if isinstance(response_cls, DerivedResponseConfig):
                     responses = response_cls.fill_missing_values(
-                        responses, ensemble_end_date
+                        responses,
+                        cast(BreakthroughMatchStrategy, strategy).ensemble_end_date,
                     )
 
                 responses = responses.with_columns(

@@ -4,6 +4,7 @@ import logging
 from abc import ABC
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import TYPE_CHECKING, override
 
 import polars as pl
@@ -38,7 +39,7 @@ class SummaryMatchConfig:
 
 @dataclass
 class BreakthroughMatchConfig:
-    pass
+    fill_in_unreached_threshold: bool = False
 
 
 @dataclass
@@ -150,7 +151,37 @@ class SummaryMatchStrategy(ReservoirDataMatchStrategy[SummaryConfig]):
 
 
 class BreakthroughMatchStrategy(ReservoirDataMatchStrategy[BreakthroughConfig]):
-    pass
+    def __init__(
+        self,
+        ensemble: LocalEnsemble,
+        response_cls: BreakthroughConfig,
+        match_config: MatchConfig,
+    ) -> None:
+        self.ensemble_end_date = None
+        if match_config.breakthrough.fill_in_unreached_threshold:
+            self.ensemble_end_date = self._compute_ensemble_end_date(ensemble)
+        super().__init__(ensemble, response_cls, match_config=match_config)
+
+    @staticmethod
+    def _compute_ensemble_end_date(ensemble: LocalEnsemble) -> datetime | None:
+        """Returns the last simulated time across all realizations with
+        responses.
+        All summary keys share the same time axis within a given
+        realization, guaranteed by the summary file format.
+        """
+        if "summary" not in ensemble.experiment.response_configuration:
+            return None
+
+        available_realizations = ensemble.get_realization_list_with_responses()
+        if not available_realizations:
+            return None
+
+        times = ensemble.load_responses("summary", tuple(available_realizations))[
+            "time"
+        ]
+        if len(times) == 0:
+            return None
+        return times.max()  # type: ignore
 
 
 class RFTMatchStrategy(ReservoirDataMatchStrategy[RFTConfig]):
