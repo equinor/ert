@@ -46,6 +46,7 @@ class BreakthroughMatchConfig:
 @dataclass
 class RFTMatchConfig:
     approximate_values: bool = True
+    filter_out_invalid_zone: bool = False
 
 
 @dataclass
@@ -228,6 +229,16 @@ class SummaryMatchStrategy(ReservoirDataMatchStrategy[SummaryConfig]):
     ) -> pl.DataFrame:
         by_cols = [*[k for k in self.match_keys if k != "time"]]
 
+        if "realization" in responses.columns:
+            num_realizations = responses.select("realization").n_unique()
+            if num_realizations > 1:
+                raise NotImplementedError(
+                    "summary matching with multiple realizations in unpivoted format "
+                    "is not yet implemented. join_asof does not produce one row per "
+                    "realization: it selects only the nearest matching response, "
+                    "regardless of realization number."
+                )
+
         return observations.sort(
             by=[*by_cols, "time"]
         ).join_asof(
@@ -307,6 +318,9 @@ class RFTMatchStrategy(ReservoirDataMatchStrategy[RFTConfig]):
         if self.match_config.qc_observations:
             observations = ensure_qc_error_column(observations)
             observations = qc_rft_observations(observations)
+
+        if self.match_config.rft.filter_out_invalid_zone:
+            observations = observations.filter(RFTConfig.is_zone_valid())
 
         return observations
 

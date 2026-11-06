@@ -1,7 +1,6 @@
 import contextlib
 import io
 from enum import IntEnum
-from typing import cast
 
 import polars as pl
 import seaborn as sns
@@ -27,12 +26,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config._reservoir_data_utils import SeismicData
 from ert.config.response_config import ResponseConfig
-from ert.config.rft_config import RFTConfig
 from ert.gui.experiments.view.run_status import RunStatusView
 from ert.storage import Ensemble
 from ert.storage.blob_data import BlobType
+from ert.storage.match import MatchConfig, matching_strategy
 from ert.warnings import capture_specific_warning
 
 from .export_dialog import ExportDialog
@@ -62,23 +60,6 @@ class _ObservationTreeWidgetItem(QTreeWidgetItem):
         self.observation_data = observation_data
         self.response_config = response_config
         super().__init__(parent, [self.display_label, observation_key])
-
-    def match_key_data(self, metadata: pl.DataFrame | None) -> dict[str, object]:
-        response_type = self.response_config.type
-        if response_type == "rft":
-            assert metadata is not None
-            observation_data = RFTConfig.enrich_observations_with_metadata(
-                self.observation_data, metadata
-            )
-            observation_data = observation_data.filter(RFTConfig.is_zone_valid())
-        else:
-            observation_data = self.observation_data
-
-        if observation_data.is_empty():
-            return {}
-        return observation_data.select(self.response_config.match_key).row(
-            0, named=True
-        )
 
     @property
     def index_key_data(self) -> dict[str, object]:
@@ -283,18 +264,13 @@ class EnsembleWidget(QWidget):
             self._ensemble.get_realization_list_with_responses()
         )
 
-        def _filter_by_match_key(
-            df: pl.DataFrame, observation_metadata: pl.DataFrame | None
-        ) -> pl.DataFrame:
-            """Filter df to match 'selected' observation on match keys."""
-            match_data = selected.match_key_data(observation_metadata)
-            if not match_data:
-                return df.filter(pl.lit(False))
-
-            mask = pl.lit(True)
-            for col, val in match_data.items():
-                mask &= pl.col(col).eq_missing(val)
-            return df.filter(mask)
+        match_config = MatchConfig()
+        match_config.response_key_to_filter_response_on = response_key
+        match_config.rft.filter_out_invalid_zone = True
+        strategy = matching_strategy(
+            self._ensemble, selected.response_config, match_config=match_config
+        )
+        obs = strategy.prepare_observations(obs)
 
         def _load_and_filter_responses() -> pl.DataFrame | None:
             assert self._ensemble is not None
@@ -306,33 +282,22 @@ class EnsembleWidget(QWidget):
             if response_key not in ens.experiment.response_key_to_response_type:
                 return None
 
-            if response_type == "rft":
+            if response_type in {"rft", "summary"}:
+                # other response types do not require going realization-by-realization.
                 per_realization: list[pl.DataFrame] = []
                 for real in reals_with_responses:
-                    response = ens.load_responses(response_key, (real,))
-                    observation_metadata = ens.load_observation_location_metadata(real)
-                    if cast(
-                        RFTConfig, selected.response_config
-                    ).approximate_missing_values:
-                        response = RFTConfig.approximate_missing_rft_responses(
-                            response.lazy(),
-                            RFTConfig.enrich_observations_with_metadata(
-                                obs, observation_metadata
-                            ),
-                        ).collect()
-                    res = _filter_by_match_key(response, observation_metadata)
+                    observations = (
+                        strategy.enrich_observations_with_realization_metadata(
+                            obs, real
+                        )
+                    )
+                    responses = strategy.extract_responses((real,), observations)
+                    res = strategy.match(observations, responses)
                     per_realization.append(res)
                 return pl.concat(per_realization)
 
-            responses = ens.load_responses(response_key, reals_with_responses)
-            if response_type == "seismic":
-                responses = (
-                    SeismicData.use_observation_locations_in_respective_responses(
-                        responses, obs
-                    )
-                )
-
-            return _filter_by_match_key(responses, None)
+            responses = strategy.extract_responses(reals_with_responses, obs)
+            return strategy.match(obs, responses)
 
         response_ds = _load_and_filter_responses()
 
