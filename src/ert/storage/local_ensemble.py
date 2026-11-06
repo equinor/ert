@@ -22,7 +22,6 @@ from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ert.config import (
-    DerivedResponseConfig,
     InvalidResponseFile,
     ParameterCardinality,
     ParameterConfig,
@@ -39,7 +38,7 @@ from ert.storage._match_for_update import (
     _retrieve_common_columns,
     _validate_selected_observations,
 )
-from ert.storage.match import BreakthroughMatchStrategy, MatchConfig, matching_strategy
+from ert.storage.match import MatchConfig, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -776,6 +775,10 @@ class LocalEnsemble(BaseMode):
 
         For each given realization, response data is loaded from a parquet file that
         matches the given response key.
+
+        'response_key' could be a real response_key or it could be just a response type.
+        If it is a response key, it will be filtered upon. If it is a response type, all
+        data from this type is returned.
         """
 
         return self._load_responses_lazy(response_key, realizations).collect(
@@ -1031,6 +1034,7 @@ class LocalEnsemble(BaseMode):
             match_config.convert_response_key_to_categorical = True
             match_config.obs_keys_to_filter_observations_on = selected_observations
             match_config.qc_observations = True
+            match_config.filter_out_unmatchable_responses = True
             match_config.breakthrough.fill_in_unreached_threshold = True
             strategy = matching_strategy(self, response_cls, match_config=match_config)
 
@@ -1046,41 +1050,7 @@ class LocalEnsemble(BaseMode):
                 observations = strategy.enrich_observations_with_realization_metadata(
                     observations_for_type, real
                 )
-
-                observed_cols = {
-                    k: observations[k].unique()
-                    for k in ["response_key", *response_cls.match_key]
-                }
-
-                responses = self._load_responses_lazy(response_type, (real,))
-                if isinstance(response_cls, DerivedResponseConfig):
-                    responses = response_cls.fill_missing_values(
-                        responses,
-                        cast(BreakthroughMatchStrategy, strategy).ensemble_end_date,
-                    )
-
-                responses = responses.with_columns(
-                    [pl.col("response_key").cast(pl.Categorical)]
-                )
-
-                if (
-                    response_type == "rft"
-                    and cast(
-                        RFTConfig, self.experiment.response_configuration["rft"]
-                    ).approximate_missing_values
-                ):
-                    responses = RFTConfig.approximate_missing_rft_responses(
-                        responses, observations
-                    )
-
-                # Filter out responses without observations
-                for col, observed_values in observed_cols.items():
-                    if col not in {"time", "east", "north"}:
-                        responses = responses.filter(
-                            pl.col(col).is_in(
-                                observed_values.implode(), nulls_equal=True
-                            )
-                        )
+                responses = strategy._extract_lazy_responses((real,), observations)
 
                 pivoted = responses.collect(engine="streaming").pivot(
                     on="realization",
