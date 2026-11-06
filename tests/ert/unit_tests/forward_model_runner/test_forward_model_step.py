@@ -297,8 +297,8 @@ def test_makedirs(monkeypatch, tmp_path):
     )
     for _ in fmstep.run():
         pass
-    assert (tmp_path / "a/file").is_file()
-    assert (tmp_path / "b/c/file").is_file()
+    assert (tmp_path / "a").is_dir()
+    assert (tmp_path / "b/c").is_dir()
 
 
 @pytest.mark.parametrize(
@@ -401,31 +401,57 @@ def test_target_file_only_sets_error_if_specified_and_fm_step_succeeded(
 
 def test_that_max_running_minutes_timeout_triggers_for_jobs_running_over_24_hours():
     fmstep = ForwardModelStep({"name": "timeout_step", "max_running_minutes": 1440}, 0)
-    mock_proc = MagicMock()
-    mock_proc.pid = os.getpid()
 
     # Simulate a job that has been running for 25 hours (exceeds 1440-min limit)
     run_start_time = dt.datetime.now(tz=dt.UTC) - dt.timedelta(hours=25)
-    result = fmstep.handle_process_timeout_and_create_exited_msg(
-        0, mock_proc, run_start_time
-    )
 
-    assert result is not None, (
+    assert fmstep._has_exceeded_max_running_minutes(run_start_time), (
         "Timeout should have triggered for a job running 25h with a 1440-minute limit"
     )
-    assert "explicitly killed" in result.error_message
 
 
 def test_that_max_running_minutes_timeout_does_not_trigger_before_limit():
     fmstep = ForwardModelStep({"name": "timeout_step", "max_running_minutes": 1440}, 0)
-    mock_proc = MagicMock()
 
     # Simulate a job that has been running for 23 hours (within the 24-hour limit)
     run_start_time = dt.datetime.now(tz=dt.UTC) - dt.timedelta(hours=23)
-    result = fmstep.handle_process_timeout_and_create_exited_msg(
-        0, mock_proc, run_start_time
-    )
 
-    assert result is None, (
+    assert not fmstep._has_exceeded_max_running_minutes(run_start_time), (
         "Timeout should not trigger for a job running 23h with a 1440-minute limit"
     )
+
+
+def test_that_stdout_and_stderr_files_are_only_created_when_written_to(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    step = ForwardModelStep(
+        {
+            "name": "writer",
+            "executable": "/bin/sh",
+            "argList": ["-c", "echo hello"],
+            "stdout": "out.txt",
+            "stderr": "err.txt",
+        },
+        0,
+    )
+    list(step.run())
+    assert (tmp_path / "out.txt").read_text(encoding="utf-8") == "hello\n"
+    assert not (tmp_path / "err.txt").exists()
+
+
+def test_that_stale_output_files_are_removed_when_step_writes_nothing(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out.txt").write_text("stale")
+    step = ForwardModelStep(
+        {
+            "name": "silent",
+            "executable": "/bin/true",
+            "stdout": "out.txt",
+        },
+        0,
+    )
+    list(step.run())
+    assert not (tmp_path / "out.txt").exists()

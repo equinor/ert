@@ -10,7 +10,7 @@ import socket
 import sys
 import time
 import uuid
-from collections.abc import Generator, Iterable, Sequence
+from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from subprocess import Popen, run
@@ -176,6 +176,23 @@ class ForwardModelStep:
 
         return (stdin, stdout, stderr)
 
+    def _close_streams_and_remove_empty_outputs(
+        self,
+        stdin: io.TextIOWrapper | None,
+        stdout: io.TextIOWrapper | None,
+        stderr: io.TextIOWrapper | None,
+    ) -> None:
+        for stream in (stdin, stdout, stderr):
+            if stream is not None:
+                stream.close()
+
+        for output_file in (self.std_out, self.std_err):
+            if output_file:
+                path = Path(output_file)
+                with contextlib.suppress(FileNotFoundError):
+                    if path.is_file() and path.stat().st_size == 0:
+                        path.unlink()
+
     def _create_environment(self) -> dict[str, str] | None:
         combined_environment = None
         if environment := self.step_data.get("environment"):
@@ -212,8 +229,8 @@ class ForwardModelStep:
             exited_message = self._handle_process_io_error_and_create_exited_message(
                 e, stderr
             )
+            self._close_streams_and_remove_empty_outputs(stdin, stdout, stderr)
             yield exited_message
-            ensure_file_handles_closed([stdin, stdout, stderr])
             return
 
         exit_code = None
@@ -229,15 +246,14 @@ class ForwardModelStep:
                 if exit_code is not None:
                     break
             except TimeoutExpired:
-                potential_exited_msg = (
-                    self.handle_process_timeout_and_create_exited_msg(
-                        exit_code,
-                        proc,  # type: ignore
-                        run_start_time,
+                if self._has_exceeded_max_running_minutes(run_start_time):
+                    self._kill_process_group_if_separate(proc)
+                    self._close_streams_and_remove_empty_outputs(stdin, stdout, stderr)
+                    yield Exited(self, exit_code).with_error(
+                        f"Step:{self.name()} has been running "
+                        f"for more than {self.step_data.get('max_running_minutes')} "
+                        "minutes - explicitly killed."
                     )
-                )
-                if isinstance(potential_exited_msg, Exited):
-                    yield potential_exited_msg
                     return
 
             (memory_rss, cpu_seconds_snapshot, oom_score, pids) = _get_processtree_data(
@@ -265,7 +281,7 @@ class ForwardModelStep:
                     oom_score=oom_score,
                 ),
             )
-        ensure_file_handles_closed([stdin, stdout, stderr])
+        self._close_streams_and_remove_empty_outputs(stdin, stdout, stderr)
         exited_message = self._create_exited_message_based_on_exit_code(
             max_memory_usage,
             target_file,
@@ -329,21 +345,15 @@ class ForwardModelStep:
             f"Process exited with status code {exited_message.exit_code}"
         )
 
-    def handle_process_timeout_and_create_exited_msg(
-        self,
-        exit_code: int | None,
-        proc: Popen[Process],  # type: ignore
-        run_start_time: dt.datetime,
-    ) -> Exited | None:
+    def _has_exceeded_max_running_minutes(self, run_start_time: dt.datetime) -> bool:
         max_running_minutes = self.step_data.get("max_running_minutes")
-
+        if max_running_minutes is None:
+            return False
         run_time = dt.datetime.now(tz=dt.UTC) - run_start_time
-        if (
-            max_running_minutes is None
-            or run_time.total_seconds() < max_running_minutes * 60
-        ):
-            return None
+        return run_time.total_seconds() >= max_running_minutes * 60
 
+    @staticmethod
+    def _kill_process_group_if_separate(proc: Popen[bytes]) -> None:
         # If the spawned process is not in the same process group as
         # the callee (fm_dispatch), we will kill the process group
         # explicitly.
@@ -354,12 +364,6 @@ class ForwardModelStep:
         this_group_id = os.getpgid(os.getpid())
         if process_group_id != this_group_id:
             os.killpg(process_group_id, signal.SIGKILL)
-
-        return Exited(self, exit_code).with_error(
-            f"Step:{self.name()} has been running "
-            f"for more than {max_running_minutes} "
-            "minutes - explicitly killed."
-        )
 
     def _handle_process_io_error_and_create_exited_message(
         self, e: OSError, stderr: io.TextIOWrapper | None
@@ -439,12 +443,6 @@ def _get_existing_target_file_mtime(file: str | None) -> int | None:
     if file and Path(file).exists():
         mtime = Path(file).stat().st_mtime_ns
     return mtime
-
-
-def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) -> None:
-    for file_handle in file_handles:
-        if file_handle is not None:
-            file_handle.close()
 
 
 @dataclass
