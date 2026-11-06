@@ -191,7 +191,9 @@ class RunModel(RunModelConfig, ABC):
     _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
     _workflow_run_id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _pending_workflow_events: list[WorkflowEvent] = PrivateAttr(default_factory=list)
-    _status_listener: Callable[[StatusEvents], None] | None = PrivateAttr(default=None)
+    _status_event_handler: Callable[[StatusEvents], None] | None = PrivateAttr(
+        default=None
+    )
 
     def __init__(
         self,
@@ -224,7 +226,7 @@ class RunModel(RunModelConfig, ABC):
         )
 
         if (runtime_plugins := init_context_var.get()) is not None:
-            self._status_listener = runtime_plugins.status_listener
+            self._status_event_handler = runtime_plugins.status_event_handler
 
     @property
     def api(self) -> RunModelAPI:
@@ -330,9 +332,9 @@ class RunModel(RunModelConfig, ABC):
         return None
 
     def send_event(self, event: StatusEvents) -> None:
-        if self._status_listener is not None:
+        if self._status_event_handler is not None:
             try:
-                self._status_listener(event)
+                self._status_event_handler(event)
             except Exception:
                 logger.exception("Status listener failed")
         self.status_queue.put(event)

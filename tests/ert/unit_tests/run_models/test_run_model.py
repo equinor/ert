@@ -1281,7 +1281,7 @@ def test_that_workflows_hooked_after_cancelled_workflow_still_appear_as_cancelle
 def test_that_run_model_forwards_sent_events_to_runtime_status_listener(use_tmpdir):
     listener = Mock()
     with use_runtime_plugins(
-        ErtRuntimePlugins(queue_options=None, status_listener=listener)
+        ErtRuntimePlugins(queue_options=None, status_event_handler=listener)
     ):
         mocked_run_model = create_run_model()
     event = FinishedTotalRunPathCreationEvent()
@@ -1295,7 +1295,7 @@ def test_that_failing_status_listener_does_not_stop_event_reaching_status_queue(
 ):
     listener = Mock(side_effect=RuntimeError("kaboom"))
     with use_runtime_plugins(
-        ErtRuntimePlugins(queue_options=None, status_listener=listener)
+        ErtRuntimePlugins(queue_options=None, status_event_handler=listener)
     ):
         mocked_run_model = create_run_model()
     event = FinishedTotalRunPathCreationEvent()

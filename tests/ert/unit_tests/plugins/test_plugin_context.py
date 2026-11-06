@@ -37,7 +37,7 @@ def test_no_plugins():
     pm = ErtPluginManager(plugins=[])
     runtime_plugins = get_site_plugins(pm)
     assert runtime_plugins == ErtRuntimePlugins(
-        queue_options=None, status_listener=pm.notify_status_event
+        queue_options=None, status_event_handler=pm.notify_status_event
     )
 
 
@@ -98,7 +98,7 @@ def test_that_site_configuration_propagates_through_plugin_context():
     pm = ErtPluginManager(plugins=[SomePlugin])
     runtime_plugins = get_site_plugins(pm)
     assert runtime_plugins == ErtRuntimePlugins(
-        **site_config_content, status_listener=pm.notify_status_event
+        **site_config_content, status_event_handler=pm.notify_status_event
     )
 
 
