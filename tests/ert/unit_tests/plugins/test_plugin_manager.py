@@ -6,6 +6,7 @@ import pytest
 
 import ert.plugins.hook_implementations
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
+from ert.run_models.event import FinishedTotalRunPathCreationEvent
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
@@ -362,3 +363,40 @@ def test_get_ip_address(monkeypatch, tmpdir):
         assert default_plugin.get_ip_address() != pm.get_ip_address()
         assert default_plugin.get_ip_address() == default_ip_address
         assert pm.get_ip_address() == PLUGIN_IP_ADDRESS
+
+
+def test_that_on_status_event_hook_receives_notified_events():
+    events_received = []
+
+    class ListenerPlugin:
+        @plugin(name="status_listener")
+        def on_status_event(event):
+            events_received.append(event)
+
+    pm = ErtPluginManager(plugins=[ListenerPlugin])
+    event = FinishedTotalRunPathCreationEvent()
+
+    pm.notify_status_event(event)
+    assert events_received == [event]
+
+
+def test_that_failing_status_event_plugin_does_not_block_other_plugins(caplog):
+    events_received = []
+
+    class FailingPlugin:
+        @plugin(name="failing_status_listener")
+        def on_status_event(event):
+            raise RuntimeError("kaboom")
+
+    class ListenerPlugin:
+        @plugin(name="status_listener")
+        def on_status_event(event):
+            events_received.append(event)
+
+    pm = ErtPluginManager(plugins=[ListenerPlugin, FailingPlugin])
+    event = FinishedTotalRunPathCreationEvent()
+
+    pm.notify_status_event(event)
+
+    assert events_received == [event]
+    assert "Plugin 'failing_status_listener' failed in on_status_event" in caplog.text

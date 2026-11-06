@@ -14,6 +14,7 @@ import pytest
 from pydantic import ConfigDict
 
 from _ert.events import EESnapshotUpdate
+from ert.base_model_context import use_runtime_plugins
 from ert.config import (
     CircleShapeConfig,
     ErtConfig,
@@ -42,7 +43,7 @@ from ert.ensemble_evaluator.state import (
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models import create_model
-from ert.run_models.event import WorkflowEvent
+from ert.run_models.event import FinishedTotalRunPathCreationEvent, WorkflowEvent
 from ert.run_models.run_model import (
     RunModel,
     UserCancelled,
@@ -1277,3 +1278,30 @@ def test_that_workflows_hooked_after_cancelled_workflow_still_appear_as_cancelle
 
     for skipped_event in (second_event, third_event):
         assert skipped_event.status is WorkflowJobStatus.CANCELLED
+
+
+def test_that_run_model_forwards_sent_events_to_runtime_status_listener(use_tmpdir):
+    listener = Mock()
+    with use_runtime_plugins(
+        ErtRuntimePlugins(queue_options=None, status_event_handler=listener)
+    ):
+        mocked_run_model = create_run_model()
+    event = FinishedTotalRunPathCreationEvent()
+
+    mocked_run_model.send_event(event)
+    listener.assert_called_once_with(event)
+
+
+def test_that_failing_status_listener_does_not_stop_event_reaching_status_queue(
+    use_tmpdir, caplog
+):
+    listener = Mock(side_effect=RuntimeError("kaboom"))
+    with use_runtime_plugins(
+        ErtRuntimePlugins(queue_options=None, status_event_handler=listener)
+    ):
+        mocked_run_model = create_run_model()
+    event = FinishedTotalRunPathCreationEvent()
+
+    mocked_run_model.send_event(event)
+    mocked_run_model.status_queue.put.assert_called_once_with(event)
+    assert "Status listener failed" in caplog.text
