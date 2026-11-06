@@ -13,7 +13,6 @@ from ert.config import (
     ErtConfig,
     ESSettings,
     LocalizationType,
-    OutlierSettings,
     ParameterType,
 )
 from ert.config.parsing import ConfigKeys, ConfigWarning
@@ -253,11 +252,15 @@ def test_unknown_variable_raises_validation_error():
         )
 
 
-def test_default_alpha_is_set():
-    default_alpha = OutlierSettings().alpha
+def test_default_alpha_is_three():
+    """This test is testing that missing alpha in OutlierSettings
+    defaults to some value, but also that the value should be the same as the
+    documented value, guarding against unintentional changes.
+    """
+    DEFAULT_ALPHA = 3.0
     assert (
         AnalysisConfig.from_dict({}).observation_settings.outlier_settings.alpha
-        == default_alpha
+        == DEFAULT_ALPHA
     )
 
 
@@ -271,11 +274,15 @@ def test_alpha_is_set_from_corresponding_key(value):
     )
 
 
-def test_default_std_cutoff_is_set():
-    default_std_cutoff = OutlierSettings().std_cutoff
+def test_default_std_cutoff_is_one_millionth():
+    """This test is testing that missing std_cutoff in OutlierSettings
+    defaults to some value, but also that the value should be the same as the
+    documented value, guarding against unintentional changes.
+    """
+    DEFAULT_STD_CUTOFF = 1e-6
     assert (
         AnalysisConfig.from_dict({}).observation_settings.outlier_settings.std_cutoff
-        == default_std_cutoff
+        == DEFAULT_STD_CUTOFF
     )
 
 
