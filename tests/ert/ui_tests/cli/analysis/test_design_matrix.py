@@ -306,7 +306,15 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         "realizations. The merged design matrix will only contain the "
         "realizations that are active in all instances."
     ) in warning_messages
-    storage_path = ErtConfig.from_file("poly.ert").ens_path
+    with pytest.warns(
+        ConfigWarning,
+        match=(
+            "do not have the same active realizations. The merged design "
+            "matrix will only contain the realizations that are active "
+            "in all instances."
+        ),
+    ):
+        storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
         params = experiment.get_ensemble_by_name("default").load_parameters(
