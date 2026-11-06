@@ -30,6 +30,7 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
                 try:
                     return func(*args, **kwargs)
                 except Exception:
+                    # See https://github.com/equinor/ert/issues/14908
                     logger.exception(f"Plugin '{name}' failed in {func.__name__}")
                     return None
             res = func(*args, **kwargs)
