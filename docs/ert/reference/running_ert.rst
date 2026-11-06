@@ -10,6 +10,11 @@ Graphical user interface (GUI)
    :prog: ert
    :path: gui
 
+The Distribution plot shows ``<no data>`` when a selected ensemble has no data
+for the parameter. When multiple ensembles are selected, ensembles with data
+are still plotted, and ensembles without data are labeled in the legend and
+individual-points rows.
+
 Command line interface (CLI)
 ----------------------------
 
