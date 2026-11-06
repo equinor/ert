@@ -257,6 +257,23 @@ def test_that_event_stream_logs_first_event_and_total_on_close(event_client, cap
     assert "ended after 1 events" in caplog.text
 
 
+def test_that_event_stream_does_not_sleep_between_received_messages(
+    event_client, monkeypatch
+):
+    api, connection, _ = event_client
+    sleep = MagicMock()
+    monkeypatch.setattr("ert.services.ert_client.time.sleep", sleep)
+    event = EndEvent(failed=False, msg="completed")
+    connection.recv.side_effect = [
+        event.model_dump_json(),
+        event.model_dump_json(),
+        ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+    ]
+
+    assert list(api.iter_events("experiment", refresh_interval=1.0)) == [event, event]
+    sleep.assert_not_called()
+
+
 @pytest.mark.parametrize("status_code", [200, 401, 503])
 @pytest.mark.parametrize("timeout", [None, 1.0])
 def test_that_server_probe_checks_authenticated_endpoint_with_requested_timeout(

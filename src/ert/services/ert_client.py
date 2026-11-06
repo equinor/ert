@@ -429,8 +429,6 @@ class ErtClient:
                                 type(event).__name__,
                             )
                         yield event
-
-                time.sleep(refresh_interval)
         except ConnectionClosedOK:
             logger.debug("Connection closed by server")
         except ConnectionClosedError as error:
