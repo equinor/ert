@@ -382,7 +382,6 @@ class ErtClient:
     def iter_events(
         self,
         experiment_id: str,
-        refresh_interval: float = 0.01,
         open_timeout: float = 30.0,
         websocket_recv_timeout: float = 1.0,
     ) -> Generator[StatusEvents, None, None]:
@@ -429,8 +428,6 @@ class ErtClient:
                                 type(event).__name__,
                             )
                         yield event
-
-                time.sleep(refresh_interval)
         except ConnectionClosedOK:
             logger.debug("Connection closed by server")
         except ConnectionClosedError as error:
@@ -457,7 +454,6 @@ class ErtClient:
     def setup_event_queue_from_ws_endpoint(
         self,
         experiment_id: str,
-        refresh_interval: float = 0.01,
         open_timeout: float = 30,
         websocket_recv_timeout: float = 1.0,
     ) -> tuple[queue.SimpleQueue[StatusEvents], ErtThread]:
@@ -470,7 +466,6 @@ class ErtClient:
         def passthrough_ws_events() -> None:
             for event in self.iter_events(
                 experiment_id,
-                refresh_interval=refresh_interval,
                 open_timeout=open_timeout,
                 websocket_recv_timeout=websocket_recv_timeout,
             ):
