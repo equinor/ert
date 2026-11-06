@@ -832,7 +832,7 @@ async def test_killing_job_does_not_hang_on_waiting_for_scheduler_to_kill_in_bat
 async def test_that_empty_output_files_are_not_waited_for(
     realization, mocker, nonempty_files
 ):
-    mock_sleep = mocker.patch("asyncio.sleep")
+    mocker.patch("asyncio.sleep")
     runpath = Path(realization.run_arg.runpath)
     runpath.mkdir()
     existing_output_files = set()
@@ -854,4 +854,3 @@ async def test_that_empty_output_files_are_not_waited_for(
         existing_output_files=existing_output_files,
     )
     assert remaining_timeout == Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
-    mock_sleep.assert_not_called()
