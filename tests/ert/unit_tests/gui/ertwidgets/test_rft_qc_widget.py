@@ -889,19 +889,21 @@ def test_that_response_status_column_is_added(
         ( 1.0,   1.0,   2.0, ["zone1"],       [1, 1, 2],    [1.0, 1.0, 2.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ] if with_observations else []
 
+    none = None  # bypassing ruff forcing line format despite fmt: off
     responses = [
         # connection_cell  values   cell_center      depth  cell_zones
         ( [1, 1, 1],       10.0,   [1.0, 1.0, 1.0],   1.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( [1, 1, 3],       12.0,   [1.0, 1.0, 3.0],   3.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+        ( [1, 1, 4],       none,   [1.0, 1.0, 4.0],   4.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ] if with_responses else []
     # fmt: on
 
     if not with_responses:
         expected_statuses = []
     elif approximate_missing_values and with_observations:
-        expected_statuses = [_PointStatus.RESPONSE] * 2 + [_PointStatus.APPROXIMATED]
+        expected_statuses = [_PointStatus.RESPONSE] * 3 + [_PointStatus.APPROXIMATED]
     else:
-        expected_statuses = [_PointStatus.RESPONSE] * 2
+        expected_statuses = [_PointStatus.RESPONSE] * 3
 
     stored_observations = pl.DataFrame(
         observations,
