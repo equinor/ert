@@ -6,6 +6,7 @@ either taper repairs that, and that the result predicts report steps nobody
 assimilated.
 """
 
+import contextlib
 import logging
 from pathlib import Path
 
@@ -99,25 +100,35 @@ def forecast_error(config_file: str) -> tuple[float, float]:
     return errors[0], errors[1]
 
 
+@pytest.fixture(scope="module")
+def unlocalized_field_errors(waterflood_case) -> tuple[float, float]:
+    """RMS field error of the prior and of the unlocalized posterior."""
+    with contextlib.chdir(waterflood_case()):
+        unlocalized = write_config("global", "GLOBAL")
+        run_cli(*SINGLE_ES, "--disable-monitoring", unlocalized)
+        return field_error(unlocalized)
+
+
 @pytest.mark.timeout(1200)
-@pytest.mark.usefixtures("copy_waterflood")
 @pytest.mark.slow
-def test_that_the_unlocalized_update_leaves_the_field_further_from_the_truth():
+def test_that_the_unlocalized_update_leaves_the_field_further_from_the_truth(
+    unlocalized_field_errors,
+):
     """Twenty realizations against 2500 cells is the regime localization exists for.
 
     That localization repairs this is asserted by the next test, which is where the
     two tapers are compared.
     """
-    unlocalized = write_config("global", "GLOBAL")
-    run_cli(*SINGLE_ES, "--disable-monitoring", unlocalized)
-    prior_error, unlocalized_error = field_error(unlocalized)
+    prior_error, unlocalized_error = unlocalized_field_errors
     assert unlocalized_error > prior_error
 
 
 @pytest.mark.timeout(1200)
 @pytest.mark.usefixtures("copy_waterflood")
 @pytest.mark.slow
-def test_that_both_localization_strategies_repair_the_unlocalized_update():
+def test_that_both_localization_strategies_repair_the_unlocalized_update(
+    unlocalized_field_errors,
+):
     """Which taper is *better* is not asserted: tuned, they are hard to separate on
     this case (0.778 adaptive against 0.779 distance at 50 realizations), and at
     20 the radius wins comfortably (0.840 against 0.945) because the threshold in
@@ -125,9 +136,7 @@ def test_that_both_localization_strategies_repair_the_unlocalized_update():
     scale with the ~1/sqrt(N) noise floor of a correlation, a radius does not.
     Ref the README.
     """
-    unlocalized = write_config("global", "GLOBAL")
-    run_cli(*SINGLE_ES, "--disable-monitoring", unlocalized)
-    _, unlocalized_error = field_error(unlocalized)
+    _, unlocalized_error = unlocalized_field_errors
 
     localized_errors = {}
     for name, strategy in [("adaptive", "ADAPTIVE"), ("distance", "DISTANCE")]:

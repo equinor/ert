@@ -9,6 +9,7 @@ import stat
 import sys
 import warnings
 from argparse import ArgumentParser
+from collections.abc import Callable
 from importlib.resources import files
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -337,11 +338,25 @@ def copy_heat_equation(copy_case):
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
+@pytest.fixture(scope="session")
+def waterflood_case(tmp_path_factory, source_root: Path) -> Callable[[], Path]:
+    def _copy() -> Path:
+        case = tmp_path_factory.mktemp("waterflood") / "test_data"
+        shutil.copytree(
+            source_root / "test-data" / "ert" / "waterflood",
+            case,
+            ignore=shutil.ignore_patterns("storage"),
+        )
+        with (case / "config.ert").open("a", encoding="utf-8") as fh:
+            fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+        return case
+
+    return _copy
+
+
 @pytest.fixture
-def copy_waterflood(copy_case):
-    copy_case("waterflood")
-    with Path("config.ert").open("a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+def copy_waterflood(waterflood_case, monkeypatch):
+    monkeypatch.chdir(waterflood_case())
 
 
 @pytest.fixture(
