@@ -509,6 +509,7 @@ def _transform_tree(
             ["<DATE>", dt.datetime.now().astimezone().date().isoformat()],
             ["<CWD>", config_dir],
             ["<CONFIG_FILE>", Path(file).name],
+            ["<USER>", os.environ.get("USER", "$USER")],
         ]
 
     # need to copy pre_defines because _handle_includes will

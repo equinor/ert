@@ -645,6 +645,7 @@ def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
     # Override these to avoid user time/env-specifics in snapshots
     runmodel.queue_config.queue_options.activate_script = "activate"
     runmodel.substitutions["<DATE>"] = "2000-01-01"
+    runmodel.substitutions["<USER>"] = "user"
 
     serialized = runmodel.model_dump_json(indent=2) + "\n"
 

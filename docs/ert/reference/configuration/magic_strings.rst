@@ -45,6 +45,7 @@ List of keywords
    * :ref:`CONFIG_FILE_BASE <ms_config_file_base>`
    * :ref:`CWD <ms_cwd>`
    * :ref:`DATE <ms_date>`
+   * :ref:`USER <ms_user>`
 
 * Experiment variables
 
@@ -159,6 +160,12 @@ Experiment constants
 .. topic:: DATE
 
     Will be replaced with the current date in ISO-8601 format (YYYY-MM-DD).
+
+.. _ms_user:
+.. topic:: USER
+
+    Will be replaced with the value of the ``$USER`` environment variable.
+    Equivalent to ``DEFINE <USER> $USER``.
 
 .. _ms_exp_variables:
 
