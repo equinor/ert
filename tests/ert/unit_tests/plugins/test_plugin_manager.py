@@ -390,3 +390,25 @@ def test_that_failing_status_event_plugin_does_not_raise(caplog):
     pm.notify_status_event(FinishedTotalRunPathCreationEvent())
 
     assert "On status event plugin 'FailingPlugin' failed" in caplog.text
+
+
+def test_that_failing_status_event_plugin_does_not_block_other_plugins(caplog):
+    events_received = []
+
+    class FailingPlugin:
+        @plugin(name="failing_status_listener")
+        def on_status_event(event):
+            raise RuntimeError("kaboom")
+
+    class ListenerPlugin:
+        @plugin(name="status_listener")
+        def on_status_event(event):
+            events_received.append(event)
+
+    pm = ErtPluginManager(plugins=[ListenerPlugin, FailingPlugin])
+    event = FinishedTotalRunPathCreationEvent()
+
+    pm.notify_status_event(event)
+
+    assert events_received == [event]
+    assert "On status event plugin 'FailingPlugin' failed" in caplog.text
