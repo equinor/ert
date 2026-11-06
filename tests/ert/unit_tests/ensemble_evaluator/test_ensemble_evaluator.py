@@ -15,6 +15,7 @@ from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
     EnsembleEvaluationWarning,
+    EnsembleSucceeded,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepStart,
@@ -859,3 +860,30 @@ async def test_evaluator_forwards_scheduler_warning(
                 break
 
     await asyncio.wait_for(wait_for_warning_event_in_output_queue(), timeout=5)
+
+
+@pytest.mark.timeout(5)
+async def test_that_terminal_ensemble_event_is_batched_without_waiting_out_interval(
+    make_ee_config,
+):
+    evaluator = EnsembleEvaluator(
+        TestEnsemble(0, 2, 2, id_="0"),
+        make_ee_config(),
+        end_event=Event(),
+    )
+    evaluator._batching_interval = 60
+    batcher_task = asyncio.create_task(evaluator._batch_events_into_buffer())
+
+    running_event = ForwardModelStepRunning(
+        ensemble=evaluator.ensemble.id_, real="0", fm_step="0"
+    )
+    succeeded_event = EnsembleSucceeded(ensemble=evaluator.ensemble.id_)
+    await evaluator._events.put(running_event)
+    await evaluator._events.put(succeeded_event)
+
+    batch = await asyncio.wait_for(evaluator._batch_processing_queue.get(), timeout=1)
+    assert [event for _, event in batch] == [running_event, succeeded_event]
+    assert evaluator._complete_batch.is_set()
+
+    batcher_task.cancel()
+    await asyncio.gather(batcher_task, return_exceptions=True)
