@@ -22,21 +22,19 @@ from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ert.config import (
-    DerivedResponseConfig,
     InvalidResponseFile,
     ParameterCardinality,
     ParameterConfig,
     SummaryConfig,
 )
-from ert.config._reservoir_data_utils import SeismicData
 from ert.config.field import Field, field_transform
-from ert.config.observation_quality_control import (
-    append_to_qc_error,
-    ensure_qc_error_column,
-    qc_rft_observations,
-    qc_seismic_observations,
-)
 from ert.config.rft_config import RFTConfig
+from ert.storage._match_for_update import (
+    _join_observations_and_responses,
+    _retrieve_common_columns,
+    _validate_selected_observations,
+)
+from ert.storage.match import MatchConfig, RFTMatchStrategy, matching_strategy
 from ert.substitutions import substitute_runpath_name
 
 from .blob_data import (
@@ -773,29 +771,15 @@ class LocalEnsemble(BaseMode):
 
         For each given realization, response data is loaded from a parquet file that
         matches the given response key.
+
+        'response_key' could be a real response_key or it could be just a response type.
+        If it is a response key, it will be filtered upon. If it is a response type, all
+        data from this type is returned.
         """
 
         return self._load_responses_lazy(response_key, realizations).collect(
             engine="streaming"
         )
-
-    def _compute_ensemble_end_date(self) -> datetime | None:
-        """Returns the last simulated time across all realizations with
-        responses.
-        All summary keys share the same time axis within a given
-        realization, guaranteed by the summary file format.
-        """
-        if "summary" not in self.experiment.response_configuration:
-            return None
-
-        available_realizations = self.get_realization_list_with_responses()
-        if not available_realizations:
-            return None
-
-        times = self.load_responses("summary", tuple(available_realizations))["time"]
-        if len(times) == 0:
-            return None
-        return times.max()  # type: ignore
 
     def _load_responses_lazy(
         self, response_key: str, realizations: tuple[int, ...]
@@ -994,24 +978,17 @@ class LocalEnsemble(BaseMode):
     ) -> None:
         filename = "rft_observation_location_metadata.parquet"
         output_path = self._realization_dir(realization) / filename
+        Path(output_path).parent.mkdir(exist_ok=True, parents=True)
         self._storage._to_parquet_transaction(output_path, dataset)
 
     def load_observation_location_metadata(self, realization: int) -> pl.DataFrame:
         filename = "rft_observation_location_metadata.parquet"
         ds_path = self._realization_dir(realization) / filename
+        if not ds_path.exists():
+            raise FileNotFoundError(
+                f"RFT location metadata not found for realization {realization}"
+            )
         return pl.read_parquet(ds_path)
-
-    def add_rft_metadata_and_qc(
-        self, observations: pl.DataFrame, realization: int
-    ) -> pl.DataFrame:
-        observation_metadata_in_realization = self.load_observation_location_metadata(
-            realization
-        )
-        enriched_observations = RFTConfig.enrich_observations_with_metadata(
-            observations, observation_metadata_in_realization
-        )
-
-        return qc_rft_observations(enriched_observations)
 
     def get_observations_and_responses(
         self,
@@ -1031,197 +1008,54 @@ class LocalEnsemble(BaseMode):
                 or "123.5, 456.7, 2500.0, None" when zone is missing
         - Seismic "123.5, 456.7" (east, north)
         """
-        known_observations = self.experiment.observation_keys
+        _validate_selected_observations(self, selected_observations)
 
-        unknown_observations = set(selected_observations) - set(known_observations)
-
-        if unknown_observations:
-            raise KeyError(
-                f"Observations: {', '.join(unknown_observations)} not in experiment"
-            )
-
-        observations_by_type = self.experiment.observations
-
-        ensemble_end_date = (
-            self._compute_ensemble_end_date()
-            if "breakthrough" in self.experiment.response_configuration
-            else None
-        )
+        observations_dict = self.experiment.observations
+        response_config_dict = self.experiment.response_configuration
+        reals = np.sort(iens_active_index).tolist()
 
         dfs_per_response_type = []
-        for (
-            response_type,
-            response_cls,
-        ) in self.experiment.response_configuration.items():
-            if response_type not in observations_by_type:
+        for response_type, response_cls in response_config_dict.items():
+            if response_type not in observations_dict:
                 continue
 
-            observations_for_type = (
-                observations_by_type[response_type]
-                .filter(pl.col("observation_key").is_in(list(selected_observations)))
-                .with_columns([pl.col("response_key").cast(pl.Categorical)])
-            )
-            if response_type == "seismic":
-                observations_for_type = qc_seismic_observations(
-                    observations_for_type, self.experiment.shape_registry
-                )
+            match_config = MatchConfig()
+            match_config.convert_response_key_to_categorical = True
+            match_config.obs_keys_to_filter_observations_on = selected_observations
+            match_config.qc_observations = True
+            match_config.filter_out_unmatchable_responses = True
+            match_config.pivot_responses_on = "realization"
+            match_config.breakthrough.fill_in_unreached_threshold = True
+            strategy = matching_strategy(self, response_cls, match_config=match_config)
 
-            reals = np.sort(iens_active_index).tolist()
+            observations_for_type = strategy.prepare_observations(
+                observations_dict[response_type]
+            )
 
             # Load and join one realization at a time to reduce peak memory usage
-            first_columns: pl.DataFrame | None = None
+            common_columns: pl.DataFrame | None = None
             realization_columns: list[pl.DataFrame] = []
 
             for real in reals:
-                observations = ensure_qc_error_column(observations_for_type)
-                if response_type == "rft":
-                    observations = self.add_rft_metadata_and_qc(observations, real)
-
-                observed_cols = {
-                    k: observations[k].unique()
-                    for k in ["response_key", *response_cls.match_key]
-                }
-
-                responses = self._load_responses_lazy(response_type, (real,))
-                if isinstance(response_cls, DerivedResponseConfig):
-                    responses = response_cls.fill_missing_values(
-                        responses, ensemble_end_date
-                    )
-
-                responses = responses.with_columns(
-                    [pl.col("response_key").cast(pl.Categorical)]
+                observations = strategy.enrich_observations_with_realization_metadata(
+                    observations_for_type, real
+                )
+                responses = strategy.extract_responses((real,), observations)
+                joined = _join_observations_and_responses(
+                    strategy, observations, responses, real
                 )
 
-                if (
-                    response_type == "rft"
-                    and cast(
-                        RFTConfig, self.experiment.response_configuration["rft"]
-                    ).approximate_missing_values
-                ):
-                    responses = RFTConfig.approximate_missing_rft_responses(
-                        responses, observations
-                    )
-
-                # Filter out responses without observations
-                for col, observed_values in observed_cols.items():
-                    if col not in {"time", "east", "north"}:
-                        responses = responses.filter(
-                            pl.col(col).is_in(
-                                observed_values.implode(), nulls_equal=True
-                            )
-                        )
-
-                pivoted = responses.collect(engine="streaming").pivot(
-                    on="realization",
-                    index=["response_key", *response_cls.match_key],
-                    values="values",
-                    aggregate_function="mean",
-                )
-                if response_type == "seismic":
-                    pivoted = (
-                        SeismicData.use_observation_locations_in_respective_responses(
-                            pivoted, observations
-                        )
-                        # Due to performed validations, all match keys should be unique.
-                        # Calculating 'mean' anyway to assure no ugly error is raised if
-                        # validations are somehow bypassed
-                        .group_by(["response_key", "east", "north"])
-                        .agg(pl.col(str(real)).mean())
-                    )
-
-                if pivoted.is_empty():
-                    # There are no responses for this realization,
-                    # so we explicitly create a column of Nones
-                    # to represent this. We are basically saying that
-                    # for this realization, each observation points
-                    # to a None response.
-                    joined = observations.with_columns(
-                        pl.lit(None, dtype=pl.Float32).alias(str(real)),
-                    )
-                elif "time" in pivoted:
-                    by_cols = [
-                        "response_key",
-                        *[k for k in response_cls.match_key if k != "time"],
-                    ]
-                    joined = observations.sort(
-                        by=[*by_cols, "time"]
-                    ).join_asof(
-                        pivoted.sort(by=[*by_cols, "time"]),
-                        by=by_cols,
-                        on="time",
-                        check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
-                        strategy="nearest",
-                        tolerance="1s",
-                    )
-                else:
-                    joined = observations.join(
-                        pivoted,
-                        how="left",
-                        on=["response_key", *response_cls.match_key],
-                        nulls_equal=True,
-                    )
-
-                no_matched_response_condition = pl.col(str(real)).is_null()
-                no_matched_response_error = pl.concat_str(
-                    [
-                        pl.lit("no response matched observation data: "),
-                        pl.lit("response_key="),
-                        pl.col("response_key").cast(pl.String),
-                        pl.lit(", "),
-                        response_cls.match_key_dict_expr(),
-                    ],
-                    separator="",
-                )
-
-                joined = joined.with_columns(
-                    append_to_qc_error(
-                        no_matched_response_condition, no_matched_response_error
-                    ).alias(f"qc_error_{real}")
-                )
-
-                # Avoid potential collision with "index" column (it could be a part
-                # of the index_key)
-                joined = joined.with_columns(
-                    response_cls.index_column_expr().alias("__tmp_index_key__")
-                )
-                if "index" in joined.columns:
-                    joined = joined.drop("index")
-                joined = joined.rename({"__tmp_index_key__": "index"})
-
-                joined = joined.with_columns(
-                    pl.when(pl.col(f"qc_error_{real}").is_null())
-                    .then(pl.col(str(real)))
-                    .otherwise(pl.lit(None, dtype=pl.Float32))
-                    .alias(str(real))
-                )
-
-                if first_columns is None:
-                    # The "leftmost" index columns are not yet collected.
-                    # They are the same for all iterations, and indexed the same
-                    # because we do a left join for the observations.
-                    # Hence, we select these columns only once.
-                    first_columns = joined.select(
-                        [
-                            "response_key",
-                            "index",
-                            "observation_key",
-                            "observations",
-                            "std",
-                            "east",
-                            "north",
-                            "radius",
-                        ]
-                    )
-
+                if common_columns is None:
+                    common_columns = _retrieve_common_columns(joined)
                 realization_columns.append(joined.select(str(real), f"qc_error_{real}"))
 
-            if first_columns is None:
+            if common_columns is None:
                 # Not a single realization had any responses to the
                 # observations. Hence, there is no need to include
                 # it in the dataset
                 continue
 
-            if any(df.height != first_columns.height for df in realization_columns):
+            if any(df.height != common_columns.height for df in realization_columns):
                 raise ValueError(
                     "Realization columns for response type "
                     f"{response_type} have differing numbers of rows"
@@ -1229,7 +1063,7 @@ class LocalEnsemble(BaseMode):
 
             dfs_per_response_type.append(
                 pl.concat(
-                    [first_columns, *realization_columns],
+                    [common_columns, *realization_columns],
                     how="horizontal_extend",
                 )
             )
@@ -1275,13 +1109,6 @@ class LocalEnsemble(BaseMode):
             pl.int_range(pl.len()).over("well").alias("order"),
         )
 
-        pivot_index = [
-            "well",
-            "date",
-            "realization",
-            "well_connection_cell",
-        ]
-
         output_columns = [
             "order",
             "east",
@@ -1308,37 +1135,22 @@ class LocalEnsemble(BaseMode):
 
         result_frames: list[pl.DataFrame] = []
 
+        config = cast(RFTConfig, self.experiment.response_configuration["rft"])
+        match_keys = ["well", "date", "well_connection_cell"]
+
+        match_config = MatchConfig()
+        match_config.special_match_keys = match_keys
+        match_config.filter_out_unmatchable_responses = True
+        match_config.pivot_responses_on = "property"
+        strategy = RFTMatchStrategy(self, config, match_config)
+
+        pure_observations = strategy.prepare_observations(pure_observations)
+
         for real in sorted(realizations):
-            responses = self.load_responses("rft", (real,)).with_columns(
-                pl.col("property").str.to_lowercase(),
+            observations = strategy.enrich_observations_with_realization_metadata(
+                pure_observations, real
             )
-            observation_metadata_in_realization = (
-                self.load_observation_location_metadata(real)
-            )
-            observations = RFTConfig.enrich_observations_with_metadata(
-                pure_observations,
-                observation_metadata_in_realization,
-            )
-            if cast(
-                RFTConfig, self.experiment.response_configuration["rft"]
-            ).approximate_missing_values:
-                responses = RFTConfig.approximate_missing_rft_responses(
-                    responses.lazy(), observations
-                ).collect()
-
-            join_keys = ["well", "date", "well_connection_cell"]
-            observed_values = {k: observations[k].unique() for k in join_keys}
-
-            for col, values in observed_values.items():
-                responses = responses.filter(
-                    pl.col(col).is_in(values.implode(), nulls_equal=True)
-                )
-
-            pivoted = responses.pivot(
-                on="property",
-                index=pivot_index,
-                values="values",
-            )
+            pivoted = strategy.extract_responses((real,), observations)
 
             for col in ["pressure", "sgas", "swat"]:
                 if col not in pivoted.columns:
@@ -1351,12 +1163,7 @@ class LocalEnsemble(BaseMode):
             )
 
             joined = (
-                observations.join(
-                    pivoted,
-                    how="left",
-                    on=join_keys,
-                    nulls_equal=True,
-                )
+                strategy.match(observations, pivoted)
                 .with_columns(
                     RFTConfig.is_zone_valid().alias("valid_zone"),
                     (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),

@@ -869,18 +869,19 @@ def test_that_get_rft_observations_and_responses_raises_error_for_no_observation
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_raises_error_when_response_not_saved():
-    with (
-        _create_rft_ensemble(1, [create_rft_observation()]) as ensemble,
-        pytest.raises(KeyError, match="No response for key rft"),
-    ):
-        ensemble.get_rft_observations_and_responses()
+    with _create_rft_ensemble(1, [create_rft_observation()]) as ensemble:
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(), 0
+        )
+        with pytest.raises(KeyError, match="No response for key rft"):
+            ensemble.get_rft_observations_and_responses()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_raises_error_when_location_metadata_not_saved():  # ruff: ignore[line-too-long]
     with _create_rft_ensemble(1, [create_rft_observation()]) as ensemble:
         ensemble.save_response("rft", _create_rft_response_df(), 0)
-        with pytest.raises(FileNotFoundError, match="observation_location_metadata"):
+        with pytest.raises(FileNotFoundError, match="RFT location metadata not found"):
             ensemble.get_rft_observations_and_responses()
 
 

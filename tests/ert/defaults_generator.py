@@ -16,6 +16,7 @@ from ert.config.parsing.file_context_token import FileContextToken
 from ert.config.parsing.observations_parser import ObservationDict, ObservationType
 from ert.config.rft_config import RFTConfig
 from ert.config.seismic_config import SeismicConfig
+from ert.config.summary_config import SummaryConfig
 
 
 def create_general_observation(
@@ -67,10 +68,12 @@ def create_general_observation_dict(
 def create_summary_observation(
     name: str = "summary_observation",
     key: str = "FOPR",
-    date: str = "2020-01-01",
+    date: str | dt.datetime = "2020-01-01",
     value: float = 1.0,
     error: float = 0.1,
 ) -> SummaryObservation:
+    if isinstance(date, dt.datetime):
+        date = date.isoformat()
     return SummaryObservation(
         name=name,
         key=key,
@@ -95,6 +98,28 @@ def create_summary_observation_dict(
         "VALUE": value,
         "ERROR": error,
     }
+
+
+def create_summary_response(
+    response_key: str = "FOPR",
+    time: str | dt.datetime = "2020-01-01",
+    values: float = 1.1,
+) -> pl.DataFrame:
+    if isinstance(time, dt.datetime):
+        time_series = pl.Series([time])
+    else:
+        time_series = pl.Series([time]).str.to_datetime()
+
+    df = pl.DataFrame(
+        {
+            "response_key": [response_key],
+            "time": time_series.dt.cast_time_unit("ms"),
+            "values": [np.float32(values)],
+        },
+        schema=SummaryConfig.response_schema(),
+    )
+    SummaryConfig._assert_schema(df, SummaryConfig.response_schema())
+    return df
 
 
 def create_breakthrough_observation(
