@@ -44,7 +44,7 @@ class BreakthroughMatchConfig:
 
 @dataclass
 class RFTMatchConfig:
-    pass
+    approximate_values: bool = True
 
 
 @dataclass
@@ -66,6 +66,8 @@ class MatchConfig:
     convert_response_key_to_categorical: bool = False
     obs_keys_to_filter_observations_on: Iterable[str] | None = None
     qc_observations: bool = False
+    response_key_to_filter_response_on: str | None = None
+    filter_out_unmatchable_responses: bool = False
 
 
 class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
@@ -123,6 +125,49 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
         self, observations: pl.DataFrame, realization: int
     ) -> pl.DataFrame:
         return observations
+
+    def customize_lazy_responses(
+        self, lazy_responses: pl.LazyFrame, observations: pl.DataFrame
+    ) -> pl.LazyFrame:
+        return lazy_responses
+
+    def _extract_lazy_responses(
+        self, realizations: tuple[int, ...], observations: pl.DataFrame
+    ) -> pl.LazyFrame:
+        responses = self._load_lazy_responses(realizations)
+        responses = self.customize_lazy_responses(responses, observations)
+        if self.match_config.filter_out_unmatchable_responses:
+            responses = self._filter_out_unmatchable_responses(
+                responses, observations, self.match_keys
+            )
+        return responses
+
+    def _load_lazy_responses(self, realizations: tuple[int, ...]) -> pl.LazyFrame:
+        if self.match_config.response_key_to_filter_response_on is not None:
+            response_id = self.match_config.response_key_to_filter_response_on
+        else:
+            response_id = self.response_cls.type
+        raw_responses = self.ensemble._load_responses_lazy(response_id, realizations)
+
+        if self.match_config.convert_response_key_to_categorical:
+            raw_responses = raw_responses.with_columns(
+                [pl.col("response_key").cast(pl.Categorical)]
+            )
+        return raw_responses
+
+    @staticmethod
+    def _filter_out_unmatchable_responses(
+        responses: pl.LazyFrame, observations: pl.DataFrame, match_keys: list[str]
+    ) -> pl.LazyFrame:
+        observed_cols = {k: observations[k].unique() for k in match_keys}
+
+        # Filter out responses without observations
+        for col, observed_values in observed_cols.items():
+            if col not in {"time", "east", "north"}:
+                responses = responses.filter(
+                    pl.col(col).is_in(observed_values.implode(), nulls_equal=True)
+                )
+        return responses
 
 
 class GenDataMatchStrategy(ReservoirDataMatchStrategy[GenDataConfig]):
@@ -183,6 +228,24 @@ class BreakthroughMatchStrategy(ReservoirDataMatchStrategy[BreakthroughConfig]):
             return None
         return times.max()  # type: ignore
 
+    @override
+    def customize_lazy_responses(
+        self, lazy_responses: pl.LazyFrame, observations: pl.DataFrame
+    ) -> pl.LazyFrame:
+        if self.match_config.breakthrough.fill_in_unreached_threshold:
+            if self.match_config.convert_response_key_to_categorical:
+                lazy_responses = lazy_responses.with_columns(
+                    pl.col("response_key").cast(pl.String)
+                )
+            lazy_responses = self.response_cls.fill_missing_values(
+                lazy_responses, self.ensemble_end_date
+            )
+            if self.match_config.convert_response_key_to_categorical:
+                lazy_responses = lazy_responses.with_columns(
+                    pl.col("response_key").cast(pl.Categorical)
+                )
+        return lazy_responses
+
 
 class RFTMatchStrategy(ReservoirDataMatchStrategy[RFTConfig]):
     @override
@@ -201,6 +264,19 @@ class RFTMatchStrategy(ReservoirDataMatchStrategy[RFTConfig]):
             observations = qc_rft_observations(observations)
 
         return observations
+
+    @override
+    def customize_lazy_responses(
+        self, lazy_responses: pl.LazyFrame, observations: pl.DataFrame
+    ) -> pl.LazyFrame:
+        if (
+            self.match_config.rft.approximate_values
+            and self.response_cls.approximate_missing_values
+        ):
+            lazy_responses = RFTConfig.approximate_missing_rft_responses(
+                lazy_responses, observations
+            )
+        return lazy_responses
 
 
 class SeismicMatchStrategy(ReservoirDataMatchStrategy[SeismicConfig]):
