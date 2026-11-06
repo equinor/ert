@@ -389,4 +389,4 @@ def test_that_failing_status_event_plugin_does_not_raise(caplog):
     pm = ErtPluginManager(plugins=[FailingPlugin])
     pm.notify_status_event(FinishedTotalRunPathCreationEvent())
 
-    assert "On status event plugin failed" in caplog.text
+    assert "On status event plugin FailingPlugin failed" in caplog.text
