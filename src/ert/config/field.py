@@ -265,14 +265,14 @@ class Field(ParameterConfig):
         )
 
     def load_parameter_graph(self) -> nx.Graph[int]:
-        parameter_graph = create_flattened_cube_graph(
+        """Graph with one node per ERTBOX cell and edges between
+        neighbouring cells. Node k corresponds to row k of the array
+        returned by load_parameters, i.e. the flat C-order index of
+        cell (x, y, z) in a cube of shape (nx, ny, nz).
+        """
+        return create_flattened_cube_graph(
             px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
         )
-        new_labels = {
-            old_label: new_label
-            for new_label, old_label in enumerate(parameter_graph.nodes())
-        }
-        return nx.relabel_nodes(parameter_graph, new_labels, copy=True)
 
     @property
     def nx(self) -> int:
