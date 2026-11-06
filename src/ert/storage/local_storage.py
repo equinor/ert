@@ -815,8 +815,8 @@ class LocalStorage(BaseMode):
     def load_blob(self, blob_dir: Path, uri: str) -> bytes:
         """Return raw bytes for the blob identified by *uri* inside *blob_dir*."""
         if not _BLOB_URI_PATTERN.fullmatch(uri):
-            logger.warning("Invalid blob URI format: %s", uri)
-            raise FileNotFoundError(uri)
+            logger.warning("Invalid blob URI: %s", uri)
+            raise ValueError(f"Invalid blob URI: {uri}")
         resolved_dir = blob_dir.resolve()
         blob_path = (resolved_dir / uri).resolve()
         try:

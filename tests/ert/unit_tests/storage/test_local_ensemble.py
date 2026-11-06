@@ -541,16 +541,17 @@ def test_that_load_blob_metadata_skips_malformed_metadata_and_logs_a_warning(
 
 
 @pytest.mark.parametrize(
-    "uri_template",
+    ("uri_template", "expected_exception"),
     [
-        pytest.param("missing.blob", id="missing-file"),
-        pytest.param("../index.json", id="parent-directory"),
-        pytest.param("{ensemble_path}/index.json", id="absolute-path"),
+        pytest.param("abcdef12.blob", FileNotFoundError, id="missing-file"),
+        pytest.param("../index.json", ValueError, id="parent-directory"),
+        pytest.param("{ensemble_path}/index.json", ValueError, id="absolute-path"),
     ],
 )
-def test_that_load_blob_raises_file_not_found_for_invalid_uri(
+def test_that_load_blob_distinguishes_missing_blobs_from_invalid_uris(
     tmp_path,
     uri_template,
+    expected_exception,
 ):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
@@ -559,7 +560,7 @@ def test_that_load_blob_raises_file_not_found_for_invalid_uri(
         )
         uri = uri_template.format(ensemble_path=ensemble._path)
 
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(expected_exception):
             ensemble.load_blob(uri)
 
 
@@ -590,7 +591,7 @@ def test_that_load_blob_rejects_existing_files_with_invalid_uri_before_resolving
         with monkeypatch.context() as patch:
             patch.setattr(Path, "resolve", resolve)
 
-            with pytest.raises(FileNotFoundError):
+            with pytest.raises(ValueError, match="Invalid blob URI"):
                 ensemble.load_blob(uri)
 
         resolve.assert_not_called()
