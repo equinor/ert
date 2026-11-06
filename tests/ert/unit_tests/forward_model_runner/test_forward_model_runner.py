@@ -278,7 +278,7 @@ def test_default_env_variables_available_inside_fm_step_context():
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("failing_step", [False, True])
-def test_that_checksum_lists_only_non_empty_output_files_with_prefix_md5(
+def test_that_checksum_lists_only_non_empty_output_files_with_tail_md5(
     failing_step,
 ):
     script = "print('x' * 2 * 1024 * 1024)" + (
@@ -297,9 +297,8 @@ def test_that_checksum_lists_only_non_empty_output_files_with_prefix_md5(
     assert list(checksum) == ["writer.0.stdout"]
     entry = checksum["writer.0.stdout"]
     assert entry["path"] == str(Path("out.txt").absolute())
-    assert entry["bytecount_used_in_md5sum"] == 1024 * 1024
-    assert (
-        entry["md5sum"]
-        == hashlib.md5(Path("out.txt").read_bytes()[: 1024 * 1024]).hexdigest()
-    )
+    content = Path("out.txt").read_bytes()
+    assert entry["size"] == len(content)
+    assert entry["tail_bytecount_used_in_md5sum"] == 1024 * 1024
+    assert entry["md5sum"] == hashlib.md5(content[-1024 * 1024 :]).hexdigest()
     assert not Path("err.txt").exists()

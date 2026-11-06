@@ -16,7 +16,7 @@ from _ert.forward_model_runner.reporting.message import (
     Message,
 )
 
-OUTPUT_FILE_MD5_PREFIX_BYTES = 1024 * 1024
+OUTPUT_FILE_MD5_TAIL_BYTES = 1024 * 1024
 
 
 class ForwardModelRunner:
@@ -59,7 +59,7 @@ class ForwardModelRunner:
                     entries[f"{step.name()}.{step.index}.{stream}"] = {
                         "type": "file",
                         "path": str(Path(file).absolute()),
-                        "bytecount_used_in_md5sum": OUTPUT_FILE_MD5_PREFIX_BYTES,
+                        "tail_bytecount_used_in_md5sum": OUTPUT_FILE_MD5_TAIL_BYTES,
                     }
         return entries
 
@@ -71,9 +71,15 @@ class ForwardModelRunner:
         for info in manifest.values():
             path = Path(info["path"])
             if path.exists():
-                with path.open("rb") as f:
-                    content = f.read(info.get("bytecount_used_in_md5sum", -1))
-                info["md5sum"] = hashlib.md5(content).hexdigest()
+                tail_bytecount = info.get("tail_bytecount_used_in_md5sum")
+                if tail_bytecount is None:
+                    info["md5sum"] = hashlib.md5(path.read_bytes()).hexdigest()
+                else:
+                    with path.open("rb") as f:
+                        size = os.fstat(f.fileno()).st_size
+                        f.seek(max(0, size - tail_bytecount))
+                        info["md5sum"] = hashlib.md5(f.read()).hexdigest()
+                    info["size"] = size
             else:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest

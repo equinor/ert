@@ -14,7 +14,8 @@ class Manifest(TypedDict):
     path: str
     error: NotRequired[str]
     md5sum: NotRequired[str]
-    bytecount_used_in_md5sum: NotRequired[int]
+    tail_bytecount_used_in_md5sum: NotRequired[int]
+    size: NotRequired[int]
 
 
 STEP_EXIT_FAILED_STRING_TEMPLATE = """Step {step_name} FAILED with code {exit_code}

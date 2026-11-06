@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import logging
 import shutil
+import string
 import time
 import warnings
 from functools import partial, wraps
@@ -347,6 +349,51 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
         await job_run_task
 
     assert f"File {file_path} checksum verification failed." in log_msgs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("file_content", "expected_size", "verified"),
+    [
+        (string.digits, 10, True),
+        (string.digits, 12, False),
+        ("23456789", 10, False),
+    ],
+)
+async def test_that_tail_checksum_verification_requires_matching_file_size(
+    realization: Realization, file_content, expected_size, verified
+):
+    scheduler = create_scheduler()
+    scheduler._manifest_queue = asyncio.Queue()
+    file_path = "output_file"
+    scheduler.checksum = {
+        "test_runpath": {
+            "file": {
+                "path": file_path,
+                "md5sum": hashlib.md5(b"6789").hexdigest(),
+                "tail_bytecount_used_in_md5sum": 4,
+                "size": expected_size,
+            }
+        }
+    }
+    Path(file_path).write_text(file_content, encoding="utf-8")
+
+    log_msgs = []
+    job = Job(scheduler, realization)
+    job.started.set()
+
+    with captured_logs(log_msgs, logging.WARNING):
+        job_run_task = asyncio.create_task(
+            job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+        )
+        job.started.set()
+        job.returncode.set_result(0)
+        await job_run_task
+
+    assert (
+        f"File {file_path} checksum verification failed." in log_msgs
+    ) is not verified
 
 
 @pytest.mark.asyncio

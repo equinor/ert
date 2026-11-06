@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import hashlib
 import logging
+import os
 import time
 import warnings
 from collections import Counter
@@ -364,12 +365,21 @@ class Job:
                 expected_md5sum = info.get("md5sum")
                 file_path_exists = await file_path.exists()
                 if file_path_exists and expected_md5sum:
+                    expected_size = info.get("size")
                     async with await file_path.open("rb") as file:
-                        file_bytes = await file.read(
-                            info.get("bytecount_used_in_md5sum", -1)
-                        )
-                    actual_md5sum = hashlib.md5(file_bytes).hexdigest()
-                    if expected_md5sum == actual_md5sum:
+                        actual_size = os.fstat(file.wrapped.fileno()).st_size
+                        if expected_size is None:
+                            file_bytes = await file.read()
+                        elif actual_size == expected_size:
+                            tail_bytecount = info["tail_bytecount_used_in_md5sum"]
+                            await file.seek(max(0, expected_size - tail_bytecount))
+                            file_bytes = await file.read(tail_bytecount)
+                        else:
+                            file_bytes = None
+                    if (
+                        file_bytes is not None
+                        and expected_md5sum == hashlib.md5(file_bytes).hexdigest()
+                    ):
                         logger.debug(f"File {file_path} checksum successful.")
                     else:
                         logger.warning(
