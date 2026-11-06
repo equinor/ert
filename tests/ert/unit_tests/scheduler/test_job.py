@@ -825,14 +825,21 @@ async def test_killing_job_does_not_hang_on_waiting_for_scheduler_to_kill_in_bat
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_that_log_warnings_skips_output_files_not_reported_as_existing(
-    realization, mocker
+@pytest.mark.parametrize(
+    "nonempty_files",
+    [(), ("stdout",), ("stderr",), ("stdout", "stderr")],
+)
+async def test_that_empty_output_files_are_not_waited_for(
+    realization, mocker, nonempty_files
 ):
     mock_sleep = mocker.patch("asyncio.sleep")
-    Path(realization.run_arg.runpath).mkdir()
-    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
-        "hello", encoding="utf-8"
-    )
+    runpath = Path(realization.run_arg.runpath)
+    runpath.mkdir()
+    existing_output_files = set()
+    for stream in nonempty_files:
+        filename = Path(f"foo.{stream}.0")
+        (runpath / filename).write_text("hello", encoding="utf-8")
+        existing_output_files.add(filename)
     realization.fm_steps = [
         ForwardModelStep(
             name="foo",
@@ -844,7 +851,7 @@ async def test_that_log_warnings_skips_output_files_not_reported_as_existing(
     remaining_timeout = await log_warnings_from_forward_model(
         realization,
         time.time() - 1,
-        existing_output_files={Path("foo.stdout.0")},
+        existing_output_files=existing_output_files,
     )
     assert remaining_timeout == Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
     mock_sleep.assert_not_called()
