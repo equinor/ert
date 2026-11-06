@@ -108,7 +108,15 @@ def test_merge_multiple_occurrences(
         DataSource.DESIGN_MATRIX
     }
     if error_msg == "ok_merge_with_different_realizations":
-        design_matrix_1.merge_with_other(design_matrix_2)
+        with pytest.warns(
+            ConfigWarning,
+            match=(
+                "do not have the same active realizations. The merged design "
+                "matrix will only contain the realizations that are active "
+                "in all instances."
+            ),
+        ):
+            design_matrix_1.merge_with_other(design_matrix_2)
         design_params = [cfg.name for cfg in design_matrix_1.parameter_configurations]
         assert all(param in design_params for param in ("a", "b", "d"))
         assert design_matrix_1.active_realizations == [False, True, True]

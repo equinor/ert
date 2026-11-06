@@ -2090,9 +2090,7 @@ def test_two_design2params_validates_design_matrix_merging(
         "PREINSTALLED_FORWARD_MODEL_STEPS",
         {"DESIGN2PARAMS": mock_design2params},
     )
-    with pytest.warns(
-        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
-    ):
+    with pytest.warns(ConfigWarning) as recorded_warnings:
         ErtConfig.from_file_contents(
             f"""\
                 NUM_REALIZATIONS 1
@@ -2102,6 +2100,20 @@ def test_two_design2params_validates_design_matrix_merging(
                     <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
                 """
         )
+    warning_messages = [str(warning.message) for warning in recorded_warnings]
+    assert any(
+        "DESIGN2PARAMS will be replaced with DESIGN_MATRIX" in message
+        for message in warning_messages
+    )
+    assert any(
+        (
+            "do not have the same active realizations. The merged design "
+            "matrix will only contain the realizations that are active "
+            "in all instances."
+        )
+        in message
+        for message in warning_messages
+    )
 
 
 def test_three_design2params_validates_design_matrix_merging(
@@ -2145,9 +2157,7 @@ def test_three_design2params_validates_design_matrix_merging(
         "PREINSTALLED_FORWARD_MODEL_STEPS",
         {"DESIGN2PARAMS": mock_design2params},
     )
-    with pytest.warns(
-        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
-    ):
+    with pytest.warns(ConfigWarning) as recorded_warnings:
         ErtConfig.from_file_contents(
             f"""\
                 NUM_REALIZATIONS 1
@@ -2159,6 +2169,20 @@ def test_three_design2params_validates_design_matrix_merging(
                     <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
                 """
         )
+    warning_messages = [str(warning.message) for warning in recorded_warnings]
+    assert any(
+        "DESIGN2PARAMS will be replaced with DESIGN_MATRIX" in message
+        for message in warning_messages
+    )
+    assert any(
+        (
+            "do not have the same active realizations. The merged design "
+            "matrix will only contain the realizations that are active "
+            "in all instances."
+        )
+        in message
+        for message in warning_messages
+    )
 
 
 def test_design_matrix_default_argument(tmp_path):
@@ -3325,12 +3349,19 @@ def test_that_categorical_gen_kw_override_warns_that_updates_are_turned_off(
         encoding="utf-8",
     )
 
-    with pytest.warns(
-        ConfigWarning,
-        match=r"\['a'\] will be overridden by design matrix\. Updates will be "
-        "turned off",
-    ):
+    with pytest.warns(ConfigWarning) as recorded_warnings:
         ErtConfig.from_file("config.ert")
+    warning_messages = [str(warning.message) for warning in recorded_warnings]
+    assert any(
+        "['a'] will be overridden by design matrix. Updates will be turned off"
+        in message
+        for message in warning_messages
+    )
+    assert any(
+        "categorical values are not supported by the update step "
+        "and will not be updated: a." in message
+        for message in warning_messages
+    )
 
 
 def test_that_log_observation_keys_logs_count_of_summary_keys(caplog):
