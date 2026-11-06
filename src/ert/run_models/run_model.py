@@ -332,12 +332,12 @@ class RunModel(RunModelConfig, ABC):
         return None
 
     def send_event(self, event: StatusEvents) -> None:
+        self.status_queue.put(event)
         if self._status_event_handler is not None:
             try:
                 self._status_event_handler(event)
             except Exception:
                 logger.exception("Status listener failed")
-        self.status_queue.put(event)
 
     @property
     def ensemble_size(self) -> int:
