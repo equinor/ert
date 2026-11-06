@@ -15,7 +15,7 @@ from websockets.exceptions import (
 from websockets.frames import Close
 
 from ert.ensemble_evaluator import EndEvent
-from ert.services.ert_client import _WEBSOCKET_CONNECT_RETRIES, ErtClient
+from ert.services.ert_client import _WEBSOCKET_CONNECT_RETRIES, ErtClient, _checked
 from ert.services.shared_client import SharedClient
 
 
@@ -349,3 +349,19 @@ def test_that_stop_server_propagates_transport_errors_when_server_is_unreachable
         api.stop_server()
 
     assert api.client.request.call_count == 1
+
+
+def test_that_unsuccessful_response_error_reports_status_code_and_body():
+    response = httpx.Response(
+        status_code=501,
+        text='{"detail": "not implemented"}',
+        request=httpx.Request("GET", "https://server/ensembles/1"),
+    )
+
+    with pytest.raises(httpx.RequestError) as exc_info:
+        _checked(response)
+
+    message = str(exc_info.value)
+    assert "501" in message
+    assert '{"detail": "not implemented"}' in message
+    assert "https://server/ensembles/1" in message
