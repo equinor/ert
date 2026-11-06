@@ -326,7 +326,12 @@ def test_that_fm_dispatch_script_runs_minimal_jobs_json_without_ert(tmp_path: Pa
         encoding="utf-8",
     )
 
-    result = run(["fm_dispatch.py", str(runpath)], cwd=tmp_path, check=False)
+    result = run(
+        ["fm_dispatch.py", str(runpath)],
+        cwd=tmp_path,
+        check=False,
+        start_new_session=True,
+    )
 
     assert result.returncode == 0
     assert (runpath / "echo.out").read_text(encoding="utf-8") == (
