@@ -27,7 +27,6 @@ from ert.config import (
     ParameterConfig,
     SummaryConfig,
 )
-from ert.config._reservoir_data_utils import SeismicData
 from ert.config.field import Field, field_transform
 from ert.config.observation_quality_control import (
     qc_rft_observations,
@@ -1035,6 +1034,7 @@ class LocalEnsemble(BaseMode):
             match_config.obs_keys_to_filter_observations_on = selected_observations
             match_config.qc_observations = True
             match_config.filter_out_unmatchable_responses = True
+            match_config.pivot_responses_on = "realization"
             match_config.breakthrough.fill_in_unreached_threshold = True
             strategy = matching_strategy(self, response_cls, match_config=match_config)
 
@@ -1050,24 +1050,9 @@ class LocalEnsemble(BaseMode):
                 observations = strategy.enrich_observations_with_realization_metadata(
                     observations_for_type, real
                 )
-                responses = strategy._extract_lazy_responses((real,), observations)
-
-                responses = responses.collect(engine="streaming")
-                if response_type == "seismic":
-                    responses = (
-                        SeismicData.use_observation_locations_in_respective_responses(
-                            responses, observations
-                        )
-                    )
-                pivoted = responses.pivot(
-                    on="realization",
-                    index=["response_key", *response_cls.match_key],
-                    values="values",
-                    aggregate_function="mean",
-                )
-
+                responses = strategy.extract_responses((real,), observations)
                 joined = _join_observations_and_responses(
-                    strategy, observations, pivoted, real
+                    strategy, observations, responses, real
                 )
 
                 if common_columns is None:

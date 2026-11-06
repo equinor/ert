@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, override
 
 import polars as pl
 
+from ert.config._reservoir_data_utils import SeismicData
 from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.gen_data_config import GenDataConfig
 from ert.config.observation_quality_control import (
@@ -68,6 +69,7 @@ class MatchConfig:
     qc_observations: bool = False
     response_key_to_filter_response_on: str | None = None
     filter_out_unmatchable_responses: bool = False
+    pivot_responses_on: str | None = None
 
 
 class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
@@ -106,6 +108,12 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
 
         return observations
 
+    def extract_responses(
+        self, realizations: tuple[int, ...], observations: pl.DataFrame
+    ) -> pl.DataFrame:
+        lazy_responses = self._extract_lazy_responses(realizations, observations)
+        return self._collect_responses(lazy_responses, observations)
+
     def match(
         self,
         observations: pl.DataFrame,
@@ -130,6 +138,11 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
         self, lazy_responses: pl.LazyFrame, observations: pl.DataFrame
     ) -> pl.LazyFrame:
         return lazy_responses
+
+    def customize_responses(
+        self, pivoted_responses: pl.DataFrame, observations: pl.DataFrame
+    ) -> pl.DataFrame:
+        return pivoted_responses
 
     def _extract_lazy_responses(
         self, realizations: tuple[int, ...], observations: pl.DataFrame
@@ -168,6 +181,38 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
                     pl.col(col).is_in(observed_values.implode(), nulls_equal=True)
                 )
         return responses
+
+    def _collect_responses(
+        self, lazy_responses: pl.LazyFrame, observations: pl.DataFrame
+    ) -> pl.DataFrame:
+        responses = lazy_responses.collect(engine="streaming")
+        responses = self.customize_responses(responses, observations)
+        responses = self._pivot_responses(responses)
+        return responses  # ruff: ignore[unnecessary-assign]
+
+    def _pivot_responses(self, responses: pl.DataFrame) -> pl.DataFrame:
+        if self.match_config.pivot_responses_on is None:
+            return responses
+
+        on = self.match_config.pivot_responses_on
+        if responses[on].dtype == pl.String:
+            responses = responses.with_columns(
+                pl.col(on).str.to_lowercase(),
+            )
+        index = list(self.match_keys)
+        # realization information should not be lost
+        if on != "realization":
+            index.append("realization")
+
+        return responses.pivot(
+            on=on,
+            # match keys should be subset of index to assure row uniqueness
+            index=index,
+            values="values",
+            # backup action to assure one row per observation.
+            # shouldn't be used if all values in the index are unique (they should be)
+            aggregate_function="mean",
+        )
 
 
 class GenDataMatchStrategy(ReservoirDataMatchStrategy[GenDataConfig]):
@@ -287,6 +332,14 @@ class SeismicMatchStrategy(ReservoirDataMatchStrategy[SeismicConfig]):
                 observations, self.ensemble.experiment.shape_registry
             )
         return observations
+
+    @override
+    def customize_responses(
+        self, pivoted_responses: pl.DataFrame, observations: pl.DataFrame
+    ) -> pl.DataFrame:
+        return SeismicData.use_observation_locations_in_respective_responses(
+            pivoted_responses, observations
+        )
 
 
 MatchStrategyType = (
