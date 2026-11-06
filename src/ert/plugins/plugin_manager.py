@@ -380,6 +380,18 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
         default=None, exclude=True, repr=False
     )
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ErtRuntimePlugins):
+            return NotImplemented
+        return self._comparable_fields() == other._comparable_fields()
+
+    def _comparable_fields(self) -> dict[str, Any]:
+        return {
+            name: value
+            for name, value in self.__dict__.items()
+            if name != "status_event_handler"
+        }
+
 
 def get_site_plugins(
     plugin_manager: ErtPluginManager | None = None,

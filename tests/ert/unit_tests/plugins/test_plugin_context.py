@@ -34,11 +34,8 @@ def mock_dummy_plugins(target_dir: Path):
 
 
 def test_no_plugins():
-    pm = ErtPluginManager(plugins=[])
-    runtime_plugins = get_site_plugins(pm)
-    assert runtime_plugins == ErtRuntimePlugins(
-        queue_options=None, status_event_handler=pm.notify_status_event
-    )
+    runtime_plugins = get_site_plugins(ErtPluginManager(plugins=[]))
+    assert ErtRuntimePlugins(queue_options=None) == runtime_plugins
 
 
 def test_that_ecl_and_flow_envvars_plugins_are_passed_through_plugin_context(
@@ -95,11 +92,8 @@ def test_that_site_configuration_propagates_through_plugin_context():
         def site_configurations():
             return site_config_content
 
-    pm = ErtPluginManager(plugins=[SomePlugin])
-    runtime_plugins = get_site_plugins(pm)
-    assert runtime_plugins == ErtRuntimePlugins(
-        **site_config_content, status_event_handler=pm.notify_status_event
-    )
+    runtime_plugins = get_site_plugins(ErtPluginManager(plugins=[SomePlugin]))
+    assert runtime_plugins == ErtRuntimePlugins(**site_config_content)
 
 
 def test_that_site_configuration_forward_models_are_merged_with_other_plugins():
