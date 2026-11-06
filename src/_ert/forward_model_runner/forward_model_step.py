@@ -10,7 +10,7 @@ import socket
 import sys
 import time
 import uuid
-from collections.abc import Generator, Iterable, Sequence
+from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from subprocess import Popen, run
@@ -176,6 +176,23 @@ class ForwardModelStep:
 
         return (stdin, stdout, stderr)
 
+    def _close_streams_and_remove_empty_outputs(
+        self,
+        stdin: io.TextIOWrapper | None,
+        stdout: io.TextIOWrapper | None,
+        stderr: io.TextIOWrapper | None,
+    ) -> None:
+        for stream in (stdin, stdout, stderr):
+            if stream is not None:
+                stream.close()
+
+        for output_file in (self.std_out, self.std_err):
+            if output_file:
+                path = Path(output_file)
+                with contextlib.suppress(FileNotFoundError):
+                    if path.is_file() and path.stat().st_size == 0:
+                        path.unlink()
+
     def _create_environment(self) -> dict[str, str] | None:
         combined_environment = None
         if environment := self.step_data.get("environment"):
@@ -212,8 +229,8 @@ class ForwardModelStep:
             exited_message = self._handle_process_io_error_and_create_exited_message(
                 e, stderr
             )
+            self._close_streams_and_remove_empty_outputs(stdin, stdout, stderr)
             yield exited_message
-            ensure_file_handles_closed([stdin, stdout, stderr])
             return
 
         exit_code = None
@@ -237,6 +254,7 @@ class ForwardModelStep:
                     )
                 )
                 if isinstance(potential_exited_msg, Exited):
+                    self._close_streams_and_remove_empty_outputs(stdin, stdout, stderr)
                     yield potential_exited_msg
                     return
 
@@ -265,7 +283,7 @@ class ForwardModelStep:
                     oom_score=oom_score,
                 ),
             )
-        ensure_file_handles_closed([stdin, stdout, stderr])
+        self._close_streams_and_remove_empty_outputs(stdin, stdout, stderr)
         exited_message = self._create_exited_message_based_on_exit_code(
             max_memory_usage,
             target_file,
@@ -439,12 +457,6 @@ def _get_existing_target_file_mtime(file: str | None) -> int | None:
     if file and Path(file).exists():
         mtime = Path(file).stat().st_mtime_ns
     return mtime
-
-
-def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) -> None:
-    for file_handle in file_handles:
-        if file_handle is not None:
-            file_handle.close()
 
 
 @dataclass

@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import hashlib
 import logging
+import os
 import time
 import warnings
 from collections import Counter
@@ -273,6 +274,7 @@ class Job:
                             self.real,
                             job_submission_time=self.submit_time,
                             timeout_seconds=self.remaining_file_verification_time,
+                            existing_output_files=self._reported_file_paths(),
                         )
                     )
                     await self.log_time_spent_above_threshold_waiting_for_files(
@@ -292,6 +294,17 @@ class Job:
             else:
                 current_span.set_status(Status(StatusCode.ERROR))
                 await self._send(JobState.FAILED)
+
+    def _reported_file_paths(self) -> set[Path] | None:
+        checksum = self._scheduler.checksum.get(self.real.run_arg.runpath)
+        if checksum is None:
+            return None
+        runpath = Path(self.real.run_arg.runpath)
+        return {
+            Path(info["path"]).relative_to(runpath)
+            for info in checksum.values()
+            if "path" in info and Path(info["path"]).is_relative_to(runpath)
+        }
 
     async def _max_runtime_task(self) -> None:
         assert self.real.max_runtime is not None
@@ -353,9 +366,21 @@ class Job:
                 expected_md5sum = info.get("md5sum")
                 file_path_exists = await file_path.exists()
                 if file_path_exists and expected_md5sum:
-                    file_bytes = await file_path.read_bytes()
-                    actual_md5sum = hashlib.md5(file_bytes).hexdigest()
-                    if expected_md5sum == actual_md5sum:
+                    expected_size = info.get("size")
+                    async with await file_path.open("rb") as file:
+                        actual_size = os.fstat(file.wrapped.fileno()).st_size
+                        if expected_size is None:
+                            file_bytes = await file.read()
+                        elif actual_size == expected_size:
+                            tail_bytecount = info["tail_bytecount_used_in_md5sum"]
+                            await file.seek(max(0, expected_size - tail_bytecount))
+                            file_bytes = await file.read(tail_bytecount)
+                        else:
+                            file_bytes = None
+                    if (
+                        file_bytes is not None
+                        and expected_md5sum == hashlib.md5(file_bytes).hexdigest()
+                    ):
                         logger.debug(f"File {file_path} checksum successful.")
                     else:
                         logger.warning(
@@ -484,6 +509,7 @@ async def log_warnings_from_forward_model(
     job_submission_time: float,
     timeout_seconds: int = Job.DEFAULT_FILE_VERIFICATION_TIMEOUT,
     max_logged_warnings: int = 200,
+    existing_output_files: set[Path] | None = None,
 ) -> int:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
@@ -497,6 +523,10 @@ async def log_warnings_from_forward_model(
             started. Files not changed after the job started are not read. There is
             a retry used to wait for file sync.
         timeout_seconds: Time to wait for stdout and stderr to appear if missing.
+        existing_output_files: Runpath-relative paths of files the forward model
+            runner reported as existing. Empty stdout and stderr files are removed
+            by the runner, so files not in this set are not waited for. None means
+            no report was received, and all files are waited for.
     Returns:
         The seconds left of the given timeout_seconds.
     """
@@ -566,7 +596,13 @@ async def log_warnings_from_forward_model(
                 (step.stderr_file, "stderr"),
             ]:
                 if std_file_name is not None:
-                    std_path = runpath / f"{std_file_name}.{step_idx}"
+                    relative_std_path = Path(f"{std_file_name}.{step_idx}")
+                    std_path = runpath / relative_std_path
+                    if (
+                        existing_output_files is not None
+                        and relative_std_path not in existing_output_files
+                    ):
+                        continue
                     timeout_seconds = await wait_for_file(std_path, timeout_seconds)
 
                     if timeout_seconds <= 0:
