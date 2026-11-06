@@ -214,6 +214,12 @@ where:
    When a parameter name overlaps between DESIGN_MATRIX and GEN_KW, the PRIORITY setting determines which source's update behavior takes precedence.
    Default is `FALSE`.
 
+   .. note::
+
+      Setting ``UPDATE:TRUE`` is an advanced feature. Leave the default
+      ``UPDATE:FALSE`` unless you intend to include design matrix parameters
+      in the history-matching update.
+
   Columns containing non-numeric (categorical) values, e.g. text labels, cannot be updated
   when they are sourced from the design matrix, even if ``UPDATE:TRUE`` is set. When
   ``UPDATE:TRUE`` is set, ERT emits a ``ConfigWarning`` listing the excluded parameter names.
