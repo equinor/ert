@@ -1,3 +1,4 @@
+import logging
 from typing import cast, override
 
 from PyQt6.QtCore import (
@@ -30,7 +31,10 @@ from ert.gui.model.snapshot import (
     MemoryUsageRole,
     RealIens,
 )
+from ert.gui.utils import log_once
 from ert.shared.status.utils import byte_with_unit
+
+logger = logging.getLogger(__name__)
 
 
 class RealizationWidget(QWidget):
@@ -61,6 +65,12 @@ class RealizationWidget(QWidget):
         )
 
         self._real_view.clicked.connect(self._item_clicked)
+
+        log_once(
+            self._real_view.clicked,
+            logger,
+            "Realization details opened in experiment status",
+        )
 
         layout = QVBoxLayout()
         layout.addWidget(self._real_view)
