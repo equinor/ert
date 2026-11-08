@@ -52,11 +52,9 @@ def test_that_monitor_delivers_events_after_end_event(monitor_client):
     monitor_client.iter_events.return_value = (event for event in events)
     callback = MagicMock()
 
-    start_monitor(monitor_client, callback, "experiment", polling_interval=0.2)
+    start_monitor(monitor_client, callback, "experiment")
 
-    monitor_client.iter_events.assert_called_once_with(
-        "experiment", refresh_interval=0.2
-    )
+    monitor_client.iter_events.assert_called_once_with("experiment")
     assert [call.args[0][SIM_PROGRESS_ID] for call in callback.call_args_list] == events
 
 
