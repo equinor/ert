@@ -68,6 +68,10 @@ class PlotContext:
         self._rug_plot: bool = True
         self._gkde_plot: bool = True
 
+        # Maps plot
+        self._misfit_map: bool = True
+        self._observations_map: bool = True
+
         self._plot_type: PlotType | None = None
 
     @property
@@ -225,3 +229,19 @@ class PlotContext:
     @histogram.setter
     def histogram(self, value: bool) -> None:
         self._histogram = value
+
+    @property
+    def misfit_map(self) -> bool:
+        return self._misfit_map
+
+    @misfit_map.setter
+    def misfit_map(self, value: bool) -> None:
+        self._misfit_map = value
+
+    @property
+    def observations_map(self) -> bool:
+        return self._observations_map
+
+    @observations_map.setter
+    def observations_map(self, value: bool) -> None:
+        self._observations_map = value
