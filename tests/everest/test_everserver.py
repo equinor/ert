@@ -20,6 +20,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent
+from ert.plugins import ErtPluginManager
 from ert.run_models.event import StatusEvents
 from ert.scheduler.event import FinishedEvent
 from ert.server.app import app
@@ -427,7 +428,6 @@ def test_that_draining_gives_up_after_the_timeout(caplog):
 def everest_run_state(monkeypatch):
     state = ExperimentRunnerState()
     monkeypatch.setitem(_experiments, "experiment_id", state)
-    monkeypatch.setattr("ert.server.endpoints.experiment_runs.get_site_plugins", Mock())
     monkeypatch.setattr(
         "ert.server.endpoints.experiment_runs.use_runtime_plugins",
         lambda _: nullcontext(),
@@ -448,7 +448,7 @@ async def test_that_model_creation_failure_publishes_a_failed_end_event(
     subscriber = Subscriber()
     everest_run_state.subscribers["subscriber"] = subscriber
 
-    await run_everest(Mock(), "experiment_id")
+    await run_everest(Mock(), "experiment_id", Mock())
 
     assert everest_run_state.events == [EndEvent(failed=True, msg="Invalid config")]
     assert everest_run_state.status.status == ExperimentState.failed
@@ -479,7 +479,7 @@ async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event
     subscriber = Subscriber()
     everest_run_state.subscribers["subscriber"] = subscriber
 
-    await run_everest(Mock(), "experiment_id")
+    await run_everest(Mock(), "experiment_id", Mock())
 
     model.cancel.assert_called_once_with()
     assert everest_run_state.events == [
