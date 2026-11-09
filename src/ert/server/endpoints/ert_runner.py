@@ -325,11 +325,9 @@ async def run_ert(
     cancellation_requested = False
 
     def publish(event: StatusEvents) -> None:
-        run.events.append(event)
+        run.publish(event)
         if isinstance(event, EndEvent):
             run.finalized.set()
-        for subscriber in run.subscribers.values():
-            subscriber.notify()
 
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         if run.status.status == ExperimentState.stopped:

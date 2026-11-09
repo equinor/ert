@@ -1,6 +1,8 @@
 import asyncio
+import json
 import logging
 import threading
+import uuid
 import warnings
 from base64 import b64encode
 from contextlib import nullcontext
@@ -14,14 +16,16 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 import yaml
+from fastapi import BackgroundTasks
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent
-from ert.plugins import ErtPluginManager
-from ert.run_models.event import StatusEvents
+from ert.plugins import ErtPluginManager, get_site_plugins
+from ert.run_models.event import RunModelStatusEvent, StatusEvents
+from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
 from ert.server.app import app
 from ert.server.endpoints.experiment_runs import (
@@ -29,6 +33,7 @@ from ert.server.endpoints.experiment_runs import (
     Subscriber,
     _experiments,
     run_everest,
+    start_experiment,
     websocket_endpoint,
 )
 from ert.services import ErtClient, ErtServerController
@@ -622,6 +627,79 @@ def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypa
 
     assert response.status_code == 200
     assert not any(issubclass(w.category, ConfigWarning) for w in caught_warnings)
+
+
+async def test_that_started_everest_experiment_passes_status_events_and_id_to_notifier(
+    monkeypatch,
+):
+    received_events = []
+
+    def notify_status_event(experiment_id, event):
+        received_events.append((experiment_id, event))
+
+    events = [
+        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
+        EndEvent(failed=False, msg="done"),
+    ]
+
+    def create_run_model(*, status_queue, **_):
+        run_model = MagicMock()
+        run_model.queue_config.queue_system = QueueSystem.LOCAL
+        run_model.exit_code = EverestExitCode.COMPLETED
+        run_model.start_simulations_thread.side_effect = lambda _: [
+            status_queue.put(event) for event in events
+        ]
+        return run_model
+
+    monkeypatch.setattr("ert.server.endpoints.experiment_runs._experiments", {})
+    background_tasks = BackgroundTasks()
+    with (
+        patch(
+            "ert.server.endpoints.experiment_runs.EverestRunModel.create",
+            side_effect=create_run_model,
+        ),
+        patch("ert.server.endpoints.experiment_runs.EvaluatorServerConfig"),
+    ):
+        response = await start_experiment(
+            MagicMock(),
+            background_tasks,
+            get_site_plugins(ErtPluginManager(plugins=[])),
+            notify_status_event,
+        )
+        await background_tasks()
+
+    experiment_id = json.loads(bytes(response.body))["experiment_id"]
+    assert received_events == [(experiment_id, event) for event in events]
+
+
+async def test_that_stopped_run_everest_forwards_end_event_to_status_event_listener(
+    monkeypatch, everest_run_state
+):
+    received_events = []
+    everest_run_state.status_event_listener = received_events.append
+
+    cancelled = threading.Event()
+    model = Mock()
+    model._experiment = None
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+    model.cancel.side_effect = cancelled.set
+
+    def simulate(_evaluator_config):
+        everest_run_state.status = ExperimentStatus(
+            status=ExperimentState.stopped, message="Server stopped by user"
+        )
+        cancelled.wait(timeout=5)
+
+    model.start_simulations_thread.side_effect = simulate
+    monkeypatch.setattr(
+        "ert.server.endpoints.experiment_runs.EverestRunModel.create",
+        Mock(return_value=model),
+    )
+
+    await run_everest(Mock(), "experiment_id", Mock())
+
+    assert received_events == [EndEvent(failed=True, msg="Optimization aborted")]
+    assert everest_run_state.status.status == ExperimentState.stopped
 
 
 async def test_websocket_no_events_on_connect(setup_client):
