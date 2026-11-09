@@ -399,6 +399,7 @@ class ExperimentRunner:
                     continue
 
                 run.events.append(item)
+                self._plugin_manager.notify_status_event(item, self._experiment_id)
                 for sub in run.subscribers.values():
                     sub.notify()
 

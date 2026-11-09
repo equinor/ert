@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import uuid
 import warnings
 from base64 import b64encode
 from dataclasses import dataclass
@@ -15,12 +16,15 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from ert.config import ConfigWarning
+from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent
-from ert.run_models.event import StatusEvents
+from ert.plugins import ErtPluginManager, plugin
+from ert.run_models.event import RunModelStatusEvent, StatusEvents
+from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
 from ert.server.app import app
 from ert.server.endpoints.experiment_runs import (
+    ExperimentRunner,
     ExperimentRunnerState,
     _experiments,
     get_plugin_manager,
@@ -455,6 +459,47 @@ def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypa
 
     assert response.status_code == 200
     assert not any(issubclass(w.category, ConfigWarning) for w in caught_warnings)
+
+
+async def test_that_experiment_runner_passes_status_events_and_id_to_plugins(
+    monkeypatch,
+):
+    received_events = []
+
+    class EventSubscriber:
+        @plugin(name="event_subscriber")
+        def on_status_event(event, experiment_id):
+            received_events.append((event, experiment_id))
+
+    events = [
+        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
+        EndEvent(failed=False, msg="done"),
+    ]
+
+    def create_run_model(*, status_queue, **_):
+        run_model = MagicMock()
+        run_model.queue_config.queue_system = QueueSystem.LOCAL
+        run_model.exit_code = EverestExitCode.COMPLETED
+        run_model.start_simulations_thread.side_effect = lambda _: [
+            status_queue.put(event) for event in events
+        ]
+        return run_model
+
+    monkeypatch.setitem(_experiments, "experiment_id", ExperimentRunnerState())
+    with (
+        patch(
+            "ert.server.endpoints.experiment_runs.EverestRunModel.create",
+            side_effect=create_run_model,
+        ),
+        patch("ert.server.endpoints.experiment_runs.EvaluatorServerConfig"),
+    ):
+        await ExperimentRunner(
+            MagicMock(),
+            "experiment_id",
+            ErtPluginManager(plugins=[EventSubscriber]),
+        ).run()
+
+    assert received_events == [(event, "experiment_id") for event in events]
 
 
 async def test_websocket_no_events_on_connect(setup_client):
