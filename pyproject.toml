@@ -112,7 +112,7 @@ dev = [
     "pytest-timeout",
     "pytest-xdist",
     "pytest-durations",
-    "pytest>6",
+    "pytest>6,<9.2",
     "resdata",
     "rust-just",
     "scikit-image",
