@@ -216,9 +216,9 @@ where:
 
    .. note::
 
-      Setting ``UPDATE:TRUE`` is an advanced feature. Leave the default
-      ``UPDATE:FALSE`` unless you intend to include design matrix parameters
-      in the history-matching update.
+      Setting ``UPDATE:TRUE`` is an advanced feature and will include design matrix parameters in history matching.
+      When using the option the user is responsible for making sure that the initial parameter distribution is compatible
+      with parameters sampled by ert, which uses a standard normal distribution. The default is ``UPDATE:FALSE``
 
   Columns containing non-numeric (categorical) values, e.g. text labels, cannot be updated
   when they are sourced from the design matrix, even if ``UPDATE:TRUE`` is set. When
