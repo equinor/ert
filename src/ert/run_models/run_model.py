@@ -35,6 +35,7 @@ from _ert.events import (
     EESnapshotUpdate,
     EnsembleEvaluationWarning,
 )
+from ert.base_model_context import init_context_var
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -190,6 +191,9 @@ class RunModel(RunModelConfig, ABC):
     _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
     _workflow_run_id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _pending_workflow_events: list[WorkflowEvent] = PrivateAttr(default_factory=list)
+    _status_event_listeners: dict[str, Callable[[StatusEvents], object]] = PrivateAttr(
+        default_factory=dict
+    )
 
     def __init__(
         self,
@@ -220,6 +224,9 @@ class RunModel(RunModelConfig, ABC):
             substitutions=self.substitutions,
             eclbase=self.runpath_config.summary_file_base_name,
         )
+
+        if (runtime_plugins := init_context_var.get()) is not None:
+            self._status_event_listeners = dict(runtime_plugins.status_event_listeners)
 
     @property
     def api(self) -> RunModelAPI:
@@ -326,6 +333,14 @@ class RunModel(RunModelConfig, ABC):
 
     def send_event(self, event: StatusEvents) -> None:
         self.status_queue.put(event)
+        for plugin_name, listener in self._status_event_listeners.items():
+            try:
+                listener(event)
+            except Exception:
+                # See https://github.com/equinor/ert/issues/14908
+                logger.exception(
+                    f"Status event listener from plugin {plugin_name!r} failed"
+                )
 
     @property
     def ensemble_size(self) -> int:
