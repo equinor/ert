@@ -2,9 +2,8 @@ from .cesp import CrossEnsembleStatisticsPlot
 from .distribution import DistributionPlot
 from .field_update_plot import FieldUpdatePlot
 from .histogram import HistogramPlot
-from .misfit_map import MisfitMapPlot
+from .maps import MapsPlot
 from .misfits import MisfitsPlot
-from .observations_map import ObservationsMapPlot
 from .statistics import StatisticsPlot
 from .std_dev import StdDevPlot
 from .waterfall import WaterfallPlot
@@ -14,9 +13,8 @@ __all__ = [
     "DistributionPlot",
     "FieldUpdatePlot",
     "HistogramPlot",
-    "MisfitMapPlot",
+    "MapsPlot",
     "MisfitsPlot",
-    "ObservationsMapPlot",
     "StatisticsPlot",
     "StdDevPlot",
     "WaterfallPlot",

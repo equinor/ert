@@ -21,6 +21,7 @@ from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
 from ert.gui.plotting.ert_plots.histogram import HistogramPlot
+from ert.gui.plotting.ert_plots.maps import MISFIT_MAP_TITLE
 from ert.gui.plotting.models import DataTypeSeparator
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.plotting.plot_window import (
@@ -34,9 +35,8 @@ from ert.gui.plotting.utils.plot_maps import (
     ENSEMBLE,
     ERT_PLOT_MAP,
     HISTOGRAM,
-    MISFIT_MAP,
+    MAPS,
     MISFITS,
-    OBSERVATIONS_MAP,
     STATISTICS,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget
@@ -1468,8 +1468,8 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
 
-    misfit_map_widget = plot_window._widget_by_name(MISFIT_MAP)
-    plot_window._central_tab.setCurrentWidget(misfit_map_widget)
+    maps_widget = plot_window._widget_by_name(MAPS)
+    plot_window._central_tab.setCurrentWidget(maps_widget)
 
     ensemble_list = plot_window._ensemble_selection_widget._selected_ensembles
     ensemble_items = [ensemble_list.item(i) for i in range(ensemble_list.count())]
@@ -1478,14 +1478,22 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
     # Min and max of the signed chi-squared misfit for the first ensemble
     expected_v_range = (4.0, 36.0)
 
-    # The plot color range (vmin and vmax) is the same for both ensembles:
-    ensemble_list.itemClicked.emit(ensemble_items[0])
-    plot_artist = misfit_map_widget._figure.axes[0].collections[0]
-    assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+    for item in ensemble_items:
+        ensemble_list.itemClicked.emit(item)
+        (misfit_axes,) = [
+            axes
+            for axes in maps_widget._figure.axes
+            if axes.get_title() == MISFIT_MAP_TITLE
+        ]
 
-    ensemble_list.itemClicked.emit(ensemble_items[1])
-    plot_artist = misfit_map_widget._figure.axes[0].collections[0]
-    assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+        # The plot color range (vmin and vmax) is the same for both ensembles:
+        # ensemble_list.itemClicked.emit(ensemble_items[0])
+        plot_artist = misfit_axes.collections[0]
+        assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+
+        # ensemble_list.itemClicked.emit(ensemble_items[1])
+        plot_artist = misfit_axes.collections[0]
+        assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
 
 
 def _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1535,7 +1543,7 @@ def _select_additional_ensemble(plot_window: PlotWindow, row: int) -> None:
     ensemble_list.itemClicked.emit(ensemble_list.item(row))
 
 
-@pytest.mark.parametrize("tab_name", [MISFIT_MAP, OBSERVATIONS_MAP])
+@pytest.mark.parametrize("tab_name", [MAPS])
 @pytest.mark.slow
 def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
     qtbot: QtBot, tab_name: str, mock_plot_api: MagicMock
@@ -1555,7 +1563,7 @@ def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
 
 
 @pytest.mark.slow
-def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit(
+def test_that_switching_away_from_maps_tab_restores_default_ensemble_limit(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1564,7 +1572,7 @@ def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
 
-    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MAPS))
     assert selection_widget.get_maximum_ensemble_limit() == 1
 
     plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFITS))
@@ -1576,7 +1584,7 @@ def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit
 
 
 @pytest.mark.slow
-def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_limit(
+def test_that_selecting_a_key_without_a_maps_tab_restores_default_ensemble_limit(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1584,7 +1592,7 @@ def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_lim
     )
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
-    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MAPS))
     assert selection_widget.get_maximum_ensemble_limit() == 1
 
     _select_data_type_key(plot_window, "POLY_RES")
@@ -1597,7 +1605,7 @@ def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_lim
 
 
 @pytest.mark.slow
-def test_that_selecting_a_key_restoring_the_misfit_map_tab_narrows_selection_to_one(
+def test_that_selecting_a_key_restoring_the_maps_tab_narrows_selection_to_one(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1606,13 +1614,13 @@ def test_that_selecting_a_key_restoring_the_misfit_map_tab_narrows_selection_to_
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
     # Remembered as the tab to return to for two-dimensional keys
-    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MAPS))
     _select_data_type_key(plot_window, "POLY_RES")
     _select_additional_ensemble(plot_window, 1)
     assert len(selection_widget.get_selected_ensembles()) == 2
 
     _select_data_type_key(plot_window, "SEISMIC")
 
-    assert _current_tab_name(plot_window) == MISFIT_MAP
+    assert _current_tab_name(plot_window) == MAPS
     assert selection_widget.get_maximum_ensemble_limit() == 1
     assert len(selection_widget.get_selected_ensembles()) == 1
