@@ -6,6 +6,7 @@ import pytest
 
 import ert.plugins.hook_implementations
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
+from ert.plugins.plugin_manager import hook_implementation
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
@@ -347,8 +348,34 @@ def test_that_plugin_manager_with_two_site_configurations_raises_error():
         def site_configurations():
             return ErtRuntimePlugins(environment_variables={"a": "c"})
 
-    with pytest.raises(ValueError, match="Only one site configuration is allowed"):
-        ErtPluginManager(plugins=[SiteOne, SiteTwo]).get_site_configurations()
+    with pytest.raises(
+        ValueError,
+        match=r"Only one plugin may implement the 'site_configurations' hook",
+    ):
+        ErtPluginManager(plugins=[SiteOne, SiteTwo])
+
+
+@pytest.mark.parametrize("hook_name", ["get_ip_address", "site_configurations"])
+def test_that_second_implementation_of_single_implementation_hook_is_rejected(
+    hook_name,
+):
+    def make_plugin(plugin_name):
+        @hook_implementation(specname=hook_name)
+        def hook():
+            return None
+
+        return type(plugin_name, (), {"hook": staticmethod(hook)})
+
+    first, second = make_plugin("FirstPlugin"), make_plugin("SecondPlugin")
+    pm = ErtPluginManager(plugins=[first])
+
+    with pytest.raises(
+        ValueError, match=f"Only one plugin may implement the '{hook_name}' hook"
+    ):
+        pm.register(second)
+
+    assert pm.is_registered(first)
+    assert not pm.is_registered(second)
 
 
 def test_get_ip_address(monkeypatch, tmpdir):

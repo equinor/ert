@@ -1,6 +1,7 @@
-from ert.plugins.plugin_manager import hook_specification
+from ert.plugins.plugin_manager import hook_specification, single_implementation
 
 
+@single_implementation
 @hook_specification
 def get_ip_address() -> str:  # type: ignore
     """Ert uses network communication over TCP/IP and needs to provide potential
@@ -11,4 +12,6 @@ def get_ip_address() -> str:  # type: ignore
     On machines exposing several IP addresses, the correct IP is non-trivial
     to pick, and by specifying this hook in an installed plugin, any custom
     code can be injected in order to pick the correct IP.
+
+    Only one implementation is allowed.
     """
