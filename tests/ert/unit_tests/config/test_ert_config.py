@@ -2161,6 +2161,38 @@ def test_three_design2params_validates_design_matrix_merging(
         )
 
 
+@pytest.mark.parametrize(
+    ("num_realizations", "expected_size", "expected_active"),
+    [(12, 9, [1, 4, 8]), (6, 6, [1, 4])],
+)
+def test_that_sparse_design_matrix_warning_reports_active_realizations_within_ensemble(
+    tmp_path, num_realizations, expected_size, expected_active
+):
+    design_matrix_file = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file, pl.DataFrame({"REAL": [1, 4, 8], "a": [1, 2, 3]})
+    )
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS {num_realizations}\nDESIGN_MATRIX {design_matrix_file}"
+    )
+    with pytest.warns(ConfigWarning) as recorded_warnings:
+        ensemble_size = config.ensemble_size
+
+    assert ensemble_size == expected_size
+    assert [
+        index for index, active in enumerate(config.active_realizations) if active
+    ] == expected_active
+
+    messages = [str(warning.message) for warning in recorded_warnings]
+    assert any(
+        f"NUM_REALIZATIONS ({num_realizations})" in message
+        and "DESIGN_MATRIX" in message
+        and "(9)" in message
+        and f"of which {len(expected_active)} are active" in message
+        for message in messages
+    ), messages
+
+
 def test_design_matrix_default_argument(tmp_path):
     design_matrix_file = tmp_path / "my_design_matrix.xlsx"
     _create_design_matrix(

@@ -1,4 +1,5 @@
 import tempfile
+from argparse import Namespace
 from pathlib import Path
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
@@ -20,7 +21,7 @@ from pytestqt.qtbot import QtBot
 
 import ert.run_models
 from _ert.events import EnsembleEvaluationWarning
-from ert.config import ErtConfig
+from ert.config import ConfigWarning, DesignMatrix, ErtConfig
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -31,6 +32,10 @@ from ert.ensemble_evaluator.event import (
 from ert.gui.ertwidgets.suggestor.suggestor import Suggestor
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments._design_matrix_panel import DesignMatrixPanel
+from ert.gui.experiments._panel_utils import (
+    create_active_realizations_field,
+    create_number_of_realizations_container,
+)
 from ert.gui.experiments.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
@@ -50,6 +55,7 @@ from ert.run_models.event import (
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
+from ert.run_models.model_factory import _get_and_validate_active_realizations_list
 from ert.run_models.run_model import RunModel
 from ert.scheduler.job import Job
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
@@ -993,11 +999,62 @@ def test_that_ert_chooses_minimum_realization_with_design_matrix(
 
     # Verify that the warning icon has the correct tooltip
     warning_icon = gui.findChild(QLabel, "warning_icon_num_realizations_design_matrix")
-    assert warning_icon.toolTip() == (
-        f"Number of realizations was set to {expected_num_realizations} "
-        "due to different number of realizations in the design matrix "
-        "and NUM_REALIZATIONS in config"
+    assert str(expected_num_realizations) in warning_icon.toolTip()
+    assert f"of which {expected_num_realizations} are active" in warning_icon.toolTip()
+
+
+@pytest.mark.parametrize(
+    ("config_num_realizations", "expected_size", "expected_active"),
+    [(12, 9, 3), (6, 6, 2)],
+)
+def test_that_design_matrix_tooltip_reports_active_realizations_within_ensemble(
+    qtbot: QtBot, tmp_path, config_num_realizations, expected_size, expected_active
+):
+    design_path = tmp_path / "design_matrix.xlsx"
+    pd.DataFrame({"REAL": [1, 4, 8], "a": [1, 2, 3]}).to_excel(
+        design_path, index=False, sheet_name="DesignSheet"
     )
+    design_matrix = DesignMatrix(design_path, "DesignSheet", None)
+    container, label = create_number_of_realizations_container(expected_size)
+    qtbot.addWidget(container)
+    button_layout = DesignMatrixPanel.get_design_matrix_button(
+        design_matrix, label, config_num_realizations
+    )
+    container.layout().addItem(button_layout)
+
+    warning_icon = container.findChild(
+        QLabel, "warning_icon_num_realizations_design_matrix"
+    )
+    assert warning_icon is not None
+    assert str(expected_size) in warning_icon.toolTip()
+    assert f"of which {expected_active} are active" in warning_icon.toolTip()
+
+
+def test_that_active_realizations_editor_accepts_only_design_matrix_subset(
+    qtbot: QtBot, tmp_path
+):
+    design_path = tmp_path / "design_matrix.xlsx"
+    pd.DataFrame({"REAL": [1, 4, 8], "a": [1, 2, 3]}).to_excel(
+        design_path, index=False, sheet_name="DesignSheet"
+    )
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 6\nDESIGN_MATRIX {design_path}"
+    )
+    with pytest.warns(ConfigWarning):
+        active_realizations = config.active_realizations
+    field, _ = create_active_realizations_field(active_realizations)
+    qtbot.addWidget(field)
+
+    assert field.text() == "1, 4"
+    field.setText("4")
+    assert field.isValid()
+    assert _get_and_validate_active_realizations_list(
+        Namespace(realizations=field.text()), config
+    ) == [False, False, False, False, True, False]
+    field.setText("1-4")
+    assert not field.isValid()
+    field.setText("8")
+    assert not field.isValid()
 
 
 @pytest.mark.slow
