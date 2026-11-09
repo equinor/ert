@@ -1568,7 +1568,9 @@ def test_that_hovering_over_point_highlights_it_and_moving_away_clears_it(qtbot)
 
         # Hovered point is overlaid:
         assert display_xy[plot._hover_index].tolist() == display_xy[i].tolist()
-        assert plot._hover_artist._offsets3d == pytest.approx(([cx], [cy], [cz]))
+        np.testing.assert_array_almost_equal(
+            plot._hover_artist._offsets3d, ([cx], [cy], [cz])
+        )
 
         hover_plot(plot, x + 1000, y + 1000)  # Move away from the point
 
