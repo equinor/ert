@@ -5,7 +5,8 @@ from pathlib import Path
 import pytest
 
 import ert.plugins.hook_implementations
-from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins, plugin
+from ert.run_models.event import FinishedTotalRunPathCreationEvent
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
@@ -362,3 +363,25 @@ def test_get_ip_address(monkeypatch, tmpdir):
         assert default_plugin.get_ip_address() != pm.get_ip_address()
         assert default_plugin.get_ip_address() == default_ip_address
         assert pm.get_ip_address() == PLUGIN_IP_ADDRESS
+
+
+def test_that_status_event_listeners_contain_all_on_status_event_hooks():
+    events_received = []
+
+    class FirstListenerPlugin:
+        @plugin(name="first_status_listener")
+        def on_status_event(event):
+            events_received.append(("first", event))
+
+    class SecondListenerPlugin:
+        @plugin(name="second_status_listener")
+        def on_status_event(event):
+            events_received.append(("second", event))
+
+    pm = ErtPluginManager(plugins=[FirstListenerPlugin, SecondListenerPlugin])
+    event = FinishedTotalRunPathCreationEvent()
+
+    for listener in get_site_plugins(pm).status_event_listeners.values():
+        listener(event)
+
+    assert sorted(events_received) == [("first", event), ("second", event)]

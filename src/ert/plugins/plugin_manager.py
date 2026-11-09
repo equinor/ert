@@ -34,6 +34,8 @@ hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
 
 if TYPE_CHECKING:
+    from ert.run_models.event import StatusEvents
+
     from .plugin_response import PluginMetadata, PluginResponse
 K = TypeVar("K")
 V = TypeVar("V")
@@ -189,6 +191,14 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_installable_workflow_jobs(self) -> dict[str, str]:
         return self._get_config_workflow_jobs()
+
+    def get_status_event_listeners(
+        self,
+    ) -> dict[str, Callable[[StatusEvents], object]]:
+        return {
+            impl.plugin_name: impl.function
+            for impl in self.hook.on_status_event.get_hookimpls()
+        }
 
     @staticmethod
     def _merge_internal_jobs(
@@ -371,6 +381,9 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
     environment_variables: Mapping[str, str] = Field(default_factory=dict)
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
+    status_event_listeners: dict[str, Callable[..., object]] = Field(
+        default_factory=dict, exclude=True, repr=False
+    )
 
 
 def get_site_plugins(
@@ -419,6 +432,7 @@ def get_site_plugins(
         ),
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
+        status_event_listeners=plugin_manager.get_status_event_listeners(),
     )
 
 
