@@ -23,6 +23,7 @@ from ert.server.app import app
 from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
     _experiments,
+    get_plugin_manager,
 )
 from ert.services import ErtClient
 from ert.storage import ExperimentState
@@ -36,6 +37,16 @@ from everest.strings import (
 )
 from everest.util._utils import get_everest_experiment
 from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
+
+
+@pytest.fixture(autouse=True)
+def uncached_plugin_manager():
+    def new_plugin_manager() -> ErtPluginManager:
+        return ErtPluginManager()
+
+    app.dependency_overrides[get_plugin_manager] = new_plugin_manager
+    yield
+    app.dependency_overrides.pop(get_plugin_manager, None)
 
 
 @pytest.fixture
