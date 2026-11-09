@@ -121,21 +121,6 @@ def test_custom_realizations():
     assert model_factory._realizations(args, ensemble_size).tolist() == active_mask
 
 
-def test_setup_single_test_run(tmp_path):
-    model = model_factory._setup_single_test_run(
-        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
-        Namespace(
-            current_ensemble="current-ensemble",
-            target_ensemble=None,
-            random_seed=None,
-            experiment_name=None,
-        ),
-        queue.SimpleQueue(),
-    )
-    assert isinstance(model, SingleTestRun)
-    assert model._storage.path == tmp_path
-
-
 def test_setup_single_test_run_with_ensemble(tmp_path):
     model = model_factory._setup_single_test_run(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
