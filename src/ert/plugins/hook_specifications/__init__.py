@@ -1,3 +1,4 @@
+from .event_subscriber import on_status_event
 from .forward_model_steps import (
     forward_model_configuration,
     installable_forward_model_steps,
@@ -22,5 +23,6 @@ __all__ = [
     "installable_forward_model_steps",
     "installable_workflow_jobs",
     "legacy_ertscript_workflow",
+    "on_status_event",
     "site_configurations",
 ]
