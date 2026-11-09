@@ -1,6 +1,7 @@
 import json
 import logging
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -373,3 +374,29 @@ def test_get_ip_address(monkeypatch, tmpdir):
         assert default_plugin.get_ip_address() != pm.get_ip_address()
         assert default_plugin.get_ip_address() == default_ip_address
         assert pm.get_ip_address() == PLUGIN_IP_ADDRESS
+
+
+def test_that_notify_status_event_forwards_the_event_and_experiment_id_to_the_plugin():
+    received_events = []
+
+    class EventListener:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_id, event):
+            received_events.append((experiment_id, event))
+
+    event = Mock()
+    ErtPluginManager(plugins=[EventListener]).notify_status_event("e_id", event)
+    assert received_events == [("e_id", event)]
+
+
+def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(caplog):
+    class FailingPlugin:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_id, event):
+            raise RuntimeError("kaboom!")
+
+    pm = ErtPluginManager(plugins=[FailingPlugin])
+    with caplog.at_level(logging.ERROR):
+        pm.notify_status_event("e_id", Mock())
+    assert "Status event plugin failed for experiment 'e_id'" in caplog.text
+    assert "kaboom!" in caplog.text
