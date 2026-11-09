@@ -16,6 +16,7 @@ from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
+    log_enabled_flags,
     setup_logging,
 )
 
@@ -26,6 +27,7 @@ def monitor_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
 
     with setup_logging(options):
+        log_enabled_flags("monitor", options)
         if threading.current_thread() is threading.main_thread():
             signal.signal(
                 signal.SIGINT,
