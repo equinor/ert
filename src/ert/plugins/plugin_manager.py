@@ -46,6 +46,8 @@ def single_implementation[F: Callable[..., object]](hookspec: F) -> F:
 
 
 if TYPE_CHECKING:
+    from ert.run_models.event import StatusEvents
+
     from .plugin_response import PluginMetadata, PluginResponse
 K = TypeVar("K")
 V = TypeVar("V")
@@ -373,6 +375,14 @@ class ErtPluginManager(pluggy.PluginManager):
             return net_utils.get_ip_address()
 
         return ip_address[0]
+
+    def notify_status_event(self, event: StatusEvents, experiment_id: str) -> None:
+        try:
+            self.hook.on_status_event(event=event, experiment_id=experiment_id)
+        except Exception:
+            logger.exception(
+                f"Status event plugin failed for experiment '{experiment_id}'"
+            )
 
     def add_span_processor_to_trace_provider(self) -> None:
         span_processors = self.hook.add_span_processor()
