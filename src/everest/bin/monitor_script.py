@@ -65,14 +65,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Display debug information in the terminal.",
     )
-    arg_parser.add_argument(
-        "--show-all-jobs",
-        action="store_true",
-        help=(
-            "This option no longer has an effect, "
-            "and will be removed in a future version."
-        ),
-    )
 
     return arg_parser
 
