@@ -19,6 +19,7 @@ P = ParamSpec("P")
 
 logger = logging.getLogger(__name__)
 
+# Exceptions raised by implementations will not affect rest of experiment
 _ISOLATED_HOOKS = {"on_status_event"}
 
 
