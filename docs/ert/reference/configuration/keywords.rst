@@ -313,6 +313,14 @@ If the :ref:`design_sheet` contains column `REAL`, ert will automatically set th
 specified in `REAL` column; i.e.; 0,1 and 3 in the example. If the `REAL` column is not present, ert will enumerate individual rows
 as realization; i.e. 0,1 and 2 in the example.
 
+The design matrix realization span is the highest ``REAL`` value plus one, including
+any missing realization indices. ERT limits the ensemble size to the smaller of this
+span and ``NUM_REALIZATIONS``; only indices present in ``REAL`` and within that
+ensemble are active. For example, with ``REAL`` values 1, 4 and 8 and
+``NUM_REALIZATIONS 6``, the ensemble has six realization slots and realizations 1
+and 4 are active. A CLI or GUI realization selection can further restrict these
+active realizations.
+
 Multiple :code:`DESIGN_MATRIX` keywords can be added to the configuration file and ert will validate that
 the parameter names are either unique or the values need to be the same for the overlapping parameters
 in the different instances of the keyword. The ``PRIORITY`` and ``UPDATE`` options of each keyword only

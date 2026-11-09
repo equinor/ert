@@ -1480,6 +1480,9 @@ class ErtConfig(BaseModel, extra="forbid"):
         ) and (
             dm_num_realizations := len(dm_active_realizations)
         ) != config_num_realizations:
+            ensemble_size = min(config_num_realizations, dm_num_realizations)
+            active_count = sum(dm_active_realizations[:ensemble_size])
+            active_verb = "is" if active_count == 1 else "are"
             msg = (
                 f"NUM_REALIZATIONS ({config_num_realizations}) is "
                 + (
@@ -1487,16 +1490,17 @@ class ErtConfig(BaseModel, extra="forbid"):
                     if dm_num_realizations < config_num_realizations
                     else "less "
                 )
-                + f"than the number of realizations in DESIGN_MATRIX "
-                f"({dm_num_realizations}). Using the realizations from "
+                + "than the number of realization slots implied by DESIGN_MATRIX "
+                f"({dm_num_realizations}). Using the ensemble size from "
                 + (
                     f"DESIGN_MATRIX ({dm_num_realizations})"
                     if dm_num_realizations < config_num_realizations
                     else f"NUM_REALIZATIONS ({config_num_realizations})"
                 )
+                + f", of which {active_count} {active_verb} active."
             )
             ConfigWarning.warn(msg)
-            return min(config_num_realizations, dm_num_realizations)
+            return ensemble_size
         return config_num_realizations
 
     @property

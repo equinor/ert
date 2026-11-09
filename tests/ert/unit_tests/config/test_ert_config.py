@@ -2163,7 +2163,7 @@ def test_three_design2params_validates_design_matrix_merging(
 
 @pytest.mark.parametrize(
     ("num_realizations", "expected_size", "expected_active"),
-    [(12, 9, [1, 4, 8]), (6, 6, [1, 4])],
+    [(12, 9, [1, 4, 8]), (6, 6, [1, 4]), (3, 3, [1]), (1, 1, [])],
 )
 def test_that_sparse_design_matrix_warning_reports_active_realizations_within_ensemble(
     tmp_path, num_realizations, expected_size, expected_active
@@ -2184,11 +2184,12 @@ def test_that_sparse_design_matrix_warning_reports_active_realizations_within_en
     ] == expected_active
 
     messages = [str(warning.message) for warning in recorded_warnings]
+    active_verb = "is" if len(expected_active) == 1 else "are"
     assert any(
         f"NUM_REALIZATIONS ({num_realizations})" in message
         and "DESIGN_MATRIX" in message
         and "(9)" in message
-        and f"of which {len(expected_active)} are active" in message
+        and f"of which {len(expected_active)} {active_verb} active" in message
         for message in messages
     ), messages
 

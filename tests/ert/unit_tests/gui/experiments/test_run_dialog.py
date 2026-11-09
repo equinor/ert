@@ -1005,7 +1005,7 @@ def test_that_ert_chooses_minimum_realization_with_design_matrix(
 
 @pytest.mark.parametrize(
     ("config_num_realizations", "expected_size", "expected_active"),
-    [(12, 9, 3), (6, 6, 2)],
+    [(12, 9, 3), (6, 6, 2), (3, 3, 1), (1, 1, 0)],
 )
 def test_that_design_matrix_tooltip_reports_active_realizations_within_ensemble(
     qtbot: QtBot, tmp_path, config_num_realizations, expected_size, expected_active
@@ -1027,7 +1027,8 @@ def test_that_design_matrix_tooltip_reports_active_realizations_within_ensemble(
     )
     assert warning_icon is not None
     assert str(expected_size) in warning_icon.toolTip()
-    assert f"of which {expected_active} are active" in warning_icon.toolTip()
+    active_verb = "is" if expected_active == 1 else "are"
+    assert f"of which {expected_active} {active_verb} active" in warning_icon.toolTip()
 
 
 def test_that_active_realizations_editor_accepts_only_design_matrix_subset(
