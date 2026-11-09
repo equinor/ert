@@ -261,3 +261,33 @@ Minimal example to override how Ert chooses the IP address:
     @ert.plugin(name="my_plugin")
     def get_ip_address():
         return "127.0.0.1"
+
+
+Status event listener
+~~~~~~~~~~~~~~~~~~~~~
+Plugins can listen to the status events emitted while an experiment runs,
+such as progress updates, snapshot updates and the final ``EndEvent``.
+This applies to experiments started from the CLI, the GUI and Everest.
+
+.. autofunction:: ert.plugins.hook_specifications.event_listener.on_status_event
+
+Minimal example to log when an experiment ends:
+
+.. code-block:: python
+
+   import logging
+
+   import ert
+   from ert.run_models.event import EndEvent
+
+   logger = logging.getLogger(__name__)
+
+   @ert.plugin(name="end_listener")
+   def on_status_event(event):
+       if isinstance(event, EndEvent):
+           logger.info("Experiment ended")
+
+Avoid slow work such as network calls directly in the hook, since it delays
+the experiment. Hand such work off to a queue or background thread instead.
+The hook may be called concurrently from multiple threads, so any shared
+state in the plugin must be thread-safe.
