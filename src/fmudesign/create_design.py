@@ -32,7 +32,7 @@ from .design_distributions import (
     read_correlations,
     to_probabilit,
 )
-from .quality_report import QualityReporter, print_corrmat
+from .quality_report import print_corrmat
 from .seed_strategy import SeedStrategy
 from .utils import (
     _raise_if_duplicates,
@@ -104,7 +104,8 @@ class DesignMatrix:
             or they are read from a file.
         seedvalues: list of seed values
         verbosity: how much information to print
-        output_dir: where to write debugging output and QC plots
+        mc_sensitivities: Monte Carlo sensitivities (including the
+            background draw) paired with their parameter descriptions
         rng: generator seeded with 'distribution_seed'; draws all parameters
             under 'joint'
         seed_strategy: 'joint' or 'independent' Monte Carlo seeding
@@ -118,23 +119,18 @@ class DesignMatrix:
     defaultvalues: dict[str, str | float | int | bool]
     backgroundvalues: pd.DataFrame | None
     seedvalues: list[int] | None
+    mc_sensitivities: list[tuple[MonteCarloSensitivity, dict[str, Any]]]
     verbosity: int
-    output_dir: Path | None
     rng: np.random.Generator
     seed_strategy: SeedStrategy
     base_seed: int
 
     START_COLUMNS = ("REAL", "SENSNAME", "SENSCASE", "RMS_SEED")
 
-    def __init__(
-        self,
-        config: DesignConfig,
-        verbosity: int = 0,
-        output_dir: Path | None = None,
-    ) -> None:
+    def __init__(self, config: DesignConfig, verbosity: int = 0) -> None:
         self.designvalues = pd.DataFrame()
-        self.verbosity: int = verbosity
-        self.output_dir: Path | None = output_dir
+        self.verbosity = verbosity
+        self.mc_sensitivities = []
         self._generate(config)
 
     def log_inputdict(self, config: DesignConfig) -> None:
@@ -353,11 +349,8 @@ class DesignMatrix:
             sensitivity.map_dependencies(sens.get("dependencies", {}))
             self._add_sensitivity(sensitivity)
 
-            # MonteCarloSensitivity is special - it can produce debugging outputs
-            if isinstance(sensitivity, MonteCarloSensitivity) and self.verbosity > 0:
-                self._report_samples(
-                    sensitivity, sens["parameters"], plot=self.verbosity > 1
-                )
+            if isinstance(sensitivity, MonteCarloSensitivity):
+                self.mc_sensitivities.append((sensitivity, sens["parameters"]))
 
         # Once all sensitivities have been added, complete the work
         self._fill_with_background_values()
@@ -601,45 +594,11 @@ class DesignMatrix:
             seed_strategy=self.seed_strategy,
             base_seed=self.base_seed,
         )
-        if self.verbosity > 0:
-            self._report_samples(mc_background, back_dict["parameters"], plot=True)
+        self.mc_sensitivities.append((mc_background, back_dict["parameters"]))
 
         background_values = mc_background.sensvalues
         _round_to_decimals(background_values, back_dict.get("decimals", {}))
         self.backgroundvalues = background_values
-
-    def _report_samples(
-        self,
-        sensitivity: MonteCarloSensitivity,
-        variables: dict[str, Any],
-        *,
-        plot: bool,
-    ) -> None:
-        """Print statistics of the sampled values and, if `plot`, save plots
-        of them to `output_dir`.
-        """
-        quality_reporter = QualityReporter(
-            df=sensitivity.sensvalues, variables=variables
-        )
-        quality_reporter.print_numeric()
-        quality_reporter.print_discrete()
-        for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-            quality_reporter.print_correlation(corr_name, df_corr)
-
-        if not plot or self.output_dir is None:
-            return
-
-        output_dir = self.output_dir / sensitivity.sensname
-        quality_reporter.plot_columns(output_dir=output_dir)
-        for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-            quality_reporter.plot_correlation_heatmap(
-                corr_name, df_corr, output_dir=output_dir
-            )
-            # Only plot pairgrid for small correlation groups
-            if len(df_corr) <= 6:
-                quality_reporter.plot_correlation(
-                    corr_name, df_corr, output_dir=output_dir
-                )
 
     def _set_decimals(self, config: DesignConfig) -> None:
         """Round to specified number of decimals.
