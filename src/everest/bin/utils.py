@@ -29,6 +29,13 @@ def cleanup_logging() -> None:
     os.environ.pop("ERT_LOG_DIR", None)
 
 
+def log_enabled_flags(command: str, options: argparse.Namespace) -> None:
+    logger = logging.getLogger(__name__)
+    logger.info(f"everest command used: {command}")
+    for flag in sorted(k for k, v in vars(options).items() if v is True):
+        logger.info(f"everest flag used: {command} --{flag.replace('_', '-')}")
+
+
 @contextmanager
 def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
     if isinstance(options.config, EverestConfig):

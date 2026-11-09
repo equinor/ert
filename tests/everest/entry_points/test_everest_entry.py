@@ -67,6 +67,9 @@ def test_everest_entry_debug(
     assert '"objective_functions"' in logstream
     assert '"name": "my_control"' in logstream
     assert f'"config_path": "{Path.cwd()}/config.yml"' in logstream
+    assert "everest command used: run" in caplog.messages
+    assert "everest flag used: run --debug" in caplog.messages
+    assert "everest flag used: run --gui" not in caplog.messages
 
 
 @patch("everest.bin.everest_script.run_server_monitor")
