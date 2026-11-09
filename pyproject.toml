@@ -125,6 +125,7 @@ dev = [
     "json-schema-for-humans",
     "xlsxwriter>=3.2.3",
     "resfo-utilities[testing]>=1.1.0",
+    "httpx2>=2.16.0",
 ]
 style = ["pre-commit"]
 types = [
