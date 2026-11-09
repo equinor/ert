@@ -337,7 +337,9 @@ def test_that_forward_model_step_is_registered(tmpdir):
         assert pm.forward_model_steps == [DummyFMStep]
 
 
-@pytest.mark.parametrize("hook_name", ["get_ip_address", "site_configurations"])
+@pytest.mark.parametrize(
+    "hook_name", ["get_ip_address", "on_status_event", "site_configurations"]
+)
 def test_that_second_implementation_of_single_implementation_hook_is_rejected(
     hook_name,
 ):
