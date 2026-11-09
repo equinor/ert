@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (
 from xtgeo import RegularSurface
 
 import ert.gui
-from ert.config import ErtConfig
+from ert.config import EcosystemPlugin, ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import (
     CreateExperimentDialog,
@@ -107,6 +107,61 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
         assert all(
             e in m for m, e in zip(shown_messages, expected_message_types, strict=False)
         )
+
+
+class _GuiStartupEcosystem(EcosystemPlugin):
+    name: str = "DUMMY"
+    startup_calls: int = 0
+
+    def configure(self, config_dict):
+        pass
+
+    def on_gui_startup(self):
+        self.startup_calls += 1
+
+
+def test_that_selected_ecosystem_plugins_are_notified_on_gui_startup(qapp, tmp_path):
+    config_file = tmp_path / "config.ert"
+    config_file.write_text("NUM_REALIZATIONS 1\nECOSYSTEM DUMMY\n", encoding="utf-8")
+    ecosystem = _GuiStartupEcosystem()
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"DUMMY": ecosystem}}
+    )
+
+    args = Mock()
+    args.config = str(config_file)
+    with add_gui_log_handler() as log_handler:
+        gui, *_ = ert.gui.main._start_initial_gui_window(
+            args, log_handler, runtime_plugins
+        )
+        assert isinstance(gui, ErtMainWindow)
+
+    assert ecosystem.startup_calls == 1
+
+
+def test_that_gui_startup_ignores_configs_without_a_matching_ecosystem_plugin():
+    config = Mock(ecosystem=None, PREINSTALLED_ECOSYSTEM_PLUGINS={})
+    ert.gui.main._run_ecosystem_gui_startup(config, Mock())
+
+    config = Mock(ecosystem="MISSING", PREINSTALLED_ECOSYSTEM_PLUGINS={})
+    logger = Mock()
+    ert.gui.main._run_ecosystem_gui_startup(config, logger)
+    logger.exception.assert_not_called()
+
+
+def test_that_failing_ecosystem_gui_startup_is_logged_and_not_raised():
+    class FailingEcosystem(_GuiStartupEcosystem):
+        def on_gui_startup(self):
+            raise RuntimeError("no credentials")
+
+    config = Mock(
+        ecosystem="DUMMY",
+        PREINSTALLED_ECOSYSTEM_PLUGINS={"DUMMY": FailingEcosystem()},
+    )
+    logger = Mock()
+    ert.gui.main._run_ecosystem_gui_startup(config, logger)
+    logger.exception.assert_called_once()
+    assert "failed during gui startup" in logger.exception.call_args.args[0]
 
 
 @pytest.mark.usefixtures("copy_poly_case")

@@ -1,6 +1,7 @@
 """Ert - Ensemble Reservoir Tool - a package for reservoir modeling."""
 
 from .config import (
+    EcosystemPlugin,
     ErtScript,
     ErtScriptWorkflow,
     ForwardModelStepDocumentation,
@@ -15,6 +16,7 @@ from .scheduler import JobState
 from .workflow_runner import WorkflowRunner
 
 __all__ = [
+    "EcosystemPlugin",
     "ErtScript",
     "ErtScriptWorkflow",
     "ForwardModelStepDocumentation",

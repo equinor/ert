@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
 from ert.config import (
+    EcosystemPlugin,
     ForwardModelStepDocumentation,
     ForwardModelStepPlugin,
     KnownQueueOptions,
@@ -100,6 +101,17 @@ class ErtPluginManager(pluggy.PluginManager):
             resp.data for resp in self.hook.installable_forward_model_steps()
         ]
         return [fm_step for fm_steps in fm_steps_listed for fm_step in fm_steps]
+
+    @property
+    def ecosystem_plugin(self) -> type[EcosystemPlugin] | None:
+        plugins = [resp.data for resp in self.hook.ecosystem_plugin()]
+        if len(plugins) > 1:
+            names = sorted(plugin.__name__ for plugin in plugins)
+            raise ValueError(
+                f"Only one ecosystem plugin can be installed, found {len(plugins)}: "
+                f"{names}"
+            )
+        return plugins[0] if plugins else None
 
     @staticmethod
     def _evaluate_config_hook(hook: pluggy.HookCaller, config_name: str) -> str | None:
@@ -365,6 +377,9 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
         default_factory=dict
     )
     installed_workflow_jobs: Mapping[str, WorkflowJob] = Field(default_factory=dict)
+    installed_ecosystem_plugins: Mapping[str, EcosystemPlugin] = Field(
+        default_factory=dict
+    )
     queue_options: KnownQueueOptions | None = Field(
         default_factory=LocalQueueOptions, discriminator="name"
     )
@@ -406,9 +421,16 @@ def get_site_plugins(
         fm_step = fm_step_subclass()  # type: ignore
         all_forward_model_steps[fm_step.name] = fm_step
 
+    all_ecosystem_plugins: dict[str, EcosystemPlugin] = {}
+    ecosystem_plugin_subclass = plugin_manager.ecosystem_plugin
+    if ecosystem_plugin_subclass is not None:
+        ecosystem_plugin = ecosystem_plugin_subclass()  # type: ignore[call-arg]
+        all_ecosystem_plugins[ecosystem_plugin.name] = ecosystem_plugin
+
     return ErtRuntimePlugins(
         installed_forward_model_steps=all_forward_model_steps,
         installed_workflow_jobs=all_workflow_jobs,
+        installed_ecosystem_plugins=all_ecosystem_plugins,
         queue_options=site_configurations.queue_options
         if site_configurations
         else None,
