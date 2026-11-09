@@ -169,12 +169,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
         help="The path to the everest configuration file.",
     )
     arg_parser.add_argument(
-        "--new-run",
-        action="store_true",
-        help="DEPRECATED: This option is deprecated and has no effect. "
-        "Update your scripts accordingly.",
-    )
-    arg_parser.add_argument(
         "--gui",
         action="store_true",
         help="Spawn a GUI monitoring simulation statuses.",
@@ -183,14 +177,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
         "--debug",
         action="store_true",
         help="Display debug information in the terminal.",
-    )
-    arg_parser.add_argument(
-        "--show-all-jobs",
-        action="store_true",
-        help=(
-            "DEPRECATED: This option no longer has an effect, "
-            "and will be removed in a future version."
-        ),
     )
     arg_parser.add_argument(
         "--disable-monitoring",
