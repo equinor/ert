@@ -5,7 +5,7 @@ import logging
 import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload, override
 
 import pluggy
 from pydantic import BaseModel, Field
@@ -31,6 +31,18 @@ _PLUGIN_NAMESPACE = "ert"
 
 hook_implementation = pluggy.HookimplMarker(_PLUGIN_NAMESPACE)
 hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
+
+_SINGLE_IMPLEMENTATION_ATTR = "single_implementation_hook"
+
+
+def single_implementation[F: Callable[..., object]](hookspec: F) -> F:
+    """Mark a hook specification as allowing at most one plugin implementation.
+
+    The plugin manager refuses to register a plugin that would give the hook
+    a second implementation.
+    """
+    setattr(hookspec, _SINGLE_IMPLEMENTATION_ATTR, True)
+    return hookspec
 
 
 if TYPE_CHECKING:
@@ -78,6 +90,25 @@ class ErtPluginManager(pluggy.PluginManager):
                 self.register(plugin)
 
         self._log_handles: list[logging.Handler] | None = None
+
+    @override
+    def register(self, plugin: object, name: str | None = None) -> str | None:
+        plugin_name = super().register(plugin, name)
+        if plugin_name is None:
+            return None
+        for hook_caller in self.get_hookcallers(plugin) or []:
+            if hook_caller.spec is None or not getattr(
+                hook_caller.spec.function, _SINGLE_IMPLEMENTATION_ATTR, False
+            ):
+                continue
+            hook_impls = hook_caller.get_hookimpls()
+            if len(hook_impls) > 1:
+                self.unregister(name=plugin_name)
+                raise ValueError(
+                    f"Only one plugin may implement the {hook_caller.name!r} hook, "
+                    f"got {[impl.plugin_name for impl in hook_impls]!r}"
+                )
+        return plugin_name
 
     def __str__(self) -> str:
         self_str = "ERT Plugin manager:\n"
@@ -176,13 +207,6 @@ class ErtPluginManager(pluggy.PluginManager):
             if len(plugin_response) == 0:
                 return None
 
-            if len(plugin_response) > 1:
-                plugin_names = [
-                    plugin.plugin_metadata.plugin_name for plugin in plugin_response
-                ]
-                raise ValueError(
-                    f"Only one site configuration is allowed, got {plugin_names}"
-                )
             return ErtRuntimePlugins.model_validate(plugin_response[0].data)
         except AttributeError:
             return None
@@ -345,10 +369,6 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_ip_address(self) -> str:
         ip_address: list[str] = self.hook.get_ip_address()
-        if len(ip_address) > 1:
-            raise ValueError(
-                f"Only one plugin should provide the IP address, got {ip_address}"
-            )
         if not ip_address:
             return net_utils.get_ip_address()
 
