@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import threading
 import uuid
 import warnings
 from base64 import b64encode
@@ -465,11 +466,14 @@ async def test_that_experiment_runner_passes_status_events_and_id_to_plugins(
     monkeypatch,
 ):
     received_events = []
+    end_event_received = threading.Event()
 
     class EventSubscriber:
         @plugin(name="event_subscriber")
         def on_status_event(event, experiment_id):
             received_events.append((event, experiment_id))
+            if isinstance(event, EndEvent):
+                end_event_received.set()
 
     events = [
         RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
@@ -499,6 +503,7 @@ async def test_that_experiment_runner_passes_status_events_and_id_to_plugins(
             ErtPluginManager(plugins=[EventSubscriber]),
         ).run()
 
+    assert await asyncio.to_thread(end_event_received.wait, 5)
     assert received_events == [(event, "experiment_id") for event in events]
 
 

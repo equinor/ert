@@ -13,8 +13,9 @@ if TYPE_CHECKING:
 def on_status_event(event: StatusEvents, experiment_id: str) -> None:
     """Called for every status event emitted by a running experiment.
 
-    Implementations are called synchronously from the server's event loop,
-    so they must return quickly.
+    Implementations are called from a dedicated thread, one event at a time
+    and in the order the events were emitted. A slow implementation does not
+    delay the server, but it does delay its own subsequent events.
 
     Only one implementation is allowed.
 

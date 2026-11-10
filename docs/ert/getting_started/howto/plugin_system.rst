@@ -294,5 +294,9 @@ Minimal example of logging the type of each event:
    def on_status_event(event, experiment_id):
        logger.info(f"Experiment run {experiment_id} emitted {event.event_type}")
 
-The subscriber is called from the server's event loop, so a slow implementation
-delays event delivery for all running experiments and connected clients.
+The subscriber is called from a dedicated thread, separate from the server's
+event loop, so it does not delay running experiments or connected clients.
+Events are delivered one at a time in the order they were emitted, across all
+running experiments, so a slow implementation delays its own subsequent events.
+When the server shuts down normally, events that are still pending are
+delivered before the server process exits.

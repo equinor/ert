@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -385,8 +386,41 @@ def test_that_notify_status_event_forwards_the_event_and_experiment_id_to_the_pl
             received_events.append((event, experiment_id))
 
     event = Mock()
-    ErtPluginManager(plugins=[EventSubscriber]).notify_status_event(event, "e_id")
+    ErtPluginManager(plugins=[EventSubscriber]).notify_status_event(
+        event, "e_id"
+    ).result(timeout=5)
     assert received_events == [(event, "e_id")]
+
+
+def test_that_notify_status_event_returns_before_the_plugin_has_processed_the_event():
+    plugin_may_finish = threading.Event()
+
+    class SlowEventSubscriber:
+        @plugin(name="event_subscriber")
+        def on_status_event(event, experiment_id):
+            plugin_may_finish.wait(timeout=5)
+
+    pm = ErtPluginManager(plugins=[SlowEventSubscriber])
+    pending = pm.notify_status_event(Mock(), "e_id")
+    try:
+        assert not pending.done()
+    finally:
+        plugin_may_finish.set()
+    pending.result(timeout=5)
+
+
+def test_that_notify_status_event_delivers_events_in_the_order_they_were_given():
+    received_events = []
+
+    class EventSubscriber:
+        @plugin(name="event_subscriber")
+        def on_status_event(event, experiment_id):
+            received_events.append(event)
+
+    pm = ErtPluginManager(plugins=[EventSubscriber])
+    pending = [pm.notify_status_event(number, "e_id") for number in range(50)]
+    pending[-1].result(timeout=5)
+    assert received_events == list(range(50))
 
 
 def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(caplog):
@@ -397,6 +431,6 @@ def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(capl
 
     pm = ErtPluginManager(plugins=[FailingPlugin])
     with caplog.at_level(logging.ERROR):
-        pm.notify_status_event(Mock(), "e_id")
+        pm.notify_status_event(Mock(), "e_id").result(timeout=5)
     assert "Status event plugin failed for experiment 'e_id'" in caplog.text
     assert "kaboom!" in caplog.text
