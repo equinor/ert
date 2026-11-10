@@ -1,7 +1,6 @@
 from typing import Any
 
-from fmudesign.exceptions import FmudesignError
-
+from .exceptions import FmudesignError
 from .read_correlations import parse_sensitivity_correlations
 from .read_distributions import parse_distribution_parameters
 from .utils import excel_sheet_names, find_sheet, parse_decimals, read_excel_sheet

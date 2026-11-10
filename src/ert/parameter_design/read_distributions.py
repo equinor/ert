@@ -2,8 +2,7 @@ from typing import Any, Literal
 
 import pandas as pd
 
-from fmudesign.exceptions import FmudesignError
-
+from .exceptions import FmudesignError
 from .utils import _has_value
 
 

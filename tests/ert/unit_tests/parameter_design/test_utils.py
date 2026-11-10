@@ -7,8 +7,8 @@ import pytest
 import xlsxwriter
 from hypothesis import given
 
-from fmudesign import FmudesignError
-from fmudesign.utils import map_dependencies, resolve_path, seeds_from_extern
+from ert.parameter_design import FmudesignError
+from ert.parameter_design.utils import map_dependencies, resolve_path, seeds_from_extern
 
 
 @pytest.mark.parametrize("suffix", ["xlsx", "csv", "txt"])

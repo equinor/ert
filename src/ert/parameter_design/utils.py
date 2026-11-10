@@ -11,7 +11,7 @@ import polars as pl
 from polars.exceptions import NoDataError
 from python_calamine import CalamineWorkbook
 
-from fmudesign.exceptions import FmudesignError
+from .exceptions import FmudesignError
 
 
 def excel_sheet_names(filename: Path | str) -> list[str]:
@@ -256,11 +256,11 @@ def find_sheet(name: str, names: list[str]) -> str:
     >>> find_sheet('variable_input', ['generalinput', 'designinput', 'defaultinput'])
     Traceback (most recent call last):
       ...
-    fmudesign.exceptions.FmudesignError: Sheet 'variable_input' was not found. Sheets in workbook: ['generalinput', 'designinput', 'defaultinput']
+    ert.parameter_design.exceptions.FmudesignError: Sheet 'variable_input' was not found. Sheets in workbook: ['generalinput', 'designinput', 'defaultinput']
     >>> find_sheet('design_input', ['designinput', 'Design_Input'])
     Traceback (most recent call last):
       ...
-    fmudesign.exceptions.FmudesignError: Sheet 'design_input' matches several sheets: ['designinput', 'Design_Input']
+    ert.parameter_design.exceptions.FmudesignError: Sheet 'design_input' matches several sheets: ['designinput', 'Design_Input']
     """  # ruff: ignore[line-too-long]
 
     def sanitize(inputstring: str) -> str:

@@ -11,8 +11,8 @@ import probabilit.distributions
 import probabilit.modeling
 from scipy import stats
 
-from fmudesign.exceptions import FmudesignError
-from fmudesign.utils import excel_sheet_names
+from .exceptions import FmudesignError
+from .utils import excel_sheet_names
 
 
 def validate_params(distname: str, parameters: list[str]) -> list[float]:
@@ -24,7 +24,7 @@ def validate_params(distname: str, parameters: list[str]) -> list[float]:
     >>> validate_params('normal', ['inf'])
     Traceback (most recent call last):
         ...
-    fmudesign.exceptions.FmudesignError: dist_param1 in distribution normal is not finite: inf
+    ert.parameter_design.exceptions.FmudesignError: dist_param1 in distribution normal is not finite: inf
     """  # ruff: ignore[line-too-long]
     new_parameters: list[float] = []
 

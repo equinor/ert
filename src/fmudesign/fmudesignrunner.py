@@ -33,13 +33,13 @@ from opentelemetry.trace import Status, StatusCode
 from packaging.version import Version
 from pydantic import ValidationError
 
+from ert.parameter_design import DesignMatrix, FmudesignError
+from ert.parameter_design.create_design import _normalize_xlsx_filename
 from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import trace, tracer
-from fmudesign.exceptions import FmudesignError
 
 from ._excel_to_design import excel_to_config
-from .create_design import DesignMatrix, _normalize_xlsx_filename
 
 logger = logging.getLogger(__name__)
 

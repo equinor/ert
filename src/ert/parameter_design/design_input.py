@@ -4,10 +4,10 @@ from typing import Any, Self
 import pandas as pd
 from python_calamine import CalamineWorkbook
 
-from fmudesign.exceptions import FmudesignError
-from fmudesign.read_correlations import parse_sensitivity_correlations
-from fmudesign.read_distributions import parse_distribution_parameters
-from fmudesign.utils import (
+from .exceptions import FmudesignError
+from .read_correlations import parse_sensitivity_correlations
+from .read_distributions import parse_distribution_parameters
+from .utils import (
     _has_value,
     _raise_if_duplicates,
     parse_decimals,

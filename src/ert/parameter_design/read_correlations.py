@@ -3,9 +3,8 @@ from typing import Any
 
 import pandas as pd
 
-from fmudesign.exceptions import FmudesignError
-
 from .design_distributions import read_correlations
+from .exceptions import FmudesignError
 from .utils import _has_value
 
 

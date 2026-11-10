@@ -25,7 +25,6 @@ import probabilit.correlation
 import probabilit.modeling
 
 from ert.shared import __version__ as ert_version
-from fmudesign.exceptions import FmudesignError
 
 from .design_config import DesignConfig
 from .design_distributions import (
@@ -33,6 +32,7 @@ from .design_distributions import (
     read_correlations,
     to_probabilit,
 )
+from .exceptions import FmudesignError
 from .quality_report import QualityReporter, print_corrmat
 from .seed_strategy import SeedStrategy
 from .utils import (

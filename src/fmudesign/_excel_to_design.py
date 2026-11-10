@@ -8,12 +8,10 @@ from pathlib import Path
 import openpyxl
 import yaml
 
-from fmudesign.exceptions import FmudesignError
-
-from .design_config import DesignConfig
-from .design_input import DesignInput
-from .general_input import GeneralInput
-from .utils import (
+from ert.parameter_design import DesignConfig, FmudesignError
+from ert.parameter_design.design_input import DesignInput
+from ert.parameter_design.general_input import GeneralInput
+from ert.parameter_design.utils import (
     excel_sheet_names,
     find_sheet,
 )

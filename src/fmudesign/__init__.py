@@ -6,11 +6,10 @@ Output of this module can be used in custom standalone applications.
 
 import logging
 
+from ert.parameter_design import DesignConfig, DesignMatrix, FmudesignError
+
 from ._designsummary import summarize_design
 from ._excel_to_design import config_to_yaml, excel_to_config
-from .create_design import DesignMatrix
-from .design_config import DesignConfig
-from .exceptions import FmudesignError
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

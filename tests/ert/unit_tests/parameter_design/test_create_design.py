@@ -10,16 +10,20 @@ import pandas as pd
 import pytest
 from scipy import stats
 
-from ert.shared import __version__ as ert_version
-from fmudesign import DesignConfig, DesignMatrix, FmudesignError
-from fmudesign import design_distributions as design_dist
-from fmudesign.create_design import (
+from ert.parameter_design import (
+    DesignConfig,
+    DesignMatrix,
+    FmudesignError,
+    SeedStrategy,
+)
+from ert.parameter_design import design_distributions as design_dist
+from ert.parameter_design.create_design import (
     ExternSensitivity,
     MonteCarloSensitivity,
     _derive_rng,
 )
-from fmudesign.quality_report import print_corrmat
-from fmudesign.seed_strategy import SeedStrategy
+from ert.parameter_design.quality_report import print_corrmat
+from ert.shared import __version__ as ert_version
 
 from ._configurations import (
     background_configuration,
@@ -524,7 +528,7 @@ def test_that_summary_log_reports_usage_of_design_features(tmp_path, caplog):
         },
     }
 
-    caplog.set_level(logging.INFO, logger="fmudesign")
+    caplog.set_level(logging.INFO, logger="ert.parameter_design")
     DesignMatrix(config=config)
 
     [summary] = [m for m in caplog.messages if m.startswith("Fmudesign summary")]
