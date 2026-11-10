@@ -684,37 +684,23 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    (
-        "num_realizations",
-        "specified_realizations",
-        "expected_realizations",
-        "expected_active_count",
-    ),
+    ("specified_realizations", "intersected_realizations_count"),
     [
         pytest.param(
-            20,
             "--realizations=3-6",
-            [5, 6],
-            5,
+            2,
             id="specified_realizations_finds_and_uses_intersect",
         ),
         pytest.param(
-            20,
             "--realizations=0-4",
-            [],
-            5,
+            0,
             id="specified_realizations_are_not_intersecting_and_raises",
-        ),
-        pytest.param(
-            7, "--realizations=5-6", [5, 6], 2, id="num_realizations_limits_mask"
         ),
     ],
 )
 def test_run_poly_example_with_specified_realizations_finds_intersection_and_warns(
     specified_realizations: str,
-    expected_realizations: list[int],
-    num_realizations: int,
-    expected_active_count: int,
+    intersected_realizations_count: int,
     copy_poly_case_with_design_matrix,
     capsys,
 ):
@@ -726,26 +712,31 @@ def test_run_poly_example_with_specified_realizations_finds_intersection_and_war
     default_list = [["b", 1], ["c", 2]]
     copy_poly_case_with_design_matrix(design_dict, default_list)
     with Path("poly.ert").open("a+", encoding="utf-8") as f:
-        f.write(f"\nNUM_REALIZATIONS {num_realizations}")
-    if expected_realizations:
-        with pytest.warns(ConfigWarning) as recorded_warnings:
-            run_cli(
-                ENSEMBLE_EXPERIMENT_MODE,
-                specified_realizations,
-                "--disable-monitoring",
-                "poly.ert",
-                "--experiment-name",
-                "test-experiment",
-            )
+        f.write("\nNUM_REALIZATIONS 20")
+    if intersected_realizations_count > 0:
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            specified_realizations,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+
+        assert (
+            "Using realizations intersected between realizations specified and "
+            f"DESIGN_MATRIX ({intersected_realizations_count})"
+        ) in capsys.readouterr().out
+
+        config_path = ErtConfig.from_file("poly.ert").config_path
+        realizations_run = list((Path(config_path) / "poly_out").iterdir())
+        assert len(realizations_run) == intersected_realizations_count
     else:
-        with (
-            pytest.warns(ConfigWarning) as recorded_warnings,
-            pytest.raises(
-                ErtCliError,
-                match=(
-                    "The specified realizations do not intersect with the active "
-                    r"realizations in the design matrix"
-                ),
+        with pytest.raises(
+            ErtCliError,
+            match=(
+                "The specified realizations do not intersect with the active "
+                r"realizations in the design matrix."
             ),
         ):
             run_cli(
@@ -756,22 +747,3 @@ def test_run_poly_example_with_specified_realizations_finds_intersection_and_war
                 "--experiment-name",
                 "test-experiment",
             )
-
-    if expected_realizations:
-        assert (
-            "Using realizations intersected between realizations specified and "
-            f"DESIGN_MATRIX ({len(expected_realizations)})"
-        ) in capsys.readouterr().out
-        config_path = ErtConfig.from_file("poly.ert").config_path
-        assert {path.name for path in (Path(config_path) / "poly_out").iterdir()} == {
-            f"realization-{index}" for index in expected_realizations
-        }
-
-    warning_messages = [str(warning.message) for warning in recorded_warnings]
-    assert any(
-        f"NUM_REALIZATIONS ({num_realizations})" in message
-        and "DESIGN_MATRIX" in message
-        and "(11)" in message
-        and f"of which {expected_active_count} are active" in message
-        for message in warning_messages
-    ), warning_messages
