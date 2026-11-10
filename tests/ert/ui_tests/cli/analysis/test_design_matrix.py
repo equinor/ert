@@ -628,7 +628,7 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             5,
             (
                 r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
-                "greater than the number of realization slots implied by DESIGN_MATRIX "
+                "greater than the number of realizations implied by DESIGN_MATRIX "
                 r"\({realizations_in_design_matrix}\)\. Using the ensemble size from "
                 r"DESIGN_MATRIX \({realizations_in_design_matrix}\)"
             ),
@@ -638,7 +638,7 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             15,
             (
                 r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
-                "less than the number of realization slots implied by DESIGN_MATRIX "
+                "less than the number of realizations implied by DESIGN_MATRIX "
                 r"\({realizations_in_design_matrix}\)\. Using the ensemble size from "
                 r"NUM_REALIZATIONS \({num_realizations_in_user_config}\)"
             ),

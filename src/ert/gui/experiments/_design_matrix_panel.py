@@ -120,7 +120,7 @@ class DesignMatrixPanel(QDialog):
                 active_count = sum(design_matrix.active_realizations[:ensemble_size])
                 active_verb = "is" if active_count == 1 else "are"
                 warning_icon.setToolTip(
-                    f"Ensemble size was set to {ensemble_size} realization slots, "
+                    f"Ensemble size was set to {ensemble_size} realizations, "
                     f"of which {active_count} {active_verb} active, because "
                     "the DESIGN_MATRIX realization span differs from "
                     "NUM_REALIZATIONS in the configuration."

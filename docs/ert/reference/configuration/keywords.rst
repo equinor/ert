@@ -317,7 +317,7 @@ The design matrix realization span is the highest ``REAL`` value plus one, inclu
 any missing realization indices. ERT limits the ensemble size to the smaller of this
 span and ``NUM_REALIZATIONS``; only indices present in ``REAL`` and within that
 ensemble are active. For example, with ``REAL`` values 1, 4 and 8 and
-``NUM_REALIZATIONS 6``, the ensemble has six realization slots and realizations 1
+``NUM_REALIZATIONS 6``, the ensemble has six realizations and realizations 1
 and 4 are active. A CLI or GUI realization selection can further restrict these
 active realizations.
 

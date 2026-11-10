@@ -1490,7 +1490,7 @@ class ErtConfig(BaseModel, extra="forbid"):
                     if dm_num_realizations < config_num_realizations
                     else "less "
                 )
-                + "than the number of realization slots implied by DESIGN_MATRIX "
+                + "than the number of realizations implied by DESIGN_MATRIX "
                 f"({dm_num_realizations}). Using the ensemble size from "
                 + (
                     f"DESIGN_MATRIX ({dm_num_realizations})"
