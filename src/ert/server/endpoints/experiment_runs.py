@@ -1,6 +1,7 @@
 import asyncio
 import dataclasses
 import datetime as dt
+import functools
 import logging
 import os
 import queue
@@ -37,7 +38,7 @@ from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
-from ert.plugins import get_site_plugins
+from ert.plugins import ErtPluginManager, get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from ert.server.common import EverEndpoints
@@ -171,12 +172,19 @@ def verify_auth(
 authenticated = [Depends(verify_auth)]
 
 
-async def _with_runtime_plugins() -> AsyncIterator[None]:
+@functools.cache
+def get_plugin_manager() -> ErtPluginManager:
+    return ErtPluginManager()
+
+
+async def _with_runtime_plugins(
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
+) -> AsyncIterator[None]:
     stack = ExitStack()
     try:
         stack.enter_context(warnings.catch_warnings())
         warnings.filterwarnings("ignore", category=ConfigWarning)
-        stack.enter_context(use_runtime_plugins(get_site_plugins()))
+        stack.enter_context(use_runtime_plugins(get_site_plugins(plugin_manager)))
         yield
     finally:
         stack.close()
@@ -217,11 +225,12 @@ def stop() -> Response:
 async def start_experiment(
     config: EverestConfig,
     background_tasks: BackgroundTasks,
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState()
     _experiments[experiment_id] = experiment_state
-    runner = ExperimentRunner(config, experiment_id)
+    runner = ExperimentRunner(config, experiment_id, plugin_manager)
     try:
         background_tasks.add_task(runner.run)
         experiment_state.config_path = config.config_path
@@ -347,16 +356,18 @@ class ExperimentRunner:
         self,
         everest_config: EverestConfig,
         experiment_id: str,
+        plugin_manager: ErtPluginManager,
     ) -> None:
         self._everest_config = everest_config
         self._experiment_id = experiment_id
+        self._plugin_manager = plugin_manager
 
     async def run(self) -> None:
         run = _experiments[self._experiment_id]
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         run_model: EverestRunModel | None = None
         try:  # ruff: ignore[too-many-statements-in-try-clause]
-            site_plugins = get_site_plugins()
+            site_plugins = get_site_plugins(self._plugin_manager)
             with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(
                     everest_config=self._everest_config,
@@ -388,6 +399,7 @@ class ExperimentRunner:
                     continue
 
                 run.events.append(item)
+                self._plugin_manager.notify_status_event(item, self._experiment_id)
                 for sub in run.subscribers.values():
                     sub.notify()
 

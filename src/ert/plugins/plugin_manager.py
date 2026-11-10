@@ -5,6 +5,7 @@ import logging
 import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload, override
 
 import pluggy
@@ -46,6 +47,8 @@ def single_implementation[F: Callable[..., object]](hookspec: F) -> F:
 
 
 if TYPE_CHECKING:
+    from ert.run_models.event import StatusEvents
+
     from .plugin_response import PluginMetadata, PluginResponse
 K = TypeVar("K")
 V = TypeVar("V")
@@ -90,6 +93,9 @@ class ErtPluginManager(pluggy.PluginManager):
                 self.register(plugin)
 
         self._log_handles: list[logging.Handler] | None = None
+        self._status_event_executor = ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="ert_status_event_plugin"
+        )
 
     @override
     def register(self, plugin: object, name: str | None = None) -> str | None:
@@ -373,6 +379,29 @@ class ErtPluginManager(pluggy.PluginManager):
             return net_utils.get_ip_address()
 
         return ip_address[0]
+
+    def notify_status_event(
+        self, event: StatusEvents, experiment_id: str
+    ) -> Future[None]:
+        """Hand the event to the status event plugin without waiting for it.
+
+        Events are delivered one at a time, in the order they were given, on a
+        dedicated thread.
+
+        Returns:
+            A future that completes when the plugin has processed the event.
+        """
+        return self._status_event_executor.submit(
+            self._call_status_event_hook, event, experiment_id
+        )
+
+    def _call_status_event_hook(self, event: StatusEvents, experiment_id: str) -> None:
+        try:
+            self.hook.on_status_event(event=event, experiment_id=experiment_id)
+        except Exception:
+            logger.exception(
+                f"Status event plugin failed for experiment '{experiment_id}'"
+            )
 
     def add_span_processor_to_trace_provider(self) -> None:
         span_processors = self.hook.add_span_processor()
