@@ -377,6 +377,8 @@ def init_user_config_schema() -> ConfigSchemaDict:
         forward_model_keyword(),
         data_kw_keyword(),
         define_keyword(),
+        single_arg_keyword(ConfigKeys.CASE),
+        single_arg_keyword(ConfigKeys.SCRATCH),
         existing_path_inline_keyword(
             ConfigKeys.OBS_CONFIG, parser=lambda f, c: parse_observations(c, f)
         ),
