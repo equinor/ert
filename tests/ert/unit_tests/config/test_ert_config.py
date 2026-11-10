@@ -415,6 +415,36 @@ def test_that_user_defining_the_user_magic_string_overrides_the_predefined_value
     assert ert_config.substitutions["<USER>"] == "someone_else"
 
 
+def test_that_case_and_scratch_keywords_are_equivalent_to_define():
+    ert_config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nCASE my_case\nSCRATCH /my/scratch\n"
+        "SETENV X <SCRATCH>/<CASE>\n"
+    )
+
+    assert ert_config.substitutions["<CASE>"] == "my_case"
+    assert ert_config.substitutions["<SCRATCH>"] == "/my/scratch"
+    assert ert_config.env_vars["X"] == "/my/scratch/my_case"
+
+
+def test_that_scratch_defaults_to_current_directory_and_is_the_default_runpath_base():
+    ert_config = ErtConfig.from_file_contents("NUM_REALIZATIONS 1")
+
+    assert ert_config.substitutions["<SCRATCH>"] == "."
+    assert ert_config.runpath_config.runpath_format_string == (
+        "realization-<IENS>/iter-<ITER>"
+    )
+
+
+def test_that_the_default_runpath_is_below_scratch():
+    ert_config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nSCRATCH /my/scratch\n"
+    )
+
+    assert ert_config.runpath_config.runpath_format_string == (
+        "/my/scratch/realization-<IENS>/iter-<ITER>"
+    )
+
+
 def test_that_subst_list_is_given_default_runpath_file():
     assert ErtConfig.from_file_contents("NUM_REALIZATIONS 1").substitutions[
         "<RUNPATH_FILE>"
@@ -970,7 +1000,7 @@ def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
     )
     assert (
         step_json["jobList"][0]["environment"]["_ERT_RUNPATH"]
-        == "simulations/realization-0/iter-0"
+        == "realization-0/iter-0"
     )
 
 

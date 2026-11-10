@@ -17,6 +17,7 @@ Keyword name                                                             Require
 ======================================================================   ======================================  ==============================  ==============================================================================================================================================
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                               NO                                                                      Set analysis module internal state variable
 :ref:`APPROXIMATE_MISSING_RFT_VALUES <approximate_missing_rft_values>`   NO                                      FALSE                           Interpolate/extrapolate RFT values for observation locations with missing simulator responses
+:ref:`CASE <case>`                                                       NO                                                                      Name of the case, equivalent to DEFINE <CASE>
 :ref:`CASE_TABLE <case_table>`                                           NO                                                                      Deprecated
 :ref:`CREATE_WORKFLOW_FROM_JOB <create_workflow_from_job>`               NO                                                                      Define and register a single-job workflow inline
 :ref:`DATA_FILE <data_file>`                                             NO                                                                      Provide an ECLIPSE data file for the problem
@@ -54,9 +55,10 @@ Keyword name                                                             Require
 :ref:`RANDOM_SEED <random_seed>`                                         NO                                                                      Set a fixed integer seed to gain reproducibility and avoid randomness.
 :ref:`REALIZATION_MEMORY <realization_memory>`                           NO                                                                      Set the expected memory requirements for a realization
 :ref:`RFT <rft>`                                                         NO                                                                      Specify which RFT data to load from simulator output
-:ref:`RUNPATH <runpath>`                                                 NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
+:ref:`RUNPATH <runpath>`                                                 NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; <SCRATCH>/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                       NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                       NO                                                                      Install arbitrary files in the runpath directory
+:ref:`SCRATCH <scratch>`                                                 NO                                      .                               Base directory of the default RUNPATH, equivalent to DEFINE <SCRATCH>
 :ref:`SEISMIC <seismic>`                                                 NO                                                                      Specify which Seismic data to load from fmu-sim2seis simulator output
 :ref:`SETENV <setenv>`                                                   NO                                                                      You can modify the UNIX environment with SETENV calls
 :ref:`STD_CUTOFF <std_cutoff>`                                           NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
@@ -141,6 +143,32 @@ Note that redefining a key to a different value takes effect for the rest of the
 
 In the above example, the environment variable VAR is set to 3 while the environment variable
 VAR2 is set to 4.
+
+.. _case:
+
+CASE
+----
+
+``CASE`` sets the name of the case. ``CASE my_case`` is equivalent to
+``DEFINE <CASE> my_case``. It is used by ecosystem plugins, see
+:ref:`ECOSYSTEM <ecosystem>`.
+
+.. _scratch:
+
+SCRATCH
+-------
+
+``SCRATCH`` sets the base directory for runpaths. ``SCRATCH /my/scratch`` is
+equivalent to ``DEFINE <SCRATCH> /my/scratch``. It defaults to ``.``, and
+the default :ref:`RUNPATH <runpath>` is ``<SCRATCH>/realization-<IENS>/iter-<ITER>``.
+
+*Example:*
+
+::
+
+        CASE my_case
+        SCRATCH /my/scratch
+        ECOSYSTEM FMU
 
 .. _data_file:
 
@@ -712,7 +740,8 @@ RUNPATH
 The RUNPATH keyword should give the name of the folders where the ECLIPSE
 simulations are executed. It should contain <IENS> and <ITER>, which
 will be replaced by the realization number and iteration number when ERT creates the folders.
-By default, RUNPATH is set to "simulations/realization-<IENS>/iter-<ITER>".
+By default, RUNPATH is set to "<SCRATCH>/realization-<IENS>/iter-<ITER>",
+which is "realization-<IENS>/iter-<ITER>" when :ref:`SCRATCH <scratch>` is not set.
 
 Deprecated syntax still allow use of two `%d` specifiers. Use of more than two `%d` specifiers,
 using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.

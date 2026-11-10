@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import os
 import re
 import shutil
 from pathlib import Path
@@ -20,10 +21,15 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
+DEFAULT_SCRATCH = "."
+DEFAULT_RUNPATH = "<SCRATCH>/realization-<IENS>/iter-<ITER>"
 DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
 DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
+
+
+def default_runpath(scratch: str = DEFAULT_SCRATCH) -> str:
+    return os.path.normpath(DEFAULT_RUNPATH.replace("<SCRATCH>", scratch))
 
 _TOKEN_REGEX = re.compile(r"<[^<>]+>")
 
@@ -35,7 +41,7 @@ MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD = 200 * 1000**3  # 200 GB
 
 class ModelConfig(BaseModel, extra="forbid"):
     num_realizations: int = 1
-    runpath_format_string: str = DEFAULT_RUNPATH
+    runpath_format_string: str = default_runpath()
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT
     summary_file_base_name: str | None = None
     gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME
@@ -114,9 +120,14 @@ class ModelConfig(BaseModel, extra="forbid"):
 
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
+        scratch = dict(config_dict.get(ConfigKeys.DEFINE, [])).get(
+            "<SCRATCH>", DEFAULT_SCRATCH
+        )
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
-            runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
+            runpath_format_string=config_dict.get(
+                ConfigKeys.RUNPATH, default_runpath(scratch)
+            ),
             jobname_format_string=config_dict.get(
                 ConfigKeys.JOBNAME,
                 Path(config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT)).name,

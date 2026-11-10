@@ -5,6 +5,8 @@ class ConfigKeys(StrEnum):
     """Keywords that are the first word of each statement in the user config file."""
 
     DEFINE = "DEFINE"
+    CASE = "CASE"
+    SCRATCH = "SCRATCH"
     INCLUDE = "INCLUDE"
     ANALYSIS_SET_VAR = "ANALYSIS_SET_VAR"
     DATA_FILE = "DATA_FILE"

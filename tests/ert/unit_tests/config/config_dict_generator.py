@@ -364,6 +364,7 @@ class ErtConfigValues:
             ("<CWD>", cwd),
             ("<CONFIG_FILE>", config_file_name),
             ("<USER>", os.environ.get("USER", "$USER")),
+            ("<SCRATCH>", "."),
         ]
         result.extend(self.define)
         result.extend(

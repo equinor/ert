@@ -178,6 +178,18 @@ def _substitute_token(
     return current
 
 
+# Keywords that are shorthand for DEFINE <KEYWORD> value
+DEFINE_SHORTHAND_KEYWORDS = ("CASE", "SCRATCH")
+
+
+def _set_define(defines: Defines, key: str, value: Sequence[Any]) -> None:
+    existing_define = next((define for define in defines if define[0] == key), None)
+    if existing_define:
+        existing_define[1:] = value  # type: ignore
+    else:
+        defines.append([key, *value])  # type: ignore
+
+
 def _tree_to_dict(
     config_file: str,
     pre_defines: Defines,
@@ -218,13 +230,10 @@ def _tree_to_dict(
             if kw == "DEFINE":
                 assert isinstance(value_list, list)
                 define_key, *define_args = value_list
-                existing_define = next(
-                    (define for define in arglist if define[0] == define_key), None
-                )
-                if existing_define:
-                    existing_define[1:] = define_args  # type: ignore
-                else:
-                    arglist.append(value_list)  # type: ignore
+                _set_define(defines, define_key, define_args)
+            elif kw in DEFINE_SHORTHAND_KEYWORDS:
+                _set_define(defines, f"<{kw}>", [value_list])
+                config_dict[kw] = value_list  # type: ignore
             elif constraints.multi_occurrence:
                 arglist.append(value_list)  # type: ignore
 
@@ -346,6 +355,8 @@ def _handle_includes(
             args = _substitute_args(args, constraints, defines)  # type: ignore
             args = constraints.apply_constraints(args, kw, Path.cwd())  # type: ignore
             defines.append(args)  # type: ignore
+        if kw in DEFINE_SHORTHAND_KEYWORDS and len(args) == 1:
+            _set_define(defines, f"<{kw}>", [_substitute_token(defines, args[0])])
         if kw == "INCLUDE":
             if len(args) > 1:
                 superfluous_tokens: list[FileContextToken] = args[1:]
@@ -510,6 +521,7 @@ def _transform_tree(
             ["<CWD>", config_dir],
             ["<CONFIG_FILE>", Path(file).name],
             ["<USER>", os.environ.get("USER", "$USER")],
+            ["<SCRATCH>", "."],
         ]
 
     # need to copy pre_defines because _handle_includes will
