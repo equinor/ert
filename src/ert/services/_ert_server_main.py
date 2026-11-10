@@ -1,5 +1,6 @@
 import argparse
 import datetime as dt
+import ipaddress
 import json
 import logging
 import logging.config
@@ -33,6 +34,7 @@ from ert.plugins import setup_site_logging
 from ert.services import ErtServerExit, raise_ert_server_exit_on_signal
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
+from ert.shared.constants import LOCAL_HOST_IP
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 
@@ -85,13 +87,16 @@ def _get_host_list() -> list[str]:
 def _create_connection_info(
     sock: socket.socket, authtoken: str, cert: str | os.PathLike[str] | Path
 ) -> dict[str, Any]:
+    port = sock.getsockname()[1]
     connection_info = {
+        # Clients use the first url that answers, so clients on the same
+        # machine as the server connect without a hostname lookup.
         "urls": [
-            f"https://{host}:{sock.getsockname()[1]}" for host in _get_host_list()
+            f"https://{host}:{port}" for host in (LOCAL_HOST_IP, *_get_host_list())
         ],
         "authtoken": authtoken,
         "host": get_machine_name(),
-        "port": sock.getsockname()[1],
+        "port": port,
         "cert": str(cert),
         "auth": authtoken,
     }
@@ -143,7 +148,13 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
         .not_valid_after(dt.datetime.now(dt.UTC) + dt.timedelta(days=365))  # 1 year
         .add_extension(
             x509.SubjectAlternativeName(
-                [x509.DNSName(f"{san_name}") for san_name in subject_alternative_names]
+                [
+                    x509.IPAddress(ipaddress.ip_address(LOCAL_HOST_IP)),
+                    *(
+                        x509.DNSName(f"{san_name}")
+                        for san_name in subject_alternative_names
+                    ),
+                ]
             ),
             critical=False,
         )

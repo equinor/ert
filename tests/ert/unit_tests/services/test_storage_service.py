@@ -12,7 +12,50 @@ import pytest
 from ert.services import ErtServerController
 from ert.services._ert_server_main import _create_connection_info, _generate_certificate
 from ert.services.ert_server_controller import create_ert_server_controller
+from ert.services.shared_client import create_ertserver_client
 from ert.shared import find_available_socket
+
+
+def test_that_local_host_url_is_listed_before_hostname_urls_in_connection_info(
+    monkeypatch,
+):
+    monkeypatch.setenv("ERT_SERVER_CONNECTION_STRING", "")
+    sock = find_available_socket()
+    port = sock.getsockname()[1]
+
+    with (
+        patch(
+            "ert.services._ert_server_main._get_host_list",
+            return_value=["compute-node", "compute-node.example.com"],
+        ),
+        patch(
+            "ert.services._ert_server_main.get_machine_name",
+            return_value="compute-node.example.com",
+        ),
+    ):
+        conn_info = _create_connection_info(sock, "token", Path("path/to/cert"))
+
+    assert conn_info["urls"] == [
+        f"https://127.0.0.1:{port}",
+        f"https://compute-node:{port}",
+        f"https://compute-node.example.com:{port}",
+    ]
+
+
+@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
+@pytest.mark.slow
+def test_that_client_on_server_machine_connects_through_local_host(change_to_tmpdir):
+    project = Path().absolute()
+    with ErtServerController.start_server(
+        project=project, parent_pid=os.getpid()
+    ) as server:
+        assert server.wait_until_ready(), "StorageService failed to start"
+        client = create_ertserver_client(project)
+        try:
+            assert client.conn_info.base_url.startswith("https://127.0.0.1:")
+            assert client.get("/healthcheck").status_code == 200
+        finally:
+            client.close()
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?

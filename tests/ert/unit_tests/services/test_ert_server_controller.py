@@ -5,6 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+import requests
 
 from ert.services import ert_server_controller
 from ert.services.ert_server_controller import (
@@ -322,6 +323,48 @@ def test_that_fetch_connection_info_raises_when_storage_path_does_not_exist(
             proc.fetch_connection_info()
     finally:
         proc.shutdown()
+
+
+@pytest.mark.parametrize(
+    "local_host_error",
+    [
+        pytest.param(
+            requests.exceptions.SSLError("certificate verify failed"),
+            id="another server answers on the local host port",
+        ),
+        pytest.param(
+            requests.ConnectionError("connection refused"),
+            id="nothing listens on the local host port",
+        ),
+    ],
+)
+def test_that_fetch_url_returns_hostname_url_when_server_runs_on_another_machine(
+    monkeypatch, local_host_error
+):
+    local_host_url = "https://127.0.0.1:51850"
+    hostname_url = "https://compute-node:51850"
+
+    def healthcheck(url, **kwargs):
+        if url.startswith(local_host_url):
+            raise local_host_error
+        response = requests.Response()
+        response.status_code = 200
+        return response
+
+    monkeypatch.setattr(requests, "get", healthcheck)
+    controller = ErtServerController(
+        storage_path=".",
+        connection_info={
+            "urls": [local_host_url, hostname_url],
+            "authtoken": "token",
+            "host": "compute-node",
+            "port": "51850",
+            "cert": "path/to/cert",
+            "auth": "token",
+        },
+    )
+
+    assert controller.fetch_url() == hostname_url
 
 
 def test_that_signal_handler_deletes_connection_files_and_calls_previous_handler(
