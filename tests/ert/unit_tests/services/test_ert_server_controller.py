@@ -1,4 +1,5 @@
 import signal
+import socket
 import threading
 import time
 from pathlib import Path
@@ -336,6 +337,10 @@ def test_that_fetch_connection_info_raises_when_storage_path_does_not_exist(
             requests.ConnectionError("connection refused"),
             id="nothing listens on the local host port",
         ),
+        pytest.param(
+            requests.ReadTimeout("read timed out"),
+            id="a process on the local host port never answers",
+        ),
     ],
 )
 def test_that_fetch_url_returns_hostname_url_when_server_runs_on_another_machine(
@@ -365,6 +370,35 @@ def test_that_fetch_url_returns_hostname_url_when_server_runs_on_another_machine
     )
 
     assert controller.fetch_url() == hostname_url
+
+
+def test_that_fetch_url_gives_up_on_a_url_that_accepts_connections_but_never_answers(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        ert_server_controller, "_HEALTHCHECK_CONNECT_TIMEOUT_SECONDS", 0.1
+    )
+    monkeypatch.setattr(
+        ert_server_controller, "_HEALTHCHECK_ANSWER_TIMEOUT_SECONDS", 0.1
+    )
+    with socket.socket() as silent_listener:
+        silent_listener.bind(("127.0.0.1", 0))
+        silent_listener.listen()
+        port = silent_listener.getsockname()[1]
+        controller = ErtServerController(
+            storage_path=".",
+            connection_info={
+                "urls": [f"https://127.0.0.1:{port}"],
+                "authtoken": "token",
+                "host": "127.0.0.1",
+                "port": str(port),
+                "cert": requests.certs.where(),
+                "auth": "token",
+            },
+        )
+
+        with pytest.raises(TimeoutError, match="None of the URLs"):
+            controller.fetch_url()
 
 
 def test_that_signal_handler_deletes_connection_files_and_calls_previous_handler(

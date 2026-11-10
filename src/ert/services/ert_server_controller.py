@@ -210,6 +210,8 @@ class _Proc(threading.Thread):
 
 _ERT_SERVER_CONNECTION_INFO_FILE = "ert_server_connection.json"
 _ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_ert_server_main.py")
+_HEALTHCHECK_CONNECT_TIMEOUT_SECONDS: int = 60
+_HEALTHCHECK_ANSWER_TIMEOUT_SECONDS: int = 120
 
 
 class ErtServerContext:
@@ -345,6 +347,10 @@ class ErtServerController:
                     f"{url}/healthcheck",
                     auth=self.fetch_auth(),
                     verify=con_info["cert"],
+                    timeout=(
+                        _HEALTHCHECK_CONNECT_TIMEOUT_SECONDS,
+                        _HEALTHCHECK_ANSWER_TIMEOUT_SECONDS,
+                    ),
                 )
                 if resp.status_code == 200:
                     logger.info(f"Successfully connected to {url}")
@@ -352,8 +358,8 @@ class ErtServerController:
                     return str(url)
                 logs.append((resp.status_code, f"{url}: {resp.reason}"))
 
-            except requests.ConnectionError as ce:
-                logs.append(("ConnectionError", f"{url}: {ce}"))
+            except (requests.ConnectionError, requests.Timeout) as e:
+                logs.append((type(e).__name__, f"{url}: {e}"))
 
         logger.info(f"Attempted urls: {logs}")
 
