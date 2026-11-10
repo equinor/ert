@@ -1,9 +1,17 @@
 from datetime import UTC, datetime
-from typing import Annotated, Any, Final, Literal
+from typing import Annotated, Any, Final, Literal, NotRequired
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from typing_extensions import TypedDict
 
 StdStream = Literal["stdout", "stderr"]
+
+
+class Manifest(TypedDict):
+    type: Literal["file"]
+    path: str
+    error: NotRequired[str]
+    md5sum: NotRequired[str]
 
 
 class Id:
@@ -105,10 +113,18 @@ class ForwardModelStepCancelled(ForwardModelStepBaseEvent):
 
 
 class ForwardModelStepChecksum(BaseEvent):
+    """Reports the manifest outputs of a realization's forward model.
+
+    Attributes:
+        checksums: Maps the runpath of the realization, as a string, to its
+            manifest entries, which are keyed by manifest name. An entry has
+            an md5sum if the file exists, otherwise an error.
+    """
+
     event_type: Id.FORWARD_MODEL_STEP_CHECKSUM_TYPE = Id.FORWARD_MODEL_STEP_CHECKSUM
     ensemble: str | None = None
     real: str
-    checksums: dict[str, dict[str, Any]]
+    checksums: dict[str, dict[str, Manifest]]
 
 
 class RealizationBaseEvent(BaseEvent):
