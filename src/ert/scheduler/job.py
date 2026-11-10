@@ -252,6 +252,7 @@ class Job:
         self._requested_max_submit = max_submit
         for attempt in range(max_submit):
             self._scheduler.std_stream_paths.pop(self.iens, None)
+            self._scheduler.checksum.pop(self.real.run_arg.runpath, None)
             await self._submit_and_run_once(sem)
 
             if self.returncode.cancelled() or self._scheduler._cancelled:
