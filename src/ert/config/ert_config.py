@@ -47,7 +47,7 @@ from .forward_model_step import (
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
-from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
+from .model_config import DEFAULT_ECLBASE_FORMAT, DEFAULT_SCRATCH, ModelConfig
 from .parameter_config import LocalizationType, ParameterType
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
@@ -1136,15 +1136,14 @@ class ErtConfig(BaseModel, extra="forbid"):
             errors.append(ConfigValidationError.from_pydantic(err))
 
         if model_config is not None:
-            runpath = model_config.runpath_format_string
-            summary_file_base_name = model_config.summary_file_base_name
-            substitutions["<RUNPATH>"] = runpath
-            if summary_file_base_name is not None:
-                substitutions["<ECL_BASE>"] = summary_file_base_name
-                substitutions["<ECLBASE>"] = summary_file_base_name
-            else:
-                substitutions["<ECL_BASE>"] = DEFAULT_ECLBASE_FORMAT
-                substitutions["<ECLBASE>"] = DEFAULT_ECLBASE_FORMAT
+            model_config = model_config.model_copy(
+                update={
+                    "runpath_format_string": Substitutions(substitutions).substitute(
+                        model_config.runpath_format_string
+                    )
+                }
+            )
+            substitutions.update(_model_config_substitutions(model_config))
 
         try:
             workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
@@ -1690,8 +1689,18 @@ def _get_files_in_directory(
     return files
 
 
+def _model_config_substitutions(model_config: ModelConfig) -> dict[str, str]:
+    ecl_base = model_config.summary_file_base_name or DEFAULT_ECLBASE_FORMAT
+    return {
+        "<RUNPATH>": model_config.runpath_format_string,
+        "<ECL_BASE>": ecl_base,
+        "<ECLBASE>": ecl_base,
+    }
+
+
 def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
     substitutions = dict(config_dict.get("DEFINE", []))
+    substitutions.setdefault("<SCRATCH>", DEFAULT_SCRATCH)
 
     if "<CONFIG_PATH>" not in substitutions:
         substitutions["<CONFIG_PATH>"] = str(Path.cwd())

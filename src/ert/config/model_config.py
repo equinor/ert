@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
+DEFAULT_SCRATCH = "simulations"
+SCRATCH_RUNPATH = "<SCRATCH>/realization-<IENS>/iter-<ITER>"
 DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
 DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
@@ -116,7 +118,7 @@ class ModelConfig(BaseModel, extra="forbid"):
     def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
-            runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
+            runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, SCRATCH_RUNPATH),
             jobname_format_string=config_dict.get(
                 ConfigKeys.JOBNAME,
                 Path(config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT)).name,
