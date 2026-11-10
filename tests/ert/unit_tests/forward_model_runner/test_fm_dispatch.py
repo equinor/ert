@@ -361,7 +361,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
             }
         )
 
-        fm_dispatch(["script.py"])
+        fm_dispatch(["script.py", "--report-to-evaluator"])
 
         mock_killpg.assert_called_with(17, signal.SIGKILL)
 
