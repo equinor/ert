@@ -34,6 +34,7 @@ def create_scheduler():
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
     sch._manifest_queue = None
+    sch.checksum = {}
     sch.std_stream_paths = {}
     sch._cancelled = False
     sch._cancelled_by_evaluator = False
@@ -254,7 +255,7 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     scheduler = create_scheduler()
     scheduler._manifest_queue = asyncio.Queue()
     file_path = "does/not/exist"
-    scheduler.checksum = {
+    checksum = {
         "test_runpath": {
             "file": {
                 "path": file_path,
@@ -281,6 +282,8 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
         job_run_task = asyncio.create_task(
             job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
         )
+        await asyncio.sleep(0)
+        scheduler.checksum = checksum
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -296,7 +299,7 @@ async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
     scheduler._manifest_queue = asyncio.Queue()
     file_path = "does/not/exist"
     error = f"Expected file {file_path} not created by forward model!"
-    scheduler.checksum = {
+    checksum = {
         "test_runpath": {
             "file": {
                 "path": file_path,
@@ -312,6 +315,8 @@ async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
         job_run_task = asyncio.create_task(
             job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
         )
+        await asyncio.sleep(0)
+        scheduler.checksum = checksum
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -327,7 +332,7 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
     scheduler = create_scheduler()
     scheduler._manifest_queue = asyncio.Queue()
     file_path = "invalid_md5sum"
-    scheduler.checksum = {
+    checksum = {
         "test_runpath": {
             "file": {
                 "path": file_path,
@@ -346,6 +351,8 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
         job_run_task = asyncio.create_task(
             job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
         )
+        await asyncio.sleep(0)
+        scheduler.checksum = checksum
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -378,8 +385,8 @@ async def test_that_failed_attempt_output_paths_are_dropped_after_silent_retry(
 ):
     scheduler = create_scheduler()
     runpath = Path(realization.run_arg.runpath)
-    scheduler.checksum = {str(runpath): {}}
     failed_attempt_stdout = runpath / "failed.stdout"
+    scheduler.checksum = {}
     job = Job(scheduler, realization)
     job.submit_time = 0.0
     attempts = 0
@@ -389,8 +396,10 @@ async def test_that_failed_attempt_output_paths_are_dropped_after_silent_retry(
         attempts += 1
         if attempts == 1:
             scheduler.std_stream_paths[job.iens] = {failed_attempt_stdout}
+            scheduler.checksum[str(runpath)] = {}
             job.returncode.set_result(1)
         else:
+            scheduler.checksum[str(runpath)] = {}
             job.returncode.set_result(0)
 
     mocker.patch.object(job, "_submit_and_run_once", submit_and_run_once)
@@ -405,6 +414,52 @@ async def test_that_failed_attempt_output_paths_are_dropped_after_silent_retry(
 
     assert attempts == 2
     assert log_warnings.call_args.kwargs["existing_output_files"] == set()
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_checksum_from_failed_attempt_is_not_used_after_retry(
+    realization: Realization, mocker
+):
+    scheduler = create_scheduler()
+    scheduler._manifest_queue = asyncio.Queue()
+    scheduler.checksum = {}
+    scheduler.warnings_extracted = False
+    runpath = Path(realization.run_arg.runpath)
+    runpath.mkdir()
+    result_file = runpath / "result.txt"
+    result_file.write_text("data", encoding="utf-8")
+    job = Job(scheduler, realization)
+    job.submit_time = 0.0
+    attempts = 0
+
+    async def submit_and_run_once(_sem):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            scheduler.checksum[str(runpath)] = {}
+            job.returncode.set_result(1)
+        else:
+            job.returncode.set_result(0)
+
+    async def deliver_checksum_of_second_attempt(_seconds):
+        scheduler.checksum[str(runpath)] = {
+            "result": {"type": "file", "path": str(result_file)}
+        }
+
+    mocker.patch.object(job, "_submit_and_run_once", submit_and_run_once)
+    mocker.patch.object(job, "_handle_finished_forward_model", AsyncMock())
+    mocker.patch("asyncio.sleep", deliver_checksum_of_second_attempt)
+    log_warnings = mocker.patch(
+        "ert.scheduler.job.log_warnings_from_forward_model",
+        AsyncMock(return_value=0),
+    )
+
+    await job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=2)
+
+    assert log_warnings.call_args.kwargs["existing_output_files"] == {
+        Path("result.txt")
+    }
 
 
 @pytest.mark.asyncio
