@@ -146,8 +146,8 @@ async def register(request: StartErtExperimentRequest) -> JSONResponse:
     config_id = str(uuid.uuid4())
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
     try:
-        run_model = create_model(
-            request.config, cast(Namespace, request.args), status_queue
+        run_model = await asyncio.to_thread(
+            create_model, request.config, cast(Namespace, request.args), status_queue
         )
     except ConfigValidationError as e:
         raise HTTPException(
