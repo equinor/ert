@@ -261,3 +261,38 @@ Minimal example to override how Ert chooses the IP address:
     @ert.plugin(name="my_plugin")
     def get_ip_address():
         return "127.0.0.1"
+
+Status event subscriber
+~~~~~~~~~~~~~~~~~~~~~~~
+A plugin can listen to the status events emitted while an experiment runs,
+such as progress updates and snapshot updates.
+
+This only applies to experiments started from the server.
+Since the server can run multiple experiments at the same time,
+the subscriber receives both the event and the server's ID (a UUID string)
+of the experiment run that emitted it. This is not the ID of the experiment
+in storage.
+
+.. autofunction:: ert.plugins.hook_specifications.event_subscriber.on_status_event
+
+Only one plugin may implement this hook. If a second plugin implements it,
+that plugin is rejected with a ``ValueError`` when the plugins are loaded.
+
+Exceptions raised by the subscriber are logged and do not stop the experiment.
+
+Minimal example of logging the type of each event:
+
+.. code-block:: python
+
+   import logging
+
+   import ert
+
+   logger = logging.getLogger(__name__)
+
+   @ert.plugin(name="event_logger")
+   def on_status_event(event, experiment_id):
+       logger.info(f"Experiment run {experiment_id} emitted {event.event_type}")
+
+The subscriber is called from the server's event loop, so a slow implementation
+delays event delivery for all running experiments and connected clients.
