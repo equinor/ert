@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 @single_implementation
 @hook_specification
-def on_status_event(experiment_id: str, event: StatusEvents) -> None:
+def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
     """Called for every status event emitted by a running experiment.
 
     Implementations are called synchronously from the server's event loop,
@@ -19,7 +19,7 @@ def on_status_event(experiment_id: str, event: StatusEvents) -> None:
 
     Only one implementation is allowed.
 
-    :param experiment_id: The server's ID of the experiment run that emitted
+    :param experiment_run_id: The server's ID of the experiment run that emitted
         the event. This is not the ID of the experiment in storage.
     :param event: The emitted status event.
     """
