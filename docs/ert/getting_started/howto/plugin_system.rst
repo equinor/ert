@@ -294,8 +294,8 @@ Minimal example of logging the type of each event:
    logger = logging.getLogger(__name__)
 
    @ert.plugin(name="event_logger")
-   def on_status_event(experiment_id, event):
-       logger.info(f"Experiment run {experiment_id} emitted {event.event_type}")
+   def on_status_event(experiment_run_id, event):
+       logger.info(f"Experiment run {experiment_run_id} emitted {event.event_type}")
 
 The listener is called from the server's event loop, so a slow implementation
 delays event delivery for all running experiments and connected clients.
