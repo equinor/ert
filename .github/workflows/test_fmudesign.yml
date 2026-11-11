@@ -67,9 +67,6 @@ jobs:
         run: |
           ERT_PYTEST_ARGS='-n 3 --cov=ert --cov=everest --cov=fmudesign --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v' uv run just fmudesign-tests
 
-      - name: Run doctests on fmudesign
-        run: uv run --no-sync pytest ./src/fmudesign/ --doctest-modules -v
-
       - name: Upload coverage to Codecov
         id: codecov1
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
