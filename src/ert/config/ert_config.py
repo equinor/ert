@@ -1480,8 +1480,14 @@ class ErtConfig(BaseModel, extra="forbid"):
         ) and (
             dm_num_realizations := len(dm_active_realizations)
         ) != config_num_realizations:
-            ensemble_size = min(config_num_realizations, dm_num_realizations)
-            active_count = sum(dm_active_realizations[:ensemble_size])
+            ensemble_size = self.analysis_config.design_matrix.get_ensemble_size(
+                config_num_realizations
+            )
+            active_count = (
+                self.analysis_config.design_matrix.get_active_realization_count(
+                    ensemble_size
+                )
+            )
             active_verb = "is" if active_count == 1 else "are"
             msg = (
                 f"NUM_REALIZATIONS ({config_num_realizations}) is "

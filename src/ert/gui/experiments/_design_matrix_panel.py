@@ -114,10 +114,8 @@ class DesignMatrixPanel(QDialog):
                 layout.setSpacing(2)
                 layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-                ensemble_size = min(
-                    config_num_realization, len(design_matrix.active_realizations)
-                )
-                active_count = sum(design_matrix.active_realizations[:ensemble_size])
+                ensemble_size = design_matrix.get_ensemble_size(config_num_realization)
+                active_count = design_matrix.get_active_realization_count(ensemble_size)
                 active_verb = "is" if active_count == 1 else "are"
                 warning_icon.setToolTip(
                     f"Ensemble size was set to {ensemble_size} realizations, "
