@@ -636,6 +636,19 @@ def test_that_read_correlations_returns_labeled_symmetric_matrix(tmp_path):
     assert np.isclose(arr[0, 1], 0.5)
 
 
+@pytest.mark.parametrize("omitted", ["header", "index"])
+def test_that_correlation_sheet_without_header_or_index_raises_fmudesign_error(
+    tmp_path, omitted
+):
+    filepath = tmp_path / "corr.xlsx"
+    pd.DataFrame(
+        [[1.0, np.nan], [0.5, 1.0]], index=["A", "B"], columns=["A", "B"]
+    ).to_excel(filepath, sheet_name="corr1", **{omitted: False})
+
+    with pytest.raises(FmudesignError, match="Mismatch between column and index"):
+        design_dist.read_correlations(str(filepath), corr_sheet="corr1")
+
+
 def test_that_print_corrmat_formats_without_mutating_input(capsys):
     values = np.array([[1, -0.0, 0.9], [-0.0, 1, 0], [0.9, 0, 1.0]])
     df = pd.DataFrame(values, index=["A", "B", "C"], columns=["A", "B", "C"])
