@@ -370,6 +370,10 @@ class ErtServerController:
         if self._thread_that_starts_server_process is None:
             return -1
 
+        from .shared_client import SharedClient  # ruff: ignore[import-outside-top-level]
+
+        SharedClient.close_client()
+
         self.__class__._instance = None
         error_code = self._thread_that_starts_server_process.shutdown()
         self._thread_that_starts_server_process = None
