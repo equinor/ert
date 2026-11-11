@@ -14,6 +14,7 @@ from ert.services.ert_server_controller import (
     _delete_connection_files_then_call_previous_handler,
     create_ert_server_controller,
 )
+from ert.services.shared_client import Client, ErtClientConnectionInfo, SharedClient
 
 
 class _DummyService(ErtServerController):
@@ -119,6 +120,21 @@ def test_long_lived(server, tmp_path):
     assert server.fetch_connection_info() == {"authtoken": "test123", "urls": ["url"]}
     assert server.shutdown() == -signal.SIGTERM
     assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
+
+
+@pytest.mark.script(
+    """\
+os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
+os.close(fd)
+time.sleep(10)
+"""
+)
+def test_that_shutdown_closes_the_shared_client(server, monkeypatch):
+    client = Client(ErtClientConnectionInfo(base_url="https://localhost"))
+    monkeypatch.setattr(SharedClient, "_instance", SharedClient(Path(), client))
+    server.shutdown()
+    assert client.is_closed
+    assert SharedClient._instance is None
 
 
 @pytest.mark.slow
