@@ -135,7 +135,7 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
 ):
     received_events = []
 
-    def notify_status_event(experiment_run_id, event):
+    def notify_status_event(*, experiment_run_id, event):
         received_events.append((experiment_run_id, event))
 
     monkeypatch.setattr(ert_runner, "_experiments", {})
@@ -333,7 +333,7 @@ async def test_that_cancellation_before_start_forwards_end_event_to_listener(
         status=ExperimentStatus(status=ExperimentState.stopped, message="Cancelled"),
         run_model=model,
         status_queue=SimpleQueue(),
-        status_event_listener=received_events.append,
+        status_event_listener=lambda *, event: received_events.append(event),
     )
     monkeypatch.setitem(_experiments, str(uuid4()), state)
 

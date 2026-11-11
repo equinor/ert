@@ -385,7 +385,9 @@ def test_that_notify_status_event_passes_event_and_experiment_run_id_to_plugin()
             received_events.append((experiment_run_id, event))
 
     event = Mock()
-    ErtPluginManager(plugins=[EventListener]).notify_status_event("e_id", event)
+    ErtPluginManager(plugins=[EventListener]).notify_status_event(
+        experiment_run_id="e_id", event=event
+    )
     assert received_events == [("e_id", event)]
 
 
@@ -397,6 +399,6 @@ def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(capl
 
     pm = ErtPluginManager(plugins=[FailingPlugin])
     with caplog.at_level(logging.ERROR):
-        pm.notify_status_event("e_id", Mock())
+        pm.notify_status_event(experiment_run_id="e_id", event=Mock())
     assert "Status event plugin failed for experiment run 'e_id'" in caplog.text
     assert "kaboom!" in caplog.text

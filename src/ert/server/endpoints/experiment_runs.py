@@ -12,10 +12,10 @@ import traceback
 import uuid
 import warnings
 from base64 import b64decode
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from contextlib import ExitStack
 from queue import SimpleQueue
-from typing import Annotated
+from typing import Annotated, Protocol
 
 from fastapi import (
     APIRouter,
@@ -58,6 +58,14 @@ class UserCancelled(Exception):
     pass
 
 
+class StatusEventNotifier(Protocol):
+    def __call__(self, *, experiment_run_id: str, event: StatusEvents) -> None: ...
+
+
+class StatusEventListener(Protocol):
+    def __call__(self, *, event: StatusEvents) -> None: ...
+
+
 @dataclasses.dataclass
 class ExperimentRunnerState:
     status: ExperimentStatus = dataclasses.field(default_factory=ExperimentStatus)
@@ -69,12 +77,12 @@ class ExperimentRunnerState:
     run_path: str | os.PathLike[str] | None = None
     storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
-    status_event_listener: Callable[[StatusEvents], None] | None = None
+    status_event_listener: StatusEventListener | None = None
 
     def publish(self, event: StatusEvents) -> None:
         self.events.append(event)
         if self.status_event_listener is not None:
-            self.status_event_listener(event)
+            self.status_event_listener(event=event)
         for subscriber in self.subscribers.values():
             subscriber.notify()
 
@@ -195,7 +203,7 @@ async def get_plugin_manager() -> ErtPluginManager:
 
 async def get_status_event_notifier(
     plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
-) -> Callable[[str, StatusEvents], None]:
+) -> StatusEventNotifier:
     return plugin_manager.notify_status_event
 
 
@@ -261,12 +269,14 @@ async def start_experiment(
     background_tasks: BackgroundTasks,
     site_plugins: Annotated[ErtRuntimePlugins, Depends(_with_runtime_plugins)],
     notify_status_event: Annotated[
-        Callable[[str, StatusEvents], None], Depends(get_status_event_notifier)
+        StatusEventNotifier, Depends(get_status_event_notifier)
     ],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState(
-        status_event_listener=functools.partial(notify_status_event, experiment_id)
+        status_event_listener=functools.partial(
+            notify_status_event, experiment_run_id=experiment_id
+        )
     )
     _experiments[experiment_id] = experiment_state
     try:

@@ -376,7 +376,9 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return ip_address[0]
 
-    def notify_status_event(self, experiment_run_id: str, event: StatusEvents) -> None:
+    def notify_status_event(
+        self, *, experiment_run_id: str, event: StatusEvents
+    ) -> None:
         try:
             self.hook.on_status_event(experiment_run_id=experiment_run_id, event=event)
         except Exception:

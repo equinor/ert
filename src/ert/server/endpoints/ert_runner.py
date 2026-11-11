@@ -6,7 +6,7 @@ import queue
 import threading
 import time
 import uuid
-from collections.abc import Callable, Generator
+from collections.abc import Generator
 from contextlib import contextmanager
 from functools import partial
 from queue import SimpleQueue
@@ -34,6 +34,7 @@ from everest.everserver.server import ExperimentState, ExperimentStatus
 
 from .experiment_runs import (
     ExperimentRunnerState,
+    StatusEventNotifier,
     _experiments,
     _with_runtime_plugins,
     authenticated,
@@ -146,7 +147,7 @@ def _exclusive_runpath_access(
 async def register(
     request: StartErtExperimentRequest,
     notify_status_event: Annotated[
-        Callable[[str, StatusEvents], None], Depends(get_status_event_notifier)
+        StatusEventNotifier, Depends(get_status_event_notifier)
     ],
 ) -> JSONResponse:
     config_id = str(uuid.uuid4())
@@ -167,7 +168,7 @@ async def register(
         config_path=request.config.config_path,
         run_path=request.config.runpath_config.runpath_format_string,
         storage_path=request.config.ens_path,
-        status_event_listener=partial(notify_status_event, config_id),
+        status_event_listener=partial(notify_status_event, experiment_run_id=config_id),
     )
     _experiments[config_id] = experiment_state
 
