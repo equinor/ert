@@ -325,5 +325,5 @@ experiment or the progress shown to the user. The events of one
 experiment run are passed one at a time, in the order they were emitted,
 but events from different experiment runs can be passed at the same time
 from different threads. The run is not marked as finished until the
-listener has returned from its ``EndEvent``, so a listener that blocks
-keeps the run open.
+listener has returned from its ``EndEvent``, or until 60 seconds have
+passed, after which the listener is abandoned and a warning is logged.
