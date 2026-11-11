@@ -238,7 +238,6 @@ def test_that_server_hosts_and_localhost_ip_exists_as_san_in_certificate(
     auth_token = "very_secret_token"
     sock = find_available_socket()
     cert_path, _, _ = _generate_certificate(Path())
-    monkeypatch.setenv("ERT_SERVER_CONNECTION_STRING", "")
 
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable
