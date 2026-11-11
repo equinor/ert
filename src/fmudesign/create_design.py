@@ -98,6 +98,8 @@ def _identical_parameters(
     identically distributed parameter that has the same correlations with all
     other parameters. Their values must be identical, which inducing
     correlations cannot achieve, since it only reorders independent draws.
+
+    Prints a warning if only the correlations with other parameters differ.
     """
     names = correlations.index.tolist()
     matrix = correlations.to_numpy()
@@ -106,8 +108,15 @@ def _identical_parameters(
         original, name = names[i], names[j]
         same_distribution = parameters[original][:2] == parameters[name][:2]
         same_correlations = np.array_equal(matrix[i], matrix[j])
-        if matrix[i, j] == 1 and same_distribution and same_correlations:
-            identical.setdefault(name, original)
+        if matrix[i, j] == 1 and same_distribution:
+            if same_correlations:
+                identical.setdefault(name, original)
+            else:
+                print(
+                    f"Warning: Parameter {name!r} is not set identical to "
+                    f"{original!r}, despite correlation 1 and the same distribution, "
+                    "as their correlations with other parameters differ"
+                )
     return identical
 
 

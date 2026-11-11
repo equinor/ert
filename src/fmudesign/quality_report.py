@@ -361,7 +361,8 @@ class QualityReporter:
 
         pairgrid = sns.PairGrid(df)
 
-        pairgrid.map_upper(sns.kdeplot)
+        # Parameters with identical values have no joint density to estimate
+        pairgrid.map_upper(sns.kdeplot, warn_singular=False)
         pairgrid.map_upper(add_grid)
         bins = max(int(math.sqrt(len(df))), 30)
         pairgrid.map_diag(sns.histplot, bins=bins, kde=True)

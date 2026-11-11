@@ -1011,12 +1011,18 @@ def _sample_correlation_group(tmp_path, params, matrix, strategy="joint"):
 def test_that_correlation_one_between_identical_distributions_gives_identical_values(
     tmp_path, strategy
 ):
-    params = dict.fromkeys(["A", "B", "C"], ("normal", ["0", "1"], "corr1"))
-    matrix = [[1.0, 1.0, 0.5], [1.0, 1.0, 0.5], [0.5, 0.5, 1.0]]
+    params = dict.fromkeys(["A", "B", "C", "D"], ("normal", ["0", "1"], "corr1"))
+    matrix = [
+        [1.0, 1.0, 1.0, 0.5],
+        [1.0, 1.0, 1.0, 0.5],
+        [1.0, 1.0, 1.0, 0.5],
+        [0.5, 0.5, 0.5, 1.0],
+    ]
 
     result = _sample_correlation_group(tmp_path, params, matrix, strategy)
 
     np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "C"))
 
 
 def test_that_correlation_one_gives_identical_values_in_an_inconsistent_matrix(
@@ -1057,6 +1063,18 @@ def test_that_correlation_one_keeps_values_apart_if_distribution_or_correlations
     result = _sample_correlation_group(tmp_path, params, matrix)
 
     assert not np.array_equal(_col(result, "A"), _col(result, "B"))
+
+
+def test_that_correlation_one_warns_when_correlations_with_other_parameters_differ(
+    tmp_path, capsys
+):
+    params = dict.fromkeys(["A", "B", "C"], ("normal", ["0", "1"], "corr1"))
+    matrix = [[1.0, 1.0, 0.5], [1.0, 1.0, 0.3], [0.5, 0.3, 1.0]]
+
+    _sample_correlation_group(tmp_path, params, matrix)
+
+    stdout = capsys.readouterr().out
+    assert "Warning: Parameter 'B' is not set identical to 'A'" in stdout
 
 
 def test_that_independent_sampling_preserves_other_groups_when_group_is_removed(
