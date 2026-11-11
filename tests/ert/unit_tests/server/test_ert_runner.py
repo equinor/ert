@@ -15,6 +15,7 @@ from ert.config import ErtConfig, QueueSystem
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
+from ert.plugins import ErtRuntimePlugins
 from ert.run_models import SingleTestRun
 from ert.run_models.run_model import RunModel
 from ert.server.endpoints import ert_runner
@@ -316,6 +317,39 @@ def runner_client() -> Iterator[TestClient]:
     app.dependency_overrides[ert_runner._with_runtime_plugins] = lambda: None
     with TestClient(app) as client:
         yield client
+
+
+@pytest.mark.slow
+def test_that_forward_model_steps_run_via_the_server_see_plugin_environment_variables(
+    monkeypatch: pytest.MonkeyPatch, use_tmpdir, runner_client: TestClient
+):
+    monkeypatch.setattr(ert_runner, "_experiments", {})
+    Path("PRINT_GREETING").write_text(
+        "EXECUTABLE printenv\nARGLIST GREETING\nSTDOUT greeting\n",
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        "NUM_REALIZATIONS 1\n"
+        "INSTALL_JOB print_greeting PRINT_GREETING\n"
+        "FORWARD_MODEL print_greeting\n",
+        encoding="utf-8",
+    )
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(env_pr_fm_step={"print_greeting": {"GREETING": "hello"}})
+    ).from_file("config.ert")
+
+    registration = runner_client.post(
+        "/experiment_runs/register",
+        json={"config": config.model_dump(mode="json"), "args": {"mode": "test_run"}},
+    )
+    assert registration.status_code == 200, registration.text
+    runner_client.post(
+        "/experiment_runs/start_experiment_ert",
+        params={"config_id": registration.json()["config_id"]},
+    )
+
+    step_stdout = Path("simulations/realization-0/iter-0/greeting.0")
+    assert step_stdout.read_text(encoding="utf-8") == "hello\n"
 
 
 def test_that_inspection_and_runpath_requests_reuse_the_registered_model(

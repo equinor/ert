@@ -859,6 +859,7 @@ class ErtConfig(BaseModel, extra="forbid"):
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = Field(default_factory=dict)
+    env_pr_fm_step: dict[str, dict[str, str]] = Field(default_factory=dict)
     analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = Field(default_factory=QueueConfig)
     workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
@@ -1276,6 +1277,7 @@ class ErtConfig(BaseModel, extra="forbid"):
                 ensemble_config=ensemble_config,
                 ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
                 env_vars=env_vars,
+                env_pr_fm_step=cls.ENV_PR_FM_STEP,
                 analysis_config=analysis_config,
                 queue_config=queue_config,
                 workflow_jobs=workflow_jobs,
@@ -1574,10 +1576,6 @@ class ErtConfig(BaseModel, extra="forbid"):
 
     def forward_model_step_name_list(self) -> list[str]:
         return [j.name for j in self.forward_model_steps]
-
-    @property
-    def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
-        return self.ENV_PR_FM_STEP
 
     @property
     def random_seed(self) -> int:
