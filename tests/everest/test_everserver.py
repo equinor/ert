@@ -634,8 +634,8 @@ async def test_that_started_everest_experiment_passes_status_events_and_id_to_no
 ):
     received_events = []
 
-    def notify_status_event(experiment_id, event):
-        received_events.append((experiment_id, event))
+    def notify_status_event(experiment_run_id, event):
+        received_events.append((experiment_run_id, event))
 
     events = [
         RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
