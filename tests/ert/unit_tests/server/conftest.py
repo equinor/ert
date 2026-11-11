@@ -13,6 +13,11 @@ from ert.server import common
 from ert.server.app import app
 
 
+@pytest.fixture(autouse=True)
+def _reset_server_plugin_manager(reset_server_plugin_manager):
+    pass
+
+
 @pytest.fixture(scope="session")
 def poly_example_tmp_dir_shared(
     tmp_path_factory,

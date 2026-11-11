@@ -1,7 +1,6 @@
 import gc
 import logging
 import os
-import sys
 from unittest.mock import patch
 
 import pytest
@@ -115,12 +114,12 @@ def remove_root_log_handlers_added_by_test():
             existing_logger.removeHandler(handler)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def reset_server_plugin_manager():
     yield
-    experiment_runs = sys.modules.get("ert.server.endpoints.experiment_runs")
-    if experiment_runs is not None:
-        experiment_runs._create_plugin_manager.cache_clear()
+    from ert.server.endpoints import experiment_runs  # ruff: ignore[import-outside-top-level]
+
+    experiment_runs._create_plugin_manager.cache_clear()
 
 
 @pytest.hookimpl(wrapper=True)

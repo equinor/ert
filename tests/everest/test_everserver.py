@@ -52,6 +52,8 @@ from everest.strings import (
 from everest.util._utils import get_everest_experiment
 from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
 
+pytestmark = pytest.mark.usefixtures("reset_server_plugin_manager")
+
 
 @pytest.fixture
 def authorized_client(monkeypatch):
