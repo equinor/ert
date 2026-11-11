@@ -376,12 +376,12 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return ip_address[0]
 
-    def notify_status_event(self, experiment_id: str, event: StatusEvents) -> None:
+    def notify_status_event(self, experiment_run_id: str, event: StatusEvents) -> None:
         try:
-            self.hook.on_status_event(experiment_id=experiment_id, event=event)
+            self.hook.on_status_event(experiment_run_id=experiment_run_id, event=event)
         except Exception:
             logger.exception(
-                f"Status event plugin failed for experiment '{experiment_id}'"
+                f"Status event plugin failed for experiment run '{experiment_run_id}'"
             )
 
     def add_span_processor_to_trace_provider(self) -> None:
