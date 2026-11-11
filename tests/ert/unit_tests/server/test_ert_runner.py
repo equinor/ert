@@ -135,8 +135,8 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
 ):
     received_events = []
 
-    def notify_status_event(experiment_id, event):
-        received_events.append((experiment_id, event))
+    def notify_status_event(experiment_run_id, event):
+        received_events.append((experiment_run_id, event))
 
     monkeypatch.setattr(ert_runner, "_experiments", {})
     events = [
