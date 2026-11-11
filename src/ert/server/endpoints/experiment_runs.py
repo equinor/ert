@@ -15,7 +15,7 @@ from base64 import b64decode
 from collections.abc import AsyncIterator
 from contextlib import ExitStack
 from queue import SimpleQueue
-from typing import Annotated
+from typing import Annotated, Protocol
 
 from fastapi import (
     APIRouter,
@@ -58,6 +58,14 @@ class UserCancelled(Exception):
     pass
 
 
+class StatusEventNotifier(Protocol):
+    def __call__(self, *, experiment_run_id: str, event: StatusEvents) -> None: ...
+
+
+class StatusEventListener(Protocol):
+    def __call__(self, *, event: StatusEvents) -> None: ...
+
+
 @dataclasses.dataclass
 class ExperimentRunnerState:
     status: ExperimentStatus = dataclasses.field(default_factory=ExperimentStatus)
@@ -69,6 +77,12 @@ class ExperimentRunnerState:
     run_path: str | os.PathLike[str] | None = None
     storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
+    status_event_listener: StatusEventListener | None = None
+
+    def publish(self, event: StatusEvents) -> None:
+        self.events.append(event)
+        for subscriber in self.subscribers.values():
+            subscriber.notify()
 
     def reset_for_rerun(self) -> None:
         self.events.clear()
@@ -185,6 +199,12 @@ async def get_plugin_manager() -> ErtPluginManager:
     return _create_plugin_manager()
 
 
+async def get_status_event_notifier(
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
+) -> StatusEventNotifier:
+    return plugin_manager.notify_status_event
+
+
 async def _with_runtime_plugins(
     plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
 ) -> AsyncIterator[ErtRuntimePlugins]:
@@ -246,9 +266,16 @@ async def start_experiment(
     config: EverestConfig,
     background_tasks: BackgroundTasks,
     site_plugins: Annotated[ErtRuntimePlugins, Depends(_with_runtime_plugins)],
+    notify_status_event: Annotated[
+        StatusEventNotifier, Depends(get_status_event_notifier)
+    ],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
-    experiment_state = ExperimentRunnerState()
+    experiment_state = ExperimentRunnerState(
+        status_event_listener=functools.partial(
+            notify_status_event, experiment_run_id=experiment_id
+        )
+    )
     _experiments[experiment_id] = experiment_state
     try:
         background_tasks.add_task(run_everest, config, experiment_id, site_plugins)
@@ -310,9 +337,7 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
     run.active_streams += 1
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         while True:
-            event = await _get_event(
-                subscriber_id=subscriber_id, experiment_id=experiment_id
-            )
+            event = await _get_event(subscriber_id=subscriber_id, run=run)
             payload = json.dumps(
                 jsonable_encoder(event), separators=(",", ":"), ensure_ascii=False
             )
@@ -337,13 +362,12 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
         )
 
 
-async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
+async def _get_event(subscriber_id: str, run: ExperimentRunnerState) -> StatusEvents:
     """
     The function waits until there is an event available for the subscriber
     and returns the event. If the subscriber is up to date it will
     wait until we wake up the subscriber using notify
     """
-    run = _experiments[experiment_id]
     if subscriber_id not in run.subscribers:
         run.subscribers[subscriber_id] = Subscriber()
     subscriber = run.subscribers[subscriber_id]
@@ -356,6 +380,44 @@ async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
     return event
 
 
+async def _forward_status_events(
+    run: ExperimentRunnerState, listener: StatusEventListener
+) -> None:
+    subscriber_id = str(uuid.uuid4())
+    try:
+        while True:
+            event = await _get_event(subscriber_id=subscriber_id, run=run)
+            await asyncio.to_thread(listener, event=event)
+            if isinstance(event, EndEvent):
+                return
+    finally:
+        run.subscribers.pop(subscriber_id, None)
+
+
+def start_status_event_forwarding(
+    run: ExperimentRunnerState,
+) -> asyncio.Task[None] | None:
+    if run.status_event_listener is None:
+        return None
+    return asyncio.create_task(_forward_status_events(run, run.status_event_listener))
+
+
+async def finalize_run(
+    run: ExperimentRunnerState, forwarding_task: asyncio.Task[None] | None
+) -> None:
+    """Mark the run as finalized once the status event listener has
+    received the EndEvent, so a rerun cannot clear events it has not read.
+    """
+    try:
+        if forwarding_task is not None:
+            if any(isinstance(event, EndEvent) for event in run.events):
+                await forwarding_task
+            else:
+                forwarding_task.cancel()
+    finally:
+        run.finalized.set()
+
+
 async def run_everest(
     config: EverestConfig,
     experiment_id: str,
@@ -365,6 +427,7 @@ async def run_everest(
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
     run_model: EverestRunModel | None = None
     end_message = "Experiment ended without a terminal event"
+    forwarding_task = start_status_event_forwarding(run)
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         with use_runtime_plugins(site_plugins):
             run_model = EverestRunModel.create(
@@ -396,9 +459,7 @@ async def run_everest(
                 await asyncio.sleep(0.01)
                 continue
 
-            run.events.append(item)
-            for sub in run.subscribers.values():
-                sub.notify()
+            run.publish(item)
 
             if isinstance(item, EndEvent):
                 break
@@ -427,10 +488,8 @@ async def run_everest(
                 run_model._experiment.status = run.status
         finally:
             if not any(isinstance(event, EndEvent) for event in run.events):
-                run.events.append(EndEvent(failed=True, msg=end_message))
-                for sub in run.subscribers.values():
-                    sub.notify()
-            run.finalized.set()
+                run.publish(EndEvent(failed=True, msg=end_message))
+            await finalize_run(run, forwarding_task)
 
         logging.getLogger(__name__).info(
             f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
