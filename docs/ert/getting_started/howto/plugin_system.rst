@@ -283,8 +283,8 @@ that plugin is rejected with a ``ValueError`` when the plugins are loaded.
 
 Exceptions raised by the listener are logged and do not stop the experiment.
 
-The listener receives the same event object that is shown to the user in the
-GUI and in progress monitoring, so it must not modify the event.
+The listener receives a copy of the event, so modifying it does not change
+what is shown to the user in the GUI and in progress monitoring.
 
 End events and reruns
 ^^^^^^^^^^^^^^^^^^^^^
