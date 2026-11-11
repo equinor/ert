@@ -13,9 +13,11 @@ if TYPE_CHECKING:
 def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
     """Called for every status event emitted by a running experiment.
 
-    Implementations are called synchronously before the event is passed on
-    to the user, so they must return quickly. The event object is shared, so
-    it must not be modified.
+    Implementations are called in a worker thread, with the events of each
+    experiment run passed one at a time in the order they were emitted.
+    Events from different experiment runs can be passed concurrently from
+    different threads. The event object is shared with other subscribers,
+    so it must not be modified.
 
     Only one implementation is allowed.
 

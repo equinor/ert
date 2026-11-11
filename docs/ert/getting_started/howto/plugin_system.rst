@@ -320,5 +320,10 @@ Minimal example of logging the type of each event:
    def on_status_event(experiment_run_id, event):
        logger.info(f"Experiment run {experiment_run_id} emitted {event.event_type}")
 
-The listener is called before the event is shown to the user, so a slow
-implementation delays progress updates for all running experiments.
+The listener is called in a worker thread, so it does not delay the
+experiment or the progress shown to the user. The events of one
+experiment run are passed one at a time, in the order they were emitted,
+but events from different experiment runs can be passed at the same time
+from different threads. The run is not marked as finished until the
+listener has returned from its ``EndEvent``, or until 60 seconds have
+passed, after which the listener is abandoned and a warning is logged.

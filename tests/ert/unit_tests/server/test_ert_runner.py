@@ -323,24 +323,65 @@ async def test_that_cancellation_before_start_does_not_start_simulations(
 
 
 @pytest.mark.asyncio
-async def test_that_cancellation_before_start_forwards_end_event_to_listener(
+async def test_that_cancelled_run_is_finalized_after_listener_gets_end_event(
     monkeypatch: pytest.MonkeyPatch,
 ):
     received_events = []
+
+    def listener(*, event):
+        received_events.append(event)
+
     model = Mock(spec=RunModel)
     model._storage = Mock(spec=LocalStorage)
     state = ert_runner.ErtExperimentRunnerState(
         status=ExperimentStatus(status=ExperimentState.stopped, message="Cancelled"),
         run_model=model,
         status_queue=SimpleQueue(),
-        status_event_listener=lambda *, event: received_events.append(event),
+        status_event_listener=listener,
     )
     monkeypatch.setitem(_experiments, str(uuid4()), state)
 
     await ert_runner.run_ert(state)
 
+    assert state.finalized.is_set()
     assert received_events == [
         EndEvent(failed=True, msg="Experiment cancelled before start.")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_that_rerun_forwards_the_events_of_both_runs_to_listener(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    received_events = []
+
+    def listener(*, event):
+        received_events.append(event)
+
+    status_queue: SimpleQueue = SimpleQueue()
+    runs_events = [
+        [EndEvent(failed=False, msg="first run")],
+        [EndEvent(failed=False, msg="rerun")],
+    ]
+    model = Mock(spec=RunModel)
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+    model.start_simulations_thread.side_effect = lambda *_, **__: [
+        status_queue.put(event) for event in runs_events.pop(0)
+    ]
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model,
+        status_queue=status_queue,
+        status_event_listener=listener,
+    )
+    monkeypatch.setitem(_experiments, str(uuid4()), state)
+
+    await ert_runner.run_ert(state)
+    state.reset_for_rerun()
+    await ert_runner.run_ert(state, rerun_failed_realizations=True)
+
+    assert received_events == [
+        EndEvent(failed=False, msg="first run"),
+        EndEvent(failed=False, msg="rerun"),
     ]
 
 

@@ -13,6 +13,7 @@ import uuid
 import warnings
 from base64 import b64decode
 from collections.abc import AsyncIterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from queue import SimpleQueue
 from typing import Annotated, Protocol
@@ -81,8 +82,6 @@ class ExperimentRunnerState:
 
     def publish(self, event: StatusEvents) -> None:
         self.events.append(event)
-        if self.status_event_listener is not None:
-            self.status_event_listener(event=event)
         for subscriber in self.subscribers.values():
             subscriber.notify()
 
@@ -339,9 +338,7 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
     run.active_streams += 1
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         while True:
-            event = await _get_event(
-                subscriber_id=subscriber_id, experiment_id=experiment_id
-            )
+            event = await _get_event(subscriber_id=subscriber_id, run=run)
             payload = json.dumps(
                 jsonable_encoder(event), separators=(",", ":"), ensure_ascii=False
             )
@@ -366,13 +363,12 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
         )
 
 
-async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
+async def _get_event(subscriber_id: str, run: ExperimentRunnerState) -> StatusEvents:
     """
     The function waits until there is an event available for the subscriber
     and returns the event. If the subscriber is up to date it will
     wait until we wake up the subscriber using notify
     """
-    run = _experiments[experiment_id]
     if subscriber_id not in run.subscribers:
         run.subscribers[subscriber_id] = Subscriber()
     subscriber = run.subscribers[subscriber_id]
@@ -385,6 +381,64 @@ async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
     return event
 
 
+STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS = 60.0
+_status_event_listener_executor = ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="status_event_listener"
+)
+
+
+async def _forward_status_events(
+    run: ExperimentRunnerState, listener: StatusEventListener
+) -> None:
+    subscriber_id = str(uuid.uuid4())
+    loop = asyncio.get_running_loop()
+    try:
+        while True:
+            event = await _get_event(subscriber_id=subscriber_id, run=run)
+            await loop.run_in_executor(
+                _status_event_listener_executor,
+                functools.partial(listener, event=event),
+            )
+            if isinstance(event, EndEvent):
+                return
+    finally:
+        run.subscribers.pop(subscriber_id, None)
+
+
+def start_status_event_forwarding(
+    run: ExperimentRunnerState,
+) -> asyncio.Task[None] | None:
+    if run.status_event_listener is None:
+        return None
+    return asyncio.create_task(_forward_status_events(run, run.status_event_listener))
+
+
+async def finalize_run(
+    run: ExperimentRunnerState, forwarding_task: asyncio.Task[None] | None
+) -> None:
+    """Mark the run as finalized once the status event listener has
+    received the EndEvent, so a rerun cannot clear events it has not read.
+    A listener that does not finish within the timeout is abandoned.
+    """
+    try:
+        if forwarding_task is not None:
+            if any(isinstance(event, EndEvent) for event in run.events):
+                await asyncio.wait_for(
+                    forwarding_task,
+                    timeout=STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS,
+                )
+            else:
+                forwarding_task.cancel()
+    except TimeoutError:
+        logging.getLogger(__name__).warning(
+            "Status event listener did not receive the EndEvent within "
+            f"{STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS} seconds, "
+            "finalizing the run without it"
+        )
+    finally:
+        run.finalized.set()
+
+
 async def run_everest(
     config: EverestConfig,
     experiment_id: str,
@@ -394,6 +448,7 @@ async def run_everest(
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
     run_model: EverestRunModel | None = None
     end_message = "Experiment ended without a terminal event"
+    forwarding_task = start_status_event_forwarding(run)
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         with use_runtime_plugins(site_plugins):
             run_model = EverestRunModel.create(
@@ -455,7 +510,7 @@ async def run_everest(
         finally:
             if not any(isinstance(event, EndEvent) for event in run.events):
                 run.publish(EndEvent(failed=True, msg=end_message))
-            run.finalized.set()
+            await finalize_run(run, forwarding_task)
 
         logging.getLogger(__name__).info(
             f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
