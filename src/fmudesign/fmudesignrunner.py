@@ -360,6 +360,7 @@ def main() -> None:
     setup_site_logging(root_logger)
 
     logging.getLogger("fmudesign").setLevel(logging.INFO)
+    logging.getLogger("ert.parameter_design").setLevel(logging.INFO)
     logger.info(f"Running fmudesign with args: {given_args}")
 
     err_guide_msg = (

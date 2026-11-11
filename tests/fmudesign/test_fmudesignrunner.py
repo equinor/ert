@@ -1,4 +1,5 @@
 import argparse
+import logging
 import re
 import sys
 from argparse import Namespace
@@ -19,6 +20,7 @@ from fmudesign.fmudesignrunner import (
     subcommand_init,
     subcommand_run,
 )
+from tests.ert.unit_tests.parameter_design._configurations import minimal_configuration
 from tests.fmudesign.test_excel_to_design import (
     _write_config_workbook,
 )
@@ -328,3 +330,20 @@ def test_that_init_subcommand_fmudesign_error_is_caught_as_handled_exception_in_
     stdout = capsys.readouterr().out
     assert "fmudesign failed with" in stdout
     assert "Error on 'foo.xlsx'. Not found among" in stdout
+
+
+def test_that_main_logs_the_parameter_design_summary(monkeypatch, caplog):
+    """Ert have a different log level than fmudesign (defaults to Warning).
+    This tests that fmudesign sets ert.parameter_design log level such that logs are
+    captured when running fmudesign from cli.
+    """
+    # Specifically set the handler level of caplog without changing the root logger
+    caplog.handler.setLevel(logging.INFO)
+
+    args = Namespace(func=partial(lambda _: DesignMatrix(minimal_configuration())))
+    monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda _: args)
+    monkeypatch.setattr(sys, "argv", ["fmudesign", "run"])
+
+    fmudesignrunner.main()
+
+    assert "Fmudesign summary:" in caplog.text
