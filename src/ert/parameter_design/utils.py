@@ -11,7 +11,7 @@ import polars as pl
 from polars.exceptions import NoDataError
 from python_calamine import CalamineWorkbook
 
-from .exceptions import FmudesignError
+from .exceptions import ParameterDesignError
 
 
 def excel_sheet_names(filename: Path | str) -> list[str]:
@@ -39,7 +39,7 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
         filename (str): name of file
     """
     if not Path(filename).is_file():
-        raise FmudesignError(f"External file '{filename}' does not exist.")
+        raise ParameterDesignError(f"External file '{filename}' does not exist.")
 
     if str(filename).endswith(".xlsx"):
         return read_excel_sheet(filename)
@@ -47,7 +47,7 @@ def parameters_from_extern(filename: str) -> pd.DataFrame:
     if str(filename).endswith(".csv"):
         return pd.read_csv(filename)
 
-    raise FmudesignError(
+    raise ParameterDesignError(
         "External file with parameter values should "
         "be on Excel or csv format "
         "and end with .xlsx or .csv"
@@ -68,7 +68,7 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
         reader = pl.read_csv
         kwargs = {"infer_schema": False}
     else:
-        raise FmudesignError(
+        raise ParameterDesignError(
             "External file with seed values should "
             "be on Excel or csv format "
             "and end with .xlsx .csv or .txt"
@@ -81,7 +81,7 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
 
     seeds = seeds.str.strip_chars().replace("", None).drop_nulls()
     if seeds.is_empty():
-        raise FmudesignError(
+        raise ParameterDesignError(
             f"rms_seeds file '{filename}' contains no data. "
             f"rms_seeds file must contain at least one seed."
         )
@@ -89,7 +89,7 @@ def seeds_from_extern(filename: Path | str) -> list[int]:
     try:
         return seeds.cast(pl.Int64).to_list()
     except pl.exceptions.InvalidOperationError as err:
-        raise FmudesignError(
+        raise ParameterDesignError(
             f"Seed values in {str(filename)!r} must be integers: {err}"
         ) from err
 
@@ -196,7 +196,7 @@ def map_dependencies(
         try:
             _raise_if_duplicates(from_values)
         except ValueError as err:
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Duplicate dependency keys for {from_param!r}\n{err}"
             ) from err
 
@@ -218,7 +218,7 @@ def map_dependencies(
                     f"Length mismatch.\nMapping from values: {from_values!r}"
                     f"\nMapping to values: {to_values!r}"
                 )
-                raise FmudesignError(msg)
+                raise ParameterDesignError(msg)
 
             # At this point we have a mapping 'from_param' - > 'to_param'
             # defined elementwise by values of 'from_values' -> 'to_values'
@@ -232,7 +232,7 @@ def map_dependencies(
                     f"mapping:\n{mapping!r}\n failed. The following values could "
                     f"not be mapped:\n{not_mapped!r}"
                 )
-                raise FmudesignError(msg)
+                raise ParameterDesignError(msg)
 
             df[to_param] = source_values.map(mapping)
             if verbose:
@@ -247,7 +247,7 @@ def map_dependencies(
 
 
 def find_sheet(name: str, names: list[str]) -> str:
-    """Search for Excel sheets with a soft matching. Raises FmudesignError if zero
+    """Search for Excel sheets with a soft matching. Raises ParameterDesignError if zero
     or more than one match is found.
 
     Examples:
@@ -256,11 +256,11 @@ def find_sheet(name: str, names: list[str]) -> str:
     >>> find_sheet('variable_input', ['generalinput', 'designinput', 'defaultinput'])
     Traceback (most recent call last):
       ...
-    ert.parameter_design.exceptions.FmudesignError: Sheet 'variable_input' was not found. Sheets in workbook: ['generalinput', 'designinput', 'defaultinput']
+    ert.parameter_design.exceptions.ParameterDesignError: Sheet 'variable_input' was not found. Sheets in workbook: ['generalinput', 'designinput', 'defaultinput']
     >>> find_sheet('design_input', ['designinput', 'Design_Input'])
     Traceback (most recent call last):
       ...
-    ert.parameter_design.exceptions.FmudesignError: Sheet 'design_input' matches several sheets: ['designinput', 'Design_Input']
+    ert.parameter_design.exceptions.ParameterDesignError: Sheet 'design_input' matches several sheets: ['designinput', 'Design_Input']
     """  # ruff: ignore[line-too-long]
 
     def sanitize(inputstring: str) -> str:
@@ -268,11 +268,11 @@ def find_sheet(name: str, names: list[str]) -> str:
 
     found = [name_i for name_i in names if sanitize(name) == sanitize(name_i)]
     if not found:
-        raise FmudesignError(
+        raise ParameterDesignError(
             f"Sheet {name!r} was not found. Sheets in workbook: {names}"
         )
     if len(found) > 1:
-        raise FmudesignError(f"Sheet {name!r} matches several sheets: {found}")
+        raise ParameterDesignError(f"Sheet {name!r} matches several sheets: {found}")
     return found[0]
 
 

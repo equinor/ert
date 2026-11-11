@@ -5,7 +5,7 @@ import openpyxl
 import pandas as pd
 import pytest
 
-from ert.parameter_design import FmudesignError
+from ert.parameter_design import ParameterDesignError
 from ert.parameter_design.design_input import _read_dependencies
 from ert.parameter_design.utils import _has_value, map_dependencies
 
@@ -168,7 +168,7 @@ def test_that_incomplete_dependency_rows_raise_a_configuration_error(
     )
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=f"Missing dependency value for parameter '{missing_parameter}' "
         "in sheet 'dependencies', row 4",
     ):
@@ -206,7 +206,7 @@ def test_that_duplicate_dependency_parameter_names_raise_value_error(
     )
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match="Duplicate parameter names in dependency sheet 'dependencies'",
     ):
         _read_dependencies(
@@ -219,7 +219,7 @@ def test_that_missing_dependency_worksheet_raises_value_error(tmp_path):
         tmp_path / "dependencies.xlsx", [["SOURCE", "TARGET"]]
     )
 
-    with pytest.raises(FmudesignError, match="Worksheet 'missing' not found"):
+    with pytest.raises(ParameterDesignError, match="Worksheet 'missing' not found"):
         _read_dependencies(
             filename=str(input_path), sheetname="missing", from_parameter="SOURCE"
         )
@@ -234,7 +234,7 @@ def test_that_dependency_sheet_without_source_parameter_raises_value_error(
     input_path = _write_dependency_workbook(tmp_path / "dependencies.xlsx", rows)
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r"Parameter SOURCE.*sheet specifying the dependencies dependencies.*"
         r"does not contain the input parameter",
     ):

@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from ert.parameter_design import FmudesignError
+from ert.parameter_design import ParameterDesignError
 from ert.parameter_design.utils import read_excel_sheet
 
 
@@ -49,7 +49,7 @@ def summarize_design(filename: str, sheetname: str = "DesignSheet01") -> pd.Data
     elif str(filename).endswith(".csv"):
         dgn = pd.read_csv(filename)
     else:
-        raise FmudesignError(
+        raise ParameterDesignError(
             "Design matrix must be on Excel or csv format"
             " and filename must end with .xlsx or .csv"
         )

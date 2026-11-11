@@ -13,7 +13,7 @@ from scipy import stats
 from ert.parameter_design import (
     DesignConfig,
     DesignMatrix,
-    FmudesignError,
+    ParameterDesignError,
     SeedStrategy,
 )
 from ert.parameter_design import design_distributions as design_dist
@@ -450,7 +450,7 @@ def test_that_correlation_sheet_without_header_or_index_raises_fmudesign_error(
         [[1.0, np.nan], [0.5, 1.0]], index=["A", "B"], columns=["A", "B"]
     ).to_excel(filepath, sheet_name="corr1", **{omitted: False})
 
-    with pytest.raises(FmudesignError, match="Mismatch between column and index"):
+    with pytest.raises(ParameterDesignError, match="Mismatch between column and index"):
         design_dist.read_correlations(str(filepath), corr_sheet="corr1")
 
 
@@ -603,7 +603,7 @@ def test_that_decimals_are_rejected_for_parameter_with_any_non_numeric_value():
     }
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r"Cannot round parameter 'A' to 1 decimals .*'foo'.*'decimals'",
     ):
         DesignMatrix(config=config)
@@ -1048,7 +1048,7 @@ def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strateg
         "W": ("normal", ["0", "1"], "corr2"),
     }
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             "Parameter 'Z' is part of several correlation groups: 'corr1' and 'corr2'"
         ),
@@ -1070,7 +1070,7 @@ def test_that_only_iman_conover_requires_more_realizations_than_correlated_param
     params = {name: ("normal", ["0", "1"], "corr1") for name in names}
     corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             r"Correlation group 'corr1' in sensitivity 'foo' has 3 parameters, "
             r"but only 3 realizations.*at least 4 realizations"
@@ -1091,7 +1091,7 @@ def test_that_correlation_groups_require_at_least_two_realizations(
     params = {name: ("normal", ["0", "1"], "corr1") for name in names}
     corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             r"Correlation group 'corr1' in sensitivity 'foo' needs at least 2 "
             r"realizations .* got 1\."
@@ -1107,7 +1107,7 @@ def test_that_correlation_groups_require_at_least_two_realizations(
 
 def test_that_unknown_seed_strategy_raises_value_error():
     """The low-level API must reject typos instead of silently using 'joint'."""
-    with pytest.raises(FmudesignError, match="seed_strategy"):
+    with pytest.raises(ParameterDesignError, match="seed_strategy"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, strategy="bogus")
 
 
@@ -1137,7 +1137,7 @@ def test_that_invalid_distribution_parameters_raise_fmudesign_error_naming_param
     dist_name, dist_params, requirement
 ):
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=rf"Parameter 'A' in sensitivity 'foo': .* must have {requirement}, ",
     ):
         _sample_mc({"A": (dist_name, dist_params, None)}, size=5)
@@ -1145,7 +1145,7 @@ def test_that_invalid_distribution_parameters_raise_fmudesign_error_naming_param
 
 def test_that_invalid_distribution_parameter_errors_label_each_value():
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r", got: mean=0\.0, stddev=1\.0, min=2\.0, max=1\.0$",
     ):
         _sample_mc({"A": ("normal", ["0", "1", "2", "1"], None)}, size=5)
@@ -1170,14 +1170,14 @@ def test_that_sampling_errors_raise_fmudesign_error_naming_the_sampled_unit(
     }
     corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=rf"Sampling {sampled_unit} failed: Sampling gave non-finite values",
     ):
         _sample_mc(params, corrdict=corrdict, strategy=strategy, size=5)
 
 
 def test_that_independent_sampling_without_base_seed_raises_value_error():
-    with pytest.raises(FmudesignError, match="base_seed"):
+    with pytest.raises(ParameterDesignError, match="base_seed"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, base=None)
 
 
@@ -1235,7 +1235,7 @@ def test_that_initializing_dm_without_background_populates_background_to_none():
 def test_that_missing_background_keys_in_background_dict_raises_key_error():
     config = minimal_configuration()
     config.background = {}
-    with pytest.raises(FmudesignError, match="'extern' or 'parameters'"):
+    with pytest.raises(ParameterDesignError, match="'extern' or 'parameters'"):
         DesignMatrix(config=config)
 
 
@@ -1244,7 +1244,7 @@ def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
 ):
     sens = ExternSensitivity(sensname="extern", verbosity=0)
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r"(?s)duplicate names.*\{'PARAM1': 2, 'PARAM3': 3\}",
     ):
         sens.generate(
@@ -1257,7 +1257,7 @@ def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
 
 @pytest.mark.parametrize("probabilities", [[1.5, -0.5], [np.nan, 0.5], [np.inf, 1.0]])
 def test_that_non_finite_or_negative_probabilities_raise_fmudesign_error(probabilities):
-    with pytest.raises(FmudesignError, match="must be finite non-negative"):
+    with pytest.raises(ParameterDesignError, match="must be finite non-negative"):
         design_dist.quantiles_to_values(
             quantiles=np.array([0.1, 0.9]),
             values=np.array(["a", "b"]),

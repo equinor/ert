@@ -7,7 +7,7 @@ import pytest
 import xlsxwriter
 from hypothesis import given
 
-from ert.parameter_design import FmudesignError
+from ert.parameter_design import ParameterDesignError
 from ert.parameter_design.utils import map_dependencies, resolve_path, seeds_from_extern
 
 
@@ -41,12 +41,12 @@ def test_that_non_integer_seed_values_raise_value_error(tmp_path):
     seeds_file = tmp_path / "seeds.txt"
     seeds_file.write_text("2000\n2000.5\n")
 
-    with pytest.raises(FmudesignError, match=r"2000\.5"):
+    with pytest.raises(ParameterDesignError, match=r"2000\.5"):
         seeds_from_extern(seeds_file)
 
 
 def test_that_seeds_from_extern_rejects_unsupported_file_extensions():
-    with pytest.raises(FmudesignError, match=r"end with \.xlsx \.csv or \.txt"):
+    with pytest.raises(ParameterDesignError, match=r"end with \.xlsx \.csv or \.txt"):
         seeds_from_extern("seeds.json")
 
 
@@ -88,7 +88,9 @@ def test_that_duplicate_normalized_dependency_keys_raise_value_error(from_values
         }
     }
 
-    with pytest.raises(FmudesignError, match="Duplicate dependency keys for 'SOURCE'"):
+    with pytest.raises(
+        ParameterDesignError, match="Duplicate dependency keys for 'SOURCE'"
+    ):
         map_dependencies(
             pd.DataFrame({"SOURCE": from_values[:1]}), dependencies=dependencies
         )
@@ -97,5 +99,5 @@ def test_that_duplicate_normalized_dependency_keys_raise_value_error(from_values
 def test_that_seeds_from_extern_raises_when_file_contains_just_newlines(use_tmpdir):
     seeds_file = "seeds.txt"
     Path(seeds_file).write_text("\n", encoding="utf-8")
-    with pytest.raises(FmudesignError, match=r"'seeds.txt' contains no data"):
+    with pytest.raises(ParameterDesignError, match=r"'seeds.txt' contains no data"):
         seeds_from_extern(seeds_file)

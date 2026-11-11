@@ -12,7 +12,7 @@ import pytest
 
 from fmudesign import (
     DesignMatrix,
-    FmudesignError,
+    ParameterDesignError,
     fmudesignrunner,
 )
 from fmudesign.fmudesignrunner import (
@@ -166,7 +166,7 @@ def test_that_subcommand_run_raises_when_config_does_not_exist(use_tmpdir):
     args = _create_run_args(config_file_name=missing_file)
     Path(missing_file).unlink()
     with pytest.raises(
-        FmudesignError, match=f"Input file {missing_file} does not exist"
+        ParameterDesignError, match=f"Input file {missing_file} does not exist"
     ):
         subcommand_run(args, parser_run)
 
@@ -180,7 +180,7 @@ def test_that_subcommand_run_raises_when_config_is_equal_to_destination(use_tmpd
         config_file_name=duplicate_name, destination_file_name=duplicate_name
     )
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=rf'Identical name "{duplicate_name}".*input.*output file',
     ):
         subcommand_run(args, parser_run)
@@ -202,7 +202,7 @@ def test_that_subcommand_init_raises_if_config_does_not_exist_among_examples(cap
     _, subparsers = get_parser()
     parser_init = subparsers.choices["init"]
     with pytest.raises(
-        FmudesignError, match=r"Error on 'config.xlsx'. Not found among:"
+        ParameterDesignError, match=r"Error on 'config.xlsx'. Not found among:"
     ):
         subcommand_init(Namespace(file="config.xlsx"), parser_init)
 
@@ -214,7 +214,7 @@ def test_that_subcommand_init_raises_if_file_already_exists(use_tmpdir, capsys):
     Path(existing_file).touch()
 
     with pytest.raises(
-        FmudesignError, match=f"Error on '{existing_file}'. Already exists."
+        ParameterDesignError, match=f"Error on '{existing_file}'. Already exists."
     ):
         subcommand_init(Namespace(file=existing_file), parser_init)
 
@@ -260,7 +260,7 @@ def test_that_run_rejects_output_matching_input_after_adding_xlsx_suffix(
         lambda *args, **kwargs: pytest.fail("Input workbook was parsed"),
     )
 
-    with pytest.raises(FmudesignError, match="Identical name"):
+    with pytest.raises(ParameterDesignError, match="Identical name"):
         args.func(args)
 
     assert input_path.read_bytes() == original_content
@@ -277,7 +277,7 @@ def test_that_init_copies_nothing_when_auxiliary_destination_exists(
     parser, _ = fmudesignrunner.get_parser()
     args = parser.parse_args(["init", "ex2_correlations.xlsx"])
 
-    with pytest.raises(FmudesignError, match="Already exists"):
+    with pytest.raises(ParameterDesignError, match="Already exists"):
         args.func(args)
 
     assert not Path("ex2_correlations.xlsx").exists()

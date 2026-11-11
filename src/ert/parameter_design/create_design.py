@@ -32,7 +32,7 @@ from .design_distributions import (
     read_correlations,
     to_probabilit,
 )
-from .exceptions import FmudesignError
+from .exceptions import ParameterDesignError
 from .quality_report import QualityReporter, print_corrmat
 from .seed_strategy import SeedStrategy
 from .utils import (
@@ -83,7 +83,7 @@ def _round_to_decimals(df: pd.DataFrame, decimals: Mapping[str, int]) -> None:
             try:
                 values = df[key].astype(float)
             except (TypeError, ValueError) as err:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     f"Cannot round parameter {key!r} to {decimals[key]} decimals "
                     f"({err}). Either clear its 'decimals' cell or make all its "
                     "values numeric."
@@ -383,7 +383,7 @@ class DesignMatrix:
                         seedvalues=self.seedvalues,
                     )
                 case unknown:
-                    raise FmudesignError(f"Unknown sensitivity type: {unknown!r}")
+                    raise ParameterDesignError(f"Unknown sensitivity type: {unknown!r}")
 
             sensitivity.map_dependencies(sens.get("dependencies", {}))
             self._add_sensitivity(sensitivity)
@@ -507,7 +507,7 @@ class DesignMatrix:
 
         # Raise if none of the cases above apply. We do this because if we did not we
         # would return None, which is a valid case in itself.
-        raise FmudesignError(f"Must be None, 'default' or list: {seeds=}")
+        raise ParameterDesignError(f"Must be None, 'default' or list: {seeds=}")
 
     def add_background(
         self,
@@ -543,13 +543,13 @@ class DesignMatrix:
                     correlation_iterations=correlation_iterations,
                 )
             else:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     "Neither keys 'extern' or 'parameters' were set in background "
                     "dictionary - of which one is required. If no background values "
                     "are to be used, set background to 'None'."
                 )
         else:
-            raise FmudesignError(
+            raise ParameterDesignError(
                 "Background value in DesignMatrix config must be 'None' or of type "
                 "'dict'."
             )
@@ -581,7 +581,7 @@ class DesignMatrix:
                 if key not in case_:
                     temp_df[key] = self.backgroundvalues[key]
                     if len(temp_df) > len(self.backgroundvalues):
-                        raise FmudesignError(
+                        raise ParameterDesignError(
                             "Provided number of background values "
                             f"{len(self.backgroundvalues)} is smaller than number"
                             f" of realisations for sensitivity {sensname}"
@@ -606,7 +606,9 @@ class DesignMatrix:
                     self.defaultvalues[key]
                 )
             elif key not in self.START_COLUMNS:
-                raise FmudesignError(f"No defaultvalues given for parameter {key} ")
+                raise ParameterDesignError(
+                    f"No defaultvalues given for parameter {key} "
+                )
 
     def _add_dist_background(
         self,
@@ -759,7 +761,7 @@ class SeedSensitivity(Sensitivity):
                 "Seed values must be set when running sensitivity type 'seed'. "
                 f"Got seed: {seedvalues}"
             )
-            raise FmudesignError(msg)
+            raise ParameterDesignError(msg)
 
         self.sensvalues = pd.DataFrame(index=range(size))
         self.sensvalues[seedname] = seedvalues[0:size]
@@ -769,7 +771,7 @@ class SeedSensitivity(Sensitivity):
                 dist_name = parameters[key][0].lower()
                 constant = parameters[key][1]
                 if dist_name != "const":
-                    raise FmudesignError(
+                    raise ParameterDesignError(
                         'A sensitivity of type "seed" can only have '
                         "additional parameters where dist_name is "
                         f'"const". Check sensitivity {self.sensname}"'
@@ -983,7 +985,7 @@ class MonteCarloSensitivity(Sensitivity):
         self.correlation_dfs_: dict[str, pd.DataFrame] = {}  # correlation matrices
 
         if size < 0:
-            raise FmudesignError(f"Got < 0 samples ({size=})")
+            raise ParameterDesignError(f"Got < 0 samples ({size=})")
 
         distr_by_name: dict[str, ProbabilitNode] = {}
         for param_name, (dist_name, dist_params, _) in parameters.items():
@@ -992,7 +994,7 @@ class MonteCarloSensitivity(Sensitivity):
                     distname=dist_name, dist_parameters=dist_params
                 )
             except ValueError as err:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     f"Parameter {param_name!r} in sensitivity {self.sensname!r}: {err}"
                 ) from err
 
@@ -1015,7 +1017,7 @@ class MonteCarloSensitivity(Sensitivity):
             )
         elif seed_strategy == SeedStrategy.INDEPENDENT:
             if base_seed is None:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     "'base_seed' is required when seed_strategy='independent'"
                 )
             self._sample_independent(
@@ -1026,7 +1028,7 @@ class MonteCarloSensitivity(Sensitivity):
                 base_seed=base_seed,
             )
         else:
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"'seed_strategy' must be one of {[s.value for s in SeedStrategy]}, "
                 f"got: {seed_strategy!r}"
             )
@@ -1050,7 +1052,7 @@ class MonteCarloSensitivity(Sensitivity):
         null_columns = self.sensvalues.isna().any(axis=0)
         if null_columns.any():
             cols_w_null = list(null_columns.loc[lambda ser: ser].index)
-            raise FmudesignError(f"Found NaN values in columns: {cols_w_null}")
+            raise ParameterDesignError(f"Found NaN values in columns: {cols_w_null}")
 
     def _load_correlation_groups(
         self,
@@ -1113,7 +1115,7 @@ class MonteCarloSensitivity(Sensitivity):
             # would get the correlations of whichever group is sampled last.
             for name in multivariate_parameters:
                 if name in group_of_param:
-                    raise FmudesignError(
+                    raise ParameterDesignError(
                         f"Parameter {name!r} is part of several correlation "
                         f"groups: {group_of_param[name]!r} and "
                         f"{corr_group_name!r}. A parameter may only appear in "
@@ -1122,7 +1124,7 @@ class MonteCarloSensitivity(Sensitivity):
                 group_of_param[name] = corr_group_name
 
             if size < 2:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     f"Correlation group {corr_group_name!r} in sensitivity "
                     f"{self.sensname!r} needs at least 2 realizations (numreal, "
                     "or repeats if numreal is not set) to correlate its "
@@ -1131,7 +1133,7 @@ class MonteCarloSensitivity(Sensitivity):
 
             num_params = len(multivariate_parameters)
             if correlation_iterations == 0 and size <= num_params:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     f"Correlation group {corr_group_name!r} in sensitivity "
                     f"{self.sensname!r} has {num_params} parameters, but only "
                     f"{size} realizations. Inducing correlations needs more "
@@ -1239,7 +1241,7 @@ class MonteCarloSensitivity(Sensitivity):
                 size=size, random_state=rng, method="lhs", correlator=correlator
             )
         except ValueError as err:
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Sampling sensitivity {self.sensname!r} failed: {err}"
             ) from err
 
@@ -1274,7 +1276,7 @@ class MonteCarloSensitivity(Sensitivity):
                     correlator=correlator,
                 )
             except ValueError as err:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     f"Sampling correlation group {group_name!r} in sensitivity "
                     f"{self.sensname!r} failed: {err}"
                 ) from err
@@ -1288,7 +1290,7 @@ class MonteCarloSensitivity(Sensitivity):
             try:
                 distr.sample(size=size, random_state=unit_rng, method="lhs")
             except ValueError as err:
-                raise FmudesignError(
+                raise ParameterDesignError(
                     f"Sampling parameter {param_name!r} in sensitivity "
                     f"{self.sensname!r} failed: {err}"
                 ) from err
@@ -1326,11 +1328,13 @@ class ExternSensitivity(Sensitivity):
         try:
             _raise_if_duplicates(parameters)
         except ValueError as e:
-            raise FmudesignError(f"Found parameters with duplicate names.\n{e}") from e
+            raise ParameterDesignError(
+                f"Found parameters with duplicate names.\n{e}"
+            ) from e
         self.sensvalues = pd.DataFrame(columns=parameters, index=range(size))
         extern_values = parameters_from_extern(filename)
         if size > len(extern_values):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Number of realisations {size} specified for "
                 f"sensitivity {self.sensname} is larger than rows in "
                 f"file {filename}"
@@ -1339,7 +1343,7 @@ class ExternSensitivity(Sensitivity):
             if param in extern_values:
                 self.sensvalues[param] = list(extern_values[param][:size])
             else:
-                raise FmudesignError(f"Parameter {param} not in external file")
+                raise ParameterDesignError(f"Parameter {param} not in external file")
 
         self.sensvalues["SENSNAME"] = self.sensname
         self.sensvalues["SENSCASE"] = "p10_p90"

@@ -6,7 +6,7 @@ Output of this module can be used in custom standalone applications.
 
 import logging
 
-from ert.parameter_design import DesignConfig, DesignMatrix, FmudesignError
+from ert.parameter_design import DesignConfig, DesignMatrix, ParameterDesignError
 
 from ._designsummary import summarize_design
 from ._excel_to_design import config_to_yaml, excel_to_config
@@ -18,7 +18,7 @@ logger.addHandler(logging.NullHandler())
 __all__ = [
     "DesignConfig",
     "DesignMatrix",
-    "FmudesignError",
+    "ParameterDesignError",
     "config_to_yaml",
     "excel_to_config",
     "summarize_design",
