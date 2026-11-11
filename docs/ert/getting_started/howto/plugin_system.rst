@@ -261,3 +261,69 @@ Minimal example to override how Ert chooses the IP address:
     @ert.plugin(name="my_plugin")
     def get_ip_address():
         return "127.0.0.1"
+
+Status event listener
+~~~~~~~~~~~~~~~~~~~~~
+A plugin can listen to the status events emitted while an experiment runs,
+such as progress updates and snapshot updates.
+
+The listener is called for experiments started from the Ert GUI and for
+Everest optimizations. Experiments started from the Ert command line do not
+call the listener yet.
+
+Several experiments can run at the same time, so each event is passed
+together with an ``experiment_run_id`` (a UUID string) that identifies which
+run emitted it. Use this ID to tell runs apart. It is not the ID of the
+experiment in storage.
+
+.. autofunction:: ert.plugins.hook_specifications.event_listener.on_status_event
+
+Only one plugin may implement this hook. If a second plugin implements it,
+that plugin is rejected with a ``ValueError`` when the plugins are loaded.
+
+Exceptions raised by the listener are logged and do not stop the experiment.
+
+The listener receives the same event object that is shown to the user in the
+GUI and in progress monitoring, so it must not modify the event.
+
+End events and reruns
+^^^^^^^^^^^^^^^^^^^^^
+Every run ends with an ``EndEvent``, also when the run fails or is cancelled.
+Its ``failed`` attribute tells whether the run failed, and ``msg`` gives the
+reason.
+
+An ``EndEvent`` does not mean that no more events will arrive for that
+``experiment_run_id``. When the user reruns failed realizations from the Ert
+GUI, the rerun reuses the same ``experiment_run_id``. The listener then
+receives a new sequence of events, ending with another ``EndEvent``. This
+can happen after an ``EndEvent`` where ``failed`` is ``False``, since a run
+can finish with some failed realizations.
+
+As a consequence, a listener should:
+
+- expect more than one ``EndEvent`` per ``experiment_run_id``,
+- not release or delete state for an ``experiment_run_id`` on its first
+  ``EndEvent`` if it needs that state for a rerun,
+- treat the latest ``EndEvent`` as the outcome of the experiment run.
+
+Minimal example of logging the type of each event:
+
+.. code-block:: python
+
+   import logging
+
+   import ert
+
+   logger = logging.getLogger(__name__)
+
+   @ert.plugin(name="event_logger")
+   def on_status_event(experiment_run_id, event):
+       logger.info(f"Experiment run {experiment_run_id} emitted {event.event_type}")
+
+The listener is called in a worker thread, so it does not delay the
+experiment or the progress shown to the user. The events of one
+experiment run are passed one at a time, in the order they were emitted,
+but events from different experiment runs can be passed at the same time
+from different threads. The run is not marked as finished until the
+listener has returned from its ``EndEvent``, so a listener that blocks
+keeps the run open.
