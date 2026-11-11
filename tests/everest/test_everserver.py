@@ -33,6 +33,7 @@ from ert.server.endpoints.experiment_runs import (
     Subscriber,
     _experiments,
     _get_event,
+    finalize_run,
     run_everest,
     start_experiment,
     start_status_event_forwarding,
@@ -720,6 +721,35 @@ async def test_that_slow_status_event_listener_does_not_delay_websocket_subscrib
     assert not forwarding_task.done()
     listener_may_return.set()
     await asyncio.wait_for(forwarding_task, timeout=5)
+
+
+async def test_that_run_is_finalized_when_status_event_listener_exceeds_timeout(
+    monkeypatch, everest_run_state, caplog
+):
+    listener_may_return = threading.Event()
+
+    def listener(*, event):
+        listener_may_return.wait(timeout=5)
+
+    monkeypatch.setattr(
+        "ert.server.endpoints.experiment_runs.STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS",
+        0.01,
+    )
+    everest_run_state.status_event_listener = listener
+    forwarding_task = start_status_event_forwarding(everest_run_state)
+    everest_run_state.publish(EndEvent(failed=False, msg="done"))
+
+    try:
+        await asyncio.wait_for(
+            finalize_run(everest_run_state, forwarding_task), timeout=5
+        )
+    finally:
+        listener_may_return.set()
+
+    assert everest_run_state.finalized.is_set()
+    assert forwarding_task.cancelled()
+    assert not everest_run_state.subscribers
+    assert "Status event listener did not receive the EndEvent" in caplog.text
 
 
 async def test_websocket_no_events_on_connect(setup_client):

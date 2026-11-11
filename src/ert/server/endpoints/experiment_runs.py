@@ -13,6 +13,7 @@ import uuid
 import warnings
 from base64 import b64decode
 from collections.abc import AsyncIterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from queue import SimpleQueue
 from typing import Annotated, Protocol
@@ -380,14 +381,24 @@ async def _get_event(subscriber_id: str, run: ExperimentRunnerState) -> StatusEv
     return event
 
 
+STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS = 60.0
+_status_event_listener_executor = ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="status_event_listener"
+)
+
+
 async def _forward_status_events(
     run: ExperimentRunnerState, listener: StatusEventListener
 ) -> None:
     subscriber_id = str(uuid.uuid4())
+    loop = asyncio.get_running_loop()
     try:
         while True:
             event = await _get_event(subscriber_id=subscriber_id, run=run)
-            await asyncio.to_thread(listener, event=event)
+            await loop.run_in_executor(
+                _status_event_listener_executor,
+                functools.partial(listener, event=event),
+            )
             if isinstance(event, EndEvent):
                 return
     finally:
@@ -407,13 +418,23 @@ async def finalize_run(
 ) -> None:
     """Mark the run as finalized once the status event listener has
     received the EndEvent, so a rerun cannot clear events it has not read.
+    A listener that does not finish within the timeout is abandoned.
     """
     try:
         if forwarding_task is not None:
             if any(isinstance(event, EndEvent) for event in run.events):
-                await forwarding_task
+                await asyncio.wait_for(
+                    forwarding_task,
+                    timeout=STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS,
+                )
             else:
                 forwarding_task.cancel()
+    except TimeoutError:
+        logging.getLogger(__name__).warning(
+            "Status event listener did not receive the EndEvent within "
+            f"{STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS} seconds, "
+            "finalizing the run without it"
+        )
     finally:
         run.finalized.set()
 
