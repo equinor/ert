@@ -16,8 +16,8 @@ def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
     Implementations are called in a worker thread, with the events of each
     experiment run passed one at a time in the order they were emitted.
     Events from different experiment runs can be passed concurrently from
-    different threads. The event object is shared with other subscribers,
-    so it must not be modified.
+    different threads. The event is a copy, so modifying it does not affect
+    other subscribers.
 
     Only one implementation is allowed.
 

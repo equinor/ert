@@ -736,6 +736,24 @@ async def test_that_slow_status_event_listener_does_not_delay_websocket_subscrib
     await asyncio.wait_for(forwarding_task, timeout=5)
 
 
+async def test_that_listener_modifying_event_does_not_affect_other_subscribers(
+    everest_run_state,
+):
+    def listener(*, event):
+        event.msg = "modified by plugin"
+
+    everest_run_state.status_event_listener = listener
+    forwarding_task = start_status_event_forwarding(everest_run_state)
+    await asyncio.sleep(0)
+
+    everest_run_state.publish(EndEvent(failed=False, msg="done"))
+    await asyncio.wait_for(forwarding_task, timeout=5)
+
+    assert await _get_event(subscriber_id="websocket", run=everest_run_state) == (
+        EndEvent(failed=False, msg="done")
+    )
+
+
 async def test_that_run_is_finalized_when_status_event_listener_exceeds_timeout(
     monkeypatch, everest_run_state, caplog
 ):
