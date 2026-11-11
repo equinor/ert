@@ -442,6 +442,8 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
 
     correlations = (
         correlations.dropna(axis=0, how="all")
+        # Names in non-text cells are read as numbers, dates or NaN
+        .rename(columns=str, index=str)
         # Remove any 'Unnamed' columns that Excel/pandas may have automatically added.
         .loc[:, lambda df: ~df.columns.str.contains("^Unnamed")]
         # Remove whitespace
