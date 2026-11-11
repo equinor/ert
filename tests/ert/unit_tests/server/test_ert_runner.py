@@ -350,7 +350,7 @@ async def test_that_cancelled_run_is_finalized_after_listener_gets_end_event(
 
 
 @pytest.mark.asyncio
-async def test_that_rerun_forwards_the_events_of_both_runs_to_listener(
+async def test_that_rerun_forwards_events_of_both_runs_to_listener(
     monkeypatch: pytest.MonkeyPatch,
 ):
     received_events = []
