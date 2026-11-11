@@ -994,9 +994,10 @@ def test_that_ert_chooses_minimum_realization_with_design_matrix(
     # Verify that the warning icon has the correct tooltip
     warning_icon = gui.findChild(QLabel, "warning_icon_num_realizations_design_matrix")
     assert warning_icon.toolTip() == (
-        f"Number of realizations was set to {expected_num_realizations} "
-        "due to different number of realizations in the design matrix "
-        "and NUM_REALIZATIONS in config"
+        f"Ensemble size was set to {expected_num_realizations} realizations, "
+        f"of which {expected_num_realizations} are active, because "
+        "the DESIGN_MATRIX realization span differs from "
+        "NUM_REALIZATIONS in the configuration."
     )
 
 
