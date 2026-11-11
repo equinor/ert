@@ -380,7 +380,9 @@ class ErtPluginManager(pluggy.PluginManager):
         self, *, experiment_run_id: str, event: StatusEvents
     ) -> None:
         try:
-            self.hook.on_status_event(experiment_run_id=experiment_run_id, event=event)
+            self.hook.on_status_event(
+                experiment_run_id=experiment_run_id, event=event.model_copy(deep=True)
+            )
         except Exception:
             logger.exception(
                 f"Status event plugin failed for experiment run '{experiment_run_id}'"

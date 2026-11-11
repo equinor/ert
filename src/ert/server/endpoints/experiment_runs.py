@@ -387,12 +387,6 @@ _status_event_listener_executor = ThreadPoolExecutor(
 )
 
 
-def _notify_listener_with_copy(
-    listener: StatusEventListener, event: StatusEvents
-) -> None:
-    listener(event=event.model_copy(deep=True))
-
-
 async def _forward_status_events(
     run: ExperimentRunnerState, listener: StatusEventListener
 ) -> None:
@@ -403,7 +397,7 @@ async def _forward_status_events(
             event = await _get_event(subscriber_id=subscriber_id, run=run)
             await loop.run_in_executor(
                 _status_event_listener_executor,
-                functools.partial(_notify_listener_with_copy, listener, event),
+                functools.partial(listener, event=event),
             )
             if isinstance(event, EndEvent):
                 return

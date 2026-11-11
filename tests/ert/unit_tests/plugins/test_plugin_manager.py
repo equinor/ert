@@ -6,8 +6,10 @@ from unittest.mock import Mock
 import pytest
 
 import ert.plugins.hook_implementations
+from ert.ensemble_evaluator.event import EndEvent
 from ert.plugins import ErtPluginManager, plugin
 from ert.plugins.plugin_manager import hook_implementation
+from ert.run_models.event import EverestBatchResultEvent
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
@@ -384,11 +386,29 @@ def test_that_notify_status_event_passes_event_and_experiment_run_id_to_plugin()
         def on_status_event(experiment_run_id, event):
             received_events.append((experiment_run_id, event))
 
-    event = Mock()
+    event = EndEvent(failed=False, msg="done")
     ErtPluginManager(plugins=[EventListener]).notify_status_event(
         experiment_run_id="e_id", event=event
     )
     assert received_events == [("e_id", event)]
+
+
+def test_that_plugin_modifying_status_event_does_not_modify_the_original_event():
+    class ModifyingPlugin:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            event.results["objective"] = "modified by plugin"
+
+    event = EverestBatchResultEvent(
+        batch=0,
+        everest_event="OPTIMIZATION_RESULT",
+        result_type="FunctionResult",
+        results={"objective": 1.0},
+    )
+    ErtPluginManager(plugins=[ModifyingPlugin]).notify_status_event(
+        experiment_run_id="e_id", event=event
+    )
+    assert event.results == {"objective": 1.0}
 
 
 def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(caplog):
