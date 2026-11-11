@@ -767,6 +767,32 @@ async def test_that_run_is_finalized_when_status_event_listener_exceeds_timeout(
     assert "Status event listener did not receive the EndEvent" in caplog.text
 
 
+async def test_that_listener_exception_does_not_stop_forwarding_of_later_events(
+    everest_run_state, caplog
+):
+    received_events = []
+
+    def listener(*, event):
+        received_events.append(event)
+        if not isinstance(event, EndEvent):
+            raise RuntimeError("listener failed")
+
+    everest_run_state.status_event_listener = listener
+    forwarding_task = start_status_event_forwarding(everest_run_state)
+    events = [
+        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
+        EndEvent(failed=False, msg="done"),
+    ]
+    for event in events:
+        everest_run_state.publish(event)
+
+    await asyncio.wait_for(finalize_run(everest_run_state, forwarding_task), timeout=5)
+
+    assert received_events == events
+    assert everest_run_state.finalized.is_set()
+    assert "Status event listener failed to handle event" in caplog.text
+
+
 async def test_websocket_no_events_on_connect(setup_client):
     events = []
     client, subs, experiment_id = setup_client(events)

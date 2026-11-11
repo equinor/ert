@@ -395,10 +395,15 @@ async def _forward_status_events(
     try:
         while True:
             event = await _get_event(subscriber_id=subscriber_id, run=run)
-            await loop.run_in_executor(
-                _status_event_listener_executor,
-                functools.partial(listener, event=event),
-            )
+            try:
+                await loop.run_in_executor(
+                    _status_event_listener_executor,
+                    functools.partial(listener, event=event),
+                )
+            except Exception:
+                logging.getLogger(__name__).exception(
+                    "Status event listener failed to handle event"
+                )
             if isinstance(event, EndEvent):
                 return
     finally:
