@@ -1000,6 +1000,94 @@ def test_that_sampling_strategies_induce_configured_group_correlation(
     assert abs(achieved - 0.7) < 0.05
 
 
+def _sample_correlation_group(tmp_path, params, matrix, strategy="joint"):
+    path = tmp_path / "corr.xlsx"
+    _write_correlation_sheets(path, {"corr1": (list(params), matrix)})
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    return _sample_mc(params, corrdict=corrdict, strategy=strategy)
+
+
+@pytest.mark.parametrize("strategy", ["joint", "independent"])
+def test_that_correlation_one_between_identical_distributions_gives_identical_values(
+    tmp_path, strategy
+):
+    params = dict.fromkeys(["A", "B", "C", "D"], ("normal", ["0", "1"], "corr1"))
+    matrix = [
+        [1.0, 1.0, 1.0, 0.5],
+        [1.0, 1.0, 1.0, 0.5],
+        [1.0, 1.0, 1.0, 0.5],
+        [0.5, 0.5, 0.5, 1.0],
+    ]
+
+    result = _sample_correlation_group(tmp_path, params, matrix, strategy)
+
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "C"))
+
+
+def test_that_correlation_one_gives_identical_values_in_an_inconsistent_matrix(
+    tmp_path,
+):
+    params = dict.fromkeys(["A", "B", "C", "D", "E"], ("normal", ["0", "1"], "corr1"))
+    # C cannot correlate 0.9 with both D and E while they are uncorrelated
+    matrix = [
+        [1.0, 1.0, 0.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.9, 0.9],
+        [0.0, 0.0, 0.9, 1.0, 0.0],
+        [0.0, 0.0, 0.9, 0.0, 1.0],
+    ]
+
+    result = _sample_correlation_group(tmp_path, params, matrix)
+
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+
+
+@pytest.mark.parametrize(
+    ("distribution_b", "correlation_bc"),
+    [
+        pytest.param(["0", "2"], 0.5, id="different_distribution"),
+        pytest.param(["0", "1"], 0.3, id="different_correlation_with_others"),
+    ],
+)
+def test_that_correlation_one_keeps_values_apart_if_distribution_or_correlations_differ(
+    tmp_path, distribution_b, correlation_bc
+):
+    params = {
+        "A": ("normal", ["0", "1"], "corr1"),
+        "B": ("normal", distribution_b, "corr1"),
+        "C": ("normal", ["0", "1"], "corr1"),
+    }
+    matrix = [[1.0, 1.0, 0.5], [1.0, 1.0, correlation_bc], [0.5, correlation_bc, 1.0]]
+
+    result = _sample_correlation_group(tmp_path, params, matrix)
+
+    assert not np.array_equal(_col(result, "A"), _col(result, "B"))
+
+
+def test_that_correlation_one_warns_when_correlations_with_other_parameters_differ(
+    tmp_path, capsys
+):
+    params = dict.fromkeys(["A", "B", "C"], ("normal", ["0", "1"], "corr1"))
+    matrix = [[1.0, 1.0, 0.5], [1.0, 1.0, 0.3], [0.5, 0.3, 1.0]]
+
+    _sample_correlation_group(tmp_path, params, matrix)
+
+    stdout = capsys.readouterr().out
+    assert "Warning: Parameter 'B' is not set identical to 'A'" in stdout
+
+
+def test_that_correlation_one_gives_identical_values_for_numpy_arguments(tmp_path):
+    params = {
+        "A": ("normal", np.array([0.0, 1.0]), "corr1"),
+        "B": ("normal", np.array([0.0, 1.0]), "corr1"),
+    }
+
+    result = _sample_correlation_group(tmp_path, params, [[1.0, 1.0], [1.0, 1.0]])
+
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+
+
 def test_that_independent_sampling_preserves_other_groups_when_group_is_removed(
     tmp_path,
 ):

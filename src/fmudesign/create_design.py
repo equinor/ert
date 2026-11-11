@@ -11,6 +11,7 @@ used to generate design matrices, including one or several Sensitivities.
 from __future__ import annotations
 
 import hashlib
+import itertools
 import logging
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -88,6 +89,40 @@ def _round_to_decimals(df: pd.DataFrame, decimals: Mapping[str, int]) -> None:
                     "values numeric."
                 ) from err
             df[key] = values.round(int(decimals[key]))
+
+
+def _identical_parameters(
+    correlations: pd.DataFrame, parameters: Mapping[str, Sequence[Any]]
+) -> dict[str, str]:
+    """Return ``{name: original}`` for each parameter with correlation 1 to an
+    identically distributed parameter that has the same correlations with all
+    other parameters. Their values must be identical, which inducing
+    correlations cannot achieve, since it only reorders independent draws.
+
+    Prints a warning if only the correlations with other parameters differ.
+    """
+    names = correlations.index.tolist()
+    matrix = correlations.to_numpy()
+    # Arguments are unpacked, since == is ambiguous for NumPy arrays
+    distributions = {
+        param_name: [dist_name, *dist_params]
+        for param_name, (dist_name, dist_params, _) in parameters.items()
+    }
+    identical: dict[str, str] = {}
+    for i, j in itertools.combinations(range(len(names)), 2):
+        original, name = names[i], names[j]
+        same_distribution = distributions[original] == distributions[name]
+        same_correlations = np.array_equal(matrix[i], matrix[j])
+        if matrix[i, j] == 1 and same_distribution:
+            if same_correlations:
+                identical.setdefault(name, original)
+            else:
+                print(
+                    f"Warning: Parameter {name!r} is not set identical to "
+                    f"{original!r}, despite correlation 1 and the same distribution, "
+                    "as their correlations with other parameters differ"
+                )
+    return identical
 
 
 class DesignMatrix:
@@ -918,6 +953,8 @@ class MonteCarloSensitivity(Sensitivity):
                 - 'inputfile': Name of Excel file with correlation matrices
                 - 'sheetnames': List of sheet names, where each sheet contains a
                 correlation matrix. If None, parameters are treated as uncorrelated.
+                Parameters with correlation 1, the same distribution and the
+                same correlations with all other parameters get identical values.
             rng (numpy.random.Generator): Random number generator instance.
               Draws all values under 'joint'. Unused under 'independent'.
             correlation_iterations (int): Number of permutations performed
@@ -961,7 +998,7 @@ class MonteCarloSensitivity(Sensitivity):
 
         # Read and validate the correlation groups once, up front. Both seed
         # strategies consume the same groups; only the seeding differs.
-        corr_groups = self._load_correlation_groups(
+        corr_groups, identical = self._load_correlation_groups(
             parameters,
             corrdict,
             size=size,
@@ -1001,6 +1038,9 @@ class MonteCarloSensitivity(Sensitivity):
 
             self.sensvalues = self.sensvalues.assign(**{distr_name: samples})
 
+        for name, original in identical.items():
+            self.sensvalues[name] = self.sensvalues[original]
+
         if self.sensname != "background":
             self.sensvalues["SENSNAME"] = self.sensname
             self.sensvalues["SENSCASE"] = "p10_p90"
@@ -1019,9 +1059,10 @@ class MonteCarloSensitivity(Sensitivity):
         *,
         size: int,
         correlation_iterations: int,
-    ) -> list[CorrelationGroup]:
+    ) -> tuple[list[CorrelationGroup], dict[str, str]]:
         """Return ``(group_name, df_correlations, member_params)`` per correlation
-        group, reading and validating each matrix.
+        group, reading and validating each matrix, and ``{name: original}`` for
+        parameters whose values must be identical to another parameter's.
 
         Single-member groups are skipped (with a warning) and treated as
         uncorrelated. Populates ``self.correlation_dfs_`` as a side effect.
@@ -1038,7 +1079,7 @@ class MonteCarloSensitivity(Sensitivity):
                 more realizations than correlated parameters.
         """
         if not corrdict:
-            return []
+            return [], {}
 
         group_sizes = Counter(
             corr_sheet
@@ -1047,6 +1088,7 @@ class MonteCarloSensitivity(Sensitivity):
         )
 
         loaded: list[CorrelationGroup] = []
+        identical: dict[str, str] = {}
         group_of_param: dict[str, str] = {}
         # The order affects seeded sampling: sheet indices first, then names
         for corr_group_name in sorted(
@@ -1111,6 +1153,17 @@ class MonteCarloSensitivity(Sensitivity):
                     f"{multivariate_parameters}",
                 )
 
+            # Use the matrix as given, since adjusting it turns an exact 1 into
+            # 0.999999
+            for name, original in _identical_parameters(
+                df_correlations, parameters
+            ).items():
+                print(
+                    f"Parameter {name!r} is set identical to {original!r}, "
+                    "as they have correlation 1 and the same distribution"
+                )
+                identical[name] = original
+
             # Get the nearest correlation matrix
             nearest = probabilit.correlation.nearest_correlation_matrix(
                 correlations, weights=None, eps=1e-6, verbose=False
@@ -1136,7 +1189,7 @@ class MonteCarloSensitivity(Sensitivity):
             self.correlation_dfs_[corr_group_name] = df_correlations
             loaded.append((corr_group_name, df_correlations, multivariate_parameters))
 
-        return loaded
+        return loaded, identical
 
     @staticmethod
     def _make_correlator(
