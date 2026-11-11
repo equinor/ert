@@ -103,10 +103,15 @@ def _identical_parameters(
     """
     names = correlations.index.tolist()
     matrix = correlations.to_numpy()
+    # Arguments are unpacked, since == is ambiguous for NumPy arrays
+    distributions = {
+        param_name: [dist_name, *dist_params]
+        for param_name, (dist_name, dist_params, _) in parameters.items()
+    }
     identical: dict[str, str] = {}
     for i, j in itertools.combinations(range(len(names)), 2):
         original, name = names[i], names[j]
-        same_distribution = parameters[original][:2] == parameters[name][:2]
+        same_distribution = distributions[original] == distributions[name]
         same_correlations = np.array_equal(matrix[i], matrix[j])
         if matrix[i, j] == 1 and same_distribution:
             if same_correlations:

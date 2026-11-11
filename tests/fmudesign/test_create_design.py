@@ -1077,6 +1077,17 @@ def test_that_correlation_one_warns_when_correlations_with_other_parameters_diff
     assert "Warning: Parameter 'B' is not set identical to 'A'" in stdout
 
 
+def test_that_correlation_one_gives_identical_values_for_numpy_arguments(tmp_path):
+    params = {
+        "A": ("normal", np.array([0.0, 1.0]), "corr1"),
+        "B": ("normal", np.array([0.0, 1.0]), "corr1"),
+    }
+
+    result = _sample_correlation_group(tmp_path, params, [[1.0, 1.0], [1.0, 1.0]])
+
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+
+
 def test_that_independent_sampling_preserves_other_groups_when_group_is_removed(
     tmp_path,
 ):
