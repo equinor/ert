@@ -6,7 +6,7 @@ import queue
 import threading
 import time
 import uuid
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from functools import partial
 from queue import SimpleQueue
@@ -37,6 +37,7 @@ from .experiment_runs import (
     _experiments,
     _with_runtime_plugins,
     authenticated,
+    get_status_event_notifier,
 )
 
 router = APIRouter(prefix="/experiment_runs", tags=["experiment_runs"])
@@ -142,7 +143,12 @@ def _exclusive_runpath_access(
     "/" + ErtRunnerEndpoints.REGISTER,
     dependencies=[*authenticated, Depends(_with_runtime_plugins)],
 )
-async def register(request: StartErtExperimentRequest) -> JSONResponse:
+async def register(
+    request: StartErtExperimentRequest,
+    notify_status_event: Annotated[
+        Callable[[str, StatusEvents], None], Depends(get_status_event_notifier)
+    ],
+) -> JSONResponse:
     config_id = str(uuid.uuid4())
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
     try:
@@ -161,6 +167,7 @@ async def register(request: StartErtExperimentRequest) -> JSONResponse:
         config_path=request.config.config_path,
         run_path=request.config.runpath_config.runpath_format_string,
         storage_path=request.config.ens_path,
+        status_event_listener=partial(notify_status_event, config_id),
     )
     _experiments[config_id] = experiment_state
 

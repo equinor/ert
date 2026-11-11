@@ -17,6 +17,7 @@ from ert.config.parsing.config_errors import ConfigValidationError
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models import SingleTestRun
+from ert.run_models.event import RunModelStatusEvent
 from ert.run_models.run_model import RunModel
 from ert.server.endpoints import ert_runner
 from ert.server.endpoints.experiment_runs import (
@@ -105,7 +106,7 @@ async def test_that_start_uses_the_registered_model_and_config_id(
     create_model = Mock(return_value=model)
     monkeypatch.setattr(ert_runner, "create_model", create_model)
 
-    registration = await ert_runner.register(request)
+    registration = await ert_runner.register(request, Mock())
     writer.close.assert_not_called()
     assert model._storage is writer
     config_id = json.loads(bytes(registration.body))["config_id"]
@@ -126,6 +127,49 @@ async def test_that_start_uses_the_registered_model_and_config_id(
     assert len(tasks.tasks) == 1
     assert tasks.tasks[0].func is ert_runner.run_ert
     assert tasks.tasks[0].args == (state,)
+
+
+@pytest.mark.asyncio
+async def test_that_registered_ert_experiment_passes_status_events_and_id_to_notifier(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    received_events = []
+
+    def notify_status_event(experiment_id, event):
+        received_events.append((experiment_id, event))
+
+    monkeypatch.setattr(ert_runner, "_experiments", {})
+    events = [
+        RunModelStatusEvent(iteration=0, run_id=uuid4(), msg="running"),
+        EndEvent(failed=False, msg="done"),
+    ]
+    model = Mock(spec=RunModel)
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+
+    def create_model(config, args, status_queue):
+        model.start_simulations_thread.side_effect = lambda *_, **__: [
+            status_queue.put(event) for event in events
+        ]
+        return model
+
+    monkeypatch.setattr(ert_runner, "create_model", create_model)
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(
+            spec=ErtConfig,
+            config_path="config.ert",
+            runpath_config=SimpleNamespace(runpath_format_string="runpath"),
+            ens_path="storage",
+        ),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="notifier-test"
+        ),
+    )
+
+    registration = await ert_runner.register(request, notify_status_event)
+    config_id = json.loads(bytes(registration.body))["config_id"]
+    await ert_runner.run_ert(ert_runner._get_ert_experiment(config_id))
+
+    assert received_events == [(config_id, event) for event in events]
 
 
 @pytest.mark.asyncio
@@ -188,7 +232,7 @@ async def test_that_model_creation_error_does_not_register_a_state(
     )
 
     with pytest.raises(ValueError, match="Invalid config"):
-        await ert_runner.register(request)
+        await ert_runner.register(request, Mock())
     assert not registry
 
 
@@ -211,7 +255,7 @@ async def test_that_config_validation_error_on_registration_gives_http_422(
     )
 
     with pytest.raises(ert_runner.HTTPException) as error:
-        await ert_runner.register(request)
+        await ert_runner.register(request, Mock())
 
     assert error.value.status_code == 422
     assert "Ensemble size must be positive" in error.value.detail
@@ -244,7 +288,7 @@ async def test_that_failed_registration_releases_partially_initialized_storage(
     )
 
     with pytest.raises(RuntimeError, match="Invalid prior ensemble") as error:
-        await ert_runner.register(request)
+        await ert_runner.register(request, Mock())
 
     assert error.value.__traceback__ is not None
     assert not registry
@@ -274,6 +318,28 @@ async def test_that_cancellation_before_start_does_not_start_simulations(
     model.start_simulations_thread.assert_not_called()
     model._storage.close.assert_called_once_with()
     assert state.events == [
+        EndEvent(failed=True, msg="Experiment cancelled before start.")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_that_cancellation_before_start_forwards_end_event_to_listener(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    received_events = []
+    model = Mock(spec=RunModel)
+    model._storage = Mock(spec=LocalStorage)
+    state = ert_runner.ErtExperimentRunnerState(
+        status=ExperimentStatus(status=ExperimentState.stopped, message="Cancelled"),
+        run_model=model,
+        status_queue=SimpleQueue(),
+        status_event_listener=received_events.append,
+    )
+    monkeypatch.setitem(_experiments, str(uuid4()), state)
+
+    await ert_runner.run_ert(state)
+
+    assert received_events == [
         EndEvent(failed=True, msg="Experiment cancelled before start.")
     ]
 
