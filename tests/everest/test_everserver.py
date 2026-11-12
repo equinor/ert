@@ -6,7 +6,6 @@ import threading
 import uuid
 import warnings
 from base64 import b64encode
-from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
@@ -489,17 +488,18 @@ def everest_run_state(monkeypatch):
     state = ExperimentRunnerState()
     monkeypatch.setitem(_experiments, "experiment_id", state)
     monkeypatch.setattr(
-        "ert.server.endpoints.experiment_runs.use_runtime_plugins",
-        lambda _: nullcontext(),
-    )
-    monkeypatch.setattr(
         "ert.server.endpoints.experiment_runs.EvaluatorServerConfig", Mock()
     )
     return state
 
 
+@pytest.fixture(scope="module")
+def site_plugins():
+    return get_site_plugins(ErtPluginManager(plugins=[]))
+
+
 async def test_that_model_creation_failure_publishes_a_failed_end_event(
-    monkeypatch, everest_run_state
+    monkeypatch, everest_run_state, site_plugins
 ):
     monkeypatch.setattr(
         "ert.server.endpoints.experiment_runs.EverestRunModel.create",
@@ -508,7 +508,7 @@ async def test_that_model_creation_failure_publishes_a_failed_end_event(
     subscriber = Subscriber()
     everest_run_state.subscribers["subscriber"] = subscriber
 
-    await run_everest(Mock(), "experiment_id", Mock())
+    await run_everest(Mock(), "experiment_id", site_plugins)
 
     assert everest_run_state.events == [EndEvent(failed=True, msg="Invalid config")]
     assert everest_run_state.status.status == ExperimentState.failed
@@ -517,7 +517,7 @@ async def test_that_model_creation_failure_publishes_a_failed_end_event(
 
 
 async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event(
-    monkeypatch, everest_run_state
+    monkeypatch, everest_run_state, site_plugins
 ):
     cancelled = threading.Event()
     model = Mock()
@@ -539,7 +539,7 @@ async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event
     subscriber = Subscriber()
     everest_run_state.subscribers["subscriber"] = subscriber
 
-    await run_everest(Mock(), "experiment_id", Mock())
+    await run_everest(Mock(), "experiment_id", site_plugins)
 
     model.cancel.assert_called_once_with()
     assert everest_run_state.events == [
@@ -749,7 +749,7 @@ async def test_that_everest_experiment_started_without_notifier_has_no_forwarder
 
 
 async def test_that_stopped_run_everest_delivers_its_end_event_to_listener(
-    monkeypatch, everest_run_state
+    monkeypatch, everest_run_state, site_plugins
 ):
     received_events = []
 
@@ -777,7 +777,7 @@ async def test_that_stopped_run_everest_delivers_its_end_event_to_listener(
         Mock(return_value=model),
     )
 
-    await run_everest(Mock(), "experiment_id", Mock())
+    await run_everest(Mock(), "experiment_id", site_plugins)
 
     assert everest_run_state.finalized.is_set()
     await wait_until_all_status_events_are_delivered(forwarder)
