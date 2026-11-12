@@ -29,15 +29,21 @@ jobs:
         submodules: true
         lfs: true
 
+    # Reverse DNS lookups (socket.getfqdn, getnameinfo) block for 35s in the
+    # python.org framework build that setup-python installs on macOS runners.
+    # UV_PYTHON_PREFERENCE makes uv install its own standalone Python rather
+    # than fall back to a system one.
     - if: ${{ runner.os == 'macOS' }}
-      run: echo "ERT_TESTS_RUN_ON_MAC_CI=true" >> "$GITHUB_ENV"
+      run: |
+        echo "ERT_TESTS_RUN_ON_MAC_CI=true" >> "$GITHUB_ENV"
+        echo "UV_PYTHON_PREFERENCE=only-managed" >> "$GITHUB_ENV"
 
     - uses: ./.github/actions/install_dependencies_qt
       with:
         os: ${{ inputs.os }}
 
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-      id: setup_python
+      if: runner.os != 'macOS'
       with:
         python-version: ${{ inputs.python-version }}
 
