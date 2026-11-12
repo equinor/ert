@@ -387,7 +387,7 @@ _status_event_listener_executor = ThreadPoolExecutor(
 )
 
 
-async def _forward_status_events(
+async def _status_event_listener_subscriber(
     run: ExperimentRunnerState, listener: StatusEventListener
 ) -> None:
     subscriber_id = str(uuid.uuid4())
@@ -415,7 +415,9 @@ def start_status_event_forwarding(
 ) -> asyncio.Task[None] | None:
     if run.status_event_listener is None:
         return None
-    return asyncio.create_task(_forward_status_events(run, run.status_event_listener))
+    return asyncio.create_task(
+        _status_event_listener_subscriber(run, run.status_event_listener)
+    )
 
 
 async def finalize_run(
