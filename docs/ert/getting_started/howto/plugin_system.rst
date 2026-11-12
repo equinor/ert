@@ -327,3 +327,7 @@ but events from different experiment runs can be passed at the same time
 from different threads. The run is not marked as finished until the
 listener has returned from its ``EndEvent``, or until 60 seconds have
 passed, after which the listener is abandoned and a warning is logged.
+
+The listener must not block indefinitely. A listener that never returns
+keeps one of the shared worker threads busy, which can delay events for
+other experiment runs, and can prevent the Ert server from shutting down.

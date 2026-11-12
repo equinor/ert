@@ -21,6 +21,10 @@ def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
 
     Only one implementation is allowed.
 
+    Implementations must not block indefinitely, as a call that never
+    returns can delay events for other experiment runs and prevent the
+    server from shutting down.
+
     :param experiment_run_id: ID of the experiment run that emitted the event.
         Reruns of failed realizations reuse the ID, so more than one
         ``EndEvent`` can be received for the same ID. This is not the ID of
