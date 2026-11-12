@@ -306,6 +306,8 @@ As a consequence, a listener should:
   ``EndEvent`` if it needs that state for a rerun,
 - treat the latest ``EndEvent`` as the outcome of the experiment run.
 
+Example
+^^^^^^^
 Minimal example of logging the type of each event:
 
 .. code-block:: python
