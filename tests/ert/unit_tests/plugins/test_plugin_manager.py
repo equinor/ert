@@ -378,6 +378,19 @@ def test_get_ip_address(monkeypatch, tmpdir):
         assert pm.get_ip_address() == PLUGIN_IP_ADDRESS
 
 
+def test_that_has_status_event_listener_is_false_without_implementing_plugin():
+    assert not ErtPluginManager(plugins=[]).has_status_event_listener
+
+
+def test_that_has_status_event_listener_is_true_with_implementing_plugin():
+    class EventListener:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            pass
+
+    assert ErtPluginManager(plugins=[EventListener]).has_status_event_listener
+
+
 def test_that_notify_status_event_passes_event_and_experiment_run_id_to_plugin():
     received_events = []
 

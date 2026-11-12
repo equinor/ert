@@ -60,3 +60,13 @@ class StatusEventForwarder:
             )
         if self._events:
             self._deliver_next()
+
+
+def create_status_event_forwarder(
+    notifier: StatusEventNotifier | None, experiment_run_id: str
+) -> StatusEventForwarder | None:
+    if notifier is None:
+        return None
+    return StatusEventForwarder(
+        functools.partial(notifier, experiment_run_id=experiment_run_id)
+    )

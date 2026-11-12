@@ -31,8 +31,8 @@ from ert.run_models.model_factory import create_model
 from ert.run_models.run_model import RunModel
 from ert.server.common import ErtRunnerEndpoints
 from ert.server.status_event_forwarder import (
-    StatusEventForwarder,
     StatusEventNotifier,
+    create_status_event_forwarder,
 )
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
@@ -150,7 +150,7 @@ def _exclusive_runpath_access(
 async def register(
     request: StartErtExperimentRequest,
     notify_status_event: Annotated[
-        StatusEventNotifier, Depends(get_status_event_notifier)
+        StatusEventNotifier | None, Depends(get_status_event_notifier)
     ],
 ) -> JSONResponse:
     config_id = str(uuid.uuid4())
@@ -171,8 +171,8 @@ async def register(
         config_path=request.config.config_path,
         run_path=request.config.runpath_config.runpath_format_string,
         storage_path=request.config.ens_path,
-        status_event_forwarder=StatusEventForwarder(
-            partial(notify_status_event, experiment_run_id=config_id)
+        status_event_forwarder=create_status_event_forwarder(
+            notify_status_event, config_id
         ),
     )
     _experiments[config_id] = experiment_state

@@ -376,6 +376,10 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return ip_address[0]
 
+    @property
+    def has_status_event_listener(self) -> bool:
+        return bool(self.hook.on_status_event.get_hookimpls())
+
     def notify_status_event(
         self, *, experiment_run_id: str, event: StatusEvents
     ) -> None:

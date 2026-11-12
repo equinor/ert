@@ -739,6 +739,23 @@ async def test_that_started_everest_experiment_passes_status_events_and_id_to_no
     assert received_events == [(experiment_id, event) for event in events]
 
 
+async def test_that_everest_experiment_started_without_notifier_has_no_forwarder(
+    monkeypatch,
+):
+    registry: dict[str, ExperimentRunnerState] = {}
+    monkeypatch.setattr("ert.server.endpoints.experiment_runs._experiments", registry)
+
+    response = await start_experiment(
+        MagicMock(),
+        BackgroundTasks(),
+        get_site_plugins(ErtPluginManager(plugins=[])),
+        None,
+    )
+
+    experiment_id = json.loads(bytes(response.body))["experiment_id"]
+    assert registry[experiment_id].status_event_forwarder is None
+
+
 async def test_that_stopped_run_everest_delivers_its_end_event_to_listener(
     monkeypatch, everest_run_state
 ):

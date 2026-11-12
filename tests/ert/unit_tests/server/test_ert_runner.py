@@ -16,7 +16,7 @@ from ert.config import ErtConfig, QueueSystem
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
-from ert.plugins import ErtRuntimePlugins
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
 from ert.run_models import SingleTestRun
 from ert.run_models.event import RunModelStatusEvent
 from ert.run_models.run_model import RunModel
@@ -25,6 +25,7 @@ from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
     _experiments,
     _get_experiment,
+    get_status_event_notifier,
     verify_auth,
 )
 from ert.server.status_event_forwarder import StatusEventForwarder
@@ -183,6 +184,54 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
 
     await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
     assert received_events == [(config_id, event) for event in events]
+
+
+@pytest.mark.asyncio
+async def test_that_ert_experiment_registered_without_notifier_has_no_forwarder(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(ert_runner, "_experiments", {})
+    monkeypatch.setattr(ert_runner, "create_model", Mock(spec=RunModel))
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(
+            spec=ErtConfig,
+            config_path="config.ert",
+            runpath_config=SimpleNamespace(runpath_format_string="runpath"),
+            ens_path="storage",
+        ),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="no-notifier-test"
+        ),
+    )
+
+    registration = await ert_runner.register(request, None)
+
+    config_id = json.loads(bytes(registration.body))["config_id"]
+    assert ert_runner._get_ert_experiment(config_id).status_event_forwarder is None
+
+
+@pytest.mark.asyncio
+async def test_that_status_event_notifier_is_none_when_no_plugin_listens():
+    assert await get_status_event_notifier(ErtPluginManager(plugins=[])) is None
+
+
+@pytest.mark.asyncio
+async def test_that_status_event_notifier_passes_events_to_listening_plugin():
+    received_events = []
+
+    class EventListener:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            received_events.append((experiment_run_id, event))
+
+    notifier = await get_status_event_notifier(
+        ErtPluginManager(plugins=[EventListener])
+    )
+    assert notifier is not None
+    event = EndEvent(failed=False, msg="done")
+    notifier(experiment_run_id="e_id", event=event)
+
+    assert received_events == [("e_id", event)]
 
 
 @pytest.mark.asyncio

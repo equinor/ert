@@ -45,6 +45,7 @@ from ert.server.common import EverEndpoints
 from ert.server.status_event_forwarder import (
     StatusEventForwarder,
     StatusEventNotifier,
+    create_status_event_forwarder,
 )
 from everest.config import EverestConfig
 from everest.everserver.server import (
@@ -200,7 +201,9 @@ async def get_plugin_manager() -> ErtPluginManager:
 
 async def get_status_event_notifier(
     plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
-) -> StatusEventNotifier:
+) -> StatusEventNotifier | None:
+    if not plugin_manager.has_status_event_listener:
+        return None
     return plugin_manager.notify_status_event
 
 
@@ -266,13 +269,13 @@ async def start_experiment(
     background_tasks: BackgroundTasks,
     site_plugins: Annotated[ErtRuntimePlugins, Depends(_with_runtime_plugins)],
     notify_status_event: Annotated[
-        StatusEventNotifier, Depends(get_status_event_notifier)
+        StatusEventNotifier | None, Depends(get_status_event_notifier)
     ],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState(
-        status_event_forwarder=StatusEventForwarder(
-            functools.partial(notify_status_event, experiment_run_id=experiment_id)
+        status_event_forwarder=create_status_event_forwarder(
+            notify_status_event, experiment_id
         )
     )
     _experiments[experiment_id] = experiment_state
