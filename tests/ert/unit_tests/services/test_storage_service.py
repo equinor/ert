@@ -15,7 +15,6 @@ from ert.services.ert_server_controller import create_ert_server_controller
 from ert.shared import find_available_socket
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_create_connection_string(monkeypatch):
     authtoken = "very_secret_token"
@@ -82,7 +81,6 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
     create_ert_server_controller(project=Path().absolute())
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @patch("ert.services.ErtServerController.start_server")
 def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
     start_server_mock, change_to_tmpdir
@@ -175,7 +173,6 @@ def test_that_service_can_be_started_with_empty_json_content(
     start_server_mock.assert_called_once()
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_storage_logging(change_to_tmpdir):
     """
@@ -203,7 +200,6 @@ def test_storage_logging(change_to_tmpdir):
     ), "Found duplicated log entries"
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_certificate_generation(change_to_tmpdir):
     cert, key, pw = _generate_certificate(Path())
@@ -217,7 +213,6 @@ def test_certificate_generation(change_to_tmpdir):
     ctx.load_cert_chain(cert, key, pw)  # raise on error
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
     with patch(
@@ -235,7 +230,6 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
     ctx.load_cert_chain(cert, key, pw)  # raise on error
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkeypatch):
     auth_token = "very_secret_token"
