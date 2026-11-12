@@ -34,7 +34,7 @@ from packaging.version import Version
 from pydantic import ValidationError
 
 from ert.parameter_design import DesignMatrix, ParameterDesignError
-from ert.parameter_design.create_design import _normalize_xlsx_filename
+from ert.parameter_design.create_design import normalize_xlsx_filename
 from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import trace, tracer
@@ -266,7 +266,7 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
     if not Path(args.config).is_file():
         raise ParameterDesignError(f"Input file {args.config} does not exist")
 
-    destination = _normalize_xlsx_filename(args.destination)
+    destination = normalize_xlsx_filename(args.destination)
     if Path(args.config).resolve() == Path(destination).resolve():
         raise ParameterDesignError(
             f'Identical name "{args.config}" have been provided for the input'

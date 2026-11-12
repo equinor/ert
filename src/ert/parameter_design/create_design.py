@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     ProbabilitNode = probabilit.modeling.Node[npt.NDArray[Any]]
 
 
-def _normalize_xlsx_filename(filename: str) -> str:
+def normalize_xlsx_filename(filename: str) -> str:
     return filename if filename.endswith(".xlsx") else f"{filename}.xlsx"
 
 
@@ -431,7 +431,7 @@ class DesignMatrix:
             defaultsheet (str): name of excel sheet containing default
                 values (optional, defaults to 'DefaultValues')
         """
-        normalized_filename = _normalize_xlsx_filename(filename)
+        normalized_filename = normalize_xlsx_filename(filename)
         if normalized_filename != filename:
             filename = normalized_filename
             print(f"Warning: Missing .xlsx suffix. Changed to: {filename}")
