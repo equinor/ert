@@ -24,8 +24,8 @@ def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
 
     Implementations must not block indefinitely, as a call that never
     returns blocks all later events for its experiment run, can delay
-    events for other experiment runs and can prevent the server from
-    shutting down.
+    events for other experiment runs and can delay the shutdown of the
+    server.
 
     :param experiment_run_id: ID of the experiment run that emitted the event.
         Reruns of failed realizations reuse the ID, so more than one
