@@ -347,7 +347,7 @@ user, and a rerun can be started, before the listener has received the
 No events are skipped while the Ert server is running, but events that have
 not yet been passed to the listener when the server stops are lost:
 
-- Closing the Ert GUI stops the server right away.
+- Closing the Ert GUI stops the server without waiting for the listener.
 - After an Everest optimization has finished, the server waits up to 30
   seconds for the listener to receive the remaining events before it stops.
 
