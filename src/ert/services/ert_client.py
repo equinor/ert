@@ -368,6 +368,10 @@ class ErtClient:
         response = self._experiment_runs_get(EverEndpoints.ACTIVE_STREAMS)
         return int(response.json()["active_streams"])
 
+    def pending_status_events(self) -> int:
+        response = self._experiment_runs_get(EverEndpoints.PENDING_STATUS_EVENTS)
+        return int(response.json()["pending_status_events"])
+
     def experiment_status(self, experiment_id: str) -> dict[str, Any]:
         return dict(
             self._experiment_runs_get(f"{EverEndpoints.STATUS}/{experiment_id}").json()

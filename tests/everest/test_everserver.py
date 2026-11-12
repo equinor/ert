@@ -462,25 +462,94 @@ def test_that_active_streams_are_summed_over_all_experiments(
     assert response.json() == {"active_streams": 3}
 
 
+async def test_that_pending_status_events_are_summed_over_all_experiments(
+    setup_client, authorized_client
+):
+    listener_may_return = threading.Event()
+
+    def listener(*, event):
+        listener_may_return.wait(timeout=5)
+
+    setup_client()
+    forwarders = [StatusEventForwarder(listener), StatusEventForwarder(listener)]
+    _experiments["experiment_id"].status_event_forwarder = forwarders[0]
+    _experiments["other_experiment_id"] = ExperimentRunnerState(
+        status_event_forwarder=forwarders[1]
+    )
+    _experiments["experiment_without_listener"] = ExperimentRunnerState()
+    client, auth_headers = authorized_client
+
+    try:
+        forwarders[0].forward(
+            RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running")
+        )
+        forwarders[0].forward(EndEvent(failed=False, msg="done"))
+        forwarders[1].forward(EndEvent(failed=False, msg="done"))
+
+        response = client.get(
+            "/experiment_runs/pending_status_events", headers=auth_headers
+        )
+    finally:
+        listener_may_return.set()
+    for forwarder in forwarders:
+        await wait_until_all_status_events_are_delivered(forwarder)
+
+    assert response.status_code == 200
+    assert response.json() == {"pending_status_events": 3}
+
+
 def test_that_draining_returns_once_no_streams_are_active():
     client = MagicMock()
     client.active_event_streams.side_effect = [2, 1, 0]
+    client.pending_status_events.return_value = 0
 
-    everserver._wait_for_event_streams_to_drain(client, timeout=5, poll_interval=0)
+    everserver._wait_for_event_delivery_to_drain(client, timeout=5, poll_interval=0)
 
     assert client.active_event_streams.call_count == 3
+
+
+def test_that_draining_waits_for_pending_status_events_without_active_streams():
+    client = MagicMock()
+    client.active_event_streams.return_value = 0
+    client.pending_status_events.side_effect = [2, 1, 0]
+
+    everserver._wait_for_event_delivery_to_drain(client, timeout=5, poll_interval=0)
+
+    assert client.pending_status_events.call_count == 3
+
+
+def test_that_draining_continues_until_streams_and_status_events_are_both_drained():
+    client = MagicMock()
+    client.active_event_streams.side_effect = [1, 0, 1, 0]
+    client.pending_status_events.side_effect = [0, 1, 0, 0]
+
+    everserver._wait_for_event_delivery_to_drain(client, timeout=5, poll_interval=0)
+
+    assert client.active_event_streams.call_count == 4
+    assert client.pending_status_events.call_count == 4
 
 
 def test_that_draining_gives_up_after_the_timeout(caplog):
     client = MagicMock()
     client.active_event_streams.return_value = 1
+    client.pending_status_events.return_value = 0
 
     with caplog.at_level(logging.WARNING):
-        everserver._wait_for_event_streams_to_drain(
-            client, timeout=0.05, poll_interval=0.01
-        )
+        everserver._wait_for_event_delivery_to_drain(client, timeout=0, poll_interval=0)
 
-    assert "Event streams still active" in caplog.text
+    assert "1 active event streams" in caplog.text
+    assert "shutting down anyway" in caplog.text
+
+
+def test_that_drain_timeout_warning_names_the_pending_status_events(caplog):
+    client = MagicMock()
+    client.active_event_streams.return_value = 0
+    client.pending_status_events.return_value = 2
+
+    with caplog.at_level(logging.WARNING):
+        everserver._wait_for_event_delivery_to_drain(client, timeout=0, poll_interval=0)
+
+    assert "2 pending status events" in caplog.text
 
 
 @pytest.fixture
