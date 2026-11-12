@@ -602,8 +602,10 @@ class DesignMatrix:
         """Filling NaNs with default values"""
         for key in self.designvalues.columns:
             if key in self.defaultvalues:
-                self.designvalues[key] = self.designvalues[key].fillna(
-                    self.defaultvalues[key]
+                column = self.designvalues[key]
+                # Not fillna, as a default may differ in type from its column
+                self.designvalues[key] = column.where(
+                    column.notna(), self.defaultvalues[key]
                 )
             elif key not in self.START_COLUMNS:
                 raise FmudesignError(f"No defaultvalues given for parameter {key} ")
