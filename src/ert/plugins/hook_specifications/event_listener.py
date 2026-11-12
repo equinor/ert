@@ -13,17 +13,19 @@ if TYPE_CHECKING:
 def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
     """Called for every status event emitted by a running experiment.
 
-    Implementations are called in a worker thread, with the events of each
-    experiment run passed one at a time in the order they were emitted.
-    Events from different experiment runs can be passed concurrently from
-    different threads. The event is a copy, so modifying it does not affect
-    other subscribers.
+    Implementations are called in a worker thread, without delaying the
+    experiment. The events of each experiment run are passed one at a time
+    in the order they were emitted, also across reruns of failed
+    realizations. Events from different experiment runs can be passed
+    concurrently from different threads. The event is a copy, so modifying
+    it does not affect other subscribers.
 
     Only one implementation is allowed.
 
     Implementations must not block indefinitely, as a call that never
-    returns can delay events for other experiment runs and prevent the
-    server from shutting down.
+    returns blocks all later events for its experiment run, can delay
+    events for other experiment runs and can prevent the server from
+    shutting down.
 
     :param experiment_run_id: ID of the experiment run that emitted the event.
         Reruns of failed realizations reuse the ID, so more than one
