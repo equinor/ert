@@ -271,48 +271,8 @@ The listener is called for experiments started from the Ert GUI and for
 Everest optimizations. Experiments started from the Ert command line do not
 call the listener yet.
 
-Several experiments can run at the same time, so each event is passed
-together with an ``experiment_run_id`` (a UUID string) that identifies which
-run emitted it. Use this ID to tell runs apart. It is not the ID of the
-experiment in storage.
-
 .. autofunction:: ert.plugins.hook_specifications.event_listener.on_status_event
 
-Only one plugin may implement this hook. If a second plugin implements it,
-that plugin is rejected with a ``ValueError`` when the plugins are loaded.
-
-Exceptions raised by the listener are logged. They do not stop the
-experiment, and the listener is still called for later events.
-
-The listener receives a copy of the event, so modifying it does not change
-what is shown to the user in the GUI and in progress monitoring.
-
-End events and reruns
-^^^^^^^^^^^^^^^^^^^^^
-Every run ends with an ``EndEvent``, also when the run fails or is cancelled.
-Its ``failed`` attribute tells whether the run failed, and ``msg`` gives the
-reason.
-
-An ``EndEvent`` does not mean that no more events will arrive for that
-``experiment_run_id``. When the user reruns failed realizations from the Ert
-GUI, the rerun reuses the same ``experiment_run_id``. The listener then
-receives a new sequence of events, ending with another ``EndEvent``. This
-can happen after an ``EndEvent`` where ``failed`` is ``False``, since a run
-can finish with some failed realizations.
-
-The events of a rerun are passed to the listener only after it has returned
-from the ``EndEvent`` of the previous run with the same
-``experiment_run_id``.
-
-As a consequence, a listener should:
-
-- expect more than one ``EndEvent`` per ``experiment_run_id``,
-- not release or delete state for an ``experiment_run_id`` on its first
-  ``EndEvent`` if it needs that state for a rerun,
-- treat the latest ``EndEvent`` as the outcome of the experiment run.
-
-Example
-^^^^^^^
 Minimal example of logging the type of each event:
 
 .. code-block:: python
@@ -327,31 +287,30 @@ Minimal example of logging the type of each event:
    def on_status_event(experiment_run_id, event):
        logger.info(f"Experiment run {experiment_run_id} emitted {event.event_type}")
 
-Threading and ordering
-^^^^^^^^^^^^^^^^^^^^^^
-The listener is called in a worker thread, so it does not delay the
-experiment or the progress shown to the user.
+End events and reruns
+^^^^^^^^^^^^^^^^^^^^^
+Every run ends with an ``EndEvent``, also when the run fails or is cancelled.
+Its ``failed`` attribute tells whether the run failed, and ``msg`` gives the
+reason.
 
-The events of one experiment run are passed one at a time, in the order
-they were emitted. This also holds across reruns of failed realizations, so
-the listener is never called by two threads at the same time for the same
-``experiment_run_id``. Events from different experiment runs can be passed
-at the same time from different threads, so state shared between runs must
-be protected, for example with a lock.
+An ``EndEvent`` does not mean that no more events will arrive for that
+``experiment_run_id``. When the user reruns failed realizations from the Ert
+GUI, the rerun reuses the ``experiment_run_id`` and emits a new sequence of
+events, ending with another ``EndEvent``. This can also happen after an
+``EndEvent`` where ``failed`` is ``False``, since a run can finish with some
+failed realizations. A listener should therefore keep any state it needs
+for a rerun after an ``EndEvent``, and treat the latest ``EndEvent`` as the
+outcome of the experiment run.
 
-Ert does not wait for the listener. A slow listener receives its events
-later than they were emitted, so a run can be shown as finished to the
-user, and a rerun can be started, before the listener has received the
-``EndEvent`` of that run.
+Since Ert does not wait for the listener, a run can be shown as finished,
+and a rerun started, before the listener has received the ``EndEvent`` of
+that run.
 
-No events are skipped while the Ert server is running, but events that have
-not yet been passed to the listener when the server stops are lost:
+Shutdown
+^^^^^^^^
+Events that have not yet been passed to the listener when the Ert server
+stops are lost:
 
 - Closing the Ert GUI stops the server without waiting for the listener.
 - After an Everest optimization has finished, the server waits up to 30
   seconds for the listener to receive the remaining events before it stops.
-
-The listener must not block indefinitely. A listener that never returns
-keeps one of the four shared worker threads busy and receives no more
-events for that experiment run. It can also delay events for other
-experiment runs and delay the shutdown of the Ert server.
