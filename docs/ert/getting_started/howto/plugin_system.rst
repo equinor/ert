@@ -354,4 +354,4 @@ not yet been passed to the listener when the server stops are lost:
 The listener must not block indefinitely. A listener that never returns
 keeps one of the four shared worker threads busy and receives no more
 events for that experiment run. It can also delay events for other
-experiment runs and prevent the Ert server from shutting down.
+experiment runs and delay the shutdown of the Ert server.
