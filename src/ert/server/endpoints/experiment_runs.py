@@ -14,10 +14,9 @@ import uuid
 import warnings
 from base64 import b64decode
 from collections.abc import AsyncIterator
-from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from queue import SimpleQueue
-from typing import Annotated, Protocol
+from typing import Annotated
 
 from fastapi import (
     APIRouter,
@@ -43,6 +42,10 @@ from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from ert.server.common import EverEndpoints
+from ert.server.status_event_forwarder import (
+    StatusEventForwarder,
+    StatusEventNotifier,
+)
 from everest.config import EverestConfig
 from everest.everserver.server import (
     ExperimentState,
@@ -60,14 +63,6 @@ class UserCancelled(Exception):
     pass
 
 
-class StatusEventNotifier(Protocol):
-    def __call__(self, *, experiment_run_id: str, event: StatusEvents) -> None: ...
-
-
-class StatusEventListener(Protocol):
-    def __call__(self, *, event: StatusEvents) -> None: ...
-
-
 @dataclasses.dataclass
 class ExperimentRunnerState:
     status: ExperimentStatus = dataclasses.field(default_factory=ExperimentStatus)
@@ -79,12 +74,14 @@ class ExperimentRunnerState:
     run_path: str | os.PathLike[str] | None = None
     storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
-    status_event_listener: StatusEventListener | None = None
+    status_event_forwarder: StatusEventForwarder | None = None
 
     def publish(self, event: StatusEvents) -> None:
         self.events.append(event)
         for subscriber in self.subscribers.values():
             subscriber.notify()
+        if self.status_event_forwarder is not None:
+            self.status_event_forwarder.forward(event)
 
     def reset_for_rerun(self) -> None:
         self.events.clear()
@@ -274,8 +271,8 @@ async def start_experiment(
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState(
-        status_event_listener=functools.partial(
-            notify_status_event, experiment_run_id=experiment_id
+        status_event_forwarder=StatusEventForwarder(
+            functools.partial(notify_status_event, experiment_run_id=experiment_id)
         )
     )
     _experiments[experiment_id] = experiment_state
@@ -382,71 +379,6 @@ async def _get_event(subscriber_id: str, run: ExperimentRunnerState) -> StatusEv
     return event
 
 
-STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS = 60.0
-_status_event_listener_executor = ThreadPoolExecutor(
-    max_workers=4, thread_name_prefix="status_event_listener"
-)
-
-
-async def _status_event_listener_subscriber(
-    run: ExperimentRunnerState, listener: StatusEventListener
-) -> None:
-    subscriber_id = str(uuid.uuid4())
-    loop = asyncio.get_running_loop()
-    try:
-        while True:
-            event = await _get_event(subscriber_id=subscriber_id, run=run)
-            try:
-                await loop.run_in_executor(
-                    _status_event_listener_executor,
-                    functools.partial(listener, event=event),
-                )
-            except Exception:
-                logging.getLogger(__name__).exception(
-                    "Status event listener failed to handle event"
-                )
-            if isinstance(event, EndEvent):
-                return
-    finally:
-        run.subscribers.pop(subscriber_id, None)
-
-
-def start_status_event_forwarding(
-    run: ExperimentRunnerState,
-) -> asyncio.Task[None] | None:
-    if run.status_event_listener is None:
-        return None
-    return asyncio.create_task(
-        _status_event_listener_subscriber(run, run.status_event_listener)
-    )
-
-
-async def finalize_run(
-    run: ExperimentRunnerState, forwarding_task: asyncio.Task[None] | None
-) -> None:
-    """Mark the run as finalized once the status event listener has
-    received the EndEvent, so a rerun cannot clear events it has not read.
-    A listener that does not finish within the timeout is abandoned.
-    """
-    try:
-        if forwarding_task is not None:
-            if any(isinstance(event, EndEvent) for event in run.events):
-                await asyncio.wait_for(
-                    forwarding_task,
-                    timeout=STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS,
-                )
-            else:
-                forwarding_task.cancel()
-    except TimeoutError:
-        logging.getLogger(__name__).warning(
-            "Status event listener did not receive the EndEvent within "
-            f"{STATUS_EVENT_LISTENER_FINALIZE_TIMEOUT_SECONDS} seconds, "
-            "finalizing the run without it"
-        )
-    finally:
-        run.finalized.set()
-
-
 async def run_everest(
     config: EverestConfig,
     experiment_id: str,
@@ -456,7 +388,6 @@ async def run_everest(
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
     run_model: EverestRunModel | None = None
     end_message = "Experiment ended without a terminal event"
-    forwarding_task = start_status_event_forwarding(run)
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         with use_runtime_plugins(site_plugins):
             run_model = EverestRunModel.create(
@@ -518,7 +449,7 @@ async def run_everest(
         finally:
             if not any(isinstance(event, EndEvent) for event in run.events):
                 run.publish(EndEvent(failed=True, msg=end_message))
-            await finalize_run(run, forwarding_task)
+            run.finalized.set()
 
         logging.getLogger(__name__).info(
             f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"

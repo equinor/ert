@@ -30,17 +30,18 @@ from ert.run_models import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.run_models.run_model import RunModel
 from ert.server.common import ErtRunnerEndpoints
+from ert.server.status_event_forwarder import (
+    StatusEventForwarder,
+    StatusEventNotifier,
+)
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
 from .experiment_runs import (
     ExperimentRunnerState,
-    StatusEventNotifier,
     _experiments,
     _with_runtime_plugins,
     authenticated,
-    finalize_run,
     get_status_event_notifier,
-    start_status_event_forwarding,
 )
 
 router = APIRouter(prefix="/experiment_runs", tags=["experiment_runs"])
@@ -170,7 +171,9 @@ async def register(
         config_path=request.config.config_path,
         run_path=request.config.runpath_config.runpath_format_string,
         storage_path=request.config.ens_path,
-        status_event_listener=partial(notify_status_event, experiment_run_id=config_id),
+        status_event_forwarder=StatusEventForwarder(
+            partial(notify_status_event, experiment_run_id=config_id)
+        ),
     )
     _experiments[config_id] = experiment_state
 
@@ -333,13 +336,12 @@ async def run_ert(
     status_queue = run.status_queue
     model = run.run_model
     cancellation_requested = False
-    forwarding_task = start_status_event_forwarding(run)
 
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         if run.status.status == ExperimentState.stopped:
             model._storage.close()
             run.publish(EndEvent(failed=True, msg="Experiment cancelled before start."))
-            await finalize_run(run, forwarding_task)
+            run.finalized.set()
             return
 
         run.status = ExperimentStatus(
@@ -401,4 +403,4 @@ async def run_ert(
             ),
         )
     run.publish(terminal_event)
-    await finalize_run(run, forwarding_task)
+    run.finalized.set()

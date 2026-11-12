@@ -1,3 +1,4 @@
+import asyncio
 import json
 import shutil
 from collections.abc import Iterator
@@ -26,8 +27,18 @@ from ert.server.endpoints.experiment_runs import (
     _get_experiment,
     verify_auth,
 )
+from ert.server.status_event_forwarder import StatusEventForwarder
 from ert.storage import LocalStorage, open_storage
 from everest.everserver.server import ExperimentState, ExperimentStatus
+
+
+async def wait_until_all_status_events_are_delivered(
+    forwarder: StatusEventForwarder | None,
+) -> None:
+    assert forwarder is not None
+    async with asyncio.timeout(5):
+        while forwarder.pending:  # ruff: ignore[async-busy-wait]
+            await asyncio.sleep(0.001)
 
 
 def test_that_run_args_deserializes_selected_parameter_configurations():
@@ -167,8 +178,10 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
 
     registration = await ert_runner.register(request, notify_status_event)
     config_id = json.loads(bytes(registration.body))["config_id"]
-    await ert_runner.run_ert(ert_runner._get_ert_experiment(config_id))
+    state = ert_runner._get_ert_experiment(config_id)
+    await ert_runner.run_ert(state)
 
+    await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
     assert received_events == [(config_id, event) for event in events]
 
 
@@ -323,7 +336,7 @@ async def test_that_cancellation_before_start_does_not_start_simulations(
 
 
 @pytest.mark.asyncio
-async def test_that_cancelled_run_is_finalized_after_listener_gets_end_event(
+async def test_that_run_cancelled_before_start_delivers_its_end_event_to_listener(
     monkeypatch: pytest.MonkeyPatch,
 ):
     received_events = []
@@ -337,13 +350,14 @@ async def test_that_cancelled_run_is_finalized_after_listener_gets_end_event(
         status=ExperimentStatus(status=ExperimentState.stopped, message="Cancelled"),
         run_model=model,
         status_queue=SimpleQueue(),
-        status_event_listener=listener,
+        status_event_forwarder=StatusEventForwarder(listener),
     )
     monkeypatch.setitem(_experiments, str(uuid4()), state)
 
     await ert_runner.run_ert(state)
 
     assert state.finalized.is_set()
+    await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
     assert received_events == [
         EndEvent(failed=True, msg="Experiment cancelled before start.")
     ]
@@ -371,7 +385,7 @@ async def test_that_rerun_forwards_events_of_both_runs_to_listener(
     state = ert_runner.ErtExperimentRunnerState(
         run_model=model,
         status_queue=status_queue,
-        status_event_listener=listener,
+        status_event_forwarder=StatusEventForwarder(listener),
     )
     monkeypatch.setitem(_experiments, str(uuid4()), state)
 
@@ -379,6 +393,7 @@ async def test_that_rerun_forwards_events_of_both_runs_to_listener(
     state.reset_for_rerun()
     await ert_runner.run_ert(state, rerun_failed_realizations=True)
 
+    await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
     assert received_events == [
         EndEvent(failed=False, msg="first run"),
         EndEvent(failed=False, msg="rerun"),
