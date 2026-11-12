@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
+from PyQt6.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig
@@ -68,11 +68,18 @@ def test_that_runpaths_are_preserved_when_deletion_fails(
     QTimer.singleShot(
         1000, lambda: handle_runpath_dialog(gui, qtbot, expect_error=True)
     )
-    with patch.object(ErtClient, "runpath_delete", return_value=False) as delete:
+    with (
+        patch.object(
+            ErtClient, "runpath_delete", side_effect=PermissionError("Denied")
+        ) as delete,
+        patch.object(QMessageBox, "warning") as deletion_failed_warning,
+    ):
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         delete.assert_called_once()
+        deletion_failed_warning.assert_called_once()
+        assert deletion_failed_warning.call_args.args[2] == "Denied"
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)

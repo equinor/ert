@@ -128,7 +128,7 @@ def test_that_registration_serializes_parameter_configs_in_arguments():
         ),
         ("discard_registration", "DELETE", "register", None, None, DEFAULT_TIMEOUT),
         ("runpath_exists", "POST", "runpath", {}, True, DEFAULT_TIMEOUT),
-        ("runpath_delete", "DELETE", "runpath", {}, True, None),
+        ("runpath_delete", "DELETE", "runpath", {}, None, None),
         (
             "get_runmodel_data",
             "POST",
@@ -169,6 +169,31 @@ def test_that_registered_ert_requests_send_config_id_as_a_query_parameter(
         params={"config_id": "registered-config"},
         timeout=timeout,
     )
+
+
+def test_that_runpath_delete_raises_permission_error_with_the_server_detail():
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(
+        403, json={"detail": "[Errno 13] Permission denied: '/runpath/iter-0'"}
+    )
+
+    with pytest.raises(PermissionError) as error:
+        ErtClient(transport).runpath_delete("registered-config")
+
+    assert str(error.value) == "[Errno 13] Permission denied: '/runpath/iter-0'"
+
+
+@pytest.mark.parametrize("status_code", [404, 409, 500])
+def test_that_runpath_delete_raises_request_error_on_other_server_errors(
+    status_code: int,
+):
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(status_code, text="not json")
+
+    with pytest.raises(httpx.RequestError, match="Failed to delete runpath"):
+        ErtClient(transport).runpath_delete("registered-config")
 
 
 def test_that_active_event_streams_reads_the_server_stream_count():

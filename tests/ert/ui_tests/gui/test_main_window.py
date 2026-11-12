@@ -1154,7 +1154,8 @@ def test_that_run_action_registers_once_and_reuses_config_id(
         "supports_rerunning_failed_realizations": False,
     }
     client.runpath_exists.return_value = existing_runpath
-    client.runpath_delete.return_value = deletion_succeeds
+    if not deletion_succeeds:
+        client.runpath_delete.side_effect = PermissionError("Permission denied")
     client.start_experiment_ert.return_value = None
     event_queue = SimpleQueue()
     event_thread = Mock()
@@ -1184,6 +1185,7 @@ def test_that_run_action_registers_once_and_reuses_config_id(
             patch.object(
                 QMessageBox, "exec", side_effect=accept_runpath_warning
             ) as warning,
+            patch.object(QMessageBox, "warning") as deletion_failed_warning,
             patch.object(RunDialog, "setup_event_monitoring") as monitor,
             (
                 qtbot.waitSignal(panel.experiment_started)
@@ -1198,6 +1200,9 @@ def test_that_run_action_registers_once_and_reuses_config_id(
         client.runpath_exists.assert_called_once_with("registered-config")
         if existing_runpath:
             assert warning.call_count == (2 if not deletion_succeeds else 1)
+            assert deletion_failed_warning.call_count == (
+                1 if delete_runpath and not deletion_succeeds else 0
+            )
         else:
             warning.assert_not_called()
         if not proceed:
