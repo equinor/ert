@@ -322,6 +322,8 @@ Minimal example of logging the type of each event:
    def on_status_event(experiment_run_id, event):
        logger.info(f"Experiment run {experiment_run_id} emitted {event.event_type}")
 
+Threading and timeouts
+^^^^^^^^^^^^^^^^^^^^^^
 The listener is called in a worker thread, so it does not delay the
 experiment or the progress shown to the user. The events of one
 experiment run are passed one at a time, in the order they were emitted,
