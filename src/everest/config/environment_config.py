@@ -59,10 +59,8 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
         return output_folder
 
     @model_validator(mode="before")
-    def warn_about_deprecated_log_level_before(
-        cls, values: dict[str, Any]
-    ) -> dict[str, Any]:
-        if "log_level" in values and values["log_level"] is not None:
+    def warn_about_deprecated_log_level_before(cls, values: Any) -> Any:
+        if isinstance(values, dict) and values.get("log_level") is not None:
             ConfigWarning.deprecation_warn(
                 "`environment: log_level` is deprecated and ignored. "
                 "The log level is no longer configurable."
