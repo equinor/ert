@@ -429,6 +429,28 @@ def test_that_runpath_requests_report_run_model_errors(
     assert response.status_code == expected_status
 
 
+def test_that_runpath_deletion_responds_forbidden_with_the_permission_error_text(
+    monkeypatch: pytest.MonkeyPatch, runner_client: TestClient
+):
+    model = Mock(spec=RunModel)
+    model.rm_runpath.side_effect = PermissionError("Operation not permitted")
+    config_id = str(uuid4())
+    monkeypatch.setitem(
+        _experiments,
+        config_id,
+        ert_runner.ErtExperimentRunnerState(
+            run_model=model, status_queue=SimpleQueue()
+        ),
+    )
+
+    response = runner_client.delete(
+        "/experiment_runs/runpath", params={"config_id": config_id}
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Operation not permitted"}
+
+
 @pytest.mark.parametrize(
     ("method", "endpoint"),
     [

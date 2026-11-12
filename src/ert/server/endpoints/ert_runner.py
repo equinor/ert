@@ -279,10 +279,13 @@ def delete_runpath(
             )
         try:
             config.run_model.rm_runpath()
+        except PermissionError as e:
+            logging.getLogger(__name__).exception(str(e))
+            raise HTTPException(status_code=403, detail=str(e)) from e
         except Exception as e:
             logging.getLogger(__name__).exception(str(e))
-            return Response("Failed to delete runpaths", status_code=500)
-    return Response("All runpaths deleted", status_code=200)
+            raise HTTPException(status_code=500) from e
+    return Response("All runpath deleted", status_code=200)
 
 
 @router.post(f"/{ErtRunnerEndpoints.RUNMODEL}", dependencies=[*authenticated])

@@ -9,9 +9,7 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QAction, QStandardItemModel
 from PyQt6.QtWidgets import (
-    QApplication,
     QCheckBox,
-    QDialog,
     QFrame,
     QHBoxLayout,
     QMessageBox,
@@ -364,30 +362,16 @@ class ExperimentPanel(QWidget):
                 delete = True
 
         if delete:
-            progress_dialog = QDialog(self)
-            progress_dialog.setObjectName("RUNPATH_PROGRESS_DIALOG")
-            progress_dialog.setWindowTitle("Deleting runpaths")
-            progress_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-            progress_layout = QVBoxLayout(progress_dialog)
-            progress_layout.setContentsMargins(0, 0, 0, 0)
-
-            progress_dialog.resize(420, 120)
-            progress_dialog.show()
-            QApplication.processEvents()
-            with wait_cursor():
-                try:
-                    successfully_removed = client.runpath_delete(config_id)
-                except Exception as e:
-                    QMessageBox.warning(
-                        self,
-                        "Runpath deletion failed",
-                        f"Failed to delete the runpath: {e}",
-                        QMessageBox.StandardButton.Ok,
-                    )
-                    successfully_removed = False
-            if not successfully_removed:
-                progress_dialog.close()
-                progress_dialog.deleteLater()
+            try:
+                with wait_cursor():
+                    client.runpath_delete(config_id)
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    "Runpath deletion failed",
+                    str(e),
+                    QMessageBox.StandardButton.Ok,
+                )
                 msg_box = QMessageBox(self)
                 msg_box.setObjectName("RUNPATH_ERROR_BOX")
                 msg_box.setIcon(QMessageBox.Icon.Warning)
@@ -401,12 +385,8 @@ class ExperimentPanel(QWidget):
                 )
                 msg_box.setDefaultButton(QMessageBox.StandardButton.No)
                 msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
-                msg_box_res = msg_box.exec()
-                if msg_box_res == QMessageBox.StandardButton.No:
+                if msg_box.exec() == QMessageBox.StandardButton.No:
                     return False
-            else:
-                progress_dialog.close()
-                progress_dialog.deleteLater()
 
         return True
 
