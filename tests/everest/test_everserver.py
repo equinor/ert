@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 import logging
 import threading
@@ -21,8 +22,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
+from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent
+from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import ErtPluginManager, get_site_plugins
 from ert.run_models.event import RunModelStatusEvent, StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode
@@ -32,6 +36,7 @@ from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
     Subscriber,
     _experiments,
+    _failed_realizations_messages,
     _get_event,
     finalize_run,
     run_everest,
@@ -273,6 +278,51 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
     assert status is not None
     assert status.status == ExperimentState.failed
     assert "The run is cancelled due to reaching MAX_RUNTIME" in status.message
+
+
+def test_that_failed_realizations_messages_leave_event_snapshots_unchanged():
+    def snapshot_with_fm_step(**fm_step) -> EnsembleSnapshot:
+        return EnsembleSnapshot.from_nested_dict(
+            {"reals": {"0": {"fm_steps": {"0": fm_step}}}}
+        )
+
+    event_fields = {
+        "iteration_label": "Batch 0",
+        "total_iterations": 1,
+        "progress": 0.5,
+        "realization_count": 1,
+        "status_count": {},
+        "iteration": 0,
+    }
+    events = [
+        FullSnapshotEvent(
+            snapshot=snapshot_with_fm_step(name="simulate", status="Running"),
+            **event_fields,
+        ),
+        SnapshotUpdateEvent(
+            snapshot=snapshot_with_fm_step(status="Failed", error="Disk is full"),
+            **event_fields,
+        ),
+        SnapshotUpdateEvent(
+            snapshot=snapshot_with_fm_step(error=FORWARD_MODEL_TERMINATED_MSG),
+            **event_fields,
+        ),
+    ]
+    emitted_snapshots = [copy.deepcopy(event.snapshot.to_dict()) for event in events]
+
+    messages = _failed_realizations_messages(
+        events, EverestExitCode.TOO_FEW_REALIZATIONS
+    )
+
+    assert messages == [
+        OPT_FAILURE_REALIZATIONS,
+        "simulate Failed with: Disk is full",
+    ]
+    assert [event.snapshot.to_dict() for event in events] == emitted_snapshots
+    assert (
+        events[2].snapshot.get_fm_step("0", "0")["error"]
+        == FORWARD_MODEL_TERMINATED_MSG
+    )
 
 
 def test_websocket_no_authentication(setup_client):

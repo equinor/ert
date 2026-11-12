@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import dataclasses
 import datetime as dt
 import functools
@@ -108,10 +109,10 @@ def _failed_realizations_messages(
     snapshots: dict[int, EnsembleSnapshot] = {}
     for event in events:
         if isinstance(event, FullSnapshotEvent) and event.snapshot:
-            snapshots[event.iteration] = event.snapshot
+            snapshots[event.iteration] = copy.deepcopy(event.snapshot)
         elif isinstance(event, SnapshotUpdateEvent) and event.snapshot:
             snapshot = snapshots[event.iteration]
-            snapshot.merge_snapshot(event.snapshot)
+            snapshot.merge_snapshot(copy.deepcopy(event.snapshot))
     messages = [
         OPT_FAILURE_REALIZATIONS
         if exit_code == EverestExitCode.TOO_FEW_REALIZATIONS
