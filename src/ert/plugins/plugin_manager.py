@@ -384,6 +384,7 @@ class ErtPluginManager(pluggy.PluginManager):
                 experiment_run_id=experiment_run_id, event=event.model_copy(deep=True)
             )
         except Exception:
+            # Log flooding potential tracked in https://github.com/equinor/ert/issues/14908
             logger.exception(
                 f"Status event plugin failed for experiment run '{experiment_run_id}'"
             )
