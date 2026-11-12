@@ -118,7 +118,9 @@ class ExperimentModel:
                 return self._name
             if col == _Column.TIME:
                 return (
-                    humanize.naturaltime(self._children[0]._start_time)
+                    humanize.naturaltime(
+                        self._children[0]._start_time, minimum_unit="minutes"
+                    )
                     if self._children
                     else "None"
                 )
