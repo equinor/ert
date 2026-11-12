@@ -28,6 +28,7 @@ from ert.scheduler.event import (
 
 if TYPE_CHECKING:
     from ert.scheduler.driver import Driver
+    from ert.server.status_event_forwarder import StatusEventForwarder
 
 
 import importlib.util
@@ -277,6 +278,15 @@ class MockZMQServer:
                     await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
             except asyncio.CancelledError:
                 break
+
+
+async def wait_until_all_status_events_are_delivered(
+    forwarder: StatusEventForwarder | None,
+) -> None:
+    assert forwarder is not None
+    async with asyncio.timeout(5):
+        while forwarder.pending:  # ruff: ignore[async-busy-wait]
+            await asyncio.sleep(0.001)
 
 
 async def poll(

@@ -32,29 +32,19 @@ from everest.util import version_info
 
 logger = logging.getLogger(__name__)
 
-EVENT_DELIVERY_DRAIN_TIMEOUT = 30.0
+EVENT_STREAM_DRAIN_TIMEOUT = 30.0
 
 
-def _wait_for_event_delivery_to_drain(
+def _wait_for_event_streams_to_drain(
     client: ErtClient,
-    timeout: float = EVENT_DELIVERY_DRAIN_TIMEOUT,
+    timeout: float = EVENT_STREAM_DRAIN_TIMEOUT,
     poll_interval: float = 0.1,
 ) -> None:
-    """Waits until all event streams have closed and all status events have
-    been handled by the status event listener, sharing a single timeout.
-    """
     deadline = time.monotonic() + timeout
-    while True:
-        active_streams = client.active_event_streams()
-        pending_status_events = client.pending_status_events()
-        if active_streams == 0 and pending_status_events == 0:
-            return
+    while client.active_event_streams() > 0:
         if time.monotonic() >= deadline:
             logger.warning(
-                f"Event delivery not finished after {timeout}s "
-                f"({active_streams} active event streams, "
-                f"{pending_status_events} pending status events), "
-                "shutting down anyway"
+                f"Event streams still active after {timeout}s, shutting down anyway"
             )
             return
         time.sleep(poll_interval)
@@ -193,7 +183,7 @@ def main() -> None:
                     ]
                     done = experiment_ids and not any(active)
                     time.sleep(0.5)
-                _wait_for_event_delivery_to_drain(client)
+                _wait_for_event_streams_to_drain(client)
         except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
             logging.getLogger(__name__).info("Everserver stopped by user")

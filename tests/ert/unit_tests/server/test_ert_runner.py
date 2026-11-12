@@ -1,4 +1,3 @@
-import asyncio
 import json
 import shutil
 from collections.abc import Iterator
@@ -31,15 +30,7 @@ from ert.server.endpoints.experiment_runs import (
 from ert.server.status_event_forwarder import StatusEventForwarder
 from ert.storage import LocalStorage, open_storage
 from everest.everserver.server import ExperimentState, ExperimentStatus
-
-
-async def wait_until_all_status_events_are_delivered(
-    forwarder: StatusEventForwarder | None,
-) -> None:
-    assert forwarder is not None
-    async with asyncio.timeout(5):
-        while forwarder.pending:  # ruff: ignore[async-busy-wait]
-            await asyncio.sleep(0.001)
+from tests.ert.utils import wait_until_all_status_events_are_delivered
 
 
 def test_that_run_args_deserializes_selected_parameter_configurations():

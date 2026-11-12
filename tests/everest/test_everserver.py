@@ -54,6 +54,7 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
 )
 from everest.util._utils import get_everest_experiment
+from tests.ert.utils import wait_until_all_status_events_are_delivered
 from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
 
 pytestmark = pytest.mark.usefixtures("reset_server_plugin_manager")
@@ -462,94 +463,25 @@ def test_that_active_streams_are_summed_over_all_experiments(
     assert response.json() == {"active_streams": 3}
 
 
-async def test_that_pending_status_events_are_summed_over_all_experiments(
-    setup_client, authorized_client
-):
-    listener_may_return = threading.Event()
-
-    def listener(*, event):
-        listener_may_return.wait(timeout=5)
-
-    setup_client()
-    forwarders = [StatusEventForwarder(listener), StatusEventForwarder(listener)]
-    _experiments["experiment_id"].status_event_forwarder = forwarders[0]
-    _experiments["other_experiment_id"] = ExperimentRunnerState(
-        status_event_forwarder=forwarders[1]
-    )
-    _experiments["experiment_without_listener"] = ExperimentRunnerState()
-    client, auth_headers = authorized_client
-
-    try:
-        forwarders[0].forward(
-            RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running")
-        )
-        forwarders[0].forward(EndEvent(failed=False, msg="done"))
-        forwarders[1].forward(EndEvent(failed=False, msg="done"))
-
-        response = client.get(
-            "/experiment_runs/pending_status_events", headers=auth_headers
-        )
-    finally:
-        listener_may_return.set()
-    for forwarder in forwarders:
-        await wait_until_all_status_events_are_delivered(forwarder)
-
-    assert response.status_code == 200
-    assert response.json() == {"pending_status_events": 3}
-
-
 def test_that_draining_returns_once_no_streams_are_active():
     client = MagicMock()
     client.active_event_streams.side_effect = [2, 1, 0]
-    client.pending_status_events.return_value = 0
 
-    everserver._wait_for_event_delivery_to_drain(client, timeout=5, poll_interval=0)
+    everserver._wait_for_event_streams_to_drain(client, timeout=5, poll_interval=0)
 
     assert client.active_event_streams.call_count == 3
-
-
-def test_that_draining_waits_for_pending_status_events_without_active_streams():
-    client = MagicMock()
-    client.active_event_streams.return_value = 0
-    client.pending_status_events.side_effect = [2, 1, 0]
-
-    everserver._wait_for_event_delivery_to_drain(client, timeout=5, poll_interval=0)
-
-    assert client.pending_status_events.call_count == 3
-
-
-def test_that_draining_continues_until_streams_and_status_events_are_both_drained():
-    client = MagicMock()
-    client.active_event_streams.side_effect = [1, 0, 1, 0]
-    client.pending_status_events.side_effect = [0, 1, 0, 0]
-
-    everserver._wait_for_event_delivery_to_drain(client, timeout=5, poll_interval=0)
-
-    assert client.active_event_streams.call_count == 4
-    assert client.pending_status_events.call_count == 4
 
 
 def test_that_draining_gives_up_after_the_timeout(caplog):
     client = MagicMock()
     client.active_event_streams.return_value = 1
-    client.pending_status_events.return_value = 0
 
     with caplog.at_level(logging.WARNING):
-        everserver._wait_for_event_delivery_to_drain(client, timeout=0, poll_interval=0)
+        everserver._wait_for_event_streams_to_drain(
+            client, timeout=0.05, poll_interval=0.01
+        )
 
-    assert "1 active event streams" in caplog.text
-    assert "shutting down anyway" in caplog.text
-
-
-def test_that_drain_timeout_warning_names_the_pending_status_events(caplog):
-    client = MagicMock()
-    client.active_event_streams.return_value = 0
-    client.pending_status_events.return_value = 2
-
-    with caplog.at_level(logging.WARNING):
-        everserver._wait_for_event_delivery_to_drain(client, timeout=0, poll_interval=0)
-
-    assert "2 pending status events" in caplog.text
+    assert "Event streams still active" in caplog.text
 
 
 @pytest.fixture
@@ -564,15 +496,6 @@ def everest_run_state(monkeypatch):
         "ert.server.endpoints.experiment_runs.EvaluatorServerConfig", Mock()
     )
     return state
-
-
-async def wait_until_all_status_events_are_delivered(
-    forwarder: StatusEventForwarder | None,
-) -> None:
-    assert forwarder is not None
-    async with asyncio.timeout(5):
-        while forwarder.pending:  # ruff: ignore[async-busy-wait]
-            await asyncio.sleep(0.001)
 
 
 async def test_that_model_creation_failure_publishes_a_failed_end_event(
@@ -890,111 +813,6 @@ async def test_that_slow_status_event_listener_does_not_delay_websocket_subscrib
     finally:
         listener_may_return.set()
     await wait_until_all_status_events_are_delivered(forwarder)
-
-
-async def test_that_pending_counts_events_until_the_listener_has_returned():
-    listener_started = threading.Event()
-    listener_may_return = threading.Event()
-
-    def listener(*, event):
-        listener_started.set()
-        listener_may_return.wait(timeout=5)
-
-    forwarder = StatusEventForwarder(listener)
-    assert forwarder.pending == 0
-
-    try:
-        forwarder.forward(
-            RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running")
-        )
-        forwarder.forward(EndEvent(failed=False, msg="done"))
-        assert await asyncio.to_thread(listener_started.wait, 5)
-
-        assert forwarder.pending == 2
-    finally:
-        listener_may_return.set()
-    await wait_until_all_status_events_are_delivered(forwarder)
-    assert forwarder.pending == 0
-
-
-async def test_that_listener_blocked_on_end_event_is_not_called_for_rerun_events(
-    monkeypatch, everest_run_state
-):
-    end_event_reached_listener = threading.Event()
-    listener_may_return = threading.Event()
-    lock = threading.Lock()
-    received_events = []
-    concurrent_calls = 0
-    max_concurrent_calls = 0
-
-    def listener(*, event):
-        nonlocal concurrent_calls, max_concurrent_calls
-        with lock:
-            concurrent_calls += 1
-            max_concurrent_calls = max(max_concurrent_calls, concurrent_calls)
-            received_events.append(event)
-        if event == first_run_end:
-            end_event_reached_listener.set()
-            listener_may_return.wait(timeout=5)
-        with lock:
-            concurrent_calls -= 1
-
-    forwarder = StatusEventForwarder(listener)
-    everest_run_state.status_event_forwarder = forwarder
-    monkeypatch.setattr(
-        "ert.server.endpoints.experiment_runs.EverestRunModel.create",
-        Mock(side_effect=RuntimeError("Invalid config")),
-    )
-    first_run_end = EndEvent(failed=True, msg="Invalid config")
-    rerun_events = [
-        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="rerunning"),
-        EndEvent(failed=False, msg="rerun"),
-    ]
-
-    try:
-        await asyncio.wait_for(run_everest(Mock(), "experiment_id", Mock()), timeout=5)
-        assert await asyncio.to_thread(end_event_reached_listener.wait, 5)
-        assert everest_run_state.finalized.is_set()
-
-        everest_run_state.reset_for_rerun()
-        for event in rerun_events:
-            everest_run_state.publish(event)
-        await asyncio.sleep(0.01)
-
-        assert received_events == [first_run_end]
-        assert forwarder.pending == 3
-    finally:
-        listener_may_return.set()
-    await wait_until_all_status_events_are_delivered(forwarder)
-
-    assert received_events == [first_run_end, *rerun_events]
-    assert max_concurrent_calls == 1
-
-
-async def test_that_listener_exception_does_not_stop_forwarding_of_later_events(
-    everest_run_state, caplog
-):
-    received_events = []
-
-    def listener(*, event):
-        received_events.append(event)
-        if not isinstance(event, EndEvent):
-            raise RuntimeError("listener failed")
-
-    forwarder = StatusEventForwarder(listener)
-    everest_run_state.status_event_forwarder = forwarder
-    events = [
-        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
-        EndEvent(failed=False, msg="done"),
-    ]
-    for event in events:
-        everest_run_state.publish(event)
-
-    await wait_until_all_status_events_are_delivered(forwarder)
-
-    assert received_events == events
-    assert "Status event listener failed to handle event" in caplog.text
-    assert "RuntimeError: listener failed" in caplog.text
 
 
 async def test_websocket_no_events_on_connect(setup_client):

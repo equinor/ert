@@ -15,8 +15,8 @@ from pathlib import Path
 from select import PIPE_BUF, select
 from subprocess import Popen, TimeoutExpired
 from tempfile import NamedTemporaryFile
-from time import sleep
-from typing import Any, TypedDict, cast
+from time import monotonic, sleep
+from typing import Any, Protocol, TypedDict, cast
 
 import requests
 
@@ -25,6 +25,29 @@ from ert.trace import get_traceparent
 logger = logging.getLogger(__name__)
 
 SERVICE_CONF_PATHS: set[str] = set()
+
+STATUS_EVENT_DRAIN_TIMEOUT = 30.0
+_STATUS_EVENT_REQUEST_TIMEOUT = 5
+
+
+class _StatusEventDeliveryStatus(Protocol):
+    def pending_status_events(self) -> int: ...
+
+
+def wait_for_status_events_to_drain(
+    client: _StatusEventDeliveryStatus,
+    timeout: float = STATUS_EVENT_DRAIN_TIMEOUT,
+    poll_interval: float = 0.1,
+) -> None:
+    deadline = monotonic() + timeout
+    while (pending_status_events := client.pending_status_events()) > 0:
+        if monotonic() >= deadline:
+            logger.warning(
+                f"{pending_status_events} status events not passed to the "
+                f"status event listener after {timeout}s, shutting down anyway"
+            )
+            return
+        sleep(poll_interval)
 
 
 class ErtServerConnectionInfo(TypedDict):
@@ -156,6 +179,9 @@ class _Proc(threading.Thread):
 
         finally:
             self._ensure_connection_info_file_is_deleted()
+
+    def is_server_process_running(self) -> bool:
+        return self._childproc.poll() is None
 
     def shutdown(self) -> int:
         """Shutdown the server."""
@@ -370,11 +396,53 @@ class ErtServerController:
         if self._thread_that_starts_server_process is None:
             return -1
 
+        self._wait_for_status_events_to_drain()
         self.__class__._instance = None
         error_code = self._thread_that_starts_server_process.shutdown()
         self._thread_that_starts_server_process = None
 
         return error_code
+
+    def _wait_for_status_events_to_drain(self) -> None:
+        """Gives the server a chance to pass queued status events to the
+        status event listener before it is terminated. Never raises.
+        """
+        server_process = self._thread_that_starts_server_process
+        connection_info_future = self._connection_info_future
+        if (
+            server_process is None
+            or not server_process.is_server_process_running()
+            or not connection_info_future.done()
+            or connection_info_future.exception() is not None
+        ):
+            return
+
+        from .ert_client import ErtClient  # ruff: ignore[import-outside-top-level]
+        from .shared_client import (  # ruff: ignore[import-outside-top-level]
+            Client,
+            ErtClientConnectionInfo,
+            SharedClient,
+        )
+
+        try:
+            connection_info = self.fetch_connection_info()
+            client_connection_info = ErtClientConnectionInfo(
+                base_url=self.fetch_url(),
+                auth_token=connection_info["authtoken"],
+                cert=connection_info["cert"],
+            )
+            with Client(client_connection_info) as http_client:
+                wait_for_status_events_to_drain(
+                    ErtClient(
+                        SharedClient(Path(self._storage_path), http_client),
+                        timeout=_STATUS_EVENT_REQUEST_TIMEOUT,
+                    )
+                )
+        except Exception as exc:
+            logger.warning(
+                "Could not wait for status events to be passed to the listener "
+                f"before shutting down ERT server: {type(exc).__name__}: {exc}"
+            )
 
     @classmethod
     def start_server(

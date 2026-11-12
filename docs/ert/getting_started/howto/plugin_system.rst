@@ -308,9 +308,8 @@ that run.
 
 Shutdown
 ^^^^^^^^
-Events that have not yet been passed to the listener when the Ert server
-stops are lost:
-
-- Closing the Ert GUI stops the server without waiting for the listener.
-- After an Everest optimization has finished, the server waits up to 30
-  seconds for the listener to receive the remaining events before it stops.
+When the Ert server is shut down, for example when the Ert GUI is closed or
+an Everest optimization has finished, Ert waits up to 30 seconds for the
+remaining events to be passed to the listener before it stops the server.
+Events that have not been passed to the listener by then are lost, and a
+warning with the number of undelivered events is logged.
