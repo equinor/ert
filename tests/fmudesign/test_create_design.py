@@ -1359,6 +1359,7 @@ def test_that_invalid_distribution_parameter_errors_label_each_value():
         ("independent", "corr1", "correlation group 'corr1' in sensitivity 'foo'"),
     ],
 )
+@pytest.mark.filterwarnings("ignore:overflow encountered in exp")
 def test_that_sampling_errors_raise_fmudesign_error_naming_the_sampled_unit(
     tmp_path, strategy, corr_sheet, sampled_unit
 ):
