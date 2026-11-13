@@ -44,9 +44,8 @@ from ert.gui.plotting.utils.plot_maps import (
     FIELD_UPDATE_PLOT,
     GAUSSIAN_KDE,
     HISTOGRAM,
-    MISFIT_MAP,
+    MAPS,
     MISFITS,
-    OBSERVATIONS_MAP,
     SHARED_PLOT_MAP,
     STATISTICS,
     STD_DEV,
@@ -72,6 +71,7 @@ from .widgets.plot_controls import (
     DistributionOptions,
     EverestControlsPlotOptions,
     GeneralPlotOptions,
+    MapOptions,
     StatisticsOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
@@ -313,6 +313,7 @@ class PlotWindow(QMainWindow):
             self._boxplot_options = BoxplotOptions(self.update_plot)
             self._statistics_options = StatisticsOptions(self.update_plot)
             self._distribution_options = DistributionOptions(self.update_plot)
+            self._map_options = MapOptions(self.update_plot)
 
             right_container = QWidget()
             right_layout = create_group_layout(
@@ -324,6 +325,7 @@ class PlotWindow(QMainWindow):
                     self._boxplot_options.get_widget(),
                     self._statistics_options.get_widget(),
                     self._distribution_options.get_widget(),
+                    self._map_options.get_widget(),
                 ]
             )
             right_layout.addStretch(1)
@@ -335,6 +337,7 @@ class PlotWindow(QMainWindow):
             self._boxplot_options.get_widget().setVisible(False)
             self._statistics_options.get_widget().setVisible(False)
             self._distribution_options.get_widget().setVisible(False)
+            self._map_options.get_widget().setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
             self.setCentralWidget(self._central_tab)
@@ -390,7 +393,7 @@ class PlotWindow(QMainWindow):
 
     def _apply_ensemble_selection_policy_for_tab(self, tab_name: str) -> None:
         if not self.is_everest:
-            if tab_name in {MISFIT_MAP, OBSERVATIONS_MAP, WATERFALL}:
+            if tab_name in {MAPS, WATERFALL}:
                 self._ensemble_selection_widget.set_maximum_ensemble_limit(1)
                 if len(self._ensemble_selection_widget.get_selected_ensembles()) > 1:
                     self._ensemble_selection_widget.clear_ensemble_selection()
@@ -450,6 +453,7 @@ class PlotWindow(QMainWindow):
         self._distribution_options.get_widget().setVisible(
             plot_widget.name == DISTRIBUTION
         )
+        self._map_options.get_widget().setVisible(plot_widget.name == MAPS)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
@@ -630,7 +634,8 @@ class PlotWindow(QMainWindow):
             )
 
             if (
-                plot_widget.name == MISFIT_MAP
+                plot_widget.name == MAPS
+                and self._map_options.misfit_map_checkbox_state
                 and ensemble_to_data_map
                 and not observations.empty
             ):
@@ -681,15 +686,15 @@ class PlotWindow(QMainWindow):
                 history_data_available=history_data_available,
                 has_observations=key_def.observations,
                 show_observations=key_def.observations
-                and selected_tab not in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP},
-                show_color_palette=key_def.observations
-                and selected_tab not in {MISFIT_MAP, OBSERVATIONS_MAP},
+                and selected_tab not in {MISFITS, MAPS},
+                show_color_palette=key_def.observations and selected_tab != MAPS,
                 log_scale_available=log_scale_valid_values
                 and selected_tab in {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE},
             )
             self._boxplot_options.update_plot_context(plot_context)
             self._everest_controls_plot_options.update_plot_context(plot_context)
             self._distribution_options.update_plot_context(plot_context)
+            self._map_options.update_plot_context(plot_context)
 
             # Check if key is a history key.
             # If it is, it already has the data it needs.
@@ -866,14 +871,8 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
             and not is_everest_specific_widget
             and (
-                (
-                    is_observed_seismic
-                    and widget.name in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP}
-                )
-                or (
-                    not is_observed_seismic
-                    and widget.name not in {MISFIT_MAP, OBSERVATIONS_MAP}
-                )
+                (is_observed_seismic and widget.name in {MISFITS, MAPS})
+                or (not is_observed_seismic and widget.name != MAPS)
             )
             and widget.name != WATERFALL
             and (

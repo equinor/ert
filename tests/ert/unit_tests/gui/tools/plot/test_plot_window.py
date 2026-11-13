@@ -21,6 +21,7 @@ from ert.config.breakthrough_config import BreakthroughConfig
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
 from ert.gui.plotting.ert_plots.histogram import HistogramPlot
+from ert.gui.plotting.ert_plots.maps import MISFIT_MAP_TITLE
 from ert.gui.plotting.models import DataTypeSeparator
 from ert.gui.plotting.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.plotting.plot_window import (
@@ -34,9 +35,8 @@ from ert.gui.plotting.utils.plot_maps import (
     ENSEMBLE,
     ERT_PLOT_MAP,
     HISTOGRAM,
-    MISFIT_MAP,
+    MAPS,
     MISFITS,
-    OBSERVATIONS_MAP,
     STATISTICS,
 )
 from ert.gui.plotting.widgets import DataTypeKeysWidget
@@ -996,6 +996,51 @@ def test_that_clicking_title_emits_edit_request(qtbot: QtBot):
     received.assert_called_once_with()
 
 
+def test_that_axes_headings_are_not_editable_when_the_figure_has_a_suptitle(
+    qtbot: QtBot,
+):
+    def _plot_with_figure_suptitle(figure: Figure, *_args, **_kwargs) -> None:
+        figure.add_subplot(111).set_title("Fixed heading")
+        figure.suptitle("Editable title")
+
+    plotter = MagicMock()
+    plotter.dimensionality = 1
+    plotter.requires_observations = False
+    plotter.plot.side_effect = _plot_with_figure_suptitle
+
+    plot_widget = PlotWidget("Any", plotter)
+    qtbot.addWidget(plot_widget)
+    received = MagicMock()
+    plot_widget.titleEditRequested.connect(received)
+
+    plot_widget.update_plot(
+        PlotContext(
+            PlotConfig(),
+            ensembles=[],
+            ensembles_color_indexes=[],
+            key="some_key",
+            layer=None,
+        ),
+        {},
+        pd.DataFrame(),
+        {},
+        None,
+    )
+
+    heading = plot_widget._figure.axes[0].title
+    assert not heading.get_picker()
+
+    plot_widget._on_canvas_pick(type("PickEventStub", (), {"artist": heading})())
+
+    received.assert_not_called()
+
+    plot_widget._on_canvas_pick(
+        type("PickEventStub", (), {"artist": plot_widget._figure.texts[0]})()
+    )
+
+    received.assert_called_once_with()
+
+
 @pytest.mark.parametrize(
     "text_kind",
     [
@@ -1416,10 +1461,9 @@ def test_that_seismic_y_label_is_created(key, expected_y_label):
     assert label == expected_y_label
 
 
-@pytest.mark.slow
-def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
+def _plot_window_with_seismic_prior_and_posterior(
     qtbot: QtBot, mock_plot_api: MagicMock
-):
+) -> tuple[PlotWindow, EnsembleObject, EnsembleObject]:
 
     first_ensemble = EnsembleObject(
         "prior", "prior-id", False, "experiment", "2026-01-01T00:00:00"
@@ -1467,9 +1511,18 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
 
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
+    return plot_window, first_ensemble, later_ensemble
 
-    misfit_map_widget = plot_window._widget_by_name(MISFIT_MAP)
-    plot_window._central_tab.setCurrentWidget(misfit_map_widget)
+
+@pytest.mark.slow
+def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
+    qtbot: QtBot, mock_plot_api: MagicMock
+):
+    plot_window, _, _ = _plot_window_with_seismic_prior_and_posterior(
+        qtbot, mock_plot_api
+    )
+    maps_widget = plot_window._widget_by_name(MAPS)
+    plot_window._central_tab.setCurrentWidget(maps_widget)
 
     ensemble_list = plot_window._ensemble_selection_widget._selected_ensembles
     ensemble_items = [ensemble_list.item(i) for i in range(ensemble_list.count())]
@@ -1478,14 +1531,42 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
     # Min and max of the signed chi-squared misfit for the first ensemble
     expected_v_range = (4.0, 36.0)
 
-    # The plot color range (vmin and vmax) is the same for both ensembles:
-    ensemble_list.itemClicked.emit(ensemble_items[0])
-    plot_artist = misfit_map_widget._figure.axes[0].collections[0]
-    assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+    for item in ensemble_items:
+        ensemble_list.itemClicked.emit(item)
+        (misfit_axes,) = [
+            axes
+            for axes in maps_widget._figure.axes
+            if axes.get_title() == MISFIT_MAP_TITLE
+        ]
 
-    ensemble_list.itemClicked.emit(ensemble_items[1])
-    plot_artist = misfit_map_widget._figure.axes[0].collections[0]
-    assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+        plot_artist = misfit_axes.collections[0]
+        assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+
+
+def test_that_unchecking_misfit_map_skips_loading_ensemble_for_color_range(
+    qtbot: QtBot, mock_plot_api: MagicMock
+):
+    plot_window, first_ensemble, later_ensemble = (
+        _plot_window_with_seismic_prior_and_posterior(qtbot, mock_plot_api)
+    )
+
+    maps_widget = plot_window._widget_by_name(MAPS)
+    plot_window._central_tab.setCurrentWidget(maps_widget)
+
+    misfit_checkbox = plot_window._map_options.get_widget().findChild(
+        QCheckBox, "misfit_map_checkbox"
+    )
+    assert plot_window._ensemble_selection_widget.get_selected_ensembles() == [
+        later_ensemble
+    ]
+    mock_plot_api.data_for_response.reset_mock()
+    misfit_checkbox.setChecked(False)
+
+    assert MISFIT_MAP_TITLE not in [a.get_title() for a in maps_widget._figure.axes]
+    assert all(
+        c.kwargs.get("ensemble_id") != first_ensemble.id
+        for c in mock_plot_api.data_for_response.call_args_list
+    )
 
 
 def _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1535,7 +1616,7 @@ def _select_additional_ensemble(plot_window: PlotWindow, row: int) -> None:
     ensemble_list.itemClicked.emit(ensemble_list.item(row))
 
 
-@pytest.mark.parametrize("tab_name", [MISFIT_MAP, OBSERVATIONS_MAP])
+@pytest.mark.parametrize("tab_name", [MAPS])
 @pytest.mark.slow
 def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
     qtbot: QtBot, tab_name: str, mock_plot_api: MagicMock
@@ -1555,7 +1636,7 @@ def test_that_switching_to_a_map_tab_narrows_ensemble_selection_to_one(
 
 
 @pytest.mark.slow
-def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit(
+def test_that_switching_away_from_maps_tab_restores_default_ensemble_limit(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1564,7 +1645,7 @@ def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
 
-    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MAPS))
     assert selection_widget.get_maximum_ensemble_limit() == 1
 
     plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFITS))
@@ -1576,7 +1657,7 @@ def test_that_switching_away_from_misfit_map_tab_restores_default_ensemble_limit
 
 
 @pytest.mark.slow
-def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_limit(
+def test_that_selecting_a_key_without_a_maps_tab_restores_default_ensemble_limit(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1584,7 +1665,7 @@ def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_lim
     )
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
-    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MAPS))
     assert selection_widget.get_maximum_ensemble_limit() == 1
 
     _select_data_type_key(plot_window, "POLY_RES")
@@ -1597,7 +1678,7 @@ def test_that_selecting_a_key_without_a_misfit_map_restores_default_ensemble_lim
 
 
 @pytest.mark.slow
-def test_that_selecting_a_key_restoring_the_misfit_map_tab_narrows_selection_to_one(
+def test_that_selecting_a_key_restoring_the_maps_tab_narrows_selection_to_one(
     qtbot: QtBot, mock_plot_api: MagicMock
 ):
     plot_window = _plot_window_with_observed_seismic_and_gen_data_keys(
@@ -1606,13 +1687,13 @@ def test_that_selecting_a_key_restoring_the_misfit_map_tab_narrows_selection_to_
     _select_data_type_key(plot_window, "SEISMIC")
     selection_widget = plot_window._ensemble_selection_widget
     # Remembered as the tab to return to for two-dimensional keys
-    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MISFIT_MAP))
+    plot_window._central_tab.setCurrentWidget(plot_window._widget_by_name(MAPS))
     _select_data_type_key(plot_window, "POLY_RES")
     _select_additional_ensemble(plot_window, 1)
     assert len(selection_widget.get_selected_ensembles()) == 2
 
     _select_data_type_key(plot_window, "SEISMIC")
 
-    assert _current_tab_name(plot_window) == MISFIT_MAP
+    assert _current_tab_name(plot_window) == MAPS
     assert selection_widget.get_maximum_ensemble_limit() == 1
     assert len(selection_widget.get_selected_ensembles()) == 1
