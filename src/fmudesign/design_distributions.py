@@ -84,11 +84,6 @@ def quantiles_to_values(
     if not np.isclose(np.sum(probabilities), 1.0):
         probabilities /= np.sum(probabilities)
 
-    if not np.all(probabilities >= 0):
-        raise FmudesignError(
-            f"Probabilities must be finite non-negative numbers, was '{probabilities}'"
-        )
-
     # Create bin edges
     edges = np.cumsum([0, *list(probabilities)])
     # Map to bin indices, then back onto the original values

@@ -31,7 +31,7 @@ MOCK_GENERAL_INPUT = pd.DataFrame(
 )
 
 MOCK_DESIGNINPUT = pd.DataFrame(
-    data=[["sensname", "numreal", "type", "param_name"], ["rms_seed", "", "seed"]]
+    data=[["sensname", "numreal", "type", "param_name"], ["rms_seed", "", "seed", ""]]
 )
 
 
@@ -103,11 +103,11 @@ def test_that_duplicate_sensitivity_names_raise_value_error(use_tmpdir):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
-            ["rms_seed", "", "seed"],
-            ["rms_seed", "", "seed"],
-            [np.nan, "", "seed"],  # NaN sensname - should be ignored
-            ["", "", "seed"],  # Empty string - should be ignored
-            ["valid_name", "", "seed"],  # Valid unique name
+            ["rms_seed", "", "seed", None],
+            ["rms_seed", "", "seed", None],
+            [np.nan, "", "seed", None],  # NaN sensname - should be ignored
+            ["", "", "seed", None],  # Empty string - should be ignored
+            ["valid_name", "", "seed", None],  # Valid unique name
         ]
     )
     input_path = _write_config_workbook(
@@ -129,7 +129,7 @@ def test_that_excel_to_design_strips_sensitivity_and_parameter_name_whitespace(
     mock_spacious_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
-            ["rms_seed   ", "", "seed"],
+            ["rms_seed   ", "", "seed", ""],
         ]
     )
     defaultvalues_spacious = pd.DataFrame(
@@ -175,8 +175,8 @@ def test_that_mixed_sensitivity_types_raise_value_error(use_tmpdir):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
-            ["rms_seed", "", "seed"],
-            ["", "", "dist"],
+            ["rms_seed", "", "seed", ""],
+            ["", "", "dist", ""],
         ]
     )
     input_path = _write_config_workbook(
@@ -198,7 +198,10 @@ def test_that_invalid_sensitivity_type_error_lists_valid_types(
     use_tmpdir, sens_type, problem
 ):
     design_input = pd.DataFrame(
-        data=[["sensname", "numreal", "type", "param_name"], ["Sens_1", "", sens_type]]
+        data=[
+            ["sensname", "numreal", "type", "param_name"],
+            ["Sens_1", "", sens_type, ""],
+        ]
     )
     input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
 
@@ -522,7 +525,10 @@ def test_that_excel_to_design_preserves_seed_strategy(use_tmpdir):
         ]
     )
     designinput = pd.DataFrame(
-        data=[["sensname", "numreal", "type", "param_name"], ["rms_seed", "", "seed"]]
+        data=[
+            ["sensname", "numreal", "type", "param_name"],
+            ["rms_seed", "", "seed", ""],
+        ]
     )
     input_path = _write_config_workbook(
         "designinput.xlsx",

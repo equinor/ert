@@ -1326,6 +1326,11 @@ def test_that_unknown_seed_strategy_raises_value_error():
             ["a,b", "-1,-2"],
             "probabilities >= 0 with a finite positive sum",
         ),
+        (
+            "discrete",
+            ["a,b", "inf,1"],
+            "probabilities >= 0 with a finite positive sum",
+        ),
     ],
 )
 def test_that_invalid_distribution_parameters_raise_fmudesign_error_naming_parameter(
@@ -1354,6 +1359,7 @@ def test_that_invalid_distribution_parameter_errors_label_each_value():
         ("independent", "corr1", "correlation group 'corr1' in sensitivity 'foo'"),
     ],
 )
+@pytest.mark.filterwarnings("ignore:overflow encountered in exp")
 def test_that_sampling_errors_raise_fmudesign_error_naming_the_sampled_unit(
     tmp_path, strategy, corr_sheet, sampled_unit
 ):
@@ -1447,14 +1453,4 @@ def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
             filename="unused.csv",
             parameters=["PARAM1", "PARAM2", "PARAM1", "PARAM3", "PARAM3", "PARAM3"],
             seedvalues=None,
-        )
-
-
-@pytest.mark.parametrize("probabilities", [[1.5, -0.5], [np.nan, 0.5], [np.inf, 1.0]])
-def test_that_non_finite_or_negative_probabilities_raise_fmudesign_error(probabilities):
-    with pytest.raises(FmudesignError, match="must be finite non-negative"):
-        design_dist.quantiles_to_values(
-            quantiles=np.array([0.1, 0.9]),
-            values=np.array(["a", "b"]),
-            probabilities=np.array(probabilities),
         )
