@@ -2320,6 +2320,26 @@ def test_that_missing_rft_observations_name_is_defaulted_to_primary_keys():
     assert obs_name == f"{well}:{date}:{property_}:{east}:{north}:{tvd}"
 
 
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
+def test_that_rft_localization_after_east_and_north_keeps_their_values():
+    obs_config_contents = """
+        RFT_OBSERVATION {
+        VALUE=3800;
+        ERROR=10;
+        EAST=9500.0;
+        NORTH=10000.0;
+        WELL=PROD;
+        DATE=2015-02-01;
+        PROPERTY=PRESSURE;
+        TVD=8400.0;
+        LOCALIZATION { RADIUS=500; };
+        };
+    """
+    ert_config = ert_config_from_parser(obs_config_contents)
+    rft_observation = ert_config.observation_declarations[0]
+    assert (rft_observation.east, rft_observation.north) == (9500.0, 10000.0)
+
+
 def test_that_missing_summary_observations_name_is_defaulted_to_primary_key():
     key = "WOPR:OP1"
     date = "2011-12-21"
