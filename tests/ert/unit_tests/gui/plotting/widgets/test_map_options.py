@@ -6,16 +6,22 @@ from PyQt6.QtWidgets import QCheckBox
 from ert.gui.plotting.widgets.plot_controls.map_options import MapOptions
 
 
-def test_that_both_maps_are_enabled_by_default(qtbot):
+def test_that_all_maps_are_enabled_by_default(qtbot):
     options = MapOptions(Mock())
     qtbot.addWidget(options.get_widget())
 
     assert options.misfit_map_checkbox_state is True
     assert options.observations_map_checkbox_state is True
+    assert options.mean_simulated_response_map_checkbox_state is True
 
 
 @pytest.mark.parametrize(
-    "checkbox_name", ["misfit_map_checkbox", "observations_map_checkbox"]
+    "checkbox_name",
+    [
+        "misfit_map_checkbox",
+        "observations_map_checkbox",
+        "mean_simulated_response_map_checkbox",
+    ],
 )
 def test_that_toggling_a_map_checkbox_invokes_the_connection_point(
     qtbot, checkbox_name
