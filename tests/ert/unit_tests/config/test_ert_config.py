@@ -2183,6 +2183,55 @@ def test_design_matrix_default_argument(tmp_path):
     assert config.analysis_config.design_matrix.default_sheet is None
 
 
+@pytest.mark.parametrize(
+    ("config_num_realizations", "expected_ensemble_size", "expected_warning"),
+    [
+        pytest.param(
+            6,
+            6,
+            "NUM_REALIZATIONS (6) is less than the number of realizations implied by "
+            "DESIGN_MATRIX (9). Using the ensemble size from NUM_REALIZATIONS (6), "
+            "of which 2 are active.",
+            id="limited-by-config-with-two-active-realizations",
+        ),
+        pytest.param(
+            20,
+            9,
+            "NUM_REALIZATIONS (20) is greater than the number of realizations implied "
+            "by DESIGN_MATRIX (9). Using the ensemble size from DESIGN_MATRIX (9), "
+            "of which 3 are active.",
+            id="limited-by-design-matrix-with-three-active-realizations",
+        ),
+        pytest.param(
+            2,
+            2,
+            "NUM_REALIZATIONS (2) is less than the number of realizations implied by "
+            "DESIGN_MATRIX (9). Using the ensemble size from NUM_REALIZATIONS (2), "
+            "of which 1 is active.",
+            id="singular-active-realization-count",
+        ),
+    ],
+)
+def test_that_design_matrix_warning_reports_sparse_active_realizations(
+    tmp_path, config_num_realizations, expected_ensemble_size, expected_warning
+):
+    design_matrix_file = tmp_path / "sparse_design_matrix.xlsx"
+    # design matrix with nine realizations but only three active ones
+    _create_design_matrix(
+        design_matrix_file,
+        pl.DataFrame({"REAL": [1, 4, 8], "a": [1, 4, 8]}),
+    )
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS {config_num_realizations}\n"
+        f"DESIGN_MATRIX {design_matrix_file}"
+    )
+
+    with pytest.warns(ConfigWarning) as warning_record:
+        assert config.ensemble_size == expected_ensemble_size
+
+    assert str(warning_record[0].message) == expected_warning
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_template_raises_configvalidationerror_with_more_than_two_arguments():
     Path("template.txt").touch()
