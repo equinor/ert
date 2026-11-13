@@ -1,7 +1,7 @@
 {
   "backend": {
     "convergence_tolerance": 0.001,
-    "method": "optpp_q_newton",
+    "method": "optpp_q_newton2",
     "parallel": true,
     "verbose": true
   },

@@ -129,7 +129,7 @@ def test_everest2ropt_controls_optimizer_setting(ever_config):
         ever_config.optimization_output_dir,
     )
     assert len(ropt_config["realizations"]["weights"]) == 2
-    assert ropt_config["backend"]["method"] == "optpp_q_newton"
+    assert ropt_config["backend"]["method"] == "optpp_q_newton2"
     assert ropt_config["gradient"]["number_of_perturbations"] == 2
 
 
@@ -284,7 +284,32 @@ def test_everest2ropt_default_algorithm_name(min_config):
         config.environment.random_seed,
         config.optimization_output_dir,
     )
-    assert ropt_config["backend"]["method"] == "optpp_q_newton"
+    assert ropt_config["backend"]["method"] == "optpp_q_newton2"
+
+
+@pytest.mark.parametrize(
+    ("algorithm", "method"),
+    [
+        ("optpp_q_newton", "optpp_q_newton2"),
+        ("dakota/optpp_q_newton", "optpp_q_newton2"),
+        ("conmin_mfd", "conmin_mfd"),
+    ],
+)
+def test_that_optpp_q_newton_is_replaced_by_optpp_q_newton2(
+    min_config, algorithm, method
+):
+    config = EverestConfig(**(min_config | {"optimization": {"algorithm": algorithm}}))
+    ropt_config, _ = everest2ropt(
+        [ctrl for c in config.controls for ctrl in c.to_ert_parameter_config()],
+        config.create_ert_objectives_config(),
+        config.input_constraints,
+        config.create_ert_output_constraints_config(),
+        config.optimization,
+        config.model,
+        config.environment.random_seed,
+        config.optimization_output_dir,
+    )
+    assert ropt_config["backend"]["method"] == method
 
 
 @pytest.mark.parametrize(
