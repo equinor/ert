@@ -161,7 +161,7 @@ async def test_that_execution_retains_its_model_after_termination(
     create_model.assert_not_called()
     assert _get_experiment(experiment_id) is state
     assert state.run_model is model
-    assert state.status.status == (
+    assert state.status.state == (
         ExperimentState.completed if outcome == "completed" else ExperimentState.failed
     )
     assert state.events[-1] == EndEvent(
@@ -260,7 +260,7 @@ async def test_that_cancellation_before_start_does_not_start_simulations(
     model = Mock(spec=RunModel)
     model._storage = Mock(spec=LocalStorage)
     state = ert_runner.ErtExperimentRunnerState(
-        status=ExperimentStatus(status=ExperimentState.stopped, message="Cancelled"),
+        status=ExperimentStatus(state=ExperimentState.stopped, message="Cancelled"),
         run_model=model,
         status_queue=SimpleQueue(),
     )
@@ -305,7 +305,7 @@ async def test_that_setup_failure_closes_storage_and_publishes_one_failed_end_ev
             msg="Exception occurred during setup: Address already in use",
         )
     ]
-    assert state.status.status == ExperimentState.failed
+    assert state.status.state == ExperimentState.failed
     assert state.finalized.is_set()
 
 
@@ -554,7 +554,7 @@ def test_that_discard_rejects_started_experiments_without_closing_storage(
         run_model=model,
         status_queue=SimpleQueue(),
         start_time_unix=1,
-        status=ExperimentStatus(status=experiment_status),
+        status=ExperimentStatus(state=experiment_status),
     )
     monkeypatch.setitem(_experiments, "registered-config", state)
 
@@ -608,7 +608,7 @@ def test_that_rerun_reuses_the_model_and_clears_previous_events(
         run_model=model,
         status_queue=SimpleQueue(),
         start_time_unix=1,
-        status=ExperimentStatus(status=terminal_status),
+        status=ExperimentStatus(state=terminal_status),
         events=[EndEvent(failed=True, msg="Previous run")],
     )
     state.finalized.set()
@@ -625,7 +625,7 @@ def test_that_rerun_reuses_the_model_and_clears_previous_events(
     assert response.content == b""
     assert state.events == []
     assert state.run_model is model
-    assert state.status.status == ExperimentState.pending
+    assert state.status.state == ExperimentState.pending
     run_ert.assert_awaited_once_with(state, rerun_failed_realizations=True)
 
 
@@ -654,7 +654,7 @@ def test_that_rerun_rejects_unfinished_or_ineligible_models(
     state = ert_runner.ErtExperimentRunnerState(
         run_model=model,
         status_queue=SimpleQueue(),
-        status=ExperimentStatus(status=status),
+        status=ExperimentStatus(state=status),
     )
     if finalized:
         state.finalized.set()

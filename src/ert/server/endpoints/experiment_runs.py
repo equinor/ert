@@ -218,7 +218,7 @@ def stop() -> Response:
         os.kill(os.getpid(), signal.SIGTERM)
     for experiment in _experiments.values():
         experiment.status = ExperimentStatus(
-            message="Server stopped by user", status=ExperimentState.stopped
+            message="Server stopped by user", state=ExperimentState.stopped
         )
     return Response("Raise STOP flag succeeded. EVEREST initiates shutdown..", 200)
 
@@ -244,7 +244,7 @@ async def start_experiment(
     except Exception:
         error_message = "Could not start experiment due to an internal error."
         experiment_state.status = ExperimentStatus(
-            status=ExperimentState.failed,
+            state=ExperimentState.failed,
             message=error_message,
         )
         logging.getLogger(__name__).exception("Failed to start experiment")
@@ -257,7 +257,7 @@ async def start_experiment(
 async def config_path(
     experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
 ) -> JSONResponse:
-    if experiment.status.status == ExperimentState.pending:
+    if experiment.status.state == ExperimentState.pending:
         return JSONResponse("No experiment started", status_code=404)
 
     return JSONResponse(
@@ -276,7 +276,7 @@ async def config_path(
 async def start_time(
     experiment: Annotated[ExperimentRunnerState, Depends(_get_experiment)],
 ) -> Response:
-    if experiment.status.status == ExperimentState.pending:
+    if experiment.status.state == ExperimentState.pending:
         return Response("No experiment started", status_code=404)
 
     return Response(str(experiment.start_time_unix), status_code=200)
@@ -356,7 +356,7 @@ async def run_everest(config: EverestConfig, experiment_id: str) -> None:
                 runtime_plugins=site_plugins,
             )
         run.status = ExperimentStatus(
-            message="Experiment started", status=ExperimentState.running
+            message="Experiment started", state=ExperimentState.running
         )
         loop = asyncio.get_running_loop()
         simulation_future = loop.run_in_executor(
@@ -368,7 +368,7 @@ async def run_everest(config: EverestConfig, experiment_id: str) -> None:
             ),
         )
         while True:
-            if run.status.status == ExperimentState.stopped:
+            if run.status.state == ExperimentState.stopped:
                 run_model.cancel()
                 raise UserCancelled("Optimization aborted")
             try:
@@ -390,7 +390,7 @@ async def run_everest(config: EverestConfig, experiment_id: str) -> None:
         )
         run.status = ExperimentStatus(
             message=msg,
-            status=exp_status,
+            state=exp_status,
         )
     except UserCancelled as e:
         end_message = str(e)
@@ -400,7 +400,7 @@ async def run_everest(config: EverestConfig, experiment_id: str) -> None:
         logging.getLogger(__name__).exception(e)
         run.status = ExperimentStatus(
             message=f"Exception: {e}\n{traceback.format_exc()}",
-            status=ExperimentState.failed,
+            state=ExperimentState.failed,
         )
     finally:
         try:

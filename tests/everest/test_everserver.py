@@ -147,7 +147,7 @@ async def test_status_exception(mock_configure_loggers, change_to_tmpdir, min_co
     status = get_experiment_status(str(config.storage_dir))
 
     assert status is not None
-    assert status.status == ExperimentState.failed
+    assert status.state == ExperimentState.failed
     assert "Optimization failed: all realizations failed" in status.message
 
 
@@ -173,7 +173,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
     # The server should complete without error.
     assert status is not None
-    assert status.status == ExperimentState.completed
+    assert status.state == ExperimentState.completed
     assert status.message == "Maximum number of batches reached."
     experiment = get_everest_experiment(config.storage_dir)
 
@@ -208,7 +208,7 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
 
     # The server should complete without error.
     assert status is not None
-    assert status.status == ExperimentState.failed
+    assert status.state == ExperimentState.failed
     assert OPT_FAILURE_REALIZATIONS in status.message
 
 
@@ -236,7 +236,7 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
 
     # The server should complete without error.
     assert status is not None
-    assert status.status == ExperimentState.failed
+    assert status.state == ExperimentState.failed
     assert OPT_FAILURE_ALL_REALIZATIONS in status.message
 
 
@@ -260,7 +260,7 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
     status = get_experiment_status(str(config.storage_dir))
 
     assert status is not None
-    assert status.status == ExperimentState.failed
+    assert status.state == ExperimentState.failed
     assert "The run is cancelled due to reaching MAX_RUNTIME" in status.message
 
 
@@ -451,7 +451,7 @@ async def test_that_model_creation_failure_publishes_a_failed_end_event(
     await run_everest(Mock(), "experiment_id")
 
     assert everest_run_state.events == [EndEvent(failed=True, msg="Invalid config")]
-    assert everest_run_state.status.status == ExperimentState.failed
+    assert everest_run_state.status.state == ExperimentState.failed
     assert everest_run_state.finalized.is_set()
     await asyncio.wait_for(subscriber.wait_for_event(), timeout=1)
 
@@ -467,7 +467,7 @@ async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event
 
     def simulate(_evaluator_config):
         everest_run_state.status = ExperimentStatus(
-            status=ExperimentState.stopped, message="Server stopped by user"
+            state=ExperimentState.stopped, message="Server stopped by user"
         )
         cancelled.wait(timeout=5)
 
@@ -485,7 +485,7 @@ async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event
     assert everest_run_state.events == [
         EndEvent(failed=True, msg="Optimization aborted")
     ]
-    assert everest_run_state.status.status == ExperimentState.stopped
+    assert everest_run_state.status.state == ExperimentState.stopped
     assert everest_run_state.finalized.is_set()
     await asyncio.wait_for(subscriber.wait_for_event(), timeout=1)
 
@@ -681,7 +681,7 @@ def test_that_get_status_returns_successfully(setup_client):
             None,
             b64encode(b"username:password").decode(),
             200,
-            {"status": "pending", "message": ""},
+            {"state": "pending", "message": ""},
         ),
     ],
 )
@@ -719,7 +719,7 @@ def test_that_get_config_path_returns_successfully_for_running_experiment(
     credentials = b64encode(b"username:password").decode()
 
     assert experiment_id in _experiments
-    _experiments[experiment_id].status.status = ExperimentState.running
+    _experiments[experiment_id].status.state = ExperimentState.running
     response = client.get(
         f"/experiment_runs/config_path/{experiment_id}",
         headers={"Authorization": f"Basic {credentials}"},
@@ -731,7 +731,7 @@ def test_that_experiment_stop_endpoint_returns_successfully(setup_client):
     client, _, experiment_id = setup_client()
 
     assert experiment_id in _experiments
-    assert _experiments[experiment_id].status.status == ExperimentState.pending
+    assert _experiments[experiment_id].status.state == ExperimentState.pending
 
     credentials = b64encode(b"username:password").decode()
 
@@ -744,7 +744,7 @@ def test_that_experiment_stop_endpoint_returns_successfully(setup_client):
     assert response.text == "Raise STOP flag succeeded. EVEREST initiates shutdown.."
 
     # ExperimentState should be updated to 'stopped' after the stop endpoint is called
-    assert _experiments[experiment_id].status.status == ExperimentState.stopped
+    assert _experiments[experiment_id].status.state == ExperimentState.stopped
     assert _experiments[experiment_id].status.message == "Server stopped by user"
 
 

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 _BLOB_URI_PATTERN = re.compile(r"^[0-9a-f]{8}\.blob$")
-_LOCAL_STORAGE_VERSION = 42
+_LOCAL_STORAGE_VERSION = 43
 
 
 def open_storage(
@@ -655,6 +655,7 @@ class LocalStorage(BaseMode):
             to40,
             to41,
             to42,
+            to43,
         )
 
         try:  # ruff: ignore[too-many-statements-in-try-clause]
@@ -726,6 +727,7 @@ class LocalStorage(BaseMode):
                     39: to40,
                     40: to41,
                     41: to42,
+                    42: to43,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)
