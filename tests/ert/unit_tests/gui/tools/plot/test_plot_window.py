@@ -1486,12 +1486,6 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
             if axes.get_title() == MISFIT_MAP_TITLE
         ]
 
-        # The plot color range (vmin and vmax) is the same for both ensembles:
-        # ensemble_list.itemClicked.emit(ensemble_items[0])
-        plot_artist = misfit_axes.collections[0]
-        assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
-
-        # ensemble_list.itemClicked.emit(ensemble_items[1])
         plot_artist = misfit_axes.collections[0]
         assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
 
