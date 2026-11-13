@@ -34,6 +34,8 @@ def create_scheduler():
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
     sch._manifest_queue = None
+    sch.checksum = {}
+    sch.std_stream_paths = {}
     sch._cancelled = False
     sch._cancelled_by_evaluator = False
     sch.schedule_kill = lambda real: sch.driver.kill([real])
@@ -253,7 +255,7 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     scheduler = create_scheduler()
     scheduler._manifest_queue = asyncio.Queue()
     file_path = "does/not/exist"
-    scheduler.checksum = {
+    checksum = {
         "test_runpath": {
             "file": {
                 "path": file_path,
@@ -280,6 +282,8 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
         job_run_task = asyncio.create_task(
             job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
         )
+        await asyncio.sleep(0)
+        scheduler.checksum = checksum
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -295,7 +299,7 @@ async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
     scheduler._manifest_queue = asyncio.Queue()
     file_path = "does/not/exist"
     error = f"Expected file {file_path} not created by forward model!"
-    scheduler.checksum = {
+    checksum = {
         "test_runpath": {
             "file": {
                 "path": file_path,
@@ -311,6 +315,8 @@ async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
         job_run_task = asyncio.create_task(
             job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
         )
+        await asyncio.sleep(0)
+        scheduler.checksum = checksum
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -326,7 +332,7 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
     scheduler = create_scheduler()
     scheduler._manifest_queue = asyncio.Queue()
     file_path = "invalid_md5sum"
-    scheduler.checksum = {
+    checksum = {
         "test_runpath": {
             "file": {
                 "path": file_path,
@@ -345,11 +351,115 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
         job_run_task = asyncio.create_task(
             job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
         )
+        await asyncio.sleep(0)
+        scheduler.checksum = checksum
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
 
     assert f"File {file_path} checksum verification failed." in log_msgs
+
+
+@pytest.mark.asyncio
+async def test_that_reported_file_paths_include_std_streams_relative_to_runpath(
+    realization: Realization,
+):
+    scheduler = create_scheduler()
+    runpath = Path(realization.run_arg.runpath)
+    scheduler.checksum = {
+        str(runpath): {"file": {"type": "file", "path": str(runpath / "result.txt")}}
+    }
+    scheduler.std_stream_paths = {
+        realization.run_arg.iens: {runpath / "step.stdout", Path("/elsewhere/log")}
+    }
+
+    assert Job(scheduler, realization)._reported_file_paths() == {
+        Path("result.txt"),
+        Path("step.stdout"),
+    }
+
+
+@pytest.mark.asyncio
+async def test_that_failed_attempt_output_paths_are_dropped_after_silent_retry(
+    realization: Realization, mocker
+):
+    scheduler = create_scheduler()
+    runpath = Path(realization.run_arg.runpath)
+    failed_attempt_stdout = runpath / "failed.stdout"
+    scheduler.checksum = {}
+    job = Job(scheduler, realization)
+    job.submit_time = 0.0
+    attempts = 0
+
+    async def submit_and_run_once(_sem):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            scheduler.std_stream_paths[job.iens] = {failed_attempt_stdout}
+            scheduler.checksum[str(runpath)] = {}
+            job.returncode.set_result(1)
+        else:
+            scheduler.checksum[str(runpath)] = {}
+            job.returncode.set_result(0)
+
+    mocker.patch.object(job, "_submit_and_run_once", submit_and_run_once)
+    mocker.patch.object(job, "_handle_finished_forward_model", AsyncMock())
+    scheduler.warnings_extracted = False
+    log_warnings = mocker.patch(
+        "ert.scheduler.job.log_warnings_from_forward_model",
+        AsyncMock(return_value=0),
+    )
+
+    await job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=2)
+
+    assert attempts == 2
+    assert log_warnings.call_args.kwargs["existing_output_files"] == set()
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_checksum_from_failed_attempt_is_not_used_after_retry(
+    realization: Realization, mocker
+):
+    scheduler = create_scheduler()
+    scheduler._manifest_queue = asyncio.Queue()
+    scheduler.checksum = {}
+    scheduler.warnings_extracted = False
+    runpath = Path(realization.run_arg.runpath)
+    runpath.mkdir()
+    result_file = runpath / "result.txt"
+    result_file.write_text("data", encoding="utf-8")
+    job = Job(scheduler, realization)
+    job.submit_time = 0.0
+    attempts = 0
+
+    async def submit_and_run_once(_sem):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            scheduler.checksum[str(runpath)] = {}
+            job.returncode.set_result(1)
+        else:
+            job.returncode.set_result(0)
+
+    async def deliver_checksum_of_second_attempt(_seconds):
+        scheduler.checksum[str(runpath)] = {
+            "result": {"type": "file", "path": str(result_file)}
+        }
+
+    mocker.patch.object(job, "_submit_and_run_once", submit_and_run_once)
+    mocker.patch.object(job, "_handle_finished_forward_model", AsyncMock())
+    mocker.patch("asyncio.sleep", deliver_checksum_of_second_attempt)
+    log_warnings = mocker.patch(
+        "ert.scheduler.job.log_warnings_from_forward_model",
+        AsyncMock(return_value=0),
+    )
+
+    await job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=2)
+
+    assert log_warnings.call_args.kwargs["existing_output_files"] == {
+        Path("result.txt")
+    }
 
 
 @pytest.mark.asyncio
@@ -825,3 +935,35 @@ async def test_killing_job_does_not_hang_on_waiting_for_scheduler_to_kill_in_bat
         f"Realization {job.iens} did not get confirmation from "
         "scheduler that the batch killing with driver ran successfully."
     ) in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "nonempty_files",
+    [(), ("stdout",), ("stderr",), ("stdout", "stderr")],
+)
+async def test_that_empty_output_files_are_not_waited_for(
+    realization, mocker, nonempty_files
+):
+    mocker.patch("asyncio.sleep")
+    runpath = Path(realization.run_arg.runpath)
+    runpath.mkdir()
+    existing_output_files = set()
+    for stream in nonempty_files:
+        filename = Path(f"foo.{stream}.0")
+        (runpath / filename).write_text("hello", encoding="utf-8")
+        existing_output_files.add(filename)
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+            stderr_file="foo.stderr",
+        )
+    ]
+    remaining_timeout = await log_warnings_from_forward_model(
+        realization,
+        time.time() - 1,
+        existing_output_files=existing_output_files,
+    )
+    assert remaining_timeout == Job.DEFAULT_FILE_VERIFICATION_TIMEOUT

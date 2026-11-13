@@ -1,19 +1,13 @@
 import dataclasses
 import datetime as dt
-from typing import TYPE_CHECKING, Literal, NotRequired, Self
+from typing import TYPE_CHECKING, Self
 
 import psutil
-from typing_extensions import TypedDict
+
+from _ert.events import Manifest, StdStream
 
 if TYPE_CHECKING:
     from _ert.forward_model_runner.forward_model_step import ForwardModelStep
-
-
-class Manifest(TypedDict):
-    type: Literal["file"]
-    path: str
-    error: NotRequired[str]
-    md5sum: NotRequired[str]
 
 
 STEP_EXIT_FAILED_STRING_TEMPLATE = """Step {step_name} FAILED with code {exit_code}
@@ -123,6 +117,7 @@ class Exited(Message):
     ) -> None:
         super().__init__(fm_step)
         self.exit_code = exit_code
+        self.std_stream_paths: dict[StdStream, str] = {}
 
 
 class Checksum(Message):

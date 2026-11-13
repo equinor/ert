@@ -25,6 +25,7 @@ from _ert.events import (
     FMEvent,
     ForwardModelStepChecksum,
     ForwardModelStepFailure,
+    ForwardModelStepSuccess,
     RealizationEvent,
     SnapshotInputEvent,
     dispatcher_event_from_json,
@@ -406,6 +407,11 @@ class EnsembleEvaluator:
             if type(event) is ForwardModelStepChecksum:
                 await self._manifest_queue.put(event)
             else:
+                if (
+                    isinstance(event, ForwardModelStepSuccess | ForwardModelStepFailure)
+                    and event.std_stream_paths
+                ):
+                    await self._manifest_queue.put(event)
                 event = cast(FMEvent, event)
                 await self._events.put(event)
 
