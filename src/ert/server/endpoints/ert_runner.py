@@ -26,10 +26,11 @@ from ert.config.parsing.config_errors import ConfigValidationError
 from ert.config.surface_config import SurfaceConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.namespace import Namespace
-from ert.run_models import StatusEvents
+from ert.run_models import ErtRunError, StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.run_models.run_model import RunModel
 from ert.server.common import ErtRunnerEndpoints
+from ert.storage import ErtStorageException, ErtStoragePermissionError
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
 from .experiment_runs import (
@@ -154,6 +155,17 @@ async def register(request: StartErtExperimentRequest) -> JSONResponse:
             status_code=422,
             detail=str(e),
         ) from e
+    except ErtRunError as e:
+        logging.getLogger(__name__).warning(f"Failed to register experiment: {e}")
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    except ErtStoragePermissionError as e:
+        logging.getLogger(__name__).warning(f"Failed to register experiment: {e}")
+        raise HTTPException(status_code=403, detail=str(e)) from e
+    except ErtStorageException as e:
+        logging.getLogger(__name__).warning(
+            f"Failed to register experiment: {e}", exc_info=True
+        )
+        raise HTTPException(status_code=409, detail=str(e)) from e
 
     experiment_state = ErtExperimentRunnerState(
         run_model=run_model,
