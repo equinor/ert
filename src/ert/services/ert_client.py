@@ -462,10 +462,11 @@ class ErtClient:
         _checked(response)
         return True
 
-    def runpath_delete(self, config_id: str) -> bool:
+    def runpath_delete(self, config_id: str) -> None:
         """
         Deletes the runpath for the given ERT experiment.
-        Returns True if successful. Timeout is set to None (no timeout)
+        Raises an exception on failure.
+        Timeout is set to None (no timeout)
         as the operation may take a significant amount of time.
         """
         response = self._request(
@@ -475,7 +476,11 @@ class ErtClient:
             params={"config_id": config_id},
             timeout=None,
         )
-        return response.status_code == httpx.codes.OK
+        if response.is_success:
+            return
+        if response.status_code == httpx.codes.FORBIDDEN:
+            raise PermissionError(response.json()["detail"])
+        raise httpx.RequestError("Failed to delete runpath")
 
     def get_runmodel_data(self, config_id: str) -> dict[str, Any]:
         """Retrieves the runmodel data for the given ERT experiment."""
