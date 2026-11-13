@@ -996,6 +996,51 @@ def test_that_clicking_title_emits_edit_request(qtbot: QtBot):
     received.assert_called_once_with()
 
 
+def test_that_axes_headings_are_not_editable_when_the_figure_has_a_suptitle(
+    qtbot: QtBot,
+):
+    def _plot_with_figure_suptitle(figure: Figure, *_args, **_kwargs) -> None:
+        figure.add_subplot(111).set_title("Fixed heading")
+        figure.suptitle("Editable title")
+
+    plotter = MagicMock()
+    plotter.dimensionality = 1
+    plotter.requires_observations = False
+    plotter.plot.side_effect = _plot_with_figure_suptitle
+
+    plot_widget = PlotWidget("Any", plotter)
+    qtbot.addWidget(plot_widget)
+    received = MagicMock()
+    plot_widget.titleEditRequested.connect(received)
+
+    plot_widget.update_plot(
+        PlotContext(
+            PlotConfig(),
+            ensembles=[],
+            ensembles_color_indexes=[],
+            key="some_key",
+            layer=None,
+        ),
+        {},
+        pd.DataFrame(),
+        {},
+        None,
+    )
+
+    heading = plot_widget._figure.axes[0].title
+    assert not heading.get_picker()
+
+    plot_widget._on_canvas_pick(type("PickEventStub", (), {"artist": heading})())
+
+    received.assert_not_called()
+
+    plot_widget._on_canvas_pick(
+        type("PickEventStub", (), {"artist": plot_widget._figure.texts[0]})()
+    )
+
+    received.assert_called_once_with()
+
+
 @pytest.mark.parametrize(
     "text_kind",
     [
