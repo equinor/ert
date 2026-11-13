@@ -15,7 +15,7 @@ from ert.services.ert_server_controller import (
     ServerBootFail,
     _delete_connection_files_then_call_previous_handler,
     create_ert_server_controller,
-    wait_for_status_events_to_drain,
+    poll_until_status_events_drained,
 )
 
 
@@ -352,7 +352,7 @@ def test_that_waiting_for_status_events_stops_polling_once_none_are_pending():
     client = MagicMock()
     client.pending_status_events.side_effect = [2, 1, 0]
 
-    wait_for_status_events_to_drain(client, timeout=5, poll_interval=0)
+    poll_until_status_events_drained(client, timeout=5, poll_interval=0)
 
     assert client.pending_status_events.call_count == 3
 
@@ -364,7 +364,7 @@ def test_that_waiting_for_status_events_logs_the_pending_count_after_timeout(
     client.pending_status_events.return_value = 2
 
     with caplog.at_level(logging.WARNING):
-        wait_for_status_events_to_drain(client, timeout=0, poll_interval=0)
+        poll_until_status_events_drained(client, timeout=0, poll_interval=0)
 
     assert "2 status events not passed to the status event listener" in caplog.text
 
@@ -404,7 +404,7 @@ def test_that_shutdown_terminates_server_when_pending_status_events_request_fail
         raise RuntimeError("request failed")
 
     monkeypatch.setattr(
-        ert_server_controller, "wait_for_status_events_to_drain", fail_request
+        ert_server_controller, "poll_until_status_events_drained", fail_request
     )
 
     with caplog.at_level(logging.WARNING):

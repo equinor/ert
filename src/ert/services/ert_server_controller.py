@@ -34,7 +34,7 @@ class _StatusEventDeliveryStatus(Protocol):
     def pending_status_events(self) -> int: ...
 
 
-def wait_for_status_events_to_drain(
+def poll_until_status_events_drained(
     client: _StatusEventDeliveryStatus,
     timeout: float = STATUS_EVENT_DRAIN_TIMEOUT,
     poll_interval: float = 0.1,
@@ -396,14 +396,14 @@ class ErtServerController:
         if self._thread_that_starts_server_process is None:
             return -1
 
-        self._wait_for_status_events_to_drain()
+        self._drain_status_events_before_shutdown()
         self.__class__._instance = None
         error_code = self._thread_that_starts_server_process.shutdown()
         self._thread_that_starts_server_process = None
 
         return error_code
 
-    def _wait_for_status_events_to_drain(self) -> None:
+    def _drain_status_events_before_shutdown(self) -> None:
         """Gives the server a chance to pass queued status events to the
         status event listener before it is terminated. Never raises.
         """
@@ -432,7 +432,7 @@ class ErtServerController:
                 cert=connection_info["cert"],
             )
             with Client(client_connection_info) as http_client:
-                wait_for_status_events_to_drain(
+                poll_until_status_events_drained(
                     ErtClient(
                         SharedClient(Path(self._storage_path), http_client),
                         timeout=_STATUS_EVENT_REQUEST_TIMEOUT,
