@@ -565,6 +565,27 @@ def test_that_load_blob_distinguishes_missing_blobs_from_invalid_uris(
 
 
 @pytest.mark.parametrize(
+    "uri_template",
+    [
+        pytest.param("../index.json", id="parent-directory"),
+        pytest.param("{ensemble_path}/index.json", id="absolute-path"),
+    ],
+)
+def test_that_load_blob_rejects_invalid_paths(
+    tmp_path,
+    uri_template,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+        uri = uri_template.format(ensemble_path=ensemble._path)
+        with pytest.raises(ValueError, match="Invalid blob URI path"):
+            ensemble.load_blob(uri)
+
+
+@pytest.mark.parametrize(
     "uri",
     [
         pytest.param("ABCDEF12.blob", id="uppercase-hex"),
@@ -591,7 +612,7 @@ def test_that_load_blob_rejects_existing_files_with_invalid_uri_before_resolving
         with monkeypatch.context() as patch:
             patch.setattr(Path, "resolve", resolve)
 
-            with pytest.raises(ValueError, match="Invalid blob URI"):
+            with pytest.raises(ValueError, match="Invalid blob URI pattern"):
                 ensemble.load_blob(uri)
 
         resolve.assert_not_called()
