@@ -11,6 +11,7 @@ import hypothesis.strategies as st
 import numpy as np
 import polars as pl
 import pytest
+from filelock import FileLock
 from hypothesis import given
 
 from ert.config import (
@@ -346,6 +347,26 @@ def test_that_storage_migration_detected_and_completed(tmp_path):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         assert storage.version == _LOCAL_STORAGE_VERSION
+
+
+def test_that_migrating_locked_storage_raises_ert_storage_exception(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        storage._index.version = _LOCAL_STORAGE_VERSION - 1
+        storage._save_index()
+
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
+    with (
+        FileLock(tmp_path / "storage.lock"),
+        pytest.raises(
+            ErtStorageException,
+            match=r"Failed to migrate storage: .* Not able to acquire lock",
+        ),
+    ):
+        LocalStorage.perform_migration(tmp_path)
+
+    assert LocalStorage.check_migration_needed(tmp_path)
 
 
 def test_ensemble_no_parameters(storage):

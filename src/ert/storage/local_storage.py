@@ -228,10 +228,17 @@ class LocalStorage(BaseMode):
         Raises
         ------
         ErtStorageException
-            If the storage version is newer than the current version.
+            If the storage version is newer than the current version, or if
+            the storage lock cannot be acquired.
         """
         if LocalStorage.check_migration_needed(path):
-            with LocalStorage(path, Mode("w"), stage_for_migration=True) as storage:
+            try:
+                storage = LocalStorage(path, Mode("w"), stage_for_migration=True)
+            except TimeoutError as err:
+                raise ert.storage.ErtStorageException(
+                    f"Failed to migrate storage: {path} with error: {err}"
+                ) from err
+            with storage:
                 storage._migrate(storage.version)
                 storage.reload()
 
