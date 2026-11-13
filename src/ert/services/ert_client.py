@@ -109,14 +109,24 @@ def _filter_params(filter_on: dict[str, Any] | None) -> dict[str, Any] | None:
     return None if filter_on is None else {"filter_on": json.dumps(filter_on)}
 
 
+def _response_detail(response: httpx.Response) -> str:
+    try:
+        detail = response.json().get("detail")
+    except (ValueError, AttributeError):
+        detail = None
+    if detail is None:
+        return response.text or "<no response body>"
+    return str(detail)
+
+
 def _checked(response: httpx.Response) -> httpx.Response:
     if response.status_code == httpx.codes.UNAUTHORIZED:
         raise httpx.RequestError(message=f"{response.text}")
     if response.status_code != httpx.codes.OK:
-        raise httpx.RequestError(
-            f" Please report this error and try restarting the application."
-            f"{response.text} from url: {response.url}."
-        )
+        detail = _response_detail(response)
+        if not response.is_client_error:
+            detail = f"Unexpected server response {response.status_code}: {detail}"
+        raise httpx.RequestError(detail)
     return response
 
 

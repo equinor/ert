@@ -26,6 +26,10 @@ class MockResponse:
     def is_success(self):
         return self.status_code == 200
 
+    @property
+    def is_client_error(self):
+        return 400 <= self.status_code < 500
+
 
 class MockClient:
     def request(self, method, url, **kwargs):
